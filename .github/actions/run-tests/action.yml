@@ -27,6 +27,7 @@ runs:
         apt-get update && apt-get install -y --no-install-recommends \
             build-essential \
             curl \
+            git \
             && rm -rf /var/lib/apt/lists/*
 
         curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
@@ -114,6 +115,14 @@ runs:
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
         cd ../..
         mv junit.xml junit_sbom_retention.xml
+
+    - name: BUILD ENVGENE SCRIPTS test
+      shell: bash
+      run: |
+        cd build_envgene/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_build_envgene_scripts.xml
 
     - name: Merge test results
       shell: bash

@@ -1,8 +1,5 @@
 import os
 import re
-import shutil
-import tempfile
-from hashlib import sha256
 from os import getenv, path
 from typing import Callable
 
@@ -35,44 +32,6 @@ EXTRACT_FUNCTIONS = {
     'SOPS': extract_value_SOPS,
     'Fernet': extract_value_Fernet
 }
-
-def _path_safe_backup_name(file_path: str) -> str:
-    rel = path.relpath(file_path, BASE_DIR)
-    return rel.replace(path.sep, '__') + '.bak'
-
-
-def _cred_backup_dir() -> str:
-    backup_key_parts = [
-        f"CI_JOB_ID={getenv('CI_JOB_ID', '')}",
-        f"BASE_DIR={path.abspath(BASE_DIR)}", # for running locally
-    ]
-    backup_key = sha256("\0".join(backup_key_parts).encode("utf-8")).hexdigest()[:16]
-    return path.join(tempfile.gettempdir(), f"envgene_cred_backup_{backup_key}")
-
-
-def _cred_backup_path(file_path: str) -> str:
-    return path.join(_cred_backup_dir(), _path_safe_backup_name(file_path))
-
-
-def _backup_encrypted_cred_file(file_path: str) -> None:
-    if not is_encrypted(file_path):
-        return
-    backup_path = _cred_backup_path(file_path)
-    os.makedirs(path.dirname(backup_path), exist_ok=True)
-    shutil.copy2(file_path, backup_path)
-
-
-def _get_cred_backup_path(file_path: str) -> str | None:
-    backup_path = _cred_backup_path(file_path)
-    if path.exists(backup_path):
-        return backup_path
-    return None
-
-
-def _cleanup_cred_backups() -> None:
-    backup_dir = _cred_backup_dir()
-    if backup_dir and path.isdir(backup_dir):
-        shutil.rmtree(backup_dir, ignore_errors=True)
 
 
 def get_configured_encryption_type():
@@ -196,27 +155,21 @@ def check_for_encrypted_files(files):
 
 
 def decrypt_all_cred_files_for_env(**kwargs):
-    _cleanup_cred_backups()
     files = get_all_necessary_cred_files()
     if not get_crypt():
         check_for_encrypted_files(files)
         return
 
     for f in files:
-        _backup_encrypted_cred_file(f)
         decrypt_file(f, **kwargs)
     logger.debug(f"Decrypted next cred files:\n{files}")
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
-    try:
-        files = get_all_necessary_cred_files()
-        logger.debug(f"Attempting to encrypt(if crypt is true) next files:\n{files}")
-        for f in files:
-            backup = _get_cred_backup_path(f)
-            encrypt_file(f, minimize_diff=backup is not None, old_file_path=backup, **kwargs)
-    finally:
-        _cleanup_cred_backups()
+    files = get_all_necessary_cred_files()
+    logger.debug(f"Attempting to encrypt(if crypt is true) next files:\n{files}")
+    for f in files:
+        encrypt_file(f, **kwargs)
 
 
 def get_crypt():

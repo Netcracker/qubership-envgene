@@ -273,6 +273,9 @@ if [ -d /tmp/updated_creds ]; then
     done
 fi
 
+echo "Minimizing credential file diffs (plaintext compare against HEAD)..."
+python3 /module/scripts/minimize_cred_diffs.py
+
 echo "Checking changes..."
 git add ./*
 diff_status=0

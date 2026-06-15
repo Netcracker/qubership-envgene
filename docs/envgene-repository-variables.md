@@ -17,10 +17,20 @@
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
     - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
     - [`GCP_SA_KEY`](#gcp_sa_key)
+    - [`VAULT_TOKEN`](#vault_token)
+    - [`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials)
+    - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
+    - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
     - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
+  - [Discovery EnvGene Repository](#discovery-envgene-repository)
+    - [`DOCKER_REGISTRY` (in discovery repository)](#docker_registry-in-discovery-repository)
+    - [`GITLAB_RUNNER_TAG_NAME` (in discovery repository)](#gitlab_runner_tag_name-in-discovery-repository)
+    - [`K8S_HOST`](#k8s_host)
+    - [`K8S_TOKEN`](#k8s_token)
+    - [`SECRET_KEY` (in discovery repository)](#secret_key-in-discovery-repository)
 
 The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
 
@@ -194,6 +204,60 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 
 **Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service account with at least `Artifact Registry Reader` role. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
 
+### `VAULT_TOKEN`
+
+**Description**: Vault authentication token used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
+credentials in a Vault [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
+identifier is not `default_store`, set the prefixed variant `<id>_VAULT_TOKEN` instead (one set per store). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a Vault Secret Store
+
+### `GOOGLE_APPLICATION_CREDENTIALS`
+
+**Description**: GCP service account credentials used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
+credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). When the
+Secret Store identifier is not `default_store`, set the prefixed variant `<id>_GOOGLE_APPLICATION_CREDENTIALS`
+instead. See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+The variable holds the full JSON content of the service account key, not a file path - the CLI consumes the
+JSON directly.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store
+
+### `AWS_ACCESS_KEY_ID`
+
+**Description**: AWS access key ID used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to authenticate to AWS
+Secrets Manager for an AWS [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
+identifier is not `default_store`, set the prefixed variant `<id>_AWS_ACCESS_KEY_ID` instead. Paired with
+[`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references an AWS Secrets Manager Secret Store
+
+### `AWS_SECRET_ACCESS_KEY`
+
+**Description**: AWS secret access key used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to authenticate to AWS
+Secrets Manager for an AWS [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
+identifier is not `default_store`, set the prefixed variant `<id>_AWS_SECRET_ACCESS_KEY` instead. Paired with
+[`AWS_ACCESS_KEY_ID`](#aws_access_key_id). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references an AWS Secrets Manager Secret Store
+
 ## Template EnvGene Repository
 
 ### `ENV_TEMPLATE_TEST`
@@ -213,3 +277,76 @@ The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
 ### `DOCKER_REGISTRY` (in template repository)
 
 The same as [`DOCKER_REGISTRY` in instance repository](#docker_registry-in-instance-repository)
+
+## Discovery EnvGene Repository
+
+### `DOCKER_REGISTRY` (in discovery repository)
+
+**Description**: Specifies the Docker registry where the `qubership-cloud-passport-cli` image is located.
+
+Set by the GSF installer during Discovery repository initialization. For on-premises deployments, set this to the internal registry.
+
+**Default Value**: `ghcr.io`
+
+**Mandatory**: Yes
+
+**Example**: `artifactorycn.netcracker.com:17014`
+
+### `GITLAB_RUNNER_TAG_NAME` (in discovery repository)
+
+**Description**: The tag that identifies the GitLab runner used to execute the `get_cloud_passport` job.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `NETCRACKER`
+
+### `K8S_HOST`
+
+**Description**: Kubernetes API server URL used to connect to the cluster when no kubeconfig file is present in the Discovery repository.
+
+The Discovery pipeline resolves the host in the following order of precedence:
+
+1. Per-environment variable: `K8S_HOST_<env_name>` (where `<env_name>` is derived from `ENV_NAME` — e.g., for `ocp-01/platform` the variable name is `K8S_HOST_ocp-01_platform`)
+2. Generic fallback: `K8S_HOST`
+
+If neither is set and no kubeconfig file is found in the repository, the pipeline fails.
+
+**Default Value**: None
+
+**Mandatory**: Conditional — required when no kubeconfig file is present
+
+**Example**: `https://api.ocp-01.example.com:6443`
+
+### `K8S_TOKEN`
+
+**Description**: Kubernetes API bearer token used to authenticate with the cluster when no kubeconfig file is present in the Discovery repository.
+
+Resolved with the same per-environment precedence as [`K8S_HOST`](#k8s_host):
+
+1. Per-environment variable: `K8S_TOKEN_<env_name>`
+2. Generic fallback: `K8S_TOKEN`
+
+Store as a **masked** CI/CD variable to prevent the token from appearing in job logs.
+
+**Default Value**: None
+
+**Mandatory**: Conditional — required when no kubeconfig file is present
+
+**Example**: `eyJhbGciOiJSUzI1NiIs...`
+
+### `SECRET_KEY` (in discovery repository)
+
+**Description**: Fernet key used by the `cloud_passport_cli` to encrypt credential values in the generated Cloud Passport.
+
+Resolved with per-environment precedence:
+
+1. Per-environment variable: `SECRET_KEY_<env_name>`
+2. Generic fallback: `SECRET_KEY`
+
+**Default Value**: None
+
+**Mandatory**: Conditional — required when credentials are stored encrypted
+
+**Example**: `key-placeholder-123`

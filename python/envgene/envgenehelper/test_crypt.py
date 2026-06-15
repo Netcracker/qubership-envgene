@@ -1,7 +1,6 @@
 import os
 import copy
-import shutil
-import tempfile
+import subprocess
 import pytest
 from subprocess import SubprocessError
 
@@ -9,14 +8,7 @@ from ruyaml import CommentedMap
 
 from .collections_helper import compare_dicts
 
-from . import crypt as crypt_module
-from .crypt import (
-    decrypt_file,
-    encrypt_file,
-    decrypt_all_cred_files_for_env,
-    encrypt_all_cred_files_for_env,
-    is_encrypted,
-)
+from .crypt import decrypt_file, encrypt_file, is_encrypted
 from .file_helper import check_file_exists, writeToFile
 from .yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
 
@@ -186,82 +178,3 @@ def test_minimize_diff(crypt_kwargs):
     # test wrong parameter combination
     with pytest.raises(ValueError):
         encrypt_file(**crypt_kwargs, minimize_diff=True)
-
-
-@pytest.fixture(params=['SOPS', 'Fernet'])
-def encrypt_all_env(request, monkeypatch):
-    crypt_backend = request.param
-    if crypt_backend == 'SOPS':
-        secret_key = crypt_test_data[0]['secret_key']
-        public_key = crypt_test_data[0]['public_key']
-        monkeypatch.setenv('ENVGENE_AGE_PRIVATE_KEY', secret_key)
-        monkeypatch.setenv('PUBLIC_AGE_KEYS', public_key)
-    else:
-        secret_key = crypt_test_data[1]['secret_key']
-        public_key = None
-        monkeypatch.setenv('SECRET_KEY', secret_key)
-
-    project_dir = tempfile.mkdtemp()
-    cred_dir = os.path.join(project_dir, 'configuration', 'credentials')
-    os.makedirs(cred_dir)
-    cred_file = os.path.join(cred_dir, 'credentials.yml')
-    shutil.copy(TEST_FILE, cred_file)
-
-    config_path = os.path.join(project_dir, 'configuration', 'config.yml')
-    with open(config_path, 'w', encoding='utf-8') as f:
-        f.write(f'crypt: true\ncrypt_backend: {crypt_backend}\n')
-
-    monkeypatch.setenv('CI_PROJECT_DIR', project_dir)
-    monkeypatch.delenv('ENV_NAMES', raising=False)
-    monkeypatch.setattr(crypt_module, 'BASE_DIR', project_dir)
-
-    bulk_kwargs = {
-        'crypt_backend': crypt_backend,
-        'secret_key': secret_key,
-        'public_key': public_key,
-        'ignore_is_crypt': True,
-        'is_crypt': True,
-    }
-
-    yield cred_file, bulk_kwargs
-
-    crypt_module._cleanup_cred_backups()
-    shutil.rmtree(project_dir, ignore_errors=True)
-
-
-def test_encrypt_all_cred_files_minimize_diff(encrypt_all_env):
-    cred_file, bulk_kwargs = encrypt_all_env
-    crypt_kwargs = {'file_path': cred_file, **bulk_kwargs}
-
-    initial_enc_content = encrypt_file(**crypt_kwargs)
-    decrypt_all_cred_files_for_env(**bulk_kwargs)
-
-    backup_dir = crypt_module._cred_backup_dir()
-    backup_path = crypt_module._cred_backup_path(cred_file)
-    assert backup_dir.startswith(tempfile.gettempdir())
-    assert not backup_dir.startswith(os.path.dirname(cred_file))
-    assert os.path.exists(backup_path)
-
-    encrypt_all_cred_files_for_env(**bulk_kwargs)
-    assert not os.path.exists(backup_dir)
-
-    diff_paths, removed_paths = compare_dicts(initial_enc_content, openYaml(cred_file))
-    assert len(removed_paths) == 0 and len(diff_paths) == 0
-
-
-def test_encrypt_all_cred_files_no_minimize_diff_without_backup(encrypt_all_env):
-    cred_file, bulk_kwargs = encrypt_all_env
-    crypt_kwargs = {'file_path': cred_file, **bulk_kwargs}
-
-    initial_enc_content = encrypt_file(**crypt_kwargs)
-    decrypt_file(**crypt_kwargs)
-
-    # No decrypt_all called beforehand, so no backup exists
-    assert crypt_module._get_cred_backup_path(cred_file) is None
-
-    encrypt_all_cred_files_for_env(**bulk_kwargs)
-    new_enc_content = openYaml(cred_file)
-
-    # Without minimize_diff all values are re-encrypted, so ciphertext must differ
-    diff_paths, _ = compare_dicts(initial_enc_content, new_enc_content)
-    assert len(diff_paths) > 0
