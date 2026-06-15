@@ -278,15 +278,11 @@ them during `generate_effective_set`. See
 
 Before you start the pipeline, confirm each row has a value in Cloud Passport or in `e2eParameters` in `cloud.yaml`:
 
-| Cloud Passport (`ARGOCD_*`) | Or `e2eParameters` in `cloud.yaml` |
-|-----------------------------|------------------------------------|
-| `ARGOCD_GITLAB_URL`         | `DCL_GIT_URL`                      |
-| `ARGOCD_GITLAB_BRANCH`      | `DCL_GIT_BRANCH`                   |
-| `ARGOCD_GITLAB_USER`        | `DCL_CONFIG_GITLAB_USER`           |
-| `ARGOCD_GITLAB_PASSWORD`    | `DCL_CONFIG_GITLAB_TOKEN`          |
-| `ARGOCD_URL`                | `DCL_CONFIG_ARGOCD_URL`            |
-| `ARGOCD_USER`               | `DCL_CONFIG_ARGOCD_USER`           |
-| `ARGOCD_PASSWORD`           | `DCL_CONFIG_ARGOCD_PASSWORD`       |
+| Cloud Passport (`ARGOCD_*`) | Or `e2eParameters` in `cloud.yaml` | Description |
+|-----------------------------|------------------------------------|-------------|
+| `ARGOCD_GITLAB_URL`         | `DCL_GIT_URL`                      | External GitLab repository URL for Effective Set publish |
+| `ARGOCD_GITLAB_BRANCH`      | `DCL_GIT_BRANCH`                   | Target branch for commit and push |
+| `ARGOCD_GITLAB_PASSWORD`    | `DCL_CONFIG_GITLAB_TOKEN`          | GitLab personal access token used for Git push |
 
 For environments that use Cloud Passport, confirm the environment is linked to a passport and that
 [Cloud Passport processing](/docs/features/cloud-passport-processing.md#passport-file) has populated the `ARGOCD_*`
@@ -353,6 +349,6 @@ If validation fails, the `generate_effective_set` job stops before external publ
 | Error or symptom             | What to check |
 |------------------------------|---------------|
 | `endpoint_unreachable`       | GitLab URL reachable from the pipeline runner. Matches `ARGOCD_GITLAB_URL` or `DCL_GIT_URL`. |
-| `authentication_failed`      | User and token valid. Token can push to the publish branch. |
+| `authentication_failed`      | GitLab token valid. Token can push to the publish branch. |
 | Missing connection parameter | Every mapped row in [Verify connection parameters are available](#verify-connection-parameters-are-available) has a value. |
 | Job succeeds, external empty   | `placement` is `remote` or `dual`. `ENV_NAMES` matches the edited environment. |

@@ -148,11 +148,7 @@ When Cloud Passport has no `ARGOCD_*` connection values, EnvGene reads the mappe
 ```yaml
 e2eParameters:
   DCL_GIT_URL: "https://gitlab.example.com/group/external-effective-set.git"
-  DCL_CONFIG_GITLAB_USER: "ci-bot"
   DCL_CONFIG_GITLAB_TOKEN: "glpat-xxxx"
-  DCL_CONFIG_ARGOCD_URL: "https://argocd.example.com"
-  DCL_CONFIG_ARGOCD_USER: "argocd-user"
-  DCL_CONFIG_ARGOCD_PASSWORD: "argocd-password"
 ```
 
 **Trigger:**
@@ -244,7 +240,5 @@ GENERATE_EFFECTIVE_SET: true
 
 **Results:**
 
-1. The `generate_effective_set` job fails with one of:
-   - `endpoint_unreachable` when the URL does not respond. Error includes the checked URL.
-   - `authentication_failed` when credentials fail. Error includes the checked URL and remediation guidance.
+1. The `generate_effective_set` job fails.
 2. External publish does not run.

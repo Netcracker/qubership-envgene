@@ -195,15 +195,11 @@ For `remote` and `dual`, EnvGene resolves each connection parameter in this orde
 2. DCL parameters (`DCL_*`) from `e2eParameters` in `cloud.yaml` for the environment when the matching
    `ARGOCD_*` value is not in Cloud Passport
 
-| ARGOCD parameter        | DCL fallback in `e2eParameters` |
-|-------------------------|---------------------------|
-| `ARGOCD_GITLAB_URL`     | `DCL_GIT_URL`             |
-| `ARGOCD_GITLAB_BRANCH`  | `DCL_GIT_BRANCH`          |
-| `ARGOCD_GITLAB_USER`    | `DCL_CONFIG_GITLAB_USER`  |
-| `ARGOCD_GITLAB_PASSWORD` | `DCL_CONFIG_GITLAB_TOKEN` |
-| `ARGOCD_URL`            | `DCL_CONFIG_ARGOCD_URL`   |
-| `ARGOCD_USER`           | `DCL_CONFIG_ARGOCD_USER`  |
-| `ARGOCD_PASSWORD`       | `DCL_CONFIG_ARGOCD_PASSWORD` |
+| ARGOCD parameter         | DCL fallback in `e2eParameters` | Description |
+|--------------------------|---------------------------------|-------------|
+| `ARGOCD_GITLAB_URL`      | `DCL_GIT_URL`                   | External GitLab repository URL for Effective Set publish |
+| `ARGOCD_GITLAB_BRANCH`   | `DCL_GIT_BRANCH`                | Target branch for commit and push |
+| `ARGOCD_GITLAB_PASSWORD` | `DCL_CONFIG_GITLAB_TOKEN`       | GitLab personal access token used for Git push |
 
 ### Branch resolution
 
@@ -227,9 +223,9 @@ For `remote` and `dual`, the publish branch is resolved in this order:
 
 #### During repository access check
 
-1. **Reachability.** The external GitLab URL responds before publish. Failure code: `endpoint_unreachable`.
-2. **Authentication.** Resolved credentials authenticate to that URL. Failure code: `authentication_failed` (includes
-   the URL and remediation guidance).
+1. **Reachability.** The external GitLab URL responds before publish.
+2. **Authentication.** The token from `ARGOCD_GITLAB_PASSWORD` (or `DCL_CONFIG_GITLAB_TOKEN`) authenticates to that
+   URL.
 
 See [Effective Set external export use cases](/docs/use-cases/effective-set-external-export.md) for worked examples.
 
