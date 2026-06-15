@@ -51,11 +51,11 @@ jobs:
           echo "Java version: ${{ github.event.inputs.java-version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Check if tag exists
         id: check_tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-checker@v1.0.4
+        uses: netcracker/qubership-workflow-hub/actions/tag-checker@d70dd2ebbe0fe5964ead0165353f6a1e4f774c3c # v1.0.4
         with:
           tag: 'v${{ github.event.inputs.version }}'
         env:
@@ -80,24 +80,24 @@ jobs:
       artifact_id: ${{ steps.config.outputs.artifact_id }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Update pom.xml
         id: config
-        uses: netcracker/qubership-workflow-hub/actions/pom-updater@v1.0.4
+        uses: netcracker/qubership-workflow-hub/actions/pom-updater@d70dd2ebbe0fe5964ead0165353f6a1e4f774c3c # v1.0.4
         with:
           new_value: ${{ github.event.inputs.version }}
 
       - name: Commit Changes
-        uses: netcracker/qubership-workflow-hub/actions/commit-and-push@v1.0.4
+        uses: netcracker/qubership-workflow-hub/actions/commit-and-push@d70dd2ebbe0fe5964ead0165353f6a1e4f774c3c # v1.0.4
         with:
           commit_message: "Update pom.xml version to ${{ github.event.inputs.version }}"
 
   mvn-package:
     needs: [update-pom-version]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@e7fb05c3368d17c451ede3985bc756a1e3bbe11e # v1.0.3
     with:
       maven-command: "--batch-mode package"
       java-version: ${{ github.event.inputs.java-version }}
@@ -115,20 +115,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Run tests
         run: echo "Running tests here"
 
   tag:
     needs: [tests]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
+    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@e7fb05c3368d17c451ede3985bc756a1e3bbe11e # v1.0.3
     with:
       tag-name: "v${{ github.event.inputs.version }}"
 
   mvn-deploy:
     needs: [update-pom-version, tag]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@e7fb05c3368d17c451ede3985bc756a1e3bbe11e # v1.0.3
     with:
       maven-command: ${{ (github.event.inputs.dry-run == 'true' && '--batch-mode package') || github.event.inputs.profile == 'github'  && '--batch-mode deploy -P github' || '--batch-mode deploy -P central' }}
       java-version: ${{ github.event.inputs.java-version }}

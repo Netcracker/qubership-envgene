@@ -83,10 +83,10 @@ jobs:
     needs: [conventional-commits]
     runs-on: ubuntu-latest
     container:
-      image: python:3.12-slim-bookworm
+      image: python:3.12-slim-bookworm@sha256:76d4b7b6305788c6b4c6a19d6a22a3921bf802e9af4d5e1e5bd771208dba74bf
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Run Tests
         uses: ./.github/actions/run-tests
@@ -107,7 +107,7 @@ jobs:
       branch_latest_tag: ${{ steps.build-pipegene.outputs.branch_latest_tag }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
     - name: Build Qubership PipeGene Docker Image
       uses: ./.github/actions/build-pipegene
@@ -132,7 +132,7 @@ jobs:
       branch_latest_tag: ${{ steps.build-envgene.outputs.branch_latest_tag }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
     - name: Build Qubership Envgene Docker Image
       uses: ./.github/actions/build-envgene
@@ -144,7 +144,7 @@ jobs:
   build-effective-set-jar:
     needs: [linters, tests, link-check]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@e7fb05c3368d17c451ede3985bc756a1e3bbe11e # v1.0.3
     with:
       maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator/pom.xml"
       java-version: 17
@@ -170,7 +170,7 @@ jobs:
       branch_latest_tag: ${{ steps.build-effective-set-generator.outputs.branch_latest_tag }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
     - name: Build Effective Set Generator Docker Image
       uses: ./.github/actions/build-effective-set
@@ -199,14 +199,14 @@ jobs:
     steps:
       - name: "Prepare app token"
         if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         id: app-token
         with:
           app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
           private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
@@ -237,14 +237,14 @@ jobs:
     steps:
       - name: "Prepare app token"
         if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         id: app-token
         with:
           app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
           private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
@@ -275,14 +275,14 @@ jobs:
     steps:
       - name: "Prepare app token"
         if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         id: app-token
         with:
           app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
           private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
