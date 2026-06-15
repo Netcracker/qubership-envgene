@@ -14,6 +14,7 @@
       - [Secret Store](#secret-store)
       - [Parameter with VALS reference](#parameter-with-vals-reference)
       - [Parameter with ESO reference](#parameter-with-eso-reference)
+      - [Deployment context](#deployment-context)
       - [External Credential Context](#external-credential-context)
       - [Pipeline context](#pipeline-context)
       - [Topology context](#topology-context)
@@ -130,6 +131,17 @@ EnvGene invokes the
 [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) against this context
 inside the job that generates the Effective Set. The CLI materializes each Credential in its target Secret
 Store according to the per-entry strategy. See [Credential provisioning](#credential-provisioning).
+
+External Credential output files at a glance. Paths are relative to the per-environment Effective Set root
+`environments/<cluster-name>/<env-name>/effective-set/`:
+
+| Context                                                       | File path                                                 | Emission                                                                                                                       |
+|---------------------------------------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| [Deployment context](#deployment-context)                     | `deployment/<ns>/<app>/values/external-credentials.yaml`  | one file per application that has any external Credential Reference in `deployParameters`                                      |
+| [Pipeline context](#pipeline-context) (global)                | `pipeline/external-credentials.yaml`                      | always emitted, empty when no `e2eParameter` resolves to an external Credential                                                |
+| [Pipeline context](#pipeline-context) (per-consumer)          | `pipeline/<consumer-name>-external-credentials.yaml`      | one file per consumer declared in `contexts.pipeline.consumers[]`. Default (no consumers) - no files. May be empty             |
+| [Topology context](#topology-context)                         | `topology/external-credentials.yaml`                      | always emitted, empty when no [Built-in credential reference](#built-in-credential-references) resolves to an external Credential |
+| [External Credential Context](#external-credential-context)   | `external-credential/external-credentials.yaml`           | always emitted, empty `credentials:` map when no [Credential](#credential) has `type: external`                                 |
 
 ### Objects
 
@@ -440,6 +452,33 @@ CONSUL_ADMIN_TOKEN:
   normalizedSecretName: ocp-05/postgres-password
 ```
 
+#### Deployment context
+
+The deployment context emits one `external-credentials.yaml` per application. The file holds the subset of
+the application's `deployParameters` whose values are [Credential References](#credential-reference) resolving
+to an [external Credential](#credential). Each entry is either a
+[Parameter with VALS reference](#parameter-with-vals-reference) or a
+[Parameter with ESO reference](#parameter-with-eso-reference), chosen per application by
+[Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references). One application produces
+at most one shape per `external-credentials.yaml`. Mixed VALS and ESO entries in the same file are not emitted.
+
+The file is located at:
+
+```text
+└── environments
+    └── <cluster-name>
+        └── <env-name>
+            └── effective-set
+                └── deployment
+                    └── <namespace-folder>
+                        └── <application-name>
+                            └── values
+                                └── external-credentials.yaml
+```
+
+The file is emitted once per application that has at least one external Credential Reference in its
+`deployParameters`. Applications without any external Credential Reference do not produce this file.
+
 #### External Credential Context
 
 **External Credential Context** is a separate Effective Set context consisting of a single YAML file that the
@@ -548,8 +587,9 @@ to two file shapes in the
 - `effective-set/pipeline/external-credentials.yaml` - the global file, containing every `e2eParameter`
   resolving to an external Credential.
 - `effective-set/pipeline/<consumer-name>-external-credentials.yaml` - one file per consumer declared under
-  `contexts.pipeline.consumers[]` in the Effective Set config. Contains the subset of `e2eParameters` that
-  match the consumer's schema (same selector used for `<consumer-name>-credentials.yaml`).
+  `contexts.pipeline.consumers[]` in the Effective Set config. `<consumer-name>` is derived from the
+  consumer's JSON schema filename as described in
+  [Consumer Specific Context of Pipeline Context](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context).
 
 Both shapes are flat maps of `e2eParameter` key to VALS URI:
 
@@ -572,7 +612,21 @@ The file locations are:
                     └── <consumer-name>-external-credentials.yaml
 ```
 
-The global file is always emitted. When no `e2eParameter` references an external Credential, it is empty.
+Emission rules:
+
+- The global file is always emitted. When no `e2eParameter` references an external Credential, the file is
+  empty.
+- Per-consumer files are emitted only for entries declared in `contexts.pipeline.consumers[]`. When the list is
+  absent or empty (the default), no `<consumer-name>-external-credentials.yaml` is produced.
+- For each declared consumer, the per-consumer file contains the subset of entries from the global
+  `external-credentials.yaml` whose key matches the consumer's JSON schema. The selector is the same one used
+  for the local `<consumer-name>-credentials.yaml` file. When a consumer is declared and no key matches its
+  schema, the file is emitted and empty.
+- The default-value and mandatory-missing rules from
+  [Consumer Specific Context of Pipeline Context](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context)
+  do not apply to external-credential entries. Such entries can only originate from `e2eParameter` Credential
+  References, so a JSON schema default value cannot synthesize a VALS reference, and a schema-mandatory key
+  with no matching `e2eParameter` does not produce an entry.
 
 #### Topology context
 
@@ -613,7 +667,8 @@ The file location is:
                     └── external-credentials.yaml
 ```
 
-The file is always emitted.
+The file is always emitted. When no [Built-in credential reference](#built-in-credential-references) resolves
+to an external Credential, the file is empty.
 
 #### EnvGene System Credentials
 
