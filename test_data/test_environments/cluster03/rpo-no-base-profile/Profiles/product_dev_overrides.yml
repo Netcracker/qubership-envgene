@@ -1,0 +1,16 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "product_dev_overrides"
+version: 0
+baseline: "dev"
+description: "Override for dev-profile without base template profile"
+applications:
+  - name: "billing-app"
+    services:
+      - name: "billing-service"
+        parameters:
+          - name: "CPU_LIMIT"
+            value: "4"
+          - name: "REPLICAS"
+            value: "3"
