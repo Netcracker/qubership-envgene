@@ -1,4 +1,6 @@
-# Find docs at <link>
+# Environment Inventory reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml
+
 inventory: {}
 envTemplate:
   name: <template-descriptor-name>

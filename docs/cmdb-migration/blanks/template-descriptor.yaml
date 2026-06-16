@@ -1,4 +1,6 @@
----
+# Template Descriptor reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#template-descriptor
+
 tenant: "{{ templates_dir }}/env_templates/dev/tenant.yml.j2"
 cloud: "{{ templates_dir }}/env_templates/dev/cloud.yml.j2"
 namespaces:

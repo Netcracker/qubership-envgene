@@ -28,7 +28,7 @@ structure is parsed rather than carried as text.
 
 Find connection parameters that sit in the ParameterSets. Move them into the Cloud Passport, where every
 environment on the cluster reads them from one place. For which cloud fields belong in the passport, see
-[Field mapping](/docs/cmdb-migration/migrate-cmdb-to-envgene.md#field-mapping).
+[Create the Cloud Passport](/docs/cmdb-migration/migrate-cmdb-to-envgene.md#32-create-the-cloud-passport).
 
 ## 3. Split the parameters by reuse
 

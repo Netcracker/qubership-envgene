@@ -3,164 +3,292 @@
 - [Migrate CMDB environments to EnvGene](#migrate-cmdb-environments-to-envgene)
   - [Description](#description)
   - [Prerequisites](#prerequisites)
-  - [1. Build the environment template](#1-build-the-environment-template)
-    - [1.1 Group namespaces into environments by Solution Descriptor](#11-group-namespaces-into-environments-by-solution-descriptor)
-    - [1.2 Create one template per deploy postfix set](#12-create-one-template-per-deploy-postfix-set)
-  - [2. Create the environment inventories](#2-create-the-environment-inventories)
-    - [2.1 Create the Cloud Passport](#21-create-the-cloud-passport)
-    - [2.2 Create one inventory per environment](#22-create-one-inventory-per-environment)
-    - [2.3 Attach cloud-level inputs](#23-attach-cloud-level-inputs)
-    - [2.4 Attach namespace-level inputs](#24-attach-namespace-level-inputs)
-    - [2.5 Export tenant credentials](#25-export-tenant-credentials)
-    - [2.6 Add the Solution Descriptor](#26-add-the-solution-descriptor)
-    - [2.7 Run generation to verify](#27-run-generation-to-verify)
-  - [Field mapping](#field-mapping)
-  - [Troubleshoot common errors](#troubleshoot-common-errors)
-  - [Results](#results)
+  - [1. Export the CMDB configuration](#1-export-the-cmdb-configuration)
+  - [2. Build the environment template](#2-build-the-environment-template)
+    - [2.1 Group environments into types by their Full Solution Descriptors](#21-group-environments-into-types-by-their-full-solution-descriptors)
+    - [2.2 Create environment template per environment type](#22-create-environment-template-per-environment-type)
+  - [3. Create the environment inventories](#3-create-the-environment-inventories)
+    - [3.1 Create the cluster folders](#31-create-the-cluster-folders)
+    - [3.2 Create the Cloud Passport](#32-create-the-cloud-passport)
+    - [3.3 Identify the environments](#33-identify-the-environments)
+    - [3.4 Create one inventory per environment](#34-create-one-inventory-per-environment)
+    - [3.5 Attach cloud inline parameters](#35-attach-cloud-inline-parameters)
+    - [3.6 Attach cloud referenced ParameterSets](#36-attach-cloud-referenced-parametersets)
+    - [3.7 Attach the cloud Resource Profile Override](#37-attach-the-cloud-resource-profile-override)
+    - [3.8 Attach namespace inline parameters](#38-attach-namespace-inline-parameters)
+    - [3.9 Attach namespace referenced ParameterSets](#39-attach-namespace-referenced-parametersets)
+    - [3.10 Attach the namespace Resource Profile Override](#310-attach-the-namespace-resource-profile-override)
+    - [3.11 Export the credentials](#311-export-the-credentials)
+    - [3.12 Add the Solution Descriptor](#312-add-the-solution-descriptor)
+    - [3.13 Create the Artifact Definition](#313-create-the-artifact-definition)
+  - [4. Run generation to verify](#4-run-generation-to-verify)
 
 ## Description
 
-This guide moves CMDB environments to EnvGene as a lift-and-shift. Work through sections 1 and 2 in order:
+This guide moves CMDB environments to EnvGene as a lift-and-shift. The guide has two phases, do them in order:
 
-1. Build one template per environment shape.
-2. Create an inventory for each environment, copying parameters as they are.
+1. Build one template per environment type.
+2. Create an inventory for each environment, copying parameters from CMDB as they are.
 
 Copying the parameters as they are gets each environment generating from a template fast. Cleaning them up is a
-separate guide: [Refactor migrated parameters](/docs/cmdb-migration/refactor-migrated-parameters.md). Do not
-refactor before generation works.
+separate guide: [Refactor migrated parameters](/docs/cmdb-migration/refactor-migrated-parameters.md).
 
 The source is a file export of CMDB objects with the folder layout
-`Tenants/<tenant>/Clouds/<cloud>/Namespaces/<namespace>/`. A generic blank for every file you create lives next
-to this guide under [blanks](/docs/cmdb-migration/blanks/). Copy a blank as-is, then fill in your values.
+`Tenants/<tenant>/Clouds/<cloud>/Namespaces/<namespace>/`. Many of the files you create have a generic blank
+next to this guide under [blanks](/docs/cmdb-migration/blanks/). Copy a blank as-is, then fill in your values.
 
 ## Prerequisites
 
 - A template repository and a region instance repository, provided to you, already set up with the EnvGene
   pipeline. There is one instance repository per region, and each cluster belongs to one region. The region is
   derived from the cluster URL.
-- A file export of the CMDB objects for the environments you migrate.
-- A Solution Descriptor for each solution instance. It lists the applications and their `deployPostfix` values.
+- Access to each CMDB instance (URL, username, and token) and the CMDB export tool.
+- A Solution Descriptor for each solution type. It lists the applications and their `deployPostfix` values.
 
 > [!NOTE]
 > The cluster-URL-to-region mapping is not yet defined. Use `<region>` as a placeholder until the mapping is
 > agreed, then replace it everywhere it appears.
 
-## 1. Build the environment template
+## 1. Export the CMDB configuration
 
-### 1.1 Group namespaces into environments by Solution Descriptor
+Produce the file export with the CMDB export tool. The tool needs the CMDB URL, a username, and a token:
 
-A Solution Descriptor deploys one solution instance into a set of namespaces, each named by its `deployPostfix`.
-That set of namespaces is one environment. Read the `deployPostfix` values from each Solution Descriptor to find
-the namespaces of each environment.
+```bash
+<export-tool> --url <cmdb-url> --username <cmdb-username> --token <cmdb-token> --out cmdb-export/
+```
 
-Environments whose Solution Descriptors cover the same set of `deployPostfix` values use one template. They share
-it even when their parameter values or application versions differ. Those differences belong in the inventory,
-not the template.
+> [!NOTE]
+> The configuration can span several CMDB instances. Run the export against each one. This guide follows a single
+> export, but the steps are the same for several.
 
-Give the template a short, simple name. EnvGene uses it only as the key the inventory points to, so any clear
-label works. This guide uses `dev`. A template with a different set of deploy postfixes just needs a different
-name, for example `prod`.
+Then validate the export. Remove stale or leftover Clouds and Namespaces that are no longer in use: delete their
+folders under `Tenants/<tenant>/Clouds/` so they are not migrated or considered in the following steps.
 
-### 1.2 Create one template per deploy postfix set
+## 2. Build the environment template
 
-Create one environment template per distinct set of `deployPostfix` values. Copy the Tenant, Cloud, and Namespace
-[blanks](/docs/cmdb-migration/blanks/) as-is, then edit only what these steps list. Put the files under
-`templates/env_templates/dev/`, using the name from 1.1.
+### 2.1 Group environments into types by their Full Solution Descriptors
 
-1. Create one Namespace Template per `deployPostfix` in the set. Copy the
+1. In each Full Solution Descriptor, read the `deployPostfix` of every entry under `applications`, and remove
+   duplicates. Several applications share one `deployPostfix`. The deduplicated list is the set of namespaces
+   that Solution Descriptor deploys into.
+2. Compare the deduplicated lists. Full Solution Descriptors with the same list are one environment type. Each
+   distinct list is one type.
+3. Name each environment type. This guide uses `dev`.
+
+### 2.2 Create environment template per environment type
+
+1. In the cloud CMDB, create an Application Definition for the env-template artifact.
+
+2. Create one Namespace Template per `deployPostfix` in the set. Copy the
    [Namespace Template blank](/docs/cmdb-migration/blanks/namespace.yml.j2) to
    `templates/env_templates/dev/<deployPostfix>.yml.j2`, naming the file after the namespace `deployPostfix`.
-   Then edit:
+   Then set `name` so it renders to the real namespace name in the cluster. The common pattern is
+   `{{ current_env.name }}-<deployPostfix>`. The generated `name` must match the real namespace.
 
-    - Set `name` so it renders to the real namespace name in the cluster. The common pattern is
-      `{{ current_env.name }}-<deployPostfix>`. If your namespaces follow a different rule, set the exact value
-      that reproduces the deployed name. The generated `name` must match the real namespace.
-    - Set `profile.baseline` and leave `profile.name` empty. An empty override with a baseline is the safe
-      default. Add a named override later only if the namespace needs one. For a named override, copy the
-      [Resource Profile Override blank](/docs/cmdb-migration/blanks/resource-profile.yml) into
-      `templates/resource_profiles/` and point `profile.name` at it.
+   > [!NOTE]
+   > If your namespace names do not follow this pattern, that is out of scope for this guide. Contact the EnvGene
+   > team to work out that case.
 
-2. Copy the [Cloud Template blank](/docs/cmdb-migration/blanks/cloud.yml.j2) to
-   `templates/env_templates/dev/cloud.yml.j2` unchanged. Connectivity is filled from the Cloud Passport during
-   generation. You create the passport in [2.1 Create the Cloud Passport](#21-create-the-cloud-passport).
+3. Copy the [Cloud Template blank](/docs/cmdb-migration/blanks/cloud.yml.j2) to
+   `templates/env_templates/dev/cloud.yml.j2` unchanged.
 
-3. Copy the [Tenant Template blank](/docs/cmdb-migration/blanks/tenant.yml.j2) to
+4. Copy the [Tenant Template blank](/docs/cmdb-migration/blanks/tenant.yml.j2) to
    `templates/env_templates/dev/tenant.yml.j2` unchanged.
 
-4. Copy the [Template Descriptor blank](/docs/cmdb-migration/blanks/template-descriptor.yaml) to
+5. Copy the [Template Descriptor blank](/docs/cmdb-migration/blanks/template-descriptor.yaml) to
    `templates/env_templates/dev.yaml`. List the tenant, cloud, and one entry per namespace template. The
    namespace file name is the deploy postfix, so you do not set `deploy_postfix` explicitly.
 
-5. Commit and publish the template artifact. Copy the
-   [Artifact Definition blank](/docs/cmdb-migration/blanks/artifact-definition.yml) to
-   `configuration/artifact_definitions/<name>.yml` so EnvGene can download it, and use its `name:version` in the
-   inventory.
+6. Add the Application Definitions and Registry Definitions the templates need, then parameterize the registry.
 
-## 2. Create the environment inventories
+    - Collect an AppDef for every application that appears in the Solution Descriptors of all templates in the
+      repository. Take the base files from the centralized definitions repository.
+    - Collect the RegDefs that those AppDefs reference.
+    - Place each AppDef at `templates/appdefs/<application-name>.yml.j2` and each RegDef at
+      `templates/regdefs/<registry-name>.yml.j2`. The `.yml.j2` extension marks them as templates.
+    - In each AppDef, replace the hardcoded `registryName` with
+      `{{ appdefs.overrides.registryName | default('<original-registry>') }}`.
 
-### 2.1 Create the Cloud Passport
+7. Commit and publish the template artifact. Note its `name:version` for the inventory.
 
-Create the Cloud Passport from the Cloud record connectivity fields. Do this once per cluster, before the
-environments on it.
+## 3. Create the environment inventories
 
-- Copy the [Cloud Passport blank](/docs/cmdb-migration/blanks/cloud-passport.yml) to
-  `environments/<cluster>/cloud-passport/<cluster>.yml` and fill in the connectivity values.
-- Copy the [Cloud Passport credentials blank](/docs/cmdb-migration/blanks/cloud-passport-creds.yml) to
-  `environments/<cluster>/cloud-passport/<cluster>-creds.yml`.
+### 3.1 Create the cluster folders
 
-Take only the connectivity fields now. Other cloud parameters move in
-[Refactor migrated parameters](/docs/cmdb-migration/refactor-migrated-parameters.md). For the field-to-key
-mapping, see [Field mapping](#field-mapping).
+Go through the Clouds in the CMDB export. Each Cloud is `Tenants/<tenant>/Clouds/<cloud>/`, with its record at
+`<cloud>.yml`. For each Cloud, read `apiUrl` from that record and derive the cluster name: take the host, drop
+the `api.` prefix and the base domain. Create the folder `/environments/<cluster>/`.
 
-### 2.2 Create one inventory per environment
+For example, `https://api.cluster-01.example.com:6443` gives `/environments/cluster-01/`.
 
-Each environment found in 1.1 (one Solution Descriptor) needs one inventory.
+> [!NOTE]
+> If several Clouds describe the same cluster, that is out of scope for this guide. Contact the EnvGene team to
+> work out that case.
 
-For each environment, copy the [Environment Inventory blank](/docs/cmdb-migration/blanks/env_definition.yml) to
-`environments/<cluster>/<env>/Inventory/env_definition.yml`. Point it at the Cloud Passport from 2.1 with
-`inventory.cloudPassport`, name the template artifact, and list the environment-specific inputs. For the full
-field list, see the
-[`env_definition.yml` reference](/docs/envgene-configs.md#env_definitionyml).
+### 3.2 Create the Cloud Passport
 
-### 2.3 Attach cloud-level inputs
+Do this once for each Cloud `Tenants/<tenant>/Clouds/<cloud>/`.
 
-Read these from the CMDB Cloud record. The inventory key is `cloud` for every cloud-level input.
+Copy the [Cloud Passport blank](/docs/cmdb-migration/blanks/cloud-passport.yml) to
+`environments/<cluster>/cloud-passport/<cluster>.yml`.
 
-- **Deploy, e2e, or technical parameters.** Put them in a ParameterSet, one per context, under
-  `environments/<cluster>/<env>/Inventory/parameters/<name>.yml`. Link by context in `env_definition.yml`:
-  `envSpecificParamsets` for deploy, `envSpecificE2EParamsets` for e2e, `envSpecificTechnicalParamsets` for
-  technical, each keyed by `cloud`.
-- **Resource Profile Override.** Put it under `environments/<cluster>/<env>/Inventory/resource_profiles/<name>.yml`
-  and link it in `env_definition.yml` under `envSpecificResourceProfiles`, keyed by `cloud`.
-- **Referenced ParameterSets.** Place each one as above and link it the same way.
+Fill the `cloud` block of `<cluster>.yml` from the Cloud record `<cloud>.yml`. Each value below is the source
+attribute to copy:
 
-Copy the [ParameterSet blank](/docs/cmdb-migration/blanks/paramset.yml) and the
-[Resource Profile Override blank](/docs/cmdb-migration/blanks/resource-profile.yml) as starting points.
+```yaml
+cloud:
+  CLOUD_API_HOST: <apiUrl>
+  CLOUD_API_PORT: "<apiPort>"
+  CLOUD_PRIVATE_HOST: <privateUrl>
+  CLOUD_PUBLIC_HOST: <publicUrl>
+  CLOUD_DASHBOARD_URL: <dashboardUrl>
+  CLOUD_DEPLOY_TOKEN: <defaultCredentialsId>
+```
 
-### 2.4 Attach namespace-level inputs
+Copy the [Cloud Passport credentials blank](/docs/cmdb-migration/blanks/cloud-passport-creds.yml) to
+`environments/<cluster>/cloud-passport/<cluster>-creds.yml`.
 
-For each namespace in the environment, read these from the CMDB Namespace record. The inventory key is the
-namespace `deployPostfix`.
+Copy only the attributes shown above for now. Other cloud parameters move in
+[Refactor migrated parameters](/docs/cmdb-migration/refactor-migrated-parameters.md).
 
-- **Deploy, e2e, or technical parameters.** Same as the cloud level, keyed by the `deployPostfix`.
-- **Resource Profile Override.** Same as the cloud level, keyed by the `deployPostfix`.
-- **Referenced ParameterSets.** Same as the cloud level, keyed by the `deployPostfix`.
+### 3.3 Identify the environments
 
-### 2.5 Export tenant credentials
+1. In the CMDB export, open `Tenants/<tenant>/Clouds/`. Each `<cloud>` folder is a cluster.
+2. For each cluster, list the folders under `Namespaces/`. Each folder is a namespace.
+3. Split each namespace name into its environment-name part and its `deployPostfix` part. For example,
+   `env-01-billing` is environment `env-01` with postfix `billing`. Group the namespaces by their
+   environment-name part.
+4. Each group is one environment, and its set of `deployPostfix` values matches one of the types from 2.1.
 
-Export the credentials from the CMDB tenant. Copy the
-[Credentials blank](/docs/cmdb-migration/blanks/credentials.yml) to
-`environments/<cluster>/<env>/Credentials/credentials.yml`, or to a shared file linked by
-`sharedMasterCredentialFiles`. Set each secret value to `envgeneNullValue` until you fill in the real value.
+> [!NOTE]
+> If your namespace names do not follow the `<env-name>-<deployPostfix>` convention, that is out of scope for
+> this guide. Contact the EnvGene team to work out that case.
 
-### 2.6 Add the Solution Descriptor
+### 3.4 Create one inventory per environment
+
+For each environment from 3.3, create a folder named after the environment under its cluster,
+`environments/<cluster>/<env>/`. Put the
+[Environment Inventory blank](/docs/cmdb-migration/blanks/env_definition.yml) into it as
+`Inventory/env_definition.yml`.
+
+### 3.5 Attach cloud inline parameters
+
+For each non-empty inline parameters attribute on the Cloud record
+`Tenants/<tenant>/Clouds/<cloud>/<cloud>.yml`, create a ParameterSet under
+`environments/<cluster>/<env>/Inventory/parameters/`, copy the attribute's contents into the ParameterSet
+`parameters`, and name the file by context. Then reference it as a list under the `cloud` key in the matching
+field of `env_definition.yml`:
+
+- `deployParameters` to `cloud-deploy.yml`, referenced in `envSpecificParamsets`.
+- `e2eParameters` to `cloud-e2e.yml`, referenced in `envSpecificE2EParamsets`.
+- `technicalConfigurationParameters` to `cloud-tech.yml`, referenced in `envSpecificTechnicalParamsets`.
+
+For example:
+
+```yaml
+envTemplate:
+  envSpecificParamsets:
+    cloud:
+      - cloud-deploy
+```
+
+### 3.6 Attach cloud referenced ParameterSets
+
+For each ParameterSet name listed in `deployParameterSets`, `e2eParameterSets`, or
+`technicalConfigurationParameterSets` on the Cloud record, copy the source file
+`Tenants/<tenant>/ParameterSets/<name>.yml` to `environments/<cluster>/<env>/Inventory/parameters/<name>.yml`,
+keeping its name. Then reference it under the `cloud` key in the field for its context, the same way as in 3.5.
+
+### 3.7 Attach the cloud Resource Profile Override
+
+If the Cloud record has a `profile`, create a Resource Profile Override at
+`environments/<cluster>/<env>/Inventory/resource_profiles/cloud-profile.yml` from its `name` and `baseline`.
+Then reference it by file name without the `.yml` extension, as a single value under the `cloud` key in
+`envSpecificResourceProfiles`:
+
+```yaml
+envTemplate:
+  envSpecificResourceProfiles:
+    cloud: cloud-profile
+```
+
+### 3.8 Attach namespace inline parameters
+
+Do this for each namespace in the environment, reading from the Namespace record
+`Tenants/<tenant>/Clouds/<cloud>/Namespaces/<namespace>/<namespace>.yml`. This mirrors 3.5, but the reference
+key is the namespace `deployPostfix` instead of `cloud`.
+
+For each non-empty inline parameters attribute, create a ParameterSet under
+`environments/<cluster>/<env>/Inventory/parameters/`, copy the attribute's contents into the ParameterSet
+`parameters`, and name the file by namespace and context:
+
+- `deployParameters` to `<deployPostfix>-deploy.yml`, referenced in `envSpecificParamsets`.
+- `e2eParameters` to `<deployPostfix>-e2e.yml`, referenced in `envSpecificE2EParamsets`.
+- `technicalConfigurationParameters` to `<deployPostfix>-tech.yml`, referenced in
+  `envSpecificTechnicalParamsets`.
+
+For example, for a namespace with `deployPostfix` `bss`:
+
+```yaml
+envTemplate:
+  envSpecificParamsets:
+    bss:
+      - bss-deploy
+```
+
+### 3.9 Attach namespace referenced ParameterSets
+
+For each ParameterSet name listed in `deployParameterSets`, `e2eParameterSets`, or
+`technicalConfigurationParameterSets` on the Namespace record, copy the source file
+`Tenants/<tenant>/ParameterSets/<name>.yml` to `environments/<cluster>/<env>/Inventory/parameters/<name>.yml`,
+keeping its name. Then reference it under the `<deployPostfix>` key in the field for its context, as in 3.8.
+
+### 3.10 Attach the namespace Resource Profile Override
+
+If the Namespace record has a `profile`, create a Resource Profile Override at
+`environments/<cluster>/<env>/Inventory/resource_profiles/<deployPostfix>-profile.yml` from its `name` and
+`baseline`. Then reference it by file name without the `.yml` extension, as a single value under the
+`<deployPostfix>` key in `envSpecificResourceProfiles`:
+
+```yaml
+envTemplate:
+  envSpecificResourceProfiles:
+    bss: bss-profile
+```
+
+### 3.11 Export the credentials
+
+Export every credential from the Jenkins credential store into a single shared credential file, then associate
+that file with every environment in the repository.
+
+1. Export all credentials from the Jenkins credential store into one repository-wide file at
+   `environments/credentials/shared-credentials.yml`.
+
+   > [!NOTE]
+   > The credential export mechanism is not yet defined. This guide is updated with it once it is available.
+
+2. In each environment's `env_definition.yml`, reference the file by name, without the `.yml` extension, in
+   `sharedMasterCredentialFiles`:
+
+   ```yaml
+   envTemplate:
+     sharedMasterCredentialFiles:
+       - shared-credentials
+   ```
+
+### 3.12 Add the Solution Descriptor
 
 Copy the environment's Solution Descriptor to
 `environments/<cluster>/<env>/Inventory/solution-descriptor/sd.yml`. There is one Full Solution Descriptor per
-environment. It lists the applications and their `deployPostfix` values. For its structure, see the
-[Solution Descriptor object](/docs/envgene-objects.md#solution-descriptor).
+environment.
 
-### 2.7 Run generation to verify
+### 3.13 Create the Artifact Definition
+
+Once per instance repository, copy the
+[Artifact Definition blank](/docs/cmdb-migration/blanks/artifact-definition.yml) to
+`configuration/artifact_definitions/<name>.yaml`. The file name must match the `name` attribute inside it.
+
+## 4. Run generation to verify
 
 Trigger the instance pipeline to confirm the environment generates.
 
@@ -175,58 +303,3 @@ After the pipeline commits, open `environments/<cluster>/<env>/cloud.yml` and
 carries a comment naming its source. The Effective Set under `effective-set/` lists the applications from the
 Solution Descriptor. For the SD pipeline inputs, see
 [Generate an Effective Set](/docs/how-to/generate-effective-set.md).
-
-## Field mapping
-
-Connectivity fields move to the Cloud Passport. EnvGene writes them back into the generated `cloud.yml`, so the
-template carries placeholders only. The passport key for each field is fixed.
-
-| CMDB Cloud field       | Cloud Passport key          |
-|------------------------|-----------------------------|
-| `apiUrl`               | `cloud.CLOUD_API_HOST`      |
-| `apiPort`              | `cloud.CLOUD_API_PORT`      |
-| `privateUrl`           | `cloud.CLOUD_PRIVATE_HOST`  |
-| `publicUrl`            | `cloud.CLOUD_PUBLIC_HOST`   |
-| `dashboardUrl`         | `cloud.CLOUD_DASHBOARD_URL` |
-| `defaultCredentialsId` | `cloud.CLOUD_DEPLOY_TOKEN`  |
-| `protocol`             | `cloud.CLOUD_PROTOCOL`      |
-| `productionMode`       | `cloud.PRODUCTION_MODE`     |
-
-These CMDB fields are dropped. They are not part of the EnvGene schema.
-
-| CMDB field  | Reason                    |
-|-------------|---------------------------|
-| `dirty`     | Internal CMDB state.      |
-| `dbMode`    | Deprecated in the schema. |
-| `databases` | Deprecated in the schema. |
-
-A CMDB Application record under a Namespace becomes an `applications` entry inside a ParameterSet. EnvGene
-generates the Application object from that entry. Prefer the `applications` section over standalone Application
-files.
-
-For production environments, set `inventory.config.updateCredIdsWithEnvName: true` so credential IDs are prefixed
-with the environment path. This prevents credential collisions across environments.
-
-## Troubleshoot common errors
-
-> [!NOTE]
-> Every error below stops the `env_build` or `generate_effective_set` job and reports the failing object.
-
-- **ParameterSet name does not match filename.** The `name` field must equal the filename without the
-  extension. Rename the file or change the field.
-- **Template Descriptor references a missing file.** The `template_path` is relative to
-  `templates/env_templates/`. Confirm the artifact was rebuilt and the path is spelled correctly.
-- **Cloud Passport not found.** `env_definition.yml` names the passport in `inventory.cloudPassport`. Place the
-  file at `environments/<cluster>/cloud-passport/<name>.yml`.
-- **Jinja error, `current_env.cluster` is undefined.** No Cloud Passport resolved, or a passport key name is
-  wrong. Confirm the keys are uppercase and prefixed with `CLOUD_`.
-- **Schema validation failed on `dirty`.** The CMDB `dirty` field is not in the EnvGene schema. Remove it from
-  any file you copied from the export.
-
-## Results
-
-- Each environment regenerates from the template artifact and `env_definition.yml`.
-- Cluster connectivity lives in one Cloud Passport, shared by every environment on that cluster.
-- A common change is one template version bump, not a per-record edit.
-- The parameters are still a literal copy of the CMDB values. Clean them up with
-  [Refactor migrated parameters](/docs/cmdb-migration/refactor-migrated-parameters.md).

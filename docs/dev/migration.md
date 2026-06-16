@@ -2,7 +2,6 @@
 TO DO:
 
 1. What should the template descriptor be like to include SaaS best practices?
-   1. Consult with Vitya/Ganesh.
 2. Validate approach via migration a project
 3. Validate blanks
    1. Import into CMDB should not fail
@@ -11,12 +10,16 @@ TO DO:
    1. Make both versions at once
    2. Or
    3. Only dev, add prod later
+5. Описать деплой кли использование для экспорта
+3. Добавить инфу про запуск deploycli
+4. Добавить инфу про то как мапить энв на регион
+5. Создавать апп дефы для темлпейтов автоматически
+6. Описать как экспортировать креды
 
 OQ:
 
 1. Should all environments of one project be in one instance repo, or split per region?
 2. Should we change the naming pattern of namespaces if it's not the default one?
-3. Do we use Cloud Passport in Phase 3 or 4?
 
 Phase 1
 
@@ -26,27 +29,28 @@ Step 1
 
 Step 2 - Create template
 
-1. Identify solution/env topology (could be more than one) [!!!] Is this too complex? **M**
-   1. Topology = the list of namespaces that are part of the env
-2. For each unique solution topology, create an env template that includes:
+1. Identify environments from the Solution Descriptors (could be more than one) **M**
+   1. An environment = the set of namespaces (deployPostfix) that one Solution Descriptor deploys into
+2. For each unique set of deploy postfixes, create an env template that includes:
    1. Namespace template for each namespace - use `<this>` template as is
       1. Rename the template file (j2 file) to match deploy postfix
       2. Change the name to {env-name}-`<deployPostfix>` [!!!] What if another naming pattern is required?
-      <!-- 3. Set resource profile baseline + an empty override [!!!] (this is a workaround for a bug) -->
    2. Cloud template - use `<this>` template as is
       1. Do not modify it
    3. Tenant template - use as is
       1. Do not modify it
    4. Template descriptor
       1. Write it like this `<principle>`
-3. **App Reg def**
+3. Copy from central git app and reg def by SD
+   1. Transform them according to [doc](https://github.com/Netcracker/qubership-envgene/blob/main/docs/how-to/app-reg-defs-add-to-template.md)
+4. In the cloud CMDB, create an Application Definition for the env-template artifact, so the cloud can resolve and download the template
 
 Step 3 - Create env inventory
 
 1. Export configuration from CMDB Tenant via `<tool>`
 2. Find env configurations in CMDB **M**
    1. For each cloud, list all namespaces under it
-   2. Based on namespace list and topology, determine the number of envs
+   2. One Solution Descriptor = one env; group by deployPostfix set to determine the number of envs
 3. For each identified env
    1. Create env_definition at `<this path>` with `<this content>`
    2. If there are deployment/e2e/technical parameters for the cloud:
@@ -64,7 +68,6 @@ Step 3 - Create env inventory
       3. If param sets are linked to the namespace
           1. Put them in the repo `<here>`, link them in env_definition `<like this>`
 4. Export creds from tenant `<like this>`, put `<here>`, link them in env_definition `<like this>`
-   1. **handle built-in creds**
 5. Put SD into the repo `<here>`
 
 Step 4 - Test
