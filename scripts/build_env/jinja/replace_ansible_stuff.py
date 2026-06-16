@@ -1,6 +1,6 @@
 import re
 from envgenehelper import logger
-from jinja.jinja import JINJA_FILTERS
+from build_env.jinja.jinja import JINJA_FILTERS
 
 general_warn_message = (
     "All Ansible built-in filters (ansible.builtin.*) in this template need to be removed/replaced. "

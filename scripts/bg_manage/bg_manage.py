@@ -4,16 +4,18 @@ import json
 from enum import auto, Enum
 from pathlib import Path
 
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, getenv_with_error, get_namespaces, get_bgd_object, NamespaceRole
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, getenv_with_error, get_namespaces, \
+    get_bgd_object, NamespaceRole
 from envgenehelper.file_helper import deleteFileIfExists
 from envgenehelper.yaml_helper import openYaml
 from envgenehelper import logger, writeYamlToFile
 
-ENV_PATH = get_current_env_dir_from_env_vars()
-NAMESPACES_PATH = os.path.join(ENV_PATH, 'Namespaces')
-BG_STATE_STR = getenv_with_error('BG_STATE')
-logger.info(f"Content of BG_STATE: {BG_STATE_STR}")
-BG_STATE = json.loads(BG_STATE_STR)
+
+def _bg_state():
+    bg_state_str = getenv_with_error('BG_STATE')
+    logger.info(f"Content of BG_STATE: {bg_state_str}")
+    return json.loads(bg_state_str)
+
 
 class State(Enum):
     ACTIVE = auto()
@@ -27,42 +29,47 @@ class State(Enum):
     def __str__(self):
         return self.name.lower()
 
+
 Pair = tuple[State, State]
+
 
 def mirror_pair(pair: Pair) -> Pair:
     return pair[1], pair[0]
 
+
 def pair_to_str(pair: Pair) -> str:
     return f'{{"origin": "{pair[0]}", "peer": "{pair[1]}"}}'
+
 
 def is_mirrored(a: Pair, b: Pair) -> bool:
     return a == mirror_pair(b)
 
+
 S = State
 
 VALID_TRANSITIONS_BASE: dict[Pair, list[Pair]] = {
-    (S.ACTIVE,S.NONE): [
-        (S.ACTIVE,S.IDLE),
+    (S.ACTIVE, S.NONE): [
+        (S.ACTIVE, S.IDLE),
     ],
     (S.ACTIVE, S.IDLE): [
         (S.ACTIVE, S.CANDIDATE),
         (S.ACTIVE, S.FAILEDW),
         (S.ACTIVE, S.IDLE),
     ],
-    (S.ACTIVE,S.CANDIDATE): [
-        (S.LEGACY,S.ACTIVE),
-        (S.ACTIVE,S.FAILEDC),
-        (S.ACTIVE,S.IDLE),
+    (S.ACTIVE, S.CANDIDATE): [
+        (S.LEGACY, S.ACTIVE),
+        (S.ACTIVE, S.FAILEDC),
+        (S.ACTIVE, S.IDLE),
     ],
-    (S.LEGACY,S.ACTIVE): [
-        (S.IDLE,S.ACTIVE),
-        (S.FAILEDC,S.ACTIVE),
+    (S.LEGACY, S.ACTIVE): [
+        (S.IDLE, S.ACTIVE),
+        (S.FAILEDC, S.ACTIVE),
     ],
-    (S.ACTIVE,S.FAILEDW): [
-        (S.ACTIVE,S.CANDIDATE),
-        (S.ACTIVE,S.FAILEDW),
+    (S.ACTIVE, S.FAILEDW): [
+        (S.ACTIVE, S.CANDIDATE),
+        (S.ACTIVE, S.FAILEDW),
     ],
-    (S.ACTIVE,S.FAILEDC): [
+    (S.ACTIVE, S.FAILEDC): [
         (S.IDLE, S.ACTIVE),
         (S.ACTIVE, S.FAILEDC),
     ],
@@ -72,7 +79,7 @@ VALID_TRANSITIONS_BASE: dict[Pair, list[Pair]] = {
     ]
 }
 
-NON_MIRRORABLE_STATES: list[Pair] = [(S.ACTIVE,S.NONE)]
+NON_MIRRORABLE_STATES: list[Pair] = [(S.ACTIVE, S.NONE)]
 VALID_TRANSITIONS = {}
 for curr, valid_new_states in VALID_TRANSITIONS_BASE.items():
     VALID_TRANSITIONS.setdefault(curr, valid_new_states)
@@ -80,6 +87,7 @@ for curr, valid_new_states in VALID_TRANSITIONS_BASE.items():
         mirrored_curr = mirror_pair(curr)
         mirrored_new_states = [mirror_pair(n) for n in valid_new_states]
         VALID_TRANSITIONS.setdefault(mirrored_curr, mirrored_new_states)
+
 
 def is_valid_transition(curr_state: Pair, new_state: Pair) -> tuple[bool, str]:
     valid_new_states = VALID_TRANSITIONS.get(curr_state, None)
@@ -89,11 +97,13 @@ def is_valid_transition(curr_state: Pair, new_state: Pair) -> tuple[bool, str]:
         return False, "Transition from current state to new one is invalid"
     return new_state in VALID_TRANSITIONS[curr_state], ""
 
+
 def get_current_state() -> Pair:
+    env_path = get_current_env_dir_from_env_vars()
     origin_state = S.NONE
     peer_state = S.NONE
 
-    for file in Path(ENV_PATH).iterdir():
+    for file in Path(env_path).iterdir():
         if not file.is_file():
             continue
         name = file.name
@@ -104,7 +114,7 @@ def get_current_state() -> Pair:
         state_enum = getattr(State, state.upper(), None)
         if not state_enum:
             continue
-        multiple_state_files_err_msg = f"Multiple state files found in {ENV_PATH}"
+        multiple_state_files_err_msg = f"Multiple state files found in {env_path}"
 
         if role == NamespaceRole.ORIGIN:
             if origin_state != S.NONE: raise ValueError(multiple_state_files_err_msg + " for 'origin'")
@@ -119,18 +129,23 @@ def get_current_state() -> Pair:
 
     return origin_state, peer_state
 
+
 def str_to_state(state: str) -> State:
     return getattr(State, state.upper(), S.NONE)
 
+
 def get_new_state() -> Pair:
-    origin_state = BG_STATE['originNamespace']['state']
-    peer_state = BG_STATE['peerNamespace']['state']
+    bg_state = _bg_state()
+    origin_state = bg_state['originNamespace']['state']
+    peer_state = bg_state['peerNamespace']['state']
     return str_to_state(origin_state), str_to_state(peer_state)
+
 
 def validate_bg_state_namespace_names():
     bgd_file = get_bgd_object()
-    origin_name_bg_state = BG_STATE['originNamespace']['name']
-    peer_name_bg_state = BG_STATE['peerNamespace']['name']
+    bg_state = _bg_state()
+    origin_name_bg_state = bg_state['originNamespace']['name']
+    peer_name_bg_state = bg_state['peerNamespace']['name']
     origin_name_file = bgd_file['originNamespace']['name']
     peer_name_file = bgd_file['peerNamespace']['name']
     if origin_name_bg_state != origin_name_file:
@@ -138,29 +153,33 @@ def validate_bg_state_namespace_names():
     if peer_name_bg_state != peer_name_file:
         raise ValueError('Peer namespace name in BG_STATE and bg_domain.yml do not match')
 
+
 def update_current_state(curr_state: Pair, new_state: Pair):
+    env_path = get_current_env_dir_from_env_vars()
     logger.info("Updating state files")
-    deleteFileIfExists(os.path.join(ENV_PATH, f".origin-{curr_state[0]}"))
-    deleteFileIfExists(os.path.join(ENV_PATH, f".peer-{curr_state[1]}"))
-    open(os.path.join(ENV_PATH,f".origin-{new_state[0]}"),'w').close()
-    open(os.path.join(ENV_PATH,f".peer-{new_state[1]}"),'w').close()
+    deleteFileIfExists(os.path.join(env_path, f".origin-{curr_state[0]}"))
+    deleteFileIfExists(os.path.join(env_path, f".peer-{curr_state[1]}"))
+    open(os.path.join(env_path, f".origin-{new_state[0]}"), 'w').close()
+    open(os.path.join(env_path, f".peer-{new_state[1]}"), 'w').close()
     logger.info("Successfully updated state files")
+
 
 def make_operation_specific_changes(curr_state: Pair, new_state: Pair):
     transition = (curr_state, new_state)
     mirrored_transition = (mirror_pair(curr_state), mirror_pair(new_state))
 
-    warm_up_operation = ((S.ACTIVE,S.IDLE),(S.ACTIVE,S.CANDIDATE))
+    warm_up_operation = ((S.ACTIVE, S.IDLE), (S.ACTIVE, S.CANDIDATE))
 
     logger.info('Checking if current operation is warmup')
     if transition == warm_up_operation or mirrored_transition == warm_up_operation:
         logger.info('Current operation is warmup, copying content of "active" namespace to "candidate"')
+        bg_state = _bg_state()
         if new_state[0] == S.ACTIVE:
-            active_ns = BG_STATE['originNamespace']['name']
-            candidate_ns = BG_STATE['peerNamespace']['name']
+            active_ns = bg_state['originNamespace']['name']
+            candidate_ns = bg_state['peerNamespace']['name']
         else:
-            active_ns = BG_STATE['peerNamespace']['name']
-            candidate_ns = BG_STATE['originNamespace']['name']
+            active_ns = bg_state['peerNamespace']['name']
+            candidate_ns = bg_state['originNamespace']['name']
         logger.info(f'Active ns: {active_ns}, Candidate ns: {candidate_ns}')
 
         namespaces = get_namespaces()
@@ -178,6 +197,7 @@ def make_operation_specific_changes(curr_state: Pair, new_state: Pair):
         logger.info('Copying was successful')
     logger.info('Finished check')
 
+
 def run_bg_manage():
     curr_state = get_current_state()
     # validate_bg_state_namespace_names()
@@ -193,7 +213,3 @@ def run_bg_manage():
     logger.info("Validation succeeded")
     make_operation_specific_changes(curr_state, new_state)
     update_current_state(curr_state, new_state)
-
-if __name__ == "__main__":
-    run_bg_manage()
-

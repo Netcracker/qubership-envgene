@@ -25,7 +25,7 @@ on:
         default: ""
         type: string
         description: ""
-      ENV_BUILDER:
+      ENV_BUILD:
         required: false
         default: "true"
         type: choice
@@ -89,7 +89,7 @@ jobs:
       BG_MANAGE: ${{ env.BG_MANAGE }}
       ENV_INVENTORY_CONTENT: ${{ env.ENV_INVENTORY_CONTENT }}
       CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
-      ENV_BUILDER: ${{ env.ENV_BUILDER }}
+      ENV_BUILD: ${{ env.ENV_BUILD }}
       GENERATE_EFFECTIVE_SET: ${{ env.GENERATE_EFFECTIVE_SET }}
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
       ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
@@ -114,7 +114,7 @@ jobs:
         run: |
            echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
            echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
-           echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
+           echo "ENV_BUILD=${{ github.event.inputs.ENV_BUILD }}" >> $GITHUB_ENV
            echo "GENERATE_EFFECTIVE_SET=${{ github.event.inputs.GENERATE_EFFECTIVE_SET }}" >> $GITHUB_ENV
            echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
            echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
@@ -289,7 +289,7 @@ jobs:
 
       ### APP_REG_DEF_PROCESS - START ###
       - name: APP_REG_DEF_PROCESS
-        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -305,7 +305,7 @@ jobs:
 
       - name: APP_REG_DEF_PROCESS - Upload APP_REG_DEF_PROCESS Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
         with:
           name: app_reg_def_process_${{ env.PACKAGE_NAME }}
           path: |
@@ -351,7 +351,7 @@ jobs:
 
       ### ENV_BUILD - START ###
       - name: ENV_BUILD
-        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e COMMIT_ENV=true --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -367,7 +367,7 @@ jobs:
 
       - name: ENV_BUILD - Upload Build Env Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
         with:
           name: env_build_${{ env.PACKAGE_NAME }}
           path: |

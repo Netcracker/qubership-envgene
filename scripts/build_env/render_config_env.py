@@ -1,8 +1,9 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
 
+from build_env.jinja.jinja import create_jinja_env
+from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 from deepmerge import always_merger
 from envgenehelper import *
 from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
@@ -10,13 +11,6 @@ from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
-from jinja.jinja import create_jinja_env
-from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-
-SCHEMAS_DIR = Path(getenv_with_error("JSON_SCHEMAS_DIR"))
-APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
-TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
-COMPOSITE_SCHEMA = str(SCHEMAS_DIR / "composite-structure.schema.json")
 
 yml = create_yaml_processor()
 
@@ -131,7 +125,7 @@ class EnvGenerator:
             env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
             self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
 
-        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, TD_SCHEMA)
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, get_schema_dir() / "template-descriptor.schema.json")
         env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"Loaded env_template from {env_tmpl_final_path}")
         return env_template, suitable_files
@@ -428,7 +422,7 @@ class EnvGenerator:
             cs_file = Path(current_env_dir) / "composite_structure.yml"
             cs_file.parent.mkdir(parents=True, exist_ok=True)
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
-            validate_yaml_by_scheme_or_fail(cs_file, COMPOSITE_SCHEMA)
+            validate_yaml_by_scheme_or_fail(cs_file, get_schema_dir() / "composite-structure.schema.json")
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)
@@ -559,7 +553,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
+                validate_yaml_by_scheme_or_fail(file, get_schema_dir() / "appdef.schema.json")
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)
