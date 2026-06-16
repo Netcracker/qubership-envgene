@@ -1,0 +1,11 @@
+name: <artifact-name>
+groupId: <group-id>
+artifactId: <artifact-id>
+registry:
+  name: <registry-name>
+  credentialsId: <registry-cred-id>
+  mavenConfig:
+    repositoryDomainName: <registry-url>
+    targetSnapshot: <snapshot-repo>
+    targetStaging: <staging-repo>
+    targetRelease: <release-repo>

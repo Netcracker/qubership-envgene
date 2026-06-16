@@ -1,0 +1,4 @@
+<deploy-cred-id>:
+  type: secret
+  data:
+    secret: envgeneNullValue

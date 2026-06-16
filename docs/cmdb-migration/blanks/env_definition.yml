@@ -1,0 +1,9 @@
+inventory: {}
+envTemplate:
+  name: <template-descriptor-name>
+  artifact: <artifact-name>:<version>
+  envSpecificParamsets: {}
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles: []
