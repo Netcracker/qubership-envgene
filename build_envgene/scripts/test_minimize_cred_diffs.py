@@ -1,4 +1,6 @@
 import logging
+import os
+import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -159,3 +161,72 @@ class TestCredentialDiffMinimization:
 
         assert 'Cannot read credential file at HEAD' in caplog.text
         assert openYaml(str(cred_path)) == working_copy_before
+
+    @pytest.mark.unit
+    def test_cache_hit_skips_decrypt_and_encrypt(self, cred_repo, tmp_path, monkeypatch):
+        _, _, cred_path = cred_repo
+        cache_dir = tmp_path / 'minimize_cache'
+        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_dir))
+        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
+
+        with patch.object(mcd, 'decrypt_file') as decrypt_mock, patch.object(mcd, 'encrypt_file') as encrypt_mock:
+            mcd.main()
+            mcd.main()
+
+        assert decrypt_mock.call_count == 1
+        assert encrypt_mock.call_count == 1
+        assert len(list(cache_dir.glob('*.enc'))) == 1
+
+    @pytest.mark.unit
+    def test_cache_miss_when_head_changes(self, cred_repo, tmp_path, monkeypatch):
+        repo, repo_path, cred_path = cred_repo
+        cache_dir = tmp_path / 'minimize_cache'
+        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_dir))
+        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
+
+        with patch.object(mcd, 'decrypt_file') as decrypt_mock, patch.object(mcd, 'encrypt_file') as encrypt_mock:
+            mcd.main()
+            assert decrypt_mock.call_count == 1
+            assert encrypt_mock.call_count == 1
+
+            shutil.copy2(cred_path, repo_path / 'head_snapshot.yml')
+            _encrypt_cred(cred_path)
+            repo.git.add(CRED_REL_PATH)
+            repo.index.commit('remote cred rotation')
+
+            _simulate_pipeline_cred_update(cred_path, 'updated-secret-again')
+            mcd.main()
+
+        assert decrypt_mock.call_count == 2
+        assert encrypt_mock.call_count == 2
+        assert len(list(cache_dir.glob('*.enc'))) == 2
+
+    @pytest.mark.unit
+    def test_default_cache_dir_uses_ci_job_id(self, monkeypatch):
+        monkeypatch.delenv('MINIMIZE_CRED_DIFF_CACHE_DIR', raising=False)
+        monkeypatch.setenv('CI_JOB_ID', '55767405')
+
+        assert mcd._default_cache_dir() == Path('/tmp/minimize_cred_diff_cache_55767405')
+
+    @pytest.mark.unit
+    def test_default_cache_dir_uses_process_id_without_ci(self, monkeypatch):
+        monkeypatch.delenv('MINIMIZE_CRED_DIFF_CACHE_DIR', raising=False)
+        monkeypatch.delenv('CI_JOB_ID', raising=False)
+        monkeypatch.delenv('GITHUB_RUN_ID', raising=False)
+
+        cache_dir = mcd._default_cache_dir()
+
+        assert cache_dir == Path(f'/tmp/minimize_cred_diff_cache_{os.getpid()}')
+
+    @pytest.mark.unit
+    def test_cache_disabled_runs_minimize_on_every_call(self, cred_repo, monkeypatch):
+        _, _, cred_path = cred_repo
+        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', 'off')
+        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
+
+        with patch.object(mcd, 'decrypt_file') as decrypt_mock, patch.object(mcd, 'encrypt_file') as encrypt_mock:
+            mcd.main()
+            mcd.main()
+
+        assert decrypt_mock.call_count == 2
+        assert encrypt_mock.call_count == 2

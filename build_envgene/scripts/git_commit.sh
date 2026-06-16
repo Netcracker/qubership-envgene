@@ -36,6 +36,17 @@ elif [ -n "${GITLAB_CI}" ]; then
       TOKEN="${GITLAB_TOKEN}"
 fi
 
+if [ -z "${MINIMIZE_CRED_DIFF_CACHE_DIR:-}" ]; then
+    if [ -n "${GITLAB_CI:-}" ]; then
+        MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_${CI_JOB_ID}"
+    elif [ -n "${GITHUB_ACTIONS:-}" ]; then
+        MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT:-1}"
+    else
+        MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_$$"
+    fi
+fi
+export MINIMIZE_CRED_DIFF_CACHE_DIR
+
 if [ -z "${TOKEN}" ]; then
       echo "No auth token was found. Please check!"
       exit 1
@@ -294,6 +305,9 @@ if [ ${#JOB_RETRY_PATHS[@]} -gt 0 ]; then
     JOB_STASH=$(git commit-tree "$(git write-tree)" -p HEAD -m "job artifacts for push retry")
     git reset -q HEAD -- "${JOB_RETRY_PATHS[@]}"
 fi
+
+echo "Credential diff cache directory: ${MINIMIZE_CRED_DIFF_CACHE_DIR}"
+mkdir -p "${MINIMIZE_CRED_DIFF_CACHE_DIR}"
 
 echo "Minimizing credential file diffs (plaintext compare against HEAD)..."
 python3 /module/scripts/minimize_cred_diffs.py
