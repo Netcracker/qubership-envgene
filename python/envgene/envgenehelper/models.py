@@ -20,4 +20,4 @@ class TemplateVersionUpdateMode(str, Enum):
 
 class SbomRetentionConfig(BaseModel):
     enabled: bool = Field(default=False)
-    keep_versions_per_app: Optional[int] = Field(default=None, ge=0)
+    keep_versions_per_app: Optional[int] = Field(default=None, gt=0)

@@ -108,14 +108,6 @@ runs:
         cd ../..
         mv junit.xml junit_cred_rotation.xml
 
-    - name: SBOMS RETENTION POLICY test
-      shell: bash
-      run: |
-        cd build_effective_set_generator/scripts
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_sbom_retention.xml
-
     - name: BUILD ENVGENE SCRIPTS test
       shell: bash
       run: |

@@ -13,6 +13,8 @@ class BaseTest:
     ci_project_dir = test_data_dir
     os.environ['CI_PROJECT_DIR'] = str(test_data_dir)
     os.environ['JSON_SCHEMAS_DIR'] = str(base_dir / "schemas")
+    os.environ['SECRET_KEY'] = "dummy_secret_key"
+
 
     def set_ci_project_dir(self, *subdirs) -> Path:
         self.ci_project_dir = self.ci_project_dir.joinpath(*subdirs)

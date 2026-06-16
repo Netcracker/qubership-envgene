@@ -20,6 +20,9 @@ def handle_effective_set_config(config_str):
     app_chart_value = config.get("app_chart_validation", True)
     extra_args.append(f"--app_chart_validation={str(app_chart_value).lower()}")
 
+    traceability = config.get("enable_traceability", False)
+    extra_args.append(f"--enable-traceability={str(traceability).lower()}")
+
     consumers = (
         config.get("contexts", {})
         .get("pipeline", {})

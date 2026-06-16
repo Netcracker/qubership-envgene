@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from envgenehelper.env_helper import Environment
 
+from envgenehelper.env_helper import Environment
 from scripts.build_env.tests.base_test import BaseTest
 from test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
 
@@ -14,7 +14,6 @@ os.environ['CI_PROJECT_DIR'] = "temporary"
 
 from process_sd import handle_sd
 from envgenehelper import SD_FILE_NAME, logger, openJson
-
 
 TEST_CASES_POSITIVE = [
     "TC-001-098",
@@ -72,7 +71,6 @@ class TestSdProcessArtifact(BaseTest):
     @pytest.mark.parametrize("test_case_name,expected_exception", [(k, v) for k, v in TEST_CASES_NEGATIVE.items()])
     @patch("process_sd.download_sd_by_appver")
     def test_sd_negative(self, mock_download_sd, test_case_name, expected_exception):
-
         env = Environment(str(Path(self.output_dir, test_case_name)), self.cluster, self.env_name)
         do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
         logger.info(f"Starting SD test:\n\tTest case: {test_case_name}")

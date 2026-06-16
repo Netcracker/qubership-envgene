@@ -1,9 +1,9 @@
 import os
 
 import pytest
+
 from envgenehelper import logger, SD_FILE_NAME
 from envgenehelper.env_helper import Environment
-
 from scripts.build_env.tests.base_test import BaseTest
 from test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
 
@@ -56,7 +56,8 @@ class TestSdProcessArtifact(BaseTest):
         do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
         logger.info(f"Starting SD test:\n\tTest case: {test_case_name}")
 
-        sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(self.test_data_dir, test_case_name)
+        sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(self.test_data_dir,
+                                                                                                  test_case_name)
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
         assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)
