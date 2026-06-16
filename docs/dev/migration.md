@@ -3,10 +3,11 @@ TO DO:
 
 1. What should the template descriptor be like to include SaaS best practices?
    1. Consult with Vitya/Ganesh.
-2. Validate blanks
+2. Validate approach via migration a project
+3. Validate blanks
    1. Import into CMDB should not fail
    2. Effective set generation should not fail
-3. What do we do with dev/prod baselines?
+4. What do we do with dev/prod baselines?
    1. Make both versions at once
    2. Or
    3. Only dev, add prod later
@@ -31,7 +32,7 @@ Step 2 - Create template
    1. Namespace template for each namespace - use `<this>` template as is
       1. Rename the template file (j2 file) to match deploy postfix
       2. Change the name to {env-name}-`<deployPostfix>` [!!!] What if another naming pattern is required?
-      3. Set resource profile baseline + an empty override [!!!] (this is a workaround for a bug)
+      <!-- 3. Set resource profile baseline + an empty override [!!!] (this is a workaround for a bug) -->
    2. Cloud template - use `<this>` template as is
       1. Do not modify it
    3. Tenant template - use as is
@@ -46,15 +47,16 @@ Step 3 - Create env inventory
 2. Find env configurations in CMDB **M**
    1. For each cloud, list all namespaces under it
    2. Based on namespace list and topology, determine the number of envs
-3. For each identified env, create env_definition at `<this path>` with `<this content>`
-   1. If there are deployment/e2e/technical parameters for the cloud:
+3. For each identified env
+   1. Create env_definition at `<this path>` with `<this content>`
+   2. If there are deployment/e2e/technical parameters for the cloud:
       1. Put them into param sets (one per context) `<here>`, link them in env_definition `<like this>`
-   2. If a resource profile override is linked to the cloud:
+   3. If a resource profile override is linked to the cloud:
       1. Put it in the repo `<here>`, link it in env_definition `<like this>`
-   3. If param sets are linked to the cloud:
+   4. If param sets are linked to the cloud:
       1. Put them in the repo `<here>`, link them in env_definition `<like this>`
-   4. Take `<these>` parameters from the cloud and put in the cloud passport [!!!] Controversial, maybe in phase 2
-   5. For each namespace in the env:
+   5. Take `<these>` parameters from the cloud and put in the cloud passport [!!!] Controversial, maybe in phase 2
+   6. For each namespace in the env:
       1. If namespace has deployment/e2e/technical parameters
          1. Put them into param sets (one per context) `<here>`, link them in env_definition `<like this>`
       2. If resource profile override is linked to the namespace
