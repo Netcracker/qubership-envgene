@@ -1,3 +1,4 @@
+# Find docs at <link>
 inventory: {}
 envTemplate:
   name: <template-descriptor-name>
