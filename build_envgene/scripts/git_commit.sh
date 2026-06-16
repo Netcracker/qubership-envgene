@@ -5,6 +5,14 @@ echo "===== SCRIPT START: $(date '+%H:%M:%S') ====="
 
 retries=0
 exit_code=0
+JOB_STASH=""
+JOB_RETRY_PATHS=()
+
+add_retry_path_if_artifact() {
+    if [ -e "/tmp/$1" ]; then
+        JOB_RETRY_PATHS+=("$1")
+    fi
+}
 
 if [ -n "${GITHUB_ACTIONS}" ]; then
       # Logic for GitHub
@@ -57,64 +65,6 @@ else
       message="${ticket_id} ${COMMIT_MESSAGE}"
 fi
 echo "Commit message: ${message}"
-
-ENV_PREFIX="environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
-LOCAL_COMMIT=""
-
-cherry_pick_onto_origin() {
-    local local_commit=$1
-    if [ -z "$local_commit" ]; then
-        echo "❌ No local commit to cherry-pick"
-        return 1
-    fi
-
-    echo "Resetting to origin/${REF_NAME}..."
-    git reset --hard "origin/${REF_NAME}"
-
-    echo "Cherry-picking ${local_commit} onto origin/${REF_NAME}..."
-    GIT_EDITOR=true git cherry-pick --empty=drop "${local_commit}" 2>/dev/null \
-        || GIT_EDITOR=true git cherry-pick "${local_commit}"
-    local rc=$?
-    if [ "$rc" -eq 0 ]; then
-        return 0
-    fi
-
-    if ! git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
-        echo "❌ Cherry-pick failed without merge conflicts"
-        git cherry-pick --abort 2>/dev/null || true
-        return "$rc"
-    fi
-
-    echo "Resolving cherry-pick conflicts (owned prefix: ${ENV_PREFIX})..."
-
-    while git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; do
-        while IFS= read -r path; do
-            [ -z "$path" ] && continue
-            if [[ "$path" == "${ENV_PREFIX}"* ]]; then
-                echo "  keeping job version: ${path}"
-                git checkout --theirs -- "${path}"
-            else
-                echo "  keeping remote version: ${path}"
-                git checkout --ours -- "${path}"
-            fi
-            git add -- "${path}"
-        done < <(git diff --name-only --diff-filter=U)
-
-        GIT_EDITOR=true git cherry-pick --continue
-        rc=$?
-        if [ "$rc" -eq 0 ]; then
-            return 0
-        fi
-
-        if ! git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
-            echo "❌ Cherry-pick continue failed without remaining conflicts"
-            git cherry-pick --abort 2>/dev/null || true
-            return "$rc"
-        fi
-    done
-
-    return 0
-}
 
 # copying environments folder to temp storage
 
@@ -329,6 +279,22 @@ if [ -d /tmp/updated_creds ]; then
     done
 fi
 
+if [ "${COMMIT_ENV}" = "true" ]; then
+    JOB_RETRY_PATHS+=("environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}")
+fi
+add_retry_path_if_artifact appdefs
+add_retry_path_if_artifact regdefs
+add_retry_path_if_artifact configuration
+add_retry_path_if_artifact gitlab-ci
+add_retry_path_if_artifact templates
+
+if [ ${#JOB_RETRY_PATHS[@]} -gt 0 ]; then
+    echo "Saving job state for push retry..."
+    git add -A -- "${JOB_RETRY_PATHS[@]}"
+    JOB_STASH=$(git commit-tree "$(git write-tree)" -p HEAD -m "job artifacts for push retry")
+    git reset -q HEAD -- "${JOB_RETRY_PATHS[@]}"
+fi
+
 echo "Minimizing credential file diffs (plaintext compare against HEAD)..."
 python3 /module/scripts/minimize_cred_diffs.py
 
@@ -342,8 +308,6 @@ git diff --cached --quiet || diff_status=$?
 if [ $diff_status -ne 0 ]; then
     echo "Changes detected. Committing..."
     git commit -am "${message}"
-    LOCAL_COMMIT=$(git rev-parse HEAD)
-    echo "Local commit to replay on retry: ${LOCAL_COMMIT}"
 
     echo "Pushing to origin HEAD:${REF_NAME}"
     echo "Current commit: $(git rev-parse HEAD)"
@@ -384,14 +348,25 @@ if [ "$exit_code" -ne 0 ]; then
               break
           fi
 
-          echo "Cherry-picking local commit onto origin/${REF_NAME}..."
-          cherry_pick_onto_origin "${LOCAL_COMMIT}"
-          cherry_pick_exit_code=$?
+          git reset --hard "origin/${REF_NAME}"
 
-          if [ "$cherry_pick_exit_code" -ne 0 ]; then
-              echo "❌ Cherry-pick failed with exit code: $cherry_pick_exit_code"
-              exit_code=$cherry_pick_exit_code
-              break
+          if [ -n "$JOB_STASH" ]; then
+              echo "Restoring job state from snapshot..."
+              git checkout "$JOB_STASH" -- "${JOB_RETRY_PATHS[@]}"
+          fi
+
+          if [ -e /tmp/sboms ]; then
+              echo "Restoring sboms folder (overlay)"
+              git checkout HEAD -- sboms/ 2>/dev/null || rm -rf sboms
+              mkdir -p sboms
+              cp -r /tmp/sboms/. sboms/
+          fi
+
+          python3 /module/scripts/minimize_cred_diffs.py
+
+          git add ./*
+          if ! git diff --cached --quiet; then
+              git commit -am "${message}"
           fi
 
           echo "Attempting push (retry $retries)..."
