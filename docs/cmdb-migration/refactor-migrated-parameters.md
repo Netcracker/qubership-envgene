@@ -41,5 +41,5 @@ Sort the remaining parameters into two groups and move each group to its scope.
 ## 4. Replace plaintext secrets with credential macros
 
 Find plaintext secrets in the parameters. Replace each one with a credential macro, for example
-`${creds.get("id").field}`, and add a matching Credential object. Copy the
-[Credentials blank](/docs/cmdb-migration/blanks/credentials.yml) as a starting point.
+`${creds.get("id").field}`, and add a matching Credential object. See
+[Credential](/docs/envgene-objects.md#credential) for the file format.

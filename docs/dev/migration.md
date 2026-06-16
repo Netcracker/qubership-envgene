@@ -10,11 +10,11 @@ TO DO:
    1. Make both versions at once
    2. Or
    3. Only dev, add prod later
-5. Описать деплой кли использование для экспорта
-3. Добавить инфу про запуск deploycli
-4. Добавить инфу про то как мапить энв на регион
-5. Создавать апп дефы для темлпейтов автоматически
-6. Описать как экспортировать креды
+5. Describe deploycli usage for export
+6. Add information about running deploycli
+7. Add information about how to map an environment to a region
+8. Create Application Definitions for templates automatically
+9. Describe how to export credentials
 
 OQ:
 
