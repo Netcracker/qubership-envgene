@@ -142,9 +142,9 @@ def writeCredToYaml(credItem, credsYaml) :
         data.insert(1, "namespace", "envgeneNullValue", "FillMe")
         newCred["data"] = data
     if (comment):
-        store_value_to_yaml(credsYaml, cred["credentialsId"], newCred, comment)
+        store_cred_value_to_yaml(credsYaml, cred["credentialsId"], newCred, comment)
     else:
-        store_value_to_yaml(credsYaml, cred["credentialsId"], newCred)
+        store_cred_value_to_yaml(credsYaml, cred["credentialsId"], newCred)
     return credsYaml
 
 def mergeAndSaveYaml(yamlPath, newCreds) :
@@ -190,7 +190,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
             credYaml = openYaml(credFilePath)
             count = 0
             for key in credYaml :
-                store_value_to_yaml(credsYaml, key, credYaml[key], f"shared credentials: {credFileName}")
+                store_cred_value_to_yaml(credsYaml, key, credYaml[key], f"shared credentials: {credFileName}")
                 count += 1
             logger.info(f"Added {count} shared master credentials from {credFilePath}")
     writeYamlToFile(credYamlPath, credsYaml)
