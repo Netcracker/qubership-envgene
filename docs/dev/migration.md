@@ -1,25 +1,23 @@
 
 TO DO:
 
-1. What should the template descriptor be like to include SaaS best practices?
-2. Validate approach via migration a project
-3. Validate blanks
-   1. Import into CMDB should not fail
-   2. Effective set generation should not fail
-4. What do we do with dev/prod baselines?
-   1. Make both versions at once
-   2. Or
-   3. Only dev, add prod later
-5. Describe deploycli usage for export
-6. Add information about running deploycli
-7. Add information about how to map an environment to a region
-8. Create Application Definitions for templates automatically
-9. Describe how to export credentials
+1. **Describe how to export credentials from JCS** T
+2. **Validate approach via migration a project** T
+3. **Describe deploycli usage for export**
+4. **Add information about how to map an environment to a region**
+   1. Pavel Karpievich
+5. **Create Application Definitions for templates automatically** E
+   1. Sergei Yashin
+6. **What should the template descriptor be like to include SaaS best practices?**
 
 OQ:
 
 1. Should all environments of one project be in one instance repo, or split per region?
 2. Should we change the naming pattern of namespaces if it's not the default one?
+3. What do we do with dev/prod baselines?
+   1. Make both versions at once
+   2. Or
+   3. Only dev, add prod later
 
 Phase 1
 
