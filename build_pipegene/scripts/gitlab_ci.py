@@ -220,7 +220,9 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             'tmp/',
         )
 
-        if not do_checkout(job):
+        if do_checkout(job):
+            job.add_variables(GIT_DEPTH="1")
+        else:
             job.add_variables(GIT_STRATEGY="empty")
 
     sorted_pipeline.write_yaml()
