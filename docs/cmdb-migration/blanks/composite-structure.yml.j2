@@ -1,0 +1,10 @@
+# Composite Structure Template reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#composite-structure-template
+
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-<deployPostfix>"
+  type: "namespace"
+satellites:
+  - name: "{{ current_env.name }}-<deployPostfix>"
+    type: "namespace"

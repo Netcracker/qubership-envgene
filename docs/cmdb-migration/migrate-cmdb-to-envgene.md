@@ -99,7 +99,20 @@ folders under `Tenants/<tenant>/Clouds/` so they are not migrated or considered 
    `templates/env_templates/dev.yaml`. List the tenant, cloud, and one entry per namespace template. The
    namespace file name is the deploy postfix, so you do not set `deploy_postfix` explicitly.
 
-6. Add the Application Definitions and Registry Definitions the templates need, then parameterize the registry.
+6. If the CMDB export has a composite structure, copy the
+   [Composite Structure Template blank](/docs/cmdb-migration/blanks/composite-structure.yml.j2) to
+   `templates/env_templates/dev/composite-structure.yml.j2` and set the deploy postfixes in `baseline` and
+   `satellites`. Then uncomment the `composite_structure` line in the Template Descriptor `dev.yaml`:
+
+   ```yaml
+   composite_structure: "{{ templates_dir }}/env_templates/dev/composite-structure.yml.j2"
+   ```
+
+7. Check the CMDB export for Blue-Green Domains. Blue-Green Domain solutions are out of scope for this guide. If any
+   namespace of the type belongs to a Blue-Green Domain, or the composite baseline is itself a Blue-Green Domain,
+   contact the EnvGene team to work out that case.
+
+8. Add the Application Definitions and Registry Definitions the templates need, then parameterize the registry.
 
     - Collect an AppDef for every application that appears in the Solution Descriptors of all templates in the
       repository. Take the base files from the centralized definitions repository.
@@ -109,7 +122,7 @@ folders under `Tenants/<tenant>/Clouds/` so they are not migrated or considered 
     - In each AppDef, replace the hardcoded `registryName` with
       `{{ appdefs.overrides.registryName | default('<original-registry>') }}`.
 
-7. Commit and publish the template artifact. Note its `name:version` for the inventory.
+9. Commit and publish the template artifact. Note its `name:version` for the inventory.
 
 ## 3. Create the environment inventories
 
