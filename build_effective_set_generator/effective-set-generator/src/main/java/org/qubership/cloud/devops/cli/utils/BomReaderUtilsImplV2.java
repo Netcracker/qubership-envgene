@@ -295,6 +295,8 @@ public class BomReaderUtilsImplV2 {
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
+        serviceParams.put("DEPLOYMENT_SESSION_ID", sharedData.getDeploymentSessionId());
+        serviceParams.put("MANAGED_BY", "argocd");
         serviceMap.put(component.getName(), serviceParams);
     }
 
@@ -326,6 +328,8 @@ public class BomReaderUtilsImplV2 {
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
+        serviceParams.put("DEPLOYMENT_SESSION_ID", sharedData.getDeploymentSessionId());
+        serviceParams.put("MANAGED_BY", "argocd");
         perServiceMap.put(component.getName(), serviceParams);
     }
 

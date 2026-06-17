@@ -291,7 +291,7 @@ public class CliParameterParser {
     }
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
                                String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
-        DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
+        DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).deploySessionId(sharedData.getDeploymentSessionId()).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         ParameterBundle parameterBundle = getParameterBundleByESVer(tenantName, cloudName, namespaceName, appName,
                 deployerInputs, originalNamespace, k8TokenMap);
