@@ -99,7 +99,7 @@ public class ExternalCredUtils {
         return prepareFinalExtValue(credId, prop, refShape, origin);
     }
 
-    private static Object prepareFinalExtValue(String credId, String property, String refShape, String origin) {
+    public static Object prepareFinalExtValue(String credId, String property, String refShape, String origin) {
         Credential rawCred = Injector.getInstance().getDi().get(CredentialUtils.class).getCredentialsById(credId);
         if (rawCred == null) {
             throw new ExternalCredProcessingException(String.format(EXT_CRED_NOT_FOUND, credId));

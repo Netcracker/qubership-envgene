@@ -8,6 +8,7 @@ CRED_TYPE_SECRET="secret"
 CRED_TYPE_USERPASS="usernamePassword"
 CRED_TYPE_VAULT="vaultAppRole"
 CRED_TYPE_EXTERNAL="external"
+TECHNICAL_CONFIG_PARAMS = "technicalConfigurationParameters"
 
 def createCredDefinition(credId, credType) :
     cred = {}
@@ -18,22 +19,25 @@ def createCredDefinition(credId, credType) :
 def processParametersAndAppend(paramTypeKey, paramsDict, credsList, tenantName, cloudName="", namespaceName="", comment="", external_cred_ids=None) :
     if paramTypeKey not in paramsDict.keys():
         return
-    processDictAndAppend(paramsDict[paramTypeKey], credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids)
+    processDictAndAppend(paramsDict[paramTypeKey], credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, paramTypeKey)
 
-def processDictAndAppend(params, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids=None):
+def processDictAndAppend(params, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids=None, param_type_key=None):
     for key, value in params.items():
-        processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids)
+        processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, param_type_key)
 
-def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids: Optional[Set[str]] = None):
+def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids: Optional[Set[str]] = None, param_type_key=None):
     if isinstance(value, dict):
         cred_id = extract_external_cred(value)
-        if cred_id and external_cred_ids is not None:
-            external_cred_ids.add(cred_id)
-            return
-        processDictAndAppend(value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids)
+        if cred_id:
+            if param_type_key == TECHNICAL_CONFIG_PARAMS:
+                raise ValidationError(f"Invalid value for key '{key}'. External credentials are not supported in '{TECHNICAL_CONFIG_PARAMS}'")
+            if external_cred_ids is not None:
+                external_cred_ids.add(cred_id)
+                return
+        processDictAndAppend(value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, param_type_key)
     elif isinstance(value, list): # if is array, than iterate
         for idx, item in enumerate(value):
-            value[idx] = processSingleParam(idx, item, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids)
+            value[idx] = processSingleParam(idx, item, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, param_type_key)
     elif isinstance(value, str):
         if check_is_cred(key, value):
             appendCredList(get_cred_list_from_param(key, value, True, tenantName, cloudName, namespaceName), credsList, comment)

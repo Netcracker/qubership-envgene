@@ -8,7 +8,7 @@ privateUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
 publicUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
 dashboardUrl: "https://dashboard.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
 labels: []
-defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: cluster-01 version: 1.5
+defaultCredentialsId: "app-sidecar-token" # cloud passport: cluster-01 version: 1.5
 protocol: "https" # cloud passport: cluster-01 version: 1.5
 dbMode: "db"
 databases: []
@@ -39,6 +39,10 @@ deployParameters:
     property: password
 e2eParameters:
   CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
+  DB_USERNAME:
+    $type: credRef
+    credId: app-db-cred
+    property: username
 technicalConfigurationParameters:
   integrations.ndo-api-gw.url: "http://api-test:8080"
 deployParameterSets: []
