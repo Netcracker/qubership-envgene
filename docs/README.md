@@ -86,6 +86,7 @@
 - [**Sample Configurations**](/docs/samples/README.md) - Complete example configurations
 - [**Template Examples**](/docs/samples/template-repository/) - Ready-to-use template examples
 - [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
+- [**Blue-Green Deployment Samples**](/docs/samples/bgd/) - Template and inventory examples for non-BG to BGD migration
 
 ## Development
 
