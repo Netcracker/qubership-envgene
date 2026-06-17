@@ -34,7 +34,7 @@ public class ParameterUtils {
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
 
-    private static final String PARAM_TYPE = "DEPLOY";
+    private static final Set<String> SUPPORTED_PARAMETER_TYPES = Set.of("DEPLOY", "E2E");
 
     public static void splitBySecure(
             Map<String, Parameter> input,
@@ -124,7 +124,7 @@ public class ParameterUtils {
             if (extCredEntities == null || !extCredEntities.isExternalOnly) {
                 throw new ExternalCredProcessingException(String.format(INVALID_CRED_TYPE, valueMap));
             }
-            if (!PARAM_TYPE.equals(extCredEntities.getParameterType())) {
+            if (!SUPPORTED_PARAMETER_TYPES.contains(extCredEntities.getParameterType())) {
                 return true;
             }
             Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape());

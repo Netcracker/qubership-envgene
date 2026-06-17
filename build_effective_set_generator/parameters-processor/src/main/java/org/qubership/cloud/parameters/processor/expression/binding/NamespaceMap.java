@@ -22,10 +22,7 @@ import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
 import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
 import org.qubership.cloud.devops.commons.pojo.clouds.model.Cloud;
-import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
-import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
-import org.qubership.cloud.devops.commons.pojo.credentials.model.SecretCredentials;
-import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.*;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeEntityDTO;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
@@ -37,6 +34,7 @@ import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.K8S_TOKEN;
 import static org.qubership.cloud.devops.commons.utils.constant.NamespaceConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.NS_ORIGIN;
 
@@ -98,6 +96,8 @@ public class NamespaceMap extends DynamicMap {
 
                 CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
 
+                populateK8sToken(config, cloud, credentialUtils, map, nsOrigin);
+
                 if (bgDomainEntityDTO != null) {
 
                     BgDomainEntityDTO.NamespaceDTO origin = bgDomainEntityDTO.getOriginNamespace();
@@ -124,8 +124,8 @@ public class NamespaceMap extends DynamicMap {
                         if (controller.getCredentials() != null && !controller.getCredentials().isEmpty()) {
                             Credential credentialPojo = credentialUtils.getCredentialsById(controller.getCredentials());
                             if (credentialPojo instanceof ExternalCredentials) {
-                                map.put("BG_CONTROLLER_LOGIN", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "username", nsOrigin));
-                                map.put("BG_CONTROLLER_PASSWORD", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "password", nsOrigin));
+                                map.put(BG_CONTROLLER_LOGIN, buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "username", nsOrigin));
+                                map.put(BG_CONTROLLER_PASSWORD, buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "password", nsOrigin));
                             } else if (credentialPojo instanceof UsernamePasswordCredentials) {
                                 UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
                                 map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername());
@@ -144,7 +144,6 @@ public class NamespaceMap extends DynamicMap {
 //                        map.put(CMDB_CALLBACK_URL, String.format("%s/cm/v1/tenants/%s/clouds/%s/bgdomains/clone",
 //                                rootUrl, tenant, cloud));
                     }
-
                 } else {
                     map.put(ORIGIN_NAMESPACE, originalNamespace);
                 }
@@ -198,6 +197,21 @@ public class NamespaceMap extends DynamicMap {
             return map;
         }
         return null;
+    }
+
+    private void populateK8sToken(Namespace config, Cloud cloud, CredentialUtils credentialUtils, EscapeMap map, String nsOrigin) {
+        String credentialsId = config.getCredId();
+        if (StringUtils.isBlank(credentialsId)) {
+            credentialsId = cloud.getDefCred();
+        }
+        if (StringUtils.isNotBlank(credentialsId)) {
+            Credential credential = credentialUtils.getCredentialsById(credentialsId);
+            if (credential instanceof ExternalCredentials) {
+                map.put(K8S_TOKEN, buildCredentialRefMap(credentialsId, (ExternalCredentials) credential, "", nsOrigin));
+            } else if (credential instanceof StringCredentials) {
+                map.put(K8S_TOKEN, ((StringCredentials) credential).getSecret());
+            }
+        }
     }
 
     private void setBaselineVars(EscapeMap map, CompositeEntityDTO baselineEntity, BgDomainEntityDTO bgDomainEntityDTO) {
