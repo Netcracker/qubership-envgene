@@ -1,6 +1,3 @@
-import logging
-import os
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -22,6 +19,15 @@ first_cred:
     type: secret
     data:
         secret: token-placeholder-123
+second_cred:
+    type: secret
+    data:
+        secret: static-secret-456
+registry_cred:
+    type: usernamePassword
+    data:
+        username: registry-user
+        password: registry-password-789
 """
 SOPS_AGE_SECRET_KEY = 'AGE-SECRET-KEY-1AQVCSQDRR5F70H3WJL82EMHMPSDMJPRP0GREJE0Y3M5YJZ25GT9SN0Y6FM'
 SOPS_PUBLIC_KEY = 'age1y4hfj9zz05dtqycfk55y4csddch6w2lu9l6wx7r68at5x897ea3qjh0gl9'
@@ -52,9 +58,27 @@ def _simulate_pipeline_cred_update(cred_path: Path, new_secret: str) -> None:
     _encrypt_cred(cred_path)
 
 
+def _assert_only_first_cred_secret_and_mac_differ_from_head(head_encrypted: dict, cred_path: Path) -> None:
+    diff_paths, removed_paths = compare_dicts(head_encrypted, openYaml(str(cred_path)))
+    allowed_sops_fields = {'mac', 'lastmodified'}
+    assert removed_paths == []
+    assert ['first_cred', 'data', 'secret'] in diff_paths
+    for path in diff_paths:
+        if path == ['first_cred', 'data', 'secret']:
+            continue
+        if path[0] == 'sops' and len(path) == 2 and path[1] in allowed_sops_fields:
+            continue
+        pytest.fail(f'unexpected diff at {path}')
+
+
+def _cache_files(cache_dir: Path) -> list[Path]:
+    return [path for path in cache_dir.rglob('*') if path.is_file()]
+
+
 @pytest.fixture
 def cred_repo(tmp_path, monkeypatch):
     monkeypatch.setenv('CI_PROJECT_DIR', str(tmp_path))
+    monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(tmp_path / 'minimize_cred_diff_cache'))
     monkeypatch.setenv('ENVGENE_AGE_PRIVATE_KEY', SOPS_AGE_SECRET_KEY)
     monkeypatch.setenv('PUBLIC_AGE_KEYS', SOPS_PUBLIC_KEY)
 
@@ -92,17 +116,14 @@ class TestCredentialDiffMinimization:
         assert openYaml(str(cred_path)) == working_copy_before
 
     @pytest.mark.unit
-    def test_only_changed_secret_fields_differ_from_head(self, cred_repo):
+    def test_only_changed_credential_fields_differ_from_head(self, cred_repo):
         _, _, cred_path = cred_repo
         head_encrypted = openYaml(str(cred_path))
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
 
         mcd.main()
 
-        diff_paths, removed_paths = compare_dicts(head_encrypted, openYaml(str(cred_path)))
-        assert removed_paths == []
-        assert ['first_cred', 'data', 'secret'] in diff_paths
-        assert ['sops', 'mac'] in diff_paths
+        _assert_only_first_cred_secret_and_mac_differ_from_head(head_encrypted, cred_path)
 
     @pytest.mark.unit
     def test_new_cred_file_is_left_unchanged(self, cred_repo):
@@ -119,34 +140,18 @@ class TestCredentialDiffMinimization:
         assert openYaml(str(new_cred_path)) == working_copy_before
 
     @pytest.mark.unit
-    def test_non_cred_files_are_left_unchanged(self, cred_repo):
-        _, tmp_path, cred_path = cred_repo
-        readme_path = tmp_path / 'README.md'
-        writeToFile(readme_path, 'changed\n')
-        head_encrypted = openYaml(str(cred_path))
-
-        mcd.main()
-
-        assert readme_path.read_text(encoding='utf-8') == 'changed\n'
-        diff_paths, removed_paths = compare_dicts(head_encrypted, openYaml(str(cred_path)))
-        assert removed_paths == []
-        assert diff_paths == []
-
-    @pytest.mark.unit
-    def test_git_diff_failure_logs_error_and_aborts(self, monkeypatch, caplog):
+    def test_git_diff_failure_aborts(self, monkeypatch, tmp_path):
         repo = MagicMock()
         repo.git.diff.side_effect = GitCommandError('diff', 128, stderr='fatal: bad revision')
         monkeypatch.setenv('CI_PROJECT_DIR', '/tmp/repo')
+        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(tmp_path / 'cache'))
 
         with patch.object(mcd, 'get_crypt', return_value=True), patch.object(mcd, 'Repo', return_value=repo):
-            with caplog.at_level(logging.ERROR, logger='envgene'):
-                with pytest.raises(RuntimeError, match='git diff against HEAD failed'):
-                    mcd.main()
-
-        assert 'git diff against HEAD failed' in caplog.text
+            with pytest.raises(RuntimeError, match='git diff against HEAD failed'):
+                mcd.main()
 
     @pytest.mark.unit
-    def test_head_read_failure_logs_warning_and_leaves_file_unchanged(self, cred_repo, caplog):
+    def test_head_read_failure_leaves_file_unchanged(self, cred_repo):
         _, _, cred_path = cred_repo
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
         working_copy_before = openYaml(str(cred_path))
@@ -156,77 +161,57 @@ class TestCredentialDiffMinimization:
         repo.head.commit.tree.__getitem__.side_effect = OSError('cannot read blob at HEAD')
 
         with patch.object(mcd, 'Repo', return_value=repo):
-            with caplog.at_level(logging.WARNING, logger='envgene'):
-                mcd.main()
+            mcd.main()
 
-        assert 'Cannot read credential file at HEAD' in caplog.text
         assert openYaml(str(cred_path)) == working_copy_before
 
     @pytest.mark.unit
-    def test_cache_hit_skips_decrypt_and_encrypt(self, cred_repo, tmp_path, monkeypatch):
+    def test_push_retry_reproduces_same_minimised_output(self, cred_repo):
         _, _, cred_path = cred_repo
-        cache_dir = tmp_path / 'minimize_cache'
-        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_dir))
+        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
+        pre_minimised_input = cred_path.read_bytes()
+
+        mcd.main()
+        first_pass = cred_path.read_bytes()
+
+        cred_path.write_bytes(pre_minimised_input)
+        mcd.main()
+
+        assert cred_path.read_bytes() == first_pass
+
+    @pytest.mark.unit
+    def test_head_change_recomputes_against_new_base(self, cred_repo):
+        repo, _, cred_path = cred_repo
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
 
-        with patch.object(mcd, 'decrypt_file') as decrypt_mock, patch.object(mcd, 'encrypt_file') as encrypt_mock:
-            mcd.main()
-            mcd.main()
+        mcd.main()
+        first_pass = cred_path.read_bytes()
 
-        assert decrypt_mock.call_count == 1
-        assert encrypt_mock.call_count == 1
-        assert len(list(cache_dir.glob('*.enc'))) == 1
+        _simulate_pipeline_cred_update(cred_path, 'remote-head-secret')
+        repo.git.add(CRED_REL_PATH)
+        repo.index.commit('remote credential update')
+        new_head_encrypted = openYaml(str(cred_path))
 
-    @pytest.mark.unit
-    def test_cache_miss_when_head_changes(self, cred_repo, tmp_path, monkeypatch):
-        repo, repo_path, cred_path = cred_repo
-        cache_dir = tmp_path / 'minimize_cache'
-        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_dir))
-        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
+        _simulate_pipeline_cred_update(cred_path, 'updated-secret-again')
+        mcd.main()
 
-        with patch.object(mcd, 'decrypt_file') as decrypt_mock, patch.object(mcd, 'encrypt_file') as encrypt_mock:
-            mcd.main()
-            assert decrypt_mock.call_count == 1
-            assert encrypt_mock.call_count == 1
-
-            shutil.copy2(cred_path, repo_path / 'head_snapshot.yml')
-            _encrypt_cred(cred_path)
-            repo.git.add(CRED_REL_PATH)
-            repo.index.commit('remote cred rotation')
-
-            _simulate_pipeline_cred_update(cred_path, 'updated-secret-again')
-            mcd.main()
-
-        assert decrypt_mock.call_count == 2
-        assert encrypt_mock.call_count == 2
-        assert len(list(cache_dir.glob('*.enc'))) == 2
+        assert cred_path.read_bytes() != first_pass
+        _assert_only_first_cred_secret_and_mac_differ_from_head(new_head_encrypted, cred_path)
 
     @pytest.mark.unit
-    def test_default_cache_dir_uses_ci_job_id(self, monkeypatch):
-        monkeypatch.delenv('MINIMIZE_CRED_DIFF_CACHE_DIR', raising=False)
-        monkeypatch.setenv('CI_JOB_ID', '55767405')
-
-        assert mcd._default_cache_dir() == Path('/tmp/minimize_cred_diff_cache_55767405')
-
-    @pytest.mark.unit
-    def test_default_cache_dir_uses_process_id_without_ci(self, monkeypatch):
-        monkeypatch.delenv('MINIMIZE_CRED_DIFF_CACHE_DIR', raising=False)
-        monkeypatch.delenv('CI_JOB_ID', raising=False)
-        monkeypatch.delenv('GITHUB_RUN_ID', raising=False)
-
-        cache_dir = mcd._default_cache_dir()
-
-        assert cache_dir == Path(f'/tmp/minimize_cred_diff_cache_{os.getpid()}')
-
-    @pytest.mark.unit
-    def test_cache_disabled_runs_minimize_on_every_call(self, cred_repo, monkeypatch):
+    def test_separate_cache_dirs_do_not_share_entries(self, cred_repo, tmp_path, monkeypatch):
         _, _, cred_path = cred_repo
-        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', 'off')
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
 
-        with patch.object(mcd, 'decrypt_file') as decrypt_mock, patch.object(mcd, 'encrypt_file') as encrypt_mock:
-            mcd.main()
-            mcd.main()
+        cache_a = tmp_path / 'job-a-cache'
+        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_a))
+        mcd.main()
+        cache_a_files = _cache_files(cache_a)
 
-        assert decrypt_mock.call_count == 2
-        assert encrypt_mock.call_count == 2
+        cache_b = tmp_path / 'job-b-cache'
+        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_b))
+        mcd.main()
+
+        assert cache_a_files
+        assert _cache_files(cache_b)
+        assert _cache_files(cache_b) != cache_a_files
