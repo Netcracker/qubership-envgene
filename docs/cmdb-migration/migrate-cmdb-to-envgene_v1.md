@@ -19,6 +19,10 @@
     - [3.9 Attach namespace referenced ParameterSets](#39-attach-namespace-referenced-parametersets)
     - [3.10 Attach the namespace Resource Profile Override](#310-attach-the-namespace-resource-profile-override)
     - [3.11 Export the credentials](#311-export-the-credentials)
+      - [3.11.1 Retrieve the credential list from the CM API](#3111-retrieve-the-credential-list-from-the-cm-api)
+      - [3.11.2 Build the shared credentials file](#3112-build-the-shared-credentials-file)
+      - [3.11.3 Fill in the actual secret values](#3113-fill-in-the-actual-secret-values)
+      - [3.11.4 Reference the file in every environment inventory](#3114-reference-the-file-in-every-environment-inventory)
     - [3.12 Add the Solution Descriptor](#312-add-the-solution-descriptor)
     - [3.13 Create the Artifact Definition](#313-create-the-artifact-definition)
   - [4. Run generation to verify](#4-run-generation-to-verify)
@@ -271,23 +275,143 @@ envTemplate:
 
 ### 3.11 Export the credentials
 
-Export every credential from the Jenkins credential store into a single shared credential file, then associate
-that file with every environment in the repository.
+Retrieve the credential list from the Cloud Manager (CM) API using Postman, build a shared credentials file
+from the result, fill in the actual secret values, then associate that file with every environment in the
+repository.
 
-1. Export all credentials from the Jenkins credential store into one repository-wide file at
-   `environments/credentials/shared-credentials.yml`.
+#### 3.11.1 Retrieve the credential list from the CM API
 
-   > [!NOTE]
-   > The credential export mechanism is not yet defined. This guide is updated with it once it is available.
+1. Open Postman and create a new **GET** request with the following URL, replacing `<tenant>` with the tenant
+   name from the CMDB export folder `Tenants/<tenant>/`:
 
-2. In each environment's `env_definition.yml`, reference the file by name, without the `.yml` extension, in
-   `sharedMasterCredentialFiles`:
-
-   ```yaml
-   envTemplate:
-     sharedMasterCredentialFiles:
-       - shared-credentials
    ```
+   https://cloud-deployer.netcracker.com/cm/v1/domains/<tenant>/credentials
+   ```
+
+2. In the **Authorization** tab, set the type to **Bearer Token** and enter your CM API token in the **Token**
+   field:
+
+   ```
+   <cm-token>
+   ```
+
+3. Click **Send**. The response is a JSON array. Each object has the fields `id`, `provider`, `type`, and
+   `description`. For example:
+
+   ```json
+   [
+     {
+       "id": "k8sApps3-apihub-admin",
+       "provider": "jenkins",
+       "type": "secret",
+       "description": ""
+     },
+     {
+       "id": "ndoShared4-apihubAgentAdmin",
+       "provider": "jenkins",
+       "type": "usernamePassword",
+       "description": ""
+     }
+   ]
+   ```
+
+4. Save the full response locally (use **Save Response → Save to a file** in Postman) so you can work through
+   it in the next step without losing it.
+
+> [!NOTE]
+> The API returns credential metadata only. Actual secret values (passwords and tokens) are **not** included
+> in the response. You will fill them in manually in step 3.11.3.
+
+#### 3.11.2 Build the shared credentials file
+
+Create the file `environments/credentials/shared-credentials.yml` in the instance repository. For each
+object in the JSON response, add one entry to the file using the mapping table below.
+
+| CM API `type`      | EnvGene `type`      | Required `data` fields          |
+|--------------------|---------------------|---------------------------------|
+| `usernamePassword` | `usernamePassword`  | `username`, `password`          |
+| `secret`           | `secret`            | `secret`                        |
+
+Use the `id` field from the API response as the YAML key. Leave the value fields empty for now.
+
+For a `usernamePassword` credential:
+
+```yaml
+<id>:
+  type: usernamePassword
+  data:
+    username: ""
+    password: ""
+```
+
+For a `secret` credential:
+
+```yaml
+<id>:
+  type: secret
+  data:
+    secret: ""
+```
+
+**Example** — the two credentials from the API response above become:
+
+```yaml
+k8sApps3-apihub-admin:
+  type: secret
+  data:
+    secret: ""
+
+ndoShared4-apihubAgentAdmin:
+  type: usernamePassword
+  data:
+    username: ""
+    password: ""
+```
+
+Work through the full saved response and add one block per credential until every `id` in the JSON has a
+corresponding entry in the file.
+
+#### 3.11.3 Fill in the actual secret values
+
+The CM API does not return secret values, so you must supply them from the original credential source (for
+example, the Jenkins credential store or a password manager used by your team).
+
+For each entry in `shared-credentials.yml`:
+
+- **`usernamePassword`** — set `username` and `password` to the real values.
+- **`secret`** — set `secret` to the real token or secret string.
+
+```yaml
+k8sApps3-apihub-admin:
+  type: secret
+  data:
+    secret: "actual-token-value"
+
+ndoShared4-apihubAgentAdmin:
+  type: usernamePassword
+  data:
+    username: "actual-username"
+    password: "actual-password"
+```
+
+> [!WARNING]
+> Do not commit plaintext secret values to the repository. Encrypt the file using the EnvGene credential
+> encryption pipeline before pushing. See
+> [Credential Encryption](/docs/how-to/credential-encryption.md) for the procedure.
+
+#### 3.11.4 Reference the file in every environment inventory
+
+In each environment's `env_definition.yml`, reference the shared credentials file by name without the `.yml`
+extension under `sharedMasterCredentialFiles`:
+
+```yaml
+envTemplate:
+  sharedMasterCredentialFiles:
+    - shared-credentials
+```
+
+Apply this to every environment folder `environments/<cluster>/<env>/Inventory/env_definition.yml` in the
+repository.
 
 ### 3.12 Add the Solution Descriptor
 
