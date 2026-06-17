@@ -14,13 +14,15 @@
     - [3.4 Create one inventory per environment](#34-create-one-inventory-per-environment)
     - [3.5 Attach cloud inline parameters](#35-attach-cloud-inline-parameters)
     - [3.6 Attach cloud referenced ParameterSets](#36-attach-cloud-referenced-parametersets)
-    - [3.7 Attach the cloud Resource Profile Override](#37-attach-the-cloud-resource-profile-override)
-    - [3.8 Attach namespace inline parameters](#38-attach-namespace-inline-parameters)
-    - [3.9 Attach namespace referenced ParameterSets](#39-attach-namespace-referenced-parametersets)
-    - [3.10 Attach the namespace Resource Profile Override](#310-attach-the-namespace-resource-profile-override)
-    - [3.11 Export the credentials](#311-export-the-credentials)
-    - [3.12 Add the Solution Descriptor](#312-add-the-solution-descriptor)
-    - [3.13 Create the Artifact Definition](#313-create-the-artifact-definition)
+    - [3.7 Attach cloud application parameters](#37-attach-cloud-application-parameters)
+    - [3.8 Attach the cloud Resource Profile Override](#38-attach-the-cloud-resource-profile-override)
+    - [3.9 Attach namespace inline parameters](#39-attach-namespace-inline-parameters)
+    - [3.10 Attach namespace referenced ParameterSets](#310-attach-namespace-referenced-parametersets)
+    - [3.11 Attach namespace application parameters](#311-attach-namespace-application-parameters)
+    - [3.12 Attach the namespace Resource Profile Override](#312-attach-the-namespace-resource-profile-override)
+    - [3.13 Export the credentials](#313-export-the-credentials)
+    - [3.14 Add the Solution Descriptor](#314-add-the-solution-descriptor)
+    - [3.15 Create the Artifact Definition](#315-create-the-artifact-definition)
   - [4. Run generation to verify](#4-run-generation-to-verify)
 
 ## Description
@@ -212,7 +214,29 @@ For each ParameterSet name listed in `deployParameterSets`, `e2eParameterSets`, 
 `Tenants/<tenant>/ParameterSets/<name>.yml` to `environments/<cluster>/<env>/Inventory/parameters/<name>.yml`,
 keeping its name. Then reference it under the `cloud` key in the field for its context, the same way as in 3.5.
 
-### 3.7 Attach the cloud Resource Profile Override
+### 3.7 Attach cloud application parameters
+
+The Cloud holds Application objects under `Tenants/<tenant>/Clouds/<cloud>/Applications/`. Each Application has a
+`name` and per-application `deployParameters` and `technicalConfigurationParameters`. Collect these across all
+cloud Applications into one ParameterSet per context, under the ParameterSet `applications` section keyed by the
+Application `name`. Create them under `environments/<cluster>/<env>/Inventory/parameters/`, name the files by
+context, and reference them under the `cloud` key, the same way as in 3.5:
+
+- `deployParameters` to `cloud-app-deploy.yml`, referenced in `envSpecificParamsets`.
+- `technicalConfigurationParameters` to `cloud-app-tech.yml`, referenced in `envSpecificTechnicalParamsets`.
+
+Skip a context when no cloud Application has parameters for it. For example, `cloud-app-deploy.yml`:
+
+```yaml
+name: cloud-app-deploy
+parameters: {}
+applications:
+  - appName: Cloud-Core
+    parameters:
+      GW_INGRESS_ANNOTATIONS: "nginx.ingress.kubernetes.io/proxy-body-size: '800m'"
+```
+
+### 3.8 Attach the cloud Resource Profile Override
 
 If the Cloud record has a `profile`, create a Resource Profile Override at
 `environments/<cluster>/<env>/Inventory/resource_profiles/cloud-profile.yml` from its `name` and `baseline`.
@@ -225,7 +249,7 @@ envTemplate:
     cloud: cloud-profile
 ```
 
-### 3.8 Attach namespace inline parameters
+### 3.9 Attach namespace inline parameters
 
 Do this for each namespace in the environment, reading from the Namespace record
 `Tenants/<tenant>/Clouds/<cloud>/Namespaces/<namespace>/<namespace>.yml`. This mirrors 3.5, but the reference
@@ -249,14 +273,27 @@ envTemplate:
       - bss-deploy
 ```
 
-### 3.9 Attach namespace referenced ParameterSets
+### 3.10 Attach namespace referenced ParameterSets
 
 For each ParameterSet name listed in `deployParameterSets`, `e2eParameterSets`, or
 `technicalConfigurationParameterSets` on the Namespace record, copy the source file
 `Tenants/<tenant>/ParameterSets/<name>.yml` to `environments/<cluster>/<env>/Inventory/parameters/<name>.yml`,
-keeping its name. Then reference it under the `<deployPostfix>` key in the field for its context, as in 3.8.
+keeping its name. Then reference it under the `<deployPostfix>` key in the field for its context, as in 3.9.
 
-### 3.10 Attach the namespace Resource Profile Override
+### 3.11 Attach namespace application parameters
+
+Do this for each namespace, reading its Application objects from
+`Tenants/<tenant>/Clouds/<cloud>/Namespaces/<namespace>/Applications/`. This mirrors 3.7, but the reference key
+is the namespace `deployPostfix` instead of `cloud`, and the file names carry the postfix:
+
+- `deployParameters` to `<deployPostfix>-app-deploy.yml`, referenced in `envSpecificParamsets`.
+- `technicalConfigurationParameters` to `<deployPostfix>-app-tech.yml`, referenced in
+  `envSpecificTechnicalParamsets`.
+
+Collect the parameters of all the namespace Applications into the ParameterSet `applications` section, keyed by
+the Application `name`. Skip a context when no Application has parameters for it.
+
+### 3.12 Attach the namespace Resource Profile Override
 
 If the Namespace record has a `profile`, create a Resource Profile Override at
 `environments/<cluster>/<env>/Inventory/resource_profiles/<deployPostfix>-profile.yml` from its `name` and
@@ -269,7 +306,7 @@ envTemplate:
     bss: bss-profile
 ```
 
-### 3.11 Export the credentials
+### 3.13 Export the credentials
 
 Export every credential from the Jenkins credential store into a single shared credential file, then associate
 that file with every environment in the repository.
@@ -289,13 +326,13 @@ that file with every environment in the repository.
        - shared-credentials
    ```
 
-### 3.12 Add the Solution Descriptor
+### 3.14 Add the Solution Descriptor
 
 Copy the environment's Solution Descriptor to
 `environments/<cluster>/<env>/Inventory/solution-descriptor/sd.yml`. There is one Full Solution Descriptor per
 environment.
 
-### 3.13 Create the Artifact Definition
+### 3.15 Create the Artifact Definition
 
 Once per instance repository, copy the
 [Artifact Definition blank](/docs/cmdb-migration/blanks/artifact-definition.yml) to
