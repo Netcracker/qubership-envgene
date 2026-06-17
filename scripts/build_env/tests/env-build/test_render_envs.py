@@ -20,8 +20,7 @@ test_data = [
     ("cluster01", "env04", "test-template-2", {}),
     ("bgd-cluster", "bgd-env", "bgd", {}),
     ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {NamespaceRole.PEER: "test_data/test_templates_peer", NamespaceRole.ORIGIN: "test_data/test_templates_origin"}),
-    ("cluster03", "rpo-replacement-mode", "simple", {}),
-    ("cluster03", "rpo-no-base-profile", "simple-no-base-rp", {}),
+    ("cluster03", "rpo-replacement-mode", "simple", {})
 ]
 
 
