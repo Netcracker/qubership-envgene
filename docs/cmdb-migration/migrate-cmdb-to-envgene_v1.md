@@ -275,24 +275,22 @@ envTemplate:
 
 ### 3.11 Export the credentials
 
-Retrieve the credential list from the Cloud Manager (CM) API using Postman, build a shared credentials file
-from the result, fill in the actual secret values, then associate that file with every environment in the
-repository.
+Export every credential from the Jenkins credential store into a single shared credential file, then associate that file with every environment in the repository.
 
 #### 3.11.1 Retrieve the credential list from the CM API
 
-1. Open Postman and create a new **GET** request with the following URL, replacing `<tenant>` with the tenant
+1. Open nc-newman-desktop and create a new **GET** request with the following URL, replacing `<tenant>` with the tenant
    name from the CMDB export folder `Tenants/<tenant>/`:
 
    ```
    https://cloud-deployer.netcracker.com/cm/v1/domains/<tenant>/credentials
    ```
 
-2. In the **Authorization** tab, set the type to **Bearer Token** and enter your CM API token in the **Token**
-   field:
+2. In the **Authorization** tab, set the type to **Bearer Token** and enter your Jenkins API token in the **Token** (make sure the user is having admin privelege)
+   field: 
 
    ```
-   <cm-token>
+   <jenkins-token>
    ```
 
 3. Click **Send**. The response is a JSON array. Each object has the fields `id`, `provider`, `type`, and
@@ -315,7 +313,7 @@ repository.
    ]
    ```
 
-4. Save the full response locally (use **Save Response → Save to a file** in Postman) so you can work through
+4. Save the full response locally (use **Save Response → Save Response to a file** ) so you can work through
    it in the next step without losing it.
 
 > [!NOTE]
@@ -327,7 +325,7 @@ repository.
 Create the file `environments/credentials/shared-credentials.yml` in the instance repository. For each
 object in the JSON response, add one entry to the file using the mapping table below.
 
-| CM API `type`      | EnvGene `type`      | Required `data` fields          |
+| Credential `type`  | EnvGene `type`      | Required `data` fields          |
 |--------------------|---------------------|---------------------------------|
 | `usernamePassword` | `usernamePassword`  | `username`, `password`          |
 | `secret`           | `secret`            | `secret`                        |
