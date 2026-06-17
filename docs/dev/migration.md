@@ -4,11 +4,12 @@ TO DO:
 1. **Describe how to export credentials from JCS** T
 2. **Validate approach via migration a project** T
 3. **Describe deploycli usage for export**
-4. **Add information about how to map an environment to a region**
+4. **How to export RP via deploycli**
+5. **Add information about how to map an environment to a region**
    1. Pavel Karpievich
-5. **Create Application Definitions for templates automatically** E
+6. **Create Application Definitions for templates automatically** E
    1. Sergei Yashin
-6. **What should the template descriptor be like to include SaaS best practices?**
+7. **What should the template descriptor be like to include SaaS best practices?**
 
 OQ:
 
