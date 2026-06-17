@@ -31,6 +31,7 @@ public class ParameterBundle {
     Map<String, Object> configServerParams;
     Map<String, Object> securedE2eParams;
     Map<String, Object> e2eParams;
+    Map<String, Object> e2eParamsWithExtCreds;
     Map<String, Object> deployDescParams;
     Map<String, Object> perServiceParams;
     Map<String, Object> collisionDeployParameters;
