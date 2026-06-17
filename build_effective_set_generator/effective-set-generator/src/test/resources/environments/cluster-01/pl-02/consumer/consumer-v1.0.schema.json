@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "CLOUD_LEVEL_PARAM_1": {
+      "type": "string"
+    },
+    "GITLAB_URL_PIM_CONFIGURATION": {
+      "type": "integer"
+    },
+    "DB_USERNAME": {
+      "type": "string",
+      "default": "admin"
+    },
+    "PIM_TOKEN": {
+      "type": "string",
+      "default": "abcxxx"
+    }
+  },
+  "required": [
+    "CLOUD_LEVEL_PARAM_1",
+    "PIM_TOKEN"
+  ]
+}

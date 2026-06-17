@@ -21,7 +21,6 @@ import jakarta.inject.Inject;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
 import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
 import org.qubership.cloud.devops.commons.utils.Parameter;
@@ -40,11 +39,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.EXT_TEMPLATE_FOUND;
-import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logDebug;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logWarning;
 import static org.qubership.cloud.devops.commons.utils.ParameterUtils.prepareCustomParams;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.ESO_SUPPORT;
+import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.VALS;
 import static org.qubership.cloud.devops.commons.utils.constant.NamespaceConstants.SSL_SECRET;
 
 @ApplicationScoped
@@ -61,10 +60,10 @@ public class ParametersCalculationServiceV2 {
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
                                            DeployerInputs deployerInputs, String originalNamespace,
-                                           Map<String, String> k8TokenMap, CustomParameterDTO customParams, ExtCredEntities extCredEntities) {
+                                           CustomParameterDTO customParams, ExtCredEntities extCredEntities) {
         return getParameterBundle(tenantName, cloudName, namespaceName,
                 applicationName, deployerInputs, originalNamespace,
-                k8TokenMap, customParams, extCredEntities);
+                customParams, extCredEntities);
     }
 
     public ParameterBundle getCliE2EParameter(String tenantName, String cloudName, ExtCredEntities extCredEntities) {
@@ -73,7 +72,7 @@ public class ParametersCalculationServiceV2 {
 
     public ParameterBundle getCleanupParameterBundle(String tenantName, String cloudName, String namespaceName,
                                                      DeployerInputs deployerInputs, String originalNamespace,
-                                                     Map<String, String> k8TokenMap, ExtCredEntities extCredEntities) {
+                                                     ExtCredEntities extCredEntities) {
         Params parameters = parametersProcessor.processNamespaceParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -82,13 +81,13 @@ public class ParametersCalculationServiceV2 {
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getCleanupParams(), parameterBundle, ParameterType.CLEANUP, k8TokenMap, originalNamespace, extCredEntities);
+        prepareSecureInsecureParams(parameters.getCleanupParams(), parameterBundle, ParameterType.CLEANUP, extCredEntities);
         return parameterBundle;
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
                                                DeployerInputs deployerInputs, String originalNamespace,
-                                               Map<String, String> k8TokenMap, CustomParameterDTO customParams, ExtCredEntities extCredEntities) {
+                                               CustomParameterDTO customParams, ExtCredEntities extCredEntities) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -110,8 +109,8 @@ public class ParametersCalculationServiceV2 {
             parameterBundle.setCustomDeployParameters(ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams()));
             parameterBundle.setCustomTechParameters(ParametersProcessor.convertParameterMapToObject(customParams.getTechnicalParams()));
         }
-        prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace, extCredEntities);
-        prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, k8TokenMap, originalNamespace, extCredEntities);
+        prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, extCredEntities);
+        prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, extCredEntities);
         return parameterBundle;
     }
 
@@ -179,25 +178,24 @@ public class ParametersCalculationServiceV2 {
     private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName, ExtCredEntities extCredEntities) {
         Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, null, null);
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E, null, null, extCredEntities);
+        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E, extCredEntities);
         return parameterBundle;
     }
 
     public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle
-            , ParameterType parameterType, Map<String, String> k8TokenMap, String originalNamespace, ExtCredEntities extCredEntities) {
+            , ParameterType parameterType, ExtCredEntities extCredEntities) {
         Map<String, Parameter> securedParams = new TreeMap<>();
         Map<String, Parameter> inSecuredParams = new TreeMap<>();
         if (MapUtils.isEmpty(parameters) && MapUtils.isEmpty(parameterBundle.getCustomTechParameters())) {
             LOGGER.debug("No Parameters found. Check if the input values are correct");
             return;
         }
+
         Map<String, Parameter> externalCredParams = null;
-        extCredEntities.setParameterType(parameterType.toString());
-        if (ParameterType.DEPLOY.equals(parameterType) && extCredEntities.isExternalOnly) {
-            externalCredParams = new TreeMap<>();
-            String refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
-            extCredEntities.setRefShape(refShape);
+        if (extCredEntities.isExternalOnly) {
+            externalCredParams = prepareExternalCredentialContext(parameters, parameterType, extCredEntities);
         }
+
         filterSecuredParams(parameters, securedParams, inSecuredParams, externalCredParams, parameterType, extCredEntities);
         Map<String, Object> externalCredParamsAsObject = externalCredParams != null ? ParametersProcessor.convertParameterMapToObject(externalCredParams) : null;
         Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
@@ -205,13 +203,14 @@ public class ParametersCalculationServiceV2 {
         if (parameterType == ParameterType.E2E) {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
+            parameterBundle.setE2eParamsWithExtCreds(externalCredParamsAsObject);
         } else if (parameterType == ParameterType.DEPLOY) {
-            handleDeployParameters(parameterBundle, k8TokenMap, originalNamespace, finalSecuredParams, inSecuredParamsAsObject, externalCredParamsAsObject, extCredEntities);
+            handleDeployParameters(parameterBundle, finalSecuredParams, inSecuredParamsAsObject, externalCredParamsAsObject, extCredEntities);
         } else if (parameterType == ParameterType.TECHNICAL) {
             prepareCustomTechSecureParams(parameterBundle, finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.CLEANUP) {
-            finalSecuredParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
+            finalSecuredParams.put(K8S_TOKEN, inSecuredParamsAsObject.remove(K8S_TOKEN));
             parameterBundle.setCleanupSecureParameters(finalSecuredParams);
             parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
         }
@@ -229,7 +228,7 @@ public class ParametersCalculationServiceV2 {
         }
     }
 
-    private void handleDeployParameters(ParameterBundle parameterBundle, Map<String, String> k8TokenMap, String originalNamespace, Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject, Map<String, Object> externalCredParamsAsObject, ExtCredEntities extCredEntities) {
+    private void handleDeployParameters(ParameterBundle parameterBundle, Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject, Map<String, Object> externalCredParamsAsObject, ExtCredEntities extCredEntities) {
         Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
         parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
         inSecuredParamsAsObject.remove(APPR_CHART_NAME); //remove app chart name from parameters once after the usage
@@ -247,7 +246,7 @@ public class ParametersCalculationServiceV2 {
 
         parameterBundle.setCollisionDeployParameters(deployCollisionParams);
         parameterBundle.setCollisionSecureParameters(securedCollisionParams);
-        copyParams(finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
+        copyParams(finalSecuredParams, inSecuredParamsAsObject);
         prepareBundleParameters(finalSecuredParams, inSecuredParamsAsObject);
         Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams(),
                 deployCollisionParams);
@@ -271,15 +270,13 @@ public class ParametersCalculationServiceV2 {
         }
     }
 
-    private void copyParams(Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams,
-                            Map<String, String> k8TokenMap, String originalNamespace) {
+    private void copyParams(Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
         SECURED_KEYS.stream()
                 .filter(finalInsecureParams::containsKey)
                 .forEach(key -> {
                     finalSecParams.put(key, finalInsecureParams.get(key));
                     finalInsecureParams.remove(key);
                 });
-        finalSecParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
     }
 
     private Map<String, Object> getCollisionParams(Map<String, Object> parameters) {
@@ -354,5 +351,18 @@ public class ParametersCalculationServiceV2 {
         }
     }
 
-
+    private Map<String, Parameter> prepareExternalCredentialContext(Map<String, Parameter> parameters, ParameterType parameterType, ExtCredEntities extCredEntities) {
+        extCredEntities.setParameterType(parameterType.toString());
+        switch (parameterType) {
+            case DEPLOY:
+                String refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
+                extCredEntities.setRefShape(refShape);
+                return new TreeMap<>();
+            case E2E:
+                extCredEntities.setRefShape(VALS);
+                return new TreeMap<>();
+            default:
+                return null;
+        }
+    }
 }
