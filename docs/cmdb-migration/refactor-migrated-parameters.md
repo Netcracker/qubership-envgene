@@ -7,6 +7,7 @@
   - [2. Move Cloud Passport parameters into the Cloud Passport](#2-move-cloud-passport-parameters-into-the-cloud-passport)
   - [3. Split the parameters by reuse](#3-split-the-parameters-by-reuse)
   - [4. Replace plaintext secrets with credential macros](#4-replace-plaintext-secrets-with-credential-macros)
+  - [5. Replace hardcoded namespace references](#5-replace-hardcoded-namespace-references)
 
 ## Description
 
@@ -43,3 +44,11 @@ Sort the remaining parameters into two groups and move each group to its scope.
 Find plaintext secrets in the parameters. Replace each one with a credential macro, for example
 `${creds.get("id").field}`, and add a matching Credential object. See
 [Credential](/docs/envgene-objects.md#credential) for the file format.
+
+## 5. Replace hardcoded namespace references
+
+A migrated parameter can hold a namespace name frozen from CMDB, for example `BSS_NAMESPACE: env02-bss`. Frozen
+like this it does not track the environment, so the same value reused elsewhere still points at `env02`.
+Re-express each one so it derives from the environment rather than naming a namespace literally. Also drop
+references to a namespace the environment does not contain, for example an `ATP_NAMESPACE` pointing at a namespace
+the Solution Descriptor does not deploy.

@@ -10,6 +10,8 @@ TO DO:
 6. **Create Application Definitions for templates automatically** E
    1. Sergei Yashin
 7. **What should the template descriptor be like to include SaaS best practices?**
+   1. If composition is used, add `artifact_definitions/` for all parent templates
+8. **Prepare the GSF for the GitLab builder pipeline**
 
 OQ:
 

@@ -41,15 +41,10 @@ next to this guide under [blanks](/docs/cmdb-migration/blanks/). Copy a blank as
 
 ## Prerequisites
 
-- A template repository and a region instance repository, provided to you, already set up with the EnvGene
-  pipeline. There is one instance repository per region, and each cluster belongs to one region. The region is
-  derived from the cluster URL.
+- A shared template repository and one instance repository per region, provided to you, already set up with the
+  EnvGene pipeline. Each cluster belongs to one region.
 - Access to each CMDB instance (URL, username, and token) and the CMDB export tool.
-- A Solution Descriptor for each solution type. It lists the applications and their `deployPostfix` values.
-
-> [!NOTE]
-> The cluster-URL-to-region mapping is not yet defined. Use `<region>` as a placeholder until the mapping is
-> agreed, then replace it everywhere it appears.
+- A Full Solution Descriptor for each solution type. It lists the applications and their `deployPostfix` values.
 
 ## 1. Export the CMDB configuration
 
@@ -81,6 +76,9 @@ folders under `Tenants/<tenant>/Clouds/` so they are not migrated or considered 
 
 1. In the cloud CMDB, create an Application Definition for the env-template artifact.
 
+   > [!NOTE]
+   > The details of this step will be added later.
+
 2. Create one Namespace Template per `deployPostfix` in the set. Copy the
    [Namespace Template blank](/docs/cmdb-migration/blanks/namespace.yml.j2) to
    `templates/env_templates/dev/<deployPostfix>.yml.j2`, naming the file after the namespace `deployPostfix`.
@@ -101,10 +99,12 @@ folders under `Tenants/<tenant>/Clouds/` so they are not migrated or considered 
    `templates/env_templates/dev.yaml`. List the tenant, cloud, and one entry per namespace template. The
    namespace file name is the deploy postfix, so you do not set `deploy_postfix` explicitly.
 
-6. If the CMDB export has a composite structure, copy the
-   [Composite Structure Template blank](/docs/cmdb-migration/blanks/composite-structure.yml.j2) to
-   `templates/env_templates/dev/composite-structure.yml.j2` and set the deploy postfixes in `baseline` and
-   `satellites`. Then uncomment the `composite_structure` line in the Template Descriptor `dev.yaml`:
+6. If the export has a composite structure, it is at
+   `Tenants/<tenant>/Clouds/<cloud>/CompositeStructures/<name>.yml`. Copy it to
+   `templates/env_templates/dev/composite-structure.yml.j2`, replace each concrete environment name with the
+   `{{ current_env.name }}` macro (for example `env02-core` becomes `{{ current_env.name }}-core`), and drop the
+   CMDB-only `id` and `version` fields. Then uncomment the `composite_structure` line in the Template Descriptor
+   `dev.yaml`:
 
    ```yaml
    composite_structure: "{{ templates_dir }}/env_templates/dev/composite-structure.yml.j2"
@@ -132,17 +132,20 @@ folders under `Tenants/<tenant>/Clouds/` so they are not migrated or considered 
 
 Go through the Clouds in the CMDB export. Each Cloud is `Tenants/<tenant>/Clouds/<cloud>/`, with its record at
 `<cloud>.yml`. For each Cloud, read `apiUrl` from that record and derive the cluster name: take the host, drop
-the `api.` prefix and the base domain. Create the folder `/environments/<cluster>/`.
+the `api.` prefix and the base domain. Create the folder `/environments/<cluster>/` in that region's instance
+repository.
 
 For example, `https://api.cluster-01.example.com:6443` gives `/environments/cluster-01/`.
 
+Several Clouds can share one `apiUrl`, which means they sit on the same cluster. Deduplicate by cluster: create
+each `/environments/<cluster>/` folder once, however many Clouds map to it.
+
 > [!NOTE]
-> If several Clouds describe the same cluster, that is out of scope for this guide. Contact the EnvGene team to
-> work out that case.
+> Details how the region is derived from the cluster URL will be added later.
 
 ### 3.2 Create the Cloud Passport
 
-Do this once for each Cloud `Tenants/<tenant>/Clouds/<cloud>/`.
+Do this once per cluster.
 
 Copy the [Cloud Passport blank](/docs/cmdb-migration/blanks/cloud-passport.yml) to
 `environments/<cluster>/cloud-passport/<cluster>.yml`.
@@ -166,10 +169,16 @@ Copy the [Cloud Passport credentials blank](/docs/cmdb-migration/blanks/cloud-pa
 Copy only the attributes shown above for now. Other cloud parameters move in
 [Refactor migrated parameters](/docs/cmdb-migration/refactor-migrated-parameters.md).
 
+> [!NOTE]
+> `defaultCredentialsId` (the `CLOUD_DEPLOY_TOKEN`) can differ between Clouds on the same cluster. One
+> cluster-wide passport holds a single token. If the environments need different deploy tokens, that is out of
+> scope for this guide. Contact the EnvGene team to work out that case.
+
 ### 3.3 Identify the environments
 
-1. In the CMDB export, open `Tenants/<tenant>/Clouds/`. Each `<cloud>` folder is a cluster.
-2. For each cluster, list the folders under `Namespaces/`. Each folder is a namespace.
+1. In the CMDB export, open `Tenants/<tenant>/Clouds/`. Each `<cloud>` sits on the cluster you derived from its
+   `apiUrl` in 3.1.
+2. For each Cloud, list the folders under `Namespaces/`. Each folder is a namespace.
 3. Split each namespace name into its environment-name part and its `deployPostfix` part. For example,
    `env-01-billing` is environment `env-01` with postfix `billing`. Group the namespaces by their
    environment-name part.
@@ -184,7 +193,10 @@ Copy only the attributes shown above for now. Other cloud parameters move in
 For each environment from 3.3, create a folder named after the environment under its cluster,
 `environments/<cluster>/<env>/`. Put the
 [Environment Inventory blank](/docs/cmdb-migration/blanks/env_definition.yml) into it as
-`Inventory/env_definition.yml`.
+`Inventory/env_definition.yml`, then fill in:
+
+- `envTemplate.name`: the Template Descriptor name from 2.2, `dev`.
+- `envTemplate.artifact`: the template artifact `name:version` you published in 2.2.
 
 ### 3.5 Attach cloud inline parameters
 
@@ -238,15 +250,15 @@ applications:
 
 ### 3.8 Attach the cloud Resource Profile Override
 
-If the Cloud record has a `profile`, create a Resource Profile Override at
-`environments/<cluster>/<env>/Inventory/resource_profiles/cloud-profile.yml` from its `name` and `baseline`.
-Then reference it by file name without the `.yml` extension, as a single value under the `cloud` key in
-`envSpecificResourceProfiles`:
+If the Cloud record has a `profile`, copy the referenced profile from the export
+`Tenants/<tenant>/Profiles/<profile-name>.yml` to
+`environments/<cluster>/<env>/Inventory/resource_profiles/<profile-name>.yml`, keeping its name. Then reference
+it by name, without the `.yml` extension, as a single value under the `cloud` key in `envSpecificResourceProfiles`:
 
 ```yaml
 envTemplate:
   envSpecificResourceProfiles:
-    cloud: cloud-profile
+    cloud: <profile-name>
 ```
 
 ### 3.9 Attach namespace inline parameters
@@ -295,15 +307,16 @@ the Application `name`. Skip a context when no Application has parameters for it
 
 ### 3.12 Attach the namespace Resource Profile Override
 
-If the Namespace record has a `profile`, create a Resource Profile Override at
-`environments/<cluster>/<env>/Inventory/resource_profiles/<deployPostfix>-profile.yml` from its `name` and
-`baseline`. Then reference it by file name without the `.yml` extension, as a single value under the
-`<deployPostfix>` key in `envSpecificResourceProfiles`:
+If the Namespace record has a `profile`, copy the referenced profile from the export
+`Tenants/<tenant>/Profiles/<profile-name>.yml` to
+`environments/<cluster>/<env>/Inventory/resource_profiles/<profile-name>.yml`, keeping its name. Then reference
+it by name, without the `.yml` extension, as a single value under the `<deployPostfix>` key in
+`envSpecificResourceProfiles`:
 
 ```yaml
 envTemplate:
   envSpecificResourceProfiles:
-    bss: bss-profile
+    bss: dev_bss_override
 ```
 
 ### 3.13 Export the credentials
@@ -328,7 +341,7 @@ that file with every environment in the repository.
 
 ### 3.14 Add the Solution Descriptor
 
-Copy the environment's Solution Descriptor to
+Copy the environment's Full Solution Descriptor to
 `environments/<cluster>/<env>/Inventory/solution-descriptor/sd.yml`. There is one Full Solution Descriptor per
 environment.
 
@@ -336,20 +349,26 @@ environment.
 
 Once per instance repository, copy the
 [Artifact Definition blank](/docs/cmdb-migration/blanks/artifact-definition.yml) to
-`configuration/artifact_definitions/<name>.yaml`. The file name must match the `name` attribute inside it.
+`configuration/artifact_definitions/<name>.yaml`, then fill it in:
+
+- `name`: the `application` part of the `envTemplate.artifact` you set in 3.4, so the two match. The file name
+  must equal this `name`.
+- `groupId`, `artifactId`: the Maven coordinates of the template artifact you published in 2.2.
+- `registry`: the registry that holds it. Set `registry.credentialsId` to a Credential in
+  `/configuration/credentials/credentials.yml`.
 
 ## 4. Run generation to verify
 
 Trigger the instance pipeline to confirm the environment generates.
 
-| Parameter                | Value             |
-|--------------------------|-------------------|
-| `ENV_NAMES`              | `<cluster>/<env>` |
-| `ENV_BUILD`              | `true`            |
-| `GENERATE_EFFECTIVE_SET` | `true`            |
+| Parameter                  | Value             |
+|----------------------------|-------------------|
+| `ENV_NAMES`                | `<cluster>/<env>` |
+| `ENV_BUILDER`              | `true`            |
+| `GENERATE_EFFECTIVE_SET`   | `true`            |
 
 After the pipeline commits, open `environments/<cluster>/<env>/cloud.yml` and
 `Namespaces/<deploy-postfix>/namespace.yml`. Confirm the values match the CMDB source. Each generated value
 carries a comment naming its source. The Effective Set under `effective-set/` lists the applications from the
-Solution Descriptor. For the SD pipeline inputs, see
+Full Solution Descriptor. For the SD pipeline inputs, see
 [Generate an Effective Set](/docs/how-to/generate-effective-set.md).
