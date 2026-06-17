@@ -283,7 +283,7 @@ Export every credential from the Jenkins credential store into a single shared c
    name from the CMDB export folder `Tenants/<tenant>/`:
 
    ```
-   https://cloud-deployer.netcracker.com/cm/v1/domains/<tenant>/credentials
+   https://cmdb.example.com/cm/v1/domains/<tenant>/credentials
    ```
 
 2. In the **Authorization** tab, set the type to **Bearer Token** and enter your Jenkins API token in the **Token** (make sure the user is having admin privelege)
