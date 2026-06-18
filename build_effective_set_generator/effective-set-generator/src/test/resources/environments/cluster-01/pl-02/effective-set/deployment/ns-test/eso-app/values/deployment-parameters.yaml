@@ -39,7 +39,7 @@ SECRET_META: &id003
   normalizedSecretName: test-cluster-01--env-1--app-db-cred
   secretKeys:
   - remoteKeyName: password
-  secretStoreId: custom-store
+  secretStoreId: custom_store
 SERVER_HOSTNAME: cluster-01.qubership.org
 SSL_SECRET: defaultsslcertificate
 STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org

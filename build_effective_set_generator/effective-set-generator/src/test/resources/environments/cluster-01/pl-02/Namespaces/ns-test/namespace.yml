@@ -34,7 +34,7 @@ deployParameters:
     normalizedSecretName: test-cluster-01--env-1--app-db-cred
     secretKeys:
       - remoteKeyName: password
-    secretStoreId: custom-store
+    secretStoreId: custom_store
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []

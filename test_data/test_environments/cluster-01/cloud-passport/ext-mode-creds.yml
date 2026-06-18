@@ -1,18 +1,18 @@
 app-dbaas-cred:
   type: "external"
-  secretStore: "azure-store"
+  secretStore: "azure_store"
   create: false
   properties:
     - name: "username"
     - name: "password"
 app-maas-cred:
   type: "external"
-  secretStore: "azure-store"
+  secretStore: "azure_store"
   create: true
   properties:
     - name: "username"
     - name: "password"
 app-sidecar-token:
   type: "external"
-  secretStore: "vault-store"
+  secretStore: "vault_store"
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/envgene"
