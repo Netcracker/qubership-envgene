@@ -6,7 +6,7 @@ groupId: <group-id>
 artifactId: <artifact-id>
 registry:
   name: <registry-name>
-  credentialsId: <registry-cred-id>
+  credentialsId: artifactory-cred
   mavenConfig:
     repositoryDomainName: <registry-url>
     targetSnapshot: <snapshot-repo>

@@ -23,6 +23,8 @@ exposed as standalone CLI, because they are useful on their own, outside a migra
 
 The `migrate` runs the full flow and invokes those three as part of it.
 
+запуск
+
 ## `migrate`
 
 Reads the export and writes template and instance repository content in one run. It runs start to finish without
@@ -48,10 +50,10 @@ cmdbExport: ./cmdb-export
 templateRepo: ./template-repo
 # Instance repository per region, keyed by region name
 instanceRepos:
-  region-a: ./instance-repo-a
-  region-b: ./instance-repo-b
+  cn: ./instance-repo-a
+  mb: ./instance-repo-b
 # Region every cluster routes to until the cluster-URL-to-region rule is defined
-defaultInstanceRepo: ./instance-repo-a
+# defaultInstanceRepo: ./instance-repo-a
 ```
 
 Steps:
