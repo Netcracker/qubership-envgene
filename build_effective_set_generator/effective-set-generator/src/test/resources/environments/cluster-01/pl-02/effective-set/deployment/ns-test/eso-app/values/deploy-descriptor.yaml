@@ -1,0 +1,30 @@
+global: &id002
+  deployDescriptor: &id001
+    cloud-events-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.91.0_20241115-141230
+      full_image_name: artifactory.qubership.org:17208/product/test.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      git_branch: 0.91.0
+      git_revision: b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      git_url: https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      image: artifactory.qubership.org:17208/product/test.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      image_name: cloud-events-exporter
+      image_type: service
+      name: cloud-events-exporter
+      promote_artifacts: 'False'
+      qualifier: test.platform.system.monitoring_monitoring
+      version: 0.91.0-SNAPSHOT
+deployDescriptor: *id001
+cloud-events-exporter:
+  APPLICATION_NAME: eso-app
+  DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+  MANAGED_BY: argocd
+  deployDescriptor: *id001
+  global: *id002
+APPLICATION_NAME: eso-app
+DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+MANAGED_BY: argocd
