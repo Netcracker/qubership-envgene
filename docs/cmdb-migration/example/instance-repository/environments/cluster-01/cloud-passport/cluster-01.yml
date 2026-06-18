@@ -1,0 +1,13 @@
+# Cloud Passport reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud-passport
+
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.cluster-01.example.com
+  CLOUD_API_PORT: "6443"
+  CLOUD_PROTOCOL: https
+  CLOUD_PRIVATE_HOST: apps.cluster-01.example.com
+  CLOUD_PUBLIC_HOST: apps.cluster-01.example.com
+  CLOUD_DASHBOARD_URL: https://console.apps.cluster-01.example.com
+  CLOUD_DEPLOY_TOKEN: cluster-01-deploy-token
+  PRODUCTION_MODE: false

@@ -1,14 +1,4 @@
 # Artifact Definition reference:
 # https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#artifact-definition
 
-name: <artifact-name>
-groupId: <group-id>
-artifactId: <artifact-id>
-registry:
-  name: <registry-name>
-  credentialsId: artifactory-cred
-  mavenConfig:
-    repositoryDomainName: <registry-url>
-    targetSnapshot: <snapshot-repo>
-    targetStaging: <staging-repo>
-    targetRelease: <release-repo>
+<add text>

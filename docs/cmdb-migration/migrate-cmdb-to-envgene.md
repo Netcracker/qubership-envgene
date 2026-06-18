@@ -35,14 +35,16 @@ Refactoring parameters is out of scope of this guide.
 
 ## Prerequisites
 
-- A template and instance repositories, provided to you, already set up with the EnvGene pipeline.
-- Access to each CMDB instance (URL, username, and token) and the deploycli.
-- In the cloud CMDB, create an Application Definition for the env-template artifact according to
-  [guideline](<add link>)
+1. A template and instance repositories, provided to you, already set up with the EnvGene pipeline.
+2. Access to each CMDB instance (URL, username, and token) and the [deploycli](<add link>)
+3. In the cloud CMDB, create an Application Definition for the env-template artifact according to
+  [guideline](<add link>). The recommended Application Definition values are:
+
+<add text>
 
 ## 1. Export the CMDB configuration
 
-Produce the file export with the [deploycli](<add link>). The tool needs the CMDB URL, a username, and a token:
+Produce the file export with the deploycli. The tool needs the CMDB URL, a username, and a token:
 
 ```bash
 <deploycli-binary> config export tenants --all \
@@ -81,7 +83,7 @@ Do this for each environment type from 2.1:
 2. Clone one namespace template per `deployPostfix` in the type. Copy the namespace template from
    [`env_templates/namespaces`](/docs/cmdb-migration/templates/env_templates/namespaces/) to
    `templates/env_templates/namespaces/<deployPostfix>.yml.j2`, then replace `<deployPostfix>` in `name` so it
-   renders to the real namespace name. The generated `name` must match the real namespace.
+   renders to the real namespace name. **The rendered `name` must match the real namespace**.
 
    > [!NOTE]
    > If your namespace names do not follow the `{{ current_env.name }}-<deployPostfix>` pattern, that is out of
@@ -98,7 +100,8 @@ Do this for each environment type from 2.1:
 
 5. Add the Application Definitions and Registry Definitions the templates need, then parameterize the registry.
 
-   - From the centralized definitions repository, collect an AppDef for every application your solutions deploy.
+   - From the [centralized definitions repository](<add link>), collect an AppDef for every application your
+   solutions deploy.
    - Collect the RegDefs that those AppDefs reference.
    - Place each AppDef at `templates/appdefs/<application-name>.yml.j2` and each RegDef at
    `templates/regdefs/<registry-name>.yml.j2`. The `.yml.j2` extension marks them as templates.
@@ -294,32 +297,21 @@ envTemplate:
 
 ### 3.13 Export the credentials
 
-Export every credential from the Jenkins credential store into a single shared credential file, then associate
-that file with every environment in the repository.
-
-1. Export all credentials from the Jenkins credential store into one repository-wide file at
-   `environments/credentials/shared-credentials.yml`.
-
-2. In each environment's `env_definition.yml`, reference the file by name, without the `.yml` extension, in
-   `sharedMasterCredentialFiles`:
-
-   ```yaml
-   envTemplate:
-     sharedMasterCredentialFiles:
-       - shared-credentials
-   ```
+<add text>
 
 ### 3.14 Create the Artifact Definition
 
 Once per instance repository, copy the
 [Artifact Definition example](/docs/cmdb-migration/configuration/artifact_definitions/) to
-`configuration/artifact_definitions/<name>.yaml`, then fill it in:
+`configuration/artifact_definitions/<artifact-name>.yaml`, then fill it in to match the Application Definition
+you created in Prerequisites step 3:
 
-- `name`: the `application` part of the `envTemplate.artifact` you set in 3.4, so the two match. The file name
-  must equal this `name`.
-- `groupId`, `artifactId`: the Maven coordinates of the template artifact you published in 2.2.
-- `registry`: the registry that holds it. Set `registry.credentialsId` to a Credential in
-  `/configuration/credentials/credentials.yml`.
+- `name` and `artifactId`: set both to that Application Definition's name. If you changed it in the
+  prerequisites, change it here too. It must also equal the `application` part of the `envTemplate.artifact` you
+  set in 3.4, so the two match.
+- `groupId`, `registry`, and `mavenConfig`: use the same values as that Application Definition.
+
+The file name must equal this `name`.
 
 ## 4. Run generation to verify
 

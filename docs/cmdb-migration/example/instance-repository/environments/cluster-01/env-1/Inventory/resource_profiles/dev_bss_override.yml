@@ -1,0 +1,15 @@
+# Environment Specific Resource Profile Override reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-specific-resource-profile-override
+
+name: dev_bss_override
+baseline: dev
+description: "Override for the dev profile of the BSS namespace"
+applications:
+  - name: "Cloud-Core"
+    services:
+      - name: "facade-operator"
+        parameters:
+          - name: "MEMORY_LIMIT"
+            value: "550Mi"
+          - name: "MEMORY_REQUEST"
+            value: "550Mi"

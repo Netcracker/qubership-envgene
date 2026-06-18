@@ -1,0 +1,26 @@
+# Cloud Template reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud-template
+
+name: "{{ current_env.cloudNameWithCluster }}"
+apiUrl: "{{ current_env.cluster.cloud_api_url }}"
+apiPort: "{{ current_env.cluster.cloud_api_port }}"
+privateUrl: ""
+publicUrl: "{{ current_env.cluster.cloud_public_url }}"
+dashboardUrl: "https://dashboard.{{ current_env.cluster.cloud_public_url }}"
+labels: []
+defaultCredentialsId: ""
+protocol: "{{ current_env.cluster.cloud_api_protocol }}"
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+maasConfig:
+  enable: false
+vaultConfig:
+  url: ""
+  credentialsId: ""
+  enable: false
+consulConfig:
+  enabled: false

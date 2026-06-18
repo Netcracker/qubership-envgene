@@ -1,0 +1,7 @@
+# Cloud Passport Credential File reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential
+
+cluster-01-deploy-token:
+  type: secret
+  data:
+    secret: ""
