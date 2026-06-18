@@ -309,7 +309,7 @@ EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. 
 
 Two modes are supported. The modes are **mutually exclusive** — a payload that contains both a top-level `deployment`/`runtime` key and a `namespaces` key is rejected with a validation error.
 
-**Global mode** — parameters applied to every namespace:
+**Global mode** — parameters applied to every namespace.
 
 ```json
 {
@@ -324,12 +324,12 @@ Two modes are supported. The modes are **mutually exclusive** — a payload that
 }
 ```
 
-**Namespace-scoped mode** — parameters applied only to specific namespaces (identified by their folder name under `effective-set/deployment/`). Namespaces not listed receive an empty `custom-params.yaml`:
+**Namespace-scoped mode** — parameters applied only to specific namespaces. If a namespace listed in the payload does not exist in the environment, the Calculator raises a validation error.
 
 ```json
 {
   "namespaces": {
-    "<namespace-folder-name>": {
+    "<namespace-name>": {
       "deployment": {
         "<key>": "<value>",
          "...": "..."
