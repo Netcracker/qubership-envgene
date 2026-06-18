@@ -130,7 +130,7 @@ Do this once per cluster.
 > [!NOTE]
 > This is a minimal Cloud Passport. If you already have a Cloud Passport for the cluster, use it instead.
 
-Copy the [Cloud Passport example](/docs/cmdb-migration/environments/cluster-1/cloud-passport/cloud-passport.yml) to
+Copy the [Cloud Passport example](/docs/cmdb-migration/environments/cluster-01/cloud-passport/cloud-passport.yml) to
 `environments/<cluster>/cloud-passport/<cluster>.yml`.
 
 Fill the `cloud` block of `<cluster>.yml` from the Cloud record `<cloud>.yml`. Each value below is the source
@@ -147,7 +147,7 @@ cloud:
 ```
 
 Copy the
-[Cloud Passport credentials example](/docs/cmdb-migration/environments/cluster-1/cloud-passport/cloud-passport-creds.yml)
+[Cloud Passport credentials example](/docs/cmdb-migration/environments/cluster-01/cloud-passport/cloud-passport-creds.yml)
 to `environments/<cluster>/cloud-passport/<cluster>-creds.yml`.
 
 Copy only the attributes shown above for now. Other cloud parameters move in
@@ -168,7 +168,7 @@ from 2.1.
 
 For each environment from 3.3, create a folder named after the environment under its cluster,
 `environments/<cluster>/<env>/`. Put the
-[Environment Inventory example](/docs/cmdb-migration/environments/cluster-1/env-1/Inventory/env_definition.yml)
+[Environment Inventory example](/docs/cmdb-migration/environments/cluster-01/env-1/Inventory/env_definition.yml)
 into it as `Inventory/env_definition.yml`, then fill in:
 
 - `envTemplate.name`: the template name for the environment's type (`single` or `composite`).
