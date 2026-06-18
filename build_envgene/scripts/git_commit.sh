@@ -120,6 +120,9 @@ if [ -d environments ]; then
     done
 fi
 
+cp build.env /tmp/build.env
+cp ARGO_DPG_CONTEXT.env /tmp/ARGO_DPG_CONTEXT.env
+
 # Copying cred files modified as part of cred rotation job.
 CREDS_FILE="environments/credfilestoupdate.yml"
 if [ -f "$CREDS_FILE" ]; then
@@ -259,8 +262,17 @@ if [ -d /tmp/updated_creds ]; then
     done
 fi
 
+echo "Restoring build.env"
+cp /tmp/build.env build.env
+
+echo "Restoring ARGO_DPG_CONTEXT.env"
+cp /tmp/ARGO_DPG_CONTEXT.env ARGO_DPG_CONTEXT.env
+
 echo "Checking changes..."
-git add . ":(exclude)environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/effective-set"
+git add . \
+    ":(exclude)environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/effective-set" \
+    ":(exclude)build.env" \
+    ":(exclude)ARGO_DPG_CONTEXT.env"
 diff_status=0
 
 git diff --cached --name-only
