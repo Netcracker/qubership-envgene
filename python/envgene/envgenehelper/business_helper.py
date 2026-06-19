@@ -1,5 +1,4 @@
 import re
-import warnings
 from dataclasses import InitVar, dataclass, field
 from enum import auto, StrEnum
 from os import getenv
@@ -9,6 +8,7 @@ from typing import overload
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
+from .json_helper import find_file_in_schemas
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
@@ -82,7 +82,7 @@ def get_current_env_dir_from_env_vars() -> Path:
 
 
 def check_environment_is_valid_or_fail(environment_name, cluster_name, instances_dir, skip_env_definition_check=False,
-                                       validate_env_definition_by_schema=False, schemas_dir=""):
+                                       validate_env_definition_by_schema=False):
     env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
     # check that environment directory exists
     if not check_dir_exists(env_dir):
@@ -100,14 +100,12 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
             f"Env_definition.yml is not found in path '{env_definition_path}' for environment {cluster_name}/{environment_name}. Please specify correct env_definition.yml in '{cluster_name}/{environment_name}/Inventory' folder")
         raise ReferenceError(f"Validation of environment folder '{env_dir}' failed. See logs above.")
     if validate_env_definition_by_schema:
-        check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir)
+        check_env_definition_is_valid_or_fail(env_definition_path)
     logger.info(f"Environment {cluster_name}/{environment_name} validation is succesful")
 
 
-def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
-    if not schemas_dir:
-        schemas_dir = get_schema_dir()
-    schemaPath = f"{schemas_dir}/env-definition.schema.json"
+def check_env_definition_is_valid_or_fail(env_definition_path):
+    schemaPath = find_file_in_schemas("env-definition.schema.json")
     try:
         validate_yaml_by_scheme_or_fail(env_definition_path, schemaPath)
     except ValueError:
@@ -123,7 +121,7 @@ def getTemplateArtifactName(env_definition_yaml):
         return gav["artifact_id"]
 
 
-def getEnvDefinition(env_dir=None):
+def getEnvDefinition(env_dir = None):
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     env_definition_path = getEnvDefinitionPath(env_dir)
     if not check_file_exists(env_definition_path):
@@ -326,12 +324,10 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
-
 class NamespaceRole(StrEnum):
     COMMON = auto()
     ORIGIN = auto()
     PEER = auto()
-
 
 def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
     if not bgd_object:
@@ -343,7 +339,6 @@ def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> Namespac
     if bgd_object['peerNamespace']['name'] == ns_name:
         return NamespaceRole.PEER
     return NamespaceRole.COMMON
-
 
 @dataclass
 class NamespaceFile:
@@ -367,7 +362,6 @@ def get_namespaces_path(env_dir: Path | None = None) -> Path:
     logger.debug(namespaces_path)
     return namespaces_path
 
-
 def get_bgd_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     bgd_path = env_dir.joinpath('bg_domain.yml')
@@ -381,7 +375,6 @@ def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     logger.debug(bgd_object)
     return bgd_object
 
-
 def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces_path = get_namespaces_path(env_dir)
     if not check_dir_exists(str(namespaces_path)):
@@ -391,7 +384,6 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces = [NamespaceFile(path=p, bgd=bgd) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
-
 
 def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
     base_dir = base_dir if base_dir else getenv_with_error('CI_PROJECT_DIR')
@@ -405,39 +397,9 @@ def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
         result[NamespaceRole.PEER] = peer_template_path
     return result
 
-
 def is_from_template_dir(file_path: str) -> bool:
     return bool(TEMPLATE_DIR_PATTERN.search(file_path))
 
 
 def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
-
-
-def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
-    instances_dir = getenv_with_error('CI_PROJECT_DIR')
-    env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")
-    return env_dir_path
-
-
-def get_schema_dir() -> Path:
-    return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
-
-
-def is_inventory_generation_needed(inventory_params):
-    env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT')
-    env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMS')
-    env_template_name = inventory_params.get('ENV_TEMPLATE_NAME')
-    env_inventory_content = inventory_params.get('ENV_INVENTORY_CONTENT')
-
-    if env_inventory_content and (env_inventory_init or env_specific_parameters or env_template_name):
-        warnings.warn(
-            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, and ENV_TEMPLATE_NAME are deprecated",
-            DeprecationWarning
-        )
-        raise ValueError(
-            "ENV_INVENTORY_CONTENT cannot be used together with "
-            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, or ENV_TEMPLATE_NAME"
-        )
-
-    return env_inventory_content or env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
