@@ -126,6 +126,13 @@ class TestCredentialDiffMinimization:
         _assert_only_first_cred_secret_and_mac_differ_from_head(head_encrypted, cred_path)
 
     @pytest.mark.unit
+    def test_deleted_cred_file_does_not_crash(self, cred_repo):
+        repo, _, _ = cred_repo
+        repo.git.rm(CRED_REL_PATH)
+
+        mcd.main()
+
+    @pytest.mark.unit
     def test_new_cred_file_is_left_unchanged(self, cred_repo):
         repo, tmp_path, _ = cred_repo
         new_cred_path = tmp_path / NEW_CRED_REL_PATH

@@ -10,14 +10,21 @@ Artifact size limit: **1500 MB**
 
 ### First Job in Pipeline
 
-1. Performs `git checkout`
-2. Gets fresh copy of repository
-3. Modifies files (optional)
-4. Saves required paths to job artifacts
+1. Sets `GIT_STRATEGY: empty` so GitLab Runner skips the default clone
+2. Runs sparse checkout as the first script step in the job container, pulling only the paths required for the target environment
+3. Gets a filtered copy of the repository on disk
+4. Modifies files (optional)
+5. Saves required paths to job artifacts
+
+Sparse checkout paths are computed by `get_sparse_checkout_paths()` in
+[`build_pipegene/scripts/pipeline_helper.py`](/build_pipegene/scripts/pipeline_helper.py). The include list is
+`REPO_ROOT_PATHS` plus the same environment paths used for job artifacts (`get_env_artifact_paths()`).
+When `CRED_ROTATION_PAYLOAD` is set, checkout also includes all of `environments/<cluster-name>/` so credential
+rotation can scan sibling environments in the same cluster.
 
 ### Intermediate Jobs
 
-- Do NOT checkout repository
+- Do NOT checkout repository (`GIT_STRATEGY: empty`)
 - Receive files from previous job's artifacts
 - Modify files (optional)
 - Save required paths to job artifacts
@@ -34,12 +41,6 @@ Artifact size limit: **1500 MB**
 All jobs in the pipeline save **only** these paths to artifacts:
 
 - `/environments/`
-<!-- - `/environments/<cluster-name>/<env-name>`
-- `/environments/<cluster-name>/cloud-passport`
-- `/environments/<cluster-name>/parameters`
-- `/environments/<cluster-name>/credentials`
-- `/environments/<cluster-name>/resource_profiles`
-- `/environments/<cluster-name>/shared_template_variables` -->
 - `/configuration/`
 - `/sboms/`
 - `/templates/`
@@ -49,3 +50,6 @@ These paths are:
 1. Modified by various jobs during pipeline execution
 2. Needed by downstream jobs
 3. Committed to Git by `git_commit_job`
+
+Shared directories under `environments/` that are included in both sparse checkout and artifacts are defined in `get_shared_entity_paths()` in
+[`build_pipegene/scripts/pipeline_helper.py`](/build_pipegene/scripts/pipeline_helper.py).
