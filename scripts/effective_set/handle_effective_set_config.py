@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 
-from envgenehelper import logger, get_schema_dir
+from envgenehelper import logger, find_file_in_schemas
 
 
 def handle_effective_set_config(config_str):
@@ -39,7 +39,7 @@ def handle_effective_set_config(config_str):
     os.makedirs(schema_output_dir, exist_ok=True)
     logger.info(f"Ensured directory exists: {schema_output_dir}")
 
-    image_schema_dir = f"{get_schema_dir()}/registered_consumer_specific"
+    image_schema_dir = find_file_in_schemas("registered_consumer_specific")
 
     for consumer in consumers:
         schema_json = consumer.get("schema")

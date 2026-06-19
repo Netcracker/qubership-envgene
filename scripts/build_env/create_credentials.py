@@ -1,5 +1,3 @@
-from pathlib import Path
-import os
 from envgenehelper import *
 
 #const
@@ -198,7 +196,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
 def create_credentials(envDir, envInstancesDir, instancesDir) :
     logger.info(f"Start to create credentials: envDir={envDir}, envInstancesDir={envInstancesDir}, instancesDir={instancesDir}")
     logger.info(f"Creating credentials for environment directory: {envDir}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = find_file_in_schemas("credential.schema.json")
     resultingCreds = []
     #tenant
     tenantFileName = envDir+"/tenant.yml"

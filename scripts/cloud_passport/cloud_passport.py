@@ -25,7 +25,7 @@ def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment) :
             store_value_to_yaml(cloudYaml["deployParameters"], paramKey, paramValue, comment)
 
 def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
-    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
+    cloud_schema = find_file_in_schemas("cloud.schema.json")
     # cloud
     cloudYamlPath = f"{env_dir}/cloud.yml"
     cloudYaml = openYaml(cloudYamlPath)
@@ -94,7 +94,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
 
 def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_dir, comment):
     logger.info(f"Searching credentials for cloud passport {cloud_passport_file_path}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = find_file_in_schemas("credential.schema.json")
     # first searching in subfolder
     passportSubfolderPath = f'{getDirName(cloud_passport_file_path)}/credentials/{cloud_passport_name}.yml'
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"
