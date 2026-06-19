@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 
-from envgenehelper import logger, get_schema_dir, find_file_in_schemas
+from envgenehelper import logger, find_file_in_schemas
 
 
 def handle_effective_set_config(config_str):

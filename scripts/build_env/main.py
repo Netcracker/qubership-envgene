@@ -90,9 +90,9 @@ def handle_template_override(render_dir):
         template_path_stem = Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
-            schema_path = get_schema_dir() / "cloud.schema.json"
+            schema_path = find_file_in_schemas("cloud.schema.json")
         if template_path_stem == 'namespace':
-            schema_path = get_schema_dir() / "namespace.schema.json"
+            schema_path = find_file_in_schemas("namespace.schema.json")
         beautifyYaml(template_path, schema_path)
         deleteFile(file)
 
@@ -175,7 +175,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
-                                                                           get_schema_dir() / "resource-profile.schema.json")
+                                                                           find_file_in_schemas("resource-profile.schema.json"))
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
@@ -254,7 +254,7 @@ def validate_parameter_files(param_files):
     for param_file_path in param_files:
         rel_param_file_path = os.path.relpath(param_file_path, os.getenv('CI_PROJECT_DIR'))
         try:
-            validate_yaml_by_scheme_or_fail(param_file_path, get_schema_dir() / "paramset.schema.json")
+            validate_yaml_by_scheme_or_fail(param_file_path, find_file_in_schemas("paramset.schema.json"))
         except ValueError:
             errors.append(f'Parameter file at {rel_param_file_path} is invalid, look for details above')
         file_name = extractNameFromFile(param_file_path)

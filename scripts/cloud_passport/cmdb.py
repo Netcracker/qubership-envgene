@@ -2,7 +2,7 @@ from pathlib import Path
 
 from yaml import safe_load, safe_dump
 
-from envgenehelper import get_schema_dir, find_file_in_schemas
+from envgenehelper import find_file_in_schemas
 from envgenehelper.yaml_helper import beautifyYaml
 
 
