@@ -30,6 +30,10 @@ def _minimize_single_cred_file(
         logger.warning(f'Cannot read credential file at HEAD, skipping minimize for {rel_path}: {exc}')
         return
 
+    if not full_path.is_file():
+        logger.debug(f'Skipping minimize for missing working-tree cred file: {rel_path}')
+        return
+
     source_sha = hashlib.sha256(full_path.read_bytes()).hexdigest()
     cred_path = Path(rel_path)
     cached_path = cache_dir / cred_path.parent / f'{cred_path.name}.{head_blob_sha}.{source_sha}'
