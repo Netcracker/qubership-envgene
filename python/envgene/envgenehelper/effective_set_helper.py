@@ -43,7 +43,7 @@ def resolve_es_generation_mode(cluster_name, env_name):
     merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
 
     sd_path = get_sd_dir_by_env_cluster_name(cluster_name, env_name) / SD_FILE_NAME
-    sd_input = bool(getenv("SD_DATA") or bool(getenv("SD_VERSION")))
+    sd_input = bool(getenv("SD_DATA") or bool(getenv("SD_VERSION"))) or bool(getenv("APPLICATION_VERSIONS"))
     any_sd = sd_path.exists() and sd_input
 
     if not any_sd:

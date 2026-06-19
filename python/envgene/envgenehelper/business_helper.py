@@ -6,6 +6,7 @@ from os import getenv
 from pathlib import Path
 from typing import overload
 
+from envgenehelper import safe_yaml
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
@@ -441,3 +442,17 @@ def is_inventory_generation_needed(inventory_params):
         )
 
     return env_inventory_content or env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
+
+
+def get_version(entry: str) -> tuple[str, str]:
+    error = f"Invalid appver format: '{entry}'. Expected 'name:version'"
+    if ":" not in entry:
+        raise ValueError(error)
+
+    app, version = entry.split(":", 1)
+    app, version = app.strip(), version.strip()
+
+    if not app or not version:
+        raise ValueError(error)
+    return app, version
+
