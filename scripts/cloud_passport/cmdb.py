@@ -1,8 +1,9 @@
 from pathlib import Path
 
 from yaml import safe_load, safe_dump
+
+from envgenehelper import get_schema_dir, find_file_in_schemas
 from envgenehelper.yaml_helper import beautifyYaml
-from envgenehelper import get_schema_dir
 
 
 def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:
@@ -30,7 +31,7 @@ def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:
 
 def update_creds_to_cmdb_format(creds_path: str, schema_path: str = None):
     if not schema_path:
-        schema_path = f"{get_schema_dir()}/credential.schema.json"
+        schema_path = find_file_in_schemas("credential.schema.json")
     creds_path = Path(creds_path)
     data = safe_load(creds_path.read_text(encoding="utf-8"))
     cmdb_mapped = map_creds_to_cmdb_format(data)
