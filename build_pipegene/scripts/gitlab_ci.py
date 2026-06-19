@@ -15,7 +15,15 @@ from inventory_generation_job import prepare_inventory_generation_job, is_invent
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
 from effective_set_job import prepare_generate_effective_set_job
-from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job, get_env_artifact_paths, do_checkout, is_trigger_job
+from pipeline_helper import (
+    get_gav_coordinates_from_build,
+    find_predecessor_job,
+    get_env_artifact_paths,
+    do_checkout,
+    is_trigger_job,
+    get_sparse_checkout_paths,
+    REPO_ROOT_PATHS,
+)
 from envgenehelper.collections_helper import split_multi_value_param
 
 
@@ -200,6 +208,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             sorted_pipeline.add_variables(**{key: value})
     sorted_pipeline.add_tags(params["GITLAB_RUNNER_TAG_NAME"])
 
+    cred_rotation_active = bool(params.get("CRED_ROTATION_PAYLOAD"))
+
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     for job in sorted_pipeline.find_jobs(JobFilter()):
         if is_trigger_job(job):
@@ -211,17 +221,15 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         env_artifact_paths = get_env_artifact_paths(job_cluster_name, job_env_name)
         job.artifacts.add_paths(*env_artifact_paths)
 
-        job.artifacts.add_paths(
-            'appdefs/',
-            'regdefs/',
-            'configuration/',
-            'sboms/',
-            'templates/',
-            'tmp/',
-        )
+        job.artifacts.add_paths(*REPO_ROOT_PATHS, 'tmp/')
 
         if do_checkout(job):
-            job.add_variables(GIT_DEPTH="1")
+            sparse_paths = get_sparse_checkout_paths(
+                job_cluster_name,
+                job_env_name,
+                include_full_cluster=cred_rotation_active,
+            )
+            job.set_sparse_checkout(sparse_paths)
         else:
             job.add_variables(GIT_STRATEGY="empty")
 

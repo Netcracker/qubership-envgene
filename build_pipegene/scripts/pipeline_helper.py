@@ -1,3 +1,5 @@
+import shlex
+
 from gcip import Job, Need, TriggerJob
 from typing import Optional, List, Dict, Union, Any
 from envgenehelper import (
@@ -9,6 +11,15 @@ from envgenehelper import (
     get_or_create_nested_yaml_attribute,
 )
 from os import getenv
+
+REPO_ROOT_PATHS = [
+    "appdefs/",
+    "regdefs/",
+    "configuration/",
+    "sboms/",
+    "templates/",
+]
+
 
 class JobExtended(Job):
     def __init__(
@@ -24,10 +35,22 @@ class JobExtended(Job):
     ) -> None:
         super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
         self.timeout = timeout
+        self._hooks: Optional[Dict[str, List[str]]] = None
+
+    def set_sparse_checkout(self, paths: List[str]) -> None:
+        paths_args = " ".join(shlex.quote(path) for path in paths)
+        self.add_variables(GIT_STRATEGY="none")
+        self._hooks = {
+            "pre_get_sources_script": [
+                f"/module/scripts/utils/sparse_checkout.sh {paths_args}",
+            ],
+        }
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
         job_data['timeout'] = self.timeout
+        if self._hooks:
+            job_data['hooks'] = self._hooks
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):
@@ -145,12 +168,12 @@ def get_env_artifact_paths(cluster_name: str, env_name: str) -> list[str]:
     ]
     shared_entity_paths = get_shared_entity_paths(cluster_name)
     env_artifact_paths.extend(shared_entity_paths)
-    
+
     return env_artifact_paths
 
 
 def get_shared_entity_paths(cluster_name: str) -> list[str]:
-    ENV_ARTIFACT_SUBDIRS = [
+    env_artifact_subdirs = [
         "configuration",
         "configurations",
         "resource_profiles",
@@ -164,17 +187,29 @@ def get_shared_entity_paths(cluster_name: str) -> list[str]:
         "shared-credentials",
     ]
 
-    CLUSTER_ONLY_SUBDIRS = [
+    cluster_only_subdirs = [
         "app-deployer",
         "cloud-deployer",
     ]
-    
-    paths = [f"environments/{d}" for d in ENV_ARTIFACT_SUBDIRS]
+
+    paths = [f"environments/{d}" for d in env_artifact_subdirs]
 
     paths.extend(
         f"environments/{cluster_name}/{d}"
-        for d in ENV_ARTIFACT_SUBDIRS + CLUSTER_ONLY_SUBDIRS
+        for d in env_artifact_subdirs + cluster_only_subdirs
     )
-        
+
+    return paths
+
+
+def get_sparse_checkout_paths(
+    cluster_name: str,
+    env_name: str,
+    include_full_cluster: bool = False,
+) -> list[str]:
+    paths = list(REPO_ROOT_PATHS)
+    paths.extend(get_env_artifact_paths(cluster_name, env_name))
+    if include_full_cluster:
+        paths.append(f"environments/{cluster_name}/")
     return paths
 
