@@ -6,6 +6,8 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
+cd "${CI_PROJECT_DIR}"
+
 git config --global init.defaultBranch main
 git init .
 git remote add origin "${CI_REPOSITORY_URL}"

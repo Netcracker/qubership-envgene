@@ -35,22 +35,15 @@ class JobExtended(Job):
     ) -> None:
         super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
         self.timeout = timeout
-        self._hooks: Optional[Dict[str, List[str]]] = None
 
     def set_sparse_checkout(self, paths: List[str]) -> None:
         paths_args = " ".join(shlex.quote(path) for path in paths)
         self.add_variables(GIT_STRATEGY="none")
-        self._hooks = {
-            "pre_get_sources_script": [
-                f"/module/scripts/utils/sparse_checkout.sh {paths_args}",
-            ],
-        }
+        self.prepend_scripts(f"/module/scripts/utils/sparse_checkout.sh {paths_args}")
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
         job_data['timeout'] = self.timeout
-        if self._hooks:
-            job_data['hooks'] = self._hooks
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):

@@ -11,7 +11,7 @@ Artifact size limit: **1500 MB**
 ### First Job in Pipeline
 
 1. Sets `GIT_STRATEGY: none` so GitLab Runner skips the default clone
-2. Runs a sparse checkout hook (`hooks.pre_get_sources_script`) that pulls only the paths required for the target environment
+2. Runs sparse checkout as the first script step in the job container, pulling only the paths required for the target environment
 3. Gets a filtered copy of the repository on disk
 4. Modifies files (optional)
 5. Saves required paths to job artifacts

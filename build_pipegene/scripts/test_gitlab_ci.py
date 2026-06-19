@@ -120,12 +120,9 @@ def test_sparse_checkout_on_first_job():
     first_job = _find_job_by_stage(result, "app_reg_def_render")
 
     assert first_job["variables"]["GIT_STRATEGY"] == "none"
-    assert "hooks" in first_job
-    assert "pre_get_sources_script" in first_job["hooks"]
-    assert first_job["hooks"]["pre_get_sources_script"][0].startswith(
-        "/module/scripts/utils/sparse_checkout.sh "
-    )
-    assert "environments/cluster-01/env-01" in first_job["hooks"]["pre_get_sources_script"][0]
+    assert first_job["script"][0].startswith("/module/scripts/utils/sparse_checkout.sh ")
+    assert "environments/cluster-01/env-01" in first_job["script"][0]
+    assert "hooks" not in first_job
 
 
 def test_downstream_job_uses_empty_git_strategy():
