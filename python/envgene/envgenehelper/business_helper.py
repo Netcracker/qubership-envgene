@@ -4,7 +4,7 @@ from dataclasses import InitVar, dataclass, field
 from enum import auto, StrEnum
 from os import getenv
 from pathlib import Path
-from typing import overload
+from typing import overload, Callable
 
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
@@ -421,7 +421,7 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
 
 
 def get_schema_dir() -> Path:
-    return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
+    return Path(__file__).resolve().parents[3] / "schemas"
 
 
 def is_inventory_generation_needed(inventory_params):
