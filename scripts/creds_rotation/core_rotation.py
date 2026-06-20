@@ -1,7 +1,7 @@
 from typing import Optional, Dict, List, Any
 from creds_rotation.models import PayloadEntry, RotationResult, ParameterReference, CredMap
 from creds_rotation.utils.search_utils import get_ns_content, get_app_content, resolve_param, search_yaml_files
-from creds_rotation.utils.cred_utils import extract_credential
+from creds_rotation.utils.cred_utils import extract_credential, get_matching_cred_files
 import envgenehelper.logger as logger
 from envgenehelper.errors import ValidationError, ReferenceError
 
@@ -48,9 +48,9 @@ def process_entry_in_payload(
     if not value_to_search or not cred_id:
         raise ReferenceError(ErrorMessages.MISSING_CRED.format(target_file=target_file, context=entry.context),
                              error_code=ErrorCodes.INVALID_INPUT_CODE)
-
-    shared_match_files = [k for k, v in shared_cred_content.items() if cred_id in v]
-    env_cred_files = [k for k, v in env_cred_content.items() if cred_id in v]
+    
+    shared_match_files = get_matching_cred_files(files_content=shared_cred_content, cred_id=cred_id)
+    env_cred_files = get_matching_cred_files(files_content=env_cred_content, cred_id=cred_id)
 
     # Constructing map for file updation
     all_cred_files = shared_match_files + env_cred_files
