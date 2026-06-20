@@ -50,3 +50,20 @@ def test_secret_changed_present(setup_env, cluster_name, env_name):
     assert "secretChanged" in content, "'secretChanged' not found in YAML file"
     assert "userChanged" in content, "'userChanged' not found in YAML file"
     assert "passwordChanged" in content, "'passwordChanged' not found in YAML file"
+
+@pytest.mark.parametrize("cluster_name, env_name", [("cluster-01", "env-extcred")])
+def test_fail_rotation_external_cred(setup_env, cluster_name, env_name):
+    os.environ["CRED_ROTATION_FORCE"] = "false"
+    os.environ["CRED_ROTATION_PAYLOAD"] = json.dumps({
+        "rotation_items": [
+            {
+                "namespace": "env-extcred-app",
+                "context": "deployment",
+                "parameter_key": "SHARED_PASSWORD",
+                "parameter_value": "s3cr3tN3wLogin"
+            }
+        ]
+    })
+    with pytest.raises(Exception) as exc_info:
+        cred_rotation()
+    assert "has an external credential reference and must be rotated directly in secret store" in str(exc_info.value)
