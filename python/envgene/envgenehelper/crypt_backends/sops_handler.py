@@ -6,7 +6,7 @@ import tempfile
 import shutil
 
 from ..business_helper import getenv_with_error
-from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute
+from ..yaml_helper import get_empty_yaml, openYaml, readYaml, get_or_create_nested_yaml_attribute
 from ..logger import logger
 
 from .constants import *
@@ -89,6 +89,19 @@ def _get_minimized_diff(file_path, old_file_path, public_key, secret_key=None):
     return tmp_path
 
 
+def _is_empty_cred_file(file_path: str) -> bool:
+    try:
+        if os.path.getsize(file_path) == 0:
+            return True
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            text = f.read().strip()
+    except OSError:
+        return True
+    if not text:
+        return True
+    return text in ('{}', '---', 'null', '~')
+
+
 def _return_sops_result(file_path, mode, in_place, load_result, result=None):
     logger.info(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
@@ -105,10 +118,9 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     if not public_key:
         public_key = getenv_with_error("PUBLIC_AGE_KEYS")
 
-    file_content = openYaml(file_path)
-    if file_content == {}:
+    if _is_empty_cred_file(file_path):
         logger.info(f'File is empty, skipping de/encryption. Path: {file_path}')
-        return file_content if load_result else None
+        return get_empty_yaml() if load_result else None
 
     encrypted = is_encrypted_SOPS(file_path)
     if encrypted and mode == "encrypt":

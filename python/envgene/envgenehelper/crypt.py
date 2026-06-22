@@ -160,6 +160,15 @@ def check_for_encrypted_files(files):
             raise ValueError(err_msg.format(f))
 
 
+def _batch_cred_op(files, op_func, **kwargs):
+    backend = kwargs.get('crypt_backend') or get_crypt_backend()
+    if backend == 'Fernet':
+        for file_path in sorted(files):
+            op_func(file_path, **{**kwargs, 'load_result': False})
+        return
+    _parallel_cred_op(files, op_func, **kwargs)
+
+
 def _parallel_cred_op(files, op_func, **kwargs):
     file_list = sorted(files)
     if not file_list:
@@ -196,7 +205,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
 
     backend = get_crypt_backend()
     t0 = time.perf_counter()
-    _parallel_cred_op(files, decrypt_file, **kwargs)
+    _batch_cred_op(files, decrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
     logger.debug(
         f'[envgene.crypt] decrypt_all_cred_files_for_env: files={len(files)} '
@@ -212,7 +221,7 @@ def encrypt_all_cred_files_for_env(**kwargs):
     logger.debug(files)
     backend = get_crypt_backend()
     t0 = time.perf_counter()
-    _parallel_cred_op(files, encrypt_file, **kwargs)
+    _batch_cred_op(files, encrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
     logger.debug(
         f'[envgene.crypt] encrypt_all_cred_files_for_env: files={len(files)} '

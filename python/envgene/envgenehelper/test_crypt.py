@@ -224,6 +224,30 @@ def test_parallel_cred_op_sequential_when_minimize_diff():
         mock_executor.assert_called_once_with(max_workers=1)
 
 
+@pytest.mark.parametrize("crypt_kwargs", [crypt_test_data[1]], indirect=True)
+def test_batch_cred_op_uses_sequential_for_fernet(crypt_kwargs, tmp_path):
+    cred_file = crypt_kwargs['file_path']
+    second_file = tmp_path / 'credentials.yml'
+    second_file.write_text(open(cred_file, encoding='utf-8').read(), encoding='utf-8')
+    files = {cred_file, str(second_file)}
+    batch_kwargs = {
+        k: v for k, v in crypt_kwargs.items() if k != 'file_path'
+    }
+    batch_kwargs.update(
+        crypt_backend='Fernet',
+        ignore_is_crypt=True,
+        is_crypt=True,
+    )
+
+    with patch('envgenehelper.crypt.get_all_necessary_cred_files', return_value=files), \
+            patch('envgenehelper.crypt.ThreadPoolExecutor') as mock_executor:
+        encrypt_all_cred_files_for_env(**batch_kwargs)
+        mock_executor.assert_not_called()
+
+        decrypt_all_cred_files_for_env(**batch_kwargs)
+        mock_executor.assert_not_called()
+
+
 def test_minimize_diff(crypt_kwargs):
     cred_file = crypt_kwargs['file_path']
 
