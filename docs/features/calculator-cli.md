@@ -763,7 +763,11 @@ For each component with the MIME type `application/octet-stream`, if its `.compo
 - The key is the value of `.components[].properties[?name=deploy_param].value`.
 - The value is the value of `.components[].properties[?name=full_image_name].value`.
 
-If the key of such parameter (i.e., `.components[].properties[?name=deploy_param].value`) matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention), the parameter is **not** added.
+If the key of such parameter (i.e., `.components[].properties[?name=deploy_param].value`) matches the name of one of
+the [services](#version-20-service-inclusion-criteria-and-naming-convention), it is **not** added at the root level,
+because that root-level key is already occupied by the service's section. Instead, it is added only under the `global`
+key. Through the per-service alias (`<service-name>: *id001`), the parameter remains available within each service's
+section under the same key.
 
 All such parameters are added to `deployment-parameters.yaml` as `<image-params-key>: <image-params-value>`, as described in the structure [above](#version-20deployment-parameter-context-deployment-parametersyaml).
 
