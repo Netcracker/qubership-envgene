@@ -36,6 +36,8 @@
     - [UC-SD-19: Single SD\_DATA with SD\_DELTA=true](#uc-sd-19-single-sd_data-with-sd_deltatrue)
     - [UC-SD-19a: Single SD\_DATA with SD\_DELTA=true when Full SD does not exist](#uc-sd-19a-single-sd_data-with-sd_deltatrue-when-full-sd-does-not-exist)
     - [UC-SD-20: Single SD\_DATA with SD\_DELTA=false](#uc-sd-20-single-sd_data-with-sd_deltafalse)
+    - [UC-SD-21: SD\_DATA contains duplicate application entries](#uc-sd-21-sd_data-contains-duplicate-application-entries)
+    - [UC-SD-22: Existing sd.yaml contains duplicate application entries](#uc-sd-22-existing-sdyaml-contains-duplicate-application-entries)
 
 ## Overview
 
@@ -1710,3 +1712,73 @@ The SD processing logic depends on:
 2. Behavior is identical to UC-SD-11 (Single SD_DATA with `replace` mode)
 3. Delta SD is not created or modified
 4. Full SD is available in job artifacts
+
+### UC-SD-21: SD_DATA contains duplicate application entries
+
+**Pre-requisites:**
+
+1. Environment Inventory exists
+2. Full SD may or may not exist in repository at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml`
+
+**Trigger:**
+
+> [!Note]
+> One of the following conditions must be met:
+
+1. GitLab Instance pipeline is started with parameters:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: json`
+   3. `SD_DATA` contains an SD where two or more entries in `applications` share the same Application Name, Application Version, and `deployPostfix`
+2. GitHub Instance pipeline is started with equivalent parameters
+
+**Steps:**
+
+1. The `process_sd` job runs in the pipeline:
+   1. Reads `SD_DATA` parameter and parses JSON content
+   2. For each SD item, validates that no two entries in `applications` share the same `(Application Name, Application Version, deployPostfix)` triplet
+   3. Detects duplicate entries in `SD[N]`
+   4. Aborts with a clear error message before any file write occurs
+   5. Pipeline job fails
+
+**Results:**
+
+1. Pipeline job fails with the error message
+2. No SD files are created or modified in the repository
+
+---
+
+### UC-SD-22: Existing sd.yaml contains duplicate application entries
+
+**Pre-requisites:**
+
+1. Environment Inventory exists
+2. Full SD **exists** in repository at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` and already contains duplicate `(Application Name, Application Version, deployPostfix)` entries
+3. `SD_REPO_MERGE_MODE` is NOT `replace` (a repository merge is about to occur)
+
+**Trigger:**
+
+> [!Note]
+> One of the following conditions must be met:
+
+1. GitLab Instance pipeline is started with parameters:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: json` or `artifact`
+   3. `SD_VERSION` or `SD_DATA` provided
+   4. `SD_REPO_MERGE_MODE`: `basic-merge`, `basic-exclusion-merge`, or `extended-merge`
+2. GitHub Instance pipeline is started with equivalent parameters
+
+**Steps:**
+
+1. The `process_sd` job runs in the pipeline:
+   1. Reads and validates the incoming SD
+   2. Detects that Full SD already exists in repository and a repository merge is required
+   3. Reads the existing `sd.yaml` from the repository
+   4. Validates the existing `sd.yaml` for duplicate `(Application Name, Application Version, deployPostfix)` triplets
+   5. Detects duplicates in the existing Full SD
+   6. Aborts with a clear error message before any merge or write occurs
+   7. Pipeline job fails
+
+**Results:**
+
+1. Pipeline job fails with the error message
+2. No SD files are created or modified in the repository
