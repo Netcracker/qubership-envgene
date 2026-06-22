@@ -420,8 +420,8 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
     return env_dir_path
 
 
-def get_schema_dir() -> Path:
-    return Path(__file__).resolve().parents[3] / "schemas"
+def get_schema_dir(level: int = 3) -> Path:
+    return Path(__file__).resolve().parents[level] / "schemas"
 
 
 def is_inventory_generation_needed(inventory_params):
