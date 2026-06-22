@@ -1,9 +1,12 @@
 import os
 from pathlib import Path
 
+from envgenehelper import business_helper
+
 
 class BaseTest:
     base_dir = Path(__file__).resolve().parents[2]
+    schemas_dir = business_helper.get_schema_dir(2)
     test_data_dir = base_dir / "test_data"
     output_dir = base_dir / "tmp"
 
