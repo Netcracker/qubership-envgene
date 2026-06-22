@@ -421,12 +421,33 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
 
 
 def get_schema_dir(level: int = 1) -> Path:
-    current_file = Path(__file__).resolve()
-    # Check if schemas is at repository root (level 3)
-    repo_schemas = current_file.parents[3] / "schemas"
-    if (repo_schemas / "paramset.schema.json").exists():
-        return repo_schemas
-    return current_file.parents[level] / "schemas"
+    import os
+    # 1. Try environment variables that point to the repo root
+    for env_var in ['CI_PROJECT_DIR', 'GITHUB_WORKSPACE']:
+        project_dir = os.getenv(env_var)
+        if project_dir:
+            repo_schemas = Path(project_dir) / "schemas"
+            if (repo_schemas / "paramset.schema.json").exists():
+                return repo_schemas
+
+    # 2. Search upwards from the current file's location
+    current_path = Path(__file__).resolve().parent
+    for _ in range(6):
+        repo_schemas = current_path / "schemas"
+        if (repo_schemas / "paramset.schema.json").exists():
+            return repo_schemas
+        current_path = current_path.parent
+
+    # 3. Search upwards from the current working directory
+    current_path = Path(os.getcwd()).resolve()
+    for _ in range(6):
+        repo_schemas = current_path / "schemas"
+        if (repo_schemas / "paramset.schema.json").exists():
+            return repo_schemas
+        current_path = current_path.parent
+
+    # Fallback to the original level-based resolution
+    return Path(__file__).resolve().parents[level] / "schemas"
 
 
 def is_inventory_generation_needed(inventory_params):
