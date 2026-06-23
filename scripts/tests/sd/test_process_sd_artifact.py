@@ -94,7 +94,7 @@ class TestSdProcessArtifact(BaseTest):
         mock_download_sd.return_value = sd_data
 
         handler = make_handler(self.output_dir, self.cluster, self.env_name,
-                               sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+                               sd_source_type, sd_version, '', sd_delta, sd_merge_mode)
         handle_sd(handler)
 
         assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)

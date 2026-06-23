@@ -7,6 +7,7 @@ from os import getenv
 from pathlib import Path
 from typing import Self
 
+import yaml
 from envgenehelper import getenv_with_error, writeToFile
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.effective_set_helper import GenerationMode
@@ -38,7 +39,6 @@ class PipelineParametersHandler(BaseModel):
             'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
             'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
             'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
-            "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE", "artifact"),
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
@@ -62,6 +62,7 @@ class PipelineParametersHandler(BaseModel):
                 "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
             "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
+            "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS")
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')

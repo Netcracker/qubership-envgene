@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 from os import path, getenv
 from pathlib import Path
@@ -7,8 +6,7 @@ from pathlib import Path
 import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
-from envgenehelper import openYaml
-from envgenehelper.business_helper import getenv_with_error
+from envgenehelper.business_helper import getenv_with_error, get_version
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
@@ -17,8 +15,10 @@ from envgenehelper.models import OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
                                      SD_FILE_NAME, DELTA_SD_FILE_NAME)
-from pipeline.pipeline_parameters import PipelineParametersHandler
+from envgenehelper.yaml_helper import load_json_or_yaml, openYaml, dumpYamlToStr
 from typing_extensions import deprecated
+
+from pipeline.pipeline_parameters import PipelineParametersHandler
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -43,7 +43,7 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
         - If other keys exist, remove only useDeployPostfixAsNamespace.
     """
     logger.info(
-        f"[Pre handle_deploy_postfix_namespace_transformation] Original SD data: {json.dumps(sd_data, indent=2)}")
+        f"[Pre handle_deploy_postfix_namespace_transformation] Original SD data: {dumpYamlToStr(sd_data)}")
     user_data = sd_data.get("userData", {})
 
     if isinstance(user_data, dict) and user_data.get("useDeployPostfixAsNamespace") is True:
@@ -65,9 +65,6 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
             sd_data["userData"] = user_data  # Reassign to make sure it's updated
 
     return sd_data
-
-
-    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, operation_type)
 
 
 def build_namespace_dict(env) -> dict:
@@ -141,17 +138,18 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
 
 
 def handle_sd(handler: PipelineParametersHandler):
-    sd_source_type = handler.params.get('SD_SOURCE_TYPE')
-    sd_version = handler.params.get('SD_VERSION')
-    sd_data = handler.params.get('SD_DATA')
-    sd_delta = handler.params.get('SD_DELTA')
-    sd_merge_mode = handler.params.get("SD_REPO_MERGE_MODE")
+    application_versions = resolve_sd_parameters(handler)
+    if not application_versions:
+        raise ValueError("Provide either APPLICATION_VERSIONS or SD_VERSION / SD_DATA")
+
     operation_type = OperationType(handler.params.get("OPERATION_TYPE"))
 
     env = Environment(str(handler.work_dir), handler.cluster_name, handler.env_name)
     base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
 
     if operation_type == OperationType.DEPLOY:
+        sd_merge_mode = handler.params.get("SD_REPO_MERGE_MODE")
+        sd_delta = handler.params.get('SD_DELTA')
         namespace_names = getenv("NAMESPACE_NAMES")
         if namespace_names:
             logger.warning("NAMESPACE_NAMES is ignored when OPERATION_TYPE=DEPLOY")
@@ -162,53 +160,19 @@ def handle_sd(handler: PipelineParametersHandler):
         helper.check_dir_exist_and_create(base_sd_path)
         # do not commit delta sd to repo, delete old ones
         deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
-        if sd_source_type == "artifact":
-            download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mode)
-        elif sd_source_type == "json":
-            extract_sds_from_json(env, base_sd_path, sd_data, effective_merge_mode)
-        else:
-            logger.error('SD_SOURCE_TYPE must be set either to "artifact" or "json"')
-            exit(1)
+
+        try:
+            if load_json_or_yaml(application_versions):
+                extract_sds_from_content(env, base_sd_path, application_versions, effective_merge_mode)
+            else:
+                download_sds_by_version(env, base_sd_path, application_versions, effective_merge_mode)
+        except Exception as e:
+            raise ValueError(
+                "APPLICATION_VERSIONS or SD_VERSION / SD_DATA must be set either appver or json/yaml") from e
+
+        logger.info("SD successfully extracted from APPLICATION_VERSIONS or SD_VERSION / SD_DATA and saved")
     elif operation_type == OperationType.CLEAN:
-        ns_names_var = getenv("NAMESPACE_NAMES")
-        sd_path = base_sd_path / SD_FILE_NAME
-        if not sd_path.exists():
-            logger.info(f"Operation type CLEAN: sd.yaml not found at {sd_path}, nothing to filter")
-            return
-
-        if not ns_names_var:
-            deleteFileIfExists(sd_path)
-            logger.info(f"Operation type CLEAN: NAMESPACE_NAMES is empty, env-cleanup (all namespaces), deleted {sd_path}")
-            return
-
-        # { "namespace_name": "folder_name_for_ns" }
-        ns_map = build_namespace_dict(env)
-        ns_for_cleanup = {}
-
-        for ns_name in split_multi_value_param(ns_names_var):
-            deploy_postfix = ns_map.get(ns_name)
-            if deploy_postfix is None:
-                raise ValueError(f"Operation type CLEAN: namespace '{ns_name}' has no matching namespace folder")
-            ns_for_cleanup[ns_name] = deploy_postfix
-
-        sd = openYaml(sd_path)
-        apps = sd.get("applications", [])
-
-        postfixes_from_sd = {app.get("deployPostfix") for app in apps if app.get("deployPostfix")}
-        for ns_name, dp in ns_for_cleanup.items():
-            if dp not in postfixes_from_sd:
-                # case incorrect ns from namespace_names or accidentally launched 2 clean up same ns
-                logger.warning(f"Operation type CLEAN: deployPostfix '{dp}' (namespace '{ns_name}') not found in sd")
-
-        postfixes_for_cleanup = set(ns_for_cleanup.values())
-        filtered_apps = [app for app in apps if app.get("deployPostfix") not in postfixes_for_cleanup]
-        if not filtered_apps:
-            logger.info(f"Operation type CLEAN: applications is empty, delete {sd_path}")
-            deleteFileIfExists(sd_path)
-            return
-
-        sd["applications"] = filtered_apps
-        helper.writeYamlToFile(sd_path, sd)
+        apply_namespace_cleanup_to_sd(env, base_sd_path)
 
 
 def validate_applications(sd, effective_merge_mode: MergeType):
@@ -220,28 +184,24 @@ def validate_applications(sd, effective_merge_mode: MergeType):
                 f"extended merge. Current merge mode: {effective_merge_mode.value}")
 
 
-def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode: MergeType):
-    if not sd_data:
-        logger.error("SD_SOURCE_TYPE is set to 'json', but SD_DATA was not given in pipeline variables")
-        exit(1)
-    sds_from_pipe = json.loads(sd_data)
+def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_mode: MergeType):
+    logger.info(f"Extracted SD content: {app_data}")
+    app_data = load_json_or_yaml(app_data)
 
-    logger.info(f"printing data inside extract_sd_from_json {sds_from_pipe}")
-    if not isinstance(sds_from_pipe, (list, dict)) or not sds_from_pipe:
-        logger.error("SD_DATA must be a non-empty list of SD dictionaries or a single SD.")
-        exit(1)
+    if not app_data:
+        raise ValueError(f"Extracted SD must be non-empty list or dict")
 
     # Build namespace mapping and transform each SD before any operations
     namespace_dict = build_namespace_dict(env)
 
     # Transform each SD item before processing
-    if isinstance(sds_from_pipe, list):
+    if isinstance(app_data, list):
         transformed_data = []
-        for item in sds_from_pipe:
+        for item in app_data:
             transformed_item = handle_deploy_postfix_namespace_transformation(item, namespace_dict)
             transformed_data.append(transformed_item)
     else:
-        transformed_data = handle_deploy_postfix_namespace_transformation(sds_from_pipe, namespace_dict)
+        transformed_data = handle_deploy_postfix_namespace_transformation(app_data, namespace_dict)
     full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
     validate_applications(full_sd_from_pipe, effective_merge_mode)
 
@@ -251,7 +211,7 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
         logger.info("Inside replace")
         if helper.check_file_exists(sd_path):
             full_sd_yaml = helper.openYaml(sd_path)
-            logger.info(f"Full sd before replacement: {json.dumps(full_sd_yaml, indent=2)}")
+            logger.info(f"Full sd before replacement: {dumpYamlToStr(full_sd_yaml)}")
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(sd_path))
@@ -270,53 +230,37 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
                 raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
             merge_sd(sd_path, full_sd_from_pipe, selected_merge_function)
 
-    logger.info("SD successfully extracted from SD_DATA and Saved.")
 
-
-def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mode: MergeType):
-    logger.info(f"sd_version: {sd_version}")
-    if not sd_version:
-        logger.error("SD_SOURCE_TYPE is set to 'artifact', but SD_VERSION was not given in pipeline variables")
-        exit(1)
-    sd_version = sd_version.replace("\\n", "\n")
-    sd_entries = split_multi_value_param(sd_version)
-    if not sd_entries:
-        logger.error("No valid SD versions found in SD_VERSION")
-        exit(1)
+def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mode: MergeType):
+    app_versions = app_versions.replace("\\n", "\n")
+    app_entries = split_multi_value_param(app_versions)
+    if not app_entries:
+        raise ValueError(f"No valid application versions found in {app_versions}")
 
     app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/plugins/handle_sd_plugins')
-    sd_data_list = []
-    for entry in sd_entries:  # appvers
-        if ":" not in entry:
-            logger.error(f"Invalid SD_VERSION format: '{entry}'. Expected 'name:version'")
-            exit(1)
-
-        source_name, version = entry.split(":", 1)
+    app_data_list = []
+    for entry in app_entries:  # appvers
+        source_name, version = get_version(entry)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
 
-        sd_data_list.append(sd_data)
+        app_data_list.append(app_data)
 
-    sd_data_json = json.dumps(sd_data_list)
-    extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
+    app_data = dumpYamlToStr(app_data_list)
+    extract_sds_from_content(env, base_sd_path, app_data, effective_merge_mode)
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     env_creds = helper.get_cred_config()
     auth_headers = app_def.registry.resolve_auth(env_creds)
 
     artifact_info = asyncio.run(
-        artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                      auth_headers=auth_headers))
+        artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, auth_headers=auth_headers))
     if not artifact_info:
-        raise ValueError(
-            f'Solution descriptor content was not received for {app_name}:{version}')
+        raise ValueError(f'Solution descriptor content was not received for {app_name}:{version}')
     sd_url, _ = artifact_info
     return artifact.download_json_content(sd_url, auth_headers=auth_headers)
 
@@ -332,3 +276,72 @@ def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> art
     app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
+
+
+def resolve_sd_parameters(handler: PipelineParametersHandler) -> str | None:
+    application_versions = handler.params.get("APPLICATION_VERSIONS")
+    sd_version = handler.params.get("SD_VERSION")
+    sd_data = handler.params.get("SD_DATA")
+
+    if application_versions:
+        if sd_version:
+            logger.warning("SD_VERSION is deprecated and ignored because APPLICATION_VERSIONS was provided")
+
+        if sd_data:
+            logger.warning("SD_DATA is deprecated and ignored because APPLICATION_VERSIONS was provided")
+
+        return application_versions
+
+    if sd_version and sd_data:
+        raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+
+    if sd_version:
+        logger.warning("SD_VERSION and SD_SOURCE_TYPE are deprecated. Use APPLICATION_VERSIONS instead")
+        return sd_version
+
+    if sd_data:
+        logger.warning("SD_DATA and SD_SOURCE_TYPE are deprecated. Use APPLICATION_VERSIONS instead")
+        return sd_data
+
+
+def apply_namespace_cleanup_to_sd(env: Environment, base_sd_path: Path):
+    ns_names_var = getenv("NAMESPACE_NAMES")
+    sd_path = base_sd_path / SD_FILE_NAME
+    if not sd_path.exists():
+        logger.info(f"Operation type CLEAN: sd.yaml not found at {sd_path}, nothing to filter")
+        return
+
+    if not ns_names_var:
+        deleteFileIfExists(sd_path)
+        logger.info(
+            f"Operation type CLEAN: NAMESPACE_NAMES is empty, env-cleanup (all namespaces), deleted {sd_path}")
+        return
+
+    # { "namespace_name": "folder_name_for_ns" }
+    ns_map = build_namespace_dict(env)
+    ns_for_cleanup = {}
+
+    for ns_name in split_multi_value_param(ns_names_var):
+        deploy_postfix = ns_map.get(ns_name)
+        if deploy_postfix is None:
+            raise ValueError(f"Operation type CLEAN: namespace '{ns_name}' has no matching namespace folder")
+        ns_for_cleanup[ns_name] = deploy_postfix
+
+    sd = openYaml(sd_path)
+    apps = sd.get("applications", [])
+
+    postfixes_from_sd = {app.get("deployPostfix") for app in apps if app.get("deployPostfix")}
+    for ns_name, dp in ns_for_cleanup.items():
+        if dp not in postfixes_from_sd:
+            # case incorrect ns from namespace_names or accidentally launched 2 clean up same ns
+            logger.warning(f"Operation type CLEAN: deployPostfix '{dp}' (namespace '{ns_name}') not found in sd")
+
+    postfixes_for_cleanup = set(ns_for_cleanup.values())
+    filtered_apps = [app for app in apps if app.get("deployPostfix") not in postfixes_for_cleanup]
+    if not filtered_apps:
+        logger.info(f"Operation type CLEAN: applications is empty, delete {sd_path}")
+        deleteFileIfExists(sd_path)
+        return
+
+    sd["applications"] = filtered_apps
+    helper.writeYamlToFile(sd_path, sd)

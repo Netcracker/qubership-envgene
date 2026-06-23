@@ -11,6 +11,7 @@ import ruyaml
 from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+import yaml as pyyaml
 
 from .file_helper import *
 from .json_helper import openJson
@@ -295,7 +296,6 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
 
 
 def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) -> Path | None:
-    
     if not dir_path.exists():
         return None
 
@@ -462,6 +462,14 @@ def find_files_by_basename(path: str, extensions_priority: tuple[str] = ("yml", 
         if candidate.exists():
             found_files.append(candidate)
     return found_files
+
+
+def load_json_or_yaml(content: str):
+    # TODO change to ruyaml
+    data = pyyaml.safe_load(content)
+    if isinstance(data, (dict, list)):
+        return data
+    return None
 
 
 jschon.create_catalog('2020-12')

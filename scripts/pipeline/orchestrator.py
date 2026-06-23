@@ -17,7 +17,7 @@ from effective_set.sboms_retention_policy import sboms_retention_policy
 from envgenehelper.models import TemplateVersionUpdateMode
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
-from sd.process_sd import handle_sd
+from sd.process_sd import handle_sd, resolve_sd_parameters
 
 
 class PipelineStep(ABC):
@@ -92,14 +92,10 @@ class ProcessSdStep(PipelineStep):
         return "process_sd"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        source_type = (ctx.params.get("SD_SOURCE_TYPE")).lower()
-        has_sd = (
-                (source_type == "json" and bool(ctx.params.get("SD_DATA"))) or
-                (source_type == "artifact" and bool(ctx.params.get("SD_VERSION")))
-        )
-        if has_sd:
+        application_versions = resolve_sd_parameters(ctx)
+        if application_versions:
             ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
-        return has_sd
+        return bool(application_versions)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)
@@ -167,7 +163,8 @@ class GenerateEffectiveSetStep(PipelineStep):
             get_sboms.run()
         effective_set_entrypoint()
 
-#TODO after refactor git_commit.sh
+
+# TODO after refactor git_commit.sh
 
 # class GitCommitStep(PipelineStep):
 #     requires_git_commit = False
