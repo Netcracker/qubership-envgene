@@ -79,13 +79,12 @@ The system certificate configuration feature in EnvGene automatically handles ce
 5. EnvGene uses these certificates for secure communication with external systems
 
 > [!IMPORTANT]
-> If `SSL_CERTIFICATES_BUNDLE` is set but cannot be decoded (invalid base64) or does not contain a valid PEM certificate
-> after decoding, the pipeline fails with an explicit error. EnvGene does not fall back to a lower-priority source in this
-> case - fallback only occurs when a source is empty or unset, not when it is set but invalid.
->
-> If `CA_BUNDLE_CERTIFICATE` from Cloud Passport is set but cannot be decoded (invalid base64) or does not contain a valid
-> PEM certificate after decoding, the pipeline fails with an explicit error. EnvGene does not skip to the next source
-> silently - fallback only occurs when a source is empty or unset, not when it is set but invalid.
+> - If `SSL_CERTIFICATES_BUNDLE` is set but cannot be decoded (invalid base64) or does not contain a valid PEM certificate
+>   after decoding, the pipeline fails with an explicit error. EnvGene does not fall back to a lower-priority source in this
+>   case - fallback only occurs when a source is empty or unset, not when it is set but invalid.
+> - If `CA_BUNDLE_CERTIFICATE` from Cloud Passport is set but cannot be decoded (invalid base64) or does not contain a valid
+>   PEM certificate after decoding, the pipeline fails with an explicit error. EnvGene does not skip to the next source
+>   silently - fallback only occurs when a source is empty or unset, not when it is set but invalid.
 
 ```mermaid
 flowchart TD
@@ -279,8 +278,7 @@ Under the hood, EnvGene uses a certificate handling script that:
 4. Sets `REQUESTS_CA_BUNDLE` to the OS-specific system CA bundle path:
    - Debian/Ubuntu and Alpine: `/etc/ssl/certs/ca-certificates.crt`
    - CentOS/Red Hat: `/etc/pki/tls/certs/ca-bundle.crt`
-
-   The script also appends `export REQUESTS_CA_BUNDLE=...` to `~/.bashrc` so subsequent shell sessions inherit the value.
+   - Appends `export REQUESTS_CA_BUNDLE=...` to `~/.bashrc` so subsequent shell sessions inherit the value.
 
 ## Troubleshooting
 
