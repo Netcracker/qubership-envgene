@@ -32,7 +32,7 @@ In the Environment Descriptor, it becomes possible to describe the override of a
 
 `template_override` may contain Jinja expressions. In such cases, the content of `template_override` will be rendered using the same context as the Namespace or Cloud template and then merged into the rendered Namespace or Cloud during Environment Instance generation.
 
-If `template_override` contains Jinja expressions, it must be declared as a multi-line string, for example, using the [literal style](https://yaml.org/spec/1.2.2/#812-literal-style) in YAML.
+[//]: # (If `template_override` contains Jinja expressions, it must be declared as a multi-line string, for example, using the [literal style]&#40;https://yaml.org/spec/1.2.2/#812-literal-style&#41; in YAML.)
 
 ### Template Descriptor
 
