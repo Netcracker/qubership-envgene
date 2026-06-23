@@ -52,18 +52,13 @@ public class ExternalCredConstants {
 
     public static final String SECRET_KEYS = "secretKeys";
 
-    public static final String SECRET_STORES = "secretStores";
-
     public static final String CREDS = "credentials";
 
-    public static final String PROPS = "properties";
-
-    public static final String TYPE = "type";
-    public static final String URL = "url";
-    public static final String MOUNT_PATH = "mountPath";
-    public static final String VAULT_NAME = "vaultName";
-    public static final String REGION = "region";
-    public static final String PROJECT_ID = "projectId";
+    public static final String GENERATE_MARKER = "_generateValue";
+    public static final String DATA = "data";
+    public static final String VALUE = "value";
+    public static final String STRATEGY = "strategy";
+    public static final String DEFAULT_STORE = "default_store";
 
 
 }

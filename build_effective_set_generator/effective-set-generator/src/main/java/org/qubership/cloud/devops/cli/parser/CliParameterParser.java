@@ -185,10 +185,11 @@ public class CliParameterParser {
 
     private void createExtContextFile() throws IOException {
         if (inputData.isExternalOnly()) {
-            if (ExternalCredUtils.generateExternalCredentialsMap() != null && !ExternalCredUtils.generateExternalCredentialsMap().isEmpty()) {
+            Map<String, Object> externalCredentials =  ExternalCredUtils.generateExternalCredentialsMap();
+            if (externalCredentials != null && !externalCredentials.isEmpty()) {
                 Path externalContextDir = Paths.get(sharedData.getOutputDir(), "external-credential");
                 Files.createDirectories(externalContextDir);
-                fileDataConverter.writeToFile(ExternalCredUtils.generateExternalCredentialsMap(), externalContextDir.toString(), "external-credentials.yaml");
+                fileDataConverter.writeToFile(externalCredentials, externalContextDir.toString(), "external-credentials.yaml");
             }
         }
     }
@@ -203,7 +204,7 @@ public class CliParameterParser {
         }
         processBgDomainParameters();
         createTopologyFiles(k8TokenMap, extCredEntities);
-        createE2EFiles(parameterBundle, extCredEntities);
+        createE2EFiles(parameterBundle);
         createPipelineFiles(parameterBundle);
     }
 
@@ -317,7 +318,7 @@ public class CliParameterParser {
         });
     }
 
-    private void createE2EFiles(ParameterBundle parameterBundle, ExtCredEntities extCredEntities) throws IOException {
+    private void createE2EFiles(ParameterBundle parameterBundle) throws IOException {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         fileDataConverter.writeToFile(parameterBundle.getE2eParams(), pipelineDir, "parameters.yaml");
         fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
