@@ -181,10 +181,11 @@ public class CliParameterParser {
 
     private void createExtContextFile() throws IOException {
         if (inputData.isExternalOnly()) {
-            if (ExternalCredUtils.generateExternalCredentialsMap() != null && !ExternalCredUtils.generateExternalCredentialsMap().isEmpty()) {
+            Map<String, Object> externalCredentials =  ExternalCredUtils.generateExternalCredentialsMap();
+            if (externalCredentials != null && !externalCredentials.isEmpty()) {
                 Path externalContextDir = Paths.get(sharedData.getOutputDir(), "external-credential");
                 Files.createDirectories(externalContextDir);
-                fileDataConverter.writeToFile(ExternalCredUtils.generateExternalCredentialsMap(), externalContextDir.toString(), "external-credentials.yaml");
+                fileDataConverter.writeToFile(externalCredentials, externalContextDir.toString(), "external-credentials.yaml");
             }
         }
     }
