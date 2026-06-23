@@ -420,10 +420,8 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
     return env_dir_path
 
 
-def get_schema_dir(level: int = 1) -> Path:
-    return next(
-        (p / "schemas" for p in Path(__file__).resolve().parents if (p / "schemas" / "paramset.schema.json").exists()),
-        Path(__file__).resolve().parents[level] / "schemas")
+def get_schema_dir() -> Path:
+    return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
 
 
 def is_inventory_generation_needed(inventory_params):
