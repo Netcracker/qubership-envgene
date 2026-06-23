@@ -79,6 +79,7 @@ The system certificate configuration feature in EnvGene automatically handles ce
 5. EnvGene uses these certificates for secure communication with external systems
 
 > [!IMPORTANT]
+>
 > - If `SSL_CERTIFICATES_BUNDLE` is set but cannot be decoded (invalid base64) or does not contain a valid PEM certificate
 >   after decoding, the pipeline fails with an explicit error. EnvGene does not fall back to a lower-priority source in this
 >   case - fallback only occurs when a source is empty or unset, not when it is set but invalid.
