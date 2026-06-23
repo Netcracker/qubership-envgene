@@ -1,0 +1,5 @@
+---
+tenant: "{{ templates_dir }}/env_templates/common/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/common/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/namespaces/<deployPostfix>.yml.j2"

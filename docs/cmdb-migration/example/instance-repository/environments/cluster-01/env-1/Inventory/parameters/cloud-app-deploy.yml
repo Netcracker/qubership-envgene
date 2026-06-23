@@ -1,0 +1,9 @@
+# Environment Specific ParameterSet reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-specific-parameterset
+
+name: cloud-app-deploy
+parameters: {}
+applications:
+  - appName: Cloud-Core
+    parameters:
+      GW_INGRESS_ANNOTATIONS: "nginx.ingress.kubernetes.io/proxy-body-size: '800m'"

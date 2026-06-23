@@ -1,0 +1,8 @@
+---
+tenant: "{{ templates_dir }}/env_templates/common/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/common/cloud.yml.j2"
+composite_structure: "{{ templates_dir }}/env_templates/common/composite-structure.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/namespaces/core.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/namespaces/bss.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/namespaces/oss.yml.j2"

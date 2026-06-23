@@ -1,0 +1,22 @@
+# Environment Inventory reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml
+
+inventory:
+  environmentName: env-1
+envTemplate:
+  name: composite
+  artifact: bss-template:1.0.0
+  envSpecificParamsets:
+    cloud:
+      - cloud-deploy
+      - cloud-app-deploy
+    bss:
+      - bss-deploy
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets:
+    bss:
+      - bss-tech
+  envSpecificResourceProfiles:
+    bss: dev_bss_override
+  sharedMasterCredentialFiles:
+    - shared-credentials

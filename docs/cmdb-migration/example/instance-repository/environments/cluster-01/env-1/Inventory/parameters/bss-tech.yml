@@ -1,0 +1,6 @@
+# Environment Specific ParameterSet reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-specific-parameterset
+
+name: bss-tech
+parameters:
+  CORE_NAMESPACE: "env-1-core"

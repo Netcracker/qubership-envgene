@@ -159,6 +159,8 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate CMDB Environments to EnvGene**](/docs/cmdb-migration/migrate-cmdb-to-envgene.md) - Move a CMDB object export to a template-driven EnvGene environment
+- [**Refactor Migrated Parameters**](/docs/cmdb-migration/refactor-migrated-parameters.md) - Clean up the parameters after a CMDB migration
 
 ### Advanced Features
 

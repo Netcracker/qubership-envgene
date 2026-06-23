@@ -1,0 +1,7 @@
+# Environment Specific ParameterSet reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-specific-parameterset
+
+name: cloud-deploy
+parameters:
+  CMDB_URL: "https://app-deployer.apps.cluster-01.example.com"
+  CONSUL_ENABLED: "true"

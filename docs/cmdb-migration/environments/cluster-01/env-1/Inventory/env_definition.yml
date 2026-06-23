@@ -1,0 +1,12 @@
+# Environment Inventory reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml
+
+inventory: {}
+envTemplate:
+  name: <template-descriptor-name>
+  artifact: <artifact-name>:<version>
+  envSpecificParamsets: {}
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles: []

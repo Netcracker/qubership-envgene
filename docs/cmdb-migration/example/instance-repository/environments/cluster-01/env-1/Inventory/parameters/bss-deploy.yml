@@ -1,0 +1,7 @@
+# Environment Specific ParameterSet reference:
+# https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-specific-parameterset
+
+name: bss-deploy
+parameters:
+  BSS_NAMESPACE: "env-1-bss"
+  DEFAULT_TENANT_ADMIN_PASSWORD: '${creds.get("bss-admin-cred").password}'
