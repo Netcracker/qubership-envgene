@@ -2,6 +2,7 @@ from pytest_bdd import given, when, then, parsers
 from tests.framework.workspace import EnvGeneWorkspace
 import shutil
 from pathlib import Path
+import os
 
 @given(parsers.parse('the pipeline parameter "{param}" is set to "{value}"'))
 def set_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
@@ -24,7 +25,8 @@ def orchestrator_completes_successfully(workspace: EnvGeneWorkspace):
 
 @given(parsers.parse('the workspace is initialized with test data from "{test_data_path}"'))
 def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_path: str):
-    source_dir = Path("f:/project/qubership-envgene/test_data") / test_data_path
+    project_root = Path(os.environ.get("CI_PROJECT_DIR", Path(__file__).parent.parent.parent.resolve()))
+    source_dir = project_root / "test_data" / test_data_path
     if not source_dir.exists():
         raise FileNotFoundError(f"Test data directory {source_dir} does not exist.")
     

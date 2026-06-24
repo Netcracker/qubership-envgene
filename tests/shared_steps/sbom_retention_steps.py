@@ -1,5 +1,4 @@
-import pytest
-from pytest_bdd import scenarios, given, when, then, parsers
+from pytest_bdd import given, when, then, parsers
 
 
 @given('an Instance Repository exists with an "/sboms/" directory')
