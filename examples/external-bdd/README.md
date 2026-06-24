@@ -14,7 +14,7 @@ If your configurations (templates and environment instances) are stored in two s
    ENV_TEMPLATES_REPO: "https://gitlab.example.com/my-group/env-templates.git"
    ENV_INSTANCES_REPO: "https://gitlab.example.com/my-group/env-instances.git"
    ```
-   *You can also remove them from the file and define them in your GitLab repository settings (Settings -> CI/CD -> Variables).* 
+   *You can also remove them from the file and define them in your GitLab repository settings (Settings -> CI/CD -> Variables).*
 
 3. **Configure access (for private repositories):**
    If the repositories are private, cloning over HTTP requires authentication.
@@ -26,6 +26,40 @@ If your configurations (templates and environment instances) are stored in two s
 
 4. **Run the tests:**
    The `qubership-envgene` container automatically picks up data from the `$BDD_DATA_DIR` directory (which points to `/workspace/test_data`). It will contain two directories: `templates/` and `instances/`.
+
+### Handling Multiple Environments and Clusters
+
+If your repository contains several environment definitions and multiple clusters, you can drive the CI job with a **matrix** (parallel jobs) that iterates over the desired combinations.
+
+Add variables that describe the matrix, for example:
+```yaml
+CLUSTERS: "cluster-a,cluster-b"
+ENVIRONMENTS: "dev,staging,prod"
+```
+Then use a `parallel` matrix in the job definition:
+```yaml
+bdd_integration_tests:
+  stage: test
+  image: ghcr.io/netcracker/qubership-envgene:latest
+  parallel:
+    matrix:
+      - CLUSTER: "cluster-a"
+        ENV: "dev"
+      - CLUSTER: "cluster-a"
+        ENV: "staging"
+      - CLUSTER: "cluster-b"
+        ENV: "dev"
+      - CLUSTER: "cluster-b"
+        ENV: "prod"
+  before_script:
+    - export BDD_DATA_DIR="$CI_PROJECT_DIR/test_data/${CLUSTER}/${ENV}"
+    - mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
+    - git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
+    - git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances
+  script:
+    - python /module/scripts/bdd_runner.py
+```
+Each parallel job will receive its own `CLUSTER` and `ENV` values, creating an isolated test data directory (`test_data/<cluster>/<env>`) that the pipeline can consume.
 
 ## Integration with local Python fixtures (optional)
 
