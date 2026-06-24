@@ -1,0 +1,38 @@
+name: "E2E BDD Tests"
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and Start Cucumber Environment
+        run: |
+          docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+          docker compose -f devtools/docker-compose.yml up -d --build cucumber
+
+      - name: Prepare Test Environment
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
+
+      - name: Run E2E Tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/ -v -s | tee /workspace/e2e_tests.log"
+
+      - name: Upload Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs
+          path: e2e_tests.log
+
+      - name: Tear Down Environment
+        if: always()
+        run: |
+          docker compose -f devtools/docker-compose.yml down

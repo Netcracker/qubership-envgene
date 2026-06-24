@@ -1,0 +1,25 @@
+name: BDD Tests
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    container:
+      image: ghcr.io/netcracker/qubership-envgene:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run BDD Framework
+        env:
+          BDD_DATA_DIR: ${{ github.workspace }}
+          EXTERNAL_PROJECT_API_URL: "https://api.integration.example.com"
+        run: |
+          python /module/scripts/bdd_runner.py

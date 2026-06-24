@@ -30,6 +30,7 @@ COPY python /python
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
 COPY build_envgene/scripts/ /module/scripts/
+COPY tests/ /module/tests/
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     -r /build/requirements.txt \
@@ -46,8 +47,6 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
     find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
-    rm -rf /module/venv/lib/python3.12/site-packages/pytest* \
-        /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
     /module/venv/bin/pip cache purge
 
 RUN chmod 754 /module/scripts/*

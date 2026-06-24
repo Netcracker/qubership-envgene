@@ -130,8 +130,9 @@ def _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path):
 
 
 def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
+    cli_path = getenv("EFFECTIVE_SET_CLI_PATH", "/module/scripts/utils/run_effective_set_cli.sh")
     cmd = [
-        "/module/scripts/utils/run_effective_set_cli.sh",
+        cli_path,
         f"--env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output={effective_set_dir}",

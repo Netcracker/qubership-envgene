@@ -36,7 +36,7 @@ def get_value_and_attributes_from_cred(cred_macros, deployer_dir):
             logger.error(f"Credentials with key {cred_id} is not found in credentials file.")
             raise ReferenceError(f"Credentials with key {cred_id} is not found in credentials file.")
     else:
-        return cred_macros
+        return cred_macros, None
 
 def get_value_with_path_and_attribute(fp, attr_str, default_value=None):
     file = openYaml(fp)
@@ -109,8 +109,10 @@ def get_deployer_config(env_name, base_dir, instances_dir, secret_key=None, is_t
             cred_yaml = decrypt_file(cred_path, in_place=False, ignore_is_crypt=True, secret_key=secret_key, crypt_backend='Fernet')
         else:
             cred_yaml = decrypt_file(cred_path, in_place=False)
-        cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
-        cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
+        if cmdb_username_attribute_path:
+            cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
+        if cmdb_api_token_attribute_path:
+            cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
     return cmdb_url, cmdb_username, cmdb_api_token
 
 def get_sbom_generator_deployer_config():

@@ -1,0 +1,11 @@
+stages:
+  - test
+
+bdd_tests:
+  stage: test
+  image: ghcr.io/netcracker/qubership-envgene:latest
+  variables:
+    BDD_DATA_DIR: "$CI_PROJECT_DIR"
+    EXTERNAL_PROJECT_API_URL: "https://api.integration.example.com"
+  script:
+    - python /module/scripts/bdd_runner.py
