@@ -49,6 +49,17 @@ def mock_nexus(tmp_path_factory):
         z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
         z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
     proc = subprocess.Popen([sys.executable, "-m", "http.server", "8000", "-d", str(base_dir)])
+    
+    test_app_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.0.0"
+    test_app_dir.mkdir(parents=True, exist_ok=True)
+    with open(test_app_dir / "test_app_artifact-1.0.0.json", "w") as f:
+        json.dump({"applications": [{"version": "test_app:1.0.0", "deployPostfix": "dp1"}], "deployGraph": [{"chunkName": "wave1", "apps": ["test_app:dp1"]}]}, f)
+        
+    test_app2_dir = base_dir / "release" / "com" / "test" / "test_app_2_artifact" / "2.0.0"
+    test_app2_dir.mkdir(parents=True, exist_ok=True)
+    with open(test_app2_dir / "test_app_2_artifact-2.0.0.json", "w") as f:
+        json.dump({"applications": [{"version": "test_app_2:2.0.0", "deployPostfix": "dp2"}], "deployGraph": [{"chunkName": "wave1", "apps": ["test_app_2:dp2"]}]}, f)
+
     time.sleep(1)
     yield
     proc.terminate()

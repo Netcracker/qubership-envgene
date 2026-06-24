@@ -1,5 +1,5 @@
 from pytest_bdd import scenarios
-from tests.shared_steps.sbom_retention_steps import *
-from tests.shared_steps.common_steps import *
+from tests.shared_steps.unified_pipeline_steps import *
 
-scenarios('../features/sbom-retention.feature')
+scenarios('../features/unified_pipeline_success/sbom-retention.feature')
+

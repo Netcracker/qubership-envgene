@@ -1,5 +1,7 @@
 from pytest_bdd import given, then, when, parsers
-
+import os
+from pathlib import Path
+from tests.framework.golden_compare import compare_directories
 
 @then(parsers.parse('the pipeline log shows "{message}"'))
 def pipeline_log_shows(workspace, message):
@@ -39,3 +41,17 @@ def effective_set_generated(workspace):
 @then('the pipeline fails')
 def pipeline_fails(workspace):
     assert workspace.returncode != 0, "Pipeline should have failed but returned 0"
+
+@then(parsers.parse('the environment instance "{cluster}/{env}" matches the reference "{reference_path}"'))
+def environment_matches_reference(workspace, cluster, env, reference_path):
+    """
+    Deep compares the generated environment directory against a golden reference.
+    Runs via the external API `workspace.builder.get_env_dir` to support
+    both internal and external workspace implementations.
+    """
+    actual_dir = workspace.builder.get_env_dir(cluster, env)
+    
+    # Resolve reference path relative to the test execution root (project root)
+    expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
+    
+    compare_directories(expected_dir, actual_dir)

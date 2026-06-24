@@ -21,9 +21,49 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
 
-      - name: Run E2E Tests
+      - name: Test Artifact Downloading
         run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/ -v -s | tee /workspace/e2e_tests.log"
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_artifact_downloading.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Auto Environment Name
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_auto_environment_name.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Blue Green Deployment
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_blue_green_deployment.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Calculator CLI
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_calculator_cli.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Credential Rotation
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_credential_rotation.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test EnvGene Null Value Validation
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_envgene_null_value_validation.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Environment Instance Generation
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_instance_generation.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test SBOM Retention
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sbom_retention.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test SD Processing
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sd_processing.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Background Manage (Standalone)
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_bg_manage.py -v -s | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Environment Inventory Generation (Standalone)
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_inventory_generation.py -v -s | tee -a /workspace/e2e_tests.log"
 
       - name: Upload Test Logs
         if: always()
