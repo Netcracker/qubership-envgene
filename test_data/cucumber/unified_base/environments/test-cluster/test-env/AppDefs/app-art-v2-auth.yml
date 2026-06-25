@@ -1,4 +1,0 @@
-name: "app-art-v2-auth"
-groupId: "com.example"
-artifactId: "app"
-registryName: "artifactory-v2-maven"

@@ -1,4 +1,0 @@
-name: "app-art-v2-anon"
-groupId: "com.example"
-artifactId: "app"
-registryName: "artifactory-anon-v2-maven"

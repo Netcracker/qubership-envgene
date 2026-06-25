@@ -1,4 +1,0 @@
-name: env-01-bss
-e2eParameters:
-  TEST_E2E_PASSWORD: ${creds.get('shared-cred').password}
-  AFFECTED_E2E_PASSWORD: ${creds.get('shared-cred').password}
