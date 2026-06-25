@@ -155,8 +155,10 @@ def getAppDefinitionPath(base_path, template_name):
     yml_path = f"{path_without_extension}.yml"
     if check_file_exists(yml_path):
         return yml_path
-    else:
+    elif check_file_exists(yaml_path):
         return yaml_path
+    else:
+        return None
 
 
 def getTemplateVersionFromEnvDefinition(env_definition_yaml):

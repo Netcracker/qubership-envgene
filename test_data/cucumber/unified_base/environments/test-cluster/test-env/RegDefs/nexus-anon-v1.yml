@@ -1,4 +1,4 @@
-﻿name: "nexus-anon-maven"
+name: "nexus-anon-maven"
 mavenConfig:
   repositoryDomainName: "nexus.example.com"
   fullRepositoryUrl: "https://nexus.example.com/repository"

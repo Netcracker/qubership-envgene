@@ -1,4 +1,4 @@
-﻿name: "artifactory-maven"
+name: "artifactory-maven"
 credentialsId: "artifactory-creds"
 mavenConfig:
   repositoryDomainName: "artifactory.example.com"

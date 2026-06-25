@@ -1,4 +1,4 @@
-﻿name: "nexus-maven"
+name: "nexus-maven"
 credentialsId: "nexus-creds"
 mavenConfig:
   repositoryDomainName: "nexus.example.com"

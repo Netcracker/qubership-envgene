@@ -1,4 +1,4 @@
-﻿templateArtifact:
+templateArtifact:
   registry: "nexus-anon-maven"
   artifact:
     group_id: "com.example"

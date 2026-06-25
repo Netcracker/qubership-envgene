@@ -1,4 +1,4 @@
-﻿name: "app-art-v1-anon"
+name: "app-art-v1-anon"
 groupId: "com.example"
 artifactId: "app"
 registryName: "artifactory-anon-maven"

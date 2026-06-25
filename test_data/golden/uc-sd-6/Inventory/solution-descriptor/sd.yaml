@@ -1,0 +1,3 @@
+applications:
+  - deployPostfix: dp_existing
+    version: existing_app:0.9.0
