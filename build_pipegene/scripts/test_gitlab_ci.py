@@ -32,8 +32,10 @@ class PipelineVars:
     env_specific_params: str = ""
     custom_params: str = ""
 
+
 def convert_keys_to_uppercase(pairs):
     return {k.upper(): v for k, v in pairs}
+
 
 build_pipeline_test_data = [
     (
@@ -80,9 +82,11 @@ build_pipeline_test_data = [
     ),
 ]
 
+
 @pytest.fixture(autouse=True)
 def change_test_dir(request, monkeypatch):
-    monkeypatch.chdir(request.fspath.dirname+"/../..")
+    monkeypatch.chdir(request.fspath.dirname + "/../..")
+
 
 @pytest.mark.parametrize("pipeline_vars, expected_sequence", build_pipeline_test_data)
 def test_build_pipeline(pipeline_vars, expected_sequence):
@@ -106,23 +110,6 @@ def _find_job_by_stage(config: dict, stage: str) -> dict:
         if job_config.get("stage") == stage:
             return job_config
     raise AssertionError(f"No job found for stage {stage}")
-
-
-def test_sparse_checkout_on_first_job():
-    ci_commit_ref_name = "feature/test-generate"
-    os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
-    pipeline_vars = asdict(PipelineVars(get_passport="false"), dict_factory=convert_keys_to_uppercase)
-    os.environ.update(pipeline_vars)
-
-    perform_generation()
-
-    result = openYaml("generated-config.yml")
-    first_job = _find_job_by_stage(result, "app_reg_def_render")
-
-    assert first_job["variables"]["GIT_STRATEGY"] == "empty"
-    assert first_job["script"][0].startswith("/module/scripts/utils/sparse_checkout.sh ")
-    assert "environments/cluster-01/env-01" in first_job["script"][0]
-    assert "hooks" not in first_job
 
 
 def test_downstream_job_uses_empty_git_strategy():

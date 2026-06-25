@@ -1,7 +1,6 @@
-import shlex
-
-from gcip import Job, Need, TriggerJob
+from os import getenv
 from typing import Optional, List, Dict, Union, Any
+
 from envgenehelper import (
     logger,
     check_file_exists,
@@ -9,8 +8,9 @@ from envgenehelper import (
     getAppDefinitionPath,
     get_envgene_config_yaml,
     get_or_create_nested_yaml_attribute,
+    GitRepoManager
 )
-from os import getenv
+from gcip import Job, Need, TriggerJob
 
 REPO_ROOT_PATHS = [
     "appdefs/",
@@ -37,9 +37,10 @@ class JobExtended(Job):
         self.timeout = timeout
 
     def set_sparse_checkout(self, paths: List[str]) -> None:
-        paths_args = " ".join(shlex.quote(path) for path in paths)
         self.add_variables(GIT_STRATEGY="empty")
-        self.prepend_scripts(f"/module/scripts/utils/sparse_checkout.sh {paths_args}")
+        repo = GitRepoManager()
+        repo.configure()
+        repo.sparse_checkout(paths)
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()

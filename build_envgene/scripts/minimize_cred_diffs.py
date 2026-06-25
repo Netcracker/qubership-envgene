@@ -59,7 +59,7 @@ def _minimize_single_cred_file(
             old_tmp.unlink(missing_ok=True)
 
 
-def main() -> None:
+def minimize_cred_diffs() -> None:
     if not get_crypt():
         logger.info("'crypt' is disabled, skipping credential diff minimization")
         return
@@ -83,7 +83,3 @@ def main() -> None:
         if not is_cred_file(str(base_dir / rel_path)):
             continue
         _minimize_single_cred_file(repo, base_dir, rel_path, cache_dir)
-
-
-if __name__ == '__main__':
-    main()
