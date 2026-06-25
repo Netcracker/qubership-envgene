@@ -1,12 +1,13 @@
 import os
+import pipeline_helper
 from os import listdir
 
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.effective_set_helper import resolve_es_generation_mode
+from envgenehelper.git_helper import GitRepoManager
 from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
-import pipeline_helper
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
 from credential_rotation_job import prepare_credential_rotation_job
@@ -15,17 +16,8 @@ from inventory_generation_job import prepare_inventory_generation_job, is_invent
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
 from effective_set_job import prepare_generate_effective_set_job
-from pipeline_helper import (
-    get_gav_coordinates_from_build,
-    find_predecessor_job,
-    get_env_artifact_paths,
-    do_checkout,
-    is_trigger_job,
-    get_sparse_checkout_paths,
-    REPO_ROOT_PATHS,
-)
 from envgenehelper.collections_helper import split_multi_value_param
-
+from envgenehelper.repo_paths import get_env_artifact_paths, REPO_ROOT_PATHS
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -41,7 +33,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         artifact_url = os.getenv("artifact_url")
         templates_dir = f"{PROJECT_DIR}/templates/env_templates"
         # getting build artifact
-        build_artifact = get_gav_coordinates_from_build()
+        build_artifact = pipeline_helper.get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
         artifact_id = build_artifact["artifact_id"]
         params['ENV_TEMPLATE_VERSION'] = f"{artifact_id}:{build_artifact["version"]}"
@@ -199,7 +191,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
                 continue
             queued_job_names.append(job_instance.name)
             sorted_pipeline.add_children(job_instance)
-            job_instance.add_needs(*find_predecessor_job(job, jobs_map, job_sequence))
+            job_instance.add_needs(*pipeline_helper.find_predecessor_job(job, jobs_map, job_sequence))
 
         logger.info(f'----------------end processing for {full_env_name}---------------------')
 
@@ -212,7 +204,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     for job in sorted_pipeline.find_jobs(JobFilter()):
-        if is_trigger_job(job):
+        if pipeline_helper.is_trigger_job(job):
             continue
 
         job_full_name = job.variables["FULL_ENV_NAME"]
@@ -222,9 +214,10 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         job.artifacts.add_paths(*env_artifact_paths)
 
         job.artifacts.add_paths(*REPO_ROOT_PATHS, 'tmp/')
+        job.artifacts.add_paths('.git')
 
-        if do_checkout(job):
-            sparse_paths = get_sparse_checkout_paths(
+        if pipeline_helper.do_checkout(job):
+            sparse_paths = GitRepoManager.get_sparse_checkout_paths(
                 job_cluster_name,
                 job_env_name,
                 include_full_cluster=cred_rotation_active,

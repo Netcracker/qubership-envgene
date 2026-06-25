@@ -25,17 +25,22 @@ def retry_call(
     fn: Callable[..., T],
     *args,
     retry_on: Iterable[Type[Exception]] = (Exception,),
+    no_retry_on: Iterable[Type[Exception]] = (),
     **kwargs,
 ) -> T:
     if policy is None:
         return fn(*args, **kwargs)
 
+    retry_on_t = tuple(retry_on)
+    no_retry_on_t = tuple(no_retry_on)
     delay = policy.backoff_duration
 
     for attempt in range(1, policy.limit + 1):
         try:
             return fn(*args, **kwargs)
-        except retry_on:
+        except no_retry_on_t:
+            raise
+        except retry_on_t:
             if attempt >= policy.limit:
                 raise
 
