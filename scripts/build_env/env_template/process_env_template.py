@@ -116,22 +116,36 @@ def render_creds() -> dict:
 
 # logic resolving template by exact coordinates and repo, deprecated
 async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, cred_config: dict, registry_dict: dict) -> str:
-    template_artifact = env_definition['envTemplate']['templateArtifact']
-    artifact_info = template_artifact['artifact']
+    template_artifact = env_definition.get('envTemplate', {}).get('templateArtifact')
+    if not template_artifact:
+        raise ValueError("Artifact Definition not found")
+    artifact_info = template_artifact.get('artifact')
+    if not artifact_info:
+        raise ValueError("Artifact Definition not found")
 
     group_id = artifact_info['group_id']
     artifact_id = artifact_info['artifact_id']
     dd_version = artifact_info['version']
-    dd_repo_type = template_artifact.get('repository')
     repo_type = template_artifact['templateRepository']
+    dd_repo_type = template_artifact.get('repository', repo_type)
     registry_name = template_artifact['registry']
 
-    registry = registry_dict[registry_name]
+    registry = registry_dict.get(registry_name)
+    if not registry:
+        raise ValueError("Registry Definition not found")
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
 
-    repository_username = fetch_cred_value(registry.get("username"), cred_config)
-    repository_password = fetch_cred_value(registry.get("password"), cred_config)
+    username_val = registry.get("username")
+    password_val = registry.get("password")
+    if not username_val and "credentialsId" in registry:
+        cred_id = registry["credentialsId"]
+        credentials_dict = cred_config.get(cred_id, {})
+        username_val = credentials_dict.get("username")
+        password_val = credentials_dict.get("password")
+    
+    repository_username = fetch_cred_value(username_val, cred_config) if username_val else ""
+    repository_password = fetch_cred_value(password_val, cred_config) if password_val else ""
     cred = Credentials(username=repository_username, password=repository_password)
     auth_headers = artifact.credentials_to_headers(cred) if cred.username and cred.password else None
 
@@ -195,7 +209,7 @@ def process_env_template() -> dict:
         app_name, app_version = appver[0], appver[1]
         artifact_path = getAppDefinitionPath(project_dir, app_name)
         if not artifact_path:
-            raise FileNotFoundError(f"No artifact definition file found for {app_name}")
+            raise ValueError("Application Definition not found")
         app_def = Application.model_validate(openYaml(artifact_path))
         
         auth_headers = app_def.registry.resolve_auth(cred_config)

@@ -1,0 +1,5 @@
+inventory:
+  tenantName: "Tenant"
+  cloudName: "test-cluster"
+envTemplate:
+  name: "simple"

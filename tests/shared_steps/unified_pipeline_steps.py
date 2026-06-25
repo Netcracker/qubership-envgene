@@ -13,11 +13,38 @@ def set_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
     processed_value = value.replace('\\n', '\n').replace('\\"', '"')
     workspace.extra_env[param] = processed_value
 
+@given(parsers.parse('the config parameter "{param}" is set to {value}'))
+def set_config_parameter_raw(workspace: EnvGeneWorkspace, param: str, value: str):
+    if value.lower() == 'true':
+        val = True
+    elif value.lower() == 'false':
+        val = False
+    elif value.isdigit():
+        val = int(value)
+    else:
+        val = value.strip('"\'')
+    workspace.config_data[param] = val
+
 @when('the unified pipeline orchestrator runs')
 def run_unified_pipeline_orchestrator(workspace: EnvGeneWorkspace):
+    sops_mock = workspace.base_dir / "sops.bat"
+    sops_mock.write_text("@echo off\nif \"%1\" == \"--decrypt\" (\n  type %4\n) else if \"%1\" == \"--extract\" (\n  echo extracted\n) else if \"%1\" == \"edit\" (\n  python %EDITOR% %4\n) else (\n  exit /b 0\n)\n")
     # Ensure extra_env is initialized
     extra_env = getattr(workspace, 'extra_env', {})
     workspace.run_pipeline(extra_env=extra_env)
+
+@then('the orchestrator fails with return code {expected_code:d}')
+def orchestrator_fails_with_return_code(workspace: EnvGeneWorkspace, expected_code: int):
+    assert workspace.returncode == expected_code, f"Expected return code {expected_code}, got {workspace.returncode}.\nSTDOUT:\n{workspace.stdout}\nSTDERR:\n{workspace.stderr}"
+
+@then('the orchestrator fails')
+def orchestrator_fails(workspace: EnvGeneWorkspace):
+    assert workspace.returncode != 0, f"Pipeline should have failed but returned 0.\nSTDOUT:\n{workspace.stdout}\nSTDERR:\n{workspace.stderr}"
+
+@then(parsers.parse('the pipeline log contains "{message}"'))
+def pipeline_log_contains(workspace: EnvGeneWorkspace, message: str):
+    output = workspace.stdout + "\n" + workspace.stderr
+    assert message in output, f"Expected message not found in pipeline output: {message}\nSTDOUT:\n{workspace.stdout}\nSTDERR:\n{workspace.stderr}"
 
 @then('the orchestrator completes successfully')
 def orchestrator_completes_successfully(workspace: EnvGeneWorkspace):

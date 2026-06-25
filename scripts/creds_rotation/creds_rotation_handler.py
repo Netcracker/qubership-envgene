@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from pathlib import Path
 from typing import List
 
 import envgenehelper.logger as logger
@@ -127,7 +128,7 @@ def run_cred_rotation():
 
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
 
-    base_env_path = f"{config.work_dir}/environments/{config.cluster_name}/{config.env_name}"
+    base_env_path = str(Path(config.work_dir) / "environments" / config.cluster_name / config.env_name)
     cluster_path = f"{config.work_dir}/environments/{config.cluster_name}"
     output_path = f"{config.work_dir}/affected-sensitive-parameters.yaml"
 
@@ -178,12 +179,9 @@ def run_cred_rotation():
         )
 
     if not config.creds_rotation_enabled:
-        logger.info(
-            f"✅ Cred Rotation without file updation completed in {round(time.time() - start, 2)} seconds."
-        )
         raise ValidationError(
             ErrorMessages.CRED_UPDATION_FALSE.format(file=output_path),
-            error_code=ErrorCodes.INVALID_STATE_CODE,
+            error_code=ErrorCodes.INVALID_STATE_CODE
         )
     if processed_cred_and_files:
         updated_content, original_content = update_cred_content(

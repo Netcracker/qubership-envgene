@@ -24,7 +24,8 @@ def mock_nexus(tmp_path_factory):
         z.writestr("templates/Tenant.yml.j2", "name: dummy-tenant\nregistryName: default\ncredential: dummy-cred\nglobalE2EParameters: {}\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\n")
         z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
         z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
-        
+        z.writestr("templates/appdefs/app1.yml", "name: app1\nregistryName: default-registry\ngroupId: org.test\nartifactId: test-app\nsupportParallelDeploy: false\ndeployParameters: {}\ntechnicalConfigurationParameters: {}\n")
+        z.writestr("templates/regdefs/registry1.yml", "name: default-registry\ncredentialsId: dummy\ndockerConfig:\n  groupName: dummy\n  groupUri: dummy\n  releaseRepoName: dummy\n  releaseUri: dummy\n  snapshotRepoName: dummy\n  snapshotUri: dummy\n  stagingRepoName: dummy\n  stagingUri: dummy\nmavenConfig:\n  fullRepositoryUrl: dummy\n  releaseGroup: dummy\n  repositoryDomainName: dummy\n  snapshotGroup: dummy\n  targetRelease: dummy\n  targetSnapshot: dummy\n  targetStaging: dummy\n")
     foo_dir = base_dir / "release" / "org" / "test" / "foo" / "1.0"
     foo_dir.mkdir(parents=True, exist_ok=True)
     with open(foo_dir / "foo-1.0.json", "w") as f:
@@ -48,7 +49,7 @@ def mock_nexus(tmp_path_factory):
         z.writestr("templates/Tenant.yml.j2", "name: dummy-tenant\nregistryName: default\ncredential: dummy-cred\nglobalE2EParameters: {}\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\n")
         z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
         z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
-    proc = subprocess.Popen([sys.executable, "-m", "http.server", "8000", "-d", str(base_dir)])
+    proc = subprocess.Popen([sys.executable, "tests/mock_server.py", "8000", str(base_dir)])
     
     test_app_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.0.0"
     test_app_dir.mkdir(parents=True, exist_ok=True)

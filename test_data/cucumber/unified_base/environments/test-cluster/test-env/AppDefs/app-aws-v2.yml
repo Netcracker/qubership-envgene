@@ -1,0 +1,4 @@
+﻿name: "app-aws-v2"
+groupId: "com.example"
+artifactId: "app"
+registryName: "aws-maven"

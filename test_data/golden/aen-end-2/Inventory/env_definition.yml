@@ -1,0 +1,6 @@
+inventory:
+  environmentName: "env02"
+  tenantName: "Applications"
+  cloudName: "cluster01"
+envTemplate:
+  name: "simple"

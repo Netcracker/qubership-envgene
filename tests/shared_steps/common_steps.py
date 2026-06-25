@@ -55,3 +55,14 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
     
     compare_directories(expected_dir, actual_dir)
+
+@then(parsers.parse('the workspace matches the reference "{reference_path}"'))
+def workspace_matches_reference(workspace, reference_path):
+    """
+    Deep compares the entire workspace directory against a golden reference.
+    Useful for testing root-level generated files like /appdefs and /regdefs.
+    """
+    actual_dir = workspace.base_dir
+    expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
+    
+    compare_directories(expected_dir, actual_dir)

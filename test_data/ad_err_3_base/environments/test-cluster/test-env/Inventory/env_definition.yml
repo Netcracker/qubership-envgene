@@ -1,0 +1,6 @@
+templateArtifact:
+  registry: "nexus-auth"
+  artifact:
+    group_id: "org.test"
+    artifact_id: "test"
+    version: "1.0.0"

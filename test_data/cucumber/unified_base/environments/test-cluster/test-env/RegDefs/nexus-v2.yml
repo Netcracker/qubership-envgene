@@ -1,0 +1,10 @@
+﻿version: "2.0"
+name: "nexus-v2-maven"
+authConfig:
+  auth:
+    provider: "nexus"
+    authMethod: "user_pass"
+    credentialsId: "nexus-creds"
+mavenConfig:
+  authConfig: "auth"
+  repositoryDomainName: "https://nexus.example.com/repository"

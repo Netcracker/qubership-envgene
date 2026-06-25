@@ -1,0 +1,10 @@
+﻿version: "2.0"
+name: "artifactory-v2-maven"
+authConfig:
+  auth:
+    provider: "artifactory"
+    authMethod: "user_pass"
+    credentialsId: "artifactory-creds"
+mavenConfig:
+  authConfig: "auth"
+  repositoryDomainName: "https://artifactory.example.com/artifactory"

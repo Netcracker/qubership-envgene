@@ -1,0 +1,5 @@
+name: core
+deployParameters:
+  API_URL: envgeneNullValue
+e2eParameters: {}
+technicalConfigurationParameters: {}

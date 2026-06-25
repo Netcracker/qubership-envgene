@@ -1,0 +1,4 @@
+﻿name: "artifactory-anon-maven"
+mavenConfig:
+  repositoryDomainName: "artifactory.example.com"
+  fullRepositoryUrl: "https://artifactory.example.com/artifactory"

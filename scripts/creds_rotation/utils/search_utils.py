@@ -128,12 +128,12 @@ def extract_env_name(path, cluster_name):
     return None
 
 def find_namespace(entity_files_map, ns_files):
-    ns_content = None
     for ns_file in ns_files:
-        ns_content = entity_files_map.get(str(ns_file))
-        if ns_content:
-            break
-    return ns_content
+        normalized_ns = str(ns_file).replace("\\", "/")
+        for key, content in entity_files_map.items():
+            if key.replace("\\", "/") == normalized_ns:
+                return content
+    return None
 
 @lru_cache(maxsize=None)
 def trim_path_from_environments(path: str):

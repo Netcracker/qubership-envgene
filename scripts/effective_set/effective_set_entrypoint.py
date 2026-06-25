@@ -29,6 +29,11 @@ def effective_set_entrypoint():
     # do not commit delta sd to repo
     deleteFileIfExists(delta_sd_path)
 
+    from envgenehelper.params_helper import validate_parameters
+    from envgenehelper.creds_helper import validate_creds
+    validate_parameters()
+    validate_creds()
+
 
 def _run_full_generation(effective_set_dir, full_env_name, sd_path):
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
