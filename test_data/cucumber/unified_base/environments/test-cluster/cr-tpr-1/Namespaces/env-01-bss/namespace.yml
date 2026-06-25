@@ -1,0 +1,3 @@
+name: env-01-bss
+e2eParameters:
+  TEST_E2E_PASSWORD: ${creds.get('test-cred').password}

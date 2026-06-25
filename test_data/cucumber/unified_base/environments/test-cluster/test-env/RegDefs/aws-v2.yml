@@ -1,0 +1,12 @@
+version: "2.0"
+name: "aws-maven"
+authConfig:
+  auth:
+    provider: "aws"
+    authMethod: "secret"
+    credentialsId: "aws-secret-creds"
+    awsRegion: "us-east-1"
+    awsDomain: "my-domain"
+mavenConfig:
+  authConfig: "auth"
+  repositoryDomainName: "https://my-domain-123.amazonaws.com/maven/store"

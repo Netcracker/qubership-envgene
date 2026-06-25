@@ -1,5 +1,0 @@
-﻿name: "env-template"
-registry:
-  name: "nexus-maven"
-  credentialsId: "nexus-creds"
-

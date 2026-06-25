@@ -1,0 +1,11 @@
+version: "2.0"
+name: "gcp-maven"
+authConfig:
+  auth:
+    provider: "gcp"
+    authMethod: "service_account"
+    credentialsId: "gcp-sa-key"
+    gcpRegion: "us-central1"
+mavenConfig:
+  authConfig: "auth"
+  repositoryDomainName: "https://us-central1-maven.pkg.dev/my-project/maven-repo"

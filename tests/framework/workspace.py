@@ -68,8 +68,15 @@ class EnvGeneWorkspace(BaseWorkspace):
     def builder(self): return self._builder
 
     def write_config(self):
-        with open(self.config_file, 'w') as f:
-            yaml.dump(self.config_data, f)
+        if self.config_file.exists():
+            with open(self.config_file, 'r') as f:
+                existing_data = yaml.safe_load(f) or {}
+            existing_data.update(self.config_data)
+            with open(self.config_file, 'w') as f:
+                yaml.dump(existing_data, f)
+        else:
+            with open(self.config_file, 'w') as f:
+                yaml.dump(self.config_data, f)
 
     def run_module(self, module_name: str, extra_env: dict = None):
         self.write_config()

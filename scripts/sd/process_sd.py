@@ -33,7 +33,7 @@ def get_app_defs_path():
     return f"{get_base_env_path()}/AppDefs"
 
 def get_reg_defs_path():
-    return f"{get_base_env_path()}/Registries"
+    return f"{get_base_env_path()}/RegDefs"
 
 
 def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict: dict) -> dict:

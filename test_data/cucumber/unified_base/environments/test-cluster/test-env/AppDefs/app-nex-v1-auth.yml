@@ -1,0 +1,4 @@
+name: "app-nex-v1-auth"
+groupId: "com.example"
+artifactId: "app"
+registryName: "nexus-maven"

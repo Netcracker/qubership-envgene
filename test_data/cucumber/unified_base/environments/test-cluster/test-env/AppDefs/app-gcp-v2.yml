@@ -1,0 +1,4 @@
+name: "app-gcp-v2"
+groupId: "com.example"
+artifactId: "app"
+registryName: "gcp-maven"

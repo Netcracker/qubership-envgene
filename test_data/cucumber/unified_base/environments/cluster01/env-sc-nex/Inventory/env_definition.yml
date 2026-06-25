@@ -1,0 +1,6 @@
+templateArtifact:
+  registry: "nexus-maven"
+  artifact:
+    group_id: "com.example"
+    artifact_id: "env"
+    version: "1.0"

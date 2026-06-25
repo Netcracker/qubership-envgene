@@ -1,0 +1,4 @@
+name: "app-specific-version"
+groupId: "com.example"
+artifactId: "app"
+registryName: "artifactory-maven"

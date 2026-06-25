@@ -1,4 +1,0 @@
-artifactory-maven:
-  name: "artifactory-maven"
-  credentialsId: "artifactory-creds"
-  snapshotRepository: "http://localhost:8000/auth-fail"
