@@ -52,9 +52,13 @@ class GitRepoManager:
         self.repo.git.reset('--hard')
 
         try:
-            origin.pull(self.branch)
+            commit_hash = self.repo.git.ls_remote("--heads", "origin", self.branch).split()[0]
+            self.repo.git.fetch("--depth", "1", "origin", commit_hash)
+            self.repo.git.checkout("--detach", "FETCH_HEAD")
         except GitCommandError as e:
-            raise RuntimeError(f"Failed to pull branch '{self.branch}' from remote 'origin': {e}")
+            raise RuntimeError(
+                f"Failed to checkout detached head for branch '{self.branch}' from remote 'origin': {e}"
+            )
 
 
 class GitLabClient:
