@@ -48,21 +48,23 @@ Goals:
 
 ## Approach
 
-EnvGene provides a built-in mechanism for managing system certificates during pipeline execution. EnvGene evaluates four
+EnvGene provides a built-in mechanism for managing system certificates during pipeline execution. EnvGene evaluates three
 sources in a fixed priority order and selects the first non-empty one. Lower-priority sources are ignored. EnvGene does not
 merge certificates across sources.
 
 ### Certificate source priority
 
-| Priority | Source                    | Kind                  | Value format                                                                                      |
-|----------|---------------------------|-----------------------|---------------------------------------------------------------------------------------------------|
-| 1        | `SSL_CERTIFICATES_BUNDLE` | GitLab CI/CD variable | Base64-encoded PEM CA certificate or bundle                                                       |
-| 2        | `CA_BUNDLE_CERTIFICATE`   | Cloud Passport        | Base64-encoded PEM CA certificate or bundle                                                       |
-| 3        | `ca_bundle`               | Repository folder     | Certificate files at repository root                                                              |
-| 4        | `configuration/certs`     | Repository folder     | Certificate files under `configuration/`                                                          |
+| Priority | Source                    | Kind                  | Value format                                |
+|----------|---------------------------|-----------------------|---------------------------------------------|
+| 1        | `SSL_CERTIFICATES_BUNDLE` | GitLab CI/CD variable | Base64-encoded PEM CA certificate or bundle |
+| 2        | `ca_bundle`               | Repository folder     | Certificate files at repository root        |
+| 3        | `configuration/certs`     | Repository folder     | Certificate files under `configuration/`    |
 
-`CA_BUNDLE_CERTIFICATE` is read from `Devops.CA_BUNDLE_CERTIFICATE` in the [Cloud Passport](/docs/envgene-objects.md#cloud-passport).
 `ca_bundle` lives at the repository root. `configuration/certs` is evaluated at the lowest priority for backward compatibility.
+
+System certificates are for the GitLab Runner trust store during pipeline jobs. They are not sourced from the Cloud
+Passport or from deploy parameters such as `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which supply TLS material to Kubernetes
+applications.
 
 > [!IMPORTANT]
 > EnvGene applies all certificate files from the selected source only. Certificates from other sources are not loaded.
@@ -83,17 +85,12 @@ The system certificate configuration feature in EnvGene automatically handles ce
 > - If `SSL_CERTIFICATES_BUNDLE` is set but cannot be decoded (invalid base64) or does not contain a valid PEM certificate
 >   after decoding, the pipeline fails with an explicit error. EnvGene does not fall back to a lower-priority source in this
 >   case - fallback only occurs when a source is empty or unset, not when it is set but invalid.
-> - If `CA_BUNDLE_CERTIFICATE` from Cloud Passport is set but cannot be decoded (invalid base64) or does not contain a valid
->   PEM certificate after decoding, the pipeline fails with an explicit error. EnvGene does not skip to the next source
->   silently - fallback only occurs when a source is empty or unset, not when it is set but invalid.
 
 ```mermaid
 flowchart TD
     A[Pipeline execution begins] --> B{SSL_CERTIFICATES_BUNDLE set and non-empty?}
     B -->|Yes| C[Decode base64 PEM bundle and load]
-    B -->|No| D{CA_BUNDLE_CERTIFICATE from Cloud Passport non-empty?}
-    D -->|Yes| C
-    D -->|No| E{ca_bundle folder exists and non-empty?}
+    B -->|No| E{ca_bundle folder exists and non-empty?}
     E -->|Yes| F[Load all files from ca_bundle]
     E -->|No| G{configuration/certs exists and non-empty?}
     G -->|Yes| H[Load all files from configuration/certs]
@@ -287,8 +284,8 @@ Under the hood, EnvGene uses a certificate handling script that:
 
 1. **Certificate not recognised**:
    - Ensure the certificate is in the correct format
-   - Check that the certificate is present in the selected source (`SSL_CERTIFICATES_BUNDLE`, Cloud Passport
-     `Devops.CA_BUNDLE_CERTIFICATE`, `ca_bundle`, or `configuration/certs`)
+   - Check that the certificate is present in the selected source (`SSL_CERTIFICATES_BUNDLE`, `ca_bundle`, or
+     `configuration/certs`)
 
 2. **Connection failures**:
    - EnvGene does not check certificate expiry when loading certificates into the trust store. Expired certificates are
@@ -323,5 +320,3 @@ To debug certificate issues:
 
 - [Configure system certificates](/docs/how-to/system-certificate.md) - step-by-step setup for each certificate source
 - [System certificate use cases](/docs/use-cases/system-certificate.md) - observable behaviour and test scenarios
-- [Cloud Passport processing](/docs/features/cloud-passport-processing.md) - how Cloud Passport parameters reach the
-  environment

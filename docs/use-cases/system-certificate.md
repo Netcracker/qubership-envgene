@@ -4,10 +4,9 @@
   - [Overview](#overview)
   - [Certificate source resolution](#certificate-source-resolution)
     - [UC-SC-SRC-1: Load certificates from GitLab CI/CD variable](#uc-sc-src-1-load-certificates-from-gitlab-cicd-variable)
-    - [UC-SC-SRC-2: Load certificates from Cloud Passport](#uc-sc-src-2-load-certificates-from-cloud-passport)
-    - [UC-SC-SRC-3: Load certificates from `ca_bundle` folder](#uc-sc-src-3-load-certificates-from-ca_bundle-folder)
-    - [UC-SC-SRC-4: Load certificates from `configuration/certs`](#uc-sc-src-4-load-certificates-from-configurationcerts)
-    - [UC-SC-SRC-5: No system certificates loaded](#uc-sc-src-5-no-system-certificates-loaded)
+    - [UC-SC-SRC-2: Load certificates from `ca_bundle` folder](#uc-sc-src-2-load-certificates-from-ca_bundle-folder)
+    - [UC-SC-SRC-3: Load certificates from `configuration/certs`](#uc-sc-src-3-load-certificates-from-configurationcerts)
+    - [UC-SC-SRC-4: No system certificates loaded](#uc-sc-src-4-no-system-certificates-loaded)
   - [Priority resolution](#priority-resolution)
     - [UC-SC-PRI-1: Higher-priority source hides lower-priority sources](#uc-sc-pri-1-higher-priority-source-hides-lower-priority-sources)
   - [Validation failures](#validation-failures)
@@ -20,7 +19,7 @@
 ## Overview
 
 This document covers use cases for [system certificate configuration](/docs/features/system-certificate.md). EnvGene loads
-system certificates at the start of pipeline jobs. EnvGene evaluates four sources in fixed priority order, selects the first
+system certificates at the start of pipeline jobs. EnvGene evaluates three sources in fixed priority order, selects the first
 non-empty source, and does not merge certificates across sources.
 
 ## Certificate source resolution
@@ -56,46 +55,12 @@ non-empty source, and does not merge certificates across sources.
 2. CA certificates from the decoded bundle are present in the runner trust store.
 3. The job completes successfully.
 
-### UC-SC-SRC-2: Load certificates from Cloud Passport
+### UC-SC-SRC-2: Load certificates from `ca_bundle` folder
 
 **Pre-requisites:**
 
 1. `SSL_CERTIFICATES_BUNDLE` is unset or empty.
-2. Resolved Cloud Passport has non-empty `Devops.CA_BUNDLE_CERTIFICATE`.
-3. Value is valid base64-encoded PEM CA certificate or bundle content.
-
-**Trigger:**
-
-> [!NOTE]
-> One of the following jobs runs in the instance pipeline (GitLab or GitHub):
-
-1. `app_reg_def_process`
-2. `process_sd`
-3. `env_build`
-4. `generate_effective_set`
-5. `git_commit`
-
-**Steps:**
-
-1. A pipeline job runs.
-2. EnvGene resolves `CA_BUNDLE_CERTIFICATE` from Cloud Passport as the certificate source and loads the decoded
-   certificates.
-3. CA certificates are added to the system trusted root certificate store.
-4. `REQUESTS_CA_BUNDLE` is set to the OS-specific system CA bundle path.
-
-**Results:**
-
-1. Pipeline logs show `CA_BUNDLE_CERTIFICATE` as the resolved certificate source.
-2. CA certificates from the decoded bundle are present in the runner trust store.
-3. `REQUESTS_CA_BUNDLE` is set in the job environment.
-
-### UC-SC-SRC-3: Load certificates from `ca_bundle` folder
-
-**Pre-requisites:**
-
-1. `SSL_CERTIFICATES_BUNDLE` is unset or empty.
-2. `Devops.CA_BUNDLE_CERTIFICATE` is unset or empty in the resolved Cloud Passport.
-3. `/ca_bundle` exists at the repository root and contains at least one `.crt` or `.pem` certificate file, for example
+2. `/ca_bundle` exists at the repository root and contains at least one `.crt` or `.pem` certificate file, for example
    `/ca_bundle/ca.pem`.
 
 **Trigger:**
@@ -123,14 +88,13 @@ non-empty source, and does not merge certificates across sources.
 3. CA certificates from `/ca_bundle/` are present in the runner trust store.
 4. `REQUESTS_CA_BUNDLE` is set in the job environment.
 
-### UC-SC-SRC-4: Load certificates from `configuration/certs`
+### UC-SC-SRC-3: Load certificates from `configuration/certs`
 
 **Pre-requisites:**
 
 1. `SSL_CERTIFICATES_BUNDLE` is unset or empty.
-2. `Devops.CA_BUNDLE_CERTIFICATE` is unset or empty in the resolved Cloud Passport.
-3. `/ca_bundle` is absent or empty at the repository root.
-4. `/configuration/certs` exists and contains at least one `.crt` or `.pem` certificate file, for example
+2. `/ca_bundle` is absent or empty at the repository root.
+3. `/configuration/certs` exists and contains at least one `.crt` or `.pem` certificate file, for example
    `/configuration/certs/ca.pem`.
 
 **Trigger:**
@@ -158,14 +122,13 @@ non-empty source, and does not merge certificates across sources.
 3. CA certificates from `/configuration/certs/` are present in the runner trust store.
 4. `REQUESTS_CA_BUNDLE` is set in the job environment.
 
-### UC-SC-SRC-5: No system certificates loaded
+### UC-SC-SRC-4: No system certificates loaded
 
 **Pre-requisites:**
 
 1. `SSL_CERTIFICATES_BUNDLE` is unset or empty.
-2. `Devops.CA_BUNDLE_CERTIFICATE` is unset or empty in the resolved Cloud Passport.
-3. `/ca_bundle` is absent or empty at the repository root.
-4. `/configuration/certs` is absent or empty.
+2. `/ca_bundle` is absent or empty at the repository root.
+3. `/configuration/certs` is absent or empty.
 
 **Trigger:**
 
@@ -257,8 +220,7 @@ non-empty source, and does not merge certificates across sources.
 **Pre-requisites:**
 
 1. `SSL_CERTIFICATES_BUNDLE` is unset or empty.
-2. `Devops.CA_BUNDLE_CERTIFICATE` is unset or empty in the resolved Cloud Passport.
-3. The selected folder source (`/ca_bundle` or `/configuration/certs`) contains at least one certificate file that
+2. The selected folder source (`/ca_bundle` or `/configuration/certs`) contains at least one certificate file that
    cannot be read, for example due to restrictive file permissions.
 
 **Trigger:**
@@ -290,8 +252,7 @@ non-empty source, and does not merge certificates across sources.
 **Pre-requisites:**
 
 1. `SSL_CERTIFICATES_BUNDLE` is unset or empty.
-2. `Devops.CA_BUNDLE_CERTIFICATE` is unset or empty in the resolved Cloud Passport.
-3. The selected folder source (`/ca_bundle` or `/configuration/certs`) contains at least one `.crt` or `.pem` file that
+2. The selected folder source (`/ca_bundle` or `/configuration/certs`) contains at least one `.crt` or `.pem` file that
    cannot be parsed as a valid certificate.
 
 **Trigger:**
