@@ -1,4 +1,5 @@
 from pytest_bdd import scenarios
-from tests.shared_steps.unified_pipeline_steps import *
+from tests.shared_steps.inventory_gen_steps import *
+from tests.shared_steps.common_steps import *
 
-scenarios('../features/unified_pipeline_success/environment-inventory-generation.feature')
+scenarios('../features/environment-inventory-generation.feature')
