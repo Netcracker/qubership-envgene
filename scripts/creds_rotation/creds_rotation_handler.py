@@ -178,10 +178,14 @@ def run_cred_rotation():
             ErrorMessages.EMPTY_PARAM, error_code=ErrorCodes.INVALID_STATE_CODE
         )
 
-    if not config.creds_rotation_enabled:
+    affected_found = any(res.affected_parameters for res in final_result)
+    if affected_found and not config.creds_rotation_enabled:
+        logger.error(
+            f"Affected parameters found: {dump_as_yaml_format([res.to_dict() for res in final_result if res.affected_parameters])}"
+        )
         raise ValidationError(
             ErrorMessages.CRED_UPDATION_FALSE.format(file=output_path),
-            error_code=ErrorCodes.INVALID_STATE_CODE
+            error_code=ErrorCodes.TERMINATION_CODE
         )
     if processed_cred_and_files:
         updated_content, original_content = update_cred_content(

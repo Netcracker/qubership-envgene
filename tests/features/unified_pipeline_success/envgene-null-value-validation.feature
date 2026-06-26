@@ -10,4 +10,4 @@ Feature: Unified Pipeline Successful Execution - envgene-null-value-validation.m
     And the pipeline parameter "CMDB_IMPORT" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
-    And the environment instance "test-cluster/test-env" matches the reference "ref-group-1"
+    And the environment instance "test-cluster/test-env" matches the reference "uc-nvv-3"

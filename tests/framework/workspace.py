@@ -89,6 +89,9 @@ class EnvGeneWorkspace(BaseWorkspace):
         jschon_sort = str(Path(project_root) / "python" / "jschon-sort")
         scripts_root = str(Path(project_root) / "scripts")
         env["PYTHONPATH"] = f"{project_root}{os.pathsep}{python_root}{os.pathsep}{artifact_searcher}{os.pathsep}{integration}{os.pathsep}{jschon_sort}{os.pathsep}{scripts_root}"
+        
+        # Add base_dir to PATH so that sops_mock (sops.bat) can be found
+        env["PATH"] = f"{str(self.base_dir)}{os.pathsep}{env.get('PATH', '')}"
 
         import sys
         python_exe = sys.executable
