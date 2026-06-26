@@ -2,4 +2,12 @@ inventory:
   tenantName: "Applications"
   cloudName: "cluster01"
 envTemplate:
-  name: "simple"
+  name: "test"
+  templateArtifact:
+    artifact:
+      group_id: "org.test"
+      artifact_id: "test-artifact"
+      version: "v1"
+    templateRepository: "maven-repo"
+    repository: "maven-repo"
+    registry: "test-registry"

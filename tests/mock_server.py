@@ -27,5 +27,6 @@ if __name__ == "__main__":
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=directory, **kwargs)
 
+    socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", port), DualHandler) as httpd:
         httpd.serve_forever()
