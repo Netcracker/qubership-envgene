@@ -62,10 +62,6 @@ merge certificates across sources.
 
 `ca_bundle` lives at the repository root. `configuration/certs` is evaluated at the lowest priority for backward compatibility.
 
-System certificates are for the GitLab Runner trust store during pipeline jobs. They are not sourced from the Cloud
-Passport or from deploy parameters such as `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which supply TLS material to Kubernetes
-applications.
-
 > [!IMPORTANT]
 > EnvGene applies all certificate files from the selected source only. Certificates from other sources are not loaded.
 
