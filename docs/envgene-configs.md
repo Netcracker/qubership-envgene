@@ -531,13 +531,13 @@ Location: `/configuration/registry.yml`
 ```yaml
 <registry-name>:
   # Username for authenticating to the registry.
-  # It's recommended to use the envgen.creds.get() macro.
-  # For anonymous registries, use an empty string: ""
-  username: string
+  # For a local Credential use the envgen.creds.get() macro, for an external Credential use the
+  # $type: credRef form. For anonymous registries, use an empty string: ""
+  username: string | credRef
   # Password for authenticating to the registry.
-  # It's recommended to use the envgen.creds.get() macro.
-  # For anonymous registries, use an empty string: ""
-  password: string
+  # For a local Credential use the envgen.creds.get() macro, for an external Credential use the
+  # $type: credRef form. For anonymous registries, use an empty string: ""
+  password: string | credRef
   releaseRepository: string
   snapshotRepository: string
   stagingRepository: string

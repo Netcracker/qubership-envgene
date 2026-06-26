@@ -366,6 +366,8 @@ The Effective Set calculator builds VALS reference from:
 <parameter-key>: <vals-uri>
 ```
 
+A structured parameter keeps its nested map or list shape, with a VALS URI at each sensitive leaf.
+
 ```yaml
 # Example
 global.secrets.streamingPlatform.username: ref+gcpsecrets://468649328578/ocp-05--env-1--env-1-data-management--cdc--cdc-streaming-cred#/username
@@ -554,14 +556,17 @@ to two file shapes in the
   `contexts.pipeline.consumers[]` in the Effective Set config. Contains the subset of `e2eParameters` that
   match the consumer's schema (same selector used for `<consumer-name>-credentials.yaml`).
 
-Both shapes are flat maps of `e2eParameter` key to VALS URI:
+Both shapes mirror the structure of the corresponding `e2eParameters`, with a VALS URI in place of each
+sensitive value. A scalar parameter is a single `key: <vals-uri>` entry. A structured parameter keeps its
+nested map or list shape, with a VALS URI at each sensitive leaf:
 
 ```yaml
 <parameter-key>: <vals-uri>
-<parameter-key>: <vals-uri>
+<structured-parameter-key>:
+  <nested-key>: <vals-uri>
 ```
 
-Entries are ordered alphabetically by parameter key.
+Top-level entries are ordered alphabetically by parameter key.
 
 The file locations are:
 

@@ -539,6 +539,8 @@ mavenConfig:
   targetSnapshot: "snapshot"
   targetStaging: "staging"
   targetRelease: "release"
+  snapshotGroup: "maven-snapshot-group"
+  releaseGroup: "maven-release-group"
 dockerConfig:
   snapshotUri: "{{ regdefs.overrides.docker.snapshotUri | default('docker.qubership.org/snapshot') }}"
   stagingUri: "{{ regdefs.overrides.docker.stagingUri | default('docker.qubership.org/staging') }}"
@@ -565,6 +567,10 @@ name: "application-1"
 registryName: "{{ appdefs.overrides.registryName | default('registry-1') }}"
 artifactId: "application-1"
 groupId: "org.qubership"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 #### Credential Template
@@ -589,14 +595,14 @@ Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `c
 streaming-cred:
   type: external
   create: true
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
   properties:
     - name: username
     - name: password
 consul-creds:
   type: external
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}"
 ```
 
@@ -2857,6 +2863,18 @@ artifactId: string
 # Mandatory
 # Application group ID
 groupId: string
+# Optional
+# Whether the application supports parallel deployment
+supportParallelDeploy: boolean
+# Optional
+# Application-level deploy parameters (may be an empty map)
+deployParameters: hashmap
+# Optional
+# Application-level technical configuration parameters (may be an empty map)
+technicalConfigurationParameters: hashmap
+# Optional
+# Whether this application carries a Solution Descriptor
+solutionDescriptor: boolean
 ```
 
 **Example:**
@@ -2866,6 +2884,10 @@ name: qip
 registryName: sandbox
 artifactId: qip
 groupId: org.qubership
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)
