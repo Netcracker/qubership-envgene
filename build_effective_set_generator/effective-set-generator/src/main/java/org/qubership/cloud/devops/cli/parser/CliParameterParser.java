@@ -118,10 +118,12 @@ public class CliParameterParser {
                         NS_ORIGIN : CLOUD_ORIGIN;
             if (StringUtils.isNotEmpty(credentialsId)) {
                 CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
+                String secret = "";
                 if (credentialDTO != null && credentialDTO.getData() instanceof SecretCredentialsDTO) {
                     SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
-                    k8TokenMap.put(originalNamespace, new Parameter(secCred.getSecret(), credentialsIdOrigin, false));
+                    secret = secCred.getSecret() != null ? secCred.getSecret() : "";
                 }
+                k8TokenMap.put(originalNamespace, new Parameter(secret, credentialsIdOrigin, false));
             }
         });
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
@@ -387,7 +389,7 @@ public class CliParameterParser {
                     try {
                         Path servicePath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", entry.getKey()).toPath();
                         Files.createDirectories(servicePath);
-                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
+                        fileDataConverter.writeToFile(ParameterUtils.extractMapValue(entry.getValue()), servicePath.toString(), "deployment-parameters.yaml");
                     } catch (IOException e) {
                         throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
                     }

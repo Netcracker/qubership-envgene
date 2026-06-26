@@ -73,11 +73,11 @@ public class CloudMap extends DynamicMap {
         if (config == null) {
             return null; // return empty map instead?
         }
-        String cloudOrigin = String.format(CLOUD_ORIGIN, tenant, cloudName);
+        String cloudOrigin = CLOUD_ORIGIN;
         mergeE2E = config.isMergeCloudAndE2EParameters();
         EscapeMap map = new EscapeMap(config.getCloudParams(), binding, cloudOrigin);
-        EscapeMap e2e = new EscapeMap(config.getE2eParams(), binding, String.format(ParametersConstants.CLOUD_E2E_ORIGIN, tenant, cloudName));
-        EscapeMap configServer = new EscapeMap(config.getConfigServerParams(), binding, String.format(ParametersConstants.CLOUD_CONFIG_SERVER_ORIGIN, tenant, cloudName));
+        EscapeMap e2e = new EscapeMap(config.getE2eParams(), binding, cloudOrigin);
+        EscapeMap configServer = new EscapeMap(config.getConfigServerParams(), binding, cloudOrigin);
 
         map.put("app", new Parameter(new CloudApplicationMap(config, defaultApp, binding).init()));
 

@@ -100,7 +100,7 @@ public class NamespaceApplicationMap extends DynamicMap {
             }
             map.put(COLLIDING_IMAGE_DEPLOY_PARAMS, applicationBomDto.getCollidingImageDeployParams());
         }
-        map.put("DEPLOYMENT_SESSION_ID", binding.getDeployerInputs().getDeploySessionId());
+        map.put("DEPLOYMENT_SESSION_ID", binding.getDeployerInputs().getDeploySessionId(), ENVGENE_PIPELINE_PARAMETER);
     }
 
     private ApplicationBomDTO getApplicationBomDto(String appName, String appFileRef) {

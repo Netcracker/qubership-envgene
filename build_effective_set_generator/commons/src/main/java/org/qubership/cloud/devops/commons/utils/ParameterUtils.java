@@ -259,6 +259,14 @@ public class ParameterUtils {
     }
 
 
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> extractMapValue(Object value) {
+        if (value instanceof Parameter parameter) {
+            value = parameter.getValue();
+        }
+        return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;
+    }
+
     public static Map<String, Object> unwrapParameterValues(
             Map<String, Object> inputMap) {
         if (inputMap == null) {

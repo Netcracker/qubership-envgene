@@ -102,7 +102,7 @@ public class ProfileServiceCliImpl implements ProfileService {
         Map<String, Object> current = profileValues;
 
         for (int i = 0; i < parts.length - 1; i++) {
-            current = (Map<String, Object>) current.computeIfAbsent(parts[i], k -> new LinkedHashMap<String, Object>());
+            current = getOrCreateNestedMap(current, parts[i]);
         }
         current.put(parts[parts.length - 1], value);
     }
@@ -119,13 +119,21 @@ public class ProfileServiceCliImpl implements ProfileService {
 
             Map<String, Object> current = map;
             for (int i = 0; i < parts.length - 1; i++) {
-                current = (Map<String, Object>) current.computeIfAbsent(
-                        parts[i],
-                        k -> new LinkedHashMap<String, Object>()
-                );
+                current = getOrCreateNestedMap(current, parts[i]);
             }
             current.put(parts[parts.length - 1], val);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getOrCreateNestedMap(Map<String, Object> parent, String key) {
+        Object existing = parent.get(key);
+        if (existing instanceof Map<?, ?> existingMap) {
+            return (Map<String, Object>) existingMap;
+        }
+        Map<String, Object> nested = new LinkedHashMap<>();
+        parent.put(key, nested);
+        return nested;
     }
 
 }

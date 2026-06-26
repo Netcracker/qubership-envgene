@@ -332,6 +332,7 @@ public class BomReaderUtilsImplV2 {
         serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", ENVGENE_DEFAULT, false));
         serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), SBOM_ORIGIN, false));
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
+        Object imageRepository = getImageRepository(dockerTag);
         serviceParams.put("DOCKER_TAG", new Parameter(dockerTag, SBOM_ORIGIN, false));
         if (imageRepository != null) {
             serviceParams.put("IMAGE_REPOSITORY", new Parameter(imageRepository, ENVGENE_CALCULATED, false));
@@ -391,6 +392,7 @@ public class BomReaderUtilsImplV2 {
                 profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<TreeMap<String, Object>>() {
                 });
                 if (MapUtils.isNotEmpty(profileValues)) {
+                    profileService.setOverrideProfiles(appName, serviceName, null, profileValues);
                     wrapPlainMapWithOrigin(profileValues, baselineOrigin);
                 }
                 profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);

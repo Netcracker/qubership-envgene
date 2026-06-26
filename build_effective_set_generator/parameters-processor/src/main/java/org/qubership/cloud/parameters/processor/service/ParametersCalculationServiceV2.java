@@ -129,7 +129,7 @@ public class ParametersCalculationServiceV2 {
             return;
         }
         parameterBundle.setProcessPerServiceParams(true);
-        Map<String, Object> perServiceParams = ParameterUtils.deepSortMapKeysPreservingParameters((Map<?, ?>) parameter.getValue());
+        Map<String, Object> perServiceParams = ParameterUtils.deepSortMapKeysPreservingParameters(MapUtils.emptyIfNull(ParameterUtils.extractMapValue(parameter.getValue())));
 
         parameterBundle.setPerServiceParams(perServiceParams);
         parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
@@ -148,11 +148,18 @@ public class ParametersCalculationServiceV2 {
             parameters.getDeployParams().remove(DEPLOY_DESC);
         }
         Map<String, Object> finalDeployDescMap = new LinkedHashMap<>();
-        Map<String, Object> deployDescParams = ParameterUtils.deepSortMapKeysPreservingParameters((Map<String, ?>) parameter.getValue());
+        Map<String, Object> deployDescParams = ParameterUtils.deepSortMapKeysPreservingParameters(MapUtils.emptyIfNull(ParameterUtils.extractMapValue(parameter.getValue())));
 
         Map<String, Object> commonParamMap = new LinkedHashMap<>();
-        Map<String, Object> commonDepDescMap = extractMap(commParameter.getValue());
-        commonDepDescMap.values().forEach(value -> commonParamMap.putAll(extractMap(value)));
+        Map<String, Object> commonDepDescMap = ParameterUtils.extractMapValue(commParameter.getValue());
+        if (commonDepDescMap != null) {
+            commonDepDescMap.values().forEach(value -> {
+                Map<String, Object> extracted = ParameterUtils.extractMapValue(value);
+                if (extracted != null) {
+                    commonParamMap.putAll(extracted);
+                }
+            });
+        }
         Map<String, Object> deployDescParamMap = new LinkedHashMap<>();
         deployDescParamMap.put("deployDescriptor", deployDescParams);
 
@@ -288,7 +295,7 @@ public class ParametersCalculationServiceV2 {
         Map<String, Object> serviceMap = new LinkedHashMap<>();
         Map<String, Object> collisionParams = new LinkedHashMap<>();
         if (parameters.containsKey(SERVICES)) {
-            serviceMap = extractMap(parameters.get(SERVICES));
+            serviceMap = ParameterUtils.extractMapValue(parameters.get(SERVICES));
         }
         Set<String> services = serviceMap.keySet();
         Set<String> keysToRemove = new HashSet<>();
@@ -310,12 +317,12 @@ public class ParametersCalculationServiceV2 {
 
         entities.stream()
                 .map(parameters::remove)
-                .map(ParametersCalculationServiceV2::extractMap)
+                .map(ParameterUtils::extractMapValue)
                 .filter(Objects::nonNull)
                 .forEach(finalMap::putAll);
 
         Map<String, Object> collidingImageParams = MapUtils.emptyIfNull(
-                (Map<String, Object>) parameters.remove(COLLIDING_IMAGE_DEPLOY_PARAMS));
+                ParameterUtils.extractMapValue(parameters.remove(COLLIDING_IMAGE_DEPLOY_PARAMS)));
         Map<String, Object> sortedMap = ParameterUtils.deepSortMapKeysPreservingParameters(parameters);
         orderedMap.putAll(sortedMap);
         if (parameters != null && !parameters.isEmpty()) {
@@ -323,7 +330,7 @@ public class ParametersCalculationServiceV2 {
                 sortedMap.putAll(collisionParams);
             }
             sortedMap.putAll(collidingImageParams);
-            orderedMap.put("global", ParameterUtils.deepSortMapKeysPreservingParameters(sortedMap));
+            orderedMap.put("global", sortedMap);
         }
         if (processPerServiceParams) {
             finalMap.forEach((key, value) -> {
@@ -358,13 +365,5 @@ public class ParametersCalculationServiceV2 {
                 inSecuredParams.put(entry.getKey(), entry.getValue());
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> extractMap(Object value) {
-        if (value instanceof Parameter parameter) {
-            value = parameter.getValue();
-        }
-        return (value instanceof Map<?, ?> map) ? (Map<String, Object>) map : null;
     }
 }
