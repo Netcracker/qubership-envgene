@@ -7,10 +7,10 @@ from envgenehelper import (
     openYaml,
     getAppDefinitionPath,
     get_envgene_config_yaml,
-    get_or_create_nested_yaml_attribute,
-    GitRepoManager
+    get_or_create_nested_yaml_attribute
 )
 from gcip import Job, Need, TriggerJob
+from envgenehelper.git_helper import GitRepoManager
 
 REPO_ROOT_PATHS = [
     "appdefs/",
