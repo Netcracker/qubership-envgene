@@ -1,5 +1,0 @@
-name: "artifactory-maven"
-credentialsId: "artifactory-creds"
-mavenConfig:
-  repositoryDomainName: "artifactory.example.com"
-  fullRepositoryUrl: "https://artifactory.example.com/artifactory"

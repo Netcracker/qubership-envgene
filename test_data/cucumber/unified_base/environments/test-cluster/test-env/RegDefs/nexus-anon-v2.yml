@@ -1,4 +1,0 @@
-version: "2.0"
-name: "nexus-anon-v2-maven"
-mavenConfig:
-  repositoryDomainName: "https://nexus.example.com/repository"

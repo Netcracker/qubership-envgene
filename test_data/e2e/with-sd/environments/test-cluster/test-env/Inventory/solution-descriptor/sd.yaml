@@ -1,7 +1,0 @@
-applications:
-- deployPostfix: dp_existing
-  version: existing_app:0.9.0
-deployGraph:
-- apps:
-  - existing_app:dp_existing
-  chunkName: wave1

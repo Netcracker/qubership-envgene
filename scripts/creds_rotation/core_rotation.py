@@ -78,8 +78,6 @@ def process_entry_in_payload(
         target_file
     )
     logger.info(f"✅ Processed param {entry.parameter_key}, affected count = {len(affected)}")
-    if not affected:
-        return None
     return RotationResult(
         target_parameter=ParameterReference(
             environment=env,
