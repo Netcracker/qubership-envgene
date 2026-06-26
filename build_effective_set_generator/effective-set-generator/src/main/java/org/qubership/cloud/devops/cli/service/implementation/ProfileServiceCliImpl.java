@@ -26,6 +26,8 @@ import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.service.interfaces.TenantConfigurationService;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
+import org.qubership.cloud.devops.commons.utils.Parameter;
+import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.devops.commons.utils.mapper.ProfileMapper;
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,7 +36,6 @@ import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @ApplicationScoped
@@ -76,6 +77,7 @@ public class ProfileServiceCliImpl implements ProfileService {
     public void setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues) {
         expandDottedKeys(profileValues);
         if (overrideProfile != null) {
+            String overrideOrigin = String.format(ParametersConstants.RP_OVERRIDE_ORIGIN, overrideProfile.getName());
             ApplicationProfile override = overrideProfile.getApplications().stream()
                     .filter(app -> appName.equals(app.getName()))
                     .findFirst()
@@ -87,7 +89,7 @@ public class ProfileServiceCliImpl implements ProfileService {
                         .findFirst().orElse(null);
                 if (serviceOverride != null) {
                     for (ParameterProfile param : serviceOverride.getParameters()) {
-                        putNestedValue(profileValues, param.getName(), param.getValue());
+                        putNestedValue(profileValues, param.getName(), new Parameter(param.getValue(), overrideOrigin, false));
                     }
                 }
             }
@@ -100,7 +102,7 @@ public class ProfileServiceCliImpl implements ProfileService {
         Map<String, Object> current = profileValues;
 
         for (int i = 0; i < parts.length - 1; i++) {
-            current = (Map<String, Object>) current.computeIfAbsent(parts[i], k -> new LinkedHashMap<String, Object>());
+            current = getOrCreateNestedMap(current, parts[i]);
         }
         current.put(parts[parts.length - 1], value);
     }
@@ -117,13 +119,21 @@ public class ProfileServiceCliImpl implements ProfileService {
 
             Map<String, Object> current = map;
             for (int i = 0; i < parts.length - 1; i++) {
-                current = (Map<String, Object>) current.computeIfAbsent(
-                        parts[i],
-                        k -> new LinkedHashMap<String, Object>()
-                );
+                current = getOrCreateNestedMap(current, parts[i]);
             }
             current.put(parts[parts.length - 1], val);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getOrCreateNestedMap(Map<String, Object> parent, String key) {
+        Object existing = parent.get(key);
+        if (existing instanceof Map<?, ?> existingMap) {
+            return (Map<String, Object>) existingMap;
+        }
+        Map<String, Object> nested = new LinkedHashMap<>();
+        parent.put(key, nested);
+        return nested;
     }
 
 }

@@ -147,6 +147,45 @@ public class ParameterUtils {
                 .build();
     }
 
+    public static Map<String, Object> deepSortMapKeysPreservingParameters(Map<?, ?> source) {
+        Map<String, Object> out = new TreeMap<>();
+        if (source != null) {
+            for (Map.Entry<?, ?> e : source.entrySet()) {
+                out.put(String.valueOf(e.getKey()), deepSortValuePreservingParameters(e.getValue()));
+            }
+        }
+        return out;
+    }
+
+    private static Object deepSortValuePreservingParameters(Object value) {
+        if (value instanceof Parameter p) {
+            Object sorted = deepSortNestedValue(p.getValue());
+            return copyOldValues(p, sorted);
+        }
+        return deepSortNestedValue(value);
+    }
+
+    private static Object deepSortNestedValue(Object value) {
+        if (value instanceof Map<?, ?>) {
+            return deepSortMapKeysPreservingParameters((Map<?, ?>) value);
+        }
+        if (value instanceof List<?>) {
+            return deepSortListPreservingParameters((List<?>) value);
+        }
+        return value;
+    }
+
+    private static List<Object> deepSortListPreservingParameters(List<?> list) {
+        if (list == null) {
+            return null;
+        }
+        List<Object> out = new ArrayList<>(list.size());
+        for (Object item : list) {
+            out.add(deepSortValuePreservingParameters(item));
+        }
+        return out;
+    }
+
     public static void splitBgDomainParams(Map<String, Object> bgDomainMap,
                                            Map<String, Object> bgDomainSecureMap,
                                            Map<String, Object> bgDomainParamsMap) {
@@ -179,4 +218,74 @@ public class ParameterUtils {
             params.remove(key);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public static void wrapPlainMapWithOrigin(Map<String, Object> map, String origin) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Parameter) {
+                ((Parameter) value).setOrigin(origin);
+            } else if (value instanceof Map) {
+                wrapPlainMapWithOrigin((Map<String, Object>) value, origin);
+            } else if (value instanceof List) {
+                wrapPlainListWithOrigin((List<Object>) value, origin);
+            } else {
+                entry.setValue(new Parameter(value, origin, false));
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Object> wrapPlainListWithOrigin(List<Object> list, String origin) {
+        if (list == null || list.isEmpty()) {
+            return list;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            Object item = list.get(i);
+            if (item instanceof Parameter) {
+                // Keep existing Parameter as is
+            } else if (item instanceof Map) {
+                wrapPlainMapWithOrigin((Map<String, Object>) item, origin);
+            } else if (item instanceof List) {
+                list.set(i, wrapPlainListWithOrigin((List<Object>) item, origin));
+            } else {
+                list.set(i, new Parameter(item, origin, false));
+            }
+        }
+        return list;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> extractMapValue(Object value) {
+        if (value instanceof Parameter parameter) {
+            value = parameter.getValue();
+        }
+        return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;
+    }
+
+    public static Map<String, Object> unwrapParameterValues(
+            Map<String, Object> inputMap) {
+        if (inputMap == null) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Object> result = new HashMap<>();
+
+        for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
+            Object value = entry.getValue();
+
+            if (value instanceof Parameter) {
+                Parameter param = (Parameter) value;
+                result.put(entry.getKey(), param.getValue());
+            } else {
+                result.put(entry.getKey(), value);
+            }
+        }
+        return result;
+    }
+
 }
