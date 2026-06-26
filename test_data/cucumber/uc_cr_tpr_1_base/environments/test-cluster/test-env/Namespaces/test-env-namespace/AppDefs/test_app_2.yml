@@ -1,6 +1,0 @@
-name: test_app_2
-registryName: mock-reg
-artifactId: test_app_artifact
-groupId: com.test
-deployParameters:
-  db_password: "${creds.get('maven-central').password}"

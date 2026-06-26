@@ -1,5 +1,0 @@
-name: "nexus-maven"
-credentialsId: "nexus-creds"
-mavenConfig:
-  repositoryDomainName: "nexus.example.com"
-  fullRepositoryUrl: "https://nexus.example.com/repository"

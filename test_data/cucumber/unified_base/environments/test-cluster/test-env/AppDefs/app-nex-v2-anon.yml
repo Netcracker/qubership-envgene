@@ -1,4 +1,0 @@
-name: "app-nex-v2-anon"
-groupId: "com.example"
-artifactId: "app"
-registryName: "nexus-anon-v2-maven"

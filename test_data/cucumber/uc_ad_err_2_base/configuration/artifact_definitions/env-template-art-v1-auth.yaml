@@ -1,0 +1,5 @@
+﻿name: "env-template"
+registry:
+  name: "artifactory-maven"
+  credentialsId: "artifactory-creds"
+
