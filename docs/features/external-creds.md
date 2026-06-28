@@ -187,13 +187,15 @@ CONSUL_ADMIN_TOKEN:
 
 Built-in credential references are `credId` string pointers in predefined schema fields of
 [Cloud](/docs/envgene-objects.md#cloud), [Namespace](/docs/envgene-objects.md#namespace),
-[Tenant](/docs/envgene-objects.md#tenant), and [BG Domain](/docs/envgene-objects.md#bg-domain) objects, as opposed
-to free-form [Credential References](#credential-reference) in parameter values.
+[Tenant](/docs/envgene-objects.md#tenant), [BG Domain](/docs/envgene-objects.md#bg-domain),
+[Registry Definition](/docs/envgene-objects.md#registry-definition), and
+[Artifact Definition](/docs/envgene-objects.md#artifact-definition) objects, as opposed to free-form
+[Credential References](#credential-reference) in parameter values.
 
 Each holds a `credId` string. Resolution to a [Credential](#credential) entry happens against the merged
 credentials file produced according to [Credential sources and merging](#credential-sources-and-merging).
 
-The catalog and the contexts each reference feeds at Effective Set generation:
+The Cloud, Namespace, Tenant, and BG Domain references and the contexts each feeds at Effective Set generation:
 
 | Built-in credential reference              | deploy context                                                                                                                               | topology context                                                         |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
@@ -205,6 +207,15 @@ The catalog and the contexts each reference feeds at Effective Set generation:
 | `Namespace.credentialsId`                  | -                                                                                                                                            | `k8s_tokens.<namespace>`                                                 |
 | `Tenant.credential`                        | -                                                                                                                                            | -                                                                        |
 | `BGDomain.controllerNamespace.credentials` | `BG_CONTROLLER_LOGIN`, `BG_CONTROLLER_PASSWORD`                                                                                              | `bg_domain.controllerNamespace.{username,password}`                      |
+
+[Registry Definition](/docs/envgene-objects.md#registry-definition) and
+[Artifact Definition](/docs/envgene-objects.md#artifact-definition) hold `credId` pointers that EnvGene
+consumes at artifact resolution (downloading definitions and artifacts), not in Effective Set contexts:
+
+- `<reg-def>.credentialsId`
+- `<reg-def>.authConfig.<auth-name>.credentialsId`
+- `<artifact-def>.registry.credentialsId`
+- `<artifact-def>.registry.authConfig.<auth-name>.credentialsId`
 
 #### Credential Template
 
@@ -639,10 +650,6 @@ commit and others):
 | [`docker_registry_auth`](/docs/envgene-configs.md#integrationyml)                                              | `GCP_SA_KEY`                    |
 | [`<registry>.{username,password}`](/docs/envgene-configs.md#registryyml)                                       | none                            |
 | [`<deployer>.{username,token}`](/docs/envgene-configs.md#deployeryml)                                          | none                            |
-| [`<artifact-def>.registry.credentialsId`](/docs/envgene-objects.md#artifact-definition)                        | none                            |
-| [`<artifact-def>.registry.authConfig.<auth-name>.credentialsId`](/docs/envgene-objects.md#artifact-definition) | none                            |
-| [`<reg-def>.credentialsId`](/docs/envgene-objects.md#registry-definition)                                      | none                            |
-| [`<reg-def>.authConfig.<auth-name>.credentialsId`](/docs/envgene-objects.md#registry-definition)               | none                            |
 
 The Credential entries live in `/configuration/credentials/credentials.yml`, except for
 `<deployer>.{username,token}` whose Credential entries may also live in `deployer-creds.yml` within the
