@@ -1516,8 +1516,6 @@ A **Secret Store** is a named entry in the instance repository configuration tha
 <secret-store-name>:
   # Mandatory
   type: enum [ vault, azure, aws, gcp ]
-  # Mandatory
-  url: URL
   # Required when type is vault
   mountPath: string
   # Required when type is azure

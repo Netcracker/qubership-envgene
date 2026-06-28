@@ -304,7 +304,6 @@ It may contain several secret store objects:
 ```yaml
 <secret-store-name>:
   type: enum [ vault, azure, aws, gcp ]
-  url: URL
   # Required when type is vault
   mountPath: string
   # Required when type is azure
@@ -720,7 +719,7 @@ Vault auth:
 | Parameter        | Source              | Description                                 |
 |------------------|---------------------|---------------------------------------------|
 | `type`           | Secret Store object | `vault`                                     |
-| `url`            | Secret Store object | Vault server URL                            |
+| `VAULT_ADDR`     | CI/CD variable      | Vault server URL                            |
 | `VAULT_TOKEN`    | CI/CD variable      | Token-based authentication                  |
 
 GCP auth:
