@@ -11,6 +11,3 @@ cp_discovery:
     token:
       $type: credRef
       credId: cp-discovery-token-cred
-docker_registry_auth:
-  $type: credRef
-  credId: docker-registry-auth-cred

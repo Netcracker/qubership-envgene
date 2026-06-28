@@ -647,7 +647,6 @@ commit and others):
 |----------------------------------------------------------------------------------------------------------------|---------------------------------|
 | [`self_token`](/docs/envgene-configs.md#integrationyml)                                                        | `GITHUB_TOKEN` / `GITLAB_TOKEN` |
 | [`cp_discovery.gitlab.token`](/docs/envgene-configs.md#integrationyml)                                         | none                            |
-| [`docker_registry_auth`](/docs/envgene-configs.md#integrationyml)                                              | `GCP_SA_KEY`                    |
 | [`<registry>.{username,password}`](/docs/envgene-configs.md#registryyml)                                       | none                            |
 | [`<deployer>.{username,token}`](/docs/envgene-configs.md#deployeryml)                                          | none                            |
 

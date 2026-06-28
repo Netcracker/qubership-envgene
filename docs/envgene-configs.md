@@ -424,11 +424,6 @@ cp_discovery:
 # Required for EnvGene to commit changes to the instance repository
 # Set via creds.get macro for local Credentials, or $type: credRef for external
 self_token: string
-# Optional
-# Authentication credential for the Docker registry that EnvGene reads
-# Set via creds.get macro for local Credentials, or $type: credRef for external
-# Falls back to GCP_SA_KEY CI/CD variable when absent
-docker_registry_auth: string
 ```
 
 ## `deployer.yml`
