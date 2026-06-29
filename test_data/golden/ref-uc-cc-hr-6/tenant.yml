@@ -1,0 +1,15 @@
+credential: ''
+defaultBranch: ''
+deployParameters:
+  tenant_label: ${namespace_name}
+description: test
+gitRepository: ''
+globalE2EParameters:
+  environmentParameters:
+    tenant_test_label: ${namespace_test_name}
+labels: []
+name: test-tenant
+owners: test
+registryName: default
+technicalConfigurationParameters:
+  tenant_config_label: ${namespace_config_name}

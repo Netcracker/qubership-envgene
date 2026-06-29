@@ -90,7 +90,6 @@ class EnvGeneWorkspace(BaseWorkspace):
         env = os.environ.copy()
         env["CI_PROJECT_DIR"] = str(self.base_dir)
         env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
-        env["EFFECTIVE_SET_CLI_PATH"] = "echo"
 
         if extra_env:
             env.update(extra_env)
