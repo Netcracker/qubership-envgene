@@ -29,6 +29,9 @@ def set_config_parameter_raw(workspace: EnvGeneWorkspace, param: str, value: str
 def run_unified_pipeline_orchestrator(workspace: EnvGeneWorkspace):
     sops_mock = workspace.base_dir / "sops.bat"
     sops_mock.write_text("@echo off\nif \"%1\" == \"--decrypt\" (\n  type %4\n) else if \"%1\" == \"--extract\" (\n  echo extracted\n) else if \"%1\" == \"edit\" (\n  python %EDITOR% %4\n) else (\n  exit /b 0\n)\n")
+    sops_sh_mock = workspace.base_dir / "sops"
+    sops_sh_mock.write_text("#!/bin/sh\nif [ \"$1\" = \"--decrypt\" ]; then\n  cat \"$4\"\nelif [ \"$1\" = \"--extract\" ]; then\n  echo extracted\nelif [ \"$1\" = \"edit\" ]; then\n  python $EDITOR \"$4\"\nelse\n  exit 0\nfi\n")
+    os.chmod(sops_sh_mock, 0o755)
     # Ensure extra_env is initialized
     extra_env = getattr(workspace, 'extra_env', {})
     workspace.run_pipeline(extra_env=extra_env)
