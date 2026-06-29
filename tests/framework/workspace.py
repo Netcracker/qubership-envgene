@@ -23,10 +23,23 @@ class EnvGeneWorkspace(BaseWorkspace):
             d.mkdir(parents=True, exist_ok=True)
             
         with open(self.creds_dir / "credentials.yml", "w") as f:
-            yaml.dump({}, f)
+            yaml.dump({
+                "test-registry": {
+                    "data": {
+                        "username": "dummy-user",
+                        "password": "dummy-password"
+                    }
+                }
+            }, f)
 
         with open(self.config_dir / "registry.yml", "w") as f:
-            yaml.dump({}, f)
+            yaml.dump({
+                "test-registry": {
+                    "maven-repo": "http://localhost:8000/release",
+                    "username": "credentials('test-registry').username",
+                    "password": "credentials('test-registry').password"
+                }
+            }, f)
 
         self._stdout = ""
         self._stderr = ""
