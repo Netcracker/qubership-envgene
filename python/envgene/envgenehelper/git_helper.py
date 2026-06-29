@@ -22,41 +22,40 @@ class GitContext(BaseModel):
     def model_post_init(self, __context) -> None:
         logger.info("GitContext created", extra=self.model_dump(exclude={"token"}))
 
-    def __init__(self):
+    @classmethod
+    def from_env(cls) -> "GitContext":
         if os.getenv("GITHUB_ACTIONS"):
-            data = dict(
-                platform="github",
-                server_protocol="https",
-                server_host="github.com",
-                project_path=os.getenv("GITHUB_REPOSITORY"),
-                ref_name=os.getenv("GITHUB_REF_NAME"),
-                user_email=os.getenv("GITHUB_USER_EMAIL"),
-                user_name=os.getenv("GITHUB_USER_NAME"),
-                token=os.getenv("GITHUB_TOKEN")
-            )
-
+            data = {
+                "platform": "github",
+                "server_protocol": "https",
+                "server_host": "github.com",
+                "project_path": os.getenv("GITHUB_REPOSITORY"),
+                "ref_name": os.getenv("GITHUB_REF_NAME"),
+                "user_email": os.getenv("GITHUB_USER_EMAIL"),
+                "user_name": os.getenv("GITHUB_USER_NAME"),
+                "token": os.getenv("GITHUB_TOKEN"),
+            }
         elif os.getenv("GITLAB_CI"):
-            data = dict(
-                platform="gitlab",
-                server_protocol=os.getenv("CI_SERVER_PROTOCOL"),
-                server_host=os.getenv("CI_SERVER_HOST"),
-                project_path=os.getenv("CI_PROJECT_PATH"),
-                ref_name=os.getenv("CI_COMMIT_REF_NAME"),
-                user_email=os.getenv("GITLAB_USER_EMAIL"),
-                user_name=os.getenv("GITLAB_USER_LOGIN"),
-                token=os.getenv("GITLAB_TOKEN")
-            )
-
+            data = {
+                "platform": "gitlab",
+                "server_protocol": os.getenv("CI_SERVER_PROTOCOL"),
+                "server_host": os.getenv("CI_SERVER_HOST"),
+                "project_path": os.getenv("CI_PROJECT_PATH"),
+                "ref_name": os.getenv("CI_COMMIT_REF_NAME"),
+                "user_email": os.getenv("GITLAB_USER_EMAIL"),
+                "user_name": os.getenv("GITLAB_USER_LOGIN"),
+                "token": os.getenv("GITLAB_TOKEN"),
+            }
         else:
             raise RuntimeError("Neither GITHUB_ACTIONS nor GITLAB_CI detected")
 
-        super().__init__(**data)
+        return cls(**data)
 
 
 class GitRepoManager:
     def __init__(self):
         self.repo = Repo(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
-        self.ctx = GitContext()
+        self.ctx = GitContext.from_env()
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
@@ -147,7 +146,8 @@ class GitRepoManager:
 
         self.repo.git.init()
 
-        self._fetch(ref=self.ctx.commit_sha, checkout=self.ctx.commit_sha, checkout_option='--force', create_remote=True)
+        self._fetch(ref=self.ctx.commit_sha, checkout=self.ctx.commit_sha, checkout_option='--force',
+                    create_remote=True)
 
         self.repo.git.sparse_checkout("init", "--cone")
         self.repo.git.sparse_checkout("set", *paths)
