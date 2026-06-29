@@ -56,7 +56,7 @@ class GitContext(BaseModel):
 
 class GitRepoManager:
     def __init__(self):
-        self.repo = Repo(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
+        self.repo = Repo.init(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
         self.ctx = GitContext.from_env()
 
     def configure(self) -> None:
@@ -144,10 +144,6 @@ class GitRepoManager:
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
     def sparse_checkout(self, paths: list[str]) -> None:
-        logger.info(f"Initializing sparse checkout: {paths}")
-
-        self.repo.git.init()
-
         self._fetch(ref=self.ctx.commit_sha, checkout=self.ctx.commit_sha, checkout_option='--force',
                     create_remote=True)
 
