@@ -105,6 +105,7 @@ The script is configured via the following optional environment variables:
 - `BDD_GIT_URL`: Link to a git repository containing your project. If provided, the script will clone it before execution.
 - `BDD_GIT_BRANCH`: Git repository branch (defaults to `main`).
 - `BDD_TESTS_PATH`: Path to the `step_defs` folder within your project. If omitted, the framework attempts to find local `tests/step_defs` or executes the standard built-in EnvGene BDD scenarios.
+- `BDD_SCENARIO`: (Optional) Comma-separated list of scenario names or tags to run. If specified, only these scenarios will be executed.
 
 All other environment variables are automatically passed into the test execution.
 
@@ -120,6 +121,8 @@ bdd_tests:
     BDD_DATA_DIR: "$CI_PROJECT_DIR"
     BDD_TESTS_PATH: "tests/step_defs"
     TARGET_CLUSTER: "production-cluster"
+    # Example: Run only a specific scenario or a comma-separated list
+    # BDD_SCENARIO: "UC-EIG-NF-1, UC-EIG-NF-5"
   script:
     - python /module/scripts/bdd_runner.py
 ```
@@ -141,6 +144,8 @@ jobs:
         env:
           BDD_DATA_DIR: ${{ github.workspace }}
           BDD_TESTS_PATH: "tests/step_defs"
+          # Example: Run only a specific scenario or a comma-separated list
+          # BDD_SCENARIO: "UC-EIG-NF-1, UC-EIG-NF-5"
         run: |
           python /module/scripts/bdd_runner.py
 ```

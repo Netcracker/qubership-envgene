@@ -11,6 +11,7 @@ Configured via Environment Variables:
 - BDD_DATA_DIR: (Optional) Path to a local directory with data (used if BDD_GIT_URL is not set).
 - BDD_TESTS_PATH: (Optional) Path relative to the data dir where external step_defs are located.
                  If not provided, standard tests from /module/tests/step_defs/ are run.
+- BDD_SCENARIO: (Optional) Comma-separated list of scenario names or tags to run.
 
 Example usage in CI/CD:
 docker run -e BDD_GIT_URL="https://github.com/example-org/integration-tests.git" ghcr.io/netcracker/qubership-envgene:latest python /module/scripts/bdd_runner.py
@@ -42,6 +43,7 @@ def main():
     git_branch = os.environ.get("BDD_GIT_BRANCH", "")
     data_dir = os.environ.get("BDD_DATA_DIR")
     tests_path = os.environ.get("BDD_TESTS_PATH")
+    bdd_scenario = os.environ.get("BDD_SCENARIO")
     
     # We will run tests from this directory context if external data is provided
     working_dir = None
@@ -82,6 +84,11 @@ def main():
         env["PYTHONPATH"] = f"{working_dir}:{current_pythonpath}" if current_pythonpath else working_dir
         
     cmd = [sys.executable, "-m", "pytest", target_tests, "-v"]
+    
+    if bdd_scenario:
+        scenario_expr = " or ".join([s.strip() for s in bdd_scenario.split(",") if s.strip()])
+        if scenario_expr:
+            cmd.extend(["-k", scenario_expr])
     
     result = subprocess.run(cmd, env=env)
     

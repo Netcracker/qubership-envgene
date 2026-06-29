@@ -1,6 +1,8 @@
-$ErrorActionPreference = "Stop"
+param(
+    [string]$Scenarios = ""
+)
 
-# Navigate to project root
+$ErrorActionPreference = "Stop"# Navigate to project root
 Set-Location -Path $PSScriptRoot
 
 Write-Host "Starting EnvGene Integration Tests in Docker..." -ForegroundColor Cyan
@@ -20,7 +22,13 @@ try {
     
     # 4. Run pytest inside the container
     Write-Host "Executing pytest inside the container..."
-    docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest"
+    if ($Scenarios) {
+        $ScenariosExpr = $Scenarios -replace '\s*,\s*', ' or '
+        $PytestCmd = "pytest -k `"$ScenariosExpr`""
+    } else {
+        $PytestCmd = "pytest"
+    }
+    docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && $PytestCmd"
     $TestExitCode = $LASTEXITCODE
 } finally {
     # 4. Tear down the environment
