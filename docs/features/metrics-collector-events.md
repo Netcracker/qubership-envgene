@@ -1,6 +1,6 @@
-# Metrics Collector pipeline events
+# Metrics Collector events
 
-- [Metrics Collector pipeline events](#metrics-collector-pipeline-events)
+- [Metrics Collector events](#metrics-collector-events)
   - [Overview](#overview)
   - [Problem statement](#problem-statement)
   - [How it works](#how-it-works)
@@ -19,13 +19,13 @@ does not fail the CI job.
 
 ## Problem statement
 
-GitLab reports per-job status. Metrics Collector Service needs a normalised activity stream in a
-shared format across platform products.
+EnvGene must send activity events to Metrics Collector Service when a run starts and when it
+ends. GitLab alone does not provide that signal in the format Metrics Collector Service expects.
 
 ## How it works
 
-EnvGene sends CloudEvents with `kind: pipeline` and a shared `traceid`. The first executed job
-sends `type: start`; the last executed job sends `type: stop`.
+EnvGene sends events with `kind: pipeline` and a shared `traceid`. The first executed job sends
+`type: start`; the last executed job sends `type: stop`.
 
 If the HTTP call fails, EnvGene logs the failure and the CI job continues. A successful request
 returns `202 Accepted`.
@@ -72,7 +72,7 @@ Allowed values: `NOT_STARTED`, `SKIPPED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `C
 
 | Attribute       | Required | Source            | Example                                  | Description |
 |-----------------|----------|-------------------|------------------------------------------|-------------|
-| `specversion`   | yes      | `"1.0"`           | `"1.0"`                                  | CloudEvents specification version. Must be `1.0`. |
+| `specversion`   | yes      | `"1.0"`           | `"1.0"`                                  | Event specification version. Must be `1.0`. |
 | `id`            | yes      | UUID v4           | `"123e4567-e89b-12d3-a456-426614174000"` | Event UUID. The `source` + `id` pair must be unique. |
 | `source`        | yes      | `$CI_PROJECT_URL` | `"https://gitlab.example.com/..."`       | Absolute `https://` URI identifying the activity source. |
 | `type`          | yes      | `"start"`         | `"start"`                                | Activity start. |
@@ -112,7 +112,7 @@ Allowed values: `NOT_STARTED`, `SKIPPED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `C
 
 | Attribute       | Required | Source            | Example                                  | Description |
 |-----------------|----------|-------------------|------------------------------------------|-------------|
-| `specversion`   | yes      | `"1.0"`           | `"1.0"`                                  | CloudEvents specification version. Must be `1.0`. |
+| `specversion`   | yes      | `"1.0"`           | `"1.0"`                                  | Event specification version. Must be `1.0`. |
 | `id`            | yes      | UUID v4           | `"223e4567-e89b-12d3-a456-426614174001"` | Event UUID. The `source` + `id` pair must be unique. |
 | `source`        | yes      | `$CI_PROJECT_URL` | `"https://gitlab.example.com/..."`       | Absolute `https://` URI identifying the activity source. |
 | `type`          | yes      | `"stop"`          | `"stop"`                                 | Activity end. |
