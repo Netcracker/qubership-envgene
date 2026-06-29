@@ -66,6 +66,18 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_inventory_generation.py -v -s --junitxml=reports/environment_inventory_generation.xml | tee -a /workspace/e2e_tests.log"
 
+      - name: Test App Reg Defs Template Rendering
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_app_reg_defs_template_rendering.py -v -s --junitxml=reports/app_reg_defs_template_rendering.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Artifact Download Negative
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_artifact_download_negative.py -v -s --junitxml=reports/artifact_download_negative.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Unified Pipeline Success
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_unified_pipeline_success.py -v -s --junitxml=reports/unified_pipeline_success.xml | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()

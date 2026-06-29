@@ -57,7 +57,14 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     actual_dir = workspace.builder.get_env_dir(cluster, env)
     
     # Resolve reference path relative to the test execution root (project root)
-    expected_dir = Path.cwd() / "test_data" / "golden" / reference_path / "environments" / cluster / env
+    base_expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
+    
+    # Support both legacy flat golden directories and new nested structure
+    nested_expected_dir = base_expected_dir / "environments" / cluster / env
+    if nested_expected_dir.exists():
+        expected_dir = nested_expected_dir
+    else:
+        expected_dir = base_expected_dir
     
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
     compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
