@@ -112,7 +112,6 @@ def _find_job_by_stage(config: dict, stage: str) -> dict:
     raise AssertionError(f"No job found for stage {stage}")
 
 
-@pytest.mark.skip(reason="Temporarily disabled")
 def test_downstream_job_uses_empty_git_strategy():
     ci_commit_ref_name = "feature/test-generate"
     os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
