@@ -311,12 +311,15 @@ public class ParametersCalculationServiceV2 {
                 .map(key -> (Map<String, Object>) parameters.remove(key))
                 .filter(Objects::nonNull)
                 .forEach(finalMap::putAll);
+        Map<String, Object> collidingImageParams = MapUtils.emptyIfNull(
+                (Map<String, Object>) parameters.remove(COLLIDING_IMAGE_DEPLOY_PARAMS));
         Map<String, Object> sortedMap = new TreeMap<>(parameters);
         orderedMap.putAll(sortedMap);
         if (parameters != null && !parameters.isEmpty()) {
             if (!collisionParams.isEmpty()) {
                 sortedMap.putAll(collisionParams);
             }
+            sortedMap.putAll(collidingImageParams);
             orderedMap.put("global", sortedMap);
         }
         if (processPerServiceParams) {
