@@ -24,9 +24,9 @@ try {
     Write-Host "Executing pytest inside the container..."
     if ($Scenarios) {
         $ScenariosExpr = $Scenarios -replace '\s*,\s*', ' or '
-        $PytestCmd = "pytest -k `"$ScenariosExpr`""
+        $PytestCmd = "export UPDATE_GOLDEN=1 && pytest -k `"$ScenariosExpr`""
     } else {
-        $PytestCmd = "pytest"
+        $PytestCmd = "export UPDATE_GOLDEN=1 && pytest"
     }
     docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && $PytestCmd"
     $TestExitCode = $LASTEXITCODE

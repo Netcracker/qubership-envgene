@@ -60,3 +60,8 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
     # Copy all contents of the test data directory directly into the workspace base_dir
     # This simulates a workspace with predefined environments, config, etc.
     shutil.copytree(source_dir, workspace.base_dir, dirs_exist_ok=True)
+    
+    # Workaround for legacy test_data using 'configurations' instead of 'configuration'
+    legacy_config = workspace.base_dir / "configurations"
+    if legacy_config.exists():
+        shutil.copytree(legacy_config, workspace.base_dir / "configuration", dirs_exist_ok=True)
