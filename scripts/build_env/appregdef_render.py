@@ -18,7 +18,7 @@ def run_appregdef_render():
     instances_dir = getenv_with_error("INSTANCES_DIR")
 
     output_dir = f"{base_dir}/environments"
-    render_dir = f"/tmp/render/{env_name}"
+    render_dir = f"{base_dir}/tmp/render/{env_name}"
     templates_dirs = get_template_dirs()
 
     env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)

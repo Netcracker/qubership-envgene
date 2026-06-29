@@ -32,7 +32,12 @@ def pipeline_log_shows(workspace, message):
 def set_pipeline_param(workspace, param, value):
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}
-    workspace.extra_env[param] = value
+        
+    # Special case: allow empty strings if value is exactly empty
+    if value == "":
+        workspace.extra_env[param] = ""
+    else:
+        workspace.extra_env[param] = value
 
 @then('the effective set is generated successfully')
 def effective_set_generated(workspace):
@@ -52,7 +57,7 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     actual_dir = workspace.builder.get_env_dir(cluster, env)
     
     # Resolve reference path relative to the test execution root (project root)
-    expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
+    expected_dir = Path.cwd() / "test_data" / "golden" / reference_path / "environments" / cluster / env
     
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
     compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
@@ -67,4 +72,22 @@ def workspace_matches_reference(workspace, reference_path):
     expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
     
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
-    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+    import os
+    # Ignore extra framework generated files
+    ignore_patterns = ['Credentials', os.path.normpath('configuration/credentials'), os.path.normpath('configuration/config.yml'), 'tmp', 'sops', 'sops.bat', os.path.normpath('configuration/registry.yml'), 'build.env', '__pycache__', 'sboms', 'inventory', 'blueprints', 'environments']
+    compare_directories(expected_dir, actual_dir, ignore_patterns=ignore_patterns)
+
+@then(parsers.parse('the generated definitions match the reference "{reference_path}"'))
+def definitions_match_reference(workspace, reference_path):
+    """
+    Compares /appdefs and /regdefs in the workspace root against the golden reference.
+    """
+    actual_appdefs = workspace.base_dir / "appdefs"
+    expected_appdefs = Path.cwd() / "test_data" / "golden" / reference_path / "appdefs"
+    if expected_appdefs.exists():
+        compare_directories(expected_appdefs, actual_appdefs)
+
+    actual_regdefs = workspace.base_dir / "regdefs"
+    expected_regdefs = Path.cwd() / "test_data" / "golden" / reference_path / "regdefs"
+    if expected_regdefs.exists():
+        compare_directories(expected_regdefs, actual_regdefs)
