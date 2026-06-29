@@ -1,0 +1,7 @@
+applications:
+  - version: test_app:1.0.0
+    deployPostfix: dp1
+deployGraph:
+  - chunkName: wave1
+    apps:
+      - test_app:dp1
