@@ -1,0 +1,5 @@
+dummy_cred:
+  type: "usernamePassword"
+  data:
+    username: "[encrypted:AES256_Fernet]gAAAAABqQndyxeihFuQ6a80_Gb_M4DJ5lexP5Ru6Giv2T5TgBpVW6d9PraT-TBSpJFHvgehrEv6AtzZ6SsS87ahoNh7jScQWDw=="
+    password: "[encrypted:AES256_Fernet]gAAAAABqQndyQmBPZIsO7fbeFkJVhq-QfdzUyNqWcslZVti8L0vQTRY2-VLUUVc_nWe6B9MQF6DXi1zQVTm0il6G1AftSUsndA=="

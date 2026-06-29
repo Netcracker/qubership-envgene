@@ -1,0 +1,12 @@
+version: '1.0'
+infra:
+  some_key: infra-value
+cloud:
+  CLOUD_API_HOST: dummy-value
+  CLOUD_API_PORT: dummy-value
+  CLOUD_PRIVATE_HOST: dummy-value
+  CLOUD_PUBLIC_HOST: dummy-value
+  CLOUD_DASHBOARD_URL: dummy-value
+  CLOUD_DEPLOY_TOKEN: dummy-value
+  CLOUD_PROTOCOL: dummy-value
+  PRODUCTION_MODE: dummy-value

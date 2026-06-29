@@ -83,6 +83,10 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_unified_pipeline_success.py -v -s --junitxml=reports/unified_pipeline_success.xml | tee -a /workspace/e2e_tests.log"
 
+      - name: Test Cloud Passport
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "python /workspace/generate_cp_test_data.py && export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_cloud_passport.py -v -s --junitxml=reports/cloud_passport.xml | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()

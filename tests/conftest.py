@@ -5,6 +5,7 @@ import subprocess
 import time
 import json
 import zipfile
+import urllib.request
 from pathlib import Path
 from tests.framework.workspace import EnvGeneWorkspace
 from tests.step_defs.common_steps import *
@@ -51,8 +52,7 @@ def mock_nexus(tmp_path_factory):
         z.writestr("templates/Tenant.yml.j2", "name: dummy-tenant\nregistryName: default\ncredential: dummy-cred\nglobalE2EParameters: {}\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\n")
         z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
         z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
-    proc = subprocess.Popen([sys.executable, "tests/mock_server.py", "8000", str(base_dir)])
-    
+
     test_app_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.0.0"
     test_app_dir.mkdir(parents=True, exist_ok=True)
     with open(test_app_dir / "test_app_artifact-1.0.0.json", "w") as f:
@@ -63,7 +63,18 @@ def mock_nexus(tmp_path_factory):
     with open(test_app2_dir / "test_app_2_artifact-2.0.0.json", "w") as f:
         json.dump({"applications": [{"version": "test_app_2:2.0.0", "deployPostfix": "dp2"}], "deployGraph": [{"chunkName": "wave1", "apps": ["test_app_2:dp2"]}]}, f)
 
-    time.sleep(1)
+    proc = subprocess.Popen([sys.executable, "tests/mock_server.py", "8000", str(base_dir)])
+    
+    # Wait for the mock server to start
+    for i in range(10):
+        try:
+            urllib.request.urlopen("http://localhost:8000/")
+            break
+        except Exception:
+            time.sleep(0.5)
+    else:
+        print("MOCK SERVER FAILED TO START ON PORT 8000")
+
     yield
     proc.terminate()
     proc.wait()
