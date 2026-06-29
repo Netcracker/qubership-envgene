@@ -516,7 +516,7 @@ Examples:
 credentials:
   # Vault multi-field credential, default store, Credential.create: true.
   cdc-streaming-cred:
-    vals: "ref+vault://kv/data/ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred"
+    vals: "ref+vault://kv/ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred"
     strategy: create_if_absent
     data:
       username: _generateValue
@@ -524,14 +524,14 @@ credentials:
 
   # Vault single-value credential, default store, Credential.create: true.
   monitoring-token:
-    vals: "ref+vault://kv/data/ocp-05/monitoring-token"
+    vals: "ref+vault://kv/ocp-05/monitoring-token"
     strategy: create_if_absent
     data:
       value: _generateValue
 
   # Vault single-value credential, default store, Credential.create: false.
   consul-creds:
-    vals: "ref+vault://kv/data/ocp-05/consul-creds"
+    vals: "ref+vault://kv/ocp-05/consul-creds"
     strategy: fail_if_absent
 
   # GCP single-value credential, default store, Credential.create: true.
@@ -961,7 +961,7 @@ Effective Set output is determined by the invoking context.
    suffix** from step 2:
 
    - **Base URI** depends on the [Secret Store](#secret-store) `type` (use `normalizedSecretName` from step 1 and fields from the Secret Store):
-     - **`vault`:** `ref+vault://<mountPath>/data/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`).
+     - **`vault`:** `ref+vault://<mountPath>/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`).
      - **`azure`:** `ref+azurekeyvault://<vaultName>/<normalizedSecretName>` (`vaultName` from the Secret Store).
      - **`aws`:** `ref+awssecrets://<normalizedSecretName>?region=<region>` (`region` from the Secret Store as a query parameter).
      - **`gcp`:** `ref+gcpsecrets://<projectId>/<normalizedSecretName>` (`projectId` from the Secret Store).
