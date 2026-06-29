@@ -40,7 +40,7 @@ class JobExtended(Job):
     def set_sparse_checkout(self, paths: List[str]) -> None:
         paths_args = " ".join(shlex.quote(path) for path in paths)
         self.add_variables(GIT_STRATEGY="empty")
-        self.prepend_scripts(f"/module/scripts/utils/sparse_checkout.py {paths_args}")
+        self.prepend_scripts(f"python3 /module/scripts/utils/sparse_checkout.py {paths_args}")
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
