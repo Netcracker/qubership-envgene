@@ -1,3 +1,0 @@
-deployParameters:
-  TEST_DEPLOY_SECRET: ${creds.get('cred-3').secret}
-name: cloud

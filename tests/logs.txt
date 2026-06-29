@@ -1,0 +1,874 @@
+Run mkdir -p reports
+============================= test session starts ==============================
+platform linux -- Python 3.12.8, pytest-8.3.5, pluggy-1.6.0 -- /module/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /workspace
+configfile: pytest.ini
+plugins: bdd-8.1.0
+collecting ... collected 28 items
+
+127.0.0.1 - - [29/Jun/2026 08:52:00] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:00] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:00] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:00] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:00] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:00] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd1_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:03] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:03] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:03] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:03] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:03] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:03] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd2_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:06] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:06] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:06] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:06] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:06] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:06] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd3_download_sd_from_nexus_with_userpassword_appdef_v1__regdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:09] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:09] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:09] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:09] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:09] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:09] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd4_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:11] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:11] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:11] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:11] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:11] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:11] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd5_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:14] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:14] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:14] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:14] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:14] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:14] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd6_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:17] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:17] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:17] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:17] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:17] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:17] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd8_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:20] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:20] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:20] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:20] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:20] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:20] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd9_download_sd_from_aws_codeartifact_with_secret_appdef_v1__regdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:23] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:23] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:23] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:23] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:23] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:23] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd10_download_sd_from_gcp_artifact_registry_with_service_account_appdef_v1__regdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:26] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:26] "HEAD /staging/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:26] "HEAD /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:26] code 404, message File not found
+127.0.0.1 - - [29/Jun/2026 08:52:26] "HEAD /snapshot/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 404 -
+127.0.0.1 - - [29/Jun/2026 08:52:26] "GET /release/com/test/test_app_artifact/1.0.0/test_app_artifact-1.0.0.json HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadsd11_download_specific_version_sd <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py FAILED
+127.0.0.1 - - [29/Jun/2026 08:52:29] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:29] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:29] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:29] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv9_download_template_from_artifactory_with_gav_notation <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:32] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:32] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:32] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:32] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv10_download_template_from_artifactory_with_gav_notation_and_anonymous_access <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:35] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:35] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:35] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:35] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv11_download_template_from_nexus_with_gav_notation <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:38] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:38] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:38] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:38] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucscnex1_download_template_artifact_from_nexus_with_custom_ca_certificate <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:41] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:41] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:41] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:41] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv12_download_template_from_nexus_with_gav_notation_and_anonymous_access <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:45] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:45] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:45] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:45] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv13_download_template_with_app_ver_notation_from_artifactory_artdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:48] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:48] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:48] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:48] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv14_download_template_with_app_ver_notation_from_artifactory_and_anonymous_access_artdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:51] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:51] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:51] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:51] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv15_download_template_with_app_ver_notation_from_nexus_artdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:54] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:54] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:54] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:54] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv16_download_template_with_app_ver_notation_from_nexus_and_anonymous_access_artdef_v1 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:52:58] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:58] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:58] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:52:58] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv17_download_template_from_artifactory_with_app_ver_notation_artdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:01] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:01] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:01] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:01] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv18_download_template_from_artifactory_with_app_ver_notation_and_anonymous_access_artdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:04] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:04] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:04] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:04] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv19_download_template_from_nexus_with_app_ver_notation_artdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:07] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:07] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:07] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:07] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv20_download_template_from_nexus_with_app_ver_notation_and_anonymous_access_artdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:10] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:10] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:10] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:10] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv21_download_template_from_aws_codeartifact_with_app_ver_notation_artdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:14] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:14] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:14] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:14] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv22_download_template_from_gcp_artifact_registry_with_app_ver_notation_artdef_v2 <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:17] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:17] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:17] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:17] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv23_download_snapshot_template_version <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:20] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:20] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:20] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:20] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucadenv24_download_specific_template_version <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+127.0.0.1 - - [29/Jun/2026 08:53:23] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:23] "GET /release/org/test/test-artifact/v1/test-artifact-v1.json HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:23] "HEAD /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+127.0.0.1 - - [29/Jun/2026 08:53:23] "GET /release/org/test/test-artifact/v1/test-artifact-v1.zip HTTP/1.1" 200 -
+tests/step_defs/test_artifact_downloading.py::test_ucaderr4_handle_missing_artifact_definition <- ../module/venv/lib/python3.12/site-packages/pytest_bdd/scenario.py PASSED
+
+=================================== FAILURES ===================================
+_ test_ucadsd1_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v1 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd1_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v1>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d501160>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd1_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd2_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v1 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd2_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v1>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d42a9f0>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd2_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+__ test_ucadsd3_download_sd_from_nexus_with_userpassword_appdef_v1__regdef_v1 __
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd3_download_sd_from_nexus_with_userpassword_appdef_v1__regdef_v1>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d501280>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd3_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd4_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v1 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd4_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v1>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458db1e5d0>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd4_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd5_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v2 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd5_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v2>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458db13e60>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd5_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd6_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v2 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd6_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v2>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d5d9040>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd6_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd8_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v2 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd8_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v2>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458db13fb0>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd8_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd9_download_sd_from_aws_codeartifact_with_secret_appdef_v1__regdef_v2 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd9_download_sd_from_aws_codeartifact_with_secret_appdef_v1__regdef_v2>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d5dbf50>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd9_download_sd_from_0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+_ test_ucadsd10_download_sd_from_gcp_artifact_registry_with_service_account_appdef_v1__regdef_v2 _
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd10_download_sd_from_gcp_artifact_registry_with_service_account_appdef_v1__regdef_v2>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d5d28a0>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd10_download_sd_from0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+__________________ test_ucadsd11_download_specific_version_sd __________________
+
+fixturefunc = <function environment_matches_reference at 0x7f458d5b6700>
+request = <FixtureRequest for <Function test_ucadsd11_download_specific_version_sd>>
+kwargs = {'cluster': 'test-cluster', 'env': 'test-env', 'reference_path': 'ref-group-2', 'workspace': <tests.framework.workspace.EnvGeneWorkspace object at 0x7f458d5d25d0>}
+
+    def call_fixture_func(
+        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
+    ) -> FixtureValue:
+        if is_generator(fixturefunc):
+            fixturefunc = cast(
+                Callable[..., Generator[FixtureValue, None, None]], fixturefunc
+            )
+            generator = fixturefunc(**kwargs)
+            try:
+                fixture_result = next(generator)
+            except StopIteration:
+                raise ValueError(f"{request.fixturename} did not yield a value") from None
+            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)
+            request.addfinalizer(finalizer)
+        else:
+            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)
+>           fixture_result = fixturefunc(**kwargs)
+
+/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/shared_steps/common_steps.py:58: in environment_matches_reference
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+expected_dir = PosixPath('/workspace/test_data/golden/ref-group-2')
+actual_dir = PosixPath('/tmp/pytest-of-root/pytest-0/test_ucadsd11_download_specifi0/environments/test-cluster/test-env')
+ignore_patterns = ['Credentials']
+
+    def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: list = None):
+        """
+        Recursively compares actual_dir to expected_dir.
+        If UPDATE_GOLDEN=1 is set, overwrites expected_dir with actual_dir instead.
+        """
+        if os.environ.get('UPDATE_GOLDEN') == '1':
+            if expected_dir.exists():
+                shutil.rmtree(expected_dir)
+            shutil.copytree(actual_dir, expected_dir)
+            print(f"Updated golden directory at {expected_dir}")
+            return
+    
+        assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
+        assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
+    
+        ignore_patterns = ignore_patterns or []
+    
+        def is_ignored(f_path):
+            for pat in ignore_patterns:
+                if f_path.match(pat) or str(f_path).startswith(pat):
+                    return True
+            return False
+    
+        expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+        actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
+    
+        # Check for missing and extra files
+        missing_files = expected_files - actual_files
+        extra_files = actual_files - expected_files
+    
+        assert not missing_files, f"Files missing from generated output: {missing_files}"
+>       assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
+E       AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+
+tests/framework/golden_compare.py:38: AssertionError
+------- generated xml file: /workspace/reports/artifact_downloading.xml --------
+=========================== short test summary info ============================
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd1_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v1 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd2_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v1 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd3_download_sd_from_nexus_with_userpassword_appdef_v1__regdef_v1 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd4_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v1 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd5_download_sd_from_artifactory_with_userpassword_appdef_v1__regdef_v2 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd6_download_sd_from_artifactory_with_anonymous_access_appdef_v1__regdef_v2 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd8_download_sd_from_nexus_with_anonymous_access_appdef_v1__regdef_v2 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd9_download_sd_from_aws_codeartifact_with_secret_appdef_v1__regdef_v2 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd10_download_sd_from_gcp_artifact_registry_with_service_account_appdef_v1__regdef_v2 - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+FAILED tests/step_defs/test_artifact_downloading.py::test_ucadsd11_download_specific_version_sd - AssertionError: Extra files generated that are not in golden: {PosixPath('tenant.yml'), PosixPath('cloud.yml'), PosixPath('Namespaces/test-namespace/Applications/cloud.yml')}
+=================== 10 failed, 18 passed in 87.57s (0:01:27) ===================

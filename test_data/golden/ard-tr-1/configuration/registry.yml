@@ -1,4 +1,0 @@
-test-registry:
-  maven-repo: "http://localhost:8000/release"
-  username: "credentials('test-registry').username"
-  password: "credentials('test-registry').password"
