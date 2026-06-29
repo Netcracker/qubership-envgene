@@ -17,6 +17,7 @@ class GitContext(BaseModel):
     user_email: str
     user_name: str
     token: str
+    commit_sha: str
 
     def model_post_init(self, __context) -> None:
         logger.info("GitContext created", extra=self.model_dump(exclude={"token"}))
@@ -33,6 +34,7 @@ class GitContext(BaseModel):
                 "user_email": os.getenv("GITHUB_USER_EMAIL"),
                 "user_name": os.getenv("GITHUB_USER_NAME"),
                 "token": os.getenv("GITHUB_TOKEN"),
+                "commit_sha": os.getenv("GITHUB_SHA")
             }
         elif os.getenv("GITLAB_CI"):
             data = {
@@ -44,6 +46,7 @@ class GitContext(BaseModel):
                 "user_email": os.getenv("GITLAB_USER_EMAIL"),
                 "user_name": os.getenv("GITLAB_USER_LOGIN"),
                 "token": os.getenv("GITLAB_TOKEN"),
+                "commit_sha": os.getenv("CI_COMMIT_SHA")
             }
         else:
             raise RuntimeError("Neither GITHUB_ACTIONS nor GITLAB_CI detected")
