@@ -3,7 +3,7 @@ from pathlib import Path
 
 from envgenehelper import logger
 from envgenehelper.http_helper import ApiClient
-from build_envgene.scripts.git import GitCommandError, Repo
+from git import GitCommandError, Repo
 from pydantic import BaseModel
 
 from python.envgene.envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
