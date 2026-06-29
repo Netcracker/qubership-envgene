@@ -6,7 +6,7 @@ from envgenehelper.http_helper import ApiClient
 from git import GitCommandError, Repo
 from pydantic import BaseModel
 
-from python.envgene.envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
+from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
 
 
 class GitContext(BaseModel):
