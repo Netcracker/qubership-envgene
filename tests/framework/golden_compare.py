@@ -19,8 +19,16 @@ def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: l
     assert expected_dir.exists(), f"Golden directory {expected_dir} does not exist. Run with UPDATE_GOLDEN=1 to create it."
     assert actual_dir.exists(), f"Actual directory {actual_dir} does not exist."
 
-    expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md')
-    actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md')
+    ignore_patterns = ignore_patterns or []
+
+    def is_ignored(f_path):
+        for pat in ignore_patterns:
+            if f_path.match(pat) or str(f_path).startswith(pat):
+                return True
+        return False
+
+    expected_files = set(f.relative_to(expected_dir) for f in expected_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(expected_dir)))
+    actual_files = set(f.relative_to(actual_dir) for f in actual_dir.rglob('*') if f.is_file() and f.name != 'README.md' and not is_ignored(f.relative_to(actual_dir)))
 
     # Check for missing and extra files
     missing_files = expected_files - actual_files
@@ -30,7 +38,6 @@ def compare_directories(expected_dir: Path, actual_dir: Path, ignore_patterns: l
     assert not extra_files, f"Extra files generated that are not in golden: {extra_files}"
 
     for rel_file in expected_files:
-        # TODO: Implement ignore_patterns logic if needed
         expected_file = expected_dir / rel_file
         actual_file = actual_dir / rel_file
 

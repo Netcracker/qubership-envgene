@@ -54,7 +54,8 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     # Resolve reference path relative to the test execution root (project root)
     expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
     
-    compare_directories(expected_dir, actual_dir)
+    # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
 
 @then(parsers.parse('the workspace matches the reference "{reference_path}"'))
 def workspace_matches_reference(workspace, reference_path):
@@ -65,4 +66,5 @@ def workspace_matches_reference(workspace, reference_path):
     actual_dir = workspace.base_dir
     expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
     
-    compare_directories(expected_dir, actual_dir)
+    # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
+    compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
