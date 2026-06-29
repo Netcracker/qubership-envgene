@@ -2,7 +2,7 @@ from pytest_bdd import scenarios, when, then
 from tests.shared_steps.unified_pipeline_steps import *
 from tests.framework.workspace import EnvGeneWorkspace
 
-scenarios('../features/unified_pipeline_failure/cloud_passport_negative.feature')
+scenarios('../features/cloud_passport/cloud_passport_negative.feature')
 
 @when('the unified pipeline orchestrator runs')
 def run_unified_pipeline_orchestrator_mock(workspace: EnvGeneWorkspace):
