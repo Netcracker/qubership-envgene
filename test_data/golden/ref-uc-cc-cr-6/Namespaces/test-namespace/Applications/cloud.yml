@@ -1,6 +1,0 @@
-deployParameters: {}
-e2eParameters:
-  e2e_endpoint: https://e2e.example.com
-name: cloud
-technicalConfigurationParameters:
-  runtime_endpoint: ${e2e_endpoint}

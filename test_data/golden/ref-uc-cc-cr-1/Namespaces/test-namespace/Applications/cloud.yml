@@ -1,6 +1,0 @@
-deployParameters:
-  service_url: ${test_url}
-e2eParameters:
-  test_url: https://test.example.com
-name: cloud
-technicalConfigurationParameters: {}

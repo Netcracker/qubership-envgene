@@ -1,8 +1,0 @@
-deployParameters:
-  api_port: ${server_port}
-  log_level: ${debug_mode}
-  service_version: ${app_version}
-  use_ssl: ${ssl_enabled}
-e2eParameters: {}
-name: cloud
-technicalConfigurationParameters: {}

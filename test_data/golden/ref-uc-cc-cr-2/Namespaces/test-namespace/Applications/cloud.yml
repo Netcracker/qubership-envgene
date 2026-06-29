@@ -1,6 +1,0 @@
-deployParameters:
-  service_config: ${config_url}
-e2eParameters: {}
-name: cloud
-technicalConfigurationParameters:
-  config_url: https://config.example.com

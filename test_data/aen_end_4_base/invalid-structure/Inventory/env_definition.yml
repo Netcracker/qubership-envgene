@@ -1,5 +1,0 @@
-inventory:
-  tenantName: "Applications"
-  cloudName: "cluster01"
-envTemplate:
-  name: "simple"

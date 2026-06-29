@@ -1,7 +1,0 @@
-deployParameters:
-  namespace_name: core
-e2eParameters:
-  namespace_test_name: test-core
-name: cloud
-technicalConfigurationParameters:
-  namespace_config_name: config-core

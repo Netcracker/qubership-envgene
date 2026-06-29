@@ -1,3 +1,0 @@
-nexus-auth:
-  url: https://nexus.test
-  credentialsId: bad-creds

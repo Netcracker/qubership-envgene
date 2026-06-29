@@ -1,6 +1,0 @@
-deployParameters:
-  api_config: ${database_config}
-  rendered_template: ${yaml_template}
-e2eParameters: {}
-name: cloud
-technicalConfigurationParameters: {}

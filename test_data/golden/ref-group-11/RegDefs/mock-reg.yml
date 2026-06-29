@@ -1,6 +1,0 @@
-name: mock-reg
-mavenConfig:
-  targetSnapshot: snapshot
-  targetStaging: staging
-  targetRelease: release
-  repositoryDomainName: http://localhost:8000/

@@ -1,4 +1,0 @@
-name: test-env-namespace
-applications:
-- test_app
-- test_app_2

@@ -1,3 +1,0 @@
-applications:
-  - version: test_app:1.0.0
-    deployPostfix: dp1

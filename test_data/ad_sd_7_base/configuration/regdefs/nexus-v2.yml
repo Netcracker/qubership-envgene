@@ -1,6 +1,0 @@
-name: nexus-v2
-type: maven
-version: 2.0
-url: https://nexus.test
-mavenConfig:
-  authConfig: my-nexus-auth

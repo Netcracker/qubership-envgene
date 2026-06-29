@@ -1,6 +1,0 @@
-deployParameters: {}
-e2eParameters:
-  test_config: ${config_endpoint}
-name: cloud
-technicalConfigurationParameters:
-  config_endpoint: https://config.example.com

@@ -1,7 +1,0 @@
-deployParameters:
-  service_url: ${cloud_api_url}
-e2eParameters:
-  test_endpoint: ${cloud_test_url}
-name: cloud
-technicalConfigurationParameters:
-  config_endpoint: ${cloud_config_url}

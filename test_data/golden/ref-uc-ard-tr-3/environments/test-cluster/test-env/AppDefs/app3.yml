@@ -1,7 +1,0 @@
-name: app3
-groupId: org.test
-artifactId: app3
-registryName: off-site-registry-X
-supportParallelDeploy: false
-deployParameters: {}
-technicalConfigurationParameters: {}
