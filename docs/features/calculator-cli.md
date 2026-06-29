@@ -1490,7 +1490,7 @@ bg_domain:
 The file is emitted when at least one Built-in credential reference resolves to an external Credential.
 Otherwise the file is not produced.
 
-For VALS URI form, generation algorithm, the default-store constraint, and consumer responsibilities, see
+For VALS URI form, generation algorithm, the `default_store` constraint, and consumer responsibilities, see
 [Topology context](/docs/features/external-creds.md#topology-context) in
 [External Credentials Management](/docs/features/external-creds.md).
 
@@ -1579,29 +1579,25 @@ The contents of this file are identical to [mapping.yaml in the Deployment Param
 
 Downstream tooling outside EnvGene consumes this file to **provision secrets in external secret stores** (for example Vault, Azure Key Vault, AWS Secrets Manager, or GCP Secret Manager).
 
-This context aggregates all [Credential](/docs/envgene-objects.md#credential) objects in the environment with `type: external` and `create: true`, and the [Secret Store](/docs/envgene-objects.md#secret-store) definitions they reference.
+This context contains one entry for every [Credential](/docs/envgene-objects.md#credential) object in the environment with `type: external`. [Secret Store](/docs/envgene-objects.md#secret-store) definitions and authentication are out of band: the provisioning CLI reads them from the job environment.
 
 The output format is:
 
 ```yaml
-secretStores:
-  <secret-store-name>:
-    type: enum [ vault, azure, aws, gcp ]
-    url: URL
-    mountPath: string
-    vaultName: string
-    region: string
-    projectId: string
-
 credentials:
   <cred-id>:
-    secretStoreId: string
-    normalizedSecretName: string
-    properties:
-      - name: enum [ username, password ]
+    # VALS reference that addresses the secret. Path only, no `#` fragment.
+    # Carries `?secret_store_id=<id>` when the store is not `default_store`.
+    vals: string
+    # Derived from Credential.create: `fail_if_absent` when absent or false,
+    # `create_if_absent` when true.
+    strategy: enum [ fail_if_absent, create_if_absent, overwrite ]
+    # Emitted only for `create_if_absent` (or `overwrite`), omitted for
+    # `fail_if_absent`. Carries the reserved marker `_generateValue` per field.
+    data: string | map
 ```
 
-The `secretStores` section contains only stores referenced by the Credentials. The `credentials` section contains only entries with `type: external` and `create: true`.
+The `credentials` section contains one entry for every Credential with `type: external`. The `strategy` is derived from each Credential's `create` flag, and `data` is emitted only when the strategy writes.
 
 **Location:** `effective-set/external-credential/external-credentials.yaml`.
 
@@ -1609,4 +1605,4 @@ For object definitions and conceptual overview, see [External Credentials Manage
 
 ##### External Credential Context generation
 
-Normative step-by-step algorithm for building this context (including top-level `secretStores`, `credentials` entries, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set generation](/docs/features/external-creds.md#effective-set-generation).
+Normative step-by-step algorithm for building this context (`credentials` entries, `strategy` derivation, `data` shapes, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set generation](/docs/features/external-creds.md#effective-set-generation).
