@@ -1,3 +1,4 @@
+import shlex
 from os import getenv
 from typing import Optional, List, Dict, Union, Any
 
@@ -10,7 +11,6 @@ from envgenehelper import (
     get_or_create_nested_yaml_attribute
 )
 from gcip import Job, Need, TriggerJob
-from envgenehelper.git_helper import GitRepoManager
 
 REPO_ROOT_PATHS = [
     "appdefs/",
@@ -23,29 +23,30 @@ REPO_ROOT_PATHS = [
 
 class JobExtended(Job):
     def __init__(
-        self,
-        name: str,
-        stage: str,
-        image: Optional[str],
-        script: List[str],
-        variables: Optional[Dict[str, str]] = None,
-        needs: Optional[List[Union['Need', 'Job', List[str]]]] = None,
-        tags: Optional[List[str]] = None,
-        timeout: Optional[int] = None
+            self,
+            name: str,
+            stage: str,
+            image: Optional[str],
+            script: List[str],
+            variables: Optional[Dict[str, str]] = None,
+            needs: Optional[List[Union['Need', 'Job', List[str]]]] = None,
+            tags: Optional[List[str]] = None,
+            timeout: Optional[int] = None
     ) -> None:
-        super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
+        super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs,
+                         tags=tags)
         self.timeout = timeout
 
     def set_sparse_checkout(self, paths: List[str]) -> None:
+        paths_args = " ".join(shlex.quote(path) for path in paths)
         self.add_variables(GIT_STRATEGY="empty")
-        repo = GitRepoManager()
-        repo.configure()
-        repo.sparse_checkout(paths)
+        self.prepend_scripts(f"/module/scripts/utils/sparse_checkout.py {paths_args}")
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
         job_data['timeout'] = self.timeout
         return job_data
+
 
 def job_instance(params, vars, needs=None, rules=None):
     timeout = getenv("RUNNER_SCRIPT_TIMEOUT") or "10m"
@@ -103,6 +104,7 @@ def get_gav_coordinates_from_build():
         raise ReferenceError("Execution is aborted build artifact is not valid. See logs above.")
     return result
 
+
 def find_predecessor_job(job_name, jobs_map, jobs_sequence):
     seqIdx = jobs_sequence.index(job_name)
     predecessors = reversed(jobs_sequence[:seqIdx])
@@ -110,6 +112,7 @@ def find_predecessor_job(job_name, jobs_map, jobs_sequence):
         if previousJob in jobs_map:
             return [jobs_map[previousJob]]
     return []
+
 
 def check_discovery_job_needed(env_definition: dict, env_template_vers: str) -> bool:
     is_app_ver_format = False
@@ -133,10 +136,11 @@ def check_discovery_job_needed(env_definition: dict, env_template_vers: str) -> 
         return False
 
     if mode == 'false':
-        raise Exception(f"\nartifact definition for artifact with name: {template_name} is not found in the path: /configuration/artifact_definitions\n\n"
-                        +'artifact definition discovery is disable in /configuration/config.yml: \n'
-                        +'artifact_definitions_discovery_mode: false\n\n'
-                        +'set artifact definition manually or enable artifact definition discovery \n')
+        raise Exception(
+            f"\nartifact definition for artifact with name: {template_name} is not found in the path: /configuration/artifact_definitions\n\n"
+            + 'artifact definition discovery is disable in /configuration/config.yml: \n'
+            + 'artifact_definitions_discovery_mode: false\n\n'
+            + 'set artifact definition manually or enable artifact definition discovery \n')
     return True
 
 
@@ -197,13 +201,12 @@ def get_shared_entity_paths(cluster_name: str) -> list[str]:
 
 
 def get_sparse_checkout_paths(
-    cluster_name: str,
-    env_name: str,
-    include_full_cluster: bool = False,
+        cluster_name: str,
+        env_name: str,
+        include_full_cluster: bool = False,
 ) -> list[str]:
     paths = list(REPO_ROOT_PATHS)
     paths.extend(get_env_artifact_paths(cluster_name, env_name))
     if include_full_cluster:
         paths.append(f"environments/{cluster_name}/")
     return paths
-

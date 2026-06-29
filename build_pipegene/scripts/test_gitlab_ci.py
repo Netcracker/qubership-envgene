@@ -88,7 +88,6 @@ def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname + "/../..")
 
 
-@pytest.mark.skip(reason="Temporarily disabled")
 @pytest.mark.parametrize("pipeline_vars, expected_sequence", build_pipeline_test_data)
 def test_build_pipeline(pipeline_vars, expected_sequence):
     ci_commit_ref_name = "feature/test-generate"

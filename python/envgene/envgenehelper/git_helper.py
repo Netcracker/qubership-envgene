@@ -3,10 +3,9 @@ from pathlib import Path
 
 from envgenehelper import logger
 from envgenehelper.http_helper import ApiClient
+from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
 from git import GitCommandError, Repo
 from pydantic import BaseModel
-
-from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
 
 
 class GitContext(BaseModel):
