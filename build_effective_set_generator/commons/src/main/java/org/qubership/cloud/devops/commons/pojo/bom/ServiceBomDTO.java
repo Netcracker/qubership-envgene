@@ -20,6 +20,7 @@ package org.qubership.cloud.devops.commons.pojo.bom;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.NoArgsConstructor;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
@@ -28,6 +29,7 @@ import java.util.Map;
 
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServiceBomDTO {
     private String name;
     private String gitBranch;

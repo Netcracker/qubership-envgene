@@ -19,6 +19,7 @@ package org.qubership.cloud.devops.commons.pojo.cs;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 
 import javax.annotation.Nonnull;
@@ -30,6 +31,7 @@ import java.util.List;
 @JsonPropertyOrder
 @Jacksonized
 @Nonnull
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CompositeStructureDTO {
     private final String name;
     private final float version;

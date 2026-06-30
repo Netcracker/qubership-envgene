@@ -19,12 +19,14 @@ package org.qubership.cloud.devops.commons.pojo.registries.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 
 @Data
 @Builder
 @Jacksonized
 @JsonPropertyOrder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerDTO {
     private final String snapshotUri;
     private final String stagingUri;

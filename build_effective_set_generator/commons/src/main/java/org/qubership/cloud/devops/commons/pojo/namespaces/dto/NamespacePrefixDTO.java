@@ -18,9 +18,11 @@ package org.qubership.cloud.devops.commons.pojo.namespaces.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class NamespacePrefixDTO {
 
     private String name;

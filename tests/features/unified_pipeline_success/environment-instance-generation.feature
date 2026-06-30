@@ -123,7 +123,7 @@ Feature: Unified Pipeline Successful Execution - environment-instance-generation
     Given the workspace is initialized with test data from "e2e/base"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
-    And the pipeline parameter "CUSTOM_PARAMS" is set to "{"customKey": "customValue"}"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"customKey\": {\"customNestedKey\": \"customValue\"}}"
     And the pipeline parameter "ENV_BUILD" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully

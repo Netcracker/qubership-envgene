@@ -19,12 +19,14 @@ package org.qubership.cloud.devops.commons.pojo.clouds.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 
 @Jacksonized
 @Data
 @Builder
 @JsonPropertyOrder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DatabaseDTO {
     private final String type;
     private final String url;

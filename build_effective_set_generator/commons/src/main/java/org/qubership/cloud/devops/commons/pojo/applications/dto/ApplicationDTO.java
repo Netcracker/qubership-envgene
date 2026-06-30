@@ -23,6 +23,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.utils.convert.CustomDeserializer;
 
@@ -34,6 +35,7 @@ import java.util.Map;
 @Data
 @Builder
 @Jacksonized
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ApplicationDTO {
     @NotBlank(message = "Application name must not be blank.")
     @Pattern( regexp = "^[a-zA-Z0-9._-]*$", message = "Application name must match the regex: ^[a-zA-Z0-9._-]*$")

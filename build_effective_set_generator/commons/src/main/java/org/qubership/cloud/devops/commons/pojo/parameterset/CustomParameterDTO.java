@@ -19,6 +19,7 @@ package org.qubership.cloud.devops.commons.pojo.parameterset;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.NoArgsConstructor;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.utils.Parameter;
@@ -32,6 +33,7 @@ import java.util.Map;
 @Jacksonized
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomParameterDTO {
 
     private Map<String, Parameter> deployParams = Collections.emptyMap();

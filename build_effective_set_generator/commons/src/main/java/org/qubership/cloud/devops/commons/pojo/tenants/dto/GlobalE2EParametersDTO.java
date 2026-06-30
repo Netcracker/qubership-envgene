@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.utils.convert.CustomDeserializer;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 @Builder
 @JsonPropertyOrder
 @Jacksonized
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GlobalE2EParametersDTO {
     private final String pipelineDefaultRecipients;
     private final String recipientsStrategy;

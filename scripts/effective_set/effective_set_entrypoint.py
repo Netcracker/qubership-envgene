@@ -162,7 +162,7 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
 
     custom_params = getenv("CUSTOM_PARAMS")
     if custom_params:
-        cmd.append(f"--custom-params={custom_params}")
+        cmd.append(f"--custom-params='{custom_params}'")
     return " ".join(cmd)
 
 

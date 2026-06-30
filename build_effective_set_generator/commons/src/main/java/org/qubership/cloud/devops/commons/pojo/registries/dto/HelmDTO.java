@@ -24,6 +24,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 @JsonPropertyOrder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class HelmDTO {
     private final String helmTargetRelease;
     private final String helmTargetStaging;
