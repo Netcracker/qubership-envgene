@@ -23,7 +23,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileDto;
@@ -38,7 +37,6 @@ import java.util.Map;
 @Data
 @Builder(toBuilder = true)
 @Jacksonized
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class CloudDTO {
     @NotBlank(message = "cloud name must not be blank.")
     @Pattern( regexp = "^[a-zA-Z0-9_]*$", message = "cloud name must match the regex: ^[a-zA-Z0-9_]*$")

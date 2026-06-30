@@ -77,7 +77,7 @@ def set_deploy_param_null(workspace: EnvGeneWorkspace, param: str, value: str):
     overrides_dir = env_dir / "Inventory" / "overrides"
     overrides_dir.mkdir(parents=True, exist_ok=True)
     override_file = overrides_dir / "deploy_params_override.yml"
-    override_file.write_text(yaml.dump({"deployParameters": {param: value}}))
+    override_file.write_text(yaml.dump({"namespaces": {"core": {"deployParameters": {param: value}}}}))
 
 @given(parsers.parse('a credential "{cred_id}" has "{value}" for username in the environment instance'))
 def set_credential_null(workspace: EnvGeneWorkspace, cred_id: str, value: str):

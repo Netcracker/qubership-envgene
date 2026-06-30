@@ -1,6 +1,5 @@
 package org.qubership.cloud.devops.commons.pojo.bg;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
@@ -14,7 +13,6 @@ import javax.annotation.Nonnull;
 @Builder
 @JsonPropertyOrder
 @Jacksonized
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Nonnull
 public class BgDomainEntityDTO {
     private String name;
@@ -32,7 +30,6 @@ public class BgDomainEntityDTO {
     private NamespaceDTO controllerNamespace;
 
     @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class NamespaceDTO {
         private String name;
         private String type;

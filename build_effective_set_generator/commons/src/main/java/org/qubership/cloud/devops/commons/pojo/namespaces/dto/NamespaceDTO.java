@@ -22,7 +22,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileDto;
@@ -37,7 +36,6 @@ import java.util.Map;
 @Data
 @Builder(toBuilder = true)
 @Jacksonized
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NamespaceDTO {
     @NotBlank(message = "Namespace name must not be blank.")
     @Pattern( regexp = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", message = "Namespace name must match the regex: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")

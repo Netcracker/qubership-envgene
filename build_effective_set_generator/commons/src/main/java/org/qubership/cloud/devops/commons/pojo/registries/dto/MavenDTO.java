@@ -19,7 +19,6 @@ package org.qubership.cloud.devops.commons.pojo.registries.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 
 import javax.annotation.Nonnull;
@@ -30,7 +29,6 @@ import javax.annotation.Nonnull;
 @Builder
 @Jacksonized
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class MavenDTO {
     private final String repositoryDomainName;
     private final String fullRepositoryUrl;

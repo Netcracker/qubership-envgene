@@ -19,13 +19,11 @@ package org.qubership.cloud.devops.commons.pojo.bom;
 
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.Map;
 
 @Data
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ApplicationBomDTO {
     private String name;
     private String version;

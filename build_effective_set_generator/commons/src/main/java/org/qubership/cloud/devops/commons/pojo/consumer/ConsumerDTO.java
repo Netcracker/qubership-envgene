@@ -18,7 +18,6 @@ package org.qubership.cloud.devops.commons.pojo.consumer;
 
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 
 import java.util.List;
@@ -26,7 +25,6 @@ import java.util.List;
 @Data
 @Builder
 @Jacksonized
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsumerDTO {
     private List<Property> properties;
 }

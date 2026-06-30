@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
@@ -37,7 +36,6 @@ import java.util.Objects;
 @Jacksonized
 @Setter
 @Getter
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ApplicationLinkDTO {
     private final String name;
     @Nonnull

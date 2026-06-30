@@ -16,7 +16,6 @@
 
 package org.qubership.cloud.devops.commons.pojo.registries.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -30,7 +29,6 @@ import java.io.Serializable;
 @Builder
 @Jacksonized
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class RegistryDTO implements Serializable {
 
     private static final long serialVersionUID = -8691792613671479529L;

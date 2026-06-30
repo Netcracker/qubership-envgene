@@ -24,7 +24,6 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class NpmDTO {
     private final String npmTargetRelease;
     private final String npmTargetSnapshot;

@@ -24,7 +24,6 @@ import lombok.extern.jackson.Jacksonized;
 @Data
 @Builder
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class VaultConfigDTO {
     private final String url;
     private final String publicUrl;

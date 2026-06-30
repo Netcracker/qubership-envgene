@@ -22,7 +22,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.utils.convert.CustomDeserializer;
 
@@ -36,7 +35,6 @@ import java.util.Map;
 @JsonPropertyOrder
 @Jacksonized
 @Nonnull
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class TenantDTO {
     @Pattern( regexp = "^[a-zA-Z0-9_-]*$", message = "Tenant name must match the regex: ^[a-zA-Z0-9_-]*$")
     @NotBlank(message = "Tenant name must not be blank.")
@@ -52,8 +50,10 @@ public class TenantDTO {
     private final String credential;
     private final List<String> labels;
     private final List<String> deploymentParameterSets;
+    private final List<String> deployParameterSets;
     private final List<String> e2eParameterSets;
     private final List<String> technicalParameterSets;
+    private final List<String> technicalConfigurationParameterSets;
     @JsonDeserialize(using = CustomDeserializer.class)
     private final Map<String, Object> technicalConfigurationParameters;
 }

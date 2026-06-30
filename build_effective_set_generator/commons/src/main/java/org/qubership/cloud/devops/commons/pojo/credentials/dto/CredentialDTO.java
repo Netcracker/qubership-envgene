@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
@@ -31,7 +30,6 @@ import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsType
 @Data
 @Builder
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class CredentialDTO {
     private final String credentialsId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)

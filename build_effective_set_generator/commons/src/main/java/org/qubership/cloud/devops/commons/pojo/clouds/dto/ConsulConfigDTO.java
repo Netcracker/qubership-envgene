@@ -24,10 +24,10 @@ import lombok.extern.jackson.Jacksonized;
 @Data
 @Builder
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsulConfigDTO {
     private final boolean enabled;
     private final String publicUrl;
     private final String internalUrl;
     private final String tokenSecret;
+    private final String credentialsId;
 }

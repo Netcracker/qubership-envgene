@@ -19,7 +19,6 @@ package org.qubership.cloud.devops.commons.pojo.credentials.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 
@@ -30,7 +29,6 @@ import javax.annotation.Nonnull;
 @Data
 @Builder
 @JsonPropertyOrder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class SecretCredentialsDTO implements Credential {
     private final String secret;
 }
