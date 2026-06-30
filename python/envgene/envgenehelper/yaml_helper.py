@@ -269,6 +269,19 @@ def store_value_to_yaml(yamlContent, key, value, comment=""):
         yamlContent.insert(1, key, value)
 
 
+def store_cred_value_to_yaml(yamlContent, key, value, comment=""):
+    logger.debug(f"Updating credential key {key} in yaml")
+    if key in yamlContent and yamlContent[key] == value:
+        return
+    if key in yamlContent:
+        deleteCommentByKey(yamlContent, key)
+        del yamlContent[key]
+    yamlContent[key] = value
+    if comment:
+        # SOPS doesn't support inline comments and it causes issues with comment duplication on each run of envgene with env_build
+        yamlContent.yaml_set_comment_before_after_key(key, before=comment)
+
+
 def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, comment=""):
     if sourceKey in sourceYaml:
         deleteCommentByKey(targetYaml, targetKey)
@@ -295,7 +308,7 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
 
 
 def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) -> Path | None:
-    
+
     if not dir_path.exists():
         return None
 

@@ -1,0 +1,26 @@
+---
+name: "{{current_env.name}}-app"
+labels: []
+credentialsId: ""
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  DB_ADMIN_CHECK:
+      CONFIG_DEPLOY:
+        param_type: "deploy"
+      DB_ADMIN_SECRET:
+        $type: "credRef"
+        credId: "app-sidecar-token"
+      SECURED_FLAG: "true"
+  SHARED_PASSWORD:
+    $type: "credRef"
+    credId: "shared-cred"
+    property: "password"
+  SECRET_FLOW: "helm-values"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+

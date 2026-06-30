@@ -5,6 +5,14 @@ echo "===== SCRIPT START: $(date '+%H:%M:%S') ====="
 
 retries=0
 exit_code=0
+JOB_STASH=""
+JOB_RETRY_PATHS=()
+
+add_retry_path_if_artifact() {
+    if [ -e "/tmp/$1" ]; then
+        JOB_RETRY_PATHS+=("$1")
+    fi
+}
 
 if [ -n "${GITHUB_ACTIONS}" ]; then
       # Logic for GitHub
@@ -27,6 +35,17 @@ elif [ -n "${GITLAB_CI}" ]; then
       USER_NAME="${GITLAB_USER_LOGIN}"
       TOKEN="${GITLAB_TOKEN}"
 fi
+
+if [ -z "${MINIMIZE_CRED_DIFF_CACHE_DIR:-}" ]; then
+    if [ -n "${GITLAB_CI:-}" ]; then
+        MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_${CI_JOB_ID}"
+    elif [ -n "${GITHUB_ACTIONS:-}" ]; then
+        MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT:-1}"
+    else
+        MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_$$"
+    fi
+fi
+export MINIMIZE_CRED_DIFF_CACHE_DIR
 
 if [ -z "${TOKEN}" ]; then
       echo "No auth token was found. Please check!"
@@ -57,8 +76,6 @@ else
       message="${ticket_id} ${COMMIT_MESSAGE}"
 fi
 echo "Commit message: ${message}"
-
-
 
 # copying environments folder to temp storage
 
@@ -273,6 +290,25 @@ if [ -d /tmp/updated_creds ]; then
     done
 fi
 
+if [ "${COMMIT_ENV}" = "true" ]; then
+    JOB_RETRY_PATHS+=("environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}")
+fi
+add_retry_path_if_artifact appdefs
+add_retry_path_if_artifact regdefs
+add_retry_path_if_artifact configuration
+add_retry_path_if_artifact gitlab-ci
+add_retry_path_if_artifact templates
+
+if [ ${#JOB_RETRY_PATHS[@]} -gt 0 ]; then
+    echo "Saving job state for push retry..."
+    git add -A -- "${JOB_RETRY_PATHS[@]}"
+    JOB_STASH=$(git commit-tree "$(git write-tree)" -p HEAD -m "job artifacts for push retry")
+    git reset -q HEAD -- "${JOB_RETRY_PATHS[@]}"
+fi
+
+echo "Credential diff cache directory: ${MINIMIZE_CRED_DIFF_CACHE_DIR}"
+mkdir -p "${MINIMIZE_CRED_DIFF_CACHE_DIR}"
+
 echo "Minimizing credential file diffs (plaintext compare against HEAD)..."
 python3 /module/scripts/minimize_cred_diffs.py
 
@@ -317,7 +353,7 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Waiting ${sleep_time} seconds before retry..."
           sleep $sleep_time
 
-          echo "Fetching latest changes from origin/${REF_NAME}..."
+          echo "Fetching latest changes from origin/${REF_NAME} (depth=1)..."
           git fetch --depth=1 origin "${REF_NAME}"
           fetch_exit_code=$?
 
@@ -326,8 +362,26 @@ if [ "$exit_code" -ne 0 ]; then
               break
           fi
 
-          git reset --soft origin/"${REF_NAME}"
-          git commit -m "${message}"
+          git reset --hard "origin/${REF_NAME}"
+
+          if [ -n "$JOB_STASH" ]; then
+              echo "Restoring job state from snapshot..."
+              git checkout "$JOB_STASH" -- "${JOB_RETRY_PATHS[@]}"
+          fi
+
+          if [ -e /tmp/sboms ]; then
+              echo "Restoring sboms folder (overlay)"
+              git checkout HEAD -- sboms/ 2>/dev/null || rm -rf sboms
+              mkdir -p sboms
+              cp -r /tmp/sboms/. sboms/
+          fi
+
+          python3 /module/scripts/minimize_cred_diffs.py
+
+          git add ./*
+          if ! git diff --cached --quiet; then
+              git commit -am "${message}"
+          fi
 
           echo "Attempting push (retry $retries)..."
           git push origin HEAD:"${REF_NAME}"

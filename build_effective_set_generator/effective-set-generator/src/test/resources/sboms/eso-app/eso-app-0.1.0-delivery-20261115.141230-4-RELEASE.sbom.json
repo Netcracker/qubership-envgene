@@ -1,0 +1,110 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:776e042c-5940-4a1c-b6ca-c7a6f03ba14d",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-11-15T14:12:30.123456+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.046371270286701516.6226838985304548",
+      "name": "eso-app",
+      "version": "0.1.0-delivery-20261115.141230-4-RELEASE",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "BomRef.5613682882548706.07189009888782105",
+          "group": "org.qubership.deploy.product",
+          "name": "test.platform.system.monitoring_monitoring-operator",
+          "version": "0.1.0-delivery-20261115.141230-4-RELEASE",
+          "purl": "pkg:maven/org.qubership.deploy.product/test.platform.system.monitoring_monitoring-operator@0.1.0-delivery-20261115.141230-4-RELEASE?registry_id=registry-1&repository_id=targetRelease",
+	      "properties": [
+            {
+              "name": "eso_support",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.2"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.2508551698774344.44891638642662657",
+      "name": "cloud-events-exporter",
+      "version": "0.91.0-SNAPSHOT",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/test.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230"
+        },
+        {
+          "name": "git_branch",
+          "value": "0.91.0"
+        },
+        {
+          "name": "git_revision",
+          "value": "b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_version",
+          "value": "0.91.0-SNAPSHOT"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "test.platform.system.monitoring_monitoring"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.01097302979150172.8499895069415295",
+          "group": "product",
+          "name": "cloud-events-exporter",
+          "version": "0.91.0_20241115-141230",
+          "purl": "pkg:docker/product/test.platform.system.monitoring_monitoring-operator@0.91.0_20241115-141230?registry_id=registry-1"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.2508551698774344.44891638642662657"
+    }
+  ]
+}

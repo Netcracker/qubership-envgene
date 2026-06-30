@@ -208,5 +208,23 @@ CUSTOM_PARAMS: '{"deployment":{"FEATURE_FLAG_NEW_BILLING":"true","MAX_RETRIES":"
 
 The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files.
 
+To target only specific namespaces instead of all, use the `namespaces` key. Namespaces not listed receive an empty `custom-params.yaml`. This mode is mutually exclusive with top-level `deployment`/`runtime` keys:
+
+```json
+{
+  "namespaces": {
+    "<namespace-name>": {
+      "deployment": {
+        "FEATURE_FLAG_NEW_BILLING": "true",
+        "MAX_RETRIES": "5"
+      },
+      "runtime": {
+        "LOG_LEVEL": "DEBUG"
+      }
+    }
+  }
+}
+```
+
 > [!WARNING]
 > Custom Params override all other parameter sources. Use them only for temporary, session-specific values. Do not use Custom Params to replace permanent configuration - use Environment Specific ParameterSets instead.
