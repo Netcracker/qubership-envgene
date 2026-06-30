@@ -24,7 +24,12 @@ If your configurations (templates and environment instances) are stored in Git r
 2. Configure your repository variables.
 3. For private repositories, use authentication (e.g., Deploy Tokens or `CI_JOB_TOKEN`) in the `git clone` steps inside the `before_script` block.
 
-**Both CI templates contain multiple comprehensive examples:**
+### Jenkins
+1. Copy `jenkins-pipeline-template.groovy` to the root of your project as `Jenkinsfile`.
+2. Configure your repository variables.
+3. For private repositories, configure the credentials mapping (`withCredentials`) in the `git clone` steps.
+
+**All CI templates contain multiple comprehensive examples:**
 * **Run All Tests:** Clones repositories and executes all scenarios in your test suite.
 * **Run Specific Tests:** Shows how to run a single test, filter by name, or use logical OR conditions (`-k "TestA or TestB"`).
 * **Run Custom Tests:** Demonstrates how to run a subset of custom tests and output a self-contained HTML report.
