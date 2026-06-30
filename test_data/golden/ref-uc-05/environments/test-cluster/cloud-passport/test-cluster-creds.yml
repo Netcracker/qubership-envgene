@@ -1,5 +1,5 @@
 dummy_cred:
   type: "usernamePassword"
   data:
-    username: "[encrypted:AES256_Fernet]gAAAAABqQpp5n0TT_Y42gtpcJ9YSiojmnIwErrrgFh60uCMuAhGzJjl2NOafdYGNRM6YzT7z3MZTvPE0XEWdrwqZ26Yl_9zG_w=="
-    password: "[encrypted:AES256_Fernet]gAAAAABqQpp5MbyqR6ca7noBpX3AL9Sww8nKxxEtS_ztjJniK-13l6PwGxRpoQUoXMx2R4mfEvSsZhvO6NF_SkPA7nkYE_MKBA=="
+    username: "[encrypted:AES256_Fernet]gAAAAABqQpueW03Zqma1cg6P4SJz4GFJeUcP_UO67QRRKz3X29lPRHkphz8qB_A2ubfaolIKYwYLHXKpT5z9j8AhYzN_tU9DNQ=="
+    password: "[encrypted:AES256_Fernet]gAAAAABqQpuegAqDqpStKbJobe3A-xny4emMgfyPb8qd5dMvZzIi_6PSZI6Z5GeuidOTVz5g7gXRWf5nJXYTYbUs9AwnK9cadA=="
