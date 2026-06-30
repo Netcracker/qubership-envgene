@@ -6,7 +6,8 @@ from typing import List
 
 import envgenehelper.logger as logger
 from creds_rotation.core_rotation import process_entry_in_payload
-from envgenehelper import crypt, dump_as_yaml_format
+from envgenehelper import crypt
+from envgenehelper.collections_helper import dump_as_yaml_format
 from envgenehelper.errors import RuntimeError, ValidationError, ValueError
 from creds_rotation.models import PayloadEntry, RotationResult, EnvConfig
 from creds_rotation.utils.cred_utils import (
