@@ -83,6 +83,18 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_unified_pipeline_success.py -v -s --junitxml=reports/unified_pipeline_success.xml | tee -a /workspace/e2e_tests.log"
 
+      - name: Test GSF Repository Maintenance
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_gsf_repository_maintenance.py -v -s --junitxml=reports/gsf_repository_maintenance.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test SBOM Storage Migration
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sbom_storage_migration.py -v -s --junitxml=reports/sbom_storage_migration.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Template Inheritance
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_template_inheritance.py -v -s --junitxml=reports/template_inheritance.xml | tee -a /workspace/e2e_tests.log"
+
       - name: Test Cloud Passport
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "python /workspace/tests/generate_cp_test_data.py && export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_cloud_passport.py tests/step_defs/test_cloud_passport_negative.py -v -s --junitxml=reports/cloud_passport.xml | tee -a /workspace/e2e_tests.log"

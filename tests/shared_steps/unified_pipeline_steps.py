@@ -68,3 +68,24 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
     legacy_config = workspace.base_dir / "configurations"
     if legacy_config.exists():
         shutil.copytree(legacy_config, workspace.base_dir / "configuration", dirs_exist_ok=True)
+
+@given(parsers.parse('a deploy parameter "{param}" is set to "{value}" in the environment instance'))
+def set_deploy_param_null(workspace: EnvGeneWorkspace, param: str, value: str):
+    """Inject an envgeneNullValue into a deploy parameter of a namespace template override."""
+    import yaml
+    env_dir = workspace.base_dir / "environments" / "test-cluster" / "test-env"
+    overrides_dir = env_dir / "Inventory" / "overrides"
+    overrides_dir.mkdir(parents=True, exist_ok=True)
+    override_file = overrides_dir / "deploy_params_override.yml"
+    override_file.write_text(yaml.dump({"deployParameters": {param: value}}))
+
+@given(parsers.parse('a credential "{cred_id}" has "{value}" for username in the environment instance'))
+def set_credential_null(workspace: EnvGeneWorkspace, cred_id: str, value: str):
+    """Inject an envgeneNullValue into credentials."""
+    import yaml
+    env_dir = workspace.base_dir / "environments" / "test-cluster" / "test-env"
+    creds_dir = env_dir / "Credentials"
+    creds_dir.mkdir(parents=True, exist_ok=True)
+    creds_file = creds_dir / "credentials.yml"
+    creds_file.write_text(yaml.dump({cred_id: {"type": "usernamePassword", "data": {"username": value, "password": value}}}))
+
