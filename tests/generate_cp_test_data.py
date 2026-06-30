@@ -44,7 +44,8 @@ def write_yaml(path, data):
                 "type": "usernamePassword",
                 "data": {
                     "username": "foo",
-                    "password": "bar"
+                    "password": "bar",
+                    "secret": "dummy-secret-value"
                 }
             }
         }, f, sort_keys=False)

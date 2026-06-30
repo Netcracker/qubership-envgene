@@ -3,6 +3,7 @@ import shutil
 import glob
 from pytest_bdd import scenarios, given, when, then
 from tests.framework.workspace import EnvGeneWorkspace
+from tests.shared_steps.unified_pipeline_steps import *
 
 scenarios('../features/sbom_storage_migration/sbom-storage-migration.feature')
 

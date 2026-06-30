@@ -27,7 +27,8 @@ class EnvGeneWorkspace(BaseWorkspace):
                 "test-registry": {
                     "data": {
                         "username": "dummy-user",
-                        "password": "dummy-password"
+                        "password": "dummy-password",
+                        "secret": "dummy-secret-value"
                     }
                 }
             }, f)
