@@ -47,6 +47,23 @@ You can chain multiple test names using the `or` keyword:
 docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest -k 'test_scenario_1 or test_scenario_2'"
 ```
 
+## 5. Дополнительно: Очистка рабочего пространства (Cleanup)
+
+При запуске тестов локально они часто модифицируют файлы в папке `test_data` или создают временные артефакты в корне проекта, что "загрязняет" git. Чтобы быстро вернуть проект в чистое состояние:
+
+В папке `tests` созданы два вспомогательных скрипта:
+- `tests/clean_test_workspace.ps1` (для PowerShell)
+- `tests/clean_test_workspace.sh` (для Bash/Linux)
+
+Просто запустите их из терминала:
+```powershell
+# Для Windows
+cd tests
+.\clean_test_workspace.ps1
+```
+
+Эти скрипты автоматически выполнят `git checkout -- test_data/` для сброса изменений и удалят весь временный мусор вроде `reports` и `.pytest_cache`.
+
 ## Step 3: Generating HTML Reports
 
 To generate a self-contained HTML report with test results, use the `--html` flag provided by `pytest-html`:
