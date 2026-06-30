@@ -67,6 +67,23 @@ def convert_dict_to_yaml(d):
     return ruyaml.CommentedMap(d)
 
 
+def remove_cred_yaml_comments(data):
+    if isinstance(data, CommentedMap):
+        if data.ca:
+            data.ca.comment = None
+            if data.ca.items:
+                data.ca.items.clear()
+        for value in data.values():
+            remove_cred_yaml_comments(value)
+    elif isinstance(data, CommentedSeq):
+        if data.ca:
+            data.ca.comment = None
+            if data.ca.items:
+                data.ca.items.clear()
+        for item in data:
+            remove_cred_yaml_comments(item)
+
+
 def remove_empty_list_comments(data):
     # There are cases when list has values and those values have comments related
     # to them. When all values are removed from list, comments are left behind
@@ -88,10 +105,15 @@ def remove_empty_list_comments(data):
 
 
 def writeYamlToFile(filePath, contents):
+    from .crypt import is_cred_file
+
     filePath = Path(filePath)
     logger.info(f"Writing yaml to file: {filePath}")
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
-    remove_empty_list_comments(contents)
+    if is_cred_file(str(filePath)):
+        remove_cred_yaml_comments(contents)
+    else:
+        remove_empty_list_comments(contents)
     with open(filePath, 'w+') as f:
         yaml.dump(contents, f)
     return
@@ -267,19 +289,6 @@ def store_value_to_yaml(yamlContent, key, value, comment=""):
         yamlContent.insert(1, key, value, comment)
     else:
         yamlContent.insert(1, key, value)
-
-
-def store_cred_value_to_yaml(yamlContent, key, value, comment=""):
-    logger.debug(f"Updating credential key {key} in yaml")
-    if key in yamlContent and yamlContent[key] == value:
-        return
-    if key in yamlContent:
-        deleteCommentByKey(yamlContent, key)
-        del yamlContent[key]
-    yamlContent[key] = value
-    if comment:
-        # SOPS doesn't support inline comments and it causes issues with comment duplication on each run of envgene with env_build
-        yamlContent.yaml_set_comment_before_after_key(key, before=comment)
 
 
 def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, comment=""):
