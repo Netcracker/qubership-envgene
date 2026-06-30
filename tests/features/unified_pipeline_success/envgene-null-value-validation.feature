@@ -11,3 +11,13 @@ Feature: Unified Pipeline Successful Execution - envgene-null-value-validation.m
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-nvv-3"
+
+  Scenario: UC-NVV-4: Ignore null values when validation is disabled
+    Given the workspace is initialized with test data from "e2e/base"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "CMDB_IMPORT" is set to "true"
+    And the pipeline parameter "VALIDATE_NULL_VALUES" is set to "false"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "uc-nvv-4"

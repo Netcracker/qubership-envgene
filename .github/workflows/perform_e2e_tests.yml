@@ -33,7 +33,7 @@ jobs:
 
       - name: Test Auto Environment Name
         run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_auto_environment_name.py -v -s --junitxml=reports/auto_environment_name.xml | tee -a /workspace/e2e_tests.log"
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_auto_environment_name*.py -v -s --junitxml=reports/auto_environment_name.xml | tee -a /workspace/e2e_tests.log"
 
       - name: Test Blue Green Deployment
         run: |
@@ -49,7 +49,7 @@ jobs:
 
       - name: Test EnvGene Null Value Validation
         run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_envgene_null_value_validation.py -v -s --junitxml=reports/null_value_validation.xml | tee -a /workspace/e2e_tests.log"
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_envgene_null_value_validation*.py -v -s --junitxml=reports/null_value_validation.xml | tee -a /workspace/e2e_tests.log"
 
       - name: Test Environment Instance Generation
         run: |

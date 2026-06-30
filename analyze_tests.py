@@ -3,7 +3,7 @@ import glob
 import os
 import re
 
-csv_path = r"/workspace/temp_csv.md"
+csv_path = "temp_csv.md"
 
 with open(csv_path, 'r', encoding='utf-8') as f:
     lines = f.readlines()
@@ -30,7 +30,7 @@ for row in reader:
         })
 
 # Find all implemented scenarios in feature files
-feature_files = glob.glob('/workspace/tests/features/**/*.feature', recursive=True)
+feature_files = glob.glob('tests/features/**/*.feature', recursive=True)
 implemented_scenarios = set()
 for ff in feature_files:
     with open(ff, 'r', encoding='utf-8') as f:
@@ -40,7 +40,7 @@ for ff in feature_files:
             implemented_scenarios.add(s.strip())
 
 # Find all documented use cases
-doc_files = glob.glob('/workspace/docs/use-cases/**/*.md', recursive=True)
+doc_files = glob.glob('docs/use-cases/**/*.md', recursive=True)
 documented_usecases = set()
 for df in doc_files:
     with open(df, 'r', encoding='utf-8') as f:
@@ -86,7 +86,7 @@ for t in spreadsheet_tests:
     if uc_match and not is_doc:
         missing_doc.append(t)
 
-md_path = "/workspace/analysis_results.md"
+md_path = "analysis_results.md"
 with open(md_path, 'w', encoding='utf-8') as f:
     f.write("# Analysis Results: Missing Implementations and Documentation\n\n")
     

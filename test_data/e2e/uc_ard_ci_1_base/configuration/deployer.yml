@@ -1,0 +1,4 @@
+﻿inventory:
+  deployer:
+    enabled: true
+    url: http://cmdb.local

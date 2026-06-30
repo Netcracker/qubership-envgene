@@ -98,3 +98,42 @@ Feature: Unified Pipeline Successful Execution - environment-instance-generation
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-eig-es-4"
+
+  Scenario: UC-EIG-ES-1: Generate Effective Set without SD_DATA or SD_VERSION
+    Given the workspace is initialized with test data from "e2e/base"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "ENV_BUILD" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "uc-eig-es-1"
+
+  Scenario: UC-EIG-ES-2: Generate Effective Set with SD_DATA or SD_VERSION
+    Given the workspace is initialized with test data from "e2e/with-sd"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "SD_SOURCE_TYPE" is set to "artifact"
+    And the pipeline parameter "SD_VERSION" is set to "test_app:1.0.0"
+    And the pipeline parameter "ENV_BUILD" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "uc-eig-es-2"
+
+  Scenario: UC-EIG-ES-3: Apply CUSTOM_PARAMS when GENERATE_EFFECTIVE_SET is true
+    Given the workspace is initialized with test data from "e2e/base"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{"customKey": "customValue"}"
+    And the pipeline parameter "ENV_BUILD" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "uc-eig-es-3"
+
+  Scenario: UC-EIG-ME-1: Parallel Environment Instance Generation for Multiple Environments
+    Given the workspace is initialized with test data from "e2e/base"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env\ntest-cluster/test-env2"
+    And the pipeline parameter "ENV_BUILD" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "uc-eig-me-1-env1"
+    And the environment instance "test-cluster/test-env2" matches the reference "uc-eig-me-1-env2"

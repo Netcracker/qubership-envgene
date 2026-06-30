@@ -2,9 +2,9 @@
 
 ## Summary
 - **Total spreadsheet tests:** 276
-- **Total implemented scenarios:** 132
+- **Total implemented scenarios:** 144
 - **Total documented UCs/TCs:** 175
-- **Missing Implementation:** 152
+- **Missing Implementation:** 150
 - **Missing Documentation:** 108
 
 ## Missing Implementations
@@ -96,15 +96,10 @@
 | GSF maintenance | Instance Repository Maintenance via GSF | UC-GSF-INST-1: Initialize Instance Repository via GSF |
 | GSF maintenance | Instance Repository Maintenance via GSF | UC-GSF-INST-2: Upgrade Instance Repository via GSF |
 | artifact-downloading | SD/DD Artifact Download | UC-AD-SD-7: Download SD from Nexus with User/Password (AppDef v1 + RegDef v2) |
-| artifact-downloading | Environment Template Artifact Download | UC-AD-ERR-1: Handle Missing Application Definition |
-| artifact-downloading | Environment Template Artifact Download | UC-AD-ERR-2: Handle Missing Registry Definition |
-| artifact-downloading | Environment Template Artifact Download | UC-AD-ERR-3: Handle Authentication Failure |
 | Environment Instance Generation |  | TC-EIG-PARAM-010: Build Instance with DEPLOYMENT_SESSION_ID propagation |
 | Environment Instance Generation | PR processing | Resource Profiles |
-| Application and Registry Definition | Template rendering | UC-ARD-TR-1: Basic AppDef/RegDef template rendering |
-| Application and Registry Definition | Template rendering | UC-ARD-TR-2: Basic AppDef/RegDef template delete |
-| Application and Registry Definition | Template rendering | UC-ARD-TR-3: Shared template repo, off-site instance rendering |
-| Application and Registry Definition | Template rendering | UC-ARD-TR-4: Shared template repo, on-site instance rendering |
+| Solution Descriptor Processing | Multiple SD_VERSION | UC-SD-7: Multiple SD_VERSION with extended-merge mode |
+| Solution Descriptor Processing | Multiple SD_VERSION | UC-SD-7a: Multiple SD_VERSION with extended-merge mode when Full SD does not exist |
 | Application and Registry Definition | User-provided definitions | UC-ARD-UD-1: Replace template-rendered definition with user-provided file |
 | Application and Registry Definition | User-provided definitions | UC-ARD-UD-2: Delete user-provided file |
 | Application and Registry Definition | User-provided definitions | UC-ARD-UD-3: Add new definition via user-provided file with no matching template |
@@ -161,6 +156,9 @@
 | Environment Instance Generation |  | TC-EIG-PARAM-013: Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params) |
 | GSF maintenance | Template Repository Maintenance via GSF | UC-GSF-TMP-2.1: Upgrade legacy Template Repository (versions before 2.85.0) |
 | SBOM Storage Migration |  | UC-SBOM-MIG-1: First run after upgrade |
+| envgeneNullValue validation |  | UC-NVV-1: Unresolved parameter blocks pipeline |
+| envgeneNullValue validation |  | UC-NVV-2: Unresolved credential blocks pipeline |
+| envgeneNullValue validation |  | UC-NVV-4: Multiple unresolved values reported together |
 | customer E2E Test Scenarios |  | customer E2E Test Scenarios |
 
 ## Missing Documentation

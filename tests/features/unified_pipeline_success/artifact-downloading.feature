@@ -57,6 +57,15 @@ Feature: Unified Pipeline Successful Execution - artifact-downloading.md
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "ref-group-2"
 
+  Scenario: UC-AD-SD-7: Download SD from Nexus with User/Password (AppDef v1 + RegDef v2)
+    Given the workspace is initialized with test data from "e2e/base"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "SD_SOURCE_TYPE" is set to "artifact"
+    And the pipeline parameter "SD_VERSION" is set to "test_app:1.0.0"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "ref-group-2"
+
   Scenario: UC-AD-SD-8: Download SD from Nexus with Anonymous Access (AppDef v1 + RegDef v2)
     Given the workspace is initialized with test data from "e2e/base"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
