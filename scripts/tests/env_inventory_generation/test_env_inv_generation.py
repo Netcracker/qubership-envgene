@@ -57,11 +57,11 @@ class TestEnvInvGen(BaseTest):
              "/repo/environments/cluster-01/env-01/Inventory/credentials/cred1.yml"),
             (Place.CLUSTER, "credentials", INVENTORY, "cred1", "/repo/environments/cluster-01/credentials/cred1.yml"),
             (Place.SITE, "credentials", INVENTORY, "cred1", "/repo/environments/credentials/cred1.yml"),
-            (Place.ENV, "resource_profiles", INVENTORY, "rp1",
-             "/repo/environments/cluster-01/env-01/Inventory/resource_profiles/rp1.yml"),
-            (Place.CLUSTER, "resource_profiles", INVENTORY, "rp1",
-             "/repo/environments/cluster-01/resource_profiles/rp1.yml"),
-            (Place.SITE, "resource_profiles", INVENTORY, "rp1", "/repo/environments/resource_profiles/rp1.yml"),
+            (Place.ENV, "resourceProfiles", INVENTORY, "rp1",
+             "/repo/environments/cluster-01/env-01/Inventory/resourceProfiles/rp1.yml"),
+            (Place.CLUSTER, "resourceProfiles", INVENTORY, "rp1",
+             "/repo/environments/cluster-01/resourceProfiles/rp1.yml"),
+            (Place.SITE, "resourceProfiles", INVENTORY, "rp1", "/repo/environments/resourceProfiles/rp1.yml"),
             (Place.ENV, "shared_template_variables", "", "stv1",
              "/repo/environments/cluster-01/env-01/shared_template_variables/stv1.yml"),
             (Place.CLUSTER, "shared_template_variables", "", "stv1",
@@ -89,13 +89,13 @@ class TestEnvInvGen(BaseTest):
 
         assert is_dir_empty(self.site_dir / "parameters")
         assert is_dir_empty(self.site_dir / "credentials")
-        assert is_dir_empty(self.site_dir / "resource_profiles")
+        assert is_dir_empty(self.site_dir / "resourceProfiles")
         assert is_dir_empty(self.site_dir / "shared_template_variables")
 
         assert self.cluster_dir.exists()
         assert is_dir_empty(self.cluster_dir / "parameters")
         assert is_dir_empty(self.cluster_dir / "credentials")
-        assert is_dir_empty(self.cluster_dir / "resource_profiles")
+        assert is_dir_empty(self.cluster_dir / "resourceProfiles")
         assert is_dir_empty(self.cluster_dir / "shared_template_variables")
 
         assert not self.env_dir.exists()
