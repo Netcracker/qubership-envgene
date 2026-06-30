@@ -38,7 +38,15 @@ def effective_set_entrypoint():
 def _run_full_generation(effective_set_dir, full_env_name, sd_path):
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
     delete_dir(effective_set_dir)
-    subprocess.run(cmd, shell=True, check=True)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Command failed with exit code {e.returncode}")
+        if e.stdout:
+            logger.error(f"Stdout:\n{e.stdout.decode('utf-8')}")
+        if e.stderr:
+            logger.error(f"Stderr:\n{e.stderr.decode('utf-8')}")
+        raise
 
 
 def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
@@ -73,7 +81,7 @@ def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
     runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
-    subprocess.run(cmd, shell=True, check=True)
+    subprocess.run(cmd, check=True)
 
     new_cleanup_mapping = openYaml(cleanup_mapping_path, allow_default=True)
     new_runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
@@ -135,18 +143,19 @@ def _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path):
 
 
 def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
+    ci_project_dir = getenv("CI_PROJECT_DIR")
     cli_path = getenv("EFFECTIVE_SET_CLI_PATH", "/module/scripts/utils/run_effective_set_cli.sh")
     cmd = [
         cli_path,
         f"--env-id={full_env_name}",
-        "--envs-path=$CI_PROJECT_DIR/environments",
+        f"--envs-path={ci_project_dir}/environments",
         f"--output={effective_set_dir}",
     ]
 
     if sd_path.is_file():
         cmd.extend([
-            "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
-            "--sboms-path=$CI_PROJECT_DIR/sboms",
+            f"--registries={ci_project_dir}/configuration/registry.yml",
+            f"--sboms-path={ci_project_dir}/sboms",
             f"--sd-path={sd_path}",
         ])
 
@@ -162,8 +171,8 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
 
     custom_params = getenv("CUSTOM_PARAMS")
     if custom_params:
-        cmd.append(f"--custom-params='{custom_params}'")
-    return " ".join(cmd)
+        cmd.append(f"--custom-params={custom_params}")
+    return cmd
 
 
 if __name__ == "__main__":
