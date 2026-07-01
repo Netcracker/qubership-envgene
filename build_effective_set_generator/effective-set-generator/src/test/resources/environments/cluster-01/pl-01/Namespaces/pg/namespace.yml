@@ -16,6 +16,7 @@ deployParameters:
   PARAM_2: "value-2" # paramset: core version: 25.1 source: template
   PARAM_6: "value-6" # paramset: core version: 25.1 source: template
   SITE_LEVEL_PARAM_1: "site-level-value-1" # paramset: prod-shared version: 25.1 source: instance
+  '#credsns{TEST_LOGIN_NS_USERNAME, TEST_LOGIN_NS_PASSWORD}': test-ns-cred
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
