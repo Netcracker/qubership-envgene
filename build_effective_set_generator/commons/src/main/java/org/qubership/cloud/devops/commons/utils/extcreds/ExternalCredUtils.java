@@ -29,6 +29,10 @@ import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreType;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.SecretStoresUtils;
+import org.qubership.cloud.extcreds.valsref.ExternalCredValsException;
+import org.qubership.cloud.extcreds.valsref.SecretStoreConfig;
+import org.qubership.cloud.extcreds.valsref.ValsFragmentBuilder;
+import org.qubership.cloud.extcreds.valsref.ValsUriBuilder;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -114,18 +118,12 @@ public class ExternalCredUtils {
         }
         String normalizedSecretName = SecretNameBuilder.buildNormalizedSecretName(credentials.getRemoteRefPath(), credId, store.getType());
         List<CredentialDTO.Property> properties = credentials.getProperties();
+        List<String> propertyNames = properties == null
+                ? List.of()
+                : properties.stream().map(CredentialDTO.Property::getName).toList();
         SecretStoreType type = store.getType();
         if (VALS.equals(refShape)) {
-            String fragment = "";
-            if (property != null) {
-                checkMultiValProperty(properties, credId, property);
-                fragment = "#/" + property;
-            } else {
-                checkSingleValProperty(credId, properties);
-                if (type == SecretStoreType.vault) {
-                    fragment = "#/value";
-                }
-            }
+            String fragment = buildFragment(credId, property, propertyNames, type);
             return buildValsUri(store, normalizedSecretName, fragment);
         }
         if (ESO.equals(refShape)) {
@@ -145,34 +143,57 @@ public class ExternalCredUtils {
         throw new ExternalCredProcessingException(String.format(UNEXPECTED_FLOW, refShape, credId, property));
     }
 
+    private static String buildFragment(String credId, String property, List<String> propertyNames, SecretStoreType type) {
+        try {
+            return ValsFragmentBuilder.buildFragment(
+                    credId,
+                    property,
+                    propertyNames,
+                    org.qubership.cloud.extcreds.valsref.SecretStoreType.valueOf(type.name())
+            );
+        } catch (ExternalCredValsException e) {
+            throw new ExternalCredProcessingException(e.getMessage());
+        }
+    }
+
     private static void checkSingleValProperty(String credId, List<CredentialDTO.Property> properties) {
-        if (properties != null && !properties.isEmpty()) {
-            throw new ExternalCredProcessingException(String.format(MULTI_PROPERTY_ERROR, credId));
+        try {
+            List<String> propertyNames = properties == null
+                    ? List.of()
+                    : properties.stream().map(CredentialDTO.Property::getName).toList();
+            ValsFragmentBuilder.validateSingleValProperty(credId, propertyNames);
+        } catch (ExternalCredValsException e) {
+            throw new ExternalCredProcessingException(e.getMessage());
         }
     }
 
     private static void checkMultiValProperty(List<CredentialDTO.Property> properties, String credId, String prop) {
-        if (properties == null || properties.isEmpty()) {
-            throw new ExternalCredProcessingException(String.format(SINGLE_PROPERTY_ERROR, credId));
-        }
-        boolean exists = properties.stream().anyMatch(p -> prop.equals(p.getName()));
-        if (!exists) {
-            throw new ExternalCredProcessingException(String.format(INVALID_PROPERTY, prop, credId));
+        try {
+            List<String> propertyNames = properties == null
+                    ? List.of()
+                    : properties.stream().map(CredentialDTO.Property::getName).toList();
+            ValsFragmentBuilder.validateMultiValProperty(propertyNames, credId, prop);
+        } catch (ExternalCredValsException e) {
+            throw new ExternalCredProcessingException(e.getMessage());
         }
     }
 
     private static String buildValsUri(SecretStoreDTO store, String normalizedSecretName, String fragment) {
-        SecretStoreType type = store.getType();
-        String baseUri = switch (type) {
-            case vault -> "ref+vault://" + store.getMountPath() + "/data/" + normalizedSecretName;
-            case azure -> "ref+azurekeyvault://" + store.getVaultName() + "/" + normalizedSecretName;
-            case aws -> "ref+awssecrets://" + normalizedSecretName + "?region=" + store.getRegion();
-            case gcp -> "ref+gcpsecrets://" + store.getProjectId() + "/" + normalizedSecretName;
-        };
-        if (!fragment.isEmpty()) {
-            return baseUri + fragment;
+        try {
+            return ValsUriBuilder.buildValsUri(toStoreConfig(store), normalizedSecretName, fragment);
+        } catch (ExternalCredValsException e) {
+            throw new ExternalCredProcessingException(e.getMessage());
         }
-        return baseUri;
+    }
+
+    private static SecretStoreConfig toStoreConfig(SecretStoreDTO store) {
+        return SecretStoreConfig.builder()
+                .type(org.qubership.cloud.extcreds.valsref.SecretStoreType.valueOf(store.getType().name()))
+                .mountPath(store.getMountPath())
+                .vaultName(store.getVaultName())
+                .region(store.getRegion())
+                .projectId(store.getProjectId())
+                .build();
     }
 
     private static Parameter buildSecretKeys(String property, String origin) {

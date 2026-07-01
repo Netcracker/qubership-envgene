@@ -12,6 +12,7 @@
     <description>DevOps Configuration Tool Aggregator</description>
     <modules>
         <module>parameters-processor</module>
+        <module>extcreds-vals-ref-core</module>
         <module>commons</module>
     </modules>
 
@@ -25,6 +26,7 @@
                 <module>parameter-calculator-bom</module>
                 <module>gstring-to-jinjava-translator</module>
                 <module>effective-set-generator</module>
+                <module>extcreds-vals-ref-cli</module>
             </modules>
         </profile>
         <profile>
@@ -47,6 +49,7 @@
                 <module>parameter-calculator-bom</module>
                 <module>gstring-to-jinjava-translator</module>
                 <module>effective-set-generator</module>
+                <module>extcreds-vals-ref-cli</module>
             </modules>
         </profile>
     </profiles>

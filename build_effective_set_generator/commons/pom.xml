@@ -36,6 +36,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.qubership.cloud.devops</groupId>
+            <artifactId>extcreds-vals-ref-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-api</artifactId>
             <version>1.60.1</version>

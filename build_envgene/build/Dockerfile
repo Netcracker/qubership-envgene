@@ -3,6 +3,16 @@
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
 # ═══════════════════════════════════════════════════════════════════════════════════
+# Stage 0: Native build for extcreds-vals-ref CLI
+# ═══════════════════════════════════════════════════════════════════════════════════
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS vals-ref-native-build
+
+WORKDIR /build
+COPY build_effective_set_generator /build
+USER root
+RUN chmod +x mvnw && ./mvnw --batch-mode package -pl extcreds-vals-ref-cli -am -Dnative -DskipTests -Dquarkus.native.container-build=false
+
+# ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
@@ -53,12 +63,14 @@ COPY --from=build /build_env /build_env
 COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
+COPY --from=vals-ref-native-build /build/extcreds-vals-ref-cli/target/extcreds-vals-ref-runner /module/bin/extcreds-vals-ref
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 
-RUN chown -R ci:ci /module /build_env /cloud_passport /scripts
+RUN chown -R ci:ci /module /build_env /cloud_passport /scripts && \
+    chmod +x /module/bin/extcreds-vals-ref
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1

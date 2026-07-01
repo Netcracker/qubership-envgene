@@ -61,6 +61,16 @@ public class EscapeMap extends LinkedHashMap<String, Parameter> {
         return super.put(key, new Parameter(map, origin, false));
     }
 
+    public Parameter put(String key, Object value) {
+        if (value instanceof Map<?, ?> mapValue) {
+            return put(key, mapValue);
+        }
+        if (value instanceof String stringValue) {
+            return put(key, stringValue);
+        }
+        return super.put(key, new Parameter(value, origin, false));
+    }
+
     public Parameter put(String key, String string) {
         return super.put(key, new Parameter(string, origin, false));
     }
