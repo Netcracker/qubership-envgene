@@ -66,7 +66,9 @@ def minimize_cred_diffs() -> None:
 
     base_dir = Path(getenv('CI_PROJECT_DIR', os.getcwd()))
     repo = Repo(base_dir)
-    cache_dir = Path(getenv('MINIMIZE_CRED_DIFF_CACHE_DIR'))
+
+    job_id = getenv('CI_JOB_ID') or getenv('GITHUB_RUN_ID') or str(os.getpid())
+    cache_dir = Path(getenv('MINIMIZE_CRED_DIFF_CACHE_DIR') or f"/tmp/minimize_cred_diff_cache_{job_id}")
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     try:
