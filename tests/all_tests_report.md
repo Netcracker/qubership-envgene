@@ -12,45 +12,45 @@ This document lists all known test cases across BDD features, documentation, and
 | **environment specific parameters (Enviroment generation)** | ❌ Missing | - |
 | **Parameter Type Preservation in Macro Resolution** | ❌ Missing | - |
 | **Resource Profiles** | ❌ Missing | - |
-| **TC-002-001: Template override on Cloud and Namespace level. Override includes paramsets with comments** | 📝 Active | Template override on Cloud and Namespace level. Override includes paramsets with comments |
-| **TC-003-001: Environment with no explicit environmentName defined** | 📝 New | Environment with no explicit environmentName defined |
-| **TC-003-002: Environment with explicit environmentName defined** | 📝 New | Environment with explicit environmentName defined |
-| **TC-003-003: Environment with explicit environmentName different from folder name** | 📝 New | Environment with explicit environmentName different from folder name |
-| **TC-003-004: Invalid folder structure for environment** | 📝 New | Invalid folder structure for environment |
-| **TC-003-005: Template rendering with derived environment name** | 📝 New | Template rendering with derived environment name |
-| **TC-003-006: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` set in Environment Inventory** | 📝 Active | Using `current_env.cloudNameWithCluster`. `inventory.cloudName` set in Environment Inventory |
-| **TC-003-007: Using `current_env.cloudNameWithCluster`. `inventory.cloudPassport` set in Environment Inventory** | 📝 Active | Using `current_env.cloudNameWithCluster`. `inventory.cloudPassport` set in Environment Inventory |
-| **TC-003-008: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory** | 📝 Active | Using `current_env.cloudNameWithCluster`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory |
-| **TC-003-009: Using `current_env.cmdb_name`. `inventory.deployer` set in Environment Inventory** | 📝 Active | Using `current_env.cmdb_name`. `inventory.deployer` set in Environment Inventory |
-| **TC-003-010: Using `current_env.cmdb_name`. `inventory.deployer` NOT set in Environment Inventory** | 📝 New | Using `current_env.cmdb_name`. `inventory.deployer` NOT set in Environment Inventory |
-| **TC-003-011: Using `current_env.cmdb_url`. `inventory.deployer` set in Environment Inventory** | 📝 Active | Using `current_env.cmdb_url`. `inventory.deployer` set in Environment Inventory |
-| **TC-003-012: Using `current_env.cmdb_url`. `inventory.deployer` NOT set in Environment Inventory** | 📝 New | Using `current_env.cmdb_url`. `inventory.deployer` NOT set in Environment Inventory |
-| **TC-003-013: Using `current_env.description`. `inventory.description` set in Environment Inventory** | 📝 Active | Using `current_env.description`. `inventory.description` set in Environment Inventory |
-| **TC-003-014: Using `current_env.description`. `inventory.description` NOT set in Environment Inventory** | 📝 Active | Using `current_env.description`. `inventory.description` NOT set in Environment Inventory |
-| **TC-003-015: Using `current_env.owners`. `inventory.owners` set in Environment Inventory** | 📝 Active | Using `current_env.owners`. `inventory.owners` set in Environment Inventory |
-| **TC-003-016: Using `current_env.owners`. `inventory.owners` NOT set in Environment Inventory** | 📝 Active | Using `current_env.owners`. `inventory.owners` NOT set in Environment Inventory |
-| **TC-003-017: Using `current_env.env_template`** | 📝 Active | Using `current_env.env_template` |
-| **TC-003-018: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` set in Environment Inventory** | 📝 Active | Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` set in Environment Inventory |
-| **TC-003-019: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` NOT set in Environment Inventory** | 📝 Active | Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` NOT set in Environment Inventory |
-| **TC-003-020: Using `current_env.cloud_passport`. `inventory.cloudPassport` set in Environment Inventory** | 📝 Active | Using `current_env.cloud_passport`. `inventory.cloudPassport` set in Environment Inventory |
-| **TC-003-021: Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory** | 📝 Active | Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory |
-| **TC-003-022: Using `current_env.solution_structure`. SD exist in Instance repository** | 📝 Active | Using `current_env.solution_structure`. SD exist in Instance repository |
-| **TC-003-023: Using `current_env.solution_structure`. SD NOT in Instance repository** | 📝 Active | Using `current_env.solution_structure`. SD NOT in Instance repository |
-| **TC-004-001: Encryption Enabled with Supported Fields** | 📝 Active | Encryption Enabled with Supported Fields |
-| **TC-004-002: Encryption Skipped When Disabled** | 📝 Active | Encryption Skipped When Disabled |
-| **TC-004-003: Secret Key Mandatory for Fernet** | 📝 Active | Secret Key Mandatory for Fernet |
-| **TC-004-004: Successful Encryption Using Fernet** | 📝 Active | Successful Encryption Using Fernet |
-| **TC-004-005: Skip Encryption if File Already Encrypted Using Fernet** | 📝 Active | Skip Encryption if File Already Encrypted Using Fernet |
-| **TC-004-006: age_key Mandatory for SOPS** | 📝 Active | age_key Mandatory for SOPS |
-| **TC-004-007: Successful Encryption Using SOPS** | 📝 Active | Successful Encryption Using SOPS |
-| **TC-004-008: Skip Encryption if File Already Encrypted Using SOPS** | 📝 Active | Skip Encryption if File Already Encrypted Using SOPS |
-| **TC-CETC-001: Cluster Endpoint Information with Cloud Passport** | 📝 New | Cluster Endpoint Information with Cloud Passport |
-| **TC-CETC-002: Cluster Endpoint Information without Cloud Passport** | 📝 New | Cluster Endpoint Information without Cloud Passport |
-| **TC-CETC-003: Cluster Endpoint Information with Non-Standard Port** | 📝 New | Cluster Endpoint Information with Non-Standard Port |
-| **TC-CETC-004: Cluster Endpoint Information with HTTP Protocol** | 📝 New | Cluster Endpoint Information with HTTP Protocol |
-| **TC-CETC-005: Cluster Endpoint Information with Non-Standard Hostname** | 📝 New | Cluster Endpoint Information with Non-Standard Hostname |
-| **TC-CETC-006: Cluster Endpoint Information with Cloud Passport Overriding clusterUrl** | 📝 New | Cluster Endpoint Information with Cloud Passport Overriding clusterUrl |
-| **TC-CETC-007: Missing Cluster Information** | 📝 New | Missing Cluster Information |
+| **TC-002-001: Template override on Cloud and Namespace level. Override includes paramsets with comments** | ✅ Active (BDD) | Template override on Cloud and Namespace level. Override includes paramsets with comments |
+| **TC-003-001: Environment with no explicit environmentName defined** | ✅ Active (BDD) | Environment with no explicit environmentName defined |
+| **TC-003-002: Environment with explicit environmentName defined** | ✅ Active (BDD) | Environment with explicit environmentName defined |
+| **TC-003-003: Environment with explicit environmentName different from folder name** | ✅ Active (BDD) | Environment with explicit environmentName different from folder name |
+| **TC-003-004: Invalid folder structure for environment** | ✅ Active (BDD) | Invalid folder structure for environment |
+| **TC-003-005: Template rendering with derived environment name** | ✅ Active (BDD) | Template rendering with derived environment name |
+| **TC-003-006: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cloudNameWithCluster`. `inventory.cloudName` set in Environment Inventory |
+| **TC-003-007: Using `current_env.cloudNameWithCluster`. `inventory.cloudPassport` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cloudNameWithCluster`. `inventory.cloudPassport` set in Environment Inventory |
+| **TC-003-008: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cloudNameWithCluster`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory |
+| **TC-003-009: Using `current_env.cmdb_name`. `inventory.deployer` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cmdb_name`. `inventory.deployer` set in Environment Inventory |
+| **TC-003-010: Using `current_env.cmdb_name`. `inventory.deployer` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cmdb_name`. `inventory.deployer` NOT set in Environment Inventory |
+| **TC-003-011: Using `current_env.cmdb_url`. `inventory.deployer` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cmdb_url`. `inventory.deployer` set in Environment Inventory |
+| **TC-003-012: Using `current_env.cmdb_url`. `inventory.deployer` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cmdb_url`. `inventory.deployer` NOT set in Environment Inventory |
+| **TC-003-013: Using `current_env.description`. `inventory.description` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.description`. `inventory.description` set in Environment Inventory |
+| **TC-003-014: Using `current_env.description`. `inventory.description` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.description`. `inventory.description` NOT set in Environment Inventory |
+| **TC-003-015: Using `current_env.owners`. `inventory.owners` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.owners`. `inventory.owners` set in Environment Inventory |
+| **TC-003-016: Using `current_env.owners`. `inventory.owners` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.owners`. `inventory.owners` NOT set in Environment Inventory |
+| **TC-003-017: Using `current_env.env_template`** | ✅ Active (BDD) | Using `current_env.env_template` |
+| **TC-003-018: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` set in Environment Inventory |
+| **TC-003-019: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` NOT set in Environment Inventory |
+| **TC-003-020: Using `current_env.cloud_passport`. `inventory.cloudPassport` set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cloud_passport`. `inventory.cloudPassport` set in Environment Inventory |
+| **TC-003-021: Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory** | ✅ Active (BDD) | Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory |
+| **TC-003-022: Using `current_env.solution_structure`. SD exist in Instance repository** | ✅ Active (BDD) | Using `current_env.solution_structure`. SD exist in Instance repository |
+| **TC-003-023: Using `current_env.solution_structure`. SD NOT in Instance repository** | ✅ Active (BDD) | Using `current_env.solution_structure`. SD NOT in Instance repository |
+| **TC-004-001: Encryption Enabled with Supported Fields** | ✅ Active (BDD) | Encryption Enabled with Supported Fields |
+| **TC-004-002: Encryption Skipped When Disabled** | ✅ Active (BDD) | Encryption Skipped When Disabled |
+| **TC-004-003: Secret Key Mandatory for Fernet** | ✅ Active (BDD) | Secret Key Mandatory for Fernet |
+| **TC-004-004: Successful Encryption Using Fernet** | ✅ Active (BDD) | Successful Encryption Using Fernet |
+| **TC-004-005: Skip Encryption if File Already Encrypted Using Fernet** | ✅ Active (BDD) | Skip Encryption if File Already Encrypted Using Fernet |
+| **TC-004-006: age_key Mandatory for SOPS** | ✅ Active (BDD) | age_key Mandatory for SOPS |
+| **TC-004-007: Successful Encryption Using SOPS** | ✅ Active (BDD) | Successful Encryption Using SOPS |
+| **TC-004-008: Skip Encryption if File Already Encrypted Using SOPS** | ✅ Active (BDD) | Skip Encryption if File Already Encrypted Using SOPS |
+| **TC-CETC-001: Cluster Endpoint Information with Cloud Passport** | ✅ Active (BDD) | Cluster Endpoint Information with Cloud Passport |
+| **TC-CETC-002: Cluster Endpoint Information without Cloud Passport** | ✅ Active (BDD) | Cluster Endpoint Information without Cloud Passport |
+| **TC-CETC-003: Cluster Endpoint Information with Non-Standard Port** | ✅ Active (BDD) | Cluster Endpoint Information with Non-Standard Port |
+| **TC-CETC-004: Cluster Endpoint Information with HTTP Protocol** | ✅ Active (BDD) | Cluster Endpoint Information with HTTP Protocol |
+| **TC-CETC-005: Cluster Endpoint Information with Non-Standard Hostname** | ✅ Active (BDD) | Cluster Endpoint Information with Non-Standard Hostname |
+| **TC-CETC-006: Cluster Endpoint Information with Cloud Passport Overriding clusterUrl** | ✅ Active (BDD) | Cluster Endpoint Information with Cloud Passport Overriding clusterUrl |
+| **TC-CETC-007: Missing Cluster Information** | ✅ Active (BDD) | Missing Cluster Information |
 | **TC-EIG-NEG-001: Build Instance with Wrong Cluster** | ❌ Missing | Build Instance with Wrong Cluster |
 | **TC-EIG-NEG-002: Build Instance with Wrong EnvGene Project** | ❌ Missing | Build Instance with Wrong EnvGene Project |
 | **TC-EIG-NEG-003: Build Instance with Wrong Environment** | ❌ Missing | Build Instance with Wrong Environment |
@@ -75,7 +75,7 @@ This document lists all known test cases across BDD features, documentation, and
 | **TC-EIG-POS-006: Build Instance with Inventory Init and Multiple SD Versions** | ❌ Missing | Build Instance with Inventory Init and Multiple SD Versions |
 | **TC-EIG-POS-007: Build Instance with Inventory Init and Single SD Data** | ❌ Missing | Build Instance with Inventory Init and Single SD Data |
 | **TC-EIG-POS-008: Build Instance with SD Delta and SD Merge** | ❌ Missing | Build Instance with SD Delta and SD Merge |
-| **TC-XXX-XXX: [Brief Test Case Name]** | 📝 [New/Active/Archived] | [Brief Test Case Name] |
+| **TC-XXX-XXX: [Brief Test Case Name]** | ?? [New/Active/Archived] | [Brief Test Case Name] |
 | **UC-01: Environment inherits cluster Cloud Passport automatically** | ✅ Active (BDD) | Environment inherits cluster Cloud Passport automatically |
 | **UC-02: Environment uses explicitly named Cloud Passport** | ✅ Active (BDD) | Environment uses explicitly named Cloud Passport |
 | **UC-03: Environment builds without Cloud Passport** | ✅ Active (BDD) | Environment builds without Cloud Passport |

@@ -1,0 +1,5 @@
+inventory:
+envTemplate:
+  name: composite-prod
+  artifact: app-def:v1
+
