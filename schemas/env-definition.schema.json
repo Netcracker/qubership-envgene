@@ -329,27 +329,6 @@
         }
       ]
     },
-    "effective_set": {
-      "type": "object",
-      "title": "Effective Set",
-      "description": "Per-environment Effective Set publish settings. Read during generate_effective_set when GENERATE_EFFECTIVE_SET is true.",
-      "additionalProperties": false,
-      "properties": {
-        "placement": {
-          "type": "string",
-          "title": "Placement",
-          "description": "Where the Effective Set is published after generation. Omit the effective_set block or omit placement for Instance repository only.",
-          "enum": [
-            "remote",
-            "dual"
-          ],
-          "examples": [
-            "remote",
-            "dual"
-          ]
-        }
-      }
-    },
     "generatedVersions": {
       "type": "object",
       "title": "Generated Version",

@@ -15,26 +15,20 @@
     - [No-SD Mode](#no-sd-mode)
   - [Configuration](#configuration)
   - [External export](#external-export)
-    - [Placement modes](#placement-modes)
+    - [Processing order](#processing-order)
     - [External repository location](#external-repository-location)
-    - [Migration](#migration)
-    - [Parameter resolution](#parameter-resolution)
-    - [Branch resolution](#branch-resolution)
-    - [Validation](#validation)
   - [See also](#see-also)
 
 ## Overview
 
 The Effective Set (ES) is the resolved parameter set for an environment - the output consumed by deployment tooling such as ArgoCD. It is produced by merging inputs from the Solution Descriptor, the environment instance objects, Application SBOMs, and registry configuration according to strict priority rules.
 
-ES generation runs as a dedicated stage in the Instance Repository pipeline. By default, `git_commit` writes the output to the Instance repository under [Location](#location). When `effective_set.placement` is `remote` or `dual`, EnvGene can also publish to an external GitLab repository - see [External export](#external-export).
-
 ## Location
 
 The generated ES is stored alongside its environment:
 
 ```text
-/environments/<cloud-name>/<env-name>/effective-set/
+/environments/<cluster-name>/<env-name>/effective-set/
 ├── topology/
 ├── pipeline/
 ├── deployment/
@@ -45,7 +39,9 @@ The generated ES is stored alongside its environment:
 `topology/` and `pipeline/` hold solution-level data. `deployment/`, `runtime/`, and `cleanup/` contain per-namespace (and per-application for `deployment` and `runtime`) data.
 
 > [!NOTE]
-> The `generate_effective_set` job always writes this tree in the workspace under the path above. Where that tree is published after generation depends on `effective_set.placement` in `env_definition.yml` - Instance repository only (default), external repository only (`remote`), or both (`dual`). See [External export](#external-export).
+> The `generate_effective_set` job writes this tree during generation. Depending on `PIPELINE_TYPE`, the published
+> result is committed under the path above in the Instance repository, or exported to an external repository at
+> `/environments/<cluster-name>/<env-name>/effective-set/`. See [External export](#external-export).
 
 The detailed file-level layout and contents are documented in [Calculator CLI](/docs/features/calculator-cli.md#version-20-effective-set-structure).
 
@@ -134,98 +130,46 @@ Key pipeline parameters that affect ES generation:
 - `SD_REPO_MERGE_MODE` — how the incoming SD is merged with the existing one; determines whether partial or full generation applies.
 - `EFFECTIVE_SET_CONFIG` — effective-set version selection and related options.
 - `CUSTOM_PARAMS` — optional overrides injected into `deployment`, `runtime`, and `cleanup` contexts.
+- `PIPELINE_TYPE` — selects where the Effective Set is published after generation. See
+  [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type) and
+  [External export](#external-export).
 
 See [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for the full list.
 
 ## External export
 
-`effective_set.placement` in
-[`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml) at
-`/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml` selects whether the Effective Set is published
-to an external GitLab repository. Set it per environment when one EnvGene instance serves several zones.
+External export publishes the generated Effective Set to a separate GitLab repository. The export path is controlled by
+the pipeline variable `PIPELINE_TYPE`.
 
-### Placement modes
+### Processing order
 
-| `placement` | Publish target |
-|-------------|--------------------------------------------------------------------------------|
-| Absent | Instance repository only ([Location](#location)) |
-| `remote` | External repository ([External repository location](#external-repository-location)) |
-| `dual` | [Location](#location) and external repository |
+When [`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set) is `true`, the
+`generate_effective_set` job validates `PIPELINE_TYPE`:
 
-```yaml
-effective_set:
-  placement: remote
-# or
-effective_set:
-  placement: dual
+1. **`GITLAB_DEPLOY`** - export to external repository. Connection parameters are read from the pipeline context:
+   `DCL_GIT_URL`, `DCL_GIT_BRANCH`, `DCL_CONFIG_GITLAB_USER`, `DCL_CONFIG_GITLAB_TOKEN`.
+2. **Not passed** - commit to the Instance repository under [Location](#location).
+3. **`null`** - same as not passed.
+4. **Empty string** - same as not passed.
+5. **Any other value** (`PIPELINE_TYPE != GITLAB_DEPLOY`) - the job fails before generation starts.
+
+```mermaid
+flowchart TD
+    A["generate_effective_set starts"] --> B{"PIPELINE_TYPE"}
+    B -->|"not passed, null, or empty string"| C["Generate Effective Set"]
+    B -->|"GITLAB_DEPLOY"| C
+    B -->|"any other value"| H["Job fails"]
+    C --> D{"PIPELINE_TYPE"}
+    D -->|"GITLAB_DEPLOY"| E["Publish using DCL parameters from pipeline context"]
+    E --> F["Remove local Effective Set from Instance repository"]
+    D -->|"not passed, null, or empty string"| G["Commit Effective Set to Instance repository"]
 ```
-
-- **`remote`** - publishes only to the external repository. `git_commit` does not add, update, or delete files under
-  [Location](#location).
-- **`dual`** - publishes to the external repository and commits to [Location](#location). Use while consumers still
-  read from the Instance repository (see [Migration](#migration)).
-
-EnvGene reads `effective_set.placement` at the end of [Pipeline Stage](#pipeline-stage), after generation, when
-[`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set) is `true`. [Full
-Generation](#full-generation) and [Partial Generation](#partial-generation) support `remote` and `dual`.
-
-> [!NOTE]
-> Placement controls **where the Effective Set is published** after generation. EnvGene always writes the tree under
-> [Location](#location) in the workspace first.
 
 ### External repository location
 
 ```text
-/environments/<cluster-name>/<env-name>/effective-set
+/environments/<cluster-name>/<env-name>/effective-set/
 ```
-
-> [!NOTE]
-> When `placement` is `remote`, the Effective Set under [Location](#location) in the Instance repository is stale. The
-> current Effective Set is in the external repository only.
-
-### Migration
-
-Use `placement: dual` while consumers still read from the Instance repository. Switch to `placement: remote` when every
-consumer reads from the external repository. Configure placement only in `env_definition.yml`. See
-[Publish Effective Set to an external GitLab repository](/docs/how-to/generate-effective-set.md#publish-effective-set-to-an-external-gitlab-repository)
-in the how-to guide.
-
-### Parameter resolution
-
-For `remote` and `dual`, EnvGene resolves each connection parameter in this order:
-
-1. [Cloud Passport](/docs/features/cloud-passport-processing.md#passport-file) (`ARGOCD_*`)
-2. DCL parameters (`DCL_*`) from `e2eParameters` in `cloud.yaml` for the environment when the matching `ARGOCD_*` value
-   is not in Cloud Passport
-
-| ARGOCD parameter         | DCL fallback in `e2eParameters` | Description |
-|--------------------------|---------------------------------|-------------|
-| `ARGOCD_GITLAB_URL`      | `DCL_GIT_URL`                   | External GitLab repository URL for Effective Set publish |
-| `ARGOCD_GITLAB_PASSWORD` | `DCL_CONFIG_GITLAB_TOKEN`       | GitLab access token with push permission to the publish branch |
-
-### Branch resolution
-
-For `remote` and `dual`, the publish branch is resolved in this order:
-
-1. `ARGOCD_GITLAB_BRANCH` in Cloud Passport
-2. `DCL_GIT_BRANCH` in `e2eParameters` in `cloud.yaml`
-3. `master`
-
-### Validation
-
-> [!NOTE]
-> For `remote` and `dual`, each rule below terminates the `generate_effective_set` job.
-
-#### During parameter resolution
-
-1. **Parameter completeness.** Every mapped connection parameter in [Parameter resolution](#parameter-resolution) has
-   a value from Cloud Passport or from `e2eParameters` in `cloud.yaml`.
-2. **Branch completeness.** The publish branch is defined per [Branch resolution](#branch-resolution).
-
-#### During repository access check
-
-1. **Reachability.** The external GitLab URL responds before publish.
-2. **Authentication.** The resolved GitLab token authenticates to that URL.
 
 See [Effective Set external export use cases](/docs/use-cases/effective-set-external-export.md) for worked examples.
 
