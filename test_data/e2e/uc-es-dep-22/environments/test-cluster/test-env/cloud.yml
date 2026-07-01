@@ -1,0 +1,37 @@
+# UC-ES-DEP-22: DBaaS and Vault disabled
+# Cloud config with Vault and DBaaS explicitly disabled
+# When both are disabled, optional deployment URLs should be omitted
+apiPort: '6443'
+apiUrl: api.test-cluster.qubership.org
+consulConfig:
+  enabled: false
+  internalUrl: ''
+  publicUrl: ''
+  tokenSecret: ''
+dashboardUrl: https://dashboard.cluster.qubership.org
+databases: []
+dbMode: db
+defaultCredentialsId: cloud-deploy-sa-token
+deployParameters: {}
+e2eParameters: {}
+labels: []
+maasConfig:
+  credentialsId: ''
+  enable: false
+  maasInternalAddress: ''
+  maasUrl: ''
+name: test-cluster_test-env
+privateUrl: cluster.qubership.org
+productionMode: false
+protocol: https
+publicUrl: cluster.qubership.org
+technicalConfigurationParameters: {}
+vaultConfig:
+  credentialsId: ''
+  enable: false
+  publicUrl: ''
+  url: ''
+dbaasConfig:
+  enabled: false
+  url: ''
+  agentUrl: ''
