@@ -11,6 +11,7 @@
   - [Other Common Scenarios](#other-common-scenarios)
     - [Generate Without a Solution Descriptor](#generate-without-a-solution-descriptor)
     - [Inject High-Priority Parameters at Runtime](#inject-high-priority-parameters-at-runtime)
+    - [Publish Effective Set to an external GitLab repository](#publish-effective-set-to-an-external-gitlab-repository)
 
 ## Description
 
@@ -228,3 +229,24 @@ To target only specific namespaces instead of all, use the `namespaces` key. Nam
 
 > [!WARNING]
 > Custom Params override all other parameter sources. Use them only for temporary, session-specific values. Do not use Custom Params to replace permanent configuration - use Environment Specific ParameterSets instead.
+
+---
+
+### Publish Effective Set to an external GitLab repository
+
+If deployment tooling reads the Effective Set from a separate GitLab repository, run generation as described in
+[Steps](#steps) and add:
+
+```text
+PIPELINE_TYPE: GITLAB_DEPLOY
+```
+
+Before you trigger the pipeline, confirm `e2eParameters` in
+`environments/<cluster-name>/<env-name>/cloud.yml` defines the external GitLab URL, branch, and credentials. See
+[External export](/docs/features/effective-set-generation.md#external-export) for the required parameter names.
+
+When the pipeline completes, confirm:
+
+1. The `generate_effective_set` job succeeded.
+2. The external repository contains `environments/<cluster-name>/<env-name>/effective-set/`.
+3. `environments/<cluster-name>/<env-name>/effective-set/` is absent from the Instance repository.

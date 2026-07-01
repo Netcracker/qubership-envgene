@@ -13,6 +13,7 @@
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
+    - [`PIPELINE_TYPE`](#pipeline_type)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
     - [`CUSTOM_PARAMS`](#custom_params)
     - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
@@ -256,6 +257,29 @@ If `true`:
 **Mandatory**: No
 
 **Example**: `true`
+
+### `PIPELINE_TYPE`
+
+**Description**: Selects where the generated Effective Set is published after `generate_effective_set` completes.
+
+Evaluated only when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`. If `GENERATE_EFFECTIVE_SET` is `false`,
+the `generate_effective_set` job does not run and `PIPELINE_TYPE` has no effect.
+
+| Value                               | Behaviour                                                                                            |
+|-------------------------------------|------------------------------------------------------------------------------------------------------|
+| `GITLAB_DEPLOY`                     | Export to an external GitLab repository and remove the Effective Set from the Instance repository.   |
+| Not passed                          | Commit the Effective Set to the Instance repository (default).                                       |
+| `null`                              | Same as not passed.                                                                                  |
+| Empty string                        | Same as not passed.                                                                                  |
+| Any other non-empty value           | The `generate_effective_set` job fails before generation starts.                                     |
+
+For connection parameters and publish paths, see [External export](/docs/features/effective-set-generation.md#external-export).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `GITLAB_DEPLOY`
 
 ### `EFFECTIVE_SET_CONFIG`
 
