@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.commons.pojo.clouds.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +27,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @JsonPropertyOrder
 public class MaaSConfigDTO {
+    @JsonAlias("credentials_id")
     private final String credentialsId;
     private final String maasUrl;
     private final String maasInternalAddress;

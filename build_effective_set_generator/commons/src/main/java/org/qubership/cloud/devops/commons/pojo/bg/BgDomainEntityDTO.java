@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
 
 import javax.annotation.Nonnull;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 
 @Data

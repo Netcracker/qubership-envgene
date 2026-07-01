@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.commons.pojo.clouds.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 import lombok.extern.jackson.Jacksonized;
@@ -29,5 +30,6 @@ public class ConsulConfigDTO {
     private final String publicUrl;
     private final String internalUrl;
     private final String tokenSecret;
+    @JsonAlias("credentials_id")
     private final String credentialsId;
 }
