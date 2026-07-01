@@ -1,0 +1,27 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "test_app_artifact",
+      "version": "1.0.0",
+      "group": "com.test",
+      "mime-type": "application/vnd.qubership.service",
+      "components": [
+        {
+          "type": "application",
+          "name": "test_app_artifact-docker",
+          "version": "1.0.0",
+          "group": "com.test",
+          "mime-type": "application/vnd.docker.image",
+          "properties": [
+            { "name": "full_image_name", "value": "test-repo/test_app_artifact:1.0.0" }
+          ]
+        }
+      ]
+    }
+  },
+  "components": []
+}

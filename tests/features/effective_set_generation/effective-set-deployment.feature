@@ -7,6 +7,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-14"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-14"
@@ -15,6 +16,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-15"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "DEPLOYMENT_SESSION_ID" is set to "test-session-abc123"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
@@ -24,6 +26,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-16"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "MANAGED_BY" is set to "test-manager"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
@@ -33,6 +36,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-20"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-20"
@@ -41,6 +45,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-22"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-22"
@@ -49,6 +54,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-23"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-23"
@@ -57,6 +63,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a6"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a6"
@@ -65,7 +72,8 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a8"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
-    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"customKey\":\"customValue\",\"region\":\"us-east-1\"}"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"customKey\":{\"value\":\"customValue\"},\"region\":{\"value\":\"us-east-1\"}}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a8"
@@ -74,6 +82,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a9"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a9"
@@ -82,6 +91,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a11"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a11"
@@ -90,6 +100,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a14"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a14"
@@ -98,6 +109,7 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a15"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"idle\",\"version\":\"1.0.0\"},\"updateTime\":\"2024-01-01T00:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
@@ -107,7 +119,8 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a16"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
-    And the pipeline parameter "VALIDATE_APP_CHART" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "EFFECTIVE_SET_CONFIG" is set to "{\"app_chart_validation\": true}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a16"
@@ -116,7 +129,8 @@ Feature: Effective Set Generation - Deployment Context
     Given the workspace is initialized with test data from "e2e/uc-es-dep-a18"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
     And the pipeline parameter "ENV_BUILD" is set to "true"
-    And the pipeline parameter "VALIDATE_APP_CHART" is set to "false"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "EFFECTIVE_SET_CONFIG" is set to "{\"app_chart_validation\": false}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "uc-es-dep-a18"
