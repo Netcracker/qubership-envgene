@@ -1,0 +1,30 @@
+apiPort: '6443'
+apiUrl: API.cl-01.managed.qubership.cloud
+consulConfig:
+  enabled: false
+  internalUrl: ''
+  publicUrl: ''
+  tokenSecret: ''
+dashboardUrl: https://dashboard.cluster.qubership.org
+databases: []
+dbMode: db
+defaultCredentialsId: cloud-deploy-sa-token
+deployParameters: {}
+e2eParameters: {}
+labels: []
+maasConfig:
+  credentialsId: ''
+  enable: false
+  maasInternalAddress: ''
+  maasUrl: ''
+name: env-with-passport
+privateUrl: apps.cl-01.managed.qubership.cloud
+productionMode: false
+protocol: https
+publicUrl: apps.cl-01.managed.qubership.cloud
+technicalConfigurationParameters: {}
+vaultConfig:
+  credentialsId: ''
+  enable: false
+  publicUrl: ''
+  url: ''
