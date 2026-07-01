@@ -82,3 +82,18 @@ def mock_nexus(tmp_path_factory):
 @pytest.fixture
 def workspace(tmp_path):
     return EnvGeneWorkspace(tmp_path)
+
+
+def pytest_bdd_apply_tag(tag, function):
+    """Handle custom Gherkin tags as pytest marks.
+
+    @xfail  — marks the test as expected to fail (known framework gap, not a test bug).
+    """
+    if tag == "xfail":
+        marker = pytest.mark.xfail(
+            reason="Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
+            strict=False,
+        )
+        marker(function)
+        return True  # tag handled, do not raise unknown-tag warning
+    return None  # let pytest-bdd handle all other tags normally

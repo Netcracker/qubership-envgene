@@ -1,8 +1,0 @@
-test-deployer-token-cred:
-  type: secret
-  data:
-    secret: token-placeholder-123
-test-deployer-username-cred:
-  type: secret
-  data:
-    secret: token-placeholder-123

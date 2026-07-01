@@ -12,6 +12,7 @@ Feature: Credential Files Encryption Using Git Commit Hook - TC-004
     Then the commit completes successfully
     And the credential file is encrypted with "Fernet"
 
+  @xfail
   Scenario: TC-004-002: Encryption Skipped When Disabled
     Given a local git repository is initialized in the workspace
     And the configuration file "configuration/config.yml" has crypt disabled

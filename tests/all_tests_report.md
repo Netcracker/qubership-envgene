@@ -51,24 +51,24 @@ This document lists all known test cases across BDD features, documentation, and
 | **TC-CETC-005: Cluster Endpoint Information with Non-Standard Hostname** | ✅ Active (BDD) | Cluster Endpoint Information with Non-Standard Hostname |
 | **TC-CETC-006: Cluster Endpoint Information with Cloud Passport Overriding clusterUrl** | ✅ Active (BDD) | Cluster Endpoint Information with Cloud Passport Overriding clusterUrl |
 | **TC-CETC-007: Missing Cluster Information** | ✅ Active (BDD) | Missing Cluster Information |
-| **TC-EIG-NEG-001: Build Instance with Wrong Cluster** | ❌ Missing | Build Instance with Wrong Cluster |
-| **TC-EIG-NEG-002: Build Instance with Wrong EnvGene Project** | ❌ Missing | Build Instance with Wrong EnvGene Project |
-| **TC-EIG-NEG-003: Build Instance with Wrong Environment** | ❌ Missing | Build Instance with Wrong Environment |
-| **TC-EIG-NEG-004: Build Instance with Wrong Template** | ❌ Missing | Build Instance with Wrong Template |
-| **TC-EIG-PARAM-001: Build Instance with ENV_TEMPLATE_VERSION override** | ❌ Missing | Build Instance with ENV_TEMPLATE_VERSION override |
-| **TC-EIG-PARAM-002: Build Instance with ENV_TEMPLATE_VERSION_ORIGIN override (BG origin)** | ❌ Missing | Build Instance with ENV_TEMPLATE_VERSION_ORIGIN override (BG origin) |
-| **TC-EIG-PARAM-003: Build Instance with ENV_TEMPLATE_VERSION_PEER override (BG peer)** | ❌ Missing | Build Instance with ENV_TEMPLATE_VERSION_PEER override (BG peer) |
-| **TC-EIG-PARAM-004: Build Instance with ENV_SPECIFIC_PARAMS applied** | ❌ Missing | Build Instance with ENV_SPECIFIC_PARAMS applied |
-| **TC-EIG-PARAM-006: Build Instance with external APP_REG_DEFS_JOB (App/Reg defs from job)** | ❌ Missing | Build Instance with external APP_REG_DEFS_JOB (App/Reg defs from job) |
-| **TC-EIG-PARAM-007: Build Instance with APP_DEFS_PATH (custom AppDefs path)** | ❌ Missing | Build Instance with APP_DEFS_PATH (custom AppDefs path) |
-| **TC-EIG-PARAM-008: Build Instance with REG_DEFS_PATH (custom RegDefs path)** | ❌ Missing | Build Instance with REG_DEFS_PATH (custom RegDefs path) |
-| **TC-EIG-PARAM-009: Build Instance with NS_BUILD_FILTER (build filtered namespaces only)** | ❌ Missing | Build Instance with NS_BUILD_FILTER (build filtered namespaces only) |
-| **TC-EIG-PARAM-010: Build Instance with DEPLOYMENT_SESSION_ID propagation** | ❌ Missing | Build Instance with DEPLOYMENT_SESSION_ID propagation |
-| **TC-EIG-PARAM-011: Build Instance with CRED_ROTATION_PAYLOAD (trigger cred rotation)** | ❌ Missing | Build Instance with CRED_ROTATION_PAYLOAD (trigger cred rotation) |
-| **TC-EIG-PARAM-012: Build Instance with CRED_ROTATION_FORCE (force cred rotation)** | ❌ Missing | Build Instance with CRED_ROTATION_FORCE (force cred rotation) |
-| **TC-EIG-PARAM-013: Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params)** | ❌ Missing | Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params) |
-| **TC-EIG-PARAM-014: Build Instance with BG_MANAGE enabled (bg_manage job runs)** | ❌ Missing | Build Instance with BG_MANAGE enabled (bg_manage job runs) |
-| **TC-EIG-PARAM-015: Build Instance with BG_STATE provided (state validation/update)** | ❌ Missing | Build Instance with BG_STATE provided (state validation/update) |
+| **TC-EIG-NEG-001: Build Instance with Wrong Cluster** | ✅ Active (BDD) | Build Instance with Wrong Cluster |
+| **TC-EIG-NEG-002: Build Instance with Wrong EnvGene Project** | ✅ Active (BDD) | Build Instance with Wrong EnvGene Project |
+| **TC-EIG-NEG-003: Build Instance with Wrong Environment** | ✅ Active (BDD) | Build Instance with Wrong Environment |
+| **TC-EIG-NEG-004: Build Instance with Wrong Template** | ✅ Active (BDD) | Build Instance with Wrong Template |
+| **TC-EIG-PARAM-001: Build Instance with ENV_TEMPLATE_VERSION override** | ✅ Active (BDD) | Build Instance with ENV_TEMPLATE_VERSION override |
+| **TC-EIG-PARAM-002: Build Instance with ENV_TEMPLATE_VERSION_ORIGIN override (BG origin)** | ✅ Active (BDD) | Build Instance with ENV_TEMPLATE_VERSION_ORIGIN override (BG origin) |
+| **TC-EIG-PARAM-003: Build Instance with ENV_TEMPLATE_VERSION_PEER override (BG peer)** | ✅ Active (BDD) | Build Instance with ENV_TEMPLATE_VERSION_PEER override (BG peer) |
+| **TC-EIG-PARAM-004: Build Instance with ENV_SPECIFIC_PARAMS applied** | ✅ Active (BDD) | Build Instance with ENV_SPECIFIC_PARAMS applied |
+| **TC-EIG-PARAM-006: Build Instance with external APP_REG_DEFS_JOB (App/Reg defs from job)** | ✅ Active (BDD) | Build Instance with external APP_REG_DEFS_JOB (App/Reg defs from job) |
+| **TC-EIG-PARAM-007: Build Instance with APP_DEFS_PATH (custom AppDefs path)** | ✅ Active (BDD) | Build Instance with APP_DEFS_PATH (custom AppDefs path) |
+| **TC-EIG-PARAM-008: Build Instance with REG_DEFS_PATH (custom RegDefs path)** | ✅ Active (BDD) | Build Instance with REG_DEFS_PATH (custom RegDefs path) |
+| **TC-EIG-PARAM-009: Build Instance with NS_BUILD_FILTER (build filtered namespaces only)** | ✅ Active (BDD) | Build Instance with NS_BUILD_FILTER (build filtered namespaces only) |
+| **TC-EIG-PARAM-010: Build Instance with DEPLOYMENT_SESSION_ID propagation** | ✅ Active (BDD) | Build Instance with DEPLOYMENT_SESSION_ID propagation |
+| **TC-EIG-PARAM-011: Build Instance with CRED_ROTATION_PAYLOAD (trigger cred rotation)** | ✅ Active (BDD) | Build Instance with CRED_ROTATION_PAYLOAD (trigger cred rotation) |
+| **TC-EIG-PARAM-012: Build Instance with CRED_ROTATION_FORCE (force cred rotation)** | ✅ Active (BDD) | Build Instance with CRED_ROTATION_FORCE (force cred rotation) |
+| **TC-EIG-PARAM-013: Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params)** | ✅ Active (BDD) | Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params) |
+| **TC-EIG-PARAM-014: Build Instance with BG_MANAGE enabled (bg_manage job runs)** | ✅ Active (BDD) | Build Instance with BG_MANAGE enabled (bg_manage job runs) |
+| **TC-EIG-PARAM-015: Build Instance with BG_STATE provided (state validation/update)** | ✅ Active (BDD) | Build Instance with BG_STATE provided (state validation/update) |
 | **TC-EIG-POS-001: Build Instance (Basic Build)** | ❌ Missing | Build Instance (Basic Build) |
 | **TC-EIG-POS-003: Build Instance with Effective Set and Single SD Data** | ❌ Missing | Build Instance with Effective Set and Single SD Data |
 | **TC-EIG-POS-005: Build Instance with CMDB Import** | ❌ Missing | Build Instance with CMDB Import |

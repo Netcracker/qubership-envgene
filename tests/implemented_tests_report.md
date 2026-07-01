@@ -60,6 +60,24 @@ This document lists the integration test cases that are implemented, active, and
 | **UC-ES-DEP-A15** | ✅ Active | Blue-green predefined deployment parameters |
 | **UC-ES-DEP-A16** | ✅ Active | App chart validation fails when enabled |
 | **UC-ES-DEP-A18** | ✅ Active | App chart validation skipped when disabled |
+| **TC-EIG-NEG-001** | ✅ Active | Build Instance with Wrong Cluster |
+| **TC-EIG-NEG-002** | ✅ Active | Build Instance with Wrong EnvGene Project |
+| **TC-EIG-NEG-003** | ✅ Active | Build Instance with Wrong Environment |
+| **TC-EIG-NEG-004** | ✅ Active | Build Instance with Wrong Template |
+| **TC-EIG-PARAM-001** | ✅ Active | Build Instance with ENV_TEMPLATE_VERSION override |
+| **TC-EIG-PARAM-002** | ✅ Active | Build Instance with ENV_TEMPLATE_VERSION_ORIGIN override (BG origin) |
+| **TC-EIG-PARAM-003** | ✅ Active | Build Instance with ENV_TEMPLATE_VERSION_PEER override (BG peer) |
+| **TC-EIG-PARAM-004** | ✅ Active | Build Instance with ENV_SPECIFIC_PARAMS applied |
+| **TC-EIG-PARAM-006** | ✅ Active | Build Instance with external APP_REG_DEFS_JOB (App/Reg defs from job) |
+| **TC-EIG-PARAM-007** | ✅ Active | Build Instance with APP_DEFS_PATH |
+| **TC-EIG-PARAM-008** | ✅ Active | Build Instance with REG_DEFS_PATH |
+| **TC-EIG-PARAM-009** | ✅ Active | Build Instance with NS_BUILD_FILTER |
+| **TC-EIG-PARAM-010** | ✅ Active | Build Instance with DEPLOYMENT_SESSION_ID propagation |
+| **TC-EIG-PARAM-011** | ✅ Active | Build Instance with CRED_ROTATION_PAYLOAD |
+| **TC-EIG-PARAM-012** | ✅ Active | Build Instance with CRED_ROTATION_FORCE |
+| **TC-EIG-PARAM-013** | ✅ Active | Build Instance with GH_ADDITIONAL_PARAMS |
+| **TC-EIG-PARAM-014** | ✅ Active | Build Instance with BG_MANAGE enabled |
+| **TC-EIG-PARAM-015** | ✅ Active | Build Instance with BG_STATE provided |
 | **TC-004-001** | ✅ Active | Encryption Enabled with Supported Fields |
 | **TC-004-002** | ✅ Active | Encryption Skipped When Disabled |
 | **TC-004-003** | ✅ Active | Secret Key Mandatory for Fernet |

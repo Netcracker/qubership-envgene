@@ -63,10 +63,11 @@ def pipeline_inv_content_paramset(workspace, action, name, scope):
             "parameters": {}
         }
     else:
-        param_set["content"] = {"name": name}
-    content = {"paramSets": [param_set]}
+        # Use top-level 'name' field for delete (schema now supports it)
+        param_set["name"] = name
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}
+    content = {"paramSets": [param_set]}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
     workspace.run_pipeline(extra_env=workspace.extra_env)
 
@@ -180,9 +181,10 @@ def target_rp_exists(workspace, name, scope):
 def pipeline_inv_content_rp(workspace, action, name, scope):
     item = {"action": action, "place": scope}
     if action != "delete":
-        item["content"] = {"name": name, "cpu": "1", "memory": "1Gi"}
+        item["content"] = {"name": name, "profiles": {}}
     else:
-        item["content"] = {"name": name}
+        # Use top-level 'name' field for delete (schema now supports it)
+        item["name"] = name
     content = {"resourceProfiles": [item]}
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}
@@ -226,7 +228,8 @@ def pipeline_inv_content_stv(workspace, action, name, scope):
     if action != "delete":
         item["content"] = {"name": name, "artifact": "app:1.0"}
     else:
-        item["content"] = {"name": name}
+        # Use top-level 'name' field for delete (schema now supports it)
+        item["name"] = name
     content = {"specificTemplateVersions": [item]}
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}
@@ -261,7 +264,8 @@ def pipeline_inv_content_tv(workspace, action, name, scope):
     if action != "delete":
         item["content"] = {"name": name, "variables": {}}
     else:
-        item["content"] = {"name": name}
+        # Use top-level 'name' field for delete (schema now supports it)
+        item["name"] = name
     content = {"templateVariables": [item]}
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}

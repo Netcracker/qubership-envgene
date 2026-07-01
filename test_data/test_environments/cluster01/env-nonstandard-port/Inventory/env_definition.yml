@@ -1,6 +1,0 @@
-inventory:
-  clusterUrl: "https://API.cl-03.managed.qubership.cloud:8443"
-envTemplate:
-  name: composite-prod
-  artifact: app-def:v1
-

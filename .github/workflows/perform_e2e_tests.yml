@@ -111,6 +111,10 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_cluster_endpoint_topology.py -v -s --junitxml=reports/cluster_endpoint_topology.xml | tee -a /workspace/e2e_tests.log"
 
+      - name: Test EIG Negative and Parameter Overrides
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_eig_negative_params.py -v -s --junitxml=reports/eig_negative_params.xml | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
