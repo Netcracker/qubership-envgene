@@ -47,22 +47,22 @@ You can chain multiple test names using the `or` keyword:
 docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest -k 'test_scenario_1 or test_scenario_2'"
 ```
 
-## 5. Дополнительно: Очистка рабочего пространства (Cleanup)
+## 5. Optional: Cleanup the Workspace
 
-При запуске тестов локально они часто модифицируют файлы в папке `test_data` или создают временные артефакты в корне проекта, что "загрязняет" git. Чтобы быстро вернуть проект в чистое состояние:
+When running tests locally, they often modify files in the `test_data` folder or create temporary artifacts in the root of the project, which "pollutes" git. To quickly return the project to a clean state:
 
-В папке `tests` созданы два вспомогательных скрипта:
-- `tests/clean_test_workspace.ps1` (для PowerShell)
-- `tests/clean_test_workspace.sh` (для Bash/Linux)
+Two helper scripts are provided in the `tests` folder:
+- `tests/clean_test_workspace.ps1` (for PowerShell)
+- `tests/clean_test_workspace.sh` (for Bash/Linux)
 
-Просто запустите их из терминала:
+Simply run them from your terminal:
 ```powershell
-# Для Windows
+# For Windows
 cd tests
 .\clean_test_workspace.ps1
 ```
 
-Эти скрипты автоматически выполнят `git checkout -- test_data/` для сброса изменений и удалят весь временный мусор вроде `reports` и `.pytest_cache`.
+These scripts will automatically execute `git checkout -- test_data/` to reset the test data changes and delete all temporary files like `reports` and `.pytest_cache`.
 
 ## Step 3: Generating HTML Reports
 

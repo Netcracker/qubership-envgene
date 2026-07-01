@@ -99,6 +99,14 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "python /workspace/tests/generate_cp_test_data.py && export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_cloud_passport.py tests/step_defs/test_cloud_passport_negative.py -v -s --junitxml=reports/cloud_passport.xml | tee -a /workspace/e2e_tests.log"
 
+      - name: Test Template Override and Macros
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_template_override.py tests/step_defs/test_template_macros.py -v -s --junitxml=reports/template_override_macros.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Git Hooks
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_git_hooks.py -v -s --junitxml=reports/git_hooks.xml | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
