@@ -81,6 +81,8 @@ public class CmdbCliTest {
         Path sdPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-02/Inventory/solution-descriptor/sd.yaml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        Path consumerSchemaPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/consumer/consumer-v1.0.schema.json");
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -95,7 +97,8 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
-                "--app_chart_validation", "false"
+                "--app_chart_validation", "false",
+                "--pipeline-consumer-specific-schema-path", consumerSchemaPath.toString()
         );
 
         assertEquals(0, exitCode);
