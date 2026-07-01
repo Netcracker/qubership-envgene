@@ -37,7 +37,6 @@
           - [\[Version 2.0\] Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
           - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `external-credentials.yaml`](#version-20deployment-parameter-context-external-credentialsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
@@ -51,18 +50,15 @@
       - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
-        - [\[Version 2.0\]\[Pipeline Parameter Context\] `external-credentials.yaml`](#version-20pipeline-parameter-context-external-credentialsyaml)
         - [Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context)
           - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer-name>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-name-parametersyaml)
           - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer-name>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-name-credentialsyaml)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer-name>-external-credentials.yaml`](#version-20pipeline-parameter-context-consumer-name-external-credentialsyaml)
       - [\[Version 2.0\] Topology Context](#version-20-topology-context)
         - [\[Version 2.0\]\[Topology Context\] `composite_structure` Example](#version-20topology-context-composite_structure-example)
         - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
         - [\[Version 2.0\]\[Topology Context\] `environments` Example](#version-20topology-context-environments-example)
         - [\[Version 2.0\]\[Topology Context\] `cluster` Example](#version-20topology-context-cluster-example)
         - [\[Version 2.0\]\[Topology Context\] `bg_domain` Example](#version-20topology-context-bg_domain-example)
-        - [\[Version 2.0\]\[Topology Context\] `external-credentials.yaml`](#version-20topology-context-external-credentialsyaml)
       - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
@@ -245,18 +241,14 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
             └── effective-set
                 ├── topology
                 |   ├── parameters.yaml
-                |   ├── credentials.yaml
-                |   └── external-credentials.yaml
+                |   └── credentials.yaml
                 ├── pipeline
                 |   ├── parameters.yaml
                 |   ├── credentials.yaml
-                |   ├── external-credentials.yaml
                 |   ├── <consumer-name-01>-parameters.yaml
                 |   ├── <consumer-name-02>-credentials.yaml
                 |   ├── <consumer-name-01>-parameters.yaml
-                |   ├── <consumer-name-02>-credentials.yaml
-                |   ├── <consumer-name-01>-external-credentials.yaml
-                |   └── <consumer-name-02>-external-credentials.yaml
+                |   └── <consumer-name-02>-credentials.yaml
                 ├── deployment
                 |   ├── mapping.yaml
                 |   ├── <namespace-folder-01>
@@ -272,7 +264,6 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |   |       ├── deployment-parameters.yaml
                 |   |   |       ├── collision-deployment-parameters.yaml
                 |   |   |       ├── credentials.yaml
-                |   |   |       ├── external-credentials.yaml
                 |   |   |       ├── collision-credentials.yaml
                 |   |   |       ├── deploy-descriptor.yaml
                 |   |   |       └── custom-params.yaml
@@ -288,7 +279,6 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |           ├── deployment-parameters.yaml
                 |   |           ├── collision-deployment-parameters.yaml
                 |   |           ├── credentials.yaml
-                |   |           ├── external-credentials.yaml
                 |   |           ├── collision-credentials.yaml
                 |   |           ├── deploy-descriptor.yaml
                 |   |           └── custom-params.yaml
@@ -305,7 +295,6 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |       |       ├── deployment-parameters.yaml
                 |       |       ├── collision-deployment-parameters.yaml
                 |       |       ├── credentials.yaml
-                |       |       ├── external-credentials.yaml
                 |       |       ├── collision-credentials.yaml
                 |       |       ├── deploy-descriptor.yaml
                 |       |       └── custom-params.yaml
@@ -321,8 +310,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |               ├── deployment-parameters.yaml
                 |               ├── collision-deployment-parameters.yaml
                 |               ├── credentials.yaml
-                |               ├── external-credentials.yaml
-                |               ├── collision-credentials.yaml              
+                |               ├── collision-credentials.yaml
                 |               ├── deploy-descriptor.yaml
                 |               └── custom-params.yaml
                 ├── runtime
@@ -429,30 +417,39 @@ Effective Set version 2.0 handles sensitive parameters along two paths:
 
 - **Local:** Value is set through the [`creds.get`](/docs/template-macros.md#credential-macro-and-credential-reference) macro which points to a [Credential](/docs/envgene-objects.md#credential) with `type: usernamePassword` or `secret`. These values are resolved in the deployment context as plaintext.
 
-- **External:** Value is set through a [credRef Credential Reference](/docs/features/external-creds.md#credential-reference) which points to a [Credential](/docs/envgene-objects.md#credential) with `type: external`. Such values are not written as plaintext in the deployment context. The Calculator emits VALS- or ESO-shaped values **and**, when applicable, contributes to the aggregated output under [External Credential Context](#version-20-external-credential-context).
+- **External:** Value is set through a [credRef Credential Reference](/docs/features/external-creds.md#credential-reference)
+  which points to a [Credential](/docs/envgene-objects.md#credential) with `type: external`. The secret material is
+  never emitted. The Calculator writes VALS- or ESO-shaped references to `credentials.yaml` **and**, when applicable,
+  contributes to the aggregated output under [External Credential Context](#version-20-external-credential-context).
 
 For a given application, the shape of external references (VALS vs ESO) is determined by the effective [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute) attribute combined with the application's [`eso_support`](/docs/features/external-creds.md#eso_support-attribute) capability marker from the Application SBOM. See [Deciding between VALS and ESO references](/docs/features/external-creds.md#deciding-between-vals-and-eso-references). That setting applies only to the external path above, not to local credential macro splitting.
 
 ##### [Version 2.0] Local Sensitive parameters
 
-Sensitive parameters specified via the `creds.get` macro and local Credentials in the Effective Set are grouped into dedicated **local** credentials files for encryption and secure handling:
+Sensitive parameters specified via the `creds.get` macro and local Credentials are written to the per-context
+`credentials.yaml` files:
 
 1. `effective-set/topology/credentials.yaml`
 2. `effective-set/pipeline/credentials.yaml`
 3. `effective-set/pipeline/<consumer-name>-credentials.yaml`
-4. `effective-set/deployment/<namespace-folder>/<application-name>/credentials.yaml`
-5. `effective-set/deployment/<namespace-folder>/<application-name>/collision-credentials.yaml`
+4. `effective-set/deployment/<namespace-folder>/<application-name>/values/credentials.yaml`
+5. `effective-set/deployment/<namespace-folder>/<application-name>/values/collision-credentials.yaml`
 6. `effective-set/runtime/<namespace-folder>/<application-name>/credentials.yaml`
 7. `effective-set/deployment/<namespace-folder>/<application-name>/values/custom-params.yaml`
 
+For a local-category Environment Instance these files hold literal secret values and are encrypted whole.
+
 ##### [Version 2.0] Sensitive parameters via external Credentials
 
-Sensitive parameters specified via a `credRef` Credential Reference and external Credentials in the Effective Set are written as references (VALS URIs or ESO descriptors) to dedicated files. These files contain references, not secret material, and do not require encryption:
+Sensitive parameters specified via a `credRef` Credential Reference and external Credentials are written as
+references (VALS URIs or ESO descriptors), at the same parameter paths, to the per-context `credentials.yaml`
+files. The targets are the deployment, pipeline, per-consumer pipeline, and topology files from the
+[Local Sensitive parameters](#version-20-local-sensitive-parameters) list. The runtime `credentials.yaml`,
+`collision-credentials.yaml`, and `custom-params.yaml` never carry external references.
 
-1. `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`
-2. `effective-set/pipeline/external-credentials.yaml`
-3. `effective-set/pipeline/<consumer-name>-external-credentials.yaml`
-4. `effective-set/topology/external-credentials.yaml`
+An Environment Instance is single-category, so a given `credentials.yaml` holds local secrets or references,
+never both. A `credentials.yaml` that holds only references stays plaintext, because references are not
+secret material.
 
 For the YAML shape of each reference form (VALS, ESO), the structure of every output file, the
 decision logic between VALS and ESO, and the generation algorithms, see
@@ -498,7 +495,7 @@ complex_key:
 ```
 
 > [!NOTE]
-> The same rules applies to Credential References: nested maps are split recursively - only keys resolved from a credRef Credential Reference move to `external-credentials.yaml`, the rest stay in `deployment-parameters.yaml`.
+> The same rules applies to Credential References: nested maps are split recursively - only keys resolved from a credRef Credential Reference move to `credentials.yaml`, the rest stay in `deployment-parameters.yaml`.
 
 ##### External credential algorithms
 
@@ -773,11 +770,16 @@ All such parameters are added to `deployment-parameters.yaml` as `<image-params-
 
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
 
-This file contains **local** sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
+This file contains the sensitive parameters defined in the `deployParameters` section of the `Tenant`,
+`Cloud`, `Namespace`, `Application` Environment Instance objects. For a local-category Environment Instance
+the values are literal secrets resolved from the `creds.get` macro. For an external-category Environment
+Instance the values are VALS or ESO references resolved from `credRef` Credential References, and the file
+stays plaintext.
 
-For more information, refer to [Local Sensitive parameters](#version-20-local-sensitive-parameters).
+For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing).
 
-It also includes a [predefined set of parameters](#version-20-predefined-credentialsyaml-parameters) common to all application services.
+It also includes a [predefined set of parameters](#version-20-predefined-credentialsyaml-parameters) common
+to all application services. These follow the same category as the rest of the file.
 
 The structure of this file is as follows:
 
@@ -815,34 +817,6 @@ global: &id001
 > Parameters whose keys match the name of one of the services must be excluded from this file
 > and placed in [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
 
-##### \[Version 2.0][Deployment Parameter Context] `external-credentials.yaml`
-
-This file contains **external** sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
-
-The file is emitted once per application that has at least one external Credential Reference in its
-`deployParameters`. Applications without any external Credential Reference do not produce this file.
-
-For more information, refer to [Sensitive parameters via external Credentials](#version-20-sensitive-parameters-via-external-credentials).
-
-The structure of this file is as follows:
-
-```yaml
-<key-1>: <vals-or-eso-reference-1>
-<key-N>: <vals-or-eso-reference-N>
-<application-predefined-key-1>: <application-predefined-vals-or-eso-reference-1>
-<application-predefined-key-N>: <application-predefined-vals-or-eso-reference-N>
-global: &id001
-  <key-1>: <vals-or-eso-reference-1>
-  <key-N>: <vals-or-eso-reference-N>
-  <application-predefined-key-1>: <application-predefined-vals-or-eso-reference-1>
-  <application-predefined-key-N>: <application-predefined-vals-or-eso-reference-N>
-<service-name-1>: *id001
-<service-name-2>: *id001
-```
-
-> [!WARNING]
-> The list of `application-predefined-key` values is the same as in [Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters).
-
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
 Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are moved to collision files if they meet **both** conditions:
@@ -850,7 +824,8 @@ Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` ar
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
 
-Parameters from `external-credentials.yaml` are **not** inputs to this logic: they never move to `collision-credentials.yaml` or `collision-deployment-parameters.yaml`.
+Parameters that resolve to external Credentials (references in `credentials.yaml`) are **not** inputs to this
+logic. They never move to `collision-credentials.yaml` or `collision-deployment-parameters.yaml`.
 
 **Destination files:**
 
@@ -1204,7 +1179,6 @@ This context is constructed from parameters defined in the `e2eParameters` secti
 
 - `parameters.yaml`
 - `credentials.yaml`
-- `external-credentials.yaml`
 
 ##### \[Version 2.0][Pipeline Parameter Context] `parameters.yaml`
 
@@ -1220,8 +1194,9 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `credentials.yaml`
 
-This file contains **local** sensitive parameters defined in the `e2eParameters` section of the `Cloud`
-Environment Instance object.
+This file contains the sensitive parameters defined in the `e2eParameters` section of the `Cloud`
+Environment Instance object. For a local-category Environment Instance the values are literal secrets. For an
+external-category Environment Instance the values are VALS references, and the file stays plaintext.
 
 The structure of this file is as follows:
 
@@ -1232,61 +1207,43 @@ The structure of this file is as follows:
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
-##### \[Version 2.0][Pipeline Parameter Context] `external-credentials.yaml`
-
-This file contains references for sensitive parameters defined in the `e2eParameters` section of the `Cloud`
-Environment Instance object, whose values resolve to external Credentials.
-
-It is a flat map of parameter key to VALS URI:
-
-```yaml
-<key-1>: <vals-uri>
-<key-N>: <vals-uri>
-```
-
-The global file is emitted when at least one `e2eParameter` resolves to an external Credential. Otherwise
-the file is not produced.
-
-For VALS URI form, generation algorithm, and consumer responsibilities, see
-[Pipeline context](/docs/features/external-creds.md#pipeline-context)
-in [External Credentials Management](/docs/features/external-creds.md).
+For the VALS URI form, the generation algorithm, and consumer responsibilities, see
+[Pipeline context](/docs/features/external-creds.md#pipeline-context) in
+[External Credentials Management](/docs/features/external-creds.md).
 
 ##### Consumer Specific Context of Pipeline Context
 
 Optionally, the pipeline context can include files containing **consumer-specific** parameters. These
-parameters, derived as subsets of `parameters.yaml`, `credentials.yaml`, and `external-credentials.yaml`,
+parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`,
 are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. The
 resulting parameters are saved in a separate set of files:
 
 - `<consumer-name>-parameters.yaml`
 - `<consumer-name>-credentials.yaml`
-- `<consumer-name>-external-credentials.yaml`
 
 The `consumer-name` value is extracted from the filename (with `.schema.json` removed) of the JSON schema
 provided via the `--pipeline-context-schema-path` argument.
 
 For each root-level parameter declared in the consumer's JSON schema, the calculator routes the parameter
 to one of the consumer-specific files (`<consumer-name>-parameters.yaml`,
-`<consumer-name>-credentials.yaml`, `<consumer-name>-external-credentials.yaml`) according to the following
+`<consumer-name>-credentials.yaml`) according to the following
 principles:
 
 1. If the parameter exists in the general `parameters.yaml`, its value is added to
    `<consumer-name>-parameters.yaml`
 2. Otherwise, if the parameter exists in the general `credentials.yaml`, its value is added to
-   `<consumer-name>-credentials.yaml`
-3. Otherwise, if the parameter exists in the global `external-credentials.yaml`, its entry (a VALS
-   reference) is added to `<consumer-name>-external-credentials.yaml`
-4. Otherwise:
+   `<consumer-name>-credentials.yaml`. This covers both local secrets and external references, since the
+   general `credentials.yaml` carries whichever category the Environment Instance uses
+3. Otherwise:
    1. If a default value is set for this parameter in the schema, the default is added to
       `<consumer-name>-parameters.yaml`. A schema default is treated as a plain non-sensitive value and
       cannot represent a local credential or an external Credential
    2. If no default value is set and the parameter is not mandatory, the parameter is not added
    3. If no default value is set and the parameter is mandatory, the generation process terminates with
       an error
-5. These rules apply only to root-level parameters
-6. `<consumer-name>-parameters.yaml` and `<consumer-name>-credentials.yaml` are produced when the consumer
-   is declared (each file may be empty). `<consumer-name>-external-credentials.yaml` is produced only when
-   rule 3 adds at least one entry. Otherwise the file is not produced
+4. These rules apply only to root-level parameters
+5. `<consumer-name>-parameters.yaml` and `<consumer-name>-credentials.yaml` are produced when the consumer
+   is declared (each file may be empty)
 
 [Example of consumer-specific pipeline context component JSON schema](/examples/consumer-v1.0.json)
 
@@ -1304,7 +1261,10 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-credentials.yaml`
 
-This file contains consumer-specific **local** sensitive parameters.
+This file contains consumer-specific sensitive parameters. It is the per-consumer subset of the general
+[`credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml), filtered by the consumer's JSON
+schema. For a local-category Environment Instance the values are literal secrets. For an external-category
+Environment Instance the values are VALS references, and the file stays plaintext.
 
 The structure of this file is as follows:
 
@@ -1315,33 +1275,18 @@ The structure of this file is as follows:
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
-###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-external-credentials.yaml`
-
-This file contains references for **external** sensitive consumer-specific parameters. It is the
-per-consumer subset of [`external-credentials.yaml`](#version-20pipeline-parameter-context-external-credentialsyaml),
-filtered by the consumer's JSON schema.
-
-It is a flat map of parameter key to VALS URI:
-
-```yaml
-<key-1>: <vals-uri>
-<key-N>: <vals-uri>
-```
-
-The file is produced when at least one parameter from the consumer's JSON schema is routed to it under rule
-3 of the routing algorithm in
-[Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context). Otherwise
-the file is not produced.
-
 #### [Version 2.0] Topology Context
 
 The Topology Context contains information about the relationships between systems and their components. It includes:
 
 - `parameters.yaml` for non-sensitive data
-- `credentials.yaml` for **local** sensitive data
-- `external-credentials.yaml` for references to external Credentials
+- `credentials.yaml` for sensitive data. For an external-category Environment Instance the values are VALS
+  references, and the file stays plaintext
 
 For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing).
+For the VALS URI form, the generation algorithm, the `default_store` constraint, and consumer
+responsibilities, see [Topology context](/docs/features/external-creds.md#topology-context) in
+[External Credentials Management](/docs/features/external-creds.md).
 
 This context only contains parameters generated by EnvGene:
 
@@ -1472,28 +1417,6 @@ bg_domain:
     password: pass-placeholder-123
 ```
 
-##### \[Version 2.0][Topology Context] `external-credentials.yaml`
-
-This file contains references for Topology fields whose source Built-in credential references resolve
-to external Credentials. It mirrors the nested shape of `credentials.yaml`, with VALS URIs in place of
-plain values:
-
-```yaml
-k8s_tokens:
-  <namespace>: <vals-uri>
-bg_domain:
-  controllerNamespace:
-    username: <vals-uri>
-    password: <vals-uri>
-```
-
-The file is emitted when at least one Built-in credential reference resolves to an external Credential.
-Otherwise the file is not produced.
-
-For VALS URI form, generation algorithm, the default-store constraint, and consumer responsibilities, see
-[Topology context](/docs/features/external-creds.md#topology-context) in
-[External Credentials Management](/docs/features/external-creds.md).
-
 #### [Version 2.0] Runtime Parameter Context
 
 This file's parameters define a **distinct** context for managing application behavior without redeployment. These parameters can be applied without redeploying the application.
@@ -1579,29 +1502,25 @@ The contents of this file are identical to [mapping.yaml in the Deployment Param
 
 Downstream tooling outside EnvGene consumes this file to **provision secrets in external secret stores** (for example Vault, Azure Key Vault, AWS Secrets Manager, or GCP Secret Manager).
 
-This context aggregates all [Credential](/docs/envgene-objects.md#credential) objects in the environment with `type: external` and `create: true`, and the [Secret Store](/docs/envgene-objects.md#secret-store) definitions they reference.
+This context contains one entry for every [Credential](/docs/envgene-objects.md#credential) object in the environment with `type: external`. [Secret Store](/docs/envgene-objects.md#secret-store) definitions and authentication are out of band: the provisioning CLI reads them from the job environment.
 
 The output format is:
 
 ```yaml
-secretStores:
-  <secret-store-name>:
-    type: enum [ vault, azure, aws, gcp ]
-    url: URL
-    mountPath: string
-    vaultName: string
-    region: string
-    projectId: string
-
 credentials:
   <cred-id>:
-    secretStoreId: string
-    normalizedSecretName: string
-    properties:
-      - name: enum [ username, password ]
+    # VALS reference that addresses the secret. Path only, no `#` fragment.
+    # Carries `?secret_store_id=<id>` when the store is not `default_store`.
+    vals: string
+    # Derived from Credential.create: `fail_if_absent` when absent or false,
+    # `create_if_absent` when true.
+    strategy: enum [ fail_if_absent, create_if_absent, overwrite ]
+    # Emitted only for `create_if_absent` (or `overwrite`), omitted for
+    # `fail_if_absent`. Carries the reserved marker `_generateValue` per field.
+    data: string | map
 ```
 
-The `secretStores` section contains only stores referenced by the Credentials. The `credentials` section contains only entries with `type: external` and `create: true`.
+The `credentials` section contains one entry for every Credential with `type: external`. The `strategy` is derived from each Credential's `create` flag, and `data` is emitted only when the strategy writes.
 
 **Location:** `effective-set/external-credential/external-credentials.yaml`.
 
@@ -1609,4 +1528,4 @@ For object definitions and conceptual overview, see [External Credentials Manage
 
 ##### External Credential Context generation
 
-Normative step-by-step algorithm for building this context (including top-level `secretStores`, `credentials` entries, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set generation](/docs/features/external-creds.md#effective-set-generation).
+Normative step-by-step algorithm for building this context (`credentials` entries, `strategy` derivation, `data` shapes, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set generation](/docs/features/external-creds.md#effective-set-generation).
