@@ -36,6 +36,13 @@ elif [ -n "${GITLAB_CI}" ]; then
       TOKEN="${GITLAB_TOKEN}"
 fi
 
+if [ -f "configuration/integration.yml" ] && command -v python3 >/dev/null 2>&1; then
+      RESOLVED_SELF_TOKEN=$(python3 /module/scripts/resolve_integration_token.py self_token 2>/dev/null || true)
+      if [ -n "${RESOLVED_SELF_TOKEN}" ]; then
+            TOKEN="${RESOLVED_SELF_TOKEN}"
+      fi
+fi
+
 if [ -z "${MINIMIZE_CRED_DIFF_CACHE_DIR:-}" ]; then
     if [ -n "${GITLAB_CI:-}" ]; then
         MINIMIZE_CRED_DIFF_CACHE_DIR="/tmp/minimize_cred_diff_cache_${CI_JOB_ID}"

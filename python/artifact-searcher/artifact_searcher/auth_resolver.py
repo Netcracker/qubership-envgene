@@ -26,7 +26,11 @@ CRED_FIELD_DATA = "data"
 def _get_cred_data(cred_id: str, env_creds: dict) -> dict:
     if not env_creds or cred_id not in env_creds:
         raise ValueError(f"Credential '{cred_id}' not found in decrypted credentials")
-    return env_creds[cred_id].get(CRED_FIELD_DATA, {})
+    credential = env_creds[cred_id]
+    if credential.get("type") == "external":
+        from envgenehelper.system_creds_helper import resolve_credential_data
+        return resolve_credential_data(cred_id, env_creds)
+    return credential.get(CRED_FIELD_DATA, {})
 
 
 def _validate_user_pass_creds(cred_data: dict, context: str) -> tuple[str, str]:

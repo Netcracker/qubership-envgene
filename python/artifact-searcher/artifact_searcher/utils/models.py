@@ -121,7 +121,12 @@ class Registry(BaseSchema):
         Returns None if no credentials configured."""
         if not self.credentials_id or not env_creds:
             return None
-        cred_data = env_creds.get(self.credentials_id, {}).get("data", {})
+        from envgenehelper.system_creds_helper import resolve_credential_data
+        cred_entry = env_creds.get(self.credentials_id, {})
+        if cred_entry.get("type") == "external":
+            cred_data = resolve_credential_data(self.credentials_id, env_creds)
+        else:
+            cred_data = cred_entry.get("data", {})
         username = cred_data.get("username")
         password = cred_data.get("password")
         if username and password:

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from .config_helper import get_envgene_config_yaml
-from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
+from .creds_helper import check_is_envgen_cred, fetch_cred_value, get_cred_id_and_property_from_cred_macros
 from .business_helper import find_env_instances_dir, getEnvDefinition, getenv_with_error
 from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute, find_yaml_file
 from .file_helper import getDirName, check_file_exists
@@ -22,7 +22,21 @@ def get_cred_file_path(deployer_dir):
     logger.info(f"Credentials definition for deployer is found in: {cred_path}")
     return cred_path
 
+def _load_deployer_cred_config(deployer_dir):
+    from .creds_helper import get_cred_config
+    from .crypt import decrypt_file
+    from pathlib import Path
+
+    cred_config = dict(get_cred_config())
+    cred_path = get_cred_file_path(deployer_dir)
+    deployer_creds = decrypt_file(Path(cred_path))
+    cred_config.update(deployer_creds)
+    return cred_config
+
+
 def get_value_and_attributes_from_cred(cred_macros, deployer_dir):
+    if isinstance(cred_macros, dict) and cred_macros.get("$type") == "credRef":
+        return fetch_cred_value(cred_macros, _load_deployer_cred_config(deployer_dir)), None
     # defined as credentials
     if (check_is_envgen_cred(cred_macros)):
         credentials_file_path = get_cred_file_path(deployer_dir)
@@ -103,14 +117,16 @@ def get_deployer_config(env_name, base_dir, instances_dir, secret_key=None, is_t
     cmdb_url = data[deployer_name]['deployerUrl']
     envgene_config = get_envgene_config_yaml()
     is_decryption_necessary = secret_key or envgene_config.get('crypt')
-    if is_decryption_necessary:
+    if is_decryption_necessary and (cmdb_username_attribute_path or cmdb_api_token_attribute_path):
         cred_path = get_cred_file_path(deployer_dir)
         if is_test:
             cred_yaml = decrypt_file(cred_path, in_place=False, ignore_is_crypt=True, secret_key=secret_key, crypt_backend='Fernet')
         else:
             cred_yaml = decrypt_file(cred_path, in_place=False)
-        cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
-        cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
+        if cmdb_username_attribute_path:
+            cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
+        if cmdb_api_token_attribute_path:
+            cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
     return cmdb_url, cmdb_username, cmdb_api_token
 
 def get_sbom_generator_deployer_config():

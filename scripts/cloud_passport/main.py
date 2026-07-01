@@ -12,6 +12,7 @@ from envgenehelper.errors import ValidationError
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
 from envgenehelper import get_cred_config
+from envgenehelper.system_creds_helper import resolve_integration_param
 
 SECRET_KEY = "SECRET_KEY"
 
@@ -127,9 +128,11 @@ def main():
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
     cred_config = get_cred_config()
 
-    gitlab_token = os.environ.get("GITLAB_TOKEN")
+    gitlab_token = resolve_integration_param(
+        integration_config, "self_token", ["GITHUB_TOKEN", "GITLAB_TOKEN"], cred_config
+    )
     if not gitlab_token:
-        logger.error(f'Variable "GITLAB_TOKEN" is not set')
+        logger.error('Neither integration self_token nor GITHUB_TOKEN/GITLAB_TOKEN is set')
         sys.exit(1)
 
     repo = GitRepoManager(repo_path=base_dir, git_token=gitlab_token)

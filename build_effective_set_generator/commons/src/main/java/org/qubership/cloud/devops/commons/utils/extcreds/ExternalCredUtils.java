@@ -112,9 +112,13 @@ public class ExternalCredUtils {
             throw new ExternalCredProcessingException(String.format(INVALID_CRED, credId));
         }
         ExternalCredentials credentials = (ExternalCredentials) rawCred;
-        SecretStoreDTO store = Injector.getInstance().getDi().get(SecretStoresUtils.class).getStoresById(credentials.getSecretStore());
+        String secretStoreId = credentials.getSecretStore();
+        if (secretStoreId == null || secretStoreId.isBlank()) {
+            secretStoreId = "default_store";
+        }
+        SecretStoreDTO store = Injector.getInstance().getDi().get(SecretStoresUtils.class).getStoresById(secretStoreId);
         if (store == null) {
-            throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND ,credentials.getSecretStore(), credId));
+            throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND ,secretStoreId, credId));
         }
         String normalizedSecretName = SecretNameBuilder.buildNormalizedSecretName(credentials.getRemoteRefPath(), credId, store.getType());
         List<CredentialDTO.Property> properties = credentials.getProperties();
@@ -128,6 +132,9 @@ public class ExternalCredUtils {
         }
         if (ESO.equals(refShape)) {
             String secretStoreId = credentials.getSecretStore();
+            if (secretStoreId == null || secretStoreId.isBlank()) {
+                secretStoreId = "default_store";
+            }
             Map<String, Parameter> resolvedParam = new LinkedHashMap<>();
             resolvedParam.put(SECRET_STORE_ID, Parameter.builder().value(secretStoreId).origin(origin).build());
             resolvedParam.put(NORM_SECRET_NAME, Parameter.builder().value(normalizedSecretName).origin(origin).build());
@@ -226,6 +233,9 @@ public class ExternalCredUtils {
                 continue;
             }
             String storeId = cred.getSecretStore();
+            if (storeId == null || storeId.isBlank()) {
+                storeId = "default_store";
+            }
             SecretStoreDTO store = secretStoresUtils.getStoresById(storeId);
             if (store == null) {
                 throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND ,store, credId));

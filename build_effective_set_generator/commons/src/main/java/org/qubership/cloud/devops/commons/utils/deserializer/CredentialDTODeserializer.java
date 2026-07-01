@@ -44,8 +44,12 @@ public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
                 .type(type)
                 .credentialsId(credId);
         if (type == CredentialsTypeEnum.external) {
+            String secretStore = (String) node.get("secretStore");
+            if (secretStore == null || secretStore.isBlank()) {
+                secretStore = "default_store";
+            }
             builder.create((Boolean) node.getOrDefault("create", Boolean.FALSE))
-                    .secretStore((String) node.get("secretStore"))
+                    .secretStore(secretStore)
                     .remoteRefPath((String) node.get("remoteRefPath"))
                     .properties(convertProps(node.get("properties")));
         } else {

@@ -36,6 +36,31 @@ class ExtCredsValsRefCliTest {
     ExtCredsValsRefCli cli;
 
     @Test
+    void defaultsSecretStoreWhenUnset(@TempDir Path tempDir) throws Exception {
+        Path credentials = tempDir.resolve("credentials.yml");
+        Files.writeString(credentials, """
+                app-sidecar-token:
+                  type: external
+                  remoteRefPath: test_cluster_01/env-1
+                """);
+
+        Path secretStores = tempDir.resolve("secret-stores.yml");
+        Files.writeString(secretStores, """
+                default_store:
+                  type: vault
+                  mountPath: secret/data/app
+                """);
+
+        CommandLine cmd = new CommandLine(cli);
+        int exitCode = cmd.execute(
+                "--credentials", credentials.toString(),
+                "--secret-stores", secretStores.toString()
+        );
+
+        assertEquals(0, exitCode);
+    }
+
+    @Test
     void resolvesVaultCredential(@TempDir Path tempDir) throws Exception {
         Path credentials = tempDir.resolve("credentials.yml");
         Files.writeString(credentials, """

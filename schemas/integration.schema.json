@@ -86,6 +86,14 @@
         { "type": "string" },
         { "$ref": "#/definitions/credRef" }
       ]
+    },
+    "docker_registry_auth": {
+      "title": "Docker Registry Auth",
+      "description": "Authentication credential for the Docker registry that EnvGene reads. Accepts a plain string or a `$type: credRef` form for an external Credential. Falls back to the `GCP_SA_KEY` CI/CD variable when absent",
+      "oneOf": [
+        { "type": "string" },
+        { "$ref": "#/definitions/credRef" }
+      ]
     }
   },
   "required": [

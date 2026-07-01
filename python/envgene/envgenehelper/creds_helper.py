@@ -208,19 +208,34 @@ def mask_sensitive(data: dict,
     return masked
 
 
-def fetch_cred_value(val, cred_config) -> str:
-    match = re.search(r".*\('([^']+)'\)\.(\w+)", val)
-    if match:
-        cred_name = match.group(1)
-        cred_property = match.group(2)
-        return cred_config[cred_name]["data"][cred_property]
-    else:
-        raise ValueError(f"Value '{val}' does not match expected format")
+def fetch_cred_value(val, cred_config, base_dir=None) -> str:
+    if isinstance(val, dict):
+        if val.get("$type") == "credRef":
+            from .system_creds_helper import resolve_cred_ref
+            return resolve_cred_ref(val, cred_config, base_dir=base_dir)
+        raise ValueError(f"Unsupported credential reference value: {val}")
+
+    if not isinstance(val, str):
+        raise ValueError(f"Unsupported credential value type: {type(val)}")
+
+    if check_is_envgen_cred(val):
+        cred_name, cred_property = get_cred_id_and_property_from_cred_macros(val)
+        credential = cred_config.get(cred_name)
+        if not isinstance(credential, dict):
+            raise ValueError(f"Credential '{cred_name}' not found in system credentials catalog")
+        if credential.get("type") == "external":
+            from .system_creds_helper import resolve_external_cred
+            return resolve_external_cred(cred_name, cred_property, cred_config, base_dir=base_dir)
+        return credential["data"][cred_property]
+
+    return val
 
 
 def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    from .system_creds_helper import validate_system_credentials
+    validate_system_credentials(cred_config)
     return cred_config
 
 
