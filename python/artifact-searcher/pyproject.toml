@@ -10,16 +10,16 @@ dependencies = [
     "pydantic==2.10.6",
     "requests==2.32.3",
     "deepdiff==8.6.2",
-    "PyYAML==6.0.2",
+    "PyYAML==6.0.3",
     "responses==0.25.7",
     "aiohttp==3.13.3",
     "asyncio==3.4.3",
-    "aioresponses==0.7.8",
+    "aioresponses==0.7.9",
     "pytest-asyncio==1.0.0",
-    "pytest-aiohttp==1.1.0",
+    "pytest-aiohttp==1.1.1",
     "boto3==1.39.4",
     "google-auth==2.34.0",
-    "qubership-pipelines-common-library==2.0.12",
+    "qubership-pipelines-common-library==2.0.13",
     "jsonschema==4.24.1"
 ]
 
@@ -27,7 +27,7 @@ dependencies = [
 dev = [
     "pytest==8.3.5",
     "ruff==0.11.0",
-    "junitparser==5.0.0"
+    "junitparser==5.0.1"
 ]
 
 [tool.setuptools.packages.find]
