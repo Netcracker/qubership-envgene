@@ -115,6 +115,18 @@ jobs:
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_eig_negative_params.py -v -s --junitxml=reports/eig_negative_params.xml | tee -a /workspace/e2e_tests.log"
 
+      - name: Test Effective Set Deployment
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_effective_set_deployment.py -v -s --junitxml=reports/effective_set_deployment.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Effective Set No SBOM
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_effective_set_no_sbom.py -v -s --junitxml=reports/effective_set_no_sbom.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Environment Inventory Generation ESP
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_inventory_generation_esp.py -v -s --junitxml=reports/environment_inventory_generation_esp.xml | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
