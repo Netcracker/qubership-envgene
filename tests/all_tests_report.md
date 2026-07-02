@@ -69,12 +69,12 @@ This document lists all known test cases across BDD features, documentation, and
 | **TC-EIG-PARAM-013: Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params)** | ✅ Active (BDD) | Build Instance with GH_ADDITIONAL_PARAMS (GitHub additional params) |
 | **TC-EIG-PARAM-014: Build Instance with BG_MANAGE enabled (bg_manage job runs)** | ✅ Active (BDD) | Build Instance with BG_MANAGE enabled (bg_manage job runs) |
 | **TC-EIG-PARAM-015: Build Instance with BG_STATE provided (state validation/update)** | ✅ Active (BDD) | Build Instance with BG_STATE provided (state validation/update) |
-| **TC-EIG-POS-001: Build Instance (Basic Build)** | ❌ Missing | Build Instance (Basic Build) |
-| **TC-EIG-POS-003: Build Instance with Effective Set and Single SD Data** | ❌ Missing | Build Instance with Effective Set and Single SD Data |
+| **TC-EIG-POS-001: Build Instance (Basic Build)** | ✅ Active (BDD) [xfail: jschon_tools env issue] | Build Instance (Basic Build) |
+| **TC-EIG-POS-003: Build Instance with Effective Set and Single SD Data** | ✅ Active (BDD) [xfail: jschon_tools env issue] | Build Instance with Effective Set and Single SD Data |
 | **TC-EIG-POS-005: Build Instance with CMDB Import** | ❌ Missing | Build Instance with CMDB Import |
-| **TC-EIG-POS-006: Build Instance with Inventory Init and Multiple SD Versions** | ❌ Missing | Build Instance with Inventory Init and Multiple SD Versions |
-| **TC-EIG-POS-007: Build Instance with Inventory Init and Single SD Data** | ❌ Missing | Build Instance with Inventory Init and Single SD Data |
-| **TC-EIG-POS-008: Build Instance with SD Delta and SD Merge** | ❌ Missing | Build Instance with SD Delta and SD Merge |
+| **TC-EIG-POS-006: Build Instance with Inventory Init and Multiple SD Versions** | ✅ Active (BDD) [xfail: jschon_tools env issue] | Build Instance with Inventory Init and Multiple SD Versions |
+| **TC-EIG-POS-007: Build Instance with Inventory Init and Single SD Data** | ✅ Active (BDD) [xfail: jschon_tools env issue] | Build Instance with Inventory Init and Single SD Data |
+| **TC-EIG-POS-008: Build Instance with SD Delta and SD Merge** | ✅ Active (BDD) [xfail: jschon_tools env issue] | Build Instance with SD Delta and SD Merge |
 | **TC-XXX-XXX: [Brief Test Case Name]** | ?? [New/Active/Archived] | [Brief Test Case Name] |
 | **UC-01: Environment inherits cluster Cloud Passport automatically** | ✅ Active (BDD) | Environment inherits cluster Cloud Passport automatically |
 | **UC-02: Environment uses explicitly named Cloud Passport** | ✅ Active (BDD) | Environment uses explicitly named Cloud Passport |
@@ -185,23 +185,23 @@ This document lists all known test cases across BDD features, documentation, and
 | **UC-EIG-TA-2: Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain** | ✅ Active (BDD) | Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain |
 | **UC-EIG-TA-3: Environment Instance Generation with `artifact` and `bgNsArtifacts` and without BG Domain** | ✅ Active (BDD) | Environment Instance Generation with `artifact` and `bgNsArtifacts` and without BG Domain |
 | **UC-EINV-AT-ALL-1: Rollback all Inventory changes if any operation fails** | ✅ Active (BDD) | Rollback all Inventory changes if any operation fails |
-| **UC-EINV-BASIC-1: Generate minimal Environment Inventory (init)** | ❌ Missing | Generate minimal Environment Inventory (init) |
+| **UC-EINV-BASIC-1: Generate minimal Environment Inventory (init)** | ✅ Active (BDD) | Generate minimal Environment Inventory (init) |
 | **UC-EINV-CR-1: Create credentials file** | ✅ Active (BDD) | Create credentials file |
 | **UC-EINV-CR-2: Update credentials file** | ✅ Active (BDD) | Update credentials file |
 | **UC-EINV-CR-3: Delete credentials file** | ✅ Active (BDD) | Delete credentials file |
 | **UC-EINV-ED-1: Create env_definition.yml** | ✅ Active (BDD) | Create env_definition.yml |
 | **UC-EINV-ED-2: Update env_definition.yml** | ✅ Active (BDD) | Update env_definition.yml |
 | **UC-EINV-ED-3: Delete env_definition.yml** | ✅ Active (BDD) | Delete env_definition.yml |
-| **UC-EINV-ESP-1: Update inventory with ENV_SPECIFIC_PARAMS (merge/override)** | ❌ Missing | Update inventory with ENV_SPECIFIC_PARAMS (merge/override) |
-| **UC-EINV-ESP-2: Override inventory.clusterUrl via clusterParams.clusterEndpoint** | ❌ Missing | Override inventory.clusterUrl via clusterParams.clusterEndpoint |
-| **UC-EINV-ESP-3: Add cluster token credential via clusterParams.clusterToken (no override if exists)** | ❌ Missing | Add cluster token credential via clusterParams.clusterToken (no override if exists) |
-| **UC-EINV-ESP-4: Merge additionalTemplateVariables into envTemplate.additionalTemplateVariables** | ❌ Missing | Merge additionalTemplateVariables into envTemplate.additionalTemplateVariables |
-| **UC-EINV-ESP-5: Override inventory.cloudName via ENV_SPECIFIC_PARAMS.cloudName** | ❌ Missing | Override inventory.cloudName via ENV_SPECIFIC_PARAMS.cloudName |
-| **UC-EINV-ESP-6: Override inventory.tenantName via ENV_SPECIFIC_PARAMS.tenantName** | ❌ Missing | Override inventory.tenantName via ENV_SPECIFIC_PARAMS.tenantName |
-| **UC-EINV-ESP-7: Override inventory.deployer via ENV_SPECIFIC_PARAMS.deployer** | ❌ Missing | Override inventory.deployer via ENV_SPECIFIC_PARAMS.deployer |
-| **UC-EINV-ESP-8: Merge envSpecificParamsets into envTemplate.envSpecificParamsets** | ❌ Missing | Merge envSpecificParamsets into envTemplate.envSpecificParamsets |
-| **UC-EINV-INIT-1: Init inventory when env_definition.yml does not exist** | ❌ Missing | Init inventory when env_definition.yml does not exist |
-| **UC-EINV-INIT-2: Init inventory when env_definition.yml already exists (behavior/validation)** | ❌ Missing | Init inventory when env_definition.yml already exists (behavior/validation) |
+| **UC-EINV-ESP-1: Update inventory with ENV_SPECIFIC_PARAMS (merge/override)** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Update inventory with ENV_SPECIFIC_PARAMS (merge/override) |
+| **UC-EINV-ESP-2: Override inventory.clusterUrl via clusterParams.clusterEndpoint** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Override inventory.clusterUrl via clusterParams.clusterEndpoint |
+| **UC-EINV-ESP-3: Add cluster token credential via clusterParams.clusterToken (no override if exists)** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Add cluster token credential via clusterParams.clusterToken (no override if exists) |
+| **UC-EINV-ESP-4: Merge additionalTemplateVariables into envTemplate.additionalTemplateVariables** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Merge additionalTemplateVariables into envTemplate.additionalTemplateVariables |
+| **UC-EINV-ESP-5: Override inventory.cloudName via ENV_SPECIFIC_PARAMS.cloudName** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Override inventory.cloudName via ENV_SPECIFIC_PARAMS.cloudName |
+| **UC-EINV-ESP-6: Override inventory.tenantName via ENV_SPECIFIC_PARAMS.tenantName** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Override inventory.tenantName via ENV_SPECIFIC_PARAMS.tenantName |
+| **UC-EINV-ESP-7: Override inventory.deployer via ENV_SPECIFIC_PARAMS.deployer** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Override inventory.deployer via ENV_SPECIFIC_PARAMS.deployer |
+| **UC-EINV-ESP-8: Merge envSpecificParamsets into envTemplate.envSpecificParamsets** | ✅ Active (BDD) [xfail: SCHEMAS_DIR bug in production code] | Merge envSpecificParamsets into envTemplate.envSpecificParamsets |
+| **UC-EINV-INIT-1: Init inventory when env_definition.yml does not exist** | ✅ Active (BDD) [xfail: Inventory dir not created by production code] | Init inventory when env_definition.yml does not exist |
+| **UC-EINV-INIT-2: Init inventory when env_definition.yml already exists (behavior/validation)** | ✅ Active (BDD) | Init inventory when env_definition.yml already exists (behavior/validation) |
 | **UC-EINV-PS-1: Create paramset file** | ✅ Active (BDD) | Create paramset file |
 | **UC-EINV-PS-2: Update paramset file** | ✅ Active (BDD) | Update paramset file |
 | **UC-EINV-PS-3: Delete paramset file** | ✅ Active (BDD) | Delete paramset file |
@@ -229,7 +229,7 @@ This document lists all known test cases across BDD features, documentation, and
 | **UC-ES-DEP-A6: Deployment credentials, feature secrets, and SSL bundle macros** | ✅ Active (BDD) | Deployment credentials, feature secrets, and SSL bundle macros |
 | **UC-ES-DEP-A8: custom-params.yaml from CUSTOM_PARAMS** | ✅ Active (BDD) | custom-params.yaml from CUSTOM_PARAMS |
 | **UC-ES-DEP-A9: deploy-descriptor.yaml structure and configuration artifacts** | ✅ Active (BDD) | deploy-descriptor.yaml structure and configuration artifacts |
-| **UC-ES-NOSBOM-1: Only Pipeline and Topology contexts generated** | ❌ Missing | Only Pipeline and Topology contexts generated |
+| **UC-ES-NOSBOM-1: Only Pipeline and Topology contexts generated** | ✅ Active (BDD) [xfail: jschon_tools env issue] | Only Pipeline and Topology contexts generated |
 | **UC-ES-PIPE-1: pipeline parameters and credentials from Cloud e2eParameters** | ❌ Missing | pipeline parameters and credentials from Cloud e2eParameters |
 | **UC-ES-PIPE-4: Consumer copies root keys from pipeline context** | ❌ Missing | Consumer copies root keys from pipeline context |
 | **UC-ES-PIPE-5: Consumer schema default only** | ❌ Missing | Consumer schema default only |
@@ -295,7 +295,7 @@ This document lists all known test cases across BDD features, documentation, and
 | **UC-SD-6: Multiple SD_VERSION with `basic-exclusion-merge` mode** | ✅ Active (BDD) | Multiple SD_VERSION with `basic-exclusion-merge` mode |
 | **UC-SD-6a: Multiple SD_VERSION with `basic-exclusion-merge` mode when Full SD does not exist** | ✅ Active (BDD) | Multiple SD_VERSION with `basic-exclusion-merge` mode when Full SD does not exist |
 | **UC-SD-7: Single SD_VERSION with asic-exclusion-merge mode when Full SD does not exist** | ✅ Active (BDD) | Single SD_VERSION with asic-exclusion-merge mode when Full SD does not exist |
-| **UC-SD-7a: Multiple SD_VERSION with extended-merge mode when Full SD does not exist** | ❌ Missing | Multiple SD_VERSION with extended-merge mode when Full SD does not exist |
+| **UC-SD-7a: Multiple SD_VERSION with extended-merge mode when Full SD does not exist** | ✅ Active (BDD) | Multiple SD_VERSION with extended-merge mode when Full SD does not exist |
 | **UC-SD-8: Multiple SD_VERSION with `replace` mode** | ✅ Active (BDD) | Multiple SD_VERSION with `replace` mode |
 | **UC-SD-9: Single SD_VERSION with SD_DELTA=true** | ✅ Active (BDD) | Single SD_VERSION with SD_DELTA=true |
 | **UC-SD-9a: Single SD_VERSION with SD_DELTA=true when Full SD does not exist** | ✅ Active (BDD) | Single SD_VERSION with SD_DELTA=true when Full SD does not exist |

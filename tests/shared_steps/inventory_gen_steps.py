@@ -181,7 +181,8 @@ def target_rp_exists(workspace, name, scope):
 def pipeline_inv_content_rp(workspace, action, name, scope):
     item = {"action": action, "place": scope}
     if action != "delete":
-        item["content"] = {"name": name, "profiles": {}}
+        # schema requires 'applications' array
+        item["content"] = {"name": name, "applications": []}
     else:
         # Use top-level 'name' field for delete (schema now supports it)
         item["name"] = name
@@ -324,4 +325,52 @@ def creds_deleted(workspace, filename, scope):
 def file_is_updated(workspace, filename):
     env_dir = workspace.builder.get_env_dir("test-cluster", "test-env")
     assert (env_dir / "Inventory" / filename).exists(), f"File {filename} was not updated"
+
+
+# ── UC-EINV-BASIC-1 steps ────────────────────────────────────────────────────
+
+@when(parsers.parse('the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" with minimal content'))
+def pipeline_inv_content_envdef_minimal(workspace, action):
+    """Creates env_definition.yml with only the mandatory inventory + envTemplate fields."""
+    env_def = {
+        "action": action,
+        "content": {
+            "inventory": {
+                "environmentName": "test-env",
+                "cloudName": "test-cluster",
+            },
+            "envTemplate": {
+                "name": "test",
+                "artifact": "project-env-template:v1.2.3",
+            },
+        },
+    }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, 'extra_env'):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+@then("the generated env_definition contains minimal required fields")
+def env_definition_has_required_fields(workspace):
+    env_dir = workspace.builder.get_env_dir("test-cluster", "test-env")
+    inv_file = env_dir / "Inventory" / "env_definition.yml"
+    assert inv_file.exists(), "env_definition.yml does not exist"
+    data = yaml.safe_load(inv_file.read_text(encoding="utf-8"))
+    assert "inventory" in data, "Missing 'inventory' key"
+    assert "envTemplate" in data, "Missing 'envTemplate' key"
+
+
+# ── UC-EINV-INIT-1 / INIT-2 steps ───────────────────────────────────────────
+
+@when(parsers.parse('the Instance pipeline is started with ENV_INVENTORY_INIT set to "{value}"'))
+def pipeline_inv_init(workspace, value):
+    """Triggers legacy ENV_INVENTORY_INIT path (deprecated but still tested for backward compat)."""
+    if not hasattr(workspace, 'extra_env'):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_INIT"] = value
+    # Do NOT set ENV_SPECIFIC_PARAMS — its handler references SCHEMAS_DIR which is only
+    # defined in the full generate_effective_set code path, not in inventory generation.
+    workspace.run_pipeline(extra_env=workspace.extra_env)
 

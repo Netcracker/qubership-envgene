@@ -323,6 +323,16 @@ Feature: Unified Pipeline Successful Execution - sd-processing.md
     Then the orchestrator completes successfully
     And the environment instance "test-cluster/test-env" matches the reference "ref-group-2"
 
+  Scenario: UC-SD-7a: Multiple SD_VERSION with extended-merge mode when Full SD does not exist
+    Given the workspace is initialized with test data from "e2e/base"
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "SD_SOURCE_TYPE" is set to "artifact"
+    And the pipeline parameter "SD_VERSION" is set to "test_app:1.0.0,test_app_2:2.0.0"
+    And the pipeline parameter "SD_REPO_MERGE_MODE" is set to "extended-merge"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator fails
+    And the pipeline log contains "Multiple SDs not supported in extended merge mode"
+
   Scenario: UC-SD-7: Single SD_VERSION with asic-exclusion-merge mode when Full SD does not exist
     Given the workspace is initialized with test data from "e2e/base"
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"

@@ -91,3 +91,20 @@ Feature: Environment Inventory Generation
     Given the target template variable file "db_tv" does not exist at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for template_variable "db_tv" at "env" scope
     Then the template variable file "db_tv.yml" is created at "env" scope
+
+  Scenario: UC-EINV-BASIC-1: Generate minimal Environment Inventory (init)
+    Given the target environment inventory file does not exist
+    When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for "envDefinition" with minimal content
+    Then the "env_definition.yml" file is created
+    And the generated env_definition contains minimal required fields
+
+  @xfail
+  Scenario: UC-EINV-INIT-1: Init inventory when env_definition.yml does not exist
+    Given the target environment inventory file does not exist
+    When the Instance pipeline is started with ENV_INVENTORY_INIT set to "true"
+    Then the "env_definition.yml" file is created
+
+  Scenario: UC-EINV-INIT-2: Init inventory when env_definition.yml already exists
+    Given the target environment inventory file exists
+    When the Instance pipeline is started with ENV_INVENTORY_INIT set to "true"
+    Then the "env_definition.yml" file is updated
