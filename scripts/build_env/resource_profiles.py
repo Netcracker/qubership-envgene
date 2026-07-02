@@ -145,14 +145,45 @@ def collect_resource_profiles(result_profiles_dir, render_profiles_dir, profiles
     return profiles_map
 
 
+def _build_env_specific_profile_key_error(
+    profile_key: str,
+    env_specific_profile_path: str,
+    all_profiles: dict[str, str],
+) -> str:
+    available_keys = sorted(all_profiles.keys())
+    available_label = ", ".join(f"'{key}'" for key in available_keys) or "(none)"
+
+    message = (
+        f"Environment specific profile '{env_specific_profile_path}' is mapped to key "
+        f"'{profile_key}' in envTemplate.envSpecificResourceProfiles, but that key does not "
+        f"match any namespace template or cloud. Keys must be the namespace template name "
+        f"from the environment template (the folder name under Namespaces/, or 'cloud' for "
+        f"the cloud template). Available keys: {available_label}."
+    )
+
+    hints = []
+    for suffix, role_label in (("-origin", "origin"), ("-peer", "peer")):
+        candidate = f"{profile_key}{suffix}"
+        if candidate in all_profiles:
+            hints.append(
+                f"Did you mean '{candidate}'? Blue-green namespace templates append "
+                f"'{suffix}' to the deploy postfix for the {role_label} namespace."
+            )
+    if hints:
+        message += " " + " ".join(hints)
+
+    return message
+
+
 def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator):
     override_profile_map = {}
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
         if profile_key not in all_profiles:
             raise ReferenceError(
-                f"Environment specific profile '{env_specific_profile_path}' cannot be applied "
-                f"for profile key '{profile_key}', because no base template profile was found"
+                _build_env_specific_profile_key_error(
+                    profile_key, env_specific_profile_path, all_profiles
+                )
             )
         logger.info(f"Found template override profile for profile key '{profile_key}'"
                     f" with environment specific profile {env_specific_profile_path}")
