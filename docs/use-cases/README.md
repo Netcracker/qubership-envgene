@@ -206,16 +206,16 @@ Use format: `UC-<PREFIX>-<GROUP>-<NUMBER>: <Descriptive Title>`
 
 2. **Group-based Numbering**: When use cases are organized into groups:
    - Each group has its own sequential numbering starting from 1
-   - Use group prefix in the ID to ensure uniqueness: `UC-XXX-GROUP-1`, `UC-XXX-GROUP-2`, etc.
+   - Use group prefix in the ID to ensure uniqueness: `ID-XXX-GROUP-1`, `ID-XXX-GROUP-2`, etc.
    - Example: `UC-EIG-NF-1`, `UC-EIG-NF-2` (Namespace Folder group) and `UC-EIG-TA-1`, `UC-EIG-TA-2` (Template Artifacts group)
 
 3. **Non-grouped Numbering**: When use cases are not organized into groups:
-   - Use sequential numbering across the entire feature: `UC-XXX-1`, `UC-XXX-2`, `UC-XXX-3`
+   - Use sequential numbering across the entire feature: `ID-XXX-1`, `ID-XXX-2`, `ID-XXX-3`
    - No group prefix needed
 
 4. **Inserting New Use Cases**: Use decimal notation to insert between existing cases:
-   - To insert between `UC-XXX-GROUP-2` and `UC-XXX-GROUP-3`: use `UC-XXX-GROUP-2.1`, `UC-XXX-GROUP-2.2`, etc.
-   - To insert between `UC-XXX-5` and `UC-XXX-6`: use `UC-XXX-5.1`, `UC-XXX-5.2`, etc.
+   - To insert between `ID-XXX-GROUP-2` and `ID-XXX-GROUP-3`: use `ID-XXX-GROUP-2.1`, `ID-XXX-GROUP-2.2`, etc.
+   - To insert between `ID-XXX-5` and `ID-XXX-6`: use `ID-XXX-5.1`, `ID-XXX-5.2`, etc.
 
 5. **Examples**:
 

@@ -1,0 +1,149 @@
+name: "E2E BDD Tests"
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and Start Cucumber Environment
+        run: |
+          docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+          docker compose -f devtools/docker-compose.yml up -d --build cucumber
+
+      - name: Prepare Test Environment
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
+
+      - name: Test Artifact Downloading
+        run: |
+          mkdir -p reports
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_artifact_downloading.py -v -s --junitxml=reports/artifact_downloading.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Auto Environment Name
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_auto_environment_name*.py -v -s --junitxml=reports/auto_environment_name.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Blue Green Deployment
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_blue_green_deployment.py -v -s --junitxml=reports/blue_green_deployment.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Calculator CLI
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_calculator_cli.py -v -s --junitxml=reports/calculator_cli.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Credential Rotation
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_credential_rotation.py -v -s --junitxml=reports/credential_rotation.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test EnvGene Null Value Validation
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_envgene_null_value_validation*.py -v -s --junitxml=reports/null_value_validation.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Environment Instance Generation
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_instance_generation.py -v -s --junitxml=reports/environment_instance_generation.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test SBOM Retention
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sbom_retention.py -v -s --junitxml=reports/sbom_retention.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test SD Processing
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sd_processing.py -v -s --junitxml=reports/sd_processing.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Background Manage (Standalone)
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_bg_manage.py -v -s --junitxml=reports/bg_manage.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Environment Inventory Generation (Standalone)
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_inventory_generation.py -v -s --junitxml=reports/environment_inventory_generation.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test App Reg Defs Template Rendering
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_app_reg_defs_template_rendering.py -v -s --junitxml=reports/app_reg_defs_template_rendering.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Artifact Download Negative
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_artifact_download_negative.py -v -s --junitxml=reports/artifact_download_negative.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Unified Pipeline Success
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_unified_pipeline_success.py -v -s --junitxml=reports/unified_pipeline_success.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test GSF Repository Maintenance
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_gsf_repository_maintenance.py -v -s --junitxml=reports/gsf_repository_maintenance.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test SBOM Storage Migration
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sbom_storage_migration.py -v -s --junitxml=reports/sbom_storage_migration.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Template Inheritance
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_template_inheritance.py -v -s --junitxml=reports/template_inheritance.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Cloud Passport
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "python /workspace/tests/generate_cp_test_data.py && export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_cloud_passport.py tests/step_defs/test_cloud_passport_negative.py -v -s --junitxml=reports/cloud_passport.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Template Override and Macros
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_template_override.py tests/step_defs/test_template_macros.py -v -s --junitxml=reports/template_override_macros.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Git Hooks
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_git_hooks.py -v -s --junitxml=reports/git_hooks.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Cluster Endpoint Topology Context
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_cluster_endpoint_topology.py -v -s --junitxml=reports/cluster_endpoint_topology.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test EIG Negative and Parameter Overrides
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_eig_negative_params.py -v -s --junitxml=reports/eig_negative_params.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Effective Set Deployment
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_effective_set_deployment.py -v -s --junitxml=reports/effective_set_deployment.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Effective Set No SBOM
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_effective_set_no_sbom.py -v -s --junitxml=reports/effective_set_no_sbom.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Test Environment Inventory Generation ESP
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_environment_inventory_generation_esp.py -v -s --junitxml=reports/environment_inventory_generation_esp.xml | tee -a /workspace/e2e_tests.log"
+
+      - name: Publish Test Report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: "reports/**/*.xml"
+          check_name: "E2E BDD Test Results"
+
+      - name: Upload Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs
+          path: |
+            e2e_tests.log
+            reports/
+
+      - name: Tear Down Environment
+        if: always()
+        run: |
+          docker compose -f devtools/docker-compose.yml down

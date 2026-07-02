@@ -1,0 +1,32 @@
+﻿2026-06-30T10:39:48.2051021Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-06-30T10:39:48.2059065Z ##[group]Run actions/checkout@v4
+2026-06-30T10:39:48.2059611Z with:
+2026-06-30T10:39:48.2059855Z   repository: Netcracker/qubership-envgene
+2026-06-30T10:39:48.2062704Z   token: ***
+2026-06-30T10:39:48.2062920Z   ssh-strict: true
+2026-06-30T10:39:48.2063129Z   ssh-user: git
+2026-06-30T10:39:48.2063344Z   persist-credentials: true
+2026-06-30T10:39:48.2063813Z   clean: true
+2026-06-30T10:39:48.2064032Z   sparse-checkout-cone-mode: true
+2026-06-30T10:39:48.2064285Z   fetch-depth: 1
+2026-06-30T10:39:48.2064485Z   fetch-tags: false
+2026-06-30T10:39:48.2064695Z   show-progress: true
+2026-06-30T10:39:48.2064904Z   lfs: false
+2026-06-30T10:39:48.2065094Z   submodules: false
+2026-06-30T10:39:48.2065411Z   set-safe-directory: true
+2026-06-30T10:39:48.2065893Z env:
+2026-06-30T10:39:48.2066215Z   CI_PROJECT_DIR: /home/runner/work/qubership-envgene/qubership-envgene
+2026-06-30T10:39:48.2066593Z ##[endgroup]
+2026-06-30T10:39:48.2128613Z ##[command]/usr/bin/docker exec  f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136 sh -c "cat /etc/*release | grep ^ID"
+2026-06-30T10:39:48.4078627Z Syncing repository: Netcracker/qubership-envgene
+2026-06-30T10:39:48.4080068Z ##[group]Getting Git version info
+2026-06-30T10:39:48.4080535Z Working directory is '/__w/qubership-envgene/qubership-envgene'
+2026-06-30T10:39:48.4081160Z ##[endgroup]
+2026-06-30T10:39:48.4081524Z Deleting the contents of '/__w/qubership-envgene/qubership-envgene'
+2026-06-30T10:39:48.4081969Z The repository will be downloaded using the GitHub REST API
+2026-06-30T10:39:48.4082433Z To create a local Git repository instead, add Git 2.18 or higher to the PATH
+2026-06-30T10:39:48.4082837Z Downloading the archive
+2026-06-30T10:39:49.2309912Z Writing archive to disk
+2026-06-30T10:39:49.2357682Z Extracting the archive
+2026-06-30T10:39:49.2449620Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /__w/qubership-envgene/qubership-envgene/9c5dcd7e-56f4-44d6-afee-ac657dd01b4b -f /__w/qubership-envgene/qubership-envgene/9c5dcd7e-56f4-44d6-afee-ac657dd01b4b.tar.gz
+2026-06-30T10:39:49.5406400Z Resolved version Netcracker-qubership-envgene-46b4b6e

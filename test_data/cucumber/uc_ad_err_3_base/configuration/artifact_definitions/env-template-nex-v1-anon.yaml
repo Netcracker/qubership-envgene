@@ -1,0 +1,4 @@
+name: "env-template"
+registry:
+  name: "nexus-anon-maven"
+

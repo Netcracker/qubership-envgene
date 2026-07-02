@@ -6,3 +6,7 @@ sdp-dev:
   username: somepath.secret
   token: somepath.secret
   deployerUrl: "https://somevalue.com"
+test-deployer:
+  username: somepath.secret
+  token: somepath.secret
+  deployerUrl: "https://test-deployer.qubership.org/"

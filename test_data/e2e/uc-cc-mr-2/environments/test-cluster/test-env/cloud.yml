@@ -1,0 +1,35 @@
+apiPort: '6443'
+apiUrl: api.test-cluster.qubership.org
+consulConfig:
+  enabled: false
+  internalUrl: ''
+  publicUrl: ''
+  tokenSecret: ''
+dashboardUrl: https://dashboard.cluster.qubership.org
+databases: []
+dbMode: db
+defaultCredentialsId: cloud-deploy-sa-token
+deployParameters:
+  database_config:
+    connection:
+      host: db.example.com
+      port: 5432
+  yaml_template: "services:\n  api:\n    image: api:latest\n    ports:\n      - 8080:8080\n"
+e2eParameters: {}
+labels: []
+maasConfig:
+  credentialsId: ''
+  enable: false
+  maasInternalAddress: ''
+  maasUrl: ''
+name: test-cluster_test-env
+privateUrl: cluster.qubership.org
+productionMode: false
+protocol: https
+publicUrl: cluster.qubership.org
+technicalConfigurationParameters: {}
+vaultConfig:
+  credentialsId: ''
+  enable: false
+  publicUrl: ''
+  url: ''

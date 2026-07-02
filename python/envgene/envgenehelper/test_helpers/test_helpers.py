@@ -31,7 +31,18 @@ class TestHelpers:
         missing_files = ([source_map[name] for name in source_files - target_files])
 
         files_to_compare = get_all_files_in_dir(source_dir)
-        match, mismatch, errors = filecmp.cmpfiles(source_dir, target_dir, files_to_compare, shallow=False)
+        match = []
+        mismatch = []
+        errors = []
+        for file in files_to_compare:
+            try:
+                with open(os.path.join(source_dir, file), 'r') as f1, open(os.path.join(target_dir, file), 'r') as f2:
+                    if f1.read() == f2.read():
+                        match.append(file)
+                    else:
+                        mismatch.append(file)
+            except Exception as e:
+                errors.append(file)
         logger.info(f"Match: {dump_as_yaml_format(match)}")
 
         if mismatch:
@@ -40,8 +51,8 @@ class TestHelpers:
                 file1 = os.path.join(source_dir, file)
                 file2 = os.path.join(target_dir, file)
                 with open(file1, 'r') as f1, open(file2, 'r') as f2:
-                    verbose_diff_list = difflib.unified_diff(f1.readlines(), f2.readlines(), fromfile=file1,
-                                                             tofile=file2, lineterm='')
+                    verbose_diff_list = list(difflib.unified_diff(f1.readlines(), f2.readlines(), fromfile=file1,
+                                                             tofile=file2, lineterm=''))
                     diff_list = []
                     for line in verbose_diff_list:
                         if (line.startswith('+') and not line.startswith('+++')) or (

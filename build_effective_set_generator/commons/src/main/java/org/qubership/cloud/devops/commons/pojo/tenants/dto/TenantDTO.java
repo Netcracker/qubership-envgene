@@ -50,8 +50,10 @@ public class TenantDTO {
     private final String credential;
     private final List<String> labels;
     private final List<String> deploymentParameterSets;
+    private final List<String> deployParameterSets;
     private final List<String> e2eParameterSets;
     private final List<String> technicalParameterSets;
+    private final List<String> technicalConfigurationParameterSets;
     @JsonDeserialize(using = CustomDeserializer.class)
     private final Map<String, Object> technicalConfigurationParameters;
 }

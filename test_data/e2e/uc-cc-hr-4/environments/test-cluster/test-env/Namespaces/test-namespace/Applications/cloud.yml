@@ -1,0 +1,7 @@
+deployParameters:
+  namespace_db_url: db.acme.com
+e2eParameters:
+  namespace_test_url: test.acme.com
+name: cloud
+technicalConfigurationParameters:
+  namespace_config_url: config.acme.com

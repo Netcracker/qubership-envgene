@@ -16,7 +16,6 @@
 
 package org.qubership.cloud.devops.commons.pojo.applications.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +29,6 @@ import java.util.Map;
 @Data
 @Builder
 @Jacksonized
-@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class ApplicationParams implements Serializable {

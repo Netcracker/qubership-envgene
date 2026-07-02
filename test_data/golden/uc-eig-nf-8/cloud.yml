@@ -1,0 +1,21 @@
+# The contents of this file is generated from template artifact: test-artifact.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "dummy-cloud"
+apiUrl: "dummy"
+apiPort: 80
+dashboardUrl: "dummy"
+labels: []
+defaultCredentialsId: "dummy"
+protocol: "dummy"
+maasConfig: {credentialsId: "dummy"}
+vaultConfig: {credentialsId: "dummy"}
+dbaasConfigs: []
+consulConfig: {tokenSecret: "dummy", credentialsId: "dummy"}
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+namespacePrefix: "dummy"

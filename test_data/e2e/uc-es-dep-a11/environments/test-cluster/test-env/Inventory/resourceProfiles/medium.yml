@@ -1,0 +1,7 @@
+name: medium
+cpu:
+  request: "500m"
+  limit: "1000m"
+memory:
+  request: "512Mi"
+  limit: "1024Mi"

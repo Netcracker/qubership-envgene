@@ -29,14 +29,16 @@ def validate_parameters(env_dir: str = ""):
                     )
 
     tenant_file = f"{env_dir}/tenant.yml"
-    tenant_yaml = openYaml(tenant_file)
-    tenant_name = tenant_yaml.get("name", "tenant")
-    validate_yaml(tenant_name, tenant_yaml)
+    if Path(tenant_file).exists():
+        tenant_yaml = openYaml(tenant_file)
+        tenant_name = tenant_yaml.get("name", "tenant")
+        validate_yaml(tenant_name, tenant_yaml)
 
     cloud_file = f"{env_dir}/cloud.yml"
-    cloud_yaml = openYaml(cloud_file)
-    cloud_name = cloud_yaml.get("name", "cloud")
-    validate_yaml(cloud_name, cloud_yaml)
+    if Path(cloud_file).exists():
+        cloud_yaml = openYaml(cloud_file)
+        cloud_name = cloud_yaml.get("name", "cloud")
+        validate_yaml(cloud_name, cloud_yaml)
 
     namespaces = findAllYamlsInDir(f"{env_dir}/Namespaces")
     for ns_path in namespaces:

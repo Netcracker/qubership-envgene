@@ -1,0 +1,5 @@
+# custom-params.yaml mock for UC-ES-DEP tests
+params:
+  blue_green_enabled: true
+  gateway_public_url: "https://public.example.com"
+  gateway_private_url: "http://private.internal"

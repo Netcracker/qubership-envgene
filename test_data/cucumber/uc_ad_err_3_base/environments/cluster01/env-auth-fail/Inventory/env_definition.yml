@@ -1,0 +1,8 @@
+envTemplate:
+  templateArtifact:
+    registry: "artifactory-maven"
+    templateRepository: "snapshotRepository"
+    artifact:
+      group_id: "com.example"
+      artifact_id: "env"
+      version: "1.0"
