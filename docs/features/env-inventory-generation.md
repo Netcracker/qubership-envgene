@@ -338,7 +338,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
     "tenantName": "<value>",
     "deployer": "<value>",
     "envSpecificParamsets": {
-      "<ns-template-name>": [
+      "<namespace-folder-name>": [
         "paramsetA"
       ],
       "cloud": [
@@ -663,7 +663,7 @@ envTemplate:
     <key>: <value>
   envSpecificParamsets:
     cloud: [ "paramsetA" ]
-    <ns-template-name>: [ "paramsetB" ]
+    <namespace-folder-name>: [ "paramsetB" ]
   sharedMasterCredentialFiles: [ "inventory_generation_creds" ]
   name: <env-template-name>
   artifact: <app:ver>

@@ -42,7 +42,8 @@ When you need environment-specific values, you create **Environment Specific Par
 3. You know:
    - Which namespace or cloud needs parameter overrides
    - Which parameter context to override (deployment, pipeline/end-to-end, or runtime/technical configuration)
-   - The namespace identifier (defined by `deploy_postfix` in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor), or by the Namespace template filename without extension)
+   - The namespace folder name under `Namespaces/` in the Environment Instance (see
+     [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation))
 
 ---
 
