@@ -18,6 +18,7 @@ package org.qubership.cloud.devops.cli;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -144,14 +145,51 @@ public class CmdbCli implements Callable<Integer> {
             return;
         }
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Map<String, Object>> map = mapper.readValue(customParams, new TypeReference<>() {
+        JsonNode root = mapper.readTree(customParams);
+        boolean hasNamespaces = root.has("namespaces");
+        boolean hasGlobal = root.has("deployment") || root.has("runtime");
+        if (hasNamespaces && hasGlobal) {
+            throw new IllegalArgumentException(
+                    "CUSTOM_PARAMS cannot contain both top-level deployment/runtime and namespaces keys");
+        }
+        if (hasNamespaces) {
+            parseNamespaceScopedCustomParams(mapper, root.get("namespaces"));
+            return;
+        }
+        if (root.has("deployment")) {
+            sharedData.setCustomDeployParamMap(mapper.convertValue(root.get("deployment"), new TypeReference<>() {
+            }));
+        }
+        if (root.has("runtime")) {
+            sharedData.setCustomRuntimeParamMap(mapper.convertValue(root.get("runtime"), new TypeReference<>() {
+            }));
+        }
+    }
+
+    private void parseNamespaceScopedCustomParams(ObjectMapper mapper, JsonNode namespaces) {
+        if (namespaces == null || !namespaces.isObject()) {
+            throw new IllegalArgumentException("CUSTOM_PARAMS namespaces must be a JSON object");
+        }
+        Map<String, Map<String, Object>> deployByNamespace = new HashMap<>();
+        Map<String, Map<String, Object>> runtimeByNamespace = new HashMap<>();
+        Set<String> namespaceKeys = new HashSet<>();
+        namespaces.fields().forEachRemaining(entry -> {
+            String namespace = entry.getKey();
+            namespaceKeys.add(namespace);
+            JsonNode namespaceNode = entry.getValue();
+            if (namespaceNode.has("deployment")) {
+                deployByNamespace.put(namespace, mapper.convertValue(namespaceNode.get("deployment"), new TypeReference<>() {
+                }));
+            }
+            if (namespaceNode.has("runtime")) {
+                runtimeByNamespace.put(namespace, mapper.convertValue(namespaceNode.get("runtime"), new TypeReference<>() {
+                }));
+            }
         });
-        if (map.containsKey("deployment")) {
-            sharedData.setCustomDeployParamMap(map.get("deployment"));
-        }
-        if (map.containsKey("runtime")) {
-            sharedData.setCustomRuntimeParamMap(map.get("runtime"));
-        }
+        sharedData.setNamespaceScopedCustomParams(true);
+        sharedData.setNamespaceCustomDeployParamMap(deployByNamespace);
+        sharedData.setNamespaceCustomRuntimeParamMap(runtimeByNamespace);
+        sharedData.setCustomParamsNamespaceKeys(namespaceKeys);
     }
 
 
