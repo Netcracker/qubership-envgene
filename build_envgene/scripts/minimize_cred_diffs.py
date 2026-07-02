@@ -59,14 +59,16 @@ def _minimize_single_cred_file(
             old_tmp.unlink(missing_ok=True)
 
 
-def main() -> None:
+def minimize_cred_diffs() -> None:
     if not get_crypt():
         logger.info("'crypt' is disabled, skipping credential diff minimization")
         return
 
     base_dir = Path(getenv('CI_PROJECT_DIR', os.getcwd()))
     repo = Repo(base_dir)
-    cache_dir = Path(getenv('MINIMIZE_CRED_DIFF_CACHE_DIR'))
+
+    job_id = getenv('CI_JOB_ID') or getenv('GITHUB_RUN_ID') or str(os.getpid())
+    cache_dir = Path(getenv('MINIMIZE_CRED_DIFF_CACHE_DIR') or f"/tmp/minimize_cred_diff_cache_{job_id}")
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -83,7 +85,3 @@ def main() -> None:
         if not is_cred_file(str(base_dir / rel_path)):
             continue
         _minimize_single_cred_file(repo, base_dir, rel_path, cache_dir)
-
-
-if __name__ == '__main__':
-    main()
