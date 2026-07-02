@@ -91,7 +91,7 @@ inventory:
     # <tenant-name>-<cloud-name>-<env-name>-<RPO-name>
     updateRPOverrideNameWithEnvName: boolean
     # Optional. Default value - `true`
-    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificParamsets
+    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificResourceProfiles
     # are merged with Resource Profile Overrides from the Environment Template
     # If `false`, they completely replace the Environment Template's Resource Profile Overrides
     mergeEnvSpecificResourceProfiles: boolean
@@ -128,26 +128,30 @@ envTemplate:
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
