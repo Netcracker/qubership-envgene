@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3"
 ]
 dependencies = [
-    "jschon==0.11.0",
+    "jschon==0.11.1",
     "ruyaml==0.91.0"
 ]
 

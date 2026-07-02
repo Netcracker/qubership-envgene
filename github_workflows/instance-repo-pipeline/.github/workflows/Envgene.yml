@@ -100,7 +100,7 @@ jobs:
       DOCKER_CLOUD_REGISTRY_PROVIDER: ${{ env.DOCKER_CLOUD_REGISTRY_PROVIDER }}
     steps:
       - name: Repository Checkout
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -144,7 +144,7 @@ jobs:
           env > ${{ github.workspace }}/.env
 
       - name: Upload .env as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
             include-hidden-files: true
             name: environment-file
@@ -162,13 +162,13 @@ jobs:
         environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}
     steps:
       - name: Repository Checkout
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
         with:
           fetch-depth: 1
 
       ### ENV VARS PROCESSING - START ###
       - name: Download environment-file
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: environment-file
 
@@ -197,7 +197,7 @@ jobs:
 
       - name: Authenticate to GAR (Google Artifact Registry)
         if: needs.process_environment_variables.outputs.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP'
-        uses: docker/login-action@v4
+        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4
         with:
           registry: ${{ vars.DOCKER_REGISTRY }}
           username: _json_key
@@ -225,7 +225,7 @@ jobs:
           "
 
       - name: BG_MANAGE - Upload BG_MANAGE Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
         with:
           name: bg_manage_${{ env.PACKAGE_NAME }}
@@ -252,7 +252,7 @@ jobs:
             "
 
       - name: ENV_INVENTORY_GENERATION - Upload ENV_INVENTORY_GENERATION Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
           name: env_inventory_generation_${{ env.PACKAGE_NAME }}
@@ -279,7 +279,7 @@ jobs:
             "
 
       - name: CREDENTIAL_ROTATION - Upload Credential Rotation Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         with:
           name: credential_rotation_${{ env.PACKAGE_NAME }}
@@ -305,7 +305,7 @@ jobs:
             "
 
       - name: APP_REG_DEF_PROCESS - Upload APP_REG_DEF_PROCESS Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
           name: app_reg_def_process_${{ env.PACKAGE_NAME }}
@@ -341,7 +341,7 @@ jobs:
             "
 
       - name: PROCESS_SD - Upload PROCESS_SD Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
         with:
           name: process_sd_${{ env.PACKAGE_NAME }}
@@ -367,7 +367,7 @@ jobs:
             "
 
       - name: ENV_BUILD - Upload Build Env Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
           name: env_build_${{ env.PACKAGE_NAME }}
@@ -434,7 +434,7 @@ jobs:
             "
 
       - name: GENERATE_EFFECTIVE_SET - Upload Generate Effective Set Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
           name: generate_effective_set_${{ env.PACKAGE_NAME }}
@@ -473,7 +473,7 @@ jobs:
             env > .env.container
 
       - name: GIT_COMMIT - Upload Git Commit Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: git_commit_${{ env.PACKAGE_NAME }}
           path: |
