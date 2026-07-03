@@ -29,6 +29,8 @@ def do_prerequisites(sd, test_sd_dir, output_dir, test_case_name, env, test_suit
         writeYamlToFile(target_sd_dir.joinpath(sd), openYaml(pr_dir.joinpath("exclude").joinpath(sd)))
     elif test_case_name in test_suits_map["extended"]:
         writeYamlToFile(target_sd_dir.joinpath(sd), openYaml(pr_dir.joinpath("extended").joinpath(sd)))
+    elif test_case_name in test_suits_map.get("full_sd_duplicate", []):
+        writeYamlToFile(target_sd_dir.joinpath(sd), openYaml(pr_dir.joinpath("duplicate").joinpath(sd)))
 
 
 def assert_sd_contents(test_sd_dir, output_dir, test_case_name, test_suits_map):
