@@ -17,34 +17,24 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout this repository (destination)
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          path: qubership-envgene-part
 
-      - name: Checkout source repository (envgene Python packages)
-        uses: actions/checkout@v4
-        with:
-          repository: netcracker/qubership-envgene
-          path: qubership-envgene
-
-      - name: Build and start cucumber container
-        working-directory: qubership-envgene-part
+      - name: Build production image and start cucumber container
         run: |
+          docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
           docker compose -f devtools/docker-compose.yml up -d --build cucumber
 
-      - name: Install Python packages from source repo
-        working-directory: qubership-envgene-part
+      - name: Install Python packages inside container
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber \
             bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
 
       - name: Run Environment Inventory Generation BDD tests
-        working-directory: qubership-envgene-part
         run: |
           mkdir -p reports
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "export PYTHONPATH=/workspace:/envgene-src && \
+            "export PYTHONPATH=/workspace && \
              cd /workspace && \
              pytest tests/step_defs/test_environment_inventory_generation.py \
                -v -s \
@@ -55,7 +45,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
-          files: "qubership-envgene-part/reports/**/*.xml"
+          files: "reports/**/*.xml"
           check_name: "EIG BDD Test Results"
 
       - name: Upload test logs and reports
@@ -64,11 +54,10 @@ jobs:
         with:
           name: eig-test-results
           path: |
-            qubership-envgene-part/e2e_tests.log
-            qubership-envgene-part/reports/
+            e2e_tests.log
+            reports/
 
       - name: Tear down
         if: always()
-        working-directory: qubership-envgene-part
         run: |
           docker compose -f devtools/docker-compose.yml down

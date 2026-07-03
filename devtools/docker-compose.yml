@@ -24,6 +24,3 @@ services:
     build:
       dockerfile: devtools/cucumber/Dockerfile
       context: ../
-      # local-envgene-main is a locally built image (not on Docker Hub).
-      # pull=false tells BuildKit not to attempt to pull it from a registry.
-      pull: false
