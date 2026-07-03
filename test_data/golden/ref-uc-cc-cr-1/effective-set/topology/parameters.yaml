@@ -1,0 +1,8 @@
+bg_domain: {}
+cluster:
+    api_port: '6443'
+    api_url: api.test-cluster.qubership.org
+    protocol: https
+    public_url: cluster.qubership.org
+composite_structure: {}
+environments: {}

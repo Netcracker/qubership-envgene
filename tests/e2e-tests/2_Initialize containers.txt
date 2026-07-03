@@ -1,0 +1,57 @@
+﻿2026-06-30T10:39:43.3090042Z ##[group]Checking docker version
+2026-06-30T10:39:43.3103475Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-06-30T10:39:43.3856114Z '1.48'
+2026-06-30T10:39:43.3870360Z Docker daemon API version: '1.48'
+2026-06-30T10:39:43.3871194Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-06-30T10:39:43.4028703Z '1.48'
+2026-06-30T10:39:43.4043259Z Docker client API version: '1.48'
+2026-06-30T10:39:43.4048325Z ##[endgroup]
+2026-06-30T10:39:43.4051310Z ##[group]Clean up resources from previous jobs
+2026-06-30T10:39:43.4057454Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=07f6a4"
+2026-06-30T10:39:43.4198016Z ##[command]/usr/bin/docker network prune --force --filter "label=07f6a4"
+2026-06-30T10:39:43.4329128Z ##[endgroup]
+2026-06-30T10:39:43.4329701Z ##[group]Create local container network
+2026-06-30T10:39:43.4340108Z ##[command]/usr/bin/docker network create --label 07f6a4 github_network_8c181b49714142edb86847ac9ebb2954
+2026-06-30T10:39:43.4858307Z cada4d848e173ae0af58700ae81aeb2430e53b511e530fbada8908296a1d159e
+2026-06-30T10:39:43.4881569Z ##[endgroup]
+2026-06-30T10:39:43.4905566Z ##[group]Starting job container
+2026-06-30T10:39:43.4929275Z ##[command]/usr/bin/docker pull python:3.12-slim-bookworm
+2026-06-30T10:39:44.3641475Z 3.12-slim-bookworm: Pulling from library/python
+2026-06-30T10:39:44.6470222Z 68629629b516: Pulling fs layer
+2026-06-30T10:39:44.6471852Z 03952ff66d70: Pulling fs layer
+2026-06-30T10:39:44.6473179Z 524401bfa9eb: Pulling fs layer
+2026-06-30T10:39:44.6474955Z a056f49ed4fb: Pulling fs layer
+2026-06-30T10:39:44.6476307Z a056f49ed4fb: Waiting
+2026-06-30T10:39:44.8890868Z 03952ff66d70: Verifying Checksum
+2026-06-30T10:39:44.8893773Z 03952ff66d70: Download complete
+2026-06-30T10:39:44.9254254Z 524401bfa9eb: Verifying Checksum
+2026-06-30T10:39:44.9254928Z 524401bfa9eb: Download complete
+2026-06-30T10:39:44.9859019Z 68629629b516: Verifying Checksum
+2026-06-30T10:39:44.9859822Z 68629629b516: Download complete
+2026-06-30T10:39:45.1140591Z a056f49ed4fb: Verifying Checksum
+2026-06-30T10:39:45.1141548Z a056f49ed4fb: Download complete
+2026-06-30T10:39:46.1308914Z 68629629b516: Pull complete
+2026-06-30T10:39:47.2589301Z 03952ff66d70: Pull complete
+2026-06-30T10:39:47.8924682Z 524401bfa9eb: Pull complete
+2026-06-30T10:39:47.9062957Z a056f49ed4fb: Pull complete
+2026-06-30T10:39:47.9112442Z Digest: sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b
+2026-06-30T10:39:47.9128929Z Status: Downloaded newer image for python:3.12-slim-bookworm
+2026-06-30T10:39:47.9138345Z docker.io/library/python:3.12-slim-bookworm
+2026-06-30T10:39:47.9229099Z ##[command]/usr/bin/docker create --name 8a9f59cc0d964c0982b5787547cd32b8_python312slimbookworm_28a2d6 --label 07f6a4 --workdir /__w/qubership-envgene/qubership-envgene --network github_network_8c181b49714142edb86847ac9ebb2954  -e "HOME=/github/home" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work":"/__w" -v "/home/runner/actions-runner/cached/2.335.1/externals":"/__e":ro -v "/home/runner/work/_temp":"/__w/_temp" -v "/home/runner/work/_actions":"/__w/_actions" -v "/opt/hostedtoolcache":"/__t" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" --entrypoint "tail" python:3.12-slim-bookworm "-f" "/dev/null"
+2026-06-30T10:39:47.9511515Z f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136
+2026-06-30T10:39:47.9533897Z ##[command]/usr/bin/docker start f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136
+2026-06-30T10:39:48.1471115Z f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136
+2026-06-30T10:39:48.1497539Z ##[command]/usr/bin/docker ps --all --filter id=f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-06-30T10:39:48.1616440Z f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136 Up Less than a second
+2026-06-30T10:39:48.1634938Z ##[command]/usr/bin/docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136
+2026-06-30T10:39:48.1754857Z HOME=/github/home
+2026-06-30T10:39:48.1755409Z GITHUB_ACTIONS=true
+2026-06-30T10:39:48.1755830Z CI=true
+2026-06-30T10:39:48.1756197Z PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+2026-06-30T10:39:48.1756632Z LANG=C.UTF-8
+2026-06-30T10:39:48.1757102Z GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+2026-06-30T10:39:48.1757822Z PYTHON_VERSION=3.12.13
+2026-06-30T10:39:48.1758295Z PYTHON_SHA256=c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684
+2026-06-30T10:39:48.1776837Z ##[endgroup]
+2026-06-30T10:39:48.1786097Z ##[group]Waiting for all services to be ready
+2026-06-30T10:39:48.1788267Z ##[endgroup]

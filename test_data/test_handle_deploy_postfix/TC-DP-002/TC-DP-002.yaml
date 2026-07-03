@@ -1,0 +1,4 @@
+SD_DATA: '[{"version":1,"type":"solutionDeploy","applications":[{"version":"origin-app:1.0","deployPostfix":"bss-origin"},{"version":"peer-app:1.0","deployPostfix":"bss-peer"}],"userData":{"useDeployPostfixAsNamespace":true}}]'
+SD_SOURCE_TYPE: 'json'
+SD_VERSION: ''
+SD_DELTA: False

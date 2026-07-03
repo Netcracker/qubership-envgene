@@ -1,0 +1,7 @@
+inventory:
+  environmentName: test-env
+  cloudName: test-cloud
+  tenantName: test-tenant
+envTemplate:
+  name: test-template
+  artifact: test-artifact:v1

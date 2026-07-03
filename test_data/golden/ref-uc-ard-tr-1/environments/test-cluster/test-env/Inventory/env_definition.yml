@@ -1,0 +1,17 @@
+envTemplate:
+  name: test
+  version: 1.0.0
+  templateArtifact:
+    artifact:
+      group_id: org.test
+      artifact_id: test-artifact
+      version: v1
+    templateRepository: maven-repo
+    repository: maven-repo
+    registry: test-registry
+inventory:
+  cloudName: test-cluster
+  tenantName: test-tenant
+  environmentName: test-env
+generatedVersions:
+  generateEnvironmentLatestVersion: "v1"  # This value is automatically generated during job run.

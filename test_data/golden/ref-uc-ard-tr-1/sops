@@ -1,0 +1,10 @@
+#!/bin/sh
+if [ "$1" = "--decrypt" ]; then
+  cat "$4"
+elif [ "$1" = "--extract" ]; then
+  echo extracted
+elif [ "$1" = "edit" ]; then
+  python $EDITOR "$4"
+else
+  exit 0
+fi

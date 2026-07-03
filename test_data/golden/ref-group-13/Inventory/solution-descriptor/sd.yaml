@@ -1,0 +1,7 @@
+applications:
+  - deployPostfix: dp_existing
+    version: existing_app:0.9.0
+  - version: test_app:1.0.0
+    deployPostfix: dp1
+  - version: test_app_2:2.0.0
+    deployPostfix: dp2

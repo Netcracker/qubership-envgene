@@ -1,0 +1,15 @@
+credential: ''
+defaultBranch: ''
+deployParameters:
+  tenant_name: acme-corp
+description: test
+gitRepository: ''
+globalE2EParameters:
+  environmentParameters:
+    tenant_test_name: acme-test
+labels: []
+name: test-tenant
+owners: test
+registryName: default
+technicalConfigurationParameters:
+  tenant_config_name: acme-config

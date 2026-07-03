@@ -1,0 +1,7 @@
+deployParameters:
+  organization: ${tenant_id}
+e2eParameters:
+  test_org: ${tenant_test_id}
+name: cloud
+technicalConfigurationParameters:
+  config_org: ${tenant_config_id}

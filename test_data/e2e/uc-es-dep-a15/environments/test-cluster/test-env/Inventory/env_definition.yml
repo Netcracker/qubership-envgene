@@ -1,0 +1,20 @@
+# UC-ES-DEP-A15: Blue-green predefined deployment parameters
+envTemplate:
+  name: "test"
+  version: "1.0.0"
+  templateArtifact:
+    artifact:
+      group_id: "org.test"
+      artifact_id: "test-artifact"
+      version: "v1"
+    templateRepository: "maven-repo"
+    repository: "maven-repo"
+    registry: "test-registry"
+inventory:
+  cloudName: "test-cloud"
+  tenantName: "test-tenant"
+  environmentName: "test-env"
+  deployParameters:
+    bg.mode: "active"
+    bg.originNamespace: "bss-origin"
+    bg.peerNamespace: "bss-peer"

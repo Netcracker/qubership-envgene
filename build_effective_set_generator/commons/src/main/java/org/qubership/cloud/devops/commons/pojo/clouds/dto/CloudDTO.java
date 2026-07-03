@@ -17,6 +17,7 @@
 package org.qubership.cloud.devops.commons.pojo.clouds.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
@@ -49,6 +50,8 @@ public class CloudDTO {
     private final List<String> labels;
     private final String defaultCredentialsId;
     private final String protocol;
+    @JsonProperty("namespacePrefix")
+    private final String namespacePrefix;
     @JsonDeserialize(using = CustomDeserializer.class)
     private final Map<String, Object> deployParameters;
     @JsonDeserialize(using = CustomDeserializer.class)

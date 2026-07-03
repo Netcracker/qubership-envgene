@@ -243,12 +243,16 @@ async def check_artifact_by_full_url_async(
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
     try:
         async with session.head(full_url) as response:
+            if response.status in (401, 403):
+                raise ValueError("Authentication failed")
             if response.status == 200:
                 stop_artifact_event.set()
                 logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
                 return full_url, repo
             logger.warning(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
+    except ValueError:
+        raise
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
@@ -495,6 +499,8 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
     try:
         response = requests.head(full_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+        if response.status_code in (401, 403):
+            raise ValueError("Authentication failed")
         if response.status_code == 200:
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
@@ -503,6 +509,8 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
         logger.warning(
             f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact not found at URL {full_url}, status: {response.status_code}"
         )
+    except ValueError:
+        raise
     except Exception as e:
         logger.warning(
             f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Error checking artifact URL {full_url}: {e}"

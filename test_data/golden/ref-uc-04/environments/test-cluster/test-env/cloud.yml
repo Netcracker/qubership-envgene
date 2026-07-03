@@ -1,0 +1,26 @@
+# The contents of this file is generated from template artifact: test-artifact.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "dummy-cloud"
+apiUrl: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+apiPort: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+privateUrl: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+publicUrl: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+dashboardUrl: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+labels: []
+defaultCredentialsId: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+protocol: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+maasConfig: {credentialsId: "dummy", enable: false}
+vaultConfig: {credentialsId: "dummy", enable: false}
+dbaasConfigs: []
+consulConfig: {tokenSecret: "dummy", enabled: false, credentialsId: "dummy"}
+deployParameters:
+  CLOUD_DASHBOARD_URL: "dummy-value" # cloud passport: my-custom-passport version: 1.1
+  test_passport_key: "custom-location-value" # cloud passport: my-custom-passport version: 1.1
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+namespacePrefix: "dummy"
+productionMode: "dummy-value" # cloud passport: my-custom-passport version: 1.1

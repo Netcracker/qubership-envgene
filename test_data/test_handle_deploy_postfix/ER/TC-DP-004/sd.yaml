@@ -1,0 +1,3 @@
+applications:
+  - version: core-app:1.0
+    deployPostfix: core-namespace

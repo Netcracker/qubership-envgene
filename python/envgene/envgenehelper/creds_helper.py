@@ -234,7 +234,9 @@ def validate_creds(creds_path: str = ""):
     credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
     for credListPath in credsYamls:
-        credListYaml = openYaml(credListPath)
+        credListYaml = crypt.decrypt_file(credListPath, in_place=False)
+        if not isinstance(credListYaml, dict):
+            continue
         for key, value in credListYaml.items() :
             errorCheck = check_cred_value(key, value)
             if errorCheck :

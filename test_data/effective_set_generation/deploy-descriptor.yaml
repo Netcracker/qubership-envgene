@@ -1,0 +1,10 @@
+# deploy-descriptor.yaml mock for UC-ES-DEP tests
+services:
+  test-service:
+    deploy_param:
+      image_key: test-image
+    resource_profiles:
+      - default
+    configuration_artifacts:
+      - name: conf-artifact
+        version: "1.0.0"

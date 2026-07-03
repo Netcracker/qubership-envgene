@@ -34,7 +34,7 @@ class PipelineParametersHandler(BaseModel):
     def from_env(cls) -> Self:
         params = {
             'ENV_NAMES': getenv("ENV_NAMES", ""),
-            'ENV_BUILD': getenv("ENV_BUILD", "false").lower() == "true",
+            'ENV_BUILD': getenv("ENV_BUILD", getenv("ENV_BUILDER", "false")).lower() == "true",
             'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
             'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
             'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
@@ -46,6 +46,7 @@ class PipelineParametersHandler(BaseModel):
             "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
             "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
+            'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD"),
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
             'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
             'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
@@ -85,7 +86,10 @@ class PipelineParametersHandler(BaseModel):
                 os.environ[k] = str(v)
 
         full_env_name = env_names[0]
-        cluster_name, env_name = full_env_name.split("/")
+        try:
+            cluster_name, env_name = full_env_name.split("/")
+        except ValueError:
+            raise ValueError(f"Could not determine environment name from path: {full_env_name}")
         internal_params = {
             'FULL_ENV_NAME': full_env_name,
             'CLUSTER_NAME': cluster_name,

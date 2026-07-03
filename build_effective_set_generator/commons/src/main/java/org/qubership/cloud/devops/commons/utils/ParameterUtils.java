@@ -113,10 +113,21 @@ public class ParameterUtils {
         }
         bgDomainParamsMap.putAll(bgDomainMap);
         Map<String, Object> controller = (Map<String, Object>) bgDomainParamsMap.get(CONTROLLER_NAMESPACE);
-        Object userName = controller.remove(USERNAME);
-        Object password = controller.remove(PASSWORD);
-        bgDomainParamsMap.put(CONTROLLER_NAMESPACE, controller);
-        bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of(USERNAME, userName, PASSWORD, password));
+        if (controller != null) {
+            Object userName = controller.remove(USERNAME);
+            Object password = controller.remove(PASSWORD);
+            bgDomainParamsMap.put(CONTROLLER_NAMESPACE, controller);
+            Map<String, Object> secureController = new java.util.HashMap<>();
+            if (userName != null) {
+                secureController.put(USERNAME, userName);
+            }
+            if (password != null) {
+                secureController.put(PASSWORD, password);
+            }
+            if (!secureController.isEmpty()) {
+                bgDomainSecureMap.put(CONTROLLER_NAMESPACE, secureController);
+            }
+        }
     }
 
     public static void prepareCustomParams(CustomParameterDTO customParameterDTO,

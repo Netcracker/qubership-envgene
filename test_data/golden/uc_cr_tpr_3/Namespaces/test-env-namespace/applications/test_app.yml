@@ -1,0 +1,8 @@
+name: test_app
+registryName: mock-reg
+artifactId: test_app_artifact
+groupId: com.test
+deployParameters:
+  db_password: ${creds.get('cred-2').password}
+technicalConfigurationParameters:
+  runtime_password: ${creds.get('cred-3').password}

@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.commons.pojo.tenants.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
@@ -44,14 +45,19 @@ public class TenantDTO {
     private final String owners;
     @JsonDeserialize(using = CustomDeserializer.class)
     private final Map<String, Object> deployParameters;
+    @JsonProperty("e2eParameters")
+    @JsonDeserialize(using = CustomDeserializer.class)
+    private final Map<String, Object> e2eParameters;
     private final GlobalE2EParametersDTO globalE2EParameters;
     private final String gitRepository;
     private final String defaultBranch;
     private final String credential;
     private final List<String> labels;
     private final List<String> deploymentParameterSets;
+    private final List<String> deployParameterSets;
     private final List<String> e2eParameterSets;
     private final List<String> technicalParameterSets;
+    private final List<String> technicalConfigurationParameterSets;
     @JsonDeserialize(using = CustomDeserializer.class)
     private final Map<String, Object> technicalConfigurationParameters;
 }

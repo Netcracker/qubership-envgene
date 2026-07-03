@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.commons.pojo.clouds.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 import lombok.extern.jackson.Jacksonized;
@@ -27,6 +28,7 @@ import lombok.extern.jackson.Jacksonized;
 public class VaultConfigDTO {
     private final String url;
     private final String publicUrl;
+    @JsonAlias("credentials_id")
     private final String credentialsId;
     private final boolean enable;
 }

@@ -1,0 +1,15 @@
+# The contents of this file is generated from template artifact: test-artifact.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "core"
+credentialsId: "dummy"
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

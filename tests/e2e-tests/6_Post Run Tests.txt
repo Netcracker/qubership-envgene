@@ -1,0 +1,4 @@
+﻿2026-06-30T10:40:52.4133266Z Post job cleanup.
+2026-06-30T10:40:52.4250421Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-06-30T10:40:52.4251662Z Post job cleanup.
+2026-06-30T10:40:52.4259016Z ##[command]/usr/bin/docker exec  f74cfa236f12339b52c39f1198c24facdd3e592e689af94222e5e96dd61e3136 sh -c "cat /etc/*release | grep ^ID"

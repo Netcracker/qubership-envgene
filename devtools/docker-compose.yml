@@ -17,3 +17,11 @@ services:
       dockerfile: devtools/tests/Dockerfile
       context: ../
 
+  cucumber:
+    <<: *base-service
+    environment:
+      <<: *base-env
+    build:
+      dockerfile: devtools/cucumber/Dockerfile
+      context: ../
+

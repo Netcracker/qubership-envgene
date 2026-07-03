@@ -1,0 +1,6 @@
+deployParameters:
+  deploy_url: https://deploy.example.com
+e2eParameters: {}
+name: cloud
+technicalConfigurationParameters:
+  runtime_config: ${deploy_url}

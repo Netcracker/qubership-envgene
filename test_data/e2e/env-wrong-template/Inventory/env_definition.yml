@@ -1,0 +1,4 @@
+envTemplate:
+  name: missing-template
+  artifact: missing-app-def:v1
+

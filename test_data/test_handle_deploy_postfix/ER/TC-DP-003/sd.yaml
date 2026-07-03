@@ -1,0 +1,5 @@
+applications:
+  - version: core-app:1.0
+    deployPostfix: core
+  - version: bss-app:1.0
+    deployPostfix: bss

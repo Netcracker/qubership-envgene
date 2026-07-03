@@ -4,7 +4,7 @@ from dataclasses import InitVar, dataclass, field
 from enum import auto, StrEnum
 from os import getenv
 from pathlib import Path
-from typing import overload
+from typing import overload, Callable
 
 from envgenehelper import safe_yaml
 from ruyaml import CommentedMap
@@ -155,8 +155,10 @@ def getAppDefinitionPath(base_path, template_name):
     yml_path = f"{path_without_extension}.yml"
     if check_file_exists(yml_path):
         return yml_path
-    else:
+    elif check_file_exists(yaml_path):
         return yaml_path
+    else:
+        return None
 
 
 def getTemplateVersionFromEnvDefinition(env_definition_yaml):
@@ -421,8 +423,8 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
     return env_dir_path
 
 
-def get_schema_dir() -> Path:
-    return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
+def get_schema_dir(level: int = 1) -> Path:
+    return next((p / "schemas" for p in Path(__file__).resolve().parents if (p / "schemas" / "paramset.schema.json").exists()), Path(__file__).resolve().parents[level] / "schemas")
 
 
 def is_inventory_generation_needed(inventory_params):

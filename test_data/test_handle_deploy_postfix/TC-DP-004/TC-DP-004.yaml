@@ -1,0 +1,4 @@
+SD_DATA: '[{"version":1,"type":"solutionDeploy","applications":[{"version":"core-app:1.0","deployPostfix":"core-namespace"}]}]'
+SD_SOURCE_TYPE: 'json'
+SD_VERSION: ''
+SD_DELTA: False

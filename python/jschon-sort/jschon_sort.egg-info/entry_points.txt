@@ -1,0 +1,3 @@
+[console_scripts]
+jschon-remove-additional-props = jschon_tools.cli:remove_additional_props_main
+jschon-sort = jschon_tools.cli:sort_main

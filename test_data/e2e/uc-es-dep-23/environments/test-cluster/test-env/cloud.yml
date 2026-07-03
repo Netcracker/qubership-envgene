@@ -1,0 +1,32 @@
+# UC-ES-DEP-23: Public and private gateway URLs
+# Cloud config with public and private gateway URLs defined
+apiPort: '6443'
+apiUrl: api.test-cluster.qubership.org
+consulConfig:
+  enabled: false
+  internalUrl: ''
+  publicUrl: ''
+  tokenSecret: ''
+dashboardUrl: https://dashboard.cluster.qubership.org
+databases: []
+dbMode: db
+defaultCredentialsId: cloud-deploy-sa-token
+deployParameters: {}
+e2eParameters: {}
+labels: []
+maasConfig:
+  credentialsId: ''
+  enable: false
+  maasInternalAddress: ''
+  maasUrl: ''
+name: test-cluster_test-env
+privateUrl: private.cluster.internal
+productionMode: false
+protocol: https
+publicUrl: public.cluster.qubership.org
+technicalConfigurationParameters: {}
+vaultConfig:
+  credentialsId: ''
+  enable: false
+  publicUrl: ''
+  url: ''

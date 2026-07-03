@@ -8,7 +8,8 @@ from creds_rotation.models import CredMap
 from creds_rotation.utils.yaml_utils import get_nested_target_key
 from creds_rotation.utils.file_utils import openJson
 from pathlib import Path
-from envgenehelper import crypt, writeYamlToFile, openYaml, dump_as_yaml_format
+from envgenehelper import crypt, writeYamlToFile, openYaml
+from envgenehelper.collections_helper import dump_as_yaml_format
 import envgenehelper.logger as logger
 from creds_rotation.utils.error_constants import *
 from envgenehelper.errors import ValidationError, ValueError

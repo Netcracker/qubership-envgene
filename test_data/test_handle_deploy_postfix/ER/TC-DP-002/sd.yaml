@@ -1,0 +1,5 @@
+applications:
+  - version: origin-app:1.0
+    deployPostfix: bss-origin
+  - version: peer-app:1.0
+    deployPostfix: bss-peer

@@ -17,6 +17,7 @@
 package org.qubership.cloud.devops.commons.pojo.credentials.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -31,6 +32,7 @@ import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsType
 @Builder
 @JsonPropertyOrder
 public class CredentialDTO {
+    @JsonAlias("credentials_id")
     private final String credentialsId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private final CredentialsTypeEnum type;

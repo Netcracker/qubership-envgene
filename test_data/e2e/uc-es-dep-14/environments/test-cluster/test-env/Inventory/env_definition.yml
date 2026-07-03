@@ -1,0 +1,22 @@
+# UC-ES-DEP-14: deploy_param image keys
+# This env definition includes deployParameters with image key references
+# that should be correctly resolved during effective set generation
+envTemplate:
+  name: "test"
+  version: "1.0.0"
+  templateArtifact:
+    artifact:
+      group_id: "org.test"
+      artifact_id: "test-artifact"
+      version: "v1"
+    templateRepository: "maven-repo"
+    repository: "maven-repo"
+    registry: "test-registry"
+inventory:
+  cloudName: "test-cloud"
+  tenantName: "test-tenant"
+  environmentName: "test-env"
+  deployParameters:
+    image.tag: "2.1.0"
+    image.repository: "registry.example.com/myapp"
+    image.pullPolicy: "IfNotPresent"

@@ -1,0 +1,6 @@
+deployParameters:
+  api_url: https://api.example.com
+e2eParameters:
+  test_endpoint: ${api_url}
+name: cloud
+technicalConfigurationParameters: {}

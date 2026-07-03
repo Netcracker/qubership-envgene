@@ -1,0 +1,29 @@
+bg_domain:
+    name: dummy-bg-domain
+    type: null
+    originNamespace:
+        name: bss-origin
+        type: null
+        credentials: dummy
+    peerNamespace:
+        name: bss-peer
+        type: null
+        credentials: dummy
+    controllerNamespace:
+        name: controller-ns
+        type: null
+        credentials: dummy
+        url: null
+cluster:
+    api_port: '80'
+    api_url: dummy
+    protocol: dummy
+    public_url: null
+composite_structure: {}
+environments:
+    test-cluster/test-env:
+        namespaces:
+            bss-origin:
+                deployPostfix: bss-origin
+            core:
+                deployPostfix: core

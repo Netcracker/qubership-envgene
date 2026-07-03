@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.commons.pojo.namespaces.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
@@ -40,6 +41,7 @@ public class NamespaceDTO {
     @NotBlank(message = "Namespace name must not be blank.")
     @Pattern( regexp = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", message = "Namespace name must match the regex: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
     private final String name;
+    @JsonAlias("credentials_id")
     private final String credentialsId;
     private final boolean isServerSideMerge;
     private final List<String> labels;

@@ -4,6 +4,7 @@ from creds_rotation.utils.search_utils import get_ns_content, get_app_content, r
 from creds_rotation.utils.cred_utils import extract_credential
 import envgenehelper.logger as logger
 from envgenehelper.errors import ValidationError, ReferenceError
+from creds_rotation.utils.error_constants import ErrorMessages, ErrorCodes
 
 
 def process_entry_in_payload(
@@ -77,17 +78,14 @@ def process_entry_in_payload(
         target_file
     )
     logger.info(f"✅ Processed param {entry.parameter_key}, affected count = {len(affected)}")
-    if affected:
-        return RotationResult(
-            target_parameter=ParameterReference(
-                environment=env,
-                namespace=entry.namespace,
-                application=str(entry.application or ""),
-                context=entry.context,
-                parameter_key=entry.parameter_key,
-                cred_field=cred_field
-            ),
-            affected_parameters=affected
-        )
-    logger.info(f"No affected parameters found for the given target key {entry.parameter_key}")
-    return None
+    return RotationResult(
+        target_parameter=ParameterReference(
+            environment=env,
+            namespace=entry.namespace,
+            application=str(entry.application or ""),
+            context=entry.context,
+            parameter_key=entry.parameter_key,
+            cred_field=cred_field
+        ),
+        affected_parameters=affected
+    )

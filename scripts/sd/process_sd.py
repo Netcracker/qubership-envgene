@@ -26,12 +26,14 @@ MERGE_METHODS = {
     MergeType.EXTENDED: helper.extended_merge
 }
 
-ENVIRONMENT_NAME = getenv_with_error('ENVIRONMENT_NAME')
-CLUSTER_NAME = getenv_with_error('CLUSTER_NAME')
-WORK_DIR = getenv_with_error('CI_PROJECT_DIR')
-BASE_ENV_PATH = f"{WORK_DIR}/environments/{CLUSTER_NAME}/{ENVIRONMENT_NAME}"
-APP_DEFS_PATH = f"{BASE_ENV_PATH}/AppDefs"
-REG_DEFS_PATH = f"{BASE_ENV_PATH}/RegDefs"
+def get_base_env_path():
+    return helper.get_env_instances_dir(helper.getenv_with_error('ENVIRONMENT_NAME'), helper.getenv_with_error('CLUSTER_NAME'), helper.getenv_with_error('INSTANCES_DIR'))
+
+def get_app_defs_path():
+    return f"{get_base_env_path()}/AppDefs"
+
+def get_reg_defs_path():
+    return f"{get_base_env_path()}/RegDefs"
 
 
 def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict: dict) -> dict:
@@ -237,6 +239,10 @@ def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mod
     if not app_entries:
         raise ValueError(f"No valid application versions found in {app_versions}")
 
+    if effective_merge_mode == MergeType.EXTENDED and len(app_entries) > 1:
+        raise ValueError("Multiple SDs not supported in extended merge mode")
+
+
     app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/plugins/handle_sd_plugins')
     app_data_list = []
     for entry in app_entries:  # appvers
@@ -270,9 +276,17 @@ def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> art
     for result in results:
         if result is not None:
             return result
-    app_def_path = identify_yaml_extension(f"{APP_DEFS_PATH}/{app_name}")
+    try:
+        app_def_path = identify_yaml_extension(f"{get_app_defs_path()}/{app_name}")
+    except FileNotFoundError:
+        raise ValueError("Application Definition not found")
     app_dict = helper.openYaml(app_def_path)
-    reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registryName']}")
+    
+    try:
+        reg_def_path = identify_yaml_extension(f"{get_reg_defs_path()}/{app_dict['registryName']}")
+    except FileNotFoundError:
+        raise ValueError("Registry Definition not found")
+    
     app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
