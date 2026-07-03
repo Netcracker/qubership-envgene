@@ -59,6 +59,11 @@
             "$ref": "paramset.schema.json",
             "title": "Parameter Set Content",
             "description": "Parameter Set definition as file content"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Parameter Set file (without extension). Required for delete action. The file will be saved as <name>.yml"
           }
         },
         "required": ["action", "place"],
@@ -142,6 +147,11 @@
             "$ref": "resource-profile.schema.json",
             "title": "Resource Profile Override Content",
             "description": "Resource Profile Override as file content"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Resource Profile Override file (without extension). Required for delete action."
           }
         },
         "required": ["action", "place"],
@@ -203,7 +213,96 @@
           "required": ["content"]
         }
       }
+    },
+    "specificTemplateVersions": {
+      "type": "array",
+      "title": "Specific Template Version Files",
+      "description": "Block that controls Specific Template Version file operations",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_or_replace", "delete"],
+            "title": "Action",
+            "description": "Operation mode for the Specific Template Version file"
+          },
+          "place": {
+            "type": "string",
+            "enum": ["site", "cluster", "env"],
+            "title": "Place",
+            "description": "Defines where the Specific Template Version file is stored"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Specific Template Version file (without extension). Required for delete action."
+          },
+          "content": {
+            "type": "object",
+            "title": "Specific Template Version Content",
+            "description": "Content of the Specific Template Version file",
+            "additionalProperties": true
+          }
+        },
+        "required": ["action", "place"],
+        "if": {
+          "properties": {
+            "action": {
+              "const": "create_or_replace"
+            }
+          }
+        },
+        "then": {
+          "required": ["content"]
+        }
+      }
+    },
+    "templateVariables": {
+      "type": "array",
+      "title": "Template Variable Files",
+      "description": "Block that controls Template Variable file operations",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_or_replace", "delete"],
+            "title": "Action",
+            "description": "Operation mode for the Template Variable file"
+          },
+          "place": {
+            "type": "string",
+            "enum": ["site", "cluster", "env"],
+            "title": "Place",
+            "description": "Defines where the Template Variable file is stored"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Template Variable file (without extension). Required for delete action."
+          },
+          "content": {
+            "type": "object",
+            "title": "Template Variable Content",
+            "description": "Content of the Template Variable file as key-value hashmap",
+            "additionalProperties": true
+          }
+        },
+        "required": ["action", "place"],
+        "if": {
+          "properties": {
+            "action": {
+              "const": "create_or_replace"
+            }
+          }
+        },
+        "then": {
+          "required": ["content"]
+        }
+      }
     }
   }
 }
-
