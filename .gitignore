@@ -10,3 +10,4 @@ __pycache__
 .DS_Store
 pyrightconfig.json
 junit*
+python/artifact-searcher/artifact_searcher.egg-info
