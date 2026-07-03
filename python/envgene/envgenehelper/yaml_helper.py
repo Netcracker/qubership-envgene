@@ -68,20 +68,15 @@ def convert_dict_to_yaml(d):
 
 
 def remove_cred_yaml_comments(data):
-    if isinstance(data, CommentedMap):
-        if data.ca:
-            data.ca.comment = None
-            if data.ca.items:
-                data.ca.items.clear()
-        for value in data.values():
-            remove_cred_yaml_comments(value)
-    elif isinstance(data, CommentedSeq):
-        if data.ca:
-            data.ca.comment = None
-            if data.ca.items:
-                data.ca.items.clear()
-        for item in data:
-            remove_cred_yaml_comments(item)
+    if not isinstance(data, (CommentedMap, CommentedSeq)):
+        return
+    if data.ca:
+        data.ca.comment = None
+        if data.ca.items:
+            data.ca.items.clear()
+    children = data.values() if isinstance(data, CommentedMap) else data
+    for child in children:
+        remove_cred_yaml_comments(child)
 
 
 def remove_empty_list_comments(data):
