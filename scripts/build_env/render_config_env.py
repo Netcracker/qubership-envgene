@@ -446,7 +446,7 @@ class EnvGenerator:
         secret_store_file = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
         validate_yaml_by_scheme_or_fail(yaml_file_path=secret_store_file, schema_file_path=get_schema_dir() / "secret-stores.schema.json")
 
-        #copy rendred creds to env creds file seperately to propagate comments
+        #copy rendered creds to env creds file
         copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT, get_schema_dir() / "credential.schema.json")
         self.is_external_cred_env = True
 
