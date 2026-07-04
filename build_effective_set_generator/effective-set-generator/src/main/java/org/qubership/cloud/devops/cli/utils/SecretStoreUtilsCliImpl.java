@@ -20,8 +20,8 @@ import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.utils.SecretStoresUtils;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 import java.util.Map;
 
