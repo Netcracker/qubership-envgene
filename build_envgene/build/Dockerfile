@@ -2,6 +2,16 @@
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write (shutil.copy2 utime) in CI/CD
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
+# Stage 0: Build Native Java CLI Binary
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS java-native-builder
+
+WORKDIR /project
+
+COPY build_effective_set_generator /project
+COPY --chown=quarkus:quarkus build_effective_set_generator /project
+
+RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dnative
+
 # Stage 1: Build Java JAR
 FROM maven:3.9-eclipse-temurin-17 AS maven-build
 
@@ -73,6 +83,7 @@ COPY --from=build /schemas /schemas
 COPY --from=build /modules /modules
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
+COPY --from=java-native-builder /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
@@ -81,6 +92,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chown -R ci:ci /module /deployments && \
     chmod +x /module/scripts/*.sh && \
     chmod +x /module/scripts/utils/*.sh && \
+    chmod +x /module/scripts/vals-reference-cli && \
     chmod 644 /module/scripts/*.py 2>/dev/null || true && \
     chmod 540 /deployments/run-java.sh && \
     chmod g+rwX /deployments
