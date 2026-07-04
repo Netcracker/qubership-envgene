@@ -18,14 +18,11 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.cyclonedx.model.Bom;
-import org.cyclonedx.model.Component;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qubership.cloud.devops.cli.constants.GenericConstants;
@@ -46,7 +43,6 @@ import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
@@ -54,7 +50,7 @@ import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataRepository;
-import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 import java.io.File;
 import java.io.IOException;

@@ -23,13 +23,15 @@ import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreType;
 import org.qubership.cloud.devops.commons.pojo.extcreds.Strategy;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.SecretStoresUtils;
 import org.qubership.cloud.devops.commons.utils.di.DIWrapper;
+import org.qubership.cloud.devops.vals.core.SecretNameBuilder;
+import org.qubership.cloud.devops.vals.core.ValsUriBuilder;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreType;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -112,11 +114,11 @@ public class ExternalCredUtils {
         if (store == null) {
             throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND, credentials.getSecretStore(), credId));
         }
-        String normalizedSecretName = SecretNameBuilder.buildNormalizedSecretName(credentials.getRemoteRefPath(), credId, store.getType());
+
         List<CredentialDTO.Property> properties = credentials.getProperties();
         SecretStoreType type = store.getType();
         if (VALS.equals(refShape)) {
-            String baseUri = buildValsUriWithoutFragment(store, normalizedSecretName, credentials.getSecretStore());
+            String baseUri = ValsUriBuilder.buildValsUri(credId, credentials.getRemoteRefPath(), credentials.getSecretStore(), store);
             String fragment = "";
             if (property != null) {
                 checkMultiValProperty(properties, credId, property);
@@ -136,6 +138,7 @@ public class ExternalCredUtils {
             String secretStoreId = credentials.getSecretStore();
             Map<String, Parameter> resolvedParam = new LinkedHashMap<>();
             resolvedParam.put(SECRET_STORE_ID, Parameter.builder().value(secretStoreId).origin(origin).build());
+            String normalizedSecretName = SecretNameBuilder.buildNormalizedSecretName(credentials.getRemoteRefPath(), credId, store.getType());
             resolvedParam.put(NORM_SECRET_NAME, Parameter.builder().value(normalizedSecretName).origin(origin).build());
             if (property != null) {
                 checkMultiValProperty(properties, credId, property);
@@ -165,20 +168,6 @@ public class ExternalCredUtils {
         }
     }
 
-    private static String buildValsUriWithoutFragment(SecretStoreDTO store, String normalizedSecretName, String secretStoreId) {
-        SecretStoreType type = store.getType();
-        String baseUri = switch (type) {
-            case vault -> "ref+vault://" + store.getMountPath() + "/data/" + normalizedSecretName;
-            case azure -> "ref+azurekeyvault://" + store.getVaultName() + "/" + normalizedSecretName;
-            case aws -> "ref+awssecrets://" + normalizedSecretName + "?region=" + store.getRegion();
-            case gcp -> "ref+gcpsecrets://" + store.getProjectId() + "/" + normalizedSecretName;
-        };
-        if (DEFAULT_STORE.equals(secretStoreId)) {
-            return baseUri;
-        }
-        String separator = (type == SecretStoreType.aws) ? "&" : "?";
-        return baseUri + separator + "secret_store_id=" + secretStoreId;
-    }
 
     private static Parameter buildSecretKeys(String property, String origin) {
         Map<String, Parameter> remoteKeyMap = Map.of(
@@ -215,12 +204,7 @@ public class ExternalCredUtils {
                 throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND, storeId, credId));
             }
             Map<String, Object> credMap = new LinkedHashMap<>();
-            String normalizedName = SecretNameBuilder.buildNormalizedSecretName(
-                    cred.getRemoteRefPath(),
-                    credId,
-                    store.getType()
-            );
-            String valsUrl = buildValsUriWithoutFragment(store, normalizedName, storeId);
+            String valsUrl = ValsUriBuilder.buildValsUri(credId, cred.getRemoteRefPath(), cred.getSecretStore(), store);
             credMap.put(VALS, valsUrl);
             boolean createIfAbsent = Boolean.TRUE.equals(cred.getCreate());
             String strategy = createIfAbsent ? Strategy.CREATE_IF_ABSENT.getValue() : Strategy.FAIL_IF_ABSENT.getValue();
