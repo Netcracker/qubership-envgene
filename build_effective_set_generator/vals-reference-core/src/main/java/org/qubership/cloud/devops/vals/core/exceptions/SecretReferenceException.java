@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.commons.utils;
+package org.qubership.cloud.devops.vals.core.exceptions;
 
-import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
+public class SecretReferenceException extends RuntimeException {
+    public SecretReferenceException() {
+    }
 
-public interface SecretStoresUtils {
-
-    SecretStoreDTO getStoresById(String id);
+    public SecretReferenceException(String message) {
+        super(message);
+    }
 }

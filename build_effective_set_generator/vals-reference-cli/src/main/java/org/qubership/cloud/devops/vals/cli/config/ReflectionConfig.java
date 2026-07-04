@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.commons.pojo.extcreds;
+package org.qubership.cloud.devops.vals.cli.config;
 
-public enum SecretStoreType {
-        vault,
-        azure,
-        aws,
-        gcp
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
+
+@RegisterForReflection(targets = {
+        SecretStoreDTO.class
+})
+public class ReflectionConfig {
 }
