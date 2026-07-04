@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.commons.utils.extcreds;
-
+package org.qubership.cloud.devops.vals.core;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreType;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreType;
+import org.qubership.cloud.devops.vals.core.exceptions.SecretReferenceException;
 
 import java.util.regex.Pattern;
 
-import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.*;
-import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.*;
+import static org.qubership.cloud.devops.vals.core.constants.SecretReferenceConstants.*;
+import static org.qubership.cloud.devops.vals.core.exceptions.ExceptionMessages.*;
 
 public class SecretNameBuilder {
 
     public static String buildNormalizedSecretName(String remoteRefPath, String credId, SecretStoreType secretStoreType) {
         if (isNullOrBlank(remoteRefPath) || isNullOrBlank(credId) || secretStoreType == null) {
-            throw new ExternalCredProcessingException
+            throw new SecretReferenceException
                     (String.format(NORMALIZATION_INPUT_ERROR,  remoteRefPath, credId, secretStoreType));
         }
         remoteRefPath = remoteRefPath.trim();
         credId = credId.trim();
         String type = secretStoreType.name();
         if (secretStoreType != SecretStoreType.vault) {
-            validateLength(credId, MAX_CRED_ID_LENGTH, CREDID, type);
+            validateLength(credId, MAX_CRED_ID_LENGTH, CRED_ID, type);
         }
         switch (secretStoreType) {
             case vault:
@@ -66,7 +65,7 @@ public class SecretNameBuilder {
                 validateLength(gcpResult, GCP_MAX_LENGTH, SECRET_NAME, type);
                 return gcpResult;
             default:
-                throw new ExternalCredProcessingException(String.format(
+                throw new SecretReferenceException(String.format(
                         UNSUPPORTED_SECRET_TYPE,
                         type, credId, remoteRefPath
                 ));
@@ -75,14 +74,14 @@ public class SecretNameBuilder {
 
     private static void validate(String input, Pattern pattern, String type) {
         if (!pattern.matcher(input).matches()) {
-            throw new ExternalCredProcessingException(String.format(INVALID_CHARACTER, SECRET_NAME, input, type, pattern));
+            throw new SecretReferenceException(String.format(INVALID_CHARACTER, SECRET_NAME, input, type, pattern));
         }
     }
 
     private static void validateLength(String input, int max, String fieldLabel, String type) {
         int length = input.length();
         if (length > max) {
-            throw new ExternalCredProcessingException(String.format(INVALID_LENGTH, fieldLabel, input, type, max, length));
+            throw new SecretReferenceException(String.format(INVALID_LENGTH, fieldLabel, input, type, max, length));
         }
     }
 
@@ -107,7 +106,7 @@ public class SecretNameBuilder {
         //prefixLen = totalLength - (dash [which is 1 character] + hash [is 5 characters]).
         int prefixLen = maxLen - 6;
         if (prefixLen <= 0) {
-            throw new ExternalCredProcessingException("Invalid maxLen: " + maxLen);
+            throw new SecretReferenceException("Invalid maxLen: " + maxLen);
         }
         return segment.substring(0, prefixLen)  + "-" + DigestUtils.sha256Hex(segment).substring(0, 5);
     }
@@ -115,4 +114,3 @@ public class SecretNameBuilder {
         return s == null || s.isBlank();
     }
 }
-

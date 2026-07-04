@@ -27,11 +27,11 @@ import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 import java.util.Collections;
 import java.util.Map;
