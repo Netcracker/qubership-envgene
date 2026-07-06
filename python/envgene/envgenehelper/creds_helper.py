@@ -4,7 +4,7 @@ from pathlib import Path
 
 from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
-from envgenehelper.yaml_helper import  store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
+from envgenehelper.yaml_helper import store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
 
 from .logger import logger
 
@@ -312,7 +312,7 @@ def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_sch
     else:
         env_creds_yaml = yaml.load("{}")
     for key, value in creds_yaml_content.items() :
-        store_value_to_yaml(env_creds_yaml, key, value, comment)
+        store_value_to_yaml(env_creds_yaml, key, value)
     # storing credentials yaml
     writeYamlToFile(env_credentials_path, env_creds_yaml)
     beautifyYaml(env_credentials_path, creds_schema)

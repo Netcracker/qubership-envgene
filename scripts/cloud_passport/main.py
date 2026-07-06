@@ -7,10 +7,10 @@ import sys
 from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, readYaml
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
 from envgenehelper.crypt import get_configured_encryption_type
+from envgenehelper.git_helper import GitRepoManager, GitLabClient
 from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
-from git_client import GitRepoManager, GitLabClient
 from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"
@@ -132,8 +132,8 @@ def main():
         logger.error(f'Variable "GITLAB_TOKEN" is not set')
         sys.exit(1)
 
-    repo = GitRepoManager(repo_path=base_dir, git_token=gitlab_token)
-    repo.prepare_repo()
+    repo = GitRepoManager()
+    repo.configure()
 
     downstream_gl_client = GitLabClient(token=gitlab_token)
 

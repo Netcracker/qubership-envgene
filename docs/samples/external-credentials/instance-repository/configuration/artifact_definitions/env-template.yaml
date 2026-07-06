@@ -1,0 +1,16 @@
+---
+# Artifact Definition for the env-template artifact named in env_definition.yml
+# (envTemplate.artifact: env-template:1.0.0). The name must equal the application part of that
+# artifact and the file name. registry.credentialsId references the system Credential
+# artifactory-cred, shared with the Registry Definition.
+name: env-template
+groupId: org.qubership
+artifactId: env-template
+registry:
+  name: sample-registry
+  credentialsId: artifactory-cred
+  mavenConfig:
+    repositoryDomainName: https://maven.example.com
+    targetSnapshot: mvn.snapshot
+    targetStaging: mvn.staging
+    targetRelease: mvn.release

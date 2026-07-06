@@ -124,27 +124,27 @@ Example:
 ```yaml
 credentials:
   db-app-cred:
-    vals: "ref+vault://kv/data/env-1/db-app-cred"
+    vals: "ref+vault://kv/env-1/db-app-cred"
     strategy: create_if_absent
     data:
       username: username
       password: password
 
   db-readonly-cred:
-    vals: "ref+vault://kv/data/env-1/db-readonly-cred"
+    vals: "ref+vault://kv/env-1/db-readonly-cred"
     strategy: create_if_absent
     data:
       username: username
       password: _generateValue
 
   mq-connection-secret:
-    vals: "ref+vault://kv/data/env-1/mq-connection-secret"
+    vals: "ref+vault://kv/env-1/mq-connection-secret"
     strategy: create_if_absent
     data:
       value: token
 
   monitoring-token:
-    vals: "ref+vault://kv/data/env-1/monitoring-token"
+    vals: "ref+vault://kv/env-1/monitoring-token"
     strategy: fail_if_absent
 
   gcp-license-token:

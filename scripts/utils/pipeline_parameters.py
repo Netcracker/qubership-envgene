@@ -43,10 +43,11 @@ def get_pipeline_parameters() -> dict:
         "EFFECTIVE_SET_CONFIG" : getenv("EFFECTIVE_SET_CONFIG"),
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
         "CUSTOM_PARAMS" : getenv("CUSTOM_PARAMS"),
+        "DEPLOYMENT_TICKET_ID": getenv("DEPLOYMENT_TICKET_ID"),
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
             "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
     }
-    
+
 def get_sensitive_param_names() -> list:
     return [
         "CRED_ROTATION_PAYLOAD",
@@ -63,7 +64,7 @@ class PipelineParametersHandler:
 
         if pipe_param_plugin.modules:
             pipe_param_plugin.run(pipeline_params=self.params)
-        
+
         for k, v in self.params.items():
             try:
                 parsed = json.loads(v)
@@ -95,7 +96,7 @@ class PipelineParametersHandler:
             parsed = json.loads(env_inventory_content)
             self.hide_secrets(parsed)
             params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
-            
+
         for k, v in params.items():
             params_str += f"\n{k.upper()}: {v}"
 

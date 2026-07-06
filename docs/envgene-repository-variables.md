@@ -17,6 +17,7 @@
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
     - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
     - [`GCP_SA_KEY`](#gcp_sa_key)
+    - [`VAULT_ADDR`](#vault_addr)
     - [`VAULT_TOKEN`](#vault_token)
     - [`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials)
     - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
@@ -203,6 +204,18 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 **Example**: `{"type":"service_account","project_id":"...",...}`
 
 **Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service account with at least `Artifact Registry Reader` role. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+
+### `VAULT_ADDR`
+
+**Description**: Vault server URL used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to reach a Vault
+[Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store identifier is not
+`default_store`, set the prefixed variant `<id>_VAULT_ADDR` instead (one set per store). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a Vault Secret Store
 
 ### `VAULT_TOKEN`
 
