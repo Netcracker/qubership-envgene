@@ -31,10 +31,9 @@ Configure these secrets on `Netcracker/qubership-envgene`:
 
 | Secret            | Purpose                                      |
 |-------------------|----------------------------------------------|
-| `PYPI_API_USER`   | PyPI username (typically `__token__`)        |
 | `PYPI_API_TOKEN`  | PyPI API token (must start with `pypi-`)     |
 
-The workflow reads them as `TWINE_USERNAME` and `TWINE_PASSWORD` during credential checks and upload.
+The workflow passes the token to Poetry as `POETRY_PYPI_TOKEN_PYPI`. No PyPI username secret is required.
 
 ### GitHub App for version-bump push (required on protected `main`)
 
@@ -63,6 +62,7 @@ Key environment variables:
 | `CLI_NAME`                  | `external-cred-provision`                  |
 | `UPSTREAM_REPO`             | `Netcracker/qubership-envgene`             |
 | `PYPI_SCRIPTS_DIR`          | `.github/scripts/pypi`                     |
+| `POETRY_VERSION`            | `2.1.3`                                    |
 | `PYPI_RETRY_ATTEMPTS`       | `3`                                        |
 | `PYPI_RETRY_DELAY_SECONDS`  | `30`                                       |
 
@@ -82,7 +82,7 @@ gate → validate-input → build-package → publish-package → sync-repo-vers
 | `gate`              | Always                            | Sets `can_publish` for upstream `main` only |
 | `validate-input`    | Always                            | Validates SemVer; checks PyPI bump in publish mode |
 | `build-package`     | After validation                  | Tests, builds, smoke-tests CLI, uploads artifact |
-| `publish-package`   | `can_publish == true`             | Uploads to PyPI and verifies the release |
+| `publish-package`   | `can_publish == true`             | Publishes to PyPI with Poetry and verifies the release |
 | `sync-repo-version` | Publish succeeded on upstream     | Commits `pyproject.toml` version bump |
 
 Concurrency group `pypi-external-cred-provision` prevents overlapping runs. In-progress runs are not cancelled.
@@ -146,7 +146,7 @@ Open the job in the Actions run and expand **Summary** to read them.
 | Script | Role |
 |--------|------|
 | [/.github/scripts/pypi/check_pypi_version.py](/.github/scripts/pypi/check_pypi_version.py) | SemVer validation, bump check, post-publish verification |
-| [/.github/scripts/pypi/check_pypi_credentials.py](/.github/scripts/pypi/check_pypi_credentials.py) | PyPI reachability and credential shape preflight |
+| [/.github/scripts/pypi/check_pypi_credentials.py](/.github/scripts/pypi/check_pypi_credentials.py) | PyPI reachability and token shape preflight |
 | [/.github/scripts/pypi/set_pyproject_version.py](/.github/scripts/pypi/set_pyproject_version.py) | Updates `[project].version` in `pyproject.toml` |
 | [/.github/scripts/pypi/retry_command.sh](/.github/scripts/pypi/retry_command.sh) | Shared retry helper for transient PyPI failures |
 
@@ -165,9 +165,17 @@ Exit codes from `check_pypi_version.py`:
 
 The candidate version is not greater than the latest PyPI release. Pick a higher `X.Y.Z` value.
 
-### Credential preflight fails with HTTP 401 or 403
+### Token preflight fails
 
-Check `PYPI_API_USER` and `PYPI_API_TOKEN`. When the username is `__token__`, the token must start with `pypi-`.
+Check `PYPI_API_TOKEN`. The value must start with `pypi-` and must not include leading or trailing whitespace.
+
+Create a new API token on [pypi.org](https://pypi.org) with **Entire account** scope for a first release, or project scope for
+`qubership-external-cred-provision`.
+
+### Poetry publish fails with HTTP 403
+
+The token lacks upload permission for this package, or the secret value is wrong. Replace `PYPI_API_TOKEN` and re-run the
+workflow. Preflight checks reachability and token shape only. Upload authorization is enforced by `poetry publish`.
 
 ### Publish succeeds but sync commit fails
 
