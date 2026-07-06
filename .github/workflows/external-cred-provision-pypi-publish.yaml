@@ -401,7 +401,7 @@ jobs:
 
           retry_command "${PYPI_RETRY_ATTEMPTS}" "${PYPI_RETRY_DELAY_SECONDS}" "any" \
             "PyPI upload failed" -- \
-            poetry publish --no-build --no-interaction
+            poetry publish --no-interaction
 
       - name: Verify published version on PyPI
         env:
