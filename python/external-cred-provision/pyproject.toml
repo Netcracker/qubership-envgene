@@ -58,3 +58,8 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+addopts = "-v -ra --strict-markers"
+markers = [
+  "unit: unit tests with mocked secret-store dependencies (no network I/O)",
+  "fixture: YAML fixture tests; provider type parsing is still mocked",
+]

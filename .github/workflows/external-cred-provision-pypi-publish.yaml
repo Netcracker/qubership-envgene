@@ -188,7 +188,46 @@ jobs:
 
           cd "${PROJECT_DIR}"
           python -m pip install -e .
-          python -m pytest
+
+          echo "Provisioner tests: unit (mocked) + fixture (sample-context.yaml, mocked providers)."
+          echo "No Vault, OpenBao, GCP, or AWS network calls are made."
+          echo ""
+          echo "Collected tests:"
+          python -m pytest --collect-only -q
+          echo ""
+          echo "Running tests..."
+          python -m pytest --capture=no --junitxml=test-results.xml
+          echo ""
+          echo "OK: all tests passed."
+
+      - name: Write unit test summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd "${PROJECT_DIR}"
+
+          {
+            echo "## Unit tests"
+            echo ""
+            echo "Mocked unit and fixture tests for \`external_cred_provision\` (no secret-store I/O)."
+            echo ""
+            if [[ -f test-results.xml ]]; then
+              tests="$(grep -oE 'tests="[0-9]+"' test-results.xml | head -1 | grep -oE '[0-9]+')"
+              failures="$(grep -oE 'failures="[0-9]+"' test-results.xml | head -1 | grep -oE '[0-9]+')"
+              errors="$(grep -oE 'errors="[0-9]+"' test-results.xml | head -1 | grep -oE '[0-9]+')"
+              echo "| Metric | Value |"
+              echo "|--------|-------|"
+              echo "| Tests | ${tests:-0} |"
+              echo "| Failures | ${failures:-0} |"
+              echo "| Errors | ${errors:-0} |"
+            else
+              echo "JUnit report was not produced."
+            fi
+            echo ""
+            echo "Markers: \`unit\` (parsing and generation), \`fixture\` (sample context YAML)."
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Build sdist and wheel
         shell: bash

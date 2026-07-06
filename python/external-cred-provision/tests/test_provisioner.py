@@ -1,3 +1,16 @@
+"""Provisioner unit and fixture tests.
+
+Test types in this module:
+
+- **Unit tests** (`@pytest.mark.unit`): exercise `PasswordGenerator`, credential parsing, and
+  `_generateValue` resolution in isolation. `MultiStoreProvider` is mocked, so no Vault, OpenBao,
+  GCP, or AWS calls are made.
+- **Fixture tests** (`@pytest.mark.fixture`): load `tests/fixtures/sample-context.yaml` and assert
+  every credential entry parses without errors. Provider type detection is still mocked.
+
+These are not integration or end-to-end tests. They do not connect to real secret stores.
+"""
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,7 +25,10 @@ from external_cred_provision.provisioner import (
 )
 
 
+@pytest.mark.unit
 class TestPasswordGenerator:
+    """Unit tests for generated password length and character set."""
+
     def test_default_length(self):
         assert len(PasswordGenerator.generate()) == PasswordGenerator.DEFAULT_LENGTH
 
@@ -24,7 +40,10 @@ class TestPasswordGenerator:
             assert all(c in PasswordGenerator.CHARS for c in PasswordGenerator.generate())
 
 
+@pytest.mark.unit
 class TestParseCredential:
+    """Unit tests for credential YAML entry parsing and validation rules."""
+
     VAULT_URI = "ref+vault://secret/data/env/my-cred"
     GCP_URI = "ref+gcpsecrets://my-project/my-secret"
 
@@ -139,7 +158,10 @@ class TestParseCredential:
         assert len(errors) >= 2  # both vals and strategy missing
 
 
+@pytest.mark.unit
 class TestResolveData:
+    """Unit tests for `_generateValue` marker resolution in credential data."""
+
     provisioner = ExternalCredProvisioner(context_path="dummy")
 
     def test_literal_string_unchanged(self):
@@ -172,7 +194,10 @@ class TestResolveData:
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+@pytest.mark.fixture
 class TestSampleContextFixture:
+    """Fixture test: sample context YAML parses cleanly (providers mocked)."""
+
     @staticmethod
     def _provider_type_from_vals(vals: str) -> tuple[str, str | None]:
         if vals.startswith("ref+vault://"):
