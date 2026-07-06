@@ -33,6 +33,10 @@ consulConfig:
   publicUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
   internalUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
 deployParameters:
+  '#creds{TEST_LOGIN_USERNAME, TEST_LOGIN_PASSWORD}': creds-get-password-cred
+  '#credscl{TEST_LOGIN_CL_USERNAME, TEST_LOGIN_CL_PASSWORD}': test-cloud-cred
+  CMDB_CRED_USERNAME: ${cmdb.creds.get("creds-get-password-cred").username}
+  CMDB_CRED_PASSWORD: ${cmdb.creds.get("creds-get-password-cred").password}
   CDN_STORAGE_PASSWORD: "${STORAGE_PASSWORD}" # cloud passport: cluster-01 version: 1.5
   CDN_STORAGE_PROVIDER: "${STORAGE_PROVIDER}" # cloud passport: cluster-01 version: 1.5
   CDN_STORAGE_REGION: "${STORAGE_REGION}" # cloud passport: cluster-01 version: 1.5
