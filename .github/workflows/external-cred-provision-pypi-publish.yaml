@@ -338,6 +338,18 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "poetry==${POETRY_VERSION}" packaging
 
+      - name: Set release version in pyproject.toml
+        env:
+          VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python "${PYPI_SCRIPTS_DIR}/set_pyproject_version.py" \
+            --pyproject "${PROJECT_DIR}/pyproject.toml" \
+            --package-name "${PACKAGE_NAME}" \
+            --version "${VERSION}"
+
       - name: Verify PyPI connectivity and token
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
@@ -355,39 +367,32 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: ${{ env.PACKAGE_NAME }}-dist-${{ inputs.version }}
-          path: dist
+          path: ${{ env.PROJECT_DIR }}/dist
 
       - name: Validate artifacts to publish
         shell: bash
         run: |
           set -euo pipefail
 
-          wheel_count="$(find dist -maxdepth 1 -name '*.whl' | wc -l)"
-          sdist_count="$(find dist -maxdepth 1 -name '*.tar.gz' | wc -l)"
+          dist_dir="${PROJECT_DIR}/dist"
+
+          wheel_count="$(find "${dist_dir}" -maxdepth 1 -name '*.whl' | wc -l)"
+          sdist_count="$(find "${dist_dir}" -maxdepth 1 -name '*.tar.gz' | wc -l)"
 
           if [[ "${wheel_count}" -ne 1 ]]; then
             echo "ERROR: expected exactly one wheel to publish, found ${wheel_count}"
-            find dist -maxdepth 1 -name '*.whl' -print
+            find "${dist_dir}" -maxdepth 1 -name '*.whl' -print
             exit 1
           fi
 
           if [[ "${sdist_count}" -ne 1 ]]; then
             echo "ERROR: expected exactly one sdist to publish, found ${sdist_count}"
-            find dist -maxdepth 1 -name '*.tar.gz' -print
+            find "${dist_dir}" -maxdepth 1 -name '*.tar.gz' -print
             exit 1
           fi
 
-          ls -lah dist/
+          ls -lah "${dist_dir}/"
           echo "OK: publish artifacts are valid."
-
-      - name: Stage distributions for Poetry publish
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mkdir -p "${PROJECT_DIR}/dist"
-          cp dist/* "${PROJECT_DIR}/dist/"
-          ls -lah "${PROJECT_DIR}/dist/"
 
       - name: Publish package to PyPI
         shell: bash
