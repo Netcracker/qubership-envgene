@@ -1,6 +1,6 @@
 # qubership-external-cred-provision
 
-Command-line tool for [EnvGene](/README.md) that provisions external credentials into secret stores
+Command-line tool for [EnvGene](https://github.com/Netcracker/qubership-envgene/blob/main/README.md) that provisions external credentials into secret stores
 from a declarative YAML context file.
 
 EnvGene generates the context during Effective Set calculation. This CLI reads that file, connects
@@ -105,13 +105,13 @@ credentials:
 Authentication and store settings are read from environment variables. Variable names depend on
 store type and optional `secret_store_id` query parameters in each VALS reference.
 
-See the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md)
+See the [External Credentials provisioning CLI](https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/external-creds-provisioning-cli.md)
 reference for the full variable list, input schema, value-generation rules, and runtime behaviour.
 
 Broader EnvGene external-credentials design (context generation, Effective Set integration):
 
-[External Credentials Management](/docs/features/external-creds.md)
+[External Credentials Management](https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/external-creds.md)
 
 ## License
 
-Apache License 2.0. See the [LICENSE](/LICENSE) file in the EnvGene repository.
+Apache License 2.0. See the [LICENSE](https://github.com/Netcracker/qubership-envgene/blob/main/LICENSE) file in the EnvGene repository.
