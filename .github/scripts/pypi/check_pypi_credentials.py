@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import os
 import sys
@@ -11,13 +10,11 @@ import urllib.error
 import urllib.request
 
 PYPI_JSON_URL_TEMPLATE = "https://pypi.org/pypi/{package_name}/json"
-PYPI_UPLOAD_URL = "https://upload.pypi.org/legacy/"
+TOKEN_ENV_VAR = "POETRY_PYPI_TOKEN_PYPI"
+TOKEN_PREFIX = "pypi-"
 
 EXIT_VALIDATION_ERROR = 1
 EXIT_PYPI_QUERY_ERROR = 2
-
-TOKEN_USERNAME = "__token__"
-TOKEN_PREFIX = "pypi-"
 
 
 class PyPIQueryError(RuntimeError):
@@ -30,11 +27,11 @@ def require_non_empty(name: str, value: str | None) -> str:
     return value.strip()
 
 
-def validate_credential_shape(username: str, password: str) -> None:
-    if username == TOKEN_USERNAME and not password.startswith(TOKEN_PREFIX):
+def validate_token_shape(token: str) -> None:
+    if not token.startswith(TOKEN_PREFIX):
         raise ValueError(
-            f"When TWINE_USERNAME is '{TOKEN_USERNAME}', TWINE_PASSWORD must be a PyPI API token "
-            f"starting with '{TOKEN_PREFIX}'."
+            f"PyPI API token must start with '{TOKEN_PREFIX}'. "
+            f"Configure repository secret PYPI_API_TOKEN with a token from pypi.org."
         )
 
 
@@ -61,72 +58,34 @@ def probe_pypi_json_api(package_name: str) -> None:
     print(f"OK: PyPI JSON API is reachable for package '{package_name}'.")
 
 
-def probe_upload_endpoint(username: str, password: str) -> None:
-    print(f"Checking PyPI upload endpoint reachability: {PYPI_UPLOAD_URL}")
-
-    credentials = base64.b64encode(f"{username}:{password}".encode()).decode("ascii")
-    request = urllib.request.Request(
-        PYPI_UPLOAD_URL,
-        method="GET",
-        headers={"Authorization": f"Basic {credentials}"},
-    )
-
-    try:
-        with urllib.request.urlopen(request, timeout=20):
-            print("OK: PyPI upload endpoint is reachable.")
-    except urllib.error.HTTPError as exc:
-        if exc.code in {401, 403}:
-            raise ValueError(
-                f"PyPI upload credentials were rejected (HTTP {exc.code})."
-            ) from exc
-        if exc.code == 405:
-            print("OK: PyPI upload endpoint is reachable.")
-            return
-        if exc.code < 500:
-            raise PyPIQueryError(
-                f"PyPI upload endpoint returned unexpected client error: HTTP {exc.code}"
-            ) from exc
-        raise PyPIQueryError(f"Failed to reach PyPI upload endpoint: HTTP {exc.code}") from exc
-    except urllib.error.URLError as exc:
-        raise PyPIQueryError(f"Failed to reach PyPI upload endpoint: {exc.reason}") from exc
-
-
-def check_pypi_credentials(package_name: str, username: str, password: str) -> None:
-    validate_credential_shape(username, password)
+def check_pypi_credentials(package_name: str, token: str) -> None:
+    validate_token_shape(token)
     probe_pypi_json_api(package_name=package_name)
-    probe_upload_endpoint(username=username, password=password)
     print(
-        "NOTE: Full upload authorization is confirmed during twine upload. "
-        "Credential configuration and endpoint reachability checks passed."
+        "NOTE: Upload authorization is confirmed during poetry publish. "
+        "PyPI reachability and token shape checks passed."
     )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Verify PyPI reachability and upload credential configuration."
+        description="Verify PyPI reachability and Poetry publish token configuration."
     )
     parser.add_argument("--package-name", required=True)
     parser.add_argument(
-        "--username",
-        default=os.environ.get("TWINE_USERNAME"),
-        help="PyPI username (default: TWINE_USERNAME environment variable).",
-    )
-    parser.add_argument(
-        "--password",
-        default=os.environ.get("TWINE_PASSWORD"),
-        help="PyPI password or API token (default: TWINE_PASSWORD environment variable).",
+        "--token",
+        default=os.environ.get(TOKEN_ENV_VAR),
+        help=(
+            "PyPI API token (default: POETRY_PYPI_TOKEN_PYPI environment variable). "
+            "Poetry reads the same variable during publish."
+        ),
     )
 
     args = parser.parse_args()
 
     try:
-        username = require_non_empty("TWINE_USERNAME", args.username)
-        password = require_non_empty("TWINE_PASSWORD", args.password)
-        check_pypi_credentials(
-            package_name=args.package_name,
-            username=username,
-            password=password,
-        )
+        token = require_non_empty(TOKEN_ENV_VAR, args.token)
+        check_pypi_credentials(package_name=args.package_name, token=token)
     except ValueError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return EXIT_VALIDATION_ERROR
@@ -134,7 +93,7 @@ def main() -> int:
         print(f"PYPI QUERY ERROR: {exc}", file=sys.stderr)
         return EXIT_PYPI_QUERY_ERROR
 
-    print(f"OK: PyPI connectivity and credential configuration verified for user '{username}'.")
+    print("OK: PyPI connectivity and token configuration verified.")
     return 0
 
 
