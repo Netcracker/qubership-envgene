@@ -1,6 +1,6 @@
 import pytest
 
-from appregdef_render import write_app_reg_defs
+from build_env.appregdef_render import write_app_reg_defs
 
 class TestWriteAppRegDefs:
 
