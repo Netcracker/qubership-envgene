@@ -5,64 +5,69 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 ## OQ
 
-1. ...
+1. `run_cloud_passport` (берет паспорт из даунстри джобы и декриптит) уже в `env_prepare`?
+2. `generate_deployment_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
 
 ## AI
 
-1. Agree with Lenya on using the dynamic pipeline
-2. Agree with Lenya/Tema on the `process_dp` function
-3. Discuss with Tema encrypting ARGO_DPG_CONTEXT.env via crypt, not DPG
-4. Get OK from Vanya to move `es-pusher`, `sync` to GitHub
+1. Agree with Kristina DD and zip layout
+2. Agree with Lenya on using the dynamic pipeline
+3. Agree with Lenya/Tema on the `process_dp` function
+4. Discuss with Tema encrypting ARGO_DPG_CONTEXT.env via crypt, not DPG
 5. [phase2] Consider create_if_not_exist | replace strategies for appregdef processing
 6. [phase2] Design integration with the central appregdef storage
-7. Design `setup_rendering_context`
-8. Design `process_dp`
-9. [phase2] Design splitting `env_build`
-10. [phase2] Design SAVE_ARTIFACTS_STRATEGY
+7. [phase2] Design SAVE_ARTIFACTS_STRATEGY
     1. save env_instance/ES/sd.yaml to a job artifact on SAVE_ALL
-11. Design `git_commit`
+8. Design `git_commit`
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES/sd.yaml or not
-12. Decide on `registry_discovery`
-13. Describe the function trigger criteria
-14. [after the flow is finalized] analyze the flow for file-read optimization
+9. [after the flow is finalized] analyze the flow for file-read optimization
     (remove redundant reads/writes, cache within one process)
-15. [phase1] update Colly to read `deploy-plan.yml` (dp_sd_adapter removed, consumers read SD/DP directly)
 
 ## Data exchange Rules
 
-1. Functions and sub-functions in one job exchange data through the filesystem.
-2. Jobs exchange through files published as job artifacts, or through dotenv files.
-3. A step depends on the artifact, not on another step's execution.
+1. Within `orchestrator.py`, steps exchange:
+   - structured data via the in-memory context `ctx.*`
+   - scalars via the in-memory parameters handler `PipelineParametersHandler`
+2. Crossing a separate job (`cmdb_import`, `sync`), exchange on disk:
+   - structured data via files (job artifacts)
+   - scalars via `build.env`
+3. Crossing a following function in the same job:
+   - `generate_deployment_plan`
+   - `argocd_repo_generator`
+   - `es-pusher`
+   - effective-set calculator
+   exchange:
+   - structured data via contracted files
+   - scalars via command parameters
 
 ## Artifacts
 
 Producers and consumers are Target Flow step numbers.
 
-| Artifact                  | Path                                        | Producers      | Consumers              |
-|---------------------------|---------------------------------------------|----------------|------------------------|
-| env_definition            | Inventory/env_definition.yml                | 7, 9           | 8, 9, 10, 11, 22       |
-| cloud_passport            | cloud-passport/                             | 2              | 10                     |
-| artdef                    | configuration/artifact_definitions/         | 8              | 9                      |
-| downloaded template files | templates/ (+ tmp/peer, tmp/origin)         | 9              | 11, 12, 13, 15, 17, 22 |
-| current-env-context.yml   | current-env-context.yml                     | 10             | 11, 12, 13, 15, 22     |
-| current-env-template.yml  | current-env-template.yml                    | 11             | 12, 13, 15, 22         |
-| bg_domain                 | env instance bg_domain.yml                  | 12             | 14, 16                 |
-| rendered namespaces       | env instance Namespaces/                    | 13             | 14, 16                 |
-| namespace-map.yml         | namespace-map.yml (not committed)           | 14             | 19, 21, 22, external   |
-| composite_structure.yml   | env instance composite_structure.yml        | 15             | 16                     |
-| composite-topology.yml    | composite-topology.yml                      | 16             | 22                     |
-| appreg defs               | env instance appregdef files                | 17             | 18, 19, 23             |
-| sd.yaml                   | Inventory/solution-descriptor/sd.yaml       | 18, 20         | 21, 23, 26             |
-| delta_sd.yaml             | Inventory/solution-descriptor/delta_sd.yaml | 18             | 26                     |
-| deploy-plan.yml           | deploy-plan.yml                             | 19             | 20, 27                 |
-| solution-structure.yml    | solution-structure.yml                      | 21             | 22                     |
-| env instance              | environments/<cluster>/<env>/               | 12, 13, 15, 22 | 26, 29, 30, 4          |
-| DD and zip                | deploy descriptors dir                      | 23             | 24, 27                 |
-| sboms                     | sboms/                                      | 24             | committed              |
-| effective set             | env instance effective-set/                 | 26             | 27, 30                 |
-| appset/app CR             | appsets                                     | 27             | 30                     |
-| ARGO_DPG_CONTEXT.env      | dotenv (reports)                            | 27             | 5                      |
-| control flags/scalars     | build.env / CI vars                         | 1              | many                   |
+| Artifact                     | Path                                                                          | Producers      | Consumers              |
+|------------------------------|-------------------------------------------------------------------------------|----------------|------------------------|
+| env_definition               | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/env_definition.yml` | 7, 10, 22      | 9, 10, 11, 12, 22      |
+| cloud passport               | `${CI_PROJECT_DIR}/environments/<cluster>/cloud-passport/`                    | 8              | 11, 22                 |
+| artdef                       | `${CI_PROJECT_DIR}/configuration/artifact_definitions/`                       | 9              | 10                     |
+| downloaded template files    | `${CI_PROJECT_DIR}/tmp/` (common), `tmp/origin/`, `tmp/peer/`                 | 10             | 12, 13, 14, 16, 18, 22 |
+| namespace-map.yml            | `${CI_PROJECT_DIR}/tmp/render-context/namespace-map.yml`                      | 15             | 20, 21, 22, external   |
+| env instance                 | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/`                             | 13, 14, 16, 22 | 26, 29, 30, 3          |
+| appreg defs                  | env instance appregdef files                                                  | 18             | 19, 20, 23, 24         |
+| sd.yaml                      | Inventory/solution-descriptor/sd.yaml                                         | 19             | 19, 21, 23, 26         |
+| delta_sd.yaml                | Inventory/solution-descriptor/delta_sd.yaml                                   | 19             | 26                     |
+| deploy-plan.yml              | deploy-plan.yml                                                               | 20             | 21, 23, 26, 27         |
+| DD and zip                   | `${APP_ARTIFACTS_DIR}`                                                        | 23             | 24, 27                 |
+| sboms                        | sboms/                                                                        | 24             | committed              |
+| effective set                | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/effective-set/`               | 26             | 27, 30                 |
+| appset/app CR                | TBD                                                                           | 27             | 30                     |
+| build.env                    | `${CI_PROJECT_DIR}/build.env`                                                 | 1              | 20, 27, 30, 3, 4       |
+| ARGO_DPG_CONTEXT.env         | TBD                                                                           | 27             | 4                      |
+| system config                | TBD                                                                           | TBD            | TBD                    |
+
+## Defaults
+
+1. APP_ARTIFACTS_DIR: `${CI_PROJECT_DIR}/tmp/app-artifacts/`
+
 ## DD and zip layout
 
 `dd_downloading` stores artifacts at `APP_ARTIFACTS_DIR`:
@@ -88,7 +93,7 @@ ${APP_ARTIFACTS_DIR}/
 - The DD and zip filenames are the basename of the remote artifact URL (`<artifact_id>-<version>.json`/`.zip`).
 - The folder under `<version>` is the maven `artifact_id` (unzipped content), which often equals the app name.
 
-## deploy-plan
+## `deploy-plan.yml`
 
 ```yaml
 - version: app-1:version-1
@@ -101,11 +106,23 @@ ${APP_ARTIFACTS_DIR}/
   wave: 1
 ```
 
+## `namespace-map.yml`
+
+TBD
+
+## `ctx.current_env`
+
+TBD
+
+## build.env
+
+TBD
+
 ## APPLICATION_VERSIONS
 
 TBD
 
-## Pipe generation
+## Multi env support
 
 - Single `ENV_NAMES` -> direct include `static-api.yaml`, multiple -> run generator.
 - OOB launches `static-api.yaml` directly.
@@ -171,37 +188,73 @@ AI:
 - Verify `orchestrator.py` needs no changes
 - Verify `static-api.yaml` needs no changes
 - Verify `$ENV_NAMES =~ /[,; \n]/` works correctly
+- Test parallel commits
 - Update the gsf package
 - Update the gsf-related documentation
 - Do the same on GitHub
 
+## To deprecate
+
+1. Fernet
+2. GAV notation
+
 ## Target Flow
 
 1. job `trigger_passport`
-   - не изменяем
-2. job `get_passport`
-   - не изменяем
-   - AI[phase1]: протестить руками
-   - AI[phase2]: подготовить UC, покрыть тестами
-3. job `generate_effective_set/env_prepare`
+   - trigger:
+     - `GET_PASSPORT: true`
+   - input:
+     - `integration.yaml`
+     - `ENV_NAMES`
+   - output:
+     - triggered downstream pipeline
+   - actions:
+     - trigger discovery repository pipeline
+   - AI[phase1]: unchanged
+   - AI[phase2]: add `trigger_passport` to `static-api.yaml`
+2. job `env_prepare`
    1. `set_defaults`
+       - trigger:
+         - always
+       - inputs:
+         - none
+       - output:
+         - `build.env`
+         - env variables
+       - actions:
+         - set defaults
+       - AI[phase1]: add `APP_ARTIFACTS_DIR`
+       - AI[phase2]: remove non required `build.env` vars
    2. `cert_apply`
-       - не изменяем
-       - AI[phase2]: перенести из before script
+       - unchanged
+       - AI[phase2]: move out of the before script
+       - AI[phase2]: implement [#1506](https://github.com/Netcracker/qubership-envgene/issues/1506)
    3. `git_fetch`
-       - не изменяем
+       - [phase1] unchanged
    4. `crypt` to decrypt
-       - не изменяем
+       - [phase1] unchanged
    5. `credential_rotation`
-       - не изменяем
-       - AI[phase2]: проверить готовность UC, покрытие тестами
+       - [phase1] unchanged
+       - AI[phase2]: check UC readiness and test coverage
    6. `bg_manage`
-       - не изменяем
-       - AI[phase2]: проверить готовность UC, покрытие тестами
+       - [phase1] unchanged
+       - AI[phase2]: check UC readiness and test coverage
    7. `env_inventory_generation`
-       - не изменяем
-       - AI[phase2]: проверить готовность UC, покрытие тестам
-   8. `registry_discovery`
+       - [phase1] unchanged
+       - AI[phase2]: check UC readiness and test coverage
+   8. `run_cloud_passport`
+       - trigger:
+         - `GET_PASSPORT: true`
+       - input:
+         - `integration.yaml`
+         - cloud passport in `trigger_passport` downstream pipeline
+       - output:
+         - cloud passport
+       - actions:
+         - find the downstream discovery pipeline via bridges, download its artifacts
+         - Fernet-decrypt or re-encrypt
+       - [phase1] unchanged
+   9. `registry_discovery`
        - trigger:
          - always
        - input:
@@ -211,132 +264,148 @@ AI:
          - artdef
        - actions:
          - generate artdef base from CMDB/central appreg storage
-       - выпилить или расширить (запилить интеграцию с central appregdef storage)?
-       - AI[phase1]: оставляем выключенным
-       - AI[phase2]: включаем (?)
+       - remove or extend (add integration with the central appregdef storage)?
+       - AI[phase1]: keep it off
+       - AI[phase2]: turn on (?)
        - AI[phase3]: add integration with central appregdef storage
-   9. `process_env_template` (.set_version -> .download)
+   10. `process_env_template` (`.set_version` -> `.download`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - ENV_TEMPLATE_VERSION
-         - ENV_TEMPLATE_VERSION_PEER
-         - ENV_TEMPLATE_VERSION_ORIGIN
-         - ENV_TEMPLATE_VERSION_UPDATE_MODE
+         - `ENV_TEMPLATE_VERSION`
+         - `ENV_TEMPLATE_VERSION_PEER`
+         - `ENV_TEMPLATE_VERSION_ORIGIN`
+         - `ENV_TEMPLATE_VERSION_UPDATE_MODE`
          - env definition
          - artifact definition
        - output:
-         - downloaded template files (3 templates in case of bgd)
+         - downloaded template files
          - updated env_definition
        - actions:
          - validate env definition, artifact definition
          - set template version
          - download env template
-       - не изменяем
-       - AI[phase1]: пофиксить багу c установкой версии темплейта
-   10. `setup_rendering_context.compute_template_macros`
+       - [phase1]: unchanged
+       - AI[phase1]: fix the template-version-setting bug
+   11. `setup_rendering_context.compute_template_macros` (ex `render_config_env.generate_config`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
          - env_definition
-         - cloud_passport
+         - cloud passport
          - deployer config
        - output:
-         - `current-env-context.yml` file with `current_env.*` macros: `name`, `environmentName`, `tenant`, `cloud`, `cloudNameWithCluster`, `cmdb_name`, `cmdb_url`, `description`, `owners`, `env_template`, `additionalTemplateVariables`, `cluster.*`, `cloud_passport`; `solution_structure` initialized to {}
+         - `ctx.` with `current_env.*` macros: `name`, `environmentName`, `tenant`,
+           `cloud`, `cloudNameWithCluster`, `cmdb_name`, `cmdb_url`, `description`, `owners`, `env_template`,
+           `additionalTemplateVariables`, `cluster.*`, `cloud_passport`; `solution_structure` initialized to {}
        - actions:
-         - генерирует значения макросов выше
-       - AI[phase1]: extract generate_config into a standalone step (currently the first line of env_build)
-   11. `setup_rendering_context.load_template_descriptor`
+         - generates the macro values above
+       - AI[phase1]: extract generate_config into a standalone step
+       - AI[phase2]: rename `generate_config` -> `compute_template_macros`
+   12. `setup_rendering_context.load_template_descriptor` (ex `render_config_env.set_env_templates`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - env_definition (`envTemplate.name`)
-         - downloaded template dirs for common/peer/origin
-         - `current-env-context.yml`
+         - env_definition
+         - downloaded template files
+         - `ctx.current_env`
        - output:
-         - `current-env-template.yml` for common/peer/origin - the rendered and validated descriptor(s)
+         - `ctx.current_env_template` for common/peer/origin
        - actions:
-         - render the descriptor if .j2
-         - validate against schema
-         - load into current_env_template; repeat for the PEER and ORIGIN dirs
+         - render the template descriptor if .j2, validate
+         - load into `current_env_template`
+         - repeat for the peer/origin dirs
        - AI[phase1]: extract set_env_templates into this sub-function
-   12. `env_build.render_bgd`
+       - AI[phase2]: rename `set_env_templates` -> `load_template_descriptor`
+   13. `env_build.render_bgd` (ex `render_config_env.generate_bgd_file`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - downloaded template dir
-         - `current-env-context.yml`
-         - `current-env-template.yml`
+         - downloaded template files
+         - `ctx.current_env`
+         - `ctx.current_env_template`
        - output:
          - rendered bg domain into env instance
        - actions:
-         - renders the bg_domain object into the env instance (render_config_env.generate_bgd_file)
-         - no-op if no bg_domain
-   13. `env_build.render_namespaces`
+         - renders the bg domain into the env instance
+         - no-op if no bg domain
+       - AI[phase2]: rename `generate_bgd_file` -> `render_bgd`
+   14. `env_build.render_namespaces` (ex `render_config_env.generate_namespace_files`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - downloaded template dirs for common/peer/origin
-         - `current-env-context.yml`
-         - `current-env-template.yml`
+         - downloaded template files
+         - `ctx.current_env`
+         - `ctx.current_env_template`
        - output:
-         - rendered namespace objects into env instance
+         - rendered namespaces into env instance
        - actions:
-         - render all namespace templates for the template name (light render, the name is independent of solution_structure)
-   14. `setup_rendering_context.compute_namespace_map` to calculate the deployPostfix to namespace mapping for the current env
+         - render all namespaces into env instance
+       - AI[phase2]: rename `generate_namespace_files` -> `render_namespaces`
+   15. `setup_rendering_context.compute_namespace_map`
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
          - `ENV_NAME`
-         - rendered namespace objects in env instance
+         - rendered namespace in env instance
          - rendered bg domain in env instance
        - output:
-         - `namespace-map.yml` file with `current_env.namespace_map` (`{deployPostfix: {namespace: <name>}}`), for current env only
-           - loaded into the Jinja context as a macro for template/external consumers
+         - `namespace-map.yml`
        - actions:
          - read rendered namespace name + deployPostfix for each env namespace
          - calculate deployPostfix to namespace mapping (incl. BG suffix)
        - AI[phase1]: create the function
-   15. `env_build.render_composite_structure`
+   16. `env_build.render_composite_structure` (ex `render_config_env.generate_composite_structure`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - downloaded template dirs for common
-         - `current-env-context.yml`
-         - `current-env-template.yml`
+         - downloaded template files
+         - `ctx.current_env`
+         - `ctx.current_env_template`
        - output:
-         - composite_structure.yml into env instance
+         - rendered composite structure into env instance
        - actions:
          - render the composite structure template, validate (no-op if none)
-   16. `setup_rendering_context.compute_composite_topology`
+       - AI[phase2]: rename `generate_composite_structure` -> `render_composite_structure`
+   17. `setup_rendering_context.compute_composite_topology`
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - composite_structure.yml (rendered)
-         - bg domain in env instance
-         - rendered namespace objects (env instance namespace dirs)
+         - rendered composite structure into env instance
+         - rendered bg domain into env instance
+         - rendered namespace objects into env instance
        - output:
-         - `composite-topology.yml` file with `current_env.composite_topology` (`{baseline: {originNamespace, peerNamespace?, controllerNamespace?}, satellites: [...]}`)
+         - `ctx.current_env.composite_topology`
        - actions:
          - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
-       - AI[phase2]: adopt the macro computation from master
-   17. `app_reg_def_process` for list of appregdef
+       - AI[phase1.5]: adopt the macro computation from master
+   18. `app_reg_def_process` (ex `run_appregdef_render`)
        - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - env template files
-         - env instance files
+         - downloaded template files
+         - env instance
          - system config
          - `APPREG_DEF_STRATEGY`
        - output:
-         - appreg def files
+         - appreg defs
        - actions:
          - render appreg defs, validate
-         - skip which is present in env instance files if `APPREG_DEF_STRATEGY` == `create_if_not_exist``APPREG_DEF_STRATEGY` == `replace`
-       - [phase1]: не изменяем
+         - skip appregdefs already present in env instance if `APPREG_DEF_STRATEGY` == `create_if_not_exist` (default). do not skip if `APPREG_DEF_STRATEGY` == `replace`
+       - phase1: unchanged
        - AI[phase2]: renders only required appregdef
        - AI[phase2]: implement create_if_not_exist | replace strategies
-   18. `process_sd`
+       - AI[phase2]: rename `run_appregdef_render` -> `app_reg_def_process`
+   19. `process_sd` (ex `handle_sd`)
        - trigger:
          - (`SD_VERSION` or `SD_DATA`) and `PIPELINE_TYPE` !== `GITAB_DEPLOY`
        - inputs:
@@ -351,14 +420,16 @@ AI:
          - delta_sd.yaml
        - actions:
          - merge sd
-       - [phase1]: не изменяем
-       - AI[phase1]: в новом флоу не вызывается, в старом вызывается
-       - AI[phase2]: удалить `SD_SOURCE_TYPE`
-   19. `generate_deployment_plan`
+       - phase1: unchanged
+       - AI[phase1]: not called in the new flow, called in the old flow
+       - AI[phase2]: remove `SD_SOURCE_TYPE`
+       - AI[phase2]: rename `handle_sd` -> `process_sd`
+   20. `generate_deployment_plan`
        - trigger:
          - `PIPELINE_TYPE: GITAB_DEPLOY`
        - input:
          - `APPLICATION_VERSION`
+         - `build.env.FULL_ENV_NAME`
          - appreg defs
          - namespace_map (`namespace-map.yml`)
          - filters:
@@ -372,53 +443,55 @@ AI:
          - process `APPLICATION_VERSION` (download SD, merge)
          - filter DP
          - enrich DP
-       - AI[phase1]: в старом флоу не вызывается, в новом вызывается
+       - AI[phase1]: not called in the old flow, called in the new flow
        - AI[phase1]: create the function
-       - AI[phase1]: move to GitHub
-   20. `dp_sd_adapter`
+       - AI[phase2]: move to GitHub
+   21. `setup_rendering_context.compute_solution_structure` (ex `generate_solution_structure`, split)
        - trigger:
-         - `PIPELINE_TYPE: GITAB_DEPLOY`
-       - inputs:
-         - `deploy-plan.yml`
-       - outputs:
-         - `sd.yaml`
-       - actions:
-         - generates `sd.yaml` from `deploy-plan.yml`
-       - AI[phase1]: create the function to simplify migration (do not touch `compute_solution_structure` ES calc, Colly)
-       - AI[phase2]: remove the function
-   21. `setup_rendering_context.compute_solution_structure`
-       - trigger:
-         - always
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - `sd.yaml`
+         - `sd.yaml` or `deploy-plan.yml`
          - `namespace-map.yml`
        - output:
-         - `solution-structure.yml` file with `current_env.solution_structure`
+         - `ctx.current_env.solution_structure`
        - actions:
          - join applications by deployPostfix with namespace_map
-         - no-op if no `sd.yaml`
+         - no-op if no `sd.yaml` or `deploy-plan.yml`
        - AI[phase1]: create the function (split from render_config_env.generate_solution_structure lines 286-305)
-       - note: `composite_topology` is produced earlier (step 16); `environments` (site Environments Structure) is NOT produced here
+       - note: `composite_topology` is produced earlier (step 17); `environments` (site Environments Structure) is NOT produced here
          - environments = per-env upsert of namespace_map into environment-structure.yml at run end (phase2), respects 5s NFR (no cross-env template download)
-       - AI[phase2]: support DP as well as SD
-   22. `env_build`
+       - AI[phase1]: support DP as well as SD
+   22. `env_build` (ex `run_build_environment`) (`.render_tenant` -> `.render_cloud` -> `process_cloud_passport`
+       -> `.create_external_credentials` -> `.render_paramsets` -> `.create_credentials` -> `apply_ns_build_filter`)
+       - trigger:
+         - `PIPELINE_TYPE: GITAB_DEPLOY` or
+         - `ENV_BUILDER: true`
        - input:
-         - downloaded template dirs for common/peer/origin
+         - downloaded template files
          - env_definition
-         - `current-env-context.yml`
-         - `current-env-template.yml`
+         - `ctx.current_env`
+         - `ctx.current_env_template`
          - `namespace-map.yml`
-         - `composite-topology.yml`
-         - `solution-structure.yml`
-       - renders the remaining env instance artifacts (explicit list):
-         - `.render_tenant`
-         - `.render_cloud`
+         - `ctx.current_env.composite_topology`
+         - `ctx.current_env.solution_structure`
+         - cloud passport
+       - output:
+         - fully rendered env instance
+       - actions:
+       - renders remain env instance:
+         - `.render_tenant` (ex `generate_tenant_file`)
+         - `.render_cloud` (ex `generate_cloud_file`)
+         - `process_cloud_passport`: merge cloud_passport into the rendered `cloud.yml`
          - `.create_external_credentials`
-         - `.render_paramsets`
+         - `.render_paramsets` (ex `generate_paramset_templates`)
          - `.create_credentials`
        - `apply_ns_build_filter`
-         - желательно оставить as is
-       - [phase1]: не изменяем
+         - prefer to keep as is
+       - phase1: unchanged
+       - AI[phase1]: test manually
+       - AI[phase2]: prepare a UC, add tests
+       - AI[phase2]: rename render_config_env `generate_*` methods to `env_build.render_*`
    23. `dd_downloading`
        - trigger:
          - `PIPELINE_TYPE: GITAB_DEPLOY` or
@@ -426,26 +499,31 @@ AI:
        - input:
          - appreg defs
          - `sd.yaml` or `deploy-plan.yml`
+         - `APP_ARTIFACTS_DIR`
        - output:
-         - DD and zip
+         - DD and zip at `${APP_ARTIFACTS_DIR}/<app>/<version>/`
        - actions:
-         - downloads DD and zip
-       - AI[phase1]: separate from sbom generation (to prepare input for sbom generation and argocd-dpg)
-       - AI[phase2]: support DP as well as SD
+         - resolve DD + zip per app with appreg defs
+         - download DD + zip, unzip
+       - AI[phase1]: extract from sbom_generator
+       - AI[phase1]: rename `WORKSPACE` to `APP_ARTIFACTS_DIR` in artifact_searcher, keep the code default
+       - AI[phase1]: support DP as well as SD
    24. `sbom_generation`
        - trigger:
          - `PIPELINE_TYPE: GITAB_DEPLOY` or
          - `GENERATE_EFFECTIVE_SET: true`
        - input:
-         - DD and zip
+         - local DD + zip
+         - appreg defs
+         - `APP_ARTIFACTS_DIR`
        - output:
          - sboms
        - actions:
-         - generate sbom
+         - generate SBOM components from local DD + zip
          - sbom retention
-       - AI[phase1]: support local DD and zip
+       - AI[phase1]: consume local DD + zip. download moved to `dd_downloading`
    25. `null_validation`
-       - AI[phase1]: проверить, что есть
+       - AI[phase1]: check what exists
    26. ES Calc CLI
        - trigger:
          - `PIPELINE_TYPE: GITAB_DEPLOY` or
@@ -457,29 +535,36 @@ AI:
          - Effective Set
        - actions:
          - generates ES
-       - AI[phase2]: support DP as well as SD
+       - AI[phase1]: support DP as well as SD
    27. `argocd_repo_generator`
        - trigger:
          - `PIPELINE_TYPE: GITAB_DEPLOY`
        - input:
-         - DP
+         - `deploy-plan.yml`
+         - effective set
+         - local DD (from dd_downloading)
+         - `APP_ARTIFACTS_DIR` (env)
+         - params.environment_id -> `build.env.FULL_ENV_NAME`
          - TBD
        - output:
          - appset CR, app CR, TBD
          - dotenv ARGO_DPG_CONTEXT.env
        - actions:
          - TBD
-       - AI[Тема]: убрать генерацию DP
-       - AI[Тема]: добавить локальные DD
-       - AI[Тема]: шифровать ARGO_DPG_CONTEXT.env
-       - AI[phase2]: move to GitHub
-         - или это сделает `crypt`?
-         - или объеденить build.env ?
+       - AI[Tema]: remove DP generation
+       - AI[Tema]: add local DD
+       - AI[Tema]: encrypt ARGO_DPG_CONTEXT.env
+       - AI[phase2]: move to GitHub or not?
+         - or will `crypt` do it?
+         - or merge build.env?
    28. `crypt` to encrypt
    29. `git_commit`
-       - AI[phase1]: в зависимости от `PIPELINE_TYPE` комитить или нет env_instance/ES/sd.yaml
-       - AI[phase2]: в зависимости от `SAVE_ARTIFACTS_STRATEGY` сохранять или нет env_instance/ES/sd.yaml в артифакты
-       - AI[phase2]: объеденить с es-pusher?
+       - input:
+         - `CLUSTER_NAME`
+         - `ENVIRONMENT_NAME`
+       - AI[phase1]: depending on `PIPELINE_TYPE`, commit env_instance/ES/sd.yaml or not
+       - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
+       - AI[phase3]: unify with `es-pusher`
    30. `es-pusher`
        - trigger:
          - `PIPELINE_TYPE: GITAB_DEPLOY`
@@ -488,13 +573,13 @@ AI:
            - effective set
            - appset
          - `DCL_GIT_URL`
-         - `DCL_GIT_BRANCH` дефолты на стороне оркестратора
+         - `DCL_GIT_BRANCH` defaults on the orchestrator side
          - `DCL_CONFIG_GITLAB_USER`
          - `DCL_CONFIG_GITLAB_TOKEN`
          - `GITLAB_USER_NAME`
          - `GITLAB_USER_EMAIL`
          - COMMIT_FILTER
-         - params.environment_id -> `ENV_NAME`
+         - params.environment_id -> `build.env.FULL_ENV_NAME`
          - params.commit_message -> `DEPLOYMENT_TICKET_ID`
          - params.rootdir -> x
          - path filter
@@ -503,17 +588,22 @@ AI:
        - actions:
          - push effective set and appsets to the deploy target repo
        - AI[phase1]: move to GitHub
-   31. удаление лишнего
-4. job `cmdb_import`
-   - AI[phase1]: в новом флоу не вызывается, в старом вызывается
-5. job `sync`
+       - AI[phase3]: unify with `git_commit`
+   31. cleanup of leftovers (?)
+   32. create the dotenv report (?)
+3. job `cmdb_import`
+   - input:
+     - `build.env.FULL_ENV_NAME`
+   - AI[phase1]: not called in the new flow, called in the old flow
+4. job `sync`
    - trigger:
      - `PIPELINE_TYPE: GITAB_DEPLOY`
    - input:
-     - dotenv ARGO_DPG_CONTEXT.env
+     - `ARGO_DPG_CONTEXT.env`
+     - `build.env.FULL_ENV_NAME`
    - output:
      - TBD
    - actions:
      - TBD
-   - AI[phase1]: в старом флоу не вызывается, в новом вызывается
+   - AI[phase1]: not called in the old flow, called in the new flow
    - AI[phase2]: move to GitHub
