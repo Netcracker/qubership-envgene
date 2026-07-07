@@ -78,6 +78,76 @@ Producers and consumers are Target Flow step numbers.
 
 TBD
 
+## Pipe generation
+
+- Single `ENV_NAMES` -> direct include `static-api.yaml`, multiple -> run generator.
+- OOB launches `static-api.yaml` directly.
+- Thin generator: per env emit `trigger: include static-api.yaml`, forward vars, set `ENV_NAME=<cluster>/<env>`.
+- Keep `orchestrator.py` single-env, unchanged.
+- Passport jobs per env flow. no aggregation.
+
+`gitlab-ci.yaml`:
+
+```yaml
+## --- single env: static-api directly ---
+include:
+  - local: static-api.yaml
+    rules:
+      - if: '$ENV_NAMES !~ /[,; \n]/'        # no delimiter -> one env (empty -> CLUSTER/ENV fallback)
+
+## --- multi env: generation ---
+generate_pipeline:
+  ...
+    script:
+      - "python /module/scripts/main.py generate_pipeline"
+    rules:
+      - if: '$ENV_NAMES =~ /[,; \n]/'          # has a delimiter -> N envs
+  ...
+run_generated_pipeline:
+  ...
+  trigger:
+    include:
+      - artifact: generated-config.yml
+        job: generate_pipeline
+  rules:
+    - if: '$ENV_NAMES =~ /[,; \n]/'
+  ...
+```
+
+Generated `generated-config.yml`:
+
+```yaml
+env-prepare-cluster-01-env-1:
+  trigger:
+    include:
+      - local: static-api.yaml
+    ...
+  variables:
+    ENV_NAME: "cluster-01/env-1"
+  ...
+
+env-prepare-cluster-01-env-2:
+  trigger:
+    include:
+      - local: static-api.yaml
+    ...
+  variables:
+    ENV_NAME: "cluster-01/env-2"
+  ...
+```
+
+AI:
+
+- Write a new `/module/scripts/main.py generate_pipeline` on the `build_pipegene` image (or the common `envgene` one)
+- Prepare `gitlab_ci.yaml`
+- Add a passport generation job for the per-env flow
+- Verify `orchestrator.py` needs no changes
+- Verify `static-api.yaml` needs no changes
+- Verify `$ENV_NAMES =~ /[,; \n]/` works correctly
+- Update the gsf package
+- Update the gsf-related documentation
+- Do the same on GitHub
+
 ## Target Flow
 
 1. job `trigger_passport`
