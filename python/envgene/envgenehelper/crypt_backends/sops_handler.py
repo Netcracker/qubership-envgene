@@ -11,13 +11,19 @@ from ..logger import logger
 
 from .constants import *
 
+ENVGENE_AGE_PRIVATE_KEY = None
+PUBLIC_AGE_KEYS = None
+
 
 def _sops_subprocess_env(secret_key=None, **extra):
+    global ENVGENE_AGE_PRIVATE_KEY
     env = os.environ.copy()
     if secret_key:
         env['SOPS_AGE_KEY'] = secret_key
     elif not env.get('SOPS_AGE_KEY'):
-        env['SOPS_AGE_KEY'] = getenv_with_error("ENVGENE_AGE_PRIVATE_KEY")
+        if ENVGENE_AGE_PRIVATE_KEY is None:
+            ENVGENE_AGE_PRIVATE_KEY = getenv_with_error("ENVGENE_AGE_PRIVATE_KEY", no_log=True)
+        env['SOPS_AGE_KEY'] = ENVGENE_AGE_PRIVATE_KEY
     env.update(extra)
     return env
 
@@ -113,10 +119,15 @@ def _return_sops_result(file_path, mode, in_place, load_result, result=None):
 
 def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None,
                load_result=True, *args, **kwargs):
+    global ENVGENE_AGE_PRIVATE_KEY, PUBLIC_AGE_KEYS
+    if not secret_key or not public_key:
+        if ENVGENE_AGE_PRIVATE_KEY is None:
+            ENVGENE_AGE_PRIVATE_KEY = getenv_with_error("ENVGENE_AGE_PRIVATE_KEY", no_log=True)
+            PUBLIC_AGE_KEYS = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
     if not secret_key:
-        secret_key = getenv_with_error("ENVGENE_AGE_PRIVATE_KEY")
+        secret_key = ENVGENE_AGE_PRIVATE_KEY
     if not public_key:
-        public_key = getenv_with_error("PUBLIC_AGE_KEYS")
+        public_key = PUBLIC_AGE_KEYS
 
     if _is_empty_cred_file(file_path):
         logger.info(f'File is empty, skipping de/encryption. Path: {file_path}')
