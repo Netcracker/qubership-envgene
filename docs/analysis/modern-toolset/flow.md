@@ -9,23 +9,24 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 ## AI
 
-1. Договорится с Леней про использование динамического пайпа
-2. Договорится с Леней/Темой про `process_dp` функцию
-3. Поговорить с Темой про шифровние ARGO_DPG_CONTEXT.env не DPG а crypt
-4. Получить OK от Вани на move to GitHub `es-pusher`, `sync`
-5. [phase2] Подумать о create_if_not_exist | replace стратегиях процессинга appregdef
-6. [phase2] Дизайн интеграции с centrall appregdef storage
-7. Дизайн `setup_rendering_context`
-8. Дизайн `process_dp`
-9. [phase2] Дизайн раcпиливания `env_build`
-10. [phase2] Дизайн SAVE_ARTIFACTS_STRATEGY
-    1. сохранять env_instance/ES/sd.yaml в job-артефакт при SAVE_ALL
-11. Дизайн `git_commit`
-    1. Учитывая `PIPELINE_TYPE` и `SAVE_ARTIFACTS_STRATEGY` комитить или нет env_instance/ES/sd.yaml
-12. Решить про `registry_discovery`
-13. Описать критерии вызова функций
-14. [после финализации флоу] проанализировать флоу на оптимизацию чтения файлов
-    (убрать избыточные чтения/записи, кэш в пределах одного процесса)
+1. Agree with Lenya on using the dynamic pipeline
+2. Agree with Lenya/Tema on the `process_dp` function
+3. Discuss with Tema encrypting ARGO_DPG_CONTEXT.env via crypt, not DPG
+4. Get OK from Vanya to move `es-pusher`, `sync` to GitHub
+5. [phase2] Consider create_if_not_exist | replace strategies for appregdef processing
+6. [phase2] Design integration with the central appregdef storage
+7. Design `setup_rendering_context`
+8. Design `process_dp`
+9. [phase2] Design splitting `env_build`
+10. [phase2] Design SAVE_ARTIFACTS_STRATEGY
+    1. save env_instance/ES/sd.yaml to a job artifact on SAVE_ALL
+11. Design `git_commit`
+    1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES/sd.yaml or not
+12. Decide on `registry_discovery`
+13. Describe the function trigger criteria
+14. [after the flow is finalized] analyze the flow for file-read optimization
+    (remove redundant reads/writes, cache within one process)
+15. [phase1] update Colly to read `deploy-plan.yml` (dp_sd_adapter removed, consumers read SD/DP directly)
 
 ## Data exchange Rules
 
@@ -62,9 +63,34 @@ Producers and consumers are Target Flow step numbers.
 | appset/app CR             | appsets                                     | 27             | 30                     |
 | ARGO_DPG_CONTEXT.env      | dotenv (reports)                            | 27             | 5                      |
 | control flags/scalars     | build.env / CI vars                         | 1              | many                   |
+## DD and zip layout
+
+`dd_downloading` stores artifacts at `APP_ARTIFACTS_DIR`:
+
+```text
+${APP_ARTIFACTS_DIR}/
+  app-1/
+    version-1/
+      app-1-version-1.json       # DD
+      app-1-version-1.zip        # downloaded zip artifact
+      app-1/                     # unzipped content
+  app-2/
+    version-2/
+      app-2-version-2.json
+      app-2-version-2.zip
+      app-2/
+```
+
+- `APP_ARTIFACTS_DIR` is defaulted by `set_defaults` (step 1) to `${CI_PROJECT_DIR}/tmp/app-artifacts/` and
+  written to `build.env`.
+- The `<version>` folder is the raw app version. Snapshot normalization (`...-timestamp` to `-SNAPSHOT`) applies
+  only to the remote maven URL, not the local folder.
+- The DD and zip filenames are the basename of the remote artifact URL (`<artifact_id>-<version>.json`/`.zip`).
+- The folder under `<version>` is the maven `artifact_id` (unzipped content), which often equals the app name.
 
 ## deploy-plan
 
+```yaml
 - version: app-1:version-1
   deployPostfix: core
   namespace: ''
@@ -73,6 +99,7 @@ Producers and consumers are Target Flow step numbers.
   deployPostfix: core
   namespace: ''
   wave: 1
+```
 
 ## APPLICATION_VERSIONS
 
