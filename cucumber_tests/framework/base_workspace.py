@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from tests.framework.base_data_builders import BaseDataBuilder
+from cucumber_tests.framework.base_data_builders import BaseDataBuilder
 class BaseWorkspace(ABC):
     """Abstract workspace contract for shared BDD step definitions.
 

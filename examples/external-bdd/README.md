@@ -48,7 +48,7 @@ When writing tests, you typically need two types of test data to perform reliabl
 
 ```text
 my-project/
-├── tests/
+├── cucumber_tests/
 │   ├── features/
 │   │   └── customer-e2e-template.feature # Gherkin scenarios (BDD)
 │   ├── step_defs/
@@ -103,7 +103,7 @@ Scenario: UC-PROJ-001: Successful Environment Generation
 To execute the `.feature` files, you need "glue code" in Python.
 
 1. **Workspace Fixtures**: Copy `workspace_template.py` and `conftest_template.py` into your `tests/` directory to manage isolated filesystem environments for every test case.
-2. **Step Definitions**: Copy `steps_template.py` into your `tests/step_defs/` folder. This file shows how to automatically map the Gherkin statements to Python functions.
+2. **Step Definitions**: Copy `steps_template.py` into your `cucumber_tests/step_defs/` folder. This file shows how to automatically map the Gherkin statements to Python functions.
 
 ### Writing Custom Assertions
 If the unified steps are not enough, you can write custom steps in your `steps_template.py` file. 

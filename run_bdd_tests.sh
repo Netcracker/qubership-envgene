@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# run_e2e_tests.sh — Local runner for the EIG BDD test suite
+# run_bdd_tests.sh — Local runner for the EIG BDD test suite
 # Usage:
-#   ./run_e2e_tests.sh                           # run all EIG scenarios
-#   ./run_e2e_tests.sh "UC-EINV-ED-1"           # run a specific scenario by name
-#   ENVGENE_SOURCE_ROOT=/custom/path ./run_e2e_tests.sh
+#   ./run_bdd_tests.sh                           # run all EIG scenarios
+#   ./run_bdd_tests.sh "UC-EINV-ED-1"           # run a specific scenario by name
+#   ENVGENE_SOURCE_ROOT=/custom/path ./run_bdd_tests.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,13 +40,13 @@ echo "[3/4] Executing BDD tests..."
 mkdir -p reports
 
 if [ -n "${SCENARIOS}" ]; then
-    PYTEST_CMD="pytest tests/step_defs/test_environment_inventory_generation.py -k '${SCENARIOS}' -v -s --junitxml=reports/eig.xml"
+    PYTEST_CMD="pytest cucumber_tests/step_defs/test_environment_inventory_generation.py -k '${SCENARIOS}' -v -s --junitxml=reports/eig.xml"
 else
-    PYTEST_CMD="pytest tests/step_defs/test_environment_inventory_generation.py -v -s --junitxml=reports/eig.xml"
+    PYTEST_CMD="pytest cucumber_tests/step_defs/test_environment_inventory_generation.py -v -s --junitxml=reports/eig.xml"
 fi
 
 docker compose -f devtools/docker-compose.yml exec -T cucumber \
-    bash -c "export PYTHONPATH=/workspace:/envgene-src && cd /workspace && mkdir -p reports && ${PYTEST_CMD} | tee e2e_tests.log"
+    bash -c "set -o pipefail; export PYTHONPATH=/workspace:/envgene-src && cd /workspace && mkdir -p reports && ${PYTEST_CMD} | tee bdd_tests.log"
 
 echo ""
 echo "Tests complete. Results saved to:"

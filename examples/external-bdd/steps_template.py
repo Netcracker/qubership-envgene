@@ -1,7 +1,7 @@
 """
 Example Step Definitions (steps_template.py) for an external project.
 
-Copy this file into your project (e.g., tests/step_defs/test_project.py).
+Copy this file into your project (e.g., cucumber_tests/step_defs/test_project.py).
 """
 
 from pytest_bdd import scenarios, given, when, then, parsers

@@ -40,7 +40,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest tests/ -v -s --junitxml=reports/all_tests.xml
+          pytest cucumber_tests/ -v -s --junitxml=reports/all_tests.xml
 
   # ======================================================================
   # Example 2: Run specific (single) test cases
@@ -64,13 +64,13 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           # Option A: Run a single specific python test file
-          pytest tests/step_defs/test_project.py -v -s
+          pytest cucumber_cucumber_tests/step_defs/test_project.py -v -s
           
           # Option B: Run a specific scenario by matching its name
-          # pytest tests/ -k "UC-PROJ-001" -v -s
+          # pytest cucumber_tests/ -k "UC-PROJ-001" -v -s
           
           # Option C: Run multiple specific scenarios
-          # pytest tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
+          # pytest cucumber_tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
 
   # ======================================================================
   # Example 3: Run custom tests with HTML report generation
@@ -94,7 +94,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           pip install pytest-html
-          pytest tests/custom_checks/ --html=reports/custom_report.html --self-contained-html
+          pytest cucumber_cucumber_tests/custom_checks/ --html=reports/custom_report.html --self-contained-html
 
       - name: Upload Report
         uses: actions/upload-artifact@v4
@@ -136,4 +136,4 @@ jobs:
           CLUSTER_NAME: ${{ matrix.environment.cluster }}
           ENV_NAME: ${{ matrix.environment.env }}
         run: |
-          pytest tests/ -v -s --junitxml=reports/matrix_${{ matrix.environment.cluster }}_${{ matrix.environment.env }}.xml
+          pytest cucumber_tests/ -v -s --junitxml=reports/matrix_${{ matrix.environment.cluster }}_${{ matrix.environment.env }}.xml

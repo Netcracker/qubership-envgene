@@ -7,8 +7,8 @@ import json
 import zipfile
 import urllib.request
 from pathlib import Path
-from tests.framework.workspace import EnvGeneWorkspace
-from tests.step_defs.common_steps import *
+from cucumber_tests.framework.workspace import EnvGeneWorkspace
+from cucumber_tests.step_defs.common_steps import *
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_nexus(tmp_path_factory):
@@ -63,7 +63,7 @@ def mock_nexus(tmp_path_factory):
     with open(test_app2_dir / "test_app_2_artifact-2.0.0.json", "w") as f:
         json.dump({"applications": [{"version": "test_app_2:2.0.0", "deployPostfix": "dp2"}], "deployGraph": [{"chunkName": "wave1", "apps": ["test_app_2:dp2"]}]}, f)
 
-    proc = subprocess.Popen([sys.executable, "tests/mock_server.py", "8000", str(base_dir)])
+    proc = subprocess.Popen([sys.executable, "cucumber_tests/mock_server.py", "8000", str(base_dir)])
     
     # Wait for the mock server to start
     for i in range(10):

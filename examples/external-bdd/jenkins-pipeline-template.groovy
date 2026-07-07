@@ -37,7 +37,7 @@ pipeline {
         stage('Run All Pytest Scenarios') {
             steps {
                 sh '''
-                    pytest tests/ -v -s --junitxml=reports/all_tests.xml
+                    pytest cucumber_tests/ -v -s --junitxml=reports/all_tests.xml
                 '''
             }
             post {

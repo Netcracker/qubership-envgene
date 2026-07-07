@@ -1,7 +1,7 @@
 from pytest_bdd import given, then, when, parsers
 import os
 from pathlib import Path
-from tests.framework.golden_compare import compare_directories
+from cucumber_tests.framework.golden_compare import compare_directories
 
 @then(parsers.parse('the pipeline log shows "{message}"'))
 def pipeline_log_shows(workspace, message):

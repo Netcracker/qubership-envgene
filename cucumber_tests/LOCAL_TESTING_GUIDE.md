@@ -28,27 +28,27 @@ All tests execute in an isolated container that replicates the CI/CD environment
 
 ## Step 2: Run Tests with HTML Reporting
 
-To generate beautiful HTML reports, the `pytest-html` plugin is used. The output report will be saved inside the `tests/reports` folder, which syncs directly to your local PC.
+To generate beautiful HTML reports, the `pytest-html` plugin is used. The output report will be saved inside the `cucumber_tests/reports` folder, which syncs directly to your local PC.
 
 ### Run All Tests
 ```bash
-docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/ -v -s --html=tests/reports/report.html --self-contained-html"
+docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest cucumber_tests/ -v -s --html=cucumber_tests/reports/report.html --self-contained-html"
 ```
 
 ### Run a Specific Scenario (by name)
 You can filter tests by name using the `-k` parameter:
 ```bash
-docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/ -k 'UC-SD-1' -v -s --html=tests/reports/report.html --self-contained-html"
+docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest cucumber_tests/ -k 'UC-SD-1' -v -s --html=cucumber_tests/reports/report.html --self-contained-html"
 ```
 
 ### Run a Specific Test File
 ```bash
-docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest tests/step_defs/test_sd_processing.py -v -s --html=tests/reports/report.html --self-contained-html"
+docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest cucumber_tests/step_defs/test_sd_processing.py -v -s --html=cucumber_tests/reports/report.html --self-contained-html"
 ```
 
 ## Step 3: View the Report
 
-Once the tests finish running, navigate to the `tests/reports` folder in your local project repository.
+Once the tests finish running, navigate to the `cucumber_tests/reports` folder in your local project repository.
 Open the `report.html` file in any web browser by double-clicking it. The report will show detailed information about passed, failed, and skipped scenarios, along with the logs for each step.
 
 ## Step 4: Cleanup (Optional)

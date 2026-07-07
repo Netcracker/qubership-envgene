@@ -1,7 +1,7 @@
 """
 Example of integrating qubership-envgene BDD tests into an external project.
 
-Copy this file into your project (e.g., tests/framework/workspace.py).
+Copy this file into your project (e.g., cucumber_tests/framework/workspace.py).
 """
 
 from pathlib import Path

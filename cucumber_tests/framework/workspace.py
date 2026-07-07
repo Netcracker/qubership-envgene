@@ -123,12 +123,14 @@ class EnvGeneWorkspace(BaseWorkspace):
         return result
 
     def run_pipeline(self, extra_env: dict = None):
+        project_root = str(Path(__file__).parent.parent.parent.resolve())
         env = {
             "ENV_NAMES": "test-cluster/test-env",
             "CLUSTER_NAME": "test-cluster",
             "ENVIRONMENT_NAME": "test-env",
             "FULL_ENV_NAME": "test-cluster/test-env",
-            "INSTANCES_DIR": str(self.environments_dir)
+            "INSTANCES_DIR": str(self.environments_dir),
+            "JSON_SCHEMAS_DIR": str(Path(project_root) / "schemas"),
         }
         if extra_env:
             env.update(extra_env)

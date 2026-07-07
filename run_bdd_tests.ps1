@@ -29,15 +29,15 @@ try {
     # 3. Build pytest command
     if ($Scenarios) {
         $ScenariosExpr = $Scenarios -replace '\s*,\s*', ' or '
-        $PytestCmd = "pytest tests/step_defs/test_environment_inventory_generation.py -k `"$ScenariosExpr`" -v -s"
+        $PytestCmd = "pytest cucumber_tests/step_defs/test_environment_inventory_generation.py -k `"$ScenariosExpr`" -v -s"
     } else {
-        $PytestCmd = "pytest tests/step_defs/test_environment_inventory_generation.py -v -s"
+        $PytestCmd = "pytest cucumber_tests/step_defs/test_environment_inventory_generation.py -v -s"
     }
 
     # 4. Execute pytest inside the container
     Write-Host "Executing BDD tests inside the container..." -ForegroundColor Yellow
     docker compose -f devtools/docker-compose.yml exec -T cucumber `
-        bash -c "export PYTHONPATH=/workspace:/envgene-src && cd /workspace && mkdir -p reports && $PytestCmd --junitxml=reports/eig.xml | tee e2e_tests.log"
+        bash -c "set -o pipefail; export PYTHONPATH=/workspace:/envgene-src && cd /workspace && mkdir -p reports && $PytestCmd --junitxml=reports/eig.xml | tee bdd_tests.log"
     $TestExitCode = $LASTEXITCODE
 
 } finally {
@@ -47,7 +47,7 @@ try {
 }
 
 if ($TestExitCode -ne 0) {
-    Write-Host "Tests FAILED. Check e2e_tests.log and reports/eig.xml for details." -ForegroundColor Red
+    Write-Host "Tests FAILED. Check bdd_tests.log and reports/eig.xml for details." -ForegroundColor Red
     exit $TestExitCode
 } else {
     Write-Host "All tests PASSED." -ForegroundColor Green

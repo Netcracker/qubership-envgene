@@ -39,7 +39,7 @@ run_all_tests:
   script:
     # Standard pytest run for the 'tests' folder where your step_defs and features reside
     - export PYTHONPATH=$CI_PROJECT_DIR
-    - pytest tests/ -v -s --junitxml=reports/all_tests.xml
+    - pytest cucumber_tests/ -v -s --junitxml=reports/all_tests.xml
 
 # ======================================================================
 # Example 2: Run specific test cases (single or multiple)
@@ -52,16 +52,16 @@ run_specific_tests:
     - export PYTHONPATH=$CI_PROJECT_DIR
     
     # Option A: Run a single specific python test file
-    - pytest tests/step_defs/test_project.py -v -s
+    - pytest cucumber_cucumber_tests/step_defs/test_project.py -v -s
     
     # Option B: Run a specific scenario by matching its name using -k flag
-    # - pytest tests/ -k "UC-PROJ-001" -v -s
+    # - pytest cucumber_tests/ -k "UC-PROJ-001" -v -s
     
     # Option C: Run multiple specific scenarios using an "or" condition with -k flag
-    # - pytest tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
+    # - pytest cucumber_tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
     
     # Option D: Run a specific scenario by its Gherkin tag (if marked with @critical)
-    # - pytest tests/ -m "critical" -v -s
+    # - pytest cucumber_tests/ -m "critical" -v -s
 
 # ======================================================================
 # Example 3: Run custom tests with HTML report generation
@@ -75,7 +75,7 @@ run_custom_tests_with_report:
     # Install additional dependencies for reports if needed
     - pip install pytest-html
     # Run tests located in a specific folder and generate a self-contained HTML report
-    - pytest tests/custom_checks/ --html=reports/custom_report.html --self-contained-html
+    - pytest cucumber_cucumber_tests/custom_checks/ --html=reports/custom_report.html --self-contained-html
   artifacts:
     when: always
     paths:
@@ -111,4 +111,4 @@ run_matrix_tests:
     # Pass cluster and environment parameters into tests via environment variables.
     # In features, you can use: And the pipeline parameter "ENV_NAMES" is set to "$CLUSTER_NAME/$ENV_NAME"
     # This requires a custom python step to read os.environ (if needed)
-    - pytest tests/ -v -s --junitxml=reports/matrix_${CLUSTER_NAME}_${ENV_NAME}.xml
+    - pytest cucumber_tests/ -v -s --junitxml=reports/matrix_${CLUSTER_NAME}_${ENV_NAME}.xml
