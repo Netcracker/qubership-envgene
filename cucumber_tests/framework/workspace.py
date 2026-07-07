@@ -5,6 +5,19 @@ from pathlib import Path
 from .data_builders import DataBuilder
 from .base_workspace import BaseWorkspace
 
+def delete_file_if_exists(path: Path) -> None:
+    """Remove a file if it exists, then assert it is gone."""
+    if path.exists():
+        path.unlink()
+    assert not path.exists()
+
+
+def create_file(path: Path, content: str = "name: test") -> None:
+    """Create a file (including parent dirs) with the given text content."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
+
+
 class EnvGeneWorkspace(BaseWorkspace):
     def __init__(self, tmp_path):
         self._base_dir = tmp_path
@@ -18,6 +31,10 @@ class EnvGeneWorkspace(BaseWorkspace):
         self.blueprints_dir = self._base_dir / "blueprints"
         self.environments_dir = self._base_dir / "environments"
         self.creds_dir = self.config_dir / "credentials"
+
+        # Default cluster/env names — can be overridden per-test via a Given step.
+        self.cluster_name = "test-cluster"
+        self.env_name = "test-env"
 
         for d in [self.config_dir, self.creds_dir, self._sboms_dir, self.inventory_dir, self.regdefs_dir, self.blueprints_dir, self.environments_dir]:
             d.mkdir(parents=True, exist_ok=True)
@@ -122,13 +139,34 @@ class EnvGeneWorkspace(BaseWorkspace):
         self.returncode = result.returncode
         return result
 
+    def entity_dir(self, subdir: str, scope: str, inventory: str = "Inventory") -> Path:
+        """Return the directory for an entity file by scope.
+
+        Args:
+            subdir:    entity subdirectory name, e.g. "parameters", "credentials", "resource_profiles".
+            scope:     "env", "cluster", or "site".
+            inventory: Inventory folder name inserted for env-scope entities (default: "Inventory").
+
+        Scope → path mapping:
+            env     → environments/<cluster>/<env>/Inventory/<subdir>
+            cluster → environments/<cluster>/<subdir>
+            site    → environments/<subdir>
+        """
+        base = self._base_dir / "environments"
+        if scope == "env":
+            return base / self.cluster_name / self.env_name / inventory / subdir
+        elif scope == "cluster":
+            return base / self.cluster_name / subdir
+        else:  # site
+            return base / subdir
+
     def run_pipeline(self, extra_env: dict = None):
         project_root = str(Path(__file__).parent.parent.parent.resolve())
         env = {
-            "ENV_NAMES": "test-cluster/test-env",
-            "CLUSTER_NAME": "test-cluster",
-            "ENVIRONMENT_NAME": "test-env",
-            "FULL_ENV_NAME": "test-cluster/test-env",
+            "ENV_NAMES": f"{self.cluster_name}/{self.env_name}",
+            "CLUSTER_NAME": self.cluster_name,
+            "ENVIRONMENT_NAME": self.env_name,
+            "FULL_ENV_NAME": f"{self.cluster_name}/{self.env_name}",
             "INSTANCES_DIR": str(self.environments_dir),
             "JSON_SCHEMAS_DIR": str(Path(project_root) / "schemas"),
         }

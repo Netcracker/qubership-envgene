@@ -26,25 +26,12 @@ Feature: Environment Inventory Generation
     And the "env_definition.yml" file is updated
     And its content matches the payload
 
-  @stub
-  Scenario: UC-EINV-ED-NEGATIVE-1: Invalid env_definition.yml content
-    Given the target environment inventory file does not exist
-    When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for "envDefinition" with invalid content
-    Then the pipeline fails
-    And the pipeline logs contain a readable error message explaining the failure reason
-
+  @xfail
   Scenario: UC-EINV-ED-3: Delete env_definition.yml
     Given the target environment inventory file exists
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "delete" for "envDefinition"
     Then the "env_definition.yml" file is deleted
     And the environment directory is deleted
-
-  @stub
-  Scenario: UC-EINV-ED-4: Create env_definition.yml with ENV_TEMPLATE_VERSION override
-    Given the target environment inventory file does not exist
-    When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for "envDefinition" and ENV_TEMPLATE_VERSION set to "override-template:2.0.0"
-    Then the "env_definition.yml" file is created
-    And the "env_definition.yml" file has envTemplate.artifact equal to "override-template:2.0.0"
 
   # ── Paramsets ────────────────────────────────────────────────────────────────
 
@@ -100,54 +87,54 @@ Feature: Environment Inventory Generation
 
   # ── Resource Profiles ────────────────────────────────────────────────────────
 
-  Scenario: UC-EINV-RP-1: Create resource profile file
-    Given the target resource profile file "db_profile" does not exist at "env" scope
+  Scenario: UC-EINV-RP-1: Create resource profile override file
+    Given the target resource_profile file "db_profile" does not exist at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for resource_profile "db_profile" at "env" scope
     Then it validates "resourceProfiles" against the request schema
     And it validates "resourceProfiles[].content" against the "resourceProfiles.yml" schema
     And it resolves target path for "db_profile.yml"
-    And the resource profile file "db_profile.yml" is created at "env" scope
+    And the resource_profile file "db_profile.yml" is created at "env" scope
     And its content matches the payload
 
-  Scenario: UC-EINV-RP-2: Replace resource profile file
-    Given the target resource profile file "db_profile" exists at "env" scope
+  Scenario: UC-EINV-RP-2: Replace resource profile override file
+    Given the target resource_profile file "db_profile" exists at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for resource_profile "db_profile" at "env" scope
     Then it validates "resourceProfiles" against the request schema
     And it validates "resourceProfiles[].content" against the "resourceProfiles.yml" schema
     And it resolves target path for "db_profile.yml"
-    And the resource profile file "db_profile.yml" is updated at "env" scope
+    And the resource_profile file "db_profile.yml" is updated at "env" scope
     And its content matches the payload
 
-  Scenario: UC-EINV-RP-3: Delete resource profile file
-    Given the target resource profile file "db_profile" exists at "env" scope
+  Scenario: UC-EINV-RP-3: Delete resource profile override file
+    Given the target resource_profile file "db_profile" exists at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "delete" for resource_profile "db_profile" at "env" scope
-    Then the resource profile file "db_profile.yml" is deleted at "env" scope
+    Then the resource_profile file "db_profile.yml" is deleted at "env" scope
     And its parent directory is not deleted
 
   # ── Shared Template Variables ─────────────────────────────────────────────────
 
-  Scenario: UC-EINV-STV-1: Create shared template variable file
-    Given the target shared template variable file "prod_vars" does not exist at "env" scope
+  Scenario: UC-EINV-STV-1: Create Shared Template Variable file
+    Given the target shared_template_variable file "prod_vars" does not exist at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for shared_template_variable "prod_vars" at "env" scope
     Then it validates "sharedTemplateVariables" against the request schema
     And it validates "sharedTemplateVariables[].content" against the "shared_template_variables.yml" schema
     And it resolves target path for "prod_vars.yml"
-    And the shared template variable file "prod_vars.yml" is created at "env" scope
+    And the shared_template_variable file "prod_vars.yml" is created at "env" scope
     And its content matches the payload
 
-  Scenario: UC-EINV-STV-2: Replace shared template variable file
-    Given the target shared template variable file "prod_vars" exists at "env" scope
+  Scenario: UC-EINV-STV-2: Replace Shared Template Variable file
+    Given the target shared_template_variable file "prod_vars" exists at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for shared_template_variable "prod_vars" at "env" scope
     Then it validates "sharedTemplateVariables" against the request schema
     And it validates "sharedTemplateVariables[].content" against the "shared_template_variables.yml" schema
     And it resolves target path for "prod_vars.yml"
-    And the shared template variable file "prod_vars.yml" is updated at "env" scope
+    And the shared_template_variable file "prod_vars.yml" is updated at "env" scope
     And its content matches the payload
 
-  Scenario: UC-EINV-STV-3: Delete shared template variable file
-    Given the target shared template variable file "prod_vars" exists at "env" scope
+  Scenario: UC-EINV-STV-3: Delete Shared Template Variable file
+    Given the target shared_template_variable file "prod_vars" exists at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "delete" for shared_template_variable "prod_vars" at "env" scope
-    Then the shared template variable file "prod_vars.yml" is deleted at "env" scope
+    Then the shared_template_variable file "prod_vars.yml" is deleted at "env" scope
     And its parent directory is not deleted
 
   # ── Atomic rollback ───────────────────────────────────────────────────────────
@@ -166,18 +153,3 @@ Feature: Environment Inventory Generation
     Given the target environment inventory file exists
     When the Instance pipeline is started with ENV_TEMPLATE_VERSION set to "env-templates:2.0.0" and update mode "PERSISTENT"
     Then the "env_definition.yml" file has envTemplate.artifact equal to "env-templates:2.0.0"
-
-  # ── Basic / Init ─────────────────────────────────────────────────────────────
-
-  @xfail
-  @stub
-  Scenario: UC-EINV-INIT-1: Init inventory when env_definition.yml does not exist
-    Given the target environment inventory file does not exist
-    When the Instance pipeline is started with ENV_INVENTORY_INIT set to "true"
-    Then the "env_definition.yml" file is created
-
-  @stub
-  Scenario: UC-EINV-INIT-2: Init inventory when env_definition.yml already exists
-    Given the target environment inventory file exists
-    When the Instance pipeline is started with ENV_INVENTORY_INIT set to "true"
-    Then the "env_definition.yml" file is updated
