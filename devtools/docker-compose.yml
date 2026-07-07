@@ -14,7 +14,7 @@ services:
     environment:
       <<: *base-env
     build:
-      dockerfile: devtools/local_runner/Dockerfile
+      dockerfile: devtools/tests/Dockerfile
       context: ../
 
   cucumber:
