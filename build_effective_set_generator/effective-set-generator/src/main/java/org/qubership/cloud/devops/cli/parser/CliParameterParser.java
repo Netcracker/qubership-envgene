@@ -296,8 +296,6 @@ public class CliParameterParser {
                     k8TokenMap,
                     customParams,
                     extCredEntities);
-            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, extCredEntities);
-            createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
             parameterBundle = parametersServiceV1.getCliParameter(tenantName,
                     cloudName,
@@ -335,21 +333,6 @@ public class CliParameterParser {
 
     private ExtCredEntities getExtCredEntities() {
         return ExtCredEntities.builder().isExternalOnly(inputData.isExternalOnly()).build();
-    }
-
-    private void createCleanupParams(ParameterBundle parameterBundle, ParameterBundle cleanupParameterBundle) {
-        if (cleanupParameterBundle.getCleanupParameters() == null) {
-            cleanupParameterBundle.setCleanupParameters(new HashMap<>());
-        }
-        if (cleanupParameterBundle.getCleanupSecureParameters() == null) {
-            cleanupParameterBundle.setCleanupSecureParameters(new HashMap<>());
-        }
-        if (MapUtils.isNotEmpty(cleanupParameterBundle.getCleanupSecureParameters()) &&
-                MapUtils.isNotEmpty(parameterBundle.getCustomTechParameters())) {
-            cleanupParameterBundle.getCleanupSecureParameters().putAll(parameterBundle.getCustomTechParameters());
-        }
-        parameterBundle.setCleanupParameters(cleanupParameterBundle.getCleanupParameters());
-        parameterBundle.setCleanupSecureParameters(cleanupParameterBundle.getCleanupSecureParameters());
     }
 
     private String findDefaultCredentialsId(String namespace) {
@@ -449,7 +432,7 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
 
             // cleanup parameters
-            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
+            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, getExtCredEntities());
             createCleanupParams(cleanupParameterBundle);
 
             String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
