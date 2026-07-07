@@ -5,8 +5,8 @@ from envgenehelper import logger, SD_FILE_NAME, OperationType
 from envgenehelper.effective_set_helper import GenerationMode
 from envgenehelper.env_helper import Environment
 
-from tests.base_test import BaseTest
-from tests.sd.test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
+from scripts.tests.base_test import BaseTest
+from scripts.tests.sd.test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
 
 os.environ['ENVIRONMENT_NAME'] = "temporary"
 os.environ['CLUSTER_NAME'] = "temporary"

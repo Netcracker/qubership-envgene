@@ -1,0 +1,139 @@
+name: Integration BDD Tests
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+env:
+  ENV_TEMPLATES_REPO: "https://github.com/your-org/env-templates.git"
+  ENV_INSTANCES_REPO: "https://github.com/your-org/env-instances.git"
+  # Use Personal Access Tokens (PAT) for private repositories
+  # GIT_AUTH_TOKEN: ${{ secrets.GIT_AUTH_TOKEN }}
+  BDD_DATA_DIR: ${{ github.workspace }}/test_data
+
+jobs:
+  # ======================================================================
+  # Example 1: Run all tests in the project (with Repo Cloning)
+  # ======================================================================
+  run-all-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/netcracker/qubership-envgene:latest
+    steps:
+      - name: Checkout project code
+        uses: actions/checkout@v4
+
+      - name: Prepare Test Data (Clone Repositories)
+        run: |
+          mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
+          
+          # Example for Private Repository with PAT:
+          # git clone https://${GIT_AUTH_TOKEN}@github.com/your-org/env-templates.git $BDD_DATA_DIR/templates
+          
+          # Example for Public Repository:
+          git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
+          git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances
+
+      - name: Run All Pytest Scenarios
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest tests/ -v -s --junitxml=reports/all_tests.xml
+
+  # ======================================================================
+  # Example 2: Run specific (single) test cases
+  # ======================================================================
+  run-specific-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/netcracker/qubership-envgene:latest
+    steps:
+      - name: Checkout project code
+        uses: actions/checkout@v4
+
+      - name: Prepare Test Data
+        run: |
+          mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
+          git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
+          git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances
+
+      - name: Run Specific Scenarios
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          # Option A: Run a single specific python test file
+          pytest tests/step_defs/test_project.py -v -s
+          
+          # Option B: Run a specific scenario by matching its name
+          # pytest tests/ -k "UC-PROJ-001" -v -s
+          
+          # Option C: Run multiple specific scenarios
+          # pytest tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
+
+  # ======================================================================
+  # Example 3: Run custom tests with HTML report generation
+  # ======================================================================
+  run-custom-tests-with-report:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/netcracker/qubership-envgene:latest
+    steps:
+      - name: Checkout project code
+        uses: actions/checkout@v4
+
+      - name: Prepare Test Data
+        run: |
+          mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
+          git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
+          git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances
+
+      - name: Run Custom Checks and Generate HTML Report
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pip install pytest-html
+          pytest tests/custom_checks/ --html=reports/custom_report.html --self-contained-html
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-html-report
+          path: reports/
+
+  # ======================================================================
+  # Example 4: Run an array (matrix) of tests
+  # ======================================================================
+  run-matrix-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/netcracker/qubership-envgene:latest
+    strategy:
+      matrix:
+        environment:
+          - cluster: dev-cluster
+            env: backend-env
+          - cluster: prod-cluster
+            env: frontend-env
+    steps:
+      - name: Checkout project code
+        uses: actions/checkout@v4
+
+      - name: Prepare Test Data for Matrix
+        run: |
+          export ISOLATED_DATA_DIR="$BDD_DATA_DIR/${{ matrix.environment.cluster }}/${{ matrix.environment.env }}"
+          mkdir -p $ISOLATED_DATA_DIR/templates $ISOLATED_DATA_DIR/instances
+          git clone $ENV_TEMPLATES_REPO $ISOLATED_DATA_DIR/templates
+          git clone $ENV_INSTANCES_REPO $ISOLATED_DATA_DIR/instances
+          # Write it to github env for the next step
+          echo "BDD_DATA_DIR=$ISOLATED_DATA_DIR" >> $GITHUB_ENV
+
+      - name: Run Pytest for Matrix Environment
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          # In your features, you can pass pipeline parameters using $CLUSTER/$ENV variables if your custom steps read them
+          CLUSTER_NAME: ${{ matrix.environment.cluster }}
+          ENV_NAME: ${{ matrix.environment.env }}
+        run: |
+          pytest tests/ -v -s --junitxml=reports/matrix_${{ matrix.environment.cluster }}_${{ matrix.environment.env }}.xml
