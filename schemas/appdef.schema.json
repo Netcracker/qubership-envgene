@@ -42,10 +42,11 @@
       "type": ["object","null"],
       "properties": {
         "helmReleaseNameStrategy": {
-          "type": "string"
+          "type": "string",
+          "enum": ["perApplication", "perVersion", "perDeployment"]
         }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     }
   },
   "required": [
@@ -58,4 +59,3 @@
     "technicalConfigurationParameters"
   ]
 }
-
