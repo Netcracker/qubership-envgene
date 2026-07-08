@@ -39,7 +39,7 @@
       }
     },
     "metaString": {
-      "type": ["object","null"],
+      "type": ["object", "null"],
       "properties": {
         "helmReleaseNameStrategy": {
           "type": "string"
@@ -58,4 +58,3 @@
     "technicalConfigurationParameters"
   ]
 }
-
