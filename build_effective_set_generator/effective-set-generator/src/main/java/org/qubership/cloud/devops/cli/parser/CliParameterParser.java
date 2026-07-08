@@ -39,9 +39,7 @@ import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
-import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
-import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
@@ -50,7 +48,6 @@ import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
-import org.qubership.cloud.devops.commons.utils.extcreds.ExternalCredUtils;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -60,7 +57,6 @@ import org.qubership.cloud.parameters.processor.service.ParametersCalculationSer
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -115,11 +111,10 @@ public class CliParameterParser {
             String credentialsId = findDefaultCredentialsId(namespaceName);
             if (StringUtils.isNotEmpty(credentialsId)) {
                 CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
-                String secret = "";
-                if (credentialDTO != null && credentialDTO.getData() instanceof SecretCredentialsDTO) {
-                    secret = ((SecretCredentialsDTO) credentialDTO.getData()).getSecret();
+                if (credentialDTO != null) {
+                    SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
+                    k8TokenMap.put(originalNamespace, secCred.getSecret());
                 }
-                k8TokenMap.put(originalNamespace, secret);
             }
         });
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
@@ -129,7 +124,7 @@ public class CliParameterParser {
                     String namespaceName = app.getNamespace();
                     try {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
-                        generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap, getExtCredEntities());
+                        generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
                         String deployPostFixDir = EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion() ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
                                 String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
                         String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
@@ -151,8 +146,7 @@ public class CliParameterParser {
                     }
                 });
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
-            generateE2EOutput(tenantName, cloudName, k8TokenMap, getExtCredEntities());
-            createExtContextFile();
+            generateE2EOutput(tenantName, cloudName, k8TokenMap);
             generateCleanedNamespacesOutput(tenantName, cloudName, namespaceDTOMap, deployMappingFileData, runtimeMappingFileData, cleanupMappingFileData, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
                 fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
@@ -171,16 +165,8 @@ public class CliParameterParser {
         }
 
     }
-    private void createExtContextFile() throws IOException {
-        if (inputData.isExternalOnly()) {
-            Path externalContextDir = Paths.get(sharedData.getOutputDir(), "external-credential");
-            Files.createDirectories(externalContextDir);
-            fileDataConverter.writeToFile(ExternalCredUtils.generateExternalCredentialsMap(), externalContextDir.toString(), "external-credentials.yaml");
-        }
-    }
-
-    private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities) throws IOException {
-        ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName, extCredEntities);
+    private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
+        ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName);
         if (parameterBundle.getE2eParams() == null) {
             parameterBundle.setE2eParams(new HashMap<>());
         }
@@ -202,9 +188,6 @@ public class CliParameterParser {
                 UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
                 bgDomainEntityDTO.getControllerNamespace().setUserName(usernamePasswordCredentials.getUsername());
                 bgDomainEntityDTO.getControllerNamespace().setPassword(usernamePasswordCredentials.getPassword());
-            } else if (credentialPojo instanceof ExternalCredentials) {
-                bgDomainEntityDTO.getControllerNamespace().setUserName("");
-                bgDomainEntityDTO.getControllerNamespace().setPassword("");
             }
         }
     }
@@ -283,7 +266,7 @@ public class CliParameterParser {
     }
 
     public ParameterBundle getParameterBundleByESVer(String tenantName, String cloudName, String namespaceName, String appName,
-                                   DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities){
+                                   DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap){
         ParameterBundle parameterBundle;
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             CustomParameterDTO customParams = getCustomParameters();
@@ -294,8 +277,7 @@ public class CliParameterParser {
                     deployerInputs,
                     originalNamespace,
                     k8TokenMap,
-                    customParams,
-                    extCredEntities);
+                    customParams);
         } else {
             parameterBundle = parametersServiceV1.getCliParameter(tenantName,
                     cloudName,
@@ -308,11 +290,11 @@ public class CliParameterParser {
         return parameterBundle;
     }
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
-                               String appVersion, String appFileRef, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities) throws IOException {
-        DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).deploySessionId(sharedData.getDeploymentSessionId()).build();
+                               String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
+        DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         ParameterBundle parameterBundle = getParameterBundleByESVer(tenantName, cloudName, namespaceName, appName,
-                deployerInputs, originalNamespace, k8TokenMap, extCredEntities);
+                deployerInputs, originalNamespace, k8TokenMap);
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
@@ -329,10 +311,6 @@ public class CliParameterParser {
         parameterDTO.setDeployParams(deployParams);
         parameterDTO.setTechnicalParams(techParams);
         return parameterDTO;
-    }
-
-    private ExtCredEntities getExtCredEntities() {
-        return ExtCredEntities.builder().isExternalOnly(inputData.isExternalOnly()).build();
     }
 
     private String findDefaultCredentialsId(String namespace) {
@@ -377,12 +355,6 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
-
-            //parameters with external creds
-            if (parameterBundle.getDeployParamsWithExtCreds() != null && !parameterBundle.getDeployParamsWithExtCreds().isEmpty()) {
-                fileDataConverter.writeToFile(parameterBundle.getDeployParamsWithExtCreds(), deploymentDir, "external-credentials.yaml");
-            }
-
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
@@ -432,7 +404,7 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
 
             // cleanup parameters
-            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, getExtCredEntities());
+            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(cleanupParameterBundle);
 
             String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);

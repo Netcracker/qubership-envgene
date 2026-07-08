@@ -1,7 +1,11 @@
 ---
 inventory:
+  environmentName: env
+  tenantName: sample-tenant
+  cloudName: cluster_env
   cloudPassport: cluster
-  deployer: deployer
+  description: External credentials sample
+  owners: sample
 envTemplate:
   name: external-cred-sample
-  artifact: env-template:1.0.0
+  artifact: deployment-configuration-env-templates:1.0.0

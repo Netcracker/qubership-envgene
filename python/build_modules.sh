@@ -26,4 +26,3 @@ if [ "$IS_LOCAL_DEV_TEST_ENVGENE" = "true" ]; then
 fi
 install_and_clean "envgene" "envgenehelper"
 install_and_clean "artifact-searcher" "artifact_searcher"
-install_and_clean "external-cred-provision" "external_cred_provision"

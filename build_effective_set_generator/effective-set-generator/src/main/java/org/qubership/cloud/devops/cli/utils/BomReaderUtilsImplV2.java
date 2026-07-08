@@ -39,14 +39,12 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import org.qubership.cloud.devops.commons.service.interfaces.RegistryConfigurationService;
 import org.qubership.cloud.devops.commons.utils.ServiceArtifactType;
-import org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants;
 
 import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
-import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.ESO_SUPPORT;
 
 @ApplicationScoped
 @Slf4j
@@ -81,11 +79,10 @@ public class BomReaderUtilsImplV2 {
                 ApplicationBomDTO applicationBomDto = component.getComponents()
                         .stream()
                         .map(subComp -> {
-                            String esoSupport = bomCommonUtils.getPropertyValue(subComp, ESO_SUPPORT);
                             RegistrySummaryDTO registrySummaryDTO = bomCommonUtils.getRegistrySummaryDTO(subComp, MAVEN_PATTERN);
                             String mavenRepoName = registryConfigurationService.getMavenRepoForApp(registrySummaryDTO);
                             return ApplicationBomDTO.builder().name(appName).artifactId(subComp.getName()).groupId(subComp.getGroup())
-                                    .version(subComp.getVersion()).mavenRepo(mavenRepoName).esoSupport(esoSupport).build();
+                                    .version(subComp.getVersion()).mavenRepo(mavenRepoName).build();
                         }).findFirst().orElse(null);
 
                 bomCommonUtils.getServiceEntities(entitiesMap, bomContent.getComponents());
@@ -104,7 +101,6 @@ public class BomReaderUtilsImplV2 {
                     applicationBomDto.setCommonDeployDescriptors(entitiesMap.getCommonParamsMap());
                     applicationBomDto.setAppChartName(entitiesMap.getAppChartName());
                     applicationBomDto.setDeployParams(entitiesMap.getDeployParams());
-                    applicationBomDto.setCollidingImageDeployParams(entitiesMap.getCollidingImageDeployParams());
                 }
                 return applicationBomDto;
             }
@@ -299,8 +295,6 @@ public class BomReaderUtilsImplV2 {
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
-        serviceParams.put("DEPLOYMENT_SESSION_ID", sharedData.getDeploymentSessionId());
-        serviceParams.put("MANAGED_BY", "argocd");
         serviceMap.put(component.getName(), serviceParams);
     }
 
@@ -317,7 +311,7 @@ public class BomReaderUtilsImplV2 {
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         serviceParams.put("DOCKER_TAG", dockerTag);
         serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
-        addImageParameters(component, entitiesMap.getDeployParams(), entitiesMap.getCollidingImageDeployParams(), entitiesMap.getServiceMap().keySet());
+        addImageParameters(component, entitiesMap.getDeployParams(), entitiesMap.getServiceMap().keySet());
 
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
@@ -332,21 +326,15 @@ public class BomReaderUtilsImplV2 {
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
-        serviceParams.put("DEPLOYMENT_SESSION_ID", sharedData.getDeploymentSessionId());
-        serviceParams.put("MANAGED_BY", "argocd");
         perServiceMap.put(component.getName(), serviceParams);
     }
 
-    private void addImageParameters(Component component, Map<String, String> deployParams, Map<String, Object> collidingImageDeployParams, Set<String> serviceNames) {
+    private void addImageParameters(Component component, Map<String, String> serviceParams, Set<String> serviceNames) {
         if (component.getMimeType().equalsIgnoreCase(APPLICATION_OCTET_STREAM)) {
             String key = getPropertyValue(component, "deploy_param", null, false, component.getName());
-            if (StringUtils.isNotEmpty(key)) {
+            if (StringUtils.isNotEmpty(key) && !serviceNames.contains(key)) {
                 String value = getPropertyValue(component, "full_image_name", null, false, component.getName());
-                if (serviceNames.contains(key)) {
-                    collidingImageDeployParams.put(key, value);
-                } else {
-                    deployParams.put(key, value);
-                }
+                serviceParams.put(key, value);
             }
         }
     }

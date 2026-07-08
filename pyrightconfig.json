@@ -4,8 +4,7 @@
     "./python/envgene",
     "./python/artifact-searcher",
     "./python/integration",
-    "./python/jschon-sort",
-    "./python/external-cred-provision"
+    "./python/jschon-sort"
   ],
   "pythonVersion": "3.12"
 }
