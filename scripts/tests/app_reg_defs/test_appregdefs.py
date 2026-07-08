@@ -2,8 +2,8 @@ import os
 import shutil
 from pathlib import Path
 
-from jinja2.exceptions import TemplateSyntaxError
 import pytest
+from jinja2.exceptions import TemplateSyntaxError
 
 from scripts.tests.base_test import BaseTest
 
@@ -106,3 +106,4 @@ class TestAppRegDefRendering(BaseTest):
         context_vars = self._get_render_context(test_number)
         with pytest.raises(expected_exception):
             render_context.process_app_reg_defs(self.env_name, context_vars)
+

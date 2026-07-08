@@ -36,7 +36,7 @@ jobs:
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
             "export PYTHONPATH=/workspace && \
              cd /workspace && \
-             pytest cucumber_tests/step_defs/test_environment_inventory_generation.py \
+             pytest tests/step_defs/test_environment_inventory_generation.py \
                -v -s \
                --junitxml=reports/environment_inventory_generation.xml \
                | tee /workspace/e2e_tests.log"

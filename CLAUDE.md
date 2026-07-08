@@ -1,61 +1,65 @@
-# EnvGene — Repository Overview
+# CLAUDE.md
 
-EnvGene is a git-native tool that generates and versions cloud environment configurations from Jinja2 templates. It bridges a **Template Repository** (Jinja templates) and an **Instance Repository** (per-environment generated YAML + credentials) to produce an **Effective Set** consumed by ArgoCD/deployers.
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
-## Module Map
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipeline/orchestrator.py::run_unified_pipeline`), not as separate per-job Docker images/scripts. Most job logic lives under `scripts/`.
+## 1. Think Before Coding
 
-| Directory | Purpose |
-|-----------|---------|
-| `scripts/` | Single-job pipeline: `pipeline/` (orchestrator + params), `build_env/`, `cloud_passport/`, `creds_rotation/`, `effective_set/`, `bg_manage/`, `inventory/`, `sd/`, `build_template/`, `utils/`, `tests/` |
-| `python/envgene/` | `envgenehelper` pip package — core Python library shared by all modules |
-| `python/artifact-searcher/` | Async Maven artifact URL resolver (multi-cloud auth) |
-| `build_effective_set_generator/` | Java/Maven multi-module project (Quarkus CLI) — the Effective Set generator engine, invoked from `scripts/effective_set/` via `scripts/utils/run_effective_set_cli.sh` |
-| `build_envgene/` | Docker image + scripts for `git_commit` (Python, `git_commit.py`) and credential diff minimization |
-| `schemas/` | JSON schemas for all EnvGene objects (validated at runtime) |
-| `docs/` | Comprehensive documentation — start with `docs/envgene-objects.md` and `docs/envgene-configs.md` |
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/CLAUDE.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `python/envgene/CLAUDE.md`).
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-## Core Concepts
+## 2. Simplicity First
 
-- **Template Repository** → Jinja2 templates for Tenant/Cloud/Namespace/Application objects, ParameterSets, ResourceProfiles, Registry/Application Definitions.
-- **Instance Repository** → `environments/<cluster>/<env>/` tree: `Inventory/env_definition.yml`, `Namespaces/`, `Credentials/credentials.yml`, `Inventory/solution-descriptor/sd.yaml`.
-- **Effective Set** → `effective-set/{topology,pipeline,deployment,runtime,cleanup}/` — final YAML for deployers.
-- **Solution Descriptor (SD)** — list of `application:version` + `deployPostfix` entries driving ES generation. Merge modes: `basic-merge`, `extended-merge`, `basic-exclusion-merge`, `replace`.
+**Minimum code that solves the problem. Nothing speculative.**
 
-## Key Environment Variables (runtime)
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-- `CI_PROJECT_DIR` — root of the instance repository
-- `FULL_ENV_NAME` — `<cluster>/<env-name>`; `CLUSTER_NAME` and `ENVIRONMENT_NAME` are its split parts
-- `SECRET_KEY` — Fernet encryption key; `ENVGENE_AGE_PRIVATE_KEY` / `PUBLIC_AGE_KEYS` for SOPS/AGE
-- `SD_DATA` / `SD_VERSION` / `SD_REPO_MERGE_MODE` — Solution Descriptor inputs
-- `EFFECTIVE_SET_CONFIG` — JSON config for the ES generator
-- `ENV_NAMES` — multi-value `<cluster>/<env>` list for batch operations
-- `ENVGENE_LOG_LEVEL` — logging verbosity
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-## Credentials
+## 3. Surgical Changes
 
-All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. Encryption backend is configured in `configuration/config.yml` (`crypt_backend: Fernet | SOPS`). The `type` field is never encrypted.
+**Touch only what you must. Clean up only your own mess.**
 
-## Tests
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
 
-Each Python sub-package has its own pytest suite. Run from its directory:
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-```bash
-cd python/envgene && python -m pytest
-cd build_envgene/scripts && python -m pytest
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
-The single-job pipeline scripts under `scripts/` are tested from the repository root with `scripts/` on `PYTHONPATH` (matches CI's `PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/scripts`; see `scripts/CLAUDE.md`):
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-```bash
-PYTHONPATH=".:./scripts" python -m pytest scripts/tests/
-```
+---
 
-The Effective Set generator is a Maven project; from `build_effective_set_generator/`:
-
-```bash
-./mvnw test
-```
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
