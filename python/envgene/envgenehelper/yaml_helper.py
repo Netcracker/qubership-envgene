@@ -431,8 +431,16 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
     print("\n========== YAML ==========")
     pprint.pp(yaml_content)
 
-    print("\n========== metadata schema ==========")
-    pprint.pp(schema_content["definitions"]["metaString"])
+    print("\n========== SCHEMA ==========")
+    pprint.pp(schema_content)
+
+    if "definitions" in schema_content:
+        print("\n========== DEFINITIONS ==========")
+        pprint.pp(schema_content["definitions"])
+
+        if "metaString" in schema_content["definitions"]:
+            print("\n========== metaString ==========")
+            pprint.pp(schema_content["definitions"]["metaString"])
 
     if schemas_dir:
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
