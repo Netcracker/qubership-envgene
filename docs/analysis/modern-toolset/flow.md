@@ -22,7 +22,7 @@
       - [2.2. step `credential_rotation`](#22-step-credential_rotation)
       - [2.3. step `bg_manage`](#23-step-bg_manage)
       - [2.4. step `env_inventory_generation`](#24-step-env_inventory_generation)
-      - [2.5. step `run_cloud_passport`](#25-step-run_cloud_passport)
+      - [2.5. step `cloud_passport_process`](#25-step-cloud_passport_process)
       - [2.6. step `registry_discovery`](#26-step-registry_discovery)
       - [2.7. step `app_reg_def_process`](#27-step-app_reg_def_process)
       - [2.8. step `process_sd`](#28-step-process_sd)
@@ -32,7 +32,7 @@
       - [2.12. step `generate_argocd_repo`](#212-step-generate_argocd_repo)
       - [2.13. step `postprocess`](#213-step-postprocess)
       - [2.14. step `git_commit`](#214-step-git_commit)
-      - [2.15. step `es-pusher`](#215-step-es-pusher)
+      - [2.15. step `es_pusher`](#215-step-es_pusher)
     - [3. job `cmdb_import`](#3-job-cmdb_import)
       - [3.1. step `cmdb_import`](#31-step-cmdb_import)
     - [4. job `sync`](#4-job-sync)
@@ -45,21 +45,17 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 1. `run_cloud_passport` (берет паспорт из даунстри джобы и декриптит) уже в `env_prepare`?
 2. `generate_deployment_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
+3. В бгд кейсе что должно быть в `namespace-map.yml` в `deployPostfix` - bss или bss-peer, bss-origin
 
 ## AI
 
-1. Agree with Kristina DD and zip layout
-2. Agree with Lenya on using the dynamic pipeline
-3. Agree with Lenya/Tema on the `process_dp` function
-4. Discuss with Tema encrypting ARGO_DPG_CONTEXT.env via crypt, not DPG
-5. [phase2] Consider create_if_not_exist | replace strategies for appregdef processing
-6. [phase2] Design integration with the central appregdef storage
-7. [phase2] Design SAVE_ARTIFACTS_STRATEGY
+1. [phase2] Consider create_if_not_exist | replace strategies for appregdef processing
+2. [phase2] Design integration with the central appregdef storage
+3. [phase2] Design SAVE_ARTIFACTS_STRATEGY
     1. save env_instance/ES/sd.yaml to a job artifact on SAVE_ALL
-8. Design `git_commit`
+4. Design `git_commit`
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES/sd.yaml or not
-9. [after the flow is finalized] analyze the flow for file-read optimization
-    (remove redundant reads/writes, cache within one process)
+5. After the flow is finalized analyze the flow for optimization
 
 ## Data exchange Rules
 
@@ -80,28 +76,27 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 ## Artifacts
 
-Producers and consumers are Target Flow step numbers. Low numbers `3` and `4` in the consumers column are the
+Producers and consumers are `job.step` numbers from the flow below.
 deploy-stage jobs `cmdb_import` and `sync`, not sub-steps.
 
-| Artifact                  | Path                                                                          | Producers      | Consumers              |
-|---------------------------|-------------------------------------------------------------------------------|----------------|------------------------|
-| env_definition            | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/env_definition.yml` | 7, 10, 22      | 9, 10, 11, 12, 22      |
-| cloud passport            | `${CI_PROJECT_DIR}/environments/<cluster>/cloud-passport/`                    | 8              | 11, 22                 |
-| artdef                    | `${CI_PROJECT_DIR}/configuration/artifact_definitions/`                       | 9              | 10                     |
-| downloaded template files | `${CI_PROJECT_DIR}/tmp/` (common), `tmp/origin/`, `tmp/peer/`                 | 10             | 12, 13, 14, 16, 18, 22 |
-| namespace-map.yml         | `${CI_PROJECT_DIR}/tmp/render-context/namespace-map.yml`                      | 15             | 20, 21, 22, external   |
-| env instance              | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/`                             | 13, 14, 16, 22 | 18, 26, 29, 3          |
-| appreg defs               | env instance appregdef files                                                  | 18             | 19, 20, 23, 24         |
-| sd.yaml                   | Inventory/solution-descriptor/sd.yaml                                         | 19             | 19, 21, 23, 26         |
-| delta_sd.yaml             | Inventory/solution-descriptor/delta_sd.yaml                                   | 19             | 26                     |
-| deploy-plan.yml           | deploy-plan.yml                                                               | 20             | 21, 23, 26, 27         |
-| DD and zip                | `${APP_ARTIFACTS_DIR}`                                                        | 23             | 24, 27                 |
-| sboms                     | sboms/                                                                        | 24             | 26, committed          |
-| effective set             | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/effective-set/`               | 26             | 27, 30                 |
-| appset/app CR             | TBD                                                                           | 27             | 30                     |
-| build.env                 | `${CI_PROJECT_DIR}/build.env`                                                 | 1              | 20, 27, 30, 3, 4       |
-| ARGO_DPG_CONTEXT.env      | TBD                                                                           | 27             | 4                      |
-| system config             | TBD                                                                           | TBD            | 9, 18                  |
+| Artifact                  | Path                                                                          | Producers      | Consumers                 |
+|---------------------------|-------------------------------------------------------------------------------|----------------|---------------------------|
+| env_definition            | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/env_definition.yml` | 2.4, 2.7, 2.10 | 2.6, 2.7, 2.10            |
+| cloud passport            | `${CI_PROJECT_DIR}/environments/<cluster>/cloud-passport/`                    | 2.5            | 2.7, 2.10                 |
+| artdef                    | `${CI_PROJECT_DIR}/configuration/artifact_definitions/`                       | 2.6            | 2.7                       |
+| downloaded template files | `${CI_PROJECT_DIR}/tmp/` (common), `tmp/origin/`, `tmp/peer/`                 | 2.7            | 2.7, 2.10                 |
+| namespace-map.yml         | `${CI_PROJECT_DIR}/tmp/render-context/namespace-map.yml`                      | 2.7            | 2.9                       |
+| env instance              | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/`                             | 2.7, 2.10      | 2.7, 2.11, 2.14, 3.1      |
+| appreg defs               | env instance appregdef files                                                  | 2.7            | 2.8, 2.9, 2.11            |
+| sd.yaml                   | Inventory/solution-descriptor/sd.yaml                                         | 2.8            | 2.8, 2.10, 2.11           |
+| deploy-plan.yml           | deploy-plan.yml                                                               | 2.9            | 2.10, 2.11, 2.12          |
+| DD and zip                | `${APP_ARTIFACTS_DIR}`                                                        | 2.11           | 2.11, 2.12                |
+| sboms                     | sboms/                                                                        | 2.11           | 2.11, committed           |
+| effective set             | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/effective-set/`               | 2.11           | 2.12, 2.15                |
+| appset/app CR             | TBD                                                                           | 2.12           | 2.15                      |
+| build.env                 | `${CI_PROJECT_DIR}/build.env`                                                 | 2.1            | 2.9, 2.12, 2.15, 3.1, 4.1 |
+| ARGO_DPG_CONTEXT.env      | TBD                                                                           | 2.12           | 4.1                       |
+| system config             | TBD                                                                           | TBD            | 2.6, 2.7                  |
 
 ## Defaults
 
@@ -147,7 +142,20 @@ ${APP_ARTIFACTS_DIR}/
 
 ## `namespace-map.yml`
 
-TBD
+Flat map keyed by the `deployPostfix`, value the rendered namespace name:
+
+```yaml
+<deployPostfix>: <namespace-name> 
+```
+
+Example:
+
+```yaml
+# composite
+core: env-1-core
+oss: env-1-oss 
+bss: env-1-bss
+```
 
 ## `ctx.current_env`
 
@@ -331,7 +339,7 @@ TBD
 - [phase1] unchanged
 - AI[phase2]: check UC readiness and test coverage
 
-#### 2.5. step `run_cloud_passport`
+#### 2.5. step `cloud_passport_process`
 
 Triggers:
 
@@ -399,7 +407,7 @@ Functions:
       - download env template
     - [phase1] unchanged
     - AI[phase1]: fix the template-version-setting bug
-2. `env_build.compute_template_macros` (ex `render_config_env.generate_config`)
+2. `compute_template_macros` (`render_config_env.generate_config`)
     - input:
       - env_definition
       - cloud passport
@@ -411,7 +419,7 @@ Functions:
     - actions:
       - generates the macro values above
     - AI[phase2]: rename `generate_config` -> `compute_template_macros`
-3. `env_build.load_template_descriptor` (ex `render_config_env.set_env_templates`)
+3. `load_template_descriptor` (`render_config_env.set_env_templates`)
     - input:
       - env_definition
       - downloaded template files
@@ -423,7 +431,7 @@ Functions:
       - load into `current_env_template`
       - repeat for the peer/origin dirs
     - AI[phase2]: rename `set_env_templates` -> `load_template_descriptor`
-4. `env_build.render_bgd` (ex `render_config_env.generate_bgd_file`)
+4. `generate_bgd_file`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -433,8 +441,7 @@ Functions:
     - actions:
       - renders the bg domain into the env instance
       - no-op if no bg domain
-    - AI[phase2]: rename `generate_bgd_file` -> `render_bgd`
-5. `env_build.render_namespaces` (ex `render_config_env.generate_namespace_files`)
+5. `generate_namespace_files`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -443,8 +450,7 @@ Functions:
       - rendered namespaces into env instance
     - actions:
       - render all namespaces into env instance
-    - AI[phase2]: rename `generate_namespace_files` -> `render_namespaces`
-6. `env_build.compute_namespace_map` (new)
+6. `compute_namespace_map` (new)
     - input:
       - `FULL_ENV_NAME`
       - rendered namespace in env instance
@@ -455,7 +461,7 @@ Functions:
       - read rendered namespace name + deployPostfix for each env namespace
       - calculate deployPostfix to namespace mapping (incl. BG suffix)
     - AI[phase1]: create the function
-7. `env_build.render_composite_structure` (ex `render_config_env.generate_composite_structure`)
+7. `generate_composite_structure`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -464,8 +470,7 @@ Functions:
       - rendered composite structure into env instance
     - actions:
       - render the composite structure template, validate (no-op if none)
-    - AI[phase2]: rename `generate_composite_structure` -> `render_composite_structure`
-8. `env_build.compute_composite_topology` (new)
+8. `compute_composite_topology` (new)
     - input:
       - rendered composite structure into env instance
       - rendered bg domain into env instance
@@ -475,7 +480,7 @@ Functions:
     - actions:
       - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
     - AI[phase2]: adopt the macro computation from master
-9. `app_reg_def_process` (ex `run_appregdef_render`)
+9. `run_appregdef_render`
     - input:
       - downloaded template files
       - env instance
@@ -490,7 +495,6 @@ Functions:
     - [phase1] unchanged
     - AI[phase2]: renders only required appregdef
     - AI[phase2]: implement create_if_not_exist | replace strategies
-    - AI[phase2]: rename `run_appregdef_render` -> `app_reg_def_process`
 
 #### 2.8. step `process_sd`
 
@@ -500,24 +504,22 @@ Triggers:
 
 Functions:
 
-TBD
-
-- input:
-  - `SD_VERSION`
-  - `SD_DATA`
-  - `SD_SOURCE_TYPE`
-  - `SD_REPO_MERGE_MODE`
-  - sd.yaml
-  - appreg defs
-- output:
-  - updated sd.yaml
-  - delta_sd.yaml
-- actions:
-  - merge sd
-- [phase1] unchanged
-- AI[phase1]: do not call in the new flow, call in the old flow
-- AI[phase2]: remove `SD_SOURCE_TYPE`
-- AI[phase2]: rename `handle_sd` -> `process_sd`
+1. `handle_sd`
+    - input:
+      - `SD_VERSION`
+      - `SD_DATA`
+      - `SD_SOURCE_TYPE`
+      - `SD_REPO_MERGE_MODE`
+      - sd.yaml
+      - appreg defs
+    - output:
+      - updated sd.yaml
+      - delta_sd.yaml
+    - actions:
+      - merge sd
+    - [phase1] unchanged
+    - AI[phase1]: do not call in the new flow, call in the old flow
+    - AI[phase2]: remove `SD_SOURCE_TYPE`
 
 #### 2.9. step `generate_deployment_plan`
 
@@ -531,8 +533,8 @@ Functions:
     - input:
       - `APPLICATION_VERSION`
       - params.environment_id -> `build.env.FULL_ENV_NAME`
-      - app defs (для СД)
-      - namespace_map (`namespace-map.yml`)
+      - app defs
+      - `namespace-map.yml`
       - filters:
         - `DEPLOY_POSTFIXES_FILTER`
         - `NAMESPACE_NAMES_FILTER`
@@ -546,8 +548,6 @@ Functions:
       - enrich DP, plan map (namespace_map)
       - filter DP, plan filter (filter vars)
     - AI[phase1]: do not call in the old flow, call in the new flow
-    - AI[phase1]: create the function
-    - AI[phase1]: change input for enrich from ES to namespace_map (Artem)
     - AI[phase1]: move to GitHub
 
 #### 2.10. step `env_build`
@@ -559,25 +559,22 @@ Triggers:
 
 Functions:
 
-1. `env_build.compute_solution_structure` (ex `generate_solution_structure`)
+1. `generate_solution_structure`
     - input:
       - `sd.yaml` or `deploy-plan.yml`
-      - `namespace-map.yml`
     - output:
       - `ctx.current_env.solution_structure`
     - actions:
       - join applications by deployPostfix with namespace_map
       - no-op if no `sd.yaml` or `deploy-plan.yml`
     - AI[phase1]: support DP as well as SD
-2. `env_build` (ex `run_build_environment`)
-    - render chain: `.render_tenant` -> `.render_cloud` -> `process_cloud_passport`
-      -> `.create_external_credentials` -> `.render_paramsets` -> `.create_credentials` -> `apply_ns_build_filter`
+    - AI[phase2]: add `namespace-map.yml` as input to optimize execution time
+2. `run_build_environment`
     - input:
       - downloaded template files
       - env_definition
       - `ctx.current_env`
       - `ctx.current_env_template`
-      - `namespace-map.yml` (?)
       - `ctx.current_env.composite_topology`
       - `ctx.current_env.solution_structure`
       - cloud passport
@@ -585,17 +582,16 @@ Functions:
       - fully rendered env instance
       - updated env_definition
     - actions:
-      - `.render_tenant` (ex `generate_tenant_file`)
-      - `.render_cloud` (ex `generate_cloud_file`)
+      - `.generate_tenant_file`
+      - `.generate_cloud_file`
       - `process_cloud_passport`: merge cloud_passport into the rendered `cloud.yml`
       - `.create_external_credentials`
-      - `.render_paramsets` (ex `generate_paramset_templates`)
+      - `.generate_paramset_templates`
       - `.create_credentials`
-      - `apply_ns_build_filter` (prefer to keep as is)
+      - `apply_ns_build_filter`
     - [phase1] unchanged
     - AI[phase1]: test manually
     - AI[phase2]: prepare a UC, add tests
-    - AI[phase2]: rename render_config_env `generate_*` methods to `env_build.render_*`
 
 #### 2.11. step `generate_effective_set`
 
@@ -665,9 +661,9 @@ Functions:
       - dotenv ARGO_DPG_CONTEXT.env
     - actions:
       - TBD
-    - AI[Tema]: remove DP generation
-    - AI[Tema]: add local DD
-    - AI[Tema]: encrypt ARGO_DPG_CONTEXT.env
+    - AI[phase1]: remove DP generation (Artem)
+    - AI[phase1]: add local DD (Artem)
+    - AI[phase1]: encrypt ARGO_DPG_CONTEXT.env (Artem)
     - AI[phase2]: move to GitHub
 
 #### 2.13. step `postprocess`
@@ -696,7 +692,7 @@ Functions:
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
 
-#### 2.15. step `es-pusher`
+#### 2.15. step `es_pusher`
 
 Triggers:
 
