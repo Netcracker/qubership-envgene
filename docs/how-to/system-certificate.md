@@ -26,15 +26,15 @@ For other certificate sources and how EnvGene merges them, see
 > usually fits. For larger bundles, store certificate files in `ca_bundle` or `configuration/certs` instead (see
 > [Certificate sources](/docs/features/system-certificate.md#certificate-sources)).
 
-> [!IMPORTANT]
-> If `SSL_CERTIFICATES_BUNDLE` is set but invalid, the job fails. See
-> [Certificate validation](/docs/features/system-certificate.md#certificate-validation).
-
 ## Prerequisites
 
 - Maintainer access (or equivalent) to the GitLab project that hosts the instance repository pipeline.
 - A PEM file with the CA certificate or certificate chain your pipeline must trust (for example `ca-bundle.pem`).
 - The instance repository pipeline is configured and can run EnvGene jobs.
+
+> [!IMPORTANT]
+> If `SSL_CERTIFICATES_BUNDLE` is set but invalid, the job fails. See
+> [Certificate validation](/docs/features/system-certificate.md#certificate-validation).
 
 ## Steps
 

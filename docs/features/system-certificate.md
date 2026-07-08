@@ -47,7 +47,7 @@ Goals:
 
 1. Provide a consistent way to manage certificates across all environments
 2. Automate certificate installation during pipeline execution
-3. Support PEM CA certificate formats (`.crt`, `.pem`, and other file names in folder sources)
+3. Support PEM CA certificate formats (`.crt`, `.pem`, and other filenames in folder sources)
 4. Remove the need for manual certificate management on build agents
 
 ## Approach
@@ -75,8 +75,8 @@ store.
 EnvGene validates certificate content from each non-empty source before installation. The flow below applies to all
 sources. For `SSL_CERTIFICATES_BUNDLE`, EnvGene base64-decodes the variable value first.
 
-1. **Obtain PEM content** - For `ca_bundle` and `configuration/certs`, EnvGene reads every file in the folder (any file
-   name or extension). For `SSL_CERTIFICATES_BUNDLE`, EnvGene uses the decoded variable value.
+1. **Obtain PEM content** - For `ca_bundle` and `configuration/certs`, EnvGene reads every file in the folder (any
+   filename or extension). For `SSL_CERTIFICATES_BUNDLE`, EnvGene uses the decoded variable value.
 2. **Detect a PEM certificate block** - Content must contain `-----BEGIN CERTIFICATE-----`.
    - Folder file without the block: EnvGene skips the file and emits a warning in the job log.
    - `SSL_CERTIFICATES_BUNDLE` without the block after decode: the job fails with an explicit error. Certificates from
@@ -127,7 +127,7 @@ flowchart TD
 - **CA certificates**: Root or intermediate certificates used to validate server certificates. PEM content is identified
   by `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` boundaries.
 
-File names such as `ca-*.pem` or `ca-*.crt` are conventions only. For how folder sources are evaluated, see
+Filenames such as `ca-*.pem` or `ca-*.crt` are conventions only. For how folder sources are evaluated, see
 [Certificate validation](#certificate-validation).
 
 ### Certificate chain ordering
@@ -282,7 +282,7 @@ EnvGene uses a certificate handling script that:
 
 1. Detects the operating system of the runner
 2. Validates certificate content from each non-empty source as described in [Certificate validation](#certificate-validation)
-3. Copies each valid certificate to the OS trust directory under a normalised `<basename>.crt` file name:
+3. Copies each valid certificate to the OS trust directory under a normalised `<basename>.crt` filename:
    - Debian/Ubuntu: `/usr/local/share/ca-certificates/`
    - CentOS/Red Hat: `/etc/pki/ca-trust/source/anchors/`
    - Alpine: `/usr/local/share/ca-certificates/`
