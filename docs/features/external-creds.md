@@ -1123,8 +1123,6 @@ Provisioning is the act of materializing each external [Credential](#credential)
 that context and applies the strategy attached to each entry.
 
 The CLI is specified in [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
-Package name, installation, and command synopsis are in
-[Package and installation](/docs/features/external-creds-provisioning-cli.md#package-and-installation).
 This section describes how EnvGene generates the context and invokes the CLI.
 
 #### Invocation scenarios
