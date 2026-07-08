@@ -121,7 +121,7 @@ envTemplate:
   
   # Override deployment parameters
   envSpecificParamsets:
-    billing:                    # Namespace identifier
+    billing:                    # Namespace folder name
       - billing-prod-deploy     # ParameterSet name (without .yml)
 ```
 
