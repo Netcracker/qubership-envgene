@@ -39,14 +39,13 @@
       }
     },
     "metaString": {
-      "type": ["object","null"],
+      "type": ["object", "null"],
       "properties": {
         "helmReleaseNameStrategy": {
-          "type": "string",
-          "enum": ["perApplication", "perVersion", "perDeployment"]
+          "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
   "required": [
@@ -59,4 +58,3 @@
     "technicalConfigurationParameters"
   ]
 }
-
