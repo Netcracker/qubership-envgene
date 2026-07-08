@@ -9,8 +9,8 @@ supports dry-run mode for CI validation without writes.
 
 ## Features
 
-- Provisions credentials into HashiCorp Vault, OpenBao, Google Cloud Secret Manager, and AWS Secrets
-  Manager
+- Provisions credentials into HashiCorp Vault, OpenBao, Azure Key Vault, Google Cloud Secret Manager,
+  and AWS Secrets Manager
 - Idempotent strategies: verify presence, create when absent, or overwrite
 - Generates secret values when a field is marked with the reserved `_generateValue` marker
 - Dry-run mode for pre-flight checks before apply
@@ -66,12 +66,13 @@ top-level `credentials` map.
 
 Store type is inferred from each credential's VALS reference scheme:
 
-| VALS scheme prefix   | Store                         |
-|----------------------|-------------------------------|
-| `ref+vault://`       | HashiCorp Vault               |
-| `ref+openbao://`     | OpenBao                       |
-| `ref+gcpsecrets://`  | Google Cloud Secret Manager   |
-| `ref+awssecrets://`  | AWS Secrets Manager           |
+| VALS scheme prefix     | Store                         |
+|------------------------|-------------------------------|
+| `ref+vault://`         | HashiCorp Vault               |
+| `ref+openbao://`       | OpenBao                       |
+| `ref+azurekeyvault://` | Azure Key Vault               |
+| `ref+gcpsecrets://`    | Google Cloud Secret Manager   |
+| `ref+awssecrets://`    | AWS Secrets Manager           |
 
 ## Provisioning strategies
 
