@@ -1,0 +1,35 @@
+---
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.cluster-01.qubership.org
+  CLOUD_API_PORT: "6443"
+  CLOUD_DEPLOY_TOKEN: app-sidecar-token
+  CLOUD_PUBLIC_HOST: cluster-01.qubership.org
+  CLOUD_PRIVATE_HOST: cluster-01.qubership.org
+  CLOUD_DASHBOARD_URL: https://dashboard.cluster-01.qubership.org
+  CLOUD_PROTOCOL: https
+  PRODUCTION_MODE: false
+  CMDB_URL: https://cluster-01.qubership.org
+dbaas:
+  API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
+  DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
+    $type: "credRef"
+    credId: "app-dbaas-cred"
+    property: "username"
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
+    $type: "credRef"
+    credId: "app-dbaas-cred"
+    property: "password"
+maas:
+  MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
+  MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
+  MAAS_CREDENTIALS_USERNAME: ${creds.get("app-maas-cred").username}
+  MAAS_CREDENTIALS_PASSWORD: ${creds.get("app-maas-cred").password}
+consul:
+  CONSUL_URL: http://consul.consul:8080
+  CONSUL_ENABLED: true
+  CONSUL_PUBLIC_URL: http://consul.consul:8080
+  CONSUL_ADMIN_TOKEN: ${creds.get("app-sidecar-token").secret}
+global:
+  MONITORING_ENABLED: "true"

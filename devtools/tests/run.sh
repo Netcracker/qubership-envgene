@@ -26,5 +26,6 @@ run_pytest_suite bg_manage scripts/bg_manage
 run_pytest_suite build_env scripts/build_env
 run_pytest_suite cred_rotation creds_rotation/scripts
 run_pytest_suite sbom_retention build_effective_set_generator/scripts
+run_pytest_suite external_cred_provision python/external-cred-provision
 
 junitparser merge junit_*.xml junit.xml
