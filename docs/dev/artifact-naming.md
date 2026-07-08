@@ -10,7 +10,8 @@
 
 ## Artifact Names
 
-Artifact names (artifact ID for Maven artifacts, Docker image names, PyPI distribution names, etc.) match the component name:
+Artifact names (artifact ID for Maven artifacts, Docker image names, PyPI distribution names, etc.) match
+the component name:
 
 - `qubership-envgene`
 - `qubership-pipegene`
@@ -18,7 +19,8 @@ Artifact names (artifact ID for Maven artifacts, Docker image names, PyPI distri
 - `qubership-instance-repo-pipeline`
 - `qubership-external-cred-provision`
 
-The installed CLI command for `qubership-external-cred-provision` is `external-cred-provision` (shorter than the PyPI distribution name).
+The installed CLI command for `qubership-external-cred-provision` is `external-cred-provision` (shorter
+than the PyPI distribution name).
 
 ## PyPI packages
 
@@ -32,7 +34,8 @@ EnvGene publishes the External Credentials provisioning CLI to the public PyPI i
 
 Published with [External Credentials CLI PyPI publish workflow](/docs/dev/external-cred-provision-pypi-publish-workflow.md).
 
-Release versions use strict SemVer `X.Y.Z` with no `v` prefix and no prerelease suffix. That differs from Docker image tags, which use a `v` prefix.
+Release versions use strict SemVer `X.Y.Z` with no `v` prefix and no prerelease suffix. That differs from
+Docker image tags, which use a `v` prefix.
 
 Install a released version:
 
