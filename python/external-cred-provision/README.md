@@ -112,13 +112,6 @@ Broader EnvGene external-credentials design (context generation, Effective Set i
 
 [External Credentials Management](https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/external-creds.md)
 
-## PyPI releases
-
-Maintainers publish this package with the
-[External Credentials CLI PyPI publish workflow](/docs/dev/external-cred-provision-pypi-publish-workflow.md).
-Artifact naming conventions are documented in
-[Artifact naming conventions](/docs/dev/artifact-naming.md).
-
 ## License
 
 Apache License 2.0. See the [LICENSE](https://github.com/Netcracker/qubership-envgene/blob/main/LICENSE) file in the EnvGene repository.

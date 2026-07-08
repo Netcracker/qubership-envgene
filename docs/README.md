@@ -70,6 +70,8 @@
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories (including BG support)
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO in the Effective Set, and External Credential Context
+- [**External Credentials provisioning CLI**](/docs/features/external-creds-provisioning-cli.md) -
+   `external-cred-provision` CLI for secret store writes
 - [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
@@ -89,10 +91,4 @@
 
 ## Development
 
-- [**Artifact naming conventions**](/docs/dev/artifact-naming.md) - Docker, Maven, PyPI, and GitHub Actions
-   artifact names and version formats
-- [**External Credentials CLI PyPI publish workflow**](/docs/dev/external-cred-provision-pypi-publish-workflow.md) -
-   Build, test, and publish `qubership-external-cred-provision` to PyPI
-- [**Docker build workflow**](/docs/dev/docker-build-workflow.md) - On-commit and manual Docker image builds
-- [**Creating a change request**](/docs/dev/creating-cr.md) - Change request template and convention for
-   implementation issues
+- [**Development Guides**](/docs/dev/) - Development setup and guidelines
