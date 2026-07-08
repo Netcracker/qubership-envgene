@@ -5,11 +5,11 @@ variables:
   # Set the URLs of your repositories (these can also be set in CI/CD settings)
   ENV_TEMPLATES_REPO: "https://gitlab.example.com/my-group/env-templates.git"
   ENV_INSTANCES_REPO: "https://gitlab.example.com/my-group/env-instances.git"
-  
+
   # Tokens or keys for cloning private repositories (set these as Protected CI/CD variables)
   # GIT_AUTH_USER: "gitlab-ci-token"
   # GIT_AUTH_PASSWORD: "$CI_JOB_TOKEN" # Or your Personal Access Token
-  
+
   # Directory where repositories will be cloned and where the framework will look for them
   BDD_DATA_DIR: "$CI_PROJECT_DIR/test_data"
 
@@ -20,11 +20,11 @@ variables:
   before_script:
     - echo "Preparing test data directories..."
     - mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
-    
+
     # If repositories are private, use authentication (uncomment and provide credentials)
     # - git clone https://${GIT_AUTH_USER}:${GIT_AUTH_PASSWORD}@gitlab.example.com/my-group/env-templates.git $BDD_DATA_DIR/templates
     # - git clone https://${GIT_AUTH_USER}:${GIT_AUTH_PASSWORD}@gitlab.example.com/my-group/env-instances.git $BDD_DATA_DIR/instances
-    
+
     # Cloning public repositories (by default)
     - git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
     - git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances
@@ -50,16 +50,16 @@ run_specific_tests:
   <<: *prepare_data
   script:
     - export PYTHONPATH=$CI_PROJECT_DIR
-    
+
     # Option A: Run a single specific python test file
     - pytest cucumber_cucumber_tests/step_defs/test_project.py -v -s
-    
+
     # Option B: Run a specific scenario by matching its name using -k flag
     # - pytest cucumber_tests/ -k "UC-PROJ-001" -v -s
-    
+
     # Option C: Run multiple specific scenarios using an "or" condition with -k flag
     # - pytest cucumber_tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
-    
+
     # Option D: Run a specific scenario by its Gherkin tag (if marked with @critical)
     # - pytest cucumber_tests/ -m "critical" -v -s
 
@@ -98,11 +98,11 @@ run_matrix_tests:
     # Create an isolated directory for this specific matrix job
     - export BDD_DATA_DIR="$CI_PROJECT_DIR/test_data/${CLUSTER_NAME}/${ENV_NAME}"
     - mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
-    
+
     # Cloning private repositories (uncomment if needed)
     # - git clone https://${GIT_AUTH_USER}:${GIT_AUTH_PASSWORD}@gitlab.example.com/my-group/env-templates.git $BDD_DATA_DIR/templates
     # - git clone https://${GIT_AUTH_USER}:${GIT_AUTH_PASSWORD}@gitlab.example.com/my-group/env-instances.git $BDD_DATA_DIR/instances
-    
+
     # Cloning public repositories (by default)
     - git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
     - git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances

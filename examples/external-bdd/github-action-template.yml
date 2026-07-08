@@ -28,10 +28,10 @@ jobs:
       - name: Prepare Test Data (Clone Repositories)
         run: |
           mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
-          
+
           # Example for Private Repository with PAT:
           # git clone https://${GIT_AUTH_TOKEN}@github.com/your-org/env-templates.git $BDD_DATA_DIR/templates
-          
+
           # Example for Public Repository:
           git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates
           git clone $ENV_INSTANCES_REPO $BDD_DATA_DIR/instances
@@ -65,10 +65,10 @@ jobs:
         run: |
           # Option A: Run a single specific python test file
           pytest cucumber_cucumber_tests/step_defs/test_project.py -v -s
-          
+
           # Option B: Run a specific scenario by matching its name
           # pytest cucumber_tests/ -k "UC-PROJ-001" -v -s
-          
+
           # Option C: Run multiple specific scenarios
           # pytest cucumber_tests/ -k "UC-PROJ-001 or UC-PROJ-002" -v -s
 

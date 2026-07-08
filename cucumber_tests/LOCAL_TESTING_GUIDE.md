@@ -1,4 +1,4 @@
-# Local Testing Guide (E2E Tests)
+# Local Testing Guide (end-to-end Tests)
 
 This guide provides step-by-step instructions on how to locally execute the End-to-End (BDD) tests for the EnvGene project and generate human-readable HTML reports.
 

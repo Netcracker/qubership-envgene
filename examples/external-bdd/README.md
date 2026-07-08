@@ -1,6 +1,6 @@
-# Guide: Integrating E2E Tests into Implementation Projects
+# Guide: Integrating end-to-end Tests into Implementation Projects
 
-This directory contains templates and examples to help you quickly integrate E2E (BDD) testing using `qubership-envgene` into your implementation projects.
+This directory contains templates and examples to help you quickly integrate end-to-end (BDD) testing using `qubership-envgene` into your implementation projects.
 
 By using this framework, you can automatically validate that your environment instances and templates build correctly before pushing them to production.
 
@@ -83,7 +83,7 @@ You **do not** need to write complex Python code for standard pipeline operation
 
 ### Concrete Test Case Examples
 
-Review `customer-e2e-template.feature` for comprehensive examples. 
+Review `customer-e2e-template.feature` for comprehensive examples.
 
 **Example: A Happy Path Execution**
 ```gherkin
@@ -106,7 +106,7 @@ To execute the `.feature` files, you need "glue code" in Python.
 2. **Step Definitions**: Copy `steps_template.py` into your `cucumber_tests/step_defs/` folder. This file shows how to automatically map the Gherkin statements to Python functions.
 
 ### Writing Custom Assertions
-If the unified steps are not enough, you can write custom steps in your `steps_template.py` file. 
+If the unified steps are not enough, you can write custom steps in your `steps_template.py` file.
 
 **In your feature file:**
 ```gherkin
