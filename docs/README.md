@@ -89,7 +89,10 @@
 
 ## Development
 
-- [**Artifact naming conventions**](/docs/dev/artifact-naming.md) - Docker, Maven, PyPI, and GitHub Actions artifact names and version formats
-- [**External Credentials CLI PyPI publish workflow**](/docs/dev/external-cred-provision-pypi-publish-workflow.md) - Build, test, and publish `qubership-external-cred-provision` to PyPI
+- [**Artifact naming conventions**](/docs/dev/artifact-naming.md) - Docker, Maven, PyPI, and GitHub Actions
+   artifact names and version formats
+- [**External Credentials CLI PyPI publish workflow**](/docs/dev/external-cred-provision-pypi-publish-workflow.md) -
+   Build, test, and publish `qubership-external-cred-provision` to PyPI
 - [**Docker build workflow**](/docs/dev/docker-build-workflow.md) - On-commit and manual Docker image builds
-- [**Creating a change request**](/docs/dev/creating-cr.md) - Change request template and convention for implementation issues
+- [**Creating a change request**](/docs/dev/creating-cr.md) - Change request template and convention for
+   implementation issues
