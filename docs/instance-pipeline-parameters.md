@@ -461,6 +461,7 @@ resourceProfiles:
           value: 50m
     version: 0
 
+
 ### `GENERATE_EFFECTIVE_SET`
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.

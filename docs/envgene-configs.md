@@ -136,6 +136,7 @@ envTemplate:
   # Optional
   # Set of environment-specific deployment parameters
   # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
   # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
   # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
@@ -143,6 +144,7 @@ envTemplate:
   # Optional
   # Environment specific pipeline (e2e) parameters set
   # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
   # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
   # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
@@ -150,6 +152,7 @@ envTemplate:
   # Optional
   # Environment specific runtime (technical) parameters set
   # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
   # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
   # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
@@ -157,6 +160,7 @@ envTemplate:
   # Optional
   # Environment specific resource profile overrides
   # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
   # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
   # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
