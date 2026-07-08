@@ -612,3 +612,50 @@ AI:
      - TBD
    - AI[phase1]: not called in the old flow, called in the new flow
    - AI[phase2]: move to GitHub
+
+## AI diff (since 62e1d91f, 2026-07-07)
+
+Inline `AI[...]` changes, notation `[<step> <name>] AI[<phase>]: <text>`.
+
+### Added
+
+```text
+[1 trigger_passport]            AI[phase1]: unchanged (new step)
+[1 trigger_passport]            AI[phase2]: add trigger_passport to static-api.yaml
+[1 set_defaults]                AI[phase1]: add APP_ARTIFACTS_DIR
+[1 set_defaults]                AI[phase2]: remove non required build.env vars
+[2 cert_apply]                  AI[phase2]: implement #1506
+[11 compute_template_macros]    AI[phase2]: rename generate_config -> compute_template_macros
+[12 load_template_descriptor]   AI[phase2]: rename set_env_templates -> load_template_descriptor
+[13 render_bgd]                 AI[phase2]: rename generate_bgd_file -> render_bgd
+[14 render_namespaces]          AI[phase2]: rename generate_namespace_files -> render_namespaces
+[16 render_composite_structure] AI[phase2]: rename generate_composite_structure -> render_composite_structure
+[18 app_reg_def_process]        AI[phase2]: rename run_appregdef_render -> app_reg_def_process
+[19 process_sd]                 AI[phase2]: rename handle_sd -> process_sd
+[22 env_build]                  AI[phase2]: rename generate_* -> env_build.render_*
+[20 generate_deployment_plan]   AI[phase1,Tema]: change input for enrich from ES to namespace_map
+[23 dd_downloading]             AI[phase1]: add APP_ARTIFACTS_DIR
+[30 es-pusher]                  AI[phase3]: unify with git_commit
+```
+
+### Removed
+
+```text
+[20 dp_sd_adapter]  AI[phase1]: create the function to simplify migration (step dp_sd_adapter removed)
+[20 dp_sd_adapter]  AI[phase2]: remove the function
+[2 get_passport]    AI[phase1]: test manually            (moved to [22 env_build])
+[2 get_passport]    AI[phase2]: prepare a UC, add tests  (moved to [22 env_build])
+```
+
+### Changed
+
+```text
+[17 compute_composite_topology] adopt the macro computation from master   phase2 -> phase1.5
+[21 compute_solution_structure] support DP as well as SD                  phase2 -> phase1
+[23 dd_downloading]             support DP as well as SD                  phase2 -> phase1
+[26 ES Calc CLI]                support DP as well as SD                  phase2 -> phase1
+[20 generate_deployment_plan]   move to GitHub                            phase1 -> phase2
+[27 argocd_repo_generator]      move to GitHub -> move to GitHub or not?  (became a question)
+[23 dd_downloading]             separate from sbom generation -> extract from sbom_generator
+[24 sbom_generation]            support local DD and zip -> consume local DD + zip
+```
