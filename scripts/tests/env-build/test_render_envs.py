@@ -8,7 +8,7 @@ from envgenehelper.business_helper import NamespaceRole
 from build_env.main import render_environment
 from envgenehelper.test_helpers import TestHelpers
 
-from tests.base_test import BaseTest
+from scripts.tests.base_test import BaseTest
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -22,6 +22,7 @@ test_data = [
     ("bgd-cluster", "bgd-env", "bgd", {}),
     ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {NamespaceRole.PEER: "test_data/test_templates_peer", NamespaceRole.ORIGIN: "test_data/test_templates_origin"}),
     ("cluster03", "rpo-replacement-mode", "simple", {}),
+    ("cluster-01", "env-extcred", "extcred-template", {}),
 ]
 
 

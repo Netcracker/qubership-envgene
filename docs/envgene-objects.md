@@ -539,6 +539,8 @@ mavenConfig:
   targetSnapshot: "snapshot"
   targetStaging: "staging"
   targetRelease: "release"
+  snapshotGroup: "maven-snapshot-group"
+  releaseGroup: "maven-release-group"
 dockerConfig:
   snapshotUri: "{{ regdefs.overrides.docker.snapshotUri | default('docker.qubership.org/snapshot') }}"
   stagingUri: "{{ regdefs.overrides.docker.stagingUri | default('docker.qubership.org/staging') }}"
@@ -565,6 +567,10 @@ name: "application-1"
 registryName: "{{ appdefs.overrides.registryName | default('registry-1') }}"
 artifactId: "application-1"
 groupId: "org.qubership"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 #### Credential Template
@@ -577,7 +583,7 @@ During Environment Instance generation, the result is merged into the instance [
 
 Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
 
-For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 Sensitive parameters via external Credentials](/docs/features/calculator-cli.md#version-20-sensitive-parameters-via-external-credentials).
 
 Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
 
@@ -589,14 +595,14 @@ Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `c
 streaming-cred:
   type: external
   create: true
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
   properties:
     - name: username
     - name: password
 consul-creds:
   type: external
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}"
 ```
 
@@ -1510,8 +1516,6 @@ A **Secret Store** is a named entry in the instance repository configuration tha
 <secret-store-name>:
   # Mandatory
   type: enum [ vault, azure, aws, gcp ]
-  # Mandatory
-  url: URL
   # Required when type is vault
   mountPath: string
   # Required when type is azure
@@ -1875,6 +1879,9 @@ This object describes where the **environment template artifact** is stored in t
 **Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
 
 The filename must match the value of the `name` attribute.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 Two versions of this object are supported
 
@@ -2256,6 +2263,9 @@ The filename must match the value of the `name` attribute.
 **Location:** `/regdefs/<registry-name>.yml`
 
 Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 Two versions of this object are supported
 
@@ -2837,15 +2847,8 @@ Application Definitions can also be supplied as user-provided files at `/configu
 
 ```yaml
 # Optional
-metadata:
-  # Optional
-  # Describes the strategy for generating the Helm release name.
-  # Deployment automation relies on this attribute to form a unique Helm release name.
-  # Available options:
-  #   `perApplication` - Unique per application
-  #   `perVersion` - Unique per application version
-  #   `perDeployment` - Unique per deployment of this application
-  helmReleaseNameStrategy: enum[ perApplication, perVersion, perDeployment ]
+# Free-form metadata map. Structure is not specified.
+metadata: hashmap
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
 name: string
@@ -2858,6 +2861,18 @@ artifactId: string
 # Mandatory
 # Application group ID
 groupId: string
+# Optional
+# Whether the application supports parallel deployment
+supportParallelDeploy: boolean
+# Optional
+# Application-level deploy parameters (may be an empty map)
+deployParameters: hashmap
+# Optional
+# Application-level technical configuration parameters (may be an empty map)
+technicalConfigurationParameters: hashmap
+# Optional
+# Whether this application carries a Solution Descriptor
+solutionDescriptor: boolean
 ```
 
 **Example:**
@@ -2867,6 +2882,10 @@ name: qip
 registryName: sandbox
 artifactId: qip
 groupId: org.qubership
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)

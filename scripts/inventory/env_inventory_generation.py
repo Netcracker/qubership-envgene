@@ -228,7 +228,7 @@ def handle_env_inv_content(env_inventory_content: dict):
 
     handle_objects(env_dir, env_inventory_content.get("paramSets"), "parameters", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("credentials"), "credentials", INVENTORY, encrypt=True)
-    handle_objects(env_dir, env_inventory_content.get("resourceProfiles"), "resourceProfiles", INVENTORY)
+    handle_objects(env_dir, env_inventory_content.get("resourceProfiles"), "resource_profiles", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("specificTemplateVersions"), "specificTemplateVersions", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("templateVariables"), "templateVariables", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
