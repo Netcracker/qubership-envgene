@@ -1,5 +1,7 @@
 import os
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import getenv, path
 from typing import Callable
 
@@ -57,8 +59,10 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping decryption")
         return openYaml(file_path)
-    return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place,
-                                          public_key=public_key, mode='decrypt')
+    return CRYPT_FUNCTIONS[crypt_backend](
+        file_path=file_path, secret_key=secret_key, in_place=in_place,
+        public_key=public_key, mode='decrypt', **kwargs
+    )
 
 
 def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
@@ -82,9 +86,11 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping encryption")
         return openYaml(file_path)
-    return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place,
-                                          public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
-                                          old_file_path=old_file_path)
+    return CRYPT_FUNCTIONS[crypt_backend](
+        file_path=file_path, secret_key=secret_key, in_place=in_place,
+        public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
+        old_file_path=old_file_path, **kwargs
+    )
 
 
 def extract_encrypted_data(file_path, attribute_str):
@@ -154,22 +160,73 @@ def check_for_encrypted_files(files):
             raise ValueError(err_msg.format(f))
 
 
+def _batch_cred_op(files, op_func, **kwargs):
+    backend = kwargs.get('crypt_backend') or get_crypt_backend()
+    if backend == 'Fernet':
+        for file_path in sorted(files):
+            op_func(file_path, **{**kwargs, 'load_result': False})
+        return
+    _parallel_cred_op(files, op_func, **kwargs)
+
+
+def _parallel_cred_op(files, op_func, **kwargs):
+    file_list = sorted(files)
+    if not file_list:
+        return
+    if kwargs.get('minimize_diff'):
+        max_workers = 1
+    else:
+        max_workers = min(len(file_list), os.cpu_count() or 2)
+    errors = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_file = {
+            executor.submit(op_func, f, **{**kwargs, 'load_result': False}): f
+            for f in file_list
+        }
+        for future in as_completed(future_to_file):
+            file_path = future_to_file[future]
+            try:
+                future.result()
+            except Exception as e:
+                errors.append((file_path, e))
+
+    if errors:
+        summary = '; '.join(
+            f'{file_path} ({type(exc).__name__}: {exc})' for file_path, exc in errors
+        )
+        raise RuntimeError(f'{op_func.__name__} failed: {summary}') from errors[0][1]
+
+
 def decrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
     if not get_crypt():
         check_for_encrypted_files(files)
         return
 
-    for f in files:
-        decrypt_file(f, **kwargs)
-    logger.debug(f"Decrypted next cred files:\n{files}")
+    backend = get_crypt_backend()
+    t0 = time.perf_counter()
+    _batch_cred_op(files, decrypt_file, **kwargs)
+    elapsed = time.perf_counter() - t0
+    logger.debug(
+        f'[envgene.crypt] decrypt_all_cred_files_for_env: files={len(files)} '
+        f'elapsed={elapsed:.3f}s backend={backend}'
+    )
+    logger.debug("Decrypted next cred files:")
+    logger.debug(files)
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
-    logger.debug(f"Attempting to encrypt(if crypt is true) next files:\n{files}")
-    for f in files:
-        encrypt_file(f, **kwargs)
+    logger.debug("Attempting to encrypt(if crypt is true) next files:")
+    logger.debug(files)
+    backend = get_crypt_backend()
+    t0 = time.perf_counter()
+    _batch_cred_op(files, encrypt_file, **kwargs)
+    elapsed = time.perf_counter() - t0
+    logger.debug(
+        f'[envgene.crypt] encrypt_all_cred_files_for_env: files={len(files)} '
+        f'elapsed={elapsed:.3f}s backend={backend}'
+    )
 
 
 def get_crypt():

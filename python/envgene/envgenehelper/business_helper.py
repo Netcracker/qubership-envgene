@@ -60,11 +60,12 @@ def getenv_and_log(name, *args, **kwargs):
     return var
 
 
-def getenv_with_error(var_name):
+def getenv_with_error(var_name, *, no_log=False):
     var = getenv(var_name)
     if not var:
         raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
-    logger.debug(f"{var_name}: {var}")
+    if not no_log:
+        logger.debug(f"{var_name}: {var}")
     return var
 
 
