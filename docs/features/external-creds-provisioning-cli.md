@@ -1,6 +1,7 @@
 # External Credentials provisioning CLI
 
 - [External Credentials provisioning CLI](#external-credentials-provisioning-cli)
+  - [Package and installation](#package-and-installation)
   - [Synopsis](#synopsis)
   - [Arguments](#arguments)
     - [Positional](#positional)
@@ -14,6 +15,20 @@
     - [Processing phase](#processing-phase)
     - [Dry-run phase](#dry-run-phase)
     - [Post-processing](#post-processing)
+
+## Package and installation
+
+The CLI is published on PyPI as `qubership-external-cred-provision`. The installed command is
+`external-cred-provision` (shorter than the distribution name).
+
+```bash
+pip install qubership-external-cred-provision
+```
+
+Package source and user readme: [/python/external-cred-provision/](/python/external-cred-provision/).
+
+For how EnvGene generates the context YAML and invokes the CLI in CI, see
+[External Credentials Management](/docs/features/external-creds.md#credential-provisioning).
 
 ## Synopsis
 
