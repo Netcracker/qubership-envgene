@@ -1,0 +1,9 @@
+ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-20261215.141230-3-RELEASE
+DEPLOYMENT_RESOURCE_NAME: alertmanager-v1
+DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+DEPLOYMENT_VERSION: v1
+DOCKER_TAG: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/alertmanager
+MANAGED_BY: argocd
+SERVICE_NAME: alertmanager
+TAG: v0.28.1

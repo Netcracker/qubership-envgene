@@ -68,6 +68,18 @@ def convert_dict_to_yaml(d):
     return ruyaml.CommentedMap(d)
 
 
+def remove_cred_yaml_comments(data):
+    if not isinstance(data, (CommentedMap, CommentedSeq)):
+        return
+    if data.ca:
+        data.ca.comment = None
+        if data.ca.items:
+            data.ca.items.clear()
+    children = data.values() if isinstance(data, CommentedMap) else data
+    for child in children:
+        remove_cred_yaml_comments(child)
+
+
 def remove_empty_list_comments(data):
     # There are cases when list has values and those values have comments related
     # to them. When all values are removed from list, comments are left behind
@@ -89,10 +101,15 @@ def remove_empty_list_comments(data):
 
 
 def writeYamlToFile(filePath, contents):
+    from .crypt import is_cred_file
+
     filePath = Path(filePath)
     logger.info(f"Writing yaml to file: {filePath}")
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
-    remove_empty_list_comments(contents)
+    if is_cred_file(str(filePath)):
+        remove_cred_yaml_comments(contents)
+    else:
+        remove_empty_list_comments(contents)
     with open(filePath, 'w+') as f:
         yaml.dump(contents, f)
     return
@@ -319,11 +336,15 @@ def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additiona
     return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
 
-def findAllYamlsInDir(dir):
+def findAllYamlsInDir(dir, recursively=True):
     result = []
     dirPointer = pathlib.Path(dir)
-    fileList = list(dirPointer.rglob("*.yml"))
-    fileListYaml = list(dirPointer.rglob("*.yaml"))
+    if recursively:
+        fileList     = list(dirPointer.rglob("*.yml"))
+        fileListYaml = list(dirPointer.rglob("*.yaml"))
+    else:
+        fileList     = list(dirPointer.glob("*.yml"))
+        fileListYaml = list(dirPointer.glob("*.yaml"))
     if len(fileListYaml) > 0:
         fileList = fileList + fileListYaml
     for f in fileList:

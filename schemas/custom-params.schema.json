@@ -1,18 +1,36 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://qubership.org/schemas/custom-params.schema.json",
-  "title": "CUSTOM_PARAMS",
-  "description": "Schema for the CUSTOM_PARAMS instance pipeline parameter.",
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "deployment": {
-      "type": "object",
-      "description": "Overrides applied to the deployment and cleanup context of Effective Set"
-    },
-    "runtime": {
-      "type": "object",
-      "description": "Overrides applied to the runtime context of Effective Set"
-    }
-  }
+   "$schema":"http://json-schema.org/draft-07/schema#",
+   "$id":"https://qubership.org/schemas/custom-params.schema.json",
+   "title":"CUSTOM_PARAMS",
+   "description":"Schema for the CUSTOM_PARAMS instance pipeline parameter.",
+   "type":"object",
+   "additionalProperties":false,
+   "properties":{
+      "deployment":{
+         "type":"object",
+         "description":"Overrides applied to the deployment and cleanup context of Effective Set"
+      },
+      "runtime":{
+         "type":"object",
+         "description":"Overrides applied to the runtime context of Effective Set"
+      },
+      "namespaces":{
+         "type":"object",
+         "description":"Per-namespace overrides",
+         "additionalProperties":{
+            "type":"object",
+            "additionalProperties":false,
+            "properties":{
+               "deployment":{
+                  "type":"object",
+                  "description":"Deployment overrides for this namespace"
+               },
+               "runtime":{
+                  "type":"object",
+                  "description":"Runtime overrides for this namespace"
+               }
+            }
+         }
+      }
+   }
 }
