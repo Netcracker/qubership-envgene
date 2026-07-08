@@ -1,14 +1,34 @@
+/*
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.qubership.cloud.devops.cli;
 
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
 import org.qubership.cloud.devops.cli.utils.FileTestUtils;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,6 +38,9 @@ public class CmdbCliTest {
     @TopCommand
     @Inject
     CmdbCli cli;
+
+    @Inject
+    InputData inputData;
 
     @Test
     void testGenerateEffectiveSet(@TempDir Path tempDir) throws Exception {
@@ -49,5 +72,59 @@ public class CmdbCliTest {
         Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");
 
         FileTestUtils.compareFolders(expected, outputPath);
+    }
+
+    @Test
+    void testGenerateEffectiveSetForExternalCred(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path sdPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/Inventory/solution-descriptor/sd.yaml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-02",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--sd-path", sdPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
+                "--app_chart_validation", "false"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path expected = FileTestUtils.resource("environments/cluster-01/pl-02/effective-set");
+
+        FileTestUtils.compareFolders(expected, outputPath);
+    }
+
+    @AfterEach
+    void tearDown() {
+        resetInputData(inputData);
+    }
+
+    private void resetInputData(InputData inputData) {
+        if (inputData != null) {
+            inputData.setNamespaceDTOMap(new HashMap<>());
+            inputData.setCredentialDTOMap(new HashMap<>());
+            inputData.setProfileFullDtoMap(new HashMap<>());
+            inputData.setConsumerDTOMap(new HashMap<>());
+            inputData.setRegistryDTOMap(new HashMap<>());
+            inputData.setSecretStoreDTOMap(new HashMap<>());
+            inputData.setClusterMap(new HashMap<>());
+            inputData.setTenantDTO(null);
+            inputData.setCloudDTO(null);
+            inputData.setCompositeStructureDTO(null);
+            inputData.setBgDomainEntityDTO(null);
+            inputData.setSolutionBomDTO(Optional.empty());
+            inputData.setExternalOnly(false);
+        }
     }
 }

@@ -3,21 +3,50 @@
   "title": "registry Configuration",
   "description": "Configuration for the registry service, including credentials and repository URLs",
   "type": "object",
+  "definitions": {
+    "credRef": {
+      "type": "object",
+      "title": "Credential Reference",
+      "description": "Reference to an external Credential, resolved at runtime through the Secret Store",
+      "properties": {
+        "$type": {
+          "type": "string",
+          "const": "credRef"
+        },
+        "credId": {
+          "type": "string",
+          "description": "Identifier of the referenced Credential entry"
+        },
+        "property": {
+          "type": "string",
+          "description": "Optional property name to read from a multi-field Credential"
+        }
+      },
+      "required": ["$type", "credId"],
+      "additionalProperties": false
+    }
+  },
   "additionalProperties": {
     "properties": {
       "username": {
-        "type": "string",
         "title": "Username",
-        "description": "Username for accessing the registry service",
+        "description": "Username for accessing the registry service. Accepts a plain string (for example the `envgen.creds.get` macro for a local Credential) or a `$type: credRef` form for an external Credential",
+        "oneOf": [
+          { "type": "string" },
+          { "$ref": "#/definitions/credRef" }
+        ],
         "examples": [
           "user",
           "envgen.creds.get('artifactory-cred').username"
         ]
       },
       "password": {
-        "type": "string",
         "title": "Password",
-        "description": "Password for accessing the registry service",
+        "description": "Password for accessing the registry service. Accepts a plain string (for example the `envgen.creds.get` macro for a local Credential) or a `$type: credRef` form for an external Credential",
+        "oneOf": [
+          { "type": "string" },
+          { "$ref": "#/definitions/credRef" }
+        ],
         "examples": [
           "pass",
           "envgen.creds.get('artifactory-cred').password"

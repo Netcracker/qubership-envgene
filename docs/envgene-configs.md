@@ -418,9 +418,12 @@ cp_discovery:
     branch: master
     # Mandatory
     # Authentication token for the discovery repository
-    # Recommended to set via cred macro:
-    # ${creds.get('<cred-id>').secret}
+    # Set via creds.get macro for local Credentials, or $type: credRef for external
     token: string
+# Authentication token for EnvGene to access the instance repository
+# Required for EnvGene to commit changes to the instance repository
+# Set via creds.get macro for local Credentials, or $type: credRef for external
+self_token: string
 ```
 
 ## `deployer.yml`
@@ -450,13 +453,11 @@ Located at:
 <name>:
   # Mandatory
   # Username for authentication with external CMDB
-  # Recommended to set via cred macro:
-  # envgen.creds.get(<cred-id>).secret
+  # Set via creds.get macro for local Credentials, or $type: credRef for external
   username: string
   # Mandatory
   # Token for authentication with external CMDB
-  # Recommended to set via cred macro:
-  # envgen.creds.get(<cred-id>).secret
+  # Set via creds.get macro for local Credentials, or $type: credRef for external
   token: string
   # Mandatory
   # URL of external CMDB
@@ -525,13 +526,13 @@ Location: `/configuration/registry.yml`
 ```yaml
 <registry-name>:
   # Username for authenticating to the registry.
-  # It's recommended to use the envgen.creds.get() macro.
-  # For anonymous registries, use an empty string: ""
-  username: string
+  # For a local Credential use the envgen.creds.get() macro, for an external Credential use the
+  # $type: credRef form. For anonymous registries, use an empty string: ""
+  username: string | credRef
   # Password for authenticating to the registry.
-  # It's recommended to use the envgen.creds.get() macro.
-  # For anonymous registries, use an empty string: ""
-  password: string
+  # For a local Credential use the envgen.creds.get() macro, for an external Credential use the
+  # $type: credRef form. For anonymous registries, use an empty string: ""
+  password: string | credRef
   releaseRepository: string
   snapshotRepository: string
   stagingRepository: string
