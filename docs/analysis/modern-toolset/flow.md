@@ -292,7 +292,7 @@ AI:
          - download env template
        - [phase1]: unchanged
        - AI[phase1]: fix the template-version-setting bug
-   11. `setup_rendering_context.compute_template_macros` (ex `render_config_env.generate_config`)
+   11. `env_build.compute_template_macros` (ex `render_config_env.generate_config`)
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY` or
          - `ENV_BUILDER: true`
@@ -306,9 +306,8 @@ AI:
            `additionalTemplateVariables`, `cluster.*`, `cloud_passport`. `solution_structure` initialized to {}
        - actions:
          - generates the macro values above
-       - AI[phase1]: extract generate_config into a standalone step
        - AI[phase2]: rename `generate_config` -> `compute_template_macros`
-   12. `setup_rendering_context.load_template_descriptor` (ex `render_config_env.set_env_templates`)
+   12. `env_build.load_template_descriptor` (ex `render_config_env.set_env_templates`)
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY` or
          - `ENV_BUILDER: true`
@@ -322,7 +321,6 @@ AI:
          - render the template descriptor if .j2, validate
          - load into `current_env_template`
          - repeat for the peer/origin dirs
-       - AI[phase1]: extract set_env_templates into this sub-function
        - AI[phase2]: rename `set_env_templates` -> `load_template_descriptor`
    13. `env_build.render_bgd` (ex `render_config_env.generate_bgd_file`)
        - trigger:
@@ -351,7 +349,7 @@ AI:
        - actions:
          - render all namespaces into env instance
        - AI[phase2]: rename `generate_namespace_files` -> `render_namespaces`
-   15. `setup_rendering_context.compute_namespace_map`
+   15. `env_build.compute_namespace_map`
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY` or
          - `ENV_BUILDER: true`
@@ -378,7 +376,7 @@ AI:
        - actions:
          - render the composite structure template, validate (no-op if none)
        - AI[phase2]: rename `generate_composite_structure` -> `render_composite_structure`
-   17. `setup_rendering_context.compute_composite_topology`
+   17. `env_build.compute_composite_topology`
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY` or
          - `ENV_BUILDER: true`
@@ -390,7 +388,7 @@ AI:
          - `ctx.current_env.composite_topology`
        - actions:
          - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
-       - AI[phase1.5]: adopt the macro computation from master
+       - AI[phase2]: adopt the macro computation from master
    18. `app_reg_def_process` (ex `run_appregdef_render`)
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY` or
@@ -451,7 +449,7 @@ AI:
        - AI[phase1]: not called in the old flow, called in the new flow
        - AI[phase1]: create the function
        - AI[phase2]: move to GitHub
-   21. `setup_rendering_context.compute_solution_structure` (ex `generate_solution_structure`, split)
+   21. `env_build.compute_solution_structure` (ex `generate_solution_structure`)
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY` or
          - `ENV_BUILDER: true`
@@ -463,7 +461,6 @@ AI:
        - actions:
          - join applications by deployPostfix with namespace_map
          - no-op if no `sd.yaml` or `deploy-plan.yml`
-       - AI[phase1]: create the function (split from render_config_env.generate_solution_structure lines 286-305)
        - AI[phase1]: support DP as well as SD
    22. `env_build` (ex `run_build_environment`) (`.render_tenant` -> `.render_cloud` -> `process_cloud_passport`
        -> `.create_external_credentials` -> `.render_paramsets` -> `.create_credentials` -> `apply_ns_build_filter`)
@@ -569,7 +566,7 @@ AI:
          - `ENVIRONMENT_NAME`
        - AI[phase1]: depending on `PIPELINE_TYPE`, commit env_instance/ES/sd.yaml or not
        - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
-       - AI[phase3]: unify with `es-pusher`
+       - AI[phase2]: unify with `es-pusher`
    30. `es-pusher`
        - trigger:
          - `PIPELINE_TYPE: GITLAB_DEPLOY`
@@ -593,7 +590,7 @@ AI:
        - actions:
          - push effective set and appsets to the deploy target repo
        - AI[phase1]: move to GitHub
-       - AI[phase3]: unify with `git_commit`
+       - AI[phase2]: unify with `git_commit`
    31. cleanup of leftovers (?)
    32. create the dotenv report (?)
 3. job `cmdb_import`
