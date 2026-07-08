@@ -1123,6 +1123,10 @@ Provisioning is the act of materializing each external [Credential](#credential)
 that context and applies the strategy attached to each entry.
 
 The CLI is specified in [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
+It ships as the PyPI package `qubership-external-cred-provision` (installed command
+`external-cred-provision`). Source and package readme:
+[/python/external-cred-provision/](/python/external-cred-provision/). Install with
+`pip install qubership-external-cred-provision`.
 This section describes how EnvGene generates the context and invokes the CLI.
 
 #### Invocation scenarios

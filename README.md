@@ -170,8 +170,6 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
-- [**External Credentials provisioning CLI**](/docs/features/external-creds-provisioning-cli.md) -
-   `external-cred-provision` CLI for secret store writes
 - [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
