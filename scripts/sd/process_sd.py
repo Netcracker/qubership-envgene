@@ -252,7 +252,7 @@ def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mod
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
+    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins)
 
     env_creds = helper.get_cred_config()
     auth_headers = app_def.registry.resolve_auth(env_creds)
@@ -261,11 +261,11 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(f'Solution descriptor content was not received for {app_name}:{version}')
-    sd_url, _ = artifact_info
-    return artifact.download_json_content(sd_url, auth_headers=auth_headers)
+    return artifact.download_json_content(artifact_info.source_url, auth_headers=auth_headers)
 
 
-def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
+def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Application:
+    app_name, _ = get_version(appver)
     results = plugins.run(appver=appver)
     for result in results:
         if result is not None:

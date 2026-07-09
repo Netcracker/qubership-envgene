@@ -106,7 +106,7 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
 
     result = await check_artifact_async(app, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
     assert result is not None
-    full_url, _ = result
+    full_url = result.source_url
 
     sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
     assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"

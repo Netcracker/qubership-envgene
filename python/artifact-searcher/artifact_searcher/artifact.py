@@ -2,23 +2,18 @@ import asyncio
 import base64
 import os
 import re
-import shutil
-import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
-from zipfile import ZipFile
 from collections import defaultdict
+from zipfile import ZipFile
 
 import aiohttp
 import requests
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
-from artifact_searcher.utils.models import Registry, RegistryV2, Application, FileExtension, Credentials, ArtifactInfo, Provider, MavenConfig
+from artifact_searcher.utils.models import RegistryV2, Application, FileExtension, Credentials, ArtifactSource, ArtifactDownload, Repo, RepoType, Provider, MavenConfig
 from envgenehelper import logger
-
-WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
-
 
 def convert_nexus_repo_url_to_index_view(url: str) -> str:
     parsed = urlparse(url)
@@ -39,13 +34,13 @@ def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    
+
     # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
     if repo:
         path = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
     else:
         path = f"{group_id}/{app.artifact_id}/{folder}/"
-    
+
     return urljoin(registry_url, path)
 
 
@@ -135,74 +130,61 @@ def version_to_folder_name(version: str):
     return folder
 
 
-def clean_temp_dir():
-    if WORKSPACE.exists():
-        shutil.rmtree(WORKSPACE)
-    os.makedirs(WORKSPACE, exist_ok=True)
-
-
 def credentials_to_headers(cred: Credentials) -> dict:
     # Convert Credentials object to Authorization headers dict.
     token = base64.b64encode(f"{cred.username}:{cred.password}".encode()).decode()
     return {"Authorization": f"Basic {token}"}
 
 
-async def download_all_async(artifacts_info: list[ArtifactInfo]):
+async def download_all_async(downloads: list[ArtifactDownload]):
     auth_groups = defaultdict(list)
-    for artifact in artifacts_info:
+    for download in downloads:
         # Use sorted tuple of auth items as key, or "none" for None
-        auth_key = tuple(sorted(artifact.auth_headers.items())) if artifact.auth_headers else "none"
-        auth_groups[auth_key].append(artifact)
-    
+        auth_headers = download.source.auth_headers
+        auth_key = tuple(sorted(auth_headers.items())) if auth_headers else "none"
+        auth_groups[auth_key].append(download)
+
     all_results = []
-    for auth_key, artifacts in auth_groups.items():
-        headers = artifacts[0].auth_headers
+    for auth_key, downloads_group in auth_groups.items():
+        headers = downloads_group[0].source.auth_headers
         connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
         async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
             async with asyncio.TaskGroup() as tg:
-                tasks = [tg.create_task(download_async(session, artifact)) for artifact in artifacts]
+                tasks = [tg.create_task(download_async(session, download)) for download in downloads_group]
             results = []
             errors = []
 
             for i, task in enumerate(tasks):
                 result = task.result()
-                if not result or result.local_path is None:
+                if not result:
                     errors.append(f"Task {i}: artifact was not downloaded")
                 else:
                     results.append(result)
 
             if errors:
                 raise ValueError("Some tasks failed:\n" + "\n".join(errors))
-            
+
             all_results.extend(results)
-    
+
     return all_results
 
 
-def create_app_artifacts_local_path(app_name, app_version):
-    return f"{WORKSPACE}/{app_name}/{app_version}"
-
-
-async def download_async(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
+async def download_async(session, download: ArtifactDownload) -> ArtifactDownload:
     """
-    Downloads an artifact to a local directory: <workspace_dir>/<app_name>/<app_version>/filename.extension
-    Sets full local path of artifact to artifact info
+    Downloads an artifact to download.local_target_path.
     Returns:
-        ArtifactInfo: Object containing related information about the artifact
+        ArtifactDownload: Object containing related information about the artifact
     """
-    url = artifact_info.url
-    app_local_path = create_app_artifacts_local_path(artifact_info.app_name, artifact_info.app_version)
-    artifact_local_path = os.path.join(app_local_path, os.path.basename(url))
-    os.makedirs(os.path.dirname(artifact_local_path), exist_ok=True)
+    url = download.source.source_url
+    os.makedirs(os.path.dirname(download.local_target_path), exist_ok=True)
     try:
         async with session.get(url) as response:
             if response.status == 200:
-                with open(artifact_local_path, "wb") as f:
+                with open(download.local_target_path, "wb") as f:
                     f.write(await response.read())
-                logger.info(f"Downloaded: {artifact_local_path}")
-                artifact_info.local_path = artifact_local_path
-                return artifact_info
+                logger.info(f"Downloaded: {download.local_target_path}")
+                return download
             else:
                 logger.error(f"Download process with error {response.text}: {url}")
     except Exception as e:
@@ -212,24 +194,24 @@ async def download_async(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
 async def check_artifact_by_full_url_async(
         app: Application,
         version: str,
-        repo,
+        repo: Repo,
         artifact_extension: FileExtension,
         stop_snapshot_event_for_others: asyncio.Event,
         stop_artifact_event: asyncio.Event,
         session,
         task_id: int,
+        auth_headers: dict | None = None,
         classifier: str = ""
-) -> tuple[str, tuple[str, str]] | None:
-    repo_value, repo_pointer = repo
-    # Allow empty repo_value for cloud providers (repositoryName), but not for Nexus/Artifactory
-    if not repo_value and repo_pointer != "repositoryName":
-        logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured")
+) -> ArtifactSource | None:
+    # Allow empty repo value for cloud providers (REPOSITORY_NAME), but not for Nexus/Artifactory
+    if not repo.value and repo.type != RepoType.REPOSITORY_NAME:
+        logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo.type.value} is not configured")
         return None
 
     resolved_version = version
     id_main_task = None
     if version.endswith("-SNAPSHOT"):
-        snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
+        snapshot_info = await resolve_snapshot_version_async(session, app, version, repo.value, task_id,
                                                              stop_artifact_event, stop_snapshot_event_for_others,
                                                              artifact_extension, classifier)
         if not snapshot_info:
@@ -240,13 +222,13 @@ async def check_artifact_by_full_url_async(
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
 
-    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
+    full_url = create_full_url(app, resolved_version, repo.value, artifact_extension, classifier)
     try:
         async with session.head(full_url) as response:
             if response.status == 200:
                 stop_artifact_event.set()
                 logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
-                return full_url, repo
+                return ArtifactSource(source_url=full_url, repository=repo, application=app, auth_headers=auth_headers)
             logger.warning(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
     except Exception as e:
@@ -265,23 +247,22 @@ def _is_cloud_provider(registry) -> bool:
 
 
 # TODO: delete after models are refactored to use polymorphism
-def get_repo_value_pointer_dict(registry):
+def get_repos(registry) -> list[Repo]:
     """V2 cloud providers: use empty repo (domain already contains full path).
     V1/Nexus/Artifactory: use target fields."""
     if _is_cloud_provider(registry):
-        return {"": "repositoryName"}
+        return [Repo(value="", type=RepoType.REPOSITORY_NAME)]
     maven = registry.maven_config
-    return {
-        maven.target_snapshot: "targetSnapshot",
-        maven.target_staging: "targetStaging",
-        maven.target_release: "targetRelease",
-        maven.snapshot_group: "snapshotGroup",
-    }
+    return [
+        Repo(value=maven.target_snapshot, type=RepoType.TARGET_SNAPSHOT),
+        Repo(value=maven.target_staging, type=RepoType.TARGET_STAGING),
+        Repo(value=maven.target_release, type=RepoType.TARGET_RELEASE),
+        Repo(value=maven.snapshot_group, type=RepoType.SNAPSHOT_GROUP),
+    ]
 
 
-def get_repo_pointer(repo_value: str, registry):
-    repos_dict = get_repo_value_pointer_dict(registry)
-    return repos_dict.get(repo_value)
+def get_repo_pointer(repo_value: str, registry) -> Optional[RepoType]:
+    return next((repo.type for repo in get_repos(registry) if repo.value == repo_value), None)
 
 
 async def _attempt_check(
@@ -291,8 +272,8 @@ async def _attempt_check(
         registry_url: str | None = None,
         auth_headers: dict | None = None,
         classifier: str = ""
-) -> Optional[tuple[str, tuple[str, str]]]:
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+) -> Optional[ArtifactSource]:
+    repos = get_repos(app.registry)
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
@@ -314,10 +295,11 @@ async def _attempt_check(
                         stop_artifact_event,
                         session,
                         i,
+                        auth_headers,
                         classifier
                     )
                 )
-                for i, repo in enumerate(repos_dict.items())
+                for i, repo in enumerate(repos)
             ]
 
         for task in tasks:
@@ -339,7 +321,7 @@ async def _retry_with_nexus_url(
         artifact_extension: FileExtension,
         auth_headers: dict | None,
         classifier: str = ""
-) -> Optional[tuple[str, tuple[str, str]]]:
+) -> Optional[ArtifactSource]:
     """Retry artifact check with Nexus index-view URL conversion."""
     original_domain = app.registry.maven_config.repository_domain_name
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
@@ -354,34 +336,26 @@ async def _retry_with_nexus_url(
     return None
 
 
-async def check_artifact_async(
-        app: Application, artifact_extension: FileExtension, version: str,
-        auth_headers: dict | None = None,
-        classifier: str = "") -> Optional[tuple[str, tuple[str, str]]] | None:
+async def check_artifact_async(app: Application, artifact_extension: FileExtension, version: str,
+        auth_headers: dict | None = None, classifier: str = "") -> Optional[ArtifactSource]:
     """
     Resolves the full artifact URL and the first repository where it was found.
     Supports both release and snapshot versions.
-
-    Returns:
-        Optional[tuple[str, tuple[str, str]]]: A tuple containing:
-            - str: Full URL to the artifact.
-            - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
-            Returns None if the artifact could not be resolved
     """
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+    repos = get_repos(app.registry)
 
     # Single repo: no parallelism
-    if len(repos_dict) == 1:
-        repo_value, repo_pointer = next(iter(repos_dict.items()))
-        if not repo_value and repo_pointer != "repositoryName":
-            logger.warning(f"[Registry: {app.registry.name}] - {repo_pointer} is not configured")
+    if len(repos) == 1:
+        repo = repos[0]
+        if not repo.value and repo.type != RepoType.REPOSITORY_NAME:
+            logger.warning(f"[Registry: {app.registry.name}] - {repo.type.value} is not configured")
             return None
         domain = app.registry.maven_config.repository_domain_name
-        repo_url = domain if not repo_value else domain.rstrip('/') + '/' + repo_value
+        repo_url = domain if not repo.value else domain.rstrip('/') + '/' + repo.value
         url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
                              artifact_extension, auth_headers=auth_headers, classifier=classifier)
         if url:
-            return url, (repo_value, repo_pointer)
+            return ArtifactSource(source_url=url, repository=repo, application=app, auth_headers=auth_headers)
         if _should_retry_nexus_url(app.registry):
             return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier)
         return None
@@ -398,55 +372,24 @@ async def check_artifact_async(
     return None
 
 
-def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
+def unzip_file(artifact_id: str, source_zip_path: Path, target_dir: Path):
     extracted = False
-    app_artifacts_dir = f"{artifact_id}/"
+    entry_prefix = f"{artifact_id}/"
     try:
-        with ZipFile(zip_url, "r") as zip_file:
+        with ZipFile(source_zip_path, "r") as zip_file:
             for file in zip_file.namelist():
-                if file.startswith(app_artifacts_dir):
-                    zip_file.extract(file, create_app_artifacts_local_path(app_name, app_version))
+                if file.startswith(entry_prefix):
+                    zip_file.extract(file, target_dir)
                     extracted = True
     except Exception as e:
         logger.error(f"Error unpacking {e}")
     if not extracted:
-        logger.warning(f"No files were extracted for application {app_name}:{app_version}")
-
-
-def create_aql_artifacts(aqls: list[str]):
-    return f'items.find({{"$or":  [{', '.join(aqls)}]}})'
+        logger.warning(f"No files were extracted for artifact {artifact_id} from {source_zip_path}")
 
 
 def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, version: str,
                          classifier: str = "") -> str:
     return f"{artifact_id}-{version}{'-' + classifier if classifier else ''}.{artifact_extension.value}"
-
-
-def create_aql_artifact(app: Application, artifact_extension: FileExtension, version: str,
-                        classifier: str = "") -> str:
-    group_id = app.group_id.replace(".", "/")
-    folder = version_to_folder_name(version)
-    path = f"{group_id}/{app.artifact_id}/{folder}"
-    name = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
-    aql = f'{{"$and": [{{"name": "{name}"}},{{"path":"{path}"}}]}}'
-    return aql
-
-
-def check_artifacts_by_aql(aql: str, url: str = "",
-                            auth_headers: dict | None = None) -> list[ArtifactInfo]:
-    artifacts = []
-    base_url = url.rstrip('/')
-    response = requests.post(f"{base_url}/api/search/aql", data=aql, headers=auth_headers)
-    response.raise_for_status()
-    results = response.json()
-    for result in (results.get("results") or []):
-        repo = result.get("repo")
-        path = result.get("path")
-        name = result.get("name")
-        artifact_url = f"{base_url}/{repo}/{path}/{name}"
-        artifact = ArtifactInfo(repo=repo, path=path, name=name, url=artifact_url, auth_headers=auth_headers)
-        artifacts.append(artifact)
-    return artifacts
 
 
 # not async, download artifact directly
