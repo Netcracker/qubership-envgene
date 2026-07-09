@@ -22,7 +22,7 @@
       - [2.2. step `credential_rotation`](#22-step-credential_rotation)
       - [2.3. step `bg_manage`](#23-step-bg_manage)
       - [2.4. step `env_inventory_generation`](#24-step-env_inventory_generation)
-      - [2.5. step `cloud_passport_process`](#25-step-cloud_passport_process)
+      - [2.5. step `get_cloud_passport`](#25-step-get_cloud_passport)
       - [2.6. step `registry_discovery`](#26-step-registry_discovery)
       - [2.7. step `app_reg_def_process`](#27-step-app_reg_def_process)
       - [2.8. step `process_sd`](#28-step-process_sd)
@@ -339,7 +339,7 @@ TBD
 - [phase1] unchanged
 - AI[phase2]: check UC readiness and test coverage
 
-#### 2.5. step `cloud_passport_process`
+#### 2.5. step `get_cloud_passport`
 
 Triggers:
 
