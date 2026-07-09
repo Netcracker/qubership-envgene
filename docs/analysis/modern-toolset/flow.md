@@ -12,6 +12,9 @@
   - [`ctx.current_env`](#ctxcurrent_env)
   - [build.env](#buildenv)
   - [APPLICATION\_VERSIONS](#application_versions)
+  - [Uniq names](#uniq-names)
+    - [`generate_deployment_plan`](#generate_deployment_plan)
+  - [ES Calc](#es-calc)
   - [Multi env support](#multi-env-support)
   - [To deprecate](#to-deprecate)
   - [Flow](#flow)
@@ -108,36 +111,53 @@ deploy-stage jobs `cmdb_import` and `sync`, not sub-steps.
 
 ```text
 ${APP_ARTIFACTS_DIR}/
-  app-1/
-    version-1/
-      app-1-version-1.json       # DD
-      app-1-version-1.zip        # downloaded zip artifact
-      app-1/                     # unzipped content
-  app-2/
-    version-2/
-      app-2-version-2.json
-      app-2-version-2.zip
-      app-2/
+  <app-name>/
+    <app-version>/
+      dd.json       # DD
+      dd.zip        # downloaded zip artifact
+      dd/           # unzipped content
 ```
-
-- `APP_ARTIFACTS_DIR` is defaulted by `set_defaults` (step 1) to `${CI_PROJECT_DIR}/tmp/app-artifacts/` and
-  written to `build.env`.
-- The `<version>` folder is the raw app version. Snapshot normalization (`...-timestamp` to `-SNAPSHOT`) applies
-  only to the remote maven URL, not the local folder.
-- The DD and zip filenames are the basename of the remote artifact URL (`<artifact_id>-<version>.json`/`.zip`).
-- The folder under `<version>` is the maven `artifact_id` (unzipped content), which often equals the app name.
 
 ## `deploy-plan.yml`
 
 ```yaml
-- version: app-1:version-1
+- # Mandatory
+  # `<app-name>:<version>`
+  version: string
+  # Mandatory
+  deployPostfix: string
+  # Mandatory
+  namespace: string
+  # Mandatory
+  wave: int
+  # Mandatory
+  # Default `UniqForApp`
+  # Set from the AppDef attribute `netcracker.com/argo-app-generation-type`
+  generationType: enum[`UniqForApp`, `UniqForVersion`, `UniqForRun`]
+  # Mandatory
+  # Sub-folder segment inserted before `values` in the deploy context.
+  # Value depends on `generationType`:
+  #   `UniqForApp`     -> ""
+  #   `UniqForVersion` -> <version>
+  #   `UniqForRun`     -> a UUID7
+  generationId: string
+```
+
+Example:
+
+```yaml
+- version: app-1:1.2.3
   deployPostfix: core
-  namespace: ''
+  namespace: env-1-core
   wave: 0
-- version: app-2:version-2
+  generationType: UniqForApp
+  generationId: ''
+- version: app-2:4.5.6
   deployPostfix: core
-  namespace: ''
+  namespace: env-1-core
   wave: 1
+  generationType: UniqForRun
+  generationId: 0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f
 ```
 
 ## `namespace-map.yml`
@@ -168,6 +188,31 @@ TBD
 ## APPLICATION_VERSIONS
 
 TBD
+
+## Uniq names
+
+### `generate_deployment_plan`
+
+- Путь App Def становятся одним из инпутов для `generate_deployment_plan`
+- Задает `generationType` из атрибута `metadata.netcracker.com/argo-app-generation-type`
+  соответствующего App Def. При отсутствии атрибута — `UniqForApp`.
+- Задает `generationId` значение которое зависит от `generationType` - "", `<version>`, UUID7
+- Когда необходимо `generate_deployment_plan` генерирует UUID7
+
+## ES Calc
+
+- Читает `deploy-plan.yml`. Для `generationType != UniqForApp` вставляет между `<application-name>`
+  и `values` подпапку, равную `generationId`:
+
+  ```text
+  /environments/<cluster>/<env>/effective-set/deployment/<deployPostfix>/<application-name>/<generationId>/values/...
+  ```
+
+- Для `UniqForApp` подпапка не добавляется (поведение как сейчас).
+- `UniqForVersion`: последующая операция реплейсит предыдущую папку (как сейчас).
+- `UniqForRun`: папки накапливаются — каждый запуск добавляет новую, предыдущие остаются.
+- Решение по каждому приложению принимается независимо от остальных.
+- Политика ретеншена в ES Calc не предусмотренна
 
 ## Multi env support
 
@@ -540,7 +585,6 @@ Functions:
         - `NAMESPACE_NAMES_FILTER`
         - `COMPONENT_NAMES_FILTER`
         - `WAVE_NAMES_FILTER`
-      - для паблик реджестри нужны параметры этих реджестри где брать
     - output:
       - `deploy-plan.yml`
     - actions:
@@ -549,6 +593,8 @@ Functions:
       - filter DP, plan filter (filter vars)
     - AI[phase1]: do not call in the old flow, call in the new flow
     - AI[phase1]: move to GitHub
+    - AI[phase1]: implement uniq app names (Artem)
+    - AI[phase2]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
 
 #### 2.10. step `env_build`
 
@@ -639,6 +685,7 @@ Functions:
     - actions:
       - generates ES
     - AI[phase1]: support DP as well as SD
+    - AI[phase1]: implement uniq app names
 
 #### 2.12. step `generate_argocd_repo`
 
