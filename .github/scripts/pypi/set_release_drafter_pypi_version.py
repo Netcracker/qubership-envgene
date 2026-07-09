@@ -31,22 +31,38 @@ def replace_pypi_release_url(
     validate_semver(release_version)
 
     text = config_path.read_text(encoding="utf-8")
-    pattern = re.compile(
+    url_pattern = re.compile(
         rf"(https://pypi\.org/project/{re.escape(package_name)}/)"
         r"[0-9]+\.[0-9]+\.[0-9]+"
         r"(/)"
     )
+    tag_pattern = re.compile(
+        rf"(`{re.escape(package_name)}:)"
+        r"[0-9]+\.[0-9]+\.[0-9]+"
+        r"(`)"
+    )
 
-    new_text, replacements = pattern.subn(
+    new_text, url_replacements = url_pattern.subn(
         rf"\g<1>{release_version}\2",
         text,
         count=1,
     )
+    new_text, tag_replacements = tag_pattern.subn(
+        rf"\g<1>{release_version}\2",
+        new_text,
+        count=1,
+    )
 
-    if replacements != 1:
+    if url_replacements != 1:
         raise ValueError(
             f"Could not update PyPI release URL for '{package_name}' in {config_path}. "
             "Expected exactly one matching link."
+        )
+
+    if tag_replacements != 1:
+        raise ValueError(
+            f"Could not update PyPI package tag for '{package_name}' in {config_path}. "
+            f"Expected exactly one `{package_name}:X.Y.Z` entry."
         )
 
     config_path.write_text(new_text, encoding="utf-8")
@@ -54,12 +70,12 @@ def replace_pypi_release_url(
     print(f"Config: {config_path}")
     print(f"Package: {package_name}")
     print(f"Release version: {release_version}")
-    print("OK: release drafter PyPI link updated.")
+    print("OK: release drafter PyPI link and package tag updated.")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Update the PyPI package version link in release-drafter-config.yml."
+        description="Update the PyPI package version link and tag in release-drafter-config.yml."
     )
     parser.add_argument("--config", required=True)
     parser.add_argument("--package-name", required=True)
