@@ -164,6 +164,9 @@ public class CmdbCli implements Callable<Integer> {
                 }
             });
         }
+        if (StringUtils.isEmpty(sharedData.getDeploymentSessionId())) {
+            sharedData.setDeploymentSessionId(UUID.randomUUID().toString());
+        }
     }
 
     static class EnvCommandSpace {

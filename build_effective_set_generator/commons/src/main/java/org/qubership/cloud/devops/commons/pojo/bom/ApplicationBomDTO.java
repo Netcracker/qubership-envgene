@@ -32,6 +32,7 @@ public class ApplicationBomDTO {
     private String mavenRepo;
     private String deployerSessionId;
     public String appChartName;
+    private String esoSupport;
     private Map<String, Map<String, Object>> services;
     private Map<String, Map<String, Object>> configurations;
     private Map<String, Map<String, Object>> frontends;
@@ -39,6 +40,7 @@ public class ApplicationBomDTO {
     private Map<String, Map<String, Object>> cdn;
     private Map<String, Map<String, Object>> sampleRepo;
     private Map<String, String> deployParams;
+    private Map<String, Object> collidingImageDeployParams;
 
     //deployment-descriptor params
     private Map<String, Map<String, Object>> deployDescriptors;

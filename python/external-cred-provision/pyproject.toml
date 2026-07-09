@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "external-cred-provision"
+version = "0.1.0"
+description = "Provisions external credentials into secret stores from a declarative YAML context file."
+requires-python = "~=3.12"
+dependencies = [
+    "click==8.1.7",
+    "pyyaml==6.0.2",
+    "qubership-pipelines-common-library==2.0.12",
+]
+
+[project.scripts]
+external-cred-provision = "external_cred_provision.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

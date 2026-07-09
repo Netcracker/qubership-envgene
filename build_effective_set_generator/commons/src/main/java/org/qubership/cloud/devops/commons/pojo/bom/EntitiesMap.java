@@ -40,6 +40,7 @@ public class EntitiesMap {
     public Map<String, Map<String, Object>> commonParamsMap = new TreeMap<>();
     public Map<String, Map<String, Object>> perServiceParams = new TreeMap<>();
     public Map<String, String> deployParams = new TreeMap<>();
+    public Map<String, Object> collidingImageDeployParams = new TreeMap<>();
     public String deployerSessionId;
     public String appChartName;
 }
