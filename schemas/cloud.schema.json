@@ -324,17 +324,8 @@
   },
   "required": [
     "name",
+    "publicUrl",
     "apiUrl",
-    "apiPort",
-    "dashboardUrl",
-    "labels",
-    "defaultCredentialsId",
-    "protocol",
-    "deployParameters",
-    "e2eParameters",
-    "technicalConfigurationParameters",
-    "maasConfig",
-    "vaultConfig",
-    "consulConfig"
+    "defaultCredentialsId"
   ]
 }

@@ -223,8 +223,8 @@ public class CloudMap extends DynamicMap {
         }
         map.putIfAbsent("CLOUD_PUBLIC_HOST", config.getCloudUrlPub());
 
-        String port = StringUtils.isNotBlank(config.getCloudApiPort()) ? config.getCloudApiPort() : "8443";
-        map.putIfAbsent("CLOUD_API_PORT ", port);
+        String port = StringUtils.isNotBlank(config.getCloudApiPort()) ? config.getCloudApiPort() : "6443";
+        map.putIfAbsent("CLOUD_API_PORT", port);
 
         maps.put(cloudName, map);
 

@@ -125,9 +125,7 @@ public class PojoConverterUtils implements Serializable {
                     .enable(maaSConfigDTO.isEnable())
                     .build();
         } else {
-            throw new NotFoundException(
-                    String.format(ExceptionAdditionalInfoMessages.CLOUD_MAAS_NOT_FOUND, cloudDTO.getName())
-            );
+            maaS = MaaS.builder().build();
         }
         VaultConfigDTO vaultConfigDTO = cloudDTO.getVaultConfig();
         Vault vault;
@@ -139,9 +137,7 @@ public class PojoConverterUtils implements Serializable {
                     .enable(vaultConfigDTO.isEnable())
                     .build();
         } else {
-            throw new NotFoundException(
-                    String.format(ExceptionAdditionalInfoMessages.CLOUD_VAULT_NOT_FOUND, cloudDTO.getName())
-            );
+            vault = Vault.builder().build();
         }
 
         ConsulConfigDTO consulConfigDTO = cloudDTO.getConsulConfig();
@@ -154,9 +150,7 @@ public class PojoConverterUtils implements Serializable {
                     .tokenSecret(consulConfigDTO.getTokenSecret())
                     .build();
         } else {
-            throw new NotFoundException(
-                    String.format(ExceptionAdditionalInfoMessages.CLOUD_CONSUL_NOT_FOUND,
-                            cloudDTO.getName()));
+            consul = Consul.builder().build();
         }
 
         return Cloud.builder()
