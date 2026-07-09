@@ -10,6 +10,7 @@ class UnifiedAppDef:
     artifact_id: str = ""
     solution_descriptor: bool = False
     registry: str = ""
+    metadata: dict = field(default_factory=dict)
 
 @dataclass
 class UnifiedRegDef:

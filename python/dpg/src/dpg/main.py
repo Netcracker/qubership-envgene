@@ -5,6 +5,7 @@ from qubership_pipelines_common_library.v1.utils.utils_cli import utils_cli
 
 @click.group()
 def cli():
+    """"""
 
 @cli.group()
 def plan():

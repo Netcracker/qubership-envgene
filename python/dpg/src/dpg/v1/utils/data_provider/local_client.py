@@ -1,5 +1,6 @@
 import os
 import yaml
+import functools
 from pathlib import Path
 
 from .middleware import DataProviderInterface, UnifiedAppDef, UnifiedRegDef
@@ -15,7 +16,7 @@ class LocalClient(DataProviderInterface):
         if self.root_dir is None:
             self.root_dir = Path(os.getcwd())
 
-
+    @functools.cache
     def get_app_def(self, application: str) -> UnifiedAppDef:
         apppath = self.root_dir / Path(self.DEFAULT_PATH_TO_APPDEFS) / f"{application}.yml"
         if not apppath.exists():
@@ -30,10 +31,12 @@ class LocalClient(DataProviderInterface):
             group_id=appdef_d.get("groupId"),
             artifact_id=appdef_d.get('artifactId'),
             solution_descriptor=appdef_d.get("solutionDescriptor"),
-            registry=appdef_d.get("registryName")
+            registry=appdef_d.get("registryName"),
+            metadata=appdef_d.get("metadata", dict())
         )
         return appdef
 
+    @functools.cache
     def get_reg_def(self, registry: str) -> UnifiedAppDef:
         regpath = self.root_dir / Path(self.DEFAULT_PATH_TO_REGDEFS) / f"{registry}.yml"
         if not regpath.exists():
@@ -73,6 +76,7 @@ class LocalClient(DataProviderInterface):
             }
         )
 
+    @functools.cache
     def get_registry_info(self, registry: str) -> RegistryInfo:
         regdef = self.get_reg_def(registry=registry)
 

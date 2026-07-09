@@ -2,16 +2,17 @@ import json
 import re
 import yaml
 import copy
+import uuid6
 from pathlib import Path
 from typing import Tuple, List
 
-from .models import DeployPlan, DeployPlanEntity
+from .models import DeployPlan, DeployPlanEntity, GenerationType
 
 import dpg.v1.utils as utils
 from dpg.v1.utils.data_provider import DataProviderInterface
 from dpg.v1.internal.sd import SolutionDescriptorParser
 from dpg.v1.internal.artifact_descriptor import DDFinder
-
+from dpg.v1.internal.common import CommonSettings
 
 class DeploymentPlanCalculator:
     _RE_NS_APP_VER = re.compile(r'^(?P<namespace>[^:]+):(?P<name>[^:]+):(?P<version>.+)$')
@@ -43,8 +44,30 @@ class DeploymentPlanCalculator:
 
     def calculate(self, context) -> DeployPlan:
         deploy_plan = self.__collect_waves(context=context)
+        deploy_plan = self.__enrich_plan_generation_types(context=context, deploy_plan=deploy_plan)
+
         if not self.__validate_deploy_plan(deploy_plan):
             raise Exception("Validation of deploy plan failed.")
+
+        return deploy_plan
+
+    def __enrich_plan_generation_types(self, context, deploy_plan: DeployPlan):
+        run_uuid = uuid6.uuid7()
+        for entity in deploy_plan.entities:
+            appname, version = entity.version.split(":")
+            appdef = self.data_provider.get_app_def(application=appname)
+
+            generation_type = appdef.metadata.get(CommonSettings.METADATA_KEY_GENERATION_TYPE, "UniqForApp")
+            try:
+                generation_type = GenerationType(generation_type)
+            except ValueError:
+                context.logger.error(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
+                raise ValueError(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
+
+            entity.generation_type = generation_type
+            # we should provide generation id only for UniqForRun
+            if entity.generation_type == GenerationType.UNIQ_FOR_RUN:
+                entity.generation_id = run_uuid
 
         return deploy_plan
 
