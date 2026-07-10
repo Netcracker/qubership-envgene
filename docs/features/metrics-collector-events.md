@@ -33,9 +33,9 @@ each event `id` before POST. A successful request returns `202 Accepted`. When M
 Service is unavailable, EnvGene logs the error and continues without retries.
 
 For field-level API contract, request examples, and `data` structure, see
-[Metrics Collector events API](/docs/dev/metrics-collector-events.md).
+[Metrics Collector events API](/docs/dev/metrics-collector-integration.md).
 
 ## Related documentation
 
-- [Metrics Collector events API](/docs/dev/metrics-collector-events.md) - event fields, `data`
+- [Metrics Collector events API](/docs/dev/metrics-collector-integration.md) - event fields, `data`
   structure, and JSON examples
