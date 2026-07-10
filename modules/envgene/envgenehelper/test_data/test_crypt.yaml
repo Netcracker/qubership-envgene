@@ -1,0 +1,9 @@
+first_cred:
+    type: secret
+    data:
+        secret: token-placeholder-123
+second_cred:
+    type: usernamePassword
+    data:
+        username: user-placeholder-123
+        password: pass-placeholder-123

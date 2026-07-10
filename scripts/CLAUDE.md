@@ -2,7 +2,7 @@
 
 This branch runs every pipeline job (build, passport, cred rotation, effective set generation, etc.) as **one process**, orchestrated by `pipeline/orchestrator.py::run_unified_pipeline()`. It builds a `PipelineParametersHandler` from env vars, then runs an ordered list of `PipelineStep` objects, each with `should_run(ctx)` / `execute(ctx)`; a step is skipped (logged) if `should_run` returns `False`.
 
-Steps, in order: `PassportStep` → `CredentialRotationStep` → `BgManageStep` → `InventoryGenerationStep` → `SetTemplateVersionStep` → `AppregdefRenderStep` → `ProcessSdStep` → `EnvBuildStep` → `GenerateEffectiveSetStep`. (A `GitCommitStep` is commented out pending wiring — `git_commit()` itself already exists in `build_envgene/scripts/git_commit.py`.)
+Steps, in order: `PassportStep` → `CredentialRotationStep` → `BgManageStep` → `InventoryGenerationStep` → `SetTemplateVersionStep` → `AppregdefRenderStep` → `ProcessSdStep` → `EnvBuildStep` → `GenerateEffectiveSetStep` → `GitCommitStep` (`git_commit()` lives in `scripts/git_commit/git_commit.py`, always runs — `git_commit()` itself no-ops when there's nothing to stage).
 
 ## Directory Map
 

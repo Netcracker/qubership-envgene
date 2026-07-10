@@ -10,7 +10,7 @@ from envgenehelper.file_helper import writeToFile
 from envgenehelper.logger import logger as envgene_logger
 from envgenehelper.yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
 
-import minimize_cred_diffs as mcd
+import git_commit.minimize_cred_diffs as mcd
 
 CRED_REL_PATH = 'environments/cluster/env/configuration/credentials.yml'
 NEW_CRED_REL_PATH = 'environments/cluster/env/Inventory/credentials/extra-creds.yml'

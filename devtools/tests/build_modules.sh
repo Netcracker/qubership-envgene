@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-SCRIPTPATH="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
+SCRIPTPATH="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/../../modules" >/dev/null 2>&1 && pwd -P)"
 
 install_and_clean() {
     local path="$1"

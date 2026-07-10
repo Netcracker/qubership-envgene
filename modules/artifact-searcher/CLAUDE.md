@@ -2,6 +2,8 @@
 
 Resolves `application:version` notation to download-ready Maven artifact URLs. Supports Nexus, Artifactory, AWS CodeArtifact, GCP Artifact Registry, and Azure Artifacts. Uses `aiohttp` for parallel resolution across multiple repos.
 
+Pip-installable package (`artifact_searcher` — version is a setuptools formality, not published anywhere; see root `CLAUDE.md` "Python module layout").
+
 ## File Reference
 
 | File | Responsibility |
@@ -32,6 +34,7 @@ Resolves `application:version` notation to download-ready Maven artifact URLs. S
 ## Tests
 
 ```bash
-cd python/artifact-searcher
+pip install -e modules/artifact-searcher
+cd modules/artifact-searcher
 python -m pytest artifact_searcher/
 ```
