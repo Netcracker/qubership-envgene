@@ -278,12 +278,16 @@ class Repo(BaseSchema):
     type: RepoType
 
 
-class ArtifactInfo(BaseSchema):
-    url: str
-    app_def: Application
-    repo: Optional[Repo] = None
-    target_path: Optional[str] = None
+class ArtifactSource(BaseSchema):
+    source_url: str
+    application: Application
+    repository: Repo
     auth_headers: Optional[dict] = None
+
+
+class ArtifactDownload(BaseSchema):
+    source: ArtifactSource
+    local_target_path: str
 
 
 class FileExtension(str, Enum):
