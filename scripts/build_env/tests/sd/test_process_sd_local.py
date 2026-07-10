@@ -25,12 +25,18 @@ TEST_CASES_POSITIVE = [
     "TC-001-017",
 ]
 
+TEST_CASES_NEGATIVE = {
+    "TC-001-018": ValueError,
+    "TC-001-019": ValueError,
+}
+
 test_suits_map = {
     "basic_not_first": ["TC-001-010", "TC-001-012"],
     "basic_first": ["TC-001-002", "TC-001-004"],
     "exclude": ["TC-001-014", "TC-001-016"],
     "extended": ["TC-001-017"],
-    "replace": ["TC-001-008", "TC-001-006"]
+    "replace": ["TC-001-008", "TC-001-006"],
+    "full_sd_duplicate": ["TC-001-019"],
 }
 
 FEATURE_TEST_DIR = "test_handle_sd"
@@ -60,4 +66,16 @@ class TestSdProcessArtifact(BaseTest):
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
         assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)
+        logger.info(f"=====SUCCESS - {test_case_name}======")
+
+    @pytest.mark.parametrize("test_case_name,expected_exception", [(k, v) for k, v in TEST_CASES_NEGATIVE.items()])
+    def test_sd_negative(self, test_case_name, expected_exception):
+        env = Environment(self.output_dir, "cluster-01", "env-01")
+        do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
+        logger.info(f"Starting SD test:\n\tTest case: {test_case_name}")
+
+        sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(self.test_data_dir, test_case_name)
+        with pytest.raises(expected_exception):
+            handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+
         logger.info(f"=====SUCCESS - {test_case_name}======")
