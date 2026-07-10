@@ -113,9 +113,38 @@ deploy-stage jobs `cmdb_import` and `sync`, not sub-steps.
 ${APP_ARTIFACTS_DIR}/
   <app-name>/
     <app-version>/
-      dd.json       # DD
-      dd.zip        # downloaded zip artifact
-      dd/           # unzipped content
+      artifact-info.yml   #
+      dd.json             # DD
+      dd.zip              # downloaded zip artifact
+      dd/                 # unzipped content
+```
+
+artifact-info.yml:
+
+```yaml
+apiVersion: v1
+kind: artifactInfo
+spec:
+  appName: bss-core
+  appVersion: 1.2.3
+
+  # the appreg-def name, kept for cross-check. 
+  registry: pd-saas-onsite
+  # The repository the artifacts were ACTUALLY
+  # fetched from (snapshot/staging/release resolved at download time)
+  repo: pd.saas.mvn.release
+
+  artifacts:
+    dd:
+      # Full resolved URL - provenance. Also lets the consumer avoid guessing the filename.
+      url: https://artifactorycn.netcracker.com/pd.saas.mvn.release/com/netcracker/bss/bss-core-deploy/1.2.3/bss-core-deploy-1.2.3.json
+      # Path relative to this folder.
+      file: bss-core-deploy-1.2.3.json
+    zip:
+      url: https://artifactorycn.netcracker.com/pd.saas.mvn.release/com/netcracker/bss/bss-core-deploy/1.2.3/bss-core-deploy-1.2.3.zip
+      file: bss-core-deploy-1.2.3.zip
+      # Directory the zip was extracted into
+      unpackedDir: bss-core-deploy
 ```
 
 ## `deploy-plan.yml`
@@ -649,7 +678,6 @@ Triggers:
 Functions:
 
 1. `dd_downloading`
-    - note: перенести раньше по флоу, расширить (dd + sd)
     - input:
       - appreg defs
       - `sd.yaml` or `deploy-plan.yml`
