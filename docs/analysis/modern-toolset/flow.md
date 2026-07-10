@@ -82,24 +82,24 @@ for the target flow. The per-component docs in this directory elaborate individu
 Producers and consumers are `job.step` numbers from the flow below.
 deploy-stage jobs `cmdb_import` and `sync`, not sub-steps.
 
-| Artifact                  | Path                                                                          | Producers      | Consumers                 |
-|---------------------------|-------------------------------------------------------------------------------|----------------|---------------------------|
-| env_definition            | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/env_definition.yml` | 2.4, 2.7, 2.10 | 2.6, 2.7, 2.10            |
-| cloud passport            | `${CI_PROJECT_DIR}/environments/<cluster>/cloud-passport/`                    | 2.5            | 2.7, 2.10                 |
-| artdef                    | `${CI_PROJECT_DIR}/configuration/artifact_definitions/`                       | 2.6            | 2.7                       |
-| downloaded template files | `${CI_PROJECT_DIR}/tmp/` (common), `tmp/origin/`, `tmp/peer/`                 | 2.7            | 2.7, 2.10                 |
-| namespace-map.yml         | `${CI_PROJECT_DIR}/tmp/render-context/namespace-map.yml`                      | 2.7            | 2.9                       |
-| env instance              | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/`                             | 2.7, 2.10      | 2.7, 2.11, 2.14, 3.1      |
-| appreg defs               | env instance appregdef files                                                  | 2.7            | 2.8, 2.9, 2.11            |
-| sd.yaml                   | Inventory/solution-descriptor/sd.yaml                                         | 2.8            | 2.8, 2.10, 2.11           |
-| deploy-plan.yml           | deploy-plan.yml                                                               | 2.9            | 2.10, 2.11, 2.12          |
-| DD and zip                | `${APP_ARTIFACTS_DIR}`                                                        | 2.11           | 2.11, 2.12                |
-| sboms                     | sboms/                                                                        | 2.11           | 2.11, committed           |
-| effective set             | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/effective-set/`               | 2.11           | 2.12, 2.15                |
-| appset/app CR             | TBD                                                                           | 2.12           | 2.15                      |
-| build.env                 | `${CI_PROJECT_DIR}/build.env`                                                 | 2.1            | 2.9, 2.12, 2.15, 3.1, 4.1 |
-| ARGO_DPG_CONTEXT.env      | TBD                                                                           | 2.12           | 4.1                       |
-| system config             | TBD                                                                           | TBD            | 2.6, 2.7                  |
+| Artifact                  | Path                                                                                   | Producers      | Consumers                 |
+|---------------------------|----------------------------------------------------------------------------------------|----------------|---------------------------|
+| env_definition            | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/env_definition.yml`          | 2.4, 2.7, 2.10 | 2.6, 2.7, 2.10            |
+| cloud passport            | `${CI_PROJECT_DIR}/environments/<cluster>/cloud-passport/`                             | 2.5            | 2.7, 2.10                 |
+| artdef                    | `${CI_PROJECT_DIR}/configuration/artifact_definitions/`                                | 2.6            | 2.7                       |
+| downloaded template files | `${CI_PROJECT_DIR}/tmp/` (common), `tmp/origin/`, `tmp/peer/`                          | 2.7            | 2.7, 2.10                 |
+| namespace-map.yml         | `${CI_PROJECT_DIR}/tmp/render-context/namespace-map.yml`                               | 2.7            | 2.9                       |
+| env instance              | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/`                                      | 2.7, 2.10      | 2.7, 2.11, 2.14, 3.1      |
+| appreg defs               | `${CI_PROJECT_DIR}/appdefs`, `${CI_PROJECT_DIR}/regdefs`                               | 2.7            | 2.8, 2.9, 2.11            |
+| sd.yaml                   | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/solution-descriptor/sd.yaml` | 2.8            | 2.8, 2.10, 2.11           |
+| deploy-plan.yml           | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/deploy-plan.yml`             | 2.9            | 2.10, 2.11, 2.12          |
+| DD and zip                | `${APP_ARTIFACTS_DIR}`                                                                 | 2.11           | 2.11, 2.12                |
+| sboms                     | `${CI_PROJECT_DIR}/sboms`                                                              | 2.11           | 2.11, committed           |
+| effective set             | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/effective-set/`                        | 2.11           | 2.12, 2.15                |
+| appset/app CR             | TBD                                                                                    | 2.12           | 2.15                      |
+| build.env                 | `${CI_PROJECT_DIR}/build.env`                                                          | 2.1            | 2.9, 2.12, 2.15, 3.1, 4.1 |
+| ARGO_DPG_CONTEXT.env      | TBD                                                                                    | 2.12           | 4.1                       |
+| system config             | TBD                                                                                    | TBD            | 2.6, 2.7                  |
 
 ## Defaults
 
