@@ -419,28 +419,12 @@ def yaml_from_string(yaml_str):
     result = yaml.load(yaml_str)
     return result
 
+
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
-
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
     schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
-
-    # DEBUG
-    import pprint
-    print("\n========== YAML ==========")
-    pprint.pp(yaml_content)
-
-    print("\n========== SCHEMA ==========")
-    pprint.pp(schema_content)
-
-    if "definitions" in schema_content:
-        print("\n========== DEFINITIONS ==========")
-        pprint.pp(schema_content["definitions"])
-
-        if "metaString" in schema_content["definitions"]:
-            print("\n========== metaString ==========")
-            pprint.pp(schema_content["definitions"]["metaString"])
 
     if schemas_dir:
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
@@ -448,25 +432,12 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
     else:
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
-
     if len(errors) > 0:
-        print("\n========== VALIDATION ERRORS ==========")
-
-        for err in errors:
-            print("--------------------------------")
-            print("Message      :", err.message)
-            print("Path         :", list(err.path))
-            print("Schema Path  :", list(err.schema_path))
-            print("Instance     :", err.instance)
-            print("Schema Used  :", err.schema)
-
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
             logger.error(f"Validation of {rel_path} file has failed")
-
         for err in errors:
             log_jsonschema_validation_error(err)
-
         raise ValueError("Validation failed") from None
 
 
