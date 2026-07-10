@@ -763,7 +763,10 @@ Functions:
     - input:
       - `CLUSTER_NAME`
       - `ENVIRONMENT_NAME`
-    - AI[phase1]: depending on `PIPELINE_TYPE`, commit env_instance/ES/sd.yaml or not
+    - AI[phase1]: If `PIPELINE_TYPE: GITLAB_DEPLOY` then do not commit into inventory repository:
+      - env instance
+      - effective set
+      - sd.yaml
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
 
