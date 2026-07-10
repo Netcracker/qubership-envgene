@@ -7,8 +7,8 @@ packages = [{include = "external_cred_provision", from = "src"}]
 
 [project]
 name = "qubership-external-cred-provision"
-version = "1.0.1"
-description = "Qubership EnvGene CLI that provisions external credentials into Vault, OpenBao, GCP Secret Manager, and AWS Secrets Manager from a YAML context file."
+version = "1.0.2"
+description = "Qubership EnvGene CLI that provisions external credentials into Vault, OpenBao, Azure Key Vault, GCP Secret Manager, and AWS Secrets Manager from a YAML context file."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = "~=3.12"
 authors = [
@@ -23,6 +23,7 @@ keywords = [
   "secrets",
   "vault",
   "openbao",
+  "azure",
   "gcp",
   "aws",
   "provisioning",

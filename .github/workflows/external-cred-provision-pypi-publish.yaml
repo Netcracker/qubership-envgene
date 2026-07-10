@@ -32,6 +32,7 @@ env:
   PYPI_RETRY_ATTEMPTS: 3
   PYPI_RETRY_DELAY_SECONDS: 30
   PYPI_SCRIPTS_DIR: .github/scripts/pypi
+  RELEASE_DRAFTER_CONFIG: .github/release-drafter-config.yml
   POETRY_VERSION: "2.1.3"
 
 jobs:
@@ -476,6 +477,18 @@ jobs:
             --package-name "${PACKAGE_NAME}" \
             --version "${VERSION}"
 
+      - name: Set PyPI version in release drafter config
+        env:
+          VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python "${PYPI_SCRIPTS_DIR}/set_release_drafter_pypi_version.py" \
+            --config "${RELEASE_DRAFTER_CONFIG}" \
+            --package-name "${PACKAGE_NAME}" \
+            --version "${VERSION}"
+
       - name: Commit version bump
         id: sync
         env:
@@ -486,7 +499,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "${PROJECT_DIR}/pyproject.toml"
+          git add "${PROJECT_DIR}/pyproject.toml" "${RELEASE_DRAFTER_CONFIG}"
 
           if git diff --staged --quiet; then
             echo "OK: repository version already matches release ${VERSION}."
