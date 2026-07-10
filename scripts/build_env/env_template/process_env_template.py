@@ -69,7 +69,7 @@ async def resolve_artifact_new_logic(app_def: Application, app_version: str, tem
     dd_artifact_info = await artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, auth_headers=auth_headers)
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
-        dd_url, repo_name = dd_artifact_info.url, dd_artifact_info.repo.value
+        dd_url, repo_name = dd_artifact_info.source_url, dd_artifact_info.repository.value
         logger.info(f"Resolved deployment descriptor URL: {dd_url}")
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(dd_url, app_version)
@@ -94,7 +94,7 @@ async def resolve_artifact_new_logic(app_def: Application, app_version: str, tem
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
         artifact_info = await artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, auth_headers=auth_headers)
         if artifact_info:
-            template_url = artifact_info.url
+            template_url = artifact_info.source_url
         validate_url(template_url, group_id, artifact_id, version)
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
