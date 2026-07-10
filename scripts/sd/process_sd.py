@@ -261,7 +261,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(f'Solution descriptor content was not received for {app_name}:{version}')
-    return artifact.download_json_content(artifact_info.url, auth_headers=auth_headers)
+    return artifact.download_json_content(artifact_info.source_url, auth_headers=auth_headers)
 
 
 def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Application:
