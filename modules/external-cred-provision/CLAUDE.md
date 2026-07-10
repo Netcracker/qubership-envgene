@@ -11,7 +11,7 @@ Pip-installable package (`external-cred-provision`, v0.1.0 — version is a setu
 
 ## Flow (`ExternalCredProvisioner.run`)
 
-1. **Load context** (`_load_context`) — parses the YAML context file; if SOPS-encrypted (`SopsClient.is_encrypted`), decrypts using `SOPS_AGE_KEY` env var first. Parses each `credentials.<id>` entry into a `CredentialEntry` (`vals` path, `strategy`, `data`, provider type/store id from `MultiStoreProvider.parse_provider_type`).
+1. **Load context** (`_load_context`) — parses the YAML context file; if SOPS-encrypted (`SopsClient.is_encrypted`), decrypts using `SOPS_AGE_KEY` env var first. Parses each `credentials.<id>` entry into a `CredentialEntry` (`vals` path, `strategy`, `data`, provider type/store ID from `MultiStoreProvider.parse_provider_type`).
 2. **Pre-flight phase** — authenticates to every distinct (provider_type, store) pair referenced by the context before touching anything.
 3. **Processing phase** (or **dry-run phase**) — applies each credential per its `Strategy`: `fail_if_absent` requires the secret to already exist; `create_if_absent` only writes if missing; `overwrite` always writes. Dry-run only checks existence/connectivity, never writes.
 4. **Summary** — logs aggregate counts (`created`/`overwritten`/`skipped`/`verified`/`failed` or `dry_run_ok`/`dry_run_fail`); `run()` exit code is non-zero if anything failed.
