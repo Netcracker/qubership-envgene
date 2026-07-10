@@ -45,7 +45,7 @@ A JSON file compliant with the CycloneDX specification, describing the following
 2. Coordinates of the microservice's artifacts such as Docker image
 3. Application's components attributes
 
-[Example](/examples/application.sbom.json)
+[Example](/docs/examples/application.sbom.json)
 
 #### Environment Template SBOM
 
@@ -53,7 +53,7 @@ A JSON file compliant with the CycloneDX specification, describing the following
 
 1. Coordinates of the environment template artifact
 
-[Example](/examples/env-template.sbom.json)
+[Example](/docs/examples/env-template.sbom.json)
 
 ## SBOM Storage and Retention
 
