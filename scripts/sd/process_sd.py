@@ -42,8 +42,6 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
         - If userData contains ONLY field useDeployPostfixAsNamespace, remove userData.
         - If other keys exist, remove only useDeployPostfixAsNamespace.
     """
-    logger.info(
-        f"[Pre handle_deploy_postfix_namespace_transformation] Original SD data: {dumpYamlToStr(sd_data)}")
     user_data = sd_data.get("userData", {})
 
     if isinstance(user_data, dict) and user_data.get("useDeployPostfixAsNamespace") is True:
