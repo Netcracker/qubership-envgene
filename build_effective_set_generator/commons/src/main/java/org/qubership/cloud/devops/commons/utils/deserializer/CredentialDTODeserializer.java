@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static org.qubership.cloud.devops.vals.core.constants.SecretReferenceConstants.DEFAULT_STORE;
+
 public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -45,7 +47,7 @@ public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
                 .credentialsId(credId);
         if (type == CredentialsTypeEnum.external) {
             builder.create((Boolean) node.getOrDefault("create", Boolean.FALSE))
-                    .secretStore((String) node.get("secretStore"))
+                    .secretStore(resolveSecretStore((String) node.get("secretStore")))
                     .remoteRefPath((String) node.get("remoteRefPath"))
                     .properties(convertProps(node.get("properties")));
         } else {
@@ -82,5 +84,11 @@ public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
     private List<CredentialDTO.Property> convertProps(Object obj) {
         if (obj == null) return null;
         return mapper.convertValue(obj, new TypeReference<List<CredentialDTO.Property>>() {});
+    }
+
+    private String resolveSecretStore(String secretStore) {
+        return (secretStore == null || secretStore.isBlank())
+                ? DEFAULT_STORE
+                : secretStore;
     }
 }
