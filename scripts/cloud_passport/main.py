@@ -127,15 +127,16 @@ def main():
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
     cred_config = get_cred_config()
 
-    gitlab_token = os.environ.get("GITLAB_TOKEN")
-    if not gitlab_token:
-        logger.error(f'Variable "GITLAB_TOKEN" is not set')
-        sys.exit(1)
+    self_git_token = fetch_cred_value(integration_config.get("self_token"), cred_config)   
+    self_git_token = self_git_token or os.getenv("GITLAB_TOKEN") or os.getenv("GITHUB_TOKEN")
+    if not self_git_token:
+        logger.error(f'Repository token is not set')
+        sys.exit(1) 
 
-    repo = GitRepoManager()
-    repo.configure()
+    repo = GitRepoManager(repo_path=base_dir, git_token=self_git_token)
+    repo.prepare_repo()
 
-    downstream_gl_client = GitLabClient(token=gitlab_token)
+    downstream_gl_client = GitLabClient(token=self_git_token)
 
     project_id = os.getenv("CI_PROJECT_ID")
     pipeline_id = os.getenv("CI_PIPELINE_ID")
