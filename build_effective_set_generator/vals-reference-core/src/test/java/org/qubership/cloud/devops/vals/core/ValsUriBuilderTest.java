@@ -35,7 +35,7 @@ public class ValsUriBuilderTest {
         return Stream.of(
                 Arguments.of(
                         SecretStoreDTO.builder().type(SecretStoreType.vault).mountPath("secret").build(),
-                        "ref+vault://secret/data/cluster/env/cred"
+                        "ref+vault://secret/cluster/env/cred"
                 ),
                 Arguments.of(
                         SecretStoreDTO.builder().type(SecretStoreType.azure).vaultName("myvault").build(),
