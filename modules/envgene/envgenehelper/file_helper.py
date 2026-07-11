@@ -32,8 +32,7 @@ def identify_yaml_extension(file_path: str) -> str:
     """
     Takes file_path and check if it exists either with .yml or .yaml extension and returns existing file
     """
-    file_root, _ = os.path.splitext(file_path)
-    possible_files = [file_root + ext for ext in ['.yml', '.yaml']]
+    possible_files = [file_path + ext for ext in ['.yml', '.yaml']]
     for file in possible_files:
         if os.path.isfile(file):
             return file
