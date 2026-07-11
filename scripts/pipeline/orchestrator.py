@@ -125,7 +125,7 @@ class AppregdefRenderStep(PipelineStep):
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILD'))
+        return bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
@@ -137,7 +137,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILD'))
+        return bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_build_environment()
