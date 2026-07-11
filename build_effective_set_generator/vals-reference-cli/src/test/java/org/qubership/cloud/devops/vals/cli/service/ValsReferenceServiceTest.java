@@ -35,7 +35,7 @@ public class ValsReferenceServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(
-                "ref+vault://secret/data/cluster/env/app-custom-cred?secret_store_id=vault_store",
+                "ref+vault://secret/cluster/env/app-custom-cred?secret_store_id=vault_store",
                 result.get("app-custom-cred"));
     }
 }
