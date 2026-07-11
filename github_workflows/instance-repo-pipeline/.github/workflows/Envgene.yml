@@ -458,7 +458,7 @@ jobs:
               /module/scripts/utils/handle_certs.sh
               # Execute git commit with proper error handling
               echo 'Executing git commit operations...'
-              if ! python /module/scripts/git_commit.py; then
+              if ! python /module/scripts/git_commit/git_commit.py; then
                 echo 'git_commit.py failed with exit code '\$?
                 exit 1
               fi

@@ -3,7 +3,7 @@ import os
 from envgenehelper import logger
 from envgenehelper.git_helper import GitRepoManager
 
-from minimize_cred_diffs import minimize_cred_diffs
+from git_commit.minimize_cred_diffs import minimize_cred_diffs
 
 
 def build_commit_message() -> str:

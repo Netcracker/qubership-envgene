@@ -15,6 +15,7 @@ from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import effective_set_entrypoint
 from effective_set.sboms_retention_policy import sboms_retention_policy
 from envgenehelper.models import TemplateVersionUpdateMode
+from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from sd.process_sd import handle_sd, resolve_sd_parameters
@@ -164,20 +165,16 @@ class GenerateEffectiveSetStep(PipelineStep):
         effective_set_entrypoint()
 
 
-# TODO after refactor git_commit.sh
+class GitCommitStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "git_commit"
 
-# class GitCommitStep(PipelineStep):
-#     requires_git_commit = False
-#
-#     @property
-#     def name(self) -> str:
-#         return "git_commit"
-#
-#     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-#         return self.requires_git_commit
-#
-#     def execute(self, ctx: PipelineParametersHandler) -> None:
-#         run_git_commit()
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return True
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        git_commit()
 
 
 def run_unified_pipeline() -> None:
@@ -194,7 +191,8 @@ def run_unified_pipeline() -> None:
         AppregdefRenderStep(),
         ProcessSdStep(),
         EnvBuildStep(),
-        GenerateEffectiveSetStep()
+        GenerateEffectiveSetStep(),
+        GitCommitStep()
     ]
 
     for step in steps:
