@@ -152,7 +152,6 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
-- [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configuration.md) - Prepare a template and inventory for Blue-Green Deployment
 
 ### Migrations
 

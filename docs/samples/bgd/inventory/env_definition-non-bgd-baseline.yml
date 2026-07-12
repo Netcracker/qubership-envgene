@@ -4,6 +4,7 @@ inventory:
   environmentName: "sample-bgd-env"
   tenantName: "Application"
   cloudName: "sample_cloud"
+  cloudPassport: "sample-cluster"
   clusterUrl: "https://k8s.example.local:6443"
   description: "Non-BG baseline for BGD migration sample"
   owners: "Platform team"
