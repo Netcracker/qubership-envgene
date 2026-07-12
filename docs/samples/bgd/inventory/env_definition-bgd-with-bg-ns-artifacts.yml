@@ -4,7 +4,6 @@ inventory:
   environmentName: "sample-bgd-env"
   tenantName: "Application"
   cloudName: "sample_cloud"
-  cloudPassport: "sample-cluster"
   clusterUrl: "https://k8s.example.local:6443"
   description: "BGD environment with split origin/peer artifacts"
   owners: "Platform team"
@@ -19,5 +18,3 @@ envTemplate:
   envSpecificParamsets: {}
   envSpecificTechnicalParamsets: {}
   sharedMasterCredentialFiles: []
-generatedVersions:
-  generateEnvironmentLatestVersion: "my-env-templates:2.0.0"

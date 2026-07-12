@@ -53,9 +53,11 @@ environments/
   └── <shared-template-variables>.yml
 ```
 
-> **Note:**
+> [!NOTE]
 > The `env_definition.yml` should follow the [documented structure](/docs/envgene-configs.md#env_definitionyml).
 
-## Blue-Green Deployment Samples
+## Blue-Green Deployment samples
 
-For migrating a non-BG template and environment to Blue-Green Domain (BGD), see [BGD samples](/docs/samples/bgd/) and the [configuration how-to](/docs/how-to/blue-green-deployment-configuration.md).
+For migrating a non-BG template and environment to Blue-Green Deployment (BGD), see
+[BGD samples](/docs/samples/bgd/) and the
+[configuration how-to](/docs/how-to/blue-green-deployment-configuration.md).
