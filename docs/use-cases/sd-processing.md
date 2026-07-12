@@ -36,7 +36,7 @@
     - [UC-SD-19: Single SD\_DATA with SD\_DELTA=true](#uc-sd-19-single-sd_data-with-sd_deltatrue)
     - [UC-SD-19a: Single SD\_DATA with SD\_DELTA=true when Full SD does not exist](#uc-sd-19a-single-sd_data-with-sd_deltatrue-when-full-sd-does-not-exist)
     - [UC-SD-20: Single SD\_DATA with SD\_DELTA=false](#uc-sd-20-single-sd_data-with-sd_deltafalse)
-    - [UC-SD-21: SD\_DATA contains duplicate application entries](#uc-sd-21-sd_data-contains-duplicate-application-entries)
+    - [UC-SD-21: Input SD contains duplicate application entries](#uc-sd-21-input-sd-contains-duplicate-application-entries)
     - [UC-SD-22: Existing sd.yaml contains duplicate application entries](#uc-sd-22-existing-sdyaml-contains-duplicate-application-entries)
 
 ## Overview
@@ -1713,12 +1713,13 @@ The SD processing logic depends on:
 3. Delta SD is not created or modified
 4. Full SD is available in job artifacts
 
-### UC-SD-21: SD_DATA contains duplicate application entries
+### UC-SD-21: Input SD contains duplicate application entries
 
 **Pre-requisites:**
 
 1. Environment Inventory exists
-2. Full SD may or may not exist in repository at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml`
+2. For `artifact` source: AppDef and RegDef exist for each `app:ver` in `SD_VERSION`
+3. Full SD may or may not exist in repository at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml`
 
 **Trigger:**
 
@@ -1729,13 +1730,19 @@ The SD processing logic depends on:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: json`
    3. `SD_DATA` contains an SD where two or more entries in `applications` share the same Application Name, Application Version, and `deployPostfix`
-2. GitHub Instance pipeline is started with equivalent parameters
+2. GitLab Instance pipeline is started with parameters:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>` where the downloaded SD contains two or more entries in `applications` that share the same Application Name, Application Version, and `deployPostfix`
+3. GitHub Instance pipeline is started with parameters:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=json,SD_DATA=<sd-json>"` or `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>"` with an SD that contains such entries
 
 **Steps:**
 
 1. The `process_sd` job runs in the pipeline:
-   1. Reads `SD_DATA` parameter and parses JSON content
-   2. For each SD item, validates that no two entries in `applications` share the same `(Application Name, Application Version, deployPostfix)` triplet
+   1. Reads the input SD from the `SD_DATA` parameter or downloads the SD artifact for the specified `SD_VERSION`
+   2. For each input SD, validates that no two entries in `applications` share the same `(Application Name, Application Version, deployPostfix)` triplet
    3. Detects duplicate entries in `SD[N]`
    4. Aborts with a clear error message before any file write occurs
    5. Pipeline job fails
@@ -1764,7 +1771,7 @@ The SD processing logic depends on:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: json` or `artifact`
    3. `SD_VERSION` or `SD_DATA` provided
-   4. `SD_REPO_MERGE_MODE`: `basic-merge`, `basic-exclusion-merge`, or `extended-merge`
+   4. `SD_REPO_MERGE_MODE`: `basic-merge`, `basic-exclusion-merge`, or `extended-merge`, or not set (the merge mode defaults to `basic-merge`)
 2. GitHub Instance pipeline is started with equivalent parameters
 
 **Steps:**
