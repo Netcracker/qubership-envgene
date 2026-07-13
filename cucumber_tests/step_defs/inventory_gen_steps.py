@@ -4,6 +4,7 @@ import os
 import pytest
 import yaml
 import shutil
+from pathlib import Path
 from pytest_bdd import given, parsers, then, when
 
 from cucumber_tests.framework.workspace import (
@@ -15,7 +16,7 @@ from cucumber_tests.framework.workspace import (
 from cucumber_tests.framework.golden_compare import compare_directories
 
 
-# Entity в†’ (subdirectory, has_inventory_folder)
+# Entity -> (subdirectory, has_inventory_folder)
 # has_inventory_folder=True means env scope puts files under .../Inventory/<subdir>
 _ENTITY_DIRS = {
     "paramset":                 ("parameters",               True),
@@ -36,7 +37,7 @@ def _entity_dir(workspace, entity: str, scope: str) -> "Path":
         return workspace.entity_dir(subdir, scope)
 
 
-# в”Ђв”Ђ Environment/cluster context setup в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── Environment/cluster context setup ────────────────────────────────────────
 
 
 @given(parsers.parse('environment is "{cluster}/{env}"'))
@@ -46,7 +47,7 @@ def set_environment(workspace, cluster, env):
     workspace.env_name = env
 
 
-# в”Ђв”Ђ env_definition.yml в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── env_definition.yml ────────────────────────────────────────────────────────
 
 
 @given("the target environment inventory file does not exist")
@@ -58,7 +59,14 @@ def inv_does_not_exist(workspace):
 def inv_exists(workspace):
     inv_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name) / "Inventory"
     inv_dir.mkdir(parents=True, exist_ok=True)
-    (inv_dir / "env_definition.yml").write_text(TEST_ENV_DEFINITION_CONTENT)
+    
+    data_path = Path(__file__).parent.parent / "test_data" / "einv" / "env_definition.yml"
+    if data_path.exists():
+        content = data_path.read_text(encoding="utf-8")
+    else:
+        content = TEST_ENV_DEFINITION_CONTENT
+        
+    (inv_dir / "env_definition.yml").write_text(content, encoding="utf-8")
 
 
 @when(
@@ -103,7 +111,7 @@ def file_is_deleted(workspace, filename):
     assert not (env_dir / "Inventory" / filename).exists(), f"File {filename} was not deleted"
 
 
-# в”Ђв”Ђ Generic entity steps (paramsets, credentials, resource_profiles, shtv) в”Ђв”Ђв”Ђ
+# ── Generic entity steps (paramsets, credentials, resource_profiles, shtv) ───
 
 
 @given(
@@ -125,7 +133,15 @@ def target_entity_not_exist(workspace, entity, name, scope):
 def target_entity_exists(workspace, entity, name, scope):
     """Ensure entity file is present before test."""
     path = _entity_dir(workspace, entity, scope) / f"{name}.yml"
-    create_file(path)
+    subdir, _ = _ENTITY_DIRS[entity]
+    
+    data_path = Path(__file__).parent.parent / "test_data" / "einv" / subdir / f"{name}.yml"
+    if data_path.exists():
+        content = data_path.read_text(encoding="utf-8")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    else:
+        create_file(path)
 
 
 @then(
@@ -161,7 +177,7 @@ def entity_file_deleted(workspace, entity, filename, scope):
     workspace.last_checked_file_path = path
 
 
-# в”Ђв”Ђ Per-entity pipeline When-steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── Per-entity pipeline When-steps ────────────────────────────────────────────
 
 
 @when(
@@ -237,7 +253,7 @@ def pipeline_inv_content_shtv(workspace, action, name, scope):
     workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
-# в”Ђв”Ђ Atomic rollback в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── Atomic rollback ───────────────────────────────────────────────────────────
 
 
 @given("the repository has an initial state for rollback testing")
@@ -287,7 +303,7 @@ def repo_state_identical(workspace):
     )
 
 
-# в”Ђв”Ђ UC-EINV-INIT steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── UC-EINV-INIT steps ────────────────────────────────────────────────────────
 
 
 @when(
@@ -303,7 +319,7 @@ def pipeline_inv_init(workspace, value):
     workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
-# в”Ђв”Ђ UC-EINV-BASIC-1 steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── UC-EINV-BASIC-1 steps ─────────────────────────────────────────────────────
 
 
 @when(
@@ -344,12 +360,12 @@ def env_definition_has_required_fields(workspace):
     assert "envTemplate" in data, "Missing 'envTemplate' key"
 
 
-# в”Ђв”Ђ UC-EINV-TV steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── UC-EINV-TV steps ──────────────────────────────────────────────────────────
 
 
 @when(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying “{action}” for “envDefinition” and ENV_TEMPLATE_VERSION set to “{version}”'
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" and ENV_TEMPLATE_VERSION set to "{version}"'
     )
 )
 def pipeline_inv_content_envdef_with_version(workspace, action, version):
@@ -369,7 +385,7 @@ def pipeline_inv_content_envdef_with_version(workspace, action, version):
     workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
-# в”Ђв”Ђ Invalid content в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── Invalid content ───────────────────────────────────────────────────────────
 
 
 @when(
@@ -399,7 +415,7 @@ def pipeline_logs_contain_text(workspace, text):
     workspace.assert_logs_contain(text)
 
 
-# в”Ђв”Ђ Shared assertions в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+# ── Shared assertions ─────────────────────────────────────────────────────────
 
 
 @then("its content matches the payload")
