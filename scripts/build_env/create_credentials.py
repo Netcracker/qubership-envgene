@@ -89,11 +89,14 @@ def getCloudCreds(cloudContent, tenantName, cloudName, is_external_cred_env=Fals
     creds = []
     cloudComment = f"cloud {cloudName}"
     checkCredAndAppend(cloudContent["defaultCredentialsId"], creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
-    checkCredAndAppend(cloudContent["maasConfig"]["credentialsId"], creds, CRED_TYPE_USERPASS, cloudComment, is_external_cred_env, external_cred_ids)
-    checkCredAndAppend(cloudContent["vaultConfig"]["credentialsId"], creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
-    checkCredAndAppend(cloudContent["consulConfig"]["tokenSecret"], creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
-    for i in cloudContent["dbaasConfigs"]:
-        checkCredAndAppend(i["credentialsId"], creds, CRED_TYPE_USERPASS, cloudComment, is_external_cred_env, external_cred_ids)
+    if "maasConfig" in cloudContent:
+        checkCredAndAppend(cloudContent["maasConfig"].get("credentialsId", ""), creds, CRED_TYPE_USERPASS, cloudComment, is_external_cred_env, external_cred_ids)
+    if "vaultConfig" in cloudContent:
+        checkCredAndAppend(cloudContent["vaultConfig"].get("credentialsId", ""), creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
+    if "consulConfig" in cloudContent:
+        checkCredAndAppend(cloudContent["consulConfig"].get("tokenSecret", ""), creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
+    for i in cloudContent.get("dbaasConfigs", []):
+        checkCredAndAppend(i.get("credentialsId", ""), creds, CRED_TYPE_USERPASS, cloudComment, is_external_cred_env, external_cred_ids)
 
     #process deployParameters
     processParametersAndAppend("deployParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment, external_cred_ids=external_cred_ids)
