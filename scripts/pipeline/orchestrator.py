@@ -233,19 +233,24 @@ def run_unified_pipeline() -> None:
             finally:
                 duration_ms = (time.time_ns() - start) // 1_000_000
                 results.append(StepResult(step.name, status, duration_ms))
-                logger.info(f"========== END: {step.name} ({duration_ms}ms) - {status} ==========")
+                logger.info(f"========== END: {step.name} ({_format_duration(duration_ms)}) - {status} ==========")
     finally:
         log_pipeline_summary(results)
+
+
+def _format_duration(duration_ms: int | None) -> str:
+    if duration_ms is None:
+        return "-"
+    return f"{duration_ms}ms ({duration_ms / 1000:.3f}s)"
 
 
 def log_pipeline_summary(results: list[StepResult]) -> None:
     name_width = max((len(r.name) for r in results), default=0)
     lines = ["========== PIPELINE SUMMARY =========="]
     for r in results:
-        duration = f"{r.duration_ms}ms" if r.duration_ms is not None else "-"
-        lines.append(f"{r.name.ljust(name_width)}  {r.status:<7}  {duration}")
+        lines.append(f"{r.name.ljust(name_width)}  {r.status:<7}  {_format_duration(r.duration_ms)}")
     total_ms = sum(r.duration_ms for r in results if r.duration_ms is not None)
-    lines.append(f"Total: {total_ms}ms")
+    lines.append(f"Total: {_format_duration(total_ms)}")
     lines.append("========================================")
     logger.info("\n".join(lines))
 

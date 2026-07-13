@@ -204,10 +204,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
     t0 = time.perf_counter()
     _batch_cred_op(files, decrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
-    logger.debug(
-        f'[envgene.crypt] decrypt_all_cred_files_for_env: files={len(files)} '
-        f'elapsed={elapsed:.3f}s backend={backend}'
-    )
+    logger.info(f'Decrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
     logger.debug("Decrypted next cred files:")
     logger.debug(files)
 
@@ -220,10 +217,7 @@ def encrypt_all_cred_files_for_env(**kwargs):
     t0 = time.perf_counter()
     _batch_cred_op(files, encrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
-    logger.debug(
-        f'[envgene.crypt] encrypt_all_cred_files_for_env: files={len(files)} '
-        f'elapsed={elapsed:.3f}s backend={backend}'
-    )
+    logger.info(f'Encrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
 
 
 def get_crypt():
