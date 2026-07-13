@@ -21,7 +21,8 @@ Feature: Environment Inventory Generation
     And its content matches the payload
 
   Scenario: UC-EINV-ED-2: Replace env_definition.yml
-  # Call chain: identical to ED-1 — handle_env_def() overwrites the existing file unconditionally
+  # Call chain: generate_env_new_approach() → validate_yaml_by_scheme_or_fail(env-inventory-content.schema.json)
+  #   → handle_env_inv_content() → handle_env_def() → writeYamlToFile(Inventory/env_definition.yml) overwrites the existing file unconditionally → beautifyYaml()
   # Verifies: JSON Schema validation passes (returncode == 0); existing env_definition.yml is replaced;
   #   file content equals the request payload (strict match)
     Given the target environment inventory file exists
@@ -56,7 +57,9 @@ Feature: Environment Inventory Generation
     And its content matches the payload
 
   Scenario: UC-EINV-PS-2: Replace paramset file
-  # Call chain: identical to PS-1 — writeYamlToFile() overwrites the existing file
+  # Call chain: handle_objects(env_dir, paramSets, "parameters", "Inventory", encrypt=False)
+  #   → resolve_path(Place.ENV) → Inventory/parameters/app_params.yml
+  #   → writeYamlToFile() overwrites the existing file → beautifyYaml()
   # Verifies: JSON Schema validation passes (returncode == 0); existing app_params.yml is replaced;
   #   file content equals the request payload (strict match)
     Given the target paramset file "app_params" exists at "env" scope
@@ -91,7 +94,9 @@ Feature: Environment Inventory Generation
     And its content matches the payload
 
   Scenario: UC-EINV-CR-2: Replace credentials file
-  # Call chain: identical to CR-1 — writeYamlToFile() + encrypt_file() overwrite the existing file
+  # Call chain: handle_objects(env_dir, credentials, "credentials", "Inventory", encrypt=True)
+  #   → resolve_path(Place.CLUSTER) → <cluster>/credentials/db_creds.yml (Inventory folder ignored)
+  #   → writeYamlToFile() → encrypt_file() (Fernet encrypts data.username / data.password) overwrites the existing file → beautifyYaml()
   # Verifies: JSON Schema validation passes (returncode == 0); existing db_creds.yml is replaced;
   #   file contains the credential key and correct "type" field (data values not compared — Fernet-encrypted)
     Given the target credentials file "db_creds" exists at "cluster" scope
@@ -126,7 +131,9 @@ Feature: Environment Inventory Generation
     And its content matches the payload
 
   Scenario: UC-EINV-RP-2: Replace resource profile override file
-  # Call chain: identical to RP-1 — writeYamlToFile() overwrites the existing file
+  # Call chain: handle_objects(env_dir, resourceProfiles, "resource_profiles", "Inventory", encrypt=False)
+  #   → resolve_path(Place.ENV) → Inventory/resource_profiles/db_profile.yml
+  #   → writeYamlToFile() overwrites the existing file → beautifyYaml()
   # Verifies: JSON Schema validation passes (returncode == 0); existing db_profile.yml is replaced;
   #   file content equals the request payload (strict match)
     Given the target resource_profile file "db_profile" exists at "env" scope
@@ -161,7 +168,9 @@ Feature: Environment Inventory Generation
     And its content matches the payload
 
   Scenario: UC-EINV-STV-2: Replace Shared Template Variable file
-  # Call chain: identical to STV-1 — writeYamlToFile() overwrites the existing file
+  # Call chain: handle_objects(env_dir, sharedTemplateVariables, "shared_template_variables", "", encrypt=False)
+  #   → resolve_path(Place.ENV, inventory="") → shared_template_variables/prod_vars.yml (no Inventory folder)
+  #   → writeYamlToFile() overwrites the existing file → beautifyYaml()
   # Verifies: JSON Schema validation passes (returncode == 0); existing prod_vars.yml is replaced;
   #   file content equals the request payload (strict match)
     Given the target shared_template_variable file "prod_vars" exists at "env" scope
