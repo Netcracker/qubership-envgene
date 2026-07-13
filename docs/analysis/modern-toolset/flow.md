@@ -4,7 +4,6 @@
   - [OQ](#oq)
   - [AI](#ai)
   - [Data exchange Rules](#data-exchange-rules)
-  - [Artifacts](#artifacts)
   - [Defaults](#defaults)
   - [DD and zip layout](#dd-and-zip-layout)
   - [`deploy-plan.yml`](#deploy-planyml)
@@ -14,7 +13,7 @@
   - [APPLICATION\_VERSIONS](#application_versions)
   - [Uniq names](#uniq-names)
     - [`generate_deployment_plan`](#generate_deployment_plan)
-  - [ES Calc](#es-calc)
+    - [ES Calc](#es-calc)
   - [Multi env support](#multi-env-support)
   - [To deprecate](#to-deprecate)
   - [Flow](#flow)
@@ -48,7 +47,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 1. `run_cloud_passport` (берет паспорт из даунстри джобы и декриптит) уже в `env_prepare`?
 2. `generate_deployment_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
-3. В бгд кейсе что должно быть в `namespace-map.yml` в `deployPostfix` - bss или bss-peer, bss-origin
+3. В бгд кейсе что должно быть в `namespace-map.yml` в `deployPostfix` - bss или bss-peer, bss-origin?
 
 ## AI
 
@@ -64,7 +63,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 1. Within `orchestrator.py`, steps exchange:
    - structured data via the in-memory context `ctx.*`
-   - scalars via the in-memory parameters handler `PipelineParametersHandler`
+   - scalars via the in-memory parameters
 2. Crossing a separate job (`cmdb_import`, `sync`), exchange on disk:
    - structured data via files (job artifacts)
    - scalars via `build.env`
@@ -76,30 +75,6 @@ for the target flow. The per-component docs in this directory elaborate individu
    exchange:
    - structured data via contracted files
    - scalars via command parameters
-
-## Artifacts
-
-Producers and consumers are `job.step` numbers from the flow below.
-deploy-stage jobs `cmdb_import` and `sync`, not sub-steps.
-
-| Artifact                  | Path                                                                                   | Producers      | Consumers                 |
-|---------------------------|----------------------------------------------------------------------------------------|----------------|---------------------------|
-| env_definition            | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/env_definition.yml`          | 2.4, 2.7, 2.10 | 2.6, 2.7, 2.10            |
-| cloud passport            | `${CI_PROJECT_DIR}/environments/<cluster>/cloud-passport/`                             | 2.5            | 2.7, 2.10                 |
-| artdef                    | `${CI_PROJECT_DIR}/configuration/artifact_definitions/`                                | 2.6            | 2.7                       |
-| downloaded template files | `${CI_PROJECT_DIR}/tmp/` (common), `tmp/origin/`, `tmp/peer/`                          | 2.7            | 2.7, 2.10                 |
-| namespace-map.yml         | `${CI_PROJECT_DIR}/tmp/render-context/namespace-map.yml`                               | 2.7            | 2.9                       |
-| env instance              | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/`                                      | 2.7, 2.10      | 2.7, 2.11, 2.14, 3.1      |
-| appreg defs               | `${CI_PROJECT_DIR}/appdefs`, `${CI_PROJECT_DIR}/regdefs`                               | 2.7            | 2.8, 2.9, 2.11            |
-| sd.yaml                   | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/solution-descriptor/sd.yaml` | 2.8            | 2.8, 2.10, 2.11           |
-| deploy-plan.yml           | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/Inventory/deploy-plan.yml`             | 2.9            | 2.10, 2.11, 2.12          |
-| DD and zip                | `${APP_ARTIFACTS_DIR}`                                                                 | 2.11           | 2.11, 2.12                |
-| sboms                     | `${CI_PROJECT_DIR}/sboms`                                                              | 2.11           | 2.11, committed           |
-| effective set             | `${CI_PROJECT_DIR}/environments/<cluster>/<env>/effective-set/`                        | 2.11           | 2.12, 2.15                |
-| appset/app CR             | TBD                                                                                    | 2.12           | 2.15                      |
-| build.env                 | `${CI_PROJECT_DIR}/build.env`                                                          | 2.1            | 2.9, 2.12, 2.15, 3.1, 4.1 |
-| ARGO_DPG_CONTEXT.env      | TBD                                                                                    | 2.12           | 4.1                       |
-| system config             | TBD                                                                                    | TBD            | 2.6, 2.7                  |
 
 ## Defaults
 
@@ -113,38 +88,9 @@ deploy-stage jobs `cmdb_import` and `sync`, not sub-steps.
 ${APP_ARTIFACTS_DIR}/
   <app-name>/
     <app-version>/
-      artifact-info.yml   #
       dd.json             # DD
       dd.zip              # downloaded zip artifact
       dd/                 # unzipped content
-```
-
-artifact-info.yml:
-
-```yaml
-apiVersion: v1
-kind: artifactInfo
-spec:
-  appName: bss-core
-  appVersion: 1.2.3
-
-  # the appreg-def name, kept for cross-check. 
-  registry: pd-saas-onsite
-  # The repository the artifacts were ACTUALLY
-  # fetched from (snapshot/staging/release resolved at download time)
-  repo: pd.saas.mvn.release
-
-  artifacts:
-    dd:
-      # Full resolved URL - provenance. Also lets the consumer avoid guessing the filename.
-      url: https://artifactorycn.netcracker.com/pd.saas.mvn.release/com/netcracker/bss/bss-core-deploy/1.2.3/bss-core-deploy-1.2.3.json
-      # Path relative to this folder.
-      file: bss-core-deploy-1.2.3.json
-    zip:
-      url: https://artifactorycn.netcracker.com/pd.saas.mvn.release/com/netcracker/bss/bss-core-deploy/1.2.3/bss-core-deploy-1.2.3.zip
-      file: bss-core-deploy-1.2.3.zip
-      # Directory the zip was extracted into
-      unpackedDir: bss-core-deploy
 ```
 
 ## `deploy-plan.yml`
@@ -194,7 +140,7 @@ Example:
 Flat map keyed by the `deployPostfix`, value the rendered namespace name:
 
 ```yaml
-<deployPostfix>: <namespace-name> 
+<deployPostfix>: <namespace-name>
 ```
 
 Example:
@@ -202,7 +148,7 @@ Example:
 ```yaml
 # composite
 core: env-1-core
-oss: env-1-oss 
+oss: env-1-oss
 bss: env-1-bss
 ```
 
@@ -228,7 +174,7 @@ TBD
 - Задает `generationId` значение которое зависит от `generationType` - "", `<version>`, UUID7
 - Когда необходимо `generate_deployment_plan` генерирует UUID7
 
-## ES Calc
+### ES Calc
 
 - Читает `deploy-plan.yml`. Для `generationType != UniqForApp` вставляет между `<application-name>`
   и `values` подпапку, равную `generationId`:
@@ -574,7 +520,8 @@ Functions:
 
 Triggers:
 
-- (`SD_VERSION` or `SD_DATA`) and `PIPELINE_TYPE` is not `GITLAB_DEPLOY`
+- (`SD_VERSION` or `SD_DATA`) and
+- `PIPELINE_TYPE` is not `GITLAB_DEPLOY`
 
 Functions:
 
@@ -766,7 +713,6 @@ Functions:
     - AI[phase1]: If `PIPELINE_TYPE: GITLAB_DEPLOY` then do not commit into inventory repository:
       - env instance
       - effective set
-      - sd.yaml
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
 
