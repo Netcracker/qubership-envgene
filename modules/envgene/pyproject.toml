@@ -11,7 +11,7 @@ classifiers = [
     "Programming Language :: Python :: 3"
 ]
 dependencies = [
-    "pydantic==2.10.6",
+    "pydantic==2.13.2",
     "jschon==0.11.0",
     "jschon-sort==0.2.0",
     "ruyaml==0.91.0",
