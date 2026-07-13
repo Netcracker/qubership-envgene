@@ -444,8 +444,8 @@ For a local-category Environment Instance these files hold literal secret values
 Sensitive parameters specified via a `credRef` Credential Reference and external Credentials are written as
 references (VALS URIs or ESO descriptors), at the same parameter paths, to the per-context `credentials.yaml`
 files. The targets are the deployment, pipeline, per-consumer pipeline, and topology files from the
-[Local Sensitive parameters](#version-20-local-sensitive-parameters) list. The runtime `credentials.yaml`,
-`collision-credentials.yaml`, and `custom-params.yaml` never carry external references.
+[Local Sensitive parameters](#version-20-local-sensitive-parameters) list. The runtime `credentials.yaml` and
+`custom-params.yaml` never carry external references.
 
 An Environment Instance is single-category, so a given `credentials.yaml` holds local secrets or references,
 never both. A `credentials.yaml` that holds only references stays plaintext, because references are not
@@ -665,6 +665,17 @@ These parameters establish a dedicated rendering context exclusively applied dur
 
 This context is formed as a result of merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects. Parameters from the Application SBOM and `Resource Profile` objects of the Environment Instance also contribute to the formation of this context.
 
+> [!NOTE]
+> Consumers apply these files as an ordered merge sequence when materializing per-application values (for
+> example, as ordered `-f` files for Helm). The canonical order is:
+>
+> 1. `deploy-descriptor.yaml`
+> 2. `credentials.yaml`
+> 3. `deployment-parameters.yaml`
+> 4. `collision-deployment-parameters.yaml`
+> 5. `collision-credentials.yaml`
+> 6. `per-service-parameters/<service-name|app-chart-name>/deployment-parameters.yaml`
+
 For each namespace (identified by its folder name), the context contains files:
 
 ##### \[Version 2.0][Deployment Parameter Context] `deployment-parameters.yaml`
@@ -824,13 +835,14 @@ Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` ar
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
 
-Parameters that resolve to external Credentials (references in `credentials.yaml`) are **not** inputs to this
-logic. They never move to `collision-credentials.yaml` or `collision-deployment-parameters.yaml`.
+The rule applies to every sensitive value in `credentials.yaml`, whether the value is a literal secret
+(local-category Environment Instance) or a VALS or ESO reference (external-category Environment Instance).
+The `collision-credentials.yaml` inherits the category of its source `credentials.yaml`.
 
 **Destination files:**
 
-- `collision-deployment-parameters.yaml` — for non-sensitive parameters
-- `collision-credentials.yaml` — for **local** sensitive parameters (defined via `${creds.get(...)}` only)
+- `collision-deployment-parameters.yaml` - for non-sensitive parameters
+- `collision-credentials.yaml` - for sensitive parameters.
 
 > [!NOTE]
 > Only root-level parameters are processed by this collision logic. If a parameter with a service name as its key is nested under a service section, it is not moved to the collision files and remains in its original location.
