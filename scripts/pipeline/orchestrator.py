@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
 
-from envgenehelper import logger
+from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import resolve_es_generation_mode
@@ -173,11 +173,15 @@ class GenerateEffectiveSetStep(PipelineStep):
         return True
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
+        decrypt_all_cred_files_for_env()
+        validate_creds()
+        validate_parameters()
         sboms_retention_policy()
         get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
         if get_sboms.modules:
             get_sboms.run()
         effective_set_entrypoint()
+        encrypt_all_cred_files_for_env()
 
 
 class GitCommitStep(PipelineStep):
