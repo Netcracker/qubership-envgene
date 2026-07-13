@@ -28,8 +28,8 @@ flowchart TB
         A[trigger_passport] --> B[get_passport]
     end
     subgraph per_env["Per-environment jobs"]
-        C[bg_manage] --> D[env_inventory_generation]
-        D --> E[credential_rotation]
+        C[credential_rotation] --> D[bg_manage]
+        D --> E[env_inventory_generation]
         E --> F[app_reg_def_process]
         F --> G[process_sd]
         G --> H[env_build]
@@ -48,11 +48,15 @@ flowchart TB
    - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-3. **bg_manage**
+3. **credential_rotation**:
+   - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
+   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+
+4. **bg_manage**
    - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-4. **env_inventory_generation**:
+5. **env_inventory_generation**:
    - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test) AND any of the following holds:
      - [`ENV_INVENTORY_CONTENT`](/docs/instance-pipeline-parameters.md#env_inventory_content) is set, or
      - [`ENV_INVENTORY_INIT`](/docs/instance-pipeline-parameters.md#env_inventory_init) is `true`, or
@@ -60,17 +64,13 @@ flowchart TB
      - [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name) is set (non-empty)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-5. **credential_rotation**:
-   - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
-
 6. **app_reg_def_process**:
    - **What happens in this job**:
        1. Handles certificate updates from the configuration directory.
        2. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
-          1. Templates, as described in [User Defined by Template](/docs/features/app-reg-defs.md#user-defined-by-template)
-          2. External Job, as described in [External Job](/docs/features/app-reg-defs.md#external-job)
-       3. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
+          1. Templates, as described in [Templates](/docs/features/app-reg-defs.md#templates)
+          2. External Job, as described in [External Job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated)
+       3. Runs [Template transformation](/docs/features/app-reg-defs.md#template-transformation)
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
@@ -91,6 +91,9 @@ flowchart TB
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 9. **generate_effective_set**:
+   - **What happens in this job**:
+       1. Generates the Effective Set
+       2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. Skipped when the Environment Instance contains no external Credentials. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
    - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 

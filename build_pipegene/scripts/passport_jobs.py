@@ -45,15 +45,14 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name):
                     'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
                   ],
     }
-    get_passport_params['script'].append('/module/scripts/git_commit.sh')
+    get_passport_params['script'].append('python3 /module/scripts/git_commit.py')
     get_passport_vars = {
+        "FULL_ENV_NAME": full_env,
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
-    base = "${CI_PROJECT_DIR}/environments"
-    get_passport_job.artifacts.add_paths(f"{base}/{cluster_name}/cloud-passport")
     get_passport_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(get_passport_job)
     return get_passport_job

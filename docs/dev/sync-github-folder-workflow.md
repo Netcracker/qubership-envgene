@@ -21,12 +21,12 @@ This workflow serves several important purposes:
 
 The workflow accepts the following input parameters:
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `target_branches` | string | No | '' | Comma-separated list of target branches or "ALL" for all branches |
-| `exclude_branch` | string | No | '' | Comma-separated list of branches to exclude from sync |
-| `check_only` | choice | No | 'false' | Check mode - show differences without syncing (true/false) |
-| `include_files` | string | No | '' | Specific files/folders to sync (comma-separated, e.g., "actions,workflows/perform_tests.yml"), "ALL" for all .github files, or empty (only when target_branches is empty or "ALL") |
+| Parameter         | Type   | Required | Default | Description                                                                                                                                                                        |
+|-------------------|--------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `target_branches` | string | No       | ''      | Comma-separated list of target branches or "ALL" for all branches                                                                                                                  |
+| `exclude_branch`  | string | No       | ''      | Comma-separated list of branches to exclude from sync                                                                                                                              |
+| `check_only`      | choice | No       | 'false' | Check mode - show differences without syncing (true/false)                                                                                                                         |
+| `include_files`   | string | No       | ''      | Specific files/folders to sync (comma-separated, e.g., "actions,workflows/perform_tests.yml"), "ALL" for all .github files, or empty (only when target_branches is empty or "ALL") |
 
 ### Modes of Operation
 

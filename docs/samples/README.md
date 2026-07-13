@@ -2,6 +2,11 @@
 
 This document provides an overview of the recommended structures for Template and Instance repositories when using EnvGene.
 
+A minimal **external credentials** sample lives under
+[docs/samples/external-credentials](/docs/samples/external-credentials/). It covers the Template Descriptor,
+Credential Template, Application and Registry Definition templates, the instance, the Effective Set, and the
+system credentials EnvGene itself consumes (integration, deployer, registry, and definition credentials).
+
 ---
 
 ## Template Repository Layout

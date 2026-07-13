@@ -2,14 +2,15 @@ import os
 import re
 import shutil
 from pathlib import Path
+import sys
 
 from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, readYaml
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
 from envgenehelper.crypt import get_configured_encryption_type
+from envgenehelper.git_helper import GitRepoManager, GitLabClient
 from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
-from git_client import GitRepoManager, GitLabClient
 from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"
@@ -126,11 +127,15 @@ def main():
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
     cred_config = get_cred_config()
 
-    self_git_token = fetch_cred_value(integration_config.get("self_token"), cred_config)
-    repo = GitRepoManager(repo_path=base_dir, git_token=self_git_token)
-    repo.prepare_repo()
+    gitlab_token = os.environ.get("GITLAB_TOKEN")
+    if not gitlab_token:
+        logger.error(f'Variable "GITLAB_TOKEN" is not set')
+        sys.exit(1)
 
-    downstream_gl_client = GitLabClient(token=self_git_token)
+    repo = GitRepoManager()
+    repo.configure()
+
+    downstream_gl_client = GitLabClient(token=gitlab_token)
 
     project_id = os.getenv("CI_PROJECT_ID")
     pipeline_id = os.getenv("CI_PIPELINE_ID")

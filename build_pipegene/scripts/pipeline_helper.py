@@ -1,34 +1,38 @@
-from gcip import Job, Need
-from typing import Optional, List, Dict, Union, Any
-from envgenehelper import (
-    logger,
-    check_file_exists,
-    openYaml,
-    getAppDefinitionPath,
-    get_envgene_config_yaml,
-    get_or_create_nested_yaml_attribute,
-)
+import shlex
 from os import getenv
+from typing import Optional, List, Dict, Union, Any
+
+from envgenehelper import check_file_exists, openYaml, logger, get_or_create_nested_yaml_attribute, \
+    get_envgene_config_yaml, getAppDefinitionPath
+from gcip import Job, Need, TriggerJob
+
 
 class JobExtended(Job):
     def __init__(
-        self,
-        name: str,
-        stage: str,
-        image: Optional[str],
-        script: List[str],
-        variables: Optional[Dict[str, str]] = None,
-        needs: Optional[List[Union['Need', 'Job', List[str]]]] = None,
-        tags: Optional[List[str]] = None,
-        timeout: Optional[int] = None
+            self,
+            name: str,
+            stage: str,
+            image: Optional[str],
+            script: List[str],
+            variables: Optional[Dict[str, str]] = None,
+            needs: Optional[List[Union['Need', 'Job', List[str]]]] = None,
+            tags: Optional[List[str]] = None,
+            timeout: Optional[int] = None
     ) -> None:
-        super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
+        super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs,
+                         tags=tags)
         self.timeout = timeout
+
+    def set_sparse_checkout(self, paths: List[str]) -> None:
+        paths_args = " ".join(shlex.quote(path) for path in paths)
+        self.add_variables(GIT_STRATEGY="empty")
+        self.prepend_scripts(f"python3 /module/scripts/utils/sparse_checkout.py --sparse-paths {paths_args}")
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
         job_data['timeout'] = self.timeout
         return job_data
+
 
 def job_instance(params, vars, needs=None, rules=None):
     timeout = getenv("RUNNER_SCRIPT_TIMEOUT") or "10m"
@@ -86,6 +90,7 @@ def get_gav_coordinates_from_build():
         raise ReferenceError("Execution is aborted build artifact is not valid. See logs above.")
     return result
 
+
 def find_predecessor_job(job_name, jobs_map, jobs_sequence):
     seqIdx = jobs_sequence.index(job_name)
     predecessors = reversed(jobs_sequence[:seqIdx])
@@ -93,6 +98,7 @@ def find_predecessor_job(job_name, jobs_map, jobs_sequence):
         if previousJob in jobs_map:
             return [jobs_map[previousJob]]
     return []
+
 
 def check_discovery_job_needed(env_definition: dict, env_template_vers: str) -> bool:
     is_app_ver_format = False
@@ -116,8 +122,25 @@ def check_discovery_job_needed(env_definition: dict, env_template_vers: str) -> 
         return False
 
     if mode == 'false':
-        raise Exception(f"\nartifact definition for artifact with name: {template_name} is not found in the path: /configuration/artifact_definitions\n\n"
-                        +'artifact definition discovery is disable in /configuration/config.yml: \n'
-                        +'artifact_definitions_discovery_mode: false\n\n'
-                        +'set artifact definition manually or enable artifact definition discovery \n')
+        raise Exception(
+            f"\nartifact definition for artifact with name: {template_name} is not found in the path: /configuration/artifact_definitions\n\n"
+            + 'artifact definition discovery is disable in /configuration/config.yml: \n'
+            + 'artifact_definitions_discovery_mode: false\n\n'
+            + 'set artifact definition manually or enable artifact definition discovery \n')
     return True
+
+
+def is_trigger_job(job):
+    return isinstance(job, TriggerJob)
+
+
+def do_checkout(job):
+    is_first_job = job.needs is None or len(job.needs) == 0
+    if is_first_job or any(is_trigger_job(need) for need in job.needs):
+        logger.info(
+            f"Enabling checkout for {job.name} "
+            f"Stage: {job.stage}, Needs: {job.needs}"
+        )
+        return True
+
+    return False

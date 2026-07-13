@@ -172,15 +172,15 @@ Hashes are used for component verification:
 
 [Data components](#data-components) contain a `data` array:
 
-| Attribute                         | Type   | Mandatory | Description                                                                 |
-|-----------------------------------|--------|-----------|-----------------------------------------------------------------------------|
-| `type`                            | string | Yes       | Type of data. Must be `configuration`                                       |
-| `name`                            | string | Yes       | Name of the data file (e.g., `values.schema.json`, `dev.yaml`)              |
-| `contents`                        | object | Yes       | Contents object containing the data                                         |
-| `contents.attachment`             | object | Yes       | Attachment object with encoded content                                      |
-| `contents.attachment.contentType` | string | Yes       | MIME type of the content (e.g., `application/json`, `application/yaml`)     |
-| `contents.attachment.encoding`    | string | Yes       | Encoding method. Must be `base64`                                           |
-| `contents.attachment.content`     | string | Yes       | Base64-encoded content                                                      |
+| Attribute                         | Type   | Mandatory | Description                                                             |
+|-----------------------------------|--------|-----------|-------------------------------------------------------------------------|
+| `type`                            | string | Yes       | Type of data. Must be `configuration`                                   |
+| `name`                            | string | Yes       | Name of the data file (e.g., `values.schema.json`, `dev.yaml`)          |
+| `contents`                        | object | Yes       | Contents object containing the data                                     |
+| `contents.attachment`             | object | Yes       | Attachment object with encoded content                                  |
+| `contents.attachment.contentType` | string | Yes       | MIME type of the content (e.g., `application/json`, `application/yaml`) |
+| `contents.attachment.encoding`    | string | Yes       | Encoding method. Must be `base64`                                       |
+| `contents.attachment.content`     | string | Yes       | Base64-encoded content                                                  |
 
 #### Component Attributes
 
@@ -239,15 +239,15 @@ Represents an application component that, after deployment to the cloud, runs co
 
 **Pattern**: Standalone-runnable → Helm Chart → Docker image
 
-| Attribute       | Type   | Mandatory | Default                                  | Description                               |
-|-----------------|--------|-----------|------------------------------------------|-------------------------------------------|
-| `type`          | string | yes       | `application`                            | Component type                            |
-| `mime-type`     | string | yes       | `application/vnd.nc.standalone-runnable` | Component MIME type                       |
-| `bom-ref`       | string | yes       | None                                     | Unique component identifier within the AM |
-| `name`          | string | yes       | None                                     | Component name                            |
-| `version`       | string | yes       | None                                     | Component version                         |
-| `properties`    | array  | no        | `[]`                                     | Always `[]`                               |
-| `components`    | array  | yes       | `[]`                                     | Always `[]`                               |
+| Attribute    | Type   | Mandatory | Default                                  | Description                               |
+|--------------|--------|-----------|------------------------------------------|-------------------------------------------|
+| `type`       | string | yes       | `application`                            | Component type                            |
+| `mime-type`  | string | yes       | `application/vnd.nc.standalone-runnable` | Component MIME type                       |
+| `bom-ref`    | string | yes       | None                                     | Unique component identifier within the AM |
+| `name`       | string | yes       | None                                     | Component name                            |
+| `version`    | string | yes       | None                                     | Component version                         |
+| `properties` | array  | no        | `[]`                                     | Always `[]`                               |
+| `components` | array  | yes       | `[]`                                     | Always `[]`                               |
 
 ```json
 {
@@ -281,15 +281,15 @@ Represents an application extension component that extends the functionality of 
 
 **Pattern**: Smartplug → Helm Chart → JAR
 
-| Attribute       | Type   | Mandatory | Default                          | Description                                |
-|-----------------|--------|-----------|----------------------------------|--------------------------------------------|
-| `type`          | string | yes       | `application`                    | Component type                             |
-| `mime-type`     | string | yes       | `application/vnd.nc.smartplug`   | Component MIME type                        |
-| `bom-ref`       | string | yes       | None                             | Unique component identifier within the AM  |
-| `name`          | string | yes       | None                             | Component name                             |
-| `version`       | string | yes       | None                             | Component version                          |
-| `properties`    | array  | yes       | `[]`                             | Always `[]`                                |
-| `components`    | array  | yes       | `[]`                             | Always `[]`                                |
+| Attribute    | Type   | Mandatory | Default                        | Description                               |
+|--------------|--------|-----------|--------------------------------|-------------------------------------------|
+| `type`       | string | yes       | `application`                  | Component type                            |
+| `mime-type`  | string | yes       | `application/vnd.nc.smartplug` | Component MIME type                       |
+| `bom-ref`    | string | yes       | None                           | Unique component identifier within the AM |
+| `name`       | string | yes       | None                           | Component name                            |
+| `version`    | string | yes       | None                           | Component version                         |
+| `properties` | array  | yes       | `[]`                           | Always `[]`                               |
+| `components` | array  | yes       | `[]`                           | Always `[]`                               |
 
 ```json
 {
@@ -325,15 +325,15 @@ Represents a configuration application component that applies configuration to a
 
 **Structure:**
 
-| Attribute       | Type   | Mandatory | Default                          | Description                                |
-|-----------------|--------|-----------|----------------------------------|--------------------------------------------|
-| `type`          | string | yes       | `application`                    | Component type                             |
-| `mime-type`     | string | yes       | `application/vnd.nc.samplerepo`  | Component MIME type                        |
-| `bom-ref`       | string | yes       | None                             | Unique component identifier within the AM  |
-| `name`          | string | yes       | None                             | Component name                             |
-| `version`       | string | yes       | None                             | Component version                          |
-| `properties`    | array  | yes       | `[]`                             | Always `[]`                                |
-| `components`    | array  | yes       | `[]`                             | Always `[]`                                |
+| Attribute    | Type   | Mandatory | Default                         | Description                               |
+|--------------|--------|-----------|---------------------------------|-------------------------------------------|
+| `type`       | string | yes       | `application`                   | Component type                            |
+| `mime-type`  | string | yes       | `application/vnd.nc.samplerepo` | Component MIME type                       |
+| `bom-ref`    | string | yes       | None                            | Unique component identifier within the AM |
+| `name`       | string | yes       | None                            | Component name                            |
+| `version`    | string | yes       | None                            | Component version                         |
+| `properties` | array  | yes       | `[]`                            | Always `[]`                               |
+| `components` | array  | yes       | `[]`                            | Always `[]`                               |
 
 ```json
 {
@@ -363,15 +363,15 @@ Represents a CDN application component that uses ZIP-based artifacts for content
 
 **Pattern**: CDN → Helm Chart → ZIP
 
-| Attribute       | Type   | Mandatory | Default                        | Description                                |
-|-----------------|--------|-----------|--------------------------------|--------------------------------------------|
-| `type`          | string | yes       | `application`                  | Component type                             |
-| `mime-type`     | string | yes       | `application/vnd.nc.cdn`       | Component MIME type                        |
-| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM  |
-| `name`          | string | yes       | None                           | Component name                             |
-| `version`       | string | yes       | None                           | Component version                          |
-| `properties`    | array  | yes       | `[]`                           | Always `[]`                                |
-| `components`    | array  | yes       | `[]`                           | Always `[]`                                |
+| Attribute    | Type   | Mandatory | Default                  | Description                               |
+|--------------|--------|-----------|--------------------------|-------------------------------------------|
+| `type`       | string | yes       | `application`            | Component type                            |
+| `mime-type`  | string | yes       | `application/vnd.nc.cdn` | Component MIME type                       |
+| `bom-ref`    | string | yes       | None                     | Unique component identifier within the AM |
+| `name`       | string | yes       | None                     | Component name                            |
+| `version`    | string | yes       | None                     | Component version                         |
+| `properties` | array  | yes       | `[]`                     | Always `[]`                               |
+| `components` | array  | yes       | `[]`                     | Always `[]`                               |
 
 ```json
 {
@@ -400,15 +400,15 @@ Represents a Custom Resource Definition (CRD) application component that defines
 
 **Pattern**: CRD → Helm Chart
 
-| Attribute       | Type   | Mandatory | Default                        | Description                                |
-|-----------------|--------|-----------|--------------------------------|--------------------------------------------|
-| `type`          | string | yes       | `application`                  | Component type                             |
-| `mime-type`     | string | yes       | `application/vnd.nc.crd`       | Component MIME type                        |
-| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM  |
-| `name`          | string | yes       | None                           | Component name                             |
-| `version`       | string | yes       | None                           | Component version                          |
-| `properties`    | array  | yes       | `[]`                           | Always `[]`                                |
-| `components`    | array  | yes       | `[]`                           | Always `[]`                                |
+| Attribute    | Type   | Mandatory | Default                  | Description                               |
+|--------------|--------|-----------|--------------------------|-------------------------------------------|
+| `type`       | string | yes       | `application`            | Component type                            |
+| `mime-type`  | string | yes       | `application/vnd.nc.crd` | Component MIME type                       |
+| `bom-ref`    | string | yes       | None                     | Unique component identifier within the AM |
+| `name`       | string | yes       | None                     | Component name                            |
+| `version`    | string | yes       | None                     | Component version                         |
+| `properties` | array  | yes       | `[]`                     | Always `[]`                               |
+| `components` | array  | yes       | `[]`                     | Always `[]`                               |
 
 ```json
 {
@@ -437,15 +437,15 @@ Represents a Kubernetes Job application component that executes a one-time task 
 
 **Pattern**: Job → Helm Chart → Docker Image
 
-| Attribute       | Type   | Mandatory | Default                        | Description                                |
-|-----------------|--------|-----------|--------------------------------|--------------------------------------------|
-| `type`          | string | yes       | `application`                  | Component type                             |
-| `mime-type`     | string | yes       | `application/vnd.nc.job`       | Component MIME type                        |
-| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM  |
-| `name`          | string | yes       | None                           | Component name                             |
-| `version`       | string | yes       | None                           | Component version                          |
-| `properties`    | array  | yes       | `[]`                           | Always `[]`                                |
-| `components`    | array  | yes       | `[]`                           | Always `[]`                                |
+| Attribute    | Type   | Mandatory | Default                  | Description                               |
+|--------------|--------|-----------|--------------------------|-------------------------------------------|
+| `type`       | string | yes       | `application`            | Component type                            |
+| `mime-type`  | string | yes       | `application/vnd.nc.job` | Component MIME type                       |
+| `bom-ref`    | string | yes       | None                     | Unique component identifier within the AM |
+| `name`       | string | yes       | None                     | Component name                            |
+| `version`    | string | yes       | None                     | Component version                         |
+| `properties` | array  | yes       | `[]`                     | Always `[]`                               |
+| `components` | array  | yes       | `[]`                     | Always `[]`                               |
 
 ```json
 {
@@ -476,25 +476,25 @@ Represents a Docker image artifact that contains containerized application code.
 - If app-chart exists, app-chart `dependsOn` all Docker images that are not associated with service Helm charts
 - Uses PURL for identification
 
-| Attribute       | Type   | Mandatory | Default                        | Description                                                |
-|-----------------|--------|-----------|--------------------------------|------------------------------------------------------------|
-| `type`          | string | yes       | `container`                    | Component type                                             |
-| `mime-type`     | string | yes       | `application/vnd.docker.image` | Component MIME type                                        |
-| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM                  |
-| `name`          | string | yes       | None                           | Docker image name                                          |
-| `group`         | string | yes       | `""`                           | Group or namespace for the image (empty string if none)    |
-| `version`       | string | yes       | None                           | Docker image version (tag)                                 |
-| `purl`          | string | yes       | None                           | Package URL (PURL) for the image                           |
-| `hashes`        | array  | no        | None                           | List of hashes for the image (optional)                    |
-| `hashes.alg`    | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present) |
-| `hashes.content`| string | yes       | None                           | Hash value as a hex string (required if hash present)      |
-| `properties`    | array  | no        | None                           | List of additional properties. See Properties below        |
+| Attribute        | Type   | Mandatory | Default                        | Description                                                |
+|------------------|--------|-----------|--------------------------------|------------------------------------------------------------|
+| `type`           | string | yes       | `container`                    | Component type                                             |
+| `mime-type`      | string | yes       | `application/vnd.docker.image` | Component MIME type                                        |
+| `bom-ref`        | string | yes       | None                           | Unique component identifier within the AM                  |
+| `name`           | string | yes       | None                           | Docker image name                                          |
+| `group`          | string | yes       | `""`                           | Group or namespace for the image (empty string if none)    |
+| `version`        | string | yes       | None                           | Docker image version (tag)                                 |
+| `purl`           | string | yes       | None                           | Package URL (PURL) for the image                           |
+| `hashes`         | array  | no        | None                           | List of hashes for the image (optional)                    |
+| `hashes.alg`     | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present) |
+| `hashes.content` | string | yes       | None                           | Hash value as a hex string (required if hash present)      |
+| `properties`     | array  | no        | None                           | List of additional properties. See Properties below        |
 
 **Properties:**
 
-| Property Name        | Type   | Mandatory | Description                                                                                                                                                                                                                                                                                  |
-|----------------------|--------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `nc:dd:image_type`   | string | No        | Preserves the original Deployment Descriptor `image_type` value to enable lossless DD ↔ AMv2 round-trip. Allowed values: `image`, `service`. Set during DD → AMv2 transformation; read during AMv2 → DD transformation. Absent for Docker images that did not originate from a DD `service`. |
+| Property Name      | Type   | Mandatory | Description                                                                                                                                                                                                                                                                                  |
+|--------------------|--------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `nc:dd:image_type` | string | No        | Preserves the original Deployment Descriptor `image_type` value to enable lossless DD ↔ AMv2 round-trip. Allowed values: `image`, `service`. Set during DD → AMv2 transformation; read during AMv2 → DD transformation. Absent for Docker images that did not originate from a DD `service`. |
 
 ```json
 {
@@ -553,34 +553,34 @@ Represents a Helm chart, which can either be an umbrella (app-chart) chart that 
 
 Root components of this type describe Helm Chart artifact, nested helm charts describe abstract helm charts (this is necessary to properly form values.yaml)
 
-| Attribute             | Type    | Mandatory | Default                         | Description                                                |
-|-----------------------|---------|-----------|---------------------------------|------------------------------------------------------------|
-| `type`                | string  | yes       | `application`                   | Component type                                             |
-| `mime-type`           | string  | yes       | `application/vnd.nc.helm.chart` | Component MIME type                                        |
-| `bom-ref`             | string  | yes       | None                            | Unique component identifier within the AM                  |
-| `name`                | string  | yes       | None                            | Helm chart name                                            |
-| `version`             | string  | no        | None                            | Helm chart version. Optional for nested service charts that have no separate artifact |
-| `purl`                | string  | no        | None                            | Package URL (PURL) for the chart                           |
-| `hashes`              | array   | no        | None                            | List of hashes for the chart (empty array if none)         |
-| `hashes.alg`          | string  | yes       | None                            | Hash algorithm, e.g., "SHA-256" (required if hash present) |
-| `hashes.content`      | string  | yes       | None                            | Hash value as a hex string (required if hash present)      |
-| `properties`          | array   | yes       | None                            | List of additional properties. See Properties below        |
-| `components`          | array   | no        | `[]`                            | Nested components. See Components below                    |
+| Attribute        | Type   | Mandatory | Default                         | Description                                                                           |
+|------------------|--------|-----------|---------------------------------|---------------------------------------------------------------------------------------|
+| `type`           | string | yes       | `application`                   | Component type                                                                        |
+| `mime-type`      | string | yes       | `application/vnd.nc.helm.chart` | Component MIME type                                                                   |
+| `bom-ref`        | string | yes       | None                            | Unique component identifier within the AM                                             |
+| `name`           | string | yes       | None                            | Helm chart name                                                                       |
+| `version`        | string | no        | None                            | Helm chart version. Optional for nested service charts that have no separate artifact |
+| `purl`           | string | no        | None                            | Package URL (PURL) for the chart                                                      |
+| `hashes`         | array  | no        | None                            | List of hashes for the chart (empty array if none)                                    |
+| `hashes.alg`     | string | yes       | None                            | Hash algorithm, e.g., "SHA-256" (required if hash present)                            |
+| `hashes.content` | string | yes       | None                            | Hash value as a hex string (required if hash present)                                 |
+| `properties`     | array  | yes       | None                            | List of additional properties. See Properties below                                   |
+| `components`     | array  | no        | `[]`                            | Nested components. See Components below                                               |
 
 **Components:**
 
-| Child Component       | Type    | Mandatory | Default | Description                                                    |
-|-----------------------|---------|-----------|---------|----------------------------------------------------------------|
-| `components[0]`       | object  | no        | None    | Child `application/vnd.nc.helm.values.schema` component        |
-| `components[1]`       | object  | no        | None    | Child `application/vnd.nc.resource-profile-baseline` component |
-| `components[n]`       | object  | no        | None    | Child `application/vnd.nc.helm.chart` component                |
+| Child Component | Type   | Mandatory | Default | Description                                                    |
+|-----------------|--------|-----------|---------|----------------------------------------------------------------|
+| `components[0]` | object | no        | None    | Child `application/vnd.nc.helm.values.schema` component        |
+| `components[1]` | object | no        | None    | Child `application/vnd.nc.resource-profile-baseline` component |
+| `components[n]` | object | no        | None    | Child `application/vnd.nc.helm.chart` component                |
 
 **Properties:**
 
-| Property Name                            | Type    | Mandatory | Description                                                                                                                                                              |
-|------------------------------------------|---------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `isLibrary`                              | boolean | Yes       | Indicates if the chart is a library chart. Value `true` for library charts, `false` for application charts                                                               |
-| `nc:helm.values.artifactMappings`        | object  | No        | Maps Docker image bom-refs to Helm values paths. Used to specify how Docker images should be referenced in Helm chart values. See nc:helm.values.artifactMappings bellow |
+| Property Name                     | Type    | Mandatory | Description                                                                                                                                                              |
+|-----------------------------------|---------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `isLibrary`                       | boolean | Yes       | Indicates if the chart is a library chart. Value `true` for library charts, `false` for application charts                                                               |
+| `nc:helm.values.artifactMappings` | object  | No        | Maps Docker image bom-refs to Helm values paths. Used to specify how Docker images should be referenced in Helm chart values. See nc:helm.values.artifactMappings bellow |
 
 ```json
 {

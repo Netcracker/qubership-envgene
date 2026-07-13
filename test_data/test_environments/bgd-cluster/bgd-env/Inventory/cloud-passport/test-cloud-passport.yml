@@ -1,0 +1,17 @@
+---
+version: 1.5
+global:
+  VALUE: "true"
+cloud:
+  CLOUD_API_HOST: tmp.cloud.com
+  CLOUD_API_PORT: "0000"
+  CLOUD_DEPLOY_TOKEN: cloud-deploy-sa-token
+  CLOUD_PUBLIC_HOST: test-host.managed.tmp.cloud
+  CLOUD_PRIVATE_HOST: test-host.managed.tmp.cloud
+  CLOUD_DASHBOARD_URL: https://dashboard.test-host.managed.tmp.cloud
+  CLOUD_PROTOCOL: https
+  PRODUCTION_MODE: false
+  GRAYLOG_UI_URL: https://test-host.managed.tmp.cloud
+  TRACING_UI_URL: https://test-host.managed.tmp.cloud
+  GRAFANA_UI_URL: https://test-host.managed.tmp.cloud
+  CMDB_URL: https://test-host.managed.tmp.cloud

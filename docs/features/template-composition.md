@@ -143,6 +143,9 @@ The sequence below describes how composition is executed during template build.
 
    - Parameter maps (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) are merged into `template_override`.
    - Parameter set lists (`deployParameterSets`, `e2eParameterSets`, `technicalConfigurationParameterSets`) are appended into `template_override`.
+   - **Override priority within `overrides-parent`:**
+     - Parameter sets (e.g. `deployParameterSets`) have **higher priority** than directly specified parameters (e.g. `deployParameters`). If the same key is defined in both, the value from the parameter set wins.
+     - Within a parameter set list, each successive entry has **higher priority** than the previous one — the last entry in the list wins if the same key appears in multiple sets.
    - `profile` override has two modes:
      - default mode (`merge-with-parent` is false or not set): use the override profile as the resulting profile reference;
      - merge mode (`merge-with-parent: true`): merge override profile content into the selected parent profile and use the merged result.

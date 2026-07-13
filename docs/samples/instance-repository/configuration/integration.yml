@@ -3,4 +3,3 @@ cp_discovery:
     project: "deploy-configuration-management/discovery-project"
     branch: master
     token: envgen.creds.get('discovery-repository-cred').secret
-self_token: envgen.creds.get('self-token-cred').secret

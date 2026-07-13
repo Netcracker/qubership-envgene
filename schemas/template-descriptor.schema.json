@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Template Descriptor",
-  "description": "Configuration for environment templates including tenant, cloud, namespaces, and parametersets",
+  "description": "Configuration for environment templates including tenant, cloud, namespaces, optional external credential template path",
   "type": "object",
   "properties": {
     "tenant": {
@@ -58,6 +58,14 @@
       "type": "string",
       "examples": [
         "{{ templates_dir }}/env_templates/dev/composite-structure.yml.j2"
+      ]
+    },
+    "external_credential_template": {
+      "title": "External Credential Template Path",
+      "description": "Path to a single Credential Template file (Jinja) for external Credentials. Used during Environment Instance generation.",
+      "type": "string",
+      "examples": [
+        "{{ templates_dir }}/Credentials/credentials.yml.j2"
       ]
     },
     "namespaces": {

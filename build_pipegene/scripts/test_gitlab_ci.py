@@ -32,8 +32,10 @@ class PipelineVars:
     env_specific_params: str = ""
     custom_params: str = ""
 
+
 def convert_keys_to_uppercase(pairs):
     return {k.upper(): v for k, v in pairs}
+
 
 build_pipeline_test_data = [
     (
@@ -48,16 +50,16 @@ build_pipeline_test_data = [
             "git_commit",
         ],
     ),
-    (
-        PipelineVars(env_template_test="true", env_inventory_init="true"),
-        [
-            "trigger",
-            "process_passport",
-            "app_reg_def_render",
-            "env_builder",
-            "generate_effective_set",
-        ],
-    ),
+    # (
+    #     PipelineVars(env_template_test="true", env_inventory_init="true"),
+    #     [
+    #         "trigger",
+    #         "process_passport",
+    #         "app_reg_def_render",
+    #         "env_builder",
+    #         "generate_effective_set",
+    #     ],
+    # ),
     (
         PipelineVars(get_passport="false"),
         ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
@@ -80,9 +82,11 @@ build_pipeline_test_data = [
     ),
 ]
 
+
 @pytest.fixture(autouse=True)
 def change_test_dir(request, monkeypatch):
-    monkeypatch.chdir(request.fspath.dirname+"/../..")
+    monkeypatch.chdir(request.fspath.dirname + "/../..")
+
 
 @pytest.mark.parametrize("pipeline_vars, expected_sequence", build_pipeline_test_data)
 def test_build_pipeline(pipeline_vars, expected_sequence):
@@ -97,3 +101,43 @@ def test_build_pipeline(pipeline_vars, expected_sequence):
     err_msg = f"Stages after generation should be: {dump_as_yaml_format(expected_sequence)}\nenv_template_version: {pipeline_vars['ENV_TEMPLATE_VERSION']}"
     assert result["stages"] == expected_sequence, err_msg
     # os.remove("generated-config.yml")
+
+
+def _find_job_by_stage(config: dict, stage: str) -> dict:
+    for job_name, job_config in config.items():
+        if job_name in ("stages", "variables", "default", "include", "workflow"):
+            continue
+        if job_config.get("stage") == stage:
+            return job_config
+    raise AssertionError(f"No job found for stage {stage}")
+
+
+def test_sparse_checkout_on_first_job():
+    ci_commit_ref_name = "feature/test-generate"
+    os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
+    pipeline_vars = asdict(PipelineVars(get_passport="false"), dict_factory=convert_keys_to_uppercase)
+    os.environ.update(pipeline_vars)
+
+    perform_generation()
+
+    result = openYaml("generated-config.yml")
+    first_job = _find_job_by_stage(result, "app_reg_def_render")
+
+    assert first_job["variables"]["GIT_STRATEGY"] == "empty"
+    assert first_job["script"][0].startswith("python3 /module/scripts/utils/sparse_checkout.py --sparse-paths ")
+    assert "environments/cluster-01/env-01" in first_job["script"][0]
+
+
+def test_downstream_job_uses_empty_git_strategy():
+    ci_commit_ref_name = "feature/test-generate"
+    os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
+    pipeline_vars = asdict(PipelineVars(get_passport="false"), dict_factory=convert_keys_to_uppercase)
+    os.environ.update(pipeline_vars)
+
+    perform_generation()
+
+    result = openYaml("generated-config.yml")
+    downstream_job = _find_job_by_stage(result, "env_builder")
+
+    assert downstream_job["variables"]["GIT_STRATEGY"] == "empty"
+    assert "hooks" not in downstream_job

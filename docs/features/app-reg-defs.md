@@ -1,157 +1,223 @@
 # Application and Registry Definition
 
 - [Application and Registry Definition](#application-and-registry-definition)
-  - [Problem Statement](#problem-statement)
-  - [Proposed Approach](#proposed-approach)
-    - [Application and Registry Definitions Source](#application-and-registry-definitions-source)
-      - [External Job](#external-job)
-      - [User Defined by Template](#user-defined-by-template)
-    - [Using Application and Registry Definitions](#using-application-and-registry-definitions)
-      - [Used by EnvGene](#used-by-envgene)
-      - [Used by External Systems](#used-by-external-systems)
-      - [Export to External CMDB Systems](#export-to-external-cmdb-systems)
-    - [Application and Registry Definitions Transformation](#application-and-registry-definitions-transformation)
+  - [Overview](#overview)
+  - [Definition sources](#definition-sources)
+    - [Templates](#templates)
+    - [Definition overrides](#definition-overrides)
+    - [External Job (deprecated)](#external-job-deprecated)
+  - [Processing](#processing)
+  - [Output layout](#output-layout)
+    - [Placement modes](#placement-modes)
+  - [Consumers](#consumers)
+    - [EnvGene](#envgene)
+    - [External systems](#external-systems)
+    - [Import into external CMDB systems](#import-into-external-cmdb-systems)
+  - [Template transformation](#template-transformation)
+  - [See also](#see-also)
 
-## Problem Statement
+## Overview
 
-To work with artifacts, a short, human-readable identifier in the format `application:version` is used. This identifier should uniquely specify the artifact and where it is stored.
+Using Application and Registry Definition, EnvGene resolves an `application:version` pointer into the parameters
+needed to download the artifact:
 
-Using this kind of identifier means need to:
+1. [Application Definition](/docs/envgene-objects.md#application-definition) (AppDef) - describes an application
+   artifact and references a Registry Definition.
+2. [Registry Definition](/docs/envgene-objects.md#registry-definition) (RegDef) - describes a registry and its access
+   parameters.
 
-1. Make sure that each `application` in `application:version` is unique
-2. Be able to resolve `application:version` into all the parameters needed to download the artifact (like registry URL, registry credentials, Maven GAV coordinates, Docker image group/name/tag, etc.)
+An AppDef, and a RegDef for its registry, must exist for every Solution Descriptor (SD) used in the repository and
+for every application the SDs reference.
 
-Also need to support:
+Effective definitions live in the root-level folders of the instance repository:
 
-1. Identifying artifacts of different types (Maven, Docker, npm, etc.)
-2. Identifying artifacts stored in different registries (Artifactory, Nexus, GCR, etc.)
+```text
+/appdefs/<name>.yml
+/regdefs/<name>.yml
+```
 
-## Proposed Approach
+Depending on the [placement mode](#placement-modes), EnvGene also maintains the per-environment folders
+`/environments/<cluster>/<env>/AppDefs/` and `/environments/<cluster>/<env>/RegDefs/`, which hold the
+definitions of the current build rather than a copy of the root-level content.
 
-Use two types of objects:
+EnvGene assembles effective definitions from two sources:
 
-1. [Application Definition](/docs/envgene-objects.md#application-definition)
-   This object contains the main info about an application artifact: artifact ID, group ID, and a link to the Registry Definition.
-   Each Environment has its own set of Application Definitions, stored in the Instance repository at `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`.
+- **Templates** - Jinja or plain YAML files in the template repository, rendered with the current environment context.
+- **Definition overrides** - plain YAML files in the instance repository that replace template-rendered definitions or
+  add new ones.
 
-2. [Registry Definition](/docs/envgene-objects.md#registry-definition)
-   This object describes the registry where artifacts are stored.
-   Each Environment has its own set of Registry Definitions, stored in the Instance repository at `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`.
+A deprecated [External Job](#external-job-deprecated) path can supply definitions instead of these sources.
 
-These objects are used to resolve application pointers written in the `application:version` format. They provide all the details needed to download the artifact from the correct registry.
+## Definition sources
 
-### Application and Registry Definitions Source
+### Templates
 
-There are two sources for obtaining Application and Registry Definitions in EnvGene:
-
-#### External Job
-
-> [!WARNING]
-> The External Job–based mechanism is **deprecated**, is not recommended for use in new or actively maintained environments, and is planned to be removed in a future EnvGene release. Consumers should migrate to template-based Application and Registry Definitions as soon as reasonably possible.
-
-An external job (not implemented in EnvGene itself, but serves as an extension point) that somehow creates/discovers/generates Application and Registry Definitions as YAML files and saves them in its artifact with the contract name `definitions.zip`.
-
-During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene retrieves the Application and Registry Definitions from this artifact and saves them as part of the Environment instance.
-
-EnvGene uses the following instance repository pipeline parameters:
-
-- [`APP_REG_DEFS_JOB`](/docs/instance-pipeline-parameters.md#app_reg_defs_job) - specifies which job to use
-- [`APP_DEFS_PATH`](/docs/instance-pipeline-parameters.md#app_defs_path) - specifies the path within the artifact where Application Definitions are located
-- [`REG_DEFS_PATH`](/docs/instance-pipeline-parameters.md#reg_defs_path) - specifies the path within the artifact where Registry Definitions are located
-
-The External Job must be configured as part of the EnvGene Instance pipeline.
-
-#### User Defined by Template
-
-The user defines, in the Template repository as part of the Environment Template, templates for Application and Registry Definitions in contract path:
-
-- `/templates/appdefs/<application-name>.yaml|yml|yml.j2|yaml.j2`
-- `/templates/regdefs/<registry-name>.yaml|yml|yml.j2|yaml.j2`
+Templates are stored in the template repository:
 
 ```text
 /templates/
- ├── appdefs/                        # Application Definitions templates
+ ├── appdefs/                        # Application Definition templates
  │   ├── app1.yml.j2
  │   └── app2.yml.j2
- └── regdefs/                        # Registry Definitions templates
+ └── regdefs/                        # Registry Definition templates
      ├── registry1.yml.j2
      └── registry2.yml.j2
 ```
 
-These files can be either Jinja templates of the object or plain objects without parameterization. All EnvGene [Jinja macros](/docs/template-macros.md#jinja-macros) are available for template creation.
+EnvGene processes files matching `*.yaml.j2`, `*.yml.j2`, `*.j2`, `*.yaml`, or `*.yml`. A template is either a Jinja
+template or a plain YAML definition without parameterization. All EnvGene
+[Jinja macros](/docs/template-macros.md#jinja-macros) are available during rendering. Each definition is a separate
+file.
 
-Each Application and Registry Definition is created as a separate file.
+Templates are rendered during the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline) pipeline stage.
+In GitLab pipelines the stage runs as the `app_reg_def_render.<cluster>/<env>` job. In GitHub Actions it runs as the
+`APP_REG_DEF_PROCESS` step.
 
-During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene renders these templates and saves them as part of the Environment Instance.
+A template-rendered definition is written as `<name>.yml`, where `<name>` is the value of the `name` field of the
+rendered YAML, not the template filename. Template-rendered definitions are schema-validated after rendering, and
+the stage fails on a violation.
 
-### Using Application and Registry Definitions
+### Definition overrides
 
-#### Used by EnvGene
-
-EnvGene itself uses Application and Registry Definitions to download artifacts (like the Environment Template artifact, Solution Descriptor artifact, etc.).
-
-These definitions are environment-specific. This means that for any operation on a particular Environment, only the definitions located in that environment are used, i.e.:
-
-- `/environments/<cluster-name>/<env-name>/AppDefs/...`
-- `/environments/<cluster-name>/<env-name>/RegDefs/...`
+Definition overrides are stored in the instance repository:
 
 ```text
-/environments/
-└── <cluster-name>/
-    └── <env-name>/
-        ├── AppDefs/                   # Application Definitions
-        │   ├── application-1.yml
-        │   └── application-2.yml
-        └── RegDefs/                   # Registry Definitions
-            ├── registry-1.yml
-            └── registry-2.yml
+/configuration/
+ ├── appdefs/
+ └── regdefs/
 ```
 
-#### Used by External Systems
+EnvGene processes files with the `.yml` or `.yaml` extension. Nested directories are not scanned. Definition
+overrides are plain YAML and are used as-is. They are never rendered as Jinja: they apply after template rendering
+completes, so no Jinja context is available.
 
-External systems can get Application and Registry Definitions from the EnvGene instance repository using GitLab/GitHub API calls, or by checking out the repository.
+Each definition override is copied over the output of template rendering:
 
-Again, these definitions are environment-specific. So, for any operation on a specific environment, only the definitions from that environment should be used:
+- A file with the same filename as a template-rendered definition fully replaces it. There is no field-level merge:
+  fields omitted from the definition override are lost.
+- A file with no counterpart is added as a new effective definition.
 
-- `/environments/<cluster-name>/<env-name>/AppDefs/...`
-- `/environments/<cluster-name>/<env-name>/RegDefs/...`
+Because template-rendered definitions are named by their `name` field, a definition override that replaces one must
+match that name, not the template filename.
 
-#### Export to External CMDB Systems
+Definition overrides apply repository-wide: the same files are applied on every environment build. They are not
+schema-validated, because validation runs on the render output before definition overrides are applied.
 
-EnvGene provides an extension point for integration with external CMDB systems, but does not implement the integration itself. As part of such integration, it is possible to create Application and Registry Definitions or their equivalents.
+The [`appdefs.overrides` and `regdefs.overrides`](#template-transformation) macros apply during template rendering. A
+definition override applies later and replaces the whole definition, including any values the macros produced.
 
-For this integration, the following configuration is used:
+### External Job (deprecated)
 
-- [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import): a Instance pipeline parameter that triggers the export operation
-- `inventory.deployer`: an attribute in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) that points to the CMDB instance configuration
-- [`deployer.yml`](/docs/envgene-configs.md#deployeryml): a configuration file that describes the parameters of the CMDB instance
+> [!WARNING]
+> The External Job mechanism is **deprecated** and is planned to be removed in a future EnvGene release. Migrate to
+> template-based Application and Registry Definitions as soon as reasonably possible.
 
-### Application and Registry Definitions Transformation
+An External Job is an extension point: a job, not implemented by EnvGene, produces AppDef and RegDef YAML files in its
+job artifact. The following Instance pipeline parameters configure it:
 
-When delivering a solution from one site to another, the solution artifacts are transferred from one registry to another, which affects the Application and Registry Definitions.
+- [`APP_REG_DEFS_JOB`](/docs/instance-pipeline-parameters.md#app_reg_defs_job) - specifies the job that produces the
+  artifact
+- [`APP_DEFS_PATH`](/docs/instance-pipeline-parameters.md#app_defs_path) - specifies the path within the artifact where
+  Application Definitions are located
+- [`REG_DEFS_PATH`](/docs/instance-pipeline-parameters.md#reg_defs_path) - specifies the path within the artifact where
+  Registry Definitions are located
 
-Usually (and best practice), the following attributes typically remain unchanged during delivery:
+The pipeline copies the files from the artifact into the per-environment folders before Solution Descriptor processing
+and Effective Set generation. GitLab pipelines additionally copy them into the root-level folders.
 
-- group
-- name
-- version
+The External Job path is not handled by the `app_reg_def_process` stage. It should not be combined with the template
+and definition override flow in the same repository.
 
-However, the following attributes are usually changed:
+## Processing
 
-- registry URL
-- registry access parameters
+For each environment, the `app_reg_def_process` stage:
 
-To avoid recreating these definitions from scratch, it is recommended to enable transformation of the Definitions using Jinja parameterization and macros that are available exclusively for rendering Definitions:
+1. Renders templates and validates the result (see [Templates](#templates)).
+2. Merges the render output into the root-level folders. Files with the same name are overwritten. Other files are
+   kept.
+3. Deletes the per-environment folders. In [`dual` placement mode](#placement-modes), recreates them as an exact copy
+   of the render output.
+4. Copies definition overrides into the root-level folders, and in `dual` mode also into the per-environment folders.
+
+## Output layout
+
+The root-level folders hold the effective definitions and are committed to the instance repository. Because they are
+merged into and never cleaned (see [Processing](#processing)), a definition whose template was removed persists at the
+root level until deleted manually. This applies in both placement modes.
+
+In `dual` mode the per-environment folders always mirror the current render output plus definition overrides, so
+deletions are propagated there.
+
+### Placement modes
+
+The `app_reg_defs_placement` attribute in [`config.yml`](/docs/envgene-configs.md#configyml) selects the placement
+mode. It is set at the repository level and applies to all environments.
+
+- **`dual` (default)** - root-level folders plus per-environment compatibility copies. The mode exists for backward
+  compatibility only and is planned to be removed in a future EnvGene release together with the per-environment
+  folders. Migrate consumers to the root-level folders and switch to `root`.
+- **`root`** - root-level folders only. No per-environment copies are maintained.
+
+## Consumers
+
+### EnvGene
+
+EnvGene resolves `application:version` references through the definitions in two operations:
+
+- SD download.
+- [Effective Set generation](/docs/features/effective-set-generation.md), which resolves every application referenced
+  by the SDs it processes.
+
+Resolution reads the root-level folders first and falls back to the per-environment folders. The fallback exists for
+backward compatibility only: all consumers must migrate to the root-level folders.
+
+> [!NOTE]
+> The Environment Template artifact is also downloaded by `application:version`, but its resolution uses an
+> [Artifact Definition](/docs/envgene-objects.md#artifact-definition) stored at
+> `/configuration/artifact_definitions/`, not an AppDef. AppDefs are delivered by the Environment Template artifact
+> itself, so they cannot drive its own download. An Artifact Definition is authored manually for each such artifact
+> used in the repository.
+
+### External systems
+
+External systems read the root-level folders from the instance repository, via Git API or repository checkout. Legacy
+consumers that depend on the per-environment layout are served by `dual` mode.
+
+### Import into external CMDB systems
+
+CMDB import is an extension point. EnvGene does not implement the integration itself. The configuration contract:
+
+- [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import) - an Instance pipeline parameter that triggers
+  the import operation
+- `inventory.deployer` - an attribute in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) that
+  points to the CMDB instance configuration
+- [`deployer.yml`](/docs/envgene-configs.md#deployeryml) - a configuration file that describes the parameters of the
+  CMDB instance
+
+## Template transformation
+
+Site-to-site delivery transfers solution artifacts from one registry to another. The artifact group, name, and version
+stay the same, while the registry URL and registry access parameters change. Instead of recreating the definitions for
+each site, parameterize the templates with macros available exclusively when rendering definitions:
 
 - [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
 - [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
 
-The values for these macros are set in [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml)
-
-Other Jinja [macros](/docs/template-macros.md#jinja-macros) are also available.
+The values for these macros come from [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
 
 For example:
 
-- [appregdef_config.yaml example](/test_data/configuration/appregdef_config.yaml)
+- [`appregdef_config.yaml` example](/test_data/configuration/appregdef_config.yaml)
 - [Application Definition template](/test_data/test_templates/appdefs/application-1.yaml.j2)
 - [Registry Definition template](/test_data/test_templates/regdefs/registry-1.yaml.j2)
+
+## See also
+
+- [Add Application or Registry Definitions to the template repository](/docs/how-to/app-reg-defs-add-to-template.md) -
+  how-to for authoring definition templates.
+- [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md) -
+  how-to for adding a definition override in the instance repository.
+- [Application and Registry Definitions use cases](/docs/use-cases/app-reg-defs.md) - rendering, override, and
+  placement-mode scenarios.
+- [Artifact downloading use cases](/docs/use-cases/artifact-downloading.md) - supported registries and authentication
+  for SD and Environment Template downloads.

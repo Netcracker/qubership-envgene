@@ -1,0 +1,7 @@
+---
+inventory:
+  cloudPassport: cluster
+  deployer: deployer
+envTemplate:
+  name: external-cred-sample
+  artifact: env-template:1.0.0

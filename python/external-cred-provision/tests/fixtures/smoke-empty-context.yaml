@@ -1,0 +1,3 @@
+# Minimal context for CI smoke test dry-run (no store connectivity required).
+# See sample-context.yaml for a full example with multiple strategies and providers.
+credentials: {}

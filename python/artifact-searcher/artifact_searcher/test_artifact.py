@@ -8,6 +8,7 @@ os.environ["DEFAULT_REQUEST_TIMEOUT"] = "0.2"  # for test cases to run quicker
 from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 from artifact_searcher.artifact import check_artifact
+from artifact_searcher.artifact import _retry_with_nexus_url
 from artifact_searcher.utils.models import FileExtension
 
 TEST_REPO = "https://repo.example.com/repository/"
@@ -160,6 +161,48 @@ def test_artifact_not_found(mock_nexus, mock_folder, mock_name, mock_head):
     )
 
     assert result is None
+
+
+async def test_retry_with_nexus_url_restores_domain_after_failed_retry(aiohttp_server):
+
+    async def not_found_handler(request):
+        return web.Response(status=404)
+
+    app_web = web.Application()
+    app_web.router.add_get("/{path_info:.*}", not_found_handler)
+    server = await aiohttp_server(app_web)
+
+    base_url = str(server.make_url("/repository/"))
+
+    mvn_cfg = models.MavenConfig(
+        target_snapshot="repo",
+        target_staging="repo",
+        target_release="repo",
+        repository_domain_name=base_url,
+    )
+    dcr_cfg = models.DockerConfig(
+        snapshot_uri="https://docker.example.com/snapshot",
+        staging_uri="https://docker.example.com/staging",
+        release_uri="https://docker.example.com/release",
+        group_uri="https://docker.example.com/group",
+        snapshot_repo_name="snapshot-repo",
+        staging_repo_name="staging-repo",
+        release_repo_name="release-repo",
+        group_name="test-group",
+    )
+    reg = models.Registry(name="registry", maven_config=mvn_cfg, docker_config=dcr_cfg)
+    app = models.Application(
+        name="app", artifact_id="app", group_id="com.example",
+        registry=reg, solution_descriptor=False,
+    )
+
+    result = await _retry_with_nexus_url(app, "1.0.0-SNAPSHOT", models.FileExtension.ZIP, None)
+
+    assert result is None
+    assert app.registry.maven_config.repository_domain_name == base_url, (
+        f"domain was mutated to {app.registry.maven_config.repository_domain_name!r} after retry; "
+        f"expected original {base_url!r}"
+    )
 
 
 @patch("artifact_searcher.artifact.MavenConfig.is_nexus")

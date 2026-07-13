@@ -1,0 +1,6 @@
+---
+tenant: "{{ templates_dir }}/env_templates/external-cred/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/external-cred/cloud.yml.j2"
+external_credential_template: "{{ templates_dir }}/env_templates/external-cred/external-credentials.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/external-cred/ns.yml.j2"

@@ -15,8 +15,3 @@
     # Mandatory
     # Authentication token for the discovery repository
     # token: string
-
-# Mandatory
-# Authentication token for EnvGene to access this instance repository
-# Required for EnvGene to commit changes
-self_token: "${creds.get('self-token-cred').secret}"

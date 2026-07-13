@@ -10,11 +10,11 @@
 
 ## Performance environment variables
 
-| name                      | default                  | description                                                                                          |
-|---------------------------|--------------------------|------------------------------------------------------------------------------------------------------|
-| `TCP_CONNECTION_LIMIT`    | `100`                    | Maximum number of simultaneous TCP connections used to download artifacts from registries           |
-| `DEFAULT_REQUEST_TIMEOUT` | `30`                     | Default request timeout in seconds for registry requests                                             |
-| `WORKSPACE`               | `<system.temp.dir>/zips` | Local workspace directory used to store downloaded artifact ZIPs                                     |
+| name                      | default                  | description                                                                               |
+|---------------------------|--------------------------|-------------------------------------------------------------------------------------------|
+| `TCP_CONNECTION_LIMIT`    | `100`                    | Maximum number of simultaneous TCP connections used to download artifacts from registries |
+| `DEFAULT_REQUEST_TIMEOUT` | `30`                     | Default request timeout in seconds for registry requests                                  |
+| `WORKSPACE`               | `<system.temp.dir>/zips` | Local workspace directory used to store downloaded artifact ZIPs                          |
 
 ---
 

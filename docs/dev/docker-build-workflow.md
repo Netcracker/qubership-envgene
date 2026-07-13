@@ -100,11 +100,11 @@ The Docker build workflow automatically triggers when commits are pushed with co
 
 ### Supported Commit Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `feat:` | New features | `feat: add new authentication system` |
-| `fix:` | Bugfixes | `fix: resolve docker build issue` |
-| `BREAKING CHANGE:` | Breaking changes | `BREAKING CHANGE: major refactor` |
+| Type               | Description      | Example                               |
+|--------------------|------------------|---------------------------------------|
+| `feat:`            | New features     | `feat: add new authentication system` |
+| `fix:`             | Bugfixes         | `fix: resolve docker build issue`     |
+| `BREAKING CHANGE:` | Breaking changes | `BREAKING CHANGE: major refactor`     |
 
 ### Examples of Valid Commit Messages
 
@@ -134,12 +134,12 @@ git commit -m "BREAKING CHANGE: major refactor of build system"
 
 When running manually, you can choose which images to build:
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `build-gcip` | Build Qubership GCIP image | ✅ Enabled |
-| `build-envgene` | Build Qubership Envgene image | ✅ Enabled |
-| `build-pipeline` | Build Instance repository Pipeline image | ✅ Enabled |
-| `build-effective-set` | Build Effective Set Generator image | ✅ Enabled |
+| Option                | Description                              | Default    |
+|-----------------------|------------------------------------------|------------|
+| `build-gcip`          | Build Qubership GCIP image               | ✅ Enabled |
+| `build-envgene`       | Build Qubership Envgene image            | ✅ Enabled |
+| `build-pipeline`      | Build Instance repository Pipeline image | ✅ Enabled |
+| `build-effective-set` | Build Effective Set Generator image      | ✅ Enabled |
 
 ### Manual Execution Scenarios
 

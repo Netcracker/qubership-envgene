@@ -27,7 +27,8 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     /python/jschon-sort \
     /python/envgene \
     /python/integration \
-    /python/artifact-searcher && \
+    /python/artifact-searcher \
+    /python/external-cred-provision && \
     pip install --no-cache-dir --no-deps \
     -r /build/creds_rotation_requirements.txt
 

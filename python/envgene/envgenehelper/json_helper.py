@@ -18,10 +18,6 @@ def findAllJsonsInDir(dir) :
         result.append(str(f))
     return result
 
-def findJsons(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern="") :
-    fileList = findAllJsonsInDir(dir)
-    return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
-
 def writeJsonToFile(file_path: str, content: dict):
     logger.debug(f"Writing json to file: {file_path}")
     makedirs(path.dirname(file_path), exist_ok=True)

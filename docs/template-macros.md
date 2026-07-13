@@ -15,6 +15,7 @@
     - [`current_env.additionalTemplateVariables`](#current_envadditionaltemplatevariables)
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
+    - [`current_env.composite_topology`](#current_envcomposite_topology)
     - [`current_env.cluster.cloud_api_protocol`](#current_envclustercloud_api_protocol)
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
@@ -62,7 +63,9 @@
     - [`BASELINE_CONTROLLER`](#baseline_controller)
     - [`PUBLIC_IDENTITY_PROVIDER_URL`](#public_identity_provider_url)
     - [`PRIVATE_IDENTITY_PROVIDER_URL`](#private_identity_provider_url)
-  - [Credential Macro](#credential-macro)
+  - [Credential Macro and Credential Reference](#credential-macro-and-credential-reference)
+    - [Local credentials via `creds.get`](#local-credentials-via-credsget)
+    - [External Credentials via Credential Reference](#external-credentials-via-credential-reference)
   - [Deprecated Macros](#deprecated-macros)
     - [Deprecated Jinja Macros](#deprecated-jinja-macros)
       - [`environment.environmentName`](#environmentenvironmentname)
@@ -332,9 +335,9 @@ deployParameters:
     namespace: <namespace-C>
 ```
 
-The variable is obtained by transforming the file defined in the path `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/solution-descriptor/sd.yml`.
+The variable is obtained by transforming the file defined in the path `/environments/<CLUSTER-NAME>/<ENV-NAME>/Inventory/solution-descriptor/sd.yaml`.
 
-The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
+The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/environments/<CLUSTER-NAME>/<ENV-NAME>/Inventory/solution-descriptor/sd.yaml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
 
 The value of the `<application-name>`, `<deploy-postfix>` and `version` in this variable is obtained from the SD.
 
@@ -361,6 +364,71 @@ The value of the `<application-name>`, `<deploy-postfix>` and `version` in this 
 **Usage in sample:**
 
 - [Sample template](/docs/samples/template-repository/templates/env_templates/composite/bss.yml.j2)
+
+### `current_env.composite_topology`
+
+---
+**Description:** A hashable describing the resolved composite topology of the environment - its baseline plus
+satellites, with each member carrying its rendered namespace names. The variable has the following
+structure:
+
+```yaml
+# Mandatory
+baseline:
+  # Mandatory
+  originNamespace: <baseline-origin-ns>
+  # Optional
+  # Present only when the baseline member is a Blue-Green domain
+  peerNamespace: <baseline-peer-ns>
+  # Optional
+  # Present only when the baseline member is a Blue-Green domain
+  controllerNamespace: <baseline-controller-ns>
+# Optional
+satellites:
+  - # Mandatory
+    originNamespace: <satellite-origin-ns>
+    # Optional
+    # Present only when the satellite member is a Blue-Green domain
+    peerNamespace: <satellite-peer-ns>
+    # Optional
+    # Present only when the satellite member is a Blue-Green domain
+    controllerNamespace: <satellite-controller-ns>
+```
+
+A member has one of two kinds. A namespace member carries `originNamespace`. A Blue-Green member carries
+`originNamespace`, `peerNamespace` and `controllerNamespace`. The member kind is implied by the presence of
+`peerNamespace` and `controllerNamespace`. `satellites` may be absent or empty when the composite has only a baseline.
+
+The variable is derived from the [Composite Structure](/docs/envgene-objects.md#composite-structure) object and the
+[BG Domain](/docs/envgene-objects.md#bg-domain) object. Each member resolves its namespace template to the rendered
+namespace name.
+
+For a composite with a Blue-Green baseline the value resolves as follows.
+
+```yaml
+baseline:
+  originNamespace: env-1-bss-orgn
+  peerNamespace: env-1-bss-peer
+  controllerNamespace: env-1-ctrl
+satellites:
+  - originNamespace: env-1-data-management
+```
+
+> [!NOTE]
+> The value is `{}` for environments without Composite Structure.
+
+**Type:** HashMap
+
+**Default Value:** `{}`
+
+**Basic usage:**
+
+```yaml
+  deployParameters:
+    baseline_ns: "{{ current_env.composite_topology.baseline.originNamespace }}"
+```
+
+**Usage in sample:** TBD
 
 ### `current_env.cluster.cloud_api_protocol`
 
@@ -1199,10 +1267,19 @@ Calculation rules:
 
 **Usage in sample:** TBD
 
-## Credential Macro
+## Credential Macro and Credential Reference
 
----
-**Description:** This macro marks parameters as sensitive, triggering special processing that differs from regular parameters.
+Sensitive parameters are defined in one of two ways:
+
+- **Local credentials** - reference [Credential](/docs/envgene-objects.md#credential) objects with `type: usernamePassword` or `type: secret` through the credential macro `${creds.get(...)}`.
+
+- **External credentials** - reference [Credential](/docs/envgene-objects.md#credential) objects with `type: external` through a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+
+For the feature overview, see [External Credentials Management](/docs/features/external-creds.md).
+
+### Local credentials via `creds.get`
+
+This macro marks parameters as sensitive and refers to Local [Credential](/docs/envgene-objects.md#credential) objects (`type: usernamePassword` or `secret`). It triggers processing that differs from regular parameters.
 
 ```text
 ${creds.get('<cred-id>').username|password|secret}
@@ -1226,6 +1303,46 @@ k8s_token: ${creds.get('k8s-cred').secret}
 ```
 
 **Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/migration/test-deploy-creds.yml)
+
+### External Credentials via Credential Reference
+
+The Credential Reference points a parameter to an External [Credential](/docs/envgene-objects.md#credential) by `credId` (`type: external`). Optional `property` selects `username` or `password` when the remote secret is modeled with multiple fields. Omit `property` when the Credential has no `properties` list (single-value secret).
+
+This reference is used **only** for `external` Credentials type.
+
+The same Credential Reference is valid in the environment template and in the instance repository after rendering.
+
+```yaml
+# External Credential Reference
+<parameter-key>:
+  # Mandatory
+  # Macro type
+  $type: credRef
+  # Mandatory
+  # Pointer to EnvGene Credential
+  credId: string
+  # Optional: key inside the remote secret
+  property: enum [ username, password ]
+
+# Example
+global.secrets.streamingPlatform.username:
+  $type: credRef
+  credId: cdc-streaming-cred
+  property: username
+
+global.secrets.streamingPlatform.password:
+  $type: credRef
+  credId: cdc-streaming-cred
+  property: password
+
+# Single-value (Credential has no `properties`)
+CONSUL_ADMIN_TOKEN:
+  $type: credRef
+  credId: postgres-password
+```
+
+> [!NOTE]
+> Unlike `${creds.get(...)}`, Environment Instance generation does not create `type: external` Credential objects automatically from Credential References alone. Each external Credential must be defined by a [Credential Template](/docs/features/external-creds.md#credential-template) in the Template repository. The path to that file is `external_credential_template` on the [Template Descriptor](/docs/envgene-objects.md#template-descriptor).
 
 ## Deprecated Macros
 
@@ -1259,11 +1376,11 @@ k8s_token: ${creds.get('k8s-cred').secret}
 
 #### `${envgen.creds.get('<cred-id>').username|password|secret}`
 
-**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro-and-credential-reference)
 
 #### `${cmdb.creds.get('<cred-id>').username|password|secret}`
 
-**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro-and-credential-reference)
 
 ### Deprecated Calculator CLI macros
 

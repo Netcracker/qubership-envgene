@@ -9,13 +9,11 @@ from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from .collections_helper import dump_as_yaml_format
-from .collections_helper import merge_lists
-from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
+from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .json_helper import findJsons
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
-    validate_yaml_by_scheme_or_fail
+    validate_yaml_by_scheme_or_fail, find_yaml_file
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -62,11 +60,12 @@ def getenv_and_log(name, *args, **kwargs):
     return var
 
 
-def getenv_with_error(var_name):
+def getenv_with_error(var_name, *, no_log=False):
     var = getenv(var_name)
     if not var:
         raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
-    logger.debug(f"{var_name}: {var}")
+    if not no_log:
+        logger.debug(f"{var_name}: {var}")
     return var
 
 
@@ -113,53 +112,6 @@ def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
         raise ValueError(f"Validation of env_definition in '{env_definition_path} failed. See logs above'") from None
 
 
-def findResourcesBottomTop(sourceDir, stopParentDir, pattern, notPattern="", additionalRegexpPattern="",
-                           additionalRegexpNotPattern="", searchJsons=False):
-    result = []
-    foundMap = {}
-    # checking that stopParentDir is real parent of sourceDir or we will have infinite loop
-    stopParentDirAbs = getAbsPath(stopParentDir)
-    sourceDirAbs = getAbsPath(sourceDir)
-    parentPath = Path(stopParentDirAbs)
-    sourcePath = Path(sourceDirAbs)
-    if parentPath not in sourcePath.parents:
-        logger.error(f"Error while finding resources. {stopParentDirAbs} is not in parents of {sourceDirAbs}.")
-        raise ReferenceError(
-            f"Error while finding resources. {stopParentDirAbs} is not in parents of {sourceDirAbs}. See logs above.")
-    return __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, additionalRegexpPattern,
-                                      additionalRegexpNotPattern, searchJsons, result, foundMap)
-
-
-def __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, additionalRegexpPattern,
-                               additionalRegexpNotPattern, searchJsons, result, foundMap):
-    logger.debug(
-        f"Searching files in {sourceDir}. Pattern:{pattern}\nNotPattern:{notPattern}\nResult:\n{dump_as_yaml_format(result)}. foundMap:\n{foundMap}")
-    findResults = findYamls(sourceDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
-    if searchJsons:
-        findResults = merge_lists(findResults, findJsons(sourceDir, pattern, notPattern, additionalRegexpPattern,
-                                                         additionalRegexpNotPattern))
-    for foundFile in findResults:
-        fileName = extractNameFromFile(foundFile)
-        if fileName not in foundMap:
-            foundMap[fileName] = foundFile
-            if len(findResults) == 1:
-                yamlPath = findResults[0]
-                result.append(yamlPath)
-                logger.debug(f"Resource added from: {yamlPath}")
-            elif len(findResults) > 1:
-                logger.error(
-                    f"Duplicate resource file with pattern {pattern} found in {sourceDir}: \n\t" + ",\n\t".join(
-                        str(x) for x in findResults))
-                raise ReferenceError(f"Duplicate resource file with pattern {pattern} found. See logs above.")
-    if getAbsPath(sourceDir) == getAbsPath(stopParentDir):
-        logger.debug(f"Reached parent dir {stopParentDir}. Stopping.")
-        return result
-    else:
-        parentEnvDirPath = str(Path(sourceDir).parent)
-        return __findResourcesBottomTop__(parentEnvDirPath, stopParentDir, pattern, notPattern, additionalRegexpPattern,
-                                          additionalRegexpNotPattern, searchJsons, result, foundMap)
-
-
 def getTemplateArtifactName(env_definition_yaml):
     if "artifact" in env_definition_yaml["envTemplate"]:
         artifact = env_definition_yaml["envTemplate"]["artifact"]
@@ -169,7 +121,7 @@ def getTemplateArtifactName(env_definition_yaml):
         return gav["artifact_id"]
 
 
-def getEnvDefinition(env_dir = None):
+def getEnvDefinition(env_dir=None):
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     env_definition_path = getEnvDefinitionPath(env_dir)
     if not check_file_exists(env_definition_path):
@@ -298,7 +250,7 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
     if (cloud_passport_file_name):
-        return findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name)
+        return str(find_passport_by_env_definition(cloud_passport_file_name, env_instances_dir, instances_dir))
     else:
         cloudDir = getParentDirName(env_instances_dir + "/")
         logger.info(
@@ -312,23 +264,24 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
         return findPassportInDefaultDirByName(cloudDir, DEFAULT_PASSPORT_NAME)
 
 
-def findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name):
-    logger.debug(
-        f"Searching for cloud passport file {cloud_passport_file_name} from {env_instances_dir} to {instances_dir}")
-    passportFiles = findResourcesBottomTop(env_instances_dir, instances_dir, f"/{cloud_passport_file_name}.y",
-                                           "redentials/")
-    if len(passportFiles) == 1:
-        yamlPath = passportFiles[0]
-        logger.info(f"Cloud passport file for {cloud_passport_file_name} found in: {yamlPath}")
-        return yamlPath
-    elif len(passportFiles) > 1:
-        logger.error(
-            f"Duplicate cloud passport files with key {cloud_passport_file_name} found in {instances_dir}: \n\t" + ",\n\t".join(
-                str(x) for x in passportFiles))
-        raise ReferenceError(
-            f"Duplicate cloud passport files with key {cloud_passport_file_name} found. See logs above.")
-    else:
-        raise ReferenceError(f"Cloud passport with key {cloud_passport_file_name} not found in {instances_dir}")
+def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir) -> Path:
+    levels = [
+        Path(env_dir) / "Inventory",
+        Path(env_dir).parent,
+        Path(instances_dir),
+    ]
+
+    passport_dir_names = ["cloud-passport", "cloud-passports"]
+
+    shared_passport_paths = [level / name for level in levels for name in passport_dir_names]
+
+    for p in shared_passport_paths:
+        found_path = find_yaml_file(p, cloud_passport_name, recursively=True)
+        if found_path:
+            logger.info(f"Cloud passport with key '{cloud_passport_name}' found in '{found_path}'")
+            return found_path
+
+    raise FileNotFoundError(f"Cloud passport with key '{cloud_passport_name}' not found.")
 
 
 def findPassportInDefaultDirByName(env_instances_dir, passport_name):
@@ -371,10 +324,12 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
+
 class NamespaceRole(StrEnum):
     COMMON = auto()
     ORIGIN = auto()
     PEER = auto()
+
 
 def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
     if not bgd_object:
@@ -386,6 +341,7 @@ def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> Namespac
     if bgd_object['peerNamespace']['name'] == ns_name:
         return NamespaceRole.PEER
     return NamespaceRole.COMMON
+
 
 @dataclass
 class NamespaceFile:
@@ -409,6 +365,7 @@ def get_namespaces_path(env_dir: Path | None = None) -> Path:
     logger.debug(namespaces_path)
     return namespaces_path
 
+
 def get_bgd_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     bgd_path = env_dir.joinpath('bg_domain.yml')
@@ -422,6 +379,7 @@ def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     logger.debug(bgd_object)
     return bgd_object
 
+
 def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces_path = get_namespaces_path(env_dir)
     if not check_dir_exists(str(namespaces_path)):
@@ -431,6 +389,7 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces = [NamespaceFile(path=p, bgd=bgd) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
+
 
 def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
     base_dir = base_dir if base_dir else getenv_with_error('CI_PROJECT_DIR')
@@ -444,9 +403,16 @@ def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
         result[NamespaceRole.PEER] = peer_template_path
     return result
 
+
 def is_from_template_dir(file_path: str) -> bool:
     return bool(TEMPLATE_DIR_PATTERN.search(file_path))
 
 
 def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
+
+
+def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
+    instances_dir = getenv_with_error('CI_PROJECT_DIR')
+    env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")
+    return env_dir_path

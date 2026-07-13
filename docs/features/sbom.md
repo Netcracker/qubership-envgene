@@ -85,7 +85,7 @@ Full path to a single SBOM: `/sboms/<application-name>/<application-name>-<appli
 
 ## Use Cases
 
-- [SBOM Retention](/docs/use-cases/sbom-retention.md) - Cleanup of old SBOM versions when retention threshold is reached
+- [SBOM Retention](/docs/use-cases/sbom-retention.md) - Cleanup of old SBOM versions when retention is enabled
 - [SBOM storage migration](/docs/use-cases/sbom-storage-migration.md) - Automatic migration to per-application layout on first run after upgrading EnvGene
 
 ## Affection map

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
-from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
+from envgenehelper import get_cluster_name_from_full_name, get_environment_name_from_full_name, readYaml, \
     is_dir_empty, writeYamlToFile
 from envgenehelper.test_helpers import TestHelpers
 from jinja.jinja import create_jinja_env
@@ -22,7 +22,7 @@ class TestEnvInvGen(BaseTest):
 
     def setup_method(self):
         self.set_ci_project_dir(FEATURE_TEST_DIR, "output")
-        self.expected_dir = self.expected_dir.joinpath(FEATURE_TEST_DIR, "expected")
+        self.expected_dir = self.test_data_dir / FEATURE_TEST_DIR / "expected"
         TestHelpers.clean_test_dir(self.ci_project_dir)
 
         self.env_name = get_environment_name_from_full_name(self.full_env_name)

@@ -126,11 +126,11 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 
 Configure variables in **Settings** → **Secrets and variables** → **Actions** → **Variables** to override defaults:
 
-| Variable                   | Default              | Purpose                                       |
-|----------------------------|----------------------|-----------------------------------------------|
-| `DOCKER_REGISTRY`          | `ghcr.io/netcracker` | Docker registry for EnvGene images            |
-| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs                |
-| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes                        |
+| Variable                   | Default              | Purpose                            |
+|----------------------------|----------------------|------------------------------------|
+| `DOCKER_REGISTRY`          | `ghcr.io/netcracker` | Docker registry for EnvGene images |
+| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs     |
+| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes             |
 
 See [Repository Variables (vars)](#repository-variables-vars) for details. For a step-by-step guide on GHCR and GAR, see [Using Different Docker Registries in Envgene.yml](/docs/how-to/docker-registry-configuration.md).
 
@@ -160,10 +160,10 @@ For initializing a new instance repository from scratch, see [Environment Instan
 
 The workflow consists of two main jobs:
 
-| Job                             | Purpose                                                         |
-|---------------------------------|-----------------------------------------------------------------|
-| `process_environment_variables` | Parses inputs, loads config, builds matrix, exports variables   |
-| `envgene_execution`             | Runs EnvGene steps per environment (matrix job)                 |
+| Job                             | Purpose                                                       |
+|---------------------------------|---------------------------------------------------------------|
+| `process_environment_variables` | Parses inputs, loads config, builds matrix, exports variables |
+| `envgene_execution`             | Runs EnvGene steps per environment (matrix job)               |
 
 The first job prepares all parameters and passes them to the second job via a shared `.env` artifact and job outputs. The second job runs once per environment in the matrix.
 
@@ -173,16 +173,16 @@ The following sections describe each step in the pipeline as defined in `Envgene
 
 #### Job: `process_environment_variables`
 
-| Step                            | Description                                                  |
-|---------------------------------|--------------------------------------------------------------|
-| Repository Checkout             | Checks out the repository (without persisting credentials)   |
-| Load environment variables      | Loads `pipeline_vars.env` into `GITHUB_ENV` |
-| Process Input Parameters        | Exports workflow inputs to environment                       |
-| Process additional variables    | Parses `GH_ADDITIONAL_PARAMS` and adds to environment        |
-| Create env_generation_params    | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV variables    |
-| Multiple Environment Processing | Generates environment matrix from `ENV_NAMES`                |
-| Create .env file                | Dumps all environment variables to `.env`                    |
-| Upload .env as artifact         | Uploads `.env` for use by `envgene_execution` job            |
+| Step                            | Description                                                |
+|---------------------------------|------------------------------------------------------------|
+| Repository Checkout             | Checks out the repository (without persisting credentials) |
+| Load environment variables      | Loads `pipeline_vars.env` into `GITHUB_ENV`                |
+| Process Input Parameters        | Exports workflow inputs to environment                     |
+| Process additional variables    | Parses `GH_ADDITIONAL_PARAMS` and adds to environment      |
+| Create env_generation_params    | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV variables  |
+| Multiple Environment Processing | Generates environment matrix from `ENV_NAMES`              |
+| Create .env file                | Dumps all environment variables to `.env`                  |
+| Upload .env as artifact         | Uploads `.env` for use by `envgene_execution` job          |
 
 #### Job: `envgene_execution` (runs per environment in matrix)
 
@@ -385,13 +385,13 @@ Add your step inside the `envgene_execution` job with an `if`:
 
 **Common condition patterns:**
 
-| Condition type      | Example                                                         |
-|---------------------|-----------------------------------------------------------------|
-| Equals string       | `needs.process_environment_variables.outputs.MY_VAR == 'true'`  |
-| Not empty           | `needs.process_environment_variables.outputs.MY_VAR != ''`      |
-| Logical OR          | `(condition1) \|\| (condition2)`                                |
-| Logical AND         | `(condition1) && (condition2)`                                  |
-| Multiple conditions | `outputs.ENV_BUILDER == 'true' && outputs.SD_VERSION != ''`     |
+| Condition type      | Example                                                        |
+|---------------------|----------------------------------------------------------------|
+| Equals string       | `needs.process_environment_variables.outputs.MY_VAR == 'true'` |
+| Not empty           | `needs.process_environment_variables.outputs.MY_VAR != ''`     |
+| Logical OR          | `(condition1) \|\| (condition2)`                               |
+| Logical AND         | `(condition1) && (condition2)`                                 |
+| Multiple conditions | `outputs.ENV_BUILDER == 'true' && outputs.SD_VERSION != ''`    |
 
 ### Complete Example: Adding a Custom Job
 
@@ -527,11 +527,11 @@ europe-west1-docker.pkg.dev/my-gcp-project/envgene-images
 
 **Summary:**
 
-| Parameter                        | Location  | Required for GAR          |
-|----------------------------------|-----------|---------------------------|
-| `DOCKER_REGISTRY`                | Variables | Yes - full GAR path       |
-| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables | Yes - set to `GCP`        |
-| `GCP_SA_KEY`                     | Secrets   | Yes - JSON key content    |
+| Parameter                        | Location  | Required for GAR       |
+|----------------------------------|-----------|------------------------|
+| `DOCKER_REGISTRY`                | Variables | Yes - full GAR path    |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables | Yes - set to `GCP`     |
+| `GCP_SA_KEY`                     | Secrets   | Yes - JSON key content |
 
 ## How to Trigger the Workflow
 
@@ -600,12 +600,12 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Build the environment and generate the Effective Set for deployment.
 
-| Parameter                | Value                    |
-|--------------------------|--------------------------|
-| `ENV_NAMES`              | `prod-cluster/prod-01`   |
-| `ENV_BUILDER`            | `true`                   |
-| `GENERATE_EFFECTIVE_SET` | `true`                   |
-| `DEPLOYMENT_TICKET_ID`   | `QBSHP-1234`             |
+| Parameter                | Value                  |
+|--------------------------|------------------------|
+| `ENV_NAMES`              | `prod-cluster/prod-01` |
+| `ENV_BUILDER`            | `true`                 |
+| `GENERATE_EFFECTIVE_SET` | `true`                 |
+| `DEPLOYMENT_TICKET_ID`   | `QBSHP-1234`           |
 
 **Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GENERATE_EFFECTIVE_SET → GIT_COMMIT
 
@@ -617,10 +617,10 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Regenerate the Environment Instance without generating the Effective Set (e.g. for validation or template updates).
 
-| Parameter      | Value                  |
-|----------------|------------------------|
-| `ENV_NAMES`    | `dev-cluster/dev-01`   |
-| `ENV_BUILDER`  | `true`                 |
+| Parameter     | Value                |
+|---------------|----------------------|
+| `ENV_NAMES`   | `dev-cluster/dev-01` |
+| `ENV_BUILDER` | `true`               |
 
 **Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT
 
@@ -648,10 +648,10 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Perform a Blue-Green operation (e.g. warmup, state change).
 
-| Parameter              | Value                               |
-|------------------------|-------------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`              |
-| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}`     |
+| Parameter              | Value                           |
+|------------------------|---------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`          |
+| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}` |
 
 **Example `GH_ADDITIONAL_PARAMS` value:**
 
@@ -669,10 +669,10 @@ BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-ctrl\",\"originNamespace\
 
 **Goal:** Rotate credentials for an environment without rebuilding.
 
-| Parameter              | Value                                   |
-|------------------------|-----------------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`                  |
-| `GH_ADDITIONAL_PARAMS` | `CRED_ROTATION_PAYLOAD={...}`           |
+| Parameter              | Value                         |
+|------------------------|-------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`        |
+| `GH_ADDITIONAL_PARAMS` | `CRED_ROTATION_PAYLOAD={...}` |
 
 **Example `GH_ADDITIONAL_PARAMS` value:**
 
@@ -690,10 +690,10 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Goal:** Fetch SD from an artifact and merge it into the repository.
 
-| Parameter              | Value                                                           |
-|------------------------|-----------------------------------------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`                                          |
-| `GH_ADDITIONAL_PARAMS` | `SD_SOURCE_TYPE=artifact,SD_VERSION=my-solution:v1.2.3,...`     |
+| Parameter              | Value                                                       |
+|------------------------|-------------------------------------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`                                      |
+| `GH_ADDITIONAL_PARAMS` | `SD_SOURCE_TYPE=artifact,SD_VERSION=my-solution:v1.2.3,...` |
 
 **Steps that run:** PROCESS_SD → GIT_COMMIT
 
@@ -705,10 +705,10 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Goal:** Create a new Environment Inventory (`env_definition.yml`) for a new environment.
 
-| Parameter              | Value                                                           |
-|------------------------|-----------------------------------------------------------------|
-| `ENV_NAMES`            | `new-cluster/new-env`                                           |
-| `GH_ADDITIONAL_PARAMS` | `ENV_INVENTORY_INIT=true,ENV_TEMPLATE_NAME=my-env-template`     |
+| Parameter              | Value                                                       |
+|------------------------|-------------------------------------------------------------|
+| `ENV_NAMES`            | `new-cluster/new-env`                                       |
+| `GH_ADDITIONAL_PARAMS` | `ENV_INVENTORY_INIT=true,ENV_TEMPLATE_NAME=my-env-template` |
 
 **Steps that run:** ENV_INVENTORY_GENERATION → GIT_COMMIT
 
@@ -720,10 +720,10 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Goal:** Process several environments with the same parameters.
 
-| Parameter     | Value                                      |
-|---------------|--------------------------------------------|
-| `ENV_NAMES`   | `cluster-01/env-01,cluster-01/env-02,...`  |
-| `ENV_BUILDER` | `true`                                     |
+| Parameter     | Value                                     |
+|---------------|-------------------------------------------|
+| `ENV_NAMES`   | `cluster-01/env-01,cluster-01/env-02,...` |
+| `ENV_BUILDER` | `true`                                    |
 
 **Steps that run:** For each environment in the matrix: APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT (parallel jobs)
 
@@ -733,13 +733,13 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 ## Further Reading
 
-| Document                                                                              | Description                    |
-|---------------------------------------------------------------------------------------|--------------------------------|
-| [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md)                 | Full parameter reference       |
-| [EnvGene Pipelines](/docs/envgene-pipelines.md)                                       | Pipeline flow and descriptions |
-| [Using Different Docker Registries](/docs/how-to/docker-registry-configuration.md)    | GHCR and GAR configuration     |
-| [Blue-Green Deployment](/docs/features/blue-green-deployment.md)                      | BG-related parameters          |
-| [SD Processing](/docs/use-cases/sd-processing.md)                                     | Solution Descriptor use cases  |
+| Document                                                                           | Description                    |
+|------------------------------------------------------------------------------------|--------------------------------|
+| [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md)              | Full parameter reference       |
+| [EnvGene Pipelines](/docs/envgene-pipelines.md)                                    | Pipeline flow and descriptions |
+| [Using Different Docker Registries](/docs/how-to/docker-registry-configuration.md) | GHCR and GAR configuration     |
+| [Blue-Green Deployment](/docs/features/blue-green-deployment.md)                   | BG-related parameters          |
+| [SD Processing](/docs/use-cases/sd-processing.md)                                  | Solution Descriptor use cases  |
 
 ---
 
