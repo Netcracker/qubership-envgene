@@ -18,23 +18,25 @@
   - [To deprecate](#to-deprecate)
   - [Flow](#flow)
     - [1. job `trigger_passport`](#1-job-trigger_passport)
-      - [1.1. step `trigger_passport`](#11-step-trigger_passport)
+      - [1.1. step `preprocess`](#11-step-preprocess)
+      - [1.2. step `trigger_passport`](#12-step-trigger_passport)
     - [2. job `env_prepare`](#2-job-env_prepare)
       - [2.1. step `preprocess`](#21-step-preprocess)
-      - [2.2. step `credential_rotation`](#22-step-credential_rotation)
-      - [2.3. step `bg_manage`](#23-step-bg_manage)
-      - [2.4. step `env_inventory_generation`](#24-step-env_inventory_generation)
-      - [2.5. step `get_cloud_passport`](#25-step-get_cloud_passport)
+      - [2.2. step `get_cloud_passport`](#22-step-get_cloud_passport)
+      - [2.3. step `credential_rotation`](#23-step-credential_rotation)
+      - [2.4. step `bg_manage`](#24-step-bg_manage)
+      - [2.5. step `env_inventory_generation`](#25-step-env_inventory_generation)
       - [2.6. step `registry_discovery`](#26-step-registry_discovery)
-      - [2.7. step `app_reg_def_process`](#27-step-app_reg_def_process)
-      - [2.8. step `process_sd`](#28-step-process_sd)
-      - [2.9. step `generate_deployment_plan`](#29-step-generate_deployment_plan)
-      - [2.10. step `env_build`](#210-step-env_build)
-      - [2.11. step `generate_effective_set`](#211-step-generate_effective_set)
-      - [2.12. step `generate_argocd_repo`](#212-step-generate_argocd_repo)
-      - [2.13. step `postprocess`](#213-step-postprocess)
-      - [2.14. step `git_commit`](#214-step-git_commit)
-      - [2.15. step `es_pusher`](#215-step-es_pusher)
+      - [2.7. step `process_env_template`](#27-step-process_env_template)
+      - [2.8. step `app_reg_def_process`](#28-step-app_reg_def_process)
+      - [2.9. step `process_sd`](#29-step-process_sd)
+      - [2.10. step `generate_deployment_plan`](#210-step-generate_deployment_plan)
+      - [2.11. step `env_build`](#211-step-env_build)
+      - [2.12. step `generate_effective_set`](#212-step-generate_effective_set)
+      - [2.13. step `generate_argocd_repo`](#213-step-generate_argocd_repo)
+      - [2.14. step `postprocess`](#214-step-postprocess)
+      - [2.15. step `git_commit`](#215-step-git_commit)
+      - [2.16. step `es_pusher`](#216-step-es_pusher)
     - [3. job `cmdb_import`](#3-job-cmdb_import)
       - [3.1. step `cmdb_import`](#31-step-cmdb_import)
     - [4. job `sync`](#4-job-sync)
@@ -265,37 +267,62 @@ AI:
 1. Fernet
 2. GAV notation
 3. Template testing
+4. `ENV_INVENTORY_INIT: true`
+5. `registry_discovery`
+6. `SD_SOURCE_TYPE: artifact`
 
 ## Flow
 
 ### 1. job `trigger_passport`
 
-#### 1.1. step `trigger_passport`
-
 Triggers:
 
 - `GET_PASSPORT: true`
+
+#### 1.1. step `preprocess`
+
+Triggers:
+
+- always when the job runs
+
+Functions:
+
+1. `cert_apply`
+   - AI[phase2] add the step
+2. `crypt.decrypt`
+   - AI[phase2] add the step
+
+#### 1.2. step `trigger_passport`
+
+Triggers:
+
+- always when the job runs
 
 Functions:
 
 1. `trigger_passport`
     - input:
       - `integration.yaml`
+      - `credentials.yaml`
       - `ENV_NAMES`
     - output:
       - triggered downstream pipeline
     - actions:
       - trigger discovery repository pipeline
     - [phase1] unchanged
-    - AI[phase2]: add `trigger_passport` to `static-api.yaml`
+    - AI[phase2]: add the step
 
 ### 2. job `env_prepare`
+
+Triggers:
+
+- always
 
 #### 2.1. step `preprocess`
 
 Triggers:
 
-- always
+- always when the job runs
 
 Functions:
 
@@ -317,49 +344,9 @@ Functions:
     - [phase1] unchanged
 4. `crypt.decrypt`
     - [phase1] unchanged
+    - AI[phase2] Check no-op if `crypt: false`
 
-#### 2.2. step `credential_rotation`
-
-Triggers:
-
-TBD
-
-Functions:
-
-TBD
-
-- [phase1] unchanged
-- AI[phase2]: check UC readiness and test coverage
-
-#### 2.3. step `bg_manage`
-
-Triggers:
-
-TBD
-
-Functions:
-
-TBD
-
-- [phase1] unchanged
-- AI[phase2]: check UC readiness and test coverage
-
-#### 2.4. step `env_inventory_generation`
-
-Triggers:
-
-TBD
-
-Functions:
-
-TBD
-
-- output:
-  - env_definition
-- [phase1] unchanged
-- AI[phase2]: check UC readiness and test coverage
-
-#### 2.5. step `get_cloud_passport`
+#### 2.2. step `get_cloud_passport`
 
 Triggers:
 
@@ -379,11 +366,55 @@ TBD
   - Fernet-decrypt or re-encrypt
 - [phase1] unchanged
 
+#### 2.3. step `credential_rotation`
+
+Triggers:
+
+- `CRED_ROTATION_PAYLOAD`
+
+Functions:
+
+TBD
+
+- [phase1] unchanged
+- AI[phase2]: check UC readiness and test coverage
+
+#### 2.4. step `bg_manage`
+
+Triggers:
+
+- `BG_MANAGE: true`
+
+Functions:
+
+TBD
+
+- [phase1] unchanged
+- AI[phase2]: check UC readiness and test coverage
+
+#### 2.5. step `env_inventory_generation`
+
+Triggers:
+
+- `ENV_INVENTORY_CONTENT` or
+- `ENV_SPECIFIC_PARAMS`
+
+Ноут - критерии `ENV_INVENTORY_INIT` и `ENV_TEMPLATE_NAME` и `is_template_test` удалены по сравнению с мастером
+
+Functions:
+
+TBD
+
+- output:
+  - env_definition
+- [phase1] unchanged
+- AI[phase2]: check UC readiness and test coverage
+
 #### 2.6. step `registry_discovery`
 
 Triggers:
 
-- always
+- ???
 
 Functions:
 
@@ -401,7 +432,7 @@ TBD
 - AI[phase2]: turn on (?)
 - AI[phase3]: add integration with central appregdef storage
 
-#### 2.7. step `app_reg_def_process`
+#### 2.7. step `process_env_template`
 
 Triggers:
 
@@ -410,24 +441,41 @@ Triggers:
 
 Functions:
 
-1. `process_env_template` (`.set_version` -> `.download`)
+1. `set_template_version`
     - input:
       - `ENV_TEMPLATE_VERSION`
-      - `ENV_TEMPLATE_VERSION_PEER`
-      - `ENV_TEMPLATE_VERSION_ORIGIN`
+      - ~~`ENV_TEMPLATE_VERSION_PEER`~~
+      - ~~`ENV_TEMPLATE_VERSION_ORIGIN`~~
       - `ENV_TEMPLATE_VERSION_UPDATE_MODE`
+      - env definition
+    - output:
+      - updated env_definition
+    - actions:
+      - set template version
+    - [phase1] unchanged
+2. `download_env_template`
+    - input:
       - env definition
       - artifact definition
     - output:
       - downloaded template files
-      - updated env_definition
     - actions:
       - validate env definition, artifact definition
-      - set template version
       - download env template
     - [phase1] unchanged
     - AI[phase1]: fix the template-version-setting bug
-2. `compute_template_macros` (`render_config_env.generate_config`)
+    - AI[phase2]: move template downloading from `app_reg_def_process`
+
+#### 2.8. step `app_reg_def_process`
+
+Triggers:
+
+- `PIPELINE_TYPE: GITLAB_DEPLOY` or
+- `ENV_BUILDER: true`
+
+Functions:
+
+1. `compute_template_macros` (`render_config_env.generate_config`)
     - input:
       - env_definition
       - cloud passport
@@ -439,7 +487,7 @@ Functions:
     - actions:
       - generates the macro values above
     - AI[phase2]: rename `generate_config` -> `compute_template_macros`
-3. `load_template_descriptor` (`render_config_env.set_env_templates`)
+2. `load_template_descriptor` (`render_config_env.set_env_templates`)
     - input:
       - env_definition
       - downloaded template files
@@ -451,7 +499,7 @@ Functions:
       - load into `current_env_template`
       - repeat for the peer/origin dirs
     - AI[phase2]: rename `set_env_templates` -> `load_template_descriptor`
-4. `generate_bgd_file`
+3. `generate_bgd_file`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -461,7 +509,7 @@ Functions:
     - actions:
       - renders the bg domain into the env instance
       - no-op if no bg domain
-5. `generate_namespace_files`
+4. `generate_namespace_files`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -470,7 +518,7 @@ Functions:
       - rendered namespaces into env instance
     - actions:
       - render all namespaces into env instance
-6. `compute_namespace_map` (new)
+5. `compute_namespace_map` (new)
     - input:
       - `FULL_ENV_NAME`
       - rendered namespace in env instance
@@ -481,7 +529,7 @@ Functions:
       - read rendered namespace name + deployPostfix for each env namespace
       - calculate deployPostfix to namespace mapping (incl. BG suffix)
     - AI[phase1]: create the function
-7. `generate_composite_structure`
+6. `generate_composite_structure`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -490,7 +538,7 @@ Functions:
       - rendered composite structure into env instance
     - actions:
       - render the composite structure template, validate (no-op if none)
-8. `compute_composite_topology` (new)
+7. `compute_composite_topology` (new)
     - input:
       - rendered composite structure into env instance
       - rendered bg domain into env instance
@@ -500,7 +548,7 @@ Functions:
     - actions:
       - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
     - AI[phase2]: adopt the macro computation from master
-9. `run_appregdef_render`
+8. `run_appregdef_render`
     - input:
       - downloaded template files
       - env instance
@@ -516,7 +564,7 @@ Functions:
     - AI[phase2]: renders only required appregdef
     - AI[phase2]: implement create_if_not_exist | replace strategies
 
-#### 2.8. step `process_sd`
+#### 2.9. step `process_sd`
 
 Triggers:
 
@@ -542,7 +590,7 @@ Functions:
     - AI[phase1]: do not call in the new flow, call in the old flow
     - AI[phase2]: remove `SD_SOURCE_TYPE`
 
-#### 2.9. step `generate_deployment_plan`
+#### 2.10. step `generate_deployment_plan`
 
 Triggers:
 
@@ -572,7 +620,7 @@ Functions:
     - AI[phase1]: implement uniq app names (Artem)
     - AI[phase2]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
 
-#### 2.10. step `env_build`
+#### 2.11. step `env_build`
 
 Triggers:
 
@@ -615,7 +663,7 @@ Functions:
     - AI[phase1]: test manually
     - AI[phase2]: prepare a UC, add tests
 
-#### 2.11. step `generate_effective_set`
+#### 2.12. step `generate_effective_set`
 
 Triggers:
 
@@ -662,7 +710,7 @@ Functions:
     - AI[phase1]: support DP as well as SD
     - AI[phase1]: implement uniq app names
 
-#### 2.12. step `generate_argocd_repo`
+#### 2.13. step `generate_argocd_repo`
 
 Triggers:
 
@@ -688,21 +736,22 @@ Functions:
     - AI[phase1]: encrypt ARGO_DPG_CONTEXT.env (Artem)
     - AI[phase2]: move to GitHub
 
-#### 2.13. step `postprocess`
+#### 2.14. step `postprocess`
 
 Triggers:
 
-- TBD
+- always when the job runs
 
 Functions:
 
 1. `crypt.encrypt`
+   - AI[phase2] Check no-op if `crypt: false`
 
-#### 2.14. step `git_commit`
+#### 2.15. step `git_commit`
 
 Triggers:
 
-- TBD
+- always when the job runs
 
 Functions:
 
@@ -715,8 +764,9 @@ Functions:
       - effective set
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
+    - AI[phase2]: chech no-op if no changes
 
-#### 2.15. step `es_pusher`
+#### 2.16. step `es_pusher`
 
 Triggers:
 
@@ -749,11 +799,15 @@ Functions:
 
 ### 3. job `cmdb_import`
 
+Triggers:
+
+- `CMDB_IMPORT: true`
+
 #### 3.1. step `cmdb_import`
 
 Triggers:
 
-- TBD
+- always when the job runs
 
 Functions:
 
@@ -764,11 +818,15 @@ Functions:
 
 ### 4. job `sync`
 
+Triggers:
+
+- `PIPELINE_TYPE: GITLAB_DEPLOY`
+
 #### 4.1. step `sync`
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
+- always when the job runs
 
 Functions:
 
