@@ -1,0 +1,16 @@
+# BGD Environment Inventory (single artifact for all namespaces).
+inventory:
+  environmentName: "env-02"
+  tenantName: "Application"
+  cloudName: "sample_cloud"
+  clusterUrl: "https://k8s.example.local:6443"
+  description: "BGD environment using one template artifact"
+  owners: "Platform team"
+envTemplate:
+  name: "bgd"
+  artifact: "my-env-templates:2.0.0"
+  additionalTemplateVariables: {}
+  sharedTemplateVariables: []
+  envSpecificParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  sharedMasterCredentialFiles: []
