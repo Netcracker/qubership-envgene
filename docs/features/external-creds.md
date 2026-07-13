@@ -747,7 +747,27 @@ GCP auth:
 | `type`                           | Secret Store object | `gcp`                                |
 | `GOOGLE_APPLICATION_CREDENTIALS` | CI/CD variable      | Path to the service account key file |
 
-AWS Secrets Manager and Azure Key Vault are not supported as Secret Stores for system credentials.
+AWS auth:
+
+| Parameter               | Source              | Description                          |
+|-------------------------|---------------------|--------------------------------------|
+| `type`                  | Secret Store object | `aws`                                |
+| `AWS_ACCESS_KEY_ID`     | CI/CD variable      | IAM access key ID                    |
+| `AWS_SECRET_ACCESS_KEY` | CI/CD variable      | IAM secret access key                |
+| `AWS_DEFAULT_REGION`    | CI/CD variable      | AWS region (for example `us-east-1`) |
+
+Azure auth:
+
+| Parameter             | Source              | Description                     |
+|-----------------------|---------------------|---------------------------------|
+| `type`                | Secret Store object | `azure`                         |
+| `AZURE_TENANT_ID`     | CI/CD variable      | Azure AD tenant ID              |
+| `AZURE_CLIENT_ID`     | CI/CD variable      | Service principal client ID     |
+| `AZURE_CLIENT_SECRET` | CI/CD variable      | Service principal client secret |
+
+For multi-store setups, each variable can be prefixed with `<store-id>_` so multiple stores of the same type
+can coexist. See
+[Store identifier and CI/CD variables](#store-identifier-and-cicd-variables).
 
 #### `eso_support` attribute
 
@@ -1319,10 +1339,6 @@ Git operations, and others).
    are pre-created by the user in the external Secret Store, so they are not included in the
    [External Credential Context](#external-credential-context) creation entries.
 
-2. **System Credential Secret Store type.** Every system Credential with `type: external` references a
-   [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure` are not supported as Secret
-   Stores for system credentials.
-
 #### During CMDB import
 
 1. **No external credentials.** The Environment Instance being imported contains no [Credentials](#credential)
@@ -1338,8 +1354,6 @@ Git operations, and others).
 
 1. Support Blue-Green deployment cases
 2. Support template composition
-3. Support AWS Secrets Manager as a Secret Store for system credentials
-4. Support Azure Key Vault as a Secret Store for system credentials
 
 ## Open questions
 
