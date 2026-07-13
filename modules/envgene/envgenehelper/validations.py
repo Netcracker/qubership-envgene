@@ -38,7 +38,7 @@ def validate_pipeline(params: dict):
     real_execution_checks(
         params["ENV_NAMES"],
         params["GET_PASSPORT"],
-        params["ENV_BUILD"],
+        params["ENV_BUILDER"],
         params["ENV_INVENTORY_INIT"],
         params["ENV_INVENTORY_CONTENT"]
     )

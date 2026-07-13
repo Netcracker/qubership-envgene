@@ -415,6 +415,11 @@ def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
 
 
+def get_app_artifacts_dir() -> Path:
+    project_dir = getenv_with_error('CI_PROJECT_DIR')
+    return Path(project_dir) / "tmp" / "app-artifacts"
+
+
 def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
     instances_dir = getenv_with_error('CI_PROJECT_DIR')
     env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")

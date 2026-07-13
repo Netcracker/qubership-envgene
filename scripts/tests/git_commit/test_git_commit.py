@@ -1,4 +1,4 @@
-from git_commit import build_commit_message
+from git_commit.git_commit import build_commit_message
 
 
 class TestBuildCommitMessage:

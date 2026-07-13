@@ -106,23 +106,23 @@ flowchart TD
 
 ![application-manifest-example-drawio.png](/docs/images/application-manifest-example-drawio.png)
 
-[Simple Application Manifest](/examples/application-manifest-v2.json)
+[Simple Application Manifest](/docs/examples/application-manifest-v2.json)
 
 ### Jaeger
 
 ![application-manifest-example-jaeger.drawio.png](/docs/images/application-manifest-example-jaeger.drawio.png)
 
-[Jaeger Application Manifest](/examples/application-manifest-v2-jaeger.json)
+[Jaeger Application Manifest](/docs/examples/application-manifest-v2-jaeger.json)
 
 ### QIP
 
 ![application-manifest-example-qip.drawio.png](/docs/images/application-manifest-example-qip.drawio.png)
 
-[QIP Application Manifest](/examples/application-manifest-v2-qip.json)
+[QIP Application Manifest](/docs/examples/application-manifest-v2-qip.json)
 
 ### App-Chart
 
-[App-Chart Application Manifest](/examples/application-manifest-v2-app-chart.json)
+[App-Chart Application Manifest](/docs/examples/application-manifest-v2-app-chart.json)
 
 ## Application Manifest Build Config
 
@@ -277,7 +277,7 @@ service chart. The library chart has no Docker dependency. The umbrella chart's
 own `dependsOn` lists the nested charts.
 
 The corresponding manifest is
-[`/examples/application-manifest-v2-app-chart.json`](/examples/application-manifest-v2-app-chart.json).
+[`/docs/examples/application-manifest-v2-app-chart.json`](/docs/examples/application-manifest-v2-app-chart.json).
 
 ```yaml
 applicationVersion: 1.0.0
@@ -650,11 +650,11 @@ Each individual registry is described by a separate `yaml` file in the `/configu
 
 The `name` attribute must match the filename without the extension.
 
-[Registry Definition v2.0](/python/envgene/envgenehelper/schemas/regdef-v2.schema.json) (see envgene-objects.md for schema details)
+[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) (see envgene-objects.md for schema details)
 
-[Example](/examples/sandbox.yml)
+[Example](/docs/examples/sandbox.yml)
 
-[Qubership Example](/examples/qubership.yml)
+[Qubership Example](/docs/examples/qubership.yml)
 
 ## Artifact Reference to PURL and Vice Versa
 

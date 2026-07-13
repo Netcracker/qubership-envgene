@@ -45,3 +45,7 @@ def cli(context_file: str, dry_run: bool, log_level: str) -> None:
     setup_logging(log_level=log_level)
     provider = ExternalCredProvisioner(context_path=context_file, dry_run=dry_run)
     raise SystemExit(provider.run())
+
+
+if __name__ == "__main__":
+    cli()

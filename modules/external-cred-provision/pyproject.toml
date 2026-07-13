@@ -17,7 +17,4 @@ dependencies = [
 external-cred-provision = "external_cred_provision.main:cli"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
+where = ["."]

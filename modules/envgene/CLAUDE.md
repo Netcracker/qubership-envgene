@@ -1,6 +1,6 @@
 # envgenehelper — Core Python Library
 
-Pip-installable package (`envgenehelper`, v0.0.1). Python 3.12+. All public symbols are reexported from `__init__.py`. Imported by every other Python module in the repository.
+Pip-installable package (`envgenehelper`, v0.0.1 — version is a setuptools formality, not published anywhere; see root `CLAUDE.md` "Python module layout"). Python 3.12+. All public symbols are reexported from `__init__.py`. Imported by every other Python module in the repository.
 
 ## Module Reference
 
@@ -42,7 +42,8 @@ Pip-installable package (`envgenehelper`, v0.0.1). Python 3.12+. All public symb
 ## Tests
 
 ```bash
-cd python/envgene
+pip install -e modules/envgene
+cd modules/envgene
 python -m pytest envgenehelper/
 ```
 

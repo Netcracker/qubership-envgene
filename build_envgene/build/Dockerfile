@@ -26,10 +26,9 @@ COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
 
-COPY python /python
+COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
-COPY build_envgene/scripts/ /module/scripts/
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     -r /build/requirements.txt \
@@ -70,7 +69,7 @@ RUN apk add --no-cache \
 
 COPY --from=build /module /module
 COPY --from=build /schemas /schemas
-COPY --from=build /python /python
+COPY --from=build /modules /modules
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
 

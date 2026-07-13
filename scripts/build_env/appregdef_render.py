@@ -55,14 +55,13 @@ def run_appregdef_render():
 
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
-    instances_dir = getenv_with_error("INSTANCES_DIR")
 
     output_dir = f"{base_dir}/environments"
     render_dir = f"/tmp/render/{env_name}"
     templates_dirs = get_template_dirs()
 
-    env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)
-    cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)
+    env_dir = get_env_instances_dir(env_name, cluster_name, output_dir)
+    cloud_passport_file_path = find_cloud_passport_definition(env_dir, output_dir)
 
     render_context_vars = {
         "cluster_name": cluster_name,

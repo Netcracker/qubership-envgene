@@ -228,7 +228,7 @@ def validate_creds(creds_path: str = ""):
     if not creds_path:
         environment_name = getenv_with_error('ENVIRONMENT_NAME')
         cluster_name = getenv_with_error('CLUSTER_NAME')
-        instances_dir = getenv_with_error('INSTANCES_DIR')
+        instances_dir = f"{getenv_with_error('CI_PROJECT_DIR')}/environments"
         env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
         creds_path = Path(getEnvCredentialsPath(env_dir)).parent
     

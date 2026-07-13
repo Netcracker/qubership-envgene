@@ -25,7 +25,7 @@ on:
         default: ""
         type: string
         description: ""
-      ENV_BUILD:
+      ENV_BUILDER:
         required: false
         default: "true"
         type: choice
@@ -62,7 +62,6 @@ env:
   SECRET_POSTFIX: custom_secret
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
   CI_PROJECT_DIR: /workspace
-  INSTANCES_DIR: /workspace/environments
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
@@ -89,7 +88,7 @@ jobs:
       BG_MANAGE: ${{ env.BG_MANAGE }}
       ENV_INVENTORY_CONTENT: ${{ env.ENV_INVENTORY_CONTENT }}
       CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
-      ENV_BUILD: ${{ env.ENV_BUILD }}
+      ENV_BUILDER: ${{ env.ENV_BUILDER }}
       GENERATE_EFFECTIVE_SET: ${{ env.GENERATE_EFFECTIVE_SET }}
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
       ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
@@ -115,7 +114,7 @@ jobs:
         run: |
            echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
            echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
-           echo "ENV_BUILD=${{ github.event.inputs.ENV_BUILD }}" >> $GITHUB_ENV
+           echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
            echo "GENERATE_EFFECTIVE_SET=${{ github.event.inputs.GENERATE_EFFECTIVE_SET }}" >> $GITHUB_ENV
            echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
            echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
@@ -290,7 +289,7 @@ jobs:
 
       ### APP_REG_DEF_PROCESS - START ###
       - name: APP_REG_DEF_PROCESS
-        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -306,7 +305,7 @@ jobs:
 
       - name: APP_REG_DEF_PROCESS - Upload APP_REG_DEF_PROCESS Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
           name: app_reg_def_process_${{ env.PACKAGE_NAME }}
           path: |
@@ -352,7 +351,7 @@ jobs:
 
       ### ENV_BUILD - START ###
       - name: ENV_BUILD
-        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e COMMIT_ENV=true --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -368,7 +367,7 @@ jobs:
 
       - name: ENV_BUILD - Upload Build Env Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_BUILD == 'true'
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
           name: env_build_${{ env.PACKAGE_NAME }}
           path: |
@@ -458,7 +457,7 @@ jobs:
               /module/scripts/utils/handle_certs.sh
               # Execute git commit with proper error handling
               echo 'Executing git commit operations...'
-              if ! python /module/scripts/git_commit.py; then
+              if ! python /module/scripts/git_commit/git_commit.py; then
                 echo 'git_commit.py failed with exit code '\$?
                 exit 1
               fi

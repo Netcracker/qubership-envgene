@@ -94,17 +94,6 @@ class HelmAppConfig(BaseSchema):
     helm_dev_repo_name: Optional[str] = ""
 
 
-class ArtifactInfo(BaseSchema):
-    url: Optional[str]
-    app_name: Optional[str] = ""
-    app_version: Optional[str] = ""
-    repo: Optional[str] = ""
-    path: Optional[str] = ""
-    local_path: Optional[str] = ""
-    name: Optional[str] = ""
-    auth_headers: Optional[dict] = None
-
-
 class Registry(BaseSchema):
     credentials_id: Optional[str] = ""
     name: str
@@ -244,7 +233,7 @@ class RegistryV2(BaseSchema):
     npm_config: Optional[NpmConfigV2] = None
     helm_config: Optional[HelmConfigV2] = None
     helm_app_config: Optional[HelmAppConfigV2] = None
-    
+
     def resolve_auth(self, env_creds: Optional[dict] = None) -> Optional[dict]:
         """Returns auth headers dict for V2 registries (unified API with V1).
         Returns None if anonymous or no credentials configured."""
@@ -274,6 +263,31 @@ class Application(BaseSchema):
         if isinstance(v, dict):
             return parse_registry(v)
         return v
+
+
+class RepoType(str, Enum):
+    TARGET_SNAPSHOT = "targetSnapshot"
+    TARGET_STAGING = "targetStaging"
+    TARGET_RELEASE = "targetRelease"
+    SNAPSHOT_GROUP = "snapshotGroup"
+    REPOSITORY_NAME = "repositoryName"
+
+
+class Repo(BaseSchema):
+    value: str
+    type: RepoType
+
+
+class ArtifactSource(BaseSchema):
+    source_url: str
+    application: Application
+    repository: Repo
+    auth_headers: Optional[dict] = None
+
+
+class ArtifactDownload(BaseSchema):
+    source: ArtifactSource
+    local_target_path: str
 
 
 class FileExtension(str, Enum):

@@ -2,13 +2,15 @@
 
 Resolves `application:version` notation to download-ready Maven artifact URLs. Supports Nexus, Artifactory, AWS CodeArtifact, GCP Artifact Registry, and Azure Artifacts. Uses `aiohttp` for parallel resolution across multiple repos.
 
+Pip-installable package (`artifact_searcher` — version is a setuptools formality, not published anywhere; see root `CLAUDE.md` "Python module layout").
+
 ## File Reference
 
 | File | Responsibility |
 |------|---------------|
 | `artifact_searcher/artifact.py` | Main async resolution logic: `check_artifact_async` fans out per-repo tasks; `resolve_snapshot_version_async` fetches `maven-metadata.xml`; `check_artifacts_by_aql` for Artifactory AQL search; `download_all_async` groups by auth headers for parallel download |
 | `artifact_searcher/auth_resolver.py` | `resolve_v2_auth_headers(registry, env_creds)` dispatches to provider+authMethod handler; AWS (CodeArtifact token), GCP (service account key), basic auth (base64) |
-| `artifact_searcher/utils/models.py` | Pydantic models: `Registry` (V1), `RegistryV2` (V2), `Application`, `MavenConfig`, `AuthConfig`, `Provider` enum, `ArtifactInfo`; `parse_registry` auto-detects V1 vs V2 |
+| `artifact_searcher/utils/models.py` | Pydantic models: `Registry` (V1), `RegistryV2` (V2), `Application`, `MavenConfig`, `AuthConfig`, `Provider` enum, `ArtifactSource` (resolved artifact: `source_url`, `application`, `repository`, `auth_headers`), `ArtifactDownload` (`source: ArtifactSource` + `local_target_path`); `parse_registry` auto-detects V1 vs V2 |
 | `artifact_searcher/utils/constants.py` | `DEFAULT_REQUEST_TIMEOUT`, `TCP_CONNECTION_LIMIT`, `METADATA_XML` |
 
 ## Registry V1 vs V2
@@ -32,6 +34,7 @@ Resolves `application:version` notation to download-ready Maven artifact URLs. S
 ## Tests
 
 ```bash
-cd python/artifact-searcher
+pip install -e modules/artifact-searcher
+cd modules/artifact-searcher
 python -m pytest artifact_searcher/
 ```
