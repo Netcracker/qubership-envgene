@@ -27,7 +27,7 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
 
 - Write access to the environment instance repository.
 - The CA certificate, or full certificate chain, of each target service in PEM format.
-- OpenSSL and curl available locally for the verification steps.
+- OpenSSL and cURL available locally for the verification steps.
 
 ## Steps
 
