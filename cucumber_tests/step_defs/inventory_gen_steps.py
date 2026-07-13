@@ -21,7 +21,7 @@ _ENTITY_DIRS = {
     "paramset":                 ("parameters",               True),
     "credentials":              ("credentials",              True),
     "resource_profile":         ("resource_profiles",        True),
-    "shared_template_variable": ("shared-template-variables", False),
+    "shared_template_variable": ("shared_template_variables", False),
 }
 
 

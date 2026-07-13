@@ -148,11 +148,11 @@ Feature: Environment Inventory Generation
   # ── Shared Template Variables ─────────────────────────────────────────────────
 
   Scenario: UC-EINV-STV-1: Create Shared Template Variable file
-  # Call chain: handle_objects(env_dir, sharedTemplateVariables, "shared-template-variables", "", encrypt=False)
-  #   → resolve_path(Place.ENV, inventory="") → shared-template-variables/prod_vars.yml (no Inventory folder)
+  # Call chain: handle_objects(env_dir, sharedTemplateVariables, "shared_template_variables", "", encrypt=False)
+  #   → resolve_path(Place.ENV, inventory="") → shared_template_variables/prod_vars.yml (no Inventory folder)
   #   → writeYamlToFile() → beautifyYaml()
   # Verifies: JSON Schema validation passes (returncode == 0); prod_vars.yml is created directly under
-  #   <env>/shared-template-variables/ (not inside Inventory/); file content equals the request payload
+  #   <env>/shared_template_variables/ (not inside Inventory/); file content equals the request payload
     Given the target shared_template_variable file "prod_vars" does not exist at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "create_or_replace" for shared_template_variable "prod_vars" at "env" scope
     Then it validates "sharedTemplateVariables" against the request schema
@@ -174,7 +174,7 @@ Feature: Environment Inventory Generation
   Scenario: UC-EINV-STV-3: Delete Shared Template Variable file
   # Call chain: handle_objects() → action == DELETE → deleteFileIfExists(prod_vars.yml)
   #   (directory is not touched)
-  # Verifies: prod_vars.yml is deleted; parent shared-template-variables/ directory still exists
+  # Verifies: prod_vars.yml is deleted; parent shared_template_variables/ directory still exists
     Given the target shared_template_variable file "prod_vars" exists at "env" scope
     When the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "delete" for shared_template_variable "prod_vars" at "env" scope
     Then the shared_template_variable file "prod_vars.yml" is deleted at "env" scope

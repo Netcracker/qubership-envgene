@@ -74,11 +74,11 @@ class DataBuilder(BaseDataBuilder):
         """Creates a shared template variables file at the specified scope."""
         base_dir = self.workspace.base_dir / "environments"
         if place == "env":
-            target = base_dir / cluster / env / "shared-template-variables"
+            target = base_dir / cluster / env / "shared_template_variables"
         elif place == "cluster":
-            target = base_dir / cluster / "shared-template-variables"
+            target = base_dir / cluster / "shared_template_variables"
         else:
-            target = base_dir / "shared-template-variables"
+            target = base_dir / "shared_template_variables"
         target.mkdir(parents=True, exist_ok=True)
         with open(target / f"{name}.yml", "w") as f:
             yaml.dump(content, f)
