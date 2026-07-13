@@ -30,12 +30,13 @@ COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
 
+
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     -r /build/requirements.txt \
-    /python/envgene \
-    /python/artifact-searcher \
-    /python/external-cred-provision \
-    /python/dpg
+    /modules/envgene \
+    /modules/artifact-searcher \
+    /modules/external-cred-provision \
+    /modules/dpg
 
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
