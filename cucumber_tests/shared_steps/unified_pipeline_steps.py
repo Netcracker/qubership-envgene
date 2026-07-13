@@ -61,24 +61,6 @@ def orchestrator_completes_successfully(workspace: EnvGeneWorkspace):
     workspace.assert_success("Unified pipeline failed")
 
 
-@given(parsers.parse('the pipeline parameter "ENV_INVENTORY_CONTENT" is loaded from "{file_path}"'))
-def set_env_inventory_content_from_file(workspace: EnvGeneWorkspace, file_path: str):
-    """Read a JSON file and set its contents as ENV_INVENTORY_CONTENT.
-
-    Args:
-        file_path: Path relative to `cucumber_tests/test_data/` (e.g.
-                   ``einv/env_inventory_content/uc_einv_ed_1_create.json``).
-    """
-    project_root = Path(os.environ.get("CI_PROJECT_DIR", Path(__file__).parent.parent.parent.resolve()))
-    full_path = project_root / "cucumber_tests" / "test_data" / file_path
-    if not full_path.exists():
-        raise FileNotFoundError(f"ENV_INVENTORY_CONTENT file not found: {full_path}")
-    content = full_path.read_text(encoding="utf-8")
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    workspace.extra_env["ENV_INVENTORY_CONTENT"] = content
-
-
 @given(parsers.parse('the workspace is initialized with test data from "{test_data_path}"'))
 def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_path: str):
     project_root = Path(os.environ.get("CI_PROJECT_DIR", Path(__file__).parent.parent.parent.resolve()))

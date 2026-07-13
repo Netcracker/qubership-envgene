@@ -1,11 +1,10 @@
 import json
 import os
 
+import pytest
 import yaml
 import shutil
-from pathlib import Path
 from pytest_bdd import given, parsers, then, when
-from cryptography.fernet import Fernet
 
 from cucumber_tests.framework.workspace import (
     TEST_ENV_DEFINITION_CONTENT,
@@ -16,13 +15,13 @@ from cucumber_tests.framework.workspace import (
 from cucumber_tests.framework.golden_compare import compare_directories
 
 
-# Entity -> (subdirectory, has_inventory_folder)
-# has_inventory_folder=True means env scope puts files under .../Inventory/
+# Entity в†’ (subdirectory, has_inventory_folder)
+# has_inventory_folder=True means env scope puts files under .../Inventory/<subdir>
 _ENTITY_DIRS = {
     "paramset":                 ("parameters",               True),
     "credentials":              ("credentials",              True),
     "resource_profile":         ("resource_profiles",        True),
-    "shared_template_variable": ("shared_template_variables", False),
+    "shared_template_variable": ("shared-template-variables", False),
 }
 
 
@@ -37,7 +36,7 @@ def _entity_dir(workspace, entity: str, scope: str) -> "Path":
         return workspace.entity_dir(subdir, scope)
 
 
-# ── Environment/cluster context setup ────────────────────────────────────────
+# в”Ђв”Ђ Environment/cluster context setup в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 
 @given(parsers.parse('environment is "{cluster}/{env}"'))
@@ -47,7 +46,7 @@ def set_environment(workspace, cluster, env):
     workspace.env_name = env
 
 
-# ── env_definition.yml ────────────────────────────────────────────────────────
+# в”Ђв”Ђ env_definition.yml в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 
 @given("the target environment inventory file does not exist")
@@ -59,14 +58,27 @@ def inv_does_not_exist(workspace):
 def inv_exists(workspace):
     inv_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name) / "Inventory"
     inv_dir.mkdir(parents=True, exist_ok=True)
+    (inv_dir / "env_definition.yml").write_text(TEST_ENV_DEFINITION_CONTENT)
 
-    data_path = Path(__file__).parent.parent / "test_data" / "einv" / "env_definition.yml"
-    if data_path.exists():
-        content = data_path.read_text(encoding="utf-8")
-    else:
-        content = TEST_ENV_DEFINITION_CONTENT
 
-    (inv_dir / "env_definition.yml").write_text(content, encoding="utf-8")
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition"'
+    )
+)
+def pipeline_inv_content_envdef(workspace, action):
+    env_def = {"action": action}
+    if action != "delete":
+        env_def["content"] = {
+            "inventory": {},
+            "envTemplate": {"name": "test", "artifact": "env-templates:1.0.0"},
+        }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.last_payload = env_def.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 @then(parsers.parse('the "{filename}" file is created'))
@@ -91,7 +103,7 @@ def file_is_deleted(workspace, filename):
     assert not (env_dir / "Inventory" / filename).exists(), f"File {filename} was not deleted"
 
 
-# ── Generic entity steps (paramsets, credentials, resource_profiles, shtv) ───
+# в”Ђв”Ђ Generic entity steps (paramsets, credentials, resource_profiles, shtv) в”Ђв”Ђв”Ђ
 
 
 @given(
@@ -113,15 +125,7 @@ def target_entity_not_exist(workspace, entity, name, scope):
 def target_entity_exists(workspace, entity, name, scope):
     """Ensure entity file is present before test."""
     path = _entity_dir(workspace, entity, scope) / f"{name}.yml"
-    subdir, _ = _ENTITY_DIRS[entity]
-
-    data_path = Path(__file__).parent.parent / "test_data" / "einv" / subdir / f"{name}.yml"
-    if data_path.exists():
-        content = data_path.read_text(encoding="utf-8")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
-    else:
-        create_file(path)
+    create_file(path)
 
 
 @then(
@@ -157,7 +161,83 @@ def entity_file_deleted(workspace, entity, filename, scope):
     workspace.last_checked_file_path = path
 
 
-# ── Atomic rollback ───────────────────────────────────────────────────────────
+# в”Ђв”Ђ Per-entity pipeline When-steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for paramset "{name}" at "{scope}" scope'
+    )
+)
+def pipeline_inv_content_paramset(workspace, action, name, scope):
+    param_set = {"action": action, "place": scope}
+    if action != "delete":
+        param_set["content"] = {"name": name, "parameters": {}}
+    else:
+        param_set["name"] = name
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"paramSets": [param_set]})
+    workspace.last_payload = param_set.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for credentials "{name}" at "{scope}" scope'
+    )
+)
+def pipeline_inv_content_creds(workspace, action, name, scope):
+    cred = {"action": action, "place": scope, "name": name}
+    if action != "delete":
+        cred["content"] = {
+            name: {
+                "type": "usernamePassword",
+                "data": {"username": "user", "password": "password"},
+            }
+        }
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"credentials": [cred]})
+    workspace.last_payload = cred.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for resource_profile "{name}" at "{scope}" scope'
+    )
+)
+def pipeline_inv_content_rp(workspace, action, name, scope):
+    item = {"action": action, "place": scope}
+    if action != "delete":
+        item["content"] = {"name": name, "applications": []}
+    else:
+        item["name"] = name
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"resourceProfiles": [item]})
+    workspace.last_payload = item.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for shared_template_variable "{name}" at "{scope}" scope'
+    )
+)
+def pipeline_inv_content_shtv(workspace, action, name, scope):
+    item = {"action": action, "place": scope, "name": name}
+    if action != "delete":
+        item["content"] = {"key": "value"}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"sharedTemplateVariables": [item]})
+    workspace.last_payload = item.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+# в”Ђв”Ђ Atomic rollback в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 
 @given("the repository has an initial state for rollback testing")
@@ -172,16 +252,86 @@ def repo_has_initial_state(workspace):
     shutil.copytree(workspace.base_dir, workspace.pre_run_snapshot_dir)
 
 
+@when(
+    "the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying multiple operations where one fails"
+)
+def pipeline_inv_content_fail(workspace):
+    content = {
+        "envDefinition": {
+            "action": "create_or_replace",
+            "content": {
+                "inventory": {},
+                "envTemplate": {"name": "test", "artifact": "env-templates:1.0.0"},
+            },
+        },
+        "paramSets": [
+            {
+                "action": "invalid_action_to_fail",
+                "place": "env",
+                "content": {"name": "fail", "parameters": {}},
+            }
+        ],
+    }
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
 @then("the repository state is identical to the initial state")
 def repo_state_identical(workspace):
     compare_directories(
         workspace.pre_run_snapshot_dir,
         workspace.base_dir,
-        ignore_patterns=["build.env", "envgene-vars.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*"],
+        ignore_patterns=["build.env", "configuration/config.yml", "*.bat"],
     )
 
 
-# ── UC-EINV-BASIC-1 steps ─────────────────────────────────────────────────────
+# в”Ђв”Ђ UC-EINV-INIT steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_INIT set to "{value}"'
+    )
+)
+def pipeline_inv_init(workspace, value):
+    """Triggers legacy ENV_INVENTORY_INIT path (deprecated but still tested for backward compat)."""
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_INIT"] = value
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+# в”Ђв”Ђ UC-EINV-BASIC-1 steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" with minimal content'
+    )
+)
+def pipeline_inv_content_envdef_minimal(workspace, action):
+    """Creates env_definition.yml with only the mandatory inventory + envTemplate fields."""
+    env_def = {
+        "action": action,
+        "content": {
+            "inventory": {
+                "environmentName": workspace.env_name,
+                "cloudName": workspace.cluster_name,
+            },
+            "envTemplate": {
+                "name": "test",
+                "artifact": "project-env-template:v1.2.3",
+            },
+        },
+    }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.last_payload = env_def.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 @then("the generated env_definition contains minimal required fields")
@@ -194,12 +344,67 @@ def env_definition_has_required_fields(workspace):
     assert "envTemplate" in data, "Missing 'envTemplate' key"
 
 
-# ── Shared assertions ─────────────────────────────────────────────────────────
+# в”Ђв”Ђ UC-EINV-TV steps в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 
-@then("its parent directory is not deleted")
-def parent_dir_not_deleted(workspace):
-    workspace.assert_file_exists(workspace.last_checked_file_path.parent)
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying “{action}” for “envDefinition” and ENV_TEMPLATE_VERSION set to “{version}”'
+    )
+)
+def pipeline_inv_content_envdef_with_version(workspace, action, version):
+    env_def = {"action": action}
+    if action != "delete":
+        env_def["content"] = {
+            "inventory": {},
+            "envTemplate": {"name": "test", "artifact": "env-templates:1.0.0"},
+        }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.extra_env["ENV_TEMPLATE_VERSION"] = version
+    workspace.extra_env["ENV_TEMPLATE_VERSION_UPDATE_MODE"] = "PERSISTENT"
+    workspace.last_payload = env_def.get("content")
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+# в”Ђв”Ђ Invalid content в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+
+
+@when(
+    parsers.parse(
+        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" with invalid content'
+    )
+)
+def pipeline_inv_content_invalid(workspace, action):
+    env_def = {
+        "action": action,
+        "content": {"inventory": "this should be an object, not a string"},
+    }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.run_pipeline(extra_env=workspace.extra_env)
+
+
+@then("the pipeline logs contain a readable error message explaining the failure reason")
+def pipeline_logs_contain_error(workspace):
+    workspace.assert_logs_contain("Validation failed")
+
+
+@then(parsers.parse('the pipeline logs contain "{text}"'))
+def pipeline_logs_contain_text(workspace, text):
+    workspace.assert_logs_contain(text)
+
+
+# в”Ђв”Ђ Shared assertions в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+
+
+@then("its content matches the payload")
+def content_matches_payload(workspace):
+    workspace.assert_yaml_content_matches(workspace.last_checked_file_path, workspace.last_payload)
 
 
 @then("the environment directory is deleted")
@@ -210,46 +415,9 @@ def env_dir_is_deleted(workspace):
         assert not contents, f"Directory {env_dir} was not deleted and is not empty. Contents: {contents}"
 
 
-@then(parsers.parse('the decrypted credentials file "{filename}" at "{scope}" scope matches the reference "{ref_name}"'))
-def decrypted_creds_match(workspace, filename, scope, ref_name):
-    key = b"c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
-    fernet = Fernet(key)
-    
-    path = workspace.entity_dir("credentials", scope) / filename
-    actual_yaml = yaml.safe_load(path.read_text(encoding='utf-8'))
-    
-    # Decrypt values
-    def decrypt_node(node):
-        if isinstance(node, dict):
-            return {k: decrypt_node(v) for k, v in node.items()}
-        elif isinstance(node, list):
-            return [decrypt_node(v) for v in node]
-        elif isinstance(node, str) and node.startswith("[encrypted:AES256_Fernet]"):
-            token = node[len("[encrypted:AES256_Fernet]"):]
-            return fernet.decrypt(token.encode('utf-8')).decode('utf-8')
-        return node
-
-    decrypted_actual = decrypt_node(actual_yaml)
-    
-    # Read the golden reference
-    ref_path = Path(__file__).parent.parent / "test_data" / "goldens" / ref_name / "environments"
-    if scope == "env":
-        ref_path = ref_path / workspace.cluster_name / workspace.env_name / "Inventory" / "credentials" / filename
-    elif scope == "cluster":
-        ref_path = ref_path / workspace.cluster_name / "credentials" / filename
-    else:
-        ref_path = ref_path / "credentials" / filename
-        
-    import os
-    if os.environ.get('UPDATE_GOLDEN') == '1':
-        ref_path.parent.mkdir(parents=True, exist_ok=True)
-        ref_path.write_text(yaml.dump(decrypted_actual, sort_keys=False, Dumper=yaml.SafeDumper), encoding='utf-8')
-        print(f"Updated golden credential file at {ref_path}")
-        return
-
-    expected_yaml = yaml.safe_load(ref_path.read_text(encoding='utf-8'))
-    
-    assert decrypted_actual == expected_yaml, f"Decrypted credentials do not match expected reference {ref_name}"
+@then("its parent directory is not deleted")
+def parent_dir_not_deleted(workspace):
+    workspace.assert_file_exists(workspace.last_checked_file_path.parent)
 
 
 @then("the pipeline succeeds")
@@ -257,21 +425,70 @@ def pipeline_succeeds(workspace):
     workspace.assert_success()
 
 
-@then(parsers.parse('the pipeline logs contain a readable error message explaining the failure reason'))
-def pipeline_logs_contain_error(workspace):
-    workspace.assert_logs_contain("Validation failed")
+@then(parsers.parse('it validates "{node}" against the request schema'))
+def validates_request_schema(workspace, node):
+    workspace.assert_success(f"Pipeline failed request schema validation for {node}")
 
 
-@then(parsers.parse('the pipeline logs contain "{text}"'))
-@then(parsers.parse('the pipeline log contains "{text}"'))
-def pipeline_logs_contain_text(workspace, text):
-    workspace.assert_logs_contain(text)
+@then(parsers.parse('it validates "{node}" against the "{schema_name}" schema'))
+def validates_content_schema(workspace, node, schema_name):
+    workspace.assert_success(f"Pipeline failed content schema validation for {node} against {schema_name}")
 
 
-@then(parsers.parse('the pipeline log does not contain "{text}"'))
-def pipeline_logs_not_contain_text(workspace, text):
-    workspace.assert_logs_not_contain(text)
+# ── Template Version Update (TV-1) ──────────────────────────────────────────────
 
+@when(parsers.parse('the Instance pipeline is started with ENV_TEMPLATE_VERSION set to "{version}" and update mode "{mode}"'))
+def pipeline_env_template_version(workspace, version, mode):
+    env_def = {"action": "create_or_replace"}
+    env_def["content"] = {
+        "inventory": {},
+        "envTemplate": {"name": "test", "artifact": "env-templates:1.0.0"},
+    }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.extra_env["ENV_TEMPLATE_VERSION"] = version
+    workspace.extra_env["ENV_TEMPLATE_VERSION_UPDATE_MODE"] = mode
+    workspace.initial_env_template_artifact = "env-templates:1.0.0"
+    workspace.run_pipeline(extra_env=workspace.extra_env)
 
+@then(parsers.parse('the "env_definition.yml" file has envTemplate.artifact equal to "{version}"'))
+def envdef_has_artifact(workspace, version):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    file_path = env_dir / "Inventory" / "env_definition.yml"
+    actual_content = yaml.safe_load(file_path.read_text(encoding="utf-8"))
+    assert actual_content.get("envTemplate", {}).get("artifact") == version
 
+@then(parsers.parse('the "env_definition.yml" file has generatedVersions.generateEnvironmentLatestVersion equal to "{version}"'))
+def envdef_has_generated_versions(workspace, version):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    file_path = env_dir / "Inventory" / "env_definition.yml"
+    actual_content = yaml.safe_load(file_path.read_text(encoding="utf-8"))
+    assert actual_content.get("generatedVersions", {}).get("generateEnvironmentLatestVersion") == version
 
+@then('the "env_definition.yml" file envTemplate.artifact is not changed')
+def envdef_artifact_not_changed(workspace):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    file_path = env_dir / "Inventory" / "env_definition.yml"
+    actual_content = yaml.safe_load(file_path.read_text(encoding="utf-8"))
+    assert actual_content.get("envTemplate", {}).get("artifact") == workspace.initial_env_template_artifact
+
+# ── Rollback (Negative) ──────────────────────────────────────────────────────
+
+@when('the Instance pipeline is started with invalid ENV_INVENTORY_CONTENT that fails during processing')
+def pipeline_invalid_content_rollback(workspace):
+    workspace.pre_run_snapshot_dir = workspace.base_dir.parent / "snapshot_neg"
+    if workspace.pre_run_snapshot_dir.exists():
+        shutil.rmtree(workspace.pre_run_snapshot_dir)
+    shutil.copytree(workspace.base_dir, workspace.pre_run_snapshot_dir)
+
+    env_def = {
+        "action": "create_or_replace",
+        "content": {"inventory": "invalid_string_not_object"},
+    }
+    content = {"envDefinition": env_def}
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
+    workspace.run_pipeline(extra_env=workspace.extra_env)

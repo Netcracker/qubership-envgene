@@ -236,7 +236,7 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_objects(env_dir, env_inventory_content.get("resourceProfiles"), "resource_profiles", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("specificTemplateVersions"), "specificTemplateVersions", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("templateVariables"), "templateVariables", INVENTORY)
-    handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
+    handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared-template-variables")
 
 
 def run_inventory_generation(handler):
