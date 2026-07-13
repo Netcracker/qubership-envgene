@@ -1,10 +1,8 @@
 # BGD Environment Inventory (single artifact for all namespaces).
-# Copy to: /environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
 inventory:
-  environmentName: "sample-bgd-env"
+  environmentName: "env-02"
   tenantName: "Application"
   cloudName: "sample_cloud"
-  cloudPassport: "sample-cluster"
   clusterUrl: "https://k8s.example.local:6443"
   description: "BGD environment using one template artifact"
   owners: "Platform team"
@@ -16,5 +14,3 @@ envTemplate:
   envSpecificParamsets: {}
   envSpecificTechnicalParamsets: {}
   sharedMasterCredentialFiles: []
-generatedVersions:
-  generateEnvironmentLatestVersion: "my-env-templates:2.0.0"

@@ -1,10 +1,8 @@
 # Non-BG Environment Inventory baseline (before migration).
-# Copy to: /environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
 inventory:
-  environmentName: "sample-bgd-env"
+  environmentName: "env-01"
   tenantName: "Application"
   cloudName: "sample_cloud"
-  cloudPassport: "sample-cluster"
   clusterUrl: "https://k8s.example.local:6443"
   description: "Non-BG baseline for BGD migration sample"
   owners: "Platform team"
