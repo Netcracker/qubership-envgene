@@ -392,6 +392,12 @@ def processTemplate(templatePath, templateName, env_instances_dir, schema_path, 
                     resource_profiles_map=None, header_text="", process_env_specific=True):
     logger.info(f"Processing template: {templateName} in {templatePath}")
     templateContent = openYaml(templatePath)
+    templateContent.setdefault("deployParameters", {})
+    templateContent.setdefault("deployParameterSets", [])
+    templateContent.setdefault("e2eParameters", {})
+    templateContent.setdefault("e2eParameterSets", [])
+    templateContent.setdefault("technicalConfigurationParameters", {})
+    templateContent.setdefault("technicalConfigurationParameterSets", [])
     if process_env_specific:
         updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent, paramset_map)
     # process deployParameters
