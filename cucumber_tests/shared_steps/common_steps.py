@@ -41,11 +41,11 @@ def set_pipeline_param(workspace, param, value):
 
 @then('the effective set is generated successfully')
 def effective_set_generated(workspace):
-    assert workspace.returncode == 0, f"Pipeline failed to generate effective set. STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
+    workspace.assert_success("Pipeline failed to generate effective set")
 
 @then('the pipeline fails')
 def pipeline_fails(workspace):
-    assert workspace.returncode != 0, "Pipeline should have failed but returned 0"
+    workspace.assert_failure("Pipeline should have failed but returned 0")
 
 @then(parsers.parse('the environment instance "{cluster}/{env}" matches the reference "{reference_path}"'))
 def environment_matches_reference(workspace, cluster, env, reference_path):
@@ -57,7 +57,7 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     actual_dir = workspace.builder.get_env_dir(cluster, env)
     
     # Resolve reference path relative to the test execution root (project root)
-    base_expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
+    base_expected_dir = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path
     
     # Support both legacy flat golden directories and new nested structure
     nested_expected_dir = base_expected_dir / "environments" / cluster / env
@@ -76,7 +76,7 @@ def workspace_matches_reference(workspace, reference_path):
     Useful for testing root-level generated files like /appdefs and /regdefs.
     """
     actual_dir = workspace.base_dir
-    expected_dir = Path.cwd() / "test_data" / "golden" / reference_path
+    expected_dir = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path
     
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
     import os
@@ -90,11 +90,11 @@ def definitions_match_reference(workspace, reference_path):
     Compares /appdefs and /regdefs in the workspace root against the golden reference.
     """
     actual_appdefs = workspace.base_dir / "appdefs"
-    expected_appdefs = Path.cwd() / "test_data" / "golden" / reference_path / "appdefs"
+    expected_appdefs = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path / "appdefs"
     if expected_appdefs.exists():
         compare_directories(expected_appdefs, actual_appdefs)
 
     actual_regdefs = workspace.base_dir / "regdefs"
-    expected_regdefs = Path.cwd() / "test_data" / "golden" / reference_path / "regdefs"
+    expected_regdefs = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path / "regdefs"
     if expected_regdefs.exists():
         compare_directories(expected_regdefs, actual_regdefs)

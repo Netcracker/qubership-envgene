@@ -14,7 +14,7 @@ def update_version(env_definition_dir, version_to_add, update_mode: TemplateVers
 
     env_definition_path = getEnvDefinitionPath(env_definition_dir)
     logger.info(f"Started version update to {version_to_add} in {env_definition_path}.")
-    data = getEnvDefinition(env_instances_dir)
+    data = getEnvDefinition(env_definition_dir)
 
     if update_mode == TemplateVersionUpdateMode.TEMPORARY:
         logger.info("Template update mode: TEMPORARY, Skip updating template artifact version in env_definition.yml")

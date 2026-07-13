@@ -45,7 +45,7 @@ def generate_env():
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
 
     handle_env_inventory_init(env, env_inventory_init, env_template_version)
-    handle_env_specific_params(env, env_specific_params, SCHEMAS_DIR)
+    handle_env_specific_params(env, env_specific_params, get_schema_dir())
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
@@ -214,8 +214,13 @@ def handle_env_def(env_dir: Path, env_def: dict | None):
     else:
         content = env_def.get("content")
         if env_template_version:
-            logger.info(f"Overriding envTemplate.artifact with ENV_TEMPLATE_VERSION={env_template_version}")
-            content["envTemplate"]["artifact"] = env_template_version
+            update_mode = getenv("ENV_TEMPLATE_VERSION_UPDATE_MODE", "PERSISTENT").upper()
+            if update_mode == "TEMPORARY":
+                logger.info(f"Adding generatedVersions.generateEnvironmentLatestVersion={env_template_version}")
+                content.setdefault("generatedVersions", {})["generateEnvironmentLatestVersion"] = env_template_version
+            else:
+                logger.info(f"Overriding envTemplate.artifact with ENV_TEMPLATE_VERSION={env_template_version}")
+                content["envTemplate"]["artifact"] = env_template_version
         writeYamlToFile(env_def_path, content)
         beautifyYaml(env_def_path)
         logger.info("env_definition.yml successfully created/updated")
@@ -231,7 +236,7 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_objects(env_dir, env_inventory_content.get("resourceProfiles"), "resource_profiles", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("specificTemplateVersions"), "specificTemplateVersions", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("templateVariables"), "templateVariables", INVENTORY)
-    handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
+    handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared-template-variables")
 
 
 def run_inventory_generation(handler):
