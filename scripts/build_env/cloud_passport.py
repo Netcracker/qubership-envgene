@@ -18,12 +18,17 @@ CLOUD_SUBSTITUTIONS = {
 
 CLOUD_MANDATORY_PASSPORT_KEYS = {"CLOUD_API_HOST", "CLOUD_PUBLIC_HOST", "CLOUD_DEPLOY_TOKEN"}
 
+def ensure_section(yamlDict, key):
+    if key not in yamlDict:
+        yamlDict[key] = yaml.load("{}")
+    return yamlDict[key]
+
 def process_and_update_key(targetKey, targetYaml, sourceKey, sourceYaml, comment) :
     merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, comment)
     del sourceYaml[sourceKey]
 
 def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, is_external_cred_env) :
-    deployParams = cloudYaml.setdefault("deployParameters", {})
+    deployParams = ensure_section(cloudYaml, "deployParameters")
     for domain in cloudPassportYaml:
         if domain == "version": continue
         for paramKey, paramValue in cloudPassportYaml[domain].items():
@@ -45,32 +50,32 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
         process_and_update_key(cloudKey, cloudYaml, passportKey, cloudSection, comment)
         if (passportKey == "CLOUD_DASHBOARD_URL"):
           # CLOUD_DASHBOARD_URL variable should be both in cloud section and in deploy parameters
-          store_value_to_yaml(cloudYaml.setdefault("deployParameters", {}), "CLOUD_DASHBOARD_URL", cloudYaml[cloudKey], comment)
+          store_value_to_yaml(ensure_section(cloudYaml, "deployParameters"), "CLOUD_DASHBOARD_URL", cloudYaml[cloudKey], comment)
     # maas
     if "maas" in cloudPassportYaml :
         maasPassportYaml = cloudPassportYaml["maas"]
         # if maas is presented in cloud passport - than maas is enabled
-        store_value_to_yaml(cloudYaml.setdefault("maasConfig", {}), "enable", True, comment)
+        store_value_to_yaml(ensure_section(cloudYaml, "maasConfig"), "enable", True, comment)
         store_value_to_yaml(cloudYaml["maasConfig"], "credentialsId", extract_cred_id(maasPassportYaml["MAAS_CREDENTIALS_USERNAME"], is_external_cred_env), comment)
         process_and_update_key("maasUrl", cloudYaml["maasConfig"], "MAAS_SERVICE_ADDRESS", maasPassportYaml, comment)
         process_and_update_key("maasInternalAddress", cloudYaml["maasConfig"], "MAAS_INTERNAL_ADDRESS", maasPassportYaml, comment)
         del cloudPassportYaml["maas"]
     else:
-        store_value_to_yaml(cloudYaml.setdefault("maasConfig", {}), "enable", False)
+        store_value_to_yaml(ensure_section(cloudYaml, "maasConfig"), "enable", False)
     if "vault" in cloudPassportYaml :
         vaultPassportYaml = cloudPassportYaml["vault"]
         vaultUrl = vaultPassportYaml["VAULT_ADDR"]
         if vaultUrl :
-            store_value_to_yaml(cloudYaml.setdefault("vaultConfig", {}), "credentialsId", extract_cred_id(vaultPassportYaml["VAULT_AUTH_ROLE_ID"], is_external_cred_env), comment)
+            store_value_to_yaml(ensure_section(cloudYaml, "vaultConfig"), "credentialsId", extract_cred_id(vaultPassportYaml["VAULT_AUTH_ROLE_ID"], is_external_cred_env), comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "enable", True, comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "url", vaultUrl, comment)
         else :
-            store_value_to_yaml(cloudYaml.setdefault("vaultConfig", {}), "credentialsId", "", comment)
+            store_value_to_yaml(ensure_section(cloudYaml, "vaultConfig"), "credentialsId", "", comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "enable", False, comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "url", "", comment)
         del cloudPassportYaml["vault"]
     else:
-        store_value_to_yaml(cloudYaml.setdefault("vaultConfig", {}), "enable", False)
+        store_value_to_yaml(ensure_section(cloudYaml, "vaultConfig"), "enable", False)
     if "dbaas" in cloudPassportYaml :
         dbaasPassportYaml = cloudPassportYaml["dbaas"]
         if "dbaasConfigs" not in cloudYaml or len(cloudYaml["dbaasConfigs"]) != 1 :
@@ -87,16 +92,16 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
             store_value_to_yaml(cfg, "enable", False)
     if "consul" in cloudPassportYaml :
           consulPassportYaml = cloudPassportYaml["consul"]
-          consulConfigYaml = cloudYaml.setdefault("consulConfig", {})
+          consulConfigYaml = ensure_section(cloudYaml, "consulConfig")
           store_value_to_yaml(consulConfigYaml, "tokenSecret", extract_cred_id(consulPassportYaml["CONSUL_ADMIN_TOKEN"], is_external_cred_env), comment)
           process_and_update_key("enabled", consulConfigYaml, "CONSUL_ENABLED", consulPassportYaml, comment)
           process_and_update_key("publicUrl", consulConfigYaml, "CONSUL_PUBLIC_URL", consulPassportYaml, comment)
           process_and_update_key("internalUrl", consulConfigYaml, "CONSUL_URL", consulPassportYaml, comment)
           # CONSUL_ENABLED variable should be both in consul section and in deploy parameters
-          store_value_to_yaml(cloudYaml.setdefault("deployParameters", {}), "CONSUL_ENABLED", consulConfigYaml['enabled'], comment)
+          store_value_to_yaml(ensure_section(cloudYaml, "deployParameters"), "CONSUL_ENABLED", consulConfigYaml['enabled'], comment)
           del cloudPassportYaml["consul"]
     else:
-        store_value_to_yaml(cloudYaml.setdefault("consulConfig", {}), "enabled", False)
+        store_value_to_yaml(ensure_section(cloudYaml, "consulConfig"), "enabled", False)
         
     # adding rest of cloud passport parameters to cloud deploy parameters
     logger.debug(f"Rest of params from cloud passport are: \n{dump_as_yaml_format(cloudPassportYaml)}")
