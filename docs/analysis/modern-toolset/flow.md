@@ -288,9 +288,9 @@ Triggers:
 Functions:
 
 1. `cert_apply`
-   - AI[phase2] add the step
+   - AI[phase2] add/align the step
 2. `crypt.decrypt`
-   - AI[phase2] add the step
+   - AI[phase2] add/align the step
 
 #### 1.2. step `trigger_passport`
 
@@ -803,7 +803,20 @@ Triggers:
 
 - `CMDB_IMPORT: true`
 
-#### 3.1. step `cmdb_import`
+#### 3.1. step `preprocess`
+
+Triggers:
+
+- always when the job runs
+
+Functions:
+
+1. `cert_apply`
+   - AI[phase2] add/align the step
+2. `crypt.decrypt`
+   - AI[phase2] add/align the step
+
+#### 3.2. step `cmdb_import`
 
 Triggers:
 
@@ -821,6 +834,19 @@ Functions:
 Triggers:
 
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
+
+#### 4.1. step `preprocess`
+
+Triggers:
+
+- always when the job runs
+
+Functions:
+
+1. `cert_apply`
+   - AI[phase2] add/align the step
+2. `crypt.decrypt`
+   - AI[phase2] add/align the step
 
 #### 4.1. step `sync`
 
