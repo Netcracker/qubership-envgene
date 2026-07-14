@@ -610,7 +610,7 @@ Functions:
         - `COMPONENT_NAMES_FILTER`
         - `WAVE_NAMES_FILTER`
     - output:
-      - `deploy-plan.yml`
+      - `deploy-plan.yml` at /environments/<cluster>/<env>/Inventory/deploy-plan.yml
     - actions:
       - process `APPLICATION_VERSION` (download SD, merge), calculate (APPLICATION_VERSION)
       - enrich DP, plan map (namespace_map)
