@@ -72,18 +72,33 @@ function main() {
       exit 1
   fi
 
-  # If certs_dir doesn't exist or is empty, fall back to default_cert
-  if [ ! -d "$certs_dir" ] || ! find "$certs_dir" -mindepth 1 -print -quit >/dev/null 2>&1; then
+  local certs_applied=0
+
+  # Install SSL_CERTIFICATES_BUNDLE if provided
+  if [ -n "${SSL_CERTIFICATES_BUNDLE:-}" ]; then
+      local BUNDLE_FILE
+      BUNDLE_FILE=$(mktemp /tmp/ssl_bundle_XXXXXX.crt)
+      echo "${SSL_CERTIFICATES_BUNDLE}" | base64 -d > "${BUNDLE_FILE}"
+      updateCertificates "${BUNDLE_FILE}"
+      rm -f "${BUNDLE_FILE}"
+      certs_applied=1
+  fi
+
+  # Install certs from certs_dir if it exists and has files
+  if [ -d "$certs_dir" ] && find "$certs_dir" -mindepth 1 -print -quit >/dev/null 2>&1; then
+      while IFS= read -r -d '' cert; do
+          updateCertificates "$cert"
+      done < <(find "$certs_dir" -mindepth 1 -maxdepth 1 -type f -print0)
+      certs_applied=1
+  fi
+
+  # If neither SSL_CERTIFICATES_BUNDLE nor certs_dir provided anything, fall back to default_cert
+  if [ "$certs_applied" -eq 0 ]; then
       if [ -f "$default_cert" ]; then
           updateCertificates "$default_cert"
       else
           log "No certificates found and default certificate does not exist: $default_cert"
       fi
-  else
-      # Iterate files safely (handles spaces/newlines)
-      while IFS= read -r -d '' cert; do
-          updateCertificates "$cert"
-      done < <(find "$certs_dir" -mindepth 1 -maxdepth 1 -type f -print0)
   fi
 }
 
