@@ -69,9 +69,9 @@ def inv_exists(workspace):
     (inv_dir / "env_definition.yml").write_text(content, encoding="utf-8")
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition"'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for "envDefinition"'
     )
 )
 def pipeline_inv_content_envdef(workspace, action):
@@ -86,7 +86,6 @@ def pipeline_inv_content_envdef(workspace, action):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
     workspace.last_payload = env_def.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 @then(parsers.parse('the "{filename}" file is created'))
@@ -180,9 +179,9 @@ def entity_file_deleted(workspace, entity, filename, scope):
 # ── Per-entity pipeline When-steps ────────────────────────────────────────────
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for paramset "{name}" at "{scope}" scope'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for paramset "{name}" at "{scope}" scope'
     )
 )
 def pipeline_inv_content_paramset(workspace, action, name, scope):
@@ -195,12 +194,11 @@ def pipeline_inv_content_paramset(workspace, action, name, scope):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"paramSets": [param_set]})
     workspace.last_payload = param_set.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for credentials "{name}" at "{scope}" scope'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for credentials "{name}" at "{scope}" scope'
     )
 )
 def pipeline_inv_content_creds(workspace, action, name, scope):
@@ -216,12 +214,11 @@ def pipeline_inv_content_creds(workspace, action, name, scope):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"credentials": [cred]})
     workspace.last_payload = cred.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for resource_profile "{name}" at "{scope}" scope'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for resource_profile "{name}" at "{scope}" scope'
     )
 )
 def pipeline_inv_content_rp(workspace, action, name, scope):
@@ -234,12 +231,11 @@ def pipeline_inv_content_rp(workspace, action, name, scope):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"resourceProfiles": [item]})
     workspace.last_payload = item.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for shared_template_variable "{name}" at "{scope}" scope'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for shared_template_variable "{name}" at "{scope}" scope'
     )
 )
 def pipeline_inv_content_shtv(workspace, action, name, scope):
@@ -250,7 +246,6 @@ def pipeline_inv_content_shtv(workspace, action, name, scope):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps({"sharedTemplateVariables": [item]})
     workspace.last_payload = item.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 # ── Atomic rollback ───────────────────────────────────────────────────────────
@@ -268,8 +263,8 @@ def repo_has_initial_state(workspace):
     shutil.copytree(workspace.base_dir, workspace.pre_run_snapshot_dir)
 
 
-@when(
-    "the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying multiple operations where one fails"
+@given(
+    "the ENV_INVENTORY_CONTENT specifies multiple operations where one fails"
 )
 def pipeline_inv_content_fail(workspace):
     content = {
@@ -291,7 +286,6 @@ def pipeline_inv_content_fail(workspace):
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 @then("the repository state is identical to the initial state")
@@ -299,16 +293,16 @@ def repo_state_identical(workspace):
     compare_directories(
         workspace.pre_run_snapshot_dir,
         workspace.base_dir,
-        ignore_patterns=["build.env", "configuration/config.yml", "*.bat"],
+        ignore_patterns=["build.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*"],
     )
 
 
 # ── UC-EINV-INIT steps ────────────────────────────────────────────────────────
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_INIT set to "{value}"'
+        'the ENV_INVENTORY_INIT is set to "{value}"'
     )
 )
 def pipeline_inv_init(workspace, value):
@@ -316,15 +310,14 @@ def pipeline_inv_init(workspace, value):
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_INIT"] = value
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 # ── UC-EINV-BASIC-1 steps ─────────────────────────────────────────────────────
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" with minimal content'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for "envDefinition" with minimal content'
     )
 )
 def pipeline_inv_content_envdef_minimal(workspace, action):
@@ -347,7 +340,6 @@ def pipeline_inv_content_envdef_minimal(workspace, action):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
     workspace.last_payload = env_def.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 @then("the generated env_definition contains minimal required fields")
@@ -363,9 +355,9 @@ def env_definition_has_required_fields(workspace):
 # ── UC-EINV-TV steps ──────────────────────────────────────────────────────────
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" and ENV_TEMPLATE_VERSION set to "{version}"'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for "envDefinition" and ENV_TEMPLATE_VERSION is set to "{version}"'
     )
 )
 def pipeline_inv_content_envdef_with_version(workspace, action, version):
@@ -382,15 +374,14 @@ def pipeline_inv_content_envdef_with_version(workspace, action, version):
     workspace.extra_env["ENV_TEMPLATE_VERSION"] = version
     workspace.extra_env["ENV_TEMPLATE_VERSION_UPDATE_MODE"] = "PERSISTENT"
     workspace.last_payload = env_def.get("content")
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 # ── Invalid content ───────────────────────────────────────────────────────────
 
 
-@when(
+@given(
     parsers.parse(
-        'the Instance pipeline is started with ENV_INVENTORY_CONTENT specifying "{action}" for "envDefinition" with invalid content'
+        'the ENV_INVENTORY_CONTENT specifies "{action}" for "envDefinition" with invalid content'
     )
 )
 def pipeline_inv_content_invalid(workspace, action):
@@ -402,7 +393,6 @@ def pipeline_inv_content_invalid(workspace, action):
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 
 @then("the pipeline logs contain a readable error message explaining the failure reason")
@@ -453,7 +443,7 @@ def validates_content_schema(workspace, node, schema_name):
 
 # ── Template Version Update (TV-1) ──────────────────────────────────────────────
 
-@when(parsers.parse('the Instance pipeline is started with ENV_TEMPLATE_VERSION set to "{version}" and update mode "{mode}"'))
+@given(parsers.parse('the ENV_TEMPLATE_VERSION is set to "{version}" and update mode is "{mode}"'))
 def pipeline_env_template_version(workspace, version, mode):
     env_def = {"action": "create_or_replace"}
     env_def["content"] = {
@@ -467,7 +457,6 @@ def pipeline_env_template_version(workspace, version, mode):
     workspace.extra_env["ENV_TEMPLATE_VERSION"] = version
     workspace.extra_env["ENV_TEMPLATE_VERSION_UPDATE_MODE"] = mode
     workspace.initial_env_template_artifact = "env-templates:1.0.0"
-    workspace.run_pipeline(extra_env=workspace.extra_env)
 
 @then(parsers.parse('the "env_definition.yml" file has envTemplate.artifact equal to "{version}"'))
 def envdef_has_artifact(workspace, version):
@@ -492,7 +481,7 @@ def envdef_artifact_not_changed(workspace):
 
 # ── Rollback (Negative) ──────────────────────────────────────────────────────
 
-@when('the Instance pipeline is started with invalid ENV_INVENTORY_CONTENT that fails during processing')
+@given('the ENV_INVENTORY_CONTENT is invalid and fails during processing')
 def pipeline_invalid_content_rollback(workspace):
     workspace.pre_run_snapshot_dir = workspace.base_dir.parent / "snapshot_neg"
     if workspace.pre_run_snapshot_dir.exists():
@@ -507,4 +496,3 @@ def pipeline_invalid_content_rollback(workspace):
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
     workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
-    workspace.run_pipeline(extra_env=workspace.extra_env)

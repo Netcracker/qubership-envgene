@@ -1,0 +1,5 @@
+db_creds:
+  type: usernamePassword
+  data:
+    username: old_user
+    password: old_password
