@@ -77,7 +77,7 @@ function main() {
   # Install SSL_CERTIFICATES_BUNDLE if provided
   if [ -n "${SSL_CERTIFICATES_BUNDLE:-}" ]; then
       local BUNDLE_FILE
-      BUNDLE_FILE=$(mktemp /tmp/ssl_bundle_XXXXXX.crt)
+      BUNDLE_FILE=$(mktemp /tmp/ssl_bundle_XXXXXX)
       echo "${SSL_CERTIFICATES_BUNDLE}" | base64 -d > "${BUNDLE_FILE}"
       updateCertificates "${BUNDLE_FILE}"
       rm -f "${BUNDLE_FILE}"
