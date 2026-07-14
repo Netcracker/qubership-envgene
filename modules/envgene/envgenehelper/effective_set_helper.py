@@ -17,6 +17,9 @@ class ESGenerationContext(Enum):
 ES_MAPPING_FILE = "mapping.yaml"
 ES_DIR_NAME = "effective-set"
 
+EXTERNAL_CREDENTIAL_DIR = "external-credential"
+EXTERNAL_CREDENTIAL_FILE = "external-credentials.yaml"
+
 
 class GenerationMode(Enum):
     FULL = "full"
