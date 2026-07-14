@@ -761,7 +761,7 @@ Functions:
       - TBD
     - output:
       - appset CR, app CR, TBD
-      - dotenv ARGO_DPG_CONTEXT.env
+      - encrypted by `ENVGENE_AGE_PUBLIC_KEY` dotenv ARGO_DPG_CONTEXT.env
     - actions:
       - TBD
     - AI[phase1]: remove DP generation (Artem)
