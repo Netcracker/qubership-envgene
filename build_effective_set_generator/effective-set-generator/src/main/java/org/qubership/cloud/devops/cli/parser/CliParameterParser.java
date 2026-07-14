@@ -418,11 +418,6 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
 
-            //parameters with external creds
-            if (parameterBundle.getDeployParamsWithExtCreds() != null && !parameterBundle.getDeployParamsWithExtCreds().isEmpty()) {
-                fileDataConverter.writeToFile(parameterBundle.getDeployParamsWithExtCreds(), deploymentDir, "external-credentials.yaml");
-            }
-
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
