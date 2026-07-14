@@ -1,5 +1,6 @@
 from envgenehelper import *
 
+from build_env.build_env import process_additional_template_parameters
 from build_env.env_template.process_env_template import process_env_template
 from build_env.render_config_env import EnvGenerator
 
@@ -62,6 +63,8 @@ def run_appregdef_render():
 
     env_dir = get_env_instances_dir(env_name, cluster_name, output_dir)
     cloud_passport_file_path = find_cloud_passport_definition(env_dir, output_dir)
+    copy_path(f'{env_dir}/Inventory', f'{render_dir}/Inventory')
+    process_additional_template_parameters(render_dir, env_dir, output_dir)
 
     render_context_vars = {
         "cluster_name": cluster_name,
@@ -69,7 +72,7 @@ def run_appregdef_render():
         "current_env_dir": render_dir,
         "templates_dirs": templates_dirs,
         "cloud_passport_file_path": cloud_passport_file_path,
-        "env_instances_dir": env_dir
+        "env_instances_dir": render_dir
     }
     config = get_envgene_config_yaml()
     placement_mode = config.get("app_reg_defs_placement", "dual").lower()
