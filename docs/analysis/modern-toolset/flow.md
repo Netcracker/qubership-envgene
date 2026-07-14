@@ -11,6 +11,7 @@
   - [`ctx.current_env`](#ctxcurrent_env)
   - [build.env](#buildenv)
   - [APPLICATION\_VERSIONS](#application_versions)
+  - [Locations](#locations)
   - [Uniq names](#uniq-names)
     - [`generate_deployment_plan`](#generate_deployment_plan)
     - [ES Calc](#es-calc)
@@ -38,8 +39,10 @@
       - [2.15. step `git_commit`](#215-step-git_commit)
       - [2.16. step `es_pusher`](#216-step-es_pusher)
     - [3. job `cmdb_import`](#3-job-cmdb_import)
-      - [3.1. step `cmdb_import`](#31-step-cmdb_import)
+      - [3.1. step `preprocess`](#31-step-preprocess)
+      - [3.2. step `cmdb_import`](#32-step-cmdb_import)
     - [4. job `sync`](#4-job-sync)
+      - [4.1. step `preprocess`](#41-step-preprocess)
       - [4.1. step `sync`](#41-step-sync)
 
 Working design document for the modern-toolset instance pipeline consolidation. This is the source of truth
@@ -165,6 +168,36 @@ TBD
 ## APPLICATION_VERSIONS
 
 TBD
+
+## Locations
+
+```text
+/environments/<cluster>/<env>/
+  # inputs:
+  Inventory/
+    env_definition.yml            # env_definition
+    solution-descriptor/
+      sd.yaml                     # SD
+      delta_sd.yaml               # SD
+    deploy-plan.yml               # DP (new)
+    parameters/...                # env specific paramsets
+    resource_profiles/...         # env specific RPO
+    credentials/...               # shared creds
+    configurations/...            # shared template variables
+  # outputs:
+  effective-set/…                 # ES
+  tenant.yml                      # env instance
+  cloud.yml                       # env instance
+  bg_domain.yml                   # env instance
+  composite_structure.yml         # env instance
+  Namespaces/                     # env instance
+    <ns>/                         # env instance
+      namespace.yml               # env instance
+      Applications/...            # env instance
+  Credentials/credentials.yml     # env instance
+  AppDefs/…                       # appreg defs
+  RegDefs/…                       # appreg defs
+```
 
 ## Uniq names
 
