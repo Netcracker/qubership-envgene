@@ -9,7 +9,6 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     logger.info(f'Prepare appregdef render job for {full_env}')
 
     script = []
-    script.append("set -x")
     script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
     script.append('python3 /build_env/scripts/build_env/appregdef_render.py')

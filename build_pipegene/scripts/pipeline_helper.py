@@ -49,6 +49,7 @@ def job_instance(params, vars, needs=None, rules=None):
         job.prepend_scripts(params['before_script'])
 
     global_before = [
+        'set -x',
         'python /module/scripts/utils/log_pipe_params.py',
         '/module/scripts/utils/handle_certs.sh',
         'source ~/.bashrc',
