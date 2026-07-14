@@ -76,6 +76,29 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
     if legacy_config.exists():
         shutil.copytree(legacy_config, workspace.base_dir / "configuration", dirs_exist_ok=True)
 
+    # Load config.yml from test data into workspace.config_data so that
+    # write_config() preserves test-data-provided settings (e.g. sbom_retention)
+    import yaml
+    import time
+    config_file = workspace.base_dir / "configuration" / "config.yml"
+    if config_file.exists():
+        with open(config_file, "r", encoding="utf-8") as f:
+            loaded = yaml.safe_load(f)
+        if loaded and isinstance(loaded, dict):
+            workspace.config_data.update(loaded)
+
+    # Set distinct modification times on SBOM files so that retention policy
+    # can sort them deterministically (v0 = oldest, vN = newest).
+    sboms_dir = workspace.base_dir / "sboms"
+    if sboms_dir.exists():
+        base_time = time.time() - 100000
+        for app_dir in sorted(sboms_dir.iterdir()):
+            if app_dir.is_dir():
+                files = sorted(app_dir.glob("*.sbom.json"))
+                for idx, sbom_file in enumerate(files):
+                    mtime = base_time + (idx * 100)
+                    os.utime(sbom_file, (mtime, mtime))
+
 
 @given(parsers.parse('a deploy parameter "{param}" is set to "{value}" in the environment instance'))
 def set_deploy_param_null(workspace: EnvGeneWorkspace, param: str, value: str):

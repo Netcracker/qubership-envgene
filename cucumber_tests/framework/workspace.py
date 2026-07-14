@@ -120,7 +120,8 @@ class EnvGeneWorkspace(BaseWorkspace):
 
         # Mock run_effective_set_cli.sh for local tests
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
-        effective_set_cli_mock.write_text("@echo off\nexit 0\n")
+        effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
+        effective_set_cli_mock.chmod(0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
 
         if extra_env:
