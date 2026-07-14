@@ -46,6 +46,7 @@ def get_pipeline_parameters() -> dict:
         "DEPLOYMENT_TICKET_ID": getenv("DEPLOYMENT_TICKET_ID"),
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
             "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
+        "SSL_CERTIFICATES_BUNDLE": getenv("SSL_CERTIFICATES_BUNDLE"),
     }
 
 def get_sensitive_param_names() -> list:
