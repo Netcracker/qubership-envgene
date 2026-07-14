@@ -43,7 +43,7 @@
       - [3.2. step `cmdb_import`](#32-step-cmdb_import)
     - [4. job `sync`](#4-job-sync)
       - [4.1. step `preprocess`](#41-step-preprocess)
-      - [4.1. step `sync`](#41-step-sync)
+      - [4.2. step `sync`](#42-step-sync)
 
 Working design document for the modern-toolset instance pipeline consolidation. This is the source of truth
 for the target flow. The per-component docs in this directory elaborate individual steps.
@@ -881,7 +881,7 @@ Functions:
 2. `crypt.decrypt`
    - AI[phase2] add/align the step
 
-#### 4.1. step `sync`
+#### 4.2. step `sync`
 
 Triggers:
 
