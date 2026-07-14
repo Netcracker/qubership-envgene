@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
-    PartialMergeMode
+    PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
@@ -399,3 +399,37 @@ class TestRunGitlabDeployEffectiveSet:
         run_gitlab_deploy_effective_set(Ctx())
 
         assert called["deploy_plan"] is delta_plan
+
+
+def test_cli_skips_when_file_missing(tmp_path, monkeypatch):
+    es = tmp_path
+    called = {"run": False}
+    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+
+    _run_external_credential_provision_cli(es)
+
+    assert called["run"] is False
+
+
+def test_cli_runs_with_expected_command(tmp_path, monkeypatch):
+    es = tmp_path / ES_DIR_NAME
+    context_file = es / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+    context_file.parent.mkdir(parents=True, exist_ok=True)
+    context_file.write_text("{}")
+
+    captured = {}
+    def fake_run(cmd, check):
+        captured["cmd"] = cmd
+        captured["check"] = check
+
+    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+
+    _run_external_credential_provision_cli(es)
+
+    assert captured["check"] is True
+    assert captured["cmd"] == [
+        "external-cred-provision",
+        "--log-level",
+        "INFO",
+        str(context_file),
+    ]
