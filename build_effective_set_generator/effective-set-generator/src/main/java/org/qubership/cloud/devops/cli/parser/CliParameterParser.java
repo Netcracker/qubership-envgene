@@ -246,12 +246,6 @@ public class CliParameterParser {
         topologyParams.put("bg_domain", bgDomainParamsMap);
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
-        if (extCredEntities.isExternalOnly) {
-            if (!topologySecuredParams.isEmpty()) {
-                fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "external-credentials.yaml");
-            }
-            topologySecuredParams.clear();
-        }
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
     }
 
@@ -274,11 +268,9 @@ public class CliParameterParser {
         consumerDTOMap.forEach((key, value) -> {
             Map<String, Object> consumerParamsMap = new LinkedHashMap<>();
             Map<String, Object> consumerSecureMap = new LinkedHashMap<>();
-            Map<String, Object> consumerExternalCredsMap = new LinkedHashMap<>();
 
             String parametersFilename = key + "-parameters.yaml";
             String secureFilename = key + "-credentials.yaml";
-            String extCredSecureFilename = key + "-external-credentials.yaml";
 
             for (Property prop : value.getProperties()) {
                 String name = prop.getName();
@@ -290,11 +282,6 @@ public class CliParameterParser {
                 obj = parameterBundle.getSecuredE2eParams().get(name);
                 if (obj != null) {
                     consumerSecureMap.put(name, obj);
-                    continue;
-                }
-                obj = parameterBundle.getE2eParamsWithExtCreds().get(name);
-                if (obj != null) {
-                    consumerExternalCredsMap.put(name, obj);
                     continue;
                 }
                 if (StringUtils.isNotEmpty(prop.getValue())) {
@@ -309,9 +296,6 @@ public class CliParameterParser {
             try {
                 fileDataConverter.writeToFile(consumerParamsMap, pipelineDir, parametersFilename);
                 fileDataConverter.writeToFile(consumerSecureMap , pipelineDir, secureFilename);
-                if (!consumerExternalCredsMap.isEmpty()) {
-                    fileDataConverter.writeToFile(consumerExternalCredsMap, pipelineDir, extCredSecureFilename);
-                }
             } catch (IOException e) {
                 throw new CreateWorkDirException(e.getMessage(), e);
             }
@@ -322,9 +306,6 @@ public class CliParameterParser {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         fileDataConverter.writeToFile(parameterBundle.getE2eParams(), pipelineDir, "parameters.yaml");
         fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
-        if (parameterBundle.getE2eParamsWithExtCreds() != null && !parameterBundle.getE2eParamsWithExtCreds().isEmpty()) {
-            fileDataConverter.writeToFile(parameterBundle.getE2eParamsWithExtCreds(), pipelineDir, "external-credentials.yaml");
-        }
     }
 
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
@@ -454,11 +435,6 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
-
-            //parameters with external creds
-            if (parameterBundle.getDeployParamsWithExtCreds() != null && !parameterBundle.getDeployParamsWithExtCreds().isEmpty()) {
-                fileDataConverter.writeToFile(parameterBundle.getDeployParamsWithExtCreds(), deploymentDir, "external-credentials.yaml");
-            }
 
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
