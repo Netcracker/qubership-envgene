@@ -33,11 +33,12 @@
       - [2.9. step `process_sd`](#29-step-process_sd)
       - [2.10. step `generate_deployment_plan`](#210-step-generate_deployment_plan)
       - [2.11. step `env_build`](#211-step-env_build)
-      - [2.12. step `generate_effective_set`](#212-step-generate_effective_set)
-      - [2.13. step `generate_argocd_repo`](#213-step-generate_argocd_repo)
-      - [2.14. step `postprocess`](#214-step-postprocess)
-      - [2.15. step `git_commit`](#215-step-git_commit)
-      - [2.16. step `es_pusher`](#216-step-es_pusher)
+      - [2.12. step `set_cleaned_mark`](#212-step-set_cleaned_mark)
+      - [2.13. step `generate_effective_set`](#213-step-generate_effective_set)
+      - [2.14. step `generate_argocd_repo`](#214-step-generate_argocd_repo)
+      - [2.15. step `postprocess`](#215-step-postprocess)
+      - [2.16. step `git_commit`](#216-step-git_commit)
+      - [2.17. step `es_pusher`](#217-step-es_pusher)
     - [3. job `cmdb_import`](#3-job-cmdb_import)
       - [3.1. step `preprocess`](#31-step-preprocess)
       - [3.2. step `cmdb_import`](#32-step-cmdb_import)
@@ -53,6 +54,8 @@ for the target flow. The per-component docs in this directory elaborate individu
 1. `run_cloud_passport` (берет паспорт из даунстри джобы и декриптит) уже в `env_prepare`?
 2. `generate_deployment_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
 3. В бгд кейсе что должно быть в `namespace-map.yml` в `deployPostfix` - bss или bss-peer, bss-origin?
+4. Нужны ли `process_env_template` / `app_reg_def_process` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
+   можно скипать? Сейчас (PoC) отрабатывают все.
 
 ## AI
 
@@ -627,7 +630,8 @@ Functions:
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
+- `PIPELINE_TYPE: GITLAB_DEPLOY` and
+- `OPERATION_TYPE: !CLEAN`
 
 Functions:
 
@@ -696,7 +700,27 @@ Functions:
     - AI[phase1]: test manually
     - AI[phase2]: prepare a UC, add tests
 
-#### 2.12. step `generate_effective_set`
+#### 2.12. step `set_cleaned_mark`
+
+Triggers:
+
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or `ENV_BUILDER: true`) and
+- `OPERATION_TYPE: CLEAN`
+
+Functions:
+
+1. `set_cleaned_mark`
+    - input:
+      - env instance namespaces
+      - `NAMESPACE_NAMES`
+    - output:
+      - namespaces with `cleaned: true`
+    - actions:
+      - set `cleaned: true` on `NAMESPACE_NAMES` namespaces (all if empty. error if a namespace is not found)
+    - [phase1] currently inside `run_build_environment` (`build_env.py`)
+    - AI[phase2]: extract from `run_build_environment`
+
+#### 2.13. step `generate_effective_set`
 
 Triggers:
 
@@ -736,6 +760,7 @@ Functions:
       - env instance
       - `sd.yaml` or `deploy-plan.yml`
       - sboms
+      - `OPERATION_TYPE`
     - output:
       - Effective Set
     - actions:
@@ -743,11 +768,12 @@ Functions:
     - AI[phase1]: support DP as well as SD
     - AI[phase1]: implement uniq app names
 
-#### 2.13. step `generate_argocd_repo`
+#### 2.14. step `generate_argocd_repo`
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
+- `PIPELINE_TYPE: GITLAB_DEPLOY` and
+- `OPERATION_TYPE: !CLEAN`
 
 Functions:
 
@@ -769,7 +795,7 @@ Functions:
     - AI[phase1]: encrypt ARGO_DPG_CONTEXT.env (Artem)
     - AI[phase2]: move to GitHub
 
-#### 2.14. step `postprocess`
+#### 2.15. step `postprocess`
 
 Triggers:
 
@@ -780,7 +806,7 @@ Functions:
 1. `crypt.encrypt`
    - AI[phase2] Check no-op if `crypt: false`
 
-#### 2.15. step `git_commit`
+#### 2.16. step `git_commit`
 
 Triggers:
 
@@ -799,7 +825,7 @@ Functions:
     - AI[phase2]: unify with `es-pusher`
     - AI[phase2]: chech no-op if no changes
 
-#### 2.16. step `es_pusher`
+#### 2.17. step `es_pusher`
 
 Triggers:
 
@@ -809,6 +835,7 @@ Functions:
 
 1. `es-pusher`
     - input:
+      - if `OPERATION_TYPE: CLEAN` then set env var: `ESPUSHER_OVERWRITE: true` else `ESPUSHER_OVERWRITE: false`
       - instance files
         - effective set
         - appset
@@ -866,7 +893,8 @@ Functions:
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
+- `PIPELINE_TYPE: GITLAB_DEPLOY` and
+- `OPERATION_TYPE: !CLEAN`
 
 #### 4.1. step `preprocess`
 
