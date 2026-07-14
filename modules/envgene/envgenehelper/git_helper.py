@@ -1,9 +1,11 @@
 import os
+import shutil
 from pathlib import Path
 from typing import Optional
 
 from envgenehelper import logger, get_environment_name_from_full_name, get_cluster_name_from_full_name, \
     getenv_with_error
+from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
 from git import GitCommandError, Repo
@@ -101,11 +103,43 @@ class GitRepoManager:
         except GitCommandError as exc:
             raise RuntimeError(f"Failed to prepare repository for '{ref}': {exc}") from exc
 
-    def _get_exclude_pathspecs(self) -> list[str]:
+    def _get_excluded_paths(self) -> list[str]:
         if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
             return []
         # effective set is pushed to a separate deploy target repo by es_pusher
-        return [f":(exclude)environments/{self.cluster_name}/{self.env_name}/effective-set"]
+        return [f"environments/{self.cluster_name}/{self.env_name}/effective-set"]
+
+    @property
+    def _repo_root(self) -> Path:
+        return Path(self.repo.working_dir)
+
+    def _snapshot_root(self) -> Path:
+        return self._repo_root / "tmp" / "git_commit_snapshot"
+
+    def snapshot_excluded_paths(self) -> list[str]:
+        # protects excluded paths from being reset by the checkout further down
+        snapshot_root = self._snapshot_root()
+        delete_dir_if_exists(snapshot_root)
+        snapshot_paths = []
+        for rel_path in self._get_excluded_paths():
+            abs_path = self._repo_root / rel_path
+            if not abs_path.exists():
+                continue
+            snapshot_dir = snapshot_root / rel_path
+            snapshot_dir.parent.mkdir(parents=True, exist_ok=True)
+            # rename within repo_root, not a copy - no extra disk space used
+            shutil.move(str(abs_path), str(snapshot_dir))
+            snapshot_paths.append(rel_path)
+        return snapshot_paths
+
+    def restore_excluded_paths(self, rel_paths: list[str]) -> None:
+        snapshot_root = self._snapshot_root()
+        for rel_path in rel_paths:
+            abs_path = self._repo_root / rel_path
+            snapshot_dir = snapshot_root / rel_path
+            delete_dir_if_exists(abs_path)
+            abs_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(snapshot_dir), str(abs_path))
 
     def stage_changes(self, sparse_paths: Optional[list[str]] = None) -> bool:
         logger.info("Staging changes...")
@@ -113,8 +147,8 @@ class GitRepoManager:
             sparse_paths = self.sparse_paths
 
         existing_paths = [path for path in sparse_paths if Path(path).exists()]
-        add_args = existing_paths + self._get_exclude_pathspecs()
-        self.repo.git.add("--all", "--", *add_args)
+        exclude_args = [f":(exclude){path}" for path in self._get_excluded_paths()]
+        self.repo.git.add("--all", "--", *existing_paths, *exclude_args)
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():
