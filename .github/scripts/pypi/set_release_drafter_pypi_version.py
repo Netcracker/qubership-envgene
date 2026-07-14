@@ -31,22 +31,25 @@ def replace_pypi_release_url(
     validate_semver(release_version)
 
     text = config_path.read_text(encoding="utf-8")
-    pattern = re.compile(
-        rf"(https://pypi\.org/project/{re.escape(package_name)}/)"
+    link_pattern = re.compile(
+        rf"\*\*\[{re.escape(package_name)}:"
         r"[0-9]+\.[0-9]+\.[0-9]+"
-        r"(/)"
+        rf"\]\(https://pypi\.org/project/{re.escape(package_name)}/"
+        r"[0-9]+\.[0-9]+\.[0-9]+"
+        r"/\)\*\*"
     )
 
-    new_text, replacements = pattern.subn(
-        rf"\g<1>{release_version}\2",
+    new_text, replacements = link_pattern.subn(
+        rf"**[{package_name}:{release_version}]"
+        rf"(https://pypi.org/project/{package_name}/{release_version}/)**",
         text,
         count=1,
     )
 
     if replacements != 1:
         raise ValueError(
-            f"Could not update PyPI release URL for '{package_name}' in {config_path}. "
-            "Expected exactly one matching link."
+            f"Could not update PyPI package link for '{package_name}' in {config_path}. "
+            f"Expected exactly one `**[{package_name}:X.Y.Z](https://pypi.org/project/{package_name}/X.Y.Z/)**` entry."
         )
 
     config_path.write_text(new_text, encoding="utf-8")
@@ -54,7 +57,7 @@ def replace_pypi_release_url(
     print(f"Config: {config_path}")
     print(f"Package: {package_name}")
     print(f"Release version: {release_version}")
-    print("OK: release drafter PyPI link updated.")
+    print("OK: release drafter PyPI package link updated.")
 
 
 def main() -> int:
