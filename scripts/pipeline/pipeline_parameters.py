@@ -34,6 +34,7 @@ class PipelineParametersHandler(BaseModel):
     def from_env(cls) -> Self:
         params = {
             'ENV_NAMES': getenv("ENV_NAMES", ""),
+            'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
             'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
             'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
             'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",

@@ -38,3 +38,7 @@ class OperationType(CaseInsensitiveEnum):
             return cls.DEPLOY
 
         return super()._missing_(value)
+
+
+class PipelineType(CaseInsensitiveEnum):
+    GITLAB_DEPLOY = "GITLAB_DEPLOY"

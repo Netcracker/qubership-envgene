@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,7 +27,8 @@ def make_manager(ctx=None):
         ctx = make_context()
     with patch("envgenehelper.git_helper.Repo"), \
             patch.object(GitContext, "from_env", return_value=ctx), \
-            patch.object(GitRepoManager, "get_sparse_checkout_paths", return_value=[]):
+            patch.object(GitRepoManager, "get_sparse_checkout_paths", return_value=[]), \
+            patch.dict(os.environ, {"CLUSTER_NAME": "cluster", "ENVIRONMENT_NAME": "env"}):
         manager = GitRepoManager()
     manager.repo.git.execute = MagicMock()
     return manager

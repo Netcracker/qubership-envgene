@@ -8,6 +8,7 @@ from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
 from git import GitCommandError, Repo
 from pydantic import BaseModel
+from envgenehelper.models import PipelineType
 from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
 
 
@@ -65,6 +66,8 @@ class GitRepoManager:
     def __init__(self):
         self.repo = Repo.init(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
         self.ctx = GitContext.from_env()
+        self.cluster_name = getenv_with_error("CLUSTER_NAME")
+        self.env_name = getenv_with_error("ENVIRONMENT_NAME")
         self.sparse_paths = self.get_sparse_checkout_paths()
 
     def configure(self) -> None:
@@ -98,13 +101,20 @@ class GitRepoManager:
         except GitCommandError as exc:
             raise RuntimeError(f"Failed to prepare repository for '{ref}': {exc}") from exc
 
+    def _get_exclude_pathspecs(self) -> list[str]:
+        if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
+            return []
+        # effective set is pushed to a separate deploy target repo by es_pusher
+        return [f":(exclude)environments/{self.cluster_name}/{self.env_name}/effective-set"]
+
     def stage_changes(self, sparse_paths: Optional[list[str]] = None) -> bool:
         logger.info("Staging changes...")
         if sparse_paths is None:
             sparse_paths = self.sparse_paths
 
         existing_paths = [path for path in sparse_paths if Path(path).exists()]
-        self.repo.git.add("--all", "--", *existing_paths)
+        add_args = existing_paths + self._get_exclude_pathspecs()
+        self.repo.git.add("--all", "--", *add_args)
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():
