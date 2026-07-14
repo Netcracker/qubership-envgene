@@ -185,7 +185,7 @@ TBD
     credentials/...               # shared creds
     configurations/...            # shared template variables
   # outputs:
-  effective-set/…                 # ES
+  effective-set/...               # ES
   tenant.yml                      # env instance
   cloud.yml                       # env instance
   bg_domain.yml                   # env instance
@@ -195,8 +195,8 @@ TBD
       namespace.yml               # env instance
       Applications/...            # env instance
   Credentials/credentials.yml     # env instance
-  AppDefs/…                       # appreg defs
-  RegDefs/…                       # appreg defs
+  AppDefs/...                     # appreg defs
+  RegDefs/...                     # appreg defs
 ```
 
 ## Uniq names
