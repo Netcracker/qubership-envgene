@@ -37,6 +37,9 @@ deployParameters:
     $type: credRef
     credId: app-custom-cred
     property: password
+  alertmanager:
+    $type: credRef
+    credId: app-sidecar-token
 e2eParameters:
   CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
   DB_USERNAME:
