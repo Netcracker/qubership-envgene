@@ -191,21 +191,18 @@ public class ParametersCalculationServiceV2 {
             return;
         }
 
-        Map<String, Parameter> externalCredParams = null;
         if (extCredEntities.isExternalOnly) {
-            externalCredParams = prepareExternalCredentialContext(parameters, parameterType, extCredEntities);
+            prepareExternalCredentialContext(parameters, parameterType, extCredEntities);
         }
 
-        filterSecuredParams(parameters, securedParams, inSecuredParams, externalCredParams, parameterType, extCredEntities);
-        Map<String, Object> externalCredParamsAsObject = externalCredParams != null ? ParametersProcessor.convertParameterMapToObject(externalCredParams) : null;
+        filterSecuredParams(parameters, securedParams, inSecuredParams, parameterType, extCredEntities);
         Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
         Map<String, Object> inSecuredParamsAsObject = ParametersProcessor.convertParameterMapToObject(inSecuredParams);
         if (parameterType == ParameterType.E2E) {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
-            parameterBundle.setE2eParamsWithExtCreds(externalCredParamsAsObject);
         } else if (parameterType == ParameterType.DEPLOY) {
-            handleDeployParameters(parameterBundle, finalSecuredParams, inSecuredParamsAsObject, externalCredParamsAsObject, extCredEntities);
+            handleDeployParameters(parameterBundle, finalSecuredParams, inSecuredParamsAsObject, extCredEntities);
         } else if (parameterType == ParameterType.TECHNICAL) {
             prepareCustomTechSecureParams(parameterBundle, finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
@@ -228,24 +225,18 @@ public class ParametersCalculationServiceV2 {
         }
     }
 
-    private void handleDeployParameters(ParameterBundle parameterBundle, Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject, Map<String, Object> externalCredParamsAsObject, ExtCredEntities extCredEntities) {
+    private void handleDeployParameters(ParameterBundle parameterBundle, Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject, ExtCredEntities extCredEntities) {
         Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
         parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
         inSecuredParamsAsObject.remove(APPR_CHART_NAME); //remove app chart name from parameters once after the usage
+
         Map<String, Object> deployCollisionParams = getCollisionParams(inSecuredParamsAsObject);
         Map<String, Object> securedCollisionParams = getCollisionParams(finalSecuredParams);
-
-        inSecuredParamsAsObject.remove(ESO_SUPPORT);
-        if (externalCredParamsAsObject != null && !externalCredParamsAsObject.isEmpty()) {
-            parameterBundle.setDeployParamsWithExtCreds(externalCredParamsAsObject);
-        } else {
-            if (extCredEntities.isExternalOnly) {
-                logWarning(EXT_TEMPLATE_FOUND);
-            }
-        }
-
         parameterBundle.setCollisionDeployParameters(deployCollisionParams);
         parameterBundle.setCollisionSecureParameters(securedCollisionParams);
+
+        inSecuredParamsAsObject.remove(ESO_SUPPORT);
+
         copyParams(finalSecuredParams, inSecuredParamsAsObject);
         prepareBundleParameters(finalSecuredParams, inSecuredParamsAsObject);
         Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams(),
@@ -339,8 +330,8 @@ public class ParametersCalculationServiceV2 {
         return orderedMap;
     }
 
-    private void filterSecuredParams(Map<String, Parameter> map, Map<String, Parameter> securedParams, Map<String, Parameter> inSecuredParams, Map<String, Parameter> externalCredParams , ParameterType parameterType, ExtCredEntities extCredEntities) {
-        ParameterUtils.splitBySecure(map, securedParams, inSecuredParams, externalCredParams, extCredEntities);
+    private void filterSecuredParams(Map<String, Parameter> map, Map<String, Parameter> securedParams, Map<String, Parameter> inSecuredParams, ParameterType parameterType, ExtCredEntities extCredEntities) {
+        ParameterUtils.splitBySecure(map, securedParams, inSecuredParams, extCredEntities);
         for (Map.Entry<String, Parameter> entry : map.entrySet()) {
             if (parameterType == ParameterType.DEPLOY && entities.contains(entry.getKey())) {
                 securedParams.put(entry.getKey(), entry.getValue());
@@ -351,18 +342,18 @@ public class ParametersCalculationServiceV2 {
         }
     }
 
-    private Map<String, Parameter> prepareExternalCredentialContext(Map<String, Parameter> parameters, ParameterType parameterType, ExtCredEntities extCredEntities) {
+    private void prepareExternalCredentialContext(Map<String, Parameter> parameters, ParameterType parameterType, ExtCredEntities extCredEntities) {
         extCredEntities.setParameterType(parameterType.toString());
         switch (parameterType) {
             case DEPLOY:
                 String refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
                 extCredEntities.setRefShape(refShape);
-                return new TreeMap<>();
+                break;
             case E2E:
                 extCredEntities.setRefShape(VALS);
-                return new TreeMap<>();
+                break;
             default:
-                return null;
+                break;
         }
     }
 }
