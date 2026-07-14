@@ -48,7 +48,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 ## OQ
 
 1. `run_cloud_passport` (берет паспорт из даунстри джобы и декриптит) уже в `env_prepare`?
-2. `generate_deployment_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
+2. `generate_ent_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
 3. В бгд кейсе что должно быть в `namespace-map.yml` в `deployPostfix` - bss или bss-peer, bss-origin?
 
 ## AI
@@ -70,7 +70,7 @@ for the target flow. The per-component docs in this directory elaborate individu
    - structured data via files (job artifacts)
    - scalars via `build.env`
 3. Crossing a following function in the same job:
-   - `generate_deployment_plan`
+   - `generate_ent_plan`
    - `argocd_repo_generator`
    - `es-pusher`
    - effective-set calculator
@@ -168,7 +168,7 @@ TBD
 
 ## Uniq names
 
-### `generate_deployment_plan`
+### `generate_ent_plan`
 
 - Путь App Def становятся одним из инпутов для `generate_deployment_plan`
 - Задает `generationType` из атрибута `metadata.netcracker.com/argo-app-generation-type`
@@ -610,7 +610,7 @@ Functions:
         - `COMPONENT_NAMES_FILTER`
         - `WAVE_NAMES_FILTER`
     - output:
-      - `deploy-plan.yml`
+      - `deploy-plan.yml` at `/environments/<cluster>/<env>/Inventory/deploy-plan.yml`
     - actions:
       - process `APPLICATION_VERSION` (download SD, merge), calculate (APPLICATION_VERSION)
       - enrich DP, plan map (namespace_map)
