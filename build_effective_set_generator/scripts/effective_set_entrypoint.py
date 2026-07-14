@@ -3,7 +3,7 @@ import subprocess
 from os import getenv
 
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
-from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, \
+from envgenehelper.effective_set_helper import EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE, GenerationMode, PartialMergeMode, \
     resolve_partial_merge_mode, ES_MAPPING_FILE, ESGenerationContext, ES_DIR_NAME, get_es_generation_mode
 from envgenehelper.file_helper import delete_dir, deleteFileIfExists, delete_dir_if_exists
 from envgenehelper.logger import logger
@@ -29,6 +29,8 @@ def effective_set_entrypoint():
 
     # do not commit delta sd to repo
     deleteFileIfExists(delta_sd_path)
+
+    _run_external_credential_provision_cli(effective_set_dir)
 
 
 def _run_full_generation(effective_set_dir, full_env_name, sd_path):
@@ -159,6 +161,25 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
     if custom_params:
         cmd.append(f"--custom-params={shlex.quote(custom_params)}")
     return " ".join(cmd)
+
+def _run_external_credential_provision_cli(effective_set_dir) -> None:
+    context_file = effective_set_dir / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+    
+    if not context_file.is_file():
+        logger.info("External credential context file not found, skipping CLI")
+        return
+
+    log_level = getenv("ENVGENE_LOG_LEVEL", "INFO").upper()
+
+    logger.info(f"External credential context file found: {context_file}. Invoking CLI")
+    cmd = [
+        "external-cred-provision",
+        "--log-level",
+        log_level,
+        str(context_file),
+    ]
+
+    subprocess.run(cmd, check=True)
 
 
 if __name__ == "__main__":

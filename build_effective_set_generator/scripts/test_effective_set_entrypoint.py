@@ -1,12 +1,12 @@
 from pathlib import Path
 
 import pytest
-from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, ES_DIR_NAME
+from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, ES_DIR_NAME, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 import effective_set_entrypoint
-from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge
+from effective_set_entrypoint import _run_external_credential_provision_cli, _run_reverse_merge, _run_forward_merge
 
 
 def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str):
@@ -190,3 +190,37 @@ class TestRunForwardMerge:
         assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
         assert not (es / ESGenerationContext.CLEANUP.value / DP_2).exists()
         assert (es / ESGenerationContext.CLEANUP.value / "dp-3").exists()
+
+
+def test_cli_skips_when_file_missing(tmp_path, monkeypatch):
+    es = tmp_path
+    called = {"run": False}
+    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+    
+    _run_external_credential_provision_cli(es)
+
+    assert called["run"] is False
+	
+
+def test_cli_runs_with_expected_command(tmp_path, monkeypatch):  
+    es = tmp_path / ES_DIR_NAME
+    context_file = es / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+    context_file.parent.mkdir(parents=True, exist_ok=True)
+    context_file.write_text("{}")
+
+    captured = {}
+    def fake_run(cmd, check):
+        captured["cmd"] = cmd
+        captured["check"] = check
+
+    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+
+    _run_external_credential_provision_cli(es)
+
+    assert captured["check"] is True
+    assert captured["cmd"] == [
+        "external-cred-provision",
+        "--log-level",
+        "INFO",
+        str(context_file),
+    ]
