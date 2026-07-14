@@ -64,9 +64,9 @@ class DDFinder(metaclass=Singleton):
         self.__cache = DDCache()
         self.__data_provider = data_provider
 
-    def get(self, context, app_ver: str, **kwargs) -> Optional[dict]:
+    def get(self, app_ver: str, **kwargs) -> Optional[dict]:
         if self.__data_provider is None:
-            self.__data_provider = get_data_provider(context, **kwargs)
+            self.__data_provider = get_data_provider(**kwargs)
 
         cached = self.__cache.get(app_ver)
         if cached is not None:

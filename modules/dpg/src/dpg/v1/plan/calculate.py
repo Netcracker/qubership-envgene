@@ -1,13 +1,30 @@
+"""Deployment plan calculate command — compute a deployment plan from an application list."""
+
 import os
-import yaml
 from pathlib import Path
 
 from qubership_pipelines_common_library.v1.execution.exec_command import ExecutionCommand
+from dpg.v1.cmd import DeploymentPlanGeneratorCommand
 
-from dpg.v1.internal.deployment_plan import DeploymentPlanCalculator
-import dpg.v1.utils as utils
 
 class PlanDeploymentCalculate(ExecutionCommand):
+    """Calculate a deployment plan from a list of application names.
+
+    Resolves dependency order and wave assignments for the supplied applications
+    and writes the resulting plan to an output YAML file.
+
+    Mandatory params:
+        params.applications: Comma-separated list of application names to include
+            in the deployment plan.
+
+    Optional params:
+        params.output_file: Destination file path (default: ``deploy-plan.yaml``).
+        params.rootdir: Root directory used by the data provider to resolve
+            application metadata (default: current working directory).
+
+    Output params:
+        params.deployment_plan: Calculated plan as a list (forwarded to next steps).
+    """
 
     def _validate(self):
         if not self.context.validate(["params.applications"]):
@@ -19,24 +36,6 @@ class PlanDeploymentCalculate(ExecutionCommand):
         return True
 
     def _execute(self):
-        self.context.logger.info(
-            f"Calculating deployment plan"
-            f" [{len(self._applications)} application(s)]"
-        )
-
-        deploy_plan = DeploymentPlanCalculator(
-            applications=self._applications,
-            data_provider=utils.get_data_provider(self.context, root_dir=self._rootdir),
-        ).calculate(self.context)
-
-        wave_count = len({e.wave for e in deploy_plan.entities})
-        app_count = len(deploy_plan.entities)
-        self.context.logger.info(f"Deployment plan ready: {wave_count} wave(s), {app_count} application(s)")
-        self.context.logger.debug(f"Plan details:\n{deploy_plan}")
-
-        self.context.logger.info(f"Writing deploy plan to {self._output_file}..")
-        with open(self._output_file, "w") as f:
-            f.write(yaml.dump(deploy_plan.to_dict()))
-
+        deploy_plan = DeploymentPlanGeneratorCommand.calculate(applications=self._applications, output_file=self._output_file, rootdir=self._rootdir)
         self.context.output_param_set("params.deployment_plan", deploy_plan.to_dict())
         self.context.output_params_save()

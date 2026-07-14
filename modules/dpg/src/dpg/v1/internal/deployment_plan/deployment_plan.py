@@ -3,6 +3,7 @@ import re
 import yaml
 import copy
 import uuid6
+import logging
 from pathlib import Path
 from typing import Tuple, List
 
@@ -23,7 +24,7 @@ class DeploymentPlanCalculator:
         self.data_provider = data_provider
 
     @classmethod
-    def map_namespaces_to_plan(cls, context, deploy_plan: DeployPlan, map: dict) -> DeployPlan:
+    def map_namespaces_to_plan(cls, deploy_plan: DeployPlan, map: dict) -> DeployPlan:
         """This method should map namespaces by postfixes to deploy plan"""
 
         # TODO: do it based on input map
@@ -39,19 +40,19 @@ class DeploymentPlanCalculator:
 
         return cdeploy_plan
 
-        context.logger.debug(f"Namespace mapping applied..")
+        logging.debug(f"Namespace mapping applied..")
         return deploy_plan
 
-    def calculate(self, context) -> DeployPlan:
-        deploy_plan = self.__collect_waves(context=context)
-        deploy_plan = self.__enrich_plan_generation_types(context=context, deploy_plan=deploy_plan)
+    def calculate(self) -> DeployPlan:
+        deploy_plan = self.__collect_waves()
+        deploy_plan = self.__enrich_plan_generation_types(deploy_plan=deploy_plan)
 
         if not self.__validate_deploy_plan(deploy_plan):
             raise Exception("Validation of deploy plan failed.")
 
         return deploy_plan
 
-    def __enrich_plan_generation_types(self, context, deploy_plan: DeployPlan):
+    def __enrich_plan_generation_types(self, deploy_plan: DeployPlan):
         run_uuid = uuid6.uuid7()
         for entity in deploy_plan.entities:
             appname, version = entity.version.split(":")
@@ -61,7 +62,7 @@ class DeploymentPlanCalculator:
             try:
                 generation_type = GenerationType(generation_type)
             except ValueError:
-                context.logger.error(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
+                logging.error(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
                 raise ValueError(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
 
             entity.generation_type = generation_type
@@ -80,7 +81,7 @@ class DeploymentPlanCalculator:
                 )
         return True
 
-    def __resolve_content(self, context, app) -> Tuple[dict | None, bool]:
+    def __resolve_content(self, app) -> Tuple[dict | None, bool]:
         match app:
             case dict():
                 content = app
@@ -92,7 +93,7 @@ class DeploymentPlanCalculator:
                 if not appdef.solution_descriptor:
                     return None, False
 
-                content = DDFinder(data_provider=self.data_provider).get(context, app)
+                content = DDFinder(data_provider=self.data_provider).get(app)
             case _:
                 return None, False
 
@@ -117,24 +118,23 @@ class DeploymentPlanCalculator:
                 return json.load(f)
         return None
 
-    def __collect_waves(self, context) -> DeployPlan:
-        log = context.logger
+    def __collect_waves(self) -> DeployPlan:
         entities = []
         wave_index = 0
 
         for app in self.applications:
-            log.info(f"Resolving for {app}")
-            content, is_sd = self.__resolve_content(context, app)
+            logging.info(f"Resolving for {app}")
+            content, is_sd = self.__resolve_content(app)
 
             if not is_sd:
-                log.debug(f"Adding standalone application: {app}")
+                logging.debug(f"Adding standalone application: {app}")
                 entities.append(DeployPlanEntity(wave=wave_index, deployPostfix="", **self._parse_app(app)))
                 continue
 
             sd = SolutionDescriptorParser.parse(filepath=app, content=content)
             collected_waves = sd.collect_waves()
             sd_app_count = sum(len(v) for v in collected_waves.values())
-            log.debug(f"Solution descriptor {app} resolved: {len(collected_waves)} wave(s),"
+            logging.debug(f"Solution descriptor {app} resolved: {len(collected_waves)} wave(s),"
                       f" {sd_app_count} application(s), offset: {wave_index}")
 
             for wave, waveapps in collected_waves.items():
