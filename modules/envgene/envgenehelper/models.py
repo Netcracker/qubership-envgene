@@ -42,7 +42,3 @@ class OperationType(CaseInsensitiveEnum):
 
 class PipelineType(CaseInsensitiveEnum):
     GITLAB_DEPLOY = "GITLAB_DEPLOY"
-
-
-class SaveArtifactsStrategy(CaseInsensitiveEnum):
-    SAVE_ALL = "SAVE_ALL"
