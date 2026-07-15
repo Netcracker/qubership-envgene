@@ -94,9 +94,12 @@ credentials:
   <cred-id>:
     # Mandatory
     # VALS reference string that addresses the secret. The string is a path only — no
-    # key segments (no `#` fragment). The CLI infers the store type from the VALS
-    # scheme. The store identifier comes from the `secret_store_id` query parameter,
-    # or defaults to `default_store` when the parameter is absent.
+    # key segments (no `#` fragment). The path is independent of the Credential id map
+    # key: its last segment is the secret name in the store, which the caller may compose
+    # from a remote reference path (for example `shared--envgene--gcp-license-token`). The
+    # CLI infers the store type from the VALS scheme. The store identifier comes from the
+    # `secret_store_id` query parameter, or defaults to `default_store` when the parameter
+    # is absent.
     vals: string
     # Mandatory
     # See the Strategy enum section for the meaning of each value.
@@ -148,7 +151,7 @@ credentials:
     strategy: fail_if_absent
 
   gcp-license-token:
-    vals: "ref+gcpsecrets://example-project/gcp-license-token"
+    vals: "ref+gcpsecrets://example-project/shared--envgene--gcp-license-token"
     strategy: create_if_absent
     data: _generateValue
 
