@@ -13,7 +13,9 @@ log() { printf '%s\n' "$*"; }
 function debugPrintCertsFromFile {
     local file="$1"
     local label="$2"
-    [[ "${ENVGENE_LOG_LEVEL}" != "DEBUG" ]] && return
+    if [[ "${ENVGENE_LOG_LEVEL}" != "DEBUG" ]]; then
+        return 0
+    fi
     echo "[DEBUG] === ${label} ==="
     if [[ ! -e "$file" ]]; then
         echo "[DEBUG] File does not exist: $file"
@@ -48,7 +50,7 @@ function debugPrintCertsFromFile {
 function updateCertificates {
     local CA_FILE="$1"
     if [[ -e "${CA_FILE}" && -n "${CA_FILE}" ]]; then
-        # debugPrintCertsFromFile "${CA_FILE}" "Certificates in source file BEFORE import (${CA_FILE})"
+        debugPrintCertsFromFile "${CA_FILE}" "Certificates in source file BEFORE import (${CA_FILE})"
 
         local LOCAL_NAME
         LOCAL_NAME="$(basename "${CA_FILE}" | sed 's/\.[^.]*$//').crt"
@@ -58,8 +60,8 @@ function updateCertificates {
         export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
         echo "export REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE}" >> ~/.bashrc
 
-        # debugPrintCertsFromFile "/usr/local/share/ca-certificates/${LOCAL_NAME}" "Certificates AFTER import (installed file /usr/local/share/ca-certificates/${LOCAL_NAME})"
-        # [[ "${ENVGENE_LOG_LEVEL}" == "DEBUG" ]] && echo "[DEBUG] Certificate import completed successfully for ${CA_FILE}"
+        debugPrintCertsFromFile "/usr/local/share/ca-certificates/${LOCAL_NAME}" "Certificates AFTER import (installed file /usr/local/share/ca-certificates/${LOCAL_NAME})"
+        log "[DEBUG] Certificate import completed successfully for ${CA_FILE}"
     else
         log "[WARNING]: CA file ${CA_FILE} not found or empty, skipping"
         return 0
@@ -69,7 +71,7 @@ function updateCertificates {
 
 function main() {
   if [ -z "${CI_PROJECT_DIR:-}" ]; then
-      log "Error: CI_PROJECT_DIR is not set"
+      log "[Error]: CI_PROJECT_DIR is not set"
       exit 1
   fi
 
@@ -98,7 +100,7 @@ function main() {
       if [ -f "$default_cert" ]; then
           updateCertificates "$default_cert"
       else
-          log "No certificates found and default certificate does not exist: $default_cert"
+          log "[INFO]: No certificates found and default certificate does not exist: $default_cert"
       fi
   fi
 }
