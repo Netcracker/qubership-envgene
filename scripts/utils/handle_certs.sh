@@ -60,7 +60,7 @@ function updateCertificates {
         echo "export REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE}" >> ~/.bashrc
 
         debugPrintCertsFromFile "/usr/local/share/ca-certificates/${LOCAL_NAME}" "Certificates AFTER import (installed file /usr/local/share/ca-certificates/${LOCAL_NAME})"
-        log "[DEBUG] Certificate import completed successfully for ${CA_FILE}"
+        log "[INFO] Certificate import completed successfully for ${CA_FILE}"
     else
         log "[WARNING]: CA file ${CA_FILE} not found or empty, skipping"
         return 0
