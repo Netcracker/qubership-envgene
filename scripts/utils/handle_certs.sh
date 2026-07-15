@@ -78,25 +78,37 @@ function main() {
 
   # Install SSL_CERTIFICATES_BUNDLE if provided
   if [ -n "${SSL_CERTIFICATES_BUNDLE:-}" ]; then
+      log "[INFO]: SSL_CERTIFICATES_BUNDLE is set, installing..."
       local BUNDLE_FILE
       BUNDLE_FILE=$(mktemp /tmp/ssl_bundle_XXXXXX)
-      echo "${SSL_CERTIFICATES_BUNDLE}" | base64 -d > "${BUNDLE_FILE}"
+      if ! echo "${SSL_CERTIFICATES_BUNDLE}" | base64 -d > "${BUNDLE_FILE}" 2>/dev/null; then
+          rm -f "${BUNDLE_FILE}"
+          log "[ERROR]: SSL_CERTIFICATES_BUNDLE is not valid base64"
+          exit 1
+      fi
       updateCertificates "${BUNDLE_FILE}"
       rm -f "${BUNDLE_FILE}"
       certs_applied=1
+  else
+      log "[INFO]: SSL_CERTIFICATES_BUNDLE is not set, skipping"
   fi
 
   # Install certs from certs_dir if it exists and has files
   if [ -d "$certs_dir" ] && find "$certs_dir" -mindepth 1 -print -quit >/dev/null 2>&1; then
+      log "[INFO]: Found certificates in $certs_dir, installing..."
       while IFS= read -r -d '' cert; do
+          log "[INFO]: Installing certificate: $cert"
           updateCertificates "$cert"
       done < <(find "$certs_dir" -mindepth 1 -maxdepth 1 -type f -print0)
       certs_applied=1
+  else
+      log "[INFO]: No certificates found in $certs_dir, skipping"
   fi
 
   # If neither SSL_CERTIFICATES_BUNDLE nor certs_dir provided anything, fall back to default_cert
   if [ "$certs_applied" -eq 0 ]; then
       if [ -f "$default_cert" ]; then
+          log "[INFO]: Falling back to default certificate: $default_cert"
           updateCertificates "$default_cert"
       else
           log "[INFO]: No certificates found and default certificate does not exist: $default_cert"
