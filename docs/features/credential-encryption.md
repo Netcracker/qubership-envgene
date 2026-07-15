@@ -25,7 +25,7 @@
 
 ## Overview
 
-EnvGene encrypts credential files at rest so sensitive material never enters git in plaintext. Both the EnvGene
+EnvGene encrypts credential files at rest so sensitive material never enters Git in plaintext. Both the EnvGene
 runtime and the pre-commit hook honour the same contract.
 
 Encryption applies only to credential values that EnvGene stores directly in a credential file. Where EnvGene
@@ -54,7 +54,7 @@ The user-facing categories below define what is in scope. The file selector impl
 The selector combines a filename pattern with a directory suffix, restricted to files whose path contains a
 `configuration` or `environments` segment.
 
-- Filename pattern: the basename without extension matches the regex
+- Filename pattern: the basename without extension matches the regular expression
   `^credentials$|^creds$|-(credentials|creds)($|-)`.
 - Directory suffix: any `.yml` or `.yaml` file under a `Credentials/` or `credentials/` folder qualifies
   regardless of filename.
@@ -66,14 +66,14 @@ The categories above are the source of truth for what falls in scope.
 ## Actors
 
 EnvGene encrypts credential files in two places: as part of pipeline job execution, and via a pre-commit
-hook at git commit time.
+hook at Git commit time.
 
 - **EnvGene runtime.** Encrypts as part of pipeline job execution (environment inventory generation,
   environment build, cloud passport processing, effective-set generation). The scope is the environment being
   built. This isolates parallel matrix builds, so broken credentials in a sibling environment do not affect
   the current one.
-- **Pre-commit hook.** Runs on git commit against the working tree. The scope is the whole repository. The
-  hook makes encryption a git-level guarantee, so credential files never enter git history in plaintext,
+- **Pre-commit hook.** Runs on Git commit against the working tree. The scope is the whole repository. The
+  hook makes encryption a Git-level guarantee, so credential files never enter Git history in plaintext,
   regardless of whether the configurator ran the EnvGene pipeline locally.
 
 Both actors apply the same file selector, the same encryption rules per level, the same backend selection,
@@ -85,7 +85,7 @@ and the same safeguards.
 
 SOPS uses asymmetric age-based encryption. The emit format preserves the file content, replaces each
 value with an `ENC[...]` token, and appends a top-level `sops:` metadata block with key material and an
-integrity hash. The unencrypted-keys regex is `^type$`, so the `type` field stays plaintext.
+integrity hash. The unencrypted-keys regular expression is `^type$`, so the `type` field stays plaintext.
 
 Before, an environment instance `credentials.yml`:
 
@@ -124,7 +124,7 @@ Fernet is the AES-128-CBC with HMAC-SHA256 construction provided by the Python `
 See the [Fernet spec](https://github.com/fernet/spec) for the primitives. The same
 `SECRET_KEY` encrypts and decrypts. The on-disk marker `[encrypted:AES256_Fernet]` is a fixed literal,
 not an algorithm identifier. The emit format preserves the file structure and prefixes each encrypted
-value with the marker followed by the base64 token. The unencrypted-keys regex is `^type$`. Values that are
+value with the marker followed by the base64 token. The unencrypted-keys regular expression is `^type$`. Values that are
 the empty string are left unencrypted.
 
 Using the same environment instance `credentials.yml` as the SOPS example above, after (Fernet):
@@ -257,7 +257,7 @@ flowchart TD
     C --> D[Encrypt env-scoped credential files]
     D --> E[End of env job]
 
-    H[Configurator runs git commit] --> I[Pre-commit hook fires]
+    H[Configurator runs Git commit] --> I[Pre-commit hook fires]
     I --> J[Encrypt credential files in the whole working tree]
     J --> K[Commit proceeds with encrypted files]
 ```
