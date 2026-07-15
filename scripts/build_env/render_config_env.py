@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
@@ -609,6 +610,29 @@ class EnvGenerator:
             self.render_app_defs()
             self.render_reg_defs()
 
+            self.validate_appregdefs()
+
+    def process_app_reg_def_process(self, env_name: str, extra_env: dict):
+        logger.info(
+            f"Starting app_reg_def_process for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        with self.ctx.use():
+            self.setup_base_context(extra_env)
+            current_env = self.ctx.current_env
+
+            self.ctx.cloud = self.calculate_cloud_name()
+            self.ctx.tenant = current_env.get("tenant", '')
+            self.ctx.deployer = current_env.get('deployer', '')
+            self.ctx.bgd = current_env.get('bg_domain', '')
+
+            self.set_env_templates()
+            self.generate_bgd_file()
+            self.generate_namespace_files()
+
+            ensure_directory(Path(self.ctx.current_env_dir).joinpath("AppDefs"), 0o755)
+            ensure_directory(Path(self.ctx.current_env_dir).joinpath("RegDefs"), 0o755)
+            self.set_appreg_def_overrides()
+            self.render_app_defs()
+            self.render_reg_defs()
             self.validate_appregdefs()
 
     def render_config_env(self, env_name: str, extra_env: dict):
