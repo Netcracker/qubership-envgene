@@ -119,27 +119,34 @@ class GitRepoManager:
     def snapshot_excluded_paths(self) -> list[str]:
         # protects excluded paths from being reset by the checkout further down
         snapshot_root = self._snapshot_root()
-        delete_dir_if_exists(snapshot_root)
+
         snapshot_paths = []
         for rel_path in self._get_excluded_paths():
-            abs_path = self._repo_root / rel_path
-            if not abs_path.exists():
+            src = self._repo_root / rel_path
+            if not src.exists():
                 continue
-            snapshot_dir = snapshot_root / rel_path
-            snapshot_dir.parent.mkdir(parents=True, exist_ok=True)
-            # rename within repo_root, not a copy - no extra disk space used
-            shutil.move(str(abs_path), str(snapshot_dir))
+
+            dst = snapshot_root / rel_path
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            # os.rename within repo_root, not a copy - no extra disk space used
+            shutil.move(str(src), str(dst))
             snapshot_paths.append(rel_path)
+
         return snapshot_paths
 
     def restore_excluded_paths(self, rel_paths: list[str]) -> None:
         snapshot_root = self._snapshot_root()
+
         for rel_path in rel_paths:
-            abs_path = self._repo_root / rel_path
-            snapshot_dir = snapshot_root / rel_path
-            delete_dir_if_exists(abs_path)
-            abs_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(snapshot_dir), str(abs_path))
+            src = snapshot_root / rel_path
+            dst = self._repo_root / rel_path
+
+            delete_dir_if_exists(dst)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(dst))
+            logger.info(f"Restored {rel_path}")
+
+        delete_dir_if_exists(snapshot_root)
 
     def stage_changes(self, sparse_paths: Optional[list[str]] = None) -> bool:
         logger.info("Staging changes...")

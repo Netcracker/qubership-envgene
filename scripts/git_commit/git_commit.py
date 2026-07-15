@@ -2,7 +2,6 @@ import os
 
 from envgenehelper import logger
 from envgenehelper.git_helper import GitRepoManager
-from envgenehelper.models import SaveArtifactsStrategy
 
 from git_commit.minimize_cred_diffs import minimize_cred_diffs
 
@@ -39,13 +38,11 @@ def git_commit() -> None:
     message = build_commit_message()
     sha = repo_manager.create_detached_commit(message)
 
-    save_artifacts = os.getenv("SAVE_ARTIFACTS_STRATEGY") == SaveArtifactsStrategy.SAVE_ALL
-    snapshot_paths = repo_manager.snapshot_excluded_paths() if save_artifacts else []
+    snapshot_paths = repo_manager.snapshot_excluded_paths()
     try:
         repo_manager.retry_cherry_pick_and_push(sha)
     finally:
-        if save_artifacts:
-            repo_manager.restore_excluded_paths(snapshot_paths)
+        repo_manager.restore_excluded_paths(snapshot_paths)
 
 
 if __name__ == '__main__':
