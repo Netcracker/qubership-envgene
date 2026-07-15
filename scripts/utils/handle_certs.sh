@@ -1,6 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-set -x
 
 certs_dir="${CI_PROJECT_DIR:-}/configuration/certs"
 default_cert="/default_cert.pem"
