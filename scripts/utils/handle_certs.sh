@@ -48,7 +48,7 @@ function debugPrintCertsFromFile {
 function updateCertificates {
     local CA_FILE="$1"
     if [[ -e "${CA_FILE}" && -n "${CA_FILE}" ]]; then
-        debugPrintCertsFromFile "${CA_FILE}" "Certificates in source file BEFORE import (${CA_FILE})"
+        # debugPrintCertsFromFile "${CA_FILE}" "Certificates in source file BEFORE import (${CA_FILE})"
 
         local LOCAL_NAME
         LOCAL_NAME="$(basename "${CA_FILE}" | sed 's/\.[^.]*$//').crt"
@@ -58,11 +58,11 @@ function updateCertificates {
         export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
         echo "export REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE}" >> ~/.bashrc
 
-        debugPrintCertsFromFile "/usr/local/share/ca-certificates/${LOCAL_NAME}" "Certificates AFTER import (installed file /usr/local/share/ca-certificates/${LOCAL_NAME})"
-        [[ "${ENVGENE_LOG_LEVEL}" == "DEBUG" ]] && echo "[DEBUG] Certificate import completed successfully for ${CA_FILE}"
+        # debugPrintCertsFromFile "/usr/local/share/ca-certificates/${LOCAL_NAME}" "Certificates AFTER import (installed file /usr/local/share/ca-certificates/${LOCAL_NAME})"
+        # [[ "${ENVGENE_LOG_LEVEL}" == "DEBUG" ]] && echo "[DEBUG] Certificate import completed successfully for ${CA_FILE}"
     else
-        log "CA file ${CA_FILE} not found or empty"
-        exit 1
+        log "[WARNING]: CA file ${CA_FILE} not found or empty, skipping"
+        return 0
     fi
 }
 
