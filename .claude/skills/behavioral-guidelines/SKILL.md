@@ -72,6 +72,95 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+
+---
+
+## 5. BDD Test Fixture Conventions
+
+### Default configuration files (framework/defaults/)
+
+Hardcoded data structures in test framework initializers are a maintenance hazard — they are invisible to diffing and cannot be audited by looking at test data.
+
+**Rule**: all default fixture values written by `EnvGeneWorkspace.__init__()` must live as real files under `cucumber_tests/framework/defaults/`:
+
+```
+cucumber_tests/framework/defaults/
+├── credentials.yml   # default test credentials (test-registry dummy values)
+└── registry.yml      # default registry config (maven-repo localhost URL)
+```
+
+`workspace.py` copies these files with `shutil.copy()` during workspace setup. To override for a specific test case, place the replacement file under `configuration/` inside the test data directory:
+
+```
+test_data/e2e/uc_foo_1/
+└── configuration/
+    ├── credentials/
+    │   └── credentials.yml   # overrides framework/defaults/credentials.yml
+    └── registry.yml          # overrides framework/defaults/registry.yml
+```
+
+`shutil.copytree(source_dir, workspace.base_dir, dirs_exist_ok=True)` will overwrite the defaults with the test-specific values.
+
+### Per-scenario pipeline parameters (params.yml)
+
+Inline pipeline parameter values in feature files are acceptable only when they are:
+- Short scalars (< 40 chars), e.g. `"true"`, `"env-templates:2.0.0"`
+- Semantically meaningful without context, e.g. `"test-cluster/test-env"`
+
+Long values (JSON payloads, structured objects) must be stored in `params.yml` inside the test data directory and loaded with the step:
+
+```gherkin
+Given the pipeline parameters are loaded from test data
+```
+
+This step reads `params.yml` from the workspace root and merges values into `workspace.extra_env`.
+
+---
+
+## 6. Running Tests After Changes
+
+**After any code change to `cucumber_tests/`**, run the full test suite in Docker following `cucumber_tests/LOCAL_TESTING_GUIDE.md`. The short version:
+
+### Step 1 — Ensure the Docker environment is running
+
+```bash
+# Build the production image (only needed if Dockerfile changed)
+docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+
+# Start / rebuild the cucumber container
+docker compose -f devtools/docker-compose.yml up -d --build cucumber
+
+# Install Python packages inside the container
+docker compose -f devtools/docker-compose.yml exec -T cucumber \
+  bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
+```
+
+### Step 2 — Run all tests
+
+```bash
+docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+  "export PYTHONPATH=/workspace && cd /workspace && \
+   pytest cucumber_tests/step_defs/ -v -s \
+     --junitxml=reports/full_run.xml"
+```
+
+- JUnit XML report is saved to `reports/full_run.xml`.
+- All tests must be **green** (or `xpassed`) before committing.
+
+### Step 3 — Run a single feature file (faster iteration)
+
+```bash
+docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+  "export PYTHONPATH=/workspace && cd /workspace && \
+   pytest cucumber_tests/step_defs/test_blue_green_deployment.py -v -s"
+```
+
+### Step 4 — Cleanup (optional)
+
+```bash
+docker compose -f devtools/docker-compose.yml down
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

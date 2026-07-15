@@ -1,0 +1,5 @@
+# Generic placeholder YAML used as default content when create_file() is called
+# without an explicit content argument. This represents the minimal valid YAML
+# body for paramset, shared_template_variable, and other entity files in tests.
+name: test
+value: placeholder

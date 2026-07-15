@@ -1,0 +1,7 @@
+# Default registry configuration used by all tests.
+# Place this file inside a test data directory (configuration/registry.yml)
+# to override these defaults for a specific test case.
+test-registry:
+  maven-repo: http://localhost:8000/release
+  username: "credentials('test-registry').username"
+  password: "credentials('test-registry').password"

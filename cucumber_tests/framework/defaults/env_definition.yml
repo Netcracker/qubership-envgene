@@ -1,0 +1,9 @@
+# Default env_definition.yml content used as a minimal inventory for test scenarios.
+# Place this file inside a test data directory (Inventory/env_definition.yml)
+# to override for a specific test case.
+inventory:
+  environmentName: test-env
+  cloudName: test-cluster
+envTemplate:
+  name: placeholder
+  artifact: env-templates:0.0.0
