@@ -53,7 +53,7 @@ The user-facing categories below define what is in scope. The file selector impl
 
 The selector matches a credential file when either of these rules applies:
 
-- **Filename**: the basename without extension matches the regex
+- **Filename**: the basename without extension matches the regular expression
   `^credentials$|^creds$|-(credentials|creds)($|-)`. Covers `credentials`, `creds`,
   `<prefix>-credentials`, `<prefix>-credentials-<suffix>`, and `<prefix>-creds`.
 - **Folder**: any `.yml` or `.yaml` file under a `Credentials/` or `credentials/` folder, regardless of
