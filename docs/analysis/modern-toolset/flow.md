@@ -10,7 +10,6 @@
   - [`namespace-map.yml`](#namespace-mapyml)
   - [`APPLICATION_VERSIONS`](#application_versions)
   - [`OPERATION_TYPE`](#operation_type)
-  - [`BG_OPERATION_TYPE`](#bg_operation_type)
   - [`BG_STATE`](#bg_state)
   - [`PIPELINE_TYPE`](#pipeline_type)
   - [`BG_NS_TARGET`](#bg_ns_target)
@@ -36,13 +35,12 @@
       - [1.10 step `process_sd`](#110-step-process_sd)
       - [1.11 step `generate_deployment_plan`](#111-step-generate_deployment_plan)
       - [1.12 step `env_build`](#112-step-env_build)
-      - [1.13 step `set_cleaned_mark`](#113-step-set_cleaned_mark)
-      - [1.14 step `generate_effective_set`](#114-step-generate_effective_set)
-      - [1.15 step `generate_argocd_repo`](#115-step-generate_argocd_repo)
-      - [1.16 step `cmdb_import`](#116-step-cmdb_import)
-      - [1.17 step `postprocess`](#117-step-postprocess)
-      - [1.18 step `git_commit`](#118-step-git_commit)
-      - [1.19 step `es_pusher`](#119-step-es_pusher)
+      - [1.13 step `generate_effective_set`](#113-step-generate_effective_set)
+      - [1.14 step `generate_argocd_repo`](#114-step-generate_argocd_repo)
+      - [1.15 step `cmdb_import`](#115-step-cmdb_import)
+      - [1.16 step `postprocess`](#116-step-postprocess)
+      - [1.17 step `git_commit`](#117-step-git_commit)
+      - [1.18 step `es_pusher`](#118-step-es_pusher)
     - [2 job `sync`](#2-job-sync)
       - [2.1 step `preprocess`](#21-step-preprocess)
       - [2.2 step `sync`](#22-step-sync)
@@ -52,23 +50,32 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 ## OQ
 
-1. `run_cloud_passport` (берет паспорт из даунстри джобы и декриптит) уже в `env_prepare`?
-2. `generate_deployment_plan`, `argocd_repo_generator`, `es-pusher`, `git_commit` лягут под `orchestrator.py`?
-3. В бгд кейсе что должно быть в `namespace-map.yml` в `deployPostfix` - bss или bss-peer, bss-origin?
-4. Нужны ли `process_env_template` / `app_reg_def_process` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
+1. Нужны ли `process_env_template` / `app_reg_def_process` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
    можно скипать? Сейчас (PoC) отрабатывают все.
-5. `generate_deployment_plan`
-   1. всегда требует `APPLICATION_VERSION` ?
+2. [Done]`generate_deployment_plan`
+   1. всегда требует `APPLICATION_VERSION`?
+      1. A: Да
    2. использует ли `deploy-plan.yml` из предыдущей операции (из репо) как инпут
-6. `APPLICATION_VERSIONS` ?
+      1. А: Нет, дискаверится из арги
+3. `APPLICATION_VERSIONS` ?
    1. без него будет генерится только topology + pipeline
    2. с ним все контексты
       1. если `OPERATION_TYPE: !CLEAN` то `APPLICATION_VERSION` мандаторен
    3. в nocmdb только
-7. Кто и когда чекаутится ES репо?
-8. Как обрабатываем `COMMIT`? Делаем ли клин legacy нс?
-9. Нужна ли валидация `BG_STATE` при бг операции, если это делает пайп оркестратор?
-10. Пересчитывать ES для каждой смены стейта или 
+4. Кто и когда чекаутит ES репо?
+5. Как менять бг стейт в ES
+   1. Пересчитывать ES полностью
+   2. Ввести лайт режим калькулятора который правит только стейты
+   3. Ввести пост калькулятор, питон функцию которая будет править стейты
+6. Как обрабатываем `COMMIT` бг операцию? Делаем ли клин legacy нс?
+7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`? Или только дженеричные:
+   1. `DEPLOY_POSTFIXES_FILTER`
+   2. `NAMESPACE_NAMES_FILTER`
+   3. `COMPONENT_NAMES_FILTER`
+   4. `WAVE_NAMES_FILTER`
+8. Где будет валидация на корректность бг операции (разрешён ли переход состояний)
+   1. только в оркестратор пайпе
+   2. в оркестратор пайпе и в энвгене (сейчас она в энвгене есть и ее хочется выпилить)
 
 ## AI
 
@@ -80,9 +87,8 @@ for the target flow. The per-component docs in this directory elaborate individu
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES/sd.yaml or not
 5. After the flow is finalized analyze the flow for optimization
 6. [phase2] Согласовать с Леней `BG_MANAGE`, `BG_STATE`
-7. [phase2] Согласовать с Артемом
-8. Оставить деплой только на warmup
-9. Стейт файл из нью лука
+7. [phase2] Согласовать с Артемом `discovery_deployment_plan`. Узнать Кто и когда чекаутит ES репо?
+8. Стейт файл из нью лука
 
 ## Data exchange Rules
 
@@ -186,13 +192,8 @@ TBD
 
 ## `OPERATION_TYPE`
 
-`OPERATION_TYPE`: enum[ `CLEAN`, `DEPLOY`, `BGD` ]
+`OPERATION_TYPE`: enum[ `CLEAN`, `DEPLOY`, `BGD-INIT`, `BGD-WARMUP`, `BGD-PROMOTE`, `BGD-ROLLBACK`, `BGD-COMMIT` ]
 default: `DEPLOY`
-
-## `BG_OPERATION_TYPE`
-
-`BG_OPERATION_TYPE`: enum[ `INIT`, `WARMUP`, `PROMOTE`, `ROLLBACK`, `COMMIT` ]
-default: no default
 
 ## `BG_STATE`
 
@@ -216,12 +217,12 @@ default: `OLD`
 
 ## `BG_NS_TARGET`
 
-`BG_NS_TARGET`: enum [ `ACTIVE`, `CANDIDATE`, `NONE` ]
-default: `NONE`
+`BG_NS_TARGET`: enum [ `ACTIVE`, `CANDIDATE` ]
+default: None
 
 1. Используется в связке с `ENV_TEMPLATE_VERSION`:
    1. На основе стейт файла и `BG_NS_TARGET` вычисляется для какого ns обновить версию темплейта `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
-   2. `NONE` обновляет в `artifact`
+2. ?
 
 ## state file
 
@@ -481,7 +482,7 @@ TBD
 
 Triggers:
 
-- `OPERATION_TYPE: BGD` and
+- `OPERATION_TYPE: BGD-*` and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
@@ -494,10 +495,10 @@ Functions:
     - actions:
       - validate state transition
       - create/update BG state files
-    - AI[phase2-bgd]: replace `BG_MANAGE` to `OPERATION_TYPE`
+    - AI[phase2-bgd]: replace `BG_MANAGE` to `OPERATION_TYPE` in trigger
 2. `warmup`
-    - trigger:
-      - `BG_OPERATION_TYPE: WARMUP`
+    - triggers:
+      - `OPERATION_TYPE: BGD-WARMUP`
     - input:
       - env instance
     - output:
@@ -505,10 +506,10 @@ Functions:
     - actions:
         - copy active -> candidate namespace/applications
     - AI[phase3-bgd]: implement warmup on ES instead of env instance
-    - AI[phase2-bgd]: add `BG_OPERATION_TYPE: WARMUP` trigger
+    - AI[phase2-bgd]: add `OPERATION_TYPE: BGD-WARMUP` trigger
 3. `promote`
-    - trigger:
-      - `BG_OPERATION_TYPE: PROMOTE`
+    - triggers:
+      - `OPERATION_TYPE: BGD-PROMOTE`
     - input:
       - ???
     - output:
@@ -567,7 +568,7 @@ Functions:
 1. `set_template_version`
     - input:
       - `ENV_TEMPLATE_VERSION`
-      - `BG_NS_TARGET` (Optional)
+      - `BG_NS_TARGET`
       - `ENV_TEMPLATE_VERSION_UPDATE_MODE`
       - env definition
     - output:
@@ -723,13 +724,13 @@ Functions:
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD`)
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD-WARMUP`) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
 
 1. `generate_deployment_plan`
-    - trigger:
+    - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
       - `APPLICATION_VERSION`
@@ -752,10 +753,10 @@ Functions:
     - AI[phase1]: implement uniq app names (Artem)
     - AI[phase2]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
 2. `discovery_deployment_plan`
-    - trigger:
-      - `OPERATION_TYPE: BGD`
+    - triggers:
+      - `OPERATION_TYPE: DEPLOY`
     - input:
-      - effective set (где его взять)
+      - effective set (где его взять?)
         - argo url + cred - TBD
       - namespace - TBD
     - output:
@@ -768,12 +769,14 @@ Functions:
 
 Triggers:
 
-- `OPERATION_TYPE: DEPLOY`
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`) and
 - (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: OLD` and `ENV_BUILDER: true`))
 
 Functions:
 
 1. `generate_solution_structure`
+    - triggers:
+      - `OPERATION_TYPE: DEPLOY`
     - input:
       - `sd.yaml` or `deploy-plan.yml`
     - output:
@@ -785,6 +788,8 @@ Functions:
     - AI[phase2]: remove SD support
     - AI[phase2]: add `namespace-map.yml` as input to optimize execution time
 2. `run_build_environment`
+    - triggers:
+      - `OPERATION_TYPE: DEPLOY`
     - input:
       - downloaded template files
       - env_definition
@@ -808,16 +813,9 @@ Functions:
     - AI[phase1]: test manually
     - AI[phase2]: prepare a UC, add tests
     - AI[phase2-bgd]: переписать `apply_ns_build_filter` на использование `BG_NS_TARGET` нужно ли?
-
-#### 1.13 step `set_cleaned_mark`
-
-Triggers:
-
-- `OPERATION_TYPE: CLEAN` and
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: OLD` and `ENV_BUILDER: true`))
-Functions:
-
-1. `set_cleaned_mark`
+3. `set_cleaned_mark`
+    - triggers:
+      - `OPERATION_TYPE: CLEAN`
     - input:
       - env instance namespaces
       - `NAMESPACE_NAMES`
@@ -828,7 +826,7 @@ Functions:
     - [phase1] currently inside `run_build_environment` (`build_env.py`)
     - AI[phase2]: extract from `run_build_environment`
 
-#### 1.14 step `generate_effective_set`
+#### 1.13 step `generate_effective_set`
 
 Triggers:
 
@@ -846,7 +844,6 @@ Functions:
     - actions:
       - resolve DD + zip per app with appreg defs
       - download DD + zip, unzip
-    - AI[phase1]: extract from sbom_generator
     - AI[phase1]: add `APP_ARTIFACTS_DIR`
     - AI[phase1]: support DP as well as SD
     - AI[phase2]: remove SD support
@@ -874,19 +871,28 @@ Functions:
     - actions:
       - generates ES
     - AI[phase1]: support DP as well as SD
+    - AI[phase2-bgd]: Проверить что бг кейс будет поддержан из коробки c DP
+        - `deployPostfix` + включенность в бг домен определяет маппинг на нс фолдер в ES
+        - `namespace` определяет имя фолдера в ES
     - AI[phase2]: remove SD support
     - AI[phase1]: implement uniq app names
-5. `мерж в ES`
+5. `partial_es_processing`
+    - triggers:
+      - `PIPELINE_TYPE: OLD` and `GENERATE_EFFECTIVE_SET: true`
     - input:
+      - Effective Set from previous function `ES Calc CLI`
+      - Effective Set from previous operation, repository
     - output:
+      - Effective Set
     - actions:
-    - AI[phase2]: не должна вызваться в новом флоу
+      - в ES мержится реплейсом application слайсы которые изменились в текущей операции генерации
+    - AI[phase1!]: set `PIPELINE_TYPE: OLD` and `GENERATE_EFFECTIVE_SET: true` trigger
 
-#### 1.15 step `generate_argocd_repo`
+#### 1.14 step `generate_argocd_repo`
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD`) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD-WARMUP`) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
@@ -895,7 +901,7 @@ Functions:
     - input:
       - `deploy-plan.yml`
       - effective set
-      - local DD (from dd_downloading)
+      - local DD (from `dd_downloading`)
       - `APP_ARTIFACTS_DIR`
       - params.environment_id -> `build.env.FULL_ENV_NAME`
       - TBD
@@ -909,7 +915,7 @@ Functions:
     - AI[phase1]: encrypt ARGO_DPG_CONTEXT.env (Artem)
     - AI[phase2]: move to GitHub
 
-#### 1.16 step `cmdb_import`
+#### 1.15 step `cmdb_import`
 
 Triggers:
 
@@ -923,10 +929,10 @@ Functions:
     - input:
       - `build.env.FULL_ENV_NAME`
     - AI[phase1]: do not call in the new flow, call in the old flow
-    - AI[phase1]: add the step into `env_prepare` job
+    - AI[phase1!]: add the step into `env_prepare` job
     - AI[phase1]: remove envgene dot env file
 
-#### 1.17 step `postprocess`
+#### 1.16 step `postprocess`
 
 Triggers:
 
@@ -937,7 +943,7 @@ Functions:
 1. `crypt.encrypt`
    - AI[phase2] Check no-op if `crypt: false`
 
-#### 1.18 step `git_commit`
+#### 1.17 step `git_commit`
 
 Triggers:
 
@@ -956,7 +962,7 @@ Functions:
     - AI[phase3]: unify with `es-pusher`
     - AI[phase2]: chech no-op if no changes
 
-#### 1.19 step `es_pusher`
+#### 1.18 step `es_pusher`
 
 Triggers:
 
@@ -993,7 +999,7 @@ Functions:
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD`) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD-WARMUP`) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 #### 2.1 step `preprocess`
