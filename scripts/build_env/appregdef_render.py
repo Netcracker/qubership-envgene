@@ -74,6 +74,7 @@ def run_app_reg_def_workflow(*, gitlab_deploy: bool) -> None:
         "render_dir": render_dir,
         "env": env_name,
         "templates_dirs": templates_dirs,
+        "templates_dir": templates_dirs.get(NamespaceRole.COMMON, ""),
         "cloud_passport_file_path": cloud_passport_file_path,
         "env_instances_dir": render_dir,
     }
