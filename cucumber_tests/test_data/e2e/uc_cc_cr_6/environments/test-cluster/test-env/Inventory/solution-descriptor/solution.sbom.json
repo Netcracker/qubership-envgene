@@ -1,0 +1,11 @@
+{
+  "version": 2.1,
+  "type": "solutionDeploy",
+  "deployMode": "composite",
+  "applications": [
+    {
+      "version": "test-app:1.0.0",
+      "deployPostfix": "app"
+    }
+  ]
+}

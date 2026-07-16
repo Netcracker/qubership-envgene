@@ -1,0 +1,7 @@
+name: "test-tenant"
+registryName: "default"
+labels: []
+deployParameters:
+  tenant_label: ${namespace_name}
+e2eParameters: {tenant_test_label: "${namespace_test_name}"}
+technicalConfigurationParameters: {tenant_config_label: "${namespace_config_name}"}

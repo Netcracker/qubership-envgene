@@ -1,0 +1,13 @@
+name: "test-env-app"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  service_config: ${config_url}
+e2eParameters: {}
+technicalConfigurationParameters: {config_url: "https://config.example.com"}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

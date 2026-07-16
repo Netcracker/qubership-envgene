@@ -1,0 +1,13 @@
+name: "test-env-app"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  namespace_db_url: "postgres://db.local"
+e2eParameters: {namespace_test_url: "https://test.local"}
+technicalConfigurationParameters: {namespace_config_url: "https://config.local"}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

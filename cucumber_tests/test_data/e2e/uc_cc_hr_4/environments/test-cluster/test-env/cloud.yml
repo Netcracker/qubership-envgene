@@ -1,0 +1,10 @@
+name: "test-cluster"
+labels: []
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  cloud_config: ${namespace_db_url}
+e2eParameters: {cloud_test_config: "${namespace_test_url}"}
+technicalConfigurationParameters: {cloud_config_param: "${namespace_config_url}"}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

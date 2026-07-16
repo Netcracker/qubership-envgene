@@ -1,0 +1,13 @@
+name: "test-env-app"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  organization: ${tenant_id}
+e2eParameters: {test_org: "${tenant_test_id}"}
+technicalConfigurationParameters: {config_org: "${tenant_config_id}"}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
