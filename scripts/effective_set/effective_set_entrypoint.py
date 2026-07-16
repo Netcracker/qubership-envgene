@@ -1,8 +1,9 @@
 import shlex
 import subprocess
 from os import getenv
+from pathlib import Path
 
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, INVENTORY_DIR_NAME
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, \
     resolve_partial_merge_mode, ES_MAPPING_FILE, ESGenerationContext, ES_DIR_NAME, get_es_generation_mode
 from envgenehelper.file_helper import delete_dir, deleteFileIfExists, delete_dir_if_exists
@@ -10,29 +11,40 @@ from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
 from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 
+from deployment_plan.application_entries import DEPLOY_PLAN_FILE
 from effective_set.handle_effective_set_config import handle_effective_set_config
+
+
+def _resolve_application_source() -> tuple[Path | None, Path | None]:
+    inventory_dir = get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME
+    deploy_plan_path = inventory_dir / DEPLOY_PLAN_FILE
+    if deploy_plan_path.is_file():
+        logger.info(f"Using deploy-plan from {deploy_plan_path} for effective-set generation")
+        return None, deploy_plan_path
+
+    return get_sd_dir().joinpath(SD_FILE_NAME), None
 
 
 def effective_set_entrypoint():
     full_env_name = getenv("FULL_ENV_NAME")
     effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
-    sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
+    sd_path, deploy_plan_path = _resolve_application_source()
     delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
     if get_es_generation_mode() == GenerationMode.PARTIAL and delta_sd_path.is_file():
         if resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
-            _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path)
+            _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path or get_sd_dir().joinpath(SD_FILE_NAME))
         else:
             _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path)
     else:
-        _run_full_generation(effective_set_dir, full_env_name, sd_path)
+        _run_full_generation(effective_set_dir, full_env_name, sd_path, deploy_plan_path)
 
     # do not commit delta sd to repo
     deleteFileIfExists(delta_sd_path)
 
 
-def _run_full_generation(effective_set_dir, full_env_name, sd_path):
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
+def _run_full_generation(effective_set_dir, full_env_name, sd_path, deploy_plan_path=None):
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path, deploy_plan_path)
     delete_dir(effective_set_dir)
     subprocess.run(cmd, shell=True, check=True)
 
@@ -130,7 +142,7 @@ def _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path):
                 writeYamlToFile(path, mapping)
 
 
-def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
+def _build_cli_cmd(effective_set_dir, full_env_name, sd_path, deploy_plan_path=None):
     cmd = [
         "/module/scripts/utils/run_effective_set_cli.sh",
         f"--env-id={full_env_name}",
@@ -138,12 +150,16 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
         f"--output={effective_set_dir}",
     ]
 
-    if sd_path.is_file():
-        cmd.extend([
-            "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
-            "--sboms-path=$CI_PROJECT_DIR/sboms",
-            f"--sd-path={sd_path}",
-        ])
+    registry_sbom_args = [
+        "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
+        "--sboms-path=$CI_PROJECT_DIR/sboms",
+    ]
+    if deploy_plan_path and deploy_plan_path.is_file():
+        cmd.extend(registry_sbom_args)
+        cmd.append(f"--deploy-plan-path={deploy_plan_path}")
+    elif sd_path and sd_path.is_file():
+        cmd.extend(registry_sbom_args)
+        cmd.append(f"--sd-path={sd_path}")
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
     if effective_set_config:

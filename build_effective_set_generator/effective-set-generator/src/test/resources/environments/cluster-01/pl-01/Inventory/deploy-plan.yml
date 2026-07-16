@@ -1,0 +1,6 @@
+- wave: 0
+  version: MONITORING:0.91.0-delivery-20241115.141230-4-RELEASE
+  deployPostfix: monitoring
+- wave: 0
+  version: postgres:pg16-2.10.5-20241215.141230-3-RELEASE
+  deployPostfix: pg
