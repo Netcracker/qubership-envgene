@@ -258,11 +258,15 @@ class EnvGenerator:
         return base_name + self._get_bgd_suffix(ns_name)
 
     def generate_solution_structure(self):
+        from os import getenv
+
         from deployment_plan.deploy_plan_adapter import resolve_application_entries
+        from pipeline.pipeline_parameters import GITLAB_DEPLOY
 
         application_entries = resolve_application_entries(
             Path(self.ctx.env_instances_dir),
             Path(self.ctx.current_env_dir),
+            gitlab_deploy=getenv("PIPELINE_TYPE") == GITLAB_DEPLOY,
         )
         solution_structure = {}
         if not application_entries:

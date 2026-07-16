@@ -11,32 +11,32 @@ from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
 from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 
-from deployment_plan.application_entries import DEPLOY_PLAN_FILE
+from deployment_plan.deploy_plan_adapter import resolve_application_source_paths
 from effective_set.handle_effective_set_config import handle_effective_set_config
-
-
-def _resolve_application_source() -> tuple[Path | None, Path | None]:
-    inventory_dir = get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME
-    deploy_plan_path = inventory_dir / DEPLOY_PLAN_FILE
-    if deploy_plan_path.is_file():
-        logger.info(f"Using deploy-plan from {deploy_plan_path} for effective-set generation")
-        return None, deploy_plan_path
-
-    return get_sd_dir().joinpath(SD_FILE_NAME), None
+from pipeline.pipeline_parameters import GITLAB_DEPLOY
 
 
 def effective_set_entrypoint():
     full_env_name = getenv("FULL_ENV_NAME")
     effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
-    sd_path, deploy_plan_path = _resolve_application_source()
     delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
     if get_es_generation_mode() == GenerationMode.PARTIAL and delta_sd_path.is_file():
+        sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
         if resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
-            _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path or get_sd_dir().joinpath(SD_FILE_NAME))
+            _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path)
         else:
             _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path)
     else:
+        inventory_dir = get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME
+        gitlab_deploy = getenv("PIPELINE_TYPE") == GITLAB_DEPLOY
+        sd_path, deploy_plan_path = resolve_application_source_paths(
+            inventory_dir,
+            sd_path=get_sd_dir().joinpath(SD_FILE_NAME),
+            gitlab_deploy=gitlab_deploy,
+        )
+        if deploy_plan_path:
+            logger.info(f"Using deploy-plan from {deploy_plan_path} for effective-set generation")
         _run_full_generation(effective_set_dir, full_env_name, sd_path, deploy_plan_path)
 
     # do not commit delta sd to repo
