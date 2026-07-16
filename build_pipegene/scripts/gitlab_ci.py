@@ -225,5 +225,9 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             job.set_sparse_checkout(sparse_paths)
         else:
             job.add_variables(GIT_STRATEGY="empty")
+            job.prepend_scripts(
+                '/module/scripts/utils/handle_certs.sh',
+                'source ~/.bashrc',
+            )
 
     sorted_pipeline.write_yaml()
