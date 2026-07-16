@@ -9,7 +9,7 @@ from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.yaml_helper import load_json_or_yaml
 
 from build_env.namespace_map import NAMESPACE_MAP_FILE
-from deployment_plan.deploy_plan_adapter import DEPLOY_PLAN_FILE
+from deployment_plan.application_entries import DEPLOY_PLAN_FILE
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 _INTERMEDIATE_PLAN_FILE = "deploy-plan-calculated.yml"
