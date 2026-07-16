@@ -57,7 +57,7 @@ on:
 
 env:
   #CONFIGURATION
-  GITHUB_USER_EMAIL: envgene@qubership.org
+  GITHUB_USER_EMAIL: opensourcegroup@netcracker.com
   GITHUB_USER_NAME: envgene
   SECRET_POSTFIX: custom_secret
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}

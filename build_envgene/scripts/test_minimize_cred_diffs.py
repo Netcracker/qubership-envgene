@@ -91,7 +91,7 @@ def cred_repo(tmp_path, monkeypatch):
 
     repo = Repo.init(tmp_path)
     with repo.config_writer() as cw:
-        cw.set_value('user', 'email', 'test@example.com')
+        cw.set_value('user', 'email', 'example@example.com')
         cw.set_value('user', 'name', 'test')
 
     cred_path = tmp_path / CRED_REL_PATH

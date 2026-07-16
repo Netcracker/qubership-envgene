@@ -2172,7 +2172,7 @@ registry:
       gcpRegProject: "123456789012"
       gcpRegPoolId: "idp-pool-id"
       gcpRegProviderId: "idp-provider"
-      gcpRegSAEmail: "test@test.iam.gserviceaccount.com"
+      gcpRegSAEmail: "example@example.com"
   mavenConfig:
     authConfig: gcp-maven
     repositoryDomainName: "https://artifactregistry.googleapis.com"
@@ -2728,7 +2728,7 @@ authConfig:
     gcpRegProject: 123456789012
     gcpRegPoolId: idp-pool-id
     gcpRegProviderId: idp-provider
-    gcpRegSAEmail: test@test.iam.gserviceaccount.com
+    gcpRegSAEmail: example@example.com
 
   maven-gcp-sa:
     authType: shortLived
