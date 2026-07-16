@@ -9,7 +9,7 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import resolve_es_generation_mode
 
 from bg_manage.bg_manage import run_bg_manage
-from build_env.appregdef_render import run_app_reg_def_process, run_appregdef_render
+from build_env.appregdef_render import run_app_reg_def_workflow
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
@@ -146,7 +146,7 @@ class AppRegDefProcessStep(PipelineStep):
         return ctx.is_gitlab_deploy()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_app_reg_def_process()
+        run_app_reg_def_workflow(gitlab_deploy=True)
 
 
 class AppregdefRenderStep(PipelineStep):
@@ -158,7 +158,7 @@ class AppregdefRenderStep(PipelineStep):
         return bool(ctx.params.get('ENV_BUILDER')) and not ctx.is_gitlab_deploy()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_appregdef_render()
+        run_app_reg_def_workflow(gitlab_deploy=False)
 
 
 class GenerateDeploymentPlanStep(PipelineStep):

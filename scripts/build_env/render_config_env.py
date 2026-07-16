@@ -609,28 +609,20 @@ class EnvGenerator:
         self.render_reg_defs()
         self.validate_appregdefs()
 
-    def process_app_reg_defs(self, env_name: str, extra_env: dict):
+    def process_app_reg_defs(self, env_name: str, extra_env: dict, *, include_namespaces: bool = False):
         logger.info(
             f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-            self._render_app_reg_defs()
-
-    def process_app_reg_def_process(self, env_name: str, extra_env: dict):
-        logger.info(
-            f"Starting app_reg_def_process for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
-        with self.ctx.use():
-            self.setup_base_context(extra_env)
-            current_env = self.ctx.current_env
-
-            self.ctx.cloud = self.calculate_cloud_name()
-            self.ctx.tenant = current_env.get("tenant", '')
-            self.ctx.deployer = current_env.get('deployer', '')
-            self.ctx.bgd = current_env.get('bg_domain', '')
-
-            self.set_env_templates()
-            self.generate_bgd_file()
-            self.generate_namespace_files()
+            if include_namespaces:
+                current_env = self.ctx.current_env
+                self.ctx.cloud = self.calculate_cloud_name()
+                self.ctx.tenant = current_env.get("tenant", '')
+                self.ctx.deployer = current_env.get('deployer', '')
+                self.ctx.bgd = current_env.get('bg_domain', '')
+                self.set_env_templates()
+                self.generate_bgd_file()
+                self.generate_namespace_files()
             self._render_app_reg_defs()
 
     def render_config_env(self, env_name: str, extra_env: dict):

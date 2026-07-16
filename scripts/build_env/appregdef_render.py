@@ -79,22 +79,14 @@ def run_app_reg_def_workflow(*, gitlab_deploy: bool) -> None:
     }
 
     render_context = EnvGenerator()
+    render_context.process_app_reg_defs(
+        env_name, render_context_vars, include_namespaces=gitlab_deploy,
+    )
     if gitlab_deploy:
-        render_context.process_app_reg_def_process(env_name, render_context_vars)
         namespace_map = compute_namespace_map(Path(render_dir) / "Namespaces")
         write_namespace_map(namespace_map, Path(env_dir) / "Inventory" / NAMESPACE_MAP_FILE)
-    else:
-        render_context.process_app_reg_defs(env_name, render_context_vars)
 
     placement_mode = get_envgene_config_yaml().get("app_reg_defs_placement", "dual").lower()
     write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode)
     override_app_reg_defs(base_dir, env_dir, placement_mode)
     update_generated_versions(env_dir, BUILD_ENV_TAG, template_versions[NamespaceRole.COMMON])
-
-
-def run_appregdef_render() -> None:
-    run_app_reg_def_workflow(gitlab_deploy=False)
-
-
-def run_app_reg_def_process() -> None:
-    run_app_reg_def_workflow(gitlab_deploy=True)
