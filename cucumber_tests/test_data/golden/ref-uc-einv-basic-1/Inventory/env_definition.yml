@@ -1,0 +1,6 @@
+envTemplate:
+  artifact: project-env-template:v1.2.3
+  name: test
+inventory:
+  cloudName: test-cluster
+  environmentName: test-env

@@ -1,0 +1,9 @@
+{
+  "sharedTemplateVariables": [
+    {
+      "action": "delete",
+      "place": "env",
+      "name": "prod_vars"
+    }
+  ]
+}

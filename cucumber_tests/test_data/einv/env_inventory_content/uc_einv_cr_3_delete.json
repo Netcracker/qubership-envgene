@@ -1,0 +1,9 @@
+{
+  "credentials": [
+    {
+      "action": "delete",
+      "place": "cluster",
+      "name": "db_creds"
+    }
+  ]
+}

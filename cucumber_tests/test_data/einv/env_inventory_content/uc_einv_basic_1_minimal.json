@@ -1,0 +1,15 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {
+        "environmentName": "test-env",
+        "cloudName": "test-cluster"
+      },
+      "envTemplate": {
+        "name": "test",
+        "artifact": "project-env-template:v1.2.3"
+      }
+    }
+  }
+}
