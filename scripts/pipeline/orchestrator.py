@@ -9,13 +9,14 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import resolve_es_generation_mode
 
 from bg_manage.bg_manage import run_bg_manage
-from build_env.appregdef_render import run_appregdef_render
+from build_env.appregdef_render import run_app_reg_def_process, run_appregdef_render
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import effective_set_entrypoint
 from effective_set.sboms_retention_policy import sboms_retention_policy
+from deployment_plan.generate_deployment_plan import run_generate_deployment_plan
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
@@ -108,6 +109,8 @@ class ProcessSdStep(PipelineStep):
         return "process_sd"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        if ctx.is_gitlab_deploy():
+            return False
         application_versions = resolve_sd_parameters(ctx)
         if application_versions:
             ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
@@ -134,16 +137,40 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
+class AppRegDefProcessStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "app_reg_def_process"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return ctx.is_gitlab_deploy()
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_app_reg_def_process()
+
+
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.params.get('PIPELINE_TYPE') == PipelineType.GITLAB_DEPLOY
+        return bool(ctx.params.get('ENV_BUILDER')) and not ctx.is_gitlab_deploy()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
+
+
+class GenerateDeploymentPlanStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "generate_deployment_plan"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return ctx.is_gitlab_deploy()
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_generate_deployment_plan(ctx)
 
 
 class EnvBuildStep(PipelineStep):
@@ -152,7 +179,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.params.get('PIPELINE_TYPE') == PipelineType.GITLAB_DEPLOY
+        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_build_environment()
@@ -164,7 +191,7 @@ class GenerateEffectiveSetStep(PipelineStep):
         return "generate_effective_set"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or ctx.params.get('PIPELINE_TYPE') == PipelineType.GITLAB_DEPLOY
+        will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or ctx.is_gitlab_deploy()
         if not will_run and ctx.params.get('CUSTOM_PARAMS'):
             logger.warning("'CUSTOM_PARAMS' is set but generate_effective_set is not running - CUSTOM_PARAMS has no effect here")
         return will_run
@@ -204,8 +231,10 @@ def run_unified_pipeline() -> None:
         BgManageStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
+        AppRegDefProcessStep(),
         AppregdefRenderStep(),
         ProcessSdStep(),
+        GenerateDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
         GitCommitStep()
