@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 
 from dpg.v1.cmd import DeploymentPlanGeneratorCommand
+from dpg.v1.internal.deployment_plan import DeploymentPlanCalculator
 from envgenehelper import logger
 from envgenehelper.business_helper import get_version
 from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.file_helper import identify_yaml_extension
 
 from build_env.namespace_map import NAMESPACE_MAP_FILE
 from deployment_plan.deploy_plan_adapter import DEPLOY_PLAN_FILE
@@ -29,8 +29,22 @@ def _parse_applications(application_versions: str) -> list[str]:
 def _resolve_app_name(application: str) -> str:
     if application.endswith((".yaml", ".yml", ".json")):
         return application
-    name, _ = get_version(application)
+    parsed = DeploymentPlanCalculator._parse_app(application)
+    name, _ = get_version(parsed["version"])
     return name
+
+
+def _appdef_paths(appdefs_dir: Path, app_name: str) -> list[Path]:
+    base = appdefs_dir / app_name
+    return [Path(f"{base}{ext}") for ext in (".yml", ".yaml")]
+
+
+def _find_appdef(*appdefs_dirs: Path, app_name: str) -> Path | None:
+    for appdefs_dir in appdefs_dirs:
+        for candidate in _appdef_paths(appdefs_dir, app_name):
+            if candidate.is_file():
+                return candidate
+    return None
 
 
 def _validate_appdefs(ctx: PipelineParametersHandler, applications: list[str]) -> None:
@@ -45,11 +59,7 @@ def _validate_appdefs(ctx: PipelineParametersHandler, applications: list[str]) -
         if app_name.endswith((".yaml", ".yml", ".json")):
             continue
 
-        candidates = [
-            identify_yaml_extension(str(env_appdefs / app_name)),
-            identify_yaml_extension(str(repo_appdefs / app_name)),
-        ]
-        if not any(Path(path).is_file() for path in candidates):
+        if _find_appdef(env_appdefs, repo_appdefs, app_name=app_name) is None:
             missing.append(app_name)
 
     if missing:
