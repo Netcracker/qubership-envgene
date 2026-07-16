@@ -22,10 +22,6 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DeployPlanEntityDTO {
-    private int wave;
     private String version;
     private String deployPostfix;
-    private String namespace;
-    private String generationType;
-    private String generationId;
 }
