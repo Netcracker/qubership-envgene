@@ -12,7 +12,7 @@
   - [Configuration](#configuration)
   - [Encryption rules](#encryption-rules)
     - [Environment Instance level](#environment-instance-level)
-    - [Effective-set level](#effective-set-level)
+    - [Effective Set level](#effective-set-level)
     - [Skip cases](#skip-cases)
   - [Decryption rules](#decryption-rules)
   - [Single-category validation](#single-category-validation)
@@ -46,22 +46,18 @@ The user-facing categories below define what is in scope. The file selector impl
 - **Cloud Passport credentials** - the credentials file paired with a Cloud Passport in
   [Cloud Passport processing](/docs/features/cloud-passport-processing.md).
 - **App-deployer credentials** - the credentials file paired with an app deployer.
-- **Effective-set output credential files** - `credentials.yaml` and `collision-credentials.yaml` under an
+- **Effective Set output credential files** - `credentials.yaml` and `collision-credentials.yaml` under an
   environment's `effective-set/` tree.
 
 ### File selector
 
-The selector combines a filename pattern with a directory suffix, restricted to files whose path contains a
-`configuration` or `environments` segment.
+The selector matches a credential file when either of these rules applies:
 
-- Filename pattern: the basename without extension matches the regular expression
-  `^credentials$|^creds$|-(credentials|creds)($|-)`.
-- Directory suffix: any `.yml` or `.yaml` file under a `Credentials/` or `credentials/` folder qualifies
-  regardless of filename.
-- Path-segment restriction: the file's path contains a `configuration` or `environments` segment somewhere in
-  it, not necessarily as a repo-root prefix.
-
-The categories above are the source of truth for what falls in scope.
+- **Filename**: the basename without extension matches the regular expression
+  `^credentials$|^creds$|-(credentials|creds)($|-)`. Covers `credentials`, `creds`,
+  `<prefix>-credentials`, `<prefix>-credentials-<suffix>`, and `<prefix>-creds`.
+- **Folder**: any `.yml` or `.yaml` file under a `Credentials/` or `credentials/` folder, regardless of
+  the file's own name.
 
 ## Actors
 
@@ -69,7 +65,7 @@ EnvGene encrypts credential files in two places: as part of pipeline job executi
 hook at Git commit time.
 
 - **EnvGene runtime.** Encrypts as part of pipeline job execution (environment inventory generation,
-  environment build, cloud passport processing, effective-set generation). The scope is the environment being
+  environment build, cloud passport processing, Effective Set generation). The scope is the environment being
   built. This isolates parallel matrix builds, so broken credentials in a sibling environment do not affect
   the current one.
 - **Pre-commit hook.** Runs on Git commit against the working tree. The scope is the whole repository. The
@@ -156,12 +152,12 @@ Each backend requires its own CI/CD variables:
 ## Encryption rules
 
 Rules split into two levels by file path. Files under an `effective-set/` path in the tree use the
-effective-set per-value rule. All other credential files matched by the selector use the environment instance
+Effective Set per-value rule. All other credential files matched by the selector use the environment instance
 per-entry rule. This path-based discriminator is the single source of truth for level selection.
 
 ### Environment Instance level
 
-Applies to all credential files matched by the selector except effective-set outputs.
+Applies to all credential files matched by the selector except Effective Set outputs.
 
 Each entry follows one of two shapes defined by the
 [Credential object](/docs/envgene-objects.md#credential). The classification between literal and reference is
@@ -192,9 +188,9 @@ Per-entry classification:
 
 The rule applies to each entry independently.
 
-### Effective-set level
+### Effective Set level
 
-Applies to effective-set output files matched by the selector: `credentials.yaml` and
+Applies to Effective Set output files matched by the selector: `credentials.yaml` and
 `collision-credentials.yaml`.
 
 The file structure is a flat key-value map. A value takes one of three shapes:
@@ -211,7 +207,7 @@ Per-value classification:
 - A value that is a string starting with `ref+` is a reference. The rule skips it.
 - Any other value is a literal. The rule encrypts it.
 
-The per-value rule is required at the effective-set level because per-context credential streams merge
+The per-value rule is required at the Effective Set level because per-context credential streams merge
 into a single file that may hold literals and references side by side.
 
 ### Skip cases
@@ -219,7 +215,7 @@ into a single file that may hold literals and references side by side.
 - A file whose top-level content is an empty document is skipped as a no-op. An empty document covers a
   0-byte file, whitespace-only content, and any top-level YAML that yields an empty or null document
   (for example `{}`, `null`, `~`, or `---`).
-- A file whose content matches neither the environment instance entry map nor the effective-set flat
+- A file whose content matches neither the environment instance entry map nor the Effective Set flat
   key-value shape fails with a schema violation error.
 
 ## Decryption rules
@@ -241,8 +237,8 @@ An Environment Instance credential file is single-category by contract: either a
 non-`external` type (literals) or all entries have `type: external` (references). A pre-encryption
 validator enforces this and fails the environment instance generation if a mixed file is detected.
 
-Single-category applies only to environment instance credential files. Effective-set output files may
-hold literals and references side by side per the effective-set rule above.
+Single-category applies only to environment instance credential files. Effective Set output files may
+hold literals and references side by side per the Effective Set rule above.
 
 ## Job execution order
 
