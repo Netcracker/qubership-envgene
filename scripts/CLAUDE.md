@@ -40,8 +40,7 @@ Bridge between the Python orchestration layer and the Java Calculator CLI. Its a
 - `--env-id` — `FULL_ENV_NAME` (`<cluster>/<env>`)
 - `--envs-path` — `$CI_PROJECT_DIR/environments`
 - `--output` — path to write the ES
-- `--sd-path` — path to `sd.yaml` or `delta_sd.yaml` (legacy full generation and partial merge)
-- `--deploy-plan-path` — path to `deploy-plan.yml` (`GITLAB_DEPLOY` full generation)
+- `--sd-path` — path to `sd.yaml`, `delta_sd.yaml`, or a deploy-plan-derived SD file
 - `--registries` — path to `configuration/registry.yml`
 - `--sboms-path` — path to `sboms/` directory
 - `--effective-set-version` — from `EFFECTIVE_SET_CONFIG`

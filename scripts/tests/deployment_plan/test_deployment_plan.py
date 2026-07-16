@@ -1,14 +1,16 @@
 from pathlib import Path
 
 import pytest
-from envgenehelper.yaml_helper import writeYamlToFile
+from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 
 from build_env.namespace_map import compute_namespace_map, write_namespace_map
 from deployment_plan.deploy_plan_adapter import (
     ApplicationDeploymentEntry,
     application_entries_from_deploy_plan_entities,
+    deploy_plan_to_sd_config,
+    materialize_sd_from_deploy_plan,
     resolve_application_entries,
-    resolve_application_source_paths,
+    resolve_sd_path,
 )
 
 
@@ -38,6 +40,38 @@ class TestApplicationEntries:
         assert application_entries_from_deploy_plan_entities(entities) == [
             ApplicationDeploymentEntry(version="Cloud-Core:1.0", deploy_postfix="core", namespace="dev-core"),
         ]
+
+
+class TestDeployPlanToSd:
+    @pytest.mark.unit
+    def test_converts_entities_to_sd_config(self):
+        entities = [
+            {"wave": 0, "version": "Cloud-Core:1.0", "deployPostfix": "core", "namespace": "dev-core"},
+        ]
+
+        assert deploy_plan_to_sd_config(entities) == {
+            "version": 2.1,
+            "type": "deploy",
+            "applications": [{"version": "Cloud-Core:1.0", "deployPostfix": "core"}],
+        }
+
+    @pytest.mark.unit
+    def test_materialize_sd_writes_readable_yaml(self, tmp_path):
+        deploy_plan_path = tmp_path / "deploy-plan.yml"
+        writeYamlToFile(
+            deploy_plan_path,
+            [{"wave": 0, "version": "App:1.0", "deployPostfix": "bss"}],
+        )
+
+        sd_path = materialize_sd_from_deploy_plan(deploy_plan_path)
+
+        assert sd_path.is_file()
+        assert "sd-from-deploy-plan-" in sd_path.name
+        assert openYaml(sd_path) == {
+            "version": 2.1,
+            "type": "deploy",
+            "applications": [{"version": "App:1.0", "deployPostfix": "bss"}],
+        }
 
 
 class TestResolveApplicationEntries:
@@ -89,14 +123,28 @@ class TestResolveApplicationEntries:
             resolve_application_entries(env_dir, env_dir, gitlab_deploy=True)
 
 
-class TestResolveApplicationSourcePaths:
+class TestResolveSdPath:
     @pytest.mark.unit
     def test_gitlab_deploy_requires_deploy_plan(self, tmp_path):
         inventory = tmp_path / "Inventory"
         inventory.mkdir(parents=True)
 
         with pytest.raises(FileNotFoundError):
-            resolve_application_source_paths(inventory, gitlab_deploy=True)
+            resolve_sd_path(inventory, gitlab_deploy=True)
+
+    @pytest.mark.unit
+    def test_gitlab_deploy_converts_deploy_plan_to_sd(self, tmp_path):
+        inventory = tmp_path / "Inventory"
+        inventory.mkdir(parents=True)
+        writeYamlToFile(
+            inventory / "deploy-plan.yml",
+            [{"wave": 0, "version": "App:1.0", "deployPostfix": "bss"}],
+        )
+
+        sd_path = resolve_sd_path(inventory, gitlab_deploy=True)
+
+        assert sd_path is not None
+        assert openYaml(sd_path)["applications"] == [{"version": "App:1.0", "deployPostfix": "bss"}]
 
     @pytest.mark.unit
     def test_legacy_flow_uses_sd_when_deploy_plan_missing(self, tmp_path):
@@ -106,7 +154,7 @@ class TestResolveApplicationSourcePaths:
         sd_path = sd_dir / "sd.yml"
         writeYamlToFile(sd_path, {"applications": []})
 
-        assert resolve_application_source_paths(inventory, sd_path=sd_path) == (sd_path, None)
+        assert resolve_sd_path(inventory, sd_path=sd_path) == sd_path
 
 
 class TestWriteNamespaceMap:

@@ -11,7 +11,7 @@ from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
 from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 
-from deployment_plan.deploy_plan_adapter import resolve_application_source_paths
+from deployment_plan.deploy_plan_adapter import resolve_sd_path
 from effective_set.handle_effective_set_config import handle_effective_set_config
 from pipeline.pipeline_parameters import GITLAB_DEPLOY
 
@@ -30,23 +30,26 @@ def effective_set_entrypoint():
     else:
         inventory_dir = get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME
         gitlab_deploy = getenv("PIPELINE_TYPE") == GITLAB_DEPLOY
-        sd_path, deploy_plan_path = resolve_application_source_paths(
+        sd_path = resolve_sd_path(
             inventory_dir,
             sd_path=get_sd_dir().joinpath(SD_FILE_NAME),
             gitlab_deploy=gitlab_deploy,
         )
-        if deploy_plan_path:
-            logger.info(f"Using deploy-plan from {deploy_plan_path} for effective-set generation")
-        _run_full_generation(effective_set_dir, full_env_name, sd_path, deploy_plan_path)
+        if sd_path is None:
+            raise FileNotFoundError("No solution descriptor or deploy plan found for effective-set generation")
+        if inventory_dir.joinpath("deploy-plan.yml").is_file():
+            logger.info("Converted deploy-plan to solution descriptor for effective-set generation")
+        _run_full_generation(effective_set_dir, full_env_name, sd_path)
 
-    # do not commit delta sd to repo
-    deleteFileIfExists(delta_sd_path)
 
-
-def _run_full_generation(effective_set_dir, full_env_name, sd_path, deploy_plan_path=None):
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path, deploy_plan_path)
+def _run_full_generation(effective_set_dir, full_env_name, sd_path):
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
     delete_dir(effective_set_dir)
-    subprocess.run(cmd, shell=True, check=True)
+    try:
+        subprocess.run(cmd, shell=True, check=True)
+    finally:
+        if sd_path.name.startswith("sd-from-deploy-plan-"):
+            deleteFileIfExists(sd_path)
 
 
 def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
@@ -142,7 +145,7 @@ def _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path):
                 writeYamlToFile(path, mapping)
 
 
-def _build_cli_cmd(effective_set_dir, full_env_name, sd_path, deploy_plan_path=None):
+def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
     cmd = [
         "/module/scripts/utils/run_effective_set_cli.sh",
         f"--env-id={full_env_name}",
@@ -150,16 +153,12 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path, deploy_plan_path=N
         f"--output={effective_set_dir}",
     ]
 
-    registry_sbom_args = [
-        "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
-        "--sboms-path=$CI_PROJECT_DIR/sboms",
-    ]
-    if deploy_plan_path and deploy_plan_path.is_file():
-        cmd.extend(registry_sbom_args)
-        cmd.append(f"--deploy-plan-path={deploy_plan_path}")
-    elif sd_path and sd_path.is_file():
-        cmd.extend(registry_sbom_args)
-        cmd.append(f"--sd-path={sd_path}")
+    if sd_path.is_file():
+        cmd.extend([
+            "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
+            "--sboms-path=$CI_PROJECT_DIR/sboms",
+            f"--sd-path={sd_path}",
+        ])
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
     if effective_set_config:

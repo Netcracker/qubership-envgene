@@ -17,7 +17,7 @@ from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import effective_set_entrypoint
 from effective_set.sboms_retention_policy import sboms_retention_policy
 from deployment_plan.generate_deployment_plan import run_generate_deployment_plan
-from envgenehelper.models import PipelineType, TemplateVersionUpdateMode
+from envgenehelper.models import TemplateVersionUpdateMode
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
