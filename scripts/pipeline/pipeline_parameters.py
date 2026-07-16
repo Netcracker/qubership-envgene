@@ -16,6 +16,8 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger
 from pydantic import BaseModel, Field
 
+GITLAB_DEPLOY = "GITLAB_DEPLOY"
+
 
 class PipelineParametersHandler(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -64,7 +66,8 @@ class PipelineParametersHandler(BaseModel):
                 "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
             "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
-            "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS")
+            "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
+            "PIPELINE_TYPE": getenv("PIPELINE_TYPE", ""),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
@@ -104,6 +107,9 @@ class PipelineParametersHandler(BaseModel):
             cluster_name=cluster_name,
             env_name=env_name
         )
+
+    def is_gitlab_deploy(self) -> bool:
+        return self.params.get("PIPELINE_TYPE") == GITLAB_DEPLOY
 
     def log_pipeline_params(self) -> None:
         params = copy.deepcopy(self.params)

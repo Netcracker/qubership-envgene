@@ -41,6 +41,8 @@ public class SharedData {
 
     private Optional<String> sdPath;
 
+    private Optional<String> deployPlanPath;
+
     private Optional<String> registryPath;
 
     private String outputDir;

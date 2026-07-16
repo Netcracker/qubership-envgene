@@ -42,6 +42,7 @@ runs:
         pip install --no-cache-dir -e "modules/envgene[dev]"
         pip install --no-cache-dir -e "modules/artifact-searcher[dev]"
         pip install --no-cache-dir -e "modules/external-cred-provision"
+        pip install --no-cache-dir -e "modules/dpg"
 
     - name: Configure test environment
       shell: bash

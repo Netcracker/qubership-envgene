@@ -83,6 +83,38 @@ public class CmdbCliTest {
     }
 
     @Test
+    void testGenerateEffectiveSetFromDeployPlan(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@config.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");
+
+        FileTestUtils.compareFolders(expected, outputPath);
+    }
+
+    @Test
     void testGenerateEffectiveSetForNamespaceScopedCustomParams(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");
@@ -251,6 +283,8 @@ public class CmdbCliTest {
             sharedData.setNamespaceCustomDeployParamMap(Collections.emptyMap());
             sharedData.setNamespaceCustomRuntimeParamMap(Collections.emptyMap());
             sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
+            sharedData.setDeployPlanPath(Optional.empty());
+            sharedData.setSdPath(Optional.empty());
         }
     }
 }

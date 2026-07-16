@@ -1,14 +1,18 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
+from os import getenv
+from pathlib import Path
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
+from deployment_plan.deploy_plan_adapter import resolve_application_entries
 from deepmerge import always_merger
 from envgenehelper import *
 from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
 from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
+from pipeline.pipeline_parameters import GITLAB_DEPLOY
 from pydantic import BaseModel, Field
 
 EXTERNAL_CRED_COMMENT = "external credential template"
@@ -257,46 +261,45 @@ class EnvGenerator:
         return base_name + self._get_bgd_suffix(ns_name)
 
     def generate_solution_structure(self):
-        sd_basename = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
-        sd_path = next(iter(find_files_by_basename(sd_basename)), None)
+        application_entries = resolve_application_entries(
+            Path(self.ctx.env_instances_dir),
+            Path(self.ctx.current_env_dir),
+            gitlab_deploy=getenv("PIPELINE_TYPE") == GITLAB_DEPLOY,
+        )
         solution_structure = {}
-        if sd_path:
-            self.ctx.sd_file_path = str(sd_path)
-            sd_config = openYaml(filePath=sd_path, safe_load=True)
-            self.ctx.sd_config = sd_config
-            if "applications" not in sd_config:
-                raise ValueError("Missing 'applications' key in root")
-            self.validate_applications()
+        if not application_entries:
+            logger.info(f"Rendered solution_structure: {solution_structure}")
+            return
 
-            namespaces = self.ctx.current_env_template.get("namespaces", [])
-            postfix_template_map = {}
-            for ns in namespaces:
-                namespace_template_path = Template(ns["template_path"]).render(self.ctx.as_dict())
-                postfix = self.generate_ns_postfix(ns, namespace_template_path)
-                postfix_template_map[postfix] = namespace_template_path
+        namespaces = self.ctx.current_env_template.get("namespaces", [])
+        postfix_template_map = {}
+        for ns in namespaces:
+            namespace_template_path = Template(ns["template_path"]).render(self.ctx.as_dict())
+            postfix = self.generate_ns_postfix(ns, namespace_template_path)
+            postfix_template_map[postfix] = namespace_template_path
 
-            for app in sd_config["applications"]:
-                app_version = app["version"]
-                app_name, version = app_version.split(":", 1)
-                postfix = app["deployPostfix"]
+        for entry in application_entries:
+            app_name, version = entry.version.split(":", 1)
+            postfix = entry.deploy_postfix
+            ns_name = entry.namespace
 
+            if not ns_name:
                 ns_template_path = postfix_template_map.get(postfix)
-                ns_name = None
                 if ns_template_path:
                     rendered_ns = self.render_from_file_to_obj(ns_template_path)
                     ns_name = rendered_ns.get("name")
 
-                small_dict = {
-                    app_name: {
-                        postfix: {
-                            "version": version,
-                            "namespace": ns_name
-                        }
+            small_dict = {
+                app_name: {
+                    postfix: {
+                        "version": version,
+                        "namespace": ns_name,
                     }
                 }
-                always_merger.merge(solution_structure, small_dict)
+            }
+            always_merger.merge(solution_structure, small_dict)
 
-            always_merger.merge(self.ctx.current_env, {"solution_structure": solution_structure})
+        always_merger.merge(self.ctx.current_env, {"solution_structure": solution_structure})
         logger.info(f"Rendered solution_structure: {solution_structure}")
 
     def render_from_file_to_file(self, src_template_path: str, target_file_path: str):
@@ -589,27 +592,36 @@ class EnvGenerator:
                 logger.info(f"RegDef file: {file}")
                 validate_regdef_or_fail(file)
 
-    def process_app_reg_defs(self, env_name: str, extra_env: dict):
+    def _load_appregdef_templates(self) -> None:
+        templates_dir = self.ctx.templates_dirs[NamespaceRole.COMMON]
+        patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
+        self.ctx.appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
+        self.ctx.regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
+
+    def _render_app_reg_defs(self) -> None:
+        ensure_directory(Path(self.ctx.current_env_dir).joinpath("AppDefs"), 0o755)
+        ensure_directory(Path(self.ctx.current_env_dir).joinpath("RegDefs"), 0o755)
+        self._load_appregdef_templates()
+        self.set_appreg_def_overrides()
+        self.render_app_defs()
+        self.render_reg_defs()
+        self.validate_appregdefs()
+
+    def process_app_reg_defs(self, env_name: str, extra_env: dict, *, include_namespaces: bool = False):
         logger.info(
             f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-
-            current_env_dir = self.ctx.current_env_dir
-            templates_dir = self.ctx.templates_dirs[NamespaceRole.COMMON]
-            patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
-            appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
-            regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
-            self.ctx.appdef_templates = appdef_templates
-            self.ctx.regdef_templates = regdef_templates
-
-            ensure_directory(Path(current_env_dir).joinpath("AppDefs"), 0o755)
-            ensure_directory(Path(current_env_dir).joinpath("RegDefs"), 0o755)
-            self.set_appreg_def_overrides()
-            self.render_app_defs()
-            self.render_reg_defs()
-
-            self.validate_appregdefs()
+            if include_namespaces:
+                current_env = self.ctx.current_env
+                self.ctx.cloud = self.calculate_cloud_name()
+                self.ctx.tenant = current_env.get("tenant", '')
+                self.ctx.deployer = current_env.get('deployer', '')
+                self.ctx.bgd = current_env.get('bg_domain', '')
+                self.set_env_templates()
+                self.generate_bgd_file()
+                self.generate_namespace_files()
+            self._render_app_reg_defs()
 
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
