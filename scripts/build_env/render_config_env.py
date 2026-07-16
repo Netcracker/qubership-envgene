@@ -1,15 +1,18 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
+from os import getenv
 from pathlib import Path
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
+from deployment_plan.deploy_plan_adapter import resolve_application_entries
 from deepmerge import always_merger
 from envgenehelper import *
 from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
 from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
+from pipeline.pipeline_parameters import GITLAB_DEPLOY
 from pydantic import BaseModel, Field
 
 EXTERNAL_CRED_COMMENT = "external credential template"
@@ -258,11 +261,6 @@ class EnvGenerator:
         return base_name + self._get_bgd_suffix(ns_name)
 
     def generate_solution_structure(self):
-        from os import getenv
-
-        from deployment_plan.deploy_plan_adapter import resolve_application_entries
-        from pipeline.pipeline_parameters import GITLAB_DEPLOY
-
         application_entries = resolve_application_entries(
             Path(self.ctx.env_instances_dir),
             Path(self.ctx.current_env_dir),
