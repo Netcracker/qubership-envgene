@@ -6,10 +6,9 @@ from envgenehelper import logger
 from envgenehelper.business_helper import get_version
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.file_helper import identify_yaml_extension
-from envgenehelper.yaml_helper import load_json_or_yaml
 
 from build_env.namespace_map import NAMESPACE_MAP_FILE
-from deployment_plan.application_entries import DEPLOY_PLAN_FILE
+from deployment_plan.deploy_plan_adapter import DEPLOY_PLAN_FILE
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 _INTERMEDIATE_PLAN_FILE = "deploy-plan-calculated.yml"
@@ -21,16 +20,6 @@ def _inventory_dir(ctx: PipelineParametersHandler) -> Path:
 
 def _parse_applications(application_versions: str) -> list[str]:
     application_versions = application_versions.replace("\\n", "\n")
-    try:
-        parsed = load_json_or_yaml(application_versions)
-    except (TypeError, ValueError):
-        parsed = None
-
-    if isinstance(parsed, list):
-        return [str(item) for item in parsed]
-    if isinstance(parsed, dict) and "applications" in parsed:
-        return [app["version"] for app in parsed["applications"] if app.get("version")]
-
     applications = split_multi_value_param(application_versions)
     if not applications:
         raise ValueError("APPLICATION_VERSIONS is empty")
