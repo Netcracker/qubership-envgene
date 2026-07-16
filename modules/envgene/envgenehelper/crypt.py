@@ -50,25 +50,28 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
 
 def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False,
-                 default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
+                 default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None,
+                 load_result=True, **kwargs):
     res = _handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
-    crypt_backend = crypt_backend if crypt_backend else get_crypt_backend()
     is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping decryption")
-        return openYaml(file_path)
+        if load_result:
+            return openYaml(file_path)
+        return None
+    crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
     return CRYPT_FUNCTIONS[crypt_backend](
         file_path=file_path, secret_key=secret_key, in_place=in_place,
-        public_key=public_key, mode='decrypt', **kwargs
+        public_key=public_key, mode='decrypt', load_result=load_result, **kwargs
     )
 
 
 def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False, is_crypt=None,
                  minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False,
-                 **kwargs):
+                 load_result=True, **kwargs):
     if minimize_diff:
         if not old_file_path:
             raise ValueError('minimize_diff was set to true but old_file_path was not specified')
@@ -81,15 +84,17 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     res = _handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
-    crypt_backend = crypt_backend if crypt_backend else get_crypt_backend()
     is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping encryption")
-        return openYaml(file_path)
+        if load_result:
+            return openYaml(file_path)
+        return None
+    crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
     return CRYPT_FUNCTIONS[crypt_backend](
         file_path=file_path, secret_key=secret_key, in_place=in_place,
         public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
-        old_file_path=old_file_path, **kwargs
+        old_file_path=old_file_path, load_result=load_result, **kwargs
     )
 
 

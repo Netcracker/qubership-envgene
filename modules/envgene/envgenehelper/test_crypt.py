@@ -8,7 +8,7 @@ from ruyaml import CommentedMap
 
 from .collections_helper import compare_dicts
 
-from .crypt import decrypt_file, encrypt_file, is_encrypted
+from .crypt import decrypt_file, encrypt_file, is_encrypted, _parallel_cred_op
 from .file_helper import check_file_exists, writeToFile
 from .yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
 
@@ -118,6 +118,29 @@ def test_ignore_crypt(crypt_kwargs):
     assert init_yaml != new_yaml # should not try to decrypt with is_crypt false, so new_yaml is still encrypted
     new_yaml = decrypt_file(**crypt_kwargs, ignore_is_crypt=True, is_crypt=False)
     assert init_yaml == new_yaml
+
+def test_skip_yaml_load_when_crypt_disabled_and_load_result_false(crypt_kwargs):
+    cred_file = crypt_kwargs['file_path']
+    init_yaml = openYaml(cred_file)
+
+    assert encrypt_file(**crypt_kwargs, is_crypt=False, load_result=False) is None
+    assert decrypt_file(**crypt_kwargs, is_crypt=False, load_result=False) is None
+    assert openYaml(cred_file) == init_yaml
+
+def test_parallel_encrypt_with_crypt_disabled_and_load_result_false(tmp_path):
+    cred_paths = []
+    for index in range(6):
+        cred_path = tmp_path / f"credentials-{index}.yml"
+        writeToFile(str(cred_path), TEST_CONTENT)
+        cred_paths.append(str(cred_path))
+
+    _parallel_cred_op(
+        cred_paths,
+        encrypt_file,
+        crypt_backend='SOPS',
+        is_crypt=False,
+        load_result=False,
+    )
 
 @pytest.mark.parametrize("crypt_func", crypt_functions_data)
 def test_with_file_missing(crypt_kwargs, crypt_func):
