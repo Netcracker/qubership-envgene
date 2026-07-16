@@ -9,7 +9,7 @@ description = "Sorts a JSON or YAML document to match a JSON Schema's order of p
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = "~=3.12"
 maintainers = [
-    {name = "Ilya Konstantinov", email = "ilya.konstantinov@gmail.com"}
+    {name = "Qubership", email = "opensourcegroup@netcracker.com"}
 ]
 classifiers = [
     "Programming Language :: Python :: 3"

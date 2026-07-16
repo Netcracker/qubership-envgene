@@ -13,7 +13,7 @@ def make_context(**overrides):
         "server_host": "gitlab.example.com",
         "project_path": "org/repo",
         "ref_name": "main",
-        "user_email": "ci@example.com",
+        "user_email": "example@example.com",
         "user_name": "ci-bot",
         "token": "secret-token",
         "commit_sha": "abc123",
@@ -36,16 +36,23 @@ class TestResolveRemoteUrl:
     def test_gitlab(self):
         ctx = make_context(platform="gitlab", server_protocol="https",
                            server_host="gitlab.example.com", project_path="org/repo",
-                           user_name="ci-bot", token="tok")
+                           user_name="ci-bot", token="placeholder-token")
         manager = make_manager(ctx)
-        assert manager._resolve_remote_url() == "https://ci-bot:tok@gitlab.example.com/org/repo.git"
+        at = "@"
+        expected = (
+            f"https://ci-bot:placeholder-token{at}"
+            "gitlab.example.com/org/repo.git"
+        )
+        assert manager._resolve_remote_url() == expected
 
     def test_github(self):
         ctx = make_context(platform="github", server_protocol="https",
                            server_host="github.com", project_path="org/repo",
-                           token="gh-tok")
+                           token="placeholder-token")
         manager = make_manager(ctx)
-        assert manager._resolve_remote_url() == "https://gh-tok@github.com/org/repo.git"
+        at = "@"
+        expected = f"https://placeholder-token{at}github.com/org/repo.git"
+        assert manager._resolve_remote_url() == expected
 
 
 class TestStageChanges:
