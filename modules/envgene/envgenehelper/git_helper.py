@@ -70,7 +70,7 @@ class GitRepoManager:
         self.ctx = GitContext.from_env()
         self.cluster_name = getenv_with_error("CLUSTER_NAME")
         self.env_name = getenv_with_error("ENVIRONMENT_NAME")
-        self.sparse_paths = self.get_sparse_checkout_paths()
+        self.sparse_paths = self.get_sparse_checkout_paths(self.cluster_name, self.env_name)
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
