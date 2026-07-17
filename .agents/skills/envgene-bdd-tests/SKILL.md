@@ -29,7 +29,7 @@ completely and list all `UC-<PREFIX>-<N>:` entries.
 
 Each use case follows this template:
 
-```
+```text
 ### UC-<PREFIX>-<N>: <Title>
 
 **Pre-requisites:**
@@ -61,7 +61,7 @@ Each use case follows this template:
 
 ## 2. Project Layout
 
-```
+```text
 cucumber_tests/
 ├── conftest.py                          # Session-scoped fixtures (mock_nexus, workspace)
 ├── pytest.ini                           # pytest configuration
@@ -98,7 +98,7 @@ cucumber_tests/
 ### Naming and Location
 
 - Feature files live in `cucumber_tests/features/`.
-- File name must match the use-case document name (without path):
+- Filename must match the use-case document name (without path):
   `environment-inventory-generation.feature` ↔
   `docs/use-cases/environment-inventory-generation.md`.
 
@@ -164,7 +164,7 @@ The `<test-data-id>` matches the scenario slug: `uc_einv_ed_2`,
 
 Each test data directory mirrors the workspace root:
 
-```
+```text
 uc_<prefix>_<n>/
 ├── configuration/
 │   └── config.yml              # Runtime config (sbom_retention, etc.)
@@ -180,10 +180,10 @@ uc_<prefix>_<n>/
         └── <app-name>-v0.sbom.json
 ```
 
-### Rules
+### Scenario Rules
 
 1. **Each scenario gets its own test data directory** with unique content.
-   Do NOT copy-paste identical directories.
+   Do NOT copypaste identical directories.
 2. **Only create a test data directory** when the scenario has a meaningful
    pre-existing state. If the scenario starts from scratch ("file does not
    exist"), omit the directory and use a `Given` step that does nothing or
@@ -194,7 +194,7 @@ uc_<prefix>_<n>/
    index. Files with higher N are treated as newer (modification time is
    set deterministically: `v0` = oldest, `vN` = newest).
 5. **Large files** (e.g., for total size limit tests) must NOT be stored
-   in the repo. Use a `Given` step with sparse files (`seek` + `write`) to
+   in the repository. Use a `Given` step with sparse files (`seek` + `write`) to
    inflate them at runtime via `workspace.builder.create_mock_sboms(..., size_mb=...)`.
 6. **Golden references** go in `cucumber_tests/test_data/golden/<ref-name>/`.
    Run with `UPDATE_GOLDEN=1` to regenerate from actual output.
@@ -210,7 +210,7 @@ uc_<prefix>_<n>/
 | `step_defs/<feature>_steps.py` | Feature-specific steps |
 | `shared_steps/common_steps.py` | Generic assertions (golden compare, log check, pipeline params) |
 | `shared_steps/unified_pipeline_steps.py` | Workspace init, pipeline execution, common orchestrator steps |
-| `step_defs/common_steps.py` | Re-exports from `shared_steps/common_steps` |
+| `step_defs/common_steps.py` | Reexports from `shared_steps/common_steps` |
 
 ### Available Shared Steps (no need to re-implement)
 
@@ -373,13 +373,15 @@ Follow this order when implementing BDD tests for a new use-case document:
 ### Step 1 — Read the UC document
 
 Open `docs/use-cases/<feature-name>.md`. List every `UC-*` entry with its:
+
 - Pre-requisites (what files/config must exist)
 - Trigger (what pipeline parameters to set)
 - Results (what to assert)
 
+
 ### Step 2 — Create the feature file
 
-```
+```text
 cucumber_tests/features/<feature-name>.feature
 ```
 
@@ -390,7 +392,7 @@ document sections. Mark unimplemented behavior with `@xfail`.
 
 For each scenario where pre-requisites require existing files, create:
 
-```
+```text
 cucumber_tests/test_data/e2e/uc_<prefix>_<n>/
 ```
 
@@ -437,7 +439,7 @@ When reviewing a feature file against its use-case documentation, verify:
 
 - [ ] **All UCs covered**: Each `UC-*` in the doc has a matching `Scenario:`
 - [ ] **Scenario titles match**: `Scenario: UC-<PREFIX>-<N>: <exact title>`
-- [ ] **Test data is unique per scenario**: No copy-pasted identical directories
+- [ ] **Test data is unique per scenario**: No copypasted identical directories
 - [ ] **Pre-requisites reflected**: Config and file state match UC prerequisites
 - [ ] **Trigger parameters set**: Pipeline env vars match UC Trigger section
 - [ ] **Success/failure asserted**: `orchestrator completes successfully` or `pipeline fails`
@@ -498,7 +500,7 @@ def repo_state_identical(workspace: EnvGeneWorkspace):
 
 ### Pattern: Large File Generation
 
-Never store large files in git. Use sparse files at runtime:
+Never store large files in Git. Use sparse files at runtime:
 
 ```python
 @given(parsers.parse('the SBOM directory has a total size of {size_mb:d} MB'))
