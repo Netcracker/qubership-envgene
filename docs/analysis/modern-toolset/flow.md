@@ -10,7 +10,7 @@
   - [`namespace-map.yml`](#namespace-mapyml)
   - [`APPLICATION_VERSIONS`](#application_versions)
   - [`OPERATION_TYPE`](#operation_type)
-  - [`BG_STATE`](#bg_state)
+  - [`TARGET_BG_STATE`](#target_bg_state)
   - [`PIPELINE_TYPE`](#pipeline_type)
   - [`BG_NS_TARGET`](#bg_ns_target)
   - [state file](#state-file)
@@ -86,7 +86,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 4. Design `git_commit`
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES/sd.yaml or not
 5. After the flow is finalized analyze the flow for optimization
-6. [phase2] Согласовать с Леней `BG_MANAGE`, `BG_STATE`
+6. [phase2] Согласовать с Леней `BG_MANAGE`, `TARGET_BG_STATE`
 7. [phase2] Согласовать с Артемом `discovery_deployment_plan`. Узнать Кто и когда чекаутит ES репо?
 8. Стейт файл из нью лука
 
@@ -111,7 +111,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 1. `APP_ARTIFACTS_DIR`: `${CI_PROJECT_DIR}/tmp/app-artifacts/`
 2. `OPERATION_TYPE: DEPLOY`
-3. `PIPELINE_TYPE: OLD`
+3. `PIPELINE_TYPE: LEGACY`
 4. `DCL_GIT_BRANCH: master`
 
 ## DD and zip layout
@@ -195,7 +195,7 @@ TBD
 `OPERATION_TYPE`: enum[ `CLEAN`, `DEPLOY`, `BGD-INIT`, `BGD-WARMUP`, `BGD-PROMOTE`, `BGD-ROLLBACK`, `BGD-COMMIT` ]
 default: `DEPLOY`
 
-## `BG_STATE`
+## `TARGET_BG_STATE`
 
 ```yaml
 originNamespace:
@@ -212,8 +212,8 @@ updateTime: 2024-01-15T10:30:00Z     # не используем
 
 ## `PIPELINE_TYPE`
 
-`PIPELINE_TYPE`: enum [ `GITLAB_DEPLOY`, `OLD` ]
-default: `OLD`
+`PIPELINE_TYPE`: enum [ `GITLAB_DEPLOY`, `LEGACY` ]
+default: `LEGACY`
 
 ## `BG_NS_TARGET`
 
@@ -489,7 +489,7 @@ Functions:
 
 1. `change_bg_state`
     - input:
-      - `BG_STATE`
+      - `TARGET_BG_STATE`
     - output:
       - BG state files
     - actions:
@@ -561,7 +561,7 @@ TBD
 Triggers:
 
 - `OPERATION_TYPE: DEPLOY` and
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: OLD` and `ENV_BUILDER: true`))
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
 
 Functions:
 
@@ -596,7 +596,7 @@ Functions:
 Triggers:
 
 - `OPERATION_TYPE: DEPLOY` and
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: OLD` and `ENV_BUILDER: true`))
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
 
 Functions:
 
@@ -692,7 +692,7 @@ Functions:
 Triggers:
 
 - `OPERATION_TYPE: DEPLOY` and
-- (`PIPELINE_TYPE: OLD` and (`SD_VERSION` or `SD_DATA`))
+- (`PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `SD_DATA`))
 
 Functions:
 
@@ -770,7 +770,7 @@ Functions:
 Triggers:
 
 - (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`) and
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: OLD` and `ENV_BUILDER: true`))
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
 
 Functions:
 
@@ -830,7 +830,7 @@ Functions:
 
 Triggers:
 
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: OLD` and `GENERATE_EFFECTIVE_SET: true`))
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`))
 
 Functions:
 
@@ -878,7 +878,7 @@ Functions:
     - AI[phase1]: implement uniq app names
 5. `partial_es_processing`
     - triggers:
-      - `PIPELINE_TYPE: OLD` and `GENERATE_EFFECTIVE_SET: true`
+      - `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`
     - input:
       - Effective Set from previous function `ES Calc CLI`
       - Effective Set from previous operation, repository
@@ -886,7 +886,7 @@ Functions:
       - Effective Set
     - actions:
       - в ES мержится реплейсом application слайсы которые изменились в текущей операции генерации
-    - AI[phase1!]: set `PIPELINE_TYPE: OLD` and `GENERATE_EFFECTIVE_SET: true` trigger
+    - AI[phase1!]: set `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true` trigger
 
 #### 1.14 step `generate_argocd_repo`
 
@@ -920,7 +920,7 @@ Functions:
 Triggers:
 
 - `OPERATION_TYPE: DEPLOY` and
-- `PIPELINE_TYPE: OLD` and
+- `PIPELINE_TYPE: LEGACY` and
 - `CMDB_IMPORT: true`
 
 Functions:
