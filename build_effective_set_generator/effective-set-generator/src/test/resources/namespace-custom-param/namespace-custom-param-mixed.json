@@ -1,0 +1,12 @@
+{
+  "deployment": {
+    "customparam1": "global-value"
+  },
+  "namespaces": {
+    "pg": {
+      "deployment": {
+        "customparam1": "namespace-value"
+      }
+    }
+  }
+}

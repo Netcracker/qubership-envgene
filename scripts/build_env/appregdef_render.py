@@ -1,6 +1,10 @@
+from pathlib import Path
+
 from envgenehelper import *
 
+from build_env.build_env import process_additional_template_parameters
 from build_env.env_template.process_env_template import process_env_template
+from build_env.namespace_map import NAMESPACE_MAP_FILE, compute_namespace_map, write_namespace_map
 from build_env.render_config_env import EnvGenerator
 
 
@@ -49,35 +53,41 @@ def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> N
                 logger.debug(f"Override applied: {yaml_file} -> {env_dst}")
 
 
-def run_appregdef_render():
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
-    template_version = process_env_template()
+def run_app_reg_def_workflow(*, gitlab_deploy: bool) -> None:
+    base_dir = getenv_with_error("CI_PROJECT_DIR")
+    template_versions = process_env_template()
 
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
-    instances_dir = getenv_with_error("INSTANCES_DIR")
-
     output_dir = f"{base_dir}/environments"
     render_dir = f"/tmp/render/{env_name}"
     templates_dirs = get_template_dirs()
-
-    env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)
-    cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)
+    env_dir = get_env_instances_dir(env_name, cluster_name, output_dir)
+    cloud_passport_file_path = find_cloud_passport_definition(env_dir, output_dir)
+    copy_path(f'{env_dir}/Inventory', f'{render_dir}/Inventory')
+    process_additional_template_parameters(render_dir, env_dir, output_dir)
 
     render_context_vars = {
         "cluster_name": cluster_name,
         "output_dir": output_dir,
         "current_env_dir": render_dir,
+        "render_dir": render_dir,
+        "env": env_name,
         "templates_dirs": templates_dirs,
+        "templates_dir": templates_dirs.get(NamespaceRole.COMMON, ""),
         "cloud_passport_file_path": cloud_passport_file_path,
-        "env_instances_dir": env_dir
+        "env_instances_dir": render_dir,
     }
-    config = get_envgene_config_yaml()
-    placement_mode = config.get("app_reg_defs_placement", "dual").lower()
 
     render_context = EnvGenerator()
-    render_context.process_app_reg_defs(env_name, render_context_vars)
+    render_context.process_app_reg_defs(
+        env_name, render_context_vars, include_namespaces=gitlab_deploy,
+    )
+    if gitlab_deploy:
+        namespace_map = compute_namespace_map(Path(render_dir) / "Namespaces")
+        write_namespace_map(namespace_map, Path(env_dir) / "Inventory" / NAMESPACE_MAP_FILE)
 
+    placement_mode = get_envgene_config_yaml().get("app_reg_defs_placement", "dual").lower()
     write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode)
     override_app_reg_defs(base_dir, env_dir, placement_mode)
-    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version[NamespaceRole.COMMON])
+    update_generated_versions(env_dir, BUILD_ENV_TAG, template_versions[NamespaceRole.COMMON])

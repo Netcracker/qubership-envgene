@@ -1,0 +1,9 @@
+{
+  "namespaces": {
+    "unknown-namespace": {
+      "deployment": {
+        "customparam1": "should-not-apply"
+      }
+    }
+  }
+}

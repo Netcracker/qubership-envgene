@@ -1,23 +1,40 @@
 import time
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import StrEnum
 
-from envgenehelper import logger
+from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import resolve_es_generation_mode
 
 from bg_manage.bg_manage import run_bg_manage
-from build_env.appregdef_render import run_appregdef_render
+from build_env.appregdef_render import run_app_reg_def_workflow
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import effective_set_entrypoint
 from effective_set.sboms_retention_policy import sboms_retention_policy
+from deployment_plan.generate_deployment_plan import run_generate_deployment_plan
 from envgenehelper.models import TemplateVersionUpdateMode
+from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from sd.process_sd import handle_sd, resolve_sd_parameters
+
+
+class StepStatus(StrEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+@dataclass
+class StepResult:
+    name: str
+    status: StepStatus
+    duration_ms: int | None = None
 
 
 class PipelineStep(ABC):
@@ -92,6 +109,8 @@ class ProcessSdStep(PipelineStep):
         return "process_sd"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        if ctx.is_gitlab_deploy():
+            return False
         application_versions = resolve_sd_parameters(ctx)
         if application_versions:
             ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
@@ -118,16 +137,40 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
+class AppRegDefProcessStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "app_reg_def_process"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return ctx.is_gitlab_deploy()
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_app_reg_def_workflow(gitlab_deploy=True)
+
+
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILD'))
+        return bool(ctx.params.get('ENV_BUILDER')) and not ctx.is_gitlab_deploy()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_appregdef_render()
+        run_app_reg_def_workflow(gitlab_deploy=False)
+
+
+class GenerateDeploymentPlanStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "generate_deployment_plan"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return ctx.is_gitlab_deploy()
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_generate_deployment_plan(ctx)
 
 
 class EnvBuildStep(PipelineStep):
@@ -136,7 +179,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILD'))
+        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_build_environment()
@@ -148,36 +191,33 @@ class GenerateEffectiveSetStep(PipelineStep):
         return "generate_effective_set"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if not ctx.params.get('GENERATE_EFFECTIVE_SET'):
-            if ctx.params.get('CUSTOM_PARAMS'):
-                logger.warning(
-                    "'CUSTOM_PARAMS' is only applied when GENERATE_EFFECTIVE_SET is 'true'. "
-                    "If 'GENERATE_EFFECTIVE_SET' is 'false', CUSTOM_PARAMS has no effect")
-            return False
-        return True
+        will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or ctx.is_gitlab_deploy()
+        if not will_run and ctx.params.get('CUSTOM_PARAMS'):
+            logger.warning("'CUSTOM_PARAMS' is set but generate_effective_set is not running - CUSTOM_PARAMS has no effect here")
+        return will_run
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
+        decrypt_all_cred_files_for_env()
+        validate_creds()
+        validate_parameters()
         sboms_retention_policy()
         get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
         if get_sboms.modules:
             get_sboms.run()
         effective_set_entrypoint()
+        encrypt_all_cred_files_for_env()
 
 
-# TODO after refactor git_commit.sh
+class GitCommitStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "git_commit"
 
-# class GitCommitStep(PipelineStep):
-#     requires_git_commit = False
-#
-#     @property
-#     def name(self) -> str:
-#         return "git_commit"
-#
-#     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-#         return self.requires_git_commit
-#
-#     def execute(self, ctx: PipelineParametersHandler) -> None:
-#         run_git_commit()
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return True
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        git_commit()
 
 
 def run_unified_pipeline() -> None:
@@ -191,24 +231,54 @@ def run_unified_pipeline() -> None:
         BgManageStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
+        AppRegDefProcessStep(),
         AppregdefRenderStep(),
         ProcessSdStep(),
+        GenerateDeploymentPlanStep(),
         EnvBuildStep(),
-        GenerateEffectiveSetStep()
+        GenerateEffectiveSetStep(),
+        GitCommitStep()
     ]
 
-    for step in steps:
-        if not step.should_run(ctx):
-            logger.info(f"Step '{step.name}' skipped.")
-            continue
+    results: list[StepResult] = []
+    try:
+        for step in steps:
+            if not step.should_run(ctx):
+                logger.info(f"Step '{step.name}' skipped.")
+                results.append(StepResult(step.name, StepStatus.SKIPPED))
+                continue
 
-        logger.info(f"========== START: {step.name} ==========")
-        start = time.time_ns()
-        try:
-            step.execute(ctx)
-        finally:
-            duration_ms = (time.time_ns() - start) // 1_000_000
-            logger.info(f"========== END: {step.name} ({duration_ms}ms) ==========")
+            logger.info(f"========== START: {step.name} ==========")
+            start = time.time_ns()
+            status = StepStatus.SUCCESS
+            try:
+                step.execute(ctx)
+            except Exception:
+                status = StepStatus.FAILED
+                raise
+            finally:
+                duration_ms = (time.time_ns() - start) // 1_000_000
+                results.append(StepResult(step.name, status, duration_ms))
+                logger.info(f"========== END: {step.name} ({_format_duration(duration_ms)}) - {status} ==========")
+    finally:
+        log_pipeline_summary(results)
+
+
+def _format_duration(duration_ms: int | None) -> str:
+    if duration_ms is None:
+        return "-"
+    return f"{duration_ms}ms ({duration_ms / 1000:.3f}s)"
+
+
+def log_pipeline_summary(results: list[StepResult]) -> None:
+    name_width = max((len(r.name) for r in results), default=0)
+    lines = ["========== PIPELINE SUMMARY =========="]
+    for r in results:
+        lines.append(f"{r.name.ljust(name_width)}  {r.status:<7}  {_format_duration(r.duration_ms)}")
+    total_ms = sum(r.duration_ms for r in results if r.duration_ms is not None)
+    lines.append(f"Total: {_format_duration(total_ms)}")
+    lines.append("========================================")
+    logger.info("\n".join(lines))
 
 
 if __name__ == "__main__":

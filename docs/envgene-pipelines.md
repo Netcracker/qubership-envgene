@@ -71,7 +71,7 @@ flowchart TB
           1. Templates, as described in [Templates](/docs/features/app-reg-defs.md#templates)
           2. External Job, as described in [External Job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated)
        3. Runs [Template transformation](/docs/features/app-reg-defs.md#template-transformation)
-   - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder)
+   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 7. **process_sd**:
@@ -87,7 +87,7 @@ flowchart TB
        5. Handles template Parameter Set and Resource profiles.
        6. Handles environment-specific Parameter Set and Resource profiles.
        7. Creates Credentials including shared Credentials
-   - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
+   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 9. **generate_effective_set**:

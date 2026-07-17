@@ -16,6 +16,8 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger
 from pydantic import BaseModel, Field
 
+GITLAB_DEPLOY = "GITLAB_DEPLOY"
+
 
 class PipelineParametersHandler(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -34,7 +36,8 @@ class PipelineParametersHandler(BaseModel):
     def from_env(cls) -> Self:
         params = {
             'ENV_NAMES': getenv("ENV_NAMES", ""),
-            'ENV_BUILD': getenv("ENV_BUILD", "false").lower() == "true",
+            'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
+            'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
             'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
             'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
             'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
@@ -63,7 +66,8 @@ class PipelineParametersHandler(BaseModel):
                 "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
             "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
-            "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS")
+            "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
+            "PIPELINE_TYPE": getenv("PIPELINE_TYPE", ""),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
@@ -103,6 +107,9 @@ class PipelineParametersHandler(BaseModel):
             cluster_name=cluster_name,
             env_name=env_name
         )
+
+    def is_gitlab_deploy(self) -> bool:
+        return self.params.get("PIPELINE_TYPE") == GITLAB_DEPLOY
 
     def log_pipeline_params(self) -> None:
         params = copy.deepcopy(self.params)

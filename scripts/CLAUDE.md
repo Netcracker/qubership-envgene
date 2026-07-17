@@ -2,20 +2,21 @@
 
 This branch runs every pipeline job (build, passport, cred rotation, effective set generation, etc.) as **one process**, orchestrated by `pipeline/orchestrator.py::run_unified_pipeline()`. It builds a `PipelineParametersHandler` from env vars, then runs an ordered list of `PipelineStep` objects, each with `should_run(ctx)` / `execute(ctx)`; a step is skipped (logged) if `should_run` returns `False`.
 
-Steps, in order: `PassportStep` → `CredentialRotationStep` → `BgManageStep` → `InventoryGenerationStep` → `SetTemplateVersionStep` → `AppregdefRenderStep` → `ProcessSdStep` → `EnvBuildStep` → `GenerateEffectiveSetStep`. (A `GitCommitStep` is commented out pending wiring — `git_commit()` itself already exists in `build_envgene/scripts/git_commit.py`.)
+Steps, in order: `PassportStep` → `CredentialRotationStep` → `BgManageStep` → `InventoryGenerationStep` → `SetTemplateVersionStep` → `AppRegDefProcessStep` (`PIPELINE_TYPE=GITLAB_DEPLOY`) → `AppregdefRenderStep` → `ProcessSdStep` → `GenerateDeploymentPlanStep` (`GITLAB_DEPLOY`) → `EnvBuildStep` → `GenerateEffectiveSetStep` → `GitCommitStep` (`git_commit()` lives in `scripts/git_commit/git_commit.py`, always runs — `git_commit()` itself no-ops when there's nothing to stage).
 
 ## Directory Map
 
 | Directory | Responsibility |
 |-----------|-----------------|
 | `pipeline/` | `orchestrator.py` (steps above), `pipeline_parameters.py` (`PipelineParametersHandler.from_env()` — reads/validates all pipeline env vars, writes `build.env` dotenv), `pipeline_manager.py` |
-| `build_env/` | Environment rendering: `main.py` (`run_build_environment`, `build_environment`, template-override handling), `render_config_env.py` (`EnvGenerator` — Jinja rendering of Cloud/Namespace/composite-structure/external-cred), `appregdef_render.py` (`run_appregdef_render`, `write_app_reg_defs`, `override_app_reg_defs`), `create_credentials.py`, `env_template/` (template resolution, version), `jinja/`, `resource_profiles.py`, `templates/env_config.yml.j2` |
+| `build_env/` | Environment rendering: `main.py` (`run_build_environment`, `build_environment`, template-override handling), `render_config_env.py` (`EnvGenerator` — Jinja rendering of Cloud/Namespace/composite-structure/external-cred), `appregdef_render.py` (`run_app_reg_def_workflow`, `write_app_reg_defs`, `override_app_reg_defs`), `create_credentials.py`, `env_template/` (template resolution, version), `jinja/`, `resource_profiles.py`, `templates/env_config.yml.j2` |
 | `cloud_passport/` | `main.py` (`run_cloud_passport` — discovery download via `GitLabClient`; `get_integration_config` reads `configuration/integration.yml`), `cloud_passport.py` (`process_cloud_definition`, `add_cloud_passport_creds`, `mergeDeployParametersFromPassport`), `cmdb.py` |
 | `creds_rotation/` | Credential rotation step — see `creds_rotation/CLAUDE.md` |
 | `effective_set/` | `effective_set_entrypoint.py` (dispatches full/forward-merge/reverse-merge generation, invokes the Java CLI via `utils/run_effective_set_cli.sh`), `handle_effective_set_config.py`, `sboms_retention_policy.py` |
 | `bg_manage/` | `bg_manage.py` (`run_bg_manage` — Blue-Green state transitions), `filter_namespaces.py` (`apply_ns_build_filter`, `NS_BUILD_FILTER` handling) |
 | `inventory/` | `env_inventory_generation.py` (`run_inventory_generation` — generates `Inventory/env_definition.yml` + objects from `ENV_INVENTORY_CONTENT`/`ENV_SPECIFIC_PARAMS`) |
 | `sd/` | `process_sd.py` (`handle_sd` — Solution Descriptor download/merge: `basic-merge`/`extended-merge`/`basic-exclusion-merge`/`replace`) |
+| `deployment_plan/` | `generate_deployment_plan.py` (`run_generate_deployment_plan` — DPG calculate/map for `GITLAB_DEPLOY`), `deploy_plan_adapter.py` |
 | `build_template/` | Static scaffold resources (`template/artifact_definition.yml`, `build.sh`, `description.yaml`) for new template-repository artifacts — not orchestrator code |
 | `utils/` | `crypt_manager.py` (Click CLI: `decrypt_cred_files`, `encrypt_cred_files`, `validate_creds`, `validate_parameters`), `schema_validation.py` (`checkEnvSpecificParametersBySchema`, `checkCloudPassportBySchema`), `sparse_checkout.py` (CLI wrapper over `envgenehelper.git_helper.GitRepoManager.sparse_checkout`), `run_effective_set_cli.sh` (invokes the Java Calculator CLI — see `build_effective_set_generator/CLAUDE.md`), `handle_certs.sh`, `update_ca_cert.sh` |
 | `tests/` | Pytest suites, one subdir per area: `app_reg_defs/`, `bg_manage/`, `creds_rotation/`, `effective_set/`, `env-build/`, `env-template/`, `env_inventory_generation/`, `sd/` |
@@ -40,6 +41,7 @@ Bridge between the Python orchestration layer and the Java Calculator CLI. Its a
 - `--envs-path` — `$CI_PROJECT_DIR/environments`
 - `--output` — path to write the ES
 - `--sd-path` — path to `sd.yaml` or `delta_sd.yaml`
+- `--deploy-plan-path` — path to `deploy-plan.yml` (`GITLAB_DEPLOY` full generation; mutually exclusive with `--sd-path`)
 - `--registries` — path to `configuration/registry.yml`
 - `--sboms-path` — path to `sboms/` directory
 - `--effective-set-version` — from `EFFECTIVE_SET_CONFIG`
