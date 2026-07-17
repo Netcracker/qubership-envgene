@@ -386,6 +386,7 @@ AI:
 5. `registry_discovery`
 6. `SD_SOURCE_TYPE: artifact`
 7. `BG_MANAGE`
+8. экстендед мерж
 
 ## Flow
 
