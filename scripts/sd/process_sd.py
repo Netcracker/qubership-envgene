@@ -8,7 +8,6 @@ from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_with_error, get_version
 from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
 from envgenehelper.logger import logger
@@ -23,7 +22,6 @@ from pipeline.pipeline_parameters import PipelineParametersHandler
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
     MergeType.BASIC_EXCLUSION: helper.basic_exclusion_merge,
-    MergeType.EXTENDED: helper.extended_merge
 }
 
 ENVIRONMENT_NAME = getenv_with_error('ENVIRONMENT_NAME')
@@ -115,21 +113,10 @@ def calculate_sd_delta(sd_delta):
     return sd_delta
 
 
-def multiply_sds_to_single(sds_data, effective_merge_mode):
-    if effective_merge_mode == MergeType.EXTENDED:
-        if isinstance(sds_data, list):
-            if len(sds_data) > 1:
-                raise ValueError("Multiple SDs not supported in extended merge mode")
-            full_sd_from_pipe = sds_data[0]
-        elif isinstance(sds_data, dict):
-            full_sd_from_pipe = sds_data
-    else:
-        sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
-        cropped_sds = []
-        for sd in sds_data:
-            cropped_sds.append({"applications": sd["applications"]})
-
-        full_sd_from_pipe = basic_merge_multiple(cropped_sds)
+def multiply_sds_to_single(sds_data):
+    sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
+    cropped_sds = [{"applications": sd["applications"]} for sd in sds_data]
+    full_sd_from_pipe = basic_merge_multiple(cropped_sds)
 
     logger.info(f"Merged data after performing basic-merge for multiple SDs: {full_sd_from_pipe}")
     return full_sd_from_pipe
@@ -168,44 +155,11 @@ def handle_sd(handler: PipelineParametersHandler):
     logger.info("SD successfully extracted from APPLICATION_VERSIONS or SD_VERSION / SD_DATA and saved")
 
 
-def clean_namespaces(handler: PipelineParametersHandler):
-    ns_names_var = getenv("NAMESPACE_NAMES")
-
-    if not ns_names_var:
-        EnvgeneDeployPlan(entities=[]).write()
-        logger.info("Operation type CLEAN: NAMESPACE_NAMES is empty, env-cleanup (all namespaces)")
-        return
-
-    # { "namespace_name": "deploy_postfix" } - invert the map DeployPostfixNamespaceMapStep already built
-    ns_map = {namespace: postfix for postfix, namespace in handler.namespace_by_deploy_postfix.items()}
-    ns_for_cleanup = {}
-
-    for ns_name in split_multi_value_param(ns_names_var):
-        deploy_postfix = ns_map.get(ns_name)
-        if deploy_postfix is None:
-            raise ValueError(f"Operation type CLEAN: namespace '{ns_name}' has no matching namespace folder")
-        ns_for_cleanup[ns_name] = deploy_postfix
-
-    postfixes_for_cleanup = set(ns_for_cleanup.values())
-
-    deploy_plan = EnvgeneDeployPlan.read()
-    postfixes_from_plan = {e.deployPostfix for e in deploy_plan.entities}
-    for ns_name, dp in ns_for_cleanup.items():
-        if dp not in postfixes_from_plan:
-            # case incorrect ns from namespace_names or accidentally launched 2 clean up same ns
-            logger.warning(f"Operation type CLEAN: deployPostfix '{dp}' (namespace '{ns_name}') not found in deploy-plan")
-
-    remaining_entities = [e for e in deploy_plan.entities if e.deployPostfix not in postfixes_for_cleanup]
-    EnvgeneDeployPlan(entities=remaining_entities).write()
-
-
-def validate_applications(sd, effective_merge_mode: MergeType):
+def validate_applications(sd):
     applications = sd.get("applications")
     for app in applications:
-        if effective_merge_mode != MergeType.EXTENDED and (not isinstance(app, dict) or not app.get("deployPostfix")):
-            raise ValueError(
-                f"Application {app} doesn't have deployPostfix. <name>:<version> notation is supported only for "
-                f"extended merge. Current merge mode: {effective_merge_mode.value}")
+        if not isinstance(app, dict) or not app.get("deployPostfix"):
+            raise ValueError(f"Application {app} doesn't have deployPostfix.")
 
 
 def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_mode: MergeType):
@@ -226,8 +180,8 @@ def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_
             transformed_data.append(transformed_item)
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(app_data, namespace_dict)
-    full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
-    validate_applications(full_sd_from_pipe, effective_merge_mode)
+    full_sd_from_pipe = multiply_sds_to_single(transformed_data)
+    validate_applications(full_sd_from_pipe)
 
     sd_path = base_sd_path.joinpath(SD_FILE_NAME)
     sd_delta_path = base_sd_path.joinpath(DELTA_SD_FILE_NAME)

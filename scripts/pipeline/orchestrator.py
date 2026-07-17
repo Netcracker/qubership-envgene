@@ -24,8 +24,8 @@ from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
-from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
-from sd.process_sd import clean_namespaces, handle_sd, resolve_sd_parameters
+from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
+from sd.process_sd import handle_sd, resolve_sd_parameters
 
 
 class StepStatus(StrEnum):
@@ -135,7 +135,7 @@ class CleanNamespacesStep(PipelineStep):
         return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        clean_namespaces(ctx)
+        clean_namespaces(ctx.namespace_by_deploy_postfix, ctx.params.get('NAMESPACE_NAMES'))
 
 
 class MigrateSdToDeployPlanStep(PipelineStep):
