@@ -4,6 +4,7 @@ import base64
 
 import jsonschema
 from envgenehelper.config_helper import get_regdef_v2_schema
+from envgenehelper.creds_helper import get_cred_data
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 from pydantic.alias_generators import to_camel
 import requests
@@ -110,7 +111,7 @@ class Registry(BaseSchema):
         Returns None if no credentials configured."""
         if not self.credentials_id or not env_creds:
             return None
-        cred_data = env_creds.get(self.credentials_id, {}).get("data", {})
+        cred_data = get_cred_data(self.credentials_id, env_creds)
         username = cred_data.get("username")
         password = cred_data.get("password")
         if username and password:
