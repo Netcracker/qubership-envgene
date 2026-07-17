@@ -137,6 +137,7 @@ class GitRepoManager:
     def restore_excluded_paths(self, rel_paths: list[str]) -> None:
         snapshot_root = self._snapshot_root()
 
+        logger.info(f"Restoring {len(rel_paths)} excluded path(s) from snapshot...")
         for rel_path in rel_paths:
             src = snapshot_root / rel_path
             dst = self._repo_root / rel_path

@@ -7,14 +7,18 @@ os.environ.setdefault("ENVIRONMENT_NAME", "env-01")
 
 import pytest
 
+from envgenehelper.models import PipelineType
+
 from pipeline.orchestrator import (
-    AppRegDefProcessStep,
     AppregdefRenderStep,
+    DeployPostfixNamespaceMapStep,
     EnvBuildStep,
     GenerateDeploymentPlanStep,
     ProcessSdStep,
 )
-from pipeline.pipeline_parameters import GITLAB_DEPLOY, PipelineParametersHandler
+from pipeline.pipeline_parameters import PipelineParametersHandler
+
+GITLAB_DEPLOY = PipelineType.GITLAB_DEPLOY.value
 
 
 @pytest.fixture(autouse=True)
@@ -35,13 +39,13 @@ def _ctx(**overrides) -> PipelineParametersHandler:
 
 class TestStepGating:
     @pytest.mark.unit
-    def test_gitlab_deploy_runs_app_reg_def_process_and_deploy_plan(self):
+    def test_gitlab_deploy_runs_appregdef_render_and_deploy_plan(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY)
 
-        assert AppRegDefProcessStep().should_run(ctx)
+        assert AppregdefRenderStep().should_run(ctx)
+        assert DeployPostfixNamespaceMapStep().should_run(ctx)
         assert GenerateDeploymentPlanStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
-        assert not AppregdefRenderStep().should_run(ctx)
         assert not ProcessSdStep().should_run(ctx)
 
     @pytest.mark.unit
@@ -49,9 +53,9 @@ class TestStepGating:
         ctx = _ctx(ENV_BUILDER="true", APPLICATION_VERSIONS="Cloud-Core:1.0")
 
         assert AppregdefRenderStep().should_run(ctx)
+        assert DeployPostfixNamespaceMapStep().should_run(ctx)
         assert ProcessSdStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
-        assert not AppRegDefProcessStep().should_run(ctx)
         assert not GenerateDeploymentPlanStep().should_run(ctx)
 
     @pytest.mark.unit
