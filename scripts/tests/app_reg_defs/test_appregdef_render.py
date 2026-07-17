@@ -91,7 +91,7 @@ class TestAppRegDefRendering(BaseTest):
 
         render_context = EnvGenerator()
         context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
+        render_context.render_app_reg_defs(self.env_name, context_vars)
 
         render_dir = Path(context_vars["current_env_dir"])
         self._verify_rendered_files(test_number, render_dir)
@@ -109,18 +109,14 @@ class TestAppRegDefRendering(BaseTest):
         render_context = EnvGenerator()
         context_vars = self._get_render_context(test_number)
         with pytest.raises(expected_exception):
-            render_context.process_app_reg_defs(self.env_name, context_vars)
+            render_context.render_app_reg_defs(self.env_name, context_vars)
 
     def test_include_namespaces_generates_namespace_files(self):
         self._setup_render_dir()
 
         render_context = EnvGenerator()
         context_vars = self._get_render_context("TC-001-013")
-        render_context.process_app_reg_defs(
-            self.env_name,
-            context_vars,
-            include_namespaces=True,
-        )
+        render_context.render_namespaces_for_map(self.env_name, context_vars)
 
         namespace_file = Path(context_vars["current_env_dir"]) / "Namespaces" / "billing" / "namespace.yml"
         assert namespace_file.is_file()

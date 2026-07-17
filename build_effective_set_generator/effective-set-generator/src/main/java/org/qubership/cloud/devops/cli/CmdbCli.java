@@ -89,15 +89,8 @@ public class CmdbCli implements Callable<Integer> {
         if (version == EffectiveSetVersion.V1_0) {
             List<String> missingParams = new ArrayList<>();
 
-            boolean hasSdPath = StringUtils.isNotEmpty(envParams.sdPath);
-            boolean hasDeployPlanPath = StringUtils.isNotEmpty(envParams.deployPlanPath);
-            if (hasSdPath && hasDeployPlanPath) {
-                throw new IllegalArgumentException(
-                        "Cannot specify both --sd-path and --deploy-plan-path"
-                );
-            }
-            if (!hasSdPath && !hasDeployPlanPath) {
-                missingParams.add("--sd-path or --deploy-plan-path");
+            if (StringUtils.isEmpty(envParams.deployPlanPath)) {
+                missingParams.add("--deploy-plan-path");
             }
             if (StringUtils.isEmpty(envParams.sbomsPath)) {
                 missingParams.add("--sboms-path");
@@ -123,7 +116,6 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setEnvId(envParams.envId);
         sharedData.setEnvsPath(envParams.envsPath);
         sharedData.setSbomsPath(Optional.ofNullable(envParams.sbomsPath));
-        sharedData.setSdPath(Optional.ofNullable(envParams.sdPath));
         sharedData.setDeployPlanPath(Optional.ofNullable(envParams.deployPlanPath));
         sharedData.setRegistryPath(Optional.ofNullable(envParams.registryPath));
         sharedData.setOutputDir(envParams.outputDir);
@@ -225,9 +217,6 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-sp", "--sboms-path"}, description = "Path to the folder with Application and Environment Template SBOMs")
         String sbomsPath;
-
-        @CommandLine.Option(names = {"-sdp", "--sd-path"}, description = "Path to Solution Solution Descriptor")
-        String sdPath;
 
         @CommandLine.Option(names = {"-dpp", "--deploy-plan-path"}, description = "Path to deploy plan YAML list")
         String deployPlanPath;

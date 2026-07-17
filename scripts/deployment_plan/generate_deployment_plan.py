@@ -7,8 +7,8 @@ from envgenehelper import logger
 from envgenehelper.business_helper import get_version
 from envgenehelper.collections_helper import split_multi_value_param
 
-from build_env.namespace_map import NAMESPACE_MAP_FILE
-from deployment_plan.deploy_plan_adapter import DEPLOY_PLAN_FILE
+from build_env.namespace_render import NAMESPACE_MAP_FILE
+from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 _INTERMEDIATE_PLAN_FILE = "deploy-plan-calculated.yml"
@@ -85,7 +85,7 @@ def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
     os.environ.setdefault("LOCAL_REGDEFS_PATH", "regdefs")
 
     intermediate_plan_path = inventory_dir / _INTERMEDIATE_PLAN_FILE
-    deploy_plan_path = inventory_dir / DEPLOY_PLAN_FILE
+    deploy_plan_path = inventory_dir / DEPLOY_PLAN_FILE_NAME
 
     logger.info(f"Calculating deployment plan for {len(applications)} application(s)")
     DeploymentPlanGeneratorCommand.calculate(
@@ -95,11 +95,12 @@ def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
     )
 
     logger.info(f"Mapping namespaces from {namespace_map_path}")
-    DeploymentPlanGeneratorCommand.map(
+    deploy_plan = DeploymentPlanGeneratorCommand.map(
         deploy_plan=intermediate_plan_path,
         map=namespace_map_path,
         output_file=deploy_plan_path,
     )
+    ctx.deploy_plan = EnvgeneDeployPlan(entities=deploy_plan.entities)
 
     intermediate_plan_path.unlink(missing_ok=True)
     logger.info(f"Deployment plan written to {deploy_plan_path}")

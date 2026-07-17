@@ -7,16 +7,15 @@ from os import getenv
 from pathlib import Path
 from typing import Self
 
-import yaml
-from envgenehelper import getenv_with_error, writeToFile
-from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.effective_set_helper import GenerationMode
-from envgenehelper.models import TemplateVersionUpdateMode, OperationType
-from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper import logger
 from pydantic import BaseModel, Field
 
-GITLAB_DEPLOY = "GITLAB_DEPLOY"
+from envgenehelper import getenv_with_error, writeToFile
+from envgenehelper import logger
+from envgenehelper.collections_helper import split_multi_value_param
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode
+from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
+from envgenehelper.plugin_engine import PluginEngine
 
 
 class PipelineParametersHandler(BaseModel):
@@ -29,6 +28,10 @@ class PipelineParametersHandler(BaseModel):
     cluster_name: str
     env_name: str
     es_generation_mode: GenerationMode = GenerationMode.PARTIAL
+    partial_merge_mode: PartialMergeMode | None = None
+    namespace_by_deploy_postfix: dict = Field(default_factory=dict)
+    deploy_plan: EnvgeneDeployPlan | None = None
+    deploy_plan_delta: EnvgeneDeployPlan | None = None
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/build.env"))
 
@@ -67,7 +70,6 @@ class PipelineParametersHandler(BaseModel):
             "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
             "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
-            "PIPELINE_TYPE": getenv("PIPELINE_TYPE", ""),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
@@ -109,7 +111,7 @@ class PipelineParametersHandler(BaseModel):
         )
 
     def is_gitlab_deploy(self) -> bool:
-        return self.params.get("PIPELINE_TYPE") == GITLAB_DEPLOY
+        return self.params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
 
     def log_pipeline_params(self) -> None:
         params = copy.deepcopy(self.params)
