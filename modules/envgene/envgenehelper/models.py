@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class CaseInsensitiveEnum(str, Enum):
@@ -56,3 +56,32 @@ class DeltaDeployType(CaseInsensitiveEnum):
 
 class PipelineType(CaseInsensitiveEnum):
     GITLAB_DEPLOY = "GITLAB_DEPLOY"
+
+
+class SecretStore(BaseModel):
+    type: Literal["vault", "gcp", "aws", "azure"]
+    url: str
+    projectId: Optional[str] = None
+    mountPath: Optional[str] = None
+    vaultName: Optional[str] = None
+    region: Optional[str] = None
+
+    
+class PropertyMapping(BaseModel):
+    name: str
+
+class ExternalCredential(BaseModel):
+    type: Literal["external"]
+    secretStore: Optional[str] = None
+    remoteRefPath: str
+    create: bool = False
+    properties: list[PropertyMapping] = Field(default_factory=list)
+
+    @field_validator("secretStore")
+    @classmethod
+    def default_secret_store(cls, v: Optional[str]) -> str:
+        if v is None:
+            return "default_store"
+
+        cleaned = v.strip()
+        return cleaned if cleaned else "default_store"

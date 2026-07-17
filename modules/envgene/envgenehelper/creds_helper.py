@@ -5,6 +5,7 @@ from pathlib import Path
 from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
 from envgenehelper.yaml_helper import store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
+from envgenehelper.external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, is_external_credential_reference
 
 from .logger import logger
 
@@ -17,6 +18,9 @@ CRED_VALUE_TYPE_USERNAME = "username"
 CRED_VALUE_TYPE_PASSWORD = "password"
 CRED_VALUE_TYPE_SECRET = "secret"
 CONCEALED_SECRET_MASK = "*****"
+
+CRED_FIELD_DATA = "data"
+EXTERNAL_CREDENTIAL_TYPE = "external"
 
 
 def check_is_cred(param_key, param_value):
@@ -209,6 +213,9 @@ def mask_sensitive(data: dict,
 
 
 def fetch_cred_value(val, cred_config) -> str:
+    if is_external_credential_reference(val):
+        return resolve_external_credential_reference(val, cred_config)
+    
     match = re.search(r".*\('([^']+)'\)\.(\w+)", val)
     if match:
         cred_name = match.group(1)
@@ -276,13 +283,6 @@ def is_envgenenullvalue(value: object) -> bool:
         return True
     return False
 
-def extract_external_cred(cred_map):
-    if cred_map.get("$type") != "credRef":
-        return None
-    cred_id = cred_map.get("credId")
-    if not isinstance(cred_id, str) or not cred_id.strip():
-        raise ValueError(f"Invalid credRef: 'credId' is missing or empty in {cred_map}")
-    return cred_id
 
 def validate_cred_types(creds_map, is_external_cred_env, cred_file):
     types = {
@@ -293,17 +293,12 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
     if not types:
         return
     if is_external_cred_env:
-        if types != {"external"}:
+        if types != {EXTERNAL_CREDENTIAL_TYPE}:
             raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
     else:
-        if "external" in types:
+        if EXTERNAL_CREDENTIAL_TYPE in types:
             raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
-        
-def has_external_creds(creds_map):
-    return any(
-        isinstance(v, dict) and v.get("type") == "external"
-        for v in creds_map.values()
-    )
+
 
 def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
     env_credentials_path = f"{env_dir}/Credentials/credentials.yml"       
@@ -316,3 +311,13 @@ def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_sch
     # storing credentials yaml
     writeYamlToFile(env_credentials_path, env_creds_yaml)
     beautifyYaml(env_credentials_path, creds_schema)
+    
+
+def get_cred_data(cred_id: str, env_creds: dict) -> dict:
+    if not env_creds or cred_id not in env_creds:       
+        return {}        
+    credential = env_creds[cred_id]    
+    if credential.get("type") == EXTERNAL_CREDENTIAL_TYPE:
+        return resolve_external_credential_data(cred_id, env_creds)
+    logger.info(f"Using local credential '{cred_id}'")
+    return credential.get(CRED_FIELD_DATA, {})
