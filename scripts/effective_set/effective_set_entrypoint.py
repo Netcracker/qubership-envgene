@@ -197,12 +197,12 @@ def _run_external_credential_provision_cli(effective_set_dir) -> None:
     context_file = effective_set_dir / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
     
     if not context_file.is_file():
-        logger.info("External credential context file not found, skipping CLI")
+        logger.info("External credential context file not found, skipping credential creation in external store")
         return
 
     log_level = getenv("ENVGENE_LOG_LEVEL", "INFO").upper()
 
-    logger.info(f"External credential context file found: {context_file}. Invoking CLI")
+    logger.info(f"External credential context file found: {context_file}. Invoking external-cred-provision CLI")
     cmd = [
         "external-cred-provision",
         "--log-level",
@@ -210,7 +210,10 @@ def _run_external_credential_provision_cli(effective_set_dir) -> None:
         str(context_file),
     ]
 
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True, timeout=300)
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError("External credential provisioning timed out after 5 minutes.") from e
 
 
 if __name__ == "__main__":
