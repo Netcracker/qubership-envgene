@@ -13,3 +13,4 @@ from .crypt import decrypt_file, encrypt_file, decrypt_all_cred_files_for_env, e
 from .constants import cleanup_targets
 from .params_helper import validate_parameters
 from .models import *
+from .external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, extract_external_cred, is_external_credential_reference
