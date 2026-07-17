@@ -663,8 +663,8 @@ class EnvGenerator:
             self.set_env_templates()
 
             self.generate_bgd_file()
-            self.generate_namespace_files_and_map()
             self.generate_solution_structure()
+            self.generate_namespace_files_and_map()
             self.generate_tenant_file()
             self.generate_cloud_file()
             self.generate_composite_structure()
