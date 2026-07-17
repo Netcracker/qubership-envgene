@@ -7,7 +7,7 @@ from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME,
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
-from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
+from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, _run_external_credential_provision_cli, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
     _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, run_legacy_sd_effective_set as run_entrypoint
 
@@ -418,9 +418,9 @@ def test_cli_runs_with_expected_command(tmp_path, monkeypatch):
     context_file.write_text("{}")
 
     captured = {}
-    def fake_run(cmd, check):
+    def fake_run(cmd, **kwargs):
         captured["cmd"] = cmd
-        captured["check"] = check
+        captured.update(kwargs)
 
     monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
 
