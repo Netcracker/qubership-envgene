@@ -11,8 +11,6 @@ from envgenehelper.errors import ValidationError
 from envgenehelper.models import ExternalCredential, SecretStore
 from envgenehelper.yaml_helper import openYaml
 
-from qubership_pipelines_common_library.v2.secret_manager.providers.multi_store_provider import MultiStoreProvider
-from qubership_pipelines_common_library.v2.secret_manager.secret_manager import SecretManager
 
 SECRET_STORE_FILE = "secret-stores.yml"
 CONFIGURATION_DIR = "configuration"
@@ -97,6 +95,9 @@ def _build_vals_reference(cred_id: str, external_credential: ExternalCredential,
 
     
 def _fetch_secret_from_store(vals_reference_uri: str) -> dict[str, Any] | str | None:
+    from qubership_pipelines_common_library.v2.secret_manager.providers.multi_store_provider import MultiStoreProvider
+    from qubership_pipelines_common_library.v2.secret_manager.secret_manager import SecretManager
+
     logger.info(f"Fetching secret from external secret store using vals reference: {vals_reference_uri}")
     secret_manager = SecretManager(secret_provider=MultiStoreProvider())
     raw_payload = secret_manager.read_secret(vals_reference_uri, fail_on_missing=True)  
