@@ -108,7 +108,7 @@ def test_resolve_external_credential_reference_success(mock_configs, monkeypatch
     mock_sm_instance = MagicMock()
     mock_sm_instance.read_secret.return_value = yaml.dump({"username": "admin", "password": "super-secret-password"})
     monkeypatch.setattr(
-        "envgenehelper.external_credential_helper.SecretManager", 
+        "qubership_pipelines_common_library.v2.secret_manager.secret_manager.SecretManager", 
         lambda *args, **kwargs: mock_sm_instance
     )
 
@@ -132,7 +132,7 @@ def test_resolve_external_credential_data_all_properties(mock_configs, monkeypat
     mock_sm_instance = MagicMock()
     mock_sm_instance.read_secret.return_value = yaml.dump({"username": "app_user", "password": "password123"})
     monkeypatch.setattr(
-        "envgenehelper.external_credential_helper.SecretManager", 
+        "qubership_pipelines_common_library.v2.secret_manager.secret_manager.SecretManager", 
         lambda *args, **kwargs: mock_sm_instance
     )
          
