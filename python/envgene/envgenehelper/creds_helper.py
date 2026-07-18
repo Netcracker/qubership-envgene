@@ -314,11 +314,10 @@ def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_sch
 
 
 def get_cred_data(cred_id: str, env_creds: dict) -> dict:
-    if not env_creds or cred_id not in env_creds:
-        raise ValueError(f"Credential '{cred_id}' not found in decrypted credentials")
-    credential = env_creds[cred_id]
-    logger.info(f"Retrieved credential '{cred_id}' from decrypted credentials: {credential}")
+    if not env_creds or cred_id not in env_creds:       
+        return {}        
+    credential = env_creds[cred_id]    
     if credential.get("type") == EXTERNAL_CREDENTIAL_TYPE:
         return resolve_external_credential_data(cred_id, env_creds)
-    logger.info(f"Using local credential '{cred_id}': {credential.get(CRED_FIELD_DATA, {})}")
+    logger.info(f"Using local credential '{cred_id}'")
     return credential.get(CRED_FIELD_DATA, {})
