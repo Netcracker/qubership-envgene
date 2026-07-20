@@ -19,7 +19,6 @@
   - [Uniq names](#uniq-names)
     - [`generate_deployment_plan`](#generate_deployment_plan)
     - [ES Calc](#es-calc)
-  - [Multi env support](#multi-env-support)
   - [To deprecate](#to-deprecate)
   - [Flow](#flow)
     - [1 job `env_prepare`](#1-job-env_prepare)
@@ -68,11 +67,9 @@ for the target flow. The per-component docs in this directory elaborate individu
    2. Ввести лайт режим калькулятора который правит только стейты
    3. Ввести пост калькулятор, питон функцию которая будет править стейты
 6. Как обрабатываем `COMMIT` бг операцию? Делаем ли клин legacy нс?
-7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`? Или только дженеричные:
-   1. `DEPLOY_POSTFIXES_FILTER`
-   2. `NAMESPACE_NAMES_FILTER`
-   3. `COMPONENT_NAMES_FILTER`
-   4. `WAVE_NAMES_FILTER`
+   1. нет, при коммите только меняем стейт
+7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`?
+   1. нет. 
 8. Где будет валидация на корректность бг операции (разрешён ли переход состояний)
    1. только в оркестратор пайпе
    2. в оркестратор пайпе и в энвгене (сейчас она в энвгене есть и ее хочется выпилить)
@@ -306,77 +303,6 @@ bg_domain:
 - Решение по каждому приложению принимается независимо от остальных.
 - Политика ретеншена в ES Calc не предусмотренна
 
-## Multi env support
-
-- Single `ENV_NAMES` -> direct include `static-api.yaml`, multiple -> run generator.
-- OOB launches `static-api.yaml` directly.
-- Thin generator: per env emit `trigger: include static-api.yaml`, forward vars, set `ENV_NAMES=<cluster>/<env>`.
-- Keep `orchestrator.py` single-env, unchanged.
-- Passport jobs per env flow. no aggregation.
-
-`gitlab-ci.yaml`:
-
-```yaml
-## --- single env: static-api directly ---
-include:
-  - local: static-api.yaml
-    rules:
-      - if: '$ENV_NAMES !~ /[,; \n]/'        # no delimiter -> one env (empty -> CLUSTER/ENV fallback)
-
-## --- multi env: generation ---
-generate_pipeline:
-  ...
-    script:
-      - "python /module/scripts/main.py generate_pipeline"
-    rules:
-      - if: '$ENV_NAMES =~ /[,; \n]/'          # has a delimiter -> N envs
-  ...
-run_generated_pipeline:
-  ...
-  trigger:
-    include:
-      - artifact: generated-config.yml
-        job: generate_pipeline
-  rules:
-    - if: '$ENV_NAMES =~ /[,; \n]/'
-  ...
-```
-
-Generated `generated-config.yml`:
-
-```yaml
-env-prepare-cluster-01-env-1:
-  trigger:
-    include:
-      - local: static-api.yaml
-    ...
-  variables:
-    ENV_NAMES: "cluster-01/env-1"
-  ...
-
-env-prepare-cluster-01-env-2:
-  trigger:
-    include:
-      - local: static-api.yaml
-    ...
-  variables:
-    ENV_NAMES: "cluster-01/env-2"
-  ...
-```
-
-AI:
-
-- Write a new `/module/scripts/main.py generate_pipeline` on the `build_pipegene` image (or the common `envgene` one)
-- Prepare `gitlab_ci.yaml`
-- Add a passport generation job for the per-env flow
-- Verify `orchestrator.py` needs no changes
-- Verify `static-api.yaml` needs no changes
-- Verify `$ENV_NAMES =~ /[,; \n]/` works correctly
-- Test parallel commits
-- Update the gsf package
-- Update the gsf-related documentation
-- Do the same on GitHub
-
 ## To deprecate
 
 1. Fernet
@@ -386,7 +312,7 @@ AI:
 5. `registry_discovery`
 6. `SD_SOURCE_TYPE: artifact`
 7. `BG_MANAGE`
-8. экстендед мерж
+8. extended merge (removed)
 
 ## Flow
 
@@ -496,7 +422,7 @@ Functions:
     - actions:
       - validate state transition
       - create/update BG state files
-    - AI[phase2-bgd]: replace `BG_MANAGE` to `OPERATION_TYPE` in trigger
+    - AI[phase2-bgd]: support `OPERATION_TYPE` and  `TARGET_BG_STATE` instead of `BG_MANAGE`
 2. `warmup`
     - triggers:
       - `OPERATION_TYPE: BGD-WARMUP`
@@ -577,7 +503,8 @@ Functions:
     - actions:
       - set template version
     - [phase1] unchanged
-    - [phase2-bgd] поддержать изменение версий темплейта пира/ориджина на основе `BG_NS_TARGET`
+    - [phase2-bgd] поддержать изменение версий темплейта пира/ориджина на основе `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`
+      (с учетом `ENV_TEMPLATE_VERSION_UPDATE_MODE`)
     - [phase2-bgd] понять имплементировали ли `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`. если да - удалить
 2. `download_env_template`
     - input:
@@ -753,6 +680,7 @@ Functions:
     - AI[phase1]: move to GitHub
     - AI[phase1]: implement uniq app names (Artem)
     - AI[phase2]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
+    - AI[phase2-bgd]: support 
 2. `discovery_deployment_plan`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
