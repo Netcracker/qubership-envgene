@@ -777,6 +777,7 @@ Functions:
     - AI[phase1]: add `APP_ARTIFACTS_DIR`
     - AI[phase1]: support DP as well as SD
     - AI[phase2]: remove SD support
+    - AI[phase2]: оптимизировать скачивание ДД с учетом того что `generate_argocd_repo` требует DD
 2. `sbom_generation`
     - input:
       - local DD + zip
@@ -788,6 +789,7 @@ Functions:
       - generate SBOM from local DD + zip
       - sbom retention
     - AI[phase1]: consume local DD + zip. download moved to `dd_downloading`
+    - AI[phase2]: оптимизировать генерацию сбом с учетом того что `generate_argocd_repo` требует DD
 3. `null_validation`
     - AI[phase1]: check what exists
 4. `ES Calc CLI`
