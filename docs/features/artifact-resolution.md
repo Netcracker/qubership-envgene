@@ -3,7 +3,8 @@
 - [Artifact resolution](#artifact-resolution)
   - [Version forms](#version-forms)
   - [Processing](#processing)
-    - [AWS and GCP registries](#aws-and-gcp-registries)
+    - [Traditional registries](#traditional-registries)
+    - [Public cloud registries](#public-cloud-registries)
     - [Version resolution](#version-resolution)
 
 EnvGene resolves and downloads Maven artifacts in two flows:
@@ -15,13 +16,11 @@ Both begin the same way. Each resolves and downloads a Deployment Descriptor (DD
 This document covers the shared DD-resolution logic.
 
 The DD is a JSON artifact addressed by the artifact coordinates (`groupId:artifactId:version`). The
-coordinates come from a definition object that differs by flow:
+coordinates and registry endpoint and credentials come from objects that differs by flow:
 
 1. [Artifact Definition](/docs/features/app-reg-defs.md) for the environment template
-2. [Application Definition](/docs/features/app-reg-defs.md) for the application artifact
-
-Both reference a [Registry Definition](/docs/features/app-reg-defs.md), which declares the repositories to
-search.
+2. [Application Definition](/docs/features/app-reg-defs.md) and [Registry Definition](/docs/features/app-reg-defs.md)
+   for the application artifact
 
 ## Version forms
 
@@ -42,18 +41,26 @@ latest build. A pinned snapshot build is a fixed version that names one such bui
 
 ## Processing
 
-EnvGene searches the candidate repositories concurrently, and the first to return the DD wins. If none returns
-the DD, resolution fails. The version form does not affect which repositories are searched.
+EnvGene searches the selected repositories concurrently, and the first to return the DD wins. If none returns
+the DD, resolution fails.
 
-The candidate repositories come from the Registry Definition `mavenConfig`: `targetSnapshot`, `targetStaging`,
-`targetRelease`, and `snapshotGroup`. The Nexus, Artifactory, and Azure providers and all Registry Definition
-v1 registries use them. AWS and GCP are the exception.
+The registry provider determines which repositories the search probes. Registry Definition v2 declares the
+provider. Registry Definition v1 has no provider and always uses the traditional model.
 
-### AWS and GCP registries
+### Traditional registries
 
-For the AWS and GCP providers, `repositoryDomainName` addresses one repository that holds every artifact, so
-`mavenConfig` sets no candidate repositories and EnvGene searches that single repository. The provider is
-declared in Registry Definition v2 `authConfig`.
+Nexus and Artifactory. `repositoryDomainName` is a base URL, and `mavenConfig` names the candidate
+repositories: `targetSnapshot`, `targetStaging`, `targetRelease`, `snapshotGroup`, and `releaseGroup`. The
+version form selects which the search probes:
+
+- For a snapshot version - `targetSnapshot`, `targetStaging`, and `snapshotGroup`.
+- For a fixed version - all candidate repositories.
+
+### Public cloud registries
+
+AWS, GCP, and Azure. `repositoryDomainName` addresses one repository that holds every artifact, with no
+snapshot, staging, release, or group separation. `mavenConfig` sets no candidate repositories, and EnvGene
+searches that single repository.
 
 ### Version resolution
 
