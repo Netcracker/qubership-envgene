@@ -1913,8 +1913,7 @@ registry:
     repositoryDomainName: string
     # Mandatory
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Mandatory
     # Staging repository name
@@ -2073,21 +2072,20 @@ registry:
     # Domain name of the registry
     repositoryDomainName: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Staging repository name
     targetStaging: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Release repository name
     targetRelease: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot Maven repository group name
     snapshotGroup: string
     # Optional
@@ -2142,11 +2140,6 @@ registry:
   mavenConfig:
     authConfig: aws-maven
     repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
-    targetSnapshot: "snapshots"
-    targetStaging: "staging"
-    targetRelease: "releases"
-    snapshotGroup: "snapshot-group"
-    releaseGroup: "release-group"
 ```
 
 **Example with GCP Artifact Registry:**
@@ -2175,12 +2168,7 @@ registry:
       gcpRegSAEmail: "test@test.iam.gserviceaccount.com"
   mavenConfig:
     authConfig: gcp-maven
-    repositoryDomainName: "https://artifactregistry.googleapis.com"
-    targetSnapshot: "maven-snapshots"
-    targetStaging: "maven-staging"
-    targetRelease: "maven-releases"
-    snapshotGroup: "maven-snapshots-group"
-    releaseGroup: "maven-releases-group"
+    repositoryDomainName: "https://europe-west1-maven.pkg.dev/123456789012/maven-repo"
 ```
 
 **Example with Azure Artifacts:**
@@ -2522,19 +2510,19 @@ mavenConfig:
   # Domain name of the registry
   repositoryDomainName: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   targetSnapshot: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Staging Maven repository name
   targetStaging: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Release Maven repository name
   targetRelease: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   snapshotGroup: string
   # Optional
@@ -2782,11 +2770,6 @@ authConfig:
 mavenConfig:
   authConfig: aws
   repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
-  targetSnapshot: snapshots
-  targetStaging: staging
-  targetRelease: releases
-  snapshotGroup: snapshot-group
-  releaseGroup: staging-group
 dockerConfig:
   authConfig: aws
   snapshotUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18080
