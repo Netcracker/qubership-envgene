@@ -68,13 +68,14 @@ The generated Environment Inventory must be reused by other jobs in the same pip
 > If `ENV_TEMPLATE_VERSION` is provided in the instance pipeline, it has higher priority than the template version specified in `env_definition.yml`
 
 `ENV_SPECIFIC_PARAMS` and `ENV_INVENTORY_INIT` are legacy parameters and are deprecated. They do not cover the full set of Inventory management scenarios, therefore new integrations should use `ENV_INVENTORY_CONTENT`.
+Both parameters are scheduled for removal.
 
 ### Instance Repository Pipeline Parameters
 
 | Parameter | Type | Mandatory | Description | Example |
 | ----------- | ------------- | ------ | --------- | ---------- |
 | `ENV_INVENTORY_CONTENT` | JSON in string | no | Allows to create/ replace, delete `env_definition.yml` and related Inventory objects. Must be valid according to [JSON schema](/schemas/env-inventory-content.schema.json). See details in [ENV_INVENTORY_CONTENT](#env_inventory_content) | See [example below](#full-env_inventory_content-example) |
-| `ENV_INVENTORY_INIT` | string | no | **Deprecated**. If `true`, the new Environment Inventory will be generated in the path `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`. If `false` can be updated only | `true` OR `false` |
+| `ENV_INVENTORY_INIT` | string | no | **Deprecated, scheduled for removal**. If `true`, the new Environment Inventory will be generated in the path `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`. If `false` can be updated only | `true` OR `false` |
 | `ENV_SPECIFIC_PARAMS` | JSON in string | no | **Deprecated**. If specified, Environment Inventory is updated. See details in [ENV_SPECIFIC_PARAMS](#env_specific_params) | See [example below](#env_specific_params-example) |
 
 #### `ENV_INVENTORY_CONTENT`
