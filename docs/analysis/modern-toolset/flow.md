@@ -716,6 +716,7 @@ Functions:
     - AI[phase1]: support DP as well as SD
     - AI[phase2]: remove SD support
     - AI[phase2]: add `namespace-map.yml` as input to optimize execution time
+    - AI[phase2]: add `ENV_NAMES` to old flow, add `ENVIRONMENT_NAME` + `CLUSTER_NAME` to new flow
 2. `run_build_environment`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
