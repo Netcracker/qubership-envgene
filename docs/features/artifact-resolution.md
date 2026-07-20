@@ -16,13 +16,11 @@ Both begin the same way. Each resolves and downloads a Deployment Descriptor (DD
 This document covers the shared DD-resolution logic.
 
 The DD is a JSON artifact addressed by the artifact coordinates (`groupId:artifactId:version`). The
-coordinates come from a definition object that differs by flow:
+coordinates and registry endpoint and credentials come from objects that differs by flow:
 
 1. [Artifact Definition](/docs/features/app-reg-defs.md) for the environment template
-2. [Application Definition](/docs/features/app-reg-defs.md) for the application artifact
-
-Both reference a [Registry Definition](/docs/features/app-reg-defs.md), which declares the repositories to
-search.
+2. [Application Definition](/docs/features/app-reg-defs.md) and [Registry Definition](/docs/features/app-reg-defs.md)
+   for the application artifact
 
 ## Version forms
 
@@ -47,7 +45,7 @@ EnvGene searches the selected repositories concurrently, and the first to return
 the DD, resolution fails.
 
 The registry provider determines which repositories the search probes. Registry Definition v2 declares the
-provider in its `authConfig`. Registry Definition v1 has no provider and always uses the traditional model.
+provider. Registry Definition v1 has no provider and always uses the traditional model.
 
 ### Traditional registries
 
