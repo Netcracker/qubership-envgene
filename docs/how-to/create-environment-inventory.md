@@ -116,6 +116,11 @@ This guide provides instructions for creating a Environment Inventory in the Ins
     ```
 
     See details about pipeline parameter options in the [documentation](/docs/instance-pipeline-parameters.md)
+
+    > [!NOTE]
+    > `ENV_INVENTORY_INIT` and `ENV_SPECIFIC_PARAMS` are deprecated and will be removed in future
+    > releases. Use
+    > [`ENV_INVENTORY_CONTENT`](/docs/instance-pipeline-parameters.md#env_inventory_content) instead.
   
 2. **The pipeline will automatically:**
    - Create the required folder structure under `/environments/<cluster-name>/<env-name>`
