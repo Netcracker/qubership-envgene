@@ -69,10 +69,11 @@ for the target flow. The per-component docs in this directory elaborate individu
 6. Как обрабатываем `COMMIT` бг операцию? Делаем ли клин legacy нс?
    1. нет, при коммите только меняем стейт
 7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`?
-   1. нет. 
+   1. нет.
 8. Где будет валидация на корректность бг операции (разрешён ли переход состояний)
    1. только в оркестратор пайпе
    2. в оркестратор пайпе и в энвгене (сейчас она в энвгене есть и ее хочется выпилить)
+   3. если не будет валидации то и `TARGET_BG_STATE` не нужен
 
 ## AI
 
@@ -233,11 +234,11 @@ bg_domain:
   originNamespace:
     name: env-1-bss-origin
     type: namespace
-    status: active                                         # new
+    state: active                                         # new
   peerNamespace:
     name: env-1-bss-peer
     type: namespace
-    status: candidate                                      # new
+    state: candidate                                      # new
   controllerNamespace:
     name: env-1-controller
     type: namespace
@@ -339,16 +340,13 @@ Functions:
     - actions:
       - set defaults
     - AI[phase1]: add `APP_ARTIFACTS_DIR`
-    - AI[phase2]: remove non required `build.env` vars
 2. `cert_apply`
     - [phase1] unchanged
-    - AI[phase2]: move out of the before script
-    - AI[phase2]: implement [#1506](https://github.com/Netcracker/qubership-envgene/issues/1506)
+    - AI[techDebt-P1]: move out of the before script
 3. `git_fetch`
     - [phase1] unchanged
 4. `crypt.decrypt`
     - [phase1] unchanged
-    - AI[phase2] Check no-op if `crypt: false`
 
 #### 1.2 step `trigger_passport`
 
@@ -403,7 +401,8 @@ Functions:
 TBD
 
 - [phase1] unchanged
-- AI[phase2]: check UC readiness and test coverage
+- AI[phase1]: check UC readiness of [credential-rotation](https://github.com/Netcracker/qubership-envgene/blob/docs/modern-toolset-dev/docs/use-cases/credential-rotation.md)
+- AI[phase1]: check test coverage
 
 #### 1.5 step `bg_manage`
 
@@ -422,7 +421,13 @@ Functions:
     - actions:
       - validate state transition
       - create/update BG state files
-    - AI[phase2-bgd]: support `OPERATION_TYPE` and  `TARGET_BG_STATE` instead of `BG_MANAGE`
+    - AI[bgd]: support state change based on `OPERATION_TYPE` (design is not done)
+    - AI[bgd]: remove `BG_STATE` and validation (design is not done)
+    - AI[bgd]: after the validation decision
+      - IF support validation in envgene
+        - design `TARGET_BG_STATE` structure (Leonid)
+        - support `TARGET_BG_STATE` instead of `BG_STATE` (design is not done)
+    - AI[bgd]: support "target" state files (design is not done) (nice to have)
 2. `warmup`
     - triggers:
       - `OPERATION_TYPE: BGD-WARMUP`
@@ -432,17 +437,8 @@ Functions:
       - updated env instance
     - actions:
         - copy active -> candidate namespace/applications
-    - AI[phase3-bgd]: implement warmup on ES instead of env instance
-    - AI[phase2-bgd]: add `OPERATION_TYPE: BGD-WARMUP` trigger
-3. `promote`
-    - triggers:
-      - `OPERATION_TYPE: BGD-PROMOTE`
-    - input:
-      - ???
-    - output:
-      - ???
-    - actions:
-        - ???
+    - AI[bgd]: no updates
+    <!-- - AI[bgd]: support warmup on ES instead of env instance (design is not done) -->
 
 #### 1.6 step `env_inventory_generation`
 
@@ -458,8 +454,7 @@ TBD
 - output:
   - env_definition
 - [phase1] unchanged
-- AI[phase2]: check UC readiness and test coverage
-- AI[phase2]: проверить что из критериев запуска степа удалены `ENV_INVENTORY_INIT`, `ENV_TEMPLATE_NAME`, `is_template_test`
+- AI[techDebt-P2]: remove `ENV_INVENTORY_INIT: true` (with bwc)
 
 #### 1.7 step `registry_discovery`
 
@@ -480,8 +475,7 @@ TBD
   - generate artdef base from CMDB/central appreg storage
 - remove or extend (add integration with the central appregdef storage)?
 - AI[phase1]: keep it off
-- AI[phase2]: turn on (?)
-- AI[phase3]: add integration with central appregdef storage
+- AI[techDebt-P2]: delete functionality
 
 #### 1.8 step `process_env_template`
 
@@ -503,9 +497,9 @@ Functions:
     - actions:
       - set template version
     - [phase1] unchanged
-    - [phase2-bgd] поддержать изменение версий темплейта пира/ориджина на основе `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`
-      (с учетом `ENV_TEMPLATE_VERSION_UPDATE_MODE`)
-    - [phase2-bgd] понять имплементировали ли `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`. если да - удалить
+    - AI[bgd] поддержать изменение версий темплейта пира/ориджина на основе `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`,
+                   с учетом `ENV_TEMPLATE_VERSION_UPDATE_MODE`. (design is not done)
+    - AI[bgd] понять имплементировали ли `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`. если да - удалить
 2. `download_env_template`
     - input:
       - env definition
@@ -517,7 +511,7 @@ Functions:
       - download env template
     - [phase1] unchanged
     - AI[phase1]: fix the template-version-setting bug
-    - AI[phase2]: move template downloading from `app_reg_def_process`
+    - AI[techDebt-LOGS]: move template downloading from `app_reg_def_process`
 
 #### 1.9 step `app_reg_def_process`
 
@@ -537,7 +531,7 @@ Functions:
       - template macros
     - actions:
       - generates the macro values above
-    - AI[phase2]: rename `generate_config` -> `compute_template_macros`
+    - AI[techDebt-LOGS]: rename `generate_config` -> `compute_template_macros`
 2. `load_template_descriptor` (`render_config_env.set_env_templates`)
     - input:
       - env_definition
@@ -549,7 +543,7 @@ Functions:
       - render the template descriptor if .j2, validate
       - load into `current_env_template`
       - repeat for the peer/origin dirs
-    - AI[phase2]: rename `set_env_templates` -> `load_template_descriptor`
+    - AI[techDebt-LOGS]: rename `set_env_templates` -> `load_template_descriptor`
 3. `generate_bgd_file`
     - input:
       - downloaded template files
@@ -598,7 +592,6 @@ Functions:
       - `ctx.current_env.composite_topology`
     - actions:
       - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
-    - AI[phase2]: adopt the macro computation from master
 8. `run_appregdef_render`
     - input:
       - downloaded template files
@@ -612,8 +605,8 @@ Functions:
       - skip appregdefs already present in env instance if `APPREG_DEF_STRATEGY` == `create_if_not_exist`
         (default). do not skip if `APPREG_DEF_STRATEGY` == `replace`
     - [phase1] unchanged
-    - AI[phase2]: renders only required appregdef
-    - AI[phase2]: implement create_if_not_exist | replace strategies
+    - AI[techDebt-PERF]: renders only required appregdef
+    - AI[techDebt-PERF]: implement create_if_not_exist | replace strategies
 
 #### 1.10 step `process_sd`
 
@@ -638,7 +631,7 @@ Functions:
       - merge sd
     - [phase1] unchanged
     - AI[phase1]: do not call in the new flow, call in the old flow
-    - AI[phase2]: remove `SD_SOURCE_TYPE`
+    - AI[techDebt-P2]: remove `SD_SOURCE_TYPE`
 2. `sd_dp_adapter`
     - input:
       - `updated sd.yaml`
@@ -646,7 +639,7 @@ Functions:
       - `deploy-plan.yml`
     - actions:
       - generate dp based on sd
-    - [phase2] add the function
+    - [phase1] add the function
 
 #### 1.11 step `generate_deployment_plan`
 
@@ -679,11 +672,12 @@ Functions:
     - AI[phase1]: do not call in the old flow, call in the new flow
     - AI[phase1]: move to GitHub
     - AI[phase1]: implement uniq app names (Artem)
-    - AI[phase2]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
-    - AI[phase2-bgd]: support 
+    - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
+    - AI[bgd]: desing BG cases
+    - AI[bgd]: support BG cases (Artem)
 2. `discovery_deployment_plan`
     - triggers:
-      - `OPERATION_TYPE: DEPLOY`
+      - `OPERATION_TYPE: BGD-WARMUP`
     - input:
       - effective set (где его взять?)
         - argo url + cred - TBD
@@ -692,7 +686,8 @@ Functions:
       - `deploy-plan.yml`
     - actions:
       - TBD
-    - AI[phase2-bgd]: implement the function (Artem)
+    - AI[bgd]: design inputs
+    - AI[bgd]: implement the function (Artem)
 
 #### 1.12 step `env_build`
 
@@ -714,9 +709,8 @@ Functions:
       - join applications by deployPostfix with namespace_map
       - no-op if no `sd.yaml` or `deploy-plan.yml`
     - AI[phase1]: support DP as well as SD
-    - AI[phase2]: remove SD support
-    - AI[phase2]: add `namespace-map.yml` as input to optimize execution time
-    - AI[phase2]: add `ENV_NAMES` to old flow, add `ENVIRONMENT_NAME` + `CLUSTER_NAME` to new flow
+    - AI[phase1]: remove SD support
+    - AI[techDebt-P1]: add `namespace-map.yml` as input to optimize execution time
 2. `run_build_environment`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
@@ -741,8 +735,8 @@ Functions:
       - `apply_ns_build_filter`
     - [phase1] unchanged
     - AI[phase1]: test manually
-    - AI[phase2]: prepare a UC, add tests
-    - AI[phase2-bgd]: переписать `apply_ns_build_filter` на использование `BG_NS_TARGET` нужно ли?
+    - AI[techDebt-P1]: prepare a UC, add tests
+    <!-- - AI[bgd]: переписать `apply_ns_build_filter` на использование `BG_NS_TARGET` нужно ли -->
 3. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
@@ -753,8 +747,7 @@ Functions:
       - namespaces with `cleaned: true`
     - actions:
       - set `cleaned: true` on `NAMESPACE_NAMES` namespaces (all if empty. error if a namespace is not found)
-    - [phase1] currently inside `run_build_environment` (`build_env.py`)
-    - AI[phase2]: extract from `run_build_environment`
+    - AI[techDebt-LOGS]: extract from `run_build_environment`
 
 #### 1.13 step `generate_effective_set`
 
@@ -775,9 +768,11 @@ Functions:
       - resolve DD + zip per app with appreg defs
       - download DD + zip, unzip
     - AI[phase1]: add `APP_ARTIFACTS_DIR`
-    - AI[phase1]: support DP as well as SD
-    - AI[phase2]: remove SD support
-    - AI[phase2]: оптимизировать скачивание ДД с учетом того что `generate_argocd_repo` требует DD
+    - AI[phase1]: support DP
+    - AI[phase1]: remove SD support
+    - AI[techDebt-PERF]: оптимизировать скачивание DD/zip.
+      - (??) не скачивать zip для `generate_argocd_repo`
+      - (??) кэшировать ДД.json по аналогии с sbom
 2. `sbom_generation`
     - input:
       - local DD + zip
@@ -789,7 +784,9 @@ Functions:
       - generate SBOM from local DD + zip
       - sbom retention
     - AI[phase1]: consume local DD + zip. download moved to `dd_downloading`
-    - AI[phase2]: оптимизировать генерацию сбом с учетом того что `generate_argocd_repo` требует DD
+    - AI[techDebt-PERF]: оптимизировать генерацию sbom
+      - (??) не скачивать zip для `generate_argocd_repo`
+      - (??) кэшировать ДД.json по аналогии с sbom
 3. `null_validation`
     - AI[phase1]: check what exists
 4. `ES Calc CLI`
@@ -802,12 +799,14 @@ Functions:
       - Effective Set
     - actions:
       - generates ES
-    - AI[phase1]: support DP as well as SD
-    - AI[phase2-bgd]: Проверить что бг кейс будет поддержан из коробки c DP
+    - AI[phase1]: support DP
+    - AI[phase1]: remove SD support
+    - AI[phase1]: implement uniq app names
+    - AI[bgd]: Поддержка бг кейса в ES структуре - `<namespace-folder-01>` включает peer|origin постфиксы
         - `deployPostfix` + включенность в бг домен определяет маппинг на нс фолдер в ES
         - `namespace` определяет имя фолдера в ES
-    - AI[phase2]: remove SD support
-    - AI[phase1]: implement uniq app names
+    - AI[bgd]: add `state` to `bg_domain` in topology context
+    - AI[bgd]: post-ES python patcher writes bg_domain.status (state-only ops), no full recalc. (nice to have)
 5. `partial_es_processing`
     - triggers:
       - `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`
