@@ -168,6 +168,9 @@ EnvGene resolves `application:version` references through the definitions in two
 - [Effective Set generation](/docs/features/effective-set-generation.md), which resolves every application referenced
   by the SDs it processes.
 
+For how EnvGene searches the registries and resolves the version to download an artifact, see
+[Artifact Resolution](/docs/features/artifact-resolution.md).
+
 Resolution reads the root-level folders first and falls back to the per-environment folders. The fallback exists for
 backward compatibility only: all consumers must migrate to the root-level folders.
 
