@@ -23,6 +23,9 @@ GITLAB_DEPLOY = PipelineType.GITLAB_DEPLOY.value
 
 @pytest.fixture(autouse=True)
 def pipeline_env(monkeypatch, tmp_path):
+    monkeypatch.delenv("CLUSTER_NAME", raising=False)
+    monkeypatch.delenv("ENVIRONMENT_NAME", raising=False)
+    monkeypatch.delenv("FULL_ENV_NAME", raising=False)
     monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
     monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
     monkeypatch.setenv("ENV_BUILDER", "false")

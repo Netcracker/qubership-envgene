@@ -95,11 +95,12 @@ class PipelineParametersHandler(BaseModel):
                 raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
             cluster_name, env_name = env_names[0].split("/")
 
+        full_env_name = env_names[0]
+        cluster_name, env_name = full_env_name.split("/", 1)
+
         for k, v in params.items():
             if v is not None:
                 os.environ[k] = str(v)
-
-        full_env_name = f"{cluster_name}/{env_name}"
         internal_params = {
             'FULL_ENV_NAME': full_env_name,
             'CLUSTER_NAME': cluster_name,
