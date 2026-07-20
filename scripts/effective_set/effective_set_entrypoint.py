@@ -38,32 +38,22 @@ def effective_set_entrypoint(ctx):
 
 
 def _run_deploy_plan_full(effective_set_dir, full_env_name, entries: list[DeployPlanEntity]):
-    tmp_root, preserved = _preserve_uniq_for_run_dirs(effective_set_dir, entries)
+    tmp_root, saved = _save_es_app_dirs(effective_set_dir, entries)
     delete_dir(effective_set_dir)
-    _restore_preserved_dirs(tmp_root, preserved)
+    _restore_saved_dirs(tmp_root, saved)
+    _clear_uniq_for_version_dirs(effective_set_dir, entries)
 
-    runtime_snapshots = _snapshot_runtime_dirs(effective_set_dir, entries)
     cmd = _build_cli_cmd(effective_set_dir, full_env_name)
     subprocess.run(cmd, shell=True, check=True)
-
-    _nest_generated_output(effective_set_dir, entries, runtime_snapshots)
 
 
 def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[DeployPlanEntity]):
     for ns in {e.namespace for e in entries}:
         delete_dir_if_exists(effective_set_dir / ESGenerationContext.CLEANUP.value / ns)
     for entry in entries:
-        if entry.generation_type == GenerationType.UNIQ_FOR_RUN:
-            continue
         app = entry.version.split(":")[0]
-        generation_id = _resolve_generation_id(entry)
-        runtime_target = effective_set_dir / ESGenerationContext.RUNTIME.value / entry.namespace / app
-        deployment_target = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / entry.namespace / app
-        if generation_id:
-            runtime_target = runtime_target / generation_id
-            deployment_target = deployment_target / generation_id
-        delete_dir_if_exists(runtime_target)
-        delete_dir_if_exists(deployment_target)
+        delete_dir_if_exists(effective_set_dir / ESGenerationContext.RUNTIME.value / entry.namespace / app)
+        delete_dir_if_exists(effective_set_dir / ESGenerationContext.DEPLOYMENT.value / entry.namespace / app)
     delete_dir_if_exists(effective_set_dir / ESGenerationContext.TOPOLOGY.value)
     delete_dir_if_exists(effective_set_dir / ESGenerationContext.PIPELINE.value)
 
@@ -74,7 +64,6 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[Dep
     runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
-    runtime_snapshots = _snapshot_runtime_dirs(effective_set_dir, entries)
     cmd = _build_cli_cmd(effective_set_dir, full_env_name)
     subprocess.run(cmd, shell=True, check=True)
 
@@ -84,8 +73,6 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[Dep
     writeYamlToFile(cleanup_mapping_path, cleanup_mapping)
     writeYamlToFile(runtime_mapping_path, runtime_mapping)
     writeYamlToFile(deployment_mapping_path, deployment_mapping)
-
-    _nest_generated_output(effective_set_dir, entries, runtime_snapshots)
 
 
 def _run_reverse_merge(effective_set_dir, entries: list[DeployPlanEntity], delta_entries: list[DeployPlanEntity]):
@@ -139,52 +126,21 @@ def _resolve_generation_id(entry: DeployPlanEntity):
     return None
 
 
-def _nest_generated_output(effective_set_dir, entries: list[DeployPlanEntity], runtime_snapshots: dict):
+def _clear_uniq_for_version_dirs(effective_set_dir, entries: list[DeployPlanEntity]):
     for entry in entries:
-        generation_id = _resolve_generation_id(entry)
-        if not generation_id:
+        if entry.generation_type != GenerationType.UNIQ_FOR_VERSION:
             continue
-        ns, app = entry.namespace, entry.version.split(":")[0]
-
-        deployment_values = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ns / app / "values"
-        if deployment_values.is_dir():
-            dest = deployment_values.parent / generation_id / "values"
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(deployment_values), str(dest))
-
-        runtime_dir = effective_set_dir / ESGenerationContext.RUNTIME.value / ns / app
-        preexisting = runtime_snapshots.get((ns, app), set())
-        _nest_new_entries_under_generation_id(runtime_dir, generation_id, preexisting)
+        app = entry.version.split(":")[0]
+        generation_id = _resolve_generation_id(entry)
+        delete_dir_if_exists(effective_set_dir / ESGenerationContext.RUNTIME.value / entry.namespace / app / generation_id)
+        delete_dir_if_exists(effective_set_dir / ESGenerationContext.DEPLOYMENT.value / entry.namespace / app / generation_id)
 
 
-def _snapshot_runtime_dirs(effective_set_dir, entries: list[DeployPlanEntity]) -> dict:
-    snapshots = {}
+def _save_es_app_dirs(effective_set_dir, entries: list[DeployPlanEntity]):
+    tmp_root = None
+    saved = []
     for entry in entries:
         if _resolve_generation_id(entry) is None:
-            continue
-        ns, app = entry.namespace, entry.version.split(":")[0]
-        runtime_dir = effective_set_dir / ESGenerationContext.RUNTIME.value / ns / app
-        snapshots[(ns, app)] = {p.name for p in runtime_dir.iterdir()} if runtime_dir.is_dir() else set()
-    return snapshots
-
-
-def _nest_new_entries_under_generation_id(dir_path, generation_id, preexisting_names):
-    if not dir_path.is_dir():
-        return
-    new_entries = [p for p in dir_path.iterdir() if p.name not in preexisting_names]
-    if not new_entries:
-        return
-    dest = dir_path / generation_id
-    dest.mkdir(parents=True, exist_ok=True)
-    for entry_path in new_entries:
-        shutil.move(str(entry_path), str(dest / entry_path.name))
-
-
-def _preserve_uniq_for_run_dirs(effective_set_dir, entries: list[DeployPlanEntity]):
-    tmp_root = None
-    preserved = []
-    for entry in entries:
-        if entry.generation_type != GenerationType.UNIQ_FOR_RUN:
             continue
         ns, app = entry.namespace, entry.version.split(":")[0]
         for ctx in (ESGenerationContext.DEPLOYMENT, ESGenerationContext.RUNTIME):
@@ -192,16 +148,16 @@ def _preserve_uniq_for_run_dirs(effective_set_dir, entries: list[DeployPlanEntit
             if not src.is_dir():
                 continue
             if tmp_root is None:
-                tmp_root = Path(tempfile.mkdtemp(prefix="es-uniqforrun-"))
+                tmp_root = Path(tempfile.mkdtemp(prefix="es-save-"))
             dest = tmp_root / ctx.value / ns / app
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(src), str(dest))
-            preserved.append((src, dest))
-    return tmp_root, preserved
+            saved.append((src, dest))
+    return tmp_root, saved
 
 
-def _restore_preserved_dirs(tmp_root, preserved):
-    for src, dest in preserved:
+def _restore_saved_dirs(tmp_root, saved):
+    for src, dest in saved:
         src.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(dest), str(src))
     if tmp_root is not None:

@@ -412,10 +412,23 @@ public class FileDataRepositoryImpl implements FileDataRepository {
 
     private SBApplicationDTO getSbApplicationDTOFromDeployPlan(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, DeployPlanEntityDTO entity) {
         String deployPostfix = entity.getDeployPostfix() != null ? entity.getDeployPostfix() : "";
-        return buildSbApplicationDTO(nsWithAppsFromSD, appsToProcess, entity.getVersion(), deployPostfix);
+        return buildSbApplicationDTO(nsWithAppsFromSD, appsToProcess, entity.getVersion(), deployPostfix, resolveGenerationId(entity));
     }
 
-    private SBApplicationDTO buildSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, String version, String deployPostfix) {
+    private String resolveGenerationId(DeployPlanEntityDTO entity) {
+        String generationType = entity.getGenerationType();
+        if ("UniqForRun".equals(generationType)) {
+            return entity.getGenerationId();
+        }
+        if ("UniqForVersion".equals(generationType)) {
+            String version = entity.getVersion();
+            int separatorIndex = version.indexOf(':');
+            return separatorIndex >= 0 ? version.substring(separatorIndex + 1) : null;
+        }
+        return null;
+    }
+
+    private SBApplicationDTO buildSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, String version, String deployPostfix, String generationId) {
         String namespace = deployPostfix;
         String appName = version.split(":")[0];
         String appVersion = version.replace(":", "-");
@@ -425,6 +438,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 .appVersion(appVersion)
                 .namespace(namespace)
                 .appFileRef(appFileRef)
+                .generationId(generationId)
                 .build();
         appsToProcess.add(appName);
         nsWithAppsFromSD.computeIfAbsent(namespace, k -> new ArrayList<>()).add(appName);

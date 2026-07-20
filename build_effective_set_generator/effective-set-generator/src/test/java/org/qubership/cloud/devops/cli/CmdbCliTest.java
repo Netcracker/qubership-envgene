@@ -219,6 +219,81 @@ public class CmdbCliTest {
         FileTestUtils.compareFolders(expected, outputPath);
     }
 
+    @Test
+    void testUniqForAppAndUniqForRunNestUnderSameDeployPostfix(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/Inventory/deploy-plan-uniq-mixed.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        int exitCode = executeGenerate(envsPath, sbomsPath, deployPlanPath, registriesPath, outputPath,
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+
+        assertEquals(0, exitCode);
+
+        assertTrue(Files.isDirectory(outputPath.resolve("deployment/ns-test/eso-app/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve("runtime/ns-test/eso-app")));
+
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "runtime/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f")));
+    }
+
+    @Test
+    void testUniqForVersionAndUniqForRunSurviveAcrossRuns(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        Path outputPath = tempDir.resolve("effective-set");
+
+        int firstExitCode = executeGenerate(envsPath, sbomsPath,
+                FileTestUtils.resource("environments/cluster-01/pl-02/Inventory/deploy-plan-uniq-run1.yml"),
+                registriesPath, outputPath, "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertEquals(0, firstExitCode);
+
+        resetInputData(inputData);
+        resetSharedData(sharedData);
+
+        int secondExitCode = executeGenerate(envsPath, sbomsPath,
+                FileTestUtils.resource("environments/cluster-01/pl-02/Inventory/deploy-plan-uniq-run2.yml"),
+                registriesPath, outputPath, "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertEquals(0, secondExitCode);
+
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/eso-app/0.1.0-delivery-20261115.141230-4-RELEASE/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/eso-app/0.2.0-delivery-20261115.141230-4-RELEASE/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "runtime/ns-test/eso-app/0.1.0-delivery-20261115.141230-4-RELEASE")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "runtime/ns-test/eso-app/0.2.0-delivery-20261115.141230-4-RELEASE")));
+
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/vals-app/0190c7e2-2b3c-8d4e-9f5a-6b7c8d9e0f1a/values")));
+    }
+
+    private int executeGenerate(Path envsPath, Path sbomsPath, Path deployPlanPath, Path registriesPath,
+                                 Path outputPath, String deploymentSessionId) throws Exception {
+        CommandLine cmd = new CommandLine(cli);
+        return cmd.execute(
+                "--env-id", "cluster-01/pl-02",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=" + deploymentSessionId,
+                "--app_chart_validation", "false"
+        );
+    }
+
     @AfterEach
     void tearDown() {
         resetInputData(inputData);
