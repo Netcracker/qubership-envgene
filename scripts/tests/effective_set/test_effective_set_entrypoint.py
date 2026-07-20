@@ -8,8 +8,8 @@ from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
 from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
-    _run_reverse_merge, _resolve_generation_id, _nest_generated_output, _snapshot_runtime_dirs, \
-    _preserve_uniq_for_run_dirs, _restore_preserved_dirs, effective_set_entrypoint as run_entrypoint
+    _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
+    _clear_uniq_for_version_dirs, effective_set_entrypoint as run_entrypoint
 
 
 PARAMETERS_CONTENT = '{"param": "value"}'
@@ -20,6 +20,7 @@ APP_1 = "app-1"
 APP_2 = "app-2"
 APP_VERSION = "1.0"
 RUN_ID = "12345678-1234-5678-1234-567812345678"
+OLD_RUN_ID = "11111111-1111-1111-1111-111111111111"
 
 
 def entry(app: str, version: str, deploy_postfix: str, *, generation_type=GenerationType.UNIQ_FOR_APP,
@@ -28,12 +29,17 @@ def entry(app: str, version: str, deploy_postfix: str, *, generation_type=Genera
                              generationType=generation_type, generationId=generation_id)
 
 
-def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str):
+def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str, generation_id: str = None):
     runtime_dir = effective_set_dir / ESGenerationContext.RUNTIME.value / deploy_postfix / app_name
+    if generation_id:
+        runtime_dir = runtime_dir / generation_id
     runtime_dir.mkdir(parents=True, exist_ok=True)
     (runtime_dir / "parameters.yaml").write_text(PARAMETERS_CONTENT)
 
-    deployment_values = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / deploy_postfix / app_name / "values"
+    deployment_dir = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / deploy_postfix / app_name
+    if generation_id:
+        deployment_dir = deployment_dir / generation_id
+    deployment_values = deployment_dir / "values"
     deployment_values.mkdir(parents=True, exist_ok=True)
     (deployment_values / "parameters.yaml").write_text(PARAMETERS_CONTENT)
 
@@ -69,6 +75,17 @@ class TestRunDeployPlanPartial:
         assert not (es / ESGenerationContext.PIPELINE.value).exists()
 
     @pytest.mark.unit
+    def test_app_dir_deleted_before_cli(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        mock_cli(monkeypatch)
+
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+        assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
+
+    @pytest.mark.unit
     def test_cleanup_ns_deleted_per_deploy_postfix(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
         create_es_cleanup_dir(es, DP_1)
@@ -85,36 +102,6 @@ class TestRunDeployPlanPartial:
         assert not (es / ESGenerationContext.CLEANUP.value / DP_2).exists()
         assert (es / ESGenerationContext.CLEANUP.value / "dp-3").exists()
 
-    @pytest.mark.unit
-    def test_uniq_for_run_app_dir_not_deleted(self, tmp_path, monkeypatch):
-        es = tmp_path / ES_DIR_NAME
-        create_es_app_dirs(es, DP_1, APP_1)
-        mock_cli(monkeypatch)
-
-        _run_deploy_plan_partial(es, FULL_ENV_NAME, [
-            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
-        ])
-
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
-        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
-
-    @pytest.mark.unit
-    def test_uniq_for_version_sibling_survives_cross_run_regeneration(self, tmp_path, monkeypatch):
-        es = tmp_path / ES_DIR_NAME
-
-        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1))
-        _run_deploy_plan_partial(es, FULL_ENV_NAME,
-                                  [entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION)])
-
-        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1))
-        _run_deploy_plan_partial(es, FULL_ENV_NAME,
-                                  [entry(APP_1, "2.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION)])
-
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0").exists()
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.0").exists()
-        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / "1.0" / "values").exists()
-        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / "2.0" / "values").exists()
-
 
 class TestRunDeployPlanFull:
     @pytest.mark.unit
@@ -130,14 +117,46 @@ class TestRunDeployPlanFull:
     @pytest.mark.unit
     def test_uniq_for_run_survives_full_wipe(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
-        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1))
+        create_es_app_dirs(es, DP_1, APP_1, generation_id=OLD_RUN_ID)
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id=RUN_ID))
 
         _run_deploy_plan_full(es, FULL_ENV_NAME, [
             entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
         ])
 
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / RUN_ID).exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / OLD_RUN_ID / "parameters.yaml").exists()
+        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / OLD_RUN_ID / "values").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / RUN_ID / "parameters.yaml").exists()
         assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / RUN_ID / "values").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_version_sibling_survives_full_wipe(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id="2.0"))
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+            entry(APP_1, "2.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
+        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / "1.0" / "values").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.0" / "parameters.yaml").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_version_same_version_replaces_stale_content(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
+        stale_file = es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "stale.yaml"
+        stale_file.write_text(PARAMETERS_CONTENT)
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0"))
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+            entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert not stale_file.exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
 
 
 class TestResolveGenerationId:
@@ -156,67 +175,76 @@ class TestResolveGenerationId:
         assert _resolve_generation_id(e) == RUN_ID
 
 
-class TestNestGeneratedOutput:
+class TestClearUniqForVersionDirs:
     @pytest.mark.unit
-    def test_uniq_for_app_stays_flat(self, tmp_path):
+    def test_clears_matching_version_only(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="2.0")
+
+        _clear_uniq_for_version_dirs(es, [
+            entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.0").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_run_not_cleared(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id=RUN_ID)
+
+        _clear_uniq_for_version_dirs(es, [
+            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
+        ])
+
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / RUN_ID).exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_app_not_cleared(self, tmp_path):
         es = tmp_path / ES_DIR_NAME
         create_es_app_dirs(es, DP_1, APP_1)
 
-        _nest_generated_output(es, [entry(APP_1, APP_VERSION, DP_1)], {})
+        _clear_uniq_for_version_dirs(es, [entry(APP_1, APP_VERSION, DP_1)])
 
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "parameters.yaml").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
 
+
+class TestSaveNestedGenerationDirs:
     @pytest.mark.unit
-    def test_uniq_for_version_nests_under_version(self, tmp_path):
+    def test_uniq_for_run_saved_and_restored(self, tmp_path):
         es = tmp_path / ES_DIR_NAME
         create_es_app_dirs(es, DP_1, APP_1)
 
-        _nest_generated_output(es, [entry(APP_1, "2.5", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION)], {})
-
-        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / "2.5" / "values" / "parameters.yaml").exists()
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.5" / "parameters.yaml").exists()
-
-    @pytest.mark.unit
-    def test_uniq_for_version_preserves_sibling_generation_id_folder(self, tmp_path):
-        es = tmp_path / ES_DIR_NAME
-
-        entry_1 = entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION)
-        preexisting = _snapshot_runtime_dirs(es, [entry_1])
-        create_es_app_dirs(es, DP_1, APP_1)
-        _nest_generated_output(es, [entry_1], preexisting)
-
-        entry_2 = entry(APP_1, "2.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION)
-        preexisting = _snapshot_runtime_dirs(es, [entry_2])
-        create_es_app_dirs(es, DP_1, APP_1)
-        _nest_generated_output(es, [entry_2], preexisting)
-
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.0" / "parameters.yaml").exists()
-
-
-class TestPreserveUniqForRunDirs:
-    @pytest.mark.unit
-    def test_preserves_and_restores(self, tmp_path):
-        es = tmp_path / ES_DIR_NAME
-        create_es_app_dirs(es, DP_1, APP_1)
-
-        tmp_root, preserved = _preserve_uniq_for_run_dirs(es, [
-            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN),
+        tmp_root, saved = _save_es_app_dirs(es, [
+            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
         ])
         assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
 
-        _restore_preserved_dirs(tmp_root, preserved)
+        _restore_saved_dirs(tmp_root, saved)
         assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "parameters.yaml").exists()
 
     @pytest.mark.unit
-    def test_uniq_for_app_not_preserved(self, tmp_path):
+    def test_uniq_for_version_also_saved(self, tmp_path):
         es = tmp_path / ES_DIR_NAME
         create_es_app_dirs(es, DP_1, APP_1)
 
-        tmp_root, preserved = _preserve_uniq_for_run_dirs(es, [entry(APP_1, APP_VERSION, DP_1)])
+        tmp_root, saved = _save_es_app_dirs(es, [
+            entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+        assert tmp_root is not None
+
+    @pytest.mark.unit
+    def test_uniq_for_app_not_saved(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+
+        tmp_root, saved = _save_es_app_dirs(es, [entry(APP_1, APP_VERSION, DP_1)])
 
         assert tmp_root is None
-        assert preserved == []
+        assert saved == []
 
 
 class TestRunReverseMerge:
