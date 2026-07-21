@@ -1,3 +1,4 @@
+from functools import lru_cache
 from importlib.resources import files
 from os import getenv, path
 import json
@@ -85,6 +86,7 @@ def validate_config_file(config_yaml):
                 f'Following CI/CD variables are not set: \n{empty_parameters}.\nThese variables are mandatory for crypt_backend: {SOPS_ID}')
 
 
+@lru_cache(maxsize=1)
 def get_envgene_config_yaml():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     envgene_config_path = Path(f"{base_dir}/configuration/config.yml")

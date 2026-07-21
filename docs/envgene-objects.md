@@ -1383,7 +1383,7 @@ This object, which is an empty file, is used to represent the current Blue-Green
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
 
 **Filename patterns:**
 
@@ -2262,7 +2262,7 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/regdefs/<registry-name>.yml`
 
-Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Registry Definitions can also be supplied as definition overrides at `/configuration/regdefs/<registry-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
 
 The `credentialsId` field may reference an external Credential. See
 [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
@@ -2843,7 +2843,7 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/appdefs/<application-name>.yml`
 
-Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Application Definitions can also be supplied as definition overrides at `/configuration/appdefs/<application-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
 
 ```yaml
 # Optional

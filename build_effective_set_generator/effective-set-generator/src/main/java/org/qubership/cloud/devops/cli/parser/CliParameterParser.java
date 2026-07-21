@@ -97,6 +97,7 @@ public class CliParameterParser {
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
         checkIfEntitiesExist();
+        validateNamespaceScopedCustomParams();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
@@ -293,7 +294,7 @@ public class CliParameterParser {
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         ParameterBundle parameterBundle;
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
-            CustomParameterDTO customParams = getCustomParameters();
+            CustomParameterDTO customParams = getCustomParameters(namespaceName);
             parameterBundle = parametersServiceV2.getCliParameter(tenantName,
                     cloudName,
                     namespaceName,
@@ -317,19 +318,37 @@ public class CliParameterParser {
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
-    private CustomParameterDTO getCustomParameters() {
+    private CustomParameterDTO getCustomParameters(String namespaceName) {
         CustomParameterDTO parameterDTO = CustomParameterDTO.builder().build();
         Map<String, Parameter> deployParams = new HashMap<>();
         Map<String, Parameter> techParams = new HashMap<>();
-        sharedData.getCustomDeployParamMap().forEach((key, value) -> {
+        Map<String, Object> deploySource = sharedData.isNamespaceScopedCustomParams()
+                ? sharedData.getNamespaceCustomDeployParamMap().getOrDefault(namespaceName, Collections.emptyMap())
+                : sharedData.getCustomDeployParamMap();
+        Map<String, Object> runtimeSource = sharedData.isNamespaceScopedCustomParams()
+                ? sharedData.getNamespaceCustomRuntimeParamMap().getOrDefault(namespaceName, Collections.emptyMap())
+                : sharedData.getCustomRuntimeParamMap();
+        deploySource.forEach((key, value) -> {
             deployParams.put(key, new Parameter(value, ParametersConstants.CUSTOM_PARAMS_ORIGIN, false));
         });
-        sharedData.getCustomRuntimeParamMap().forEach((key, value) -> {
+        runtimeSource.forEach((key, value) -> {
             techParams.put(key, new Parameter(value, ParametersConstants.CUSTOM_PARAMS_ORIGIN, false));
         });
         parameterDTO.setDeployParams(deployParams);
         parameterDTO.setTechnicalParams(techParams);
         return parameterDTO;
+    }
+
+    private void validateNamespaceScopedCustomParams() {
+        if (!sharedData.isNamespaceScopedCustomParams()) {
+            return;
+        }
+        for (String namespace : sharedData.getCustomParamsNamespaceKeys()) {
+            if (!inputData.getNamespaceDTOMap().containsKey(namespace)) {
+                throw new IllegalArgumentException(
+                        "CUSTOM_PARAMS namespace '" + namespace + "' does not exist in the environment");
+            }
+        }
     }
 
     private ExtCredEntities getExtCredEntities() {

@@ -111,7 +111,7 @@ class TestCredentialDiffMinimization:
         working_copy_before = openYaml(str(cred_path))
 
         with patch.object(mcd, 'get_crypt', return_value=False):
-            mcd.main()
+            mcd.minimize_cred_diffs()
 
         assert openYaml(str(cred_path)) == working_copy_before
 
@@ -121,7 +121,7 @@ class TestCredentialDiffMinimization:
         head_encrypted = openYaml(str(cred_path))
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
 
-        mcd.main()
+        mcd.minimize_cred_diffs()
 
         _assert_only_first_cred_secret_and_mac_differ_from_head(head_encrypted, cred_path)
 
@@ -130,7 +130,7 @@ class TestCredentialDiffMinimization:
         repo, _, _ = cred_repo
         repo.git.rm(CRED_REL_PATH)
 
-        mcd.main()
+        mcd.minimize_cred_diffs()
 
     @pytest.mark.unit
     def test_new_cred_file_is_left_unchanged(self, cred_repo):
@@ -142,7 +142,7 @@ class TestCredentialDiffMinimization:
         repo.git.add(NEW_CRED_REL_PATH)
         working_copy_before = openYaml(str(new_cred_path))
 
-        mcd.main()
+        mcd.minimize_cred_diffs()
 
         assert openYaml(str(new_cred_path)) == working_copy_before
 
@@ -155,7 +155,7 @@ class TestCredentialDiffMinimization:
 
         with patch.object(mcd, 'get_crypt', return_value=True), patch.object(mcd, 'Repo', return_value=repo):
             with pytest.raises(RuntimeError, match='git diff against HEAD failed'):
-                mcd.main()
+                mcd.minimize_cred_diffs()
 
     @pytest.mark.unit
     def test_head_read_failure_leaves_file_unchanged(self, cred_repo):
@@ -168,7 +168,7 @@ class TestCredentialDiffMinimization:
         repo.head.commit.tree.__getitem__.side_effect = OSError('cannot read blob at HEAD')
 
         with patch.object(mcd, 'Repo', return_value=repo):
-            mcd.main()
+            mcd.minimize_cred_diffs()
 
         assert openYaml(str(cred_path)) == working_copy_before
 
@@ -178,11 +178,11 @@ class TestCredentialDiffMinimization:
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
         pre_minimised_input = cred_path.read_bytes()
 
-        mcd.main()
+        mcd.minimize_cred_diffs()
         first_pass = cred_path.read_bytes()
 
         cred_path.write_bytes(pre_minimised_input)
-        mcd.main()
+        mcd.minimize_cred_diffs()
 
         assert cred_path.read_bytes() == first_pass
 
@@ -191,7 +191,7 @@ class TestCredentialDiffMinimization:
         repo, _, cred_path = cred_repo
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
 
-        mcd.main()
+        mcd.minimize_cred_diffs()
         first_pass = cred_path.read_bytes()
 
         _simulate_pipeline_cred_update(cred_path, 'remote-head-secret')
@@ -200,7 +200,7 @@ class TestCredentialDiffMinimization:
         new_head_encrypted = openYaml(str(cred_path))
 
         _simulate_pipeline_cred_update(cred_path, 'updated-secret-again')
-        mcd.main()
+        mcd.minimize_cred_diffs()
 
         assert cred_path.read_bytes() != first_pass
         _assert_only_first_cred_secret_and_mac_differ_from_head(new_head_encrypted, cred_path)
@@ -212,12 +212,12 @@ class TestCredentialDiffMinimization:
 
         cache_a = tmp_path / 'job-a-cache'
         monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_a))
-        mcd.main()
+        mcd.minimize_cred_diffs()
         cache_a_files = _cache_files(cache_a)
 
         cache_b = tmp_path / 'job-b-cache'
         monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_b))
-        mcd.main()
+        mcd.minimize_cred_diffs()
 
         assert cache_a_files
         assert _cache_files(cache_b)

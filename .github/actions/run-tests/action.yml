@@ -80,6 +80,14 @@ runs:
         cd ../../..
         mv junit.xml junit_artifact_searcher.xml
 
+    - name: EXTERNAL CRED PROVISION test
+      shell: bash
+      run: |
+        cd python/external-cred-provision
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_external_cred_provision.xml
+
     - name: BG MANAGE test
       shell: bash
       env:

@@ -7,7 +7,7 @@ click==8.1.7
 cryptography==46.0.5
 diagrams==0.25.1
 gcip==3.0.2
-GitPython==3.1.45
+GitPython==3.1.50
 jaraco.collections==3.5.0
 jaraco.functools==3.5.0
 jaraco.text==3.11.0
@@ -32,5 +32,5 @@ setuptools-git-versioning==1.13.5
 shyaml==0.6.2
 six==1.16.0
 toml==0.10.2
-urllib3==2.6.3
+urllib3==2.7.0
 yamale==4.0.4

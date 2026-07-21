@@ -15,6 +15,7 @@
     - [`current_env.additionalTemplateVariables`](#current_envadditionaltemplatevariables)
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
+    - [`current_env.composite_topology`](#current_envcomposite_topology)
     - [`current_env.cluster.cloud_api_protocol`](#current_envclustercloud_api_protocol)
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
@@ -363,6 +364,71 @@ The value of the `<application-name>`, `<deploy-postfix>` and `version` in this 
 **Usage in sample:**
 
 - [Sample template](/docs/samples/template-repository/templates/env_templates/composite/bss.yml.j2)
+
+### `current_env.composite_topology`
+
+---
+**Description:** A hashable describing the resolved composite topology of the environment - its baseline plus
+satellites, with each member carrying its rendered namespace names. The variable has the following
+structure:
+
+```yaml
+# Mandatory
+baseline:
+  # Mandatory
+  originNamespace: <baseline-origin-ns>
+  # Optional
+  # Present only when the baseline member is a Blue-Green domain
+  peerNamespace: <baseline-peer-ns>
+  # Optional
+  # Present only when the baseline member is a Blue-Green domain
+  controllerNamespace: <baseline-controller-ns>
+# Optional
+satellites:
+  - # Mandatory
+    originNamespace: <satellite-origin-ns>
+    # Optional
+    # Present only when the satellite member is a Blue-Green domain
+    peerNamespace: <satellite-peer-ns>
+    # Optional
+    # Present only when the satellite member is a Blue-Green domain
+    controllerNamespace: <satellite-controller-ns>
+```
+
+A member has one of two kinds. A namespace member carries `originNamespace`. A Blue-Green member carries
+`originNamespace`, `peerNamespace` and `controllerNamespace`. The member kind is implied by the presence of
+`peerNamespace` and `controllerNamespace`. `satellites` may be absent or empty when the composite has only a baseline.
+
+The variable is derived from the [Composite Structure](/docs/envgene-objects.md#composite-structure) object and the
+[BG Domain](/docs/envgene-objects.md#bg-domain) object. Each member resolves its namespace template to the rendered
+namespace name.
+
+For a composite with a Blue-Green baseline the value resolves as follows.
+
+```yaml
+baseline:
+  originNamespace: env-1-bss-orgn
+  peerNamespace: env-1-bss-peer
+  controllerNamespace: env-1-ctrl
+satellites:
+  - originNamespace: env-1-data-management
+```
+
+> [!NOTE]
+> The value is `{}` for environments without Composite Structure.
+
+**Type:** HashMap
+
+**Default Value:** `{}`
+
+**Basic usage:**
+
+```yaml
+  deployParameters:
+    baseline_ns: "{{ current_env.composite_topology.baseline.originNamespace }}"
+```
+
+**Usage in sample:** TBD
 
 ### `current_env.cluster.cloud_api_protocol`
 

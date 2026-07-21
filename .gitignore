@@ -6,6 +6,11 @@ venv
 tmp/
 /env-builder/deployers
 __pycache__
+*.egg-info/
+dist/
+build/
+*.whl
+*.tar.gz
 .vscode
 .DS_Store
 pyrightconfig.json

@@ -62,8 +62,8 @@ This document specifies external credentials for EnvGene: object schemas, Effect
 generation algorithms, and credential provisioning into external secret stores via the
 [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
 
-A minimal end-to-end sample (template, instance repository, Effective Set deployment `values/credentials.yaml`
-and `values/external-credentials.yaml` for VALS vs ESO) lives under
+A minimal end-to-end sample (template, instance repository, and Effective Set deployment
+`values/credentials.yaml` for VALS vs ESO) lives under
 [/docs/samples/external-credentials/](/docs/samples/external-credentials/).
 
 ## Problem Statement
@@ -119,6 +119,13 @@ In the instance repository:
 Items 1 and 2 are generated during environment instance generation, 3 is created manually by the user.
 
 When generating the Effective Set, the deployment context contains sensitive parameters whose values are [Parameter with VALS reference](#parameter-with-vals-reference) values when the effective `SECRET_FLOW` for the application is `helm-values`, or [Parameter with ESO reference](#parameter-with-eso-reference) values when the effective `SECRET_FLOW` is `external-values`. See [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references).
+
+The deployment, pipeline, and topology contexts each emit one `credentials.yaml` for their sensitive parameters.
+That file holds local secrets or external references, never both. An Environment Instance is single-category (see
+[Assumption](#assumption)), so every `credentials.yaml` is homogeneous: all literal secrets for a local-category
+Environment Instance, or all references for an external-category one. A `credentials.yaml` of local secrets is
+encrypted whole. A `credentials.yaml` of references stays plain text, because references are not secret material.
+A file that holds both is a single-category violation and fails generation.
 
 The pipeline context emits sensitive `e2eParameters` whose values resolve to external Credentials as VALS references into [Pipeline context](#pipeline-context).
 
@@ -351,7 +358,9 @@ supports the VALS URI scheme (for example, `vals` or `argocd-vault-plugin`) reso
 VALS references are also emitted in the [Pipeline context](#pipeline-context) and
 [Topology context](#topology-context). Those sections describe the corresponding file paths and shapes.
 
-Parameters that resolve to VALS references are written under:
+Parameters that resolve to VALS references are written to the deployment `credentials.yaml`. For an
+external-category Environment Instance this file holds the references and stays plain text. See
+[Effective Set generation](#effective-set-generation).
 
 ```text
 └── environments
@@ -362,7 +371,7 @@ Parameters that resolve to VALS references are written under:
                     └── <namespace-folder>
                         └── <application-name>
                             └── values
-                                └── external-credentials.yaml
+                                └── credentials.yaml
 ```
 
 The Effective Set calculator builds VALS reference from:
@@ -397,7 +406,9 @@ Effective Set calculation when the effective [`SECRET_FLOW`](#secret_flow-attrib
 Those references are resolved at deploy time to secret material by the Effective Set consumer. The Helm chart
 consumes them (one value per parameter path) to render `ExternalSecret` CRs.
 
-Parameters that resolve to ESO references are written under:
+Parameters that resolve to ESO references are written to the deployment `credentials.yaml`. For an
+external-category Environment Instance this file holds the references and stays plain text. See
+[Effective Set generation](#effective-set-generation).
 
 ```text
 └── environments
@@ -408,7 +419,7 @@ Parameters that resolve to ESO references are written under:
                     └── <namespace-folder>
                         └── <application-name>
                             └── values
-                                └── external-credentials.yaml
+                                └── credentials.yaml
 ```
 
 The Effective Set calculator builds each ESO reference value from:
@@ -560,11 +571,14 @@ Sensitive `e2eParameters` resolving to an [external Credential](#credential) are
 to two file shapes in the
 [Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context):
 
-- `effective-set/pipeline/external-credentials.yaml` - the global file, containing every `e2eParameter`
+- `effective-set/pipeline/credentials.yaml` - the global file, containing every `e2eParameter`
   resolving to an external Credential.
-- `effective-set/pipeline/<consumer-name>-external-credentials.yaml` - one file per consumer declared under
+- `effective-set/pipeline/<consumer-name>-credentials.yaml` - one file per consumer declared under
   `contexts.pipeline.consumers[]` in the Effective Set config. Contains the subset of `e2eParameters` that
-  match the consumer's schema (same selector used for `<consumer-name>-credentials.yaml`).
+  match the consumer's schema.
+
+For an external-category Environment Instance these files hold the references and stay plain text. See
+[Effective Set generation](#effective-set-generation).
 
 Both shapes mirror the structure of the corresponding `e2eParameters`, with a VALS URI in place of each
 sensitive value. A scalar parameter is a single `key: <vals-uri>` entry. A structured parameter keeps its
@@ -586,25 +600,26 @@ The file locations are:
         └── <env-name>
             └── effective-set
                 └── pipeline
-                    ├── external-credentials.yaml
-                    └── <consumer-name>-external-credentials.yaml
+                    ├── credentials.yaml
+                    └── <consumer-name>-credentials.yaml
 ```
 
-The global file is emitted when at least one `e2eParameter` references an external Credential. Otherwise
-the file is not produced. Each per-consumer file is produced when at least one parameter from the
+The global file holds the references when at least one `e2eParameter` references an external Credential.
+Each per-consumer file is produced when at least one parameter from the
 consumer's JSON schema is routed to it under
 [Consumer Specific Context of Pipeline Context](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context).
-Otherwise the file is not produced.
 
 #### Topology context
 
 Sensitive fields whose source [Built-in credential reference](#built-in-credential-references) resolves to
 an [external Credential](#credential) are written as VALS references to
-`effective-set/topology/external-credentials.yaml` - a file in the
-[Topology Context](/docs/features/calculator-cli.md#version-20-topology-context).
+`effective-set/topology/credentials.yaml` - a file in the
+[Topology Context](/docs/features/calculator-cli.md#version-20-topology-context). For an external-category
+Environment Instance this file holds the references and stays plain text. See
+[Effective Set generation](#effective-set-generation).
 
-The file mirrors the shape of `effective-set/topology/credentials.yaml`, with VALS URIs in place of
-plain values:
+The file keeps the same shape whether it holds plain values or references, with a VALS URI at each sensitive
+leaf for the external case:
 
 ```yaml
 k8s_tokens:
@@ -632,11 +647,8 @@ The file location is:
         └── <env-name>
             └── effective-set
                 └── topology
-                    └── external-credentials.yaml
+                    └── credentials.yaml
 ```
-
-The file is emitted when at least one [Built-in credential reference](#built-in-credential-references)
-resolves to an external Credential. Otherwise the file is not produced.
 
 #### EnvGene System Credentials
 
@@ -1084,16 +1096,14 @@ For each sensitive `e2eParameter` whose value is a [Credential Reference](#crede
 resolving to an external Credential, the Effective Set calculator constructs a VALS URI (see
 [VALS reference generation](#vals-reference-generation)) and places it at the parameter key in:
 
-1. The global file `effective-set/pipeline/external-credentials.yaml`.
-2. Each per-consumer file `effective-set/pipeline/<consumer-name>-external-credentials.yaml` where the
-   parameter key matches the consumer's schema. The selector is the same one used for the per-consumer
-   local credentials file `<consumer-name>-credentials.yaml`.
+1. The global file `effective-set/pipeline/credentials.yaml`.
+2. Each per-consumer file `effective-set/pipeline/<consumer-name>-credentials.yaml` where the
+   parameter key matches the consumer's schema.
 
-Output ordering is deterministic. The global file is produced when at least one `e2eParameter` resolves to
-an external Credential. Otherwise the file is not produced. Each per-consumer file is produced when at
+Output ordering is deterministic. The global file holds the references when at least one `e2eParameter`
+resolves to an external Credential. Each per-consumer file is produced when at
 least one parameter from the consumer's JSON schema is routed to it under
 [Consumer Specific Context of Pipeline Context](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context).
-Otherwise the file is not produced.
 
 #### Topology context generation
 
@@ -1102,8 +1112,8 @@ resolves to an external Credential, the Effective Set calculator constructs a VA
 [VALS reference generation](#vals-reference-generation)) and places it at the field path defined in
 [Topology context](#topology-context).
 
-The file is emitted at `effective-set/topology/external-credentials.yaml` when at least one Topology field
-resolves to an external Credential. Otherwise the file is not produced.
+The file holds the references at `effective-set/topology/credentials.yaml` when at least one Topology field
+resolves to an external Credential.
 
 ### Credential provisioning
 
@@ -1333,8 +1343,6 @@ Git operations, and others).
 
 ## Open questions
 
-1. Whether to skip encryption for values in `effective-set/pipeline/credentials.yaml` when those values are
-   VALS reference strings rather than actual secret material.
-2. Notation unification. Today the `envgen.creds.get('<id>').<field>` macro is used for local Credentials
+1. Notation unification. Today the `envgen.creds.get('<id>').<field>` macro is used for local Credentials
    and `$type: credRef` is used for external Credentials. Whether to converge on a single notation, and if
    so, in which direction.

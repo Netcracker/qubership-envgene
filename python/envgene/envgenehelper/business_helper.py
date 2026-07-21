@@ -9,8 +9,7 @@ from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from .collections_helper import dump_as_yaml_format
-from .collections_helper import merge_lists
-from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
+from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
@@ -61,11 +60,12 @@ def getenv_and_log(name, *args, **kwargs):
     return var
 
 
-def getenv_with_error(var_name):
+def getenv_with_error(var_name, *, no_log=False):
     var = getenv(var_name)
     if not var:
         raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
-    logger.debug(f"{var_name}: {var}")
+    if not no_log:
+        logger.debug(f"{var_name}: {var}")
     return var
 
 

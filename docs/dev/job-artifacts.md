@@ -11,45 +11,66 @@ Artifact size limit: **1500 MB**
 ### First Job in Pipeline
 
 1. Sets `GIT_STRATEGY: empty` so GitLab Runner skips the default clone
-2. Runs sparse checkout as the first script step in the job container, pulling only the paths required for the target environment
+2. Runs sparse checkout as the first script
 3. Gets a filtered copy of the repository on disk
-4. Modifies files (optional)
-5. Saves required paths to job artifacts
+4. Saves required paths and the `.git` directory to job artifacts
 
-Sparse checkout paths are computed by `get_sparse_checkout_paths()` in
-[`build_pipegene/scripts/pipeline_helper.py`](/build_pipegene/scripts/pipeline_helper.py). The include list is
-`REPO_ROOT_PATHS` plus the same environment paths used for job artifacts (`get_env_artifact_paths()`).
-When `CRED_ROTATION_PAYLOAD` is set, checkout also includes all of `environments/<cluster-name>/` so credential
-rotation can scan sibling environments in the same cluster.
+The sparse checkout path list is built from three groups:
+
+**Repository root directories** (always included):
+
+- `appdefs/`, `regdefs/`, `configuration/`, `sboms/`, `templates/`
+
+**Target environment directory:**
+
+- `environments/<cluster>/<env>`
+
+**Shared directories** — included at site level and at cluster level:
+
+| Site level | Cluster level |
+|---|---|
+| `environments/configuration` | `environments/<cluster>/configuration` |
+| `environments/configurations` | `environments/<cluster>/configurations` |
+| `environments/resource_profiles` | `environments/<cluster>/resource_profiles` |
+| `environments/rp_override` | `environments/<cluster>/rp_override` |
+| `environments/Profiles` | `environments/<cluster>/Profiles` |
+| `environments/parameters` | `environments/<cluster>/parameters` |
+| `environments/cloud-passport` | `environments/<cluster>/cloud-passport` |
+| `environments/cloud-passports` | `environments/<cluster>/cloud-passports` |
+| `environments/credentials` | `environments/<cluster>/credentials` |
+| `environments/Credentials` | `environments/<cluster>/Credentials` |
+| `environments/shared-credentials` | `environments/<cluster>/shared-credentials` |
+| — | `environments/<cluster>/app-deployer` |
+| — | `environments/<cluster>/cloud-deployer` |
+
+When `CRED_ROTATION_PAYLOAD` is set, the entire `environments/<cluster>/` directory is added so credential rotation can scan sibling environments in the same cluster.
 
 ### Intermediate Jobs
 
 - Do NOT checkout repository (`GIT_STRATEGY: empty`)
-- Receive files from previous job's artifacts
+- Receive files and the `.git` directory from previous job's artifacts
 - Modify files (optional)
-- Save required paths to job artifacts
+- Save required paths and `.git` to job artifacts
 
 ### git_commit_job
 
-- Receives files from previous job's artifacts
-- Does `git init` and `git pull` (retrieves current repository state from remote)
-- Copies files from job's artifacts (overwrites pulled files with changes)
-- Commits and pushes changes
+- Receives files and the `.git` directory from previous job's artifacts
+- Minimizes credential file diffs (reduces noise in commits)
+- Stages only changes in the sparse-checkout paths
+- Creates a detached commit (`git write-tree` + `git commit-tree`) to snapshot changes without touching any branch
+- Fetches the latest state of the target branch from remote (`--depth=1`)
+- Cherry-picks the snapshot commit on top of the fetched state
+- Pushes to `origin HEAD:<ref>`, retrying up to 10 times with exponential backoff (start 0.3s, max 5s) on push conflicts caused by concurrent jobs
+
+This approach avoids push failures due to stale local state: changes are always applied on top of the current remote branch tip.
 
 ## Required Artifact Paths
 
-All jobs in the pipeline save **only** these paths to artifacts:
+All jobs in the pipeline save these paths to artifacts:
 
-- `/environments/`
-- `/configuration/`
-- `/sboms/`
-- `/templates/`
+- `environments/<cluster>/<env>` — target environment directory
+- Shared directories under `environments/<cluster>/` and `environments/` (credentials, parameters, resource profiles, etc.)
+- `appdefs/`, `regdefs/`, `configuration/`, `sboms/`, `templates/`
+- `.git` — required by downstream jobs to avoid re-cloning the repository
 
-These paths are:
-
-1. Modified by various jobs during pipeline execution
-2. Needed by downstream jobs
-3. Committed to Git by `git_commit_job`
-
-Shared directories under `environments/` that are included in both sparse checkout and artifacts are defined in `get_shared_entity_paths()` in
-[`build_pipegene/scripts/pipeline_helper.py`](/build_pipegene/scripts/pipeline_helper.py).
+The shared directories listed above are included in both sparse checkout and artifacts.

@@ -154,11 +154,14 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
+- [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
 ### Migrations
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate to Blue-Green Deployment**](/docs/how-to/blue-green-deployment-migration.md) - Convert a non-BG template and environment to BGD
 
 ### Advanced Features
 
@@ -186,6 +189,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Sample Configurations**](/docs/samples/README.md)
 - [**Environment Template Examples**](/docs/samples/template-repository/)
 - [**Environment Inventory Examples**](/docs/samples/instance-repository/)
+- [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/)
 
 ### Development
 

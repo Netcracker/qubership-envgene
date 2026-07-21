@@ -52,7 +52,8 @@ def extract_value_Fernet(file_path: str, attribute_str: str) -> Any:
     value = get_or_create_nested_yaml_attribute(data, attribute_str, None)
     return value
 
-def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_file_path=None, *args, **kwargs):
+def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_file_path=None,
+                 load_result=True, *args, **kwargs):
     if not secret_key:
         secret_key = getenv_with_error("SECRET_KEY")
     data = openYaml(file_path)
@@ -66,6 +67,7 @@ def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_
         _remove_unnecessary_changes(new_data, old_file_path, fernet)
     if in_place:
         writeYamlToFile(file_path, new_data)
+        return new_data if load_result else None
     return new_data
 
 def is_encrypted_Fernet(file_path):

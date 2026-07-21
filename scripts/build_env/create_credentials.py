@@ -50,6 +50,8 @@ def appendCredList(additionalCreds, wholeCredsList, comment=""):
     for cred in additionalCreds:
         credMeta = {}
         credMeta["cred"] = cred
+        # Provenance traceability (tenant, cloud, namespace, and so on). Not written to
+        # credentials.yml; separate metadata files are planned for later.
         credMeta["comment"] = comment
         wholeCredsList.append(credMeta)
 
@@ -151,7 +153,7 @@ def getCredDefinitionYaml(yamlPath):
 
 def writeCredToYaml(credItem, credsYaml) :
     cred = credItem["cred"]
-    comment = credItem["comment"]
+    comment = credItem["comment"]  # Reserved for provenance metadata; separate files planned.
     newCred = yaml.load("{}")
     #newCred.insert(1, "credentialsId", cred["credentialsId"])
     newCred.insert(1, "type", cred["type"])
@@ -171,10 +173,7 @@ def writeCredToYaml(credItem, credsYaml) :
         data.insert(1, "path", "envgeneNullValue", "FillMe")
         data.insert(1, "namespace", "envgeneNullValue", "FillMe")
         newCred["data"] = data
-    if (comment):
-        store_cred_value_to_yaml(credsYaml, cred["credentialsId"], newCred, comment)
-    else:
-        store_cred_value_to_yaml(credsYaml, cred["credentialsId"], newCred)
+    store_value_to_yaml(credsYaml, cred["credentialsId"], newCred)
     return credsYaml
 
 def mergeAndSaveYaml(yamlPath, newCreds) :
@@ -220,7 +219,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
             credYaml = openYaml(credFilePath)
             count = 0
             for key in credYaml :
-                store_cred_value_to_yaml(credsYaml, key, credYaml[key], f"shared credentials: {credFileName}")
+                store_value_to_yaml(credsYaml, key, credYaml[key])
                 count += 1
             logger.info(f"Added {count} shared master credentials from {credFilePath}")
     writeYamlToFile(credYamlPath, credsYaml)
