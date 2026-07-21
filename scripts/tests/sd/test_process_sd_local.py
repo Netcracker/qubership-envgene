@@ -8,8 +8,7 @@ from envgenehelper.env_helper import Environment
 from tests.base_test import BaseTest
 from tests.sd.test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
 
-os.environ['ENVIRONMENT_NAME'] = "temporary"
-os.environ['CLUSTER_NAME'] = "temporary"
+os.environ['ENV_NAMES'] = "temporary/temporary"
 os.environ['CI_PROJECT_DIR'] = "temporary"
 
 from sd.process_sd import handle_sd
@@ -73,8 +72,7 @@ class TestSdProcessArtifact(BaseTest):
         self.output_dir = self.output_dir / FEATURE_TEST_DIR
 
         os.environ["FULL_ENV_NAME"] = self.full_env_name
-        os.environ["ENVIRONMENT_NAME"] = self.env_name
-        os.environ["CLUSTER_NAME"] = self.cluster
+        os.environ["ENV_NAMES"] = self.full_env_name
 
     @pytest.mark.parametrize("test_case_name", TEST_CASES_POSITIVE)
     def test_sd_positive(self, test_case_name):
