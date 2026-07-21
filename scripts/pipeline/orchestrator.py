@@ -1,3 +1,4 @@
+import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -5,6 +6,7 @@ from enum import StrEnum
 
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
@@ -267,6 +269,12 @@ class GitCommitStep(PipelineStep):
 
 
 def run_unified_pipeline() -> None:
+    env_names = split_multi_value_param(os.getenv("ENV_NAMES", ""))
+    if len(env_names) > 1:
+        from pipeline import multi_env_runner
+
+        return multi_env_runner.dispatch()
+
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()

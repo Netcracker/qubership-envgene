@@ -14,8 +14,7 @@ def resolve_env_selection() -> None:
     env_names = os.getenv("ENV_NAMES")
     if env_names:
         for var in ("CLUSTER_NAME", "ENVIRONMENT_NAME", "FULL_ENV_NAME"):
-            if os.getenv(var):
-                raise ValueError(f"Do not set {var} when ENV_NAMES is set.")
+            os.environ.pop(var, None)
         for full_env_name in split_multi_value_param(env_names):
             if "/" not in full_env_name:
                 raise ValueError(

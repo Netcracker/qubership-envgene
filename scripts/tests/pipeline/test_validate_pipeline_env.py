@@ -20,12 +20,18 @@ class TestResolveEnvSelection:
             resolve_env_selection()
 
     @pytest.mark.unit
-    def test_fails_when_cluster_name_set_with_env_names(self, monkeypatch):
+    def test_env_names_clears_conflicting_legacy_vars(self, monkeypatch):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
         monkeypatch.setenv("CLUSTER_NAME", "cluster-01")
+        monkeypatch.setenv("ENVIRONMENT_NAME", "env-01")
+        monkeypatch.setenv("FULL_ENV_NAME", "cluster-01/env-01")
 
-        with pytest.raises(ValueError, match="Do not set CLUSTER_NAME when ENV_NAMES is set."):
-            resolve_env_selection()
+        resolve_env_selection()
+
+        assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
+        assert "CLUSTER_NAME" not in os.environ
+        assert "ENVIRONMENT_NAME" not in os.environ
+        assert "FULL_ENV_NAME" not in os.environ
 
     @pytest.mark.unit
     def test_passes_with_env_names_only(self, monkeypatch):
