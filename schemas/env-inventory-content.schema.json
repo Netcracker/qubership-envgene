@@ -78,7 +78,15 @@
           "required": ["content"]
         },
         "else": {
-          "required": ["name"]
+          "anyOf": [
+            { "required": ["name"] },
+            {
+              "required": ["content"],
+              "properties": {
+                "content": { "required": ["name"] }
+              }
+            }
+          ]
         }
       }
     },
@@ -172,7 +180,15 @@
           "required": ["content"]
         },
         "else": {
-          "required": ["name"]
+          "anyOf": [
+            { "required": ["name"] },
+            {
+              "required": ["content"],
+              "properties": {
+                "content": { "required": ["name"] }
+              }
+            }
+          ]
         }
       }
     },
