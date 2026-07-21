@@ -34,7 +34,8 @@ flowchart TB
         A[get_passport] --> B[credential_rotation]
         B --> C[bg_manage]
         C --> D[env_inventory_generation]
-        D --> E[app_reg_def_process]
+        D --> SV[set_template_version]
+        SV --> E[app_reg_def_process]
         E --> F[process_sd]
         F --> G[env_build]
         G --> H[generate_effective_set]
@@ -79,7 +80,16 @@ pipeline parameters.
 
      The last three are deprecated.
 
-5. **app_reg_def_process** - renders [Application Definitions](/docs/envgene-objects.md#application-definition)
+5. **set_template_version** - applies
+   [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) to the Environment
+   according to
+   [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](/docs/instance-pipeline-parameters.md#env_template_version_update_mode):
+   in `PERSISTENT` mode it updates `env_definition.yml`, in `TEMPORARY` mode it applies the version to the
+   current run only. See [Template Version Update](/docs/use-cases/template-version-update.md).
+   - **Condition**: [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is
+     provided.
+
+6. **app_reg_def_process** - renders [Application Definitions](/docs/envgene-objects.md#application-definition)
    and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
    - **Condition**: [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder).
 
@@ -89,28 +99,26 @@ pipeline parameters.
       [external job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated).
    2. Runs [template transformation](/docs/features/app-reg-defs.md#template-transformation).
 
-6. **process_sd** - builds the deployment plan from the Solution Descriptor.
+7. **process_sd** - builds the deployment plan from the Solution Descriptor.
    - **Condition**: a standalone (non-`GITLAB_DEPLOY`) pipeline runs an
      [`OPERATION_TYPE: DEPLOY`](/docs/instance-pipeline-parameters.md#operation_type) operation and a Solution
      Descriptor is provided through [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) or
      [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version). A `GITLAB_DEPLOY` pipeline builds the
      deployment plan directly.
 
-7. **env_build** - renders the Environment Instance from Jinja2 templates.
+8. **env_build** - renders the Environment Instance from Jinja2 templates.
    - **Condition**: [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder), or a
      `GITLAB_DEPLOY` deploy or clean operation.
 
    This step:
 
-   1. Updates the Environment Template version when
-      [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
-   2. Renders Namespaces, Clouds, and other environment components, but not Application and Registry
+   1. Renders Namespaces, Clouds, and other environment components, but not Application and Registry
       Definitions.
-   3. Applies template overrides.
-   4. Applies template and environment-specific ParameterSets and Resource Profiles.
-   5. Creates Credentials, including shared Credentials.
+   2. Applies template overrides.
+   3. Applies template and environment-specific ParameterSets and Resource Profiles.
+   4. Creates Credentials, including shared Credentials.
 
-8. **generate_effective_set** - generates the Effective Set with the
+9. **generate_effective_set** - generates the Effective Set with the
    [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
    CLI, invoked inside the `env-prepare` job.
    - **Condition**: [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set),
@@ -125,10 +133,10 @@ pipeline parameters.
       [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD
       variable contract and failure semantics.
 
-9. **git_commit** - commits the generated files to the Instance repository.
-   - **Condition**: always runs. It commits only when a step produced changes to the repository.
+10. **git_commit** - commits the generated files to the Instance repository.
+    - **Condition**: always runs. It commits only when a step produced changes to the repository.
 
-10. **cmdb_import** - imports data into a CMDB.
+11. **cmdb_import** - imports data into a CMDB.
     - **Condition**: [`CMDB_IMPORT: true`](/docs/instance-pipeline-parameters.md#cmdb_import). It does not run
       in a `GITLAB_DEPLOY` pipeline.
 
