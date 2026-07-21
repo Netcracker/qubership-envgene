@@ -34,7 +34,6 @@ import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.DeployPlanEntityDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
-import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionDescriptorDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
@@ -396,15 +395,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadApplicationListData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        Optional<String> deployPlanPath = sharedData.getDeployPlanPath();
-        if (deployPlanPath.isPresent()) {
-            loadDeployPlanData(nsWithAppsFromSD, appsToProcess, deployPlanPath.get());
-            return;
-        }
-        loadSDData(nsWithAppsFromSD, appsToProcess);
-    }
-
-    private void loadDeployPlanData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, String deployPlanPath) {
+        String deployPlanPath = sharedData.getDeployPlanPath()
+                .orElseThrow(() -> new IllegalArgumentException("--deploy-plan-path is required"));
         List<DeployPlanEntityDTO> entities = fileDataConverter.parseInputFile(
                 new TypeReference<List<DeployPlanEntityDTO>>() {
                 }, new File(deployPlanPath));
@@ -416,22 +408,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 .collect(Collectors.toList());
 
         inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
-    }
-
-    private void loadSDData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        Optional<String> sdPath = sharedData.getSdPath();
-        if (sdPath.isPresent()) {
-            SolutionDescriptorDTO solDescDTO = fileDataConverter.parseInputFile(SolutionDescriptorDTO.class, new File(sdPath.get()));
-            List<SBApplicationDTO> applications = solDescDTO.getApplications().stream()
-                    .map(applicationDTO -> getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, applicationDTO))
-                    .collect(Collectors.toList());
-
-            inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
-        }
-    }
-
-    private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, SolutionDescriptorDTO.ApplicationDTO applicationDTO) {
-        return buildSbApplicationDTO(nsWithAppsFromSD, appsToProcess, applicationDTO.getVersion(), applicationDTO.getDeployPostfix());
     }
 
     private SBApplicationDTO getSbApplicationDTOFromDeployPlan(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, DeployPlanEntityDTO entity) {

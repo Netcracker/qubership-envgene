@@ -6,10 +6,13 @@ from enum import StrEnum
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.effective_set_helper import resolve_es_generation_mode
+from envgenehelper.effective_set_helper import resolve_es_generation_mode, GenerationMode, PartialMergeMode, \
+    resolve_partial_merge_mode
+from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_bg_manage
-from build_env.appregdef_render import run_app_reg_def_workflow
+from build_env.appregdef_render import run_appregdef_render
+from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
@@ -17,10 +20,11 @@ from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import effective_set_entrypoint
 from effective_set.sboms_retention_policy import sboms_retention_policy
 from deployment_plan.generate_deployment_plan import run_generate_deployment_plan
-from envgenehelper.models import TemplateVersionUpdateMode
+from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
 from sd.process_sd import handle_sd, resolve_sd_parameters
 
 
@@ -109,7 +113,7 @@ class ProcessSdStep(PipelineStep):
         return "process_sd"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if ctx.is_gitlab_deploy():
+        if ctx.is_gitlab_deploy() or OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
             return False
         application_versions = resolve_sd_parameters(ctx)
         if application_versions:
@@ -118,6 +122,42 @@ class ProcessSdStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)
+        if ctx.es_generation_mode == GenerationMode.PARTIAL:
+            ctx.partial_merge_mode = resolve_partial_merge_mode()
+
+
+class CleanNamespacesStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "clean_namespaces"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        clean_namespaces(ctx.namespace_by_deploy_postfix, ctx.params.get('NAMESPACE_NAMES'))
+
+
+class MigrateSdToDeployPlanStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "migrate_sd_to_deploy_plan"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        if ctx.is_gitlab_deploy():
+            return False
+        if resolve_sd_parameters(ctx):
+            return True
+        needs_migration = get_sd_dir().joinpath(SD_FILE_NAME).is_file() and not EnvgeneDeployPlan.path().is_file()
+        if needs_migration:
+            logger.info("No new SD input this run, but sd.yaml exists without a deploy-plan.yml yet - "
+                        "migrating it to deploy-plan.yml")
+        return needs_migration
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        ctx.deploy_plan = adapt_sd_to_deploy_plan(ctx.namespace_by_deploy_postfix, SD_FILE_NAME)
+        ctx.deploy_plan_delta = adapt_sd_to_deploy_plan(
+            ctx.namespace_by_deploy_postfix, DELTA_SD_FILE_NAME, output_path=EnvgeneDeployPlan.delta_path())
 
 
 class SetTemplateVersionStep(PipelineStep):
@@ -137,28 +177,30 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
-class AppRegDefProcessStep(PipelineStep):
-    @property
-    def name(self) -> str:
-        return "app_reg_def_process"
-
-    def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy()
-
-    def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_app_reg_def_workflow(gitlab_deploy=True)
-
-
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILDER')) and not ctx.is_gitlab_deploy()
+        if OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
+            return False
+        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_app_reg_def_workflow(gitlab_deploy=False)
+        run_appregdef_render()
+
+
+class DeployPostfixNamespaceMapStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "deploy_postfix_namespace_map"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        ctx.namespace_by_deploy_postfix = compute_namespace_map()
 
 
 class GenerateDeploymentPlanStep(PipelineStep):
@@ -167,7 +209,7 @@ class GenerateDeploymentPlanStep(PipelineStep):
         return "generate_deployment_plan"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy()
+        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_generate_deployment_plan(ctx)
@@ -182,7 +224,7 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_build_environment()
+        ctx.namespace_by_deploy_postfix = run_build_environment()
 
 
 class GenerateEffectiveSetStep(PipelineStep):
@@ -204,7 +246,7 @@ class GenerateEffectiveSetStep(PipelineStep):
         get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
         if get_sboms.modules:
             get_sboms.run()
-        effective_set_entrypoint()
+        effective_set_entrypoint(ctx)
         encrypt_all_cred_files_for_env()
 
 
@@ -228,12 +270,13 @@ def run_unified_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
-        BgManageStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
-        AppRegDefProcessStep(),
         AppregdefRenderStep(),
+        DeployPostfixNamespaceMapStep(),
         ProcessSdStep(),
+        CleanNamespacesStep(),
+        MigrateSdToDeployPlanStep(),
         GenerateDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),

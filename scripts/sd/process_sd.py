@@ -11,7 +11,6 @@ from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
 from envgenehelper.logger import logger
-from envgenehelper.models import OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
                                      SD_FILE_NAME, DELTA_SD_FILE_NAME)
@@ -23,7 +22,6 @@ from pipeline.pipeline_parameters import PipelineParametersHandler
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
     MergeType.BASIC_EXCLUSION: helper.basic_exclusion_merge,
-    MergeType.EXTENDED: helper.extended_merge
 }
 
 ENVIRONMENT_NAME = getenv_with_error('ENVIRONMENT_NAME')
@@ -115,21 +113,10 @@ def calculate_sd_delta(sd_delta):
     return sd_delta
 
 
-def multiply_sds_to_single(sds_data, effective_merge_mode):
-    if effective_merge_mode == MergeType.EXTENDED:
-        if isinstance(sds_data, list):
-            if len(sds_data) > 1:
-                raise ValueError("Multiple SDs not supported in extended merge mode")
-            full_sd_from_pipe = sds_data[0]
-        elif isinstance(sds_data, dict):
-            full_sd_from_pipe = sds_data
-    else:
-        sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
-        cropped_sds = []
-        for sd in sds_data:
-            cropped_sds.append({"applications": sd["applications"]})
-
-        full_sd_from_pipe = basic_merge_multiple(cropped_sds)
+def multiply_sds_to_single(sds_data):
+    sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
+    cropped_sds = [{"applications": sd["applications"]} for sd in sds_data]
+    full_sd_from_pipe = basic_merge_multiple(cropped_sds)
 
     logger.info(f"Merged data after performing basic-merge for multiple SDs: {full_sd_from_pipe}")
     return full_sd_from_pipe
@@ -140,46 +127,39 @@ def handle_sd(handler: PipelineParametersHandler):
     if not application_versions:
         raise ValueError("Provide either APPLICATION_VERSIONS or SD_VERSION / SD_DATA")
 
-    operation_type = OperationType(handler.params.get("OPERATION_TYPE"))
-
     env = Environment(str(handler.work_dir), handler.cluster_name, handler.env_name)
     base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
 
-    if operation_type == OperationType.DEPLOY:
-        sd_merge_mode = handler.params.get("SD_REPO_MERGE_MODE")
-        sd_delta = handler.params.get('SD_DELTA')
-        namespace_names = getenv("NAMESPACE_NAMES")
-        if namespace_names:
-            logger.warning("NAMESPACE_NAMES is ignored when OPERATION_TYPE=DEPLOY")
+    sd_merge_mode = handler.params.get("SD_REPO_MERGE_MODE")
+    sd_delta = handler.params.get('SD_DELTA')
+    namespace_names = getenv("NAMESPACE_NAMES")
+    if namespace_names:
+        logger.warning("NAMESPACE_NAMES is ignored when OPERATION_TYPE=DEPLOY")
 
-        sd_delta = calculate_sd_delta(sd_delta)
-        effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
+    sd_delta = calculate_sd_delta(sd_delta)
+    effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
 
-        helper.check_dir_exist_and_create(base_sd_path)
-        # do not commit delta sd to repo, delete old ones
-        deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
+    helper.check_dir_exist_and_create(base_sd_path)
+    # do not commit delta sd to repo, delete old ones
+    deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
 
-        try:
-            if load_json_or_yaml(application_versions):
-                extract_sds_from_content(env, base_sd_path, application_versions, effective_merge_mode)
-            else:
-                download_sds_by_version(env, base_sd_path, application_versions, effective_merge_mode)
-        except Exception as e:
-            raise ValueError(
-                "APPLICATION_VERSIONS or SD_VERSION / SD_DATA must be set either appver or json/yaml") from e
+    try:
+        if load_json_or_yaml(application_versions):
+            extract_sds_from_content(env, base_sd_path, application_versions, effective_merge_mode)
+        else:
+            download_sds_by_version(env, base_sd_path, application_versions, effective_merge_mode)
+    except Exception as e:
+        raise ValueError(
+            "APPLICATION_VERSIONS or SD_VERSION / SD_DATA must be set either appver or json/yaml") from e
 
-        logger.info("SD successfully extracted from APPLICATION_VERSIONS or SD_VERSION / SD_DATA and saved")
-    elif operation_type == OperationType.CLEAN:
-        apply_namespace_cleanup_to_sd(env, base_sd_path)
+    logger.info("SD successfully extracted from APPLICATION_VERSIONS or SD_VERSION / SD_DATA and saved")
 
 
-def validate_applications(sd, effective_merge_mode: MergeType):
+def validate_applications(sd):
     applications = sd.get("applications")
     for app in applications:
-        if effective_merge_mode != MergeType.EXTENDED and (not isinstance(app, dict) or not app.get("deployPostfix")):
-            raise ValueError(
-                f"Application {app} doesn't have deployPostfix. <name>:<version> notation is supported only for "
-                f"extended merge. Current merge mode: {effective_merge_mode.value}")
+        if not isinstance(app, dict) or not app.get("deployPostfix"):
+            raise ValueError(f"Application {app} doesn't have deployPostfix.")
 
 
 def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_mode: MergeType):
@@ -200,8 +180,8 @@ def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_
             transformed_data.append(transformed_item)
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(app_data, namespace_dict)
-    full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
-    validate_applications(full_sd_from_pipe, effective_merge_mode)
+    full_sd_from_pipe = multiply_sds_to_single(transformed_data)
+    validate_applications(full_sd_from_pipe)
 
     sd_path = base_sd_path.joinpath(SD_FILE_NAME)
     sd_delta_path = base_sd_path.joinpath(DELTA_SD_FILE_NAME)
@@ -300,46 +280,3 @@ def resolve_sd_parameters(handler: PipelineParametersHandler) -> str | None:
     if sd_data:
         logger.warning("SD_DATA and SD_SOURCE_TYPE are deprecated. Use APPLICATION_VERSIONS instead")
         return sd_data
-
-
-def apply_namespace_cleanup_to_sd(env: Environment, base_sd_path: Path):
-    ns_names_var = getenv("NAMESPACE_NAMES")
-    sd_path = base_sd_path / SD_FILE_NAME
-    if not sd_path.exists():
-        logger.info(f"Operation type CLEAN: sd.yaml not found at {sd_path}, nothing to filter")
-        return
-
-    if not ns_names_var:
-        deleteFileIfExists(sd_path)
-        logger.info(
-            f"Operation type CLEAN: NAMESPACE_NAMES is empty, env-cleanup (all namespaces), deleted {sd_path}")
-        return
-
-    # { "namespace_name": "folder_name_for_ns" }
-    ns_map = build_namespace_dict(env)
-    ns_for_cleanup = {}
-
-    for ns_name in split_multi_value_param(ns_names_var):
-        deploy_postfix = ns_map.get(ns_name)
-        if deploy_postfix is None:
-            raise ValueError(f"Operation type CLEAN: namespace '{ns_name}' has no matching namespace folder")
-        ns_for_cleanup[ns_name] = deploy_postfix
-
-    sd = openYaml(sd_path)
-    apps = sd.get("applications", [])
-
-    postfixes_from_sd = {app.get("deployPostfix") for app in apps if app.get("deployPostfix")}
-    for ns_name, dp in ns_for_cleanup.items():
-        if dp not in postfixes_from_sd:
-            # case incorrect ns from namespace_names or accidentally launched 2 clean up same ns
-            logger.warning(f"Operation type CLEAN: deployPostfix '{dp}' (namespace '{ns_name}') not found in sd")
-
-    postfixes_for_cleanup = set(ns_for_cleanup.values())
-    filtered_apps = [app for app in apps if app.get("deployPostfix") not in postfixes_for_cleanup]
-    if not filtered_apps:
-        logger.info(f"Operation type CLEAN: applications is empty, delete {sd_path}")
-        deleteFileIfExists(sd_path)
-        return
-
-    sd["applications"] = filtered_apps
-    helper.writeYamlToFile(sd_path, sd)

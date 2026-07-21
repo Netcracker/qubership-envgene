@@ -7,7 +7,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--sparse-paths",
         nargs="+",
-        required=True,
+        required=False,
         help="Paths to include in sparse checkout",
     )
 

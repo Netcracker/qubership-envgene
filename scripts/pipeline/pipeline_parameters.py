@@ -7,16 +7,15 @@ from os import getenv
 from pathlib import Path
 from typing import Self
 
-import yaml
-from envgenehelper import getenv_with_error, writeToFile
-from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.effective_set_helper import GenerationMode
-from envgenehelper.models import TemplateVersionUpdateMode, OperationType
-from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper import logger
 from pydantic import BaseModel, Field
 
-GITLAB_DEPLOY = "GITLAB_DEPLOY"
+from envgenehelper import getenv_with_error, writeToFile
+from envgenehelper import logger
+from envgenehelper.collections_helper import split_multi_value_param
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode
+from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
+from envgenehelper.plugin_engine import PluginEngine
 
 
 class PipelineParametersHandler(BaseModel):
@@ -29,6 +28,10 @@ class PipelineParametersHandler(BaseModel):
     cluster_name: str
     env_name: str
     es_generation_mode: GenerationMode = GenerationMode.PARTIAL
+    partial_merge_mode: PartialMergeMode | None = None
+    namespace_by_deploy_postfix: dict = Field(default_factory=dict)
+    deploy_plan: EnvgeneDeployPlan | None = None
+    deploy_plan_delta: EnvgeneDeployPlan | None = None
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/build.env"))
 
@@ -65,9 +68,9 @@ class PipelineParametersHandler(BaseModel):
             "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
                 "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
             "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
+            "SSL_CERTIFICATES_BUNDLE": getenv("SSL_CERTIFICATES_BUNDLE"),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
             "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
-            "PIPELINE_TYPE": getenv("PIPELINE_TYPE", ""),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
@@ -81,16 +84,21 @@ class PipelineParametersHandler(BaseModel):
             except (TypeError, ValueError):
                 pass
 
-        env_names = split_multi_value_param(getenv_with_error("ENV_NAMES"))
-        if len(env_names) != 1:
-            raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
+        is_gitlab_deploy = params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
+        if is_gitlab_deploy:
+            cluster_name = getenv_with_error("CLUSTER_NAME")
+            env_name = getenv_with_error("ENVIRONMENT_NAME")
+        else:
+            env_names = split_multi_value_param(getenv_with_error("ENV_NAMES"))
+            if len(env_names) != 1:
+                raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
+            cluster_name, env_name = env_names[0].split("/")
 
         for k, v in params.items():
             if v is not None:
                 os.environ[k] = str(v)
 
-        full_env_name = env_names[0]
-        cluster_name, env_name = full_env_name.split("/")
+        full_env_name = f"{cluster_name}/{env_name}"
         internal_params = {
             'FULL_ENV_NAME': full_env_name,
             'CLUSTER_NAME': cluster_name,
@@ -109,7 +117,7 @@ class PipelineParametersHandler(BaseModel):
         )
 
     def is_gitlab_deploy(self) -> bool:
-        return self.params.get("PIPELINE_TYPE") == GITLAB_DEPLOY
+        return self.params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
 
     def log_pipeline_params(self) -> None:
         params = copy.deepcopy(self.params)

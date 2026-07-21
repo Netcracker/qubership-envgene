@@ -82,7 +82,7 @@ class GitRepoManager:
         self.ctx = GitContext.from_env()
         self.cluster_name = getenv_with_error("CLUSTER_NAME")
         self.env_name = getenv_with_error("ENVIRONMENT_NAME")
-        self.sparse_paths = self.get_sparse_checkout_paths()
+        self.sparse_paths = self.get_sparse_checkout_paths(self.cluster_name, self.env_name)
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
@@ -149,6 +149,7 @@ class GitRepoManager:
     def restore_excluded_paths(self, rel_paths: list[str]) -> None:
         snapshot_root = self._snapshot_root()
 
+        logger.info(f"Restoring {len(rel_paths)} excluded path(s) from snapshot...")
         for rel_path in rel_paths:
             src = snapshot_root / rel_path
             dst = self._repo_root / rel_path

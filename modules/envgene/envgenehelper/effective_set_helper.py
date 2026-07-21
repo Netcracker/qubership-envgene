@@ -33,7 +33,7 @@ def resolve_partial_merge_mode():
     if merge_mode == MergeType.BASIC_EXCLUSION:
         return PartialMergeMode.REVERSE
 
-    if merge_mode in {MergeType.BASIC, MergeType.EXTENDED}:
+    if merge_mode == MergeType.BASIC:
         return PartialMergeMode.FORWARD
 
     raise ValueError(f"Unsupported merge mode for partial: {merge_mode}")

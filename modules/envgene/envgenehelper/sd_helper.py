@@ -1,14 +1,7 @@
 from envgenehelper import *
 
-MERGE_IMPOSSIBLE = "SD merge error:\nDelta SD contains a new applications, but doesn't contain this application in the deployGraph.\nSD Merge is impossible."
-NEW_CHUNK_ERROR = "SD merge error:\nDelta SD contains a new chunk\nSD Merge is impossible."
-NO_DEPLOY_GRAPH_ERROR = "SD merge error:\nDelta SD contains deployGraph, but Full SD doesn't contain deployGraph.\nSD Merge is impossible."
 SD_FILE_NAME = "sd.yaml"
 DELTA_SD_FILE_NAME = "delta_sd.yaml"
-
-
-def get_app_name(name: str):
-    return name[0:name.find(":")]
 
 
 def get_app_name_sd(app):
@@ -31,110 +24,6 @@ def is_duplicating(app1, app2):
             is_matching(app1, app2) and
             get_version(app1) == get_version(app2)
     )
-
-
-def error(str):
-    logger.error(str)
-    raise ValueError(str)
-
-
-def check_deploy_graph(app_name: str, data: dict) -> bool:
-    deploy_graph = data.get("deployGraph")
-    if not deploy_graph:
-        return False
-
-    for entry in deploy_graph:
-        for app in entry.get("apps", []):
-            if app_name.lower() in app.lower():
-                return True
-    return False
-
-
-# Returns False if target contains a criteria and its value is not matched with delta's value. Otherwise returns True
-def check_criteria(target, delta, criteria):
-    result = True
-    for c in criteria:
-        if c in target:
-            result = result and (target[c] == delta[c])
-    #   if not result:
-    #       error(MERGE_IMPOSSIBLE)
-    return result
-
-
-def add_app(entry, apps: list) -> int:
-    entry_name = get_app_name(entry["version"])
-
-    for i, app in enumerate(apps):
-        app_name = get_app_name(app["version"])
-
-        if isinstance(entry, ruyaml.CommentedMap):
-            if app_name == entry_name and check_criteria(entry, app, ["deployPostfix", "alias"]):
-                logger.info(f"Replaced value: {entry}")
-                apps[i] = entry
-                return 1
-
-        elif app_name == entry_name:
-            logger.info(f"Replaced value: {entry}")
-            apps[i] = entry
-            return 1
-
-    logger.info(f"Appended value: {entry}")
-    apps.append(entry)
-    return 1
-
-
-# TODO <name>:<version> notation is supported only for extended merge for now, but later have to be removed
-def extended_merge(full_sd, delta_sd):
-    # Merges delta SD into full SD by updating or adding matching apps, ensuring deployGraph consistency
-    logger.info("Inside extended_merge")
-    logger.info(f"Full SD: {full_sd}")
-    logger.info(f"Delta SD: {delta_sd}")
-    if "deployGraph" not in delta_sd.keys():
-        error(NO_DEPLOY_GRAPH_ERROR)
-    counter_ = 0
-    apps_list = full_sd["applications"].copy()
-    length = len(delta_sd["applications"])
-
-    # find applications with suitable deployGraph
-    for j in delta_sd["applications"]:
-        if check_deploy_graph(get_app_name(j["version"]), delta_sd):
-            counter_ += add_app(j, apps_list)
-
-    # merge rest of applications
-    for i in range(len(apps_list)):
-        for j in range(len(delta_sd["applications"])):
-            apps_item = apps_list[i]
-            delta_item = delta_sd["applications"][j]
-            same_app_name = get_app_name(apps_item["version"]) == get_app_name(delta_item["version"])
-
-            if isinstance(apps_item, ruyaml.CommentedMap):
-                if same_app_name and check_criteria(apps_item, delta_item, ["deployPostfix", "alias"]):
-                    apps_list[i] = delta_item
-                    counter_ += 1
-            else:
-                if same_app_name:
-                    apps_list[i] = delta_item
-                    counter_ += 1
-
-    if counter_ < length:
-        error(MERGE_IMPOSSIBLE)
-    full_sd["applications"] = apps_list
-
-    # merge DeployGraph
-    counter = 0
-    length = len(delta_sd["deployGraph"])
-    for i in full_sd["deployGraph"]:
-        for j in delta_sd["deployGraph"]:
-            if i["chunkName"] == j["chunkName"]:
-                in_first = set(i["apps"])
-                in_second = set(j["apps"])
-                in_second_but_not_in_first = in_second - in_first
-                i["apps"] = i["apps"] + list(in_second_but_not_in_first)
-                counter += 1
-    if counter < length:
-        error(NEW_CHUNK_ERROR)
-
-    return full_sd
 
 
 def basic_merge_multiple(sd_list: list):
@@ -230,7 +119,6 @@ def basic_exclusion_merge(full_sd, delta_sd):
 
 
 class MergeType(Enum):
-    EXTENDED = "extended-merge"
     REPLACE = "replace"
     BASIC = "basic-merge"
     BASIC_EXCLUSION = "basic-exclusion-merge"
@@ -253,10 +141,6 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
     if sd_merge_mode is not None:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
     # sd_delta var is deprecated
-    elif sd_delta == "true":
-        effective_merge_mode = MergeType.EXTENDED
-        logger.info(
-            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     elif sd_delta == "false":
         effective_merge_mode = MergeType.REPLACE
         logger.info(

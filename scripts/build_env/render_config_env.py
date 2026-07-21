@@ -1,19 +1,17 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
-from os import getenv
-from pathlib import Path
+
+from deepmerge import always_merger
+from jinja2 import Template, TemplateError
+from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from deployment_plan.deploy_plan_adapter import resolve_application_entries
-from deepmerge import always_merger
 from envgenehelper import *
+from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
 from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
-from jinja2 import Template, TemplateError
-from pipeline.pipeline_parameters import GITLAB_DEPLOY
-from pydantic import BaseModel, Field
 
 EXTERNAL_CRED_COMMENT = "external credential template"
 
@@ -37,8 +35,6 @@ class Context(BaseModel):
     env_template: OrderedDict = Field(default_factory=OrderedDict)
     env_instances_dir: Optional[str] = ''
     cloud_passport_file_path: Optional[str] = ''
-    sd_config: OrderedDict = Field(default_factory=OrderedDict)
-    sd_file_path: Optional[str] = ''
     regdefs: OrderedDict = Field(default_factory=OrderedDict)
     appdefs: OrderedDict = Field(default_factory=OrderedDict)
     regdef_templates: list = Field(default_factory=list)
@@ -50,6 +46,7 @@ class Context(BaseModel):
     env_vars: OrderedDict = Field(default_factory=OrderedDict)
     render_profiles_dir: Optional[str] = ''
     work_dir: Optional[str] = ''
+    namespace_by_deploy_postfix: dict = Field(default_factory=dict)
 
     start_time: datetime | None = Field(default=None, exclude=True)
     end_time: datetime | None = Field(default=None, exclude=True)
@@ -87,6 +84,28 @@ def render_obj_by_context(template: dict, context: Context) -> dict:
     template_str = replace_ansible_stuff(template_str=dumpYamlToStr(template))
     rendered_str = create_jinja_env().from_string(template_str).render(context.as_dict())
     return yml.load(rendered_str)
+
+
+def build_minimal_render_context(env_name: str, cluster_name: str, env_dir: str, base_dir: str) -> dict:
+    from build_env.build_env import process_additional_template_parameters  # TODO: circular import, fix properly
+    output_dir = f"{base_dir}/environments"
+    render_dir = f"/tmp/render/{env_name}"
+    templates_dirs = get_template_dirs()
+    cloud_passport_file_path = find_cloud_passport_definition(env_dir, output_dir)
+    copy_path(f'{env_dir}/Inventory', f'{render_dir}/Inventory')
+    process_additional_template_parameters(render_dir, env_dir, output_dir)
+
+    return {
+        "cluster_name": cluster_name,
+        "output_dir": output_dir,
+        "current_env_dir": render_dir,
+        "render_dir": render_dir,
+        "env": env_name,
+        "templates_dirs": templates_dirs,
+        "templates_dir": templates_dirs.get(NamespaceRole.COMMON, ""),
+        "cloud_passport_file_path": cloud_passport_file_path,
+        "env_instances_dir": render_dir,
+    }
 
 
 class EnvGenerator:
@@ -142,7 +161,8 @@ class EnvGenerator:
 
         env_templates_dir = Path(f'{self.ctx.templates_dirs.get(NamespaceRole.COMMON)}/env_templates')
         env_template_basename = env_templates_dir / env_template_name
-        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.COMMON), env_template_name)
+        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.COMMON),
+                                                                     env_template_name)
         if not env_template:
             all_files = [f for f in env_templates_dir.iterdir() if f.is_file()]
             remains_files = list(set(all_files) - set(suitable_files))
@@ -155,11 +175,13 @@ class EnvGenerator:
         self.ctx.current_env_template = env_template
 
         if self.ctx.templates_dirs:
-            peer_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.PEER), env_template_name)
+            peer_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.PEER),
+                                                             env_template_name)
             if peer_template:
                 self.ctx.peer_env_template = peer_template
 
-            origin_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.ORIGIN), env_template_name)
+            origin_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.ORIGIN),
+                                                               env_template_name)
             if origin_template:
                 self.ctx.origin_env_template = origin_template
 
@@ -174,24 +196,6 @@ class EnvGenerator:
 
         current_env = self.ctx.config["environment"]
         self.ctx.current_env = current_env
-
-    def validate_applications(self):
-        applications = self.ctx.sd_config.get("applications", [])
-
-        for app in applications:
-            version = app.get("version")
-            deploy_postfix = app.get("deployPostfix")
-
-            if "version" not in app:
-                raise ValueError(f"Missing 'version' in application: {app}")
-            if "deployPostfix" not in app:
-                raise ValueError(f"Missing 'deployPostfix' in application: {app}")
-            if not isinstance(version, str):
-                raise ValueError(f"'version' must be string in application: {app}")
-            if not isinstance(deploy_postfix, str):
-                raise ValueError(f"'deployPostfix' must be string in application: {app}")
-
-            logger.info(f"Valid application: {app}")
 
     def validate_bgd(self):
         logger.info('Validating that all namespaces mentioned in BG domain object are available in namespaces')
@@ -261,33 +265,19 @@ class EnvGenerator:
         return base_name + self._get_bgd_suffix(ns_name)
 
     def generate_solution_structure(self):
-        application_entries = resolve_application_entries(
-            Path(self.ctx.env_instances_dir),
-            Path(self.ctx.current_env_dir),
-            gitlab_deploy=getenv("PIPELINE_TYPE") == GITLAB_DEPLOY,
-        )
+        deploy_plan_path = Path(self.ctx.env_instances_dir) / "Inventory" / DEPLOY_PLAN_FILE_NAME
+        application_entries = EnvgeneDeployPlan.read(deploy_plan_path).entities if deploy_plan_path.is_file() else None
         solution_structure = {}
         if not application_entries:
             logger.info(f"Rendered solution_structure: {solution_structure}")
             return
 
-        namespaces = self.ctx.current_env_template.get("namespaces", [])
-        postfix_template_map = {}
-        for ns in namespaces:
-            namespace_template_path = Template(ns["template_path"]).render(self.ctx.as_dict())
-            postfix = self.generate_ns_postfix(ns, namespace_template_path)
-            postfix_template_map[postfix] = namespace_template_path
+        namespace_by_deploy_postfix = self.ctx.namespace_by_deploy_postfix
 
         for entry in application_entries:
             app_name, version = entry.version.split(":", 1)
             postfix = entry.deploy_postfix
-            ns_name = entry.namespace
-
-            if not ns_name:
-                ns_template_path = postfix_template_map.get(postfix)
-                if ns_template_path:
-                    rendered_ns = self.render_from_file_to_obj(ns_template_path)
-                    ns_name = rendered_ns.get("name")
+            ns_name = entry.namespace or namespace_by_deploy_postfix.get(postfix)
 
             small_dict = {
                 app_name: {
@@ -302,12 +292,14 @@ class EnvGenerator:
         always_merger.merge(self.ctx.current_env, {"solution_structure": solution_structure})
         logger.info(f"Rendered solution_structure: {solution_structure}")
 
-    def render_from_file_to_file(self, src_template_path: str, target_file_path: str):
+    def render_from_file_to_file(self, src_template_path: str, target_file_path: str) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
-        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
+        rendered_obj = readYaml(escaping_quotation(rendered))
+        writeYamlToFile(target_file_path, rendered_obj)
+        return rendered_obj
 
     def render_from_file_to_obj(self, src_template_path) -> dict:
         template = openFileAsString(src_template_path)
@@ -369,9 +361,10 @@ class EnvGenerator:
             return ""
         return readYaml(rendered).get("name", "")
 
-    def generate_namespace_files(self):
+    def generate_namespace_files_and_map(self) -> dict:
         context = self.ctx.as_dict()
         bgd = get_bgd_object(Path(self.ctx.current_env_dir))
+        namespace_by_deploy_postfix = {}
 
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
@@ -390,13 +383,19 @@ class EnvGenerator:
                 role_ns_config = self._find_ns_config_by_name(role_env_template, ns_name, role_templates_dir)
                 if role_ns_config:
                     effective_ns = role_ns_config
-                    effective_template_path = self._resolve_template_path(role_ns_config["template_path"], role_templates_dir)
+                    effective_template_path = self._resolve_template_path(role_ns_config["template_path"],
+                                                                          role_templates_dir)
                     logger.info(f"Using {role.name} template for namespace {ns_name}")
 
             logger.info(f"Generate Namespace yaml for {postfix}")
             ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / postfix
-            self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
-            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override", postfix)
+            rendered_ns = self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
+            namespace_by_deploy_postfix[postfix] = rendered_ns.get("name")
+            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override",
+                                            postfix)
+
+        self.ctx.namespace_by_deploy_postfix = namespace_by_deploy_postfix
+        return namespace_by_deploy_postfix
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
@@ -431,7 +430,7 @@ class EnvGenerator:
             validate_yaml_by_scheme_or_fail(cs_file, get_schema_dir() / "composite-structure.schema.json")
 
     def generate_external_cred(self):
-        #render external creds
+        # render external creds
         external_credential_template = self.ctx.current_env_template.get("external_credential_template")
         if not external_credential_template:
             return
@@ -440,17 +439,19 @@ class EnvGenerator:
         external_creds = openYaml(external_cred_path)
         default_remote_path = "{{ current_env.cloud }}/{{ current_env.name }}"
         for cred_config in external_creds.values():
-               if isinstance(cred_config, dict) and "remoteRefPath" not in cred_config:
-                   cred_config["remoteRefPath"] = default_remote_path
+            if isinstance(cred_config, dict) and "remoteRefPath" not in cred_config:
+                cred_config["remoteRefPath"] = default_remote_path
         rendered_external_creds = render_obj_by_context(external_creds, self.ctx)
         logger.debug(f"Rendered external credentials is: \n{rendered_external_creds}")
 
-        #validate secret file
+        # validate secret file
         secret_store_file = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
-        validate_yaml_by_scheme_or_fail(yaml_file_path=secret_store_file, schema_file_path=get_schema_dir() / "secret-stores.schema.json")
+        validate_yaml_by_scheme_or_fail(yaml_file_path=secret_store_file,
+                                        schema_file_path=get_schema_dir() / "secret-stores.schema.json")
 
-        #copy rendered creds to env creds file
-        copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT, get_schema_dir() / "credential.schema.json")
+        # copy rendered creds to env creds file
+        copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT,
+                                     get_schema_dir() / "credential.schema.json")
         self.is_external_cred_env = True
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
@@ -607,21 +608,26 @@ class EnvGenerator:
         self.render_reg_defs()
         self.validate_appregdefs()
 
-    def process_app_reg_defs(self, env_name: str, extra_env: dict, *, include_namespaces: bool = False):
+    def render_app_reg_defs(self, env_name: str, extra_env: dict) -> None:
         logger.info(
             f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-            if include_namespaces:
-                current_env = self.ctx.current_env
-                self.ctx.cloud = self.calculate_cloud_name()
-                self.ctx.tenant = current_env.get("tenant", '')
-                self.ctx.deployer = current_env.get('deployer', '')
-                self.ctx.bgd = current_env.get('bg_domain', '')
-                self.set_env_templates()
-                self.generate_bgd_file()
-                self.generate_namespace_files()
             self._render_app_reg_defs()
+
+    def render_namespaces_for_map(self, env_name: str, extra_env: dict) -> dict:
+        logger.info(
+            f"Starting rendering namespaces for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        with self.ctx.use():
+            self.setup_base_context(extra_env)
+            current_env = self.ctx.current_env
+            self.ctx.cloud = self.calculate_cloud_name()
+            self.ctx.tenant = current_env.get("tenant", '')
+            self.ctx.deployer = current_env.get('deployer', '')
+            self.ctx.bgd = current_env.get('bg_domain', '')
+            self.set_env_templates()
+            self.generate_bgd_file()
+            return self.generate_namespace_files_and_map()
 
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
@@ -658,9 +664,9 @@ class EnvGenerator:
 
             self.generate_bgd_file()
             self.generate_solution_structure()
+            self.generate_namespace_files_and_map()
             self.generate_tenant_file()
             self.generate_cloud_file()
-            self.generate_namespace_files()
             self.generate_composite_structure()
             self.generate_external_cred()
 
