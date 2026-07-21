@@ -33,8 +33,10 @@
 
 This document describes use cases for **Environment Inventory Generation** — creating or replacing `env_definition.yml`, `paramsets`, `resource_profiles`, and `credentials` using `ENV_INVENTORY_CONTENT`.
 
-> **Note (template version priority):**  
-> If `ENV_TEMPLATE_VERSION` is passed to the Instance pipeline, it has **higher priority** than the template version specified in `env_definition.yml` (`envDefinition.content.envTemplate.*`). See [Template Version Update](/docs/use-cases/template-version-update.md).
+> **Note:**  
+> Applying `ENV_TEMPLATE_VERSION` is a separate pipeline step that runs after Inventory generation and
+> therefore overrides the version from `envDefinition.content.envTemplate.*`. See
+> [Template Version Update](/docs/use-cases/template-version-update.md).
 
 ---
 
@@ -54,7 +56,6 @@ Instance pipeline (GitLab or GitHub) is started with:
 - `ENV_NAMES: <cluster-name>/<env-name>`
 - `ENV_INVENTORY_CONTENT: <payload>`
   - Examples: [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
-- `ENV_TEMPLATE_VERSION: <template-artifact>` (optional; if provided, it has higher priority than the version from `envDefinition.content.envTemplate.*`)
 
 **Steps:**
 
@@ -70,7 +71,6 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
    5. Creates `Inventory/` directory if missing.
    6. Creates `env_definition.yml` using `envDefinition.content`.
-   7. If `ENV_TEMPLATE_VERSION` is provided, applies it as the template version (higher priority).
 2. The `git_commit` job runs:
    1. Commits created files into the Instance repository.
 
@@ -78,8 +78,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 1. The file is created:
    - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-2. If `ENV_TEMPLATE_VERSION` is provided, it overrides the version from `envDefinition.content.envTemplate.*`.
-3. Changes are committed.
+2. Changes are committed.
 
 ---
 
@@ -97,7 +96,6 @@ Instance pipeline (GitLab or GitHub) is started with:
 - `ENV_NAMES: <cluster-name>/<env-name>`
 - `ENV_INVENTORY_CONTENT: <payload>`
   - Examples: [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
-- `ENV_TEMPLATE_VERSION: <template-artifact>` (optional; if provided, it has higher priority than the version from `envDefinition.content.envTemplate.*`)
 
 **Steps:**
 
@@ -112,7 +110,6 @@ Instance pipeline (GitLab or GitHub) is started with:
    4. Resolves target path:
       - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
    5. Replaces `env_definition.yml` using `envDefinition.content` (fully overwrites the file).
-   6. If `ENV_TEMPLATE_VERSION` is provided, applies it as the template version (higher priority).
 2. The `git_commit` job runs:
    1. Commits updated files into the Instance repository.
 
@@ -120,8 +117,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 1. The file is replaced (fully overwritten):
    - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-2. If `ENV_TEMPLATE_VERSION` is provided, it overrides the version from `envDefinition.content.envTemplate.*`.
-3. Changes are committed.
+2. Changes are committed.
 
 ---
 
