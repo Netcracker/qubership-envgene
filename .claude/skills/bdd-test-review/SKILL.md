@@ -75,7 +75,7 @@ a new test there forces the divergence to be resolved.
    the run are void, and comparing output against the very payload that produced it is an echo, not an
    oracle. This is informal mutation testing: imagine the smallest realistic break and check the test
    would catch it.
-3. Oracle independence - the scenario must not be confirmed by product code changed in the same PR
+3. Oracle independence - the scenario must not be confirmed by the product code changed in the same PR
    (self-blessing). Goldens produced by UPDATE_GOLDEN-style runs are code-blessed: verify their content is
    independently derivable from the documented contract. Carry the result inside the verdict reason cell
    ("strict golden"), never as a standalone published note - standalone notes of that kind were rejected
@@ -114,7 +114,7 @@ undocumented / defer to the product owner.
 Actions per verdict:
 
 - code wrong - CR issue (use the design-to-cr skill when available, body format: `docs/dev/creating-cr.md`).
-- doc wrong, mechanical fix (names, paths, copy-paste) - direct docs PR.
+- doc wrong, mechanical fix (names, paths, copypaste) - direct docs PR.
 - doc wrong, semantic (contract rewrite, removal of a promised feature) - issue first.
 - defer - issue carrying the question.
 
@@ -142,7 +142,7 @@ The fate of a test follows the fate of the behavior:
 - behavior fixed by an issue - the test stays, marked @xfail(strict) with the issue link until the fix.
 - behavior owned by another module - the scenario moves out of this suite (`not needed`), proposed ones
   vanish.
-- optional nice-to-have negatives (schema pattern guards already covered by a generic schema negative) are
+- optional nice to have negatives (schema pattern guards already covered by a generic schema negative) are
   not proposed. When the schema itself is lax, fix the schema (issue + PR) instead of pinning the laxness
   with a test.
 
@@ -154,7 +154,7 @@ The report format - sections, verdict scale, legends, table rules, worked exampl
 Self-checks before showing the report:
 
 - the rows for existing scenarios (every verdict except `missing`) must equal the scenario count in the
-  feature file, one to one by UC id (a row was silently lost once - counting the whole table would mask
+  feature file, one to one by UC ID (a row was silently lost once - counting the whole table would mask
   exactly that loss whenever missing rows are present).
 - bidirectional check: every `missing` row has a Gherkin draft or is named in a pattern comment, and every
   draft has a row.
@@ -164,7 +164,7 @@ Publication, only on the user's explicit command:
 
 1. Translate to English (chat iterations may be Russian, the published artifact ships in English).
 2. Critic-author loop: a FRESH-context agent checks translation fidelity against the source, internal
-   consistency, 3-4 repo spot-facts, and house style (no semicolons, no em or en dashes, aligned table
+   consistency, 3-4 repository spot-facts, and house style (no semicolons, no em or en dashes, aligned table
    pipes, prose at 120 chars). Fix and re-run until a clean round. If the user capped the iterations and
    complaints remain at the cap, stop and surface them instead of publishing.
 3. Post as a PR comment. Never publish, commit or push anything without an explicit go-ahead.
@@ -174,7 +174,7 @@ Publication, only on the user's explicit command:
 The report is a living artifact the user challenges row by row. While it is chat-borne, re-emit the FULL
 report after every accepted change. Once the user asks to keep it as a file (default location:
 `<repo-parent>/stuff/pr-<N>-test-review.md` - the scratch directory beside the repository clone,
-outside the repo and never committed), update the
+outside the repository and never committed), update the
 file after every accepted change and report the delta in chat. Debate challenges rather than
 auto-accepting - recommend, then wait. When a challenge changes the format itself, propose an edit to
 this skill's files (SKILL.md or the reference) and apply it on the user's approval - the skill does

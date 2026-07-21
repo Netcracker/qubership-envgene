@@ -3,7 +3,7 @@
 Published title: "Test review: scenarios and test data". Five sections, in this order: Per-scenario
 verdicts, Proposed scenarios, Test data per scenario, Notes, Related issues (context only). When the
 draft becomes file-based (SKILL.md owns that mode switch), it lives in the scratch directory beside
-the repository clone (`<repo-parent>/stuff/pr-<N>-test-review.md`, outside the repo, never
+the repository clone (`<repo-parent>/stuff/pr-<N>-test-review.md`, outside the repository, never
 committed). The published comment is the draft's English translation.
 
 House style everywhere: no semicolons in prose, hyphen-minus only (no em or en dashes), prose wrapped at
@@ -28,8 +28,8 @@ Open with the legend, one plain sentence per value:
 
 Table columns: Scenario | Verdict | Reason.
 
-- The Scenario column holds the UC id ONLY. For existing scenarios spell it exactly as in the feature
-  file. `missing` rows carry proposed ids continuing the family numbering (UC-X-PS-4 after PS-1..3) and
+- The Scenario column holds the UC ID ONLY. For existing scenarios spell it exactly as in the feature
+  file. `missing` rows carry proposed IDs continuing the family numbering (UC-X-PS-4 after PS-1..3) and
   are interleaved into the table right next to their family, not appended at the bottom. No "(proposed)"
   markers - the `missing` verdict itself carries that meaning.
 - Verdict values are English even in a Russian draft.
@@ -47,16 +47,16 @@ Table columns: Scenario | Verdict | Reason.
 ## Proposed scenarios
 
 One fenced gherkin block. For every `missing` row either a full draft or an explicit mention in a pattern
-comment that names the UC id, so searching any id finds its draft. Rules:
+comment that names the UC ID, so searching any ID finds its draft. Rules:
 
 - Reuse the existing step vocabulary of the suite verbatim - drafts must be paste-ready.
-- Use Scenario Outline plus an Examples table for place or mode variants instead of copy-paste.
+- Use Scenario Outline plus an Examples table for place or mode variants instead of copypaste.
 - Every draft starts with a short `# why:` comment stating the gap it closes.
 - Data that does not exist yet appears as "<new payload>"-style placeholders. Paths that already exist in
-  the repo stay real.
+  the repository stay real.
 - A draft expected to fail until an issue is fixed carries a comment: "@xfail(strict) with a link to
   #NNNN until the fix".
-- No meta boilerplate around the block ("ids are tentative", "payloads to be created") - substantive
+- No meta boilerplate around the block ("IDs are tentative", "payloads to be created") - substantive
   inline comments only.
 
 ## Test data per scenario
@@ -115,4 +115,4 @@ collapses to the bare issue number or to self-contained wording.
 | UC-X-PS-4 | missing | place cluster/site are not covered                                                                                               |
 
 A complete published instance:
-https://github.com/Netcracker/qubership-envgene/pull/1570#issuecomment-5028814660
+<https://github.com/Netcracker/qubership-envgene/pull/1570#issuecomment-5028814660>
