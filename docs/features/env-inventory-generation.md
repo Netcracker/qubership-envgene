@@ -128,6 +128,14 @@ The order in which different object types are processed is not guaranteed and ma
 
 Before processing any files, the system performs the following validations:
 
+<<<<<<< HEAD
+=======
+**Parameter exclusivity validation:**
+
+If both `ENV_INVENTORY_CONTENT` and any of `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` or `ENV_TEMPLATE_NAME`
+are provided, validation fails
+
+>>>>>>> origin/main
 **JSON schema validation:**
 
 `ENV_INVENTORY_CONTENT` is validated against the [JSON schema](/schemas/env-inventory-content.schema.json)

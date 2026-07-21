@@ -179,11 +179,47 @@ This parameter is used for environments that use Blue-Green Deployment support. 
 
 ### `ENV_INVENTORY_INIT`
 
+<<<<<<< HEAD
 **Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
 
 ### `ENV_TEMPLATE_NAME`
 
 **Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
+=======
+**Description**:
+
+If `true`:
+  In the pipeline, a job for generating the environment inventory is executed. The new Environment Inventory will be generated in the path `/environments/<ENV_NAME>/Inventory/env_definition.yml`. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
+
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `ENV_TEMPLATE_NAME`
+
+**Description**: Specifies the template artifact value within the generated Environment Inventory. This is used together with `ENV_INVENTORY_INIT`.
+
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
+System overrides `envTemplate.name` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`:
+
+```yaml
+envTemplate:
+    name: <ENV_TEMPLATE_NAME>
+    ...
+...
+```
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `env-template:v1.2.3`
+>>>>>>> origin/main
 
 ### `ENV_SPECIFIC_PARAMS`
 
