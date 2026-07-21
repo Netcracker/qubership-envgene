@@ -91,7 +91,7 @@ You **do not** need to write complex Python code for standard pipeline operation
 
 Review `customer-e2e-template.feature` for comprehensive examples.
 
-**Example: A Happy Path Execution**
+#### Example: A Happy Path Execution
 
 ```gherkin
 Scenario: UC-PROJ-001: Successful Environment Generation
