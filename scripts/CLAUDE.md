@@ -10,7 +10,7 @@ Both the old (SD-driven) and new (`GITLAB_DEPLOY`) flows converge on the same `d
 
 | Directory | Responsibility |
 |-----------|-----------------|
-| `pipeline/` | `orchestrator.py` (steps above), `pipeline_parameters.py` (`PipelineParametersHandler.from_env()` — reads/validates all pipeline env vars, writes `build.env` dotenv), `pipeline_manager.py` |
+| `pipeline/` | `orchestrator.py` (steps above), `pipeline_parameters.py` (`PipelineParametersHandler.from_env()` — reads/validates all pipeline env vars, writes `envgene-vars.env` dotenv), `pipeline_manager.py` |
 | `build_env/` | Environment rendering: `main.py` (`run_build_environment`, `build_environment`, template-override handling), `render_config_env.py` (`EnvGenerator` — Jinja rendering of Cloud/Namespace/composite-structure/external-cred; `generate_namespace_files_and_map()` builds real `namespace.yml` files and the `namespace_by_deploy_postfix` map in the same render pass), `appregdef_render.py` (`run_appregdef_render` — AppDefs/RegDefs only; `write_app_reg_defs`, `override_app_reg_defs`), `namespace_render.py` (`render_namespace_map()` — writes `Inventory/namespace-map.yml`, returns the map used to seed `ctx.namespace_by_deploy_postfix`), `create_credentials.py`, `env_template/` (template resolution, version), `jinja/`, `resource_profiles.py`, `templates/env_config.yml.j2` |
 | `cloud_passport/` | `main.py` (`run_cloud_passport` — discovery download via `GitLabClient`; `get_integration_config` reads `configuration/integration.yml`), `cloud_passport.py` (`process_cloud_definition`, `add_cloud_passport_creds`, `mergeDeployParametersFromPassport`), `cmdb.py` |
 | `creds_rotation/` | Credential rotation step — see `creds_rotation/CLAUDE.md` |
