@@ -87,4 +87,4 @@ artifact_url = "{}/{}/{}/{}/{}".format(
 )
 
 print_with_bars(artifact_url, "Link to download zip part of the artifact")
-open("build.env", "a").write(f"artifact_url={artifact_url}\n")
+open("envgene-vars.env", "a").write(f"artifact_url={artifact_url}\n")

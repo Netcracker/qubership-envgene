@@ -33,7 +33,7 @@ class PipelineParametersHandler(BaseModel):
     deploy_plan: EnvgeneDeployPlan | None = None
     deploy_plan_delta: EnvgeneDeployPlan | None = None
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
-    dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/build.env"))
+    dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
 
     @classmethod
     def from_env(cls) -> Self:
@@ -120,7 +120,7 @@ class PipelineParametersHandler(BaseModel):
         return self.params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
 
     def log_pipeline_params(self) -> None:
-        params = copy.deepcopy(self.params)
+        params = {**self.internal_params, **copy.deepcopy(self.params)}
         if params.get("CRED_ROTATION_PAYLOAD"):
             params["CRED_ROTATION_PAYLOAD"] = "***"
 
