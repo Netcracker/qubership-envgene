@@ -890,7 +890,7 @@ Functions:
       - env instance
       - effective set
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
-    - AI[phase3]: unify with `es-pusher`
+    - AI[phase2]: unify with `es-pusher`
     - AI[phase2]: chech no-op if no changes
 
 #### 1.18 step `es_pusher`
