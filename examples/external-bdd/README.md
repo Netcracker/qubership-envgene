@@ -11,25 +11,31 @@ By using this framework, you can automatically validate that your environment in
 If your configurations (templates and environment instances) are stored in Git repositories, we provide ready-to-use CI templates that automatically clone your repositories and run the testing pipeline.
 
 ### GitHub Actions
+
 1. Copy `github-action-template.yml` into your `.github/workflows/` directory.
 2. Set your repository URLs in the `env` section:
+
    ```yaml
    ENV_TEMPLATES_REPO: "https://github.com/your-org/env-templates.git"
    ENV_INSTANCES_REPO: "https://github.com/your-org/env-instances.git"
    ```
+
 3. For private repositories, utilize Personal Access Tokens (PAT) mapped to GitHub Secrets and configure the `git clone` steps accordingly.
 
 ### GitLab CI
+
 1. Copy `implementation-project-template.gitlab-ci.yml` to the root of your project as `.gitlab-ci.yml`.
 2. Configure your repository variables.
 3. For private repositories, use authentication (e.g., Deploy Tokens or `CI_JOB_TOKEN`) in the `git clone` steps inside the `before_script` block.
 
 ### Jenkins
+
 1. Copy `jenkins-pipeline-template.groovy` to the root of your project as `Jenkinsfile`.
 2. Configure your repository variables.
 3. For private repositories, configure the credentials mapping (`withCredentials`) in the `git clone` steps.
 
 **All CI templates contain multiple comprehensive examples:**
+
 * **Run All Tests:** Clones repositories and executes all scenarios in your test suite.
 * **Run Specific Tests:** Shows how to run a single test, filter by name, or use logical OR conditions (`-k "TestA or TestB"`).
 * **Run Custom Tests:** Demonstrates how to run a subset of custom tests and output a self-contained HTML report.
@@ -86,6 +92,7 @@ You **do not** need to write complex Python code for standard pipeline operation
 Review `customer-e2e-template.feature` for comprehensive examples.
 
 **Example: A Happy Path Execution**
+
 ```gherkin
 Scenario: UC-PROJ-001: Successful Environment Generation
   Given the workspace is initialized with test data from "e2e/base_proj"
@@ -106,14 +113,17 @@ To execute the `.feature` files, you need "glue code" in Python.
 2. **Step Definitions**: Copy `steps_template.py` into your `cucumber_tests/step_defs/` folder. This file shows how to automatically map the Gherkin statements to Python functions.
 
 ### Writing Custom Assertions
+
 If the unified steps are not enough, you can write custom steps in your `steps_template.py` file.
 
 **In your feature file:**
+
 ```gherkin
 And a project-specific audit file is created at "dev-cluster/frontend-env"
 ```
 
 **In your Python steps file:**
+
 ```python
 from pytest_bdd import then, parsers
 import os
