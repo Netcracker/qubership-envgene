@@ -15,8 +15,6 @@
         - [Validations](#validations)
         - [Full `ENV_INVENTORY_CONTENT` Example](#full-env_inventory_content-example)
         - [ENV\_INVENTORY\_CONTENT in JSON-in-string format](#env_inventory_content-in-json-in-string-format)
-      - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
-        - [`ENV_SPECIFIC_PARAMS` Example](#env_specific_params-example)
     - [Example of Generated Result with `ENV_INVENTORY_CONTENT`](#example-of-generated-result-with-env_inventory_content)
       - [Generated Result with `ENV_INVENTORY_CONTENT` (new files)](#generated-result-with-env_inventory_content-new-files)
         - [Environment Inventory (`env_definition.yml`)](#environment-inventory-env_definitionyml)
@@ -33,9 +31,6 @@
           - [Existing Parameter Set file](#existing-parameter-set-file)
           - [Input request (paramSets)](#input-request-paramsets)
           - [Result Parameter Sets](#result-parameter-sets)
-    - [Example of Generated Result with `ENV_SPECIFIC_PARAMS`](#example-of-generated-result-with-env_specific_params)
-      - [Minimal Environment Inventory](#minimal-environment-inventory)
-      - [Environment Inventory with env-specific parameters](#environment-inventory-with-env-specific-parameters)
 
 ## Problem Statements
 
@@ -67,15 +62,11 @@ The generated Environment Inventory must be reused by other jobs in the same pip
 > **Note**
 > If `ENV_TEMPLATE_VERSION` is provided in the instance pipeline, it has higher priority than the template version specified in `env_definition.yml`
 
-`ENV_SPECIFIC_PARAMS` and `ENV_INVENTORY_INIT` are legacy parameters and are deprecated. They do not cover the full set of Inventory management scenarios, therefore new integrations should use `ENV_INVENTORY_CONTENT`.
-
 ### Instance Repository Pipeline Parameters
 
 | Parameter | Type | Mandatory | Description | Example |
 | ----------- | ------------- | ------ | --------- | ---------- |
 | `ENV_INVENTORY_CONTENT` | JSON in string | no | Allows to create/ replace, delete `env_definition.yml` and related Inventory objects. Must be valid according to [JSON schema](/schemas/env-inventory-content.schema.json). See details in [ENV_INVENTORY_CONTENT](#env_inventory_content) | See [example below](#full-env_inventory_content-example) |
-| `ENV_INVENTORY_INIT` | string | no | **Deprecated**. If `true`, the new Environment Inventory will be generated in the path `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`. If `false` can be updated only | `true` OR `false` |
-| `ENV_SPECIFIC_PARAMS` | JSON in string | no | **Deprecated**. If specified, Environment Inventory is updated. See details in [ENV_SPECIFIC_PARAMS](#env_specific_params) | See [example below](#env_specific_params-example) |
 
 #### `ENV_INVENTORY_CONTENT`
 
@@ -137,11 +128,14 @@ The order in which different object types are processed is not guaranteed and ma
 
 Before processing any files, the system performs the following validations:
 
+<<<<<<< HEAD
+=======
 **Parameter exclusivity validation:**
 
 If both `ENV_INVENTORY_CONTENT` and any of `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` or `ENV_TEMPLATE_NAME`
 are provided, validation fails
 
+>>>>>>> origin/main
 **JSON schema validation:**
 
 `ENV_INVENTORY_CONTENT` is validated against the [JSON schema](/schemas/env-inventory-content.schema.json)
@@ -306,86 +300,6 @@ This example shows how to generate a new Environment Inventory (`env_definition.
 
 ```json
 "{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":[\"cloud-specific-profile\"]}}}},\"paramSets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-integration-creds\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}],\"sharedTemplateVariables\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-template-variables\",\"content\":{\"TEMPLATE_VAR_1\":\"prod-value-1\",\"TEMPLATE_VAR_2\":\"prod-value-2\",\"nested\":{\"key1\":\"nested-prod-value-1\",\"key2\":\"nested-prod-value-2\"}}},{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"name\":\"sample-cloud-template-variables\",\"content\":{\"CLOUD_VAR_1\":\"cloud-value-1\",\"CLOUD_VAR_2\":\"cloud-value-2\"}}]}"
-```
-
-#### `ENV_SPECIFIC_PARAMS`
-
-| Field | Type | Mandatory | Description | Example |
-| ------- | ------------- | ------ | --------- | ---------- |
-| `clusterParams` | hashmap | no | Cluster connection parameters | None |
-| `clusterParams.clusterEndpoint` | string | no | System **overrides** the value of `inventory.clusterUrl` in corresponding Environment Inventory | `https://api.cluster.example.com:6443` |
-| `clusterParams.clusterToken` | string | no | System **adds** Credential in the `/environments/<cluster-name>/<env-name>/Inventory/credentials/inventory_generation_creds.yml`. If Credential already exists, the value will **not be overridden**. System also creates an association with the credential file in corresponding Environment Inventory via `envTemplate.sharedMasterCredentialFiles` | None |
-| `additionalTemplateVariables` | hashmap | no | System **merges** the value into `envTemplate.additionalTemplateVariables` in corresponding Environment Inventory | `{"keyA": "valueA", "keyB": "valueB"}` |
-| `cloudName` | string | no | System **overrides** the value of `inventory.cloudName` in corresponding Environment Inventory | `cloud01` |
-| `tenantName` | string | no | System **overrides** the value of `inventory.tenantName` in corresponding Environment Inventory | `Application` |
-| `deployer` | string | no | System **overrides** the value of `inventory.deployer` in corresponding Environment Inventory | `abstract-CMDB-1` |
-| `envSpecificParamsets` | hashmap | no | System **merges** the value into `envTemplate.envSpecificParamsets` in corresponding Environment Inventory | See [example](#env_specific_params-example) |
-| `paramsets` | hashmap | no | System creates Parameter Set file for each first level key in the path `/environments/<cluster-name>/<env-name>/Inventory/parameters/KEY-NAME.yml`. If Parameter Set already exists, the value will be **overridden** | See [example](#env_specific_params-example) |
-| `credentials` | hashmap | no | System **adds** Credential object for each first level key in the `/environments/<cluster-name>/<env-name>/Inventory/credentials/inventory_generation_creds.yml`. If Credential already exists, the value will be **overridden**. System also creates an association with the credential file in corresponding Environment Inventory via `envTemplate.sharedMasterCredentialFiles` | See [example](#env_specific_params-example) |
-
-##### `ENV_SPECIFIC_PARAMS` Example
-
-```json
-  {
-    "clusterParams": {
-      "clusterEndpoint": "<value>",
-      "clusterToken": "<value>"
-    },
-    "additionalTemplateVariables": {
-      "<key>": "<value>"
-    },
-    "cloudName": "<value>",
-    "tenantName": "<value>",
-    "deployer": "<value>",
-    "envSpecificParamsets": {
-      "<ns-template-name>": [
-        "paramsetA"
-      ],
-      "cloud": [
-        "paramsetB"
-      ]
-    },
-    "paramsets": {
-      "paramsetA": {
-        "version": "<paramset-version>",
-        "name": "<paramset-name>",
-        "parameters": {
-          "<key>": "<value>"
-        },
-        "applications": [
-          {
-            "appName": "<app-name>",
-            "parameters": {
-              "<key>": "<value>"
-            }
-          }
-        ]
-      },
-      "paramsetB": {
-        "version": "<paramset-version>",
-        "name": "<paramset-name>",
-        "parameters": {
-          "<key>": "<value>"
-        },
-        "applications": []
-      }
-    },
-    "credentials": {
-      "credX": {
-        "type": "<credential-type>",
-        "data": {
-          "username": "<value>",
-          "password": "<value>"
-        }
-      },
-      "credY": {
-        "type": "<credential-type>",
-        "data": {
-          "secret": "<value>"
-        }
-      }
-    }
-  }
 ```
 
 ### Example of Generated Result with `ENV_INVENTORY_CONTENT`
@@ -637,78 +551,3 @@ parameters:
 applications: []
 ```
 
-### Example of Generated Result with `ENV_SPECIFIC_PARAMS`
-
-#### Minimal Environment Inventory
-
-```yaml
-# /environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
-inventory:
-  environmentName: <env-name>
-  clusterUrl: <cloud>
-envTemplate:
-  name: <env-template-name>
-  artifact: <app:ver>
-```
-
-#### Environment Inventory with env-specific parameters
-
-```yaml
-# /environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
-inventory:
-  environmentName: <env-name>
-  clusterUrl: <cloud>
-envTemplate:
-  additionalTemplateVariables:
-    <key>: <value>
-  envSpecificParamsets:
-    cloud: [ "paramsetA" ]
-    <ns-template-name>: [ "paramsetB" ]
-  sharedMasterCredentialFiles: [ "inventory_generation_creds" ]
-  name: <env-template-name>
-  artifact: <app:ver>
-```
-
-```yaml
-# /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
-cloud-admin-token:
-  type: "secret"
-  data:
-    secret: <cloud-token>
-```
-
-```yaml
-# /environments/<cluster-name>/<env-name>/Inventory/parameters/paramsetA.yml
-paramsetA:
-  version: <paramset-ver>
-  name: <paramset-name>
-  parameters:
-    <key>: <value>
-  applications:
-    - appName: <app-name>
-      parameters:
-        <key>: <value>
-```
-
-```yaml
-# /environments/<cluster-name>/<env-name>/Inventory/parameters/paramsetB.yml
-paramsetB:
-  version: <paramset-ver>
-  name: <paramset-name>
-  parameters:
-    <key>: <value>
-  applications: []
-```
-
-```yaml
-# /environments/<cluster-name>/<env-name>/Inventory/credentials/inventory_generation_creds.yml
-credX:
-  type: <credential-type>
-  data:
-    username: <value>
-    password: <value>
-credY:
-  type: <credential-type>
-  data:
-    secret: <value>
-```

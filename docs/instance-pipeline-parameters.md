@@ -179,6 +179,13 @@ This parameter is used for environments that use Blue-Green Deployment support. 
 
 ### `ENV_INVENTORY_INIT`
 
+<<<<<<< HEAD
+**Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
+
+### `ENV_TEMPLATE_NAME`
+
+**Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
+=======
 **Description**:
 
 If `true`:
@@ -212,22 +219,11 @@ envTemplate:
 **Mandatory**: No
 
 **Example**: `env-template:v1.2.3`
+>>>>>>> origin/main
 
 ### `ENV_SPECIFIC_PARAMS`
 
-**Description**: Specifies Environment Inventory and env-specific parameters. This is can used together with `ENV_INVENTORY_INIT`. **JSON in string** format. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
-
-**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**:
-
-```text
-'{"clusterParams":{"clusterEndpoint":"<value>","clusterToken":"<value>"},"additionalTemplateVariables":{"<key>":"<value>"},"cloudName":"<value>","envSpecificParamsets":{"<ns-template-name>":["paramsetA"],"cloud":["paramsetB"]},"paramsets":{"paramsetA":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[{"appName":"<app-name>","parameters":{"<key>":"<value>"}}]},"paramsetB":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[]}},"credentials":{"credX":{"type":"<credential-type>","data":{"username":"<value>","password":"<value>"}},"credY":{"type":"<credential-type>","data":{"secret":"<value>"}}}}'
-```
+**Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
 
 ### `ENV_INVENTORY_CONTENT`
 
@@ -636,13 +632,13 @@ This parameter is only available in the [GitHub version](/github_workflows/insta
 
 **Format**: `KEY1=VALUE1,KEY2=VALUE2,KEY3=VALUE3`
 
-If a value contains JSON (e.g., `SD_DATA`, `EFFECTIVE_SET_CONFIG`, `ENV_SPECIFIC_PARAMS`, `CRED_ROTATION_PAYLOAD`, `BG_STATE`), the JSON must be properly escaped within the value part. For example: `SD_DATA=[{\"version\":2.1,...}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}`
+If a value contains JSON (e.g., `SD_DATA`, `EFFECTIVE_SET_CONFIG`, `ENV_INVENTORY_CONTENT`, `CRED_ROTATION_PAYLOAD`, `BG_STATE`), the JSON must be properly escaped within the value part. For example: `SD_DATA=[{\"version\":2.1,...}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}`
 
 **Default Value**: None
 
 **Mandatory**: No
 
-**Example**: `SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],ENV_SPECIFIC_PARAMS={\"tenantName\":\"value\"}`
+**Example**: `SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],ENV_INVENTORY_CONTENT={\"envDefinition\":{\"action\":\"create_or_replace\"}}`
 
 Example of calling EnvGene pipeline via GitHub API:
 
