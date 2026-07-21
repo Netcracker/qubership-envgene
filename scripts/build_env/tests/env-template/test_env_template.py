@@ -34,8 +34,8 @@ BASE_PATH = f"{GROUP_PATH}/{ARTIFACT_ID}/{VERSION}"
 ARTIFACT_NAME = f"{ARTIFACT_ID}-{SNAPSHOT_VERSION}"
 
 METADATA_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/maven-metadata.xml"
-DD_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.json"
-ZIP_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.zip"
+DD_URL = f"{SNAPSHOT_BASE}/{GROUP_PATH}/{ARTIFACT_ID}/{SNAPSHOT_VERSION}/{ARTIFACT_NAME}.json"
+ZIP_URL = f"{SNAPSHOT_BASE}/{GROUP_PATH}/{ARTIFACT_ID}/{SNAPSHOT_VERSION}/{ARTIFACT_NAME}.zip"
 
 STAGING_ZIP_URL = (
     f"{STAGING_BASE}/{PROJECT_GROUP_PATH}/"
@@ -232,7 +232,7 @@ class TestEnvTemplate:
         set_env("env-02")
 
         tmpl_metadata_url = f"{TMPL_SNAPSHOT_BASE}/{BASE_PATH}/maven-metadata.xml"
-        tmpl_zip_url = f"{TMPL_SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.zip"
+        tmpl_zip_url = f"{TMPL_SNAPSHOT_BASE}/{GROUP_PATH}/{ARTIFACT_ID}/{SNAPSHOT_VERSION}/{ARTIFACT_NAME}.zip"
 
         responses.add(responses.GET, METADATA_URL, body=metadata_xml, content_type="application/xml", status=404)
         responses.add(responses.GET, tmpl_metadata_url, body=metadata_xml, content_type="application/xml", status=200)

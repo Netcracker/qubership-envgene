@@ -9,6 +9,7 @@ from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 from artifact_searcher.artifact import check_artifact
 from artifact_searcher.artifact import _retry_with_nexus_url
+from artifact_searcher.artifact import get_repo_value_pointer_dict
 from artifact_searcher.utils.models import FileExtension
 
 TEST_REPO = "https://repo.example.com/repository/"
@@ -19,6 +20,44 @@ VERSION = "1.0.0"
 class MockResponse:
     def __init__(self, status_code):
         self.status_code = status_code
+
+
+def test_repo_candidates_for_snapshot_version():
+    registry = _create_registry_with_unique_maven_repos()
+
+    repos = get_repo_value_pointer_dict(registry, "1.0.0-SNAPSHOT")
+
+    assert repos == {
+        "snapshots": "targetSnapshot",
+        "staging": "targetStaging",
+        "snapshot-group": "snapshotGroup",
+    }
+
+
+def test_repo_candidates_for_fixed_version():
+    registry = _create_registry_with_unique_maven_repos()
+
+    repos = get_repo_value_pointer_dict(registry, "1.0.0")
+
+    assert repos == {
+        "snapshots": "targetSnapshot",
+        "staging": "targetStaging",
+        "releases": "targetRelease",
+        "snapshot-group": "snapshotGroup",
+        "release-group": "releaseGroup",
+    }
+
+
+def _create_registry_with_unique_maven_repos():
+    mvn_cfg = models.MavenConfig(
+        target_snapshot="snapshots",
+        target_staging="staging",
+        target_release="releases",
+        snapshot_group="snapshot-group",
+        release_group="release-group",
+        repository_domain_name="https://repo.example.com",
+    )
+    return models.Registry(name="registry", maven_config=mvn_cfg)
 
 
 @pytest.mark.parametrize(
@@ -60,7 +99,7 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
     app_web = web.Application()
     app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml",
                            maven_metadata_handler)
-    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json",
+    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-20240702.123456-1/app-1.0.0-20240702.123456-1.json",
                            maven_metadata_handler)
     server = await aiohttp_server(app_web)
 
@@ -108,17 +147,15 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
     assert result is not None
     full_url, _ = result
 
-    sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
+    sample_url = f"{str(server.make_url(index_path))}repo/com/example/app/1.0.0-20240702.123456-1/app-1.0.0-20240702.123456-1.json"
     assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"
 
 @patch("artifact_searcher.artifact.requests.head")
 @patch("artifact_searcher.artifact.create_artifact_name")
-@patch("artifact_searcher.artifact.version_to_folder_name")
 @patch("artifact_searcher.artifact.MavenConfig.is_nexus")
-def test_artifact_found(mock_nexus, mock_folder, mock_name, mock_head):
+def test_artifact_found(mock_nexus, mock_name, mock_head):
 
     mock_nexus.return_value = False
-    mock_folder.return_value = VERSION
     mock_name.return_value = "demo-1.0.0.zip"
 
     response = Mock()
@@ -140,12 +177,10 @@ def test_artifact_found(mock_nexus, mock_folder, mock_name, mock_head):
 
 @patch("artifact_searcher.artifact.requests.head")
 @patch("artifact_searcher.artifact.create_artifact_name")
-@patch("artifact_searcher.artifact.version_to_folder_name")
 @patch("artifact_searcher.artifact.MavenConfig.is_nexus")
-def test_artifact_not_found(mock_nexus, mock_folder, mock_name, mock_head):
+def test_artifact_not_found(mock_nexus, mock_name, mock_head):
 
     mock_nexus.return_value = False
-    mock_folder.return_value = VERSION
     mock_name.return_value = "demo-1.0.0.zip"
 
     response = Mock()

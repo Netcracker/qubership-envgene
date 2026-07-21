@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import os
-import re
 import shutil
 import tempfile
 import xml.etree.ElementTree as ET
@@ -38,13 +37,12 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
-    folder = version_to_folder_name(version)
     
     # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
     if repo:
-        path = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
+        path = f"{repo}/{group_id}/{app.artifact_id}/{version}/"
     else:
-        path = f"{group_id}/{app.artifact_id}/{folder}/"
+        path = f"{group_id}/{app.artifact_id}/{version}/"
     
     return urljoin(registry_url, path)
 
@@ -118,21 +116,6 @@ def _parse_snapshot_version(
             return value
 
     logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
-
-
-def version_to_folder_name(version: str):
-    """
-    Normalizes version string for folder naming.
-
-    If version is timestamped snapshot (e.g. '1.0.0-20240702.123456-1'), it replaces the timestamp suffix with
-    '-SNAPSHOT'. Otherwise, returns the version unchanged
-    """
-    snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
-    if snapshot_pattern.search(version):
-        folder = snapshot_pattern.sub("-SNAPSHOT", version)
-    else:
-        folder = version
-    return folder
 
 
 def clean_temp_dir():
@@ -228,7 +211,7 @@ async def check_artifact_by_full_url_async(
 
     resolved_version = version
     id_main_task = None
-    if version.endswith("-SNAPSHOT"):
+    if _is_snapshot_version(version):
         snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
                                                              stop_artifact_event, stop_snapshot_event_for_others,
                                                              artifact_extension, classifier)
@@ -264,23 +247,34 @@ def _is_cloud_provider(registry) -> bool:
     return False
 
 
+def _is_snapshot_version(version: str | None) -> bool:
+    return bool(version and "SNAPSHOT" in version)
+
+
 # TODO: delete after models are refactored to use polymorphism
-def get_repo_value_pointer_dict(registry):
+def get_repo_value_pointer_dict(registry, version: str | None = None):
     """V2 cloud providers: use empty repo (domain already contains full path).
-    V1/Nexus/Artifactory: use target fields."""
+    V1/Nexus/Artifactory: use target fields selected by version form."""
     if _is_cloud_provider(registry):
         return {"": "repositoryName"}
     maven = registry.maven_config
+    if _is_snapshot_version(version):
+        return {
+            maven.target_snapshot: "targetSnapshot",
+            maven.target_staging: "targetStaging",
+            maven.snapshot_group: "snapshotGroup",
+        }
     return {
         maven.target_snapshot: "targetSnapshot",
         maven.target_staging: "targetStaging",
         maven.target_release: "targetRelease",
         maven.snapshot_group: "snapshotGroup",
+        maven.release_group: "releaseGroup",
     }
 
 
-def get_repo_pointer(repo_value: str, registry):
-    repos_dict = get_repo_value_pointer_dict(registry)
+def get_repo_pointer(repo_value: str, registry, version: str | None = None):
+    repos_dict = get_repo_value_pointer_dict(registry, version)
     return repos_dict.get(repo_value)
 
 
@@ -292,7 +286,7 @@ async def _attempt_check(
         auth_headers: dict | None = None,
         classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+    repos_dict = get_repo_value_pointer_dict(app.registry, version)
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
@@ -368,7 +362,7 @@ async def check_artifact_async(
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+    repos_dict = get_repo_value_pointer_dict(app.registry, version)
 
     # Single repo: no parallelism
     if len(repos_dict) == 1:
@@ -425,8 +419,7 @@ def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, ve
 def create_aql_artifact(app: Application, artifact_extension: FileExtension, version: str,
                         classifier: str = "") -> str:
     group_id = app.group_id.replace(".", "/")
-    folder = version_to_folder_name(version)
-    path = f"{group_id}/{app.artifact_id}/{folder}"
+    path = f"{group_id}/{app.artifact_id}/{version}"
     name = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     aql = f'{{"$and": [{{"name": "{name}"}},{{"path":"{path}"}}]}}'
     return aql
@@ -490,9 +483,8 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
             return None
         version = resolved_version
 
-    folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
-    full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
+    full_url = urljoin(base, f"{group_id}/{artifact_id}/{version}/{filename}")
     try:
         response = requests.head(full_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
