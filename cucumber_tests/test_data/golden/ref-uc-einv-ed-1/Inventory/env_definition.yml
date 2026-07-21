@@ -1,4 +1,4 @@
-envTemplate:
-  artifact: env-templates:1.0.0
-  name: test
 inventory: {}
+envTemplate:
+  name: "test"
+  artifact: "env-templates:1.0.0"

@@ -1,4 +1,0 @@
-name: db_profile
-applications:
-  - name: old_app
-    profile: small

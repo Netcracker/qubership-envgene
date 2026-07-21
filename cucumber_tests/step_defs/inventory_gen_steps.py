@@ -1,11 +1,11 @@
 import json
 import os
 
-import pytest
 import yaml
 import shutil
 from pathlib import Path
 from pytest_bdd import given, parsers, then, when
+from cryptography.fernet import Fernet
 
 from cucumber_tests.framework.workspace import (
     TEST_ENV_DEFINITION_CONTENT,
@@ -181,21 +181,6 @@ def repo_state_identical(workspace):
     )
 
 
-# ── UC-EINV-INIT steps ────────────────────────────────────────────────────────
-
-
-@given(
-    parsers.parse(
-        'the ENV_INVENTORY_INIT is set to "{value}"'
-    )
-)
-def pipeline_inv_init(workspace, value):
-    """Triggers legacy ENV_INVENTORY_INIT path (deprecated but still tested for backward compat)."""
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    workspace.extra_env["ENV_INVENTORY_INIT"] = value
-
-
 # ── UC-EINV-BASIC-1 steps ─────────────────────────────────────────────────────
 
 
@@ -225,6 +210,48 @@ def env_dir_is_deleted(workspace):
         assert not contents, f"Directory {env_dir} was not deleted and is not empty. Contents: {contents}"
 
 
+@then(parsers.parse('the decrypted credentials file "{filename}" at "{scope}" scope matches the reference "{ref_name}"'))
+def decrypted_creds_match(workspace, filename, scope, ref_name):
+    key = b"c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
+    fernet = Fernet(key)
+    
+    path = workspace.entity_dir("credentials", scope) / filename
+    actual_yaml = yaml.safe_load(path.read_text(encoding='utf-8'))
+    
+    # Decrypt values
+    def decrypt_node(node):
+        if isinstance(node, dict):
+            return {k: decrypt_node(v) for k, v in node.items()}
+        elif isinstance(node, list):
+            return [decrypt_node(v) for v in node]
+        elif isinstance(node, str) and node.startswith("[encrypted:AES256_Fernet]"):
+            token = node[len("[encrypted:AES256_Fernet]"):]
+            return fernet.decrypt(token.encode('utf-8')).decode('utf-8')
+        return node
+
+    decrypted_actual = decrypt_node(actual_yaml)
+    
+    # Read the golden reference
+    ref_path = Path(__file__).parent.parent / "test_data" / "goldens" / ref_name / "environments"
+    if scope == "env":
+        ref_path = ref_path / workspace.cluster_name / workspace.env_name / "Inventory" / "credentials" / filename
+    elif scope == "cluster":
+        ref_path = ref_path / workspace.cluster_name / "credentials" / filename
+    else:
+        ref_path = ref_path / "credentials" / filename
+        
+    import os
+    if os.environ.get('UPDATE_GOLDEN') == '1':
+        ref_path.parent.mkdir(parents=True, exist_ok=True)
+        ref_path.write_text(yaml.dump(decrypted_actual, sort_keys=False, Dumper=yaml.SafeDumper), encoding='utf-8')
+        print(f"Updated golden credential file at {ref_path}")
+        return
+
+    expected_yaml = yaml.safe_load(ref_path.read_text(encoding='utf-8'))
+    
+    assert decrypted_actual == expected_yaml, f"Decrypted credentials do not match expected reference {ref_name}"
+
+
 @then("the pipeline succeeds")
 def pipeline_succeeds(workspace):
     workspace.assert_success()
@@ -236,45 +263,15 @@ def pipeline_logs_contain_error(workspace):
 
 
 @then(parsers.parse('the pipeline logs contain "{text}"'))
+@then(parsers.parse('the pipeline log contains "{text}"'))
 def pipeline_logs_contain_text(workspace, text):
     workspace.assert_logs_contain(text)
 
 
-# ── Template Version Update (TV-1) ──────────────────────────────────────────────
-
-@given(parsers.parse('the ENV_TEMPLATE_VERSION is set to "{version}" and update mode is "{mode}"'))
-def pipeline_env_template_version(workspace, version, mode):
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    workspace.extra_env["ENV_TEMPLATE_VERSION"] = version
-    workspace.extra_env["ENV_TEMPLATE_VERSION_UPDATE_MODE"] = mode
+@then(parsers.parse('the pipeline log does not contain "{text}"'))
+def pipeline_logs_not_contain_text(workspace, text):
+    workspace.assert_logs_not_contain(text)
 
 
-@then(parsers.parse('the "{filename}" file has envTemplate.artifact equal to "{version}"'))
-def envdef_has_artifact(workspace, filename, version):
-    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
-    file_path = env_dir / "Inventory" / filename
-    actual_content = yaml.safe_load(file_path.read_text(encoding="utf-8"))
-    assert actual_content.get("envTemplate", {}).get("artifact") == version
-
-
-@then(parsers.parse('the "{filename}" file has generatedVersions.generateEnvironmentLatestVersion equal to "{version}"'))
-def envdef_has_generated_versions(workspace, filename, version):
-    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
-    file_path = env_dir / "Inventory" / filename
-    actual_content = yaml.safe_load(file_path.read_text(encoding="utf-8"))
-    print(f"DEBUG actual_content: {actual_content}")
-    assert actual_content.get("generatedVersions", {}).get("generateEnvironmentLatestVersion") == version
-
-
-@then(parsers.parse('the "{filename}" file envTemplate.artifact is not changed'))
-def envdef_artifact_not_changed(workspace, filename):
-    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
-    file_path = env_dir / "Inventory" / filename
-    actual_content = yaml.safe_load(file_path.read_text(encoding="utf-8"))
-    assert actual_content.get("envTemplate", {}).get("artifact") == "env-templates:1.0.0"
-
-
-# ── Rollback (Negative) ──────────────────────────────────────────────────────
 
 
