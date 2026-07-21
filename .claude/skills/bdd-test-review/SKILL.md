@@ -2,9 +2,10 @@
 name: bdd-test-review
 description: >
   Review a qubership-envgene PR that adds or changes BDD (pytest-bdd / Gherkin) scenarios and their test
-  data. Use when the user asks to review or validate the test scenarios and test data of a PR - "поресьюим
-  PR с тестами", "провалидируй сценарии и тест-дату", "review the BDD tests in PR #N", or a PR link plus a
-  request to validate its scenarios or test data. Validates scenario completeness and validity plus
+  data. Use when the user asks to review or validate the test scenarios and test data of a PR - "поревьюим
+  (поресьюим) PR с тестами", "сделай ревью тестов", "отревьюй сценарии", "проверь/провалидируй сценарии и
+  тест-дату", "review the BDD tests in PR #N", "validate the scenarios and test data" - or a PR link plus
+  a request to validate its scenarios or test data. Validates scenario completeness and validity plus
   test-data completeness and validity against both docs and code, drives doc-vs-code divergence resolution
   with the user, and produces the canonical verdict report published as a PR comment.
 ---
