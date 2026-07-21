@@ -844,7 +844,7 @@ Functions:
     - AI[phase1]: remove DP generation (Artem)
     - AI[phase1]: add local DD (Artem)
     - AI[phase1]: encrypt ARGO_DPG_CONTEXT.env (Artem)
-    - AI[phase2]: move to GitHub
+    - AI[phase3]: move to GitHub
 
 #### 1.15 step `cmdb_import`
 
@@ -872,7 +872,6 @@ Triggers:
 Functions:
 
 1. `crypt.encrypt`
-   - AI[phase2] Check no-op if `crypt: false`
 
 #### 1.17 step `git_commit`
 
@@ -890,8 +889,7 @@ Functions:
       - env instance
       - effective set
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
-    - AI[phase2]: unify with `es-pusher`
-    - AI[phase2]: chech no-op if no changes
+    - AI[phase3]: unify with `es-pusher`
 
 #### 1.18 step `es_pusher`
 
@@ -923,8 +921,8 @@ Functions:
       - instance repo commit
     - actions:
       - push effective set and appsets to the deploy target repo
-    - AI[phase2]: move to GitHub
-    - AI[phase2]: unify with `git_commit`
+    - AI[phase3]: move to GitHub
+    - AI[phase3]: unify with `git_commit`
 
 ### 2 job `sync`
 
@@ -942,9 +940,11 @@ Triggers:
 Functions:
 
 1. `cert_apply`
-   - AI[phase2] add/align the step
+   - AI[phase2] Unify by cert config source with Envgene, currently - ca_bundle
+   - AI[phase2] Unify code (?)
 2. `crypt.decrypt`
-   - AI[phase2] add/align the step
+   - AI[phase2] Unify by key config source with Envgene, currently - `ENVGENE_AGE_PRIVATE_KEY`. Узнать у Темы нужно ли это
+   - AI[phase2] Unify code (?)
 
 #### 2.2 step `sync`
 
@@ -963,4 +963,4 @@ Functions:
     - actions:
       - TBD
     - AI[phase1]: do not call in the old flow, call in the new flow
-    - AI[phase2]: move to GitHub
+    - AI[phase3]: move to GitHub
