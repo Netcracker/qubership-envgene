@@ -1,13 +1,81 @@
 import os
+import shutil
 import subprocess
 import sys
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 from envgenehelper import logger
 from envgenehelper.collections_helper import split_multi_value_param
+from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
 
 ORCHESTRATOR_MODULE = "pipeline.orchestrator"
+
+
+def _worktree_path(base_dir: Path, full_env_name: str) -> Path:
+    cluster_name, env_name = full_env_name.split("/", 1)
+    return base_dir / "tmp" / "worktrees" / cluster_name / env_name
+
+
+def _resolve_commit_sha() -> str:
+    return os.getenv("CI_COMMIT_SHA", "HEAD")
+
+
+def _create_worktree(base_repo: Path, worktree_path: Path, commit_sha: str) -> None:
+    if worktree_path.exists():
+        _remove_worktree(base_repo, worktree_path)
+    worktree_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Creating worktree for {worktree_path.name} at {worktree_path}")
+    subprocess.run(
+        ["git", "worktree", "add", "--detach", str(worktree_path), commit_sha],
+        cwd=base_repo,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+
+def _remove_worktree(base_repo: Path, worktree_path: Path) -> None:
+    if not worktree_path.exists():
+        return
+    logger.info(f"Removing worktree at {worktree_path}")
+    try:
+        subprocess.run(
+            ["git", "worktree", "remove", "--force", str(worktree_path)],
+            cwd=base_repo,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except subprocess.CalledProcessError:
+        shutil.rmtree(worktree_path, ignore_errors=True)
+        subprocess.run(
+            ["git", "worktree", "prune"],
+            cwd=base_repo,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+
+def _copy_worktree_outputs(worktree_path: Path, main_path: Path, full_env_name: str) -> None:
+    cluster_name, env_name = full_env_name.split("/", 1)
+    sparse_paths = list(REPO_ROOT_PATHS)
+    sparse_paths.extend(get_env_artifact_paths(cluster_name, env_name))
+    for rel_path in sparse_paths:
+        src = worktree_path / rel_path
+        if not src.exists():
+            continue
+        dst = main_path / rel_path
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+        else:
+            shutil.copy2(src, dst)
 
 
 def resolve_env_selection() -> None:
@@ -31,13 +99,15 @@ def resolve_env_selection() -> None:
     os.environ["ENV_NAMES"] = f"{cluster_name}/{env_name}"
 
 
-def _child_env_for(full_env_name: str) -> dict[str, str]:
+def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
     cluster_name, env_name = full_env_name.split("/", 1)
     child = dict(os.environ)
     child["ENV_NAMES"] = full_env_name
     child["FULL_ENV_NAME"] = full_env_name
     child["CLUSTER_NAME"] = cluster_name
     child["ENVIRONMENT_NAME"] = env_name
+    child["CI_PROJECT_DIR"] = str(worktree_path)
+    child["ENVGENE_WORKTREE"] = "1"
     return child
 
 
@@ -49,11 +119,12 @@ def _run_single_env_pipeline() -> None:
     run_unified_pipeline()
 
 
-def _run_child_subprocess(full_env_name: str) -> int:
+def _run_child_subprocess(full_env_name: str, worktree_path: Path) -> int:
     logger.info(f"========== START: multi-env child {full_env_name} ==========")
     proc = subprocess.Popen(
         [sys.executable, "-m", ORCHESTRATOR_MODULE],
-        env=_child_env_for(full_env_name),
+        env=_child_env_for(full_env_name, worktree_path),
+        cwd=worktree_path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -78,21 +149,40 @@ def _run_child_subprocess(full_env_name: str) -> int:
 
 
 def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
+    base_repo = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
+    main_path = base_repo
+    commit_sha = _resolve_commit_sha()
     failed: list[str] = []
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(_run_child_subprocess, full_env_name): full_env_name
-            for full_env_name in env_names
-        }
-        for future in as_completed(futures):
-            full_env_name = futures[future]
-            try:
-                returncode = future.result()
-            except Exception:
-                logger.exception(f"Failed to run pipeline for {full_env_name}")
-                returncode = 1
-            if returncode != 0:
-                failed.append(full_env_name)
+    worktrees: list[Path] = []
+    env_to_worktree: dict[str, Path] = {}
+
+    for full_env_name in env_names:
+        worktree_path = _worktree_path(base_repo, full_env_name)
+        worktrees.append(worktree_path)
+        env_to_worktree[full_env_name] = worktree_path
+        _create_worktree(base_repo, worktree_path, commit_sha)
+
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(_run_child_subprocess, full_env_name, worktree_path): full_env_name
+                for full_env_name, worktree_path in env_to_worktree.items()
+            }
+            for future in as_completed(futures):
+                full_env_name = futures[future]
+                worktree_path = env_to_worktree[full_env_name]
+                try:
+                    returncode = future.result()
+                except Exception:
+                    logger.exception(f"Failed to run pipeline for {full_env_name}")
+                    returncode = 1
+                if returncode == 0:
+                    _copy_worktree_outputs(worktree_path, main_path, full_env_name)
+                else:
+                    failed.append(full_env_name)
+    finally:
+        for worktree_path in worktrees:
+            _remove_worktree(base_repo, worktree_path)
 
     if failed:
         logger.error(f"Multi-env pipeline finished with failures: {', '.join(failed)}")
