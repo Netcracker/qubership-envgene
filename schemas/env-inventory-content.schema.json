@@ -76,6 +76,9 @@
         },
         "then": {
           "required": ["content"]
+        },
+        "else": {
+          "required": ["name"]
         }
       }
     },
@@ -120,6 +123,9 @@
         },
         "then": {
           "required": ["content"]
+        },
+        "else": {
+          "required": ["name"]
         }
       }
     },
@@ -164,6 +170,9 @@
         },
         "then": {
           "required": ["content"]
+        },
+        "else": {
+          "required": ["name"]
         }
       }
     },
