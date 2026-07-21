@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -268,7 +269,7 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
-def run_unified_pipeline() -> None:
+def run_unified_pipeline() -> int | None:
     env_names = split_multi_value_param(os.getenv("ENV_NAMES", ""))
     if len(env_names) > 1:
         from pipeline import multi_env_runner
@@ -337,4 +338,4 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    run_unified_pipeline()
+    sys.exit(run_unified_pipeline())

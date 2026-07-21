@@ -484,7 +484,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     common_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.COMMON,
                                               origin_template_exists, peer_template_exists)
 
-    env_dir = env_template_dir + "/" + env_name
+    env_dir = env_template_dir
     logger.info(f"Env name: {env_name}")
     logger.info(f"Env dir: {env_dir}")
     logger.info(f"Parameters dir: {parameters_dir}")
