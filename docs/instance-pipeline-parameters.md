@@ -30,6 +30,7 @@
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`BG_MANAGE`](#bg_manage)
     - [`BG_STATE`](#bg_state)
+    - [`SAVE_ARTIFACTS_STRATEGY`](#save_artifacts_strategy)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -684,6 +685,18 @@ See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
 **Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
 
 **Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
+
+### `SAVE_ARTIFACTS_STRATEGY`
+
+**Description**: Per-run override for the repository-wide `save_artifacts_strategy` policy in `/configuration/config.yml`. Controls whether the troubleshooting artifact (the run work directory) is saved. `ALWAYS` saves on every run, `NEVER` saves nothing. A troubleshooting rerun typically sets `ALWAYS`.
+
+See details in [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `ALWAYS`
 
 ## Deprecated Parameters
 
