@@ -1,11 +1,11 @@
 import asyncio
-import os
 from os import path, getenv
 from pathlib import Path
 
 import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
+from build_env.namespace_render import compute_namespace_map
 from envgenehelper.business_helper import getenv_with_error, get_version
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
@@ -14,7 +14,7 @@ from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
                                      SD_FILE_NAME, DELTA_SD_FILE_NAME)
-from envgenehelper.yaml_helper import load_json_or_yaml, openYaml, dumpYamlToStr
+from envgenehelper.yaml_helper import load_json_or_yaml, dumpYamlToStr
 from typing_extensions import deprecated
 
 from pipeline.pipeline_parameters import PipelineParametersHandler
@@ -32,26 +32,30 @@ APP_DEFS_PATH = f"{BASE_ENV_PATH}/AppDefs"
 REG_DEFS_PATH = f"{BASE_ENV_PATH}/RegDefs"
 
 
-def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict: dict) -> dict:
+def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_by_deploy_postfix: dict) -> dict:
     """
     Transforms the SD data before writing:
     - If userData.useDeployPostfixAsNamespace == True:
-        - Replace deployPostfix with corresponding folder name from namespace_dict if exists.
+        - Replace deployPostfix with corresponding folder name from namespace_by_deploy_postfix if exists.
         - If userData contains ONLY field useDeployPostfixAsNamespace, remove userData.
         - If other keys exist, remove only useDeployPostfixAsNamespace.
     """
     user_data = sd_data.get("userData", {})
 
     if isinstance(user_data, dict) and user_data.get("useDeployPostfixAsNamespace") is True:
+        if not namespace_by_deploy_postfix:
+            namespace_by_deploy_postfix = compute_namespace_map()
         for app in sd_data.get("applications", []):
             if "deployPostfix" in app and isinstance(app["deployPostfix"], str):
-                current_postfix = app["deployPostfix"]
-                replacement = namespace_dict.get(current_postfix)
+                namespace_name = app["deployPostfix"]
+                replacement = next(
+                    (postfix for postfix, name in namespace_by_deploy_postfix.items() if name == namespace_name),
+                    None)
                 if replacement:
-                    logger.info(f"Replacing deployPostfix '{current_postfix}' with '{replacement}'")
+                    logger.info(f"Replacing deployPostfix '{namespace_name}' with '{replacement}'")
                     app["deployPostfix"] = replacement
                 else:
-                    logger.error(f"No replacement found for deployPostfix '{current_postfix}', cannot continue.")
+                    logger.error(f"No replacement found for deployPostfix '{namespace_name}', cannot continue.")
                     exit(1)
         # Remove entire userData if it has only one key
         if len(user_data) == 1:
@@ -61,35 +65,6 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
             sd_data["userData"] = user_data  # Reassign to make sure it's updated
 
     return sd_data
-
-
-def build_namespace_dict(env) -> dict:
-    namespaces_dir = f'{env.env_path}/Namespaces/'
-    result = {}
-
-    if not os.path.exists(namespaces_dir):
-        logger.warning(f"Namespaces directory does not exist: {namespaces_dir}")
-        return result
-
-    # Iterate over all items in Namespaces directory
-    for folder_name in os.listdir(namespaces_dir):
-        folder_path = os.path.join(namespaces_dir, folder_name)
-        if os.path.isdir(folder_path):
-            namespace_file = os.path.join(folder_path, "namespace.yml")
-            if os.path.isfile(namespace_file):
-                data = openYaml(namespace_file)
-                logger.debug(f"Parsed content of {namespace_file}: {data}")
-                # Extract 'name' property
-                ns_name = data.get("name")
-                logger.debug(f"ns_name = {ns_name}")
-                if ns_name and isinstance(ns_name, str):
-                    result[ns_name] = folder_name
-                else:
-                    logger.warning(f"Warning: 'name' property missing or invalid in {namespace_file}")
-            else:
-                continue
-    logger.info(f"Namespace dict built: {result}")
-    return result
 
 
 def merge_sd(sd_path: Path, sd_data, merge_func):
@@ -149,9 +124,9 @@ def handle_sd(handler: PipelineParametersHandler):
 
     try:
         if load_json_or_yaml(sd_source):
-            extract_sds_from_content(env, base_sd_path, sd_source, effective_merge_mode)
+            extract_sds_from_content(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
         else:
-            download_sds_by_version(env, base_sd_path, sd_source, effective_merge_mode)
+            download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
     except Exception as e:
         raise ValueError("SD_VERSION or SD_DATA must be set either appver or json/yaml") from e
 
@@ -165,24 +140,21 @@ def validate_applications(sd):
             raise ValueError(f"Application {app} doesn't have deployPostfix.")
 
 
-def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_mode: MergeType):
+def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Path, app_data, effective_merge_mode: MergeType):
     logger.info(f"Extracted SD content: {app_data}")
     app_data = load_json_or_yaml(app_data)
 
     if not app_data:
         raise ValueError(f"Extracted SD must be non-empty list or dict")
 
-    # Build namespace mapping and transform each SD before any operations
-    namespace_dict = build_namespace_dict(env)
-
     # Transform each SD item before processing
     if isinstance(app_data, list):
         transformed_data = []
         for item in app_data:
-            transformed_item = handle_deploy_postfix_namespace_transformation(item, namespace_dict)
+            transformed_item = handle_deploy_postfix_namespace_transformation(item, namespace_by_deploy_postfix)
             transformed_data.append(transformed_item)
     else:
-        transformed_data = handle_deploy_postfix_namespace_transformation(app_data, namespace_dict)
+        transformed_data = handle_deploy_postfix_namespace_transformation(app_data, namespace_by_deploy_postfix)
     full_sd_from_pipe = multiply_sds_to_single(transformed_data)
     validate_applications(full_sd_from_pipe)
 
@@ -212,7 +184,7 @@ def extract_sds_from_content(env, base_sd_path: Path, app_data, effective_merge_
             merge_sd(sd_path, full_sd_from_pipe, selected_merge_function)
 
 
-def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mode: MergeType):
+def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions, effective_merge_mode: MergeType):
     app_versions = app_versions.replace("\\n", "\n")
     app_entries = split_multi_value_param(app_versions)
     if not app_entries:
@@ -229,7 +201,7 @@ def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mod
         app_data_list.append(app_data)
 
     app_data = dumpYamlToStr(app_data_list)
-    extract_sds_from_content(env, base_sd_path, app_data, effective_merge_mode)
+    extract_sds_from_content(namespace_by_deploy_postfix, base_sd_path, app_data, effective_merge_mode)
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
