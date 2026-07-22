@@ -6,8 +6,7 @@ from enum import StrEnum
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.effective_set_helper import resolve_es_generation_mode, GenerationMode, PartialMergeMode, \
-    resolve_partial_merge_mode
+from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_bg_manage
@@ -119,10 +118,7 @@ class ProcessSdStep(PipelineStep):
         sd_data = ctx.params.get("SD_DATA")
         if sd_version and sd_data:
             raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
-        sd_source = sd_version or sd_data
-        if sd_source:
-            ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
-        return bool(sd_source)
+        return bool(sd_version or sd_data)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)

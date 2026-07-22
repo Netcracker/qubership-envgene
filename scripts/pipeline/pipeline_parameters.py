@@ -13,7 +13,7 @@ from envgenehelper import getenv_with_error, writeToFile
 from envgenehelper import logger
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
-from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode
+from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
 from envgenehelper.plugin_engine import PluginEngine
 
@@ -113,7 +113,8 @@ class PipelineParametersHandler(BaseModel):
             internal_params=internal_params,
             full_env_name=full_env_name,
             cluster_name=cluster_name,
-            env_name=env_name
+            env_name=env_name,
+            es_generation_mode=resolve_es_generation_mode(cluster_name, env_name),
         )
 
     def is_gitlab_deploy(self) -> bool:
