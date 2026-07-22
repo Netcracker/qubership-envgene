@@ -89,11 +89,11 @@ The Cloud Passport is **not part of the parameter layer hierarchy**. It has no o
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  CLOUD PASSPORT                                          │
-│  Location: environments/<cluster>/cloud-passport/       │
-│  Schema:   validated against cloud.schema.json          │
+│  Location: environments/<cluster>/cloud-passport/        │
+│  Schema:   validated against cloud.schema.json           │
 │                                                          │
-│  Sections: cloud · dbaas · maas · vault · consul        │
-│  + any free-form sections (all keys flow into           │
+│  Sections: cloud · dbaas · maas · vault · consul         │
+│  + any free-form sections (all keys flow into            │
 │    deployParameters)                                     │
 └──────────────────────────────────────────────────────────┘
 ```
