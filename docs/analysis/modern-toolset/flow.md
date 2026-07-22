@@ -818,6 +818,14 @@ Functions:
     - actions:
       - в ES мержится реплейсом application слайсы которые изменились в текущей операции генерации
     - AI[phase1!]: set `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true` trigger
+6. `external_credential_provisioning`
+    - input:
+      - Effective Set
+    - output:
+      - created credentials in external cred store
+    - actions:
+      - if the Effective Set includes external credentials, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
+      - if it does not, no-op
 
 #### 1.14 step `generate_argocd_repo`
 
