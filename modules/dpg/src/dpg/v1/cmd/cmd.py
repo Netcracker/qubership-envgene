@@ -19,7 +19,14 @@ class DeploymentPlanGeneratorCommand:
     """
 
     @staticmethod
-    def calculate(applications: list, output_file: Path = "deploy-plan.yaml", rootdir: Path = None) -> DeployPlan:
+    def calculate(applications: Union[str, list], output_file: Path = "deploy-plan.yaml", rootdir: Path = None) -> DeployPlan:
+        if isinstance(applications, str):
+            applications_content = utils.load_json_or_yaml(applications)
+            if applications_content:
+                applications = [applications_content] if isinstance(applications_content, dict) else applications_content
+            else:
+                applications = _split_application_list(applications)
+
         logging.info(
             f"Calculating deployment plan"
             f" [{len(applications)} application(s)]"
@@ -43,10 +50,7 @@ class DeploymentPlanGeneratorCommand:
 
     @staticmethod
     def map(deploy_plan: Union[DeployPlan, Path, str], map: Union[Path, str], output_file: Path = "deploy-plan.yaml") -> DeployPlan:
-        if utils.is_file_path(deploy_plan):
-            with open(deploy_plan, "r") as f:
-                deploy_plan = utils.load_json_or_yaml(f.read())
-        deploy_plan = DeployPlan.from_dict(deploy_plan)
+        deploy_plan = resolve_deploy_plan(deploy_plan)
         logging.info(f"Input plan details:\n{deploy_plan}")
 
         if utils.is_file_path(map):
@@ -76,11 +80,7 @@ class DeploymentPlanGeneratorCommand:
         wave_filter = _parse_filter(wave_filter)
         namespace_filter = _parse_filter(namespace_filter)
 
-        raw = deploy_plan
-        if utils.is_file_path(raw):
-            with open(raw, "r") as f:
-                raw = utils.load_json_or_yaml(f.read())
-        deploy_plan = DeployPlan.from_dict(raw)
+        deploy_plan = resolve_deploy_plan(deploy_plan)
         logging.info(f"Input plan details:\n{deploy_plan}")
 
         logging.debug(
@@ -109,6 +109,16 @@ class DeploymentPlanGeneratorCommand:
 
         return filtered_plan
 
+
+def resolve_deploy_plan(deploy_plan: Union[DeployPlan, Path, str]) -> DeployPlan:
+    if isinstance(deploy_plan, DeployPlan):
+        return deploy_plan
+    if utils.is_file_path(deploy_plan):
+        with open(deploy_plan, "r") as f:
+            deploy_plan = utils.load_json_or_yaml(f.read())
+    return DeployPlan.from_dict(deploy_plan)
+
+
 _FILTER_SEPARATOR_RE = re.compile(r"[;,\n ]+")
 
 
@@ -128,6 +138,20 @@ def _parse_filter(value: str | None) -> set[str]:
     if not value:
         return set()
     return {token for token in _FILTER_SEPARATOR_RE.split(value) if token}
+
+
+_APPLICATION_SEPARATOR_RE = re.compile(r"[;,\n ]+")
+
+
+def _split_application_list(value: str) -> list[str]:
+    """Parse a multi-value applications string into an ordered list of app identifiers.
+
+    Recognises semicolons, commas, newlines (including the literal ``\\n``
+    CI systems sometimes send), and spaces as separators. Order is preserved
+    since it drives wave-offset calculation.
+    """
+    value = value.replace("\\n", "\n")
+    return [token for token in _APPLICATION_SEPARATOR_RE.split(value) if token]
 
 
 def _matches_filter(value: str, filter_set: set[str]) -> bool:
