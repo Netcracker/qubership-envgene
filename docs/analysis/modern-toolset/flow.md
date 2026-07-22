@@ -824,7 +824,7 @@ Functions:
     - output:
       - created credentials in external cred store
     - actions:
-      - if the Effective Set includes external credentials, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
+      - if the Effective Set includes external credential context, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
       - if it does not, no-op
 
 #### 1.14 step `generate_argocd_repo`
