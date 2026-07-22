@@ -205,7 +205,7 @@ class DeployPostfixNamespaceMapStep(PipelineStep):
         return "deploy_postfix_namespace_map"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
+        return ctx.is_gitlab_deploy()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = compute_namespace_map()
