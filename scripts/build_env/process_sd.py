@@ -318,7 +318,8 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                      auth_headers=auth_headers))
+                                      auth_headers=auth_headers, classifier="",
+                                      use_version_to_folder_name=False))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')

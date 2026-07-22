@@ -9,6 +9,7 @@ from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 from artifact_searcher.artifact import check_artifact
 from artifact_searcher.artifact import _retry_with_nexus_url
+from artifact_searcher.artifact import get_repo_value_pointer_dict
 from artifact_searcher.utils.models import FileExtension
 
 TEST_REPO = "https://repo.example.com/repository/"
@@ -19,6 +20,43 @@ VERSION = "1.0.0"
 class MockResponse:
     def __init__(self, status_code):
         self.status_code = status_code
+
+def test_repo_candidates_for_snapshot_version():
+    registry = _create_registry_with_unique_maven_repos()
+
+    repos = get_repo_value_pointer_dict(registry, "1.0.0-SNAPSHOT")
+
+    assert repos == {
+        "snapshots": "targetSnapshot",
+        "staging": "targetStaging",
+        "snapshot-group": "snapshotGroup",
+    }
+
+
+def test_repo_candidates_for_fixed_version():
+    registry = _create_registry_with_unique_maven_repos()
+
+    repos = get_repo_value_pointer_dict(registry, "1.0.0")
+
+    assert repos == {
+        "snapshots": "targetSnapshot",
+        "staging": "targetStaging",
+        "releases": "targetRelease",
+        "snapshot-group": "snapshotGroup",
+        "release-group": "releaseGroup",
+    }
+
+
+def _create_registry_with_unique_maven_repos():
+    mvn_cfg = models.MavenConfig(
+        target_snapshot="snapshots",
+        target_staging="staging",
+        target_release="releases",
+        snapshot_group="snapshot-group",
+        release_group="release-group",
+        repository_domain_name="https://repo.example.com",
+    )
+    return models.Registry(name="registry", maven_config=mvn_cfg)
 
 
 @pytest.mark.parametrize(

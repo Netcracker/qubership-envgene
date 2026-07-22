@@ -120,7 +120,7 @@ def _parse_snapshot_version(
     logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
 
 
-def version_to_folder_name(version: str):
+def version_to_folder_name(version: str, normalize: bool = True):
     """
     Normalizes version string for folder naming.
 
@@ -128,7 +128,7 @@ def version_to_folder_name(version: str):
     '-SNAPSHOT'. Otherwise, returns the version unchanged
     """
     snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
-    if snapshot_pattern.search(version):
+    if normalize and snapshot_pattern.search(version):
         folder = snapshot_pattern.sub("-SNAPSHOT", version)
     else:
         folder = version
@@ -263,24 +263,33 @@ def _is_cloud_provider(registry) -> bool:
             return True
     return False
 
+def _is_snapshot_version(version: str | None) -> bool:
+    return bool(version and "SNAPSHOT" in version)
 
 # TODO: delete after models are refactored to use polymorphism
-def get_repo_value_pointer_dict(registry):
+def get_repo_value_pointer_dict(registry, version: str | None = None):
     """V2 cloud providers: use empty repo (domain already contains full path).
-    V1/Nexus/Artifactory: use target fields."""
+    V1/Nexus/Artifactory: use target fields selected by version form."""
     if _is_cloud_provider(registry):
         return {"": "repositoryName"}
     maven = registry.maven_config
+    if _is_snapshot_version(version):
+        return {
+            maven.target_snapshot: "targetSnapshot",
+            maven.target_staging: "targetStaging",
+            maven.snapshot_group: "snapshotGroup",
+        }
     return {
         maven.target_snapshot: "targetSnapshot",
         maven.target_staging: "targetStaging",
         maven.target_release: "targetRelease",
         maven.snapshot_group: "snapshotGroup",
+        maven.release_group: "releaseGroup",
     }
 
 
-def get_repo_pointer(repo_value: str, registry):
-    repos_dict = get_repo_value_pointer_dict(registry)
+def get_repo_pointer(repo_value: str, registry, version: str | None = None):
+    repos_dict = get_repo_value_pointer_dict(registry, version)
     return repos_dict.get(repo_value)
 
 
@@ -292,7 +301,7 @@ async def _attempt_check(
         auth_headers: dict | None = None,
         classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+    repos_dict = get_repo_value_pointer_dict(app.registry, version)
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
@@ -357,7 +366,8 @@ async def _retry_with_nexus_url(
 async def check_artifact_async(
         app: Application, artifact_extension: FileExtension, version: str,
         auth_headers: dict | None = None,
-        classifier: str = "") -> Optional[tuple[str, tuple[str, str]]] | None:
+        classifier: str = "",
+        use_version_to_folder_name: bool = True) -> Optional[tuple[str, tuple[str, str]]] | None:
     """
     Resolves the full artifact URL and the first repository where it was found.
     Supports both release and snapshot versions.
@@ -368,7 +378,7 @@ async def check_artifact_async(
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+    repos_dict = get_repo_value_pointer_dict(app.registry, version)
 
     # Single repo: no parallelism
     if len(repos_dict) == 1:
@@ -379,7 +389,8 @@ async def check_artifact_async(
         domain = app.registry.maven_config.repository_domain_name
         repo_url = domain if not repo_value else domain.rstrip('/') + '/' + repo_value
         url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
-                             artifact_extension, auth_headers=auth_headers, classifier=classifier)
+                             artifact_extension, auth_headers=auth_headers, classifier=classifier,
+                             use_version_to_folder_name=use_version_to_folder_name)
         if url:
             return url, (repo_value, repo_pointer)
         if _should_retry_nexus_url(app.registry):
@@ -476,7 +487,8 @@ def download(url: str, target_path: str, auth_headers: dict | None = None) -> st
 def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    auth_headers: dict | None = None,
-                   classifier: str = "") -> str | None:
+                   classifier: str = "",
+                   use_version_to_folder_name: bool = True) -> str | None:
     if MavenConfig.is_nexus(repo_url):
         repo_url = convert_nexus_repo_url_to_index_view(repo_url)
 
@@ -490,7 +502,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
             return None
         version = resolved_version
 
-    folder = version_to_folder_name(version)
+    folder = version_to_folder_name(version, normalize=use_version_to_folder_name)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
     try:
