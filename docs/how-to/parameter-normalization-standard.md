@@ -46,23 +46,23 @@ Parameters live in four layers. Higher layers override lower ones. Place each pa
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  TEMPLATE REPO                          lowest priority  │
-│  templates/parameters/<name>.yml                        │
-│  Constants true for ALL environments of this type       │
-│  e.g. platform type, ingress class, default flags       │
+│  templates/parameters/<name>.yml                         │
+│  Constants true for ALL environments of this type        │
+│  e.g. platform type, ingress class, default flags        │
 ├──────────────────────────┬───────────────────────────────┤
 │  SITE LEVEL              │ overrides template            │
-│  environments/parameters/                               │
-│  Defaults shared across all clusters in the org         │
+│  environments/parameters/                                │
+│  Defaults shared across all clusters in the org          │
 ├──────────────────────────┼───────────────────────────────┤
-│  CLUSTER LEVEL           │ overrides site               │
-│  environments/<cluster>/parameters/                     │
-│  Same for every env on one cluster:                     │
-│  cluster service URLs, registry, monitoring endpoints   │
+│  CLUSTER LEVEL           │ overrides site                │
+│  environments/<cluster>/parameters/                      │
+│  Same for every env on one cluster:                      │
+│  cluster service URLs, registry, monitoring endpoints    │
 ├──────────────────────────┼───────────────────────────────┤
-│  ENVIRONMENT LEVEL       │ overrides cluster  (highest) │
-│  environments/<cluster>/<env>/Inventory/parameters/     │
-│  Only what truly differs per environment:               │
-│  env label, replica counts, env-specific overrides      │
+│  ENVIRONMENT LEVEL       │ overrides cluster  (highest)  │
+│  environments/<cluster>/<env>/Inventory/parameters/      │
+│  Only what truly differs per environment:                │
+│  env label, replica counts, env-specific overrides       │
 └──────────────────────────────────────────────────────────┘
 ```
 
