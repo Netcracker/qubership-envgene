@@ -13,7 +13,8 @@
 
 By default, EnvGene saves the work directory of an instance repository pipeline run and publishes it as a job
 artifact for troubleshooting. The artifact holds the intermediate and output files the run produced, so an
-operator can inspect them without rerunning the pipeline.
+operator can inspect them without rerunning the pipeline. When `ENV_NAMES` lists several environments, each one
+runs in its own isolated work directory, and the artifact includes all of them, one per environment.
 
 ## Security
 
@@ -24,31 +25,33 @@ credential values in a failed run's artifact. Treat failure artifacts as potenti
 
 ## Scope
 
-The artifact is the work directory as the run left it, minus what is not saved. The tree below shows the full
+The artifact is the work directory as the run left it. Each run works in its own isolated git worktree that commits
+its result independently, laid out under a `<cluster-name>-<environment-name>/` wrapper. The tree below shows the full
 layout. When the work directory is not saved, the artifact holds only `NOT-PUBLISHED.txt` (see
 [Save criteria](#save-criteria)).
 
 ```text
 artifacts
-├── NOT-PUBLISHED.txt                            # Only when the work directory is not saved (NEVER, or over the 1500 MB limit)
-├── appdefs/                                     # Effective Application Definitions
-├── regdefs/                                     # Effective Registry Definitions
-├── configuration/                               # Repository wide configuration
-├── sboms/                                       # SBOMs
-├── environments/  
-│   ├── <shared-site-dirs>/                      # Shared repository wide paramsets, resource profiles, credentials
-│   └── <cluster-name>/  
-│       ├── <shared-cluster-dirs>/               # Shared cluster wide paramsets, resource profiles, credentials. Cloud Passport
-│       └── <environment-name>/                  # env instance, Inventory, sd.yml, effective-set, deploy-plan.yml, ArgoCD repo
-├── cmdb-import-<cluster>-<env>/                 # CMDB import structure
-├── templates-<cluster>-<env>/                   # downloaded env template, common
-|   ├── common/                                  # non Blue-Green or Blue-Green common template
-|   ├── origin/                                  # Blue-Green origin template
-|   └── peer/                                    # Blue-Green peer template
-└── app-artifacts/
-    └── <app-name>/
-        └── <app-version>/
-            └── dd.json
+├── NOT-PUBLISHED.txt                            # only when the run is not saved (NEVER, or over the 1500 MB limit)
+└── <cluster-name>-<environment-name>/           # isolated worktree of one run (multi-env: one sibling per environment)
+    ├── appdefs/                                 # Effective Application Definitions
+    ├── regdefs/                                 # Effective Registry Definitions
+    ├── configuration/                           # Repository wide configuration
+    ├── sboms/                                   # SBOMs
+    ├── environments/
+    │   ├── <shared-site-dirs>/                  # Shared repository wide paramsets, resource profiles, credentials
+    │   └── <cluster-name>/
+    │       ├── <shared-cluster-dirs>/           # Shared cluster wide paramsets, resource profiles, credentials. Cloud Passport
+    │       └── <environment-name>/              # env instance, Inventory, sd.yml, effective-set, deploy-plan.yml, ArgoCD repo
+    ├── cmdb-import/                             # CMDB import structure
+    ├── templates/                               # downloaded env template
+    │   ├── common/                              # non Blue-Green or Blue-Green common template
+    │   ├── origin/                              # Blue-Green origin template
+    │   └── peer/                                # Blue-Green peer template
+    └── app-artifacts/
+        └── <app-name>/
+            └── <app-version>/
+                └── dd.json
 ```
 
 `environments/` holds the processed environments plus the repository-wide and cluster-wide shared directories:
@@ -58,10 +61,10 @@ environment-specific parameter sets, resource profiles, credentials, the Effecti
 the ArgoCD repository output.
 
 > [!NOTE]
-> The `.git` directory is not saved. Under `tmp/` in the work directory, only the downloaded environment
+> The `.git` metadata is not saved. Under `tmp/` in the work directory, only the downloaded environment
 > templates and the `dd.json` deployment descriptors of the application artifact cache are saved. They appear
-> in the artifact at the root, as `templates-<cluster>-<env>/` and `app-artifacts/`. Everything else under
-> `tmp/` is left out.
+> in the artifact under the wrapper, as `templates/` and `app-artifacts/`. Everything else under `tmp/` is left
+> out.
 
 ## Save criteria
 
@@ -107,10 +110,10 @@ because the CI platform's job artifact limit applies to the smaller archived art
 ## Multi-environment runs
 
 When [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) lists more than one environment, each
-environment initiates its own independent pipeline flow. Each flow works in its own work directory and
-publishes its own artifact, so a run over several environments produces one artifact per environment. The
-save criteria apply to each flow independently. An environment that fails partway through still publishes the
-partial output produced up to the failure point.
+environment runs in its own isolated git worktree and commits its result independently. Each environment
+produces its own `<cluster-name>-<environment-name>/` artifact wrapper, one per environment. The save criteria
+apply to each environment independently. An environment that fails partway through still publishes the partial
+output produced up to the failure point.
 
 To avoid a large artifact on every run, set `save_artifacts_strategy: NEVER` in `config.yml`. To
 troubleshoot, rerun the affected environment with `SAVE_ARTIFACTS_STRATEGY: ALWAYS`.
