@@ -25,7 +25,7 @@ from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
-from sd.process_sd import handle_sd, resolve_sd_parameters
+from sd.process_sd import handle_sd
 
 
 class StepStatus(StrEnum):
@@ -115,10 +115,14 @@ class ProcessSdStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy() or OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
             return False
-        application_versions = resolve_sd_parameters(ctx)
-        if application_versions:
+        sd_version = ctx.params.get("SD_VERSION")
+        sd_data = ctx.params.get("SD_DATA")
+        if sd_version and sd_data:
+            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+        sd_source = sd_version or sd_data
+        if sd_source:
             ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
-        return bool(application_versions)
+        return bool(sd_source)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)
@@ -146,7 +150,11 @@ class MigrateSdToDeployPlanStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
             return False
-        if resolve_sd_parameters(ctx):
+        sd_version = ctx.params.get("SD_VERSION")
+        sd_data = ctx.params.get("SD_DATA")
+        if sd_version and sd_data:
+            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+        if sd_version or sd_data:
             return True
         needs_migration = get_sd_dir().joinpath(SD_FILE_NAME).is_file() and not EnvgeneDeployPlan.path().is_file()
         if needs_migration:

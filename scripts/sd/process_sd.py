@@ -123,9 +123,13 @@ def multiply_sds_to_single(sds_data):
 
 
 def handle_sd(handler: PipelineParametersHandler):
-    application_versions = resolve_sd_parameters(handler)
-    if not application_versions:
-        raise ValueError("Provide either APPLICATION_VERSIONS or SD_VERSION / SD_DATA")
+    sd_version = handler.params.get("SD_VERSION")
+    sd_data = handler.params.get("SD_DATA")
+    if sd_version and sd_data:
+        raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+    sd_source = sd_version or sd_data
+    if not sd_source:
+        raise ValueError("Provide either SD_VERSION or SD_DATA")
 
     env = Environment(str(handler.work_dir), handler.cluster_name, handler.env_name)
     base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
@@ -144,15 +148,14 @@ def handle_sd(handler: PipelineParametersHandler):
     deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
 
     try:
-        if load_json_or_yaml(application_versions):
-            extract_sds_from_content(env, base_sd_path, application_versions, effective_merge_mode)
+        if load_json_or_yaml(sd_source):
+            extract_sds_from_content(env, base_sd_path, sd_source, effective_merge_mode)
         else:
-            download_sds_by_version(env, base_sd_path, application_versions, effective_merge_mode)
+            download_sds_by_version(env, base_sd_path, sd_source, effective_merge_mode)
     except Exception as e:
-        raise ValueError(
-            "APPLICATION_VERSIONS or SD_VERSION / SD_DATA must be set either appver or json/yaml") from e
+        raise ValueError("SD_VERSION or SD_DATA must be set either appver or json/yaml") from e
 
-    logger.info("SD successfully extracted from APPLICATION_VERSIONS or SD_VERSION / SD_DATA and saved")
+    logger.info("SD successfully extracted from SD_VERSION or SD_DATA and saved")
 
 
 def validate_applications(sd):
@@ -254,29 +257,3 @@ def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Ap
     app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
-
-
-def resolve_sd_parameters(handler: PipelineParametersHandler) -> str | None:
-    application_versions = handler.params.get("APPLICATION_VERSIONS")
-    sd_version = handler.params.get("SD_VERSION")
-    sd_data = handler.params.get("SD_DATA")
-
-    if application_versions:
-        if sd_version:
-            logger.warning("SD_VERSION is deprecated and ignored because APPLICATION_VERSIONS was provided")
-
-        if sd_data:
-            logger.warning("SD_DATA is deprecated and ignored because APPLICATION_VERSIONS was provided")
-
-        return application_versions
-
-    if sd_version and sd_data:
-        raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
-
-    if sd_version:
-        logger.warning("SD_VERSION and SD_SOURCE_TYPE are deprecated. Use APPLICATION_VERSIONS instead")
-        return sd_version
-
-    if sd_data:
-        logger.warning("SD_DATA and SD_SOURCE_TYPE are deprecated. Use APPLICATION_VERSIONS instead")
-        return sd_data
