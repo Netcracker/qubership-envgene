@@ -35,10 +35,10 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
     return urlunparse(parsed._replace(path=new_path))
 
 
-def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
+def create_artifact_path(app: Application, version: str, repo: str = "", use_version_to_folder_name: bool = True) -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
-    folder = version_to_folder_name(version)
+    folder = version_to_folder_name(version, normalize=use_version_to_folder_name)
     
     # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
     if repo:
@@ -50,8 +50,8 @@ def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
-                    classifier: str = "") -> str:
-    base_path = create_artifact_path(app, version, repo)
+                    classifier: str = "", use_version_to_folder_name: bool = True) -> str:
+    base_path = create_artifact_path(app, version, repo, use_version_to_folder_name = use_version_to_folder_name)
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     return urljoin(base_path, filename)
 
@@ -218,7 +218,8 @@ async def check_artifact_by_full_url_async(
         stop_artifact_event: asyncio.Event,
         session,
         task_id: int,
-        classifier: str = ""
+        classifier: str = "",
+        use_version_to_folder_name: bool = True
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
     # Allow empty repo_value for cloud providers (repositoryName), but not for Nexus/Artifactory
@@ -240,7 +241,7 @@ async def check_artifact_by_full_url_async(
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
 
-    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
+    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier, use_version_to_folder_name = use_version_to_folder_name)
     try:
         async with session.head(full_url) as response:
             if response.status == 200:
@@ -299,7 +300,8 @@ async def _attempt_check(
         artifact_extension: FileExtension,
         registry_url: str | None = None,
         auth_headers: dict | None = None,
-        classifier: str = ""
+        classifier: str = "",
+        use_version_to_folder_name: bool = True
 ) -> Optional[tuple[str, tuple[str, str]]]:
     repos_dict = get_repo_value_pointer_dict(app.registry, version)
     if registry_url:
@@ -323,7 +325,8 @@ async def _attempt_check(
                         stop_artifact_event,
                         session,
                         i,
-                        classifier
+                        classifier,
+                        use_version_to_folder_name = use_version_to_folder_name
                     )
                 )
                 for i, repo in enumerate(repos_dict.items())
@@ -347,14 +350,17 @@ async def _retry_with_nexus_url(
         version: str,
         artifact_extension: FileExtension,
         auth_headers: dict | None,
-        classifier: str = ""
+        classifier: str = "",
+        use_version_to_folder_name: bool = True
 ) -> Optional[tuple[str, tuple[str, str]]]:
     """Retry artifact check with Nexus index-view URL conversion."""
     original_domain = app.registry.maven_config.repository_domain_name
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, artifact_extension, fixed_domain, auth_headers, classifier)
+        result = await _attempt_check(app, version, artifact_extension, 
+                                      fixed_domain, auth_headers, classifier, 
+                                      use_version_to_folder_name = use_version_to_folder_name)
         app.registry.maven_config.repository_domain_name = original_domain
         if result is not None:
             return result
@@ -394,16 +400,16 @@ async def check_artifact_async(
         if url:
             return url, (repo_value, repo_pointer)
         if _should_retry_nexus_url(app.registry):
-            return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier)
+            return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier, use_version_to_folder_name = use_version_to_folder_name)
         return None
 
     # Multiple repos: use async parallel checking
-    result = await _attempt_check(app, version, artifact_extension, auth_headers=auth_headers, classifier=classifier)
+    result = await _attempt_check(app, version, artifact_extension, auth_headers=auth_headers, classifier=classifier, use_version_to_folder_name=use_version_to_folder_name)
     if result is not None:
         return result
 
     if _should_retry_nexus_url(app.registry):
-        return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier)
+        return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier, use_version_to_folder_name = use_version_to_folder_name)
 
     logger.warning("Artifact not found")
     return None
