@@ -111,9 +111,8 @@ because the CI platform's job artifact limit applies to the smaller archived art
 
 When [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) lists more than one environment, each
 environment runs in its own isolated git worktree and commits its result independently. Each environment
-produces its own `<cluster-name>-<environment-name>/` artifact wrapper, one per environment. The save criteria
-apply to each environment independently. An environment that fails partway through still publishes the partial
-output produced up to the failure point.
+produces its own `<cluster-name>-<environment-name>/` artifact wrapper, one per environment. An environment that
+fails partway through still publishes the partial output produced up to the failure point.
 
 To avoid a large artifact on every run, set `save_artifacts_strategy: NEVER` in `config.yml`. To
 troubleshoot, rerun the affected environment with `SAVE_ARTIFACTS_STRATEGY: ALWAYS`.
