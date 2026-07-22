@@ -119,8 +119,15 @@ def _run_single_env_pipeline() -> None:
     run_unified_pipeline()
 
 
-def _run_child_subprocess(full_env_name: str, worktree_path: Path) -> int:
-    logger.info(f"========== START: multi-env child {full_env_name} ==========")
+def _run_child_subprocess(
+    full_env_name: str, worktree_path: Path, logs_dir: Path
+) -> int:
+    log_file_name = full_env_name.replace("/", "_") + ".log"
+    log_path = logs_dir / log_file_name
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    logger.info(
+        f"========== START: multi-env child {full_env_name} (log: {log_path}) =========="
+    )
     proc = subprocess.Popen(
         [sys.executable, "-m", ORCHESTRATOR_MODULE],
         env=_child_env_for(full_env_name, worktree_path),
@@ -132,19 +139,22 @@ def _run_child_subprocess(full_env_name: str, worktree_path: Path) -> int:
     )
     assert proc.stdout is not None
     prefix = f"[{full_env_name}] "
-    try:
+    with log_path.open("w", encoding="utf-8") as log_file:
         for line in proc.stdout:
+            log_file.write(line)
+            log_file.flush()
             sys.stderr.write(f"{prefix}{line}")
             sys.stderr.flush()
-    finally:
-        returncode = proc.wait()
+    returncode = proc.wait()
 
     if returncode != 0:
         logger.error(
             f"Pipeline failed for {full_env_name} with exit code {returncode}"
         )
     else:
-        logger.info(f"========== END: multi-env child {full_env_name} - SUCCESS ==========")
+        logger.info(
+            f"========== END: multi-env child {full_env_name} - SUCCESS =========="
+        )
     return returncode
 
 
@@ -156,6 +166,10 @@ def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
     worktrees: list[Path] = []
     env_to_worktree: dict[str, Path] = {}
 
+    logs_dir = main_path / "tmp" / "logs"
+    shutil.rmtree(logs_dir, ignore_errors=True)
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
     for full_env_name in env_names:
         worktree_path = _worktree_path(base_repo, full_env_name)
         worktrees.append(worktree_path)
@@ -165,7 +179,9 @@ def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
     try:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(_run_child_subprocess, full_env_name, worktree_path): full_env_name
+                executor.submit(
+                    _run_child_subprocess, full_env_name, worktree_path, logs_dir
+                ): full_env_name
                 for full_env_name, worktree_path in env_to_worktree.items()
             }
             for future in as_completed(futures):

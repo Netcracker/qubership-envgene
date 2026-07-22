@@ -1,10 +1,12 @@
 import io
+import logging
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from envgenehelper import logger
 from pipeline.multi_env_runner import (
     _child_env_for,
     _fan_out,
@@ -37,8 +39,20 @@ class TestChildEnvFor:
 
 
 class TestRunChildSubprocess:
+    @pytest.fixture
+    def captured_log(self, monkeypatch):
+        capture = io.StringIO()
+        for handler in logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                monkeypatch.setattr(handler, "stream", capture)
+        yield capture
+
     @pytest.mark.unit
-    def test_relays_prefixed_child_output(self, monkeypatch):
+    def test_tees_child_output_to_log_file_and_stderr(
+        self, monkeypatch, tmp_path, captured_log
+    ):
+        logs_dir = tmp_path / "logs"
+        logs_dir.mkdir()
         stderr = io.StringIO()
         monkeypatch.setattr(sys, "stderr", stderr)
 
@@ -64,8 +78,62 @@ class TestRunChildSubprocess:
             lambda *args, **kwargs: FakeProc(),
         )
 
-        assert _run_child_subprocess("cluster-01/env-01", Path("/tmp/worktrees/cluster-01/env-01")) == 0
+        assert (
+            _run_child_subprocess(
+                "cluster-01/env-01",
+                Path("/tmp/worktrees/cluster-01/env-01"),
+                logs_dir,
+            )
+            == 0
+        )
+        log_path = logs_dir / "cluster-01_env-01.log"
+        assert log_path.read_text() == "child log line\n"
         assert stderr.getvalue() == "[cluster-01/env-01] child log line\n"
+        assert "SUCCESS" in captured_log.getvalue()
+
+    @pytest.mark.unit
+    def test_reports_failure_without_tail(self, monkeypatch, tmp_path, captured_log):
+        logs_dir = tmp_path / "logs"
+        logs_dir.mkdir()
+        stderr = io.StringIO()
+        monkeypatch.setattr(sys, "stderr", stderr)
+
+        class FakeStdout:
+            def __init__(self):
+                self._lines = iter(["first line\n", "last line\n"])
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                return next(self._lines)
+
+        class FakeProc:
+            stdout = FakeStdout()
+
+            def wait(self):
+                return 2
+
+        monkeypatch.setattr(
+            subprocess,
+            "Popen",
+            lambda *args, **kwargs: FakeProc(),
+        )
+
+        assert (
+            _run_child_subprocess(
+                "cluster-01/env-01",
+                Path("/tmp/worktrees/cluster-01/env-01"),
+                logs_dir,
+            )
+            == 2
+        )
+        log_path = logs_dir / "cluster-01_env-01.log"
+        assert log_path.read_text() == "first line\nlast line\n"
+        stderr_text = stderr.getvalue()
+        assert "[cluster-01/env-01] first line\n" in stderr_text
+        assert "[cluster-01/env-01] last line\n" in stderr_text
+        assert "Pipeline failed for cluster-01/env-01" in captured_log.getvalue()
 
 
 class TestDispatch:
@@ -86,11 +154,11 @@ class TestDispatch:
     def test_multi_env_fan_out_runs_subprocess_per_env(self, monkeypatch, tmp_path):
         monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
-        runs: list[tuple[str, Path]] = []
+        runs: list[tuple[str, Path, Path]] = []
         copied: list[tuple[str, Path]] = []
 
-        def fake_run_child(full_env_name, worktree_path):
-            runs.append((full_env_name, worktree_path))
+        def fake_run_child(full_env_name, worktree_path, logs_dir):
+            runs.append((full_env_name, worktree_path, logs_dir))
             return 0
 
         monkeypatch.setattr(
@@ -116,17 +184,25 @@ class TestDispatch:
 
         assert dispatch() == 0
         assert sorted(runs) == [
-            ("cluster-01/env-01", tmp_path / "tmp" / "worktrees" / "cluster-01" / "env-01"),
-            ("cluster-02/env-02", tmp_path / "tmp" / "worktrees" / "cluster-02" / "env-02"),
+            (
+                "cluster-01/env-01",
+                tmp_path / "tmp" / "worktrees" / "cluster-01" / "env-01",
+                tmp_path / "tmp" / "logs",
+            ),
+            (
+                "cluster-02/env-02",
+                tmp_path / "tmp" / "worktrees" / "cluster-02" / "env-02",
+                tmp_path / "tmp" / "logs",
+            ),
         ]
-        assert sorted(copied) == sorted(runs)
+        assert sorted(copied) == [r[:2] for r in sorted(runs)]
 
     @pytest.mark.unit
     def test_multi_env_collects_failures(self, monkeypatch, tmp_path):
         monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
 
-        def fake_run_child(full_env_name, worktree_path):
+        def fake_run_child(full_env_name, worktree_path, logs_dir):
             return 0 if full_env_name == "cluster-01/env-01" else 2
 
         monkeypatch.setattr(
