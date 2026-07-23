@@ -5,7 +5,7 @@ from pathlib import Path
 from jinja2.exceptions import TemplateSyntaxError
 import pytest
 
-from envgenehelper.test_helpers import BaseTest
+from envgenehelper.test_helpers.base import BaseTest
 
 from build_env.render_config_env import EnvGenerator
 from envgenehelper.test_helpers import TestHelpers

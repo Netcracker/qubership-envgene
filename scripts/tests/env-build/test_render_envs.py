@@ -8,7 +8,7 @@ from envgenehelper.business_helper import NamespaceRole
 from build_env.main import render_environment
 from envgenehelper.test_helpers import TestHelpers
 
-from envgenehelper.test_helpers import BaseTest
+from envgenehelper.test_helpers.base import BaseTest
 
 test_data = [
     # (cluster_name, environment_name, template)

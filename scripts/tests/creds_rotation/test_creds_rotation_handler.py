@@ -1,7 +1,7 @@
 import pytest
 import os
 
-from envgenehelper.test_helpers import BaseTest
+from envgenehelper.test_helpers.base import BaseTest
 from envgenehelper import *
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 import yaml

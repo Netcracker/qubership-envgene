@@ -4,7 +4,7 @@ import shutil
 
 import bg_manage.bg_manage as bg_manage
 from envgenehelper.test_helpers import TestHelpers
-from envgenehelper.test_helpers import BaseTest
+from envgenehelper.test_helpers.base import BaseTest
 
 FULL_ENV_NAME = "bgd-cluster/bgd-env"
 FEATURE_TEST_DIR = "test_bg_manage"

@@ -7,7 +7,7 @@ from envgenehelper import get_cluster_name_from_full_name, get_environment_name_
     is_dir_empty, writeYamlToFile
 from envgenehelper.test_helpers import TestHelpers
 from build_env.jinja.jinja import create_jinja_env
-from envgenehelper.test_helpers import BaseTest
+from envgenehelper.test_helpers.base import BaseTest
 
 FEATURE_TEST_DIR = "test_inventory_generation"
 
