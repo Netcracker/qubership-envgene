@@ -1,0 +1,13 @@
+name: "test-env-app"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  namespace_name: "core"
+e2eParameters: {namespace_test_name: "test-core"}
+technicalConfigurationParameters: {namespace_config_name: "config-core"}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

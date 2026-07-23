@@ -1,0 +1,7 @@
+name: "test-tenant"
+registryName: "default"
+labels: []
+deployParameters:
+  tenant_name: "acme-corp"
+e2eParameters: {tenant_test_name: "acme-test"}
+technicalConfigurationParameters: {tenant_config_name: "acme-config"}

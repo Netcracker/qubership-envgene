@@ -1,0 +1,7 @@
+inventory:
+  environmentName: test-env
+  cloudName: test-cluster
+  tenantName: test-tenant
+envTemplate:
+  name: placeholder
+  artifact: env-templates:0.0.0

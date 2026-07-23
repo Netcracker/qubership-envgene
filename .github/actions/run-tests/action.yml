@@ -39,14 +39,10 @@ runs:
       run: |
         pip install --no-cache-dir --upgrade pip "setuptools==81" wheel
         pip install --no-cache-dir -r build_envgene/build/requirements.txt
-
-        if [ -f python/build_modules.sh ]; then
-            chmod +x python/build_modules.sh
-            ./python/build_modules.sh
-        fi
-
-        pip install --no-cache-dir -e "python/artifact-searcher[dev]"
-        pip install --no-cache-dir -e "python/envgene[dev]"
+        pip install --no-cache-dir -e "modules/envgene[dev]"
+        pip install --no-cache-dir -e "modules/artifact-searcher[dev]"
+        pip install --no-cache-dir -e "modules/external-cred-provision"
+        pip install --no-cache-dir -e "modules/dpg"
 
     - name: Configure test environment
       shell: bash
@@ -56,21 +52,21 @@ runs:
     - name: ENVGENE HELPER test
       shell: bash
       run: |
-        cd python/envgene/envgenehelper
+        cd modules/envgene/envgenehelper
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit_envgenehelper.xml
         cd ../../..
 
     - name: ARTIFACT SEARCHER test
       shell: bash
       run: |
-        cd python/artifact-searcher/artifact_searcher
+        cd modules/artifact-searcher/artifact_searcher
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit_artifact_searcher.xml
         cd ../../..
 
     - name: EXTERNAL CRED PROVISION test
       shell: bash
       run: |
-        cd python/external-cred-provision
+        cd modules/external-cred-provision
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
         cd ../..
         mv junit.xml junit_external_cred_provision.xml
@@ -82,14 +78,6 @@ runs:
         BG_STATE: ""
       run: |
         pytest scripts/tests/ --capture=no -W ignore::DeprecationWarning --junitxml=junit_scripts.xml
-
-    - name: BUILD ENVGENE SCRIPTS test
-      shell: bash
-      run: |
-        cd build_envgene/scripts
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_build_envgene_scripts.xml
 
     - name: Merge test results
       shell: bash

@@ -1,0 +1,22 @@
+name: "test-env-app"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  # Source values with explicit types
+  server_port: 8080
+  app_version: "3.0"
+  ssl_enabled: true
+  debug_mode: "true"
+  # References — must preserve the type of the referenced parameter
+  api_port: ${server_port}
+  service_version: ${app_version}
+  use_ssl: ${ssl_enabled}
+  log_level: ${debug_mode}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

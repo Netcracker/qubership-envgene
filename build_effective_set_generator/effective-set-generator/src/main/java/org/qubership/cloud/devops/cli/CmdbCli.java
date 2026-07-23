@@ -18,6 +18,7 @@ package org.qubership.cloud.devops.cli;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -88,8 +89,8 @@ public class CmdbCli implements Callable<Integer> {
         if (version == EffectiveSetVersion.V1_0) {
             List<String> missingParams = new ArrayList<>();
 
-            if (StringUtils.isEmpty(envParams.sdPath)) {
-                missingParams.add("--sd-path");
+            if (StringUtils.isEmpty(envParams.deployPlanPath)) {
+                missingParams.add("--deploy-plan-path");
             }
             if (StringUtils.isEmpty(envParams.sbomsPath)) {
                 missingParams.add("--sboms-path");
@@ -115,7 +116,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setEnvId(envParams.envId);
         sharedData.setEnvsPath(envParams.envsPath);
         sharedData.setSbomsPath(Optional.ofNullable(envParams.sbomsPath));
-        sharedData.setSdPath(Optional.ofNullable(envParams.sdPath));
+        sharedData.setDeployPlanPath(Optional.ofNullable(envParams.deployPlanPath));
         sharedData.setRegistryPath(Optional.ofNullable(envParams.registryPath));
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
@@ -144,14 +145,51 @@ public class CmdbCli implements Callable<Integer> {
             return;
         }
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Map<String, Object>> map = mapper.readValue(customParams, new TypeReference<>() {
+        JsonNode root = mapper.readTree(customParams);
+        boolean hasNamespaces = root.has("namespaces");
+        boolean hasGlobal = root.has("deployment") || root.has("runtime");
+        if (hasNamespaces && hasGlobal) {
+            throw new IllegalArgumentException(
+                    "CUSTOM_PARAMS cannot contain both top-level deployment/runtime and namespaces keys");
+        }
+        if (hasNamespaces) {
+            parseNamespaceScopedCustomParams(mapper, root.get("namespaces"));
+            return;
+        }
+        if (root.has("deployment")) {
+            sharedData.setCustomDeployParamMap(mapper.convertValue(root.get("deployment"), new TypeReference<>() {
+            }));
+        }
+        if (root.has("runtime")) {
+            sharedData.setCustomRuntimeParamMap(mapper.convertValue(root.get("runtime"), new TypeReference<>() {
+            }));
+        }
+    }
+
+    private void parseNamespaceScopedCustomParams(ObjectMapper mapper, JsonNode namespaces) {
+        if (namespaces == null || !namespaces.isObject()) {
+            throw new IllegalArgumentException("CUSTOM_PARAMS namespaces must be a JSON object");
+        }
+        Map<String, Map<String, Object>> deployByNamespace = new HashMap<>();
+        Map<String, Map<String, Object>> runtimeByNamespace = new HashMap<>();
+        Set<String> namespaceKeys = new HashSet<>();
+        namespaces.fields().forEachRemaining(entry -> {
+            String namespace = entry.getKey();
+            namespaceKeys.add(namespace);
+            JsonNode namespaceNode = entry.getValue();
+            if (namespaceNode.has("deployment")) {
+                deployByNamespace.put(namespace, mapper.convertValue(namespaceNode.get("deployment"), new TypeReference<>() {
+                }));
+            }
+            if (namespaceNode.has("runtime")) {
+                runtimeByNamespace.put(namespace, mapper.convertValue(namespaceNode.get("runtime"), new TypeReference<>() {
+                }));
+            }
         });
-        if (map.containsKey("deployment")) {
-            sharedData.setCustomDeployParamMap(map.get("deployment"));
-        }
-        if (map.containsKey("runtime")) {
-            sharedData.setCustomRuntimeParamMap(map.get("runtime"));
-        }
+        sharedData.setNamespaceScopedCustomParams(true);
+        sharedData.setNamespaceCustomDeployParamMap(deployByNamespace);
+        sharedData.setNamespaceCustomRuntimeParamMap(runtimeByNamespace);
+        sharedData.setCustomParamsNamespaceKeys(namespaceKeys);
     }
 
 
@@ -180,8 +218,8 @@ public class CmdbCli implements Callable<Integer> {
         @CommandLine.Option(names = {"-sp", "--sboms-path"}, description = "Path to the folder with Application and Environment Template SBOMs")
         String sbomsPath;
 
-        @CommandLine.Option(names = {"-sdp", "--sd-path"}, description = "Path to Solution Solution Descriptor")
-        String sdPath;
+        @CommandLine.Option(names = {"-dpp", "--deploy-plan-path"}, description = "Path to deploy plan YAML list")
+        String deployPlanPath;
 
         @CommandLine.Option(names = {"-r", "--registries"}, description = "Path to the registry configuration")
         String registryPath;

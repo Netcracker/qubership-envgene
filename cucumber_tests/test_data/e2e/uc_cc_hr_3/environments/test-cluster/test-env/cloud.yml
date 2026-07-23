@@ -1,0 +1,10 @@
+name: "test-cluster"
+labels: []
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  cloud_label: ${tenant_name}
+e2eParameters: {cloud_test_label: "${tenant_test_name}"}
+technicalConfigurationParameters: {cloud_config_label: "${tenant_config_name}"}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

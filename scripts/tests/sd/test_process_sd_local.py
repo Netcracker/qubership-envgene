@@ -24,14 +24,12 @@ TEST_CASES_POSITIVE = [
     "TC-001-012",
     "TC-001-014",
     "TC-001-016",
-    "TC-001-017",
 ]
 
 test_suits_map = {
     "basic_not_first": ["TC-001-010", "TC-001-012"],
     "basic_first": ["TC-001-002", "TC-001-004"],
     "exclude": ["TC-001-014", "TC-001-016"],
-    "extended": ["TC-001-017"],
     "replace": ["TC-001-008", "TC-001-006"]
 }
 

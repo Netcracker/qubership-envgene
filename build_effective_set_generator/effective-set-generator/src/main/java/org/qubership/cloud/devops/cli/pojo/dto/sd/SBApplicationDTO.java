@@ -27,4 +27,5 @@ public class SBApplicationDTO {
     private String appVersion;
     private String namespace;
     private String appFileRef;
+    private String generationId;
 }

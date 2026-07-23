@@ -20,7 +20,7 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 | `paramset.schema.json` | ParameterSet files |
 | `resource-profile.schema.json` | ResourceProfile files |
 | `regdef.schema.json` | Registry Definition v1.0 |
-| `regdef-v2.schema.json` | Registry Definition v2.0 (also bundled in `python/envgene/envgenehelper/schemas/`) |
+| `regdef-v2.schema.json` | Registry Definition v2.0 (also bundled in `modules/envgene/envgenehelper/schemas/`) |
 | `appdef.schema.json` | Application Definition |
 | `artifact-definition.schema.json` | Artifact Definition v1 |
 | `artifact-definition-v2.schema.json` | Artifact Definition v2 |

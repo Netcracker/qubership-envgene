@@ -98,6 +98,7 @@ public class CliParameterParser {
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
         checkIfEntitiesExist();
+        validateNamespaceScopedCustomParams();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
@@ -129,7 +130,7 @@ public class CliParameterParser {
                     String namespaceName = app.getNamespace();
                     try {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
-                        generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap, getExtCredEntities());
+                        generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), app.getGenerationId(), k8TokenMap, getExtCredEntities());
                         String deployPostFixDir = EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion() ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
                                 String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
                         String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
@@ -286,7 +287,7 @@ public class CliParameterParser {
                                    DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities){
         ParameterBundle parameterBundle;
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
-            CustomParameterDTO customParams = getCustomParameters();
+            CustomParameterDTO customParams = getCustomParameters(namespaceName);
             parameterBundle = parametersServiceV2.getCliParameter(tenantName,
                     cloudName,
                     namespaceName,
@@ -308,27 +309,45 @@ public class CliParameterParser {
         return parameterBundle;
     }
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
-                               String appVersion, String appFileRef, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities) throws IOException {
+                               String appVersion, String appFileRef, String generationId, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities) throws IOException {
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).deploySessionId(sharedData.getDeploymentSessionId()).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         ParameterBundle parameterBundle = getParameterBundleByESVer(tenantName, cloudName, namespaceName, appName,
                 deployerInputs, originalNamespace, k8TokenMap, extCredEntities);
-        createFiles(namespaceName, appName, parameterBundle, originalNamespace);
+        createFiles(namespaceName, appName, generationId, parameterBundle, originalNamespace);
     }
 
-    private CustomParameterDTO getCustomParameters() {
+    private CustomParameterDTO getCustomParameters(String namespaceName) {
         CustomParameterDTO parameterDTO = CustomParameterDTO.builder().build();
         Map<String, Parameter> deployParams = new HashMap<>();
         Map<String, Parameter> techParams = new HashMap<>();
-        sharedData.getCustomDeployParamMap().forEach((key, value) -> {
+        Map<String, Object> deploySource = sharedData.isNamespaceScopedCustomParams()
+                ? sharedData.getNamespaceCustomDeployParamMap().getOrDefault(namespaceName, Collections.emptyMap())
+                : sharedData.getCustomDeployParamMap();
+        Map<String, Object> runtimeSource = sharedData.isNamespaceScopedCustomParams()
+                ? sharedData.getNamespaceCustomRuntimeParamMap().getOrDefault(namespaceName, Collections.emptyMap())
+                : sharedData.getCustomRuntimeParamMap();
+        deploySource.forEach((key, value) -> {
             deployParams.put(key, new Parameter(value, ParametersConstants.CUSTOM_PARAMS_ORIGIN, false));
         });
-        sharedData.getCustomRuntimeParamMap().forEach((key, value) -> {
+        runtimeSource.forEach((key, value) -> {
             techParams.put(key, new Parameter(value, ParametersConstants.CUSTOM_PARAMS_ORIGIN, false));
         });
         parameterDTO.setDeployParams(deployParams);
         parameterDTO.setTechnicalParams(techParams);
         return parameterDTO;
+    }
+
+    private void validateNamespaceScopedCustomParams() {
+        if (!sharedData.isNamespaceScopedCustomParams()) {
+            return;
+        }
+        for (String namespace : sharedData.getCustomParamsNamespaceKeys()) {
+            if (!inputData.getNamespaceDTOMap().containsKey(namespace)) {
+                throw new IllegalArgumentException(
+                        "CUSTOM_PARAMS namespace '" + namespace + "' does not exist in the environment");
+            }
+        }
     }
 
     private ExtCredEntities getExtCredEntities() {
@@ -340,17 +359,18 @@ public class CliParameterParser {
                 inputData.getNamespaceDTOMap().get(namespace).getCredentialsId() : inputData.getCloudDTO().getDefaultCredentialsId();
     }
 
-    private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle, String originalNamespace) throws IOException {
+    private void createFiles(String namespaceName, String appName, String generationId, ParameterBundle parameterBundle, String originalNamespace) throws IOException {
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
+            String genSegment = StringUtils.isNotBlank(generationId) ? "/" + generationId : "";
+            String deploymentDir = String.format("%s/%s/%s/%s%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, genSegment, "values");
+            String runtimeDir = String.format("%s/%s/%s/%s%s", sharedData.getOutputDir(), "runtime", namespaceName, appName, genSegment);
+
             Path appChartPath = null;
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
                 String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), originalNamespace);
-                appChartPath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", normalizedName).toPath();
+                appChartPath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", normalizedName).toPath();
                 Files.createDirectories(appChartPath);
             }
-
-            String deploymentDir = String.format("%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values");
-            String runtimeDir = String.format("%s/%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName, appName);
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
@@ -362,7 +382,7 @@ public class CliParameterParser {
             if (StringUtils.isBlank(parameterBundle.getAppChartName()) && MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
                 parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
                     try {
-                        Path servicePath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", entry.getKey()).toPath();
+                        Path servicePath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", entry.getKey()).toPath();
                         Files.createDirectories(servicePath);
                         fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
                     } catch (IOException e) {

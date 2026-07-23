@@ -1,0 +1,7 @@
+name: "test-tenant"
+registryName: "default"
+labels: []
+deployParameters:
+  tenant_config: ${cloud_region}
+e2eParameters: {tenant_test_config: "${cloud_test_region}"}
+technicalConfigurationParameters: {tenant_config_param: "${cloud_config_region}"}

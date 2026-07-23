@@ -1,19 +1,47 @@
 from pathlib import Path
 
 import pytest
-from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, ES_DIR_NAME
-from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME
+from envgenehelper.deploy_plan_adapter import DeployPlanEntity, GenerationType
+from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
+    PartialMergeMode
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
-from effective_set.effective_set_entrypoint import _run_reverse_merge, _run_forward_merge
+from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
+    _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
+    _clear_uniq_for_version_dirs, effective_set_entrypoint as run_entrypoint
 
 
-def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str):
-    for ctx in [ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-        app_dir = effective_set_dir / ctx.value / deploy_postfix / app_name
-        app_dir.mkdir(parents=True, exist_ok=True)
-        (app_dir / "parameters.yaml").write_text(PARAMETERS_CONTENT)
+PARAMETERS_CONTENT = '{"param": "value"}'
+FULL_ENV_NAME = "cluster-01/env-01"
+DP_1 = "deploy_postfix-1"
+DP_2 = "deploy_postfix-2"
+APP_1 = "app-1"
+APP_2 = "app-2"
+APP_VERSION = "1.0"
+RUN_ID = "12345678-1234-5678-1234-567812345678"
+OLD_RUN_ID = "11111111-1111-1111-1111-111111111111"
+
+
+def entry(app: str, version: str, deploy_postfix: str, *, generation_type=GenerationType.UNIQ_FOR_APP,
+          generation_id: str = "") -> DeployPlanEntity:
+    return DeployPlanEntity(version=f"{app}:{version}", deployPostfix=deploy_postfix, namespace=deploy_postfix,
+                             generationType=generation_type, generationId=generation_id)
+
+
+def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str, generation_id: str = None):
+    runtime_dir = effective_set_dir / ESGenerationContext.RUNTIME.value / deploy_postfix / app_name
+    if generation_id:
+        runtime_dir = runtime_dir / generation_id
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    (runtime_dir / "parameters.yaml").write_text(PARAMETERS_CONTENT)
+
+    deployment_dir = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / deploy_postfix / app_name
+    if generation_id:
+        deployment_dir = deployment_dir / generation_id
+    deployment_values = deployment_dir / "values"
+    deployment_values.mkdir(parents=True, exist_ok=True)
+    (deployment_values / "parameters.yaml").write_text(PARAMETERS_CONTENT)
 
 
 def create_es_cleanup_dir(effective_set_dir: Path, deploy_postfix: str) -> None:
@@ -22,171 +50,271 @@ def create_es_cleanup_dir(effective_set_dir: Path, deploy_postfix: str) -> None:
     (cleanup_dir / "parameters.yaml").write_text(PARAMETERS_CONTENT)
 
 
-def create_es_mapping(effective_set_dir: Path, ctx: ESGenerationContext, entries: dict) -> None:
-    mapping_path = effective_set_dir / ctx.value / ES_MAPPING_FILE
-    mapping_path.parent.mkdir(parents=True, exist_ok=True)
-    writeYamlToFile(mapping_path, entries)
+def mock_cli(monkeypatch, on_run=None):
+    monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a: "fake_cmd")
+
+    def fake_run(cmd, check=False, shell=False):
+        if on_run:
+            on_run()
+
+    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
 
 
-def make_sd_app(name: str, version: str, deploy_postfix: str) -> dict:
-    return {
-        "version": f"{name}:{version}",
-        "deployPostfix": deploy_postfix,
-    }
-
-
-def write_sd_yaml(path: Path, apps: list[dict]) -> None:
-    writeYamlToFile(path, {
-        "version": APP_VERSION,
-        "applications": apps,
-    })
-
-
-PARAMETERS_CONTENT = '{"param": "value"}'
-ENVIRONMENT_NAME = "ENVIRONMENT_NAME"
-CLUSTER_NAME = "cluster-01"
-DP_1 = "deploy_postfix-1"
-DP_2 = "deploy_postfix-2"
-APP_1 = "app-1"
-APP_2 = "app-2"
-APP_VERSION = "1.0"
-
-
-class TestRunReverseMerge:
-
-    @pytest.mark.unit
-    def test_removes_app_dirs_namespace_still_in_full_sd(self, tmp_path):
-        """Remove one app, namespace stays because another app is still in Full SD"""
-        es = tmp_path / ES_DIR_NAME
-        sd = tmp_path / SD_FILE_NAME
-        delta = tmp_path / DELTA_SD_FILE_NAME
-
-        create_es_app_dirs(es, DP_1, APP_1)
-        create_es_app_dirs(es, DP_1, APP_2)
-        write_sd_yaml(sd, [make_sd_app(APP_2, APP_VERSION, DP_1)])
-        write_sd_yaml(delta, [make_sd_app(APP_1, APP_VERSION, DP_1)])
-
-        _run_reverse_merge(es, delta, sd)
-
-        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
-        assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
-
-        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_2).exists()
-        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_2).exists()
-
-    @pytest.mark.unit
-    def test_multiple_apps_same_namespace_removed_once(self, tmp_path):
-        """Two apps in same namespace both removed - namespace dirs and mapping entries deleted"""
-        es = tmp_path / ES_DIR_NAME
-        sd = tmp_path / SD_FILE_NAME
-        delta = tmp_path / DELTA_SD_FILE_NAME
-
-        create_es_app_dirs(es, DP_1, APP_1)
-        create_es_app_dirs(es, DP_1, APP_2)
-        create_es_cleanup_dir(es, DP_1)
-        for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            create_es_mapping(es, ctx, {f"{ENVIRONMENT_NAME}-{DP_1}": f"/{ctx.value}/{DP_1}"})
-
-        write_sd_yaml(sd, [])
-        write_sd_yaml(delta, [
-            make_sd_app(APP_1, APP_VERSION, DP_1),
-            make_sd_app(APP_2, APP_VERSION, DP_1),
-        ])
-
-        _run_reverse_merge(es, delta, sd)
-
-        assert not (es / ESGenerationContext.RUNTIME.value / DP_1).exists()
-        assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1).exists()
-        assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
-        for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            mapping = openYaml(es / ctx.value / ES_MAPPING_FILE)
-            assert not any(DP_1 in key for key in mapping)
-            assert not any(DP_2 in key for key in mapping)
-
-    @pytest.mark.unit
-    def test_two_namespaces_one_removed_one_kept(self, tmp_path):
-        """Two namespaces: ns-1 removed (empty in Full SD), ns-2 kept (still in Full SD)."""
-        es = tmp_path / ES_DIR_NAME
-        sd = tmp_path / SD_FILE_NAME
-        delta = tmp_path / DELTA_SD_FILE_NAME
-
-        create_es_app_dirs(es, DP_1, APP_1)
-        create_es_app_dirs(es, DP_2, APP_2)
-        create_es_cleanup_dir(es, DP_1)
-        create_es_cleanup_dir(es, DP_2)
-        for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            create_es_mapping(es, ctx, {
-                f"{ENVIRONMENT_NAME}-{DP_1}": f"/{ctx.value}/{DP_1}",
-                f"{ENVIRONMENT_NAME}-{DP_2}": f"/{ctx.value}/{DP_2}",
-            })
-
-        write_sd_yaml(sd, [make_sd_app(APP_2, APP_VERSION, DP_2)])
-        write_sd_yaml(delta, [make_sd_app(APP_1, APP_VERSION, DP_1)])
-
-        _run_reverse_merge(es, delta, sd)
-
-        assert not (es / ESGenerationContext.RUNTIME.value / DP_1).exists()
-        assert (es / ESGenerationContext.RUNTIME.value / DP_2 / APP_2).exists()
-        for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            mapping = openYaml(es / ctx.value / ES_MAPPING_FILE)
-            assert not any(DP_1 in key for key in mapping)
-            assert any(DP_2 in key for key in mapping)
-
-    @pytest.mark.unit
-    def test_app_dir_missing_no_error(self, tmp_path):
-        """App directory doesn't exist (failed previous job) and mapping file missing - no exception"""
-        es = tmp_path / ES_DIR_NAME
-        sd = tmp_path / SD_FILE_NAME
-        delta = tmp_path / DELTA_SD_FILE_NAME
-
-        write_sd_yaml(sd, [])
-        write_sd_yaml(delta, [make_sd_app(APP_1, APP_VERSION, DP_1)])
-
-        _run_reverse_merge(es, delta, sd)
-
-
-class TestRunForwardMerge:
-    full_env_name = f"{CLUSTER_NAME}/{ENVIRONMENT_NAME}"
-
-    def mock_effective_set_cli(self, monkeypatch):
-        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a: "fake_cmd")
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda cmd, check=False, shell=False: None)
-
+class TestRunDeployPlanPartial:
     @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
-        """topology and pipeline are deleted before CLI runs"""
         es = tmp_path / ES_DIR_NAME
-        delta = tmp_path / DELTA_SD_FILE_NAME
-
         (es / ESGenerationContext.TOPOLOGY.value).mkdir(parents=True)
         (es / ESGenerationContext.PIPELINE.value).mkdir(parents=True)
         create_es_app_dirs(es, DP_1, APP_1)
-        write_sd_yaml(delta, [make_sd_app(APP_1, APP_VERSION, DP_1)])
+        mock_cli(monkeypatch)
 
-        self.mock_effective_set_cli(monkeypatch)
-
-        _run_forward_merge(es, self.full_env_name, delta)
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
 
         assert not (es / ESGenerationContext.TOPOLOGY.value).exists()
         assert not (es / ESGenerationContext.PIPELINE.value).exists()
 
     @pytest.mark.unit
-    def test_cleanup_ns_deleted_per_deploy_postfix(self, tmp_path, monkeypatch):
-        """cleanup/<deploy-postfix> deleted only for dp in delta SD, others untouched"""
+    def test_app_dir_deleted_before_cli(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
-        delta = tmp_path / DELTA_SD_FILE_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        mock_cli(monkeypatch)
 
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+        assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
+
+    @pytest.mark.unit
+    def test_cleanup_ns_deleted_per_deploy_postfix(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
         create_es_cleanup_dir(es, DP_1)
         create_es_cleanup_dir(es, DP_2)
         create_es_cleanup_dir(es, "dp-3")
-        write_sd_yaml(delta, [
-            make_sd_app(APP_1, APP_VERSION, DP_1),
-            make_sd_app(APP_2, APP_VERSION, DP_2),
-        ])
-        self.mock_effective_set_cli(monkeypatch)
+        mock_cli(monkeypatch)
 
-        _run_forward_merge(es, self.full_env_name, delta)
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, [
+            entry(APP_1, APP_VERSION, DP_1),
+            entry(APP_2, APP_VERSION, DP_2),
+        ])
 
         assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
         assert not (es / ESGenerationContext.CLEANUP.value / DP_2).exists()
         assert (es / ESGenerationContext.CLEANUP.value / "dp-3").exists()
+
+
+class TestRunDeployPlanFull:
+    @pytest.mark.unit
+    def test_wipes_effective_set_dir(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        mock_cli(monkeypatch)
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_run_survives_full_wipe(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id=OLD_RUN_ID)
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id=RUN_ID))
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
+        ])
+
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / OLD_RUN_ID / "parameters.yaml").exists()
+        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / OLD_RUN_ID / "values").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / RUN_ID / "parameters.yaml").exists()
+        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / RUN_ID / "values").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_version_sibling_survives_full_wipe(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id="2.0"))
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+            entry(APP_1, "2.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
+        assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / "1.0" / "values").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.0" / "parameters.yaml").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_version_same_version_replaces_stale_content(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
+        stale_file = es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "stale.yaml"
+        stale_file.write_text(PARAMETERS_CONTENT)
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0"))
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+            entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert not stale_file.exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
+
+
+class TestResolveGenerationId:
+    @pytest.mark.unit
+    def test_uniq_for_app_has_no_generation_id(self):
+        assert _resolve_generation_id(entry(APP_1, APP_VERSION, DP_1)) is None
+
+    @pytest.mark.unit
+    def test_uniq_for_version_uses_version(self):
+        e = entry(APP_1, "2.5", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION)
+        assert _resolve_generation_id(e) == "2.5"
+
+    @pytest.mark.unit
+    def test_uniq_for_run_uses_generation_id(self):
+        e = entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID)
+        assert _resolve_generation_id(e) == RUN_ID
+
+
+class TestClearUniqForVersionDirs:
+    @pytest.mark.unit
+    def test_clears_matching_version_only(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
+        create_es_app_dirs(es, DP_1, APP_1, generation_id="2.0")
+
+        _clear_uniq_for_version_dirs(es, [
+            entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0").exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "2.0").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_run_not_cleared(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1, generation_id=RUN_ID)
+
+        _clear_uniq_for_version_dirs(es, [
+            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
+        ])
+
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / RUN_ID).exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_app_not_cleared(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+
+        _clear_uniq_for_version_dirs(es, [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+
+
+class TestSaveNestedGenerationDirs:
+    @pytest.mark.unit
+    def test_uniq_for_run_saved_and_restored(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+
+        tmp_root, saved = _save_es_app_dirs(es, [
+            entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
+        ])
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+
+        _restore_saved_dirs(tmp_root, saved)
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "parameters.yaml").exists()
+
+    @pytest.mark.unit
+    def test_uniq_for_version_also_saved(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+
+        tmp_root, saved = _save_es_app_dirs(es, [
+            entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
+        ])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+        assert tmp_root is not None
+
+    @pytest.mark.unit
+    def test_uniq_for_app_not_saved(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+
+        tmp_root, saved = _save_es_app_dirs(es, [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert tmp_root is None
+        assert saved == []
+
+
+class TestRunReverseMerge:
+    @pytest.mark.unit
+    def test_removed_app_deleted_namespace_survives(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        create_es_app_dirs(es, DP_1, APP_2)
+
+        _run_reverse_merge(es, [entry(APP_2, APP_VERSION, DP_1)], [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
+        assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_2).exists()
+        assert (es / ESGenerationContext.RUNTIME.value / DP_1).exists()
+
+    @pytest.mark.unit
+    def test_namespace_emptied_deletes_whole_namespace(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        create_es_cleanup_dir(es, DP_1)
+
+        _run_reverse_merge(es, [], [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert not (es / ESGenerationContext.RUNTIME.value / DP_1).exists()
+        assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1).exists()
+        assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
+
+    @pytest.mark.unit
+    def test_removes_emptied_namespace_from_mapping_files(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        runtime_mapping_path = es / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE
+        runtime_mapping_path.parent.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(runtime_mapping_path, {f"{DP_1}/{APP_1}": {"some": "mapping"}, "dp-3/app-3": {}})
+
+        _run_reverse_merge(es, [], [entry(APP_1, APP_VERSION, DP_1)])
+
+        mapping = openYaml(runtime_mapping_path, allow_default=True)
+        assert f"{DP_1}/{APP_1}" not in mapping
+        assert "dp-3/app-3" in mapping
+
+
+class TestEffectiveSetEntrypointDispatch:
+    @pytest.mark.unit
+    def test_reverse_mode_calls_cleanup_not_generation(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        monkeypatch.setenv("FULL_ENV_NAME", FULL_ENV_NAME)
+        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path)
+
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_reverse_merge",
+                             lambda *a: called.setdefault("cleanup", True))
+        monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_partial",
+                             lambda *a: called.setdefault("partial", True))
+        monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
+                             lambda *a: called.setdefault("full", True))
+        monkeypatch.setattr(effective_set_entrypoint.EnvgeneDeployPlan, "delta_path", staticmethod(lambda: tmp_path / "delta-deploy-plan.yml"))
+
+        class Ctx:
+            deploy_plan = type("DP", (), {"entities": [entry(APP_1, APP_VERSION, DP_1)]})()
+            deploy_plan_delta = type("DP", (), {"entities": []})()
+            es_generation_mode = GenerationMode.PARTIAL
+            partial_merge_mode = PartialMergeMode.REVERSE
+
+            def is_gitlab_deploy(self):
+                return False
+
+        run_entrypoint(Ctx())
+
+        assert called == {"cleanup": True}

@@ -5,10 +5,10 @@ from pathlib import Path
 from .data_builders import DataBuilder
 from .base_workspace import BaseWorkspace
 
-_TEST_DATA_DIR = Path(__file__).parent.parent / "test_data" / "einv" / "common"
+_DEFAULTS_DIR = Path(__file__).parent / "defaults"
 
-PLACEHOLDER_FILE = _TEST_DATA_DIR / "placeholder.yml"
-ENV_DEFINITION_FILE = _TEST_DATA_DIR / "env_definition.yml"
+PLACEHOLDER_FILE = _DEFAULTS_DIR / "placeholder.yml"
+ENV_DEFINITION_FILE = _DEFAULTS_DIR / "env_definition.yml"
 
 TEST_YAML_CONTENT = PLACEHOLDER_FILE.read_text(encoding="utf-8")
 TEST_ENV_DEFINITION_CONTENT = ENV_DEFINITION_FILE.read_text(encoding="utf-8")
@@ -48,25 +48,16 @@ class EnvGeneWorkspace(BaseWorkspace):
         for d in [self.config_dir, self.creds_dir, self._sboms_dir, self.inventory_dir, self.regdefs_dir, self.blueprints_dir, self.environments_dir]:
             d.mkdir(parents=True, exist_ok=True)
             
-        with open(self.creds_dir / "credentials.yml", "w") as f:
-            yaml.dump({
-                "test-registry": {
-                    "data": {
-                        "username": "dummy-user",
-                        "password": "dummy-password",
-                        "secret": "dummy-secret-value"
-                    }
-                }
-            }, f)
+        # Write default credentials — can be overridden per-test by placing
+        # configuration/credentials/credentials.yml in the test data directory.
+        default_creds_src = _DEFAULTS_DIR / "credentials.yml"
+        import shutil
+        shutil.copy(default_creds_src, self.creds_dir / "credentials.yml")
 
-        with open(self.config_dir / "registry.yml", "w") as f:
-            yaml.dump({
-                "test-registry": {
-                    "maven-repo": "http://localhost:8000/release",
-                    "username": "credentials('test-registry').username",
-                    "password": "credentials('test-registry').password"
-                }
-            }, f)
+        # Write default registry — can be overridden per-test by placing
+        # configuration/registry.yml in the test data directory.
+        default_registry_src = _DEFAULTS_DIR / "registry.yml"
+        shutil.copy(default_registry_src, self.config_dir / "registry.yml")
 
         self._stdout = ""
         self._stderr = ""
@@ -184,6 +175,7 @@ class EnvGeneWorkspace(BaseWorkspace):
             "FULL_ENV_NAME": f"{self.cluster_name}/{self.env_name}",
             "INSTANCES_DIR": str(self.environments_dir),
             "JSON_SCHEMAS_DIR": str(Path(project_root) / "schemas"),
+            "IS_LOCAL_DEV_TEST_ENVGENE": "true",
         }
         if extra_env:
             env.update(extra_env)
@@ -203,6 +195,11 @@ class EnvGeneWorkspace(BaseWorkspace):
         assert self.stderr or self.stdout, "No logs produced"
         logs = (self.stderr + self.stdout).lower()
         assert text.lower() in logs, f"Logs do not contain '{text}'"
+
+    def assert_logs_not_contain(self, text: str):
+        assert self.stderr or self.stdout, "No logs produced"
+        logs = (self.stderr + self.stdout).lower()
+        assert text.lower() not in logs, f"Logs erroneously contain '{text}'"
 
     def assert_file_exists(self, path):
         assert path.exists(), f"File {path} does not exist"

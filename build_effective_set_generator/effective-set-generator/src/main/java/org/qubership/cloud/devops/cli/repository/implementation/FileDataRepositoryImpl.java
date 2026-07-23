@@ -31,9 +31,9 @@ import org.json.JSONObject;
 import org.qubership.cloud.devops.cli.constants.GenericConstants;
 import org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
+import org.qubership.cloud.devops.cli.pojo.dto.sd.DeployPlanEntityDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
-import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionDescriptorDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
@@ -105,7 +105,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         try {
             Map<String, List<String>> nsWithAppsFromSD = new HashMap<>();
             Set<String> appsToProcess = new HashSet<>();
-            loadSDData(nsWithAppsFromSD, appsToProcess);
+            loadApplicationListData(nsWithAppsFromSD, appsToProcess);
             loadRegistryData();
             loadConsumerData();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
@@ -394,28 +394,51 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         return sdApps != null && sdApps.contains(app);
     }
 
-    private void loadSDData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        Optional<String> sdPath = sharedData.getSdPath();
-        if (sdPath.isPresent()) {
-            SolutionDescriptorDTO solDescDTO = fileDataConverter.parseInputFile(SolutionDescriptorDTO.class, new File(sdPath.get()));
-            List<SBApplicationDTO> applications = solDescDTO.getApplications().stream()
-                    .map(applicationDTO -> getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, applicationDTO))
-                    .collect(Collectors.toList());
-
-            inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
+    private void loadApplicationListData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+        String deployPlanPath = sharedData.getDeployPlanPath()
+                .orElseThrow(() -> new IllegalArgumentException("--deploy-plan-path is required"));
+        List<DeployPlanEntityDTO> entities = fileDataConverter.parseInputFile(
+                new TypeReference<List<DeployPlanEntityDTO>>() {
+                }, new File(deployPlanPath));
+        if (CollectionUtils.isEmpty(entities)) {
+            throw new FileParseException("Deploy plan at " + deployPlanPath + " must be a non-empty YAML list");
         }
+        List<SBApplicationDTO> applications = entities.stream()
+                .map(entity -> getSbApplicationDTOFromDeployPlan(nsWithAppsFromSD, appsToProcess, entity))
+                .collect(Collectors.toList());
+
+        inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
     }
 
-    private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, SolutionDescriptorDTO.ApplicationDTO applicationDTO) {
-        String namespace = applicationDTO.getDeployPostfix();
-        String appName = applicationDTO.getVersion().split(":")[0];
-        String appVersion = applicationDTO.getVersion().replace(":", "-");
+    private SBApplicationDTO getSbApplicationDTOFromDeployPlan(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, DeployPlanEntityDTO entity) {
+        String deployPostfix = entity.getDeployPostfix() != null ? entity.getDeployPostfix() : "";
+        return buildSbApplicationDTO(nsWithAppsFromSD, appsToProcess, entity.getVersion(), deployPostfix, resolveGenerationId(entity));
+    }
+
+    private String resolveGenerationId(DeployPlanEntityDTO entity) {
+        String generationType = entity.getGenerationType();
+        if ("UniqForRun".equals(generationType)) {
+            return entity.getGenerationId();
+        }
+        if ("UniqForVersion".equals(generationType)) {
+            String version = entity.getVersion();
+            int separatorIndex = version.indexOf(':');
+            return separatorIndex >= 0 ? version.substring(separatorIndex + 1) : null;
+        }
+        return null;
+    }
+
+    private SBApplicationDTO buildSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, String version, String deployPostfix, String generationId) {
+        String namespace = deployPostfix;
+        String appName = version.split(":")[0];
+        String appVersion = version.replace(":", "-");
         String appFileRef = String.format("%s/%s/%s", sharedData.getSbomsPath().get(), appName, appVersion + ".sbom.json");
         SBApplicationDTO dto = SBApplicationDTO.builder()
                 .appName(appName)
                 .appVersion(appVersion)
                 .namespace(namespace)
                 .appFileRef(appFileRef)
+                .generationId(generationId)
                 .build();
         appsToProcess.add(appName);
         nsWithAppsFromSD.computeIfAbsent(namespace, k -> new ArrayList<>()).add(appName);

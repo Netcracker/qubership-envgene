@@ -123,7 +123,7 @@ Below is a **complete** list of attributes
 
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](/examples/registry.yml)
+[Registry config example](/docs/examples/registry.yml)
 
 ### Effective Set v1.0
 
@@ -1245,7 +1245,7 @@ principles:
 5. `<consumer-name>-parameters.yaml` and `<consumer-name>-credentials.yaml` are produced when the consumer
    is declared (each file may be empty)
 
-[Example of consumer-specific pipeline context component JSON schema](/examples/consumer-v1.0.json)
+[Example of consumer-specific pipeline context component JSON schema](/docs/examples/consumer-v1.0.json)
 
 ###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-parameters.yaml`
 
