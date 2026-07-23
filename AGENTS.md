@@ -104,6 +104,46 @@ cross-references.
 
 ---
 
+### Define every term
+
+**Every domain term a document uses is defined. A term used in one document is defined in that document. A term
+used across documents is defined once in the glossary, and each document links to it.**
+
+Three rules govern terminology. This rule governs whether a definition exists and where it lives.
+[Use existing vocabulary](#use-existing-vocabulary) governs which term to pick.
+[Don't re-gloss established terms](#dont-re-gloss-established-terms) governs how often to restate it.
+
+The glossary lives at [/docs/glossary.md](/docs/glossary.md). A term needs a definition when a competent reader
+from outside this repository could misread it. This covers ordinary words used with a specific meaning here,
+such as Environment or Effective Set.
+
+- **Single-document term.** Define it on first use in that document, as a sentence, a parenthetical, or a short
+  definitions list.
+- **Cross-document term.** Add or reuse a glossary entry, then link to it from each document instead of
+  restating the definition.
+- **Promotion.** When a term defined in one document starts appearing in a second, write a glossary entry for
+  it and replace the inline definition in both documents with a link.
+
+❌ **INCORRECT:**
+
+- Using a shared term such as Deploy Postfix with a fresh inline definition in each document that mentions it.
+- Introducing a term with no definition in the document or the glossary, leaving the reader to infer it.
+
+✅ **CORRECT:**
+
+- A term local to one how-to guide is defined in that guide.
+- A term shared by [calculator-cli.md](/docs/features/calculator-cli.md) and
+  [envgene-objects.md](/docs/envgene-objects.md) has one glossary entry that both documents link to.
+
+**Scope:** Applies to **new and modified content only**. Existing multi-document terms are back-filled into the
+glossary only when the surrounding lines are edited for other reasons.
+
+**Why:** An undefined term forces the reader to guess or search. A term defined once and linked keeps every
+document consistent when the definition changes, and it stops the same concept from drifting into different
+meanings across documents.
+
+---
+
 ### Don't re-gloss established terms
 
 **Once the document defines a term, use it bare. Do not append the definition, type tag, or
