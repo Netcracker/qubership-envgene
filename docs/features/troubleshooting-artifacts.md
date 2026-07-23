@@ -25,7 +25,7 @@ credential values in a failed run's artifact. Treat failure artifacts as potenti
 
 ## Scope
 
-The artifact is the work directory as the run left it. Each run works in its own isolated git worktree that commits
+The artifact is the work directory as the run left it. Each run works in its own isolated Git worktree that commits
 its result independently, laid out under a `<cluster-name>-<environment-name>/` wrapper. The tree below shows the full
 layout. When the work directory is not saved, the artifact holds only `NOT-PUBLISHED.txt` (see
 [Save criteria](#save-criteria)).
@@ -110,7 +110,7 @@ because the CI platform's job artifact limit applies to the smaller archived art
 ## Multi-environment runs
 
 When [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) lists more than one environment, each
-environment runs in its own isolated git worktree and commits its result independently. Each environment
+environment runs in its own isolated Git worktree and commits its result independently. Each environment
 produces its own `<cluster-name>-<environment-name>/` artifact wrapper, one per environment. An environment that
 fails partway through still publishes the partial output produced up to the failure point.
 
