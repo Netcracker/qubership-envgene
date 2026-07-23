@@ -19,6 +19,7 @@
   - [Uniq names](#uniq-names)
     - [`generate_deployment_plan`](#generate_deployment_plan)
     - [ES Calc](#es-calc)
+  - [DD for `generate_argocd_repo`](#dd-for-generate_argocd_repo)
   - [To deprecate](#to-deprecate)
   - [Flow](#flow)
     - [1 job `env_prepare`](#1-job-env_prepare)
@@ -303,6 +304,29 @@ bg_domain:
 - `UniqForRun`: папки накапливаются — каждый запуск добавляет новую, предыдущие остаются.
 - Решение по каждому приложению принимается независимо от остальных.
 - Политика ретеншена в ES Calc не предусмотренна
+
+## DD for `generate_argocd_repo`
+
+**Опция 1:**
+
+Качать DD всегда, zip по отсутствию SBOM (сейчас качается DD + zip по отсутствию SBOM)
+
+(+) не требует изменений в `generate_argocd_repo`
+(-) DD качается зря в ряде кейсов
+
+**Опция 2:**
+
+`generate_argocd_repo` в GOPA кейсах переходит на SBOM вместо DD
+
+(-) Требуется разовое изменение `sbom_generation` (расширение `application/vnd.qubership.app.chart`)
+(-) Будущие изменения в `generate_argocd_repo` которые потребуют новых полей DD могут потребовать изменения `sbom_generation`
+(-) Требуется реализации процедуры регенерации SBOM новой версии SBOM спеки (изменилась версия спеки, перегенери даже если есть кэш)
+
+**Опция 3:**
+
+Кэшировать DD, sbom средствами гитлаба
+
+(-) Высокая вероятность мискэша потому что - кэш пер раннер нода, есть ретеншен полиси кэша
 
 ## To deprecate
 
