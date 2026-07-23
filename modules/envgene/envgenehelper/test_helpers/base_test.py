@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 class BaseTest:
-    base_dir = Path(__file__).resolve().parents[2]
+    base_dir = Path(__file__).resolve().parents[4]
     schemas_dir = base_dir / "schemas"
     test_data_dir = base_dir / "test_data"
     output_dir = base_dir / "tmp"

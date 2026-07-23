@@ -1,7 +1,7 @@
 from os import environ, getenv
 from pathlib import Path
 
-from tests.base_test import BaseTest
+from envgenehelper.test_helpers import BaseTest
 
 import pytest
 import responses
