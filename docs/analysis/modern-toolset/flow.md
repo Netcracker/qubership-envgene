@@ -33,10 +33,10 @@
       - [1.8 step `process_env_template`](#18-step-process_env_template)
       - [1.9 step `app_reg_def_process`](#19-step-app_reg_def_process)
       - [1.10 step `process_sd`](#110-step-process_sd)
-      - [1.11 step `generate_deployment_plan`](#111-step-generate_deployment_plan)
+      - [1.11 step `generate_deployment_plan` (`dpg`)](#111-step-generate_deployment_plan-dpg)
       - [1.12 step `env_build`](#112-step-env_build)
       - [1.13 step `generate_effective_set`](#113-step-generate_effective_set)
-      - [1.14 step `generate_argocd_repo`](#114-step-generate_argocd_repo)
+      - [1.14 step `generate_argocd_repo` (`argo-cd dpg`)](#114-step-generate_argocd_repo-argo-cd-dpg)
       - [1.15 step `cmdb_import`](#115-step-cmdb_import)
       - [1.16 step `postprocess`](#116-step-postprocess)
       - [1.17 step `git_commit`](#117-step-git_commit)
@@ -311,7 +311,6 @@ bg_domain:
 
 Качать DD всегда, zip по отсутствию SBOM (сейчас качается DD + zip по отсутствию SBOM)
 
-(+) не требует изменений в `generate_argocd_repo`  
 (-) DD качается зря в ряде кейсов
 
 **Опция 2:**
@@ -665,7 +664,7 @@ Functions:
       - generate dp based on sd
     - [phase1] add the function
 
-#### 1.11 step `generate_deployment_plan`
+#### 1.11 step `generate_deployment_plan` (`dpg`)
 
 Triggers:
 
@@ -674,7 +673,7 @@ Triggers:
 
 Functions:
 
-1. `generate_deployment_plan`
+1. `generate_deployment_plan` (`dpg`)
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -794,7 +793,7 @@ Functions:
     - AI[phase1]: add `APP_ARTIFACTS_DIR`
     - AI[phase1]: support DP
     - AI[phase1]: remove SD support
-    - AI[techDebt-PERF]: оптимизировать скачивание DD/zip.
+    - AI[techDebt-PERF]: оптимизировать скачивание DD/zip. https://docs.gitlab.com/ci/caching/
       - (??) не скачивать zip для `generate_argocd_repo`
       - (??) кэшировать ДД.json по аналогии с sbom
 2. `sbom_generation`
@@ -808,7 +807,7 @@ Functions:
       - generate SBOM from local DD + zip
       - sbom retention
     - AI[phase1]: consume local DD + zip. download moved to `dd_downloading`
-    - AI[techDebt-PERF]: оптимизировать генерацию sbom
+    - AI[techDebt-PERF]: оптимизировать генерацию sbom https://docs.gitlab.com/ci/caching/
       - (??) не скачивать zip для `generate_argocd_repo`
       - (??) кэшировать ДД.json по аналогии с sbom
 3. `null_validation`
@@ -851,7 +850,7 @@ Functions:
       - if the Effective Set includes external credential context, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
       - if it does not, no-op
 
-#### 1.14 step `generate_argocd_repo`
+#### 1.14 step `generate_argocd_repo` (`argo-cd dpg`)
 
 Triggers:
 
@@ -860,7 +859,7 @@ Triggers:
 
 Functions:
 
-1. `generate_argocd_repo`
+1. `generate_argocd_repo` (`argo-cd dpg`)
     - input:
       - `deploy-plan.yml`
       - effective set
