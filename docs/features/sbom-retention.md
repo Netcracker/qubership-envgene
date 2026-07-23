@@ -23,7 +23,7 @@ SBOM (Software Bill of Materials) files are cached in the Instance Repository to
 
 - SBOM generation is a computationally expensive operation
 - SBOM files are cached in `/sboms/` directory for reuse
-- [Job artifacts](/docs/dev/job-artifacts.md) size limit is 1500 MB
+- The job artifact size limit is 1500 MB
 - Without cleanup, the cache grows indefinitely and may reach the size limit
 
 ## Solution
@@ -86,9 +86,8 @@ limit:
 - If the total size exceeds 1200 MB, retention runs over each per-application subdirectory and
   keeps only the single most recently modified file. Older files in each subdirectory are deleted
 
-The 1200 MB limit sits below the [job artifacts](/docs/dev/job-artifacts.md) 1500 MB limit on
-job artifact size, so that retention can keep the cache within bounds before the job artifact
-size becomes a problem.
+The 1200 MB limit sits below the 1500 MB job artifact size limit, so that retention can keep the
+cache within bounds before the job artifact size becomes a problem.
 
 ## Configuration
 
