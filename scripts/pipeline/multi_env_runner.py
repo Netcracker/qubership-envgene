@@ -9,6 +9,7 @@ from pathlib import Path
 from envgenehelper import logger
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
+from pipeline.pipeline_parameters import PipelineParametersHandler
 
 ORCHESTRATOR_MODULE = "pipeline.orchestrator"
 
@@ -217,6 +218,8 @@ def dispatch() -> int:
     if len(env_names) <= 1:
         _run_single_env_pipeline()
         return 0
+
+    PipelineParametersHandler.from_env(allow_multi_env=True).write_dotenv()
 
     max_workers = min(len(env_names), os.cpu_count() or 1)
     logger.info(

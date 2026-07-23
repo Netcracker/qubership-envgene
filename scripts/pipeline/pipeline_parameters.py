@@ -36,7 +36,7 @@ class PipelineParametersHandler(BaseModel):
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
 
     @classmethod
-    def from_env(cls) -> Self:
+    def from_env(cls, allow_multi_env: bool = False) -> Self:
         params = {
             'ENV_NAMES': getenv("ENV_NAMES", ""),
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
@@ -85,15 +85,9 @@ class PipelineParametersHandler(BaseModel):
             except (TypeError, ValueError):
                 pass
 
-        is_gitlab_deploy = params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
-        if is_gitlab_deploy:
-            cluster_name = getenv_with_error("CLUSTER_NAME")
-            env_name = getenv_with_error("ENVIRONMENT_NAME")
-        else:
-            env_names = split_multi_value_param(getenv_with_error("ENV_NAMES"))
-            if len(env_names) != 1:
-                raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
-            cluster_name, env_name = env_names[0].split("/")
+        env_names = split_multi_value_param(getenv_with_error("ENV_NAMES"))
+        if not allow_multi_env and len(env_names) != 1:
+            raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
 
         full_env_name = env_names[0]
         cluster_name, env_name = full_env_name.split("/", 1)
