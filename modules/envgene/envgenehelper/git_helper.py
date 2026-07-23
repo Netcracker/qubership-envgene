@@ -8,7 +8,7 @@ from envgenehelper import logger, get_environment_name_from_full_name, get_clust
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
-from git import GitCommandError, Repo
+from git import GitCommandError, InvalidGitRepositoryError, Repo
 from pydantic import BaseModel
 from envgenehelper.models import PipelineType
 from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
@@ -66,7 +66,11 @@ class GitContext(BaseModel):
 
 class GitRepoManager:
     def __init__(self):
-        self.repo = Repo.init(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
+        project_dir = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
+        try:
+            self.repo = Repo(project_dir)
+        except InvalidGitRepositoryError:
+            self.repo = Repo.init(project_dir)
         self.ctx = GitContext.from_env()
         self.cluster_name = getenv_with_error("CLUSTER_NAME")
         self.env_name = getenv_with_error("ENVIRONMENT_NAME")
