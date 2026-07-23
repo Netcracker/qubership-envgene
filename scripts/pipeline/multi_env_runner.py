@@ -180,7 +180,10 @@ def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(
-                    _run_child_subprocess, full_env_name, worktree_path, logs_dir
+                    _run_child_subprocess,
+                    full_env_name,
+                    worktree_path,
+                    logs_dir,
                 ): full_env_name
                 for full_env_name, worktree_path in env_to_worktree.items()
             }

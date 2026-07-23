@@ -27,7 +27,10 @@ class TestChildEnvFor:
     def test_sets_env_scoped_variables(self, monkeypatch):
         monkeypatch.setenv("GLOBAL_FLAG", "keep")
 
-        child = _child_env_for("cluster-01/env-01", Path("/tmp/worktrees/cluster-01/env-01"))
+        child = _child_env_for(
+            "cluster-01/env-01",
+            Path("/tmp/worktrees/cluster-01/env-01"),
+        )
 
         assert child["GLOBAL_FLAG"] == "keep"
         assert child["ENV_NAMES"] == "cluster-01/env-01"
