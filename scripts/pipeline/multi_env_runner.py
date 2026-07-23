@@ -79,25 +79,32 @@ def _copy_worktree_outputs(worktree_path: Path, main_path: Path, full_env_name: 
             shutil.copy2(src, dst)
 
 
-def resolve_env_selection() -> None:
+def resolve_env_selection() -> list[str]:
     env_names = os.getenv("ENV_NAMES")
+    cluster_name = os.getenv("CLUSTER_NAME")
+    env_name = os.getenv("ENVIRONMENT_NAME")
+
     if env_names:
-        for var in ("CLUSTER_NAME", "ENVIRONMENT_NAME", "FULL_ENV_NAME"):
-            os.environ.pop(var, None)
-        for full_env_name in split_multi_value_param(env_names):
+        if cluster_name or env_name:
+            raise ValueError(
+                "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
+                "but not both at the same time"
+            )
+        parsed = split_multi_value_param(env_names)
+        for full_env_name in parsed:
             if "/" not in full_env_name:
                 raise ValueError(
                     f"Invalid environment name '{full_env_name}'. "
                     f"Expected format: <cluster>/<env>"
                 )
-        return
+        return parsed
 
-    cluster_name = os.getenv("CLUSTER_NAME")
-    env_name = os.getenv("ENVIRONMENT_NAME")
     if not cluster_name or not env_name:
         raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
 
-    os.environ["ENV_NAMES"] = f"{cluster_name}/{env_name}"
+    full_env_name = f"{cluster_name}/{env_name}"
+    os.environ["ENV_NAMES"] = full_env_name
+    return [full_env_name]
 
 
 def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
@@ -213,15 +220,14 @@ def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
 
 
 def dispatch() -> int:
-    resolve_env_selection()
-    env_names = split_multi_value_param(os.getenv("ENV_NAMES", ""))
+    env_names = resolve_env_selection()
     if len(env_names) <= 1:
         _run_single_env_pipeline()
         return 0
 
     PipelineParametersHandler.from_env(allow_multi_env=True).write_dotenv()
 
-    max_workers = min(len(env_names), os.cpu_count() or 1)
+    max_workers = min(len(env_names), 5)
     logger.info(
         f"ENV_NAMES contains {len(env_names)} environments; "
         f"running parallel subprocess fan-out (max_workers={max_workers})"

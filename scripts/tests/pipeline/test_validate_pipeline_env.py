@@ -20,24 +20,38 @@ class TestResolveEnvSelection:
             resolve_env_selection()
 
     @pytest.mark.unit
-    def test_env_names_clears_conflicting_legacy_vars(self, monkeypatch):
+    def test_fails_when_env_names_combined_with_cluster_name(self, monkeypatch):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+        monkeypatch.setenv("CLUSTER_NAME", "cluster-01")
+
+        with pytest.raises(ValueError, match="Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, but not both at the same time"):
+            resolve_env_selection()
+
+    @pytest.mark.unit
+    def test_fails_when_env_names_combined_with_environment_name(self, monkeypatch):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+        monkeypatch.setenv("ENVIRONMENT_NAME", "env-01")
+
+        with pytest.raises(ValueError, match="Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, but not both at the same time"):
+            resolve_env_selection()
+
+    @pytest.mark.unit
+    def test_fails_when_env_names_combined_with_both_per_env_vars(self, monkeypatch):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
         monkeypatch.setenv("CLUSTER_NAME", "cluster-01")
         monkeypatch.setenv("ENVIRONMENT_NAME", "env-01")
-        monkeypatch.setenv("FULL_ENV_NAME", "cluster-01/env-01")
 
-        resolve_env_selection()
-
-        assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
-        assert "CLUSTER_NAME" not in os.environ
-        assert "ENVIRONMENT_NAME" not in os.environ
-        assert "FULL_ENV_NAME" not in os.environ
+        with pytest.raises(ValueError, match="Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, but not both at the same time"):
+            resolve_env_selection()
 
     @pytest.mark.unit
     def test_passes_with_env_names_only(self, monkeypatch):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
 
-        resolve_env_selection()
+        result = resolve_env_selection()
+
+        assert result == ["cluster-01/env-01"]
+        assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
 
     @pytest.mark.unit
     def test_fails_when_env_names_has_invalid_format(self, monkeypatch):
@@ -51,8 +65,9 @@ class TestResolveEnvSelection:
         monkeypatch.setenv("CLUSTER_NAME", "cluster-01")
         monkeypatch.setenv("ENVIRONMENT_NAME", "env-01")
 
-        resolve_env_selection()
+        result = resolve_env_selection()
 
+        assert result == ["cluster-01/env-01"]
         assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
 
     @pytest.mark.unit

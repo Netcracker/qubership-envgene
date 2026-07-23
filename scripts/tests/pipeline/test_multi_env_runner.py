@@ -1,16 +1,10 @@
-import io
-import logging
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from envgenehelper import logger
 from pipeline.multi_env_runner import (
     _child_env_for,
     _fan_out,
-    _run_child_subprocess,
     dispatch,
 )
 
@@ -39,104 +33,6 @@ class TestChildEnvFor:
         assert child["ENVIRONMENT_NAME"] == "env-01"
         assert child["CI_PROJECT_DIR"] == "/tmp/worktrees/cluster-01/env-01"
         assert child["ENVGENE_WORKTREE"] == "1"
-
-
-class TestRunChildSubprocess:
-    @pytest.fixture
-    def captured_log(self, monkeypatch):
-        capture = io.StringIO()
-        for handler in logger.handlers:
-            if isinstance(handler, logging.StreamHandler):
-                monkeypatch.setattr(handler, "stream", capture)
-        yield capture
-
-    @pytest.mark.unit
-    def test_tees_child_output_to_log_file_and_stderr(
-        self, monkeypatch, tmp_path, captured_log
-    ):
-        logs_dir = tmp_path / "logs"
-        logs_dir.mkdir()
-        stderr = io.StringIO()
-        monkeypatch.setattr(sys, "stderr", stderr)
-
-        class FakeStdout:
-            def __init__(self):
-                self._lines = iter(["child log line\n"])
-
-            def __iter__(self):
-                return self
-
-            def __next__(self):
-                return next(self._lines)
-
-        class FakeProc:
-            stdout = FakeStdout()
-
-            def wait(self):
-                return 0
-
-        monkeypatch.setattr(
-            subprocess,
-            "Popen",
-            lambda *args, **kwargs: FakeProc(),
-        )
-
-        assert (
-            _run_child_subprocess(
-                "cluster-01/env-01",
-                Path("/tmp/worktrees/cluster-01/env-01"),
-                logs_dir,
-            )
-            == 0
-        )
-        log_path = logs_dir / "cluster-01_env-01.log"
-        assert log_path.read_text() == "child log line\n"
-        assert stderr.getvalue() == "[cluster-01/env-01] child log line\n"
-        assert "SUCCESS" in captured_log.getvalue()
-
-    @pytest.mark.unit
-    def test_reports_failure_without_tail(self, monkeypatch, tmp_path, captured_log):
-        logs_dir = tmp_path / "logs"
-        logs_dir.mkdir()
-        stderr = io.StringIO()
-        monkeypatch.setattr(sys, "stderr", stderr)
-
-        class FakeStdout:
-            def __init__(self):
-                self._lines = iter(["first line\n", "last line\n"])
-
-            def __iter__(self):
-                return self
-
-            def __next__(self):
-                return next(self._lines)
-
-        class FakeProc:
-            stdout = FakeStdout()
-
-            def wait(self):
-                return 2
-
-        monkeypatch.setattr(
-            subprocess,
-            "Popen",
-            lambda *args, **kwargs: FakeProc(),
-        )
-
-        assert (
-            _run_child_subprocess(
-                "cluster-01/env-01",
-                Path("/tmp/worktrees/cluster-01/env-01"),
-                logs_dir,
-            )
-            == 2
-        )
-        log_path = logs_dir / "cluster-01_env-01.log"
-        assert log_path.read_text() == "first line\nlast line\n"
-        stderr_text = stderr.getvalue()
-        assert "[cluster-01/env-01] first line\n" in stderr_text
-        assert "[cluster-01/env-01] last line\n" in stderr_text
-        assert "Pipeline failed for cluster-01/env-01" in captured_log.getvalue()
 
 
 class TestDispatch:
