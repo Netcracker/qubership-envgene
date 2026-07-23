@@ -5,12 +5,12 @@ from pathlib import Path
 
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
+from build_env.render_config_env import render_obj_by_context, Context
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger, get_or_create_nested_yaml_attribute
-from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
+from envgenehelper import unpack_archive, get_cred_config
 from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.yaml_helper import get_nested_yaml_attribute_or_fail
-from build_env.render_config_env import render_obj_by_context, Context
 
 
 def parse_artifact_appver(env_definition: dict, attribute_str: str) -> list[str]:
@@ -62,14 +62,14 @@ def validate_url(url, group_id, artifact_id, version):
 
 
 # logic resolving template by artifact definition
-async def resolve_artifact_new_logic(app_def: Application, app_version: str, template_dest: str, auth_headers: dict = None) -> str:
+async def resolve_artifact_new_logic(app_def: Application, app_version: str, template_unpack_dir: str, auth_headers: dict = None) -> str:
     template_url = None
 
     resolved_version = app_version
     dd_artifact_info = await artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, auth_headers=auth_headers)
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
-        dd_url, (repo_name, _) = dd_artifact_info
+        dd_url, repo_name = dd_artifact_info.source_url, dd_artifact_info.repository.value
         logger.info(f"Resolved deployment descriptor URL: {dd_url}")
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(dd_url, app_version)
@@ -94,14 +94,14 @@ async def resolve_artifact_new_logic(app_def: Application, app_version: str, tem
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
         artifact_info = await artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, auth_headers=auth_headers)
         if artifact_info:
-            template_url, _ = artifact_info
+            template_url = artifact_info.source_url
         validate_url(template_url, group_id, artifact_id, version)
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact_dest = tempfile.mkstemp(suffix='.zip')[1]
-    artifact.download(template_url, artifact_dest, auth_headers=auth_headers)
-    unpack_archive(artifact_dest, template_dest)
+    template_zip_path = tempfile.mkstemp(suffix='.zip')[1]
+    artifact.download(template_url, template_zip_path, auth_headers=auth_headers)
+    unpack_archive(template_zip_path, template_unpack_dir)
     return resolved_version
 
 
@@ -115,7 +115,7 @@ def render_creds() -> dict:
 
 
 # logic resolving template by exact coordinates and repo, deprecated
-async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, cred_config: dict, registry_dict: dict) -> str:
+async def resolve_artifact_old_logic(env_definition: dict, template_unpack_dir: str, cred_config: dict, registry_dict: dict) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
     artifact_info = template_artifact['artifact']
 
@@ -135,7 +135,6 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
     cred = Credentials(username=repository_username, password=repository_password)
     auth_headers = artifact.credentials_to_headers(cred) if cred.username and cred.password else None
 
-    template_url = None
     resolved_version = dd_version
     dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON, auth_headers=auth_headers)
     if dd_url:
@@ -158,9 +157,9 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact_dest = tempfile.mkstemp(suffix='.zip')[1]
-    artifact.download(template_url, artifact_dest, auth_headers=auth_headers)
-    unpack_archive(artifact_dest, template_dest)
+    template_zip_path = tempfile.mkstemp(suffix='.zip')[1]
+    artifact.download(template_url, template_zip_path, auth_headers=auth_headers)
+    unpack_archive(template_zip_path, template_unpack_dir)
     return resolved_version
 
 
@@ -179,9 +178,9 @@ def process_env_template() -> dict:
 
     for template_type, appver in appvers.items():
         if template_type == NamespaceRole.COMMON:
-            template_dest = f'{project_dir}/tmp'
+            template_unpack_dir = f'{project_dir}/tmp'
         else:
-            template_dest = f'{project_dir}/tmp/{template_type}'
+            template_unpack_dir = f'{project_dir}/tmp/{template_type}'
 
         if not (len(appver) >= 2 and bool(appver[0]) and bool(appver[1])):
             if template_type != NamespaceRole.COMMON:
@@ -189,7 +188,7 @@ def process_env_template() -> dict:
             registry_dict = openYaml(Path(f"{project_dir}/configuration/registry.yml"))
 
             logger.info('Using template resolving old logic')
-            tasks[template_type] = resolve_artifact_old_logic(env_definition, template_dest, cred_config, registry_dict)
+            tasks[template_type] = resolve_artifact_old_logic(env_definition, template_unpack_dir, cred_config, registry_dict)
             continue
 
         app_name, app_version = appver[0], appver[1]
@@ -197,11 +196,11 @@ def process_env_template() -> dict:
         if not artifact_path:
             raise FileNotFoundError(f"No artifact definition file found for {app_name}")
         app_def = Application.model_validate(openYaml(artifact_path))
-        
+
         auth_headers = app_def.registry.resolve_auth(cred_config)
 
         logger.info(f'Use template resolving new logic for {appver}')
-        tasks[template_type] = resolve_artifact_new_logic(app_def, app_version, template_dest, auth_headers)
+        tasks[template_type] = resolve_artifact_new_logic(app_def, app_version, template_unpack_dir, auth_headers)
 
     async def resolve_all():
         results = await asyncio.gather(*tasks.values())

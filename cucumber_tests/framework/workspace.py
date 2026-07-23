@@ -175,6 +175,7 @@ class EnvGeneWorkspace(BaseWorkspace):
             "FULL_ENV_NAME": f"{self.cluster_name}/{self.env_name}",
             "INSTANCES_DIR": str(self.environments_dir),
             "JSON_SCHEMAS_DIR": str(Path(project_root) / "schemas"),
+            "IS_LOCAL_DEV_TEST_ENVGENE": "true",
         }
         if extra_env:
             env.update(extra_env)
@@ -194,6 +195,11 @@ class EnvGeneWorkspace(BaseWorkspace):
         assert self.stderr or self.stdout, "No logs produced"
         logs = (self.stderr + self.stdout).lower()
         assert text.lower() in logs, f"Logs do not contain '{text}'"
+
+    def assert_logs_not_contain(self, text: str):
+        assert self.stderr or self.stdout, "No logs produced"
+        logs = (self.stderr + self.stdout).lower()
+        assert text.lower() not in logs, f"Logs erroneously contain '{text}'"
 
     def assert_file_exists(self, path):
         assert path.exists(), f"File {path} does not exist"

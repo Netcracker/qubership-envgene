@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
@@ -76,9 +77,14 @@ public class FileSystemUtils {
         solutionDescriptor.ifPresent(solutionBomDTO -> solutionBomDTO.getApplications()
                 .forEach(app -> {
                     try {
-                        Path deploymentPath = getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values", "per-service-parameters").toPath();
+                        String generationId = app.getGenerationId();
+                        Path deploymentPath = StringUtils.isNotBlank(generationId)
+                                ? getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), generationId, "values", "per-service-parameters").toPath()
+                                : getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values", "per-service-parameters").toPath();
                         Files.createDirectories(deploymentPath);
-                        Path runtimePath = getFileFromGivenPath(data.getOutputDir(), "runtime", app.getNamespace(), app.getAppName()).toPath();
+                        Path runtimePath = StringUtils.isNotBlank(generationId)
+                                ? getFileFromGivenPath(data.getOutputDir(), "runtime", app.getNamespace(), app.getAppName(), generationId).toPath()
+                                : getFileFromGivenPath(data.getOutputDir(), "runtime", app.getNamespace(), app.getAppName()).toPath();
                         Files.createDirectories(runtimePath);
                     } catch (IOException e) {
                         throw new DirectoryCreateException("Error creating directory for application " + app.getAppName() + " due to " + e.getMessage());

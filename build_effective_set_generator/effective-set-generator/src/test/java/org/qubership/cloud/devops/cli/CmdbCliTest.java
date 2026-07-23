@@ -23,14 +23,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
+import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileTestUtils;
 import picocli.CommandLine;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 public class CmdbCliTest {
@@ -42,12 +47,15 @@ public class CmdbCliTest {
     @Inject
     InputData inputData;
 
+    @Inject
+    SharedData sharedData;
+
     @Test
-    void testGenerateEffectiveSet(@TempDir Path tempDir) throws Exception {
+    void testGenerateEffectiveSetFromDeployPlan(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");
-        Path sdPath = FileTestUtils.resource(
-                "environments/cluster-01/pl-01/Inventory/solution-descriptor/sd.yml");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
 
         Path outputPath = tempDir.resolve("effective-set");
@@ -58,7 +66,7 @@ public class CmdbCliTest {
                 "--env-id", "cluster-01/pl-01",
                 "--envs-path", envsPath.toString(),
                 "--sboms-path", sbomsPath.toString(),
-                "--sd-path", sdPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
                 "--registries", registriesPath.toString(),
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
@@ -75,11 +83,117 @@ public class CmdbCliTest {
     }
 
     @Test
+    void testGenerateEffectiveSetForNamespaceScopedCustomParams(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/namespace-custom-param.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path monitoringCustomParams = outputPath.resolve(
+                "deployment/monitoring-origin/MONITORING/values/custom-params.yaml");
+        assertTrue(Files.exists(monitoringCustomParams));
+        assertEquals(0, Files.size(monitoringCustomParams));
+
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-custom-params.yaml"),
+                pgCustomParams);
+
+        Path pgRuntimeCredentials = outputPath.resolve("runtime/pg/postgres/credentials.yaml");
+        assertTrue(Files.exists(pgRuntimeCredentials));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-runtime-credentials.yaml"),
+                pgRuntimeCredentials);
+
+        Path monitoringRuntimeCredentials = outputPath.resolve(
+                "runtime/monitoring-origin/MONITORING/credentials.yaml");
+        assertTrue(Files.exists(monitoringRuntimeCredentials));
+        assertEquals(0, Files.size(monitoringRuntimeCredentials));
+    }
+
+    @Test
+    void testGenerateEffectiveSetRejectsUnknownNamespaceInCustomParams(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/namespace-custom-param-invalid.json"
+        );
+
+        assertNotEquals(0, exitCode);
+    }
+
+    @Test
+    void testGenerateEffectiveSetRejectsMixedCustomParamsModes(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/namespace-custom-param-mixed.json"
+        );
+
+        assertNotEquals(0, exitCode);
+    }
+
+    @Test
     void testGenerateEffectiveSetForExternalCred(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");
-        Path sdPath = FileTestUtils.resource(
-                "environments/cluster-01/pl-02/Inventory/solution-descriptor/sd.yaml");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
 
         Path outputPath = tempDir.resolve("effective-set");
@@ -90,7 +204,7 @@ public class CmdbCliTest {
                 "--env-id", "cluster-01/pl-02",
                 "--envs-path", envsPath.toString(),
                 "--sboms-path", sbomsPath.toString(),
-                "--sd-path", sdPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
                 "--registries", registriesPath.toString(),
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
@@ -105,9 +219,85 @@ public class CmdbCliTest {
         FileTestUtils.compareFolders(expected, outputPath);
     }
 
+    @Test
+    void testUniqForAppAndUniqForRunNestUnderSameDeployPostfix(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/Inventory/deploy-plan-uniq-mixed.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        int exitCode = executeGenerate(envsPath, sbomsPath, deployPlanPath, registriesPath, outputPath,
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+
+        assertEquals(0, exitCode);
+
+        assertTrue(Files.isDirectory(outputPath.resolve("deployment/ns-test/eso-app/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve("runtime/ns-test/eso-app")));
+
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "runtime/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f")));
+    }
+
+    @Test
+    void testUniqForVersionAndUniqForRunSurviveAcrossRuns(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        Path outputPath = tempDir.resolve("effective-set");
+
+        int firstExitCode = executeGenerate(envsPath, sbomsPath,
+                FileTestUtils.resource("environments/cluster-01/pl-02/Inventory/deploy-plan-uniq-run1.yml"),
+                registriesPath, outputPath, "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertEquals(0, firstExitCode);
+
+        resetInputData(inputData);
+        resetSharedData(sharedData);
+
+        int secondExitCode = executeGenerate(envsPath, sbomsPath,
+                FileTestUtils.resource("environments/cluster-01/pl-02/Inventory/deploy-plan-uniq-run2.yml"),
+                registriesPath, outputPath, "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertEquals(0, secondExitCode);
+
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/eso-app/0.1.0-delivery-20261115.141230-4-RELEASE/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/eso-app/0.2.0-delivery-20261115.141230-4-RELEASE/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "runtime/ns-test/eso-app/0.1.0-delivery-20261115.141230-4-RELEASE")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "runtime/ns-test/eso-app/0.2.0-delivery-20261115.141230-4-RELEASE")));
+
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/values")));
+        assertTrue(Files.isDirectory(outputPath.resolve(
+                "deployment/ns-test/vals-app/0190c7e2-2b3c-8d4e-9f5a-6b7c8d9e0f1a/values")));
+    }
+
+    private int executeGenerate(Path envsPath, Path sbomsPath, Path deployPlanPath, Path registriesPath,
+                                 Path outputPath, String deploymentSessionId) throws Exception {
+        CommandLine cmd = new CommandLine(cli);
+        return cmd.execute(
+                "--env-id", "cluster-01/pl-02",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=" + deploymentSessionId,
+                "--app_chart_validation", "false"
+        );
+    }
+
     @AfterEach
     void tearDown() {
         resetInputData(inputData);
+        resetSharedData(sharedData);
     }
 
     private void resetInputData(InputData inputData) {
@@ -125,6 +315,18 @@ public class CmdbCliTest {
             inputData.setBgDomainEntityDTO(null);
             inputData.setSolutionBomDTO(Optional.empty());
             inputData.setExternalOnly(false);
+        }
+    }
+
+    private void resetSharedData(SharedData sharedData) {
+        if (sharedData != null) {
+            sharedData.setNamespaceScopedCustomParams(false);
+            sharedData.setCustomDeployParamMap(Collections.emptyMap());
+            sharedData.setCustomRuntimeParamMap(Collections.emptyMap());
+            sharedData.setNamespaceCustomDeployParamMap(Collections.emptyMap());
+            sharedData.setNamespaceCustomRuntimeParamMap(Collections.emptyMap());
+            sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
+            sharedData.setDeployPlanPath(Optional.empty());
         }
     }
 }

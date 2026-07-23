@@ -27,7 +27,8 @@ pipeline {
                     mkdir -p $BDD_DATA_DIR/templates $BDD_DATA_DIR/instances
 
                     # Example for Private Repository with credentials (shell vars, not Groovy GString):
-                    # git clone https://${GIT_AUTH_CREDS_USR}:${GIT_AUTH_CREDS_PSW}@github.com/your-org/env-templates.git $BDD_DATA_DIR/templates
+                    # git clone https://${GIT_AUTH_CREDS_USR}:${GIT_AUTH_CREDS_PSW}@git.company.com/org/repo.git \\
+                    #     $BDD_DATA_DIR/templates
 
                     # Example for Public Repository:
                     git clone $ENV_TEMPLATES_REPO $BDD_DATA_DIR/templates

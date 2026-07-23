@@ -3,5 +3,5 @@ set -euo pipefail
 
 # shellcheck disable=SC1091
 source /module/venv/bin/activate
-chmod +x /workspace/python/build_modules.sh
-/workspace/python/build_modules.sh
+chmod +x /workspace/devtools/tests/build_modules.sh
+/workspace/devtools/tests/build_modules.sh

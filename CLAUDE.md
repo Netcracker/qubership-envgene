@@ -8,15 +8,20 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 | Directory | Purpose |
 |-----------|---------|
-| `scripts/` | Single-job pipeline: `pipeline/` (orchestrator + params), `build_env/`, `cloud_passport/`, `creds_rotation/`, `effective_set/`, `bg_manage/`, `inventory/`, `sd/`, `build_template/`, `utils/`, `tests/` |
-| `python/envgene/` | `envgenehelper` pip package — core Python library shared by all modules |
-| `python/artifact-searcher/` | Async Maven artifact URL resolver (multi-cloud auth) |
+| `scripts/` | Single-job pipeline: `pipeline/` (orchestrator + params), `build_env/`, `cloud_passport/`, `creds_rotation/`, `effective_set/`, `bg_manage/`, `inventory/`, `sd/`, `build_template/`, `utils/`, `tests/`, `git_commit/` (`git_commit.py`, `minimize_cred_diffs.py`); also `report.py` (moved here from `build_envgene/scripts/`) |
+| `modules/envgene/` | `envgenehelper` pip package — core Python library shared by all modules |
+| `modules/artifact-searcher/` | `artifact_searcher` pip package — async Maven artifact URL resolver (multi-cloud auth) |
+| `modules/external-cred-provision/` | `external-cred-provision` pip package — provisions external credentials into secret stores; `src`-layout, console script `external-cred-provision` |
 | `build_effective_set_generator/` | Java/Maven multi-module project (Quarkus CLI) — the Effective Set generator engine, invoked from `scripts/effective_set/` via `scripts/utils/run_effective_set_cli.sh` |
-| `build_envgene/` | Docker image + scripts for `git_commit` (Python, `git_commit.py`) and credential diff minimization |
+| `build_envgene/` | Docker image build context (`build_envgene/build/Dockerfile`) — no longer holds Python scripts, see `scripts/` above |
 | `schemas/` | JSON schemas for all EnvGene objects (validated at runtime) |
 | `docs/` | Comprehensive documentation — start with `docs/envgene-objects.md` and `docs/envgene-configs.md` |
 
-**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/CLAUDE.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `python/envgene/CLAUDE.md`).
+**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/CLAUDE.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `modules/envgene/CLAUDE.md`). `python/` (main's name for the directory below) was renamed to `modules/` in this branch — same pip packages as before, just a clearer top-level name.
+
+## Python module layout
+
+`modules/envgene`, `modules/artifact-searcher`, `modules/external-cred-provision` are ordinary pip packages (`pyproject.toml` + `[build-system]`), installed editable (`pip install -e`) in dev/CI and plain (`pip install`) in the Docker image — see each `pyproject.toml`'s `[project] version`, which is a required-by-setuptools formality, not a tracked release version. None of them are ever published anywhere (no PyPI, no internal registry) — `pip install -e`/`pip install <dir>` only registers the package into the local `site-packages`, nothing leaves the machine. `scripts/` itself is not a package; it's resolved purely via `PYTHONPATH` (see `scripts/CLAUDE.md`). Directory-vs-package-name note: `modules/envgene` contains package `envgenehelper`; `modules/artifact-searcher` contains package `artifact_searcher`; `modules/external-cred-provision/src` contains package `external_cred_provision`.
 
 ## Core Concepts
 
@@ -41,14 +46,18 @@ All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credential
 
 ## Tests
 
-Each Python sub-package has its own pytest suite. Run from its directory:
+Each Python module has its own pytest suite, installed editable first (`pip install -e "modules/envgene[dev]"`, etc. — see `.github/actions/run-tests/action.yml`), then run from its own directory:
 
 ```bash
-cd python/envgene && python -m pytest
-cd build_envgene/scripts && python -m pytest
+pip install -e "modules/envgene[dev]"
+pip install -e "modules/artifact-searcher[dev]"
+pip install -e "modules/external-cred-provision"
+cd modules/envgene/envgenehelper && python -m pytest
+cd modules/artifact-searcher/artifact_searcher && python -m pytest
+cd modules/external-cred-provision && python -m pytest
 ```
 
-The single-job pipeline scripts under `scripts/` are tested from the repository root with `scripts/` on `PYTHONPATH` (matches CI's `PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/scripts`; see `scripts/CLAUDE.md`):
+The single-job pipeline scripts under `scripts/` (including `git_commit.py`/`minimize_cred_diffs.py`/`report.py`, formerly under `build_envgene/scripts/`) are tested from the repository root the same way:
 
 ```bash
 PYTHONPATH=".:./scripts" python -m pytest scripts/tests/
