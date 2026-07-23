@@ -50,10 +50,10 @@ class TestStepGating:
 
     @pytest.mark.unit
     def test_env_builder_legacy_flow(self):
-        ctx = _ctx(ENV_BUILDER="true", APPLICATION_VERSIONS="Cloud-Core:1.0")
+        ctx = _ctx(ENV_BUILDER="true", SD_VERSION="Cloud-Core:1.0")
 
         assert AppregdefRenderStep().should_run(ctx)
-        assert DeployPostfixNamespaceMapStep().should_run(ctx)
+        assert not DeployPostfixNamespaceMapStep().should_run(ctx)
         assert ProcessSdStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
         assert not GenerateDeploymentPlanStep().should_run(ctx)
