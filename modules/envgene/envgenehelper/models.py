@@ -60,7 +60,6 @@ class PipelineType(CaseInsensitiveEnum):
 
 class SecretStore(BaseModel):
     type: Literal["vault", "gcp", "aws", "azure"]
-    url: str
     projectId: Optional[str] = None
     mountPath: Optional[str] = None
     vaultName: Optional[str] = None
