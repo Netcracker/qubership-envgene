@@ -225,7 +225,11 @@ def dispatch() -> int:
         _run_single_env_pipeline()
         return 0
 
-    PipelineParametersHandler.from_env(allow_multi_env=True).write_dotenv()
+    handler = PipelineParametersHandler.from_env(allow_multi_env=True)
+    env_names_value = handler.params.pop("ENV_NAMES", None)
+    handler.write_dotenv()
+    if env_names_value is not None:
+        handler.params["ENV_NAMES"] = env_names_value
 
     max_workers = min(len(env_names), 5)
     logger.info(
