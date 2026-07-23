@@ -16,7 +16,7 @@ Both begin the same way. Each resolves and downloads a Deployment Descriptor (DD
 This document covers the shared DD-resolution logic.
 
 The DD is a JSON artifact addressed by the artifact coordinates (`groupId:artifactId:version`). The
-coordinates and registry endpoint and credentials come from objects that differs by flow:
+coordinates and registry endpoint and credentials come from objects that differ by flow:
 
 1. [Artifact Definition](/docs/features/app-reg-defs.md) for the environment template
 2. [Application Definition](/docs/features/app-reg-defs.md) and [Registry Definition](/docs/features/app-reg-defs.md)
@@ -24,37 +24,33 @@ coordinates and registry endpoint and credentials come from objects that differs
 
 ## Version forms
 
-The `version` in the coordinates takes one of two forms:
+The `version` in the coordinates takes one of three forms:
 
-- **Snapshot version.** Ends with `-SNAPSHOT`. It denotes the latest non-released build, not a specific one.
+- **Non-unique snapshot version.** Ends with `-SNAPSHOT`. It denotes the latest snapshot build, not a specific
+  one. For example: `1.0.0-SNAPSHOT`.
 
-  For example: `1.0.0-SNAPSHOT` or `20260720.122600-SNAPSHOT`.
+- **Unique snapshot version.** A snapshot build published under its timestamped name
+  `<base>-<timestamp>-<buildNumber>`, matching `^(.*)-\d{8}\.\d{6}-\d+$`. It names one exact snapshot build.
+  For example: `1.0.0-20260720.122600-1`.
 
-- **Fixed version.** Has no `-SNAPSHOT` suffix. It names one exact artifact, which can be a release or a
-  pinned snapshot build.
+- **Release version.** Any version that is neither of the above. It names one exact released artifact. For
+  example: `1.0.0`.
 
-  For example: `1.0.0` or `1.0.0-20260720.122600-1`.
-
-Maven publishes each snapshot build under a unique timestamped version, for example `1.0.0-20260720.122600-1`,
-inside the `1.0.0-SNAPSHOT/` folder. The version-level `maven-metadata.xml` maps `1.0.0-SNAPSHOT` to the
-latest build. A pinned snapshot build is a fixed version that names one such build.
+Maven publishes each snapshot build under its unique timestamped name inside the `<base>-SNAPSHOT/` folder.
 
 ## Processing
 
 EnvGene searches the selected repositories concurrently, and the first to return the DD wins. If none returns
 the DD, resolution fails.
 
-The registry provider determines which repositories the search probes. Registry Definition v2 declares the
-provider. Registry Definition v1 has no provider and always uses the traditional model.
+The registry provider selects the repository model, traditional or public cloud. Registry Definition v2
+declares the provider. Registry Definition v1 has no provider and always uses the traditional model.
 
 ### Traditional registries
 
 Nexus and Artifactory. `repositoryDomainName` is a base URL, and `mavenConfig` names the candidate
 repositories: `targetSnapshot`, `targetStaging`, `targetRelease`, `snapshotGroup`, and `releaseGroup`. The
-version form selects which the search probes:
-
-- For a snapshot version - `targetSnapshot`, `targetStaging`, and `snapshotGroup`.
-- For a fixed version - all candidate repositories.
+search probes all of them.
 
 ### Public cloud registries
 
@@ -64,8 +60,11 @@ searches that single repository.
 
 ### Version resolution
 
-Within each searched repository EnvGene builds the URL from the version form:
+The version form sets the storage folder and how EnvGene picks the build within each searched repository:
 
-- **Snapshot version.** EnvGene reads `maven-metadata.xml` to resolve `-SNAPSHOT` to the latest build. The
-  metadata records the latest build per artifact type, so EnvGene picks the one for the DD and requests it.
-- **Fixed version.** EnvGene requests the file directly.
+- **Non-unique snapshot version.** The folder is the version itself. EnvGene reads that folder's
+  `maven-metadata.xml` to resolve `-SNAPSHOT` to the latest build and requests it.
+- **Unique snapshot version.** The folder is `<base>-SNAPSHOT`, derived by replacing the
+  `-<timestamp>-<buildNumber>` suffix with `-SNAPSHOT`. The build is already named, so EnvGene requests it
+  directly without reading metadata.
+- **Release version.** The folder is the version itself, and EnvGene requests the file directly.
