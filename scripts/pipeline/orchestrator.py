@@ -1,7 +1,9 @@
+import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
+from os import getenv
 
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
@@ -257,6 +259,8 @@ class GitCommitStep(PipelineStep):
 
 
 def run_unified_pipeline() -> None:
+    logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
+
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
