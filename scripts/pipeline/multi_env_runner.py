@@ -165,7 +165,7 @@ def _run_child_subprocess(
     return returncode
 
 
-def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
+def _fan_out(env_names: Sequence[str]) -> int:
     base_repo = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
     main_path = base_repo
     commit_sha = _resolve_commit_sha()
@@ -182,6 +182,12 @@ def _fan_out(env_names: Sequence[str], max_workers: int) -> int:
         worktrees.append(worktree_path)
         env_to_worktree[full_env_name] = worktree_path
         _create_worktree(base_repo, worktree_path, commit_sha)
+
+    max_workers = len(env_names)
+    logger.info(
+        f"ENV_NAMES contains {len(env_names)} environments; "
+        f"running parallel subprocess fan-out (max_workers={max_workers})"
+    )
 
     try:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -230,12 +236,7 @@ def dispatch() -> int:
     if env_names_value is not None:
         handler.params["ENV_NAMES"] = env_names_value
 
-    max_workers = min(len(env_names), 5)
-    logger.info(
-        f"ENV_NAMES contains {len(env_names)} environments; "
-        f"running parallel subprocess fan-out (max_workers={max_workers})"
-    )
-    return _fan_out(env_names, max_workers)
+    return _fan_out(env_names)
 
 
 if __name__ == "__main__":
