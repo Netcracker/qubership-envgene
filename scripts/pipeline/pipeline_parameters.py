@@ -17,6 +17,34 @@ from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, Operat
 from envgenehelper.plugin_engine import PluginEngine
 
 
+def resolve_env_names() -> list[str]:
+    env_names = os.getenv("ENV_NAMES")
+    cluster_name = os.getenv("CLUSTER_NAME")
+    env_name = os.getenv("ENVIRONMENT_NAME")
+
+    if env_names:
+        if cluster_name or env_name:
+            raise ValueError(
+                "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
+                "but not both at the same time"
+            )
+        parsed = split_multi_value_param(env_names)
+        for full_env_name in parsed:
+            if "/" not in full_env_name:
+                raise ValueError(
+                    f"Invalid environment name '{full_env_name}'. "
+                    f"Expected format: <cluster>/<env>"
+                )
+        return parsed
+
+    if not cluster_name or not env_name:
+        raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
+
+    full_env_name = f"{cluster_name}/{env_name}"
+    os.environ["ENV_NAMES"] = full_env_name
+    return [full_env_name]
+
+
 class PipelineParametersHandler(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 

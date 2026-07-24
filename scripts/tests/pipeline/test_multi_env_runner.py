@@ -2,11 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from pipeline.multi_env_runner import (
-    _child_env_for,
-    _fan_out,
-    dispatch,
-)
+from pipeline.dispatch import dispatch
+from pipeline.multi_env_runner import _child_env_for
 
 
 @pytest.fixture(autouse=True)
@@ -41,7 +38,7 @@ class TestDispatch:
         called: list[str] = []
 
         monkeypatch.setattr(
-            "pipeline.multi_env_runner._run_single_env_pipeline",
+            "pipeline.dispatch.run_single_env_pipeline",
             lambda: called.append("run"),
         )
 
@@ -76,7 +73,7 @@ class TestDispatch:
             fake_run_child,
         )
         monkeypatch.setattr(
-            "pipeline.multi_env_runner._run_single_env_pipeline",
+            "pipeline.dispatch.run_single_env_pipeline",
             pytest.fail,
         )
 

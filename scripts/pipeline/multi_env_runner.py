@@ -7,9 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from envgenehelper import logger
-from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
-from pipeline.pipeline_parameters import PipelineParametersHandler
 
 ORCHESTRATOR_MODULE = "pipeline.orchestrator"
 
@@ -79,34 +77,6 @@ def _copy_worktree_outputs(worktree_path: Path, main_path: Path, full_env_name: 
             shutil.copy2(src, dst)
 
 
-def resolve_env_selection() -> list[str]:
-    env_names = os.getenv("ENV_NAMES")
-    cluster_name = os.getenv("CLUSTER_NAME")
-    env_name = os.getenv("ENVIRONMENT_NAME")
-
-    if env_names:
-        if cluster_name or env_name:
-            raise ValueError(
-                "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
-                "but not both at the same time"
-            )
-        parsed = split_multi_value_param(env_names)
-        for full_env_name in parsed:
-            if "/" not in full_env_name:
-                raise ValueError(
-                    f"Invalid environment name '{full_env_name}'. "
-                    f"Expected format: <cluster>/<env>"
-                )
-        return parsed
-
-    if not cluster_name or not env_name:
-        raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
-
-    full_env_name = f"{cluster_name}/{env_name}"
-    os.environ["ENV_NAMES"] = full_env_name
-    return [full_env_name]
-
-
 def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
     cluster_name, env_name = full_env_name.split("/", 1)
     child = dict(os.environ)
@@ -116,14 +86,6 @@ def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
     child["ENVIRONMENT_NAME"] = env_name
     child["CI_PROJECT_DIR"] = str(worktree_path)
     return child
-
-
-def _run_single_env_pipeline() -> None:
-    # Local import keeps the multi-env dispatcher lightweight; the orchestrator is only
-    # loaded when running in single-env mode.
-    from pipeline.orchestrator import run_unified_pipeline
-
-    run_unified_pipeline()
 
 
 def _run_child_subprocess(
@@ -165,7 +127,7 @@ def _run_child_subprocess(
     return returncode
 
 
-def _fan_out(env_names: Sequence[str]) -> int:
+def fan_out(env_names: Sequence[str]) -> int:
     base_repo = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
     main_path = base_repo
     commit_sha = _resolve_commit_sha()
@@ -222,22 +184,3 @@ def _fan_out(env_names: Sequence[str]) -> int:
 
     logger.info("Multi-env pipeline finished successfully for all environments")
     return 0
-
-
-def dispatch() -> int:
-    env_names = resolve_env_selection()
-    if len(env_names) <= 1:
-        _run_single_env_pipeline()
-        return 0
-
-    handler = PipelineParametersHandler.from_env(allow_multi_env=True)
-    env_names_value = handler.params.pop("ENV_NAMES", None)
-    handler.write_dotenv()
-    if env_names_value is not None:
-        handler.params["ENV_NAMES"] = env_names_value
-
-    return _fan_out(env_names)
-
-
-if __name__ == "__main__":
-    raise SystemExit(dispatch())

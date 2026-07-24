@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 from abc import ABC, abstractmethod
@@ -7,7 +6,6 @@ from enum import StrEnum
 
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
-from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
@@ -269,13 +267,7 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
-def run_unified_pipeline() -> int | None:
-    env_names = split_multi_value_param(os.getenv("ENV_NAMES", ""))
-    if len(env_names) > 1:
-        from pipeline import multi_env_runner
-
-        return multi_env_runner.dispatch()
-
+def run_single_env_pipeline() -> None:
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
@@ -320,6 +312,9 @@ def run_unified_pipeline() -> int | None:
         log_pipeline_summary(results)
 
 
+run_unified_pipeline = run_single_env_pipeline
+
+
 def _format_duration(duration_ms: int | None) -> str:
     if duration_ms is None:
         return "-"
@@ -338,4 +333,5 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(run_unified_pipeline())
+    run_single_env_pipeline()
+    sys.exit(0)
