@@ -225,7 +225,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+        return (ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY) or bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = run_build_environment()
