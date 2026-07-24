@@ -312,9 +312,6 @@ def run_single_env_pipeline() -> None:
         log_pipeline_summary(results)
 
 
-run_unified_pipeline = run_single_env_pipeline
-
-
 def dispatch() -> int:
     env_names = resolve_env_names()
     if len(env_names) <= 1:
