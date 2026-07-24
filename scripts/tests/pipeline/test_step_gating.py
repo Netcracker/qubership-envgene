@@ -63,3 +63,10 @@ class TestStepGating:
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, APPLICATION_VERSIONS="Cloud-Core:1.0")
 
         assert not ProcessSdStep().should_run(ctx)
+
+    @pytest.mark.unit
+    def test_appregdef_render_and_env_build_run_together_for_clean(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN")
+
+        assert AppregdefRenderStep().should_run(ctx)
+        assert EnvBuildStep().should_run(ctx)
