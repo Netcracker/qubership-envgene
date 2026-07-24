@@ -1,4 +1,3 @@
-import sys
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -23,7 +22,8 @@ from deployment_plan.generate_deployment_plan import run_generate_deployment_pla
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
-from pipeline.pipeline_parameters import PipelineParametersHandler
+from pipeline.multi_env_runner import fan_out
+from pipeline.pipeline_parameters import PipelineParametersHandler, resolve_env_names
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
@@ -315,6 +315,21 @@ def run_single_env_pipeline() -> None:
 run_unified_pipeline = run_single_env_pipeline
 
 
+def dispatch() -> int:
+    env_names = resolve_env_names()
+    if len(env_names) <= 1:
+        run_single_env_pipeline()
+        return 0
+
+    handler = PipelineParametersHandler.from_env(allow_multi_env=True)
+    env_names_value = handler.params.pop("ENV_NAMES", None)
+    handler.write_dotenv()
+    if env_names_value is not None:
+        handler.params["ENV_NAMES"] = env_names_value
+
+    return fan_out(env_names)
+
+
 def _format_duration(duration_ms: int | None) -> str:
     if duration_ms is None:
         return "-"
@@ -333,5 +348,4 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    run_single_env_pipeline()
-    sys.exit(0)
+    raise SystemExit(dispatch())

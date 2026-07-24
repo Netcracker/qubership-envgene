@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pipeline.dispatch import dispatch
+from pipeline.orchestrator import dispatch
 from pipeline.multi_env_runner import _child_env_for
 
 
@@ -38,7 +38,7 @@ class TestDispatch:
         called: list[str] = []
 
         monkeypatch.setattr(
-            "pipeline.dispatch.run_single_env_pipeline",
+            "pipeline.orchestrator.run_single_env_pipeline",
             lambda: called.append("run"),
         )
 
@@ -73,7 +73,7 @@ class TestDispatch:
             fake_run_child,
         )
         monkeypatch.setattr(
-            "pipeline.dispatch.run_single_env_pipeline",
+            "pipeline.orchestrator.run_single_env_pipeline",
             pytest.fail,
         )
 
