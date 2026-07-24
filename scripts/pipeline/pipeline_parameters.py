@@ -30,8 +30,8 @@ class PipelineParametersHandler(BaseModel):
     es_generation_mode: GenerationMode = GenerationMode.PARTIAL
     partial_merge_mode: PartialMergeMode | None = None
     namespace_by_deploy_postfix: dict = Field(default_factory=dict)
-    deploy_plan: EnvgeneDeployPlan | None = None
-    deploy_plan_delta: EnvgeneDeployPlan | None = None
+    deploy_plan: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan.read())
+    deploy_plan_delta: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan(entities=[]))
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
 
