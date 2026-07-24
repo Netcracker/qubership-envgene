@@ -32,7 +32,6 @@ class TestChildEnvFor:
         assert child["CLUSTER_NAME"] == "cluster-01"
         assert child["ENVIRONMENT_NAME"] == "env-01"
         assert child["CI_PROJECT_DIR"] == "/tmp/worktrees/cluster-01/env-01"
-        assert child["ENVGENE_WORKTREE"] == "1"
 
 
 class TestDispatch:

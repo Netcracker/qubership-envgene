@@ -115,7 +115,6 @@ def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
     child["CLUSTER_NAME"] = cluster_name
     child["ENVIRONMENT_NAME"] = env_name
     child["CI_PROJECT_DIR"] = str(worktree_path)
-    child["ENVGENE_WORKTREE"] = "1"
     return child
 
 
