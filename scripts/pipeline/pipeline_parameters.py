@@ -35,14 +35,22 @@ def resolve_env_names() -> list[str]:
                     f"Invalid environment name '{full_env_name}'. "
                     f"Expected format: <cluster>/<env>"
                 )
-        return parsed
+        resolved = parsed
+    else:
+        if not cluster_name or not env_name:
+            raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
 
-    if not cluster_name or not env_name:
-        raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
+        full_env_name = f"{cluster_name}/{env_name}"
+        os.environ["ENV_NAMES"] = full_env_name
+        resolved = [full_env_name]
 
-    full_env_name = f"{cluster_name}/{env_name}"
-    os.environ["ENV_NAMES"] = full_env_name
-    return [full_env_name]
+    pipeline_type = getenv("PIPELINE_TYPE")
+    if pipeline_type and PipelineType(pipeline_type) == PipelineType.GITLAB_DEPLOY and len(resolved) > 1:
+        raise ValueError(
+            "Multiple values in ENV_NAMES are not supported when PIPELINE_TYPE is GITLAB_DEPLOY"
+        )
+
+    return resolved
 
 
 class PipelineParametersHandler(BaseModel):

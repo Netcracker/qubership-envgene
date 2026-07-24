@@ -11,6 +11,7 @@ def clean_env(monkeypatch):
     monkeypatch.delenv("CLUSTER_NAME", raising=False)
     monkeypatch.delenv("ENVIRONMENT_NAME", raising=False)
     monkeypatch.delenv("FULL_ENV_NAME", raising=False)
+    monkeypatch.delenv("PIPELINE_TYPE", raising=False)
 
 
 class TestResolveEnvSelection:
@@ -76,3 +77,24 @@ class TestResolveEnvSelection:
 
         with pytest.raises(ValueError, match="Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME"):
             resolve_env_names()
+
+    @pytest.mark.unit
+    def test_allows_multi_env_when_pipeline_type_unset(self, monkeypatch):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
+
+        assert resolve_env_names() == ["cluster-01/env-01", "cluster-02/env-02"]
+
+    @pytest.mark.unit
+    def test_rejects_multi_env_for_gitlab_deploy(self, monkeypatch):
+        monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
+
+        with pytest.raises(ValueError, match="Multiple values in ENV_NAMES are not supported"):
+            resolve_env_names()
+
+    @pytest.mark.unit
+    def test_allows_single_env_for_gitlab_deploy(self, monkeypatch):
+        monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+
+        assert resolve_env_names() == ["cluster-01/env-01"]

@@ -11,6 +11,7 @@ def clean_env(monkeypatch):
     monkeypatch.delenv("CLUSTER_NAME", raising=False)
     monkeypatch.delenv("ENVIRONMENT_NAME", raising=False)
     monkeypatch.delenv("FULL_ENV_NAME", raising=False)
+    monkeypatch.delenv("PIPELINE_TYPE", raising=False)
 
 
 class TestChildEnvFor:
@@ -118,3 +119,11 @@ class TestDispatch:
         )
 
         assert dispatch() == 1
+
+    @pytest.mark.unit
+    def test_gitlab_deploy_rejects_multi_env(self, monkeypatch):
+        monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
+
+        with pytest.raises(ValueError, match="Multiple values in ENV_NAMES are not supported"):
+            dispatch()
