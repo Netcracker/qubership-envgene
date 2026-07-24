@@ -10,15 +10,12 @@ from envgenehelper import logger
 from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
 
 ORCHESTRATOR_MODULE = "pipeline.orchestrator"
+_MAX_FAN_OUT_WORKERS = 5
 
 
 def _worktree_path(base_dir: Path, full_env_name: str) -> Path:
     cluster_name, env_name = full_env_name.split("/", 1)
     return base_dir / "tmp" / "worktrees" / cluster_name / env_name
-
-
-def _resolve_commit_sha() -> str:
-    return os.getenv("CI_COMMIT_SHA", "HEAD")
 
 
 def _create_worktree(base_repo: Path, worktree_path: Path, commit_sha: str) -> None:
@@ -130,9 +127,8 @@ def _run_child_subprocess(
 def fan_out(env_names: Sequence[str]) -> int:
     base_repo = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
     main_path = base_repo
-    commit_sha = _resolve_commit_sha()
+    commit_sha = os.getenv("CI_COMMIT_SHA", "HEAD")
     failed: list[str] = []
-    worktrees: list[Path] = []
     env_to_worktree: dict[str, Path] = {}
 
     logs_dir = main_path / "tmp" / "logs"
@@ -141,11 +137,10 @@ def fan_out(env_names: Sequence[str]) -> int:
 
     for full_env_name in env_names:
         worktree_path = _worktree_path(base_repo, full_env_name)
-        worktrees.append(worktree_path)
         env_to_worktree[full_env_name] = worktree_path
         _create_worktree(base_repo, worktree_path, commit_sha)
 
-    max_workers = len(env_names)
+    max_workers = min(len(env_names), _MAX_FAN_OUT_WORKERS)
     logger.info(
         f"ENV_NAMES contains {len(env_names)} environments; "
         f"running parallel subprocess fan-out (max_workers={max_workers})"
@@ -175,7 +170,7 @@ def fan_out(env_names: Sequence[str]) -> int:
                 else:
                     failed.append(full_env_name)
     finally:
-        for worktree_path in worktrees:
+        for worktree_path in env_to_worktree.values():
             _remove_worktree(base_repo, worktree_path)
 
     if failed:

@@ -165,10 +165,11 @@ class PipelineParametersHandler(BaseModel):
         params_str = "Input parameters are: " + "".join(f"\n{k.upper()}: {v}" for k, v in params.items())
         logger.info(params_str)
 
-    def write_dotenv(self) -> None:
+    def write_dotenv(self, exclude_keys: set[str] | None = None) -> None:
+        excluded = exclude_keys or set()
         lines = []
         for key, value in {**self.params, **self.internal_params}.items():
-            if value is None or key in self.sensitive_params:
+            if value is None or key in self.sensitive_params or key in excluded:
                 continue
             value = str(value)
             if "\n" in value:

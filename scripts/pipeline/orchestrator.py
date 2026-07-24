@@ -319,10 +319,7 @@ def dispatch() -> int:
         return 0
 
     handler = PipelineParametersHandler.from_env(allow_multi_env=True)
-    env_names_value = handler.params.pop("ENV_NAMES", None)
-    handler.write_dotenv()
-    if env_names_value is not None:
-        handler.params["ENV_NAMES"] = env_names_value
+    handler.write_dotenv(exclude_keys={"ENV_NAMES"})
 
     return fan_out(env_names)
 
