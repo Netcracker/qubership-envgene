@@ -23,6 +23,7 @@ import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
 import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
 import org.qubership.cloud.devops.commons.pojo.clouds.model.Cloud;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.SecretCredentials;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeEntityDTO;
@@ -37,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.qubership.cloud.devops.commons.utils.constant.NamespaceConstants.*;
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.NS_ORIGIN;
 
 
 public class NamespaceMap extends DynamicMap {
@@ -74,8 +76,9 @@ public class NamespaceMap extends DynamicMap {
         CompositeStructureDTO compositeStructureDTO = inputDataService.getCompositeData();
         BgDomainEntityDTO bgDomainEntityDTO = inputDataService.getBGDomainData();
         if (config != null) {
+            String nsOrigin = String.format(NS_ORIGIN, tenant, this.cloud, namespaceName);
             mergeE2E = config.isMergeCustomPramsAndE2EParams();
-            EscapeMap map = new EscapeMap(config.getCustomParameters(), binding, String.format(ParametersConstants.NS_ORIGIN, tenant, this.cloud, namespaceName));
+            EscapeMap map = new EscapeMap(config.getCustomParameters(), binding, String.format(NS_ORIGIN, tenant, this.cloud, namespaceName));
             map.putIfAbsent(NAMESPACE, originalNamespace);
 
             map.put(APP, new Parameter(new NamespaceApplicationMap(config, defaultApp, binding).init()));
@@ -126,7 +129,10 @@ public class NamespaceMap extends DynamicMap {
 
                             if (controller.getCredentials() != null && !controller.getCredentials().isEmpty()) {
                                 Credential credentialPojo = credentialUtils.getCredentialsById(controller.getCredentials());
-                                if (credentialPojo instanceof UsernamePasswordCredentials) {
+                                if (credentialPojo instanceof ExternalCredentials) {
+                                    map.put("BG_CONTROLLER_LOGIN", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "username", nsOrigin));
+                                    map.put("BG_CONTROLLER_PASSWORD", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "password", nsOrigin));
+                                } else if (credentialPojo instanceof UsernamePasswordCredentials) {
                                     UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
                                     map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername());
                                     map.put(BG_CONTROLLER_PASSWORD, usernamePasswordCredentials.getPassword());

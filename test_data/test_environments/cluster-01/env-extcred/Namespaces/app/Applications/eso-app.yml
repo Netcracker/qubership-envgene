@@ -1,0 +1,7 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "eso-app"
+deployParameters:
+  SECRET_FLOW: "external-values" # paramset: extcred version: 1 source: template
+technicalConfigurationParameters: {}

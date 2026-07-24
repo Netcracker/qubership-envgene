@@ -1,0 +1,14 @@
+---
+# CMDB deployer config. username and token reference one paired system Credential through credRef.
+# The token maps to the password property (the external properties enum is username/password only).
+# The Credential entry lives in deployer-creds.yml in this same directory.
+deployer:
+  username:
+    $type: credRef
+    credId: deployer-cred
+    property: username
+  token:
+    $type: credRef
+    credId: deployer-cred
+    property: password
+  deployerUrl: "https://deployer.example.com/"

@@ -539,6 +539,8 @@ mavenConfig:
   targetSnapshot: "snapshot"
   targetStaging: "staging"
   targetRelease: "release"
+  snapshotGroup: "maven-snapshot-group"
+  releaseGroup: "maven-release-group"
 dockerConfig:
   snapshotUri: "{{ regdefs.overrides.docker.snapshotUri | default('docker.qubership.org/snapshot') }}"
   stagingUri: "{{ regdefs.overrides.docker.stagingUri | default('docker.qubership.org/staging') }}"
@@ -565,6 +567,10 @@ name: "application-1"
 registryName: "{{ appdefs.overrides.registryName | default('registry-1') }}"
 artifactId: "application-1"
 groupId: "org.qubership"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 #### Credential Template
@@ -589,14 +595,14 @@ Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `c
 streaming-cred:
   type: external
   create: true
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
   properties:
     - name: username
     - name: password
 consul-creds:
   type: external
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}"
 ```
 
@@ -1377,7 +1383,7 @@ This object, which is an empty file, is used to represent the current Blue-Green
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
 
 **Filename patterns:**
 
@@ -1510,8 +1516,6 @@ A **Secret Store** is a named entry in the instance repository configuration tha
 <secret-store-name>:
   # Mandatory
   type: enum [ vault, azure, aws, gcp ]
-  # Mandatory
-  url: URL
   # Required when type is vault
   mountPath: string
   # Required when type is azure
@@ -1909,8 +1913,7 @@ registry:
     repositoryDomainName: string
     # Mandatory
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Mandatory
     # Staging repository name
@@ -2069,21 +2072,20 @@ registry:
     # Domain name of the registry
     repositoryDomainName: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Staging repository name
     targetStaging: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Release repository name
     targetRelease: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot Maven repository group name
     snapshotGroup: string
     # Optional
@@ -2138,11 +2140,6 @@ registry:
   mavenConfig:
     authConfig: aws-maven
     repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
-    targetSnapshot: "snapshots"
-    targetStaging: "staging"
-    targetRelease: "releases"
-    snapshotGroup: "snapshot-group"
-    releaseGroup: "release-group"
 ```
 
 **Example with GCP Artifact Registry:**
@@ -2168,15 +2165,10 @@ registry:
       gcpRegProject: "123456789012"
       gcpRegPoolId: "idp-pool-id"
       gcpRegProviderId: "idp-provider"
-      gcpRegSAEmail: "test@test.iam.gserviceaccount.com"
+      gcpRegSAEmail: "example@example.com"
   mavenConfig:
     authConfig: gcp-maven
-    repositoryDomainName: "https://artifactregistry.googleapis.com"
-    targetSnapshot: "maven-snapshots"
-    targetStaging: "maven-staging"
-    targetRelease: "maven-releases"
-    snapshotGroup: "maven-snapshots-group"
-    releaseGroup: "maven-releases-group"
+    repositoryDomainName: "https://europe-west1-maven.pkg.dev/123456789012/maven-repo"
 ```
 
 **Example with Azure Artifacts:**
@@ -2258,7 +2250,7 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/regdefs/<registry-name>.yml`
 
-Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Registry Definitions can also be supplied as definition overrides at `/configuration/regdefs/<registry-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
 
 The `credentialsId` field may reference an external Credential. See
 [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
@@ -2518,19 +2510,19 @@ mavenConfig:
   # Domain name of the registry
   repositoryDomainName: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   targetSnapshot: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Staging Maven repository name
   targetStaging: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Release Maven repository name
   targetRelease: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   snapshotGroup: string
   # Optional
@@ -2724,7 +2716,7 @@ authConfig:
     gcpRegProject: 123456789012
     gcpRegPoolId: idp-pool-id
     gcpRegProviderId: idp-provider
-    gcpRegSAEmail: test@test.iam.gserviceaccount.com
+    gcpRegSAEmail: example@example.com
 
   maven-gcp-sa:
     authType: shortLived
@@ -2778,11 +2770,6 @@ authConfig:
 mavenConfig:
   authConfig: aws
   repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
-  targetSnapshot: snapshots
-  targetStaging: staging
-  targetRelease: releases
-  snapshotGroup: snapshot-group
-  releaseGroup: staging-group
 dockerConfig:
   authConfig: aws
   snapshotUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18080
@@ -2839,7 +2826,7 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/appdefs/<application-name>.yml`
 
-Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Application Definitions can also be supplied as definition overrides at `/configuration/appdefs/<application-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
 
 ```yaml
 # Optional
@@ -2857,6 +2844,18 @@ artifactId: string
 # Mandatory
 # Application group ID
 groupId: string
+# Optional
+# Whether the application supports parallel deployment
+supportParallelDeploy: boolean
+# Optional
+# Application-level deploy parameters (may be an empty map)
+deployParameters: hashmap
+# Optional
+# Application-level technical configuration parameters (may be an empty map)
+technicalConfigurationParameters: hashmap
+# Optional
+# Whether this application carries a Solution Descriptor
+solutionDescriptor: boolean
 ```
 
 **Example:**
@@ -2866,6 +2865,10 @@ name: qip
 registryName: sandbox
 artifactId: qip
 groupId: org.qubership
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)

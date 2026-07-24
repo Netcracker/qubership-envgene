@@ -27,3 +27,7 @@ environments:
         deployPostfix: monitoring-origin
       pl-01-pg:
         deployPostfix: pg
+  cluster-01/pl-02:
+    namespaces:
+      ns-test-pl:
+        deployPostfix: ns-test

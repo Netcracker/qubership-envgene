@@ -1,0 +1,7 @@
+---
+# Application Definition template. It carries no credential of its own.
+# It points to a Registry Definition through registryName, and that Registry Definition holds the credential.
+name: "sample-app"
+registryName: "{{ appdefs.overrides.registryName | default('sample-registry') }}"
+artifactId: "sample-app"
+groupId: "org.qubership"

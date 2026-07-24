@@ -1,0 +1,27 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "env-extcred-app"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  DB_ADMIN_CHECK:
+    CONFIG_DEPLOY:
+      param_type: "deploy"
+    DB_ADMIN_SECRET:
+      $type: "credRef"
+      credId: "app-sidecar-token"
+    SECURED_FLAG: "true"
+  SECRET_FLOW: "helm-values"
+  SHARED_PASSWORD:
+    $type: "credRef"
+    credId: "shared-cred"
+    property: "password"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

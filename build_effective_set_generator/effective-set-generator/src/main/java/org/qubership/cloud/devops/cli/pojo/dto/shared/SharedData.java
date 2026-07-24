@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -56,5 +57,14 @@ public class SharedData {
     private Map<String, Object> customDeployParamMap = Collections.emptyMap();
     @Builder.Default
     private Map<String, Object> customRuntimeParamMap = Collections.emptyMap();
+
+    private boolean namespaceScopedCustomParams;
+
+    @Builder.Default
+    private Map<String, Map<String, Object>> namespaceCustomDeployParamMap = Collections.emptyMap();
+    @Builder.Default
+    private Map<String, Map<String, Object>> namespaceCustomRuntimeParamMap = Collections.emptyMap();
+    @Builder.Default
+    private Set<String> customParamsNamespaceKeys = Collections.emptySet();
 
 }

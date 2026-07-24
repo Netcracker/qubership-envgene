@@ -23,6 +23,12 @@ consulConfig:
   tokenSecret: "consul-admin-cred"
   internalUrl: "http://consul-server.consul:8500"
   publicUrl: "https://consul.cluster.example.com"
+vaultConfig:
+  # EnvGene Vault integration is not used in this sample. credentialsId, when set, points to a
+  # secret-type Credential, and may be external like the others.
+  enable: false
+  credentialsId: ""
+  url: ""
 deployParameters:
   # Non-cred Cloud Passport parameters (free-form, propagated as-is)
   CLOUD_API_HOST: "api.cluster.example.com"

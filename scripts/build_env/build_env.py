@@ -354,8 +354,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     if "envSpecificE2EParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"][templateName]
@@ -368,8 +368,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     if "envSpecificTechnicalParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"][templateName]
@@ -383,8 +383,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     return result
 
 
@@ -439,7 +439,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
         Path(source_env_dir).parent,
         Path(all_instances_dir),
     ]
-    
+
     template_params_dir_names = ["configuration", "configurations"]
     shared_template_vars_paths = [level / name for level in levels for name in template_params_dir_names]
     shared_template_vars_paths.append(Path(source_env_dir) / "Inventory")
@@ -468,7 +468,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
 
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, is_external_cred_env=False):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
@@ -527,7 +527,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
-    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir)
+    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir, is_external_cred_env)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
         cloudTemlatePath,

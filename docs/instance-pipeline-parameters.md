@@ -184,6 +184,8 @@ This parameter is used for environments that use Blue-Green Deployment support. 
 If `true`:
   In the pipeline, a job for generating the environment inventory is executed. The new Environment Inventory will be generated in the path `/environments/<ENV_NAME>/Inventory/env_definition.yml`. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
 **Default Value**: `false`
 
 **Mandatory**: No
@@ -193,6 +195,8 @@ If `true`:
 ### `ENV_TEMPLATE_NAME`
 
 **Description**: Specifies the template artifact value within the generated Environment Inventory. This is used together with `ENV_INVENTORY_INIT`.
+
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
 
 System overrides `envTemplate.name` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`:
 
@@ -307,6 +311,10 @@ EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. 
 
 **Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
 
+Two modes are supported. The modes are **mutually exclusive** — a payload that contains both a top-level `deployment`/`runtime` key and a `namespaces` key is rejected with a validation error.
+
+**Global mode** — parameters applied to every namespace.
+
 ```json
 {
   "deployment": {
@@ -320,10 +328,30 @@ EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. 
 }
 ```
 
+**Namespace-scoped mode** — parameters applied only to specific namespaces. If a namespace listed in the payload does not exist in the environment, the Calculator raises a validation error.
+
+```json
+{
+  "namespaces": {
+    "<namespace-name>": {
+      "deployment": {
+        "<key>": "<value>",
+         "...": "..."
+      },
+      "runtime": {
+        "<key>": "<value>",
+         "...": "..."
+      }
+    }
+  }
+}
+```
+
 > [!NOTE]
 >
 > 1. `<value>` can be complex, i.e. a map or a list
 > 2. All keys are optional
+> Passing both a top-level `deployment`/`runtime` key and a `namespaces` key in the same payload causes a validation error. The Calculator will fail before writing any Effective Set output.
 
 **Default Value**: None
 

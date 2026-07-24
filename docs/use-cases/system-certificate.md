@@ -6,13 +6,13 @@
     - [UC-SC-SRC-1: Load and merge certificates from configured sources](#uc-sc-src-1-load-and-merge-certificates-from-configured-sources)
     - [UC-SC-SRC-2: Load default certificate when configured sources are empty](#uc-sc-src-2-load-default-certificate-when-configured-sources-are-empty)
   - [Source merging](#source-merging)
-    - [UC-SC-MRG-2: One source valid and one source invalid](#uc-sc-mrg-2-one-source-valid-and-one-source-invalid)
-    - [UC-SC-MRG-3: Duplicate certificates from different sources](#uc-sc-mrg-3-duplicate-certificates-from-different-sources)
+    - [UC-SC-MRG-1: One source valid and one source invalid](#uc-sc-mrg-1-one-source-valid-and-one-source-invalid)
+    - [UC-SC-MRG-2: Duplicate certificates from different sources](#uc-sc-mrg-2-duplicate-certificates-from-different-sources)
   - [Validation failures](#validation-failures)
     - [UC-SC-VAL-1: Invalid CI/CD bundle fails pipeline](#uc-sc-val-1-invalid-cicd-bundle-fails-pipeline)
     - [UC-SC-VAL-2: Unreadable certificate file in folder fails pipeline](#uc-sc-val-2-unreadable-certificate-file-in-folder-fails-pipeline)
     - [UC-SC-VAL-3: Invalid certificate files in folder fail pipeline](#uc-sc-val-3-invalid-certificate-files-in-folder-fail-pipeline)
-    - [UC-SC-VAL-10: File with valid and invalid PEM blocks](#uc-sc-val-10-file-with-valid-and-invalid-pem-blocks)
+    - [UC-SC-VAL-4: File with valid and invalid PEM blocks](#uc-sc-val-4-file-with-valid-and-invalid-pem-blocks)
   - [Artifactory access](#artifactory-access)
     - [UC-SC-USG-1: Template download from Artifactory with system certificates](#uc-sc-usg-1-template-download-from-artifactory-with-system-certificates)
 
@@ -21,15 +21,11 @@
 This document covers use cases for [system certificate configuration](/docs/features/system-certificate.md).
 For merge rules, validation, and default-certificate behaviour, see the feature specification.
 
-The use cases below use a certificate-loading job as the trigger unless noted otherwise. One of the following jobs runs
-in the instance pipeline (GitLab or GitHub):
+The use cases below use a certificate-loading job as the trigger unless noted otherwise. One of the following instance
+pipeline jobs runs:
 
-1. `app_reg_def_process`
-2. `process_sd`
-3. `env_build`
-4. `generate_effective_set`
-5. `git_commit`
-6. `get_passport`
+1. `env-prepare`
+2. `cmdb_import`
 
 ## Certificate source resolution
 
@@ -71,6 +67,7 @@ A certificate-loading job runs. See [Overview](#overview).
 **Pre-requisites:**
 
 1. `SSL_CERTIFICATES_BUNDLE`, `/ca_bundle`, and `/configuration/certs` are all unset, absent, or empty.
+2. The runner image ships `/default_cert.pem`. Images without the file skip this step and install no certificate.
 
 **Trigger:**
 
@@ -90,7 +87,7 @@ A certificate-loading job runs. See [Overview](#overview).
 
 ## Source merging
 
-### UC-SC-MRG-2: One source valid and one source invalid
+### UC-SC-MRG-1: One source valid and one source invalid
 
 **Pre-requisites:**
 
@@ -115,14 +112,15 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene validates every non-empty configured source.
 3. PEM validation fails in one source.
-4. The job aborts with a certificate loading error.
+4. After all sources are checked, the job fails with a certificate loading error.
 
 **Results:**
 
 1. The job fails with a non-zero exit status.
-2. Pipeline log contains an explicit certificate loading error.
+2. Pipeline log contains an explicit certificate loading error that identifies the invalid source.
+3. No certificate is installed.
 
-### UC-SC-MRG-3: Duplicate certificates from different sources
+### UC-SC-MRG-2: Duplicate certificates from different sources
 
 **Pre-requisites:**
 
@@ -139,7 +137,7 @@ A certificate-loading job runs. See [Overview](#overview).
 
 **Results:**
 
-1. The duplicate certificate is present in the runner trust store once.
+1. The duplicate certificate is applied from both sources without errors.
 2. The job completes successfully.
 
 ## Validation failures
@@ -164,13 +162,14 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene loads `SSL_CERTIFICATES_BUNDLE`.
 3. Base64 decoding, PEM block detection, or PEM validation fails.
-4. The job aborts with a certificate loading error.
+4. After all sources are checked, the job fails with a certificate loading error.
 
 **Results:**
 
 1. The job fails with a non-zero exit status.
-2. Pipeline log contains an explicit error for `SSL_CERTIFICATES_BUNDLE`.
-3. Certificates from other sources are not loaded.
+2. Pipeline log contains one error message that names `SSL_CERTIFICATES_BUNDLE` and lists every other validation
+   problem found across the sources.
+3. No certificate is installed.
 
 ### UC-SC-VAL-2: Unreadable certificate file in folder fails pipeline
 
@@ -188,7 +187,7 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene loads certificate files from the folder source.
 3. Reading a file fails.
-4. The job aborts with a certificate loading error.
+4. After all sources are checked, the job fails with a certificate loading error.
 
 **Results:**
 
@@ -211,14 +210,15 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene validates certificate files in the folder source.
 3. One or more files fail PEM validation.
-4. The job aborts with a single certificate loading error that lists every invalid file path.
+4. After all sources are checked, the job fails with a single certificate loading error that lists every invalid
+   file path.
 
 **Results:**
 
 1. The job fails with a non-zero exit status.
 2. Pipeline log lists every invalid file path in one error message.
 
-### UC-SC-VAL-10: File with valid and invalid PEM blocks
+### UC-SC-VAL-4: File with valid and invalid PEM blocks
 
 **Pre-requisites:**
 
@@ -234,7 +234,7 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene validates the file in the folder source.
 3. PEM validation fails.
-4. The job aborts with a certificate loading error.
+4. After all sources are checked, the job fails with a certificate loading error.
 
 **Results:**
 
@@ -268,7 +268,7 @@ ENV_TEMPLATE_VERSION: <application>:<version>
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs.
+1. The `env-prepare` job runs.
 2. EnvGene loads certificates from `SSL_CERTIFICATES_BUNDLE`.
 3. EnvGene resolves the template from `ENV_TEMPLATE_VERSION` and downloads the artifact from Artifactory over TLS.
 

@@ -8,6 +8,10 @@ from envgenehelper.models import TemplateVersionUpdateMode
 
 
 def update_version(env_definition_dir, version_to_add, update_mode: TemplateVersionUpdateMode):
+    if not version_to_add:
+        logger.info('No ENV_TEMPLATE_VERSION provided, skipping template version update')
+        return
+
     env_definition_path = getEnvDefinitionPath(env_definition_dir)
     logger.info(f"Started version update to {version_to_add} in {env_definition_path}.")
     data = getEnvDefinition(env_instances_dir)

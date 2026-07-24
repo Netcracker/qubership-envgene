@@ -1,0 +1,22 @@
+---
+# Registry Definition template. credentialsId points to a system Credential (here type: external),
+# referenced by the bare credId string form regardless of the Credential's type.
+name: "sample-registry"
+credentialsId: "artifactory-cred"
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides.maven.RepositoryDomainName | default('maven.example.com') }}"
+  fullRepositoryUrl: "{{ regdefs.overrides.maven.fullRepositoryUrl | default('https://maven.example.com/repository') }}"
+  targetSnapshot: "snapshot"
+  targetStaging: "staging"
+  targetRelease: "release"
+  snapshotGroup: "maven-snapshot-group"
+  releaseGroup: "maven-release-group"
+dockerConfig:
+  snapshotUri: "docker.example.com/snapshot"
+  stagingUri: "docker.example.com/staging"
+  releaseUri: "docker.example.com/release"
+  groupUri: "docker.example.com/group"
+  snapshotRepoName: "docker-snapshot"
+  stagingRepoName: "docker-staging"
+  releaseRepoName: "docker-release"
+  groupName: "docker-group"

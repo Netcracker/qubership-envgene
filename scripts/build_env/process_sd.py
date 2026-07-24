@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from collections import Counter
 from os import path, getenv
 from pathlib import Path
 
@@ -30,6 +31,49 @@ WORK_DIR = getenv_with_error('CI_PROJECT_DIR')
 BASE_ENV_PATH = f"{WORK_DIR}/environments/{CLUSTER_NAME}/{ENVIRONMENT_NAME}"
 APP_DEFS_PATH = f"{BASE_ENV_PATH}/AppDefs"
 REG_DEFS_PATH = f"{BASE_ENV_PATH}/RegDefs"
+
+
+def collect_duplicate_apps(applications: list) -> dict:
+    counter = Counter()
+    for app in applications:
+        if isinstance(app, dict):
+            counter[(app.get("version", ""), app.get("deployPostfix", ""))] += 1
+    return {k: v for k, v in counter.items() if v > 1}
+
+
+def validate_input_sd_no_duplicates(sds: list):
+    for idx, sd in enumerate(sds):
+        duplicates = collect_duplicate_apps(sd.get("applications", []))
+        if duplicates:
+            lines = "\n".join(
+                f"  - '{name_ver}' with deployPostfix '{postfix}' appears {count} time(s)"
+                for (name_ver, postfix), count in duplicates.items()
+            )
+            msg = (
+                f"Duplicate applications detected in SD[{idx}]:\n"
+                f"{lines}\n"
+                "Each application must be uniquely identified by its name,version and deployPostfix.\n"
+                "Remove the duplicate entries and re-run the pipeline."
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+
+
+def validate_full_sd_no_duplicates(sd_path: Path, full_sd: dict):
+    duplicates = collect_duplicate_apps(full_sd.get("applications", []))
+    if duplicates:
+        lines = "\n".join(
+            f"  - '{name_ver}' with deployPostfix '{postfix}' appears {count} time(s)"
+            for (name_ver, postfix), count in duplicates.items()
+        )
+        msg = (
+            f"Duplicate applications detected in the existing Full SD ({sd_path}):\n"
+            f"{lines}\n"
+            "Each application must be uniquely identified by its name, version, and deployPostfix.\n"
+            "Remove the duplicate entries and re-run the pipeline."
+        )
+        logger.error(msg)
+        raise ValueError(msg)
 
 
 def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict: dict) -> dict:
@@ -199,6 +243,8 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
             transformed_data.append(transformed_item)
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(sds_from_pipe, namespace_dict)
+    sds_list = transformed_data if isinstance(transformed_data, list) else [transformed_data]
+    validate_input_sd_no_duplicates(sds_list)
     full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
     validate_applications(full_sd_from_pipe, effective_merge_mode)
 
@@ -220,6 +266,8 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
         if not helper.check_file_exists(sd_path):
             helper.writeYamlToFile(sd_path, full_sd_from_pipe)
         else:
+            full_sd_yaml = helper.openYaml(sd_path)
+            validate_full_sd_no_duplicates(sd_path, full_sd_yaml)
             helper.writeYamlToFile(sd_delta_path, full_sd_from_pipe)
             # Call merge_sd with correct merge function
             selected_merge_function = MERGE_METHODS.get(effective_merge_mode)

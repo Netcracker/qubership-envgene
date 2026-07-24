@@ -1,0 +1,12 @@
+{
+  "namespaces": {
+    "pg": {
+      "deployment": {
+        "customparam1": "deployment-custom-value-1"
+      },
+      "runtime": {
+        "customparam1": "runtime-custom-value-1"
+      }
+    }
+  }
+}

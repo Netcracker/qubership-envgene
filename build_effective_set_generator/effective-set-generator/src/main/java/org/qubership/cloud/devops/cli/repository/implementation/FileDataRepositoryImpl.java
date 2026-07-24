@@ -36,6 +36,7 @@ import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionDescriptorDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
+import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
 import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
 import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
@@ -43,7 +44,9 @@ import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
+import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
@@ -61,16 +64,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.qubership.cloud.devops.cli.constants.GenericConstants.*;
+import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.MIXED_CREDS;
 
 
 @ApplicationScoped
 public class FileDataRepositoryImpl implements FileDataRepository {
     private final FileDataConverter fileDataConverter;
     private final InputData inputData;
-    private final String sourceDir;
     private final SharedData sharedData;
-
-    private final BomReaderUtils bomReaderUtils;
     private final FileSystemUtils fileSystemUtils;
 
 
@@ -78,14 +79,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     public FileDataRepositoryImpl(FileDataConverter fileDataConverter,
                                   SharedData sharedData,
                                   InputData inputData,
-                                  BomReaderUtils bomReaderUtils,
                                   FileSystemUtils fileSystemUtils) {
         this.fileDataConverter = fileDataConverter;
         this.inputData = inputData;
         this.sharedData = sharedData;
-        this.bomReaderUtils = bomReaderUtils;
         this.fileSystemUtils = fileSystemUtils;
-        this.sourceDir = String.format("%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId());
     }
 
     /*  **
@@ -220,6 +218,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void traverseSourceDirectory(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+        String sourceDir = String.format("%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId());
         Map<String, ProfileFullDto> profilesMap = new HashMap<>();
         Map<String, NamespaceDTO> namespaceMap = new HashMap<>();
         List<ApplicationLinkDTO> cloudApps = new ArrayList<>();
@@ -338,10 +337,9 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 };
                 Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
                 if (credentialDTOMap != null) {
-                    credentialDTOMap.replaceAll((id, cred) ->
-                            CredentialDTO.builder().credentialsId(id)
-                                    .data(cred.getData()).description(cred.getDescription()).build());
-                    inputData.setCredentialDTOMap(credentialDTOMap);
+                    validateUniformCredentialTypes(credentialDTOMap);
+                    loadSecretStores();
+                 inputData.setCredentialDTOMap(credentialDTOMap);
                 }
                 break;
             case "composite_structure":
@@ -457,6 +455,42 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             }
             inputData.setRegistryDTOMap(registryMap);
         }
+    }
+
+    private void loadSecretStores() {
+        if (!inputData.isExternalOnly()) {
+            return;
+        }
+        Path envPath = Paths.get(sharedData.getEnvsPath());
+        Path basePath = envPath.getParent();
+
+        Path secretStorePath = basePath
+                .resolve("configuration")
+                .resolve("secret-stores.yml");
+
+        TypeReference<Map<String, SecretStoreDTO>> typeRef =
+                new TypeReference<>() {
+                };
+        Map<String, SecretStoreDTO> secretStores = fileDataConverter.parseInputFile(typeRef, new File(secretStorePath.toString()));
+        if (secretStores == null) {
+            throw new ExternalCredProcessingException(String.format("Mandatory file for external cred mode /configuration/secret-stores.yml is not found"));
+        }
+        inputData.setSecretStoreDTOMap(secretStores);
+    }
+    private void validateUniformCredentialTypes(Map<String , CredentialDTO> credentials) {
+        boolean hasExternal = false;
+        boolean hasNonExternal = false;
+        for (CredentialDTO c : credentials.values()) {
+            if (c.getType() == CredentialsTypeEnum.external) {
+                hasExternal = true;
+            } else {
+                hasNonExternal = true;
+            }
+            if (hasExternal && hasNonExternal) {
+                throw new ExternalCredProcessingException(MIXED_CREDS);
+            }
+        }
+        inputData.setExternalOnly(hasExternal);
     }
 
 }

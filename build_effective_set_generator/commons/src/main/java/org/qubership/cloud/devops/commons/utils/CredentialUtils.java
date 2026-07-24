@@ -16,16 +16,20 @@
 
 package org.qubership.cloud.devops.commons.utils;
 
+import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public interface CredentialUtils {
 
 
     Credential getCredentialsById(String id);
+
+    public Map<String, CredentialDTO> getCredsFromYaml();
 
     default String getCredentialsBasicAuthHeader(String credentialId) {
         var credentials =

@@ -1,0 +1,10 @@
+version: 1
+name: extcred
+parameters: {}
+applications:
+  - appName: "eso-app"
+    parameters:
+      SECRET_FLOW: external-values
+  - appName: "vals-app"
+    parameters:
+      INTEGRATED_SYSTEMS: ABC

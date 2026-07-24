@@ -1,0 +1,16 @@
+---
+# The same namespace template serves the non-BG baseline and the BGD descriptor.
+name: "{{ current_env.name }}-bss"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{ current_env.name }}"
+  - "solution-{{ current_env.tenant }}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
