@@ -6,7 +6,7 @@ from pathlib import Path
 import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
-from envgenehelper.business_helper import get_version
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_version
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
@@ -213,7 +213,7 @@ def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mod
         source_name, version = get_version(entry)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env)
+        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
 
         app_data_list.append(app_data)
 
@@ -222,9 +222,9 @@ def download_sds_by_version(env, base_sd_path, app_versions, effective_merge_mod
 
 
 def download_sd_by_appver(
-    app_name: str, version: str, plugins: PluginEngine, env: Environment,
+    app_name: str, version: str, plugins: PluginEngine,
 ) -> dict[str, object]:
-    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins, env)
+    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins)
 
     env_creds = helper.get_cred_config()
     auth_headers = app_def.registry.resolve_auth(env_creds)
@@ -236,16 +236,15 @@ def download_sd_by_appver(
     return artifact.download_json_content(artifact_info.source_url, auth_headers=auth_headers)
 
 
-def get_appdef_for_app(
-    appver: str, plugins: PluginEngine, env: Environment,
-) -> artifact_models.Application:
+def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Application:
     app_name, _ = get_version(appver)
     results = plugins.run(appver=appver)
     for result in results:
         if result is not None:
             return result
-    app_defs_path = f"{env.env_path}/AppDefs"
-    reg_defs_path = f"{env.env_path}/RegDefs"
+    env_path = get_current_env_dir_from_env_vars()
+    app_defs_path = f"{env_path}/AppDefs"
+    reg_defs_path = f"{env_path}/RegDefs"
     app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
     reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")
