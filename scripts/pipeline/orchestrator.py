@@ -171,15 +171,17 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
+def should_run_appregdef_and_env_build(ctx: PipelineParametersHandler) -> bool:
+    return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+
+
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
-            return False
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
+        return should_run_appregdef_and_env_build(ctx)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
@@ -215,7 +217,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+        return should_run_appregdef_and_env_build(ctx)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = run_build_environment()
