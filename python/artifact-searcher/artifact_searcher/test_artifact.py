@@ -15,6 +15,7 @@ TEST_REPO = "https://repo.example.com/repository/"
 GROUP_ID = "com.example"
 ARTIFACT_ID = "demo"
 VERSION = "1.0.0"
+TIMESTAMPED_VERSION = "1.0.0-20240702.123456-1"
 
 class MockResponse:
     def __init__(self, status_code):
@@ -158,6 +159,58 @@ def test_artifact_not_found(mock_nexus, mock_folder, mock_name, mock_head):
         ARTIFACT_ID,
         VERSION,
         FileExtension.ZIP
+    )
+
+    assert result is None
+
+
+@patch("artifact_searcher.artifact.requests.head")
+@patch("artifact_searcher.artifact.MavenConfig.is_nexus")
+def test_timestamped_artifact_found_in_exact_version_folder(mock_nexus, mock_head):
+    mock_nexus.return_value = False
+
+    not_found = Mock()
+    not_found.status_code = 404
+    found = Mock()
+    found.status_code = 200
+    exact_url = (
+        "https://repo.example.com/repository/com/example/demo/"
+        "1.0.0-20240702.123456-1/demo-1.0.0-20240702.123456-1.json"
+    )
+
+    def mock_head_by_url(url, **_):
+        if url == exact_url:
+            return found
+        return not_found
+
+    mock_head.side_effect = mock_head_by_url
+
+    result = check_artifact(
+        TEST_REPO,
+        GROUP_ID,
+        ARTIFACT_ID,
+        TIMESTAMPED_VERSION,
+        FileExtension.JSON,
+    )
+
+    assert result == exact_url
+
+
+@patch("artifact_searcher.artifact.requests.head")
+@patch("artifact_searcher.artifact.MavenConfig.is_nexus")
+def test_timestamped_artifact_not_found_when_all_folders_miss(mock_nexus, mock_head):
+    mock_nexus.return_value = False
+
+    response = Mock()
+    response.status_code = 404
+    mock_head.side_effect = [response, response]
+
+    result = check_artifact(
+        TEST_REPO,
+        GROUP_ID,
+        ARTIFACT_ID,
+        TIMESTAMPED_VERSION,
+        FileExtension.JSON,
     )
 
     assert result is None

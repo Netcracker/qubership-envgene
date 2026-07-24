@@ -5,6 +5,7 @@ import re
 import shutil
 import tempfile
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
@@ -18,6 +19,7 @@ from artifact_searcher.utils.models import Registry, RegistryV2, Application, Fi
 from envgenehelper import logger
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
+TIMESTAMPED_VERSION_PATTERN = re.compile(r"-\d{8}\.\d{6}-\d+$")
 
 
 def convert_nexus_repo_url_to_index_view(url: str) -> str:
@@ -35,23 +37,24 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
     return urlunparse(parsed._replace(path=new_path))
 
 
-def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
+def create_artifact_path(app: Application, version: str, repo: str = "",
+                         use_exact_version_folder: bool = False) -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
-    folder = version_to_folder_name(version)
-    
+    folder = _get_version_folder(version, use_exact_version_folder)
+
     # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
     if repo:
         path = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
     else:
         path = f"{group_id}/{app.artifact_id}/{folder}/"
-    
+
     return urljoin(registry_url, path)
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
-                    classifier: str = "") -> str:
-    base_path = create_artifact_path(app, version, repo)
+                    classifier: str = "", use_exact_version_folder: bool = False) -> str:
+    base_path = create_artifact_path(app, version, repo, use_exact_version_folder)
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     return urljoin(base_path, filename)
 
@@ -127,12 +130,53 @@ def version_to_folder_name(version: str):
     If version is timestamped snapshot (e.g. '1.0.0-20240702.123456-1'), it replaces the timestamp suffix with
     '-SNAPSHOT'. Otherwise, returns the version unchanged
     """
-    snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
-    if snapshot_pattern.search(version):
-        folder = snapshot_pattern.sub("-SNAPSHOT", version)
+    if TIMESTAMPED_VERSION_PATTERN.search(version):
+        folder = TIMESTAMPED_VERSION_PATTERN.sub("-SNAPSHOT", version)
     else:
         folder = version
     return folder
+
+
+def _get_version_folder(version: str, use_exact_version_folder: bool = False) -> str:
+    if use_exact_version_folder:
+        return version
+    return version_to_folder_name(version)
+
+
+def _create_candidate_urls(app: Application, version: str, repo: str, artifact_extension: FileExtension,
+                           classifier: str = "") -> list[str]:
+    urls = [create_full_url(app, version, repo, artifact_extension, classifier)]
+    if TIMESTAMPED_VERSION_PATTERN.search(version):
+        urls.append(create_full_url(app, version, repo, artifact_extension, classifier, True))
+    return urls
+
+
+def _create_candidate_urls_from_coordinates(repo_url: str, group_id: str, artifact_id: str, version: str,
+                                            artifact_extension: FileExtension, classifier: str = "") -> list[str]:
+    filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
+    base = repo_url.rstrip("/") + "/"
+    snapshot_folder = version_to_folder_name(version)
+
+    urls = [urljoin(base, f"{group_id}/{artifact_id}/{snapshot_folder}/{filename}")]
+    if TIMESTAMPED_VERSION_PATTERN.search(version):
+        urls.append(urljoin(base, f"{group_id}/{artifact_id}/{version}/{filename}"))
+    return urls
+
+
+async def _check_candidate_url_async(session, full_url: str) -> tuple[str, int | None, Exception | None]:
+    try:
+        async with session.head(full_url) as response:
+            return full_url, response.status, None
+    except Exception as e:
+        return full_url, None, e
+
+
+def _check_candidate_url(full_url: str, auth_headers: dict | None = None) -> tuple[str, int | None, Exception | None]:
+    try:
+        response = requests.head(full_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+        return full_url, response.status_code, None
+    except Exception as e:
+        return full_url, None, e
 
 
 def clean_temp_dir():
@@ -153,7 +197,7 @@ async def download_all_async(artifacts_info: list[ArtifactInfo]):
         # Use sorted tuple of auth items as key, or "none" for None
         auth_key = tuple(sorted(artifact.auth_headers.items())) if artifact.auth_headers else "none"
         auth_groups[auth_key].append(artifact)
-    
+
     all_results = []
     for auth_key, artifacts in auth_groups.items():
         headers = artifacts[0].auth_headers
@@ -174,9 +218,9 @@ async def download_all_async(artifacts_info: list[ArtifactInfo]):
 
             if errors:
                 raise ValueError("Some tasks failed:\n" + "\n".join(errors))
-            
+
             all_results.extend(results)
-    
+
     return all_results
 
 
@@ -240,18 +284,28 @@ async def check_artifact_by_full_url_async(
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
 
-    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
-    try:
-        async with session.head(full_url) as response:
-            if response.status == 200:
-                stop_artifact_event.set()
-                logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
-                return full_url, repo
+    candidate_urls = _create_candidate_urls(app, resolved_version, repo_value, artifact_extension, classifier)
+    async with asyncio.TaskGroup() as tg:
+        tasks = [tg.create_task(_check_candidate_url_async(session, full_url)) for full_url in candidate_urls]
+    candidate_results = [task.result() for task in tasks]
+
+    for full_url, status, _ in candidate_results:
+        if status == 200:
+            stop_artifact_event.set()
+            logger.info(
+                f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}"
+            )
+            return full_url, repo
+
+    for full_url, status, error in candidate_results:
+        if error:
             logger.warning(
-                f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
-    except Exception as e:
-        logger.warning(
-            f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
+                f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {error}"
+            )
+        else:
+            logger.warning(
+                f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {status}"
+            )
 
 
 def _is_cloud_provider(registry) -> bool:
@@ -433,7 +487,7 @@ def create_aql_artifact(app: Application, artifact_extension: FileExtension, ver
 
 
 def check_artifacts_by_aql(aql: str, url: str = "",
-                            auth_headers: dict | None = None) -> list[ArtifactInfo]:
+                           auth_headers: dict | None = None) -> list[ArtifactInfo]:
     artifacts = []
     base_url = url.rstrip('/')
     response = requests.post(f"{base_url}/api/search/aql", data=aql, headers=auth_headers)
@@ -490,23 +544,32 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
             return None
         version = resolved_version
 
-    folder = version_to_folder_name(version)
-    filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
-    full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
-    try:
-        response = requests.head(full_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
-        if response.status_code == 200:
+    candidate_urls = _create_candidate_urls_from_coordinates(
+        repo_url, group_id, artifact_id, version, artifact_extension, classifier
+    )
+    with ThreadPoolExecutor(max_workers=len(candidate_urls)) as executor:
+        futures = [
+            executor.submit(_check_candidate_url, full_url, auth_headers)
+            for full_url in candidate_urls
+        ]
+        candidate_results = [future.result() for future in futures]
+
+    for full_url, status, _ in candidate_results:
+        if status == 200:
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
             )
             return full_url
-        logger.warning(
-            f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact not found at URL {full_url}, status: {response.status_code}"
-        )
-    except Exception as e:
-        logger.warning(
-            f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Error checking artifact URL {full_url}: {e}"
-        )
+
+    for full_url, status, error in candidate_results:
+        if error:
+            logger.warning(
+                f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Error checking artifact URL {full_url}: {error}"
+            )
+        else:
+            logger.warning(
+                f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact not found at URL {full_url}, status: {status}"
+            )
 
     return None
 
