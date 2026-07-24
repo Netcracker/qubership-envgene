@@ -354,8 +354,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     if "envSpecificE2EParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"][templateName]
@@ -368,8 +368,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     if "envSpecificTechnicalParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"][templateName]
@@ -383,8 +383,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     return result
 
 
