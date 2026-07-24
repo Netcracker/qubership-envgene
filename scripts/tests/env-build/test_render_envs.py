@@ -1,13 +1,11 @@
-import os
 from os import environ
 
 import pytest
-from envgenehelper import *
-from envgenehelper.business_helper import NamespaceRole
 
 from build_env.main import render_environment
+from envgenehelper import *
+from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.test_helpers import TestHelpers
-
 from envgenehelper.test_helpers.base import BaseTest
 
 test_data = [
@@ -27,6 +25,14 @@ test_data = [
 
 
 class TestEnvBuild(BaseTest):
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_environments_dir(self):
+        environments_dir = self.test_data_dir / "environments"
+        shutil.rmtree(environments_dir, ignore_errors=True)
+        shutil.copytree(self.test_data_dir / "test_environments", environments_dir)
+        yield
+        shutil.rmtree(environments_dir, ignore_errors=True)
+
     @pytest.fixture(autouse=True)
     def change_test_dir(self, monkeypatch):
         monkeypatch.chdir(self.base_dir)
@@ -43,6 +49,9 @@ class TestEnvBuild(BaseTest):
 
         os.environ['CI_COMMIT_REF_NAME'] = "branch_name"
         environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
+        environ['CLUSTER_NAME'] = cluster_name
+        environ['ENVIRONMENT_NAME'] = env_name
+        environ['CI_PROJECT_DIR'] = str(self.test_data_dir)
 
         render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, g_output_dir, self.test_data_dir)
         source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
