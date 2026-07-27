@@ -123,10 +123,6 @@ class TestPipelineParametersFromEnv:
 def mock_worktrees(monkeypatch):
     monkeypatch.setattr("pipeline.multi_env_runner._create_worktree", lambda *args: None)
     monkeypatch.setattr("pipeline.multi_env_runner._remove_worktree", lambda *args: None)
-    monkeypatch.setattr(
-        "pipeline.multi_env_runner._copy_worktree_outputs",
-        lambda worktree_path, main_path, full_env_name: None,
-    )
 
 
 class TestDispatch:
@@ -148,16 +144,11 @@ class TestDispatch:
         monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
         runs: list[tuple[str, Path, Path]] = []
-        copied: list[tuple[str, Path]] = []
 
         def fake_run_child(full_env_name, worktree_path, logs_dir):
             runs.append((full_env_name, worktree_path, logs_dir))
             return 0
 
-        monkeypatch.setattr(
-            "pipeline.multi_env_runner._copy_worktree_outputs",
-            lambda worktree_path, main_path, full_env_name: copied.append((full_env_name, worktree_path)),
-        )
         monkeypatch.setattr("pipeline.multi_env_runner._run_child_subprocess", fake_run_child)
         monkeypatch.setattr("pipeline.orchestrator.run_single_env_pipeline", pytest.fail)
 
@@ -174,7 +165,6 @@ class TestDispatch:
                 tmp_path / "tmp" / "logs",
             ),
         ]
-        assert sorted(copied) == [r[:2] for r in sorted(runs)]
 
     @pytest.mark.unit
     def test_multi_env_collects_failures(self, monkeypatch, tmp_path, mock_worktrees):

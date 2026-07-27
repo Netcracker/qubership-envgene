@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from envgenehelper import logger
-from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
 
 _MAX_FAN_OUT_WORKERS = 5
 
@@ -55,22 +54,6 @@ def _remove_worktree(base_repo: Path, worktree_path: Path) -> None:
             stderr=subprocess.PIPE,
             text=True,
         )
-
-
-def _copy_worktree_outputs(worktree_path: Path, main_path: Path, full_env_name: str) -> None:
-    cluster_name, env_name = full_env_name.split("/", 1)
-    sparse_paths = list(REPO_ROOT_PATHS)
-    sparse_paths.extend(get_env_artifact_paths(cluster_name, env_name))
-    for rel_path in sparse_paths:
-        src = worktree_path / rel_path
-        if not src.exists():
-            continue
-        dst = main_path / rel_path
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        if src.is_dir():
-            shutil.copytree(src, dst, dirs_exist_ok=True)
-        else:
-            shutil.copy2(src, dst)
 
 
 def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
@@ -158,15 +141,12 @@ def fan_out(env_names: Sequence[str]) -> int:
             }
             for future in as_completed(futures):
                 full_env_name = futures[future]
-                worktree_path = env_to_worktree[full_env_name]
                 try:
                     returncode = future.result()
                 except Exception:
                     logger.exception(f"Failed to run pipeline for {full_env_name}")
                     returncode = 1
-                if returncode == 0:
-                    _copy_worktree_outputs(worktree_path, main_path, full_env_name)
-                else:
+                if returncode != 0:
                     failed.append(full_env_name)
     finally:
         for worktree_path in env_to_worktree.values():
