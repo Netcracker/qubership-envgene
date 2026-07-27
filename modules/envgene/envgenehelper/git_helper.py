@@ -119,7 +119,9 @@ class GitRepoManager:
         if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
             return []
         # effective set is pushed to a separate deploy target repo by es_pusher
-        return [f"environments/{self.cluster_name}/{self.env_name}/effective-set"]
+        return [f"environments/{self.cluster_name}/{self.env_name}/effective-set/deployment",
+                f"environments/{self.cluster_name}/{self.env_name}/effective-set/cleanup",
+                f"environments/{self.cluster_name}/{self.env_name}/effective-set/runtime"]
 
     @property
     def _repo_root(self) -> Path:

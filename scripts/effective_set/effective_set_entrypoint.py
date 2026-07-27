@@ -18,15 +18,11 @@ from effective_set.handle_effective_set_config import handle_effective_set_confi
 
 
 def effective_set_entrypoint(ctx):
-    is_new_flow = ctx.is_gitlab_deploy()
-
     full_env_name = getenv("FULL_ENV_NAME")
     effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
     entries = ctx.deploy_plan.entities
 
-    if is_new_flow:
-        _run_deploy_plan_full(effective_set_dir, full_env_name, entries)
-    elif ctx.es_generation_mode == GenerationMode.FULL:
+    if ctx.es_generation_mode == GenerationMode.FULL:
         _run_deploy_plan_full(effective_set_dir, full_env_name, entries)
     elif ctx.partial_merge_mode == PartialMergeMode.FORWARD:
         _run_deploy_plan_partial(effective_set_dir, full_env_name, ctx.deploy_plan_delta.entities)

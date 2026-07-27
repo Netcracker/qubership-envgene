@@ -6,8 +6,7 @@ from enum import StrEnum
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.effective_set_helper import resolve_es_generation_mode, GenerationMode, PartialMergeMode, \
-    resolve_partial_merge_mode
+from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_bg_manage
@@ -24,8 +23,8 @@ from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.pipeline_parameters import PipelineParametersHandler
-from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
-from sd.process_sd import handle_sd, resolve_sd_parameters
+from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
+from sd.process_sd import handle_sd
 
 
 class StepStatus(StrEnum):
@@ -115,27 +114,16 @@ class ProcessSdStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy() or OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
             return False
-        application_versions = resolve_sd_parameters(ctx)
-        if application_versions:
-            ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
-        return bool(application_versions)
+        sd_version = ctx.params.get("SD_VERSION")
+        sd_data = ctx.params.get("SD_DATA")
+        if sd_version and sd_data:
+            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+        return bool(sd_version or sd_data)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)
         if ctx.es_generation_mode == GenerationMode.PARTIAL:
             ctx.partial_merge_mode = resolve_partial_merge_mode()
-
-
-class CleanNamespacesStep(PipelineStep):
-    @property
-    def name(self) -> str:
-        return "clean_namespaces"
-
-    def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN
-
-    def execute(self, ctx: PipelineParametersHandler) -> None:
-        clean_namespaces(ctx.namespace_by_deploy_postfix, ctx.params.get('NAMESPACE_NAMES'))
 
 
 class MigrateSdToDeployPlanStep(PipelineStep):
@@ -146,7 +134,11 @@ class MigrateSdToDeployPlanStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
             return False
-        if resolve_sd_parameters(ctx):
+        sd_version = ctx.params.get("SD_VERSION")
+        sd_data = ctx.params.get("SD_DATA")
+        if sd_version and sd_data:
+            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+        if sd_version or sd_data:
             return True
         needs_migration = get_sd_dir().joinpath(SD_FILE_NAME).is_file() and not EnvgeneDeployPlan.path().is_file()
         if needs_migration:
@@ -177,15 +169,17 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
+def should_run_appregdef_and_env_build(ctx: PipelineParametersHandler) -> bool:
+    return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+
+
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
-            return False
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
+        return should_run_appregdef_and_env_build(ctx)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
@@ -197,7 +191,7 @@ class DeployPostfixNamespaceMapStep(PipelineStep):
         return "deploy_postfix_namespace_map"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
+        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = compute_namespace_map()
@@ -221,7 +215,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+        return should_run_appregdef_and_env_build(ctx)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = run_build_environment()
@@ -275,7 +269,6 @@ def run_unified_pipeline() -> None:
         AppregdefRenderStep(),
         DeployPostfixNamespaceMapStep(),
         ProcessSdStep(),
-        CleanNamespacesStep(),
         MigrateSdToDeployPlanStep(),
         GenerateDeploymentPlanStep(),
         EnvBuildStep(),
