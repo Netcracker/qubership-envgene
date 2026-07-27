@@ -39,24 +39,24 @@ class GitContext(BaseModel):
                 "platform": "github",
                 "server_protocol": "https",
                 "server_host": "github.com",
-                "project_path": os.getenv("GITHUB_REPOSITORY"),
-                "ref_name": os.getenv("GITHUB_REF_NAME"),
-                "user_email": os.getenv("GITHUB_USER_EMAIL"),
-                "user_name": os.getenv("GITHUB_USER_NAME"),
-                "token": os.getenv("GITHUB_TOKEN"),
-                "commit_sha": os.getenv("GITHUB_SHA")
+                "project_path": getenv_with_error("GITHUB_REPOSITORY"),
+                "ref_name": getenv_with_error("GITHUB_REF_NAME"),
+                "user_email": getenv_with_error("GITHUB_USER_EMAIL"),
+                "user_name": getenv_with_error("GITHUB_USER_NAME"),
+                "token": getenv_with_error("GITHUB_TOKEN", no_log=True),
+                "commit_sha": getenv_with_error("GITHUB_SHA")
             }
         elif os.getenv("GITLAB_CI"):
             data = {
                 "platform": "gitlab",
-                "server_protocol": os.getenv("CI_SERVER_PROTOCOL"),
-                "server_host": os.getenv("CI_SERVER_HOST"),
-                "project_path": os.getenv("CI_PROJECT_PATH"),
-                "ref_name": os.getenv("CI_COMMIT_REF_NAME"),
-                "user_email": os.getenv("GITLAB_USER_EMAIL"),
-                "user_name": os.getenv("GITLAB_USER_LOGIN"),
-                "token": os.getenv("GITLAB_TOKEN"),
-                "commit_sha": os.getenv("CI_COMMIT_SHA")
+                "server_protocol": getenv_with_error("CI_SERVER_PROTOCOL"),
+                "server_host": getenv_with_error("CI_SERVER_HOST"),
+                "project_path": getenv_with_error("CI_PROJECT_PATH"),
+                "ref_name": getenv_with_error("CI_COMMIT_REF_NAME"),
+                "user_email": getenv_with_error("GITLAB_USER_EMAIL"),
+                "user_name": getenv_with_error("GITLAB_USER_LOGIN"),
+                "token": getenv_with_error("GITLAB_TOKEN", no_log=True),
+                "commit_sha": getenv_with_error("CI_COMMIT_SHA")
             }
         elif os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
             data = {
