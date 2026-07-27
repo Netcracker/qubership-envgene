@@ -495,10 +495,6 @@ def load_json_or_yaml(content: str):
 
 
 class _ThreadLocalYaml:
-    """ruyaml YAML objects are not thread-safe. This proxy gives each thread
-    its own processor so concurrent load/dump operations do not corrupt
-    shared parser state."""
-
     def __init__(self, is_safe: bool = False):
         self.is_safe = is_safe
         self._local = threading.local()
