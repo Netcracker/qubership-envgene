@@ -2,6 +2,8 @@ import os
 
 os.environ.setdefault("CI_PROJECT_DIR", "/tmp")
 os.environ.setdefault("ENV_NAMES", "cluster-01/env-01")
+os.environ.setdefault("CLUSTER_NAME", "cluster-01")
+os.environ.setdefault("ENVIRONMENT_NAME", "env-01")
 
 import pytest
 
