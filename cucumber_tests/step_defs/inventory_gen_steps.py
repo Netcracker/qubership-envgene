@@ -177,7 +177,7 @@ def repo_state_identical(workspace):
     compare_directories(
         workspace.pre_run_snapshot_dir,
         workspace.base_dir,
-        ignore_patterns=["build.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*"],
+        ignore_patterns=["build.env", "envgene-vars.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*"],
     )
 
 
