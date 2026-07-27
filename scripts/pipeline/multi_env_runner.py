@@ -8,7 +8,7 @@ from pathlib import Path
 
 from envgenehelper import logger
 
-_MAX_FAN_OUT_WORKERS = 5
+_MAX_FAN_OUT_WORKERS = 3
 
 
 def _worktree_path(base_dir: Path, full_env_name: str) -> Path:
@@ -71,7 +71,6 @@ def _run_child_subprocess(
     logger.info(
         f"========== START: multi-env child {full_env_name} (log: {log_path}) =========="
     )
-    # Pass the target env as argv so the child skips dispatch()/resolve_env_names().
     proc = subprocess.Popen(
         [sys.executable, "-m", "pipeline.orchestrator", full_env_name],
         env=_child_env_for(worktree_path),
