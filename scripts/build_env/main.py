@@ -19,7 +19,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     delete_dir(render_dir)
     delete_dir(render_parameters_dir)
     delete_dir(render_profiles_dir)
-    render_env_dir = render_dir
+    render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
@@ -100,9 +100,9 @@ def handle_template_override(render_dir):
 def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    render_dir = f"{base_dir}/tmp/render/{cluster_name}/{env_name}"
-    render_parameters_dir = f"{base_dir}/tmp/parameters_templates/{cluster_name}/{env_name}"
-    render_profiles_dir = f"{base_dir}/tmp/resource_profiles/{cluster_name}/{env_name}"
+    render_dir = f"{base_dir}/tmp/render"
+    render_parameters_dir = f"{base_dir}/tmp/parameters_templates"
+    render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
 
 
     namespaces_path = get_namespaces_path()
