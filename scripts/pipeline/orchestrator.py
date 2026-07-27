@@ -268,8 +268,8 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
-def run_single_env_pipeline() -> None:
-    ctx = PipelineParametersHandler.from_env()
+def run_single_env_pipeline(full_env_name: str) -> None:
+    ctx = PipelineParametersHandler.from_env(full_env_name)
     ctx.log_pipeline_params()
     ctx.write_dotenv()
 
@@ -316,10 +316,10 @@ def run_single_env_pipeline() -> None:
 def dispatch() -> int:
     env_names = resolve_env_names()
     if len(env_names) <= 1:
-        run_single_env_pipeline()
+        run_single_env_pipeline(env_names[0])
         return 0
 
-    handler = PipelineParametersHandler.from_env(allow_multi_env=True)
+    handler = PipelineParametersHandler.from_env(env_names[0])
     handler.write_dotenv(exclude_keys={"ENV_NAMES"})
 
     return fan_out(env_names)

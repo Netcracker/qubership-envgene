@@ -2,8 +2,6 @@ import os
 
 os.environ.setdefault("CI_PROJECT_DIR", "/tmp")
 os.environ.setdefault("ENV_NAMES", "cluster-01/env-01")
-os.environ.setdefault("CLUSTER_NAME", "cluster-01")
-os.environ.setdefault("ENVIRONMENT_NAME", "env-01")
 
 import pytest
 
@@ -34,7 +32,7 @@ def pipeline_env(monkeypatch, tmp_path):
 def _ctx(**overrides) -> PipelineParametersHandler:
     for key, value in overrides.items():
         os.environ[key] = str(value).lower() if isinstance(value, bool) else str(value)
-    return PipelineParametersHandler.from_env()
+    return PipelineParametersHandler.from_env("cluster-01/env-01")
 
 
 class TestStepGating:

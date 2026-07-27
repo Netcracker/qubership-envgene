@@ -99,10 +99,8 @@ class TestResolveEnvNames:
 
 class TestPipelineParametersFromEnv:
     @pytest.mark.unit
-    def test_populates_fields_from_env_names(self, monkeypatch):
-        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
-
-        ctx = PipelineParametersHandler.from_env()
+    def test_populates_fields_from_full_env_name(self, monkeypatch):
+        ctx = PipelineParametersHandler.from_env("cluster-01/env-01")
 
         assert ctx.full_env_name == "cluster-01/env-01"
         assert ctx.cluster_name == "cluster-01"
@@ -112,11 +110,13 @@ class TestPipelineParametersFromEnv:
         assert os.environ["ENVIRONMENT_NAME"] == "env-01"
 
     @pytest.mark.unit
-    def test_rejects_multiple_env_names(self, monkeypatch):
-        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
+    def test_resolve_then_from_env(self, monkeypatch):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
 
-        with pytest.raises(ValueError, match="exactly one value"):
-            PipelineParametersHandler.from_env()
+        env_names = resolve_env_names()
+        ctx = PipelineParametersHandler.from_env(env_names[0])
+
+        assert ctx.full_env_name == "cluster-01/env-01"
 
 
 @pytest.fixture
@@ -137,11 +137,11 @@ class TestDispatch:
 
         monkeypatch.setattr(
             "pipeline.orchestrator.run_single_env_pipeline",
-            lambda: called.append("run"),
+            lambda full_env_name: called.append(full_env_name),
         )
 
         assert dispatch() == 0
-        assert called == ["run"]
+        assert called == ["cluster-01/env-01"]
 
     @pytest.mark.unit
     def test_multi_env_fan_out_runs_subprocess_per_env(self, monkeypatch, tmp_path, mock_worktrees):
