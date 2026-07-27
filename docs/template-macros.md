@@ -399,23 +399,21 @@ A member has one of two kinds. A namespace member carries `originNamespace`. A B
 `originNamespace`, `peerNamespace` and `controllerNamespace`. The member kind is implied by the presence of
 `peerNamespace` and `controllerNamespace`. `satellites` may be absent or empty when the composite has only a baseline.
 
-The variable is derived from the [Composite Structure](/docs/envgene-objects.md#composite-structure) object and the
-[BG Domain](/docs/envgene-objects.md#bg-domain) object. Each member resolves its namespace template to the rendered
-namespace name.
+The variable is derived from the [Composite Structure](/docs/envgene-objects.md#composite-structure) object alone, which
+embeds any inline Blue-Green domain as a `bgdomain` member. Each member resolves its namespace template to the rendered
+namespace name. The value is `{}` for environments without a Composite Structure, including a non-composite Blue-Green
+environment that uses a standalone [BG Domain](/docs/envgene-objects.md#bg-domain) object.
 
-For a composite with a Blue-Green baseline the value resolves as follows.
+For a composite with a Blue-Green satellite the value resolves as follows.
 
 ```yaml
 baseline:
-  originNamespace: env-1-bss-orgn
-  peerNamespace: env-1-bss-peer
-  controllerNamespace: env-1-ctrl
+  originNamespace: env-1-core
 satellites:
-  - originNamespace: env-1-data-management
+  - originNamespace: env-1-bss-orgn
+    peerNamespace: env-1-bss-peer
+    controllerNamespace: env-1-bss-ctrl
 ```
-
-> [!NOTE]
-> The value is `{}` for environments without Composite Structure.
 
 **Type:** HashMap
 
