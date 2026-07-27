@@ -22,35 +22,35 @@ def resolve_env_names() -> list[str]:
     cluster_name = os.getenv("CLUSTER_NAME")
     env_name = os.getenv("ENVIRONMENT_NAME")
 
-    if env_names:
-        if cluster_name or env_name:
-            raise ValueError(
-                "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
-                "but not both at the same time"
-            )
-        parsed = split_multi_value_param(env_names)
-        for full_env_name in parsed:
-            if "/" not in full_env_name:
-                raise ValueError(
-                    f"Invalid environment name '{full_env_name}'. "
-                    f"Expected format: <cluster>/<env>"
-                )
-        resolved = parsed
-    else:
-        if not cluster_name or not env_name:
-            raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
+    if env_names and (cluster_name or env_name):
+        raise ValueError(
+            "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
+            "but not both at the same time"
+        )
 
-        full_env_name = f"{cluster_name}/{env_name}"
-        os.environ["ENV_NAMES"] = full_env_name
-        resolved = [full_env_name]
+    if env_names:
+        names = split_multi_value_param(env_names)
+    elif cluster_name and env_name:
+        env_names = f"{cluster_name}/{env_name}"
+        os.environ["ENV_NAMES"] = env_names
+        names = [env_names]
+    else:
+        raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
+
+    for name in names:
+        if "/" not in name:
+            raise ValueError(
+                f"Invalid environment name '{name}'. "
+                f"Expected format: <cluster>/<env>"
+            )
 
     pipeline_type = getenv("PIPELINE_TYPE")
-    if pipeline_type and PipelineType(pipeline_type) == PipelineType.GITLAB_DEPLOY and len(resolved) > 1:
+    if pipeline_type and PipelineType(pipeline_type) == PipelineType.GITLAB_DEPLOY and len(names) > 1:
         raise ValueError(
             "Multiple values in ENV_NAMES are not supported when PIPELINE_TYPE is GITLAB_DEPLOY"
         )
 
-    return resolved
+    return names
 
 
 class PipelineParametersHandler(BaseModel):
