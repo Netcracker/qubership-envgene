@@ -1,3 +1,4 @@
+import sys
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -342,4 +343,4 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(dispatch())
+    sys.exit(dispatch())

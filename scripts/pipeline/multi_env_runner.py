@@ -9,7 +9,6 @@ from pathlib import Path
 from envgenehelper import logger
 from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
 
-ORCHESTRATOR_MODULE = "pipeline.orchestrator"
 _MAX_FAN_OUT_WORKERS = 5
 
 
@@ -95,7 +94,7 @@ def _run_child_subprocess(
         f"========== START: multi-env child {full_env_name} (log: {log_path}) =========="
     )
     proc = subprocess.Popen(
-        [sys.executable, "-m", ORCHESTRATOR_MODULE],
+        [sys.executable, "-m", "pipeline.orchestrator"],
         env=_child_env_for(full_env_name, worktree_path),
         cwd=worktree_path,
         stdout=subprocess.PIPE,
