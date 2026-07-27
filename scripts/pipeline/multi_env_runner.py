@@ -56,13 +56,8 @@ def _remove_worktree(base_repo: Path, worktree_path: Path) -> None:
         )
 
 
-def _child_env_for(full_env_name: str, worktree_path: Path) -> dict[str, str]:
-    cluster_name, env_name = full_env_name.split("/", 1)
+def _child_env_for(worktree_path: Path) -> dict[str, str]:
     child = dict(os.environ)
-    child["ENV_NAMES"] = full_env_name
-    child["FULL_ENV_NAME"] = full_env_name
-    child["CLUSTER_NAME"] = cluster_name
-    child["ENVIRONMENT_NAME"] = env_name
     child["CI_PROJECT_DIR"] = str(worktree_path)
     return child
 
@@ -76,9 +71,10 @@ def _run_child_subprocess(
     logger.info(
         f"========== START: multi-env child {full_env_name} (log: {log_path}) =========="
     )
+    # Pass the target env as argv so the child skips dispatch()/resolve_env_names().
     proc = subprocess.Popen(
-        [sys.executable, "-m", "pipeline.orchestrator"],
-        env=_child_env_for(full_env_name, worktree_path),
+        [sys.executable, "-m", "pipeline.orchestrator", full_env_name],
+        env=_child_env_for(worktree_path),
         cwd=worktree_path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

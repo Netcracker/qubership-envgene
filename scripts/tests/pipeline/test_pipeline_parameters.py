@@ -125,6 +125,40 @@ def mock_worktrees(monkeypatch):
     monkeypatch.setattr("pipeline.multi_env_runner._remove_worktree", lambda *args: None)
 
 
+class TestRunSingleEnvEntrypoint:
+    @pytest.mark.unit
+    def test_run_child_subprocess_passes_env_as_argv(self, monkeypatch, tmp_path):
+        import sys
+
+        from pipeline.multi_env_runner import _run_child_subprocess
+
+        captured: dict = {}
+
+        class FakeProc:
+            def __init__(self):
+                self.stdout = open(os.devnull, encoding="utf-8")
+
+            def wait(self):
+                self.stdout.close()
+                return 0
+
+        def fake_popen(cmd, **kwargs):
+            captured["cmd"] = cmd
+            return FakeProc()
+
+        monkeypatch.setattr("pipeline.multi_env_runner.subprocess.Popen", fake_popen)
+
+        worktree = tmp_path / "worktree"
+        _run_child_subprocess("cluster-02/env-02", worktree, tmp_path / "logs")
+
+        assert captured["cmd"] == [
+            sys.executable,
+            "-m",
+            "pipeline.orchestrator",
+            "cluster-02/env-02",
+        ]
+
+
 class TestDispatch:
     @pytest.mark.unit
     def test_single_env_runs_pipeline_in_process(self, monkeypatch):

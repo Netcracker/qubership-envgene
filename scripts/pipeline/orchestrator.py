@@ -343,4 +343,9 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(dispatch())
+    if len(sys.argv) > 2:
+        raise ValueError(f"Unexpected arguments: {sys.argv[1:]!r}")
+    if len(sys.argv) == 1:
+        sys.exit(dispatch())
+    full_env_name = sys.argv[1]
+    run_single_env_pipeline(full_env_name)
