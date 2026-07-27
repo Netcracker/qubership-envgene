@@ -597,25 +597,7 @@ Functions:
       - read rendered namespace name + deployPostfix for each env namespace
       - calculate deployPostfix to namespace mapping (incl. BG suffix)
     - AI[phase1]: create the function
-6. `generate_composite_structure`
-    - input:
-      - downloaded template files
-      - `ctx.current_env`
-      - `ctx.current_env_template`
-    - output:
-      - rendered composite structure into env instance
-    - actions:
-      - render the composite structure template, validate (no-op if none)
-7. `compute_composite_topology` (new)
-    - input:
-      - rendered composite structure into env instance
-      - rendered bg domain into env instance
-      - rendered namespace objects into env instance
-    - output:
-      - `ctx.current_env.composite_topology`
-    - actions:
-      - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
-8. `run_appregdef_render`
+6. `run_appregdef_render`
     - input:
       - downloaded template files
       - env instance
@@ -721,7 +703,28 @@ Triggers:
 
 Functions:
 
-1. `generate_solution_structure`
+1. `generate_composite_structure`
+    - triggers:
+      - `OPERATION_TYPE: DEPLOY`
+    - input:
+      - downloaded template files
+      - `ctx.current_env`
+      - `ctx.current_env_template`
+    - output:
+      - rendered composite structure into env instance
+    - actions:
+      - render the composite structure template, validate (no-op if none)
+2. `compute_composite_topology` (new)
+    - triggers:
+      - `OPERATION_TYPE: DEPLOY`
+    - input:
+      - rendered composite structure into env instance
+      - rendered namespace objects into env instance
+    - output:
+      - `ctx.current_env.composite_topology`
+    - actions:
+      - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
+3. `generate_solution_structure`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -734,7 +737,7 @@ Functions:
     - AI[phase1]: support DP as well as SD
     - AI[phase1]: remove SD support
     - AI[techDebt-P1]: add `namespace-map.yml` as input to optimize execution time
-2. `run_build_environment`
+4. `run_build_environment`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -760,7 +763,7 @@ Functions:
     - AI[phase1]: test manually
     - AI[techDebt-P1]: prepare a UC, add tests
     <!-- - AI[bgd]: переписать `apply_ns_build_filter` на использование `BG_NS_TARGET` нужно ли -->
-3. `set_cleaned_mark`
+5. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
     - input:
