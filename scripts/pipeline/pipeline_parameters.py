@@ -13,7 +13,7 @@ from envgenehelper import getenv_with_error, writeToFile
 from envgenehelper import logger
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
-from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode
+from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
 from envgenehelper.plugin_engine import PluginEngine
 
@@ -30,8 +30,8 @@ class PipelineParametersHandler(BaseModel):
     es_generation_mode: GenerationMode = GenerationMode.PARTIAL
     partial_merge_mode: PartialMergeMode | None = None
     namespace_by_deploy_postfix: dict = Field(default_factory=dict)
-    deploy_plan: EnvgeneDeployPlan | None = None
-    deploy_plan_delta: EnvgeneDeployPlan | None = None
+    deploy_plan: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan.read())
+    deploy_plan_delta: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan(entities=[]))
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
 
@@ -114,7 +114,8 @@ class PipelineParametersHandler(BaseModel):
             internal_params=internal_params,
             full_env_name=full_env_name,
             cluster_name=cluster_name,
-            env_name=env_name
+            env_name=env_name,
+            es_generation_mode=resolve_es_generation_mode(cluster_name, env_name),
         )
 
     def is_gitlab_deploy(self) -> bool:

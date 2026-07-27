@@ -3,6 +3,7 @@ from os import getenv
 
 from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType, logger, get_sd_dir, SD_FILE_NAME, \
     get_sd_dir_by_env_cluster_name, getenv_with_error
+from .models import PipelineType
 
 
 class ESGenerationContext(Enum):
@@ -40,10 +41,13 @@ def resolve_partial_merge_mode():
 
 
 def resolve_es_generation_mode(cluster_name, env_name):
+    if getenv("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY.value:
+        return GenerationMode.FULL
+
     merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
 
     sd_path = get_sd_dir_by_env_cluster_name(cluster_name, env_name) / SD_FILE_NAME
-    sd_input = bool(getenv("SD_DATA") or bool(getenv("SD_VERSION"))) or bool(getenv("APPLICATION_VERSIONS"))
+    sd_input = bool(getenv("SD_DATA") or getenv("SD_VERSION"))
     any_sd = sd_path.exists() and sd_input
 
     if not any_sd:
