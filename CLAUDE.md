@@ -68,3 +68,21 @@ The Effective Set generator is a Maven project; from `build_effective_set_genera
 ```bash
 ./mvnw test
 ```
+
+### BDD End-to-End Tests
+
+Cucumber BDD tests are located in the `cucumber_tests/` directory. These tests run the full pipeline orchestrated via Docker or a local Python environment.
+
+To run them, navigate to the `cucumber_tests` directory and use one of the wrappers:
+
+```bash
+cd cucumber_tests
+./run_bdd_tests.sh
+```
+
+Or on Windows:
+
+```powershell
+cd cucumber_tests
+.\run_bdd_tests.ps1
+```

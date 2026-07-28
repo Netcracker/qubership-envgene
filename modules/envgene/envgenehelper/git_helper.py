@@ -58,6 +58,18 @@ class GitContext(BaseModel):
                 "token": os.getenv("GITLAB_TOKEN"),
                 "commit_sha": os.getenv("CI_COMMIT_SHA")
             }
+        elif os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+            data = {
+                "platform": "local",
+                "server_protocol": "http",
+                "server_host": "localhost",
+                "project_path": "local/project",
+                "ref_name": "local",
+                "user_email": "local@localhost",
+                "user_name": "local",
+                "token": "local",
+                "commit_sha": "local"
+            }
         else:
             raise RuntimeError("Neither GITHUB_ACTIONS nor GITLAB_CI detected")
 
@@ -176,12 +188,21 @@ class GitRepoManager:
     def create_detached_commit(self, message: str) -> str:
         # git commit-tree "$(git write-tree)" -p HEAD -m "${message}"
         tree_sha = self.repo.git.write_tree()
-        parent_sha = self.repo.head.commit.hexsha
-        commit_sha = self.repo.git.commit_tree(tree_sha, p=parent_sha, m=message).strip()
+        try:
+            parent_sha = self.repo.head.commit.hexsha
+            commit_args = ["-p", parent_sha, "-m", message]
+        except ValueError:
+            commit_args = ["-m", message]
+            
+        commit_sha = self.repo.git.commit_tree(tree_sha, *commit_args).strip()
         logger.info(f"Created hidden commit {commit_sha} (not attached to any branch)")
         return commit_sha
 
     def _cherry_pick_and_push(self, snapshot_sha: str) -> None:
+        if os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+            logger.info("Local test mode: skipping cherry-pick and push")
+            return
+            
         self._fetch(ref=self.ctx.ref_name, checkout="FETCH_HEAD", checkout_option=["--force", "--detach"])
         try:
             logger.info(f"git cherry-pick {snapshot_sha}")

@@ -1,0 +1,12 @@
+{
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "app_params",
+        "parameters": {}
+      }
+    }
+  ]
+}

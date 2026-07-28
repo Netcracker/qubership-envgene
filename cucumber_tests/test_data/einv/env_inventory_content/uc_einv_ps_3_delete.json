@@ -1,0 +1,9 @@
+{
+  "paramSets": [
+    {
+      "action": "delete",
+      "place": "env",
+      "name": "app_params"
+    }
+  ]
+}

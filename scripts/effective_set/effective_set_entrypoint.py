@@ -163,7 +163,7 @@ def _restore_saved_dirs(tmp_root, saved):
 def _build_cli_cmd(effective_set_dir, full_env_name):
     dp_path = EnvgeneDeployPlan.path()
     cmd = [
-        "/module/scripts/utils/run_effective_set_cli.sh",
+        getenv("EFFECTIVE_SET_CLI_PATH", "/module/scripts/utils/run_effective_set_cli.sh"),
         f"--env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output={effective_set_dir}",
