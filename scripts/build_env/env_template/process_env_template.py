@@ -164,7 +164,6 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
     unpack_archive(artifact_dest, template_dest)
     return resolved_version
 
-
 def process_env_template() -> dict:
     env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
     if env_template_test:
@@ -202,7 +201,7 @@ def process_env_template() -> dict:
         if not artifact_path:
             raise FileNotFoundError(f"No artifact definition file found for {app_name}")
         app_def = Application.model_validate(openYaml(artifact_path))
-        
+
         auth_headers = app_def.registry.resolve_auth(cred_config)
 
         logger.info(f'Use template resolving new logic for {appver}')
