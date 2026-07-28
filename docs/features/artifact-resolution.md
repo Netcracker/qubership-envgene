@@ -45,23 +45,19 @@ the DD, resolution fails.
 
 The registry provider selects the repository model, traditional or public cloud. Registry Definition v2
 declares the provider. Registry Definition v1 has no provider and always uses the traditional model. The model
-sets where each version form is looked up.
+sets which repositories are searched.
 
 ### Traditional registries
 
 Nexus and Artifactory. `repositoryDomainName` is a base URL, and `mavenConfig` names the candidate
-repositories. The snapshot repositories are `targetSnapshot`, `targetStaging`, and `snapshotGroup`. The
-release repositories are `targetRelease` and `releaseGroup`. Each version form sets the folder and the
-repositories to search:
+repositories: `targetSnapshot`, `targetStaging`, `targetRelease`, `snapshotGroup`, and `releaseGroup`. Every
+version form is searched across all of them. The version form sets the folder to request:
 
 - **Non-unique snapshot version.** The folder is `<version>` (ending in `-SNAPSHOT`). EnvGene reads that
-  folder's `maven-metadata.xml` to resolve `-SNAPSHOT` to the latest build and requests it from the snapshot
-  repositories.
-- **Unique snapshot version.** EnvGene resolves it as both a snapshot and a release. As a snapshot, the folder
-  is `<base>-SNAPSHOT` (the `-<timestamp>-<buildNumber>` suffix replaced with `-SNAPSHOT`), requested directly
-  from the snapshot repositories. As a release, the folder is `<version>`, requested directly from the release
-  repositories.
-- **Release version.** The folder is `<version>`, requested directly from the release repositories.
+  folder's `maven-metadata.xml` to resolve `-SNAPSHOT` to the latest build and requests it.
+- **Unique snapshot version.** EnvGene tries both folders, each requested directly: `<base>-SNAPSHOT` (the
+  `-<timestamp>-<buildNumber>` suffix replaced with `-SNAPSHOT`) and `<version>`.
+- **Release version.** The folder is `<version>`, requested directly.
 
 ### Public cloud registries
 
