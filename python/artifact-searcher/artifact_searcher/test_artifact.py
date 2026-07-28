@@ -9,6 +9,7 @@ from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 from artifact_searcher.artifact import check_artifact
 from artifact_searcher.artifact import _retry_with_nexus_url
+from artifact_searcher.artifact import get_repo_value_pointer_dict
 from artifact_searcher.utils.models import FileExtension
 
 TEST_REPO = "https://repo.example.com/repository/"
@@ -20,6 +21,29 @@ class MockResponse:
     def __init__(self, status_code):
         self.status_code = status_code
 
+def _create_registry_with_unique_maven_repos():
+    mvn_cfg = models.MavenConfig(
+        target_snapshot="snapshots",
+        target_staging="staging",
+        target_release="releases",
+        snapshot_group="snapshot-group",
+        release_group="release-group",
+        repository_domain_name="https://repo.example.com",
+    )
+    return models.Registry(name="registry", maven_config=mvn_cfg)
+
+def test_repo_candidates():
+    registry = _create_registry_with_unique_maven_repos()
+
+    repos = get_repo_value_pointer_dict(registry)
+
+    assert repos == {
+        "snapshots": "targetSnapshot",
+        "staging": "targetStaging",
+        "releases": "targetRelease",
+        "snapshot-group": "snapshotGroup",
+        "release-group": "releaseGroup",
+    }
 
 @pytest.mark.parametrize(
     "index_path",

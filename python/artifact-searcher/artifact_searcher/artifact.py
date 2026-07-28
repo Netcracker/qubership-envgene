@@ -39,13 +39,13 @@ def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    
+
     # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
     if repo:
         path = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
     else:
         path = f"{group_id}/{app.artifact_id}/{folder}/"
-    
+
     return urljoin(registry_url, path)
 
 
@@ -153,7 +153,7 @@ async def download_all_async(artifacts_info: list[ArtifactInfo]):
         # Use sorted tuple of auth items as key, or "none" for None
         auth_key = tuple(sorted(artifact.auth_headers.items())) if artifact.auth_headers else "none"
         auth_groups[auth_key].append(artifact)
-    
+
     all_results = []
     for auth_key, artifacts in auth_groups.items():
         headers = artifacts[0].auth_headers
@@ -174,9 +174,9 @@ async def download_all_async(artifacts_info: list[ArtifactInfo]):
 
             if errors:
                 raise ValueError("Some tasks failed:\n" + "\n".join(errors))
-            
+
             all_results.extend(results)
-    
+
     return all_results
 
 
@@ -276,6 +276,7 @@ def get_repo_value_pointer_dict(registry):
         maven.target_staging: "targetStaging",
         maven.target_release: "targetRelease",
         maven.snapshot_group: "snapshotGroup",
+        maven.release_group: "releaseGroup",
     }
 
 
