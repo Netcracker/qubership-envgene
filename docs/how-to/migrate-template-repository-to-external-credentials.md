@@ -2,61 +2,70 @@
 
 - [Description](#description)
 - [Prerequisites](#prerequisites)
-- [Step 1. Analyse used Credentials](#step-1-analyse-used-credentials)
-- [Step 2. Create Credential Template](#step-2-create-credential-template)
-- [Step 3. Update Template Descriptor](#step-3-update-template-descriptor)
-- [Step 4. Replace local Credential references](#step-4-replace-local-credential-references)
-- [Step 5. Verify changes](#step-5-verify-changes)
-- [Step 6. Publish new Template version](#step-6-publish-new-template-version)
+- [Step 1. Select Environment Templates](#step-1-select-environment-templates)
+- [Step 2. Find used Credentials](#step-2-find-used-credentials)
+- [Step 3. Create the Credential Template](#step-3-create-the-credential-template)
+- [Step 4. Update the Template Descriptor](#step-4-update-the-template-descriptor)
+- [Step 5. Replace macros in templates and ParameterSets](#step-5-replace-macros-in-templates-and-parametersets)
+- [Step 6. Verify and publish](#step-6-verify-and-publish)
 - [Rollback](#rollback)
 - [Common mistakes](#common-mistakes)
 - [See also](#see-also)
 
 ## Description
 
-Update the Environment Template to move from local Credentials to External Credentials.
+Migrate Environment Templates in the Template Repository so they use External Credentials.
 
-In the Template Repository you:
+For each Environment Template:
 
-1. identify used `credId` values, their structure, and source;
-2. create a Credential Template;
-3. add `external_credential_template` to the Template Descriptor;
-4. replace local references with `$type: credRef`;
-5. publish a new concrete version of the Environment Template.
+1. find local Credential macros and Built-in Credential references
+2. create a Credential Template with matching External Credentials
+3. point the Template Descriptor at that file
+4. replace supported macros with `$type: credRef`
+5. publish a concrete Template version
 
-Secret Store setup and changes to Shared Credentials, Cloud Passport Credentials, and System
-Credentials happen in the Instance Repository.
+Repeat the same flow for every Environment Template you migrate.
 
-System Credentials for the Template Repository itself are not migrated and remain local-only.
+`$type: credRef` works only in `deployParameters`, `e2eParameters`, and ParameterSets that feed
+those blocks. It does not work in `technicalConfigurationParameters`.
+
+Built-in fields such as `credentialsId`, `defaultCredentialsId`, `tokenSecret`, and `credential`
+stay plain `credId` strings. You change the Credential definition in the Credential Template, not
+those fields.
+
+BG deployment and template composition are out of scope for this guide.
+
+System Credentials in the Template Repository stay local-only.
 
 ## Prerequisites
 
-Before you start the migration, confirm you know:
+Before you start, confirm that:
 
-- EnvGene version is updated to `<version>`;
-- the Environment Template to migrate;
-- the matching Template Descriptor;
-- the Secret Store identifier, for example `default_store`;
-- Credentials that come from Cloud Passport or Shared Credentials;
-- the current Environment Template version;
-- the template build pipeline.
+- EnvGene is upgraded to a version that includes External Credentials
+- the Environment Templates and Template Descriptors to migrate are identified
+- the Secret Store identifier is known, for example `default_store`
+- for each Credential you know whether the secret already exists, or a new generated value is
+  acceptable (`create: true`)
+- the template build pipeline is available
 
-Specification:
+Specification: [External Credentials Management](/docs/features/external-creds.md).
 
-[External Credentials Management](/docs/features/external-creds.md).
+Example layout: [Sample template repository](/docs/samples/external-credentials/template-repository/).
 
-Example:
+## Step 1. Select Environment Templates
 
-[Sample template repository](/docs/samples/external-credentials/template-repository/).
+List the Environment Templates to migrate. For each one, open its Template Descriptor and note the
+paths of its Cloud, Namespace, Tenant, and ParameterSet templates.
 
-## Step 1. Analyse used Credentials
+Work through the remaining steps per Environment Template, then publish that Template before you
+move to the next one when versions must stay independent.
 
-Identify Cloud, Namespace, Tenant, and ParameterSet templates that belong to the selected Environment
-Template.
+**Result:** Environment Templates selected for migration.
 
-### 1.1. Find local Credential references
+## Step 2. Find used Credentials
 
-Check for:
+In the Cloud, Namespace, Tenant, and ParameterSet templates for the current Environment Template,
+search for:
 
 ```text
 ${creds.get('<credId>').username}
@@ -64,106 +73,61 @@ ${creds.get('<credId>').password}
 ${creds.get('<credId>').secret}
 ```
 
-### 1.2. Find built-in Credential references
+Also search for `${envgen.creds.get(...)}` and `${cmdb.creds.get(...)}`.
 
-Check string references in standard EnvGene fields:
+Search for Built-in Credential references. Examples:
 
 ```yaml
-defaultCredentialsId: k8s-token
+credentialsId: ns-deploy-cred
 ```
 
 ```yaml
-credentialsId: namespace-deploy-cred
+credential: tenant-cred
 ```
 
-```yaml
-tokenSecret: consul-token
-```
+Built-in fields include:
 
-Built-in references include, in particular:
+- `Cloud.defaultCredentialsId`
+- `Cloud.maasConfig.credentialsId`
+- `Cloud.dbaasConfigs[].credentialsId`
+- `Cloud.vaultConfig.credentialsId`
+- `Cloud.consulConfig.tokenSecret`
+- `Namespace.credentialsId`
+- `Tenant.credential`
 
-- `Cloud.defaultCredentialsId`;
-- `Cloud.maasConfig.credentialsId`;
-- `Cloud.dbaasConfigs[].credentialsId`;
-- `Cloud.vaultConfig.credentialsId`;
-- `Cloud.consulConfig.tokenSecret`;
-- `Namespace.credentialsId`;
-- `Tenant.credential`;
-- `BGDomain.controllerNamespace.credentials`.
+Leave these fields as plain `credId` strings. Do not convert them to `$type: credRef`.
 
-A built-in reference contains only `credId`.
+When a Built-in field has no `.username` / `.password` / `.secret` macro nearby, use these structure
+hints:
 
-A Credential with that `credId` must be defined in one of these sources:
+| Built-in field                         | Credential Template shape |
+|----------------------------------------|---------------------------|
+| `maasConfig.credentialsId`             | multi-field               |
+| `dbaasConfigs[].credentialsId`         | multi-field               |
+| `vaultConfig.credentialsId`            | single-value              |
+| `consulConfig.tokenSecret`             | single-value              |
+| `Namespace.credentialsId`              | single-value              |
+| `Tenant.credential`                    | single-value              |
+| `Cloud.defaultCredentialsId`           | confirm from other usages |
 
-- Credential Template;
-- Cloud Passport Credentials;
-- Shared Credentials.
+For each `credId`, note the file and the structure from the reference. Do not guess structure from
+the name:
 
-If the Credential comes from Cloud Passport or Shared Credentials, do not add it to the Credential
-Template.
+| Local reference             | Credential Template shape                          |
+|-----------------------------|----------------------------------------------------|
+| `.username` and `.password` | multi-field (`properties`)                         |
+| `.secret`                   | single-value (no `properties`)                     |
+| Built-in string field only  | take structure from other usages of the same `credId` |
 
-> [!IMPORTANT]
-> After you add `external_credential_template`, every used `credId` must be declared explicitly in at
-> least one source. Otherwise Environment Instance generation fails with an error.
+Also mark unsupported usages: macros inside `technicalConfigurationParameters` or ParameterSets used
+only through `technicalConfigurationParameterSets`. Do not replace those with `$type: credRef` or
+with plain-text secrets in Git. Resolve them separately before you publish.
 
-### 1.3. Determine Credential structure
+**Result:** list of `credId` values, structures, and unsupported cases for this Environment Template.
 
-Determine structure from current references:
+## Step 3. Create the Credential Template
 
-| Local reference             | External Credential     |
-|-----------------------------|-------------------------|
-| `.username` and `.password` | Multi-field Credential  |
-| `.secret`                   | Single-value Credential |
-
-For a multi-field Credential use:
-
-```yaml
-properties:
-  - name: username
-  - name: password
-```
-
-For a single-value Credential, omit the `properties` field.
-
-Do not define Credential structure from the `credId` name.
-
-### 1.4. Determine Credential source
-
-For each `credId`, pick one source:
-
-- Credential Template;
-- Cloud Passport Credentials;
-- Shared Credentials.
-
-If one `credId` appears in multiple sources, confirm which source should be used.
-
-Do not add a Credential to the Credential Template when the source is not yet determined.
-
-### 1.5. Check constraints
-
-Credential Reference is supported only in:
-
-- `deployParameters`;
-- `e2eParameters`.
-
-Credential Reference is not supported in:
-
-```yaml
-technicalConfigurationParameters:
-```
-
-Do not move a Credential automatically from `technicalConfigurationParameters` into another block.
-
-Template composition for External Credentials is out of scope.
-
-> [!WARNING]
-> External Credentials migration for BG deployment cases is out of scope.
-
-**Result:** used `credId` values, their structure, source, and unsupported cases are identified.
-
-## Step 2. Create Credential Template
-
-Create one Credential Template for the selected Environment Template.
+Create one Credential Template file per Environment Template.
 
 Example path:
 
@@ -171,275 +135,214 @@ Example path:
 templates/env_templates/<solution>/external-credentials.yml.j2
 ```
 
-Add only Credentials that should be generated from this Environment Template.
+Before migration, EnvGene often auto-creates local placeholders during Instance generation, for
+example:
 
-### 2.1. Multi-field Credential
+```yaml
+app-db-cred:
+  type: usernamePassword
+  data:
+    username: envgeneNullValue
+    password: envgeneNullValue
+```
+
+After migration, declare the Credentials explicitly. Match the sample shape:
 
 ```yaml
 ---
 app-db-cred:
   type: external
+  create: true
   secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/db"
   properties:
     - name: username
     - name: password
+app-sidecar-token:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/sidecar"
+ns-deploy-cred:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
+tenant-cred:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}"
 ```
 
-### 2.2. Single-value Credential
+Rules:
 
-```yaml
-app-token:
-  type: external
-  secretStore: default_store
-```
+- top-level key is `credId`
+- `type` is `external`
+- no `data` and no secret values
+- multi-field Credentials use:
 
-For a single-value Credential, omit the `properties` field.
-
-### 2.3. Credential with explicit `remoteRefPath`
-
-```yaml
-app-db-cred:
-  type: external
-  secretStore: default_store
-  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/database"
+  ```yaml
   properties:
     - name: username
     - name: password
-```
+  ```
 
-If `remoteRefPath` is omitted, EnvGene uses:
+  never `- username` / `- password` as bare strings
+- single-value Credentials omit `properties`
+- if `secretStore` is omitted, EnvGene uses `default_store`
+- if `remoteRefPath` is omitted, EnvGene uses `{{ current_env.cloud }}/{{ current_env.name }}`
+- do not append `credId` to `remoteRefPath` - EnvGene adds it when building the final secret name
+- for Azure, AWS, and GCP, keep `credId` to at most 32 characters (see
+  [Normalization to normalizedSecretName](/docs/features/external-creds.md#normalization-to-normalizedsecretname))
+- add only Credentials that this Environment Template owns
+- do not copy Credentials that already live in Cloud Passport or Shared Credentials
 
-```text
-{{ current_env.cloud }}/{{ current_env.name }}
-```
+`create`:
 
-EnvGene builds `normalizedSecretName` from `remoteRefPath` and `credId` according to the selected Secret
-Store rules.
+- omit `create` when the secret already exists in the Secret Store
+- set `create: true` when a new generated secret value is acceptable
 
-For example, for Vault:
+`create` and `remoteRefPath` are independent. If you omit `remoteRefPath`, EnvGene still uses
+`{{ current_env.cloud }}/{{ current_env.name }}`, whether `create` is set or not.
 
-```text
-<remoteRefPath>/<credId>
-```
+**Result:** Credential Template file created for this Environment Template.
 
-Do not append `credId` to the end of `remoteRefPath` manually.
+## Step 4. Update the Template Descriptor
 
-### 2.4. Credential Template rules
-
-The Credential Template must follow these rules:
-
-- one Credential Template per Environment Template;
-- top-level key is `credId`;
-- `type` is `external`;
-- `data` and secret values are absent;
-- multi-field Credentials contain `username` and `password`;
-- single-value Credentials omit `properties`;
-- each Credential structure is defined from references;
-- Credentials from Cloud Passport or Shared Credentials are not duplicated;
-- Template Repository System Credentials are not added.
-
-For existing Credentials, do not set `create`.
-
-When `create` is absent, the strategy is:
-
-```text
-fail_if_absent
-```
-
-The secret must be prepared in the external Secret Store by a separate process.
-
-**Result:** a Credential Template with External Credentials generated by the Environment Template is
-created.
-
-## Step 3. Update Template Descriptor
-
-Add the Credential Template path to the Template Descriptor:
+Before:
 
 ```yaml
+tenant: "{{ templates_dir }}/env_templates/<solution>/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/<solution>/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/<solution>/ns.yml.j2"
+```
+
+After:
+
+```yaml
+tenant: "{{ templates_dir }}/env_templates/<solution>/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/<solution>/cloud.yml.j2"
 external_credential_template: "{{ templates_dir }}/env_templates/<solution>/external-credentials.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/<solution>/ns.yml.j2"
 ```
 
-After you add `external_credential_template`, EnvGene disables automatic generation of local placeholder
-Credentials:
+After this field is set, EnvGene stops auto-creating local placeholder Credentials with
+`data: envgeneNullValue`.
+
+> [!IMPORTANT]
+> Every `credId` used through a Built-in reference, `$type: credRef`, or `${creds.get(...)}` must be
+> declared in the Credential Template or later in Cloud Passport / Shared Credentials. Otherwise
+> Environment Instance generation fails.
+
+**Result:** Template Descriptor references the Credential Template.
+
+## Step 5. Replace macros in templates and ParameterSets
+
+Replace macros only in `deployParameters`, `e2eParameters`, and ParameterSets from
+`deployParameterSets` / `e2eParameterSets`. Leave Built-in string fields unchanged.
+
+### Namespace template
+
+Before:
 
 ```yaml
-data: envgeneNullValue
+deployParameters:
+  DB_ADMIN_USER: "${creds.get('app-db-cred').username}"
+  DB_ADMIN_PASSWORD: "${creds.get('app-db-cred').password}"
 ```
 
-Now every `credId` used through:
-
-- built-in Credential reference;
-- `$type: credRef`;
-- `${creds.get(...)}`;
-
-must be declared explicitly in one of these sources:
-
-- Credential Template;
-- Cloud Passport Credentials;
-- Shared Credentials.
-
-**Result:** the Template Descriptor uses the Credential Template and placeholder auto-generation is
-disabled.
-
-## Step 4. Replace local Credential references
-
-Replace local Credential references with `$type: credRef` in `deployParameters` and `e2eParameters`.
-
-### 4.1. Username
-
-Before migration:
+After:
 
 ```yaml
-DB_USERNAME: "${creds.get('app-db-cred').username}"
+credentialsId: ns-deploy-cred
+deployParameters:
+  DB_ADMIN_USER:
+    $type: credRef
+    credId: app-db-cred
+    property: username
+  DB_ADMIN_PASSWORD:
+    $type: credRef
+    credId: app-db-cred
+    property: password
 ```
 
-After migration:
+### ParameterSet
+
+Before:
 
 ```yaml
-DB_USERNAME:
-  $type: credRef
-  credId: app-db-cred
-  property: username
+name: ext-cred-cloud
+parameters:
+  INTEGRATION_TOKEN: "${creds.get('app-sidecar-token').secret}"
 ```
 
-### 4.2. Password
-
-Before migration:
+After:
 
 ```yaml
-DB_PASSWORD: "${creds.get('app-db-cred').password}"
+name: ext-cred-cloud
+parameters:
+  INTEGRATION_TOKEN:
+    $type: credRef
+    credId: app-sidecar-token
 ```
 
-After migration:
+Check `parameters` and `applications[].parameters`.
 
-```yaml
-DB_PASSWORD:
-  $type: credRef
-  credId: app-db-cred
-  property: password
-```
+For a single-value Credential, omit `property` on the Credential Reference.
 
-### 4.3. Single-value Credential
+**Result:** supported macros replaced with `$type: credRef`. Built-in references still strings.
 
-Before migration:
-
-```yaml
-APP_TOKEN: "${creds.get('app-token').secret}"
-```
-
-After migration:
-
-```yaml
-APP_TOKEN:
-  $type: credRef
-  credId: app-token
-```
-
-For a single-value Credential, omit the `property` field.
-
-### 4.4. Built-in references
-
-Built-in references keep the string format.
-
-Before migration:
-
-```yaml
-defaultCredentialsId: k8s-token
-```
-
-After migration:
-
-```yaml
-defaultCredentialsId: k8s-token
-```
-
-You change the Credential definition in the matching source, not the built-in reference.
-
-**Result:** local Credential references are replaced with Credential References in supported parameters.
-
-## Step 5. Verify changes
-
-### Template Descriptor
+## Step 6. Verify and publish
 
 Confirm that:
 
-- `external_credential_template` is added;
-- the path points to an existing Credential Template.
+- `external_credential_template` points to the Credential Template file
+- every Credential Template entry has `type: external` and no `data`
+- multi-field and single-value shapes match the usages from Step 2
+- supported macros are replaced
+- technical configuration has no `$type: credRef`
+- Built-in references remain strings
+- `remoteRefPath` does not end with a manually appended `credId`
 
-### Credential Template
-
-Confirm that:
-
-- the file parses and renders correctly;
-- every entry has `type: external`;
-- `data` and secret values are absent;
-- multi-field Credentials contain `username` and `password`;
-- single-value Credentials omit `properties`;
-- each Credential structure is confirmed from references;
-- Credentials from Cloud Passport and Shared Credentials are not duplicated;
-- `remoteRefPath` does not end with a manually appended `credId`.
-
-### Credential references
-
-Confirm that:
-
-- local references are replaced in `deployParameters`;
-- local references are replaced in `e2eParameters`;
-- `$type: credRef` is absent from `technicalConfigurationParameters`;
-- built-in references remain strings.
-
-### Coverage and conflicts
-
-Confirm that:
-
-- every used `credId` is defined in the Credential Template, Cloud Passport, or Shared Credentials;
-- one `credId` does not have conflicting structures;
-- the source of each `credId` is determined;
-- the Credential Template does not contain Credentials that should come from Cloud Passport or Shared
-  Credentials.
-
-**Result:** the Template is ready to build and publish.
-
-## Step 6. Publish new Template version
-
-Run the template build pipeline manually.
-
-After a successful build, note the concrete artifact version:
+Run the template build pipeline and publish a concrete version:
 
 ```text
 <artifactId>:<version>
 ```
 
-Do not use `SNAPSHOT` to switch Environment Instances.
+Do not use `SNAPSHOT` for Instance Repository cutover.
 
-Hand the concrete version to the Instance Repository owner.
+Then continue with
+[Migrate Instance Repository to External Credentials](/docs/how-to/migrate-instance-repository-to-external-credentials.md)
+for the Instance Repository that consumes this Template version.
 
-**Result:** a concrete version of the Environment Template with External Credentials support is
-published.
+**Result:** concrete Template version published.
 
 ## Rollback
 
-If no Environment Instances use the new Template version yet, keep using the previous version.
+If no Environment Instance uses the new version yet, keep the previous version.
 
-If you find an error in the published version:
+If the published version is wrong:
 
-1. do not switch Environment Instances to that version;
-2. fix the Environment Template;
-3. publish a new concrete version;
-4. use the corrected version.
+1. do not switch Environment Instances to it
+2. fix the Environment Template
+3. publish a new concrete version
 
 ## Common mistakes
 
-| Mistake                                                | Fix                                              |
-|--------------------------------------------------------|--------------------------------------------------|
-| Used `credId` is not declared                          | Add the Credential to one of the sources         |
-| `username` and `password` added for all Credentials    | Define each Credential structure from references |
-| Cloud Passport Credential added to Credential Template | Remove the duplicate                             |
-| Local reference left in a parameter                    | Replace with `$type: credRef`                    |
-| `credRef` added to `technicalConfigurationParameters`  | Revert the change                                |
-| Built-in reference replaced with an object             | Restore the string `credId`                      |
-| Incorrect `properties`                                 | Fix the Credential structure                     |
-| `credId` appended to `remoteRefPath`                   | Remove it from the path                          |
+| Mistake                                            | Fix                                         |
+|----------------------------------------------------|---------------------------------------------|
+| `credId` used but missing from Credential Template | Add it to the Credential Template           |
+| `properties: [username, password]`                 | Use `- name: username` / `- name: password` |
+| Structure guessed from `credId`                    | Use the macro or Built-in usage             |
+| Macro left in supported parameters                 | Replace with `$type: credRef`               |
+| `credRef` in technical configuration               | Do not convert. Relocate the parameter      |
+| Built-in field turned into an object               | Keep the string `credId`                    |
+| `credId` appended to `remoteRefPath`               | Remove the suffix                           |
+| `create: true` when the old secret must stay       | Omit `create` and prepare the secret first  |
 
 ## See also
 
