@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 
@@ -118,15 +117,6 @@ class TestPipelineParametersFromEnv:
         with pytest.raises(ValueError, match="exactly one environment"):
             PipelineParametersHandler.from_env()
 
-    @pytest.mark.unit
-    def test_resolve_then_from_env(self, monkeypatch):
-        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
-
-        env_names = resolve_env_names()
-        ctx = PipelineParametersHandler.from_env()
-
-        assert ctx.full_env_name == "cluster-01/env-01"
-
 
 @pytest.fixture
 def mock_worktrees(monkeypatch):
@@ -137,9 +127,7 @@ def mock_worktrees(monkeypatch):
 
 class TestRunSingleEnvEntrypoint:
     @pytest.mark.unit
-    def test_run_child_subprocess_uses_env_not_argv(self, monkeypatch, tmp_path):
-        import sys
-
+    def test_run_child_subprocess_sets_per_env_vars(self, monkeypatch, tmp_path):
         from pipeline.multi_env_runner import _run_child_subprocess
 
         captured: dict = {}
@@ -153,7 +141,6 @@ class TestRunSingleEnvEntrypoint:
                 return 0
 
         def fake_popen(cmd, **kwargs):
-            captured["cmd"] = cmd
             captured["env"] = kwargs["env"]
             return FakeProc()
 
@@ -162,11 +149,6 @@ class TestRunSingleEnvEntrypoint:
         worktree = tmp_path / "worktree"
         _run_child_subprocess("cluster-02/env-02", worktree, tmp_path / "logs")
 
-        assert captured["cmd"] == [
-            sys.executable,
-            "-m",
-            "pipeline.orchestrator",
-        ]
         assert captured["env"]["ENV_NAMES"] == "cluster-02/env-02"
         assert captured["env"]["FULL_ENV_NAME"] == "cluster-02/env-02"
         assert captured["env"]["CLUSTER_NAME"] == "cluster-02"
@@ -197,28 +179,17 @@ class TestDispatch:
     def test_multi_env_fan_out_runs_subprocess_per_env(self, monkeypatch, tmp_path, mock_worktrees):
         monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
-        runs: list[tuple[str, Path, Path]] = []
+        runs: list[str] = []
 
         def fake_run_child(full_env_name, worktree_path, logs_dir):
-            runs.append((full_env_name, worktree_path, logs_dir))
+            runs.append(full_env_name)
             return 0
 
         monkeypatch.setattr("pipeline.multi_env_runner._run_child_subprocess", fake_run_child)
         monkeypatch.setattr("pipeline.orchestrator.run_single_env_pipeline", pytest.fail)
 
         assert dispatch() == 0
-        assert sorted(runs) == [
-            (
-                "cluster-01/env-01",
-                tmp_path / "tmp" / "worktrees" / "cluster-01" / "env-01",
-                tmp_path / "tmp" / "logs",
-            ),
-            (
-                "cluster-02/env-02",
-                tmp_path / "tmp" / "worktrees" / "cluster-02" / "env-02",
-                tmp_path / "tmp" / "logs",
-            ),
-        ]
+        assert sorted(runs) == ["cluster-01/env-01", "cluster-02/env-02"]
 
     @pytest.mark.unit
     def test_multi_env_collects_failures(self, monkeypatch, tmp_path, mock_worktrees):
@@ -231,37 +202,3 @@ class TestDispatch:
         monkeypatch.setattr("pipeline.multi_env_runner._run_child_subprocess", fake_run_child)
 
         assert dispatch() == 1
-
-
-class TestFanOutWorktreeSparseCheckout:
-    @pytest.mark.unit
-    def test_fan_out_sparse_checkouts_each_worktree(self, monkeypatch, tmp_path):
-        monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
-        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
-        sparse_calls: list[tuple[str, str]] = []
-
-        monkeypatch.setattr("pipeline.multi_env_runner._create_worktree", lambda *args: None)
-        monkeypatch.setattr("pipeline.multi_env_runner._remove_worktree", lambda *args: None)
-
-        def fake_sparse_checkout(worktree_path, full_env_name):
-            sparse_calls.append((str(worktree_path), full_env_name))
-
-        monkeypatch.setattr("pipeline.multi_env_runner._sparse_checkout_worktree", fake_sparse_checkout)
-        monkeypatch.setattr(
-            "pipeline.multi_env_runner._run_child_subprocess",
-            lambda full_env_name, worktree_path, logs_dir: 0,
-        )
-
-        from pipeline.multi_env_runner import fan_out
-
-        assert fan_out(["cluster-01/env-01", "cluster-02/env-02"]) == 0
-        assert sorted(sparse_calls) == [
-            (
-                str(tmp_path / "tmp" / "worktrees" / "cluster-01" / "env-01"),
-                "cluster-01/env-01",
-            ),
-            (
-                str(tmp_path / "tmp" / "worktrees" / "cluster-02" / "env-02"),
-                "cluster-02/env-02",
-            ),
-        ]

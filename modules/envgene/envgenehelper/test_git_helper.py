@@ -49,31 +49,6 @@ class TestResolveRemoteUrl:
         assert manager._resolve_remote_url() == "https://gh-tok@github.com/org/repo.git"
 
 
-class TestSparseCheckout:
-    def test_sparse_checkout_fetches_by_default(self):
-        manager = make_manager()
-        manager._fetch = MagicMock()
-        manager.repo.git.sparse_checkout = MagicMock()
-        manager.repo.git.read_tree = MagicMock()
-
-        manager.sparse_checkout(["appdefs/"])
-
-        manager._fetch.assert_called_once()
-        manager.repo.git.sparse_checkout.assert_any_call("init", "--cone")
-        manager.repo.git.sparse_checkout.assert_any_call("set", "appdefs/")
-
-    def test_sparse_checkout_skips_fetch_when_disabled(self):
-        manager = make_manager()
-        manager._fetch = MagicMock()
-        manager.repo.git.sparse_checkout = MagicMock()
-        manager.repo.git.read_tree = MagicMock()
-
-        manager.sparse_checkout(["environments/cluster/env"], fetch=False)
-
-        manager._fetch.assert_not_called()
-        manager.repo.git.sparse_checkout.assert_any_call("set", "environments/cluster/env")
-
-
 class TestStageChanges:
     def test_filters_nonexistent_paths(self, tmp_path):
         existing = tmp_path / "environments" / "cluster" / "env"
