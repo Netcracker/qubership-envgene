@@ -32,9 +32,10 @@ def pipeline_env(monkeypatch, tmp_path):
 
 
 def _ctx(**overrides) -> PipelineParametersHandler:
+    os.environ.setdefault("ENV_NAMES", "cluster-01/env-01")
     for key, value in overrides.items():
         os.environ[key] = str(value).lower() if isinstance(value, bool) else str(value)
-    return PipelineParametersHandler.from_env("cluster-01/env-01")
+    return PipelineParametersHandler.from_env()
 
 
 class TestStepGating:

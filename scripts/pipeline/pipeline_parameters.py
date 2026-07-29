@@ -71,7 +71,15 @@ class PipelineParametersHandler(BaseModel):
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
 
     @classmethod
-    def from_env(cls, full_env_name: str) -> Self:
+    def from_env(cls) -> Self:
+        env_names_str = os.getenv("ENV_NAMES")
+        if not env_names_str:
+            raise ValueError("ENV_NAMES is not set")
+        env_names = split_multi_value_param(env_names_str)
+        if len(env_names) != 1:
+            raise ValueError("ENV_NAMES must name exactly one environment")
+        full_env_name = env_names[0]
+
         params = {
             'ENV_NAMES': getenv("ENV_NAMES", ""),
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),

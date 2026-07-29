@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from envgenehelper import logger
+from envgenehelper.repo_paths import get_sparse_checkout_paths
 
 _MAX_FAN_OUT_WORKERS = 3
 
@@ -56,10 +57,44 @@ def _remove_worktree(base_repo: Path, worktree_path: Path) -> None:
         )
 
 
-def _child_env_for(worktree_path: Path) -> dict[str, str]:
+def _child_env_for(worktree_path: Path, full_env_name: str) -> dict[str, str]:
+    cluster_name, env_name = full_env_name.split("/", 1)
     child = dict(os.environ)
     child["CI_PROJECT_DIR"] = str(worktree_path)
+    child["ENV_NAMES"] = full_env_name
+    child["FULL_ENV_NAME"] = full_env_name
+    child["CLUSTER_NAME"] = cluster_name
+    child["ENVIRONMENT_NAME"] = env_name
     return child
+
+
+def _sparse_checkout_worktree(worktree_path: Path, full_env_name: str) -> None:
+    paths = get_sparse_checkout_paths(full_env_name)
+    logger.info(f"git sparse-checkout set ({len(paths)} paths) in worktree {worktree_path}")
+    subprocess.run(
+        ["git", "sparse-checkout", "init", "--cone"],
+        cwd=worktree_path,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    subprocess.run(
+        ["git", "sparse-checkout", "set", *paths],
+        cwd=worktree_path,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    subprocess.run(
+        ["git", "read-tree", "-mu", "HEAD"],
+        cwd=worktree_path,
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
 
 
 def _run_child_subprocess(
@@ -72,8 +107,8 @@ def _run_child_subprocess(
         f"========== START: multi-env child {full_env_name} (log: {log_path}) =========="
     )
     proc = subprocess.Popen(
-        [sys.executable, "-m", "pipeline.orchestrator", full_env_name],
-        env=_child_env_for(worktree_path),
+        [sys.executable, "-m", "pipeline.orchestrator"],
+        env=_child_env_for(worktree_path, full_env_name),
         cwd=worktree_path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -116,6 +151,7 @@ def fan_out(env_names: Sequence[str]) -> int:
         worktree_path = _worktree_path(base_repo, full_env_name)
         env_to_worktree[full_env_name] = worktree_path
         _create_worktree(base_repo, worktree_path, commit_sha)
+        _sparse_checkout_worktree(worktree_path, full_env_name)
 
     max_workers = min(len(env_names), _MAX_FAN_OUT_WORKERS)
     logger.info(

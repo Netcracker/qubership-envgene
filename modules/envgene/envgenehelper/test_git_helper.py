@@ -27,7 +27,6 @@ def make_manager(ctx=None):
         ctx = make_context()
     with patch("envgenehelper.git_helper.Repo"), \
             patch.object(GitContext, "from_env", return_value=ctx), \
-            patch.object(GitRepoManager, "get_sparse_checkout_paths", return_value=[]), \
             patch.dict(os.environ, {"CLUSTER_NAME": "cluster", "ENVIRONMENT_NAME": "env"}):
         manager = GitRepoManager()
     manager.repo.git.execute = MagicMock()
@@ -48,6 +47,31 @@ class TestResolveRemoteUrl:
                            token="gh-tok")
         manager = make_manager(ctx)
         assert manager._resolve_remote_url() == "https://gh-tok@github.com/org/repo.git"
+
+
+class TestSparseCheckout:
+    def test_sparse_checkout_fetches_by_default(self):
+        manager = make_manager()
+        manager._fetch = MagicMock()
+        manager.repo.git.sparse_checkout = MagicMock()
+        manager.repo.git.read_tree = MagicMock()
+
+        manager.sparse_checkout(["appdefs/"])
+
+        manager._fetch.assert_called_once()
+        manager.repo.git.sparse_checkout.assert_any_call("init", "--cone")
+        manager.repo.git.sparse_checkout.assert_any_call("set", "appdefs/")
+
+    def test_sparse_checkout_skips_fetch_when_disabled(self):
+        manager = make_manager()
+        manager._fetch = MagicMock()
+        manager.repo.git.sparse_checkout = MagicMock()
+        manager.repo.git.read_tree = MagicMock()
+
+        manager.sparse_checkout(["environments/cluster/env"], fetch=False)
+
+        manager._fetch.assert_not_called()
+        manager.repo.git.sparse_checkout.assert_any_call("set", "environments/cluster/env")
 
 
 class TestStageChanges:

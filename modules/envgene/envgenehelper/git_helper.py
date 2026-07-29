@@ -3,15 +3,14 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from envgenehelper import logger, get_environment_name_from_full_name, get_cluster_name_from_full_name, \
-    getenv_with_error
+from envgenehelper import logger
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
 from git import GitCommandError, InvalidGitRepositoryError, Repo
 from pydantic import BaseModel
 from envgenehelper.models import PipelineType
-from envgenehelper.repo_paths import REPO_ROOT_PATHS, get_env_artifact_paths
+from envgenehelper.repo_paths import get_sparse_checkout_paths
 
 
 class ConflictError(RuntimeError):
@@ -65,16 +64,15 @@ class GitContext(BaseModel):
 
 
 class GitRepoManager:
-    def __init__(self):
-        project_dir = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
+    def __init__(self, project_dir: Path | str | None = None):
+        project_dir = Path(project_dir or os.getenv("CI_PROJECT_DIR", os.getcwd()))
         try:
             self.repo = Repo(project_dir)
         except InvalidGitRepositoryError:
             self.repo = Repo.init(project_dir)
         self.ctx = GitContext.from_env()
-        self.cluster_name = getenv_with_error("CLUSTER_NAME")
-        self.env_name = getenv_with_error("ENVIRONMENT_NAME")
-        self.sparse_paths = self.get_sparse_checkout_paths(self.cluster_name, self.env_name)
+        self.cluster_name = os.getenv("CLUSTER_NAME")
+        self.env_name = os.getenv("ENVIRONMENT_NAME")
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
@@ -156,7 +154,7 @@ class GitRepoManager:
     def stage_changes(self, sparse_paths: Optional[list[str]] = None) -> bool:
         logger.info("Staging changes...")
         if sparse_paths is None:
-            sparse_paths = self.sparse_paths
+            sparse_paths = get_sparse_checkout_paths(os.environ["FULL_ENV_NAME"])
 
         existing_paths = [path for path in sparse_paths if Path(path).exists()]
         exclude_args = [f":(exclude){path}" for path in self._get_excluded_paths()]
@@ -207,40 +205,26 @@ class GitRepoManager:
 
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
-    def sparse_checkout(self, sparse_paths: Optional[list[str]] = None) -> None:
-        if sparse_paths is None:
-            sparse_paths = self.sparse_paths
-
-        self._fetch(
-            ref=self.ctx.commit_sha,
-            checkout=self.ctx.commit_sha,
-            checkout_option=["--force"],
-            create_remote=True,
-        )
+    def sparse_checkout(self, sparse_paths: list[str], *, fetch: bool = True) -> None:
+        if fetch:
+            self._fetch(
+                ref=self.ctx.commit_sha,
+                checkout=self.ctx.commit_sha,
+                checkout_option=["--force"],
+                create_remote=True,
+            )
 
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
-        logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
-        self.repo.git.sparse_checkout("set", *sparse_paths)
+        if sparse_paths:
+            logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
+            self.repo.git.sparse_checkout("set", *sparse_paths)
+        else:
+            logger.info("git sparse-checkout set (no working tree paths)")
+            self.repo.git.sparse_checkout("set")
         logger.info("git read-tree -mu HEAD")
         self.repo.git.read_tree("-mu", "HEAD")
         logger.info("sparse checkout complete")
-
-    @staticmethod
-    def get_sparse_checkout_paths(cluster_name: Optional[str] = None, env_name: Optional[str] = None,
-                                  include_full_cluster: bool = False) -> list[str]:
-        if cluster_name is None or env_name is None:
-            full_env_name = getenv_with_error("FULL_ENV_NAME")
-            cluster_name = cluster_name or get_cluster_name_from_full_name(full_env_name)
-            env_name = env_name or get_environment_name_from_full_name(full_env_name)
-
-        paths = list(REPO_ROOT_PATHS)
-        paths.extend(get_env_artifact_paths(cluster_name, env_name))
-
-        if include_full_cluster:
-            paths.append(f"environments/{cluster_name}/")
-
-        return paths
 
 
 class GitLabClient:

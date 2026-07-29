@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 from abc import ABC, abstractmethod
@@ -24,7 +25,8 @@ from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import fan_out
-from pipeline.pipeline_parameters import PipelineParametersHandler, resolve_env_names
+from pipeline.pipeline_parameters import PipelineParametersHandler
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
@@ -268,8 +270,8 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
-def run_single_env_pipeline(full_env_name: str) -> None:
-    ctx = PipelineParametersHandler.from_env(full_env_name)
+def run_single_env_pipeline() -> None:
+    ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
 
@@ -314,12 +316,16 @@ def run_single_env_pipeline(full_env_name: str) -> None:
 
 
 def dispatch() -> int:
-    env_names = resolve_env_names()
+    env_names_str = os.getenv("ENV_NAMES")
+    if not env_names_str:
+        raise ValueError("ENV_NAMES is not set")
+    env_names = split_multi_value_param(env_names_str)
     if len(env_names) <= 1:
-        run_single_env_pipeline(env_names[0])
+        run_single_env_pipeline()
         return 0
 
-    handler = PipelineParametersHandler.from_env(env_names[0])
+    os.environ["ENV_NAMES"] = env_names[0]
+    handler = PipelineParametersHandler.from_env()
     handler.write_dotenv(exclude_keys={"ENV_NAMES"})
 
     return fan_out(env_names)
@@ -343,9 +349,6 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         raise ValueError(f"Unexpected arguments: {sys.argv[1:]!r}")
-    if len(sys.argv) == 1:
-        sys.exit(dispatch())
-    full_env_name = sys.argv[1]
-    run_single_env_pipeline(full_env_name)
+    sys.exit(dispatch())

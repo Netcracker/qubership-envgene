@@ -1,9 +1,13 @@
-from .git_helper import GitRepoManager
+import os
+
+import pytest
+
+from envgenehelper.repo_paths import get_sparse_checkout_paths
 
 
 class TestGetSparseCheckoutPaths:
     def test_full_path_list(self):
-        paths = GitRepoManager.get_sparse_checkout_paths("my-cluster", "my-env")
+        paths = get_sparse_checkout_paths("my-cluster/my-env")
         assert paths == [
             # repo root
             "appdefs/",
@@ -41,6 +45,11 @@ class TestGetSparseCheckoutPaths:
             "environments/my-cluster/cloud-deployer",
         ]
 
-    def test_cred_rotation_adds_full_cluster_dir(self):
-        paths = GitRepoManager.get_sparse_checkout_paths("my-cluster", "my-env", include_full_cluster=True)
+    def test_cred_rotation_adds_full_cluster_dir(self, monkeypatch):
+        monkeypatch.setenv("CRED_ROTATION_PAYLOAD", '{"rotation_items": []}')
+        paths = get_sparse_checkout_paths("my-cluster/my-env")
         assert "environments/my-cluster/" in paths
+
+    def test_rejects_invalid_full_env_name(self):
+        with pytest.raises(ValueError, match="Invalid environment name"):
+            get_sparse_checkout_paths("my-cluster-my-env")
