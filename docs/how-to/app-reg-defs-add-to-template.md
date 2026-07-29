@@ -86,8 +86,15 @@ The `default('off-site-registry-A')` preserves the value from the downloaded bas
 
 ### 5. Configure override values in the instance repository
 
-In each instance repository that consumes these templates, configure override values in
-`/configuration/appregdef_config.yaml`.
+In each instance repository that consumes these templates, set override values in `appregdef_config.yaml`. Place
+the file at one of two scopes:
+
+- Global (all clusters and environments): `/environments/configuration/appregdef_config.yaml`
+- Cluster-wide (all environments in one cluster): `/environments/<cluster>/configuration/appregdef_config.yaml`
+
+A cluster-wide file takes precedence over the global file on conflicting keys. Per-environment configuration is
+not supported: all environments in a cluster share one registry. For the full scope rules, see
+[`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
 
 **Off-site instance** - no overrides. Defaults from templates apply (file can be absent or empty).
 
@@ -102,6 +109,11 @@ appdefs:
 Then create the on-site RegDef as a definition override at `/configuration/regdefs/customer-onsite-registry.yml` -
 see [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)
 for the procedure.
+
+> [!NOTE]
+> `appregdef_config.yaml` lives under `/environments/`, but definition-override files
+> (`/configuration/appdefs/`, `/configuration/regdefs/`) live at the repository root. The two paths differ by
+> design.
 
 ### 6. Verify
 

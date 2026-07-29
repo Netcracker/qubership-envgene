@@ -210,7 +210,7 @@ The values for these macros come from [`appregdef_config.yaml`](/docs/envgene-co
 
 For example:
 
-- [`appregdef_config.yaml` example](/test_data/configuration/appregdef_config.yaml)
+- [`appregdef_config.yaml` example](/test_data/test_app_reg_defs/TC-001-003/environments/configuration/appregdef_config.yaml)
 - [Application Definition template](/test_data/test_templates/appdefs/application-1.yaml.j2)
 - [Registry Definition template](/test_data/test_templates/regdefs/registry-1.yaml.j2)
 
