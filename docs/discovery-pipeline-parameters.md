@@ -12,7 +12,7 @@ The Discovery pipeline performs Cloud Passport generation for a target cluster. 
 All parameters are of the string data type.
 
 > [!IMPORTANT]
-> The Discovery pipeline recognises and processes **only the parameter listed on this page**. Passing any variable not documented here has no effect on pipeline behaviour and will be silently ignored.
+> The Discovery pipeline recognises and processes Passing any variable not documented here has no effect on pipeline behaviour and will be silently ignored.
 
 ## Parameters
 
