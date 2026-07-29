@@ -85,7 +85,6 @@ class PipelineParametersHandler(BaseModel):
             except (TypeError, ValueError):
                 pass
 
-        params["ENV_NAMES"] = full_env_name
         cluster_name, env_name = full_env_name.split("/", 1)
 
         for k, v in params.items():
