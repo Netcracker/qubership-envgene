@@ -22,8 +22,8 @@ Pip-installable package (`envgenehelper`, v0.0.1 — version is a setuptools for
 | `params_helper.py` | `validate_parameters` — checks for `envgeneNullValue` in deployParameters, e2eParameters, technicalConfigurationParameters |
 | `deployer.py` | CMDB deployer config resolution, credential macro resolution in deployer files |
 | `http_helper.py` | `ApiClient` with GET/download, raises `IntegrationError` |
-| `git_helper.py` | `GitRepoManager` — `sparse_checkout(paths, fetch=True)`, configure/stage/detached-commit/cherry-pick+push; `GitContext`; `GitLabClient` |
-| `repo_paths.py` | `REPO_ROOT_PATHS`, `get_env_artifact_paths()`, `get_shared_entity_paths()`, `get_sparse_checkout_paths()` — path whitelists used by sparse checkout and `GitRepoManager.stage_changes` |
+| `git_helper.py` | `GitRepoManager` — `sparse_checkout(paths, fetch=True)`, configure/stage/detached-commit/cherry-pick+push via GitPython; `GitContext` (platform detection from env); `GitLabClient` (pipeline bridges/jobs, artifact download, project variables) |
+| `repo_paths.py` | `REPO_ROOT_PATHS`, `get_env_artifact_paths()`, `get_shared_entity_paths()`, `get_sparse_checkout_paths()` — path whitelists used by `GitRepoManager.sparse_checkout` / `stage_changes` |
 | `retry/` | Generic retry helper: `RetryPolicy`, `retry_call`, `parse_duration`, `Duration`; `GIT_RETRY_POLICY` (10 attempts, exponential backoff) used by `git_helper.py` |
 | `plugin_engine/` | Plugin discovery: `IPluginRegistry` metaclass, `PluginEngine` scans `plugins_dir` for `main.py` files |
 | `yaml_validator.py` | Whitelist-based structural validation (type, regular expression, allowNone) |
@@ -47,4 +47,4 @@ cd modules/envgene
 python -m pytest envgenehelper/
 ```
 
-Test files: `test_collections.py`, `test_creds_helper.py`, `test_crypt.py`, `test_file_helper.py`, `test_yaml_helper.py`, `test_git_helper.py`.
+Test files: `test_collections.py`, `test_creds_helper.py`, `test_crypt.py`, `test_file_helper.py`, `test_yaml_helper.py`, `test_git_helper.py`, `test_repo_paths.py`.
