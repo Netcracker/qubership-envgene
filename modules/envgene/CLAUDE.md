@@ -47,4 +47,4 @@ cd modules/envgene
 python -m pytest envgenehelper/
 ```
 
-Test files: `test_collections.py`, `test_creds_helper.py`, `test_crypt.py`, `test_file_helper.py`, `test_yaml_helper.py`, `test_git_helper.py`, `test_repo_paths.py`.
+Test files: `test_collections.py`, `test_creds_helper.py`, `test_crypt.py`, `test_file_helper.py`, `test_yaml_helper.py`, `test_git_helper.py`.

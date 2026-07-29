@@ -71,8 +71,6 @@ class GitRepoManager:
         except InvalidGitRepositoryError:
             self.repo = Repo.init(project_dir)
         self.ctx = GitContext.from_env()
-        self.cluster_name = os.getenv("CLUSTER_NAME")
-        self.env_name = os.getenv("ENVIRONMENT_NAME")
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
@@ -108,8 +106,11 @@ class GitRepoManager:
     def _get_excluded_paths(self) -> list[str]:
         if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
             return []
+        full_env_name = os.getenv("FULL_ENV_NAME")
+        if not full_env_name:
+            return []
         # effective set is pushed to a separate deploy target repo by es_pusher
-        return [f"environments/{self.cluster_name}/{self.env_name}/effective-set"]
+        return [f"environments/{full_env_name}/effective-set"]
 
     @property
     def _repo_root(self) -> Path:

@@ -5,6 +5,7 @@ import pytest
 from git import GitCommandError
 
 from .git_helper import GitContext, GitRepoManager
+from envgenehelper.models import PipelineType
 
 
 def make_context(**overrides):
@@ -26,11 +27,34 @@ def make_manager(ctx=None):
     if ctx is None:
         ctx = make_context()
     with patch("envgenehelper.git_helper.Repo"), \
-            patch.object(GitContext, "from_env", return_value=ctx), \
-            patch.dict(os.environ, {"CLUSTER_NAME": "cluster", "ENVIRONMENT_NAME": "env"}):
+            patch.object(GitContext, "from_env", return_value=ctx):
         manager = GitRepoManager()
     manager.repo.git.execute = MagicMock()
     return manager
+
+
+class TestGetExcludedPaths:
+    def test_returns_effective_set_path_for_gitlab_deploy(self):
+        manager = make_manager()
+        with patch.dict(os.environ, {
+            "PIPELINE_TYPE": PipelineType.GITLAB_DEPLOY.value,
+            "FULL_ENV_NAME": "cluster/env",
+        }, clear=False):
+            assert manager._get_excluded_paths() == ["environments/cluster/env/effective-set"]
+
+    def test_returns_empty_when_full_env_name_missing(self):
+        manager = make_manager()
+        with patch.dict(os.environ, {"PIPELINE_TYPE": PipelineType.GITLAB_DEPLOY.value}, clear=False):
+            os.environ.pop("FULL_ENV_NAME", None)
+            assert manager._get_excluded_paths() == []
+
+    def test_returns_empty_for_non_deploy_pipeline(self):
+        manager = make_manager()
+        with patch.dict(os.environ, {
+            "PIPELINE_TYPE": "ENV_BUILDER",
+            "FULL_ENV_NAME": "cluster/env",
+        }, clear=False):
+            assert manager._get_excluded_paths() == []
 
 
 class TestResolveRemoteUrl:
