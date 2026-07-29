@@ -477,9 +477,14 @@ For more info, see [Application and Registry Definition](/docs/features/app-reg-
 
 Location:
 
-- `/configuration/appregdef_config.yaml` - config for all Environments in the Instance repository
+- `/environments/configuration/appregdef_config.yaml` - global, applies to all clusters and environments in the
+  Instance repository
+- `/environments/<cluster>/configuration/appregdef_config.yaml` - cluster-wide, applies to all environments in
+  one cluster
 
-When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
+EnvGene reads both files when present and merges them. The cluster-wide file takes precedence over the global
+file on conflicting keys. Per-environment configuration is not supported: all environments in a cluster share one
+registry, so the cluster is the finest scope.
 
 [`appregdef_config.yaml` JSON Schema](/schemas/appregdef-config.schema.json)
 
