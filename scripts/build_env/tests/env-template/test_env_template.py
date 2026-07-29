@@ -36,6 +36,14 @@ ARTIFACT_NAME = f"{ARTIFACT_ID}-{SNAPSHOT_VERSION}"
 METADATA_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/maven-metadata.xml"
 DD_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.json"
 ZIP_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.zip"
+EXACT_DD_URL = (
+    f"{SNAPSHOT_BASE}/{GROUP_PATH}/{ARTIFACT_ID}/{SNAPSHOT_VERSION}/"
+    f"{ARTIFACT_NAME}.json"
+)
+EXACT_TMPL_ZIP_URL = (
+    f"{TMPL_SNAPSHOT_BASE}/{GROUP_PATH}/{ARTIFACT_ID}/{SNAPSHOT_VERSION}/"
+    f"{ARTIFACT_NAME}.zip"
+)
 
 STAGING_ZIP_URL = (
     f"{STAGING_BASE}/{PROJECT_GROUP_PATH}/"
@@ -218,14 +226,18 @@ class TestEnvTemplate:
 
         responses.add(responses.GET, METADATA_URL, body=metadata_xml, content_type="application/xml", status=200)
         mock_dd_exists(exists=True)
+        responses.add(responses.HEAD, EXACT_DD_URL, status=404)
         responses.add(responses.GET, DD_URL, json=dd_json, status=200)
         mock_zip(TMPL_ZIP_URL)
 
         process_env_template()
 
-        assert len(responses.calls) == 5
-        assert responses.calls[2].request.url == DD_URL
-        assert responses.calls[4].request.url == TMPL_ZIP_URL
+        called_urls = [call.request.url for call in responses.calls]
+
+        assert len(responses.calls) == 6
+        assert DD_URL in called_urls
+        assert EXACT_DD_URL in called_urls
+        assert TMPL_ZIP_URL in called_urls
 
     @responses.activate
     def test_old_logic_with_zip(self):
@@ -236,10 +248,14 @@ class TestEnvTemplate:
 
         responses.add(responses.GET, METADATA_URL, body=metadata_xml, content_type="application/xml", status=404)
         responses.add(responses.GET, tmpl_metadata_url, body=metadata_xml, content_type="application/xml", status=200)
+        responses.add(responses.HEAD, EXACT_TMPL_ZIP_URL, status=404)
 
         mock_zip(tmpl_zip_url)
 
         process_env_template()
 
-        assert len(responses.calls) == 4
-        assert responses.calls[3].request.url == tmpl_zip_url
+        called_urls = [call.request.url for call in responses.calls]
+
+        assert len(responses.calls) == 5
+        assert EXACT_TMPL_ZIP_URL in called_urls
+        assert tmpl_zip_url in called_urls
