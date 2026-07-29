@@ -3,7 +3,8 @@ import os
 import pytest
 
 from pipeline.orchestrator import dispatch
-from pipeline.pipeline_parameters import PipelineParametersHandler, resolve_env_names
+from pipeline.pipeline_parameters import PipelineParametersHandler
+from pipeline.resolve_env_names import resolve_env_names
 
 
 @pytest.fixture(autouse=True)

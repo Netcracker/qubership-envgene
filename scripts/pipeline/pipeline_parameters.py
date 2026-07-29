@@ -10,47 +10,10 @@ from typing import Self
 from pydantic import BaseModel, Field
 
 from envgenehelper import logger, writeToFile
-from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
 from envgenehelper.plugin_engine import PluginEngine
-
-
-def resolve_env_names() -> list[str]:
-    env_names = os.getenv("ENV_NAMES")
-    cluster_name = os.getenv("CLUSTER_NAME")
-    env_name = os.getenv("ENVIRONMENT_NAME")
-
-    if env_names and (cluster_name or env_name):
-        raise ValueError(
-            "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
-            "but not both at the same time"
-        )
-
-    if env_names:
-        names = split_multi_value_param(env_names)
-    elif cluster_name and env_name:
-        env_names = f"{cluster_name}/{env_name}"
-        os.environ["ENV_NAMES"] = env_names
-        names = [env_names]
-    else:
-        raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
-
-    for name in names:
-        if "/" not in name:
-            raise ValueError(
-                f"Invalid environment name '{name}'. "
-                f"Expected format: <cluster>/<env>"
-            )
-
-    pipeline_type = getenv("PIPELINE_TYPE")
-    if pipeline_type and PipelineType(pipeline_type) == PipelineType.GITLAB_DEPLOY and len(names) > 1:
-        raise ValueError(
-            "Multiple values in ENV_NAMES are not supported when PIPELINE_TYPE is GITLAB_DEPLOY"
-        )
-
-    return names
 
 
 class PipelineParametersHandler(BaseModel):
@@ -72,16 +35,10 @@ class PipelineParametersHandler(BaseModel):
 
     @classmethod
     def from_env(cls) -> Self:
-        env_names_str = os.getenv("ENV_NAMES")
-        if not env_names_str:
-            raise ValueError("ENV_NAMES is not set")
-        env_names = split_multi_value_param(env_names_str)
-        if len(env_names) != 1:
-            raise ValueError("ENV_NAMES must name exactly one environment")
-        full_env_name = env_names[0]
+        full_env_name = getenv("ENV_NAMES")
 
         params = {
-            'ENV_NAMES': getenv("ENV_NAMES", ""),
+            'ENV_NAMES': full_env_name,
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
             'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
             'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
