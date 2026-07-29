@@ -81,6 +81,7 @@ def set_env_inventory_content_from_file(workspace: EnvGeneWorkspace, file_path: 
 
 @given(parsers.parse('the workspace is initialized with test data from "{test_data_path}"'))
 def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_path: str):
+    import yaml as _yaml
     project_root = Path(os.environ.get("CI_PROJECT_DIR", Path(__file__).parent.parent.parent.resolve()))
     source_dir = project_root / "cucumber_tests" / "test_data" / test_data_path
     if not source_dir.exists():
@@ -93,6 +94,13 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
     legacy_config = workspace.base_dir / "configurations"
     if legacy_config.exists():
         shutil.copytree(legacy_config, workspace.base_dir / "configuration", dirs_exist_ok=True)
+
+    # Preserve existing config.yml so write_config() merges instead of overwriting
+    config_file = workspace.base_dir / "configuration" / "config.yml"
+    if config_file.exists():
+        loaded = _yaml.safe_load(config_file.read_text(encoding="utf-8"))
+        if isinstance(loaded, dict):
+            workspace.config_data.update(loaded)
 
 
 @given(parsers.parse('a deploy parameter "{param}" is set to "{value}" in the environment instance'))
