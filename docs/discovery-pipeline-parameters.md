@@ -5,7 +5,7 @@
   - [Parameters](#parameters)
     - [`ENV_NAME`](#env_name)
 
-The following are the launch parameters for the Discovery repository pipeline.
+The following are the launch parameters for the Discovery.
 
 The Discovery pipeline performs Cloud Passport generation for a target cluster. It is triggered automatically from the [Instance pipeline](/docs/envgene-pipelines.md) when [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport), or can be triggered manually via the GitLab UI.
 
