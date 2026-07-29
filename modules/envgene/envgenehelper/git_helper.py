@@ -217,12 +217,8 @@ class GitRepoManager:
 
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
-        if sparse_paths:
-            logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
-            self.repo.git.sparse_checkout("set", *sparse_paths)
-        else:
-            logger.info("git sparse-checkout set (no working tree paths)")
-            self.repo.git.sparse_checkout("set")
+        logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
+        self.repo.git.sparse_checkout("set", *sparse_paths)
         logger.info("git read-tree -mu HEAD")
         self.repo.git.read_tree("-mu", "HEAD")
         logger.info("sparse checkout complete")
