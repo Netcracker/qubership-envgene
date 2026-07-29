@@ -41,7 +41,7 @@ def create_artifact_path(app: Application, version: str, repo: str = "",
                          use_exact_version_folder: bool = False) -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
-    folder = _get_version_folder(version, use_exact_version_folder)
+    folder = version if use_exact_version_folder else version_to_folder_name(version)
 
     # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
     if repo:
@@ -135,12 +135,6 @@ def version_to_folder_name(version: str):
     else:
         folder = version
     return folder
-
-
-def _get_version_folder(version: str, use_exact_version_folder: bool = False) -> str:
-    if use_exact_version_folder:
-        return version
-    return version_to_folder_name(version)
 
 
 def _create_candidate_urls(app: Application, version: str, repo: str, artifact_extension: FileExtension,
@@ -547,12 +541,15 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     candidate_urls = _create_candidate_urls_from_coordinates(
         repo_url, group_id, artifact_id, version, artifact_extension, classifier
     )
-    with ThreadPoolExecutor(max_workers=len(candidate_urls)) as executor:
-        futures = [
-            executor.submit(_check_candidate_url, full_url, auth_headers)
-            for full_url in candidate_urls
-        ]
-        candidate_results = [future.result() for future in futures]
+    if len(candidate_urls) == 1:
+        candidate_results = [_check_candidate_url(candidate_urls[0], auth_headers)]
+    else:
+        with ThreadPoolExecutor(max_workers=len(candidate_urls)) as executor:
+            futures = [
+                executor.submit(_check_candidate_url, full_url, auth_headers)
+                for full_url in candidate_urls
+            ]
+            candidate_results = [future.result() for future in futures]
 
     for full_url, status, _ in candidate_results:
         if status == 200:

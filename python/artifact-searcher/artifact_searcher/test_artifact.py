@@ -115,8 +115,9 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
 @patch("artifact_searcher.artifact.requests.head")
 @patch("artifact_searcher.artifact.create_artifact_name")
 @patch("artifact_searcher.artifact.version_to_folder_name")
+@patch("artifact_searcher.artifact.ThreadPoolExecutor")
 @patch("artifact_searcher.artifact.MavenConfig.is_nexus")
-def test_artifact_found(mock_nexus, mock_folder, mock_name, mock_head):
+def test_artifact_found(mock_nexus, mock_executor, mock_folder, mock_name, mock_head):
 
     mock_nexus.return_value = False
     mock_folder.return_value = VERSION
@@ -137,6 +138,7 @@ def test_artifact_found(mock_nexus, mock_folder, mock_name, mock_head):
     assert result == (
         "https://repo.example.com/repository/com/example/demo/1.0.0/demo-1.0.0.zip"
     )
+    mock_executor.assert_not_called()
 
 
 @patch("artifact_searcher.artifact.requests.head")
