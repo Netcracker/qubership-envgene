@@ -43,7 +43,7 @@ If you plan to parameterize them (next step), rename to `.yml.j2` to mark them a
 - `/templates/appdefs/<application-name>.yml.j2`
 - `/templates/regdefs/<registry-name>.yml.j2`
 
-### 4. Parameterize for environment-specific values
+### 4. Parameterize for environment-specific values.
 
 The value that typically differs between instance repositories is the registry an AppDef references (the
 `registryName` field), since different deployment sites use different registries (off-site source registries vs an
@@ -84,9 +84,9 @@ The `default('off-site-registry-A')` preserves the value from the downloaded bas
 > [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md).
 > The template repository holds only off-site RegDef templates.
 
-### 5. Configure override values in the instance repository
+### 5. Configure override values in the instance repository. Optional
 
-In each instance repository that consumes these templates, set override values in `appregdef_config.yaml`. Place
+In on-site instance repository that consumes these templates, set override values in `appregdef_config.yaml`. Place
 the file at one of two scopes:
 
 - Global (all clusters and environments): `/environments/configuration/appregdef_config.yaml`
@@ -96,9 +96,10 @@ A cluster-wide file takes precedence over the global file on conflicting keys. P
 not supported: all environments in a cluster share one registry. For the full scope rules, see
 [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
 
-**Off-site instance** - no overrides. Defaults from templates apply (file can be absent or empty).
+**Off-site instance repositories** - no overrides. Defaults from templates apply (`appregdef_config.yaml` can be absent
+or empty).
 
-**On-site instance** - redirect AppDefs to the on-site registry:
+**On-site instance repositories** - redirect AppDefs to the on-site registry:
 
 ```yaml
 appdefs:
@@ -109,11 +110,6 @@ appdefs:
 Then create the on-site RegDef as a definition override at `/configuration/regdefs/customer-onsite-registry.yml` -
 see [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)
 for the procedure.
-
-> [!NOTE]
-> `appregdef_config.yaml` lives under `/environments/`, but definition-override files
-> (`/configuration/appdefs/`, `/configuration/regdefs/`) live at the repository root. The two paths differ by
-> design.
 
 ### 6. Verify
 
