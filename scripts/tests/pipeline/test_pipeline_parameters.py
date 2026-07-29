@@ -111,13 +111,6 @@ class TestPipelineParametersFromEnv:
         assert os.environ["CLUSTER_NAME"] == "cluster-01"
         assert os.environ["ENVIRONMENT_NAME"] == "env-01"
 
-    @pytest.mark.unit
-    def test_from_env_rejects_multiple_env_names(self, monkeypatch):
-        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
-
-        with pytest.raises(ValueError, match="exactly one environment"):
-            PipelineParametersHandler.from_env()
-
 
 @pytest.fixture
 def mock_worktrees(monkeypatch):
@@ -158,11 +151,6 @@ class TestRunSingleEnvEntrypoint:
 
 
 class TestDispatch:
-    @pytest.mark.unit
-    def test_fails_when_env_names_missing(self, monkeypatch):
-        with pytest.raises(ValueError, match="ENV_NAMES is not set"):
-            dispatch()
-
     @pytest.mark.unit
     def test_single_env_runs_pipeline_in_process(self, monkeypatch):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")

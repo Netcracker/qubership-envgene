@@ -316,11 +316,8 @@ def run_single_env_pipeline() -> None:
 
 
 def dispatch() -> int:
-    env_names_str = os.getenv("ENV_NAMES")
-    if not env_names_str:
-        raise ValueError("ENV_NAMES is not set")
-    env_names = split_multi_value_param(env_names_str)
-    if len(env_names) <= 1:
+    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
+    if len(env_names) == 1:
         run_single_env_pipeline()
         return 0
 
@@ -349,6 +346,4 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        raise ValueError(f"Unexpected arguments: {sys.argv[1:]!r}")
     sys.exit(dispatch())
