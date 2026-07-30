@@ -89,7 +89,7 @@ def render_obj_by_context(template: dict, context: Context) -> dict:
 def build_minimal_render_context(env_name: str, cluster_name: str, env_dir: str, base_dir: str) -> dict:
     from build_env.build_env import process_additional_template_parameters  # TODO: circular import, fix properly
     output_dir = f"{base_dir}/environments"
-    render_dir = f"/tmp/render/{env_name}"
+    render_dir = f"{base_dir}/tmp/render/{env_name}"
     templates_dirs = get_template_dirs()
     cloud_passport_file_path = find_cloud_passport_definition(env_dir, output_dir)
     copy_path(f'{env_dir}/Inventory', f'{render_dir}/Inventory')

@@ -6,7 +6,7 @@ import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from build_env.namespace_render import compute_namespace_map
-from envgenehelper.business_helper import getenv_with_error, get_version
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_version
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
@@ -23,13 +23,6 @@ MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
     MergeType.BASIC_EXCLUSION: helper.basic_exclusion_merge,
 }
-
-ENVIRONMENT_NAME = getenv_with_error('ENVIRONMENT_NAME')
-CLUSTER_NAME = getenv_with_error('CLUSTER_NAME')
-WORK_DIR = getenv_with_error('CI_PROJECT_DIR')
-BASE_ENV_PATH = f"{WORK_DIR}/environments/{CLUSTER_NAME}/{ENVIRONMENT_NAME}"
-APP_DEFS_PATH = f"{BASE_ENV_PATH}/AppDefs"
-REG_DEFS_PATH = f"{BASE_ENV_PATH}/RegDefs"
 
 
 def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_by_deploy_postfix: dict) -> dict:
@@ -223,9 +216,12 @@ def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Ap
     for result in results:
         if result is not None:
             return result
-    app_def_path = identify_yaml_extension(f"{APP_DEFS_PATH}/{app_name}")
+    env_path = get_current_env_dir_from_env_vars()
+    app_defs_path = f"{env_path}/AppDefs"
+    reg_defs_path = f"{env_path}/RegDefs"
+    app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
-    reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registryName']}")
+    reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")
     app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def

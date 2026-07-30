@@ -10,9 +10,7 @@ from typing import Self
 import yaml
 from pydantic import BaseModel, Field
 
-from envgenehelper import getenv_with_error, writeToFile
-from envgenehelper import logger
-from envgenehelper.collections_helper import split_multi_value_param
+from envgenehelper import logger, writeToFile
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
@@ -38,8 +36,10 @@ class PipelineParametersHandler(BaseModel):
 
     @classmethod
     def from_env(cls) -> Self:
+        full_env_name = getenv("ENV_NAMES")
+
         params = {
-            'ENV_NAMES': getenv("ENV_NAMES", ""),
+            'ENV_NAMES': full_env_name,
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
             'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
             'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
@@ -87,21 +87,11 @@ class PipelineParametersHandler(BaseModel):
             if isinstance(parsed, (dict, list)):
                 params[k] = json.dumps(parsed, separators=(",", ":"), default=str)
 
-        is_gitlab_deploy = params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
-        if is_gitlab_deploy:
-            cluster_name = getenv_with_error("CLUSTER_NAME")
-            env_name = getenv_with_error("ENVIRONMENT_NAME")
-        else:
-            env_names = split_multi_value_param(getenv_with_error("ENV_NAMES"))
-            if len(env_names) != 1:
-                raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
-            cluster_name, env_name = env_names[0].split("/")
+        cluster_name, env_name = full_env_name.split("/", 1)
 
         for k, v in params.items():
             if v is not None:
                 os.environ[k] = str(v)
-
-        full_env_name = f"{cluster_name}/{env_name}"
         internal_params = {
             'FULL_ENV_NAME': full_env_name,
             'CLUSTER_NAME': cluster_name,
@@ -137,10 +127,11 @@ class PipelineParametersHandler(BaseModel):
         params_str = "Input parameters are: " + "".join(f"\n{k.upper()}: {v}" for k, v in params.items())
         logger.info(params_str)
 
-    def write_dotenv(self) -> None:
+    def write_dotenv(self, exclude_keys: set[str] | None = None) -> None:
+        excluded = exclude_keys or set()
         lines = []
         for key, value in {**self.params, **self.internal_params}.items():
-            if value is None or key in self.sensitive_params:
+            if value is None or key in self.sensitive_params or key in excluded:
                 continue
             value = str(value)
             if "\n" in value:

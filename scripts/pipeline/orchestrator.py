@@ -1,3 +1,5 @@
+import os
+import sys
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -24,7 +26,9 @@ from deployment_plan.generate_deployment_plan import run_generate_deployment_pla
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
+from pipeline.multi_env_runner import fan_out
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
@@ -258,7 +262,7 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
-def run_unified_pipeline() -> None:
+def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
     ctx = PipelineParametersHandler.from_env()
@@ -304,6 +308,19 @@ def run_unified_pipeline() -> None:
         log_pipeline_summary(results)
 
 
+def dispatch() -> int:
+    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
+    if len(env_names) == 1:
+        run_single_env_pipeline()
+        return 0
+
+    os.environ["ENV_NAMES"] = env_names[0]
+    handler = PipelineParametersHandler.from_env()
+    handler.write_dotenv(exclude_keys={"ENV_NAMES"})
+
+    return fan_out(env_names)
+
+
 def _format_duration(duration_ms: int | None) -> str:
     if duration_ms is None:
         return "-"
@@ -322,4 +339,4 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    run_unified_pipeline()
+    sys.exit(dispatch())

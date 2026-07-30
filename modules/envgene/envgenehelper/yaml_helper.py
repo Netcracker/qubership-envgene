@@ -1,6 +1,7 @@
 import copy
 import json
 import pathlib
+import threading
 from io import StringIO
 from typing import OrderedDict
 
@@ -493,6 +494,21 @@ def load_json_or_yaml(content: str):
     return None
 
 
+class _ThreadLocalYaml:
+    def __init__(self, is_safe: bool = False):
+        self.is_safe = is_safe
+        self._local = threading.local()
+
+    def _get_instance(self):
+        attr = "safe_yaml" if self.is_safe else "yaml"
+        if not hasattr(self._local, attr):
+            setattr(self._local, attr, create_yaml_processor(self.is_safe))
+        return getattr(self._local, attr)
+
+    def __getattr__(self, name):
+        return getattr(self._get_instance(), name)
+
+
 jschon.create_catalog('2020-12')
-yaml = create_yaml_processor()
-safe_yaml = create_yaml_processor(is_safe=True)
+yaml = _ThreadLocalYaml(is_safe=False)
+safe_yaml = _ThreadLocalYaml(is_safe=True)

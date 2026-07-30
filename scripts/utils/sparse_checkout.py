@@ -1,18 +1,17 @@
-import argparse
+import os
 
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.git_helper import GitRepoManager
+from envgenehelper.repo_paths import get_sparse_checkout_paths
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--sparse-paths",
-        nargs="+",
-        required=False,
-        help="Paths to include in sparse checkout",
-    )
 
-    args = parser.parse_args()
-
+def main() -> None:
+    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
     repo = GitRepoManager()
     repo.configure()
-    repo.sparse_checkout(args.sparse_paths)
+    paths = get_sparse_checkout_paths(env_names[0]) if len(env_names) == 1 else []
+    repo.sparse_checkout(paths)
+
+
+if __name__ == "__main__":
+    main()

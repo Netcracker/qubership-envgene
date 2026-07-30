@@ -1,7 +1,9 @@
+import threading
+
 import pytest
 from ruyaml import CommentedMap
 
-from .yaml_helper import openYaml, store_value_to_yaml, writeYamlToFile
+from .yaml_helper import dumpYamlToStr, openYaml, readYaml, store_value_to_yaml, writeYamlToFile
 
 CRED_VALUE = {'type': 'secret', 'data': {'secret': 'token'}}
 
@@ -47,3 +49,28 @@ class TestCredentialYamlWithoutComments:
         writeYamlToFile(cred_path, loaded)
 
         assert_no_yaml_comments(cred_path)
+
+
+class TestYamlThreadSafety:
+    @pytest.mark.unit
+    def test_concurrent_load_and_dump(self):
+        errors = []
+        results = []
+
+        def worker(index: int) -> None:
+            try:
+                data = readYaml(f"key_{index}: value_{index}\n")
+                dumped = dumpYamlToStr(data)
+                assert f"key_{index}:" in dumped
+                results.append(index)
+            except Exception as exc:
+                errors.append((index, exc))
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(20)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert not errors, f"Concurrent YAML operations raised errors: {errors}"
+        assert len(results) == 20
