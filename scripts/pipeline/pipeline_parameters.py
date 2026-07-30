@@ -7,6 +7,7 @@ from os import getenv
 from pathlib import Path
 from typing import Self
 
+import yaml
 from pydantic import BaseModel, Field
 
 from envgenehelper import getenv_with_error, writeToFile
@@ -80,10 +81,11 @@ class PipelineParametersHandler(BaseModel):
 
         for k, v in params.items():
             try:
-                parsed = json.loads(v)
-                params[k] = json.dumps(parsed, separators=(",", ":"))
-            except (TypeError, ValueError):
-                pass
+                parsed = yaml.safe_load(v)
+            except (yaml.YAMLError, AttributeError):
+                continue
+            if isinstance(parsed, (dict, list)):
+                params[k] = json.dumps(parsed, separators=(",", ":"), default=str)
 
         is_gitlab_deploy = params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
         if is_gitlab_deploy:
