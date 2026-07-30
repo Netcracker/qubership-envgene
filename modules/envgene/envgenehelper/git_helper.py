@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from envgenehelper import logger
+from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
