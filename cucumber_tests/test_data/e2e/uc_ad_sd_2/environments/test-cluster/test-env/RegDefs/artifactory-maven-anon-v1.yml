@@ -1,0 +1,17 @@
+name: artifactory-maven-anon-v1
+mavenConfig:
+  repositoryDomainName: http://localhost:8000
+  targetSnapshot: release
+  targetStaging: release
+  targetRelease: release
+  snapshotGroup: release
+  releaseGroup: release
+dockerConfig:
+  snapshotUri: ""
+  stagingUri: ""
+  releaseUri: ""
+  groupUri: ""
+  snapshotRepoName: ""
+  stagingRepoName: ""
+  releaseRepoName: ""
+  groupName: ""

@@ -1,0 +1,4 @@
+nexus-maven:
+  maven-repo: http://localhost:8000/release
+  username: "credentials('nexus-creds').username"
+  password: "credentials('nexus-creds').password"

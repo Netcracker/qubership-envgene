@@ -1,0 +1,11 @@
+name: project-env-template
+groupId: org.test
+artifactId: project-env-template
+registry:
+  name: artifactory-maven-snap
+  credentialsId: artifactory-creds
+  mavenConfig:
+    repositoryDomainName: http://localhost:8000
+    targetSnapshot: libs-snapshot-local
+    targetStaging: libs-staging-local
+    targetRelease: release
