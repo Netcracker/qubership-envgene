@@ -1,6 +1,5 @@
 import os
 import shlex
-import sys
 from os import getenv
 from pathlib import Path
 
@@ -46,20 +45,20 @@ def resolve_env_names() -> list[str]:
     return names
 
 
-def main() -> int:
-    try:
-        env_names = resolve_env_names()
-    except ValueError as exc:
-        print(exc, file=sys.stderr)
-        return 1
+def main() -> None:
+    env_names = resolve_env_names()
 
-    env_names_value = ",".join(env_names)
-    Path(RESOLVED_ENV_FILE).write_text(
-        f"ENV_NAMES={shlex.quote(env_names_value)}\n",
-        encoding="utf-8",
-    )
-    return 0
+    variables: dict[str, str] = {"ENV_NAMES": ",".join(env_names)}
+    if len(env_names) == 1:
+        env_dir = f"{os.getenv('CI_PROJECT_DIR')}/environments/{env_names[0]}"
+        variables.update({
+            "LOCAL_APPDEFS_PATH": f"{env_dir}/AppDefs",
+            "LOCAL_REGDEFS_PATH": f"{env_dir}/RegDefs",
+        })
+
+    lines = [f"{key}={shlex.quote(value)}" for key, value in variables.items()]
+    Path(RESOLVED_ENV_FILE).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

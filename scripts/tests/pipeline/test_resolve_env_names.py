@@ -1,8 +1,9 @@
 import os
+from pathlib import Path
 
 import pytest
 
-from pipeline.resolve_env_names import resolve_env_names
+from pipeline.resolve_env_names import RESOLVED_ENV_FILE, main, resolve_env_names
 
 
 @pytest.fixture(autouse=True)
@@ -89,3 +90,38 @@ class TestResolveEnvNames:
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
 
         assert resolve_env_names() == ["cluster-01/env-01"]
+
+
+class TestResolvedEnvFile:
+    @staticmethod
+    def _read_resolved_env() -> dict[str, str]:
+        variables: dict[str, str] = {}
+        for line in Path(RESOLVED_ENV_FILE).read_text(encoding="utf-8").splitlines():
+            key, _, value = line.partition("=")
+            variables[key] = value
+        return variables
+
+    @pytest.mark.unit
+    def test_writes_per_env_paths_for_single_env(self, monkeypatch, tmp_path):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+        monkeypatch.setenv("CI_PROJECT_DIR", "/instance-repo")
+
+        main()
+
+        assert self._read_resolved_env() == {
+            "ENV_NAMES": "cluster-01/env-01",
+            "LOCAL_APPDEFS_PATH": "/instance-repo/environments/cluster-01/env-01/AppDefs",
+            "LOCAL_REGDEFS_PATH": "/instance-repo/environments/cluster-01/env-01/RegDefs",
+        }
+
+    @pytest.mark.unit
+    def test_writes_only_env_names_for_multi_env(self, monkeypatch, tmp_path):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01,cluster-02/env-02")
+
+        main()
+
+        assert self._read_resolved_env() == {
+            "ENV_NAMES": "cluster-01/env-01,cluster-02/env-02",
+        }
