@@ -4,7 +4,8 @@ from os import getenv
 
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, \
-    resolve_partial_merge_mode, ES_MAPPING_FILE, ESGenerationContext, ES_DIR_NAME, get_es_generation_mode
+    resolve_partial_merge_mode, ES_MAPPING_FILE, ESGenerationContext, ES_DIR_NAME, get_es_generation_mode, \
+    get_full_generation_sd_path
 from envgenehelper.file_helper import delete_dir, deleteFileIfExists, delete_dir_if_exists
 from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
@@ -25,7 +26,7 @@ def effective_set_entrypoint():
         else:
             _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path)
     else:
-        _run_full_generation(effective_set_dir, full_env_name, sd_path)
+        _run_full_generation(effective_set_dir, full_env_name, get_full_generation_sd_path())
 
     # do not commit delta sd to repo
     deleteFileIfExists(delta_sd_path)
@@ -138,7 +139,7 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
         f"--output={effective_set_dir}",
     ]
 
-    if sd_path.is_file():
+    if sd_path is not None and sd_path.is_file():
         cmd.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
             "--sboms-path=$CI_PROJECT_DIR/sboms",
