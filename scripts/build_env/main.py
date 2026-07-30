@@ -115,7 +115,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
                                                    render_parameters_dir, render_profiles_dir, output_dir)
     pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
     # get deployer parameters
-    cmdb_url, _, _ = get_deployer_config(f"{cluster_name}/{env_name}", work_dir, all_instances_dir, None, None, False)
+    cmdb_url, _, _ = get_deployer_config()
     # perform rendering with Jinja2
     # Load environment definition and ensure auto-derived environmentName is available
     env_def_path = os.path.join(render_env_dir, "Inventory", "env_definition.yml")

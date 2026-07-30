@@ -1,0 +1,63 @@
+name: "E2E BDD Tests — Environment Inventory Generation"
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  eig-e2e-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build production image and start cucumber container
+        run: |
+          docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+          docker compose -f devtools/docker-compose.yml up -d --build cucumber
+
+      - name: Install Python packages inside container
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber \
+            bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
+
+      - name: Run Environment Inventory Generation BDD tests
+        run: |
+          mkdir -p reports
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_environment_inventory_generation.py \
+               -v -s \
+               --junitxml=reports/environment_inventory_generation.xml \
+               | tee /workspace/e2e_tests.log"
+
+      - name: Publish Test Report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: "reports/**/*.xml"
+          check_name: "EIG BDD Test Results"
+
+      - name: Upload test logs and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eig-test-results
+          path: |
+            e2e_tests.log
+            reports/
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose -f devtools/docker-compose.yml down

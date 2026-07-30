@@ -75,6 +75,9 @@ def minimize_cred_diffs() -> None:
     try:
         changed_paths = repo.git.diff('--name-only', 'HEAD').splitlines()
     except GitCommandError as exc:
+        if "ambiguous argument 'HEAD'" in str(exc):
+            logger.info("No HEAD exists in the repository, skipping credential diff minimization")
+            return
         message = f'git diff against HEAD failed in {base_dir}: {exc}'
         logger.error(message)
         raise RuntimeError(message) from exc

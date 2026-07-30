@@ -1,4 +1,3 @@
----
 tenant: "{{ templates_dir }}/env_templates/test-template-2/tenant.yml.j2"
 cloud:
   template_path: "{{ templates_dir }}/env_templates/test-template-2/cloud.yml.j2"

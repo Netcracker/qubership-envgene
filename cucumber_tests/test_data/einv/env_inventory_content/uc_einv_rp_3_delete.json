@@ -1,0 +1,9 @@
+{
+  "resourceProfiles": [
+    {
+      "action": "delete",
+      "place": "env",
+      "name": "db_profile"
+    }
+  ]
+}

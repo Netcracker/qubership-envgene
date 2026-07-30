@@ -56,8 +56,8 @@ def check_dir_exist_and_create(dir_path):
 def delete_dir(path):
     try:
         shutil.rmtree(path)
-    except:
-        logger.warning(f'{path} directory does not exist')
+    except Exception as e:
+        logger.warning(f'{path} directory could not be deleted: {e}')
 
 
 def is_glob(path: str) -> bool:

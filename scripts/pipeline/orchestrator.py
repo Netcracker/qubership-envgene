@@ -1,9 +1,11 @@
 import os
 import sys
+import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
+from os import getenv
 
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
@@ -130,18 +132,6 @@ class ProcessSdStep(PipelineStep):
             ctx.partial_merge_mode = resolve_partial_merge_mode()
 
 
-class CleanNamespacesStep(PipelineStep):
-    @property
-    def name(self) -> str:
-        return "clean_namespaces"
-
-    def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN
-
-    def execute(self, ctx: PipelineParametersHandler) -> None:
-        clean_namespaces(ctx.namespace_by_deploy_postfix, ctx.params.get('NAMESPACE_NAMES'))
-
-
 class MigrateSdToDeployPlanStep(PipelineStep):
     @property
     def name(self) -> str:
@@ -185,15 +175,17 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
+def should_run_appregdef_and_env_build(ctx: PipelineParametersHandler) -> bool:
+    return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+
+
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
-            return False
-        return bool(ctx.params.get('ENV_BUILDER')) or ctx.is_gitlab_deploy()
+        return should_run_appregdef_and_env_build(ctx)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
@@ -229,7 +221,7 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
+        return should_run_appregdef_and_env_build(ctx)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = run_build_environment()
@@ -271,6 +263,8 @@ class GitCommitStep(PipelineStep):
 
 
 def run_single_env_pipeline() -> None:
+    logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
+
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
@@ -283,7 +277,6 @@ def run_single_env_pipeline() -> None:
         AppregdefRenderStep(),
         DeployPostfixNamespaceMapStep(),
         ProcessSdStep(),
-        CleanNamespacesStep(),
         MigrateSdToDeployPlanStep(),
         GenerateDeploymentPlanStep(),
         EnvBuildStep(),

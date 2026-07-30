@@ -38,24 +38,36 @@ class GitContext(BaseModel):
                 "platform": "github",
                 "server_protocol": "https",
                 "server_host": "github.com",
-                "project_path": os.getenv("GITHUB_REPOSITORY"),
-                "ref_name": os.getenv("GITHUB_REF_NAME"),
-                "user_email": os.getenv("GITHUB_USER_EMAIL"),
-                "user_name": os.getenv("GITHUB_USER_NAME"),
-                "token": os.getenv("GITHUB_TOKEN"),
-                "commit_sha": os.getenv("GITHUB_SHA")
+                "project_path": getenv_with_error("GITHUB_REPOSITORY"),
+                "ref_name": getenv_with_error("GITHUB_REF_NAME"),
+                "user_email": getenv_with_error("GITHUB_USER_EMAIL"),
+                "user_name": getenv_with_error("GITHUB_USER_NAME"),
+                "token": getenv_with_error("GITHUB_TOKEN", no_log=True),
+                "commit_sha": getenv_with_error("GITHUB_SHA")
             }
         elif os.getenv("GITLAB_CI"):
             data = {
                 "platform": "gitlab",
-                "server_protocol": os.getenv("CI_SERVER_PROTOCOL"),
-                "server_host": os.getenv("CI_SERVER_HOST"),
-                "project_path": os.getenv("CI_PROJECT_PATH"),
-                "ref_name": os.getenv("CI_COMMIT_REF_NAME"),
-                "user_email": os.getenv("GITLAB_USER_EMAIL"),
-                "user_name": os.getenv("GITLAB_USER_LOGIN"),
-                "token": os.getenv("GITLAB_TOKEN"),
-                "commit_sha": os.getenv("CI_COMMIT_SHA")
+                "server_protocol": getenv_with_error("CI_SERVER_PROTOCOL"),
+                "server_host": getenv_with_error("CI_SERVER_HOST"),
+                "project_path": getenv_with_error("CI_PROJECT_PATH"),
+                "ref_name": getenv_with_error("CI_COMMIT_REF_NAME"),
+                "user_email": getenv_with_error("GITLAB_USER_EMAIL"),
+                "user_name": getenv_with_error("GITLAB_USER_LOGIN"),
+                "token": getenv_with_error("GITLAB_TOKEN", no_log=True),
+                "commit_sha": getenv_with_error("CI_COMMIT_SHA")
+            }
+        elif os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+            data = {
+                "platform": "local",
+                "server_protocol": "http",
+                "server_host": "localhost",
+                "project_path": "local/project",
+                "ref_name": "local",
+                "user_email": "local@localhost",
+                "user_name": "local",
+                "token": "local",
+                "commit_sha": "local"
             }
         else:
             raise RuntimeError("Neither GITHUB_ACTIONS nor GITLAB_CI detected")
@@ -110,7 +122,9 @@ class GitRepoManager:
         if not full_env_name:
             return []
         # effective set is pushed to a separate deploy target repo by es_pusher
-        return [f"environments/{full_env_name}/effective-set"]
+        return [f"environments/{full_env_name}/effective-set/deployment",
+                f"environments/{full_env_name}/effective-set/cleanup",
+                f"environments/{full_env_name}/effective-set/runtime"]
 
     @property
     def _repo_root(self) -> Path:
@@ -177,12 +191,21 @@ class GitRepoManager:
     def create_detached_commit(self, message: str) -> str:
         # git commit-tree "$(git write-tree)" -p HEAD -m "${message}"
         tree_sha = self.repo.git.write_tree()
-        parent_sha = self.repo.head.commit.hexsha
-        commit_sha = self.repo.git.commit_tree(tree_sha, p=parent_sha, m=message).strip()
+        try:
+            parent_sha = self.repo.head.commit.hexsha
+            commit_args = ["-p", parent_sha, "-m", message]
+        except ValueError:
+            commit_args = ["-m", message]
+            
+        commit_sha = self.repo.git.commit_tree(tree_sha, *commit_args).strip()
         logger.info(f"Created hidden commit {commit_sha} (not attached to any branch)")
         return commit_sha
 
     def _cherry_pick_and_push(self, snapshot_sha: str) -> None:
+        if os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+            logger.info("Local test mode: skipping cherry-pick and push")
+            return
+            
         self._fetch(ref=self.ctx.ref_name, checkout="FETCH_HEAD", checkout_option=["--force", "--detach"])
         try:
             logger.info(f"git cherry-pick {snapshot_sha}")
