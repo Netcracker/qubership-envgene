@@ -40,7 +40,11 @@ class TestGetExcludedPaths:
             "PIPELINE_TYPE": PipelineType.GITLAB_DEPLOY.value,
             "FULL_ENV_NAME": "cluster/env",
         }, clear=False):
-            assert manager._get_excluded_paths() == ["environments/cluster/env/effective-set"]
+            assert manager._get_excluded_paths() == [
+                "environments/cluster/env/effective-set/deployment",
+                "environments/cluster/env/effective-set/cleanup",
+                "environments/cluster/env/effective-set/runtime",
+            ]
 
     def test_returns_empty_when_full_env_name_missing(self):
         manager = make_manager()

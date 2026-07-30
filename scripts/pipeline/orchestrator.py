@@ -29,7 +29,7 @@ from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import fan_out
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, clean_namespaces, EnvgeneDeployPlan
+from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
 
