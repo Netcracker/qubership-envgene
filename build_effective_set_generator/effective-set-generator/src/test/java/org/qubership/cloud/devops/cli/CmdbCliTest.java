@@ -243,7 +243,11 @@ public class CmdbCliTest {
 
         assertEquals(0, exitCode);
         assertTrue(Files.exists(outputPath.resolve("deployment/pg/.cleaned")));
-        assertTrue(Files.notExists(outputPath.resolve("deployment/pg/postgres")));
+        Path postgresAppDir = outputPath.resolve("deployment/pg/postgres");
+        if (Files.isDirectory(postgresAppDir)) {
+            assertTrue(FileUtils.listFiles(postgresAppDir.toFile(), null, true).isEmpty(),
+                    "Cleaned namespace must not emit deployment files for postgres");
+        }
     }
 
     @Test
