@@ -1,8 +1,0 @@
-applications:
-- version: sd-app:1.0.0
-  deployPostfix: dp1
-deployGraph:
-- chunkName: wave1
-  apps:
-  - sd-app:dp1
-

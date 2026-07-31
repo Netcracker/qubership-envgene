@@ -1,7 +1,0 @@
-inventory:
-  environmentName: test-env
-  cloudName: test-cluster
-envTemplate:
-  artifact: project-env-template:v1.2.3
-  resolvedVersion: v1.2.3
-

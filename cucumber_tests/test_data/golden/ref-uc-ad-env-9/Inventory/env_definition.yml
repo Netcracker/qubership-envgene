@@ -1,7 +1,0 @@
-inventory:
-  environmentName: test-env
-  cloudName: test-cluster
-envTemplate:
-  name: placeholder
-  resolvedVersion: v1.2.3
-
