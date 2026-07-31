@@ -3,25 +3,29 @@
 - [EnvGene configuration standard](#envgene-configuration-standard)
   - [Scope](#scope)
   - [How to read this standard](#how-to-read-this-standard)
-  - [Priorities](#priorities)
   - [Terms](#terms)
   - [Placement and layering](#placement-and-layering)
     - [PLACE-1 - Highest correct layer (SHOULD)](#place-1---highest-correct-layer-should)
     - [PLACE-2 - Override only the delta (SHOULD)](#place-2---override-only-the-delta-should)
-    - [PLACE-3 - Contract keys in the Cloud Passport (SHOULD)](#place-3---contract-keys-in-the-cloud-passport-should)
-    - [PLACE-4 - Right parameter category (SHOULD)](#place-4---right-parameter-category-should)
-    - [PLACE-5 - One resolvable Cloud Passport (MUST)](#place-5---one-resolvable-cloud-passport-must)
+    - [PLACE-3 - Place by the system tier (SHOULD)](#place-3---place-by-the-system-tier-should)
+    - [PLACE-4 - Contract keys in the Cloud Passport (SHOULD)](#place-4---contract-keys-in-the-cloud-passport-should)
+    - [PLACE-5 - Right parameter category (SHOULD)](#place-5---right-parameter-category-should)
+    - [PLACE-6 - One resolvable Cloud Passport (MUST)](#place-6---one-resolvable-cloud-passport-must)
+    - [PLACE-7 - Pipeline parameters bind to the Cloud (SHOULD)](#place-7---pipeline-parameters-bind-to-the-cloud-should)
   - [Secrets and credentials](#secrets-and-credentials)
     - [SEC-1 - No plaintext secrets (MUST)](#sec-1---no-plaintext-secrets-must)
-    - [SEC-2 - Credential type matches the secret (SHOULD)](#sec-2---credential-type-matches-the-secret-should)
-    - [SEC-3 - Repository-wide encryption (MUST)](#sec-3---repository-wide-encryption-must)
-    - [SEC-4 - No shared or reused secret values (MUST)](#sec-4---no-shared-or-reused-secret-values-must)
+    - [SEC-2 - Credential shape matches the secret (SHOULD)](#sec-2---credential-shape-matches-the-secret-should)
+    - [SEC-3 - Repository-wide encryption (MAY)](#sec-3---repository-wide-encryption-may)
+    - [SEC-4 - No mixed plaintext and encrypted secrets (MUST)](#sec-4---no-mixed-plaintext-and-encrypted-secrets-must)
+    - [SEC-5 - No secrets in runtime parameters (MUST)](#sec-5---no-secrets-in-runtime-parameters-must)
   - [Naming](#naming)
-    - [NAME-1 - Consistent key casing (SHOULD)](#name-1---consistent-key-casing-should)
-    - [NAME-2 - One name per concept (SHOULD)](#name-2---one-name-per-concept-should)
-    - [NAME-3 - Scoped names for shared concepts (SHOULD)](#name-3---scoped-names-for-shared-concepts-should)
-    - [NAME-4 - Filename equals `name` (MUST)](#name-4---filename-equals-name-must)
-    - [NAME-5 - Kebab-case files, directories, and namespaces (SHOULD)](#name-5---kebab-case-files-directories-and-namespaces-should)
+    - [NAME-1 - One name per concept (SHOULD)](#name-1---one-name-per-concept-should)
+    - [NAME-2 - Filename equals `name` (MUST)](#name-2---filename-equals-name-must)
+    - [NAME-3 - Kebab-case files, directories, and namespaces (SHOULD)](#name-3---kebab-case-files-directories-and-namespaces-should)
+    - [NAME-4 - Name a ParameterSet by subject and category (SHOULD)](#name-4---name-a-parameterset-by-subject-and-category-should)
+    - [NAME-5 - Name a Resource Profile Override by baseline and subsystem (SHOULD)](#name-5---name-a-resource-profile-override-by-baseline-and-subsystem-should)
+    - [NAME-6 - Name a credential id by purpose (SHOULD)](#name-6---name-a-credential-id-by-purpose-should)
+    - [NAME-7 - Name a Shared Template Variable by purpose (SHOULD)](#name-7---name-a-shared-template-variable-by-purpose-should)
   - [Values: type and format](#values-type-and-format)
     - [VAL-1 - Native YAML types (MUST)](#val-1---native-yaml-types-must)
     - [VAL-2 - URLs use DNS names, no trailing slash (SHOULD)](#val-2---urls-use-dns-names-no-trailing-slash-should)
@@ -63,27 +67,14 @@ repositories, whether written by hand or produced by tooling.
 ## How to read this standard
 
 - **Normative keywords.** MUST and MUST NOT mark a requirement. SHOULD and SHOULD NOT mark a strong
-  default - deviate only with a documented reason. The keywords follow their RFC 2119 meaning.
+  default - deviate only with a documented reason. MAY marks an optional practice. The keywords follow
+  their RFC 2119 meaning.
 - **Rule IDs.** Each rule has a stable ID in the form `AREA-N`, for example `SEC-1`. A new rule takes
   the next free ID in its area and does not renumber the rest.
 - **Rule shape.** Each rule states what it requires and how to tell you comply, then shows a `# OK` and
   a `# Not OK` example. It adds a reason only where the reason guides a judgement call. Background and
   analysis live elsewhere, not in the rule.
 - **Deviations.** Record any deviation as described in [Exceptions](#exceptions).
-
-## Priorities
-
-The rules are not equal. Some gate whether a configuration is shippable at all. The rest reduce future
-cost once the gates hold. Severity (MUST or SHOULD) tracks these tiers.
-
-1. **Secrets.** A readable or reused live secret is the highest risk. A configuration that exposes one is
-   not shippable, however tidy the rest is (SEC-*).
-2. **Correctness.** A rule whose violation fails generation or changes what a consumer resolves - a
-   broken schema, a passport that does not resolve, a filename that does not match `name`, a coerced
-   type, and an unresolved reserved value. These block shipping too.
-3. **Hygiene.** Naming, value format, flatness, and most placement reduce future edit cost and drift.
-   Worth doing, but only after the first two tiers hold. A clean casing sweep on a configuration that
-   still leaks a token has not reduced the real risk.
 
 ## Terms
 
@@ -107,6 +98,15 @@ Objects the rules refer to:
 - **Cloud Passport** - a key-contract set of parameters describing a cluster and the infrastructure and
   platform applications installed on it. It is part of the override chain, merged in at the cluster
   level.
+- **Association target** - a ParameterSet or a Resource Profile binds to a Cloud or a Namespace, set by
+  the key it is listed under in `env_definition.yml`. This is independent of the file's layer. Shared
+  Template Variables and shared credentials carry no such target and apply to the whole environment.
+- **Application scope** - per-application values live inside a ParameterSet under `applications`, keyed by
+  application name, and reach only that application. There is no separate per-application file.
+- **Site** - EnvGene has no site object. The word means either the Repository layer, the widest file
+  location, written `site` in file paths, or an `onsite`/`offsite` template variable that only Jinja
+  reads. A value shared by a network-isolated site goes to the Repository layer or is branched in a
+  template.
 
 ## Placement and layering
 
@@ -147,7 +147,31 @@ MONITORING_URL: https://monitoring.cluster-01.example.com
 REPLICA_COUNT: 3
 ```
 
-### PLACE-3 - Contract keys in the Cloud Passport (SHOULD)
+### PLACE-3 - Place by the system tier (SHOULD)
+
+A parameter's placement follows what it configures. A value that configures the environment's own
+applications is placed by PLACE-1, at the highest layer where it holds. A value that instead describes
+the platform or the Kubernetes cluster the environment runs on is the same for every environment on that
+cluster, so it lives at the cluster layer, and a Cloud Passport contract key lives in the passport (see
+PLACE-4). A business environment runs on both a platform and Kubernetes, so its cluster-layer values can
+describe either. A platform environment runs on Kubernetes alone.
+
+```yaml
+# OK - MONITORING_URL describes the platform this env runs on, shared by every env on the cluster
+# environments/cluster-01/parameters/cluster-01-platform.yml
+MONITORING_URL: https://monitoring.cluster-01.example.com
+
+# OK - BSS_DEFAULT_TENANT configures the env's own application, specific to this env
+# environments/cluster-01/env-1/Inventory/parameters/env-1-bss.yml
+BSS_DEFAULT_TENANT: acme
+
+# Not OK - both keys grouped at the env by application, ignoring that MONITORING_URL is a shared platform value
+# environments/cluster-01/env-1/Inventory/parameters/env-1-bss.yml
+MONITORING_URL: https://monitoring.cluster-01.example.com   # describes the platform -> belongs at the cluster
+BSS_DEFAULT_TENANT: acme
+```
+
+### PLACE-4 - Contract keys in the Cloud Passport (SHOULD)
 
 A key that belongs to the Cloud Passport contract is authored in the passport, not in any other EnvGene entity.
 See [Cloud Passport](TBD).
@@ -163,7 +187,7 @@ dbaas:
 DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.example.com
 ```
 
-### PLACE-4 - Right parameter category (SHOULD)
+### PLACE-5 - Right parameter category (SHOULD)
 
 Put a parameter in the category whose Effective Set context matches when its consumer reads the value:
 `deployParameters` at deployment, `e2eParameters` in the pipeline, and `technicalConfigurationParameters`
@@ -183,13 +207,15 @@ deployParameters:
   CACHE_TTL_SECONDS: 300
 ```
 
-### PLACE-5 - One resolvable Cloud Passport (MUST)
+### PLACE-6 - One resolvable Cloud Passport (MUST)
 
 An environment that uses a Cloud Passport resolves to exactly one passport file. When
 `env_definition.yml` sets `inventory.cloudPassport: <name>`, exactly one `<name>.{yml,yaml}` exists in
 the search path from the environment directory up to the repository root. With no `cloudPassport` field,
 auto-association takes `cloud-passport/<cluster>.{yml,yaml}` then `cloud-passport/passport.{yml,yaml}`.
-Zero matches or duplicate matches fail generation.
+Zero matches or duplicate matches fail generation. Unlike a ParameterSet or Resource Profile, which
+resolves by first-match across scopes (see HYG-5, HYG-6), the Cloud Passport is pointed at by name and
+never merged, so a duplicate in the path is an error rather than an override.
 
 ```yaml
 # OK - the reference resolves to exactly one file
@@ -200,13 +226,35 @@ Zero matches or duplicate matches fail generation.
 # Not OK - two files named cluster-01 in the path    -> duplicate, generation fails
 ```
 
+### PLACE-7 - Pipeline parameters bind to the Cloud (SHOULD)
+
+A pipeline parameter set, the pipeline context named `e2eParameters` in v2, associates to the Cloud,
+never to a Namespace. Under `envTemplate.envSpecificE2EParamsets` the reserved key `cloud` selects the
+Cloud. A namespace identifier (its `deploy_postfix`) is also accepted there, but do not use one for
+pipeline parameters. The file may sit at the env, cluster, or repository location. Only the binding is
+fixed to the Cloud.
+
+```yaml
+# OK - the reserved key cloud binds the paramset to the Cloud
+envTemplate:
+  envSpecificE2EParamsets:
+    cloud:
+      - env-1-pipeline
+
+# Not OK - keyed by a namespace identifier
+envTemplate:
+  envSpecificE2EParamsets:
+    bss:                          # a namespace deploy_postfix
+      - env-1-pipeline
+```
+
 ## Secrets and credentials
 
 ### SEC-1 - No plaintext secrets (MUST)
 
-A secret never appears as a literal in a ParameterSet.
-Create a Credential object named `<product>-<purpose>-cred` and reference it with
-`${creds.get("<id>").<field>}`.
+A secret never appears as a literal parameter value in any object that defines parameters, such as a
+ParameterSet, a Cloud, or Namespace. Create a Credential object named
+`<product>-<purpose>-cred` and reference it with `${creds.get("<id>").<field>}`.
 
 ```yaml
 # Not OK
@@ -216,78 +264,90 @@ DB_PASSWORD: s3cr3t
 db-cred:
   type: usernamePassword
   data:
-    username: "envgeneNullValue"
-    password: "envgeneNullValue"
+    username: "<value>"
+    password: "<value>"
 # ParameterSet
 DB_PASSWORD: ${creds.get("db-cred").password}
 ```
 
-### SEC-2 - Credential type matches the secret (SHOULD)
+### SEC-2 - Credential shape matches the secret (SHOULD)
 
-Use the schema type that fits the secret:
-`usernamePassword` for a pair, `secret` for a single token, `vaultAppRole` for a role-id and secret-id
-pair, or `external` for a secret resolved from an external store. An `external` Credential is authored
-as an object and referenced with `$type: credRef`, never inlined.
+Declare a credential with the shape the secret actually has. A username and password pair is declared as
+a pair, a single token or value as a single value. Do not pad a single value into a pair or collapse a
+pair into a single field. This holds whether the secret is held locally or resolved from an external
+store.
 
 ```yaml
-# OK - a single token
+# OK - a single value, local credential
 registry-pull-cred:
   type: secret
   data:
-    secret: "envgeneNullValue"
+    secret: "<value>"
 
-# Not OK - a single token forced into a pair
+# OK - a single value, resolved from an external store
+app-token-cred:
+  type: external
+  remoteRefPath: cluster-01/env-1/app-token
+
+# OK - a username and password pair, resolved from an external store
+db-app-cred:
+  type: external
+  remoteRefPath: cluster-01/env-1/db-app
+  properties:
+    - name: username
+    - name: password
+
+# Not OK - a single value padded into a pair
 registry-pull-cred:
   type: usernamePassword
   data:
-    username: "envgeneNullValue"
-    password: "envgeneNullValue"
+    username: "<value>"
+    password: "<value>"
 ```
 
-### SEC-3 - Repository-wide encryption (MUST)
+### SEC-3 - Repository-wide encryption (MAY)
 
-If any credential file in a repository holds
-non-empty secret material, every credential file with secret material in that repository is encrypted
-with the repository's backend (Fernet or SOPS). A repository never mixes encrypted and plaintext live
-secrets, and no plaintext secret enters Git history.
+A repository may encrypt every credential file that holds secret material with SOPS, applying one backend
+across the whole repository. This is optional: a repository whose secrets are resolved from an external
+store, or that holds no local secret material, needs no repository-wide encryption.
 
 ```yaml
-# Not OK - one repo, mixed: configuration/credentials.yml is SOPS-encrypted
-#          while Inventory/credentials/db-cred.yml holds a real plaintext password
-# OK - every credential file with secret material in the repo is encrypted
+# OK - every credential file with secret material in the repository is encrypted with SOPS
+# OK - no repository-wide encryption, because secrets are resolved from an external store
 ```
 
-### SEC-4 - No shared or reused secret values (MUST)
+### SEC-4 - No mixed plaintext and encrypted secrets (MUST)
 
-A secret value is not copied across environments
-or tenants. One leak must not reach past its own scope.
+A repository never keeps a live secret in plaintext alongside encrypted ones. Once any credential material
+is encrypted, no real secret remains in plaintext, because a single plaintext secret defeats the
+encryption of the rest.
 
 ```yaml
-# Not OK - the same token verbatim in many customer repos
-# customer-a/.../ci-token-cred -> glpat-XXXXXXXX
-# customer-b/.../ci-token-cred -> glpat-XXXXXXXX   # same value, cross-tenant blast radius
-# OK - each scope has its own value
+# Not OK - one repository, mixed:
+#   configuration/credentials.yml         SOPS-encrypted
+#   Inventory/credentials/db-cred.yml     a real plaintext password
+# OK - no live secret is left in plaintext alongside encrypted ones
+```
+
+### SEC-5 - No secrets in runtime parameters (MUST)
+
+A secret is never placed in a runtime parameter (`technicalConfigurationParameters`). Runtime parameters
+are applied live through Consul, which holds them in plaintext, so a secret there is exposed even though
+the Effective Set encrypts it at rest. Keep the secret in a deployment parameter (`deployParameters`),
+referenced through a Credential, where it reaches the application as a secret rather than Consul.
+
+```yaml
+# Not OK - a secret referenced in a runtime parameter, exposed in Consul
+technicalConfigurationParameters:
+  DB_PASSWORD: ${creds.get("db-cred").password}
+# OK - the secret stays in a deployment parameter
+deployParameters:
+  DB_PASSWORD: ${creds.get("db-cred").password}
 ```
 
 ## Naming
 
-### NAME-1 - Consistent key casing (SHOULD)
-
-Two casings coexist legitimately: `SCREAMING_SNAKE_CASE`
-for environment-variable style deploy keys, and dotted-camelCase for keys that mirror a Helm chart's
-`values.yaml`. Do not mix them for the same service in one ParameterSet. Dotted-camelCase that mirrors
-a chart is a documented convention, not a violation.
-
-```yaml
-# OK - one consistent style for this service's deploy keys
-KAFKA_BOOTSTRAP_SERVERS: kafka.internal:9092
-KAFKA_CLIENT_RETRIES: 3
-# Not OK - env-var style and Helm-path style interleaved for the same service
-KAFKA_BOOTSTRAP_SERVERS: kafka.internal:9092
-kafka.client.retries: 3
-```
-
-### NAME-2 - One name per concept (SHOULD)
+### NAME-1 - One name per concept (SHOULD)
 
 Collapse true aliases to one canonical key and update its
 consumers. Equal values are not proof of an alias - confirm the keys mean the same concept for the
@@ -303,22 +363,7 @@ STREAMING_BROKER_ADDRESS: kafka.internal:9092
 KAFKA_BOOTSTRAP_SERVERS: kafka.internal:9092
 ```
 
-### NAME-3 - Scoped names for shared concepts (SHOULD)
-
-Two subsystems that need the same concept
-with different values each get a prefixed name.
-
-```yaml
-# Not OK - same generic key, two backends collide
-STORAGE_URL: https://storage-a.example.com
-STORAGE_URL: https://storage-b.example.com
-
-# OK
-SUBSYSTEM_A_STORAGE_URL: https://storage-a.example.com
-SUBSYSTEM_B_STORAGE_URL: https://storage-b.example.com
-```
-
-### NAME-4 - Filename equals `name` (MUST)
+### NAME-2 - Filename equals `name` (MUST)
 
 The filename, without extension, equals the object's
 `name` for a ParameterSet, an Application Definition, a Registry Definition, and an Artifact
@@ -331,17 +376,128 @@ name: env-1-deploy
 name: deploy-params
 ```
 
-### NAME-5 - Kebab-case files, directories, and namespaces (SHOULD)
+### NAME-3 - Kebab-case files, directories, and namespaces (SHOULD)
 
 Filenames, directory names, and
-namespace names use kebab-case. YAML field names and enum values follow the object's own convention. A
-legacy capitalised application or registry name is a documented exception during migration.
+namespace names use kebab-case. YAML field names and enum values follow the object's own convention.
+
+Casing is part of a name's identity, so kebab-case governs a new name. A name that a reference resolves
+by exact string (a ParameterSet, Resource Profile Override, Shared Template Variable, or credential id)
+is not re-cased to fit this rule, because re-casing breaks the reference. A name an external producer
+dictates, such as a Cloud Passport discovery id or a legacy capitalised application or registry name, is
+exempt.
 
 ```yaml
 # OK
 # environments/cluster-01/env-01/parameters.yml
 # Not OK
 # environments/Cluster_01/Env01/Parameters.yml
+```
+
+### NAME-4 - Name a ParameterSet by subject and category (SHOULD)
+
+Name a ParameterSet `<subject>-<category>`, with an optional `-<topology>` suffix, kebab-case and equal
+to the `name:` field.
+
+| Part | Required | Values | Rule |
+|---|---|---|---|
+| `subject` | yes | what the set configures at its scope: a service or namespace (`postgresql`, `oss`), the cloud (`cloud`), or a cross-cutting area (`monitoring`, `registry`, `platform`) | one stable identity |
+| `category` | yes | `deploy`, `pipeline`, or `runtime` | matches the array that references the set: `deploy` from `deployParameterSets`, `pipeline` from `e2eParameterSets`, `runtime` from `technicalConfigurationParameterSets` |
+| `topology` | no | a repository's own topology flavor, for example `offsite`/`onsite`, `primary`/`dr`, `edge`/`core` | only where topology is a real axis of variation |
+
+The scope (site, cluster, environment) and whether the set is a base or an environment override come from
+the file location, not from a name token. Never put an environment name, cluster name, release or version,
+ticket id, or date in the name.
+
+```yaml
+# OK - subject and category, scope comes from the file location
+postgresql-deploy            # in the instance repo, the environment override of the template base
+postgresql-runtime           # same subject, second category
+oss-pipeline
+integration-deploy-offsite   # topology suffix where it genuinely varies
+
+# Not OK
+cloud-env-specific           # scope in the name, the file location already says environment
+qa01-bss-deploy              # environment name baked in
+bss-deploy-r23-3             # release baked in
+etbss-51477                  # ticket id, opaque
+bss                          # category missing
+```
+
+### NAME-5 - Name a Resource Profile Override by baseline and subsystem (SHOULD)
+
+Name a Resource Profile Override `<baseline>-<subsystem>-override`, with an optional `-<flavor>` suffix,
+matching the `name:` field.
+
+| Part | Required | Values | Rule |
+|---|---|---|---|
+| `baseline` | yes | `dev`, `prod`, `prod-nonha`, `dev-ha` | the base profile being overridden, and it must equal the `baseline:` field value |
+| `subsystem` | yes | the domain whose applications the file carries: `bss`, `core`, `oss`, `dm`, `portal` | one subsystem per file |
+| `override` | yes | the literal `override` | entity-type marker, singular for a new name (an existing `overrides` is not renamed) |
+| `flavor` | no | a workload variant: `hawk`, `single`, `new-perf` | an alternate profile for the same baseline and subsystem, not a second baseline and not an environment |
+
+The `baseline:` field holds a base-profile name, never an environment name. Generation adds the
+environment prefix through `updateRPOverrideNameWithEnvName`, so do not bake it into the name. Scope comes
+from the file location.
+
+```yaml
+# OK
+dev-core-override
+prod-oss-override
+dev-core-override-hawk
+# Not OK
+sit-dm-override                # baseline is dev, so the leading token contradicts the field
+telus-dv2-multi-sql-override   # environment name baked in
+```
+
+### NAME-6 - Name a credential id by purpose (SHOULD)
+
+Name a credential id, the key of a credentials entry, `<purpose>`, with an optional `-<role>` qualifier
+and an optional `-cred` or `-creds` suffix.
+
+| Part | Required | Values | Rule |
+|---|---|---|---|
+| `purpose` | yes | what the secret unlocks: `registry`, `argocd`, `keycloak`, `cmdb`, `dbaas`, `postgresql` | the primary dimension, named for purpose, not environment, application, or account |
+| `role` | no | `deployer`, `client`, `admin`, `ci` | disambiguates when one purpose has several, with provenance normally from the source file, not this token |
+| suffix | no | `-cred` or `-creds` | optional, kept consistent within a scope, and an existing id is not re-suffixed |
+
+One logical credential is one credential id (a `usernamePassword` or a `secret`). Do not split a username
+and password pair into two `secret` entries. The generated Effective Set form (upper-snake `_USERNAME`
+and `_PASSWORD`, SOPS-encrypted) is output, not an authoring convention. A credential id a Cloud Passport
+discovery process dictates is exempt.
+
+```yaml
+# OK
+argocd-cred
+app-deployer-cmdb-cred
+keycloak-client-cred
+# Not OK
+id_toms_b2b_dev_credentials    # environment and account baked in
+cloud-deployer-username        # a username and password pair split into two entries
+```
+
+### NAME-7 - Name a Shared Template Variable by purpose (SHOULD)
+
+Name a Shared Template Variable file `<purpose>`, with an optional `-<qualifier>`. The bare filename is
+the name listed in the `sharedTemplateVariables` array, so the filename is the reference.
+
+| Part | Required | Values | Rule |
+|---|---|---|---|
+| `purpose` | yes | a stable keyword: `toggles`, `ci-global-vars`, `ns-overrides` | the reference is this bare name, so the filename equals the reference |
+| `qualifier` | no | `-vars` or `-overrides` where it adds meaning | do not append a generic `-template-variables` suffix |
+
+Scope comes from the file location: a repository-wide file is authored once under
+`environments/configuration/variables/`, a per-environment file under the environment's
+`Inventory/configuration/variables/`. A file not listed in `sharedTemplateVariables` is ignored.
+
+```yaml
+# OK
+toggles
+ci-global-vars
+ns-overrides
+# Not OK
+saas-nd-bss-dev-template-variables   # customer, environment, and a generic suffix
+toggles-release-2024.4               # release baked in
 ```
 
 ## Values: type and format
@@ -506,8 +662,8 @@ FEATURE_X: envgeneNullValue
 ### HYG-3 - Schema-valid (MUST)
 
 Every object validates against its schema. Schema does not enforce
-`name` equals filename, key casing, or name uniqueness - those are convention rules (`NAME-4`,
-`NAME-1`), not schema claims.
+`name` equals filename or name uniqueness - those are convention rules (`NAME-2`, `NAME-1`), not schema
+claims.
 
 ```yaml
 # OK     - object matches its schema; *ParameterSets fields are lists, category bodies are maps
@@ -718,7 +874,7 @@ Mark a deviation with an inline comment above the parameter. The comment names t
 consumer that forces it, and what removes it.
 
 ```yaml
-# [EXCEPTION NAME-1] dot-notation required by chart bss v1.4.
-# Remove when the chart maps the SCREAMING_SNAKE key.
-app.config.brokerUrl: kafka.internal:9092
+# [EXCEPTION VAL-2] trailing slash required by the legacy gateway.
+# Remove when the gateway accepts the slash-free URL.
+API_BASE_URL: https://gw.internal/
 ```
