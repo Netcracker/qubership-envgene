@@ -1,5 +1,0 @@
-inventory:
-  environmentName: test-env
-  cloudName: test-cluster
-envTemplate:
-  artifact: project-env-template:1.0.0-SNAPSHOT
