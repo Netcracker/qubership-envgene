@@ -63,8 +63,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PARSE_ERROR;
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PROCESS_FAILED;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND;
@@ -126,15 +124,8 @@ public class CliParameterParser {
         });
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
-        Set<String> cleanedNamespaces = namespaceDTOMap.entrySet().stream()
-                .filter(entry -> entry.getValue().isCleaned())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-        if (!cleanedNamespaces.isEmpty()) {
-            logInfo("Skipping applications in cleaned namespaces: " + String.join(", ", cleanedNamespaces));
-        }
         applicationDTOList.stream()
-                .filter(app -> !cleanedNamespaces.contains(app.getNamespace()))
+                .filter(app -> !namespaceDTOMap.get(app.getNamespace()).isCleaned())
                 .parallel()
                 .forEach(app -> {
                     String namespaceName = app.getNamespace();
