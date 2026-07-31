@@ -357,7 +357,7 @@ Choose **only one** mode.
 
 > **Important:** A payload containing both top-level `deployment`/`runtime` keys **and** a `namespaces` key will be rejected with a validation error.
 
-**Mode 1: Global**
+### Mode 1: Global
 
 Parameters apply to **every namespace** in the environment.
 
@@ -376,7 +376,7 @@ Parameters apply to **every namespace** in the environment.
 
 ---
 
-**Mode 2: Namespace-Scoped**
+### Mode 2: Namespace-Scoped
 
 Parameters apply **only to specific namespaces**.
 
@@ -401,7 +401,7 @@ Parameters apply **only to specific namespaces**.
 
 ---
 
-**Quick Reference**
+### Quick Reference
 
 | Aspect | Details |
 |--------|---------|
