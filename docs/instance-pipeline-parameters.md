@@ -422,10 +422,12 @@ Parameters apply **only to specific namespaces**.
 - They override all other parameter sources.
 - The payload must use **either** Global mode **or** Namespace-Scoped mode.
 - Namespace-scoped payloads are validated against the namespaces present in the environment.
+
 > [!NOTE]
 >
 > 1. `<value>` can be complex, i.e. a map or a list
-> 2. All keys are optional
+> 2. All keys are optional.
+>
 > Passing both a top-level `deployment`/`runtime` key and a `namespaces` key in the same payload causes a validation error. The Calculator will fail before writing any Effective Set output.
 
 **Default Value**: None
