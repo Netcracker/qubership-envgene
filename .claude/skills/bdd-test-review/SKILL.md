@@ -37,6 +37,9 @@ Explicitly out of scope (do not report, do not propose cases for):
 
 ## Phase 1 - fix the references
 
+Project layout, step file locations, test data conventions and workspace structure are documented in
+the `envgene-bdd-tests` skill (`references/workspace-api.md` for the workspace API).
+
 Work on the CURRENT PR head in a worktree (`git fetch origin pull/<N>/head:<branch>`, then
 `git worktree add`). Identify and read:
 
@@ -49,14 +52,14 @@ Build the self-blessing map: diff the PR against ITS OWN base branch (not main) 
 file, schema and doc the PR itself changed. A scenario verifying behavior introduced by the same PR is
 flagged under oracle independence.
 
-Verification rules - each of these cost a wrong claim once:
+Verification rules - verify each fact on the current head before claiming it:
 
-- Re-verify every fact on the current head. Directories move mid-branch (a python/ to modules/ move made
-  earlier greps silently blind and produced a false "not implemented" claim).
+- Directories move mid-branch (earlier greps silently missed a python/ to modules/ rename and produced a
+  false "not implemented" claim) - re-grep, do not reuse cached paths.
 - Before declaring behavior unimplemented, search the orchestrator for a SEPARATE step implementing it.
-- A claim about a written artifact needs BOTH its writer and its reader located. A writer whose output no
-  reader consumes is a different and worse finding than a naming mismatch.
-- Verify where a payload actually fails and where data actually differs - never trust names and comments.
+- A claim about a written artifact needs BOTH its writer and its reader located. A writer with no reader
+  is a different and worse finding than a naming mismatch.
+- Verify WHERE a payload fails and WHERE data differs - never trust names and comments alone.
 
 ## Phase 2 - completeness matrix
 
@@ -170,11 +173,9 @@ Publication, only on the user's explicit command:
 
 ## Iteration discipline
 
-The report is a living artifact the user challenges row by row. While it is chat-borne, re-emit the FULL
-report after every accepted change. Once the user asks to keep it as a file (default location:
-`<repo-parent>/stuff/pr-<N>-test-review.md` - the scratch directory beside the repository clone,
-outside the repository and never committed), update the
-file after every accepted change and report the delta in chat. Debate challenges rather than
-auto-accepting - recommend, then wait. When a challenge changes the format itself, propose an edit to
-this skill's files (SKILL.md or the reference) and apply it on the user's approval - the skill does
-not silently self-edit.
+The report is a living artifact the user challenges row by row. While chat-borne, re-emit the FULL
+report after every accepted change. Once the user asks to keep it as a file, save it to
+`<repo-parent>/stuff/pr-<N>-test-review.md` (outside the repository, never committed), then update
+the file after every accepted change and report the delta in chat. Debate challenges rather than
+auto-accepting - recommend, then wait. When a challenge changes the format, propose an edit to
+SKILL.md or the reference and apply it on the user's approval - the skill does not silently self-edit.

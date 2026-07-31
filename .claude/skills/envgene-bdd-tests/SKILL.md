@@ -81,8 +81,8 @@ cucumber_tests/
 │   ├── base_workspace.py               # Abstract workspace contract
 │   ├── workspace.py                    # EnvGeneWorkspace implementation
 │   ├── base_data_builders.py           # Shared data builders (SBOM, BG state)
-│   ├── data_builders.py                # EnvGene-specific data builders
-│   └── golden_compare.py               # Deep directory comparison utility
+│   ├── data_builders.py               # EnvGene-specific data builders
+│   └── golden_compare.py              # Deep directory comparison utility
 └── test_data/                           # Static test fixtures
     ├── e2e/                             # One directory per scenario
     │   └── uc_<prefix>_<n>/            # Mirrors workspace layout
@@ -308,61 +308,9 @@ Without this file, pytest-bdd will not discover or run the scenarios.
 
 ---
 
-## 7. Workspace API Reference
+## 7. Workspace API
 
-### Key Properties
-
-| Property | Type | Description |
-|---|---|---|
-| `base_dir` | `Path` | Root directory of the test workspace |
-| `sboms_dir` | `Path` | `/sboms/` directory |
-| `config_data` | `dict` | In-memory config (written to `config.yml` on run) |
-| `stdout` | `str` | Captured stdout from last pipeline run |
-| `stderr` | `str` | Captured stderr from last pipeline run |
-| `returncode` | `int` | Return code from last pipeline run |
-| `builder` | `DataBuilder` | Factory for creating test artifacts |
-| `cluster_name` | `str` | Default: `"test-cluster"` — override via `Given environment is "<cluster>/<env>"` |
-| `env_name` | `str` | Default: `"test-env"` — override via `Given environment is "<cluster>/<env>"` |
-| `extra_env` | `dict` | Extra environment variables passed to pipeline subprocess |
-
-### Key Methods
-
-| Method | Description |
-|---|---|
-| `run_pipeline(extra_env)` | Execute the unified pipeline orchestrator |
-| `assert_success(message)` | Assert `returncode == 0` |
-| `assert_failure(message)` | Assert `returncode != 0` |
-| `assert_logs_contain(text)` | Assert text in `stdout+stderr` (case-insensitive) |
-| `assert_file_exists(path)` | Assert path exists |
-| `assert_file_not_exists(path)` | Assert path does not exist |
-| `assert_dir_deleted(path)` | Assert directory is gone |
-| `get_yaml(path)` | Load and return YAML file as dict |
-| `assert_yaml_content_matches(path, payload)` | Deep-compare YAML file to dict |
-| `entity_dir(subdir, scope, inventory)` | Resolve entity directory by scope (`env`/`cluster`/`site`) |
-
-### DataBuilder Methods
-
-| Method | Description |
-|---|---|
-| `get_env_dir(cluster, env)` | Get (and create) environment directory path |
-| `create_mock_sboms(app, count, size_mb)` | Create dummy SBOM files with distinct mtimes |
-| `modify_first_sbom_size(app, size_mb)` | Inflate first SBOM file via sparse seek |
-| `create_inventory_file(cluster, env, content)` | Create `env_definition.yml` |
-| `create_paramset_file(place, name, content, cluster, env)` | Create paramset YAML |
-| `create_credentials_file(place, name, content, cluster, env)` | Create credentials YAML |
-| `create_resource_profile_file(place, name, content, cluster, env)` | Create resource profile YAML |
-| `set_bg_state_files(origin_state, peer_state, cluster, env)` | Create BG state marker files |
-| `create_bg_namespaces(origin_ns, peer_ns, different_content, cluster, env)` | Create BG namespace dirs |
-
-### Entity Scope Paths
-
-`workspace.entity_dir(subdir, scope)` resolves to:
-
-| Scope | Path |
-|---|---|
-| `env` | `environments/<cluster>/<env>/Inventory/<subdir>` |
-| `cluster` | `environments/<cluster>/<subdir>` |
-| `site` | `environments/<subdir>` |
+Full property, method and DataBuilder reference: `references/workspace-api.md`.
 
 ---
 
@@ -473,75 +421,9 @@ UPDATE_GOLDEN=1 pytest cucumber_tests/step_defs/test_<feature>.py -v -s \
 
 ## 11. Common Patterns and Pitfalls
 
-### Pattern: Snapshot for Rollback Tests
+See `references/patterns.md` for full examples of:
 
-When a UC requires asserting that the repository state is unchanged after a
-failure, take a snapshot before the pipeline runs:
-
-```python
-@given("the repository has an initial state for rollback testing")
-def repo_has_initial_state(workspace: EnvGeneWorkspace):
-    import shutil
-    # ... setup initial files ...
-    workspace.pre_run_snapshot_dir = workspace.base_dir.parent / "snapshot"
-    if workspace.pre_run_snapshot_dir.exists():
-        shutil.rmtree(workspace.pre_run_snapshot_dir)
-    shutil.copytree(workspace.base_dir, workspace.pre_run_snapshot_dir)
-
-@then("the repository state is identical to the initial state")
-def repo_state_identical(workspace: EnvGeneWorkspace):
-    from cucumber_tests.framework.golden_compare import compare_directories
-    compare_directories(
-        workspace.pre_run_snapshot_dir,
-        workspace.base_dir,
-        ignore_patterns=["build.env", "configuration/config.yml", "*.bat", "sops"],
-    )
-```
-
-### Pattern: Large File Generation
-
-Never store large files in Git. Use sparse files at runtime:
-
-```python
-@given(parsers.parse('the SBOM directory has a total size of {size_mb:d} MB'))
-def sbom_dir_has_large_size(workspace: EnvGeneWorkspace, size_mb: int):
-    workspace.builder.create_mock_sboms("app-a", count=3, size_mb=size_mb)
-```
-
-### Pattern: JSON Payload as Pipeline Parameter
-
-Many features receive their instructions as a JSON string in an environment
-variable. Store it via `workspace.extra_env`:
-
-```python
-@given(parsers.parse('the ENV_INVENTORY_CONTENT specifies "{action}" for "envDefinition"'))
-def pipeline_inv_content_envdef(workspace: EnvGeneWorkspace, action: str):
-    env_def = {"action": action}
-    if action != "delete":
-        env_def["content"] = {
-            "inventory": {},
-            "envTemplate": {"name": "test", "artifact": "env-templates:1.0.0"},
-        }
-    content = {"envDefinition": env_def}
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    workspace.extra_env["ENV_INVENTORY_CONTENT"] = json.dumps(content)
-    workspace.last_payload = env_def.get("content")
-```
-
-### Pitfall: Missing `test_<feature>.py`
-
-Without the runner file, pytest-bdd silently skips all scenarios in the
-feature file. Always verify with `--collect-only` that scenarios are discovered.
-
-### Pitfall: Duplicate Step Definitions
-
-Importing `*` from multiple step modules can cause `AmbiguousSteDefinition`
-errors if the same step text is defined in more than one module. Always check
-shared_steps before implementing a new step.
-
-### Pitfall: Credential Files with Non-Deterministic Encryption
-
-Files encrypted with Fernet (non-deterministic keys) cannot be compared via
-golden references. Pass `ignore_patterns=['Credentials']` to
-`compare_directories()`.
+- Snapshot pattern for rollback tests
+- Large file generation via sparse files
+- JSON payload as pipeline parameter
+- Pitfalls: missing runner file, duplicate step definitions, non-deterministic encryption
