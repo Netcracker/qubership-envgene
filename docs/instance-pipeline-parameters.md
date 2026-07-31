@@ -315,7 +315,7 @@ These parameters:
 
 ---
 
-## Prerequisites
+**Prerequisites**
 
 `CUSTOM_PARAMS` only works when:
 
@@ -333,7 +333,7 @@ the `generate_effective_set` job does not run, and `CUSTOM_PARAMS` is ignored.
 
 ---
 
-## How It Works
+**How It Works**
 
 EnvGene passes the value directly to the Calculator CLI using the `--custom-params` flag.
 
@@ -343,7 +343,7 @@ The Calculator then merges these values into the Effective Set.
 
 ---
 
-## Input Format
+**Input Format**
 
 Provide a **JSON object wrapped in a string** (JSON-in-string).
 
@@ -351,13 +351,13 @@ The object must conform to the expected schema.
 
 ---
 
-## Two Modes (Mutually Exclusive)
+**Two Modes (Mutually Exclusive)**
 
 Choose **only one** mode.
 
 > **Important:** A payload containing both top-level `deployment`/`runtime` keys **and** a `namespaces` key will be rejected with a validation error.
 
-### Mode 1: Global
+#### Mode 1: Global
 
 Parameters apply to **every namespace** in the environment.
 
@@ -376,7 +376,7 @@ Parameters apply to **every namespace** in the environment.
 
 ---
 
-### Mode 2: Namespace-Scoped
+#### Mode 2: Namespace-Scoped
 
 Parameters apply **only to specific namespaces**.
 
