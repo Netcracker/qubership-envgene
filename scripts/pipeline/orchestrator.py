@@ -268,6 +268,7 @@ def run_unified_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
+        BgManageStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),

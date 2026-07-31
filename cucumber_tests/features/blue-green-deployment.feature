@@ -11,6 +11,8 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the bg_domain.yml is configured with origin namespace "origin-ns" and peer namespace "peer-ns"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-active" and ".peer-idle"
 
   # ── Warmup ───────────────────────────────────────────────────────────────────
@@ -21,6 +23,9 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"candidate\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "copying content of"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-active" and ".peer-candidate"
     And the namespace "origin-ns" and namespace "peer-ns" have the same content
 
@@ -32,6 +37,8 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"legacy\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-legacy" and ".peer-active"
 
   # ── Commit ───────────────────────────────────────────────────────────────────
@@ -42,6 +49,8 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"idle\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-idle" and ".peer-active"
 
   # ── Rollback ─────────────────────────────────────────────────────────────────
@@ -52,6 +61,8 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"idle\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-idle" and ".peer-active"
 
   # ── Reverse Warmup ────────────────────────────────────────────────────────────
@@ -62,6 +73,9 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"candidate\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "copying content of"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-candidate" and ".peer-active"
     And the namespace "origin-ns" and namespace "peer-ns" have the same content
 
@@ -73,6 +87,8 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"legacy\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-active" and ".peer-legacy"
 
   # ── Reverse Commit ────────────────────────────────────────────────────────────
@@ -83,6 +99,8 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"idle\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-active" and ".peer-idle"
 
   # ── Reverse Rollback ──────────────────────────────────────────────────────────
@@ -93,4 +111,6 @@ Feature: Blue-Green Deployment State Management - blue-green-deployment.md
     And the pipeline parameter "BG_STATE" is set to "{\"controllerNamespace\":\"controller-ns\",\"originNamespace\":{\"name\":\"origin-ns\",\"state\":\"active\",\"version\":\"1.0.0\"},\"peerNamespace\":{\"name\":\"peer-ns\",\"state\":\"idle\",\"version\":\"1.0.0\"},\"updateTime\":\"2023-10-25T12:00:00Z\"}"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline log contains "Validation succeeded"
+    And the pipeline log contains "Successfully updated state files"
     And the Blue-Green state files are ".origin-active" and ".peer-idle"
