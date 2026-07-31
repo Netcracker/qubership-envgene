@@ -19,6 +19,7 @@ package org.qubership.cloud.devops.cli;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -217,6 +218,36 @@ public class CmdbCliTest {
         Path expected = FileTestUtils.resource("environments/cluster-01/pl-02/effective-set");
 
         FileTestUtils.compareFolders(expected, outputPath);
+    }
+
+    @Test
+    void testGenerateEffectiveSetSkipsAppsInCleanedNamespace(@TempDir Path tempDir) throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        Path pgNamespace = envsPath.resolve("cluster-01/pl-01/Namespaces/pg/namespace.yml");
+        Files.writeString(pgNamespace, Files.readString(pgNamespace).replaceFirst(
+                "(?m)^name: ", "cleaned: true\nname: "));
+
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", envsPath.resolve("cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@config.json");
+
+        assertEquals(0, exitCode);
+        assertTrue(Files.exists(outputPath.resolve("deployment/pg/.cleaned")));
+        Path postgresAppDir = outputPath.resolve("deployment/pg/postgres");
+        if (Files.isDirectory(postgresAppDir)) {
+            assertTrue(FileUtils.listFiles(postgresAppDir.toFile(), null, true).isEmpty(),
+                    "Cleaned namespace must not emit deployment files for postgres");
+        }
     }
 
     @Test
