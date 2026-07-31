@@ -8,7 +8,7 @@ from pathlib import Path
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ES_DIR_NAME, ES_MAPPING_FILE, ESGenerationContext, GenerationMode, \
-    PartialMergeMode
+    PartialMergeMode, get_deployment_plan_path
 from envgenehelper.file_helper import delete_dir, delete_dir_if_exists, deleteFileIfExists
 from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME
@@ -161,7 +161,7 @@ def _restore_saved_dirs(tmp_root, saved):
 
 
 def _build_cli_cmd(effective_set_dir, full_env_name):
-    dp_path = EnvgeneDeployPlan.path()
+    dp_path = get_deployment_plan_path()
     cmd = [
         getenv("EFFECTIVE_SET_CLI_PATH", "/module/scripts/utils/run_effective_set_cli.sh"),
         f"--env-id={full_env_name}",
@@ -169,7 +169,7 @@ def _build_cli_cmd(effective_set_dir, full_env_name):
         f"--output={effective_set_dir}",
     ]
 
-    if dp_path.is_file():
+    if dp_path is not None and dp_path.is_file():
         cmd.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
             "--sboms-path=$CI_PROJECT_DIR/sboms",
