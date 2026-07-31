@@ -301,9 +301,9 @@ Consumer-specific pipeline context components registered in EnvGene:
 "{\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
 ```
 
-### `CUSTOM_PARAMS — Session-Scoped Custom Parameters`
+### `CUSTOM_PARAMS`
 
-## Overview
+**Overview**
 
 `CUSTOM_PARAMS` lets you inject temporary parameters into the Effective Set during a single parameter calculation session.
 
