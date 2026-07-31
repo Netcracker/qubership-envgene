@@ -127,6 +127,21 @@ class GitRepoManager:
         logger.info(f"Created hidden commit {commit_sha} (not attached to any branch)")
         return commit_sha
 
+    def _get_conflicted_files(self) -> list[str]:
+        try:
+            output = self.repo.git.diff("--name-only", "--diff-filter=U")
+        except GitCommandError:
+            return []
+        return [line for line in output.splitlines() if line]
+
+    def _log_conflict_details(self, conflicted_files: list[str]) -> None:
+        for file in conflicted_files:
+            try:
+                diff = self.repo.git.diff("--", file)
+            except GitCommandError as exc:
+                diff = f"<failed to read conflict diff: {exc}>"
+            logger.error(f"Conflict in '{file}':\n{diff}")
+
     def _cherry_pick_and_push(self, snapshot_sha: str) -> None:
         self._fetch(ref=self.ctx.ref_name, checkout="FETCH_HEAD", checkout_option=["--force", "--detach"])
         try:
@@ -135,7 +150,20 @@ class GitRepoManager:
             logger.info(f"git push origin HEAD:{self.ctx.ref_name}")
             self.repo.git.push("origin", f"HEAD:{self.ctx.ref_name}")
         except Exception as e:
+            conflicted_files = self._get_conflicted_files()
             self.repo.git.cherry_pick("--abort", with_exceptions=False)
+
+            if conflicted_files:
+                self._log_conflict_details(conflicted_files)
+                logger.error(
+                    f"Cherry-pick of {snapshot_sha} conflicts with '{self.ctx.ref_name}' "
+                    f"in {len(conflicted_files)} file(s): {', '.join(conflicted_files)}. "
+                    "This change cannot be applied automatically — please restart the pipeline."
+                )
+                raise ConflictError(
+                    f"Cherry-pick conflict on {snapshot_sha} in files: {', '.join(conflicted_files)}"
+                ) from e
+
             raise RuntimeError(f"Cherry-pick or push failed on {snapshot_sha}: {e}") from e
 
     def retry_cherry_pick_and_push(self, snapshot_sha: str, retry_policy: RetryPolicy = GIT_RETRY_POLICY) -> None:

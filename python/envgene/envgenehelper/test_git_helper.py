@@ -86,6 +86,7 @@ class TestCherryPickAndPush:
         manager.repo.git.cherry_pick = MagicMock(
             side_effect=[GitCommandError("cherry-pick", 1, "conflict"), None]
         )
+        manager.repo.git.diff = MagicMock(return_value="")
 
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
@@ -96,6 +97,7 @@ class TestCherryPickAndPush:
         manager = make_manager()
         manager._fetch = MagicMock()
         manager.repo.git.cherry_pick = MagicMock(side_effect=[OSError("disk full"), None])
+        manager.repo.git.diff = MagicMock(return_value="")
 
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
@@ -107,6 +109,7 @@ class TestCherryPickAndPush:
         manager._fetch = MagicMock()
         manager.repo.git.cherry_pick = MagicMock()
         manager.repo.git.push = MagicMock(side_effect=GitCommandError("push", 1, "rejected"))
+        manager.repo.git.diff = MagicMock(return_value="")
 
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
