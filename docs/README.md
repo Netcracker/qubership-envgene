@@ -4,6 +4,7 @@
   - [Getting Started](#getting-started)
   - [Tutorials](#tutorials)
   - [Core Concepts](#core-concepts)
+  - [Guidelines](#guidelines)
   - [How-To Guides](#how-to-guides)
   - [Migrations](#migrations)
   - [Advanced Features](#advanced-features)
@@ -27,6 +28,10 @@
 - [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
 - [**Instance Pipeline Parameters**](/docs/instance-pipeline-parameters.md) - Reference for Instance pipeline inputs
+
+## Guidelines
+
+- [**Configuration Standard**](/docs/configuration-standard.md) - Rules for a well-formed EnvGene configuration: where values belong, how secrets are handled, and how to name, type, and template them
 
 ## How-To Guides
 

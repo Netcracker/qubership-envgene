@@ -59,22 +59,23 @@ Each rule plays one of four roles. The role, not the rule's area, decides how no
 
 The sequence:
 
-1. **Validate and take a baseline.** Run the Gate rules `PLACE-6`, `HYG-3`, `HYG-2`, and `NAME-2`. A
+1. **Validate and take a baseline.** Run the Gate rules `INT-3`, `INT-1`, `VAL-2`, `INT-2`, and `NAME-2`. A
    violation blocks generation, so propose a fix, a person approves it, and apply it - no baseline exists
    yet to check against. Build the inventory across every environment, cluster, and the template
    repository, classify each parameter, and read the `.j2` files for Shared Template Variables. Generate
    the Effective Set for every environment in scope and keep it as the baseline.
-2. **Contain secrets.** The Confirm rules `SEC-1` and `SEC-2` - detection proposes each secret, a person
-   confirms, then the value is rewritten and compared. The Flag rule `SEC-3` is reported
-   for a person, because the fix is encryption or rotation, not a parameter edit.
-3. **Apply the safe refactors.** The Auto rules `PLACE-1`, `PLACE-2`, and `VAL-3`. Apply each,
+2. **Contain secrets.** The Confirm rules `SEC-1`, `SEC-4`, and `SEC-3` - detection proposes each fix, a person
+   confirms, then the value is rewritten and compared. The Flag rule `SEC-2` is reported
+   for a person, because the fix is encryption, not a parameter edit. `SEC-5` is optional and is not
+   enforced here.
+3. **Apply the safe refactors.** The Auto rules `PLACE-1`, `PLACE-2`, and `PLACE-3`. Apply each,
    regenerate, and require an empty comparison. A difference is a defect: undo it. `PLACE-4` joins this
    set once the Cloud Passport contract exists.
-4. **Propose the surface changes.** The Confirm rules `NAME-1`, `VAL-1`, `VAL-2` (trailing
-   slash), `VAL-7`, and `HYG-1`. Apply each, regenerate, and show the difference to a person, who
+4. **Propose the surface changes.** The Confirm rules `NAME-1`, `PLACE-6`, `VAL-1`, `VAL-3` (trailing
+   slash), and `INT-6`. Apply each, regenerate, and show the difference to a person, who
    approves it, weighing the external consumer, or undoes it.
-5. **Report the rest for a person.** The Flag rules `PLACE-5`, `VAL-4`, `VAL-5`, `VAL-6`,
-   `VAL-8`, `VAL-2` (raw IP), `FLAG-1`, `HYG-4`, and `HYG-5`. The tool detects each candidate and reports
+5. **Report the rest for a person.** The Flag rules `PLACE-5`, `PLACE-7`, `NAME-3`, `NAME-4`, `NAME-5`, `NAME-6`, `NAME-7`, `VAL-4`, `VAL-5`,
+   `INT-4`, `TPL-16`, `PLACE-8`, and `INT-5`. The tool detects each candidate and reports
    it. Resolving one, for example unifying casing, can enable an Auto or Confirm operation that a later
    pass picks up.
 6. **Validate and compare.** Re-run the Gate rules, regenerate the Effective Set, and compare it with the
