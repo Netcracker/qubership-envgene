@@ -4,108 +4,100 @@
 - [Prerequisites](#prerequisites)
 - [Step 1. Inventory the Instance Repository](#step-1-inventory-the-instance-repository)
 - [Step 2. Configure Secret Store](#step-2-configure-secret-store)
-- [Step 3. Convert Cloud Passport Credentials](#step-3-convert-cloud-passport-credentials)
-- [Step 4. Update Cloud Passport main files](#step-4-update-cloud-passport-main-files)
-- [Step 5. Convert Shared Credentials](#step-5-convert-shared-credentials)
+- [Step 3. Convert Cloud Passport Credentials and main file](#step-3-convert-cloud-passport-credentials-and-main-file)
+- [Step 4. Convert Shared Credentials](#step-4-convert-shared-credentials)
+- [Step 5. Convert System Credentials](#step-5-convert-system-credentials)
 - [Step 6. Update environment-specific parameters](#step-6-update-environment-specific-parameters)
-- [Step 7. Set SECRET_FLOW and Application SBOM ESO support](#step-7-set-secret_flow-and-application-sbom-eso-support)
-- [Step 8. Convert EnvGene System Credentials](#step-8-convert-envgene-system-credentials)
-- [Step 9. Validate before the pipeline](#step-9-validate-before-the-pipeline)
-- [Step 10. Run TEMPORARY smoke](#step-10-run-temporary-smoke)
-- [Step 11. Verify the generated result](#step-11-verify-the-generated-result)
-- [Step 12. Run PERSISTENT cutover](#step-12-run-persistent-cutover)
+- [Step 7. Remove stale generated Credentials files](#step-7-remove-stale-generated-credentials-files)
+- [Step 8. Validate before the pipeline](#step-8-validate-before-the-pipeline)
+- [Step 9. Run the Instance pipeline](#step-9-run-the-instance-pipeline)
+- [Step 10. Verify the generated result](#step-10-verify-the-generated-result)
+- [Step 11. Run a test deployment](#step-11-run-a-test-deployment)
 - [Rollback](#rollback)
-- [Common mistakes](#common-mistakes)
 - [See also](#see-also)
 
 ## Description
 
 Migrate the Instance Repository from local Credentials to External Credentials.
 
-Finish
+Complete
 [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md)
-and publish a concrete Template version first.
+and publish a concrete Template version before starting here.
 
-Then, for the Instance Repository:
+Do not remove `data` from any Credential YAML before its real value is already in the Secret
+Store. After cutover, EnvGene no longer reads values from Git. If `create: true` is set and the
+secret is missing, EnvGene generates a new value - the previous password, token, or key is lost.
 
-1. inventory all Environment Instances and bound Credential sources
-2. configure the Secret Store
-3. convert Cloud Passport Credentials, then update Cloud Passport main files
-4. convert Shared Credentials
-5. replace local macros with `$type: credRef` in environment-specific parameters
-6. set `SECRET_FLOW` and Application SBOM `eso_support` when you use ESO
-7. convert System Credentials to External Credentials
-8. run `TEMPORARY` smoke, verify, then `PERSISTENT`
+Do not put secret values in Git, Merge Requests, or migration notes at any point.
 
 ### Instance rules
 
-- After merge, each Environment Instance must use only External Credentials. Mixing
+- After merge, every Environment Instance must use External Credentials exclusively. Mixing
   `type: external` with `type: usernamePassword` or `type: secret` in one Environment Instance is
   not supported.
-- Environment Instance Credentials come from Credential Template, Cloud Passport Credentials, and
-  Shared Credentials. On duplicate `credId`, precedence is lowest to highest: Credential Template,
-  then Cloud Passport, then Shared Credentials.
+- On duplicate `credId`, precedence is lowest to highest: Credential Template, then Cloud Passport,
+  then Shared Credentials.
 - `$type: credRef` works only in `deployParameters`, `e2eParameters`, and ParameterSets that feed
   those blocks. It does not work in `technicalConfigurationParameters`.
-- Built-in fields stay plain `credId` strings.
+- Built-in string fields keep a plain `credId` string.
 - CMDB import is not supported for Environment Instances with External Credentials.
-- BG deployment is out of scope.
-
-Do not put secret values in Git, Merge Requests, or migration notes. Move existing values into the
-external Secret Store by a separate secure process when you must keep them.
 
 ## Prerequisites
 
-Before you start, confirm that:
+Confirm before you start:
 
-- the Instance Repository already uses the No-CMDB approach
-- EnvGene is upgraded to a version that includes External Credentials
+- the Instance Repository uses the No-CMDB approach
+- EnvGene is upgraded to a version that supports External Credentials
 - a concrete Template version with `external_credential_template` is published
-- the Secret Store identifier is known, for example `default_store`
-- CI/CD variables for Secret Store authentication are configured
-- for each Credential you know whether the secret already exists, or a new generated value is
-  acceptable (`create: true`)
+- real secret values that must be kept are already in the Secret Store (stubs may wait for
+  `create: true` later). Complete
+  [UC-MIG-1](/docs/analysis/external-credentials-migration-cli.md) (draft) before this how-to -
+  do not start YAML cutover until that transfer is done
+- `/configuration/secret-stores.yml` defines every Secret Store id you reference (Step 2)
+- CI/CD authentication variables for those stores are configured
+- for each Credential you know whether: the value already exists in the Secret Store (omit
+  `create`), or a freshly generated value is acceptable (`create: true`)
 
 ## Step 1. Inventory the Instance Repository
 
-Find all Environment Instances:
+Find all Environment Instances at:
 
 ```text
 environments/<cluster>/<env>/Inventory/env_definition.yml
 ```
 
-For each Environment Instance, note:
+For each Environment Instance, record:
 
-- `inventory.cloudPassport`
-- `envTemplate.sharedMasterCredentialFiles`
+- `inventory.cloudPassport` - which Cloud Passport it uses
+- `envTemplate.sharedMasterCredentialFiles` - which Shared Credential files it binds
 - environment-specific ParameterSets
-- used `credId` values
+- all `credId` values referenced
 
-Also list Cloud Passport credential files, Cloud Passport main files, Shared Credentials files, and
-System Credential files under `/configuration/credentials/` and
-`environments/<cluster>/app-deployer/*-creds.yml`.
+Also list every Credential file:
 
-Also migrate unbound Shared Credentials and Cloud Passports: files that exist but are not
-referenced from any `env_definition.yml`. Convert them the same way as bound sources.
+| Location                                              | What it contains                                      |
+|-------------------------------------------------------|-------------------------------------------------------|
+| `environments/<cluster>/cloud-passport/*-creds.yml`   | Cloud Passport Credentials                            |
+| `environments/<cluster>/cloud-passport/*.yml`         | Cloud Passport main files                             |
+| `environments/<cluster>/shared-credentials/*.yml`     | Shared Credentials                                    |
+| `environments/<cluster>/app-deployer/deployer-creds.yml` | Deployer System Credentials                        |
+| `/configuration/credentials/credentials.yml`          | System Credentials (git token, registry)              |
+| `environments/<cluster>/<env>/Credentials/credentials.yml` | Generated files - do not edit. Delete in Step 7. |
 
-Migrate the whole Instance Repository. Shared Credential and Cloud Passport files apply to every
-Environment Instance that binds them, so convert those sources completely.
+For each local Credential (`type: usernamePassword` or `type: secret`), record:
 
-**Result:** full inventory of Environment Instances and Credential sources.
+- `credId`
+- source file
+- whether `data` contains a real value or a stub (`envgeneNullValue` / empty)
+
+Include unbound files - Cloud Passport or Shared Credential files that exist but are not
+referenced from any `env_definition.yml`. Convert them the same way.
+
+**Result:** full inventory of Environment Instances, Credential sources, and per-`credId` values.
 
 ## Step 2. Configure Secret Store
 
-Create or update `/configuration/secret-stores.yml`.
-
-### Vault
-
-```yaml
-default_store:
-  type: vault
-  mountPath: secret
-```
-
-### GCP Secret Manager
+Create or update `/configuration/secret-stores.yml`:
 
 ```yaml
 default_store:
@@ -113,99 +105,90 @@ default_store:
   projectId: <project-id>
 ```
 
-### AWS Secrets Manager
+Supported `type` values include `vault`, `gcp`, `aws`, and `azure`. Use the fields required for
+the chosen type (for example `mountPath` for Vault, `region` for AWS, `vaultName` for Azure).
 
-```yaml
-default_store:
-  type: aws
-  region: <region>
-```
-
-### Azure Key Vault
-
-```yaml
-default_store:
-  type: azure
-  vaultName: <vault-name>
-```
-
-The Secret Store identifier must match `[A-Za-z_][A-Za-z0-9_]*`.
-
-Configure CI/CD variables for authentication. For a non-default store, use variables with the
-`<store_id>_` prefix. See
-[External Credentials Management](/docs/features/external-creds.md) and the
-[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
+The store identifier must match `[A-Za-z_][A-Za-z0-9_]*`. Configure CI/CD authentication variables
+for each store. See [External Credentials Management](/docs/features/external-creds.md).
 
 Do not store tokens or keys in Git.
 
 **Result:** Secret Store defined.
 
-## Step 3. Convert Cloud Passport Credentials
+## Step 3. Convert Cloud Passport Credentials and main file
 
-Open each Cloud Passport credentials file. Convert local Credentials to `type: external`.
+Work through one Cloud Passport at a time: convert its `*-creds.yml` and its main file together
+before moving to the next.
 
-Before:
+### Convert `*-creds.yml`
 
-```yaml
-dbaas-cluster-dba-cred:
-  type: usernamePassword
-  data:
-    username: <current-username>
-    password: <current-password>
-```
-
-After:
-
-```yaml
-dbaas-cluster-dba-cred:
-  type: external
-  create: true
-  secretStore: default_store
-  remoteRefPath: cluster
-  properties:
-    - name: username
-    - name: password
-```
-
-Single-value example:
-
-```yaml
-cloud-deploy-cred:
-  type: external
-  create: true
-  secretStore: default_store
-  remoteRefPath: cluster
-```
-
-Rules:
-
-- remove `data`
-- multi-field `properties` use `- name: username` and `- name: password` objects, never bare strings
-- do not append `credId` to `remoteRefPath` - EnvGene adds it when building the final secret name
-- for Azure, AWS, and GCP, keep `credId` to at most 32 characters (see
-  [Normalization to normalizedSecretName](/docs/features/external-creds.md#normalization-to-normalizedsecretname))
-- always set an explicit `remoteRefPath` in Cloud Passport, Shared, and System Credential files
-- omit `create` when the secret already exists
-- set `create: true` when a new generated secret value is acceptable
-
-Do not change Built-in string fields that only store a `credId`.
-
-**Result:** Cloud Passport Credentials are External Credentials.
-
-## Step 4. Update Cloud Passport main files
-
-For each Cloud Passport you converted in Step 3, open the matching main file (for example
-`cluster.yml`), not only `*-creds.yml`.
-
-Replace `${creds.get(...)}`, `${envgen.creds.get(...)}`, and `${cmdb.creds.get(...)}` with
-`$type: credRef`.
+Open `environments/<cluster>/cloud-passport/*-creds.yml`.
 
 Before:
 
 ```yaml
 dbaas:
-  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.get("dbaas-cluster-dba-cred").username}
-  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.get("dbaas-cluster-dba-cred").password}
+  type: usernamePassword
+  data:
+    username: <username>
+    password: <password>
+```
+
+After (secret already in the store - omit `create`):
+
+```yaml
+dbaas:
+  type: external
+  secretStore: default_store
+  remoteRefPath: <cluster>
+  properties:
+    - name: username
+    - name: password
+```
+
+After (new generated value is acceptable):
+
+```yaml
+cloud-deploy-sa-token:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: <cluster>
+```
+
+Rules:
+
+- remove `data`
+- `properties` entries must be objects: `- name: username`, not bare strings
+- do not append `credId` to `remoteRefPath` - EnvGene appends it automatically
+- for Azure, AWS, or GCP, keep `credId` to at most 32 characters
+- omit `create` when the secret already exists
+- set `create: true` only when a generated value is acceptable
+- do not change built-in fields that store only a `credId` string
+
+### Update the Cloud Passport main file
+
+Open the matching main file (for example `environments/<cluster>/cloud-passport/cluster.yml`).
+
+Replace every local Credential macro with `$type: credRef`. Search for:
+
+```text
+${creds.get('<credId>').username|password|secret}
+${envgen.creds.get('<credId>').username|password|secret}
+${cmdb.creds.get('<credId>').username|password|secret}
+#creds{LOGIN_PARAM, PASSWORD_PARAM}
+#credscl{LOGIN_PARAM, PASSWORD_PARAM}
+#credsns{LOGIN_PARAM, PASSWORD_PARAM}
+```
+
+Before:
+
+```yaml
+dbaas:
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.get("dbaas").username}
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.get("dbaas").password}
+consul:
+  CONSUL_ADMIN_TOKEN: ${creds.get("consul").secret}
 ```
 
 After:
@@ -214,278 +197,265 @@ After:
 dbaas:
   DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
     $type: credRef
-    credId: dbaas-cluster-dba-cred
+    credId: dbaas
     property: username
   DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
     $type: credRef
-    credId: dbaas-cluster-dba-cred
+    credId: dbaas
     property: password
+consul:
+  CONSUL_ADMIN_TOKEN:
+    $type: credRef
+    credId: consul
 ```
 
-Do not add `$type: credRef` to `technicalConfigurationParameters`.
+### Legacy `#creds` / `#credscl` / `#credsns` keys
 
-Do not edit generated files under `effective-set/` by hand.
-
-Finish credentials and the main file for one Cloud Passport before you move to the next.
-
-**Result:** Cloud Passport main files use Credential References.
-
-## Step 5. Convert Shared Credentials
-
-Convert Shared Credentials files with the same rules as Cloud Passport Credentials.
+These macros sit in the parameter key. The value is the `credId`. Split each key into two
+parameters with `$type: credRef`.
 
 Before:
 
 ```yaml
-shared-app-cred:
-  type: usernamePassword
-  data:
-    username: <current-username>
-    password: <current-password>
+'#creds{TEST_CREDS_LOGIN, TEST_CREDS_PASSWORD}': test-cred
 ```
 
 After:
 
 ```yaml
-shared-app-cred:
+TEST_CREDS_LOGIN:
+  $type: credRef
+  credId: test-cred
+  property: username
+TEST_CREDS_PASSWORD:
+  $type: credRef
+  credId: test-cred
+  property: password
+```
+
+All three variants expand the same way.
+
+Do not add `$type: credRef` to `technicalConfigurationParameters`.
+
+Do not edit generated files under `effective-set/` by hand.
+
+**Result:** Cloud Passport Credentials and main files use External Credentials and Credential
+References.
+
+## Step 4. Convert Shared Credentials
+
+Open each file listed in `envTemplate.sharedMasterCredentialFiles` across all `env_definition.yml`
+files, and also any unbound Shared Credential files.
+
+Apply the same rules as Step 3 for Credential YAML.
+
+Before:
+
+```yaml
+ID_TOCP_CLIENT_CREDS:
+  type: usernamePassword
+  data:
+    username: <username>
+    password: <password>
+```
+
+After:
+
+```yaml
+ID_TOCP_CLIENT_CREDS:
   type: external
   secretStore: default_store
-  remoteRefPath: shared/integration
+  remoteRefPath: <cluster>/shared
   properties:
     - name: username
     - name: password
 ```
 
-Shared Credentials override Cloud Passport and Credential Template when `credId` values collide.
+> [!IMPORTANT]
+> `sharedMasterCredentialFiles` references the file by name **without** the `.yml` extension.
+> EnvGene appends `.yml` automatically. If `env_definition.yml` has
+> `"shared-credentials.yml"`, change it to `shared-credentials`. Including the extension causes
+> the file to be skipped.
 
-**Result:** Shared Credentials are External Credentials.
+**Result:** Shared Credentials are External Credentials and `env_definition.yml` references are
+updated where needed.
 
-## Step 6. Update environment-specific parameters
+## Step 5. Convert System Credentials
 
-Replace `${creds.get(...)}`, `${envgen.creds.get(...)}`, and `${cmdb.creds.get(...)}` with
-`$type: credRef` in:
+System Credentials cover git tokens, registry authentication, and deployer credentials. They live in:
 
-- environment-specific `deployParameters` and `e2eParameters`
-- environment-specific ParameterSets under
-  `environments/<cluster>/<env>/Inventory/parameters/`, `environments/<cluster>/parameters/`, and
-  `environments/parameters/`
+- `/configuration/credentials/credentials.yml` - `self_token`, `cp_discovery` token, registry
+- `environments/<cluster>/app-deployer/deployer-creds.yml` - deployer username and token
 
-Use the same before/after shape as in Step 4.
+Apply the same conversion rules as Step 3 for Credential YAML, with these additional constraints:
 
-Do not add `$type: credRef` to `technicalConfigurationParameters`.
+- omit `create` - `create: true` is not allowed for System Credentials
+- only Vault and GCP are supported as Secret Stores for System Credentials
+- the secret must already exist in the Secret Store (from the prerequisite transfer)
 
-Do not edit generated files under `effective-set/` by hand.
+After converting the Credential entries, update references in the configuration files.
 
-**Result:** supported environment-specific parameters use Credential References.
-
-## Step 7. Set SECRET_FLOW and Application SBOM ESO support
-
-`SECRET_FLOW` selects how sensitive parameters are emitted in the Effective Set. EnvGene discovers it
-from the Cloud Passport. The attribute may also be set at Cloud, Namespace, or Application scope
-(see [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute)).
-
-| `SECRET_FLOW`     | Effective Set shape |
-|-------------------|---------------------|
-| `helm-values`     | VALS references     |
-| `external-values` | ESO references      |
-
-Sample Cloud Passport uses VALS:
+`/configuration/deployer.yml` - before:
 
 ```yaml
-global:
-  SECRET_FLOW: helm-values
-```
-
-If the effective `SECRET_FLOW` for an application is `external-values`, that application must declare
-`eso_support: true` in its Application SBOM. Otherwise Effective Set generation fails.
-
-Check every place that sets `SECRET_FLOW`, and check Application SBOM / appdefs for applications that
-use `external-values`. See also
-[eso_support](/docs/features/external-creds.md#eso_support-attribute).
-
-**Result:** `SECRET_FLOW` and `eso_support` are consistent for every application.
-
-## Step 8. Convert EnvGene System Credentials
-
-Convert System Credentials used by EnvGene for Git, registry, and deployer operations.
-
-Cover these parameters and their Credential entries:
-
-| Parameter                         | Typical location                                              |
-|-----------------------------------|---------------------------------------------------------------|
-| `self_token`                      | `/configuration/integration.yml`                              |
-| `cp_discovery.gitlab.token`       | `/configuration/integration.yml`                              |
-| registry username/password        | `/configuration/registry.yml`                                 |
-| deployer username/token           | `deployer.yml` and optional `deployer-creds.yml` nearby       |
-| Artifact Definition `credentialsId` | `/configuration/artifact_definitions/`                     |
-| Registry Definition `credentialsId`  | registry definition files                                  |
-
-Credential entries live in `/configuration/credentials/credentials.yml`, except deployer Credentials
-that may live in `deployer-creds.yml` next to `deployer.yml`.
-
-For integration, registry, and deployer parameters, replace local macros with `$type: credRef`.
-Artifact Definition and Registry Definition `credentialsId` stay plain strings.
-
-Before:
-
-```yaml
-# /configuration/integration.yml
-self_token: "${envgen.creds.get('self-token-cred').secret}"
-```
-
-```yaml
-# /configuration/credentials/credentials.yml
-self-token-cred:
-  type: secret
-  data:
-    secret: <token>
+cloud-deployer:
+  username: "${envgen.creds.get('cloud-deployer-username').secret}"
+  token: "${envgen.creds.get('cloud-deployer-token').secret}"
 ```
 
 After:
 
 ```yaml
-# /configuration/integration.yml
+cloud-deployer:
+  username:
+    $type: credRef
+    credId: cloud-deployer-username
+  token:
+    $type: credRef
+    credId: cloud-deployer-token
+```
+
+`/configuration/integration.yml` - before:
+
+```yaml
+self_token: "${envgen.creds.get('self-token-cred').secret}"
+cp_discovery:
+  gitlab:
+    token: "${envgen.creds.get('cp-discovery-repository-cred').secret}"
+```
+
+After:
+
+```yaml
 self_token:
   $type: credRef
   credId: self-token-cred
+cp_discovery:
+  gitlab:
+    token:
+      $type: credRef
+      credId: cp-discovery-repository-cred
 ```
 
-```yaml
-# /configuration/credentials/credentials.yml
-self-token-cred:
-  type: external
-  secretStore: default_store
-  remoteRefPath: /vcs/envgene-bot
-```
-
-Artifact Definition and Registry Definition example:
-
-```yaml
-credentialsId: artifactory-cred
-```
-
-System Credential rules from the feature specification:
-
-- omit `create` - `create: true` is not allowed for System Credentials
-- the secret must already exist in the Secret Store
-- only Vault and GCP are supported as Secret Stores for System Credentials
-- System Credentials are not part of the Environment Instance single-category rule
-- some parameters may still be supplied by CI/CD variables instead of a Credential
+`credentialsId` fields in Artifact Definition and Registry Definition files stay as plain strings.
 
 See [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 **Result:** System Credentials converted to External Credentials.
 
-## Step 9. Validate before the pipeline
+## Step 6. Update environment-specific parameters
 
-Confirm that:
+Replace the same macros as in Step 3 (`creds.get`, `envgen.creds.get`, `cmdb.creds.get`, `#creds`,
+`#credscl`, `#credsns`) with `$type: credRef` in:
 
-- changed YAML files are valid
-- every Environment Instance merges to External Credentials only
-- Shared, Cloud Passport, and System Credential files have no leftover `data` for migrated entries
-- `credRef.property` matches Credential `properties`
-- every `secretStore` exists in `secret-stores.yml`
-- technical configuration has no `$type: credRef`
-- secrets already exist when `create` is omitted
-- for `SECRET_FLOW: external-values`, applications have `eso_support: true`
+- environment-specific `deployParameters` and `e2eParameters`
+- ParameterSets under `environments/<cluster>/<env>/Inventory/parameters/`,
+  `environments/<cluster>/parameters/`, and `environments/parameters/`
 
-If a previously generated `Credentials/credentials.yml` still contains local entries, move any
-values you still need to the Secret Store first. Deleting that stale generated file and regenerating
-it is only a workaround, not a standard step.
+Use the same before/after shapes as in Step 3.
 
-**Result:** Instance Repository ready for `TEMPORARY` smoke.
+Do not add `$type: credRef` to `technicalConfigurationParameters`. Do not edit `effective-set/`
+files by hand.
 
-## Step 10. Run TEMPORARY smoke
+**Result:** environment-specific parameters use Credential References.
 
-Run the Instance pipeline with the new Template version:
+## Step 7. Remove stale generated Credentials files
+
+Each Environment Instance has a generated file at:
 
 ```text
-ENV_NAMES=<environment-name-or-list>
+environments/<cluster>/<env>/Credentials/credentials.yml
+```
+
+This file was produced by a previous pipeline run from the old Template. It contains local
+`type: usernamePassword` or `type: secret` entries and causes the pipeline to fail with
+`Only external credentials allowed` if it remains.
+
+Delete every such file for all Environment Instances you are migrating.
+
+The pipeline regenerates this file from the new Template (only `type: external` entries).
+
+**Result:** stale generated Credentials files removed.
+
+## Step 8. Validate before the pipeline
+
+Check:
+
+- all changed YAML files are syntactically valid
+- every Environment Instance, when its sources are merged, produces External Credentials only
+- no Credential file has a leftover `data` block for converted entries
+- `credRef.property` matches a name in the Credential's `properties` list
+- every `secretStore` id exists in `/configuration/secret-stores.yml`
+- no `$type: credRef` in `technicalConfigurationParameters`
+- secrets exist in the store for all entries where `create` is omitted
+- `sharedMasterCredentialFiles` entries do not have the `.yml` extension
+
+**Result:** Instance Repository ready for the Instance pipeline.
+
+## Step 9. Run the Instance pipeline
+
+Start with a non-production Environment Instance.
+
+```text
+ENV_NAMES=<environment-name>
 ENV_TEMPLATE_VERSION=<artifactId>:<version>
-ENV_TEMPLATE_VERSION_UPDATE_MODE=TEMPORARY
 ENV_BUILDER=true
 GENERATE_EFFECTIVE_SET=true
 CMDB_IMPORT=false
 ```
 
-Keep any other No-CMDB pipeline parameters from your working flow unchanged.
+Keep any other No-CMDB pipeline parameters from your working flow unchanged. See
+[Update template version](/docs/how-to/update-template-version.md) if you set the Template version
+manually in `env_definition.yml`.
 
-The pipeline must generate the Environment Instance, build the External Credential Context, prepare
-external secrets according to `create`, and generate the Effective Set.
+The pipeline generates the Environment Instance, builds the External Credential Context,
+prepares external secrets according to `create`, and generates the Effective Set.
 
-Do not move to `PERSISTENT` if the pipeline fails.
+Do not run a test deployment if generation fails.
 
-**Result:** Environment Instances generated without pinning the Template version.
+**Result:** Environment Instance generated with External Credentials.
 
-## Step 11. Verify the generated result
+## Step 10. Verify the generated result
 
-For each Environment Instance, check:
+For each Environment Instance you ran, check:
 
-- `environments/<cluster>/<env>/Credentials/credentials.yml` contains only `type: external`
-- `effective-set/external-credential/external-credentials.yaml` lists the expected Credentials
-- deployment contexts under `effective-set/deployment/` use VALS or ESO references, not plaintext
-- `effective-set/pipeline/credentials.yaml` when you use `e2eParameters`
-- `effective-set/topology/credentials.yaml` when you use supported Built-in references
-- for `SECRET_FLOW: external-values`, ESO references are present and applications have
-  `eso_support: true`
+- `environments/<cluster>/<env>/Credentials/credentials.yml` - all entries are `type: external`
+- `effective-set/external-credential/external-credentials.yaml` - expected Credentials listed
+- `effective-set/deployment/` - deployment contexts use VALS or ESO references, not plaintext
 
-If verification fails, fix the configuration and repeat `TEMPORARY` smoke. Run a test deployment
-after a successful smoke when you need that extra check.
+If verification fails, fix the configuration and re-run Step 9 for those environments.
 
 **Result:** generated External Credentials validated.
 
-## Step 12. Run PERSISTENT cutover
+## Step 11. Run a test deployment
 
-After successful smoke and verification, run:
+Run a test deployment for the same environments. Confirm that applications start and that
+authentication to dependent services works.
 
-```text
-ENV_NAMES=<environment-name-or-list>
-ENV_TEMPLATE_VERSION=<artifactId>:<version>
-ENV_TEMPLATE_VERSION_UPDATE_MODE=PERSISTENT
-ENV_BUILDER=true
-GENERATE_EFFECTIVE_SET=true
-CMDB_IMPORT=false
-```
+When generation and the test deployment succeed, continue with the remaining Environment Instances
+the same way.
 
-Confirm that `envTemplate.artifact` stores the new Template version and Effective Set generation
-succeeds for the Environment Instances.
-
-**Result:** Instance Repository permanently switched to External Credentials.
+**Result:** External Credentials validated end-to-end.
 
 ## Rollback
 
-### Before PERSISTENT
+### Before keeping the new Template version
 
 1. keep using the previous Template version
-2. fix Instance Repository changes
-3. repeat `TEMPORARY` smoke
+2. revert Instance Repository changes
+3. re-run the Instance pipeline on the test environments
 
-### After PERSISTENT
+### After keeping the new Template version
 
 1. restore the previous Template version
 2. restore consistent Instance Repository changes
 3. regenerate Environment Instances and Effective Sets
-4. do not delete external secrets until you confirm they are unused
-
-## Common mistakes
-
-| Error                               | What to check                                           |
-|-------------------------------------|---------------------------------------------------------|
-| Used `credId` is not declared       | Credential Template, Cloud Passport, Shared Credentials |
-| Only external credentials allowed   | Merged sources and stale `Credentials/credentials.yml`  |
-| Credential Reference not resolved   | `credId` spelling and merged Credential File            |
-| Invalid Credential property         | `property` vs `properties`                              |
-| `properties: [username, password]`  | Use `- name: username` / `- name: password`             |
-| Secret Store not found              | `/configuration/secret-stores.yml`                      |
-| Secret missing                      | Store path and whether `create` was omitted             |
-| ESO capability validation failed    | `SECRET_FLOW: external-values` needs `eso_support: true`|
-| `create: true` on System Credential | Omit `create`. Pre-create the secret                    |
-| CMDB import failed                  | Use No-CMDB flow                                        |
-| Macros left in Cloud Passport main  | Convert main file, not only `*-creds.yml`               |
+4. do not delete external secrets until confirmed unused
 
 ## See also
 
 - [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md)
+- [UC-MIG-1 Migration CLI](/docs/analysis/external-credentials-migration-cli.md)
 - [External Credentials Management](/docs/features/external-creds.md)
 - [Update template version](/docs/how-to/update-template-version.md)
 - [Generate Effective Set](/docs/how-to/generate-effective-set.md)
