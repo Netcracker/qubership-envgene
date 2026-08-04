@@ -636,7 +636,7 @@ class EnvGenerator:
 
         raise ValueError(f"Unknown composite member type: {member_type}")
 
-    def compute_composite_topology()(self):
+    def compute_composite_topology(self):
         cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
 
         if not cs_file.exists():
