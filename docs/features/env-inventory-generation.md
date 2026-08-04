@@ -123,7 +123,7 @@ The exact target folder depends on the object type and the `place` value.
 | Parameter Set file | `/environments/<cluster-name>/<env-name>/Inventory/parameters/<paramset-name>.yml` | `/environments/<cluster-name>/parameters/<paramset-name>.yml` | `/environments/parameters/<paramset-name>.yml` |
 | Shared Credentials file | `/environments/<cluster-name>/<env-name>/Inventory/credentials/<credentials-file-name>.yml` | `/environments/<cluster-name>/credentials/<credentials-file-name>.yml` | `/environments/credentials/<credentials-file-name>.yml` |
 | Resource Profile Override file | `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<override-name>.yml` | `/environments/<cluster-name>/resource_profiles/<override-name>.yml` | `/environments/resource_profiles/<override-name>.yml` |
-| Shared Template Variable File | `/environments/<cluster-name>/<env-name>/shared-template-variables/<file-name>.yml` | `/environments/<cluster-name>/shared-template-variables/<file-name>.yml` | `/environments/shared-template-variables/<file-name>.yml` |
+| Shared Template Variable File | `/environments/<cluster-name>/<env-name>/Inventory/configurations/<file-name>.yml` | `/environments/<cluster-name>/configurations/<file-name>.yml` | `/environments/configurations/<file-name>.yml` |
 
 ##### Processing Model
 
@@ -502,7 +502,7 @@ applications:
 **Result**: a Shared Template Variable File is generated from sharedTemplateVariables[].content and stored based on sharedTemplateVariables[].place.
 
 ```yaml
-# /environments/shared-template-variables/prod-template-variables.yml
+# /environments/configurations/prod-template-variables.yml
 
 TEMPLATE_VAR_1: "prod-value-1"
 TEMPLATE_VAR_2: "prod-value-2"
@@ -512,7 +512,7 @@ nested:
 ```
 
 ```yaml
-# /environments/<cluster-name>/shared-template-variables/sample-cloud-template-variables.yml
+# /environments/<cluster-name>/configurations/sample-cloud-template-variables.yml
 
 CLOUD_VAR_1: "cloud-value-1"
 CLOUD_VAR_2: "cloud-value-2"
