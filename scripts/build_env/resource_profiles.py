@@ -151,8 +151,10 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
         if profile_key not in all_profiles:
             raise ReferenceError(
-                f"Environment specific profile '{env_specific_profile_path}' cannot be applied "
-                f"for profile key '{profile_key}', because no base template profile was found"
+                f"Environment specific profile '{env_specific_profile_path}' is mapped to key "
+                f"'{profile_key}' in envTemplate.envSpecificResourceProfiles, but the "
+                f"namespace template has no profile.name. Resource profile overrides require "
+                f"a profile.name on the corresponding cloud or namespace template."
             )
         logger.info(f"Found template override profile for profile key '{profile_key}'"
                     f" with environment specific profile {env_specific_profile_path}")
