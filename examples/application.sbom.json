@@ -29,15 +29,6 @@
           ]
         }
       ]
-    },
-    "tools": {
-      "components": [
-        {
-          "type": "application",
-          "name": "sbom_generator",
-          "version": "0.1.0"
-        }
-      ]
     }
   },
   "components": [
