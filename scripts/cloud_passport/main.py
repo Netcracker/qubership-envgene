@@ -1,19 +1,24 @@
 import os
 import re
 import shutil
+import time
 from pathlib import Path
-import sys
+from urllib.parse import quote
 
 from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, readYaml
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
 from envgenehelper.crypt import get_configured_encryption_type
-from envgenehelper.git_helper import GitRepoManager, GitLabClient
+from envgenehelper.git_helper import GitLabClient
 from envgenehelper.errors import ValidationError
+from envgenehelper.retry import parse_duration
 
 from cloud_passport.cmdb import update_creds_to_cmdb_format
 from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"
+PASSPORT_JOB_NAME = "get_cloud_passport"
+POLL_INTERVAL_SECONDS = 10
+PIPELINE_TERMINAL_STATUSES = frozenset({"success", "failed", "canceled", "skipped"})
 
 header_text = (
     "The contents of this file is generated from Cloud Passport discovery procedure.\n"
@@ -34,26 +39,6 @@ def get_integration_config(integration_config_path) -> dict:
     else:
         logger.warning(f"Integration config missing: {integration_config_path}")
     return integration_config
-
-
-def find_downstream_pipeline(pipeline_jobs, env_name) -> dict | None:
-    expected = f"trigger-discovery-passport.{env_name.replace('_', '-')}-trigger"
-    logger.info(f"Searching for downstream pipeline with names: "
-                f"'trigger_discovery_passport' or '{expected}'")
-    for item in pipeline_jobs:
-        name = item.get("name", "")
-        logger.debug(f"Checking job '{name}'")
-
-        if name == "trigger_discovery_passport" or name == expected:
-            downstream = item.get("downstream_pipeline", {})
-            result = {
-                "project_id": downstream.get("project_id"),
-                "pipeline_id": downstream.get("id"),
-                "ref": downstream.get("ref")
-            }
-            logger.info(f"Downstream pipeline found: {result}")
-            return result
-    logger.warning("Downstream pipeline not found")
 
 
 def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key):
@@ -119,6 +104,32 @@ def process_discovery_files(env_name: str,
         addHeaderToYaml(cp_file, header_text)
 
 
+def _poll_discovery_pipeline(gl_client: GitLabClient, project_path: str, pipeline_id: int) -> str:
+    timeout_seconds = parse_duration(os.getenv("RUNNER_SCRIPT_TIMEOUT", "10m")).total_seconds()
+    deadline = time.time() + timeout_seconds
+    encoded_path = quote(project_path, safe="")
+    pipeline_url = f"{gl_client.api_url}/projects/{encoded_path}/pipelines/{pipeline_id}"
+
+    status = "running"
+    while time.time() < deadline:
+        status = gl_client.http.get_json(pipeline_url, headers=gl_client.headers).get("status", "")
+        logger.info(f"Discovery pipeline {pipeline_id} status: {status}")
+        if status in PIPELINE_TERMINAL_STATUSES:
+            return status
+        time.sleep(POLL_INTERVAL_SECONDS)
+
+    raise ValidationError(
+        f"Discovery pipeline {pipeline_id} timed out after {timeout_seconds}s (last status: {status})"
+    )
+
+
+def _find_passport_job(jobs: list[dict]) -> dict | None:
+    for job in jobs:
+        if job.get("name") == PASSPORT_JOB_NAME:
+            return job
+    return None
+
+
 def run_cloud_passport():
     env_name = os.getenv("FULL_ENV_NAME")
     logger.info(f"Starting discovery of cloud passport for environment {env_name}")
@@ -126,46 +137,43 @@ def run_cloud_passport():
 
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
     cred_config = get_cred_config()
+    cp_discovery = integration_config.get("cp_discovery", {}).get("gitlab", {})
+    project_path = cp_discovery.get("project")
+    branch = cp_discovery.get("branch")
+    discovery_token = fetch_cred_value(cp_discovery.get("token"), cred_config)
 
-    gitlab_token = os.environ.get("GITLAB_TOKEN")
-    if not gitlab_token:
-        logger.error(f'Variable "GITLAB_TOKEN" is not set')
-        sys.exit(1)
+    gl_client = GitLabClient(token=discovery_token)
 
-    repo = GitRepoManager()
-    repo.configure()
+    pipeline = gl_client.trigger_pipeline(
+        project_path=project_path,
+        ref=branch,
+        variables={"ENV_NAME": env_name},
+    )
+    pipeline_id = pipeline["id"]
+    logger.info(f"Triggered Discovery pipeline {pipeline_id} on {project_path}@{branch}")
 
-    downstream_gl_client = GitLabClient(token=gitlab_token)
+    status = _poll_discovery_pipeline(gl_client, project_path, pipeline_id)
+    if status != "success":
+        raise ValidationError(f"Discovery pipeline {pipeline_id} finished with status: {status}")
 
-    project_id = os.getenv("CI_PROJECT_ID")
-    pipeline_id = os.getenv("CI_PIPELINE_ID")
+    jobs = gl_client.get_pipeline_jobs(project_path, pipeline_id)
+    logger.info(f"Discovery pipeline jobs fetched: {jobs}")
+    passport_job = _find_passport_job(jobs)
+    if not passport_job:
+        raise ValidationError(f"Job '{PASSPORT_JOB_NAME}' not found in Discovery pipeline {pipeline_id}")
 
-    pipeline_jobs = downstream_gl_client.get_pipeline_bridges(project_id, pipeline_id)
-    logger.info(f"Pipeline jobs fetched: {pipeline_jobs}")
-
-    downstream = find_downstream_pipeline(pipeline_jobs, env_name)
-    if not downstream:
-        raise ValidationError("Downstream pipeline not found")
-
-    downstream_project_id = downstream.get("project_id")
-    downstream_jobs = downstream_gl_client.get_pipeline_jobs(downstream_project_id,
-                                                             downstream.get("pipeline_id"))
-    logger.info(f"Downstream pipeline jobs fetched: {downstream_jobs}")
     passport_archive_path = "/tmp/archive.zip"
-    downstream_gl_client.download_job_artifacts(
-        downstream_project_id,
-        downstream_jobs[0].get("id"),
-        passport_archive_path
+    gl_client.download_job_artifacts(
+        project_path,
+        passport_job["id"],
+        passport_archive_path,
     )
 
     passport_unpack_path = Path("/tmp/passport")
     unpack_archive(passport_archive_path, os.path.dirname(passport_unpack_path))
     passport_discovery_files = list(Path(passport_unpack_path).rglob("*"))
 
-    downstream_git_token = fetch_cred_value(integration_config.get("cp_discovery").get("gitlab").get("token"),
-                                            cred_config)
-    downstream_gl_client = GitLabClient(token=downstream_git_token)
-    downstream_vars = downstream_gl_client.get_project_variables(downstream_project_id)
+    downstream_vars = gl_client.get_project_variables(project_path)
     discovery_secret_key = None
     for var_info in downstream_vars:
         if var_info["key"] == SECRET_KEY:
@@ -177,6 +185,6 @@ def run_cloud_passport():
         env_name,
         f"{base_dir}/environments",
         passport_discovery_files,
-        discovery_secret_key
+        discovery_secret_key,
     )
     logger.info(f"Discovery of cloud passport for environment {env_name} completed successfully")

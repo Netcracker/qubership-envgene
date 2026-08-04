@@ -2,8 +2,12 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
+
+import requests
 
 from envgenehelper import logger
+from envgenehelper.errors import IntegrationError
 from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
@@ -273,3 +277,25 @@ class GitLabClient:
     def get_project_variables(self, project_id):
         url = f"{self.api_url}/projects/{project_id}/variables"
         return self.http.get_json(url, headers=self.headers)
+
+    def trigger_pipeline(self, project_path: str, ref: str, variables: dict) -> dict:
+        encoded_path = quote(project_path, safe="")
+        url = f"{self.api_url}/projects/{encoded_path}/pipeline"
+        payload = {
+            "ref": ref,
+            "variables": [{"key": key, "value": value} for key, value in variables.items()],
+        }
+        try:
+            response = requests.post(
+                url,
+                headers=self.headers,
+                json=payload,
+                verify=self.http.verify_ssl,
+                timeout=30,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise IntegrationError(
+                f"Pipeline trigger failed for {project_path}@{ref}: {e}"
+            )
