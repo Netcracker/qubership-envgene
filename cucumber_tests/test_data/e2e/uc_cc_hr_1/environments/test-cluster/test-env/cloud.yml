@@ -1,0 +1,10 @@
+name: test-cloud
+deployParameters:
+  cloud_api_url: "https://api.example.com"
+deployParameterSets: []
+e2eParameters:
+  cloud_test_url: "https://test.example.com"
+e2eParameterSets: []
+technicalConfigurationParameters:
+  cloud_config_url: "https://config.example.com"
+technicalConfigurationParameterSets: []

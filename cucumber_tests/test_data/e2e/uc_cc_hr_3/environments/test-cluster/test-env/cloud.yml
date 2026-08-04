@@ -1,0 +1,10 @@
+name: test-cloud
+deployParameters:
+  cloud_label: ${tenant_name}
+deployParameterSets: []
+e2eParameters:
+  cloud_test_label: ${tenant_test_name}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  cloud_config_label: ${tenant_config_name}
+technicalConfigurationParameterSets: []

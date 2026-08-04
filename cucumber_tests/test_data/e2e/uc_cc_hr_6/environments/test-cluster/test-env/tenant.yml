@@ -1,0 +1,13 @@
+name: test-tenant
+registryName: mock-reg
+credential: dummy-cred
+globalE2EParameters: {}
+deployParameters:
+  tenant_label: ${namespace_name}
+deployParameterSets: []
+e2eParameters:
+  tenant_test_label: ${namespace_test_name}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  tenant_config_label: ${namespace_config_name}
+technicalConfigurationParameterSets: []

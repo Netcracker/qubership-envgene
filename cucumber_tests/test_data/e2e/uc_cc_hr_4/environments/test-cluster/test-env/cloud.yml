@@ -1,0 +1,10 @@
+name: test-cloud
+deployParameters:
+  cloud_config: ${namespace_db_url}
+deployParameterSets: []
+e2eParameters:
+  cloud_test_config: ${namespace_test_url}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  cloud_config_param: ${namespace_config_url}
+technicalConfigurationParameterSets: []

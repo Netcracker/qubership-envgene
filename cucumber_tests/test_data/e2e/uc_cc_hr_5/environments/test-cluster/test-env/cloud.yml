@@ -1,0 +1,10 @@
+name: test-cloud
+deployParameters:
+  cloud_region: "us-east-1"
+deployParameterSets: []
+e2eParameters:
+  cloud_test_region: "us-west-1"
+e2eParameterSets: []
+technicalConfigurationParameters:
+  cloud_config_region: "eu-central-1"
+technicalConfigurationParameterSets: []
