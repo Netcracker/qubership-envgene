@@ -696,7 +696,7 @@ class EnvGenerator:
             self.ctx.current_env_dir = current_env_dir
             self.set_env_templates()
             self.generate_composite_structure()
-            self.compute_composite_topology()()
+            self.compute_composite_topology()
             self.generate_bgd_file()
             self.generate_solution_structure()
             self.generate_tenant_file()
