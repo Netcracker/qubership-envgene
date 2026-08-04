@@ -17,7 +17,7 @@ from envgenehelper import get_cred_config
 SECRET_KEY = "SECRET_KEY"
 PASSPORT_JOB_NAME = "get_cloud_passport"
 POLL_INTERVAL_SECONDS = 10
-POLL_MAX_TRIES = int(os.getenv("CP_DISCOVERY_POLL_MAX_TRIES", "30"))
+POLL_MAX_TRIES = 30
 PIPELINE_TERMINAL_STATUSES = frozenset({"success", "failed", "canceled", "skipped"})
 
 header_text = (
