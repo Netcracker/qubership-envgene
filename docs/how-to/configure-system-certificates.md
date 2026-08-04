@@ -1,14 +1,21 @@
 # Configure system certificates
 
-This guide shows how to add CA certificates to an environment instance repository so that EnvGene trusts internal
-registries and TLS services during pipeline execution. It also covers how to obtain certificates and how to verify
-them before use.
+This guide shows how to provide CA certificates so that EnvGene trusts internal registries and TLS services during
+pipeline execution. EnvGene merges certificates from every non-empty configured source: the `SSL_CERTIFICATES_BUNDLE`
+CI/CD variable, the `/ca_bundle` folder, and `/configuration/certs`. The guide also covers how to obtain certificates
+and how to verify them before use.
 
-For background on the mechanism, see [System certificate configuration](/docs/features/system-certificate.md).
+For background on the mechanism and the merge rules, see
+[System certificate configuration](/docs/features/system-certificate.md).
 
 - [Configure system certificates](#configure-system-certificates)
   - [Prerequisites](#prerequisites)
-  - [Steps](#steps)
+  - [Provide certificates in a repository folder](#provide-certificates-in-a-repository-folder)
+  - [Provide certificates through `SSL_CERTIFICATES_BUNDLE`](#provide-certificates-through-ssl_certificates_bundle)
+    - [Encode the bundle](#encode-the-bundle)
+    - [Create the variable in GitLab](#create-the-variable-in-gitlab)
+    - [Create the variable in GitHub](#create-the-variable-in-github)
+    - [Verify certificate loading](#verify-certificate-loading)
   - [Obtain the required certificates](#obtain-the-required-certificates)
     - [Retrieve server certificates with OpenSSL](#retrieve-server-certificates-with-openssl)
     - [Extract individual certificates from a chain](#extract-individual-certificates-from-a-chain)
@@ -21,29 +28,101 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
   - [Usage examples](#usage-examples)
     - [Secure artifact repositories](#secure-artifact-repositories)
     - [Internal services with self-signed certificates](#internal-services-with-self-signed-certificates)
-  - [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
 - Write access to the environment instance repository.
+- For the CI/CD variable source: Maintainer access to the GitLab project, or admin access to the GitHub repository.
 - The CA certificate, or full certificate chain, of each target service in PEM format.
 - OpenSSL and cURL available locally for the verification steps.
 
-## Steps
+## Provide certificates in a repository folder
 
-1. Create a `certs` directory inside the `configuration` folder of your environment instance repository:
+1. Create a certificate folder in your environment instance repository. EnvGene reads both locations:
 
    ```text
+   /ca_bundle
+     ca-chain-internal.pem
    /configuration
      /certs
        your-ca-cert.pem
-       ca-chain-internal.pem
    ```
 
-2. Place your CA certificate files in this directory. Each file must be PEM-encoded and use a `.crt` or `.pem`
-   extension.
+2. Place your CA certificate files in the folder. Each file must be PEM-encoded. The filename and extension do not
+   matter, EnvGene detects certificates by content.
 3. Commit and push the changes to your repository.
 4. Run the pipeline. EnvGene loads the certificates and rebuilds the runner trust store before the other steps run.
+
+## Provide certificates through `SSL_CERTIFICATES_BUNDLE`
+
+Use the CI/CD variable when storing certificate files in the repository is restricted by security policies. If
+`SSL_CERTIFICATES_BUNDLE` is set but invalid, the job fails. See
+[Certificate validation](/docs/features/system-certificate.md#certificate-validation).
+
+> [!WARNING]
+> GitLab limits a CI/CD variable value to 10,000 characters. A GitHub secret is limited to 48 KB. For larger
+> bundles, use a repository folder instead (see
+> [Provide certificates in a repository folder](#provide-certificates-in-a-repository-folder)).
+
+### Encode the bundle
+
+Encode the PEM file as a single line with no line breaks, then check the length. On Linux (GNU `base64`):
+
+```bash
+base64 -w 0 ca-bundle.pem
+base64 -w 0 ca-bundle.pem | wc -c
+```
+
+On macOS:
+
+```bash
+base64 -i ca-bundle.pem | tr -d '\n'
+base64 -i ca-bundle.pem | tr -d '\n' | wc -c
+```
+
+Copy the full output of the first command. You use it as the variable value in the next step. For GitLab, the
+character count must be 10,000 or less.
+
+> [!WARNING]
+> Do not add quotes, newlines, or spaces around the encoded string. Extra characters cause base64 decoding to fail
+> and the pipeline job aborts.
+
+### Create the variable in GitLab
+
+1. Open the GitLab project of the instance repository.
+2. Go to **Settings** → **CI/CD** → **Variables** and select **Add variable**.
+3. Set **Key** to `SSL_CERTIFICATES_BUNDLE` and **Value** to the encoded string. Keep **Type** as Variable. Masking
+   is recommended.
+4. Save the variable and confirm it appears in the project CI/CD variable list.
+
+> [!NOTE]
+> GitLab may refuse to mask values that do not meet masking rules. If masking fails, save the variable unmasked and
+> restrict project access instead.
+
+### Create the variable in GitHub
+
+GitHub Actions does not inject repository variables and secrets into jobs automatically. Map the value in the
+instance repository workflow:
+
+1. Open the instance repository on GitHub.
+2. Go to **Settings** → **Secrets and variables** → **Actions** and create a secret named `SSL_CERTIFICATES_BUNDLE`
+   with the encoded string as the value.
+3. In the instance pipeline workflow (`.github/workflows/Envgene.yml`), map the secret into the job environment,
+   following the existing pattern for other secrets:
+
+   ```yaml
+   env:
+     SSL_CERTIFICATES_BUNDLE: ${{ secrets.SSL_CERTIFICATES_BUNDLE }}
+   ```
+
+The workflow passes its environment into the EnvGene container.
+
+### Verify certificate loading
+
+Trigger the instance pipeline and open the log of a job that loads certificates: `env-prepare` or `cmdb_import`.
+
+Confirm the log shows certificates loaded from `SSL_CERTIFICATES_BUNDLE` and contains a successful import message,
+for example `certs from … added to trusted root`. Confirm the job exits with success.
 
 ## Obtain the required certificates
 
@@ -205,14 +284,3 @@ curl --cacert "$CERT" -sSf "https://$HOST:$PORT" -o /dev/null && echo "curl OK"
    ```
 
 3. Commit and push. The next pipeline run adds the certificate to the trust store.
-
-## Troubleshooting
-
-| Symptom                    | Check                                                       |
-|----------------------------|-------------------------------------------------------------|
-| Certificate not recognized | PEM encoding, `.crt` or `.pem` extension, correct directory |
-| Connection failures        | Certificate not expired, chain complete                     |
-| Pipeline failures          | Pipeline logs show certificate loading errors               |
-
-To check expiry and chain completeness, rerun the commands in [Verify a certificate](#verify-a-certificate)
-against the target host from the runner.
