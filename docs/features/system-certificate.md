@@ -59,7 +59,8 @@ store.
 | Default certificate       | Runner image file | PEM at `/default_cert.pem`                  | Built into the runner image, when present       |
 
 For the GitHub-specific variable mapping, see
-[Provide certificates through `SSL_CERTIFICATES_BUNDLE`](/docs/how-to/configure-system-certificates.md#provide-certificates-through-ssl_certificates_bundle).
+[Provide certificates through
+`SSL_CERTIFICATES_BUNDLE`](/docs/how-to/configure-system-certificates.md#provide-certificates-through-ssl_certificates_bundle).
 
 > [!IMPORTANT]
 > EnvGene merges valid certificates from every non-empty configured source (`SSL_CERTIFICATES_BUNDLE`, `ca_bundle`, and
@@ -147,7 +148,8 @@ EnvGene base64-decodes the value and merges the certificates with the other conf
 EnvGene uses a certificate handling script that:
 
 1. Detects the operating system of the runner
-2. Validates certificate content from each non-empty source as described in [Certificate validation](#certificate-validation)
+2. Validates certificate content from each non-empty source as described in [Certificate
+   validation](#certificate-validation)
 3. Copies each valid certificate to the OS trust directory under a normalised `<basename>.crt` filename:
    - Debian/Ubuntu: `/usr/local/share/ca-certificates/`
    - CentOS/Red Hat: `/etc/pki/ca-trust/source/anchors/`
@@ -159,5 +161,6 @@ EnvGene uses a certificate handling script that:
 
 ## Related documentation
 
-- [Configure system certificates](/docs/how-to/configure-system-certificates.md) - step-by-step setup for each certificate source
+- [Configure system certificates](/docs/how-to/configure-system-certificates.md) - step-by-step setup for each
+  certificate source
 - [System certificate use cases](/docs/use-cases/system-certificate.md) - behaviour and test scenarios
