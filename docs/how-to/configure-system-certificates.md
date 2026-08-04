@@ -9,6 +9,7 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
 - [Configure system certificates](#configure-system-certificates)
   - [Prerequisites](#prerequisites)
   - [Steps](#steps)
+  - [Use a CI/CD variable instead of committed files](#use-a-cicd-variable-instead-of-committed-files)
   - [Obtain the required certificates](#obtain-the-required-certificates)
     - [Retrieve server certificates with OpenSSL](#retrieve-server-certificates-with-openssl)
     - [Extract individual certificates from a chain](#extract-individual-certificates-from-a-chain)
@@ -21,7 +22,6 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
   - [Usage examples](#usage-examples)
     - [Secure artifact repositories](#secure-artifact-repositories)
     - [Internal services with self-signed certificates](#internal-services-with-self-signed-certificates)
-  - [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
@@ -44,6 +44,32 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
    extension.
 3. Commit and push the changes to your repository.
 4. Run the pipeline. EnvGene loads the certificates and rebuilds the runner trust store before the other steps run.
+
+## Use a CI/CD variable instead of committed files
+
+To keep certificate files out of the repository, store the base64-encoded PEM bundle in the
+`SSL_CERTIFICATES_BUNDLE` CI/CD variable. EnvGene decodes the value and installs it into the runner trust store
+before the other steps run.
+
+1. Verify the PEM bundle with the steps in [Verify a certificate](#verify-a-certificate).
+2. base64-encode the file as a single line:
+
+   ```bash
+   base64 -w 0 ca-bundle.pem
+   ```
+
+   On macOS, use `base64 -i ca-bundle.pem | tr -d '\n'`.
+
+3. Create a CI/CD variable named `SSL_CERTIFICATES_BUNDLE` with the encoded string as its value. Mask the
+   variable when your CI/CD platform allows it.
+4. Run the pipeline.
+
+> [!IMPORTANT]
+> The value must be valid base64 of PEM content. If decoding fails, the job stops with an explicit error.
+
+`SSL_CERTIFICATES_BUNDLE` and `configuration/certs/` can be used together. EnvGene installs certificates from
+both sources. For a bundle that exceeds your CI/CD platform's variable size limit, use `configuration/certs/`
+instead. See [Certificate sources](/docs/features/system-certificate.md#certificate-sources).
 
 ## Obtain the required certificates
 
@@ -205,14 +231,3 @@ curl --cacert "$CERT" -sSf "https://$HOST:$PORT" -o /dev/null && echo "curl OK"
    ```
 
 3. Commit and push. The next pipeline run adds the certificate to the trust store.
-
-## Troubleshooting
-
-| Symptom                    | Check                                                       |
-|----------------------------|-------------------------------------------------------------|
-| Certificate not recognized | PEM encoding, `.crt` or `.pem` extension, correct directory |
-| Connection failures        | Certificate not expired, chain complete                     |
-| Pipeline failures          | Pipeline logs show certificate loading errors               |
-
-To check expiry and chain completeness, rerun the commands in [Verify a certificate](#verify-a-certificate)
-against the target host from the runner.
