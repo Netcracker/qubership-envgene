@@ -262,10 +262,6 @@ class GitLabClient:
     def headers(self):
         return {"PRIVATE-TOKEN": self.token}
 
-    def get_pipeline_bridges(self, project_id, pipeline_id):
-        url = f"{self.api_url}/projects/{project_id}/pipelines/{pipeline_id}/bridges"
-        return self.http.get_json(url, headers=self.headers)
-
     def get_pipeline_jobs(self, project_id, pipeline_id):
         url = f"{self.api_url}/projects/{project_id}/pipelines/{pipeline_id}/jobs"
         return self.http.get_json(url, headers=self.headers)

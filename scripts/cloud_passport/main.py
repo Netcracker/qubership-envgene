@@ -10,7 +10,6 @@ from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.git_helper import GitLabClient
 from envgenehelper.errors import ValidationError
-from envgenehelper.retry import parse_duration
 
 from cloud_passport.cmdb import update_creds_to_cmdb_format
 from envgenehelper import get_cred_config
@@ -104,32 +103,6 @@ def process_discovery_files(env_name: str,
         addHeaderToYaml(cp_file, header_text)
 
 
-def _poll_discovery_pipeline(gl_client: GitLabClient, project_path: str, pipeline_id: int) -> str:
-    timeout_seconds = parse_duration(os.getenv("RUNNER_SCRIPT_TIMEOUT", "10m")).total_seconds()
-    deadline = time.time() + timeout_seconds
-    encoded_path = quote(project_path, safe="")
-    pipeline_url = f"{gl_client.api_url}/projects/{encoded_path}/pipelines/{pipeline_id}"
-
-    status = "running"
-    while time.time() < deadline:
-        status = gl_client.http.get_json(pipeline_url, headers=gl_client.headers).get("status", "")
-        logger.info(f"Discovery pipeline {pipeline_id} status: {status}")
-        if status in PIPELINE_TERMINAL_STATUSES:
-            return status
-        time.sleep(POLL_INTERVAL_SECONDS)
-
-    raise ValidationError(
-        f"Discovery pipeline {pipeline_id} timed out after {timeout_seconds}s (last status: {status})"
-    )
-
-
-def _find_passport_job(jobs: list[dict]) -> dict | None:
-    for job in jobs:
-        if job.get("name") == PASSPORT_JOB_NAME:
-            return job
-    return None
-
-
 def run_cloud_passport():
     env_name = os.getenv("FULL_ENV_NAME")
     logger.info(f"Starting discovery of cloud passport for environment {env_name}")
@@ -152,13 +125,23 @@ def run_cloud_passport():
     pipeline_id = pipeline["id"]
     logger.info(f"Triggered Discovery pipeline {pipeline_id} on {project_path}@{branch}")
 
-    status = _poll_discovery_pipeline(gl_client, project_path, pipeline_id)
+    encoded_path = quote(project_path, safe="")
+    pipeline_url = f"{gl_client.api_url}/projects/{encoded_path}/pipelines/{pipeline_id}"
+
+    status = "running"
+    while True:
+        status = gl_client.http.get_json(pipeline_url, headers=gl_client.headers).get("status", "")
+        logger.info(f"Discovery pipeline {pipeline_id} status: {status}")
+        if status in PIPELINE_TERMINAL_STATUSES:
+            break
+        time.sleep(POLL_INTERVAL_SECONDS)
+
     if status != "success":
         raise ValidationError(f"Discovery pipeline {pipeline_id} finished with status: {status}")
 
     jobs = gl_client.get_pipeline_jobs(project_path, pipeline_id)
     logger.info(f"Discovery pipeline jobs fetched: {jobs}")
-    passport_job = _find_passport_job(jobs)
+    passport_job = next((job for job in jobs if job.get("name") == PASSPORT_JOB_NAME), None)
     if not passport_job:
         raise ValidationError(f"Job '{PASSPORT_JOB_NAME}' not found in Discovery pipeline {pipeline_id}")
 
@@ -173,9 +156,9 @@ def run_cloud_passport():
     unpack_archive(passport_archive_path, os.path.dirname(passport_unpack_path))
     passport_discovery_files = list(Path(passport_unpack_path).rglob("*"))
 
-    downstream_vars = gl_client.get_project_variables(project_path)
+    discovery_vars = gl_client.get_project_variables(project_path)
     discovery_secret_key = None
-    for var_info in downstream_vars:
+    for var_info in discovery_vars:
         if var_info["key"] == SECRET_KEY:
             discovery_secret_key = var_info["value"]
             break
