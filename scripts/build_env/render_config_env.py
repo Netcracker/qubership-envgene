@@ -646,7 +646,7 @@ class EnvGenerator:
 
         raise ValueError(f"Unknown composite member type: {member_type}")
 
-    def generate_composite_topology(self):
+    def compute_composite_topology (self):
         cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
 
         if not cs_file.exists():
@@ -706,7 +706,7 @@ class EnvGenerator:
             self.ctx.current_env_dir = current_env_dir
             self.set_env_templates()
             self.generate_composite_structure()
-            self.generate_composite_topology()
+            self.compute_composite_topology ()
             self.generate_bgd_file()
             self.generate_solution_structure()
             self.generate_namespace_files_and_map()
