@@ -53,7 +53,7 @@ store.
 
 | Source                    | Kind              | Value format                                | How provided                                    |
 |---------------------------|-------------------|---------------------------------------------|-------------------------------------------------|
-| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | Base64-encoded PEM CA certificate or bundle | GitLab CI/CD variable or GitHub variable/secret |
+| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | base64-encoded PEM CA certificate or bundle | GitLab CI/CD variable or GitHub variable/secret |
 | `ca_bundle`               | Repository folder | PEM certificate files, any filename         | `/ca_bundle` at the repository root             |
 | `configuration/certs`     | Repository folder | PEM certificate files, any filename         | `/configuration/certs`, current behaviour       |
 | Default certificate       | Runner image file | PEM at `/default_cert.pem`                  | Built into the runner image, when present       |

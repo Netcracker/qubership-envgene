@@ -161,7 +161,7 @@ A certificate-loading job runs. See [Overview](#overview).
 
 1. A certificate-loading job runs.
 2. EnvGene loads `SSL_CERTIFICATES_BUNDLE`.
-3. Base64 decoding, PEM block detection, or PEM validation fails.
+3. base64 decoding, PEM block detection, or PEM validation fails.
 4. After all sources are checked, the job fails with a certificate loading error.
 
 **Results:**
