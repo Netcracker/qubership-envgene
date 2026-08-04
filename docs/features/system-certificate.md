@@ -37,7 +37,7 @@ EnvGene reads certificates from the sources below.
 
 | Source                    | Kind              | Value format                                | Location                                               |
 |---------------------------|-------------------|---------------------------------------------|--------------------------------------------------------|
-| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | Base64-encoded PEM CA certificate or bundle | Pipeline CI/CD variable                                |
+| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | base64-encoded PEM CA certificate or bundle | Pipeline CI/CD variable                                |
 | `configuration/certs/`    | Repository folder | One or more PEM certificate files           | `configuration/certs/` at the instance repository root |
 | Default certificate       | Runner image file | PEM certificate                             | `/default_cert.pem`, built into the runner image       |
 

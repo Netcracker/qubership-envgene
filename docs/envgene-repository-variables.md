@@ -298,7 +298,7 @@ identifier is not `default_store`, set the prefixed variant `<id>_AWS_SECRET_ACC
 
 ### `SSL_CERTIFICATES_BUNDLE`
 
-**Description**: Base64-encoded PEM CA certificate or bundle that EnvGene installs into the runner trust store during
+**Description**: base64-encoded PEM CA certificate or bundle that EnvGene installs into the runner trust store during
 the Instance EnvGene pipeline, so later steps trust internal services and artifact repositories that use private or
 self-signed certificate authorities. See
 [System certificate configuration](/docs/features/system-certificate.md).

@@ -52,7 +52,7 @@ To keep certificate files out of the repository, store the base64-encoded PEM bu
 before the other steps run.
 
 1. Verify the PEM bundle with the steps in [Verify a certificate](#verify-a-certificate).
-2. Base64-encode the file as a single line:
+2. base64-encode the file as a single line:
 
    ```bash
    base64 -w 0 ca-bundle.pem
