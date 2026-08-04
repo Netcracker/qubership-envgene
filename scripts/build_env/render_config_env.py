@@ -629,6 +629,50 @@ class EnvGenerator:
             self.generate_bgd_file()
             return self.generate_namespace_files_and_map()
 
+    def _resolve_composite_member(self, member: dict) -> dict:
+            member_type = member.get("type")
+
+            if member_type == "namespace":
+                return {
+                    "originNamespace": member["name"]
+                }
+
+            if member_type == "bgdomain":
+                return {
+                    "originNamespace": member["originNamespace"]["name"],
+                    "peerNamespace": member["peerNamespace"]["name"],
+                    "controllerNamespace": member["controllerNamespace"]["name"],
+                }
+
+            raise ValueError(f"Unknown composite member type: {member_type}")
+
+        def generate_composite_topology(self):
+            cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
+
+            if not cs_file.exists():
+                logger.info("Composite Structure not found. composite_topology={}")
+                self.ctx.current_env["composite_topology"] = {}
+                return
+
+            composite = openYaml(cs_file)
+
+            baseline = composite.get("baseline")
+            if not baseline:
+                raise ValueError("Composite Structure is missing required 'baseline'")
+            topology = {
+                "baseline": self._resolve_composite_member(baseline)
+            }
+            satellites = [
+                self._resolve_composite_member(member)
+                for member in composite.get("satellites", [])
+            ]
+            if satellites:
+                topology["satellites"] = satellites
+            self.ctx.current_env["composite_topology"] = topology
+            logger.info(
+                f"Resolved composite_topology:\n{dump_as_yaml_format(topology)}"
+            )
+
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
@@ -661,13 +705,13 @@ class EnvGenerator:
             current_env_dir = f'{self.ctx.render_dir}/{self.ctx.env}'
             self.ctx.current_env_dir = current_env_dir
             self.set_env_templates()
-
+            self.generate_composite_structure()
+            self.generate_composite_topology()
             self.generate_bgd_file()
             self.generate_solution_structure()
             self.generate_namespace_files_and_map()
             self.generate_tenant_file()
             self.generate_cloud_file()
-            self.generate_composite_structure()
             self.generate_external_cred()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
