@@ -43,6 +43,11 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Parameter Set file (without extension). Required for delete action. The file will be saved as <name>.yml"
+          },
           "action": {
             "type": "string",
             "enum": ["create_or_replace", "delete"],
@@ -71,6 +76,17 @@
         },
         "then": {
           "required": ["content"]
+        },
+        "else": {
+          "anyOf": [
+            { "required": ["name"] },
+            {
+              "required": ["content"],
+              "properties": {
+                "content": { "required": ["name"] }
+              }
+            }
+          ]
         }
       }
     },
@@ -115,6 +131,9 @@
         },
         "then": {
           "required": ["content"]
+        },
+        "else": {
+          "required": ["name"]
         }
       }
     },
@@ -126,6 +145,11 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Resource Profile Override file (without extension). Required for delete action."
+          },
           "action": {
             "type": "string",
             "enum": ["create_or_replace", "delete"],
@@ -154,6 +178,17 @@
         },
         "then": {
           "required": ["content"]
+        },
+        "else": {
+          "anyOf": [
+            { "required": ["name"] },
+            {
+              "required": ["content"],
+              "properties": {
+                "content": { "required": ["name"] }
+              }
+            }
+          ]
         }
       }
     },
