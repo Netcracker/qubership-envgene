@@ -4,7 +4,6 @@ Provides SBOM-specific assertions: file counts per application directory,
 removal tracking via pipeline logs, and sparse-file inflation for total-size-limit tests.
 """
 import os
-import time
 
 from pytest_bdd import given, then, parsers
 

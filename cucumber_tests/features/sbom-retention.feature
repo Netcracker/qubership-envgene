@@ -81,6 +81,7 @@ Feature: SBOM Retention - sbom-retention.md
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "ref-uc-sbom"
     And the pipeline log contains "Removing legacy SBOM file:"
     And no flat SBOM files remain at the top of the sboms directory
     And the SBOM directory "app-a" contains 3 files
@@ -91,6 +92,7 @@ Feature: SBOM Retention - sbom-retention.md
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the environment instance "test-cluster/test-env" matches the reference "ref-uc-sbom"
     And the pipeline log contains "SBOM retention policy is enabled"
     And no SBOM files were removed
     And the SBOM directory "app-a" contains 15 files
