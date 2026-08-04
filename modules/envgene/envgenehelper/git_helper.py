@@ -262,21 +262,28 @@ class GitLabClient:
     def headers(self):
         return {"PRIVATE-TOKEN": self.token}
 
-    def get_pipeline_jobs(self, project_id, pipeline_id):
-        url = f"{self.api_url}/projects/{project_id}/pipelines/{pipeline_id}/jobs"
+    @staticmethod
+    def _project_url_segment(project: str | int) -> str:
+        return quote(str(project), safe="")
+
+    def get_pipeline_jobs(self, project, pipeline_id):
+        project_segment = self._project_url_segment(project)
+        url = f"{self.api_url}/projects/{project_segment}/pipelines/{pipeline_id}/jobs"
         return self.http.get_json(url, headers=self.headers)
 
-    def download_job_artifacts(self, project_id, job_id, dest_artifacts_path):
-        url = f"{self.api_url}/projects/{project_id}/jobs/{job_id}/artifacts"
+    def download_job_artifacts(self, project, job_id, dest_artifacts_path):
+        project_segment = self._project_url_segment(project)
+        url = f"{self.api_url}/projects/{project_segment}/jobs/{job_id}/artifacts"
         self.http.download_file(url, dest_artifacts_path, headers=self.headers)
 
-    def get_project_variables(self, project_id):
-        url = f"{self.api_url}/projects/{project_id}/variables"
+    def get_project_variables(self, project):
+        project_segment = self._project_url_segment(project)
+        url = f"{self.api_url}/projects/{project_segment}/variables"
         return self.http.get_json(url, headers=self.headers)
 
     def trigger_pipeline(self, project_path: str, ref: str, variables: dict) -> dict:
-        encoded_path = quote(project_path, safe="")
-        url = f"{self.api_url}/projects/{encoded_path}/pipeline"
+        project_segment = self._project_url_segment(project_path)
+        url = f"{self.api_url}/projects/{project_segment}/pipeline"
         payload = {
             "ref": ref,
             "variables": [{"key": key, "value": value} for key, value in variables.items()],
