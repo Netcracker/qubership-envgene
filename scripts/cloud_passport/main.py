@@ -17,6 +17,7 @@ from envgenehelper import get_cred_config
 SECRET_KEY = "SECRET_KEY"
 PASSPORT_JOB_NAME = "get_cloud_passport"
 POLL_INTERVAL_SECONDS = 10
+POLL_MAX_TRIES = int(os.getenv("CP_DISCOVERY_POLL_MAX_TRIES", "30"))
 PIPELINE_TERMINAL_STATUSES = frozenset({"success", "failed", "canceled", "skipped"})
 
 header_text = (
@@ -128,12 +129,25 @@ def run_cloud_passport():
     encoded_path = quote(project_path, safe="")
     pipeline_url = f"{gl_client.api_url}/projects/{encoded_path}/pipelines/{pipeline_id}"
 
-    status = "running"
-    while True:
-        status = gl_client.http.get_json(pipeline_url, headers=gl_client.headers).get("status", "")
-        logger.info(f"Discovery pipeline {pipeline_id} status: {status}")
+    status = ""
+    for attempt in range(1, POLL_MAX_TRIES + 1):
+        status = gl_client.http.get_json(pipeline_url, headers=gl_client.headers).get("status") or ""
+        logger.info(
+            f"Discovery pipeline {pipeline_id} status: {status} "
+            f"(attempt {attempt}/{POLL_MAX_TRIES})"
+        )
+        if not status:
+            raise ValidationError(
+                f"Discovery pipeline {pipeline_id} status unavailable "
+                f"(pipeline missing or API error)"
+            )
         if status in PIPELINE_TERMINAL_STATUSES:
             break
+        if attempt == POLL_MAX_TRIES:
+            raise ValidationError(
+                f"Discovery pipeline {pipeline_id} did not finish after "
+                f"{POLL_MAX_TRIES} status checks (last status: {status})"
+            )
         time.sleep(POLL_INTERVAL_SECONDS)
 
     if status != "success":
