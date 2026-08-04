@@ -60,7 +60,8 @@ This variable is passed to the pipeline and is supported by EnvGene Python and J
 
 ### `SECRET_KEY`
 
-**Description**: Fernet key. Used to encrypt/decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `Fernet`
+**Description**: Fernet key. Used to encrypt/decrypt credentials when
+[`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `Fernet`
 
 Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/secret_key.txt`.
 
@@ -74,7 +75,8 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 **Description**: Access token used to authenticate with GitLab for accessing repository.
 
-Used by EnvGene to commit changes to the GitLab repository where the EnvGene pipeline is executed during the execution of the [git_commit](/docs/envgene-pipelines.md) job in GitLab
+Used by EnvGene to commit changes to the GitLab repository where the EnvGene pipeline is executed during the execution
+of the [git_commit](/docs/envgene-pipelines.md) job in GitLab
 
 **Default Value**: None
 
@@ -84,7 +86,8 @@ Used by EnvGene to commit changes to the GitLab repository where the EnvGene pip
 
 ### `ENVGENE_AGE_PRIVATE_KEY`
 
-**Description**: Private key from EnvGene's AGE key pair. Used to decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `SOPS`
+**Description**: Private key from EnvGene's AGE key pair. Used to decrypt credentials when
+[`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `SOPS`
 
 Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/private-age-key.txt`.
 
@@ -96,13 +99,16 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `ENVGENE_AGE_PUBLIC_KEY`
 
-**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
+**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in
+operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
 
 **Example**: `key-placeholder-123`
 
 ### `PUBLIC_AGE_KEYS`
 
-**Description**: Contains a comma-separated list of public AGE keys from EnvGene and external systems (`<key_1>,<key_2>,...,<key_N>`). Used for credential encryption when [`crypt_backend`](/docs/envgene-configs.md#configyml) is `SOPS`
+**Description**: Contains a comma-separated list of public AGE keys from EnvGene and external systems
+(`<key_1>,<key_2>,...,<key_N>`). Used for credential encryption when
+[`crypt_backend`](/docs/envgene-configs.md#configyml) is `SOPS`
 
 Must include at least one key: EnvGene's own AGE public key.
 If an external system provides encrypted parameters, its public AGE key must also be included.
@@ -116,7 +122,8 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `GITLAB_RUNNER_TAG_NAME`
 
-**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which
+runner will pick up and execute the job in the CI pipeline.
 
 **Default Value**: None
 
@@ -126,7 +133,8 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `GH_RUNNER_TAG_NAME`
 
-**Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+**Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which
+runner will pick up and execute the job in the CI pipeline.
 
 **Default Value**: `ubuntu-22.04`
 
@@ -136,7 +144,9 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `RUNNER_SCRIPT_TIMEOUT`
 
-**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner.
+This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running
+processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
 
 **Default Value**: 10m
 
@@ -146,9 +156,14 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `GH_RUNNER_SCRIPT_TIMEOUT`
 
-**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner in GitHub pipeline. This value is passed to the `timeout-minutes` attribute of the pipeline job. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes. The parameter value must be specified as a number in minutes.
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner
+in GitHub pipeline. This value is passed to the `timeout-minutes` attribute of the pipeline job. This value is typically
+used to control job timeouts in automation pipelines to avoid hanging or long-running processes. The parameter value
+must be specified as a number in minutes.
 
-This parameter is only available in the GitHub version of the pipeline. For more information about `timeout-minutes`, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idtimeout-minutes).
+This parameter is only available in the GitHub version of the pipeline. For more information about `timeout-minutes`,
+see the [official GitHub Actions
+documentation](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idtimeout-minutes).
 
 **Default Value**: `10`
 
@@ -158,7 +173,8 @@ This parameter is only available in the GitHub version of the pipeline. For more
 
 ### `CALCULATOR_CLI_JAVA_OPTIONS`
 
-**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
+**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and
+ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
 
 **Default Value**: None
 
@@ -182,7 +198,10 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 
 ### `DOCKER_CLOUD_REGISTRY_PROVIDER`
 
-**Description**: Cloud provider for Docker registry authentication when pulling EnvGene Docker images. Currently, the only supported value is `GCP`. When set to `GCP`, the GitHub workflow authenticates to Google Artifact Registry (GAR) before pulling EnvGene images. Used together with [`DOCKER_REGISTRY`](#docker_registry-in-instance-repository) and [`GCP_SA_KEY`](#gcp_sa_key).
+**Description**: Cloud provider for Docker registry authentication when pulling EnvGene Docker images. Currently, the
+only supported value is `GCP`. When set to `GCP`, the GitHub workflow authenticates to Google Artifact Registry (GAR)
+before pulling EnvGene images. Used together with [`DOCKER_REGISTRY`](#docker_registry-in-instance-repository) and
+[`GCP_SA_KEY`](#gcp_sa_key).
 
 **Default Value**: None
 
@@ -192,11 +211,14 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 
 **Example**: `GCP`
 
-**Note**: This parameter is used only in the GitHub EnvGene pipeline. For GitLab, use runner-level configuration. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+**Note**: This parameter is used only in the GitHub EnvGene pipeline. For GitLab, use runner-level configuration. See
+[Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
 
 ### `GCP_SA_KEY`
 
-**Description**: Full JSON content of the GCP service account key. Used for authenticating to Google Artifact Registry (GAR) when pulling EnvGene Docker images. Required only when [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider) is set to `GCP`.
+**Description**: Full JSON content of the GCP service account key. Used for authenticating to Google Artifact Registry
+(GAR) when pulling EnvGene Docker images. Required only when
+[`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider) is set to `GCP`.
 
 **Default Value**: None
 
@@ -204,7 +226,9 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 
 **Example**: `{"type":"service_account","project_id":"...",...}`
 
-**Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service account with at least `Artifact Registry Reader` role. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+**Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service
+account with at least `Artifact Registry Reader` role. See [Docker Registry
+Configuration](/docs/how-to/docker-registry-configuration.md) for details.
 
 ### `VAULT_ADDR`
 
@@ -309,7 +333,8 @@ The same as [`DOCKER_REGISTRY` in instance repository](#docker_registry-in-insta
 
 **Description**: Specifies the Docker registry where the `qubership-cloud-passport-cli` image is located.
 
-Set by the GSF installer during Discovery repository initialization. For on-premises deployments, set this to the internal registry.
+Set by the GSF installer during Discovery repository initialization. For on-premises deployments, set this to the
+internal registry.
 
 **Default Value**: `ghcr.io`
 
@@ -329,11 +354,13 @@ Set by the GSF installer during Discovery repository initialization. For on-prem
 
 ### `K8S_HOST`
 
-**Description**: Kubernetes API server URL used to connect to the cluster when no kubeconfig file is present in the Discovery repository.
+**Description**: Kubernetes API server URL used to connect to the cluster when no kubeconfig file is present in the
+Discovery repository.
 
 The Discovery pipeline resolves the host in the following order of precedence:
 
-1. Per-environment variable: `K8S_HOST_<env_name>` (where `<env_name>` is derived from `ENV_NAME` — e.g., for `ocp-01/platform` the variable name is `K8S_HOST_ocp-01_platform`)
+1. Per-environment variable: `K8S_HOST_<env_name>` (where `<env_name>` is derived from `ENV_NAME` — e.g., for
+   `ocp-01/platform` the variable name is `K8S_HOST_ocp-01_platform`)
 2. Generic fallback: `K8S_HOST`
 
 If neither is set and no kubeconfig file is found in the repository, the pipeline fails.
@@ -346,7 +373,8 @@ If neither is set and no kubeconfig file is found in the repository, the pipelin
 
 ### `K8S_TOKEN`
 
-**Description**: Kubernetes API bearer token used to authenticate with the cluster when no kubeconfig file is present in the Discovery repository.
+**Description**: Kubernetes API bearer token used to authenticate with the cluster when no kubeconfig file is present in
+the Discovery repository.
 
 Resolved with the same per-environment precedence as [`K8S_HOST`](#k8s_host):
 
@@ -363,7 +391,8 @@ Store as a **masked** CI/CD variable to prevent the token from appearing in job 
 
 ### `SECRET_KEY` (in discovery repository)
 
-**Description**: Fernet key used by the `cloud_passport_cli` to encrypt credential values in the generated Cloud Passport.
+**Description**: Fernet key used by the `cloud_passport_cli` to encrypt credential values in the generated Cloud
+Passport.
 
 Resolved with per-environment precedence:
 
