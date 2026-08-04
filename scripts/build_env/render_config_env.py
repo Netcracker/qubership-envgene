@@ -630,48 +630,48 @@ class EnvGenerator:
             return self.generate_namespace_files_and_map()
 
     def _resolve_composite_member(self, member: dict) -> dict:
-            member_type = member.get("type")
+        member_type = member.get("type")
 
-            if member_type == "namespace":
-                return {
-                    "originNamespace": member["name"]
-                }
-
-            if member_type == "bgdomain":
-                return {
-                    "originNamespace": member["originNamespace"]["name"],
-                    "peerNamespace": member["peerNamespace"]["name"],
-                    "controllerNamespace": member["controllerNamespace"]["name"],
-                }
-
-            raise ValueError(f"Unknown composite member type: {member_type}")
-
-        def generate_composite_topology(self):
-            cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
-
-            if not cs_file.exists():
-                logger.info("Composite Structure not found. composite_topology={}")
-                self.ctx.current_env["composite_topology"] = {}
-                return
-
-            composite = openYaml(cs_file)
-
-            baseline = composite.get("baseline")
-            if not baseline:
-                raise ValueError("Composite Structure is missing required 'baseline'")
-            topology = {
-                "baseline": self._resolve_composite_member(baseline)
+        if member_type == "namespace":
+            return {
+                "originNamespace": member["name"]
             }
-            satellites = [
-                self._resolve_composite_member(member)
-                for member in composite.get("satellites", [])
-            ]
-            if satellites:
-                topology["satellites"] = satellites
-            self.ctx.current_env["composite_topology"] = topology
-            logger.info(
-                f"Resolved composite_topology:\n{dump_as_yaml_format(topology)}"
-            )
+
+        if member_type == "bgdomain":
+            return {
+                "originNamespace": member["originNamespace"]["name"],
+                "peerNamespace": member["peerNamespace"]["name"],
+                "controllerNamespace": member["controllerNamespace"]["name"],
+            }
+
+        raise ValueError(f"Unknown composite member type: {member_type}")
+
+    def generate_composite_topology(self):
+        cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
+
+        if not cs_file.exists():
+            logger.info("Composite Structure not found. composite_topology={}")
+            self.ctx.current_env["composite_topology"] = {}
+            return
+
+        composite = openYaml(cs_file)
+
+        baseline = composite.get("baseline")
+        if not baseline:
+            raise ValueError("Composite Structure is missing required 'baseline'")
+        topology = {
+            "baseline": self._resolve_composite_member(baseline)
+        }
+        satellites = [
+            self._resolve_composite_member(member)
+            for member in composite.get("satellites", [])
+        ]
+        if satellites:
+            topology["satellites"] = satellites
+        self.ctx.current_env["composite_topology"] = topology
+        logger.info(
+            f"Resolved composite_topology:\n{dump_as_yaml_format(topology)}"
+        )
 
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
