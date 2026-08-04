@@ -30,7 +30,8 @@ flowchart TB
     subgraph per_env["Per-environment jobs"]
         C[credential_rotation] --> D[bg_manage]
         D --> E[env_inventory_generation]
-        E --> F[app_reg_def_process]
+        E --> E2[set_template_version]
+        E2 --> F[app_reg_def_process]
         F --> G[process_sd]
         G --> H[env_build]
         H --> I[generate_effective_set]
@@ -64,7 +65,17 @@ flowchart TB
      - [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name) is set (non-empty)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-6. **app_reg_def_process**:
+6. **set_template_version**:
+   - **What happens in this job**: Applies
+     [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) to the Environment
+     according to
+     [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](/docs/instance-pipeline-parameters.md#env_template_version_update_mode):
+     updates `env_definition.yml` in `PERSISTENT` mode, applies the version to the current run only in
+     `TEMPORARY` mode. See [Template Version Update](/docs/use-cases/template-version-update.md).
+   - **Condition**: Runs if [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
+   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+
+7. **app_reg_def_process**:
    - **What happens in this job**:
        1. Handles certificate updates from the configuration directory.
        2. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
@@ -74,34 +85,33 @@ flowchart TB
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-7. **process_sd**:
+8. **process_sd**:
    - **Condition**: Runs if ( [`SD_SOURCE_TYPE: json`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( [`SD_SOURCE_TYPE: artifact`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-8. **env_build**:
+9. **env_build**:
    - **What happens in this job**:
        1. Handles certificate updates from the configuration directory.
-       2. Updates the Environment Template version if [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
-       3. Renders the environment using Jinja2 templates (renders Namespaces, Clouds, and other environment components, but not Application and Registry Definitions).
-       4. Handles template overrides
-       5. Handles template Parameter Set and Resource profiles.
-       6. Handles environment-specific Parameter Set and Resource profiles.
-       7. Creates Credentials including shared Credentials
+       2. Renders the environment using Jinja2 templates (renders Namespaces, Clouds, and other environment components, but not Application and Registry Definitions).
+       3. Handles template overrides
+       4. Handles template Parameter Set and Resource profiles.
+       5. Handles environment-specific Parameter Set and Resource profiles.
+       6. Creates Credentials including shared Credentials
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-9. **generate_effective_set**:
-   - **What happens in this job**:
-       1. Generates the Effective Set
-       2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. Skipped when the Environment Instance contains no external Credentials. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
-   - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
-   - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
+10. **generate_effective_set**:
+    - **What happens in this job**:
+        1. Generates the Effective Set
+        2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. Skipped when the Environment Instance contains no external Credentials. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
+    - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
+    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 
-10. **git_commit**:
+11. **git_commit**:
     - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test)
     - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-11. **cmdb_import**:
+12. **cmdb_import**:
     - **Condition**: Runs if [`CMDB_IMPORT: true`](/docs/instance-pipeline-parameters.md#cmdb_import)
 
     > [!NOTE]
