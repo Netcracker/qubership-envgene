@@ -11,9 +11,6 @@
   - [Usage examples](#usage-examples)
     - [CI/CD variable (`SSL_CERTIFICATES_BUNDLE`)](#cicd-variable-ssl_certificates_bundle)
   - [Technical implementation](#technical-implementation)
-  - [Troubleshooting](#troubleshooting)
-    - [Common issues](#common-issues)
-    - [Debugging tips](#debugging-tips)
   - [Related documentation](#related-documentation)
 
 ## Description
@@ -100,8 +97,7 @@ During pipeline execution:
    [Technical implementation](#technical-implementation)
 3. If no configured source contributed certificates, EnvGene applies the default certificate (see
    [Description](#description))
-4. EnvGene sets `REQUESTS_CA_BUNDLE` (see [Technical implementation](#technical-implementation) for OS-specific paths)
-5. EnvGene uses these certificates for outbound TLS from jobs that connect to external systems
+4. EnvGene uses these certificates for outbound TLS from jobs that connect to external systems
 
 ```mermaid
 flowchart TD
@@ -117,9 +113,8 @@ flowchart TD
     G -->|No| I{Any certificates staged?}
     I -->|Yes| J[Install staged certificates and update trust store once]
     I -->|No| K[Apply default certificate from /default_cert.pem]
-    J --> L[Set REQUESTS_CA_BUNDLE]
-    K --> L
-    L --> M[Job continues]
+    J --> M[Job continues]
+    K --> M
 ```
 
 ### Supported certificate types
@@ -161,37 +156,6 @@ EnvGene uses a certificate handling script that:
    - Debian/Ubuntu: `update-ca-certificates --fresh`
    - CentOS/Red Hat: `update-ca-trust`
    - Alpine: `update-ca-certificates`
-5. Sets `REQUESTS_CA_BUNDLE` to the OS-specific system CA bundle path:
-   - Debian/Ubuntu and Alpine: `/etc/ssl/certs/ca-certificates.crt`
-   - CentOS/Red Hat: `/etc/pki/tls/certs/ca-bundle.crt`
-   - Appends `export REQUESTS_CA_BUNDLE=...` to `~/.bashrc` so subsequent shell sessions inherit the value.
-
-## Troubleshooting
-
-### Common issues
-
-1. **Certificate not recognised**:
-   - Ensure the certificate is in PEM format with `-----BEGIN CERTIFICATE-----` boundaries
-   - Check that the certificate is present in a configured source (`SSL_CERTIFICATES_BUNDLE`, `ca_bundle`, or
-     `configuration/certs`)
-
-2. **Pipeline failures**:
-   - Check pipeline logs for certificate loading errors
-   - See [Certificate validation](#certificate-validation) for read errors, invalid folder files, and invalid
-     `SSL_CERTIFICATES_BUNDLE` values
-
-3. **File skipped with warning**:
-   - See [Certificate validation](#certificate-validation) (step 2, folder files without a PEM block)
-
-4. **Invalid `SSL_CERTIFICATES_BUNDLE` value**:
-   - See [Certificate validation](#certificate-validation) (base64 decode, PEM block, and PEM validation)
-
-### Debugging tips
-
-1. Check the pipeline logs for certificate loading messages.
-2. Verify that `REQUESTS_CA_BUNDLE` is set to the expected system CA bundle path (see
-   [Technical implementation](#technical-implementation)).
-3. Use `openssl` to validate certificate chains.
 
 ## Related documentation
 

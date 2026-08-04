@@ -22,6 +22,7 @@
     - [`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials)
     - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
     - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
+    - [`SSL_CERTIFICATES_BUNDLE`](#ssl_certificates_bundle)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
     - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
@@ -270,6 +271,17 @@ identifier is not `default_store`, set the prefixed variant `<id>_AWS_SECRET_ACC
 **Default Value**: None
 
 **Mandatory**: Yes, if any external Credential references an AWS Secrets Manager Secret Store
+
+### `SSL_CERTIFICATES_BUNDLE`
+
+**Description**: Base64-encoded PEM CA certificate or bundle that EnvGene installs into the runner trust store during
+the Instance EnvGene pipeline, so later steps trust internal services and artifact repositories that use private or
+self-signed certificate authorities. See
+[System certificate configuration](/docs/features/system-certificate.md).
+
+**Default Value**: None
+
+**Mandatory**: No
 
 ## Template EnvGene Repository
 

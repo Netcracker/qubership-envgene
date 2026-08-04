@@ -28,7 +28,6 @@ For background on the mechanism and the merge rules, see
   - [Usage examples](#usage-examples)
     - [Secure artifact repositories](#secure-artifact-repositories)
     - [Internal services with self-signed certificates](#internal-services-with-self-signed-certificates)
-  - [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
@@ -285,14 +284,3 @@ curl --cacert "$CERT" -sSf "https://$HOST:$PORT" -o /dev/null && echo "curl OK"
    ```
 
 3. Commit and push. The next pipeline run adds the certificate to the trust store.
-
-## Troubleshooting
-
-| Symptom                    | Check                                             |
-|----------------------------|---------------------------------------------------|
-| Certificate not recognized | PEM encoding, file present in a configured source |
-| Connection failures        | Certificate not expired, chain complete           |
-| Pipeline failures          | Pipeline logs show certificate loading errors     |
-
-To check expiry and chain completeness, rerun the commands in [Verify a certificate](#verify-a-certificate)
-against the target host from the runner.
