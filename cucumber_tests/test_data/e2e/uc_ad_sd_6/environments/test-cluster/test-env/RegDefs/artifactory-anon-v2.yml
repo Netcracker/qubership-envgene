@@ -1,0 +1,14 @@
+version: "2.0"
+name: artifactory-anon-v2
+authConfig:
+  anon-auth:
+    provider: artifactory
+    authMethod: anonymous
+mavenConfig:
+  authConfig: anon-auth
+  repositoryDomainName: http://localhost:8000
+  targetSnapshot: release
+  targetStaging: release
+  targetRelease: release
+  snapshotGroup: release
+  releaseGroup: release

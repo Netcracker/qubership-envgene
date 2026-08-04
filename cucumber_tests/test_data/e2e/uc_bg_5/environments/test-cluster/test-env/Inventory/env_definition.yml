@@ -1,0 +1,9 @@
+envTemplate:
+  name: "test"
+  artifact: "test-artifact:v1"
+  templateRepository: "maven-repo"
+  registry: "test-registry"
+inventory:
+  cloudName: "test-cloud"
+  tenantName: "test-tenant"
+  environmentName: "test-env"

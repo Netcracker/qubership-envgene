@@ -200,7 +200,7 @@ def make_operation_specific_changes(curr_state: Pair, new_state: Pair):
 
 def run_bg_manage():
     curr_state = get_current_state()
-    # validate_bg_state_namespace_names()
+    validate_bg_state_namespace_names()
     new_state = get_new_state()
     logger.info(
         "Validating state transition.\n"

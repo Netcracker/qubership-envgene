@@ -130,8 +130,10 @@ async def resolve_artifact_old_logic(env_definition: dict, template_unpack_dir: 
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
 
-    repository_username = fetch_cred_value(registry.get("username"), cred_config)
-    repository_password = fetch_cred_value(registry.get("password"), cred_config)
+    raw_username = registry.get("username")
+    raw_password = registry.get("password")
+    repository_username = fetch_cred_value(raw_username, cred_config) if raw_username else ""
+    repository_password = fetch_cred_value(raw_password, cred_config) if raw_password else ""
     cred = Credentials(username=repository_username, password=repository_password)
     auth_headers = artifact.credentials_to_headers(cred) if cred.username and cred.password else None
 

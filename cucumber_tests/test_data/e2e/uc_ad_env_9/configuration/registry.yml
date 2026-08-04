@@ -1,0 +1,4 @@
+artifactory-maven:
+  maven-repo: http://localhost:8000/release
+  username: "credentials('artifactory-creds').username"
+  password: "credentials('artifactory-creds').password"

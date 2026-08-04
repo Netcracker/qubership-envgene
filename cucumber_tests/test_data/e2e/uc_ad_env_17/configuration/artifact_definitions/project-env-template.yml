@@ -1,0 +1,19 @@
+version: "2.0"
+name: project-env-template
+groupId: org.test
+artifactId: project-env-template
+registry:
+  name: artifactory-maven-v2
+  authConfig:
+    artifactory-auth:
+      provider: artifactory
+      authMethod: user_pass
+      credentialsId: artifactory-creds-v2
+  mavenConfig:
+    authConfig: artifactory-auth
+    repositoryDomainName: http://localhost:8000
+    targetSnapshot: libs-snapshot-local
+    targetStaging: libs-staging-local
+    targetRelease: release
+    snapshotGroup: libs-snapshot
+    releaseGroup: libs-release

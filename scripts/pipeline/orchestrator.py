@@ -272,6 +272,7 @@ def run_single_env_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
+        BgManageStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),

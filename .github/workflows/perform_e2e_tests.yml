@@ -1,4 +1,4 @@
-name: "E2E BDD Tests — Environment Inventory Generation"
+name: "E2E BDD Tests"
 
 on:
   push:
@@ -41,18 +41,38 @@ jobs:
                --junitxml=reports/environment_inventory_generation.xml \
                | tee /workspace/e2e_tests.log"
 
+      - name: Run SBOM Retention BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_sbom_retention.py \
+               -v -s \
+               --junitxml=reports/sbom_retention.xml \
+               | tee -a /workspace/e2e_tests.log"
+
+      - name: Run Blue-Green Deployment BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_blue_green_deployment.py \
+               -v -s \
+               --junitxml=reports/blue_green_deployment.xml \
+               | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
           files: "reports/**/*.xml"
-          check_name: "EIG BDD Test Results"
+          check_name: "E2E BDD Test Results"
 
       - name: Upload test logs and reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eig-test-results
+          name: e2e-test-results
           path: |
             e2e_tests.log
             reports/
