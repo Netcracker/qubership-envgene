@@ -117,6 +117,7 @@ class EnvGenerator:
 
     def set_inventory(self):
         env_definition = getEnvDefinition(self.ctx.env_instances_dir)
+        env_definition = ensure_environment_name(env_definition, self.ctx.env)
         logger.info(f"env_definition = {env_definition}")
         self.ctx.env_definition = env_definition
 
@@ -399,14 +400,12 @@ class EnvGenerator:
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
-        cluster_name = self.ctx.cluster_name
+        env_name = inv.get("environmentName") or ""
         candidates = [
             inv.get("cloudName"),
             inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
             inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
-            inv.get("environmentName", "").replace("-", "_"),
-            f"{cluster_name}_{inv.get('environmentName', '')}".replace("-", "_")
-            if cluster_name and inv.get("environmentName") else ""
+            env_name.replace("-", "_"),
         ]
 
         return next((c for c in candidates if c), "")
