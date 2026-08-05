@@ -303,17 +303,63 @@ Consumer-specific pipeline context components registered in EnvGene:
 
 ### `CUSTOM_PARAMS`
 
-**Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params are not persisted across parameter calculation sessions, have the highest priority in the parameter resolution hierarchy, and are treated as sensitive.
+#### Overview
 
-`CUSTOM_PARAMS` is only applied when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`. If `GENERATE_EFFECTIVE_SET` is `false`, the `generate_effective_set` job does not run and `CUSTOM_PARAMS` has no effect.
+`CUSTOM_PARAMS` lets you inject temporary parameters into the Effective Set during a single parameter calculation session.
 
-EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+These parameters:
 
-**Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
+- Are **not saved** after the session ends.
+- Take precedence over **all other parameters** in the resolution hierarchy.
+- Are handled as **sensitive data**.
 
-Two modes are supported. The modes are **mutually exclusive** — a payload that contains both a top-level `deployment`/`runtime` key and a `namespaces` key is rejected with a validation error.
+---
 
-**Global mode** — parameters applied to every namespace.
+#### Prerequisites
+
+`CUSTOM_PARAMS` only works when:
+
+```text
+GENERATE_EFFECTIVE_SET = true
+```
+
+If:
+
+```text
+GENERATE_EFFECTIVE_SET = false
+```
+
+the `generate_effective_set` job does not run, and `CUSTOM_PARAMS` is ignored.
+
+---
+
+#### How It Works
+
+EnvGene passes the value directly to the Calculator CLI using the `--custom-params` flag.
+
+The Calculator then merges these values into the Effective Set.
+
+> **Note:** For details about merge behavior, refer to the Calculator CLI documentation.
+
+---
+
+#### Input Format
+
+Provide a **JSON object wrapped in a string** (JSON-in-string).
+
+The object must conform to the expected schema.
+
+---
+
+#### Two Modes (Mutually Exclusive)**
+
+Choose **only one** mode.
+
+> **Important:** A payload containing both top-level `deployment`/`runtime` keys **and** a `namespaces` key will be rejected with a validation error.
+
+### Mode 1: Global
+
+Parameters apply to **every namespace** in the environment.
 
 ```json
 {
@@ -328,7 +374,13 @@ Two modes are supported. The modes are **mutually exclusive** — a payload that
 }
 ```
 
-**Namespace-scoped mode** — parameters applied only to specific namespaces. If a namespace listed in the payload does not exist in the environment, the Calculator raises a validation error.
+---
+
+### Mode 2: Namespace-Scoped
+
+Parameters apply **only to specific namespaces**.
+
+> ⚠️ If a namespace listed in the payload does not exist in the environment, the Calculator raises a validation error.
 
 ```json
 {
@@ -336,21 +388,46 @@ Two modes are supported. The modes are **mutually exclusive** — a payload that
     "<namespace-name>": {
       "deployment": {
         "<key>": "<value>",
-         "...": "..."
+        "...": "..."
       },
       "runtime": {
         "<key>": "<value>",
-         "...": "..."
+        "...": "..."
       }
     }
   }
 }
 ```
 
+---
+
+### Quick Reference
+
+| Aspect | Details |
+|--------|---------|
+| **Persistence** | Session-only (not stored) |
+| **Priority** | Highest in the resolution hierarchy |
+| **Sensitivity** | Treated as sensitive |
+| **Requires** | `GENERATE_EFFECTIVE_SET = true` |
+| **Passed via** | `--custom-params` to Calculator CLI |
+| **Format** | JSON object wrapped in a string |
+| **Modes** | Global **OR** Namespace-scoped (not both) |
+
+---
+
+#### Summary
+
+- `CUSTOM_PARAMS` provides temporary overrides during Effective Set generation.
+- Values exist only for the current calculation session.
+- They override all other parameter sources.
+- The payload must use **either** Global mode **or** Namespace-Scoped mode.
+- Namespace-scoped payloads are validated against the namespaces present in the environment.
+
 > [!NOTE]
 >
 > 1. `<value>` can be complex, i.e. a map or a list
-> 2. All keys are optional
+> 2. All keys are optional.
+>
 > Passing both a top-level `deployment`/`runtime` key and a `namespaces` key in the same payload causes a validation error. The Calculator will fail before writing any Effective Set output.
 
 **Default Value**: None
