@@ -79,6 +79,20 @@ a new test there forces the divergence to be resolved.
    independently derivable from the documented contract. Carry the result inside the verdict reason cell
    ("strict golden"), never as a standalone published note - standalone notes of that kind were rejected
    in review.
+
+   **Real-code check (part of oracle independence):** A mock that re-implements the system under test
+   is structurally self-blessing — it confirms the mock, not the code. For every scenario, ask: "Does
+   the test invoke the real component the scenario title names?"
+   - If the scenario is about the Calculator CLI, the test must execute the real JAR (via
+     `EFFECTIVE_SET_CLI_PATH` pointing to the built `effective-set-generator-*-runner.jar`), not a
+     Python reimplementation of the same rules.
+   - If the scenario is about a Python pipeline step (SBOM retention, inventory generation, etc.),
+     the test must run the real function through the full pipeline — which it does. Acceptable.
+   - A no-op stub (exit 0) at `EFFECTIVE_SET_CLI_PATH` is acceptable ONLY for scenarios whose
+     subject is NOT the Calculator CLI (e.g. SBOM retention needs the ES step to not crash, but is
+     not testing what the CLI does with its inputs).
+   When this check fails, mark the verdict `invalid` and add a finding: "Mock replaces SUT — test
+   cannot catch regressions in the real [component]. Rebuild against the real binary."
 4. Determinism - no network, wall clock, ordering or environment dependence. Encryption with random IVs
    makes byte-goldens impossible - a fixed test key enables decrypt-then-compare instead.
 

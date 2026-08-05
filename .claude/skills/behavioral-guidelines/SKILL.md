@@ -52,7 +52,40 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
-## 4. Goal-Driven Execution
+## 4. Test the Real Thing
+
+**Never mock the system under test. Mocks are for external dependencies, not the subject.**
+
+A test that replaces the component it claims to verify with a reimplementation is not a test — it is a
+tautology. It can only catch bugs in the mock itself, not in the real code.
+
+The rule in two lines:
+
+- **Allowed to mock:** network calls, wall clock, randomness, services unavailable in the test
+  environment (e.g. a remote registry, a live Kubernetes cluster).
+- **Never mock:** the component named in the scenario title, any library or binary that the pipeline
+  step under test directly invokes.
+
+When the real component requires a build step before it can be invoked (e.g. a Java JAR built with
+Maven, a compiled binary), **build it as part of test setup or as a prerequisite fixture**. Slow
+is acceptable; vacuous is not.
+
+Concretely for this repository:
+
+- If a scenario is titled "Calculator CLI validates deployPostfix", the test must invoke the real
+  `effective-set-generator-*-runner.jar`. A Python reimplementation of the same rules is a separate
+  artefact, not a test of the CLI.
+- If a scenario is titled "SBOM retention removes legacy flat files", the test must run the real
+  `sboms_retention_policy()` Python function — which it does, because the full pipeline runs. That
+  is the correct pattern.
+- Mock stubs placed at `EFFECTIVE_SET_CLI_PATH` that always exit 0 are acceptable **only** for
+  scenarios whose subject is NOT the Calculator CLI (e.g. SBOM retention scenarios that merely need
+  the ES step to not crash). They are never acceptable for Calculator CLI scenarios themselves.
+
+Diagnostic question before writing any mock: "If the real component had a bug that made it
+produce wrong output, would this test catch it?" If the answer is no, remove the mock.
+
+## 5. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
