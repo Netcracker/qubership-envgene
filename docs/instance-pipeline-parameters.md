@@ -28,8 +28,7 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
-    - [`BG_MANAGE`](#bg_manage)
-    - [`BG_STATE`](#bg_state)
+    - [`OPERATION_TYPE`](#operation_type)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -636,7 +635,7 @@ This parameter is only available in the [GitHub version](/github_workflows/insta
 
 **Format**: `KEY1=VALUE1,KEY2=VALUE2,KEY3=VALUE3`
 
-If a value contains JSON (e.g., `SD_DATA`, `EFFECTIVE_SET_CONFIG`, `ENV_SPECIFIC_PARAMS`, `CRED_ROTATION_PAYLOAD`, `BG_STATE`), the JSON must be properly escaped within the value part. For example: `SD_DATA=[{\"version\":2.1,...}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}`
+If a value contains JSON (e.g., `SD_DATA`, `EFFECTIVE_SET_CONFIG`, `ENV_SPECIFIC_PARAMS`, `CRED_ROTATION_PAYLOAD`), the JSON must be properly escaped within the value part. For example: `SD_DATA=[{\"version\":2.1,...}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}`
 
 **Default Value**: None
 
@@ -663,27 +662,30 @@ curl -X POST \
       }'
 ```
 
-### `BG_MANAGE`
+### `OPERATION_TYPE`
 
-**Description**: Enable Blue-Green operation. When set to `true`, the `bg_manage` pipeline job is executed to perform BG operations including state management and validation , Origin/Peer configuration copying for WarmUp operations.
+**Description**: Selects the Blue-Green Deployment (BGD) operation for the Instance pipeline. When set to a
+BGD value, the [`bg_manage`](/docs/envgene-pipelines.md) job runs. EnvGene reads the current BG state
+files, validates the operation, performs any required repository processing, and writes the next
+state. EnvGene does not accept a target state, application version, or update timestamp for BGD
+operations.
 
-**Default Value**: `false`
+Allowed values:
 
-**Mandatory**: No
+- `BGD-INIT`
+- `BGD-WARMUP`
+- `BGD-PROMOTE`
+- `BGD-ROLLBACK`
+- `BGD-COMMIT`
 
-**Example**: `true`
-
-### `BG_STATE`
-
-**Description**: Contains the description of the target state of the Blue-Green namespaces of the Environment. Used together with `BG_MANAGE`.
-
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+See [Blue-Green Deployment](/docs/features/blue-green-deployment.md) for operation semantics and the
+transition matrix.
 
 **Default Value**: None
 
-**Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
+**Mandatory**: No
 
-**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
+**Example**: `BGD-WARMUP`
 
 ## Deprecated Parameters
 

@@ -193,7 +193,7 @@ The following sections describe each step in the pipeline as defined in `Envgene
 | Prepare environment            | Always                                                                          | Restores env vars, sets `PACKAGE_NAME`, extracts cluster/env |
 | Create name for dynamic secret | Always                                                                          | Sets `SECRET_NAME` for cluster-specific secrets              |
 | Create env file for container  | Always                                                                          | Exports env to `.env.container` for Docker steps             |
-| **BG_MANAGE**                  | `BG_MANAGE == 'true'`                                                           | Blue-Green operations: state management, validation          |
+| **bg_manage**                  | `OPERATION_TYPE` is a BGD value                                                 | Blue-Green operations: state management, validation          |
 | **ENV_INVENTORY_GENERATION**   | One of: `ENV_INVENTORY_CONTENT`, `ENV_SPECIFIC_PARAMS`, `ENV_TEMPLATE_NAME` set | Generates Environment Inventory                              |
 | **CREDENTIAL_ROTATION**        | `CRED_ROTATION_PAYLOAD` not empty                                               | Rotates credentials per payload                              |
 | **APP_REG_DEF_PROCESS**        | `ENV_BUILDER == 'true'`                                                         | Sets template version, renders App/Reg definitions           |
@@ -236,7 +236,7 @@ For full parameter semantics, see [Instance Pipeline Parameters](/docs/instance-
 
 Use it for parameters such as:
 
-- `BG_MANAGE`, `BG_STATE` — Blue-Green operations
+- `OPERATION_TYPE` — Blue-Green Deployment operations
 - `SD_SOURCE_TYPE`, `SD_VERSION`, `SD_DATA` — Solution Descriptor
 - `ENV_SPECIFIC_PARAMS`, `ENV_TEMPLATE_NAME` — Environment configuration
 - `EFFECTIVE_SET_CONFIG` — Effective Set options
@@ -259,7 +259,7 @@ Use it for parameters such as:
 **Simple values:**
 
 ```text
-BG_MANAGE=true,SD_SOURCE_TYPE=artifact,SD_VERSION=my-app:v1.0
+OPERATION_TYPE=BGD-WARMUP,SD_SOURCE_TYPE=artifact,SD_VERSION=my-app:v1.0
 ```
 
 **With JSON (escape double quotes):**
@@ -274,10 +274,10 @@ EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"
 SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],ENV_SPECIFIC_PARAMS={\"tenantName\":\"my-tenant\"}
 ```
 
-**Blue-Green state:**
+**Blue-Green operation:**
 
 ```text
-BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\"}}
+OPERATION_TYPE=BGD-WARMUP
 ```
 
 ### JSON Values and Escaping
@@ -646,22 +646,23 @@ This section shows typical scenarios with example parameters and what happens wh
 
 ### Scenario 4: Blue-Green Operation
 
-**Goal:** Perform a Blue-Green operation (e.g. warmup, state change).
+**Goal:** Perform a Blue-Green Deployment operation (for example warmup).
 
-| Parameter              | Value                           |
-|------------------------|---------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`          |
-| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}` |
+| Parameter              | Value                         |
+|------------------------|-------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`        |
+| `GH_ADDITIONAL_PARAMS` | `OPERATION_TYPE=BGD-WARMUP`   |
 
 **Example `GH_ADDITIONAL_PARAMS` value:**
 
 ```text
-BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-ctrl\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"ACTIVE\",\"version\":\"v1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"CANDIDATE\",\"version\":\"v1.1\"},\"updateTime\":\"2024-01-15T10:00:00Z\"}
+OPERATION_TYPE=BGD-WARMUP
 ```
 
-**Steps that run:** BG_MANAGE → GIT_COMMIT
+**Steps that run:** bg_manage → GIT_COMMIT
 
-**Result:** BG state is validated, state files are updated in the repository, namespace objects are copied if warmup. No ENV_BUILD or Effective Set.
+**Result:** BG state is validated, state files are updated in the repository, namespace objects are
+copied if the operation is warmup. No ENV_BUILD or Effective Set.
 
 ---
 

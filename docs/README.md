@@ -80,7 +80,7 @@
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
-- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
+- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and BGD operations
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size

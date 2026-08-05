@@ -1444,9 +1444,10 @@ bg_domain:
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
-The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
+The files are maintained by the Instance pipeline [`bg_manage`](/docs/envgene-pipelines.md) job when
+[`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) is a BGD value.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#state-storage).
 
 **Filename patterns:**
 
