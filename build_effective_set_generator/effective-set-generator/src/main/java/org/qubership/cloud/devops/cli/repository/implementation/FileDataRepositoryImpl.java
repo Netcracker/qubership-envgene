@@ -395,19 +395,20 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadApplicationListData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        String deployPlanPath = sharedData.getDeployPlanPath()
-                .orElseThrow(() -> new IllegalArgumentException("--deploy-plan-path is required"));
-        List<DeployPlanEntityDTO> entities = fileDataConverter.parseInputFile(
-                new TypeReference<List<DeployPlanEntityDTO>>() {
-                }, new File(deployPlanPath));
-        if (CollectionUtils.isEmpty(entities)) {
-            throw new FileParseException("Deploy plan at " + deployPlanPath + " must be a non-empty YAML list");
-        }
-        List<SBApplicationDTO> applications = entities.stream()
-                .map(entity -> getSbApplicationDTOFromDeployPlan(nsWithAppsFromSD, appsToProcess, entity))
-                .collect(Collectors.toList());
+        Optional<String> deployPlanPath = sharedData.getDeployPlanPath();
+        if (deployPlanPath.isPresent()) {
+            List<DeployPlanEntityDTO> entities = fileDataConverter.parseInputFile(
+                    new TypeReference<List<DeployPlanEntityDTO>>() {
+                    }, new File(deployPlanPath.get()));
+            if (CollectionUtils.isEmpty(entities)) {
+                throw new FileParseException("Deploy plan at " + deployPlanPath + " must be a non-empty YAML list");
+            }
+            List<SBApplicationDTO> applications = entities.stream()
+                    .map(entity -> getSbApplicationDTOFromDeployPlan(nsWithAppsFromSD, appsToProcess, entity))
+                    .collect(Collectors.toList());
 
-        inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
+            inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
+        }
     }
 
     private SBApplicationDTO getSbApplicationDTOFromDeployPlan(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, DeployPlanEntityDTO entity) {
