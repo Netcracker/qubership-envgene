@@ -51,7 +51,11 @@ Cluster-wide credentials, shared across all envs on the cluster.
 
 Env-scoped credentials specific to one environment.
 
-- **Authored in**: Credential Template (`templates/env_templates/<...>/external-credentials.yml.j2`)
+- **Authored in**:
+  - Credential Template (`templates/env_templates/<...>/external-credentials.yml.j2`) - Template
+    Repository
+  - Env-scoped Shared Credential files (`environments/<cluster>/<env>/Inventory/credentials/*.yml`)
+    - Instance Repository
 - **Default `remoteRefPath`**: `/<cluster>/<env>/<ns>`
 - **Default `create`**: `true`
 - **Examples**: `bss-endpoint-cred`, per-env app credentials
@@ -61,8 +65,9 @@ Env-scoped credentials specific to one environment.
 Cross-scope credentials - not tied to a single cluster or env.
 
 - **Authored in**:
-  - Shared Credential files at repo/cluster/env scope: `environments/credentials/*.yml`,
-    `<cluster>/credentials/*.yml`, `<env>/Inventory/credentials/*.yml`
+  - Shared Credential files at repo/cluster scope: `environments/credentials/*.yml`,
+    `<cluster>/credentials/*.yml` (env-scoped `<env>/Inventory/credentials/*.yml` is env-tier -
+    see above)
   - System Credentials (EnvGene tooling): `configuration/credentials/*.yml`,
     `<env>/app-deployer/deployer-creds.yml`
 - **Default `remoteRefPath`**: `/external`
@@ -72,11 +77,6 @@ Cross-scope credentials - not tied to a single cluster or env.
 `remoteRefPath` is the prefix that env-gen writes to the source. Env-gen (via
 `SecretNameBuilder.buildNormalizedSecretName`) appends the normalized cred-id when composing the
 final Store path, so `remoteRefPath` MUST NOT include the cred-id itself.
-
-### Terms
-
-**Author override** - direct edit in `migration-plan.yaml`; single override mechanism, apply
-  honors as-is
 
 ## Prerequisites
 
@@ -292,7 +292,7 @@ credentials:
   - sourceFile: templates/env_templates/bss/external-credentials.yml.j2
     to_confirm:
       app-db-cred:
-        remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"   # env-tier default; env-gen appends credId
+        remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"  # env-tier default; env-gen appends credId
         create: true
       platform-integration-cred:
         remoteRefPath: "{{ current_env.cloud }}/{{ platform_integration_cred_scope }}"  # operator override
@@ -311,8 +311,9 @@ time.
 **Template-phase specifics**: no Store writes at template migration. `writeToStore` field is
 neither set nor read for template-repo plans - values migrate per env during Instance-repo apply.
 `remoteRefPath` is always a Jinja string that env-gen renders per env when the template is used.
-Migration composes the env-tier default (`"{{ current_env.cloud }}/{{ current_env.name }}"`).
-Operator may replace it with any Jinja template.
+Migration composes the env-tier default
+(`"{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"`). Operator may
+replace it with any Jinja template.
 
 ### Plan actions
 
@@ -323,11 +324,9 @@ Operator may replace it with any Jinja template.
 1. Scans Credential Template file
    (`templates/env_templates/<solution>/external-credentials.yml.j2`)
 2. Classifies each cred entry as env-tier. Composes default `remoteRefPath` as env-gen Jinja
-   (`"{{ current_env.cloud }}/{{ current_env.name }}"`; env-gen appends the normalized cred-id) and
-   default `create: true`
-3. Runs shadow-platform-integration heuristics: known-platform-service patterns (`dbaas-*`,
-   `argocd-*`, `arango-*`, `cluster-*`, `consul-*`), cred-id keywords (`cluster`, `admin`,
-   `dba`), comment parsing (`# cloud passport: X`, `# script`)
+   (`"{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"`; env-gen appends
+   the normalized cred-id) and default `create: true`
+3. Runs shadow-platform-integration heuristics (see "Classification algorithm" below)
 4. Writes `migration-plan.yaml`
 5. Emits stdout plan-report (see "Plan-report sample" below)
 
@@ -339,15 +338,10 @@ Operator may replace it with any Jinja template.
    System Credentials
 2. Classifies each cred entry: assigns tier from file location, composes default `remoteRefPath`
    per tier + default `create` per tier
-3. Runs shadow-platform-integration heuristics:
-   - Cross-env value hashing (same value across envs on cluster → likely shared platform
-     integration)
-   - Known-platform-service patterns (`dbaas-*`, `argocd-*`, `arango-*`, `cluster-*`, `consul-*`)
-   - Cross-namespace consumer analysis
-   - Cred-id keywords (`cluster`, `admin`, `dba`)
-   - Comment parsing (`# cloud passport: X`, `# script`)
+3. Runs shadow-platform-integration heuristics (see "Classification algorithm" below)
 4. Identifies files for deletion: generated env-scoped `Credentials/credentials.yml`, unused
-   Shared credential files (not referenced by any env definition), `app-deployer/deployer-creds.yml`
+   Shared credential files (not referenced by any env definition - see "Orphaned Shared
+   credential detection" below), `app-deployer/deployer-creds.yml`
 5. Writes `migration-plan.yaml`
 6. Emits stdout plan-report (see "Plan-report sample" below)
 
@@ -549,6 +543,271 @@ The CLI-context `vals` field and the normalized secret name MUST be produced by 
 `build_effective_set_generator/.../ExternalCredUtils.java` - specifically
 `buildValsUriWithoutFragment(store, normalizedName, storeId)` and
 `SecretNameBuilder.buildNormalizedSecretName(remoteRefPath, credId, storeType)`.
+
+### Classification algorithm
+
+Classification runs in `plan` to decide tier + defaults + whether the entry lands in `to_review`
+(operator attention needed) or `to_confirm` (default accepted). Signals combined, any hit routes
+to `to_review`; no hit routes to `to_confirm`. `suggestions` list is populated per-signal.
+
+Signals (all case-insensitive matching):
+
+1. **Known-platform-service pattern on cred-id.** Regex on `credId` (anchored, matches whole id):
+   - `^(dbaas|argocd|arango|cluster|consul|keycloak|maas|vault|k8s|kube)([-_].+)?$`
+   Any match → shadow-platform integration suspected. Suggestion: promote to `passport-tier` shape
+   (`remoteRefPath=/<cluster>`, `create=false`).
+
+2. **Cred-id keyword substring.** Case-insensitive substring on `credId`:
+   - `cluster`, `admin`, `dba`, `root`, `superuser`, `bootstrap`, `master`
+   Any match → shared-scope suspected. Suggestion: same as #1.
+
+3. **Source-comment marker.** YAML comment on or immediately above the cred entry contains one
+   of (case-insensitive):
+   - `cloud passport`, `platform`, `script generated`, `manual`, `shared across envs`
+   Comment content classified verbatim in the suggestion (`# cloud passport: X` → suggest
+   passport-tier).
+
+4. **Cross-namespace consumer analysis** (TODO - algorithm not specified yet). Placeholder in
+   the plan skeleton; do not fire in initial implementation. See Open items.
+
+Combining signals: presence of any signal → `to_review`. Absent → `to_confirm` with tier
+defaults per file location. Cross-env value hashing is intentionally out of scope for the
+initial implementation (see Open items).
+
+### Macro rewrite algorithm
+
+Applies during `apply` to consumer files. Grammar and transformations:
+
+#### Recognized macro forms
+
+**Value macros** (inside YAML scalar values):
+
+- `${creds.get('<credId>').username}` - multi-field
+- `${creds.get('<credId>').password}` - multi-field
+- `${creds.get('<credId>').secret}` - single-value
+- `${envgen.creds.get('<credId>').X}` - alias, `envgen.` prefix stripped, then same as above
+- `${cmdb.creds.get('<credId>').X}` - alias, `cmdb.` prefix stripped, then same as above
+
+Regex (anchored to full value; whitespace tolerant around identifiers):
+
+```text
+^\s*\$\{\s*(?:envgen\.|cmdb\.)?creds\.get\(\s*['"]([\w.-]+)['"]\s*\)\.(username|password|secret)\s*\}\s*$
+```
+
+**Hash-style key macros** (legacy form, macro is the YAML key not the value):
+
+- `#creds{<credId>, <field>}` - `<field>` is `username` / `password` / `secret`
+- `#credscl{<credId>, <field>}` - cluster-scope alias, semantically equivalent
+- `#credsns{<credId>, <field>}` - namespace-scope alias, semantically equivalent
+
+Hash-style key macros MUST be recognized alongside `${...}` value macros - both are legitimate
+input to migration. Reference: `python/envgene/envgenehelper/creds_helper.py::check_is_cred`.
+
+#### Property mapping
+
+| Macro suffix     | credRef `property` | Notes                        |
+|------------------|--------------------|------------------------------|
+| `.username`      | `username`         | Multi-field cred             |
+| `.password`      | `password`         | Multi-field cred             |
+| `.secret`        | (omitted)          | Single-value cred            |
+
+For hash-style macros, the `<field>` argument maps identically.
+
+#### Composite values
+
+A macro embedded inside a larger string (for example `user=${creds.get('X').username}@host`) is
+NOT rewritten because `$type: credRef` cannot express partial substitution. Apply FAILS with a
+targeted error listing the file path, key path, and offending value. Operator relocates the value
+composition (typically into two separate parameters) before re-running `plan` + `apply`.
+
+#### YAML paths that are rewritten
+
+- `deployParameters` block on Cloud, Namespace, Tenant objects
+- `e2eParameters` block on Cloud, Namespace, Tenant objects
+- `parameters` block inside a ParameterSet
+- `applications[].parameters` inside a ParameterSet
+
+YAML paths that are NOT rewritten (Assumption 5):
+
+- `technicalConfigurationParameters` on any object
+- ParameterSets used only through `technicalConfigurationParameterSets` (identified by their sole
+  binding on the consuming object)
+
+Built-in cred field references (`credentialsId`, `defaultCredentialsId`, `tokenSecret`,
+`credential`) are NOT rewritten - they stay as plain `credId` strings by contract.
+
+#### YAML formatting preservation
+
+Rewrites MUST preserve source formatting: comments, blank lines, YAML anchors, aliases,
+key order. Use `envgenehelper.yaml_helper` primitives (`openYaml`, `writeYamlToFile`,
+`beautifyYaml`), which wrap `ruamel.yaml` round-trip mode. Do not fall back to PyYAML for
+consumer-file rewrites.
+
+### Consistency validation rules
+
+Apply validates each cred entry in the plan before Store/Git writes. Warnings do not block;
+errors abort apply before any write.
+
+Rules (invariants; violation → warning unless marked error):
+
+1. **`remoteRefPath` tier-shape match.** Expected prefix per tier:
+   - `passport-tier` → `/<cluster>` (one path segment after `/`)
+   - `env-tier` → `/<cluster>/<env>` or `/<cluster>/<env>/<ns>` (2-3 path segments)
+   - `external-tier` → `/external` (one path segment, literal)
+   Mismatch → warning ("path shape does not match tier default; confirm intentional override").
+
+2. **`create: true` on `external-tier`.** Warning - external-tier defaults to `create: false`;
+   `true` is unusual (external secrets typically pre-exist).
+
+3. **`writeToStore: true` combined with `envgeneNullValue` in source data.** Warning - cannot
+   write placeholder value; migration skips Store write and rewrites Git only.
+
+4. **Missing `create` field.** Treated as `create: false` (implicit). No warning; documented
+   default.
+
+5. **ERROR: cred-id in plan not present in source file at apply time** (Assumption 4 violation).
+   Aborts apply.
+
+6. **ERROR: source cred entry already `type: external`.** Partial-migration detection - apply
+   refuses to re-migrate an already-external entry. Operator resolves by removing entry from plan
+   or restoring source to pre-migration state.
+
+### Error and exit contract
+
+Standard Linux conventions. Exit codes:
+
+| Code | Meaning                                                                      |
+|------|------------------------------------------------------------------------------|
+| 0    | Success                                                                      |
+| 1    | Apply failed (Store write error, Git rewrite error, verification failure)    |
+| 2    | Plan invalid (schema error, unknown cred type, partial-migration detected)   |
+| 3    | Pre-flight failed (missing auth env vars, missing SOPS key, dirty git tree)  |
+| 130  | User interrupt (SIGINT) - see "State handling"                               |
+
+Logs are free-text on stdout (structured reports) and stderr (per-item progress + errors). No
+JSON output. Failure lines follow the pattern `[<cred-id>] FAILED: <reason>` for machine grep.
+
+### State handling
+
+**Plan already exists.** `plan` overwrites `migration-plan.yaml` in the current working directory
+without prompting. Operator commits the plan explicitly.
+
+**Dirty git working tree at apply.** Apply runs `git status --porcelain` before writing. If any
+tracked file is modified/staged/deleted, apply aborts with exit code 3 and message listing dirty
+paths. Untracked files are ignored. Operator commits or stashes before retrying.
+
+**Multiple stores in `secret-stores.yml`.** Violation of Assumption 1. Apply exits code 3 with a
+targeted error. Migration does not support multi-store repos in the initial implementation.
+
+**Interrupted apply.** Apply is idempotent - `strategy: overwrite` on Store writes and no-op
+consumer-file rewrites when already converted. Re-running apply after SIGINT/error resumes
+cleanly from wherever apply left off; no state file, no resume mechanism, no partial-run
+bookkeeping. Operator re-runs `envgene.migrate apply` after fixing the root cause.
+
+**Concurrent invocations.** Not supported. Operator responsibility to serialize.
+
+### Orphaned Shared credential detection
+
+Algorithm for `plan` step 4 (Instance repo) - identifying Shared cred files marked to delete
+because no env references them:
+
+1. Build the set of **all declared cred-ids** across all Shared cred files (repo/cluster scope).
+2. Build the set of **all referenced cred-ids** by scanning consumer files:
+   - Value macros: `${creds.get(...)}`, `${envgen.creds.get(...)}`, `${cmdb.creds.get(...)}`
+   - Key macros: `#creds{...}`, `#credscl{...}`, `#credsns{...}`
+   - Built-in cred fields on Cloud/Namespace/Tenant/BG-domain objects (`credentialsId`,
+     `defaultCredentialsId`, `maasConfig.credentialsId`, `dbaasConfigs[].credentialsId`,
+     `vaultConfig.credentialsId`, `consulConfig.tokenSecret`, `Namespace.credentialsId`,
+     `Tenant.credential`, `controllerNamespace.credentials`)
+   - `credId` field on `$type: credRef` blocks
+   - System-configuration cred refs (`configuration/integration.yml`,
+     `configuration/registry.yml`, `configuration/artifact_definitions/*.yml`, registry
+     definition files)
+3. A Shared cred file is **orphaned** if every cred-id it declares is missing from the referenced
+   set.
+4. Env-scoped Shared cred files (`<env>/Inventory/credentials/*.yml`) are always considered
+   env-tier and never flagged orphaned by this pass (their env context makes them referenced by
+   env definition).
+
+Reference: `docs/features/external-creds.md` describes the declaration/reference contract that
+this algorithm mirrors.
+
+### Cred type support and `properties` derivation
+
+Apply derives `properties` from the source cred entry's `data` keys and rewrites the entry
+according to type:
+
+- **`type: usernamePassword`** - source `data: {username: X, password: Y}` → target
+  `properties: [{name: username}, {name: password}]`, no `data`.
+- **`type: secret`** - source `data: {secret: X}` (or scalar `data: X`) → no `properties`
+  block, no `data`.
+
+Cred types other than `usernamePassword` and `secret` (`vaultAppRole`, `sshPrivateKey`, custom)
+are NOT supported by migration in the initial implementation. Apply FAILS with exit code 2 and
+message `[<cred-id>] FAILED: unsupported cred type '<type>'` when encountered. Operator handles
+these creds out-of-band.
+
+### CLI output parsing
+
+Apply parses `external-cred-provision` output to determine per-cred outcome and route Git
+rewrites accordingly.
+
+**Parsing contract:**
+
+- Capture CLI stderr line-by-line during invocation.
+- Per-cred outcome markers in the CLI log (from `provisioner.py`):
+  - `[<cred-id>] created` - success
+  - `[<cred-id>] overwritten` - success (migration always overwrites)
+  - `[<cred-id>] skipped` - success (secret already present, no write)
+  - `[<cred-id>] verified` - success (fail_if_absent hit, present)
+  - `[<cred-id>] FAILED: <type>: <reason>` - failure
+- CLI exit code 0 means all creds succeeded. Exit code 1 means at least one cred failed - migration
+  still parses per-cred outcomes so successful creds get their Git rewrites.
+
+**Per-cred atomicity:** for each cred-id in the plan, migration cross-references the CLI outcome
+line. If the outcome is success, migration proceeds with the Git rewrite for that cred. If
+failure, migration leaves the Git entry untouched and re-emits the failure in its own
+migration-report.
+
+**Dry-run:** `envgene.migrate apply --dry-run` propagates `--dry-run` to the CLI, which emits
+`[<cred-id>] dry_run_ok` or `[<cred-id>] dry_run_fail: ...` per entry. Migration parses the same
+markers, no Git rewrites happen.
+
+### Testing
+
+Migration ships with fixture-based golden tests. Fixtures are stripped copies of real EnvGene
+projects with credentials substituted for test tokens.
+
+**Fixture sources (initial):**
+
+- Template repository: `~/Downloads/projects/template-repos/etslt-env-templates-release-ph1-cd5`
+- Instance repository: `~/Downloads/projects/instance-repos/etslt-env-instances-offsite-master`
+
+Reduce to a minimal reproducer preserving credential-related file structure (Cloud Passport,
+Shared cred files, Credential Template, System Credentials, sample consumer files with macros of
+each recognized form). Anonymize all secret values.
+
+**Golden strategy:**
+
+1. First run captures `plan` output and `apply` diff as golden files under `tests/fixtures/`.
+2. Manual review of goldens; commit as authoritative.
+3. Subsequent runs diff against goldens; any drift requires either code fix or golden regen with
+   review.
+
+**Store mock:** use `external-cred-provision --dry-run` in the initial test suite. Dry-run
+performs auth/connectivity check but no writes, exercising the full plan → context → CLI
+invocation path against a real store instance (Vault dev-server run via
+`vault server -dev` in the test setup). No SOPS-encrypted fixtures in the initial suite;
+SOPS coverage deferred.
+
+**Test matrix (initial):**
+
+- Instance repo: passport-tier + env-tier + external-tier creds, all three macro forms in
+  consumers, hash-style key macros, orphaned Shared file, deployer creds deletion.
+- Template repo: Credential Template rewrite, Template Descriptor update, ParameterSet macro
+  rewrite.
+- Failure modes: composite macro in consumer, unsupported cred type, partial-migration source,
+  dirty git working tree.
 
 ## Flow
 
