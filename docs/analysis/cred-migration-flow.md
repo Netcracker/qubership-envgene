@@ -52,8 +52,9 @@ Cluster-wide credentials, shared across all envs on the cluster.
 Env-scoped credentials specific to one environment.
 
 - **Authored in**:
-  - Credential Template (`templates/env_templates/<...>/external-credentials.yml.j2`) - Template
-    Repository
+  - Credential Template (`templates/external-credentials/<descriptor-stem>.yml.j2`) - Template
+    Repository. One file per Template Descriptor. Filename stem matches descriptor stem
+    (`dev.yaml` descriptor → `dev.yml.j2` Credential Template).
   - Env-scoped Shared Credential files (`environments/<cluster>/<env>/Inventory/credentials/*.yml`)
     - Instance Repository
 - **Default `remoteRefPath`**: `/<cluster>/<env>/<ns>`
@@ -116,7 +117,7 @@ determines which store types are in use, and requires the matching env vars to b
 invocation - pre-flight fails fast with a clear message if any required var is missing:
 
 | Store type | Required env vars                                                  |
-|----------|------------------------------------------------------------------|
+|------------|--------------------------------------------------------------------|
 | Vault      | `VAULT_ADDR`, `VAULT_TOKEN`                                        |
 | OpenBao    | `VAULT_ADDR`, `VAULT_TOKEN`                                        |
 | GCP        | `GOOGLE_APPLICATION_CREDENTIALS`                                   |
@@ -150,8 +151,9 @@ writes each to its own Store path and surfaces a warning for operator review.
 
 #### Credential source files
 
-- **Credential Template** - `templates/env_templates/<solution>/external-credentials.yml.j2`.
-  Rewrite entries to `type: external`; source of truth for env-tier defaults.
+- **Credential Template** - `templates/external-credentials/<descriptor-stem>.yml.j2`, one file
+  per Template Descriptor. Created or extended by apply from the plan (discovered from consumer
+  templates transitively through the descriptor's tree). Source of truth for env-tier defaults.
 - **Cloud Passport creds** - `environments/<cluster>/cloud-passport/*-creds.yml`. Rewrite + write
   plaintext to Store.
 - **Shared Credential files** at three scopes:
@@ -201,7 +203,7 @@ Consumer file locations scanned:
 **Updated by apply**:
 
 - Template Descriptor per env template - apply adds `external_credential_template` field pointing
-  to the Credential Template file (template phase only)
+  to the per-descriptor Credential Template file created during T3 (template phase only)
 
 **Created by operator during migration** (outside script scope, referenced from Flow):
 
@@ -289,7 +291,8 @@ repo_type: template
 generated_at: 2026-08-05T12:00:00Z
 
 credentials:
-  - sourceFile: templates/env_templates/bss/external-credentials.yml.j2
+  # One group per Template Descriptor. Stem matches (`bss.yaml` descriptor → `bss.yml.j2`).
+  - sourceFile: templates/external-credentials/bss.yml.j2
     to_confirm:
       app-db-cred:
         remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"  # env-tier default; env-gen appends credId
@@ -321,11 +324,24 @@ replace it with any Jinja template.
 
 `python -m envgene.migrate plan --repo=template` performs, in order:
 
-1. Scans Credential Template file
-   (`templates/env_templates/<solution>/external-credentials.yml.j2`)
+1. For each Template Descriptor `templates/env_templates/<stem>.yaml` (or `.yml`):
+   - Parse the descriptor. Follow references from `tenant`, `cloud`, `composite_structure`, and
+     `namespaces[].template_path`. Descriptor-level `parametersets` field is ignored (rudiment).
+   - Scan each referenced template for `${creds.get(...)}` macros, hash-macros, and Built-in cred
+     field references.
+   - Extract `deployParameterSets` and `e2eParameterSets` names from the same templates.
+     `technicalConfigurationParameterSets` is skipped per Assumption 5.
+   - Resolve paramset names to files via inner `name:` field in `templates/parameters/**/*`.
+     Scan resolved paramset files for the same cred forms.
+   - If `templates/external-credentials/<stem>.yml.j2` exists, merge its existing cred entries.
+   - Emit one plan group per descriptor. The `sourceFile` points at
+     `templates/external-credentials/<stem>.yml.j2` (existing or planned). Apply creates or
+     extends that file.
 2. Classifies each cred entry as env-tier. Composes default `remoteRefPath` as env-gen Jinja
    (`"{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"`; env-gen appends
-   the normalized cred-id) and default `create: true`
+   the normalized cred-id) and default `create: true`. Infers cred type from usage: `.username` /
+   `.password` macros → `usernamePassword`; `.secret` macros and Built-in field references →
+   `secret`.
 3. Runs shadow-platform-integration heuristics (see "Classification algorithm" below)
 4. Writes `migration-plan.yaml`
 5. Emits stdout plan-report (see "Plan-report sample" below)
@@ -354,16 +370,22 @@ replace it with any Jinja template.
 1. Reads `migration-plan.yaml`
 2. Validates internal consistency (`remoteRefPath` shape ↔ `create` implications) - warns on
    mismatch
-3. For each credential entry across all `to_review` and `to_confirm` lists: rewrites cred entry
-   in Git to `type: external` + `remoteRefPath` + optional `create` + `properties`; removes
-   `data`. No Store writes because template creds are placeholders. Per-env values migrate during
-   Instance-repo apply. Warns for `envgeneNullValue` placeholders.
+3. For each descriptor's cred entries in the plan:
+   - If `templates/external-credentials/<descriptor-stem>.yml.j2` does not exist, create it.
+   - Add or update each cred entry as `type: external` + `remoteRefPath` + `create` + `properties`.
+     Properties come from the source `data` keys when migrating an existing entry, or are inferred
+     from macro-usage form for auto-discovered cred-ids (`.username`+`.password` → multi-field;
+     `.secret` or Built-in ref → single-value). Removes any `data` field. No Store writes because
+     template creds are placeholders; per-env values migrate during Instance-repo apply. Warns for
+     `envgeneNullValue` placeholders.
 4. Scans consumer files (Environment Template files, ParameterSet templates) for macros
    (`${creds.get(...)}`, `${envgen.creds.get(...)}`, `${cmdb.creds.get(...)}`) and rewrites them
    to `$type: credRef` + `credId` + optional `property`. Macros in
    `technicalConfigurationParameters` are left untouched (Assumption 5)
-5. For each env template that gained a Credential Template file, adds
-   `external_credential_template` field to the Template Descriptor pointing to the file
+5. For each descriptor where a Credential Template file was created, adds the
+   `external_credential_template` field to the descriptor pointing at the file (if missing).
+   Convention: the created file's stem matches the descriptor's stem (`dev.yaml` →
+   `dev.yml.j2`).
 6. Runs post-apply verification - fails apply on any issue:
    - No `data` field remains on any cred entry (definition of done (DoD): zero cred values in Git)
    - Every cred entry has `type: external` with `remoteRefPath` present and non-empty
