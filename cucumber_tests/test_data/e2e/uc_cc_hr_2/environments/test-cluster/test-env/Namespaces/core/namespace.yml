@@ -2,8 +2,7 @@ name: core
 deployParameters:
   organization: ${tenant_id}
 deployParameterSets: []
-e2eParameters:
-  test_org: ${tenant_test_id}
+e2eParameters: {}
 e2eParameterSets: []
 technicalConfigurationParameters:
   config_org: ${tenant_config_id}

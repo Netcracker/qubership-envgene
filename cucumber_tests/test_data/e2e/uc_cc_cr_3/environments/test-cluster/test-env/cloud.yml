@@ -5,3 +5,18 @@ e2eParameters: {}
 e2eParameterSets: []
 technicalConfigurationParameters: {}
 technicalConfigurationParameterSets: []
+
+maasConfig:
+  credentialsId: ""
+  maasUrl: ""
+  maasInternalAddress: ""
+  enable: false
+vaultConfig:
+  credentialsId: ""
+  url: ""
+  enable: false
+consulConfig:
+  tokenSecret: ""
+  enabled: false
+  publicUrl: ""
+  internalUrl: ""

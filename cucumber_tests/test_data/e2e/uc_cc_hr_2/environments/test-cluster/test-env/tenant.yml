@@ -4,10 +4,8 @@ credential: dummy-cred
 globalE2EParameters: {}
 deployParameters:
   tenant_id: "acme-corp"
-deployParameterSets: []
-e2eParameters:
-  tenant_test_id: "acme-test"
+deploymentParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameters:
   tenant_config_id: "acme-config"
-technicalConfigurationParameterSets: []
+technicalParameterSets: []

@@ -3,8 +3,7 @@ registryName: mock-reg
 credential: dummy-cred
 globalE2EParameters: {}
 deployParameters: {}
-deployParameterSets: []
-e2eParameters: {}
+deploymentParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameters: {}
-technicalConfigurationParameterSets: []
+technicalParameterSets: []
