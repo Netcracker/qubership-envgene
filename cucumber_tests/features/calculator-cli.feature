@@ -1,7 +1,7 @@
 Feature: Calculator CLI
   As an EnvGene pipeline
   I want to generate Effective Set v2.0 using the Calculator CLI
-  So that deployPostfix matching, macro resolution, and parameter reference rules work correctly
+  So that deployPostfix matching, parameter merging, macro resolution, custom params, and reference rules all work correctly
 
   Background:
     Given the pipeline has GENERATE_EFFECTIVE_SET set to "true"
@@ -32,6 +32,26 @@ Feature: Calculator CLI
     Then the pipeline fails
     And the pipeline log shows "xyz"
 
+  # ── Parameter Merge Hierarchy (UC-CC-PM-*) ───────────────────────────────────
+
+  Scenario: UC-CC-PM-1: Namespace Parameter Overrides Cloud Parameter
+    Given the workspace is initialized with test data from "e2e/uc_cc_pm_1"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "shared_key: from-namespace"
+
+  Scenario: UC-CC-PM-2: Cloud Parameter Overrides Tenant Parameter
+    Given the workspace is initialized with test data from "e2e/uc_cc_pm_2"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "shared_key: from-cloud"
+
+  Scenario: UC-CC-PM-3: Namespace Parameter Overrides Tenant Parameter Directly
+    Given the workspace is initialized with test data from "e2e/uc_cc_pm_3"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "shared_key: from-namespace"
+
   # ── Parameter Type Preservation in Macro Resolution (UC-CC-MR-*) ─────────────
 
   Scenario: UC-CC-MR-1: Simple Type Resolution
@@ -43,6 +63,54 @@ Feature: Calculator CLI
     Given the workspace is initialized with test data from "e2e/uc_cc_mr_2"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+
+  Scenario: UC-CC-MR-3: Multi-Step Macro Chain Resolution
+    Given the workspace is initialized with test data from "e2e/uc_cc_mr_3"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "final_url: https://api.example.com"
+
+  Scenario: UC-CC-MR-4: Macro Reference Resolved Across Hierarchy Levels
+    Given the workspace is initialized with test data from "e2e/uc_cc_mr_4"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "ns_timeout:"
+
+  # ── Custom Parameters Injection (UC-CC-CP-*) ─────────────────────────────────
+
+  Scenario: UC-CC-CP-1: CUSTOM_PARAMS Injected into Deployment Parameters
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_1"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"override_key\":\"injected-value\"}}"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "override_key: injected-value"
+
+  Scenario: UC-CC-CP-2: CUSTOM_PARAMS with Unknown Namespace Fails
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_2"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"namespaces\":{\"nonexistent-ns\":{\"key\":\"value\"}}}"
+    When the unified pipeline orchestrator runs
+    Then the pipeline fails
+    And the pipeline log shows "nonexistent-ns"
+
+  Scenario: UC-CC-CP-3: CUSTOM_PARAMS with Mixed Top-Level and Namespace Keys Fails
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_3"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"key\":\"val\"},\"namespaces\":{\"core\":{\"key\":\"val\"}}}"
+    When the unified pipeline orchestrator runs
+    Then the pipeline fails
+
+  # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
+
+  Scenario: UC-CC-GI-1: UniqForRun Application Gets Unique Generation Directory
+    Given the workspace is initialized with test data from "e2e/uc_cc_gi_1"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set contains a generation id subdirectory for "test-app"
+
+  Scenario: UC-CC-GI-2: UniqForVersion Application Gets Version-Derived Generation Directory
+    Given the workspace is initialized with test data from "e2e/uc_cc_gi_2"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters for "test-app" exist under version "1.2.3"
 
   # ── Cross-Level Parameter References (UC-CC-HR-*) ────────────────────────────
 

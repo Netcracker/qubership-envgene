@@ -84,6 +84,14 @@ def workspace(tmp_path):
     return EnvGeneWorkspace(tmp_path)
 
 
+_SKIP_REASONS = {
+    "requires_docker": (
+        "Test invokes the real Calculator CLI JAR via run_effective_set_cli.sh, which relies on "
+        "shell variable expansion ($CI_PROJECT_DIR) that only works on Linux/Docker. "
+        "Run in Docker: docker compose -f devtools/docker-compose.yml exec cucumber pytest ..."
+    ),
+}
+
 _XFAIL_REASONS = {
     "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
     "xfail_cli_npe": (
@@ -104,6 +112,12 @@ _XFAIL_REASONS = {
 
 def pytest_bdd_apply_tag(tag, function):
     """Handle custom Gherkin tags as pytest marks."""
+    if tag in _SKIP_REASONS:
+        import sys
+        if sys.platform == "win32":
+            marker = pytest.mark.skip(reason=_SKIP_REASONS[tag])
+            marker(function)
+        return True
     if tag in _XFAIL_REASONS:
         marker = pytest.mark.xfail(reason=_XFAIL_REASONS[tag], strict=False)
         marker(function)

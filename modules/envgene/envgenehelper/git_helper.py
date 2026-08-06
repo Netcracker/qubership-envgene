@@ -89,6 +89,7 @@ class GitRepoManager:
             cfg.set_value("user", "email", self.ctx.user_email)
             cfg.set_value("user", "name", self.ctx.user_name)
             cfg.set_value("gc", "auto", "0")
+            cfg.set_value("core", "longpaths", "true")
 
     def _resolve_remote_url(self) -> str:
         if self.ctx.platform == "github":
