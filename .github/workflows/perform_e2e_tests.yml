@@ -71,6 +71,16 @@ jobs:
                --junitxml=reports/environment_instance_generation.xml \
                | tee -a /workspace/e2e_tests.log"
 
+      - name: Run SBOM Storage Migration BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_sbom_storage_migration.py \
+               -v -s \
+               --junitxml=reports/sbom_storage_migration.xml \
+               | tee -a /workspace/e2e_tests.log"
+
       - name: Run Credential Rotation BDD tests
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
