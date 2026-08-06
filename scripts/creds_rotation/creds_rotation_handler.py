@@ -127,9 +127,11 @@ def run_cred_rotation():
 
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
 
-    base_env_path = f"{config.work_dir}/environments/{config.cluster_name}/{config.env_name}"
-    cluster_path = f"{config.work_dir}/environments/{config.cluster_name}"
-    output_path = f"{config.work_dir}/affected-sensitive-parameters.yaml"
+    from pathlib import Path as _Path
+    _work = _Path(config.work_dir)
+    base_env_path = str(_work / "environments" / config.cluster_name / config.env_name)
+    cluster_path = str(_work / "environments" / config.cluster_name)
+    output_path = str(_work / "affected-sensitive-parameters.yaml")
 
     logger.info(f"base env path is {base_env_path}")
 
@@ -193,7 +195,7 @@ def run_cred_rotation():
             updated_content, original_content, is_encrypted
         )
         write_cred_file_path(
-            list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
+            list(processed_cred_and_files.keys()), str(_work / "environments")
         )
     else:
         logger.error(

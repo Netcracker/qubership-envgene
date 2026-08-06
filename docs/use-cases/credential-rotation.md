@@ -13,7 +13,8 @@
     - [Successful Update with Encryption Enabled](#successful-update-with-encryption-enabled)
       - [UC-CR-ENC-1: Update Credentials with Plaintext Payload when Encryption Is Enabled](#uc-cr-enc-1-update-credentials-with-plaintext-payload-when-encryption-is-enabled)
       - [UC-CR-ENC-2: Update Credentials with Encrypted Payload when Encryption Is Enabled](#uc-cr-enc-2-update-credentials-with-encrypted-payload-when-encryption-is-enabled)
-    - [Successful Update with Encryption Disabled](#successful-update-with-encryption-disabled)
+    - [UC-CR-ENC-3: Update Credentials with Plaintext Payload when Encryption Is Disabled](#uc-cr-enc-3-update-credentials-with-plaintext-payload-when-encryption-is-disabled)
+    - [UC-CR-ENC-4: Update Credentials with Encrypted Payload when Encryption Is Disabled](#uc-cr-enc-4-update-credentials-with-encrypted-payload-when-encryption-is-disabled)
 
 ## Overview
 
@@ -21,9 +22,13 @@ This document contains use cases for [Credential Rotation](/docs/features/cred-r
 
 It describes parameter targeting, affected-credentials handling with force mode, and encryption processing for `credential_rotation`.
 
+**`CRED_ROTATION_FORCE` controls whether credential files are written.** `false` (default) — dry run: `affected-sensitive-parameters.yaml` is written and the step exits with a non-zero code without modifying any files. `true` — force mode: files are updated and the step exits successfully.
+
+**At least one affected parameter must be found** for any payload item; if none are found the step fails without writing the report (see UC-CR-VAL-1).
+
 ### Successful Update without Affected Credentials
 
-This group covers successful rotation when the target credential is not linked to other parameters.
+> **Note:** This group title is retained for backward compatibility. In the current implementation every successful run requires at least one affected parameter (the target parameter itself counts). These cases exercise the dry-run path (`CRED_ROTATION_FORCE=false`).
 
 ### UC-CR-TPR-1: Update Credential from Pipeline Parameter
 
@@ -33,7 +38,7 @@ This group covers successful rotation when the target credential is not linked t
 2. Environment Instance contains a Namespace with `name` matching `<namespace-name>`.
 3. The Namespace contains a sensitive parameter in `e2eParameters` linked via the `cred` macro.
 4. The referenced Credential exists in the Environment Credentials file or in a Shared Credentials file.
-5. No other parameters reference the same `cred-id` and credential field.
+5. At least one parameter references the same `cred-id` and credential field (required — see UC-CR-VAL-1).
 6. `CRED_ROTATION_PAYLOAD` contains a valid `rotation_items` entry for Namespace-level pipeline context:
 
     ```json
@@ -64,13 +69,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    2. Uses the `pipeline` context to look for the parameter in `e2eParameters`.
    3. Determines which credential field is linked to the target parameter.
    4. Searches for affected credentials linked to the same `cred-id` and credential field.
-   5. Finds no affected credentials and continues the flow.
-   6. Updates credential value for the target parameter.
+   5. Collects affected parameters and writes `affected-sensitive-parameters.yaml`.
+   6. Because `CRED_ROTATION_FORCE=false`, the job stops without writing credential changes.
 
 **Results:**
 
-1. The credential value is updated successfully.
-2. The job completes with success status.
+1. `affected-sensitive-parameters.yaml` is created listing all affected parameters.
+2. No credential files are modified.
+3. The `credential_rotation` job exits with a non-zero code (dry-run signal).
 
 ### UC-CR-TPR-2: Update Credential from Deployment Parameter
 
@@ -81,7 +87,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 3. That Namespace contains an Application with `name` matching `<application-name>`.
 4. The Application contains a sensitive parameter in `deployParameters`.
 5. The parameter is linked via the `cred` macro to an existing credential.
-6. No other parameters reference the same `cred-id` and credential field.
+6. At least one parameter references the same `cred-id` and credential field (required — see UC-CR-VAL-1).
 7. `CRED_ROTATION_PAYLOAD` contains a valid `rotation_items` entry for Application-level deployment context:
 
     ```json
@@ -113,13 +119,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    2. Uses the `deployment` context to look for the parameter in `deployParameters`.
    3. Determines which credential field is linked to the target parameter.
    4. Searches for affected credentials linked to the same `cred-id` and credential field.
-   5. Finds no affected credentials and continues the flow.
-   6. Updates credential value for the target parameter.
+   5. Collects affected parameters and writes `affected-sensitive-parameters.yaml`.
+   6. Because `CRED_ROTATION_FORCE=false`, the job stops without writing credential changes.
 
 **Results:**
 
-1. The credential value is updated successfully.
-2. The job completes with success status.
+1. `affected-sensitive-parameters.yaml` is created listing all affected parameters.
+2. No credential files are modified.
+3. The `credential_rotation` job exits with a non-zero code (dry-run signal).
 
 ### UC-CR-TPR-3: Update Credentials from Multiple rotation_items
 
@@ -135,7 +142,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    - `runtime`
 
 5. Each payload item references an existing sensitive parameter linked via the `cred` macro.
-6. For each payload item, the target credential is not linked to other parameters.
+6. Each payload item references at least one other parameter that uses the same `cred-id` and credential field (required — see UC-CR-VAL-1).
 7. Any payload item with `context: pipeline` does not specify `application`, because Application-level pipeline rotation is rejected by the current implementation.
 
 **Trigger:**
@@ -156,14 +163,16 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
       2. `deployment` uses `deployParameters`
       3. `runtime` uses `technicalConfigurationParameters`
    4. For each payload item, searches for affected credentials linked to the same `cred-id` and credential field.
-   5. Finds no affected credentials for the successful path and continues processing.
-   6. Updates credential values for all valid payload items.
-   7. Stops the whole job if any payload item is invalid or cannot be processed.
+   5. Collects all affected parameters across all items.
+   6. Writes `affected-sensitive-parameters.yaml` covering all items.
+   7. Because `CRED_ROTATION_FORCE=false`, stops without writing credential changes.
+   8. Stops the whole job if any payload item is invalid or cannot be processed.
 
 **Results:**
 
-1. All target credential values are updated successfully.
-2. The job completes with success status.
+1. `affected-sensitive-parameters.yaml` is created listing affected parameters for all items.
+2. No credential files are modified.
+3. The `credential_rotation` job exits with a non-zero code (dry-run signal).
 
 ## Affected Credential Handling
 

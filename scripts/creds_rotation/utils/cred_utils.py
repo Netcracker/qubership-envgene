@@ -47,7 +47,8 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any]) -> Tuple[O
 
 def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: str,  is_encrypted: str):
     shared_creds_files_set = set()
-    dirs_to_scan = [f'{work_dir}/environments', f'{work_dir}/environments/credentials', f'{work_dir}/environments/Credentials']
+    _work = Path(work_dir)
+    dirs_to_scan = [str(_work / "environments"), str(_work / "environments" / "credentials"), str(_work / "environments" / "Credentials")]
     allowed_exts = ('.yml', '.yaml', '.json')
     source_path = Path(cluster_dir).resolve()
     scan_dir_for_creds(source_path, shared_creds, shared_creds_files_set)
