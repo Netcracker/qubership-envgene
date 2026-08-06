@@ -1,0 +1,8 @@
+inventory:
+  environmentName: test-env
+  cloudName: test-cluster
+envTemplate:
+  name: composite-prod
+  artifact: "project-env-template:v1.2.3"
+  templateRepository: maven-repo
+  registry: test-registry

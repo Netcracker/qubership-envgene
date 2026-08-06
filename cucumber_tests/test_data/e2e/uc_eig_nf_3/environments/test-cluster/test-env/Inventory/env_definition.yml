@@ -1,0 +1,13 @@
+inventory:
+  environmentName: test-env
+  cloudName: test-cluster
+envTemplate:
+  name: test
+  artifact: "test-artifact:v1"
+  templateRepository: maven-repo
+  registry: test-registry
+  namespaces:
+    - template_path: "{{ templates_dirs.common }}/Namespace.yml.j2"
+      deploy_postfix: "controller"
+      template_override:
+        name: "controller-ns"

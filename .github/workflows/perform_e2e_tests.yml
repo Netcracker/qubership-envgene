@@ -61,6 +61,16 @@ jobs:
                --junitxml=reports/blue_green_deployment.xml \
                | tee -a /workspace/e2e_tests.log"
 
+      - name: Run Environment Instance Generation BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_environment_instance_generation.py \
+               -v -s \
+               --junitxml=reports/environment_instance_generation.xml \
+               | tee -a /workspace/e2e_tests.log"
+
       - name: Run Credential Rotation BDD tests
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
