@@ -1165,11 +1165,11 @@ Otherwise, the value is undefined.
 ### `BASELINE_ORIGIN`
 
 ---
-**Description:** For satellite namespaces, determines the name of the BG origin namespace.
+**Description:** Determines the name of the BG origin namespace of the baseline. It is intended for use by satellite namespaces.
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the origin namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure), and the baseline of this Composite Structure is of type BG domain, then the value is the origin namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+If the current namespace is a satellite of a [Composite Structure](/docs/envgene-objects.md#composite-structure) whose baseline is of type namespace, then the value is the baseline namespace of that Composite Structure.
 
 Otherwise, the value is undefined.
 
@@ -1186,11 +1186,9 @@ Otherwise, the value is undefined.
 ### `BASELINE_PEER`
 
 ---
-**Description:** For satellite namespaces, determines the name of the BG peer namespace.
+**Description:** Determines the name of the BG peer namespace of the baseline. It is intended for use by satellite namespaces.
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the peer namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
-
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure), and the baseline of this Composite Structure is of type BG domain, then the value is the peer namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
 Otherwise, the value is undefined.
 
@@ -1207,11 +1205,9 @@ Otherwise, the value is undefined.
 ### `BASELINE_CONTROLLER`
 
 ---
-**Description:** For satellite namespaces, determines the name of the BG controller namespace.
+**Description:** Determines the name of the BG controller namespace of the baseline. It is intended for use by satellite namespaces.
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the controller namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
-
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure), and the baseline of this Composite Structure is of type BG domain, then the value is the controller namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
 Otherwise, the value is undefined.
 
