@@ -9,6 +9,8 @@ See `docs/analysis/cred-migration-flow.md`:
 import enum
 import re
 
+from .known_creds import KNOWN_CLOUD_PASSPORT_CRED_IDS
+
 
 class Tier(enum.Enum):
     PASSPORT = "passport-tier"
@@ -82,16 +84,26 @@ def parse_comment_marker(comment):
     return None
 
 
+def is_known_cloud_passport_cred(cred_id):
+    """True if cred-id is in the registry of known Cloud Passport cred-ids.
+
+    Registry sourced from real EnvGene instance repos (see known_creds.py).
+    """
+    return cred_id in KNOWN_CLOUD_PASSPORT_CRED_IDS
+
+
 def build_signals(cred_id, comment):
     """Compose the list of shadow-platform signals fired for a cred entry.
 
     Empty list means the entry lands in `to_confirm`; non-empty routes it to `to_review`.
     """
     signals = []
+    if is_known_cloud_passport_cred(cred_id):
+        signals.append("cred-id in Cloud Passport registry")
     if matches_platform_pattern(cred_id):
-        signals.append(f"cred-id matches platform pattern")
+        signals.append("cred-id matches platform pattern")
     if has_keyword_substring(cred_id):
-        signals.append(f"cred-id contains shared-scope keyword")
+        signals.append("cred-id contains shared-scope keyword")
     marker = parse_comment_marker(comment)
     if marker:
         signals.append(f"comment marker: {marker}")

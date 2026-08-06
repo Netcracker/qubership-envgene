@@ -98,7 +98,7 @@ def dump_plan(plan, path):
     """Serialize plan to YAML with block style. Overwrites destination file."""
     validate_plan(plan)
     with open(path, "w", encoding="utf-8") as fh:
-        yaml.safe_dump(plan, fh, sort_keys=False, default_flow_style=False, allow_unicode=True)
+        yaml.safe_dump(plan, fh, width=150, sort_keys=False, default_flow_style=False, allow_unicode=True)
 
 
 def load_plan(path):

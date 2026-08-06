@@ -65,7 +65,7 @@ def main(argv=None):
             print(f"warning: skipped {cred_id!r} (envgeneNullValue placeholder in source data)",
                   file=sys.stderr)
 
-    output = yaml.safe_dump(context, sort_keys=False, default_flow_style=False, allow_unicode=True)
+    output = yaml.safe_dump(context, width=150, sort_keys=False, default_flow_style=False, allow_unicode=True)
     if args.out:
         Path(args.out).write_text(output, encoding="utf-8")
     else:

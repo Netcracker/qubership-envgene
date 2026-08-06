@@ -337,11 +337,13 @@ replace it with any Jinja template.
    - Emit one plan group per descriptor. The `sourceFile` points at
      `templates/external-credentials/<stem>.yml.j2` (existing or planned). Apply creates or
      extends that file.
-2. Classifies each cred entry as env-tier. Composes default `remoteRefPath` as env-gen Jinja
-   (`"{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"`; env-gen appends
-   the normalized cred-id) and default `create: true`. Infers cred type from usage: `.username` /
-   `.password` macros → `usernamePassword`; `.secret` macros and Built-in field references →
-   `secret`.
+2. Classifies each cred entry. Default is env-tier: `remoteRefPath` as env-gen Jinja
+   (`"{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"`; env-gen
+   appends the normalized cred-id) and `create: true`. Infers cred type from usage: `.username`
+   / `.password` macros → `usernamePassword`; `.secret` macros and Built-in field references →
+   `secret`. Cred-ids matched by shadow-platform heuristics (see "Classification algorithm")
+   receive passport-tier defaults instead (`remoteRefPath: "{{ current_env.cloud }}"`,
+   `create: false`) plus a suggestion warning that the cred looks like a Cloud Passport cred.
 3. Runs shadow-platform-integration heuristics (see "Classification algorithm" below)
 4. Writes `migration-plan.yaml`
 5. Emits stdout plan-report (see "Plan-report sample" below)
@@ -574,27 +576,41 @@ to `to_review`; no hit routes to `to_confirm`. `suggestions` list is populated p
 
 Signals (all case-insensitive matching):
 
-1. **Known-platform-service pattern on cred-id.** Regex on `credId` (anchored, matches whole id):
+1. **Known Cloud Passport cred-id registry.** Explicit `frozenset` of cred-ids observed as
+   top-level keys in `environments/*/cloud-passport/*-creds.yml` across real instance repos.
+   Sourced from a snapshot of 25 EnvGene instance repos (104 distinct cred-ids). See
+   `known_creds.py`. Exact-match on `credId` → cred is a known Cloud Passport cred; treat as
+   passport-tier candidate.
+
+2. **Known-platform-service pattern on cred-id.** Regex on `credId` (anchored, matches whole id):
    - `^(dbaas|argocd|arango|cluster|consul|keycloak|maas|vault|k8s|kube)([-_].+)?$`
    Any match → shadow-platform integration suspected. Suggestion: promote to `passport-tier` shape
    (`remoteRefPath=/<cluster>`, `create=false`).
 
-2. **Cred-id keyword substring.** Case-insensitive substring on `credId`:
+3. **Cred-id keyword substring.** Case-insensitive substring on `credId`:
    - `cluster`, `admin`, `dba`, `root`, `superuser`, `bootstrap`, `master`
-   Any match → shared-scope suspected. Suggestion: same as #1.
+   Any match → shared-scope suspected. Suggestion: same as #2.
 
-3. **Source-comment marker.** YAML comment on or immediately above the cred entry contains one
+4. **Source-comment marker.** YAML comment on or immediately above the cred entry contains one
    of (case-insensitive):
    - `cloud passport`, `platform`, `script generated`, `manual`, `shared across envs`
    Comment content classified verbatim in the suggestion (`# cloud passport: X` → suggest
    passport-tier).
 
-4. **Cross-namespace consumer analysis** (TODO - algorithm not specified yet). Placeholder in
+5. **Cross-namespace consumer analysis** (TODO - algorithm not specified yet). Placeholder in
    the plan skeleton; do not fire in initial implementation. See Open items.
 
-Combining signals: presence of any signal → `to_review`. Absent → `to_confirm` with tier
-defaults per file location. Cross-env value hashing is intentionally out of scope for the
-initial implementation (see Open items).
+Combining signals:
+
+- Any signal fires → `to_review`. Template-phase plan also **flips defaults to passport-tier
+  shape** (`remoteRefPath: "{{ current_env.cloud }}"`, `create: false`) and attaches a
+  suggestion warning the operator that the cred looks like a Cloud Passport cred (value comes
+  from Cloud Passport in the Instance repo; operator should remove from plan if so, keep only
+  if EnvGene should manage this cluster-wide cred).
+- No signals → `to_confirm` with tier defaults per file location.
+
+Cross-env value hashing is intentionally out of scope for the initial implementation (see Open
+items).
 
 ### Macro rewrite algorithm
 

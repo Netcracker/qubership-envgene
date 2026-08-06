@@ -7,6 +7,7 @@ from cred_migration.classifier import (
     classify_tier_by_source_file,
     matches_platform_pattern,
     has_keyword_substring,
+    is_known_cloud_passport_cred,
     parse_comment_marker,
     build_signals,
 )
@@ -129,6 +130,28 @@ def test_build_signals_captures_keyword_and_pattern_together():
     signals = build_signals(cred_id="cluster-admin", comment=None)
     # both pattern (cluster-*) and keyword (cluster / admin) hit
     assert len(signals) >= 2
+
+
+def test_is_known_cloud_passport_cred_recognizes_widely_observed_ids():
+    """Registry sourced from 25 real Cloud Passport creds files."""
+    for cid in ("cloud-deploy-sa-token", "dbaas", "consul", "maasexternal", "coreexternal"):
+        assert is_known_cloud_passport_cred(cid), cid
+
+
+def test_is_known_cloud_passport_cred_recognizes_long_tail_ids():
+    """Registry includes cred-ids seen in only 1 repo (still real observed setups)."""
+    for cid in ("cmdb-user", "cip-hadoop-principal", "storage-proxy"):
+        assert is_known_cloud_passport_cred(cid), cid
+
+
+def test_is_known_cloud_passport_cred_returns_false_for_unknown():
+    assert not is_known_cloud_passport_cred("random-app-cred")
+    assert not is_known_cloud_passport_cred("bss-endpoint-cred")
+
+
+def test_build_signals_fires_registry_signal_for_known_cred():
+    signals = build_signals(cred_id="cloud-deploy-sa-token", comment=None)
+    assert any("cloud passport" in s.lower() or "registry" in s.lower() for s in signals)
 
 
 def test_build_signals_captures_comment_marker():

@@ -60,7 +60,7 @@ def rewrite_source_files(plan, repo_root, successful_cred_ids):
             if cred_id in source_yaml:
                 source_yaml[cred_id] = rewrite_source_entry(source_yaml[cred_id], plan_entry)
         path.write_text(
-            yaml.safe_dump(source_yaml, sort_keys=False, default_flow_style=False, allow_unicode=True)
+            yaml.safe_dump(source_yaml, width=150, sort_keys=False, default_flow_style=False, allow_unicode=True)
         )
 
 
@@ -72,7 +72,7 @@ def rewrite_consumer_file(path):
     changed = _rewrite_node(consumer_yaml)
     if changed:
         Path(path).write_text(
-            yaml.safe_dump(consumer_yaml, sort_keys=False, default_flow_style=False, allow_unicode=True)
+            yaml.safe_dump(consumer_yaml, width=150, sort_keys=False, default_flow_style=False, allow_unicode=True)
         )
 
 
@@ -140,7 +140,7 @@ def create_or_update_credential_template(cred_template_path, cred_entries_from_p
 
     cred_template_path.parent.mkdir(parents=True, exist_ok=True)
     cred_template_path.write_text(
-        yaml.safe_dump(output, sort_keys=False, default_flow_style=False, allow_unicode=True)
+        yaml.safe_dump(output, width=150, sort_keys=False, default_flow_style=False, allow_unicode=True)
     )
 
 
@@ -154,7 +154,7 @@ def update_template_descriptor(descriptor_path, cred_template_rel_path):
         return
     desc["external_credential_template"] = f"{{{{ templates_dir }}}}/{cred_template_rel_path}"
     descriptor_path.write_text(
-        yaml.safe_dump(desc, sort_keys=False, default_flow_style=False, allow_unicode=True)
+        yaml.safe_dump(desc, width=150, sort_keys=False, default_flow_style=False, allow_unicode=True)
     )
 
 
@@ -228,7 +228,7 @@ def run_apply(plan_path, repo_root, cli_runner=None, dry_run=False, skip_pre_fli
         context, skipped = build_context_from_repo(plan, repo_root)
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tf:
             os.chmod(tf.name, 0o600)
-            yaml.safe_dump(context, tf, sort_keys=False, default_flow_style=False)
+            yaml.safe_dump(context, tf, width=150, sort_keys=False, default_flow_style=False)
             tmp_path = tf.name
         try:
             log_text, exit_code = cli_runner(tmp_path, dry_run=dry_run)

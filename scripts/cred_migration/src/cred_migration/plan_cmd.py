@@ -34,6 +34,12 @@ from .template_scanner import (
 _ENV_TIER_JINJA_DEFAULT = (
     "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.namespace }}"
 )
+_PASSPORT_TIER_JINJA_DEFAULT = "{{ current_env.cloud }}"
+
+_PASSPORT_CANDIDATE_SUGGESTION = (
+    "looks like a Cloud Passport cred - value comes from Cloud Passport in the Instance repo. "
+    "Remove from this plan if so. Keep only if EnvGene should manage this cluster-wide cred."
+)
 
 
 def _generate_template_plan(repo_root, generated_at):
@@ -72,15 +78,22 @@ def _generate_template_plan(repo_root, generated_at):
         to_confirm = {}
         for cred_id in sorted(all_cred_ids):
             signals = build_signals(cred_id=cred_id, comment=None)
-            entry = build_cred_entry(
-                remote_ref_path=_ENV_TIER_JINJA_DEFAULT,
-                create=True,
-                write_to_store=None,  # template plans omit writeToStore
-                suggestions=None,
-            )
             if signals:
+                # Shadow-platform match: use passport-tier defaults + explanatory suggestion.
+                entry = build_cred_entry(
+                    remote_ref_path=_PASSPORT_TIER_JINJA_DEFAULT,
+                    create=False,
+                    write_to_store=None,
+                    suggestions=[_PASSPORT_CANDIDATE_SUGGESTION],
+                )
                 to_review[cred_id] = entry
             else:
+                entry = build_cred_entry(
+                    remote_ref_path=_ENV_TIER_JINJA_DEFAULT,
+                    create=True,
+                    write_to_store=None,
+                    suggestions=None,
+                )
                 to_confirm[cred_id] = entry
         credentials.append(build_source_group(rel_source, to_review, to_confirm))
 

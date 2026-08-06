@@ -299,17 +299,32 @@ Consumer-specific pipeline context components registered in EnvGene:
 
 ### `CUSTOM_PARAMS`
 
-**Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params are not persisted across parameter calculation sessions, have the highest priority in the parameter resolution hierarchy, and are treated as sensitive.
+**Description**: Temporary parameters injected into the Effective Set during a single parameter
+calculation session. Custom Params:
 
-`CUSTOM_PARAMS` is only applied when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`. If `GENERATE_EFFECTIVE_SET` is `false`, the `generate_effective_set` job does not run and `CUSTOM_PARAMS` has no effect.
+- are not persisted after the session ends,
+- take precedence over all other parameters in the resolution hierarchy, and
+- are treated as sensitive.
 
-EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+`CUSTOM_PARAMS` applies only when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`.
+Otherwise the `generate_effective_set` job does not run and `CUSTOM_PARAMS` has no effect.
 
-**Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
+EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See
+[Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the
+Effective Set.
 
-Two modes are supported. The modes are **mutually exclusive** — a payload that contains both a top-level `deployment`/`runtime` key and a `namespaces` key is rejected with a validation error.
+**Format**: A string containing a JSON object (JSON-in-string) that conforms to the
+[schema](/schemas/custom-params.schema.json). Two mutually exclusive modes are supported:
 
-**Global mode** — parameters applied to every namespace.
+| Mode             | Applies to             | Payload root                  |
+|------------------|------------------------|-------------------------------|
+| Global           | Every namespace        | `deployment` / `runtime`      |
+| Namespace-scoped | Only listed namespaces | `namespaces.<namespace-name>` |
+
+A payload that contains both a top-level `deployment`/`runtime` key and a `namespaces` key is
+rejected with a validation error.
+
+**Global mode** - parameters applied to every namespace:
 
 ```json
 {
@@ -324,7 +339,8 @@ Two modes are supported. The modes are **mutually exclusive** — a payload that
 }
 ```
 
-**Namespace-scoped mode** — parameters applied only to specific namespaces. If a namespace listed in the payload does not exist in the environment, the Calculator raises a validation error.
+**Namespace-scoped mode** - parameters applied only to the listed namespaces. If a namespace in the
+payload does not exist in the environment, the Calculator raises a validation error:
 
 ```json
 {
@@ -332,11 +348,11 @@ Two modes are supported. The modes are **mutually exclusive** — a payload that
     "<namespace-name>": {
       "deployment": {
         "<key>": "<value>",
-         "...": "..."
+        "...": "..."
       },
       "runtime": {
         "<key>": "<value>",
-         "...": "..."
+        "...": "..."
       }
     }
   }
@@ -345,9 +361,10 @@ Two modes are supported. The modes are **mutually exclusive** — a payload that
 
 > [!NOTE]
 >
-> 1. `<value>` can be complex, i.e. a map or a list
-> 2. All keys are optional
-> Passing both a top-level `deployment`/`runtime` key and a `namespaces` key in the same payload causes a validation error. The Calculator will fail before writing any Effective Set output.
+> - `<value>` can be complex, i.e. a map or a list.
+> - All keys are optional.
+> - Passing both a top-level `deployment`/`runtime` key and a `namespaces` key in the same payload
+>   causes a validation error. The Calculator fails before writing any Effective Set output.
 
 **Default Value**: None
 
