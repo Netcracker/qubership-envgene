@@ -72,6 +72,13 @@ inventory:
   # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
   # Should be listed in configuration/deployer.yml
   deployer: string
+  # Optional. Default value - `v1`
+  # Version of the No-CMDB deployment architecture: `v1` or `v2`
+  # Set manually by users. NOT processed by EnvGene Core
+  # Read by DevOps toolset components to determine how the Environment is delivered and deployed
+  # When set, takes precedence over `deployer`
+  # See Deployment architecture: /docs/deployment-architecture.md
+  noCmdbVersion: string
   # Optional
   # Environment description
   # This attribute's value is available for template rendering via the `current_env.description` variable

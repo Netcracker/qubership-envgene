@@ -23,6 +23,7 @@
 
 - [**EnvGene Objects**](/docs/envgene-objects.md) - What are EnvGene objects and how they work
 - [**Configuration Files**](/docs/envgene-configs.md) - File formats and config options
+- [**Deployment Architecture**](/docs/deployment-architecture.md) - CMDB and No-CMDB (v1, v2) toolset architectures and how to determine them
 - [**Pipeline Configuration**](/docs/envgene-pipelines.md) - How EnvGene pipelines work
 - [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
