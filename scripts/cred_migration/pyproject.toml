@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qubership-cred-migration"
+version = "0.1.0"
+description = "Migrate EnvGene repositories to external credentials"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+    { name = "Qubership EnvGene" },
+]
+dependencies = [
+    "PyYAML>=6.0",
+    "qubership-external-cred-provision>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+envgene-migrate = "cred_migration.migrate:main"
+envgene-external-context-generator = "cred_migration.external_context_generator:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cred_migration"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
