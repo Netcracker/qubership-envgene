@@ -1,3 +1,5 @@
+import os
+import sys
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -8,7 +10,7 @@ from os import getenv
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode
+from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_bg_manage
@@ -24,7 +26,9 @@ from deployment_plan.generate_deployment_plan import run_generate_deployment_pla
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
+from pipeline.multi_env_runner import fan_out
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
@@ -142,6 +146,9 @@ class MigrateSdToDeployPlanStep(PipelineStep):
             raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
         if sd_version or sd_data:
             return True
+        if not is_committed_sd_enabled():
+            logger.info("Skipping SD migration: use_committed_sd=false, no incoming SD (No-SD Mode)")
+            return False
         needs_migration = get_sd_dir().joinpath(SD_FILE_NAME).is_file() and not EnvgeneDeployPlan.path().is_file()
         if needs_migration:
             logger.info("No new SD input this run, but sd.yaml exists without a deploy-plan.yml yet - "
@@ -258,7 +265,7 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
-def run_unified_pipeline() -> None:
+def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
     ctx = PipelineParametersHandler.from_env()
@@ -304,6 +311,19 @@ def run_unified_pipeline() -> None:
         log_pipeline_summary(results)
 
 
+def dispatch() -> int:
+    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
+    if len(env_names) == 1:
+        run_single_env_pipeline()
+        return 0
+
+    os.environ["ENV_NAMES"] = env_names[0]
+    handler = PipelineParametersHandler.from_env()
+    handler.write_dotenv(exclude_keys={"ENV_NAMES"})
+
+    return fan_out(env_names)
+
+
 def _format_duration(duration_ms: int | None) -> str:
     if duration_ms is None:
         return "-"
@@ -322,4 +342,4 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
 
 
 if __name__ == "__main__":
-    run_unified_pipeline()
+    sys.exit(dispatch())

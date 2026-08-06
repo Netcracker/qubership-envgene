@@ -63,7 +63,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PARSE_ERROR;
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PROCESS_FAILED;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND;
@@ -125,7 +124,9 @@ public class CliParameterParser {
         });
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
-        applicationDTOList.parallelStream()
+        applicationDTOList.stream()
+                .filter(app -> !namespaceDTOMap.get(app.getNamespace()).isCleaned())
+                .parallel()
                 .forEach(app -> {
                     String namespaceName = app.getNamespace();
                     try {

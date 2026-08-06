@@ -1,10 +1,10 @@
 # EnvGene — Repository Overview
 
-EnvGene is a git-native tool that generates and versions cloud environment configurations from Jinja2 templates. It bridges a **Template Repository** (Jinja templates) and an **Instance Repository** (per-environment generated YAML + credentials) to produce an **Effective Set** consumed by ArgoCD/deployers.
+EnvGene is a Git-native tool that generates and versions cloud environment configurations from Jinja2 templates. It bridges a **Template Repository** (Jinja templates) and an **Instance Repository** (per-environment generated YAML + credentials) to produce an **Effective Set** consumed by ArgoCD/deployers.
 
 ## Module Map
 
-This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipeline/orchestrator.py::run_unified_pipeline`), not as separate per-job Docker images/scripts. Most job logic lives under `scripts/`.
+This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipeline/orchestrator.py::dispatch`), not as separate per-job Docker images/scripts. `dispatch()` runs `run_single_env_pipeline()` for one `ENV_NAMES` value, or fans out to parallel child processes via `multi_env_runner.fan_out()` when `ENV_NAMES` lists multiple environments. Most job logic lives under `scripts/`.
 
 | Directory | Purpose |
 |-----------|---------|

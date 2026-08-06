@@ -14,7 +14,7 @@ This repository follows the [Diátaxis documentation framework](https://github.c
    - Minimal theory, maximum action
    - Target: ~200-400 lines
 
-2. **Explanation** (`/docs/explanation/`)
+2. **Explanation** (`/docs/features/`)
    - Conceptual understanding
    - "Why" questions
    - Background and context
@@ -101,6 +101,46 @@ is avoided.
 
 **Why:** Parallel vocabulary forces readers to maintain two mental glossaries and produces ambiguous
 cross-references.
+
+---
+
+### Define every term
+
+**Every domain term a document uses is defined. A term used in one document is defined in that document. A term
+used across documents is defined once in the glossary, and each document links to it.**
+
+Three rules govern terminology. This rule governs whether a definition exists and where it lives.
+[Use existing vocabulary](#use-existing-vocabulary) governs which term to pick.
+[Don't re-gloss established terms](#dont-re-gloss-established-terms) governs how often to restate it.
+
+The glossary lives at [/docs/glossary.md](/docs/glossary.md). A term needs a definition when a competent reader
+from outside this repository could misread it. This covers ordinary words used with a specific meaning here,
+such as Environment or Effective Set.
+
+- **Single-document term.** Define it on first use in that document, as a sentence, a parenthetical, or a short
+  definitions list.
+- **Cross-document term.** Add or reuse a glossary entry, then link to it from each document instead of
+  restating the definition.
+- **Promotion.** When a term defined in one document starts appearing in a second, write a glossary entry for
+  it and replace the inline definition in both documents with a link.
+
+❌ **INCORRECT:**
+
+- Using a shared term such as Deploy Postfix with a fresh inline definition in each document that mentions it.
+- Introducing a term with no definition in the document or the glossary, leaving the reader to infer it.
+
+✅ **CORRECT:**
+
+- A term local to one how-to guide is defined in that guide.
+- A term shared by [calculator-cli.md](/docs/features/calculator-cli.md) and
+  [envgene-objects.md](/docs/envgene-objects.md) has one glossary entry that both documents link to.
+
+**Scope:** Applies to **new and modified content only**. Existing multi-document terms are back-filled into the
+glossary only when the surrounding lines are edited for other reasons.
+
+**Why:** An undefined term forces the reader to guess or search. A term defined once and linked keeps every
+document consistent when the definition changes, and it stops the same concept from drifting into different
+meanings across documents.
 
 ---
 
@@ -1238,6 +1278,142 @@ profile:
   baseline: dev
 # ... deployParameterSets, e2eParameters, etc. ...
 ```
+
+---
+
+## Sample files in `docs/samples/`
+
+Sample file sets under `docs/samples/` are copyable template-repository and instance-repository files.
+This section covers the files. Inline YAML snippets inside docs are covered by
+[Object Examples in Documentation](#object-examples-in-documentation).
+
+**Scope:** All rules in this section apply to **new and modified samples only**. Changing a file in an
+existing set re-triggers the file-level rules (generation-ready checks, placeholder values) for the
+changed files only. Folder-level items (subfolder names, index entries) apply only when you create or
+restructure the folder. Existing sample sets are not affected until touched.
+
+---
+
+### Samples are mandatory
+
+**A how-to guide whose steps involve authoring or editing repository files, or a feature doc that
+introduces user-facing configuration, ships with working sample files in the same PR. Prose and inline
+snippets alone are not enough.**
+
+Link existing samples when they already cover the scenario: the linked set holds the files and the states
+that the guide's steps use. Add new ones otherwise. User-facing configuration means files or fields that
+users author in template or instance repositories.
+
+❌ **INCORRECT:**
+
+- A how-to guide that describes configuration structure only in prose and inline snippets.
+- A feature doc that introduces a new user-facing configuration file with no copyable sample.
+
+✅ **CORRECT:**
+
+- A how-to guide plus `docs/samples/<feature>/` holding the files it references, cross-linked both ways.
+- A how-to guide that links samples already present under `docs/samples/`.
+
+**Scope:** Applies to **new how-to guides, new feature docs, and new sections that introduce
+configuration only**.
+
+**Why:** Samples are executable documentation. They surface defects prose hides - invalid fields, name
+mismatches, unresolvable references - and give the reader a verified starting point.
+
+---
+
+### Feature-scoped sample folders
+
+**Samples for one feature live in one folder, `docs/samples/<feature>/`, with the template-repository and
+instance-repository parts side by side.**
+
+Name the folder after the feature, matching the `docs/features/` doc name where one exists.
+
+```text
+docs/samples/<feature>/
+├── template-repository/    # Template repository files
+└── instance-repository/    # Instance repository files
+```
+
+- Create only the subfolders that have content.
+- Inside the two subfolders, mirror the real repository paths
+  (`template-repository/templates/env_templates/...`, `instance-repository/environments/...`). For
+  path segments the reader renames, use concrete instance names in the style of the existing samples
+  (`cluster-01`, `env-01`) - not angle-bracket tokens, and not bare contract-looking segments
+  (`cluster`, `env`) that read as mandatory path elements.
+- Express variants of one file as separate sample instances, never as suffixed filenames. Alternative
+  inventories become separate environment folders (`env-01/`, `env-02/`), each holding a real
+  `env_definition.yml`. Annotate what each variant shows in the sample itself (for the
+  inventories, the `description` field).
+- The folder holds every feature-specific state the guide references. A state identical to a
+  generic-tree baseline, or to a file homed in another feature folder, is linked instead of copied. A
+  state that differs is a separate sample instance.
+- The folder has no readme. Usage steps and target paths live in the guide that references the
+  samples.
+- Add the folder to the Examples & Samples section of both index readmes (see
+  [Doc index updates](#doc-index-updates)) and add a short section for it to the samples hub readme
+  `/docs/samples/README.md`.
+- The generic layout trees (`template-repository/`, `instance-repository/`) stay minimal baselines and
+  do not accumulate feature samples.
+
+**Why:** A reader following a guide needs the full set in one place, including variants a single
+canonical tree cannot express. Mirrored paths and shared subfolder names keep the set readable in the
+vocabulary the repository already uses.
+
+---
+
+### One sample, one home
+
+**A sample artifact lives in exactly one place under `docs/samples/` - not copied between a feature
+folder and the generic layout trees, between two feature folders, or within one folder.**
+
+Files that genuinely differ are variants, not copies. When a feature folder becomes the home of a
+sample, delete the copy elsewhere and update links.
+
+**Why:** Duplicated samples drift apart, and readers cannot tell which copy is authoritative.
+
+---
+
+### Samples are generation-ready
+
+**A sample set works when copied as instructed. The checks below define acceptance: filenames, object
+names, and cross-references satisfy the resolution rules of the code.**
+
+No CI job validates sample files against the schemas. Run the checks manually.
+
+Before you declare a sample set done:
+
+1. Validate every file against its JSON Schema in `schemas/`, as
+   [Object Examples in Documentation](#object-examples-in-documentation) prescribes for snippets.
+   Field types matter: `[]` and `{}` are not interchangeable. A schema pass is necessary, not
+   sufficient - the schemas allow additional properties, so also check field names against the object
+   reference. For `.j2` files, check the rendered shape against the target schema.
+2. Check names the code resolves by convention: the template descriptor filename equals
+   `envTemplate.name`, BG Domain namespace names equal `template_override.name` values, and so on.
+   Confirm each convention in the code (see [Verify, don't fabricate](#verify-dont-fabricate)).
+3. Exclude system-generated fields (for example `generatedVersions`) from files the reader copies.
+4. Exclude references to resources the sample set does not provide (for example a `cloudPassport`
+   name without a passport file), or state where they come from in the referencing guide or in a
+   comment inside the sample file.
+
+**Why:** A sample that fails generation is worse than no sample. The reader assumes their own mistake
+and loses time debugging shipped configuration.
+
+---
+
+### Placeholder values
+
+**Sample values are obviously fake and self-describing. Never use realistic-looking secrets.**
+
+- Secret values: self-describing placeholders such as `dbaas-password` or `token-placeholder-123`, or
+  Credentials of `type: external`. No opaque strings that could pass for real tokens. Credential IDs
+  (`bgdomain-cred`) are names, not secret values - normal naming rules apply.
+- Hosts and URLs: reserved example domains (`example.com`, `k8s.example.local`).
+- Substitution slots: angle-bracket tokens following the vocabulary of the samples hub readme
+  (`<cluster-name>`, `<environment-name>`, `<paramset>`).
+
+**Why:** A realistic-looking secret in a sample trains readers to paste real ones and trips secret
+scanners. Self-describing placeholders show which value goes where without a legend.
 
 ---
 

@@ -30,7 +30,7 @@ class PlanDeploymentCalculate(ExecutionCommand):
         if not self.context.validate(["params.applications"]):
             return False
 
-        self._applications = self.context.input_param_get("params.applications").split(",")
+        self._applications = self.context.input_param_get("params.applications")
         self._output_file = self.context.input_param_get("params.output_file", "deploy-plan.yaml")
         self._rootdir = Path(self.context.input_param_get("params.rootdir", os.getcwd()))
         return True

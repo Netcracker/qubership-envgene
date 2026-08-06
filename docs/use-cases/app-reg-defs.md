@@ -88,9 +88,9 @@ ENV_BUILDER: true
 
 **Notes:**
 
-- AppDef and RegDef templates can use the `appdefs.overrides` / `regdefs.overrides` Jinja macros to inject values from
-  `/configuration/appregdef_config.yaml` during rendering. UC-ARD-TR-3 and UC-ARD-TR-4 cover the override-driven
-  redirection scenario.
+- AppDef and RegDef templates can use the `appdefs.overrides` / `regdefs.overrides` Jinja macros to inject values
+  from `/environments/configuration/appregdef_config.yaml` during rendering. UC-ARD-TR-3 and UC-ARD-TR-4 cover the
+  override-driven redirection scenario.
 - Standard Jinja substitution makes environment variables and the current environment context available inside
   templates.
 - If a template contains invalid Jinja syntax, or a rendered definition is missing required fields, the
@@ -152,14 +152,15 @@ overrides are applied. Templates render with their default (source) registry ref
    - RegDef templates for off-site registries exist in `/templates/regdefs/*`
 
 2. Off-site instance repository:
-   - `/configuration/appregdef_config.yaml` does not define `appdefs.overrides.registryName` (or the file is absent)
+   - `/environments/configuration/appregdef_config.yaml` does not define `appdefs.overrides.registryName`
+     (or the file is absent)
 
 **Trigger:** Instance pipeline (GitLab or GitHub) is started in the off-site repository with `ENV_NAMES`, `ENV_BUILDER: true`.
 
 **Steps:**
 
 1. The `app_reg_def_process` job runs:
-   1. Loads `/configuration/appregdef_config.yaml` if present
+   1. Loads `/environments/configuration/appregdef_config.yaml` if present
    2. Renders AppDef templates: `registryName` resolves to the template default
    3. Renders RegDef templates
    4. Writes template-rendered definitions to `/appdefs/*`, `/regdefs/*`
@@ -182,7 +183,7 @@ a single on-site registry via `appregdef_config.yaml` overrides.
    with off-site-registry defaults. RegDef templates include the on-site registry definition.
 
 2. On-site instance repository:
-   - `/configuration/appregdef_config.yaml`:
+   - `/environments/configuration/appregdef_config.yaml`:
 
      ```yaml
      appdefs:
@@ -195,7 +196,7 @@ a single on-site registry via `appregdef_config.yaml` overrides.
 **Steps:**
 
 1. The `app_reg_def_process` job runs:
-   1. Loads `/configuration/appregdef_config.yaml` and exposes `appdefs.overrides` to the Jinja context
+   1. Loads `/environments/configuration/appregdef_config.yaml` and exposes `appdefs.overrides` to the Jinja context
    2. Renders AppDef templates: `registryName` resolves to `on-site-registry` (override beats default)
    3. Renders RegDef templates
    4. Writes template-rendered definitions to `/appdefs/*`, `/regdefs/*`

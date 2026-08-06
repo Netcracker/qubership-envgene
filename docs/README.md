@@ -53,11 +53,14 @@
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
+- [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
 ## Migrations
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate to Blue-Green Deployment**](/docs/how-to/blue-green-deployment-migration.md) - Convert a non-BG template and environment to BGD
 
 ## Advanced Features
 
@@ -66,6 +69,7 @@
 - [**Effective Set Generation**](/docs/features/effective-set-generation.md) - Generate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20) for an environment; covers full and [partial](/docs/features/effective-set-generation.md#partial-generation) modes
 - [**Custom Params**](/docs/instance-pipeline-parameters.md#custom_params) for session-scoped overrides
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
+- [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories (including BG support)
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
@@ -86,6 +90,7 @@
 - [**Sample Configurations**](/docs/samples/README.md) - Complete example configurations
 - [**Template Examples**](/docs/samples/template-repository/) - Ready-to-use template examples
 - [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
+- [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/) - Template and inventory examples for non-BG to BGD migration
 
 ## Development
 

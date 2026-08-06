@@ -258,8 +258,24 @@ Earlier EnvGene versions stored generated AppDefs and RegDefs in per-environment
 
 ### EnvGene
 
-EnvGene itself uses Application and Registry Definitions to download artifacts (Environment Template, Solution
-Descriptor, etc.) from `/appdefs/` and `/regdefs/`.
+EnvGene resolves `application:version` references through the definitions in two operations:
+
+- SD download.
+- [Effective Set generation](/docs/features/effective-set-generation.md), which resolves every application referenced
+  by the SDs it processes.
+
+For how EnvGene searches the registries and resolves the version to download an artifact, see
+[Artifact Resolution](/docs/features/artifact-resolution.md).
+
+Resolution reads the root-level folders first and falls back to the per-environment folders. The fallback exists for
+backward compatibility only: all consumers must migrate to the root-level folders.
+
+> [!NOTE]
+> The Environment Template artifact is also downloaded by `application:version`, but its resolution uses an
+> [Artifact Definition](/docs/envgene-objects.md#artifact-definition) stored at
+> `/configuration/artifact_definitions/`, not an AppDef. AppDefs are delivered by the Environment Template artifact
+> itself, so they cannot drive its own download. An Artifact Definition is authored manually for each such artifact
+> used in the repository.
 
 ### External systems
 
@@ -315,6 +331,6 @@ Other Jinja [macros](/docs/template-macros.md#jinja-macros) are also available.
 
 For example:
 
-- [`appregdef_config.yaml` example](/test_data/configuration/appregdef_config.yaml)
+- [`appregdef_config.yaml` example](/test_data/test_app_reg_defs/TC-001-003/environments/configuration/appregdef_config.yaml)
 - [Application Definition template](/test_data/test_templates/appdefs/application-1.yaml.j2)
 - [Registry Definition template](/test_data/test_templates/regdefs/registry-1.yaml.j2)

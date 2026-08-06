@@ -375,7 +375,7 @@ app_reg_defs_placement: enum [`dual`, `root`]
 # Runs during Effective Set generation when enabled
 # Applies per-application SBOM retention to subdirectories of `/sboms/` when `keep_versions_per_app` is set
 # A total size limit step keeps only the single most recent file per application subdirectory
-# if the total size of `/sboms/` still exceeds 1200 MB after per-application SBOM retention
+# if the total size of `/sboms/` still exceeds 600 MB after per-application SBOM retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
@@ -385,7 +385,7 @@ sbom_retention:
   # Per-application SBOM retention runs only when this is set to a positive integer.
   # If the field is omitted or set to `0`, this step is skipped and only the total size
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
-  # exceeds 1200 MB)
+  # exceeds 600 MB)
   keep_versions_per_app: integer
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
@@ -477,9 +477,14 @@ For more info, see [Application and Registry Definition](/docs/features/app-reg-
 
 Location:
 
-- `/configuration/appregdef_config.yaml` - config for all Environments in the Instance repository
+- `/environments/configuration/appregdef_config.yaml` - global, applies to all clusters and environments in the
+  Instance repository
+- `/environments/<cluster>/configuration/appregdef_config.yaml` - cluster-wide, applies to all environments in
+  one cluster
 
-When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
+EnvGene reads both files when present and merges them. The cluster-wide file takes precedence over the global
+file on conflicting keys. Per-environment configuration is not supported: all environments in a cluster share one
+registry, so the cluster is the finest scope.
 
 [`appregdef_config.yaml` JSON Schema](/schemas/appregdef-config.schema.json)
 

@@ -125,35 +125,11 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
         logger.warning(f"Failed to load environment definition from {env_def_path}: {str(e)}. Using empty definition.")
         env_definition = {}
 
-    # Ensure environmentName is set (auto-derive if missing)
-    # Handle missing inventory section
-    if "inventory" not in env_definition:
-        env_definition["inventory"] = {}
-        logger.debug(f"Created missing inventory section in environment definition")
-
-    if not env_definition["inventory"].get("environmentName"):
-        env_definition["inventory"]["environmentName"] = env_name
-        logger.info(f"Auto-derived environment name '{env_name}' for environment definition")
-        # Write the updated definition back to file so Ansible can access it
-        try:
-            writeYamlToFile(env_def_path, env_definition)
-            logger.debug(f"Successfully updated environment definition with auto-derived name: {env_def_path}")
-        except Exception as e:
-            logger.error(f"Failed to write updated environment definition to {env_def_path}: {str(e)}")
-            # Continue execution - the in-memory definition still has the environmentName
-
-    # Create current_env object with environmentName for Jinja2 template compatibility
-    # This is used by templates that expect current_env.environmentName (like composite_structure.yml.j2)
-    derived_env_name = env_definition.get("inventory", {}).get("environmentName", env_name)
-
-    # Validate environment name
-    if not derived_env_name or not isinstance(derived_env_name, str):
-        logger.warning(f"Invalid environment name '{derived_env_name}', falling back to folder name '{env_name}'")
-        derived_env_name = env_name
+    env_definition = ensure_environment_name(env_definition, env_name, persist_path=env_def_path)
 
     current_env = {
         "name": env_name,  # Always use folder name for consistency
-        "environmentName": derived_env_name  # Use derived or explicit name
+        "environmentName": env_definition["inventory"]["environmentName"]
     }
 
     logger.debug(

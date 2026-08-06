@@ -137,6 +137,19 @@ def getEnvDefinitionPath(env_dir) -> str:
     return str(Path(env_dir) / INVENTORY_DIR_NAME / ENV_DEFINITION_FILE_NAME)
 
 
+def ensure_environment_name(env_definition: dict, fallback_name: str, persist_path: str = None) -> dict:
+    inventory = env_definition.setdefault("inventory", {})
+    if inventory.get("environmentName") or not fallback_name:
+        return env_definition
+
+    logger.info(f"inventory.environmentName is not set, deriving it from '{fallback_name}'")
+    inventory["environmentName"] = fallback_name
+    if persist_path:
+        writeYamlToFile(persist_path, env_definition)
+        logger.debug(f"Persisted derived environmentName to {persist_path}")
+    return env_definition
+
+
 def getEnvCredentials(env_dir):
     envCredentialsPath = getEnvCredentialsPath(env_dir)
     if not check_file_exists(envCredentialsPath):
