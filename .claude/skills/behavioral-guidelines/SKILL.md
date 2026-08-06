@@ -70,22 +70,23 @@ When the real component requires a build step before it can be invoked (e.g. a J
 Maven, a compiled binary), **build it as part of test setup or as a prerequisite fixture**. Slow
 is acceptable; vacuous is not.
 
-Concretely for this repository:
-
-- If a scenario is titled "Calculator CLI validates deployPostfix", the test must invoke the real
-  `effective-set-generator-*-runner.jar`. A Python reimplementation of the same rules is a separate
-  artefact, not a test of the CLI.
-- If a scenario is titled "SBOM retention removes legacy flat files", the test must run the real
-  `sboms_retention_policy()` Python function — which it does, because the full pipeline runs. That
-  is the correct pattern.
-- Mock stubs placed at `EFFECTIVE_SET_CLI_PATH` that always exit 0 are acceptable **only** for
-  scenarios whose subject is NOT the Calculator CLI (e.g. SBOM retention scenarios that merely need
-  the ES step to not crash). They are never acceptable for Calculator CLI scenarios themselves.
-
 Diagnostic question before writing any mock: "If the real component had a bug that made it
 produce wrong output, would this test catch it?" If the answer is no, remove the mock.
 
-## 5. Goal-Driven Execution
+## 5. BDD Test Completion Checklist
+
+**A BDD test is not done until it runs green in Docker.**
+
+When adding any new BDD test scenario:
+
+1. Add the test step to `.github/workflows/perform_e2e_tests.yml` — no exceptions.
+2. Run the **full** test suite in Docker (`pytest cucumber_tests/`) and confirm:
+   - All previously passing tests still pass.
+   - The new test passes.
+
+See `cucumber_tests/CLAUDE.md` → "Mandatory steps when adding a new BDD test" for the exact commands.
+
+## 6. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
@@ -105,6 +106,3 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
