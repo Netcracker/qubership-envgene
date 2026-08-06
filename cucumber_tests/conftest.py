@@ -8,7 +8,7 @@ import zipfile
 import urllib.request
 from pathlib import Path
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
-from cucumber_tests.step_defs.common_steps import *
+from cucumber_tests.shared_steps.common_steps import *
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_nexus(tmp_path_factory):

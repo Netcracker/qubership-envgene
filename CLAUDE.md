@@ -69,6 +69,20 @@ The Effective Set generator is a Maven project; from `build_effective_set_genera
 ./mvnw test
 ```
 
+## Use Case Authoring
+
+Use case files live in `docs/use-cases/`. Each file covers one feature; group related cases with a two-letter code (`NF`, `ES`, `TA`, `MIG`, …).
+
+**UC ID format:** `UC-<FEATURE>-<GROUP>-<N>` — e.g. `UC-EIG-NF-1`, `UC-SBOM-MIG-1`. Check the highest existing N in the group before assigning a new ID.
+
+**Structure per case — four sections in order:**
+1. **Pre-requisites** — numbered list of initial state conditions
+2. **Trigger** — what CI parameter combination starts the flow; for Instance pipeline cases: *Instance pipeline (GitLab or GitHub) is started with `ENV_NAMES: <env_name>`, `ENV_BUILDER: true`.*
+3. **Steps** — numbered list; sub-items describe internal job logic
+4. **Results** — numbered list of observable, independently verifiable state changes (no internal steps)
+
+When multiple cases share identical Pre-requisites and Trigger, factor them to a single "all cases" block before a decision matrix rather than repeating per case.
+
 ### BDD End-to-End Tests
 
 Cucumber BDD tests are located in the `cucumber_tests/` directory. These tests run the full pipeline orchestrated via Docker or a local Python environment.
