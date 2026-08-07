@@ -1,0 +1,16 @@
+version: "2.0"
+name: "env-template"
+groupId: "com.example.templates"
+artifactId: "env-template"
+registry:
+  name: "aws-codeartifact"
+  authConfig:
+    aws-auth:
+      provider: "aws"
+      authMethod: "secret"
+      credentialsId: "aws-codeartifact-creds"
+      awsRegion: "us-east-1"
+      awsDomain: "my-domain"
+  mavenConfig:
+    authConfig: "aws-auth"
+    repositoryDomainName: "https://my-domain-123456789012.d.codeartifact.us-east-1.amazonaws.com/maven/my-repo"
