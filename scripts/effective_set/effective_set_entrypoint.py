@@ -60,7 +60,7 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[Dep
     runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, EnvgeneDeployPlan.delta_path())
     subprocess.run(cmd, shell=True, check=True)
 
     cleanup_mapping.update(openYaml(cleanup_mapping_path, allow_default=True))
@@ -160,8 +160,8 @@ def _restore_saved_dirs(tmp_root, saved):
         shutil.rmtree(tmp_root, ignore_errors=True)
 
 
-def _build_cli_cmd(effective_set_dir, full_env_name):
-    dp_path = get_deployment_plan_path()
+def _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan_path=None):
+    dp_path = deploy_plan_path or get_deployment_plan_path()
     cmd = [
         getenv("EFFECTIVE_SET_CLI_PATH", "/module/scripts/utils/run_effective_set_cli.sh"),
         f"--env-id={full_env_name}",

@@ -51,7 +51,12 @@ def create_es_cleanup_dir(effective_set_dir: Path, deploy_postfix: str) -> None:
 
 
 def mock_cli(monkeypatch, on_run=None):
-    monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a: "fake_cmd")
+    monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a, **k: "fake_cmd")
+    monkeypatch.setattr(
+        effective_set_entrypoint.EnvgeneDeployPlan,
+        "delta_path",
+        staticmethod(lambda: Path("/tmp/delta-deploy-plan.yml")),
+    )
 
     def fake_run(cmd, check=False, shell=False):
         if on_run:
@@ -61,6 +66,30 @@ def mock_cli(monkeypatch, on_run=None):
 
 
 class TestRunDeployPlanPartial:
+    @pytest.mark.unit
+    def test_invokes_cli_with_delta_deploy_plan(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        delta_dp = tmp_path / "Inventory" / "delta-deploy-plan.yml"
+        delta_dp.parent.mkdir(parents=True)
+        delta_dp.write_text("- version: app-1:1.0\n")
+        captured = {}
+
+        def capture_build_cli(es_dir, env_name, deploy_plan_path=None):
+            captured["deploy_plan_path"] = deploy_plan_path
+            return "fake_cmd"
+
+        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(
+            effective_set_entrypoint.EnvgeneDeployPlan,
+            "delta_path",
+            staticmethod(lambda: delta_dp),
+        )
+
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+
+        assert captured["deploy_plan_path"] == delta_dp
+
     @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
