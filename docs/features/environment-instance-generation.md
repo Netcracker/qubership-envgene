@@ -100,6 +100,15 @@ The `envTemplate.bgNsArtifacts` and `envTemplate.artifact` attributes are **not 
 
 The role of a Namespace (origin, peer, or controller) is determined through the [BG Domain](/docs/envgene-objects.md#bg-domain) object in the Environment Instance.
 
+Pipeline override: when the Instance pipeline receives
+[`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) with
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) `peer` or `origin`, and
+[`ENV_TEMPLATE_VERSION_UPDATE_MODE`](/docs/instance-pipeline-parameters.md#env_template_version_update_mode)
+is `PERSISTENT`, EnvGene writes that version into `envTemplate.bgNsArtifacts.peer` or
+`envTemplate.bgNsArtifacts.origin`. Without `BG_NS_TARGET`, the version updates the common
+`envTemplate.artifact` field. See
+[Template Version Update](/docs/use-cases/template-version-update.md).
+
 **Example:**
 
 ```yaml

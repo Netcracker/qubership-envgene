@@ -29,6 +29,7 @@
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`OPERATION_TYPE`](#operation_type)
+    - [`BG_NS_TARGET`](#bg_ns_target)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -120,7 +121,22 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 ### `ENV_TEMPLATE_VERSION`
 
-**Description**: If provided system update Environment Template version in the Environment Inventory. System overrides `envTemplate.templateArtifact.artifact.version` OR `envTemplate.artifact` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+**Description**: If provided, the pipeline updates the Environment Template version in the Environment
+Inventory at `/environments/<ENV_NAME>/Inventory/env_definition.yml`. Which Inventory field is
+written depends on [`BG_NS_TARGET`](#bg_ns_target):
+
+| `BG_NS_TARGET` | Inventory field updated (when `ENV_TEMPLATE_VERSION_UPDATE_MODE` is `PERSISTENT`) |
+|----------------|------------------------------------------------------------------------------------------|
+| unset          | `envTemplate.artifact` or `envTemplate.templateArtifact.artifact.version`                |
+| `origin`       | `envTemplate.bgNsArtifacts.origin`                                                       |
+| `peer`         | `envTemplate.bgNsArtifacts.peer`                                                         |
+
+Only one field is updated per run. The other template artifact fields are left unchanged. If
+`bgNsArtifacts` is missing when `BG_NS_TARGET` is `origin` or `peer`, the pipeline creates it and
+writes the selected key.
+
+How long the override lasts is controlled by
+[`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode).
 
 **Default Value**: None
 
@@ -130,51 +146,36 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 ### `ENV_TEMPLATE_VERSION_UPDATE_MODE`
 
-**Description**: Controls how ENV_TEMPLATE_VERSION is applied during the pipeline run.
+**Description**: Controls how [`ENV_TEMPLATE_VERSION`](#env_template_version) is applied during the
+pipeline run. It does not choose the Inventory field. Field selection uses
+[`BG_NS_TARGET`](#bg_ns_target) as described under `ENV_TEMPLATE_VERSION`.
 
 **Allowed values**:
 
 - `PERSISTENT` (default)
-  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
+  Writes `ENV_TEMPLATE_VERSION` into Environment Inventory in `env_definition.yml`:
+  - without `BG_NS_TARGET`: `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`)
+  - with `BG_NS_TARGET=origin`: `envTemplate.bgNsArtifacts.origin`
+  - with `BG_NS_TARGET=peer`: `envTemplate.bgNsArtifacts.peer`
 
 - `TEMPORARY`
-  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
-  The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update
+  `envTemplate.artifact`, `envTemplate.templateArtifact`, or `envTemplate.bgNsArtifacts` in
+  `env_definition.yml`. The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in
+  `env_definition.yml` to reflect the template artifact version that was actually applied in this
+  run, for example:
 
   ```yaml
   # env_definition.yml
   generatedVersions:
     generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"
+  ```
 
 **Default Value**: `PERSISTENT`
 
 **Mandatory**: No
 
 **Example**: `PERSISTENT`
-
-### `ENV_TEMPLATE_VERSION_ORIGIN`
-
-**Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
-
-This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `project-env-template:v1.2.3`
-
-### `ENV_TEMPLATE_VERSION_PEER`
-
-**Description**: If provided, system updates the Blue-Green peer template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.peer` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
-
-This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `project-env-template:v1.2.3`
 
 ### `ENV_INVENTORY_INIT`
 
@@ -664,28 +665,67 @@ curl -X POST \
 
 ### `OPERATION_TYPE`
 
-**Description**: Selects the Blue-Green Deployment (BGD) operation for the Instance pipeline. When set to a
-BGD value, the [`bg_manage`](/docs/envgene-pipelines.md) job runs. EnvGene reads the current BG state
-files, validates the operation, performs any required repository processing, and writes the next
+**Description**: Selects the Blue-Green Deployment (BGD) lifecycle operation for the Instance
+pipeline. When set to a BGD value, the [`bg_manage`](/docs/envgene-pipelines.md) job runs. EnvGene
+reads the current BG state files, performs any required repository processing, and writes the next
 state. EnvGene does not accept a target state, application version, or update timestamp for BGD
 operations.
 
 Allowed values:
 
-- `BGD-INIT`
+- `BGD-INIT` (later delivery; may be established manually until then)
 - `BGD-WARMUP`
 - `BGD-PROMOTE`
 - `BGD-ROLLBACK`
 - `BGD-COMMIT`
 
-See [Blue-Green Deployment](/docs/features/blue-green-deployment.md) for operation semantics and the
-transition matrix.
+Application deploy into a BG Domain side uses
+[`BG_NS_TARGET`](#bg_ns_target) with Effective Set generation, not this parameter.
+
+The orchestration pipeline validates whether the BG Operator allows the operation before it starts
+the Instance pipeline.
+
+See [Blue-Green Deployment](/docs/features/blue-green-deployment.md).
 
 **Default Value**: None
 
 **Mandatory**: No
 
 **Example**: `BGD-WARMUP`
+
+### `BG_NS_TARGET`
+
+**Description**: Selects which Blue-Green Domain side (`peer` or `origin`) the pipeline run targets.
+
+Used for:
+
+- Solution Descriptor (SD) Effective Set generation: the deploy pipeline resolves the UI choice
+  `candidate` or `active` to `peer` or `origin` through the BG Controller API, then passes that role
+  here. EnvGene maps SD `deployPostfix` entries for the BG pair onto the matching Namespace folder
+  and writes `mapping.yaml` for DPG. See
+  [SD deploy to a BG Domain side](/docs/features/blue-green-deployment.md#sd-deploy-to-a-bg-domain-side).
+- Template version update with [`ENV_TEMPLATE_VERSION`](#env_template_version): chooses whether the
+  version is written to `envTemplate.bgNsArtifacts.origin`, `envTemplate.bgNsArtifacts.peer`, or
+  (when unset) the common `envTemplate.artifact` field. See
+  [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode) for persistent versus
+  temporary application.
+
+Allowed values:
+
+- `peer`
+- `origin`
+
+EnvGene reads `peerNamespace.name` or `originNamespace.name` from `bg_domain.yml`. It does not call
+the BG Controller and does not resolve active versus candidate from BG state files on this path.
+
+`BG_NS_TARGET` is not used for Deploy Descriptor (DD) entries that already include a concrete
+namespace name (`namespace:app:version`).
+
+**Default Value**: None
+
+**Mandatory**: No (required for SD deploy into a BG origin/peer pair)
+
+**Example**: `peer`
 
 ## Deprecated Parameters
 
