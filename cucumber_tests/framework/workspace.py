@@ -118,9 +118,10 @@ class EnvGeneWorkspace(BaseWorkspace):
         env["CI_PROJECT_DIR"] = str(self.base_dir)
         env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
 
-        # Mock run_effective_set_cli.sh for local tests
+        # Mock run_effective_set_cli for local tests (cross-platform)
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
-        effective_set_cli_mock.write_text("@echo off\nexit 0\n")
+        effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
+        os.chmod(effective_set_cli_mock, 0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
 
         if extra_env:
