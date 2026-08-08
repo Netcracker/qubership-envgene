@@ -19,6 +19,8 @@
 
 /test_data/ @popoveugene
 
+/schemas/ @popoveugene
+
 README.md @popoveugene
 
 CODEOWNERS @popoveugene
