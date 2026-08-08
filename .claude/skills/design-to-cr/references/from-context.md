@@ -7,6 +7,11 @@ compliance) lives in `SKILL.md`. This file covers only the synthesize-and-draft 
 
 ## Phase 1 - draft the local Markdown
 
+Synthesizing from context is the path most likely to leak code into the draft, because your own
+investigation put function names, file paths, and internal fields in your head. Hold to the shared
+`Analyst voice` rule in `SKILL.md`: name only the documented surface, describe the observable outcome
+for anything code-only, and run the pre-file gate before filing.
+
 Gather the inputs, asking only for what is missing:
 
 - The change in one or two sentences (Context - the situation and the problem, not the action).
