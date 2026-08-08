@@ -73,6 +73,29 @@ genuinely exists, and omit it entirely otherwise - an absent section reads bette
   discrete shapes or scenarios worth pinning as YAML, for example topology cases or credential shapes.
   When the change has no such enumerable cases, omit it.
 
+### Analyst voice - name only the documented surface
+
+A CR is read by a developer, but it is written by an analyst: it states the behavior contract and how
+to verify it, and leaves the code mapping to the implementer. Keep the whole body - Context, In scope,
+Acceptance, Implementation notes - in the design's own vocabulary, not the code's. Two habits carry
+most of the weight:
+
+- Name only the documented surface. Every object, job, field, parameter, or macro you mention should
+  be findable in the product docs (feature docs, `envgene-objects.md`, `envgene-configs.md`,
+  `template-macros.md`). If a name lives only in the code or is generated internally - a private
+  function, a file path, an intermediate field the tool writes for itself - the reader cannot look it
+  up, so describe the observable outcome instead. For example, prefer "the `current_env.cloud` macro
+  resolves to the cluster name" over naming the resolver function and the internal field it writes.
+- Verify before you name. Confirm each macro, field, or behavior against the docs or the code before
+  stating it - do not infer which macro carries a value or which engine resolves it. A confident wrong
+  claim costs the reader more than describing the effect and letting the implementer bind the mechanism.
+
+State only settled behavior. If the design has not decided something (an extra warning, a side effect),
+leave it out or raise it as an open question - do not write it into In scope or Acceptance as fact.
+For Acceptance, when a condition has a sibling case (a mode set versus absent, a file present versus
+missing), put the discriminating precondition in the Given so the outcome cannot be read as applying to
+the sibling.
+
 ### Acceptance notation
 
 Write each acceptance condition in collapsed Gherkin: `Given <fixture>, <observable outcome>.` The Given
@@ -136,6 +159,30 @@ Match the GitHub issue type to the change's nature and prefix the draft's H1 acc
 (`[Story:]`, or `[Docs:]` for a documentation ticket). The H1 carries the prefix, so the filed issue
 title carries it too.
 
+### AGENTS.md compliance
+
+Keep the body publish-ready under the repository house rules in `AGENTS.md`, even though the draft file
+lives outside the repository: plain hyphen-minus for dashes (no em or en dash), no semicolons in
+prose, wrap prose at 120 characters, vertically aligned table pipes, sentence-case headings, and
+GitHub native callouts. Chat may be Russian, but the artifact ships in English. Run the pre-file gate
+below before the `issue_write` call.
+
+### Pre-file gate
+
+Right before the `issue_write` call, re-read the final body and check it mechanically. Each item below
+is a miss that has actually shipped in a filed CR, so treat them as blocking rather than advisory:
+
+- Code references: no source file paths or modules (`python/...`, `scripts/...`, `src/...`, `*.py`,
+  `*.java`, `*.ts`) and no private function or method names (`snake_case(`, `CamelCase(`). Documented
+  product locations are fine (`cloud-passport/`, `configuration/credentials/`) - the test is whether a
+  reader can look the name up in the docs, not whether it contains a slash.
+- Undocumented identifiers: for every backticked object, field, or macro, confirm it appears in the
+  docs. If it does not, replace it with the observable outcome.
+- Links: no repo-relative `/docs/...` links in the issue body - GitHub renders them as dead paths.
+  Use commit-SHA permalinks, pinned to the doc PR head commit when the doc has not merged yet.
+- House rules (as stated under AGENTS.md compliance): no em or en dashes, no semicolons in prose,
+  prose wrapped at 120.
+
 ### File the issue
 
 On the go-ahead, re-present the final draft, ask one confirmation question, and on `yes`:
@@ -150,19 +197,10 @@ On the go-ahead, re-present the final draft, ask one confirmation question, and 
    body starts at `## Context`. Do not set labels.
 3. Return the resulting issue URL.
 
-### AGENTS.md compliance
-
-Keep the body publish-ready under the repository house rules in `AGENTS.md`, even though the draft file
-lives outside the repository: plain hyphen-minus for dashes (no em or en dash), no semicolons in
-prose, wrap prose at 120 characters, vertically aligned table pipes, sentence-case headings, and
-GitHub native callouts. Chat may be Russian, but the artifact ships in English. Before filing, verify the
-body: grep for em or en dashes and semicolons, and check prose line length against 120.
-
 ## Guardrails
 
 - Confirm once before creating the issue. Never create without an explicit go-ahead.
 - Issue types for this org are org-level. Always query `list_issue_types` with owner only.
-- The issue title is the draft H1. The issue body is everything after the H1.
 - Use the GitHub MCP tools, not the `gh` CLI, for reads and writes.
 
 ## Failure modes
