@@ -54,6 +54,20 @@
             "deployer2"
           ]
         },
+        "noCmdbVersion": {
+          "type": "string",
+          "title": "No-CMDB Architecture Version",
+          "description": "Version of the No-CMDB deployment architecture. Set manually by users. NOT processed by EnvGene Core. Read by DevOps toolset components to determine how the environment is deployed. When set, it takes precedence over 'deployer'. Default 'v1'.",
+          "enum": [
+            "v1",
+            "v2"
+          ],
+          "default": "v1",
+          "examples": [
+            "v1",
+            "v2"
+          ]
+        },
         "cloudPassport": {
           "type": "string",
           "title": "Cloud Passport",
