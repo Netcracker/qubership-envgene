@@ -32,7 +32,7 @@
     - [NAME-3 - Kebab-case files, directories, and namespaces (SHOULD)](#name-3---kebab-case-files-directories-and-namespaces-should)
     - [NAME-4 - Name a ParameterSet by subject and category (SHOULD)](#name-4---name-a-parameterset-by-subject-and-category-should)
     - [NAME-5 - Name a Resource Profile Override by baseline and subsystem (SHOULD)](#name-5---name-a-resource-profile-override-by-baseline-and-subsystem-should)
-    - [NAME-6 - Name a credential id by purpose (SHOULD)](#name-6---name-a-credential-id-by-purpose-should)
+    - [NAME-6 - Name a credential ID by purpose (SHOULD)](#name-6---name-a-credential-id-by-purpose-should)
     - [NAME-7 - Name a Shared Template Variable by purpose (SHOULD)](#name-7---name-a-shared-template-variable-by-purpose-should)
   - [Values](#values)
     - [VAL-1 - A value's YAML type matches its consumer (MUST)](#val-1---a-values-yaml-type-matches-its-consumer-must)
@@ -505,9 +505,9 @@ Filenames, directory names, and
 namespace names use kebab-case. YAML field names and enum values follow the object's own convention.
 
 Casing is part of a name's identity, so kebab-case governs a new name. A name that a reference resolves
-by exact string (a ParameterSet, Resource Profile Override, Shared Template Variable, or credential id)
+by exact string (a ParameterSet, Resource Profile Override, Shared Template Variable, or credential ID)
 is not re-cased to fit this rule, because re-casing breaks the reference. A name an external producer
-dictates, such as a Cloud Passport discovery id or a legacy capitalised application or registry name, is
+dictates, such as a Cloud Passport discovery ID or a legacy capitalised application or registry name, is
 exempt.
 
 ```yaml
@@ -530,7 +530,7 @@ to the `name:` field.
 
 The scope (site, cluster, environment) and whether the set is a base or an environment override come from
 the file location, not from a name token. Never put an environment name, cluster name, release or version,
-ticket id, or date in the name.
+ticket ID, or date in the name.
 
 ```yaml
 # OK - subject and category, scope comes from the file location
@@ -573,20 +573,20 @@ sit-dm-override                # baseline is dev, so the leading token contradic
 telus-dv2-multi-sql-override   # environment name baked in
 ```
 
-### NAME-6 - Name a credential id by purpose (SHOULD)
+### NAME-6 - Name a credential ID by purpose (SHOULD)
 
-Name a credential id, the key of a credentials entry, `<purpose>`, with an optional `-<role>` qualifier
+Name a credential ID, the key of a credentials entry, `<purpose>`, with an optional `-<role>` qualifier
 and an optional `-cred` or `-creds` suffix.
 
 | Part      | Required | Values                                                                                   | Rule                                                                                                      |
 | --------- | -------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `purpose` | yes      | what the secret unlocks: `registry`, `argocd`, `keycloak`, `cmdb`, `dbaas`, `postgresql` | the primary dimension, named for purpose, not environment, application, or account                        |
 | `role`    | no       | `deployer`, `client`, `admin`, `ci`                                                      | disambiguates when one purpose has several, with provenance normally from the source file, not this token |
-| suffix    | no       | `-cred` or `-creds`                                                                      | optional, kept consistent within a scope, and an existing id is not re-suffixed                           |
+| suffix    | no       | `-cred` or `-creds`                                                                      | optional, kept consistent within a scope, and an existing ID is not re-suffixed                           |
 
-One logical credential is one credential id (a `usernamePassword` or a `secret`). Do not split a username
+One logical credential is one credential ID (a `usernamePassword` or a `secret`). Do not split a username
 and password pair into two `secret` entries. The generated Effective Set form (upper-snake `_USERNAME`
-and `_PASSWORD`, SOPS-encrypted) is output, not an authoring convention. A credential id a Cloud Passport
+and `_PASSWORD`, SOPS-encrypted) is output, not an authoring convention. A credential ID a Cloud Passport
 discovery process dictates is exempt.
 
 ```yaml
