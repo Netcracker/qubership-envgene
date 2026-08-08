@@ -28,3 +28,13 @@ CONTRIBUTING.md @popoveugene
 LICENSE @popoveugene
 
 SECURITY.md @popoveugene
+
+#
+# AI agent configuration
+#
+
+/.claude/ @popoveugene
+
+AGENTS.md @popoveugene
+
+CLAUDE.md @popoveugene
