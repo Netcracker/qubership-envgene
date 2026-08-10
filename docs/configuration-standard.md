@@ -59,7 +59,8 @@
     - [TPL-13 - Gate on app presence, not on a toggle (SHOULD)](#tpl-13---gate-on-app-presence-not-on-a-toggle-should)
     - [TPL-14 - Resolve a namespace by deploy-postfix, do not rebuild it (SHOULD)](#tpl-14---resolve-a-namespace-by-deploy-postfix-do-not-rebuild-it-should)
     - [TPL-15 - Prefer a macro over a Jinja expression (SHOULD)](#tpl-15---prefer-a-macro-over-a-jinja-expression-should)
-    - [TPL-16 - Edit inputs, not generated output (SHOULD)](#tpl-16---edit-inputs-not-generated-output-should)
+    - [TPL-16 - No deploy-scope macro in a pipeline or runtime parameter (MUST)](#tpl-16---no-deploy-scope-macro-in-a-pipeline-or-runtime-parameter-must)
+    - [TPL-17 - Edit inputs, not generated output (SHOULD)](#tpl-17---edit-inputs-not-generated-output-should)
   - [Exceptions](#exceptions)
 
 ## Scope
@@ -861,15 +862,15 @@ FEATURE: "{% if SITE | default('') == 'onsite' %}on{% else %}off{% endif %}"
 
 ### TPL-7 - Build URLs from the Cloud Passport host (MUST)
 
-Compose a service URL from the passport
-host value (`CLOUD_PUBLIC_HOST`), not from a hardcoded cluster hostname. The template appends the path
-to the host.
+Compose a service URL from the passport host
+(`current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST`), not from a hardcoded cluster hostname. The
+template appends the path to the host.
 
 ```yaml
 # Not OK - hardcoded cluster hostname
 MY_SERVICE_URL: https://my-service.cluster-01.example.com
 # OK - built from the passport host
-MY_SERVICE_URL: "https://my-service.{{ CLOUD_PUBLIC_HOST }}"
+MY_SERVICE_URL: "https://my-service.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST }}"
 ```
 
 ### TPL-8 - Protect Helm passthrough (MUST)
@@ -992,7 +993,25 @@ PG_HOST: "pg-patroni.${NAMESPACE}"
 PG_HOST: "pg-patroni.{{ current_env.name }}-oss"
 ```
 
-### TPL-16 - Edit inputs, not generated output (SHOULD)
+### TPL-16 - No deploy-scope macro in a pipeline or runtime parameter (MUST)
+
+At effective-set time the calculator resolves a `${...}` macro against the parameter's context binding.
+The pipeline (`e2eParameters`) and runtime (`technicalConfigurationParameters`) bindings do not include
+deploy-scope variables. The Cloud Passport and the derived cluster host facts (`CLOUD_PUBLIC_HOST`,
+`CLOUD_API_HOST`, and the rest) all live in the deploy scope, so a `${...}` that names one of them from a
+pipeline or runtime parameter fails to resolve and stops generation. A deploy parameter, on any object,
+does see these, so the same reference is fine there. From a pipeline or runtime parameter,
+resolve the value at generation to a literal instead, building it from the passport host per TPL-7. See
+[Template macros](/docs/template-macros.md#macro-resolution-scope) for which context sees which scope.
+
+```yaml
+# Not OK - a pipeline (e2e) parameter references a deploy-scope host var -> unresolved, generation fails
+DCL_CONFIG_ARGOCD_URL: "https://argocd-server.${CLOUD_PUBLIC_HOST}"
+# OK - the host is resolved to a literal at generation (Jinja reads the passport)
+DCL_CONFIG_ARGOCD_URL: "https://argocd-server.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST }}"
+```
+
+### TPL-17 - Edit inputs, not generated output (SHOULD)
 
 A generated object - the Effective Set, a
 generated `cloud.yml` or namespace file, anything marked auto-generated - is overwritten on the next
