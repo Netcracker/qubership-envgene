@@ -29,10 +29,11 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
-    - [`BG_MANAGE`](#bg_manage)
-    - [`BG_STATE`](#bg_state)
+    - [`OPERATION_TYPE`](#operation_type)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
+    - [`BG_MANAGE`](#bg_manage)
+    - [`BG_STATE`](#bg_state)
   - [Archived Parameters](#archived-parameters)
   - [Multiple Values Support](#multiple-values-support)
 
@@ -177,27 +178,55 @@ pipeline run.
 
 ### `BG_NS_TARGET`
 
-**Description**: Optional. Selects which Blue-Green namespace role (`origin` or `peer`) the pipeline
-run targets. BG-aware steps use this value when they must distinguish the origin namespace from the
-peer namespace (for example when resolving `deployPostfix` to a namespace in a BG Domain, or when
-updating a template version slot).
+**Description**: Optional. Selects which Blue-Green Domain namespace role (`origin` or `peer`) the
+current pipeline run targets. The value is a static role from the
+[BG Domain](/docs/envgene-objects.md#bg-domain) object. It is not a lifecycle state such as
+`ACTIVE`, `IDLE`, or `CANDIDATE`, and EnvGene does not read BG state files to interpret it.
 
-When provided together with [`ENV_TEMPLATE_VERSION`](#env_template_version):
+`BG_NS_TARGET` is shared by more than one BG-aware step. Each step uses only the meaning that
+belongs to that step.
+
+**Template artefact routing.** When provided together with
+[`ENV_TEMPLATE_VERSION`](#env_template_version):
 
 - `origin` - updates `envTemplate.bgNsArtifacts.origin`
 - `peer` - updates `envTemplate.bgNsArtifacts.peer`
+
+See also [Environment Instance generation](/docs/features/environment-instance-generation.md)
+(`bgNsArtifacts`).
+
+**Namespace map resolution.** When a Solution Descriptor
+[`deployPostfix`](/docs/glossary.md#deploy-postfix) is shared by the origin and peer Namespaces of
+a BG Domain, `compute_namespace_map` requires `BG_NS_TARGET` to write
+[`namespace-map.yml`](/docs/envgene-objects.md#namespace-map):
+
+- `origin` - map that postfix to `bg_domain.originNamespace.name`
+- `peer` - map that postfix to `bg_domain.peerNamespace.name`
+
+See [Namespace map](/docs/features/namespace-map.md). The Deployment Plan Generator consumes the map
+and does not re-read `BG_NS_TARGET`.
+
+**Namespace render filter.** When [`NS_BUILD_FILTER`](#ns_build_filter) is empty and `BG_NS_TARGET`
+is `origin` or `peer`, EnvGene applies the same effect as `NS_BUILD_FILTER=@origin` or
+`NS_BUILD_FILTER=@peer` during `env_build`. An explicitly set `NS_BUILD_FILTER` always wins. See
+[Namespace Render Filter](/docs/features/namespace-render-filtering.md).
 
 **Allowed values**:
 
 - `origin`
 - `peer`
 
+**When mandatory**:
+
+- when updating `envTemplate.bgNsArtifacts.origin` or `peer` via `ENV_TEMPLATE_VERSION`
+- when resolving a BG-ambiguous `deployPostfix` in `compute_namespace_map`
+
 On the GitHub pipeline this parameter has no dedicated workflow input. Pass it through
 [`GH_ADDITIONAL_PARAMS`](#gh_additional_params).
 
 **Default Value**: None
 
-**Mandatory**: No
+**Mandatory**: No (Yes in the cases listed above)
 
 **Example**: `peer`
 
@@ -519,15 +548,20 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `NS_BUILD_FILTER`
 
-**Description**: It allows to generate or update only specific Namespaces without touching the others.
+**Description**: Limits which [Namespaces](/docs/envgene-objects.md#namespace) `env_build`
+regenerates. Other Environment objects such as Cloud and Tenant are still rendered.
 
-See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
+When `NS_BUILD_FILTER` is empty and [`BG_NS_TARGET`](#bg_ns_target) is `origin` or `peer`, EnvGene
+applies the effect of `@origin` or `@peer`. When `NS_BUILD_FILTER` is set explicitly, that value is
+used and `BG_NS_TARGET` does not override it.
+
+See [Namespace Render Filtering](/docs/features/namespace-render-filtering.md).
 
 **Default Value**: None
 
 **Mandatory**: No
 
-**Example**: `${controller}`
+**Example**: `@peer`
 
 ### `DEPLOYMENT_SESSION_ID`
 
@@ -687,27 +721,32 @@ curl -X POST \
       }'
 ```
 
-### `BG_MANAGE`
+### `OPERATION_TYPE`
 
-**Description**: Enable Blue-Green operation. When set to `true`, the `bg_manage` pipeline job is executed to perform BG operations including state management and validation , Origin/Peer configuration copying for WarmUp operations.
+**Description**: Selects the Instance pipeline operation. This section lists the Blue-Green
+Deployment (BGD) lifecycle values.
 
-**Default Value**: `false`
+BGD values:
 
-**Mandatory**: No
+- `BGD-INIT`
+- `BGD-WARMUP`
+- `BGD-PROMOTE`
+- `BGD-ROLLBACK`
+- `BGD-COMMIT`
 
-**Example**: `true`
+A BGD value runs the [`bg_manage`](/docs/envgene-pipelines.md) step. State transitions, warmup
+processing, and validation are described in
+[Blue-Green Deployment](/docs/features/blue-green-deployment.md).
 
-### `BG_STATE`
-
-**Description**: Contains the description of the target state of the Blue-Green namespaces of the Environment. Used together with `BG_MANAGE`.
-
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+Application deploy into a BG Domain side does not use a BGD `OPERATION_TYPE` value. Use the
+deploy-side selector (for example [`BG_NS_TARGET`](#bg_ns_target) and optional
+[`NS_BUILD_FILTER`](#ns_build_filter)).
 
 **Default Value**: None
 
-**Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
+**Mandatory**: No
 
-**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
+**Example**: `BGD-WARMUP`
 
 ## Deprecated Parameters
 
@@ -728,6 +767,28 @@ See details in [SD processing](/docs/features/sd-processing.md)
 **Mandatory**: No
 
 **Example**: `true`
+
+### `BG_MANAGE`
+
+**Description**: Deprecated. Use a BGD value of [`OPERATION_TYPE`](#operation_type) instead.
+When set to `true`, the `bg_manage` pipeline step ran for Blue-Green lifecycle operations.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `BG_STATE`
+
+**Description**: Deprecated. Use a BGD value of [`OPERATION_TYPE`](#operation_type) instead.
+See [Blue-Green Deployment](/docs/features/blue-green-deployment.md).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
 
 ## Archived Parameters
 
