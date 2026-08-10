@@ -13,6 +13,8 @@
     - [PLACE-6 - Pipeline parameters bind to the Cloud (MUST)](#place-6---pipeline-parameters-bind-to-the-cloud-must)
     - [PLACE-7 - One category per ParameterSet (SHOULD)](#place-7---one-category-per-parameterset-should)
     - [PLACE-8 - One concern per entity (SHOULD)](#place-8---one-concern-per-entity-should)
+    - [PLACE-9 - One Cloud Passport per cluster (SHOULD)](#place-9---one-cloud-passport-per-cluster-should)
+    - [PLACE-10 - Each entity in its type's directory (MUST)](#place-10---each-entity-in-its-types-directory-must)
   - [Secrets](#secrets)
     - [SEC-1 - No plaintext secrets (MUST)](#sec-1---no-plaintext-secrets-must)
     - [SEC-2 - No mixed plaintext and encrypted secrets (MUST)](#sec-2---no-mixed-plaintext-and-encrypted-secrets-must)
@@ -22,10 +24,9 @@
   - [Integrity](#integrity)
     - [INT-1 - Schema-valid (MUST)](#int-1---schema-valid-must)
     - [INT-2 - Every reference resolves (MUST)](#int-2---every-reference-resolves-must)
-    - [INT-3 - One resolvable Cloud Passport (MUST)](#int-3---one-resolvable-cloud-passport-must)
-    - [INT-4 - No shadowed same-name overrides (SHOULD)](#int-4---no-shadowed-same-name-overrides-should)
-    - [INT-5 - No unreferenced entities (SHOULD)](#int-5---no-unreferenced-entities-should)
-    - [INT-6 - No dead parameters (SHOULD)](#int-6---no-dead-parameters-should)
+    - [INT-3 - No shadowed same-name overrides (SHOULD)](#int-3---no-shadowed-same-name-overrides-should)
+    - [INT-4 - No unreferenced entities (SHOULD)](#int-4---no-unreferenced-entities-should)
+    - [INT-5 - No dead parameters (SHOULD)](#int-5---no-dead-parameters-should)
   - [Naming](#naming)
     - [NAME-1 - One name per concept (SHOULD)](#name-1---one-name-per-concept-should)
     - [NAME-2 - Filename equals `name` (MUST)](#name-2---filename-equals-name-must)
@@ -34,6 +35,8 @@
     - [NAME-5 - Name a Resource Profile Override by baseline and subsystem (SHOULD)](#name-5---name-a-resource-profile-override-by-baseline-and-subsystem-should)
     - [NAME-6 - Name a credential ID by purpose (SHOULD)](#name-6---name-a-credential-id-by-purpose-should)
     - [NAME-7 - Name a Shared Template Variable by purpose (SHOULD)](#name-7---name-a-shared-template-variable-by-purpose-should)
+    - [NAME-8 - Name the Cloud Passport `passport` (SHOULD)](#name-8---name-the-cloud-passport-passport-should)
+    - [NAME-9 - Name an infra Cloud Passport `passport-infra` (SHOULD)](#name-9---name-an-infra-cloud-passport-passport-infra-should)
   - [Values](#values)
     - [VAL-1 - A value's YAML type matches its consumer (MUST)](#val-1---a-values-yaml-type-matches-its-consumer-must)
     - [VAL-2 - Reserved-value semantics (MUST)](#val-2---reserved-value-semantics-must)
@@ -188,7 +191,7 @@ See [Cloud Passport processing](/docs/features/cloud-passport-processing.md).
 
 ```yaml
 # OK - a contract key in the passport
-# environments/cluster-01/cloud-passport/cluster-01.yml
+# environments/cluster-01/cloud-passport/passport.yml
 dbaas:
   DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.example.com
 
@@ -272,6 +275,52 @@ it is a deliberately wired but empty slot.
 
 # Not OK - an empty file committed as configuration
 # parameters/bss-deploy.yml   ->   parameters: {}
+```
+
+### PLACE-9 - One Cloud Passport per cluster (SHOULD)
+
+Keep a cluster's Cloud Passport in `cloud-passport/` at the cluster directory, with its credentials file
+beside it, and nowhere else. A cluster has one default passport (NAME-8) and, for a business/infra
+split, at most one infra passport (NAME-9). Do not place a passport below the cluster level, and do not
+leave more than one passport on an environment's resolution path. A second resolvable passport fails
+generation, because the passport is pointed at by name and never merged, unlike a ParameterSet or
+Resource Profile override. See [Cloud Passport processing](/docs/features/cloud-passport-processing.md)
+for how EnvGene resolves it.
+
+```yaml
+# OK - one default passport at the cluster level (a split adds passport-infra.yml)
+# environments/cluster-01/cloud-passport/passport.yml
+# environments/cluster-01/cloud-passport/passport-creds.yml
+
+# Not OK - a passport below the cluster level
+# environments/cluster-01/env-1/Inventory/cloud-passport/passport.yml
+
+# Not OK - the same passport duplicated on the resolution path
+# environments/cluster-01/cloud-passport/passport.yml
+# environments/cloud-passport/passport.yml
+```
+
+### PLACE-10 - Each entity in its type's directory (MUST)
+
+An authored entity lives only in the directory its type defines: a ParameterSet in `parameters/`, a
+Resource Profile Override in `resource_profiles/`, a Shared Template Variable in
+`shared-template-variables/`, a shared credentials file in `credentials/`, and the Cloud Passport in
+`cloud-passport/` (PLACE-9). The directory name is fixed by the entity type. Which layer it sits at
+follows PLACE-1, and the exact per-layer path, such as an environment-level entity nested under
+`Inventory/`, is the object's Location in [EnvGene Objects](/docs/envgene-objects.md). EnvGene loads an
+entity only from its type's directory, so a file placed elsewhere is silently ignored and ships
+nothing. Generated output directories such as `Credentials/`, `Profiles/`, and the effective set are
+not authored, see TPL-16.
+
+```yaml
+# OK - a ParameterSet in the cluster parameters directory
+# environments/cluster-01/parameters/cluster-bss.yml
+
+# OK - an environment-level ParameterSet nested under Inventory
+# environments/cluster-01/env-1/Inventory/parameters/env-1-bss.yml
+
+# Not OK - a ParameterSet outside its type's directory -> silently ignored, ships nothing
+# environments/cluster-01/env-1/Inventory/env-1-bss.yml
 ```
 
 ## Secrets
@@ -401,26 +450,7 @@ DB_PASSWORD: ${creds.get("bss-db-cred").password}
 DB_PASSWORD: ${creds.get("bss-db-cred").password}
 ```
 
-### INT-3 - One resolvable Cloud Passport (MUST)
-
-An environment that uses a Cloud Passport resolves to exactly one passport file. When
-`env_definition.yml` sets `inventory.cloudPassport: <name>`, exactly one `<name>.{yml,yaml}` exists in
-the search path from the environment directory up to the repository root. With no `cloudPassport` field,
-auto-association takes `cloud-passport/<cluster>.{yml,yaml}` then `cloud-passport/passport.{yml,yaml}`.
-Zero matches or duplicate matches fail generation. Unlike a ParameterSet or Resource Profile, which
-resolves by first-match across scopes (see INT-4, INT-2), the Cloud Passport is pointed at by name and
-never merged, so a duplicate in the path is an error rather than an override.
-
-```yaml
-# OK - the reference resolves to exactly one file
-# env_definition.yml: inventory.cloudPassport: cluster-01
-# environments/cluster-01/cloud-passport/cluster-01.yml   (the one match)
-
-# Not OK - no file named cluster-01 in the path      -> not-found, generation fails
-# Not OK - two files named cluster-01 in the path    -> duplicate, generation fails
-```
-
-### INT-4 - No shadowed same-name overrides (SHOULD)
+### INT-3 - No shadowed same-name overrides (SHOULD)
 
 An env-specific ParameterSet, Credential, Shared
 Template Variable, or Resource Profile resolves by reference name across environment, cluster, and
@@ -437,7 +467,7 @@ distinct name, or keep the override at one scope.
 # environments/cluster-01/env-1/Inventory/parameters/env-1-bss.yml
 ```
 
-### INT-5 - No unreferenced entities (SHOULD)
+### INT-4 - No unreferenced entities (SHOULD)
 
 Remove an authored entity that no reference names: a ParameterSet in no `*ParameterSets` or
 `envSpecific*` list, a Shared Template Variable in no `sharedTemplateVariables` array, a credential no
@@ -453,7 +483,7 @@ the current file or repository, not dead.
 # OK - remove it, or add the reference where it is genuinely needed
 ```
 
-### INT-6 - No dead parameters (SHOULD)
+### INT-5 - No dead parameters (SHOULD)
 
 Delete a parameter no consumer reads. A key is dead by who reads it, not by its value, so a dead key with
 a real value is removed too, and an empty value a consumer reads stays.
@@ -621,6 +651,31 @@ ns-overrides
 # Not OK
 saas-nd-bss-dev-template-variables   # customer, environment, and a generic suffix
 toggles-release-2024.4               # release baked in
+```
+
+### NAME-8 - Name the Cloud Passport `passport` (SHOULD)
+
+Name a cluster's Cloud Passport `passport.yml`, with its credentials in `passport-creds.yml`. Naming it
+`passport` lets every environment in the cluster auto-associate it with no `inventory.cloudPassport`
+field. `.yaml` is equally valid as `.yml`. A passport under any other name still resolves, but only by
+matching the cluster directory name or an explicit reference, which is easier to get wrong.
+
+```yaml
+# OK - cloud-passport/passport.yml (default, auto-associated)
+# Not OK - cloud-passport/cluster-01.yml (relies on the directory name)
+```
+
+### NAME-9 - Name an infra Cloud Passport `passport-infra` (SHOULD)
+
+When a cluster runs a business/infra split (see
+[Split a Cloud Passport for business and infra environments](/docs/how-to/split-cloud-passport-for-business-and-infra.md)),
+name the infra passport `passport-infra.yml`, with credentials in `passport-infra-creds.yml`, alongside
+the default `passport.yml` (NAME-8). Business environments keep auto-associating `passport.yml`. Each
+infra environment references `passport-infra` explicitly with `inventory.cloudPassport: passport-infra`.
+
+```yaml
+# OK - cloud-passport/passport-infra.yml, infra env_definition.yml: inventory.cloudPassport: passport-infra
+# Not OK - cloud-passport/cluster-01-infra.yml (old cluster-based name)
 ```
 
 ## Values
