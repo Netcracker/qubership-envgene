@@ -1929,11 +1929,17 @@ Contains non-sensitive Cloud Passport parameters
 
 **Location:** `/environments/<cluster-name>/cloud-passport/<any-string>.yml|yaml`
 
+The recommended name is `passport.yml`, which auto-associates with every environment in the cluster. An
+additional infra passport (business/infra split) is named `passport-infra.yml`.
+
 #### Credential File
 
 Contains sensitive Cloud Passport parameters
 
 **Location:** `/environments/<cluster-name>/cloud-passport/<any-string>-creds.yml|yaml`
+
+The recommended name is `passport-creds.yml` (and `passport-infra-creds.yml` for the infra passport),
+pairing with the Main File.
 
 ### Artifact Definition
 

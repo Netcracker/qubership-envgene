@@ -1,5 +1,5 @@
 ---
-# Cloud Passport credential file (Environment Credentials File). Pair: cluster.yml. External only.
+# Cloud Passport credential file (Environment Credentials File). Pair: passport.yml. External only.
 cloud-deploy-cred:
   type: external
   create: true

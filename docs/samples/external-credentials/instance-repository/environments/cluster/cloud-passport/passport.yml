@@ -1,5 +1,5 @@
 ---
-# Cloud Passport main file (non-credential fields + credRef pointers). Pair: cluster-creds.yml
+# Cloud Passport main file (non-credential fields + credRef pointers). Pair: passport-creds.yml
 version: 1.0
 cloud:
   CLOUD_API_HOST: api.cluster.example.com
