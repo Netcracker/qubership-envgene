@@ -25,6 +25,7 @@
       - [Composite Structure](#composite-structure)
       - [BG Domain](#bg-domain)
     - [BG State Files](#bg-state-files)
+    - [Namespace map](#namespace-map)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -1440,13 +1441,18 @@ bg_domain:
 - `@origin` → origin namespaces
 - `@peer` → peer namespaces
 
+The BG Domain also supplies `originNamespace.name` and `peerNamespace.name` when
+[`compute_namespace_map`](/docs/features/namespace-map.md) resolves a shared
+[`deployPostfix`](/docs/glossary.md#deploy-postfix) using
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target).
+
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
-The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
+The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) step.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#state-storage).
 
 **Filename patterns:**
 
@@ -1476,6 +1482,32 @@ State files are located in the environment root directory:
 ├── .peer-candidate
 ```
 
+### Namespace map
+
+The namespace map is a flat YAML file that maps each
+[`deployPostfix`](/docs/glossary.md#deploy-postfix) to the Namespace `name` in the
+Environment Instance.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/Inventory/namespace-map.yml`
+
+```yaml
+# Mandatory keys are deployPostfix values from the Solution Descriptor (or equivalent application list)
+# Values are Namespace object name fields from Namespaces/<folder>/namespace.yml
+<deployPostfix>: <namespace-name>
+```
+
+**Example (BG Domain, peer selected):**
+
+```yaml
+bss: env-1-bss-peer
+core: env-1-core
+```
+
+EnvGene builds the file in `compute_namespace_map`. For Blue-Green Domains where origin and peer
+share one `deployPostfix`, resolution requires
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target). See
+[Namespace map](/docs/features/namespace-map.md).
+
 ### Solution Descriptor
 
 The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the [`current_env.solution_structure`](/docs/template-macros.md#current_envsolution_structure) variable.
@@ -1483,6 +1515,12 @@ The Solution Descriptor (SD) defines the application composition of a solution. 
 Other systems can use it for other reasons, for example as a deployment blueprint for external systems.
 
 Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
+
+Application entries use a [`deployPostfix`](/docs/glossary.md#deploy-postfix). In a
+[BG Domain](#bg-domain), origin and peer may share that postfix while their Namespace `name` values
+differ. The SD does not carry [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) or
+`originNamespace.name` / `peerNamespace.name`. EnvGene resolves the Namespace `name` through the
+[Namespace map](#namespace-map).
 
 For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 

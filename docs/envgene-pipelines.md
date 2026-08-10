@@ -52,8 +52,9 @@ flowchart TB
    - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-4. **bg_manage**
-   - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
+4. **bg_manage** (step):
+   - **Condition**: Runs if [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) is one
+     of `BGD-INIT`, `BGD-WARMUP`, `BGD-PROMOTE`, `BGD-ROLLBACK`, or `BGD-COMMIT`.
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **env_inventory_generation**:
@@ -87,6 +88,7 @@ flowchart TB
        5. Handles template Parameter Set and Resource profiles.
        6. Handles environment-specific Parameter Set and Resource profiles.
        7. Creates Credentials including shared Credentials
+       8. Applies [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter), or derives `@origin` / `@peer` from [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) when the filter is empty
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
