@@ -10,6 +10,7 @@
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
     - [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode)
+    - [`BG_NS_TARGET`](#bg_ns_target)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
@@ -121,7 +122,22 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 ### `ENV_TEMPLATE_VERSION`
 
-**Description**: If provided system update Environment Template version in the Environment Inventory. System overrides `envTemplate.templateArtifact.artifact.version` OR `envTemplate.artifact` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+**Description**: If provided, updates the Environment Template version in the Environment Inventory at
+`/environments/<ENV_NAME>/Inventory/env_definition.yml`. The value uses `application:version` notation.
+
+By default the pipeline updates `envTemplate.artifact` (or
+`envTemplate.templateArtifact.artifact.version`).
+
+If optional [`BG_NS_TARGET`](#bg_ns_target) is also provided:
+
+- `origin` - updates `envTemplate.bgNsArtifacts.origin`
+- `peer` - updates `envTemplate.bgNsArtifacts.peer`
+
+How the update is written is controlled by
+[`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode).
+
+For Blue-Green `origin` / `peer` slots, see
+[Environment Instance generation](/docs/features/environment-instance-generation.md) (`bgNsArtifacts`).
 
 **Default Value**: None
 
@@ -131,21 +147,27 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 ### `ENV_TEMPLATE_VERSION_UPDATE_MODE`
 
-**Description**: Controls how ENV_TEMPLATE_VERSION is applied during the pipeline run.
+**Description**: Controls how [`ENV_TEMPLATE_VERSION`](#env_template_version) is applied during the
+pipeline run.
 
 **Allowed values**:
 
 - `PERSISTENT` (default)
-  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
+  Updates the template version field in Environment Inventory
+  (`envTemplate.artifact` / `envTemplate.templateArtifact.artifact.version`, or
+  `envTemplate.bgNsArtifacts.origin` / `peer` when [`BG_NS_TARGET`](#bg_ns_target) is provided).
 
 - `TEMPORARY`
-  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
-  The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update
+  the `envTemplate.*` field in `env_definition.yml`.
+  The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml`
+  to reflect the template artifact version that was actually applied in this run, for example:
 
   ```yaml
   # env_definition.yml
   generatedVersions:
     generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"
+  ```
 
 **Default Value**: `PERSISTENT`
 
@@ -153,29 +175,31 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Example**: `PERSISTENT`
 
-### `ENV_TEMPLATE_VERSION_ORIGIN`
+### `BG_NS_TARGET`
 
-**Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+**Description**: Optional. Selects which Blue-Green namespace role (`origin` or `peer`) the pipeline
+run targets. BG-aware steps use this value when they must distinguish the origin namespace from the
+peer namespace (for example when resolving `deployPostfix` to a namespace in a BG Domain, or when
+updating a template version slot).
 
-This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+When provided together with [`ENV_TEMPLATE_VERSION`](#env_template_version):
+
+- `origin` - updates `envTemplate.bgNsArtifacts.origin`
+- `peer` - updates `envTemplate.bgNsArtifacts.peer`
+
+**Allowed values**:
+
+- `origin`
+- `peer`
+
+On the GitHub pipeline this parameter has no dedicated workflow input. Pass it through
+[`GH_ADDITIONAL_PARAMS`](#gh_additional_params).
 
 **Default Value**: None
 
 **Mandatory**: No
 
-**Example**: `project-env-template:v1.2.3`
-
-### `ENV_TEMPLATE_VERSION_PEER`
-
-**Description**: If provided, system updates the Blue-Green peer template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.peer` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
-
-This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `project-env-template:v1.2.3`
+**Example**: `peer`
 
 ### `ENV_INVENTORY_INIT`
 
