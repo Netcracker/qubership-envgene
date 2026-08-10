@@ -4,6 +4,7 @@ import shutil
 import tempfile
 from os import getenv
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from git import GitCommandError, Repo
 
@@ -12,24 +13,26 @@ from envgenehelper.crypt import get_crypt, is_cred_file
 from envgenehelper.logger import logger
 
 
+def _read_head_content(repo: Repo, rel_path: str):
+    try:
+        head_blob = repo.head.commit.tree[rel_path]
+        return head_blob.hexsha, head_blob.data_stream.read()
+    except KeyError:
+        logger.debug(f'Skipping minimize for new cred file: {rel_path}')
+        return None
+    except (GitCommandError, OSError) as exc:
+        logger.warning(f'Cannot read credential file at HEAD, skipping minimize for {rel_path}: {exc}')
+        return None
+
+
 def _minimize_single_cred_file(
-    repo: Repo,
     base_dir: Path,
     rel_path: str,
     cache_dir: Path,
+    head_blob_sha,
+    head_content,
 ) -> None:
     full_path = base_dir / rel_path
-    try:
-        head_blob = repo.head.commit.tree[rel_path]
-        head_blob_sha = head_blob.hexsha
-        head_content = head_blob.data_stream.read()
-    except KeyError:
-        logger.debug(f'Skipping minimize for new cred file: {rel_path}')
-        return
-    except (GitCommandError, OSError) as exc:
-        logger.warning(f'Cannot read credential file at HEAD, skipping minimize for {rel_path}: {exc}')
-        return
-
     if not full_path.is_file():
         logger.debug(f'Skipping minimize for missing working-tree cred file: {rel_path}')
         return
@@ -82,10 +85,24 @@ def minimize_cred_diffs() -> None:
         logger.error(message)
         raise RuntimeError(message) from exc
 
+    to_process = []
     for rel_path in changed_paths:
-        rel_path = rel_path.strip()
-        if not rel_path:
-            continue
         if not is_cred_file(str(base_dir / rel_path)):
             continue
-        _minimize_single_cred_file(repo, base_dir, rel_path, cache_dir)
+        result = _read_head_content(repo, rel_path)
+        if result is None:
+            continue
+        head_blob_sha, head_content = result
+        to_process.append((rel_path, head_blob_sha, head_content))
+        
+    if not to_process:
+        return
+
+    max_workers = min(len(to_process), os.cpu_count() or 4)
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futures = {
+            ex.submit(_minimize_single_cred_file, base_dir, rel_path, cache_dir, sha, content): rel_path
+            for rel_path, sha, content in to_process
+        }
+        for f in as_completed(futures):
+            f.result()
