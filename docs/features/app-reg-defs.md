@@ -224,3 +224,5 @@ For example:
   placement-mode scenarios.
 - [Artifact downloading use cases](/docs/use-cases/artifact-downloading.md) - supported registries and authentication
   for SD and Environment Template downloads.
+- [Configure cloud artifact registries](/docs/how-to/configure-cloud-artifact-registries.md) - step-by-step setup for
+  AWS CodeArtifact and GCP Artifact Registry using RegDef/ArtDef v2.0.

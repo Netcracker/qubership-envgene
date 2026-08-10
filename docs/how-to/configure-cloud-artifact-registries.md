@@ -4,34 +4,39 @@
   - [Two registry contexts in EnvGene](#two-registry-contexts-in-envgene)
   - [Prerequisites](#prerequisites)
   - [AWS CodeArtifact configuration](#aws-codeartifact-configuration)
-    - [AWS-side: required permissions](#aws-side-required-permissions)
-    - [Step 1: Create the credential entry](#step-1-create-the-credential-entry)
-    - [Step 2: Create the registry definition](#step-2-create-the-registry-definition)
-    - [Step 3: Reference the registry in an Artifact or Application Definition](#step-3-reference-the-registry-in-an-artifact-or-application-definition)
+    - [AWS-configuration: required permissions](#aws-configuration-required-permissions)
+    - [AWS Step 1: Create the credential entry](#aws-step-1-create-the-credential-entry)
+    - [AWS Step 2: Create the registry definition](#aws-step-2-create-the-registry-definition)
+    - [AWS Step 3: Reference the registry in an Artifact or Application Definition](#aws-step-3-reference-the-registry-in-an-artifact-or-application-definition)
     - [AWS authentication flow](#aws-authentication-flow)
   - [GCP Artifact Registry configuration](#gcp-artifact-registry-configuration)
     - [GCP-side: required permissions](#gcp-side-required-permissions)
-    - [Step 1: Create the credential entry](#step-1-create-the-credential-entry-1)
-    - [Step 2: Create the registry definition](#step-2-create-the-registry-definition-1)
-    - [Step 3: Reference the registry in an Artifact or Application Definition](#step-3-reference-the-registry-in-an-artifact-or-application-definition-1)
+    - [GCP Step 1: Create the credential entry](#gcp-step-1-create-the-credential-entry)
+    - [GCP Step 2: Create the registry definition](#gcp-step-2-create-the-registry-definition)
+    - [GCP Step 3: Reference the registry in an Artifact or Application Definition](#gcp-step-3-reference-the-registry-in-an-artifact-or-application-definition)
     - [GCP authentication flow](#gcp-authentication-flow)
   - [Placing configuration files](#placing-configuration-files)
   - [Supported auth methods reference](#supported-auth-methods-reference)
-  - [Troubleshooting](#troubleshooting)
+  - [See also](#see-also)
 
-EnvGene downloads Maven artifacts (Solution Descriptors, Deployment Descriptors, and environment
-templates) from AWS CodeArtifact and GCP Artifact Registry using Registry Definition v2.0 with an
-`authConfig` block. This guide walks through each provider step by step.
+EnvGene downloads Maven artifacts ([Solution Descriptors](/docs/envgene-objects.md#solution-descriptor), Deployment Descriptors, and environment templates) from external cloud registries like AWS CodeArtifact and GCP Artifact Registry using [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20) with an `authConfig` block. This guide walks through each provider step by step.
+
+> [!IMPORTANT]
+> **Pulling EnvGene Docker images from cloud registries (GAR, ECR) during pipeline execution is supported only in the GitHub workflow.**
+>
+> GitLab CI does not support pulling images from cloud registries. Use an internal Nexus or Artifactory mirror instead.
+>
+> **Publishing environment template build artifacts to external cloud registries (GAR, ECR) is not currently supported.**
 
 ## Two registry contexts in EnvGene
 
 EnvGene uses the term "registry" in two distinct contexts. Keep them separate when you read
 documentation or configure the system.
 
-| Context                  | Purpose                                              | Configured via                                                              |
-|--------------------------|------------------------------------------------------|-----------------------------------------------------------------------------|
-| A. Artifact registries   | Download Maven artifacts (SD, DD, env templates)     | RegDef v2.0 or ArtDef v2.0 with `authConfig`                               |
-| B. Image registries      | Pull EnvGene's own container images in CI            | GitHub repository variables (`DOCKER_REGISTRY`, `DOCKER_CLOUD_REGISTRY_PROVIDER`, `GCP_SA_KEY`) |
+| Context                    | Purpose                                                        | Configured via                                                                                                                                                                 |
+| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **A. Artifact registries** | Download Maven artifacts (SDs, DDs, and environment templates) | [RegDef v2.0](/docs/envgene-objects.md#registry-definition-v20) or [Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20) with `authConfig` |
+| **B. Image registries**    | Pull EnvGene container images during CI                        | GitHub repository variables: `DOCKER_REGISTRY`, `DOCKER_CLOUD_REGISTRY_PROVIDER`, and `GCP_SA_KEY`                                                         |
 
 This guide covers Context A only. For image registry configuration (Context B), see
 [Using Docker Registries in EnvGene GitHub Workflow](/docs/how-to/docker-registry-configuration.md).
@@ -39,13 +44,18 @@ This guide covers Context A only. For image registry configuration (Context B), 
 ## Prerequisites
 
 - An instance repository with the EnvGene workflow installed.
-- Write access to `configuration/registry_definitions/` and `configuration/credentials/` in the
+- Write access to `configuration/regdefs/` and `configuration/credentials/` in the
   instance repository.
 - AWS or GCP credentials ready (see the provider-specific sections below).
 
 ## AWS CodeArtifact configuration
 
-### AWS-side: required permissions
+> [!WARNING]
+> AWS CodeArtifact support is not tested end-to-end. The `authMethod: secret` implementation is
+> present in code but has not been validated against a live CodeArtifact repository. Use with
+> caution and report issues if encountered.
+
+### AWS-configuration: required permissions
 
 The IAM user or role whose access key you use must have the following CodeArtifact permissions on
 the target domain and repository:
@@ -55,16 +65,16 @@ the target domain and repository:
 | `codeartifact:GetAuthorizationToken`    | Obtain a temporary download token               |
 | `codeartifact:GetRepositoryEndpoint`    | Resolve the Maven repository URL                |
 | `codeartifact:ReadFromRepository`       | Download artifacts from the repository          |
-| `sts:GetServiceBearerToken`             | Exchange credentials for an authorisation token |
+| `sts:GetServiceBearerToken`             | Exchange credentials for an Authorization token |
 
-To create an IAM user or role with these permissions and generate an access key, follow the official
+To create an IAM user or role with these permissions and Create an access key pair, follow the official
 AWS guides:
 
 - [Create an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
 - [CodeArtifact permissions reference](https://docs.aws.amazon.com/codeartifact/latest/ug/auth-and-access-control-iam-access-control-identity-based.html)
 - [Create an IAM access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
 
-### Step 1: Create the credential entry
+### AWS Step 1: Create the credential entry
 
 Add an entry to `configuration/credentials/credentials.yml` in the instance repository:
 
@@ -84,10 +94,10 @@ aws-codeartifact-creds:
 To encrypt the credential value, see
 [Credential Encryption](/docs/how-to/credential-encryption.md).
 
-### Step 2: Create the registry definition
+### AWS Step 2: Create the registry definition
 
 Create a Registry Definition v2.0 file, for example
-`configuration/registry_definitions/aws-codeartifact.yaml`:
+`configuration/regdefs/aws-codeartifact.yaml`:
 
 ```yaml
 version: "2.0"
@@ -111,7 +121,7 @@ Field reference:
 | `authConfig.<key>.provider`        | Must be `aws`                                                                   |
 | `authConfig.<key>.authMethod`      | Must be `secret` (the only implemented AWS auth method)                         |
 | `authConfig.<key>.credentialsId`   | Must match the key in `credentials.yml`                                         |
-| `authConfig.<key>.awsRegion`       | AWS region where the CodeArtifact domain is hosted (for example, `us-east-1`)  |
+| `authConfig.<key>.awsRegion`       | AWS region where the CodeArtifact domain is hosted (for example, `us-east-1`)   |
 | `authConfig.<key>.awsDomain`       | CodeArtifact domain name, without the account suffix                            |
 | `mavenConfig.authConfig`           | Must match the auth config key defined above (for example, `aws-auth`)          |
 | `mavenConfig.repositoryDomainName` | Full Maven endpoint URL from the AWS CodeArtifact console                       |
@@ -119,9 +129,9 @@ Field reference:
 To find the `repositoryDomainName`, open the AWS CodeArtifact console, select your repository, and
 copy the **Connection instructions - Maven** endpoint URL.
 
-### Step 3: Reference the registry in an Artifact or Application Definition
+### AWS Step 3: Reference the registry in an Artifact or Application Definition
 
-**For SD/DD artifacts (Application Definition v1.0 + Registry Definition v2.0):**
+**For SD/DD artifacts ([Application Definition v1.0](/docs/envgene-objects.md#application-definition) + [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)):**
 
 ```yaml
 # configuration/app_definitions/my-app.yaml
@@ -131,10 +141,10 @@ groupId: "com.example"
 artifactId: "my-app"
 ```
 
-**For environment templates (Artifact Definition v2.0):**
+**For environment templates ([Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20)):**
 
 ```yaml
-# configuration/artifact_definitions/env-template.yaml
+# configuration/appdefs/env-template.yaml
 version: "2.0"
 name: "env-template"
 groupId: "com.example.templates"
@@ -187,7 +197,7 @@ Cloud guides:
 - [Grant an IAM role on an Artifact Registry repository](https://cloud.google.com/artifact-registry/docs/access-control#grant-repo)
 - [Create and manage service account keys](https://cloud.google.com/iam/docs/keys-create-delete)
 
-### Step 1: Create the credential entry
+### GCP Step 1: Create the credential entry
 
 Add an entry to `configuration/credentials/credentials.yml` in the instance repository:
 
@@ -214,10 +224,10 @@ Paste the full content of `sa-key.json` as the value.
 To encrypt the credential value, see
 [Credential Encryption](/docs/how-to/credential-encryption.md).
 
-### Step 2: Create the registry definition
+### GCP Step 2: Create the registry definition
 
 Create a Registry Definition v2.0 file, for example
-`configuration/registry_definitions/gcp-artifact-registry.yaml`:
+`configuration/regdefs/gcp-artifact-registry.yaml`:
 
 ```yaml
 version: "2.0"
@@ -235,21 +245,21 @@ mavenConfig:
 
 Field reference:
 
-| Field                              | Description                                                                       |
-|------------------------------------|-----------------------------------------------------------------------------------|
-| `authConfig.<key>.provider`        | Must be `gcp`                                                                     |
-| `authConfig.<key>.authMethod`      | Must be `service_account` (the only implemented GCP auth method)                  |
-| `authConfig.<key>.credentialsId`   | Must match the key in `credentials.yml`                                           |
-| `authConfig.<key>.gcpRegion`       | GCP region where the repository is hosted (for example, `us-central1`)            |
-| `mavenConfig.authConfig`           | Must match the auth config key defined above (for example, `gcp-auth`)            |
+| Field                              | Description                                                                        |
+|------------------------------------|------------------------------------------------------------------------------------|
+| `authConfig.<key>.provider`        | Must be `gcp`                                                                      |
+| `authConfig.<key>.authMethod`      | Must be `service_account` (the only implemented GCP auth method)                   |
+| `authConfig.<key>.credentialsId`   | Must match the key in `credentials.yml`                                            |
+| `authConfig.<key>.gcpRegion`       | GCP region where the repository is hosted (for example, `us-central1`)             |
+| `mavenConfig.authConfig`           | Must match the auth config key defined above (for example, `gcp-auth`)             |
 | `mavenConfig.repositoryDomainName` | Full Maven endpoint URL: `https://REGION-maven.pkg.dev/PROJECT_ID/REPOSITORY_NAME` |
 
 To find the `repositoryDomainName`, open the GCP Artifact Registry console, select your Maven
 repository, and copy the endpoint URL from the repository details panel.
 
-### Step 3: Reference the registry in an Artifact or Application Definition
+### GCP Step 3: Reference the registry in an Artifact or Application Definition
 
-**For SD/DD artifacts (Application Definition v1.0 + Registry Definition v2.0):**
+**For SD/DD artifacts ([Application Definition v1.0](/docs/envgene-objects.md#application-definition) + [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)):**
 
 ```yaml
 # configuration/app_definitions/my-app.yaml
@@ -259,15 +269,16 @@ groupId: "com.example"
 artifactId: "my-app"
 ```
 
-**For environment templates (Artifact Definition v2.0):**
+**For environment templates ([Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20)):**
 
 ```yaml
-# configuration/artifact_definitions/env-template.yaml
+# configuration/appdefs/env-template.yaml
 version: "2.0"
 name: "env-template"
 groupId: "com.example.templates"
 artifactId: "env-template"
 registry:
+  version: "2.0"
   name: "gcp-artifact-registry"
   authConfig:
     gcp-auth:
@@ -283,10 +294,8 @@ registry:
 ### GCP authentication flow
 
 1. EnvGene resolves the `authConfig` block with `provider: gcp` and `authMethod: service_account`.
-2. The credential identified by `credentialsId` is loaded from `credentials.yml`. The `secret`
-   field must contain the full JSON of a GCP service account key.
-3. EnvGene exchanges the service account key for a short-lived OAuth 2.0 access token using the
-   GCP credentials provider library.
+2. The credential identified by `credentialsId` is loaded from `credentials.yml`. The `secret` field must contain the full JSON of a GCP service account key.
+3. EnvGene exchanges the service account key for a short-lived OAuth 2.0 access token using the GCP credentials provider library.
 4. The access token is attached to all Maven download requests as `Authorization: Bearer <token>`.
 5. Maven artifacts are downloaded from the `repositoryDomainName` endpoint.
 
@@ -294,16 +303,16 @@ registry:
 
 Files can be placed at two levels. EnvGene resolves them with per-environment overriding root-level.
 
-| Level           | Path                                                                      | Scope                        |
-|-----------------|---------------------------------------------------------------------------|------------------------------|
-| Root            | `configuration/registry_definitions/<name>.yaml`                          | All environments             |
-| Per-environment | `environments/<cluster>/<env>/configuration/registry_definitions/<name>.yaml` | This environment only    |
+| Level           | Path                                                             | Scope                |
+|-----------------|------------------------------------------------------------------|----------------------|
+| Root            | `configuration/regdefs/<name>.yaml`                              | All environments     |
+| Per-environment | `environments/<cluster>/<env>/configuration/regdefs/<name>.yaml` | This environment only|
 
 Credentials follow the same pattern:
 
-| Level           | Path                                                            |
-|-----------------|-----------------------------------------------------------------|
-| Root            | `configuration/credentials/credentials.yml`                     |
+| Level           | Path                                                                     |
+|-----------------|--------------------------------------------------------------------------|
+| Root            | `configuration/credentials/credentials.yml`                              |
 | Per-environment | `environments/<cluster>/<env>/configuration/credentials/credentials.yml` |
 
 Use root-level placement for registries shared across environments. Use per-environment placement
@@ -311,58 +320,26 @@ when different environments use different registries or accounts.
 
 ## Supported auth methods reference
 
-| Provider       | Auth method        | Implemented       | Credential type    | Credential fields                                  |
-|----------------|--------------------|-------------------|--------------------|----------------------------------------------------|
+| Provider       | Auth method        | Implemented       | Credential type    | Credential fields                                   |
+|----------------|--------------------|-------------------|--------------------|--------------------------------------------------- -|
 | `aws`          | `secret`           | Yes               | `usernamePassword` | `username` = access key ID, `password` = secret key |
-| `aws`          | `assume_role`      | No (raises error) | -                  | -                                                  |
-| `gcp`          | `service_account`  | Yes               | `secret`           | `secret` = full JSON of GCP service account key    |
-| `gcp`          | `federation`       | No (raises error) | -                  | -                                                  |
-| `nexus`        | `user_pass`        | Yes               | `usernamePassword` | `username`, `password`                             |
-| `artifactory`  | `user_pass`        | Yes               | `usernamePassword` | `username`, `password`                             |
-| any            | `anonymous`        | Yes               | none               | -                                                  |
+| `aws`          | `assume_role`      | No (raises error) | -                  | -                                                   |
+| `gcp`          | `service_account`  | Yes               | `secret`           | `secret` = full JSON of GCP service account key     |
+| `gcp`          | `federation`       | No (raises error) | -                  | -                                                   |
+| `nexus`        | `user_pass`        | Yes               | `usernamePassword` | `username`, `password`                              |
+| `artifactory`  | `user_pass`        | Yes               | `usernamePassword` | `username`, `password`                              |
+| any            | `anonymous`        | Yes               | none               | -                                                   |
 
 > [!WARNING]
-> The `assume_role` (AWS) and `federation` (GCP) auth methods appear in the schema but are not
-> implemented. Using them causes a runtime error. Use `secret` for AWS and `service_account` for
-> GCP.
+> The `assume_role` (AWS) and `federation` (GCP) auth methods appear in the schema but are not implemented. Using them causes a runtime error. Use `secret` for AWS and `service_account` for GCP.
 
-## Troubleshooting
+## See also
 
-**"AWS secret auth requires both username and password in credentials"**
-
-The credential type is wrong. AWS requires `type: usernamePassword` - not `type: secret`. Check
-that your `credentials.yml` entry matches the example in
-[Step 1: Create the credential entry](#step-1-create-the-credential-entry).
-
-**"GCP service_account requires credential with 'secret' field containing SA JSON key"**
-
-The credential is missing the `secret` field, or the type is not `secret`. Check that your
-`credentials.yml` entry uses `type: secret` with `data.secret` containing the full service account
-JSON.
-
-**"GCP service account key must be valid JSON"**
-
-The value in `data.secret` is not valid JSON. Paste the raw content of the service account key
-file. Do not base64-encode or otherwise transform it.
-
-**"AuthConfig 'X' not found in registry 'Y'"**
-
-The `mavenConfig.authConfig` value in your RegDef or ArtDef does not match any key under
-`authConfig`. The value is case-sensitive - check for typos at both ends.
-
-**Credential not found**
-
-The `credentialsId` in your `authConfig` block does not match any top-level key in
-`credentials.yml`. Check the spelling at both ends.
-
-**AWS token request fails with "access denied"**
-
-The IAM user does not have `codeartifact:GetAuthorizationToken` or `sts:GetServiceBearerToken`
-permissions. Review the policy in
-[AWS-side: required permissions](#aws-side-required-permissions).
-
-**GCP returns 403 Forbidden on artifact download**
-
-The service account does not have `roles/artifactregistry.reader` on the target repository. Run
-the `gcloud artifacts repositories add-iam-policy-binding` command from
-[GCP-side: required permissions](#gcp-side-required-permissions).
+- [Registry Definition v2.0 schema](/docs/envgene-objects.md#registry-definition-v20) - full field reference for Registry Definition v2.0 including all `authConfig` fields.
+- [Artifact Definition v2.0 schema](/docs/envgene-objects.md#artifact-definition-v20) - full field reference for Artifact Definition v2.0.
+- [Application Definition schema](/docs/envgene-objects.md#application-definition) - field reference for Application Definition v1.0 used for SD/DD artifact downloads.
+- [Application and Registry Definition](/docs/features/app-reg-defs.md) - how AppDefs and RegDefs are rendered, resolved, and overridden in the pipeline.
+- [Artifact resolution](/docs/features/artifact-resolution.md) - how EnvGene constructs Maven URLs and resolves SNAPSHOT versions for cloud registries.
+- [Artifact downloading use cases](/docs/use-cases/artifact-downloading.md) - end-to-end use case scenarios for AWS CodeArtifact and GCP Artifact Registry.
+- [Credential Encryption](/docs/how-to/credential-encryption.md) - how to encrypt credential values in `credentials.yml` before committing to the instance repository.
+- [Using Docker Registries in EnvGene GitHub Workflow](/docs/how-to/docker-registry-configuration.md) - image registry configuration (Context B, separate from Maven artifact registries).
