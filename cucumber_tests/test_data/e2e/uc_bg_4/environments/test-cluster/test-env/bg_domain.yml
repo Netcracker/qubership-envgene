@@ -1,6 +1,0 @@
-controllerNamespace:
-  name: controller-ns
-originNamespace:
-  name: origin-ns
-peerNamespace:
-  name: peer-ns
