@@ -13,9 +13,8 @@ from pydantic import BaseModel, Field
 from envgenehelper import logger, writeToFile
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
-from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType
+from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, DeltaDeployType
 from envgenehelper.plugin_engine import PluginEngine
-from modules.envgene.envgenehelper import DeltaDeployType
 
 
 class PipelineParametersHandler(BaseModel):
