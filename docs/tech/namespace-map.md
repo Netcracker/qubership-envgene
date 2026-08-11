@@ -8,8 +8,6 @@
   - [Role of `BG_NS_TARGET`](#role-of-bg_ns_target)
   - [Consumers](#consumers)
   - [Validation](#validation)
-  - [Out of scope](#out-of-scope)
-  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -155,22 +153,3 @@ Example error intent:
 BG_NS_TARGET is required to resolve deployPostfix 'bss': both origin and peer Namespaces
 belong to the BG Domain.
 ```
-
-## Out of scope
-
-- BGD lifecycle operations and state-file transitions
-- Interpreting `ACTIVE`, `IDLE`, or `CANDIDATE` as `BG_NS_TARGET`
-- Changing the Solution Descriptor schema
-- Calculator output layout and parameter tables (see [Calculator CLI](/docs/features/calculator-cli.md))
-
-## Related documentation
-
-- [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)
-- [Namespace map object](/docs/envgene-objects.md#namespace-map)
-- [Deployment Plan](/docs/envgene-objects.md#deployment-plan)
-- [Deployment Plan namespace matching](/docs/features/calculator-cli.md#version-20-deployment-plan-namespace-matching)
-- [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic)
-- [BG Domain](/docs/envgene-objects.md#bg-domain)
-- [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor)
-- [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
-- [Namespace render filtering](/docs/features/namespace-render-filtering.md)
