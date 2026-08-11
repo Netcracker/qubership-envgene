@@ -135,11 +135,10 @@ not name `originNamespace.name` or `peerNamespace.name`.
   `deploy-plan[].namespace == Namespace.name`. See
   [Deployment Plan namespace matching](/docs/features/calculator-cli.md#version-20-deployment-plan-namespace-matching).
   It does not read `BG_NS_TARGET`.
+- **`env_build`** receives the selected Namespace `name` values from the map when a Solution
+  Descriptor is supplied for the run, and re-renders only those Namespaces. See
+  [Namespace render filtering](/docs/features/namespace-render-filtering.md).
 - Other modern-pipeline steps that need `deployPostfix` → Namespace `name` use the same map.
-
-Namespace-map resolution is separate from
-[Namespace Render Filter](/docs/features/namespace-render-filtering.md), which limits which
-Namespaces `env_build` re-renders.
 
 ## Validation
 
@@ -174,4 +173,4 @@ belong to the BG Domain.
 - [BG Domain](/docs/envgene-objects.md#bg-domain)
 - [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor)
 - [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
-- [Namespace Render Filter](/docs/features/namespace-render-filtering.md)
+- [Namespace render filtering](/docs/features/namespace-render-filtering.md)
