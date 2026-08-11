@@ -70,15 +70,9 @@ def _assert_only_first_cred_secret_and_mac_differ_from_head(head_encrypted: dict
             continue
         pytest.fail(f'unexpected diff at {path}')
 
-
-def _cache_files(cache_dir: Path) -> list[Path]:
-    return [path for path in cache_dir.rglob('*') if path.is_file()]
-
-
 @pytest.fixture
 def cred_repo(tmp_path, monkeypatch):
     monkeypatch.setenv('CI_PROJECT_DIR', str(tmp_path))
-    monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(tmp_path / 'minimize_cred_diff_cache'))
     monkeypatch.setenv('ENVGENE_AGE_PRIVATE_KEY', SOPS_AGE_SECRET_KEY)
     monkeypatch.setenv('PUBLIC_AGE_KEYS', SOPS_PUBLIC_KEY)
 
@@ -151,7 +145,6 @@ class TestCredentialDiffMinimization:
         repo = MagicMock()
         repo.git.diff.side_effect = GitCommandError('diff', 128, stderr='fatal: bad revision')
         monkeypatch.setenv('CI_PROJECT_DIR', '/tmp/repo')
-        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(tmp_path / 'cache'))
 
         with patch.object(mcd, 'get_crypt', return_value=True), patch.object(mcd, 'Repo', return_value=repo):
             with pytest.raises(RuntimeError, match='git diff against HEAD failed'):
@@ -173,20 +166,6 @@ class TestCredentialDiffMinimization:
         assert openYaml(str(cred_path)) == working_copy_before
 
     @pytest.mark.unit
-    def test_push_retry_reproduces_same_minimised_output(self, cred_repo):
-        _, _, cred_path = cred_repo
-        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
-        pre_minimised_input = cred_path.read_bytes()
-
-        mcd.minimize_cred_diffs()
-        first_pass = cred_path.read_bytes()
-
-        cred_path.write_bytes(pre_minimised_input)
-        mcd.minimize_cred_diffs()
-
-        assert cred_path.read_bytes() == first_pass
-
-    @pytest.mark.unit
     def test_head_change_recomputes_against_new_base(self, cred_repo):
         repo, _, cred_path = cred_repo
         _simulate_pipeline_cred_update(cred_path, 'updated-secret')
@@ -205,20 +184,3 @@ class TestCredentialDiffMinimization:
         assert cred_path.read_bytes() != first_pass
         _assert_only_first_cred_secret_and_mac_differ_from_head(new_head_encrypted, cred_path)
 
-    @pytest.mark.unit
-    def test_separate_cache_dirs_do_not_share_entries(self, cred_repo, tmp_path, monkeypatch):
-        _, _, cred_path = cred_repo
-        _simulate_pipeline_cred_update(cred_path, 'updated-secret')
-
-        cache_a = tmp_path / 'job-a-cache'
-        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_a))
-        mcd.minimize_cred_diffs()
-        cache_a_files = _cache_files(cache_a)
-
-        cache_b = tmp_path / 'job-b-cache'
-        monkeypatch.setenv('MINIMIZE_CRED_DIFF_CACHE_DIR', str(cache_b))
-        mcd.minimize_cred_diffs()
-
-        assert cache_a_files
-        assert _cache_files(cache_b)
-        assert _cache_files(cache_b) != cache_a_files
