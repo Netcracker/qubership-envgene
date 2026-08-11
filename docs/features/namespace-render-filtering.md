@@ -30,7 +30,7 @@ not intend to change.
 
 This filter answers which Namespaces `env_build` may rewrite. It does not resolve Solution
 Descriptor `deployPostfix` values to a Namespace `name`. That resolution belongs to
-[Namespace map](/docs/features/namespace-map.md).
+[Namespace map](/docs/tech/namespace-map.md).
 
 ## Syntax
 
@@ -133,5 +133,5 @@ Mixed use of aliases and names is not allowed.
 
 - [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter)
 - [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)
-- [Namespace map](/docs/features/namespace-map.md)
+- [Namespace map](/docs/tech/namespace-map.md)
 - [Blue-Green Deployment](/docs/features/blue-green-deployment.md)

@@ -203,9 +203,6 @@ a BG Domain, `compute_namespace_map` requires `BG_NS_TARGET` to write
 - `origin` - map that postfix to `bg_domain.originNamespace.name`
 - `peer` - map that postfix to `bg_domain.peerNamespace.name`
 
-See [Namespace map](/docs/features/namespace-map.md). The Deployment Plan Generator consumes the map
-and does not re-read `BG_NS_TARGET`.
-
 **Namespace render filter.** When [`NS_BUILD_FILTER`](#ns_build_filter) is empty and `BG_NS_TARGET`
 is `origin` or `peer`, EnvGene applies the same effect as `NS_BUILD_FILTER=@origin` or
 `NS_BUILD_FILTER=@peer` during `env_build`. An explicitly set `NS_BUILD_FILTER` always wins. See

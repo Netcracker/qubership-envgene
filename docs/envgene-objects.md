@@ -26,6 +26,7 @@
       - [BG Domain](#bg-domain)
     - [BG State Files](#bg-state-files)
     - [Namespace map](#namespace-map)
+    - [Deployment Plan](#deployment-plan)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -1454,11 +1455,6 @@ bg_domain:
 - `@origin` → origin namespaces
 - `@peer` → peer namespaces
 
-The BG Domain also supplies `originNamespace.name` and `peerNamespace.name` when
-[`compute_namespace_map`](/docs/features/namespace-map.md) resolves a shared
-[`deployPostfix`](/docs/glossary.md#deploy-postfix) using
-[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target).
-
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
@@ -1518,8 +1514,25 @@ core: env-1-core
 
 EnvGene builds the file in `compute_namespace_map`. For Blue-Green Domains where origin and peer
 share one `deployPostfix`, resolution requires
-[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target). See
-[Namespace map](/docs/features/namespace-map.md).
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target).
+
+### Deployment Plan
+
+The Deployment Plan is an internal Environment Inventory file. EnvGene builds it from the
+application list (Solution Descriptor or equivalent) and the
+[Namespace map](#namespace-map). Downstream steps, including Effective Set generation, consume it.
+Operators do not author it by hand.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/Inventory/deploy-plan.yml`
+
+Each list entry extends an application deploy item with the resolved Namespace `name`:
+
+```yaml
+- wave: <wave>
+  version: <application-name>:<application-version>
+  deployPostfix: <deploy-postfix>
+  namespace: <namespace-name>
+```
 
 ### Solution Descriptor
 

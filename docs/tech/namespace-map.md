@@ -13,6 +13,9 @@
 
 ## Description
 
+This document is the technical contract for `compute_namespace_map`. For the file shape, see
+[Namespace map object](/docs/envgene-objects.md#namespace-map).
+
 The namespace map resolves a
 [`deployPostfix`](/docs/glossary.md#deploy-postfix) from a
 [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) (or an equivalent application
@@ -128,6 +131,10 @@ not name `originNamespace.name` or `peerNamespace.name`.
 
 - **Deployment Plan Generator** reads `namespace-map.yml` and sets the `namespace` field on each
   Deployment Plan entry from `deployPostfix`. It does not interpret `BG_NS_TARGET` again.
+- **Effective Set Calculator** matches each Deployment Plan entry to a Namespace by
+  `deploy-plan[].namespace == Namespace.name`. See
+  [Deployment Plan namespace matching](/docs/features/calculator-cli.md#version-20-deployment-plan-namespace-matching).
+  It does not read `BG_NS_TARGET`.
 - Other modern-pipeline steps that need `deployPostfix` → Namespace `name` use the same map.
 
 Namespace-map resolution is separate from
@@ -155,13 +162,15 @@ belong to the BG Domain.
 - BGD lifecycle operations and state-file transitions
 - Interpreting `ACTIVE`, `IDLE`, or `CANDIDATE` as `BG_NS_TARGET`
 - Changing the Solution Descriptor schema
-- Effective Set folder-selection internals beyond consuming an already resolved Deployment Plan
-  namespace (see open Effective Set work)
+- Calculator output layout and parameter tables (see [Calculator CLI](/docs/features/calculator-cli.md))
 
 ## Related documentation
 
 - [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)
 - [Namespace map object](/docs/envgene-objects.md#namespace-map)
+- [Deployment Plan](/docs/envgene-objects.md#deployment-plan)
+- [Deployment Plan namespace matching](/docs/features/calculator-cli.md#version-20-deployment-plan-namespace-matching)
+- [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic)
 - [BG Domain](/docs/envgene-objects.md#bg-domain)
 - [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor)
 - [Blue-Green Deployment](/docs/features/blue-green-deployment.md)

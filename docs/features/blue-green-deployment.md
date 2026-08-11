@@ -36,7 +36,7 @@ For BGD, EnvGene:
   generation and validates that every referenced namespace exists in the Environment
 - resolves a shared Solution Descriptor `deployPostfix` to the origin or peer Namespace `name`
   through [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) and the
-  [Namespace map](/docs/features/namespace-map.md)
+  [Namespace map](/docs/tech/namespace-map.md).
 - regenerates selected namespaces by name, BG Domain role alias, or derivation from `BG_NS_TARGET`
   ([Namespace Render Filter](/docs/features/namespace-render-filtering.md))
 - creates and updates [BG state files](#state-storage) for lifecycle operations
@@ -117,8 +117,7 @@ Two independent effects:
 
 1. **Namespace map** - when origin and peer share a Solution Descriptor `deployPostfix`,
    `compute_namespace_map` requires `BG_NS_TARGET` and writes the matching Namespace `name` into
-   [`namespace-map.yml`](/docs/envgene-objects.md#namespace-map). The Deployment Plan Generator
-   consumes that map. See [Namespace map](/docs/features/namespace-map.md).
+   [`namespace-map.yml`](/docs/envgene-objects.md#namespace-map).
 2. **Render filter** - when `NS_BUILD_FILTER` is empty, `BG_NS_TARGET` applies the effect of
    `@origin` or `@peer` so `env_build` does not rewrite the other BG side. See
    [Namespace Render Filter](/docs/features/namespace-render-filtering.md).
@@ -321,7 +320,7 @@ Macros that read the BG Domain when it exists:
 - [Migrate to Blue-Green Deployment](/docs/how-to/blue-green-deployment-migration.md)
 - [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md)
 - [Blue-Green Deployment Use Cases](/docs/use-cases/blue-green-deployment.md)
-- [Namespace map](/docs/features/namespace-map.md)
+- [Namespace map](/docs/tech/namespace-map.md)
 - [Namespace Render Filter](/docs/features/namespace-render-filtering.md)
 - [BG Domain object](/docs/envgene-objects.md#bg-domain)
 - [BG Domain Template](/docs/envgene-objects.md#bg-domain-template)
