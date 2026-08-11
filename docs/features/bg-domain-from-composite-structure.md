@@ -158,7 +158,8 @@ After EnvGene generates or renders standalone `bg_domain.yml`, consumers that re
 as for any Environment with a BG Domain, including:
 
 - [Blue-Green Deployment](/docs/features/blue-green-deployment.md) lifecycle (`bg_manage`)
-- Namespace role aliases such as `@origin` / `@peer`
+- Namespace map resolution for shared `deployPostfix` values with
+  [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)
 - Effective Set Topology Context `bg_domain` (see
   [calculator-cli](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example))
 

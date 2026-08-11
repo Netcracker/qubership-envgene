@@ -23,7 +23,6 @@
     - [`SD_VERSION`](#sd_version)
     - [`SD_DATA`](#sd_data)
     - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
-    - [`NS_BUILD_FILTER`](#ns_build_filter)
     - [`DEPLOYMENT_SESSION_ID`](#deployment_session_id)
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
@@ -203,10 +202,9 @@ a BG Domain, `compute_namespace_map` requires `BG_NS_TARGET` to write
 - `origin` - map that postfix to `bg_domain.originNamespace.name`
 - `peer` - map that postfix to `bg_domain.peerNamespace.name`
 
-**Namespace render filter.** When [`NS_BUILD_FILTER`](#ns_build_filter) is empty and `BG_NS_TARGET`
-is `origin` or `peer`, EnvGene applies the same effect as `NS_BUILD_FILTER=@origin` or
-`NS_BUILD_FILTER=@peer` during `env_build`. An explicitly set `NS_BUILD_FILTER` always wins. See
-[Namespace Render Filter](/docs/features/namespace-render-filtering.md).
+`BG_NS_TARGET` is not a Namespace render filter. After the map holds concrete Namespace `name`
+values, `env_build` uses that list. See
+[Namespace render filtering](/docs/features/namespace-render-filtering.md).
 
 **Allowed values**:
 
@@ -543,23 +541,6 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 **Example**: `extended-merge`
 
-### `NS_BUILD_FILTER`
-
-**Description**: Limits which [Namespaces](/docs/envgene-objects.md#namespace) `env_build`
-regenerates. Other Environment objects such as Cloud and Tenant are still rendered.
-
-When `NS_BUILD_FILTER` is empty and [`BG_NS_TARGET`](#bg_ns_target) is `origin` or `peer`, EnvGene
-applies the effect of `@origin` or `@peer`. When `NS_BUILD_FILTER` is set explicitly, that value is
-used and `BG_NS_TARGET` does not override it.
-
-See [Namespace Render Filtering](/docs/features/namespace-render-filtering.md).
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `@peer`
-
 ### `DEPLOYMENT_SESSION_ID`
 
 **Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
@@ -735,9 +716,10 @@ A BGD value runs the [`bg_manage`](/docs/envgene-pipelines.md) step. State trans
 processing, and validation are described in
 [Blue-Green Deployment](/docs/features/blue-green-deployment.md).
 
-Application deploy into a BG Domain side does not use a BGD `OPERATION_TYPE` value. Use the
-deploy-side selector (for example [`BG_NS_TARGET`](#bg_ns_target) and optional
-[`NS_BUILD_FILTER`](#ns_build_filter)).
+Application deploy into a BG Domain side does not use a BGD `OPERATION_TYPE` value. Supply a
+Solution Descriptor for the applications to deploy and, when origin and peer share a
+`deployPostfix`, set [`BG_NS_TARGET`](#bg_ns_target). See
+[Namespace render filtering](/docs/features/namespace-render-filtering.md).
 
 **Default Value**: None
 

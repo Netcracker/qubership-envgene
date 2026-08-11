@@ -174,8 +174,8 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
-- [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
-- [**Namespace map**](/docs/features/namespace-map.md) - Resolve Solution Descriptor `deployPostfix` to a Namespace `name`, including BG Domain sides
+- [**Namespace render filtering**](/docs/features/namespace-render-filtering.md) - Render only [Namespaces](/docs/envgene-objects.md#namespace) selected from the Solution Descriptor via Namespace map
+- [**BG Domain from Composite Structure**](/docs/features/bg-domain-from-composite-structure.md) - Generate standalone `bg_domain.yml` from an inline composite `bgdomain` member
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
@@ -185,6 +185,11 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
+
+### Technical documentation
+
+- [**Technical documentation hub**](/docs/tech/README.md) - Implementer-facing contracts (algorithms, internal artefacts)
+- [**Namespace map**](/docs/tech/namespace-map.md) - `compute_namespace_map` resolution, validation, and consumers
 
 ### Examples & Samples
 

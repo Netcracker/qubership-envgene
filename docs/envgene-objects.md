@@ -1364,9 +1364,8 @@ When both the descriptor key and an inline member exist, EnvGene uses the BG Dom
 warns that the inline member is not used for `bg_domain.yml`. See
 [BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md).
 
-The BG Domain object is used for alias resolution in the
-[`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle
-management.
+The BG Domain object is used for Blue-Green Domain structure, Namespace map resolution with
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target), and BGD lifecycle management.
 
 **Location:** `/environments/<cluster-name>/<environment-name>/bg_domain.yml`
 
@@ -1449,11 +1448,12 @@ bg_domain:
     url: https://controller-env-1-controller.qubership.org
 ```
 
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+**BG Domain roles:** The object names the origin, peer, and controller Namespaces used by Namespace
+map resolution and BGD lifecycle management:
 
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
+- `originNamespace` - origin Namespace
+- `peerNamespace` - peer Namespace
+- `controllerNamespace` - controller Namespace
 
 ### BG State Files
 

@@ -88,7 +88,7 @@ flowchart TB
        5. Handles template Parameter Set and Resource profiles.
        6. Handles environment-specific Parameter Set and Resource profiles.
        7. Creates Credentials including shared Credentials
-       8. Applies [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter), or derives `@origin` / `@peer` from [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) when the filter is empty
+       8. When a Solution Descriptor is supplied for the run, re-renders only the Namespaces selected via [Namespace map](/docs/tech/namespace-map.md) and [Namespace render filtering](/docs/features/namespace-render-filtering.md). When no SD is supplied and that scenario is supported, renders all Namespaces
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 

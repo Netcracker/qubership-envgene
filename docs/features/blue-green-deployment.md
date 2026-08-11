@@ -36,9 +36,9 @@ For BGD, EnvGene:
   generation and validates that every referenced namespace exists in the Environment
 - resolves a shared Solution Descriptor `deployPostfix` to the origin or peer Namespace `name`
   through [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) and the
-  [Namespace map](/docs/tech/namespace-map.md).
-- regenerates selected namespaces by name, BG Domain role alias, or derivation from `BG_NS_TARGET`
-  ([Namespace Render Filter](/docs/features/namespace-render-filtering.md))
+  [Namespace map](/docs/tech/namespace-map.md)
+- re-renders only the Namespaces selected from the Solution Descriptor via the Namespace map
+  ([Namespace render filtering](/docs/features/namespace-render-filtering.md))
 - creates and updates [BG state files](#state-storage) for lifecycle operations
 - copies namespace contents during [warmup](#warmup-behaviour)
 - adds BG Domain parameters to the
@@ -67,10 +67,11 @@ EnvGene reads the current origin and peer states from the state files, derives t
 `OPERATION_TYPE`, and writes the new state files. The caller does not pass the next origin or peer
 states.
 
-Application deploy into a BG Domain side is not a lifecycle operation. It uses a deploy-side
-selector such as [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) and optional
-[`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter), not a BGD
-`OPERATION_TYPE` value. See [Deploy-side namespace targeting](#deploy-side-namespace-targeting) and
+Application deploy into a BG Domain side is not a lifecycle operation. It uses a Solution Descriptor
+for the applications to deploy and
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) when origin and peer share a
+`deployPostfix`, not a BGD `OPERATION_TYPE` value. See
+[Deploy-side namespace targeting](#deploy-side-namespace-targeting) and
 [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md).
 
 ## Responsibility boundaries
@@ -113,14 +114,14 @@ sequenceDiagram
 Application deploy into a BG Domain side is not a lifecycle operation. Deploy-side targeting uses
 [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) (`origin` or `peer`).
 
-Two independent effects:
+Two effects, with one shared `BG_NS_TARGET` input to Namespace map:
 
 1. **Namespace map** - when origin and peer share a Solution Descriptor `deployPostfix`,
    `compute_namespace_map` requires `BG_NS_TARGET` and writes the matching Namespace `name` into
    [`namespace-map.yml`](/docs/envgene-objects.md#namespace-map).
-2. **Render filter** - when `NS_BUILD_FILTER` is empty, `BG_NS_TARGET` applies the effect of
-   `@origin` or `@peer` so `env_build` does not rewrite the other BG side. See
-   [Namespace Render Filter](/docs/features/namespace-render-filtering.md).
+2. **Render filtering** - `env_build` re-renders only the Namespace `name` values selected from the
+   SD through that map. `BG_NS_TARGET` is not converted into a render filter. See
+   [Namespace render filtering](/docs/features/namespace-render-filtering.md).
 
 `BG_NS_TARGET` does not mean `ACTIVE`, `IDLE`, or `CANDIDATE`. State files are not inputs to these
 two effects.
@@ -132,9 +133,9 @@ sequenceDiagram
     participant CMDB as CMDB
 
     DP->>EGP: Trigger Instance Pipeline
-    Note over DP,EGP: BG_NS_TARGET and optional NS_BUILD_FILTER
-    EGP->>EGP: Build namespace-map and render Environment Instance
-    Note over EGP,EGP: Map resolves deployPostfix. Filter limits env_build render
+    Note over DP,EGP: Solution Descriptor and BG_NS_TARGET
+    EGP->>EGP: Build namespace-map and render selected Namespaces
+    Note over EGP,EGP: Map resolves deployPostfix. env_build uses selected Namespace.name values
 
     alt CMDB import
         EGP->>CMDB: Import Environment Instance to CMDB
@@ -162,7 +163,6 @@ Related pipeline parameters:
 - [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)
 - [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type)
 - [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)
-- [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter)
 - [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version)
 - [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)
 
@@ -321,7 +321,7 @@ Macros that read the BG Domain when it exists:
 - [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md)
 - [Blue-Green Deployment Use Cases](/docs/use-cases/blue-green-deployment.md)
 - [Namespace map](/docs/tech/namespace-map.md)
-- [Namespace Render Filter](/docs/features/namespace-render-filtering.md)
+- [Namespace render filtering](/docs/features/namespace-render-filtering.md)
 - [BG Domain object](/docs/envgene-objects.md#bg-domain)
 - [BG Domain Template](/docs/envgene-objects.md#bg-domain-template)
 - [BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md)
