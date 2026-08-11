@@ -325,6 +325,7 @@ Macros that read the BG Domain when it exists:
 - [Namespace Render Filter](/docs/features/namespace-render-filtering.md)
 - [BG Domain object](/docs/envgene-objects.md#bg-domain)
 - [BG Domain Template](/docs/envgene-objects.md#bg-domain-template)
+- [BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md)
 - [BG State Files](/docs/envgene-objects.md#bg-state-files)
 - [Namespace map object](/docs/envgene-objects.md#namespace-map)
 - [BGD samples](/docs/samples/blue-green-deployment/)

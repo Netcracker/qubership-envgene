@@ -531,10 +531,14 @@ satellites: []
 
 #### BG Domain Template
 
-This is a Jinja template file used to render the standalone [BG Domain](#bg-domain) object for environments that use
-Blue-Green Domain (BGD) support and are not part of a [Composite Structure](#composite-structure). For a BG Domain
-that is part of a composite structure, the [Composite Structure Template](#composite-structure-template) renders the
-inline `bgdomain` member instead.
+This is a Jinja template file used to render the standalone [BG Domain](#bg-domain) object when the
+Environment Template descriptor has a `bg_domain` key. That explicit hook takes precedence over
+generation from a [Composite Structure](#composite-structure). Generation from the composite runs
+only when the descriptor omits `bg_domain`. See
+[BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md).
+
+For Environments that embed the domain only in the composite, authors may omit this template and
+rely on generation from the composite instead.
 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
@@ -1271,9 +1275,13 @@ is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTRO
 for satellite namespaces.
 
 A BG Domain that is part of a composite structure is embedded inline as a member with `type: bgdomain`, in the
-`baseline` or in a `satellites` member. In this case the composite structure carries the domain and no standalone
-[BG Domain](#bg-domain) object is used. A BG Domain that is not part of a composite structure is represented by a
-standalone [BG Domain](#bg-domain) object.
+`baseline` or in a `satellites` member. EnvGene also generates the standalone
+[BG Domain](#bg-domain) file `bg_domain.yml` from that member so consumers that read the standalone
+object keep working.
+See [BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md).
+
+A BG Domain that is not part of a composite structure is represented only by a standalone
+[BG Domain](#bg-domain) object from the [BG Domain Template](#bg-domain-template).
 
 The Composite Structure object is generated during Environment Instance generation from the [Composite Structure
 Template](#composite-structure-template) specified in the Environment Template descriptor.
@@ -1343,16 +1351,21 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
+The standalone BG Domain object is the file `bg_domain.yml` in the Environment Instance. EnvGene
+produces it from either:
 
-The standalone BG Domain object represents a BG Domain that is not part of a
-[Composite Structure](#composite-structure).
-When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
-member and no standalone BG Domain object is generated.
+- the [BG Domain Template](#bg-domain-template) when the Environment Template descriptor has a
+  `bg_domain` key, or
+- an inline `type: bgdomain` member of the [Composite Structure](#composite-structure), by
+  generation from the composite when the descriptor omits `bg_domain`
 
-The BG Domain object is generated during Environment Instance generation based on:
+When both the descriptor key and an inline member exist, EnvGene uses the BG Domain Template and
+warns that the inline member is not used for `bg_domain.yml`. See
+[BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md).
 
-- [BG Domain Template](#bg-domain-template)
+The BG Domain object is used for alias resolution in the
+[`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle
+management.
 
 **Location:** `/environments/<cluster-name>/<environment-name>/bg_domain.yml`
 
