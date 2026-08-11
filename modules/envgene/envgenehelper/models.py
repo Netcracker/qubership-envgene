@@ -39,6 +39,10 @@ class OperationType(CaseInsensitiveEnum):
 
         return super()._missing_(value)
 
+class DeltaDeployType(CaseInsensitiveEnum):
+    NONE = "NONE"
+    DIFF_AND_HEAL = "DIFF_AND_HEAL"
+    DIFF = "DIFF"
 
 class PipelineType(CaseInsensitiveEnum):
     GITLAB_DEPLOY = "GITLAB_DEPLOY"
