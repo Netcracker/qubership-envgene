@@ -10,10 +10,8 @@
   - [`namespace-map.yml`](#namespace-mapyml)
   - [`APPLICATION_VERSIONS`](#application_versions)
   - [`OPERATION_TYPE`](#operation_type)
-  - [`TARGET_BG_STATE`](#target_bg_state)
   - [`PIPELINE_TYPE`](#pipeline_type)
   - [`BG_NS_TARGET`](#bg_ns_target)
-  - [state file](#state-file)
   - [`bg_domain` in topology context](#bg_domain-in-topology-context)
   - [Locations](#locations)
   - [Uniq names](#uniq-names)
@@ -71,10 +69,6 @@ for the target flow. The per-component docs in this directory elaborate individu
    1. нет, при коммите только меняем стейт
 7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`?
    1. нет.
-8. Где будет валидация на корректность бг операции (разрешён ли переход состояний)
-   1. только в оркестратор пайпе
-   2. в оркестратор пайпе и в энвгене (сейчас она в энвгене есть и ее хочется выпилить)
-   3. если не будет валидации то и `TARGET_BG_STATE` не нужен
 
 ## AI
 
@@ -85,9 +79,8 @@ for the target flow. The per-component docs in this directory elaborate individu
 4. Design `git_commit`
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES/sd.yaml or not
 5. After the flow is finalized analyze the flow for optimization
-6. [phase2] Согласовать с Леней `BG_MANAGE`, `TARGET_BG_STATE`
-7. [phase2] Согласовать с Артемом `discovery_deployment_plan`. Узнать Кто и когда чекаутит ES репо?
-8. Стейт файл из нью лука
+6. [phase2] Согласовать с Артемом `discovery_deployment_plan`. Узнать Кто и когда чекаутит ES репо?
+7. Стейт файл из нью лука
 
 ## Data exchange Rules
 
@@ -170,7 +163,12 @@ Example:
 
 ## `namespace-map.yml`
 
-Flat map keyed by the `deployPostfix`, value the rendered namespace name:
+Flat map keyed by the `deployPostfix`, value the rendered namespace name (already resolved to one concrete
+namespace per postfix).
+
+For a `deployPostfix` that belongs to a BG domain the value is resolved to the `ORIGIN` or
+`PEER` namespace by `BG_NS_TARGET` (see `compute_namespace_map`, step 1.9, which resolves the BG suffix from the
+rendered BG domain). Non-BG postfixes resolve to their single namespace.
 
 ```yaml
 <deployPostfix>: <namespace-name>
@@ -179,10 +177,10 @@ Flat map keyed by the `deployPostfix`, value the rendered namespace name:
 Example:
 
 ```yaml
-# composite
+# composite, BG_NS_TARGET: ORIGIN
 core: env-1-core
 oss: env-1-oss
-bss: env-1-bss
+bss: env-1-bss-origin   # BG domain member, resolved to the ORIGIN side
 ```
 
 ## `APPLICATION_VERSIONS`
@@ -194,21 +192,6 @@ TBD
 `OPERATION_TYPE`: enum[ `CLEAN`, `DEPLOY`, `BGD-INIT`, `BGD-WARMUP`, `BGD-PROMOTE`, `BGD-ROLLBACK`, `BGD-COMMIT` ]
 default: `DEPLOY`
 
-## `TARGET_BG_STATE`
-
-```yaml
-originNamespace:
-  name: bss-origin
-  state: active
-  version: v2.1.0                    # не используем
-peerNamespace:
-  name: bss-peer
-  state: candidate
-  version: v2.2.0                    # не используем
-controllerNamespace: bss-controller
-updateTime: 2024-01-15T10:30:00Z     # не используем
-```
-
 ## `PIPELINE_TYPE`
 
 `PIPELINE_TYPE`: enum [ `GITLAB_DEPLOY`, `LEGACY` ]
@@ -216,14 +199,12 @@ default: `LEGACY`
 
 ## `BG_NS_TARGET`
 
-`BG_NS_TARGET`: enum [ `ACTIVE`, `CANDIDATE` ]
+`BG_NS_TARGET`: enum [ `ORIGIN`, `PEER` ]
 default: None
 
 1. Используется в связке с `ENV_TEMPLATE_VERSION`:
-   1. На основе стейт файла и `BG_NS_TARGET` вычисляется для какого ns обновить версию темплейта `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
-2. ?
-
-## state file
+   1. На основе `BG_NS_TARGET` вычисляется для какого ns обновить версию темплейта `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
+2. Используется в `compute_namespace_map` для резолвинга deployPostfix пира ориджина в нс
 
 ## `bg_domain` in topology context
 
@@ -269,8 +250,8 @@ bg_domain:
   effective-set/...               # ES
   tenant.yml                      # env instance
   cloud.yml                       # env instance
-  bg_domain.yml                   # env instance
   composite_structure.yml         # env instance
+  bg_domain.yml                   # env instance
   Namespaces/                     # env instance
     <ns>/                         # env instance
       namespace.yml               # env instance
@@ -337,6 +318,8 @@ bg_domain:
 6. `SD_SOURCE_TYPE: artifact`
 7. `BG_MANAGE`
 8. extended merge (removed)
+9. `NS_BUILD_FILTER`
+10. `BG_STATE`
 
 ## Flow
 
@@ -438,18 +421,13 @@ Functions:
 
 1. `change_bg_state`
     - input:
-      - `TARGET_BG_STATE`
+      - `OPERATION_TYPE`
     - output:
       - BG state files
     - actions:
-      - validate state transition
-      - create/update BG state files
-    - AI[bgd]: support state change based on `OPERATION_TYPE` (design is not done)
-    - AI[bgd]: remove `BG_STATE` and validation (design is not done)
-    - AI[bgd]: after the validation decision
-      - IF support validation in envgene
-        - design `TARGET_BG_STATE` structure (Leonid)
-        - support `TARGET_BG_STATE` instead of `BG_STATE` (design is not done)
+      - derive the target state from `OPERATION_TYPE` + current state files, create/update BG state files
+    - AI[bgd]: support state change based on `OPERATION_TYPE`
+    - AI[bgd]: remove `BG_STATE`.
     - AI[bgd]: support "target" state files (design is not done) (nice to have)
 2. `warmup`
     - triggers:
@@ -586,9 +564,10 @@ Functions:
       - rendered namespaces into env instance
     - actions:
       - render all namespaces into env instance
-5. `compute_namespace_map` (new)
+5. `compute_namespace_map`
     - input:
       - `FULL_ENV_NAME`
+      - `BG_NS_TARGET`
       - rendered namespace in env instance
       - rendered bg domain in env instance
     - output:
@@ -762,7 +741,8 @@ Functions:
     - [phase1] unchanged
     - AI[phase1]: test manually
     - AI[techDebt-P1]: prepare a UC, add tests
-    <!-- - AI[bgd]: переписать `apply_ns_build_filter` на использование `BG_NS_TARGET` нужно ли -->
+    - AI[bgd]: `apply_ns_build_filter` заменить на СД-скоуп генерации: рендерить только нс из СД,
+      file-replace-merge в закоммиченный инстанс. Тогда `NS_BUILD_FILTER` уходит в deprecate.
 5. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
@@ -829,10 +809,8 @@ Functions:
     - AI[phase1]: remove SD support
     - AI[phase1]: implement uniq app names
     - AI[bgd]: Поддержка бг кейса в ES структуре - `<namespace-folder-01>` включает peer|origin постфиксы
-        - `deployPostfix` + включенность в бг домен определяет маппинг на нс фолдер в ES
-        - `namespace` определяет имя фолдера в ES
-    - AI[bgd]: add `state` to `bg_domain` in topology context
-    - AI[bgd]: post-ES python patcher writes bg_domain.status (state-only ops), no full recalc. (nice to have)
+    <!-- - AI[bgd]: add `state` to `bg_domain` in topology context -->
+    <!-- - AI[bgd]: post-ES python patcher writes bg_domain.status (state-only ops), no full recalc. (nice to have) -->
 5. `partial_es_processing`
     - triggers:
       - `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`
