@@ -109,6 +109,24 @@ class DeploymentPlanGeneratorCommand:
 
         return filtered_plan
 
+    @staticmethod
+    def merge(deploy_plans: List[Union[DeployPlan, path, str]], output_file: Path = "deploy-plan.yaml") -> Optional[DeployPlan]:
+        if len(deploy_plans) == 0:
+            return None
+        if len(deploy_plans) == 1:
+            return deploy_plans[0]
+
+        source = None
+
+        for i in range(1, len(deploy_plans)):
+            source = DeploymentPlanCalculator.merge(resolve_deploy_plan(deploy_plans[i-1]), resolve_deploy_plan(deploy_plans[i]))
+
+        logging.debug(f"Merging plan details:\n{source}")
+        logging.info(f"Writing deploy plan to {output_file}..")
+        with open(output_file, "w") as f:
+            f.write(yaml.dump(source.to_dict(), sort_keys=False))
+
+        return source
 
 def resolve_deploy_plan(deploy_plan: Union[DeployPlan, Path, str]) -> DeployPlan:
     if isinstance(deploy_plan, DeployPlan):

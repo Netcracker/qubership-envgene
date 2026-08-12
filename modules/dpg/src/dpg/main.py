@@ -11,6 +11,13 @@ def cli():
 def plan():
     """Deploy Plan modification commands"""
 
+@plan.command("merge")
+@utils_cli
+def calculate_plan(**kwargs):
+    from dpg.v1.plan import PlanDeploymentMerge
+    command = PlanDeploymentMerge(**kwargs)
+    command.run()
+
 @plan.command("calculate")
 @utils_cli
 def calculate_plan(**kwargs):

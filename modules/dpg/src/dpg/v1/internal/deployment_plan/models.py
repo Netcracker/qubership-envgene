@@ -19,6 +19,19 @@ class DeployPlanEntity(BaseModel):
     generation_type: GenerationType = Field(alias='generationType', default=GenerationType.UNIQ_FOR_APP)
     generation_id: Union[uuid.UUID, Literal[""]] = Field(alias='generationId', default="")
 
+    @property
+    def _id(self) -> str:
+        name, version = self.version.split(":")
+        id = f"{name}/{self.namespace}"
+        if self.generation_type == GenerationType.UNIQ_FOR_VERSION:
+            id += "/" + version
+        if self.generation_type == GenerationType.UNIQ_FOR_RUN:
+            id += "/" + str(self.generation_id)
+        return id
+
+    def __eq__(self, other: "DeployPlanEntity") -> bool:
+        return self._id == other._id
+
     def __repr__(self):
         return f"DeployPlanEntity(wave={self.wave}, version='{self.version}', namespace='{self.namespace}', deploy_postfix='{self.deploy_postfix}')"
 

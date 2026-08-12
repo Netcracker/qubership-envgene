@@ -24,6 +24,18 @@ class DeploymentPlanCalculator:
         self.data_provider = data_provider
 
     @classmethod
+    def merge(cls, source: DeployPlan, dest: DeployPlan) -> DeployPlan:
+        plan = source.model_copy(deep=True)
+        for candidate_entity in dest.entities:
+            index, res = next(((i, obj) for i, obj in enumerate(source.entities) if obj == candidate_entity), (None, None))
+            if res is None:
+                plan.entities.append(candidate_entity)
+            else:
+                plan.entities[index].wave = max(source.entities[index].wave, candidate_entity.wave)
+
+        return plan
+
+    @classmethod
     def map_namespaces_to_plan(cls, deploy_plan: DeployPlan, map: dict) -> DeployPlan:
         """This method should map namespaces by postfixes to deploy plan"""
 
