@@ -51,11 +51,6 @@ jobs:
                --junitxml=reports/sbom_retention.xml \
                | tee -a /workspace/e2e_tests.log"
 
-      - name: Build Calculator CLI JAR
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "cd /workspace/build_effective_set_generator && ./mvnw package -DskipTests -q"
-
       - name: Run Calculator CLI BDD tests
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \

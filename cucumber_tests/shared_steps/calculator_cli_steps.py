@@ -2,11 +2,9 @@
 UC-CC-PM-*, UC-CC-GI-*, UC-CC-CP-*).
 
 All generic Given/When/Then steps come from shared_steps and are imported in test_calculator_cli.py.
-This file wires the real effective-set-generator JAR into the BDD runner.
+This file wires the real effective-set-generator CLI into the BDD runner.
 """
-import os
 import re
-import shutil
 import yaml
 from pathlib import Path
 
@@ -14,13 +12,8 @@ from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
-# Real JAR location (built with ./mvnw package -DskipTests)
-_REPO_ROOT = Path(__file__).parent.parent.parent.resolve()
-_JAR = _REPO_ROOT / "build_effective_set_generator" / "effective-set-generator" / "target" / \
-       "effective-set-generator-master-SNAPSHOT-runner.jar"
-
-# Prefer corretto-17, fall back to whatever java is on PATH
-_JAVA_HOME = Path.home() / ".jdks" / "corretto-17.0.10"
+# Production CLI entry point — present in the envgene Docker image under /module/
+_PRODUCTION_CLI = "/module/scripts/utils/run_effective_set_cli.sh"
 
 # mock-reg registry definition matching the purl in test SBOM files
 _MOCK_REGISTRY = {
@@ -36,31 +29,9 @@ _MOCK_REGISTRY = {
 }
 
 
-def _find_java() -> str:
-    """Return path to java executable: corretto-17 if present, else system java."""
-    for candidate in [
-        _JAVA_HOME / "bin" / "java.exe",
-        _JAVA_HOME / "bin" / "java",
-    ]:
-        if candidate.exists():
-            return str(candidate)
-    found = shutil.which("java")
-    if found:
-        return found
-    raise FileNotFoundError("java not found. Install JDK or set JAVA_HOME.")
-
-
 def _install_cli_wrapper(workspace: EnvGeneWorkspace) -> None:
-    """Write a cross-platform Python wrapper that expands $CI_PROJECT_DIR and invokes the real JAR."""
-    if not _JAR.exists():
-        raise FileNotFoundError(
-            f"Real CLI JAR not found: {_JAR}\n"
-            "Build it first: cd build_effective_set_generator && ./mvnw package -DskipTests -q"
-        )
-
-    java = _find_java()
-
-    # Add mock-reg to workspace registry.yml so the real CLI resolves SBOM purl entries.
+    """Point EFFECTIVE_SET_CLI_PATH at the production CLI script already present in the image."""
+    # Add mock-reg to workspace registry.yml so the CLI resolves SBOM purl entries.
     registry_file = workspace.config_dir / "registry.yml"
     existing = {}
     if registry_file.exists():
@@ -68,43 +39,9 @@ def _install_cli_wrapper(workspace: EnvGeneWorkspace) -> None:
     existing.update(_MOCK_REGISTRY)
     registry_file.write_text(yaml.dump(existing), encoding="utf-8")
 
-    # Python wrapper expands bash-style $CI_PROJECT_DIR variables before calling java.
-    # This works identically on Windows and Linux.
-    wrapper_py = workspace.base_dir / "_real_cli_wrapper.py"
-    wrapper_py.write_text(
-        "import os, subprocess, sys, tempfile, pathlib\n"
-        "ci = os.environ.get('CI_PROJECT_DIR', '')\n"
-        "# Replace $CI_PROJECT_DIR and strip --custom-params (rebuilt from env to avoid Windows quoting issues)\n"
-        "args = []\n"
-        "for a in sys.argv[1:]:\n"
-        "    a = a.replace('${CI_PROJECT_DIR}', ci).replace('$CI_PROJECT_DIR', ci)\n"
-        "    if a.startswith('--custom-params=') or a == '--custom-params':\n"
-        "        continue\n"
-        "    args.append(a)\n"
-        "# Re-inject CUSTOM_PARAMS via @file to avoid any cmd.exe quoting issues\n"
-        "custom = os.environ.get('CUSTOM_PARAMS', '')\n"
-        "if custom:\n"
-        "    cp_file = pathlib.Path(tempfile.mktemp(suffix='.json'))\n"
-        "    cp_file.write_text(custom, encoding='utf-8')\n"
-        "    args.append('--custom-params=@' + str(cp_file))\n"
-        f'sys.exit(subprocess.call([r"{java}", "-jar", r"{_JAR}"] + args))\n',
-        encoding="utf-8",
-    )
-    bat = workspace.base_dir / "_real_cli_wrapper.bat"
-    bat.write_text(
-        f'@echo off\npython "{wrapper_py}" %*\n',
-        encoding="utf-8",
-    )
-    sh = workspace.base_dir / "_real_cli_wrapper.sh"
-    sh.write_text(
-        f'#!/bin/sh\nexec python "{wrapper_py}" "$@"\n',
-        encoding="utf-8",
-    )
-    os.chmod(sh, 0o755)
-
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
-    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = str(bat) if os.name == "nt" else str(sh)
+    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = _PRODUCTION_CLI
 
 
 @given("the Calculator CLI mock validates rules")
