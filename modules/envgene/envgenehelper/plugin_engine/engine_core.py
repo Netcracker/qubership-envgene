@@ -1,4 +1,4 @@
-from ..logger import logger
+from envgene_shared.utils.logger import logger
 from .usecase import PluginUseCase
 
 class PluginEngine:
