@@ -8,6 +8,7 @@
   - [DD and zip layout](#dd-and-zip-layout)
   - [Deploy plan](#deploy-plan)
     - [Merge algorithm](#merge-algorithm)
+    - [Removal on clean](#removal-on-clean)
   - [`namespace-map.yml`](#namespace-mapyml)
   - [Instance pipeline parameters](#instance-pipeline-parameters)
     - [`APPLICATION_VERSIONS`](#application_versions)
@@ -175,8 +176,9 @@ The deployment plan exists in two forms:
 - **Delta plan** (`delta-deploy-plan.yaml`) — the plan for a single operation, listing only the applications acted on
   in it. Transient, not persisted.
 
-Per operation: `generate_deployment_plan` builds the delta from the `APPLICATION_VERSION` input, then
-`merge_deployment_plan` merges the delta onto the repository full plan and commits the result.
+On `DEPLOY`: `generate_deployment_plan` builds the delta from the `APPLICATION_VERSION` input, then
+`merge_deployment_plan` merges the delta onto the repository full plan and commits the result. On `CLEAN` there is
+no delta and no merge (see Removal on clean below).
 
 ### Merge algorithm
 
@@ -191,6 +193,15 @@ one is collapsed into a single entry whose `wave` is the higher of the two.
 
 **Invariant.** The merge only adds entries and raises `wave`, it never removes. An entry present in the full plan
 but absent from the delta is retained. This is the stale-app corner case.
+
+### Removal on clean
+
+`CLEAN` produces no delta and does not merge. Its inputs are the repository full plan and `NAMESPACE_NAMES`, the
+namespaces being cleaned. Removal reuses the plan filter (#1682), which excludes entries via a `!`-prefixed token
+over `namespace`. Each namespace in `NAMESPACE_NAMES` is passed as a `!<namespace>` token (whole namespace).
+The filter is applied to the repository full plan and writes the reduced plan, which is committed. In short,
+`filter(full plan, exclude NAMESPACE_NAMES)` produces the reduced full plan, rather than a merge. The filter also accepts
+`!<component>` tokens for dropping specific applications, though `CLEAN` currently passes whole namespaces only.
 
 ## `namespace-map.yml`
 
@@ -727,14 +738,26 @@ Functions:
     - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
 2. `merge_deployment_plan`
     - triggers:
-      - `OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`
+      - `OPERATION_TYPE: DEPLOY`
     - input:
       - `deploy-plan.yml` from repository
       - `delta-deploy-plan.yml`
     - output:
       - updated `deploy-plan.yml`
     - actions:
-      - merges deployment plans
+      - merge the delta onto the repository full plan (add new entries, raise `wave`, never remove)
+    - AI[bgd]: Add the functions
+3. `reduce_deployment_plan`
+    - triggers:
+      - `OPERATION_TYPE: CLEAN`
+    - input:
+      - `deploy-plan.yml` from repository
+      - `NAMESPACE_NAMES`
+    - output:
+      - updated `deploy-plan.yml`
+    - actions:
+      - run the plan filter in exclude mode, passing each namespace in `NAMESPACE_NAMES` as a `!<namespace>` token
+      - writes the repository full plan minus the cleaned namespaces (no delta, no merge)
     - AI[bgd]: Add the functions
 
 #### 1.14 step `env_build`
