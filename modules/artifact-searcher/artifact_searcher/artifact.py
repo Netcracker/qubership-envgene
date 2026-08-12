@@ -14,7 +14,7 @@ import aiohttp
 import requests
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
 from artifact_searcher.utils.models import RegistryV2, Application, FileExtension, Credentials, ArtifactSource, ArtifactDownload, Repo, RepoType, Provider, MavenConfig
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 
 TIMESTAMPED_VERSION_PATTERN = re.compile(r"-\d{8}\.\d{6}-\d+$")
 

@@ -13,9 +13,11 @@ from ruyaml.scalarstring import DoubleQuotedScalarString
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .logger import logger
+from envgene_shared.utils.logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
     validate_yaml_by_scheme_or_fail, find_yaml_file
+
+from envgene_shared.utils.business_utils import getenv_with_error, get_schema_dir
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -59,15 +61,6 @@ def getenv_and_log(name: str, default: str) -> str: ...
 def getenv_and_log(name, *args, **kwargs):
     var = getenv(name, *args, **kwargs)
     logger.info(f"{name}: {var}")
-    return var
-
-
-def getenv_with_error(var_name, *, no_log=False):
-    var = getenv(var_name)
-    if not var:
-        raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
-    if not no_log:
-        logger.debug(f"{var_name}: {var}")
     return var
 
 
@@ -446,10 +439,6 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
     instances_dir = getenv_with_error('CI_PROJECT_DIR')
     env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")
     return env_dir_path
-
-
-def get_schema_dir() -> Path:
-    return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
 
 
 def is_inventory_generation_needed(inventory_params):

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import yaml
 from inventory.env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
-from envgenehelper import get_cluster_name_from_full_name, get_environment_name_from_full_name, readYaml, \
-    is_dir_empty, writeYamlToFile
+from envgene_shared.utils.yaml_utils import readYaml, writeYamlToFile
+from envgenehelper import get_cluster_name_from_full_name, get_environment_name_from_full_name, is_dir_empty
 from envgenehelper.test_helpers import TestHelpers
 from build_env.jinja.jinja import create_jinja_env
 from scripts.tests.base_test import BaseTest

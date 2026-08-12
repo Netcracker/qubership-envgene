@@ -38,4 +38,6 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 
 ## Usage
 
-Schema files are referenced by relative path from `CI_PROJECT_DIR` (e.g., `schemas/env-definition.schema.json`) or from the `envgenehelper` package resources for regdef schemas.
+Schema files are referenced by relative path from `CI_PROJECT_DIR` (e.g., `schemas/env-definition.schema.json`) or from the `envgenehelper` package resources for regdef schemas. Validation is performed via `envgene_shared.utils.yaml_utils.validate_yaml_by_scheme_or_fail` (re-exported by `envgenehelper.yaml_helper`).
+
+`config.schema.json` and `credential.schema.json` are also bundled inside `modules/envgene-shared/envgene_shared/schemas/` for use by that package's own internal validation.
