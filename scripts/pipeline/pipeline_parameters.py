@@ -60,8 +60,6 @@ class PipelineParametersHandler(BaseModel):
             'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
             'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
             'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
-            "BG_STATE": getenv("BG_STATE"),
-            "BG_MANAGE": getenv("BG_MANAGE", "false").lower() == "true",
             "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
             "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
             "CUSTOM_PARAMS": getenv("CUSTOM_PARAMS"),
@@ -74,6 +72,7 @@ class PipelineParametersHandler(BaseModel):
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
             "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
+            "OPERATION_TYPE": getenv("OPERATION_TYPE"),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')

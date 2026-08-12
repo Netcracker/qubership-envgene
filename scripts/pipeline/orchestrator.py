@@ -94,7 +94,10 @@ class BgManageStep(PipelineStep):
         return "bg_manage"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('BG_MANAGE'))
+        operation_type = ctx.params.get("OPERATION_TYPE")
+        options = {"BGD-INIT", "BGD-WARMUP", "BGD-PROMOTE", "BGD-COMMIT", "BGD-ROLLBACK"}
+        
+        return operation_type in options
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_bg_manage()

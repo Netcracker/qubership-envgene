@@ -1,6 +1,5 @@
 import os
 import shutil
-import json
 from enum import auto, Enum
 from pathlib import Path
 
@@ -11,23 +10,30 @@ from envgenehelper.yaml_helper import openYaml
 from envgenehelper import logger, writeYamlToFile
 
 
-def _bg_state():
-    bg_state_str = getenv_with_error('BG_STATE')
-    logger.info(f"Content of BG_STATE: {bg_state_str}")
-    return json.loads(bg_state_str)
-
-
 class State(Enum):
     ACTIVE = auto()
     IDLE = auto()
     CANDIDATE = auto()
     LEGACY = auto()
-    FAILEDC = auto()
-    FAILEDW = auto()
     NONE = auto()
 
     def __str__(self):
         return self.name.lower()
+
+
+class OperationType(Enum):
+    BGD_INIT = "BGD-INIT"
+    BGD_WARMUP = "BGD-WARMUP"
+    BGD_PROMOTE = "BGD-PROMOTE"
+    BGD_COMMIT = "BGD-COMMIT"
+    BGD_ROLLBACK = "BGD-ROLLBACK"
+    
+    @classmethod
+    def from_str(cls, value: str) -> OperationType | None:
+        for member in cls:
+            if member.value == value:
+                return member
+        return None
 
 
 Pair = tuple[State, State]
@@ -41,61 +47,41 @@ def pair_to_str(pair: Pair) -> str:
     return f'{{"origin": "{pair[0]}", "peer": "{pair[1]}"}}'
 
 
-def is_mirrored(a: Pair, b: Pair) -> bool:
-    return a == mirror_pair(b)
-
-
 S = State
 
-VALID_TRANSITIONS_BASE: dict[Pair, list[Pair]] = {
-    (S.ACTIVE, S.NONE): [
-        (S.ACTIVE, S.IDLE),
-    ],
-    (S.ACTIVE, S.IDLE): [
-        (S.ACTIVE, S.CANDIDATE),
-        (S.ACTIVE, S.FAILEDW),
-        (S.ACTIVE, S.IDLE),
-    ],
-    (S.ACTIVE, S.CANDIDATE): [
-        (S.LEGACY, S.ACTIVE),
-        (S.ACTIVE, S.FAILEDC),
-        (S.ACTIVE, S.IDLE),
-    ],
-    (S.LEGACY, S.ACTIVE): [
-        (S.IDLE, S.ACTIVE),
-        (S.FAILEDC, S.ACTIVE),
-    ],
-    (S.ACTIVE, S.FAILEDW): [
-        (S.ACTIVE, S.CANDIDATE),
-        (S.ACTIVE, S.FAILEDW),
-    ],
-    (S.ACTIVE, S.FAILEDC): [
-        (S.IDLE, S.ACTIVE),
-        (S.ACTIVE, S.FAILEDC),
-    ],
-    (S.FAILEDC, S.ACTIVE): [
-        (S.IDLE, S.ACTIVE),
-        (S.FAILEDC, S.ACTIVE),
-    ]
+VALID_TRANSITIONS_BASE: dict[OperationType, dict[Pair, Pair]] = {
+    OperationType.BGD_INIT: {
+        (S.ACTIVE, S.NONE): (S.ACTIVE, S.IDLE),
+    },
+    OperationType.BGD_WARMUP: {
+        (S.ACTIVE, S.IDLE): (S.ACTIVE, S.CANDIDATE),
+    },
+    OperationType.BGD_PROMOTE: {
+        (S.ACTIVE, S.CANDIDATE): (S.LEGACY, S.ACTIVE),
+    },
+    OperationType.BGD_COMMIT: {
+        (S.LEGACY, S.ACTIVE): (S.IDLE, S.ACTIVE),
+    },
+    OperationType.BGD_ROLLBACK: {
+        (S.LEGACY, S.ACTIVE): (S.IDLE, S.ACTIVE),
+    },
 }
 
-NON_MIRRORABLE_STATES: list[Pair] = [(S.ACTIVE, S.NONE)]
-VALID_TRANSITIONS = {}
-for curr, valid_new_states in VALID_TRANSITIONS_BASE.items():
-    VALID_TRANSITIONS.setdefault(curr, valid_new_states)
-    if curr not in NON_MIRRORABLE_STATES:
-        mirrored_curr = mirror_pair(curr)
-        mirrored_new_states = [mirror_pair(n) for n in valid_new_states]
-        VALID_TRANSITIONS.setdefault(mirrored_curr, mirrored_new_states)
+NON_MIRRORABLE_OPERATIONS: set[OperationType] = {OperationType.BGD_INIT}
+
+VALID_TRANSITIONS: dict[OperationType, dict[Pair, Pair]] = {}
+for _op, _transitions in VALID_TRANSITIONS_BASE.items():
+    _op_table = dict(_transitions)
+    if _op not in NON_MIRRORABLE_OPERATIONS:
+        for _curr, _nxt in _transitions.items():
+            _op_table.setdefault(mirror_pair(_curr), mirror_pair(_nxt))
+    VALID_TRANSITIONS[_op] = _op_table
 
 
-def is_valid_transition(curr_state: Pair, new_state: Pair) -> tuple[bool, str]:
-    valid_new_states = VALID_TRANSITIONS.get(curr_state, None)
-    if valid_new_states is None:
-        return False, "Current state is invalid"
-    if new_state not in VALID_TRANSITIONS[curr_state]:
-        return False, "Transition from current state to new one is invalid"
-    return new_state in VALID_TRANSITIONS[curr_state], ""
+def get_opeartion_type() -> OperationType | None:
+    raw = getenv_with_error("OPERATION_TYPE")
+    op = OperationType.from_str(raw)
+    return op 
 
 
 def get_current_state() -> Pair:
@@ -117,10 +103,12 @@ def get_current_state() -> Pair:
         multiple_state_files_err_msg = f"Multiple state files found in {env_path}"
 
         if role == NamespaceRole.ORIGIN:
-            if origin_state != S.NONE: raise ValueError(multiple_state_files_err_msg + " for 'origin'")
+            if origin_state != S.NONE:
+                raise ValueError(multiple_state_files_err_msg + " for 'origin'")
             origin_state = state_enum
         elif role == NamespaceRole.PEER:
-            if peer_state != S.NONE: raise ValueError(multiple_state_files_err_msg + " for 'peer'")
+            if peer_state != S.NONE:
+                raise ValueError(multiple_state_files_err_msg + " for 'peer'")
             peer_state = state_enum
 
     if origin_state == S.NONE and peer_state == S.NONE:
@@ -130,28 +118,11 @@ def get_current_state() -> Pair:
     return origin_state, peer_state
 
 
-def str_to_state(state: str) -> State:
-    return getattr(State, state.upper(), S.NONE)
-
-
-def get_new_state() -> Pair:
-    bg_state = _bg_state()
-    origin_state = bg_state['originNamespace']['state']
-    peer_state = bg_state['peerNamespace']['state']
-    return str_to_state(origin_state), str_to_state(peer_state)
-
-
-def validate_bg_state_namespace_names():
-    bgd_file = get_bgd_object()
-    bg_state = _bg_state()
-    origin_name_bg_state = bg_state['originNamespace']['name']
-    peer_name_bg_state = bg_state['peerNamespace']['name']
-    origin_name_file = bgd_file['originNamespace']['name']
-    peer_name_file = bgd_file['peerNamespace']['name']
-    if origin_name_bg_state != origin_name_file:
-        raise ValueError('Origin namespace name in BG_STATE and bg_domain.yml do not match')
-    if peer_name_bg_state != peer_name_file:
-        raise ValueError('Peer namespace name in BG_STATE and bg_domain.yml do not match')
+def get_new_state(op: OperationType, curr_state: Pair) -> Pair:
+    op_table = VALID_TRANSITIONS.get(op)
+    if op_table is None or curr_state not in op_table:
+        raise ValueError(f"Operation {op.value} is not allowed from state {pair_to_str(curr_state)}")
+    return op_table[curr_state]
 
 
 def update_current_state(curr_state: Pair, new_state: Pair):
@@ -164,52 +135,46 @@ def update_current_state(curr_state: Pair, new_state: Pair):
     logger.info("Successfully updated state files")
 
 
-def make_operation_specific_changes(curr_state: Pair, new_state: Pair):
-    transition = (curr_state, new_state)
-    mirrored_transition = (mirror_pair(curr_state), mirror_pair(new_state))
+def make_operation_specific_changes(op: OperationType, new_state: Pair):
+    if op != OperationType.BGD_WARMUP:
+        logger.info(f"Operation '{op.value} has no namespace sideffects")
+        return
+        
+    logger.info('Operation is warmup, copying content of "active" namespace to "candidate"')
+    bgd = get_bgd_object()
 
-    warm_up_operation = ((S.ACTIVE, S.IDLE), (S.ACTIVE, S.CANDIDATE))
+    if new_state[0] == S.ACTIVE:
+        active_ns_name = bgd['originNamespace']['name']
+        candidate_ns_name = bgd['peerNamespace']['name']
+    else:
+        active_ns_name = bgd['peerNamespace']['name']
+        candidate_ns_name = bgd['originNamespace']['name']
+    logger.info(f'Active ns: {active_ns_name}, Candidate ns: {candidate_ns_name}')
 
-    logger.info('Checking if current operation is warmup')
-    if transition == warm_up_operation or mirrored_transition == warm_up_operation:
-        logger.info('Current operation is warmup, copying content of "active" namespace to "candidate"')
-        bg_state = _bg_state()
-        if new_state[0] == S.ACTIVE:
-            active_ns = bg_state['originNamespace']['name']
-            candidate_ns = bg_state['peerNamespace']['name']
-        else:
-            active_ns = bg_state['peerNamespace']['name']
-            candidate_ns = bg_state['originNamespace']['name']
-        logger.info(f'Active ns: {active_ns}, Candidate ns: {candidate_ns}')
+    namespaces = get_namespaces()
+    active_ns = next(ns for ns in namespaces if ns.name == active_ns_name)
+    candidate_ns = next(ns for ns in namespaces if ns.name == candidate_ns_name)
 
-        namespaces = get_namespaces()
-        active_ns = next((ns for ns in namespaces if ns.name == active_ns))
-        candidate_ns = next((ns for ns in namespaces if ns.name == candidate_ns))
+    shutil.rmtree(candidate_ns.path, ignore_errors=True)
+    shutil.copytree(active_ns.path, candidate_ns.path)
 
-        shutil.rmtree(candidate_ns.path, ignore_errors=True)
-        shutil.copytree(active_ns.path, candidate_ns.path)
+    candidate_ns_file_path = candidate_ns.definition_path
+    candidate_ns_file = openYaml(candidate_ns_file_path)
+    candidate_ns_file['name'] = candidate_ns.name
+    writeYamlToFile(candidate_ns_file_path, candidate_ns_file)
 
-        candidate_ns_file_path = candidate_ns.definition_path
-        candidate_ns_file = openYaml(candidate_ns_file_path)
-        candidate_ns_file['name'] = candidate_ns.name
-        writeYamlToFile(candidate_ns_file_path, candidate_ns_file)
-
-        logger.info('Copying was successful')
-    logger.info('Finished check')
+    logger.info('Copying and sync were successful')
 
 
 def run_bg_manage():
+    op = get_opeartion_type()
+    if op is None:
+        logger.info("OPERATION_TYPE not set to a recognised BGD value, skipping bg_manage")
+        return
+    
     curr_state = get_current_state()
-    # validate_bg_state_namespace_names()
-    new_state = get_new_state()
-    logger.info(
-        "Validating state transition.\n"
-        f"Current state from repository: {pair_to_str(curr_state)}\n"
-        f"Target state from BG_STATE: {pair_to_str(new_state)}"
-    )
-    is_valid, err_msg = is_valid_transition(curr_state, new_state)
-    if not is_valid:
-        raise ValueError(f"{err_msg}.\n")
-    logger.info("Validation succeeded")
-    make_operation_specific_changes(curr_state, new_state)
+    new_state = get_new_state(op, curr_state)
+    logger.info(f"Operation '{op.value}' is allowed: {pair_to_str(curr_state)} -> {pair_to_str(new_state)}")
+
+    make_operation_specific_changes(op, new_state)
     update_current_state(curr_state, new_state)
