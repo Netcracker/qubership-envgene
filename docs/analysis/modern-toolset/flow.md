@@ -485,11 +485,16 @@ Functions:
 1. `warmup`
     - input:
       - env instance
+      - `env_definition.yml`
+      - state files
     - output:
-      - updated env instance
+      - updated env instance (candidate namespace replicated from active)
+      - updated `env_definition.yml`
     - actions:
-      - copy active -> candidate namespace/applications
-    - AI[bgd]: no updates(???)
+      - copy `active` -> `candidate` namespace content and `Application` objects, keep the candidate `name`
+      - re-point the candidate template-version pin in `env_definition.yml`:
+        `envTemplate.bgNsArtifacts.<candidate>` := `envTemplate.bgNsArtifacts.<active>` (no-op in steady
+        state, real re-point mid-rollout)
 
 #### 1.6 step `env_inventory_generation`
 
