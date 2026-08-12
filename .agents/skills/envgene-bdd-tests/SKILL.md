@@ -19,6 +19,22 @@ adding new BDD (Cucumber/Gherkin) tests to the EnvGene suite under
 
 ---
 
+## 0. Scope Restriction — MANDATORY
+
+**This branch is strictly limited to BDD test infrastructure. Never create, modify, or delete
+any file outside these two paths:**
+
+- `cucumber_tests/` — all test code, test data, step definitions, features
+- `.github/workflows/perform_e2e_tests.yml` — the CI workflow that runs the tests
+
+If a change requires touching any file outside this scope, stop and tell the user explicitly
+which file and why — do not proceed silently. Never "fix" production code, docs, linters,
+or other CI workflows even if you notice a problem.
+
+This rule overrides every other instruction.
+
+---
+
 ## 1. Start: Map a Use-Case Document to Tests
 
 Every use-case document under `docs/use-cases/` is the authoritative source for

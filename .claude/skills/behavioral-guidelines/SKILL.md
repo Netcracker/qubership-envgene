@@ -11,6 +11,22 @@ Behavioral guidelines to reduce common LLM coding mistakes.
 
 **Trade-off:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
+## 0. Scope Restriction — MANDATORY
+
+**This branch touches ONLY BDD test infrastructure. Never edit anything outside these two paths:**
+
+- `cucumber_tests/` — all test code, test data, step definitions, features
+- `.github/workflows/perform_e2e_tests.yml` — the CI workflow that runs the tests
+
+Any file outside these paths must NOT be created, modified, or deleted.
+
+If a change you are about to make would require touching a file outside this scope,
+stop and tell the user explicitly which file and why — do not proceed silently.
+
+This rule overrides every other guideline in this document.
+
+---
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface trade-offs.**
