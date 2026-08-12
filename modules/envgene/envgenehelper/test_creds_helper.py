@@ -2,7 +2,7 @@ import pytest
 
 from .collections_helper import dump_as_yaml_format
 from .creds_helper import *
-from .yaml_helper import openYaml
+from envgene_shared.utils.yaml_utils import openYaml
 
 # CONST
 TEST_TENANT = "test-tenant"

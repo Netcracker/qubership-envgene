@@ -1,4 +1,4 @@
-from .collections_helper import *
+from envgene_shared.utils.collections_utils import *
 import pytest
 
 def convert_list_elements_to_strings_in_place(lst):
