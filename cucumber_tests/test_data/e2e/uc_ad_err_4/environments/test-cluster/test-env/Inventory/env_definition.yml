@@ -1,0 +1,5 @@
+inventory:
+  environmentName: test-env
+  cloudName: test-cluster
+envTemplate:
+  artifact: non-existent-template:1.0.0

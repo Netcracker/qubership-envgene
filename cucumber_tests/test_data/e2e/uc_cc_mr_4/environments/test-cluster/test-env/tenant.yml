@@ -1,0 +1,10 @@
+name: test-tenant
+registryName: mock-reg
+credential: dummy-cred
+globalE2EParameters: {}
+deployParameters:
+  global_timeout: 30
+deploymentParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalParameterSets: []

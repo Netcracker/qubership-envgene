@@ -1,0 +1,13 @@
+inventory:
+  environmentName: test-env
+  cloudName: test-cluster
+envTemplate:
+  name: placeholder
+  templateArtifact:
+    registry: nexus-maven
+    templateRepository: maven-repo
+    repository: maven-repo
+    artifact:
+      group_id: org.test
+      artifact_id: project-env-template
+      version: v1.2.3

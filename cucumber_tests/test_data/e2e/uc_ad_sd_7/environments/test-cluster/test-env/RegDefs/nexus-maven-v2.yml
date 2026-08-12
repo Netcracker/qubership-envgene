@@ -1,0 +1,15 @@
+version: "2.0"
+name: nexus-maven-v2
+authConfig:
+  nexus-auth:
+    provider: nexus
+    authMethod: user_pass
+    credentialsId: nexus-creds-v2
+mavenConfig:
+  authConfig: nexus-auth
+  repositoryDomainName: http://localhost:8000
+  targetSnapshot: release
+  targetStaging: release
+  targetRelease: release
+  snapshotGroup: release
+  releaseGroup: release

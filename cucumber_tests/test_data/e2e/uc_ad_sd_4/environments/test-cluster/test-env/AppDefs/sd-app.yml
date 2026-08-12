@@ -1,0 +1,4 @@
+name: sd-app
+groupId: com.test
+artifactId: test_app_artifact
+registryName: nexus-maven-anon-v1
