@@ -4,12 +4,7 @@ from os import path, makedirs
 
 from .logger import logger
 
-
-def openJson(filePath):
-    logger.debug(f"Open json file: {filePath}")
-    with open(filePath, 'r') as f:
-        resultJson = json.load(f)
-    return resultJson
+from envgene_shared.utils.file_utils import openJson
 
 
 def findAllJsonsInDir(dir):
