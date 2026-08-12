@@ -18,7 +18,6 @@
       - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
       - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
       - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
-      - [\[Version 2.0\] deployPostfix Matching Logic](#version-20-deploypostfix-matching-logic)
       - [\[Version 2.0\] Deployment Plan namespace matching](#version-20-deployment-plan-namespace-matching)
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
@@ -368,19 +367,6 @@ It includes components from the Application SBOM with these `mime-type`:
 
 The service name is derived from the `name` attribute of the Application SBOM component.
 
-#### [Version 2.0] deployPostfix Matching Logic
-
-When processing the Solution Descriptor (SD), the Calculator matches the `deployPostfix` value from each `application` element in the SD to the corresponding Namespace folder in the Environment Instance. This matching logic applies to all contexts that use SD data (Deployment, Runtime, etc.).
-
-The matching logic is as follows:
-
-- First, attempts an exact match: finds a Namespace folder whose name exactly matches the `deployPostfix` value from the SD.
-- If no exact match is found, attempts to find a Namespace folder that is part of a BG Domain:
-  - Checks for a match with `deployPostfix` + `-origin` suffix **only** for namespaces that are part of a BG Domain with role `origin`
-  - Checks for a match with `deployPostfix` + `-peer` suffix **only** for namespaces that are part of a BG Domain with role `peer`
-
-This allows matching `deployPostfix` values from SD with Namespace folder names that include suffixes for BG Domain namespaces, as described in [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation).
-
 #### [Version 2.0] Deployment Plan namespace matching
 
 When the Calculator processes a
@@ -391,10 +377,10 @@ Namespace in the Environment Instance by equality:
 deploy-plan[].namespace == Namespace.name
 ```
 
-This rule applies to every Namespace. Without a [BG Domain](/docs/envgene-objects.md#bg-domain) it
-is equivalent to matching by `deployPostfix`. With a BG Domain it removes ambiguity when origin
-and peer share one `deployPostfix`: the plan already carries the chosen Namespace `name` from the
-[Namespace map](/docs/tech/namespace-map.md).
+This rule applies to every Namespace. For non-BG environments it is equivalent to the previous
+matching by `deployPostfix`. For [BG Domain](/docs/envgene-objects.md#bg-domain) Namespaces it
+removes ambiguity when origin and peer share one `deployPostfix`: the plan already carries the
+chosen Namespace `name` from the [Namespace map resolver](/docs/tech/namespace-map.md).
 
 After a match:
 
