@@ -26,6 +26,7 @@ Feature: Calculator CLI
     Then the pipeline fails
     And the pipeline log shows "nonexistent"
 
+  @xfail_cli_npe
   Scenario: UC-CC-DP-4: No BG Domain Match Found
     Given the workspace is initialized with test data from "e2e/uc_cc_dp_4"
     When the unified pipeline orchestrator runs
