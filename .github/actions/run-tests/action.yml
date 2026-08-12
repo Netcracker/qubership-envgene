@@ -42,12 +42,20 @@ runs:
         pip install --no-cache-dir -e "modules/envgene[dev]"
         pip install --no-cache-dir -e "modules/artifact-searcher[dev]"
         pip install --no-cache-dir -e "modules/external-cred-provision"
+        pip install --no-cache-dir -e "modules/envgene-shared[dev]"
         pip install --no-cache-dir -e "modules/dpg"
 
     - name: Configure test environment
       shell: bash
       run: |
         echo "PYTHONPATH=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/scripts" >> "${GITHUB_ENV}"
+
+    - name: ENVGENE SHARED test
+      shell: bash
+      run: |
+        cd modules/envgene-shared/envgene_shared
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit_envgene_shared.xml
+        cd ../../..
 
     - name: ENVGENE HELPER test
       shell: bash

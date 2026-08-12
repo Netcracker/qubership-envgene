@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-import envgenehelper.business_helper as business_helper
-from envgenehelper.config_helper import get_envgene_config_yaml
+import envgene_shared.utils.business_utils as envgene_shared_business
+from envgene_shared.utils.business_utils import get_envgene_config_yaml
 
-business_helper.get_schema_dir = lambda: Path(__file__).resolve().parents[2] / "schemas"
+envgene_shared_business.get_schema_dir = lambda: Path(__file__).resolve().parents[2] / "schemas"
 
 
 @pytest.fixture(autouse=True)

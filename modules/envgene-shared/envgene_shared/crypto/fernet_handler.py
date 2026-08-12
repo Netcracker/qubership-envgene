@@ -1,18 +1,34 @@
 import os
+import re
 from typing import Any
 from cryptography.fernet import Fernet
 
-from ..business_helper import getenv_with_error
-from ..yaml_helper import openYaml, writeYamlToFile, get_or_create_nested_yaml_attribute
-from ..logger import logger
+from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile, get_or_create_nested_yaml_attribute
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.constants import *
 
-from .constants import *
+def _apply_Fernet(value, fernet: Fernet, fernet_func, encrypted_regex=None, encrypt=False):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            should_encrypt = (encrypt or encrypted_regex is None or encrypted_regex.match(key))
+            value[key] = _apply_Fernet(child, fernet, fernet_func, encrypted_regex, should_encrypt)
+        return value
 
-def _apply_Fernet_to_dict(data: dict, fernet:Fernet, fernet_func) -> dict:
+    if isinstance(value, list):
+        for index, child in enumerate(value):
+            value[index] = _apply_Fernet(child, fernet, fernet_func, encrypted_regex, encrypt)
+        return value
+
+    if (isinstance(value, str) and value != '' and encrypt):
+        return fernet_func(value, fernet)
+    return value
+
+def _apply_Fernet_to_dict(data: dict, fernet:Fernet, fernet_func, encrypted_regex=None,) -> dict:
     for key, value in data.items():
         if isinstance(value, dict):
             _apply_Fernet_to_dict(value, fernet, fernet_func)
-        elif value != '' and not UNENCRYPTED_REGEX.match(key):
+        elif value != '' and (encrypted_regex is None or encrypted_regex.match(key)):
             data[key] = fernet_func(value, fernet)
     return data
 
@@ -53,14 +69,15 @@ def extract_value_Fernet(file_path: str, attribute_str: str) -> Any:
     return value
 
 def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_file_path=None,
-                 load_result=True, *args, **kwargs):
+                 load_result=True, encrypted_regex=None, *args, **kwargs):
     if not secret_key:
         secret_key = getenv_with_error("SECRET_KEY")
     data = openYaml(file_path)
     fernet = Fernet(secret_key)
     fernet_func = _decrypt_Fernet if mode == "decrypt" else _encrypt_Fernet
+    compiled_regex = (re.compile(encrypted_regex) if encrypted_regex else None)
     if isinstance(data, dict):
-        new_data = _apply_Fernet_to_dict(data, fernet, fernet_func)
+        new_data = _apply_Fernet(data, fernet, fernet_func, compiled_regex)
     else:
         new_data = {}
     if minimize_diff and old_file_path and mode != "decrypt":

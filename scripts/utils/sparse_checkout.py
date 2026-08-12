@@ -1,6 +1,6 @@
 import os
 
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.git_helper import GitRepoManager
 from envgenehelper.repo_paths import get_sparse_checkout_paths
 

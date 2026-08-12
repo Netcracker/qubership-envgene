@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.git_helper import GitRepoManager
 
 from git_commit.minimize_cred_diffs import minimize_cred_diffs

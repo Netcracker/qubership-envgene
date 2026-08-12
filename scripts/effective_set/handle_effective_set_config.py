@@ -3,7 +3,8 @@ import os
 import shutil
 import tempfile
 
-from envgenehelper import logger, get_schema_dir
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.business_utils import get_schema_dir
 
 
 def handle_effective_set_config(config_str):

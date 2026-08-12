@@ -9,9 +9,9 @@ from envgenehelper.business_helper import (
     parse_bg_ns_target,
 )
 from envgenehelper.errors import ReferenceError
-from envgenehelper.logger import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME
-from envgenehelper.yaml_helper import openYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 DEPLOY_PLAN_FILE_NAME = "deploy-plan.yml"
 DELTA_DEPLOY_PLAN_FILE_NAME = "delta-deploy-plan.yml"

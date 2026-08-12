@@ -1,6 +1,7 @@
 from build_env.env_template.process_env_template import process_env_template
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 from envgenehelper import *
+from envgene_shared import *
 
 
 def write_app_reg_defs(base_dir: str, render_dir: str, env_dir: str, placement_mode: str) -> None:
