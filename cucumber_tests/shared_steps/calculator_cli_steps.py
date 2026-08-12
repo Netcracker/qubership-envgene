@@ -104,7 +104,7 @@ def _install_cli_wrapper(workspace: EnvGeneWorkspace) -> None:
 
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
-    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = str(bat)
+    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = str(bat) if os.name == "nt" else str(sh)
 
 
 @given("the Calculator CLI mock validates rules")
