@@ -8,7 +8,7 @@ import zipfile
 import urllib.request
 from pathlib import Path
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
-from cucumber_tests.shared_steps.common_steps import *
+from cucumber_tests.step_defs.common_steps import *
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_nexus(tmp_path_factory):
@@ -84,42 +84,16 @@ def workspace(tmp_path):
     return EnvGeneWorkspace(tmp_path)
 
 
-_SKIP_REASONS = {
-    "requires_docker": (
-        "Test invokes the real Calculator CLI JAR via run_effective_set_cli.sh, which relies on "
-        "shell variable expansion ($CI_PROJECT_DIR) that only works on Linux/Docker. "
-        "Run in Docker: docker compose -f devtools/docker-compose.yml exec cucumber pytest ..."
-    ),
-}
-
-_XFAIL_REASONS = {
-    "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
-    "xfail_cli_npe": (
-        "Calculator CLI throws NullPointerException in splitBgDomainParams() when processing "
-        "BG-domain scenarios — affects both the success case (dp_2) and the no-match error case (dp_4)."
-    ),
-    "xfail_cli_no_hierarchy_rule": (
-        "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
-        "cannot reference Cloud- or Namespace-level parameters (doc-vs-code divergence)."
-    ),
-    "xfail_cli_no_context_rule": (
-        "Calculator CLI does not enforce the documented rule that e2eParameters and "
-        "technicalConfigurationParameters cannot cross-reference deployParameters "
-        "(doc-vs-code divergence; only deployParameters→e2eParameters/techConfig direction is caught)."
-    ),
-}
-
-
 def pytest_bdd_apply_tag(tag, function):
-    """Handle custom Gherkin tags as pytest marks."""
-    if tag in _SKIP_REASONS:
-        import sys
-        if sys.platform == "win32":
-            marker = pytest.mark.skip(reason=_SKIP_REASONS[tag])
-            marker(function)
-        return True
-    if tag in _XFAIL_REASONS:
-        marker = pytest.mark.xfail(reason=_XFAIL_REASONS[tag], strict=False)
+    """Handle custom Gherkin tags as pytest marks.
+
+    @xfail  — marks the test as expected to fail (known framework gap, not a test bug).
+    """
+    if tag == "xfail":
+        marker = pytest.mark.xfail(
+            reason="Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
+            strict=False,
+        )
         marker(function)
-        return True
-    return None
+        return True  # tag handled, do not raise unknown-tag warning
+    return None  # let pytest-bdd handle all other tags normally
