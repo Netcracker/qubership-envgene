@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Optional
 from unittest import result
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.errors import ValidationError
 from envgenehelper.models import ExternalCredential, SecretStore

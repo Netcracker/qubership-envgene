@@ -1,4 +1,5 @@
 from envgenehelper import *
+from envgene_shared import *
 import os
 
 def normalize_env_specific_schema_white_list(white_list, namespace_names):
