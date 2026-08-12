@@ -6,7 +6,8 @@ import shutil
 import zipfile
 from pathlib import Path
 
-from envgenehelper import dump_as_yaml_format, get_all_files_in_dir, logger
+from envgene_shared.utils.logger import logger
+from envgenehelper import dump_as_yaml_format, get_all_files_in_dir
 
 
 class TestHelpers:

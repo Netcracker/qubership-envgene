@@ -2,7 +2,7 @@ import pytest
 
 from .deploy_plan_adapter import EnvgeneDeployPlan, adapt_sd_to_deploy_plan
 from .errors import ReferenceError
-from .yaml_helper import openYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 
 @pytest.fixture(autouse=True)

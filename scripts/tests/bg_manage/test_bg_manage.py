@@ -6,7 +6,7 @@ import bg_manage.bg_manage as bg_manage
 from envgenehelper.business_helper import getEnvDefinitionPath
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan
 from envgenehelper.test_helpers import TestHelpers
-from envgenehelper.yaml_helper import openYaml
+from envgene_shared.utils.yaml_utils import openYaml
 from scripts.tests.base_test import BaseTest
 
 FULL_ENV_NAME = "bgd-cluster/bgd-env"

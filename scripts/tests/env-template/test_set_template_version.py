@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from build_env.env_template.set_template_version import update_version
-from envgenehelper import readYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import readYaml, writeYamlToFile
 from envgenehelper.business_helper import NamespaceRole, parse_bg_ns_target
 from envgenehelper.models import TemplateVersionUpdateMode
 from scripts.tests.base_test import BaseTest

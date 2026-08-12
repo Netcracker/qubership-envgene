@@ -1,5 +1,5 @@
 import re
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from build_env.jinja.jinja import JINJA_FILTERS
 
 general_warn_message = (

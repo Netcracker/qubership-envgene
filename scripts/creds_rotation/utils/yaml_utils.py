@@ -2,7 +2,7 @@ import os
 import yaml
 import re
 from typing import Any
-import envgenehelper.logger as logger
+from envgene_shared.utils.logger import logger
 from creds_rotation.utils.error_constants import *
 from envgenehelper.errors import ValidationError, ValueError
 

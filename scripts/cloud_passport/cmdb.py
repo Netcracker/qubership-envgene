@@ -2,7 +2,7 @@ from pathlib import Path
 
 from yaml import safe_load, safe_dump
 from envgenehelper.yaml_helper import beautifyYaml
-from envgenehelper import get_schema_dir
+from envgene_shared.utils.business_utils import get_schema_dir
 
 
 def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:

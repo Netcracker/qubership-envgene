@@ -3,9 +3,9 @@ import os
 import time
 from typing import List
 
-import envgenehelper.logger as logger
+from envgene_shared.utils.logger import logger
 from creds_rotation.core_rotation import process_entry_in_payload
-from envgenehelper import crypt
+from envgene_shared.crypto import crypt
 from envgenehelper.errors import RuntimeError, ValidationError, ValueError
 from creds_rotation.models import PayloadEntry, RotationResult, EnvConfig
 from creds_rotation.utils.cred_utils import (

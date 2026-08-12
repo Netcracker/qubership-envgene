@@ -36,6 +36,7 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     /modules/envgene \
     /modules/artifact-searcher \
     /modules/external-cred-provision \
+    /modules/envgene-shared \
     /modules/dpg
 
 RUN mkdir -p /deployments && \

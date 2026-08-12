@@ -4,7 +4,7 @@ import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
     PartialMergeMode
-from envgenehelper.yaml_helper import openYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
 from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \

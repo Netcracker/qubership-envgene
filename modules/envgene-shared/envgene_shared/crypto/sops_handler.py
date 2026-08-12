@@ -1,15 +1,14 @@
 import base64
 import os
-import shlex
 import subprocess
 import tempfile
 import shutil
 
-from ..business_helper import getenv_with_error
-from ..yaml_helper import get_empty_yaml, openYaml, readYaml, get_or_create_nested_yaml_attribute
-from ..logger import logger
+from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_or_create_nested_yaml_attribute
+from envgene_shared.utils.logger import logger
 
-from .constants import *
+from envgene_shared.utils.constants import *
 
 ENVGENE_AGE_PRIVATE_KEY = None
 PUBLIC_AGE_KEYS = None
@@ -28,12 +27,12 @@ def _sops_subprocess_env(secret_key=None, **extra):
     return env
 
 
-def _run_SOPS(arg_str, secret_key=None, return_codes_to_ignore=None, **env_extra):
+def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, **env_extra):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
-    cmd = ['sops'] + shlex.split(arg_str)
+    cmd = ['sops'] + cmd_arg
     env = _sops_subprocess_env(secret_key, **env_extra)
     result = subprocess.run(
-        cmd, shell=False, capture_output=True, text=True, timeout=5, env=env
+        cmd, shell=False, capture_output=True, text=True, timeout=25, env=env
     )
     if "metadata not found" in result.stderr:
         raise ValueError('File was already decrypted')
@@ -77,7 +76,7 @@ def _sops_edit(encrypted_path, plaintext_path, public_key, secret_key=None):
     editor_path = _create_replace_content_sh(plaintext_bytes)
     try:
         os.chmod(editor_path, 0o777)
-        sops_args = f'edit --age {public_key} {encrypted_path}'
+        sops_args = ["edit", "--age", public_key, str(encrypted_path)]
         _run_SOPS(sops_args, secret_key=secret_key, return_codes_to_ignore=[200], EDITOR=editor_path)
     finally:
         if os.path.exists(editor_path):
@@ -95,21 +94,8 @@ def _get_minimized_diff(file_path, old_file_path, public_key, secret_key=None):
     return tmp_path
 
 
-def _is_empty_cred_file(file_path: str) -> bool:
-    try:
-        if os.path.getsize(file_path) == 0:
-            return True
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-            text = f.read().strip()
-    except OSError:
-        return True
-    if not text:
-        return True
-    return text in ('{}', '---', 'null', '~')
-
-
 def _return_sops_result(file_path, mode, in_place, load_result, result=None):
-    logger.info(f'The file has been {mode}ed. Path: {file_path}')
+    logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
         if isinstance(result, str):
             return readYaml(result)
@@ -118,7 +104,7 @@ def _return_sops_result(file_path, mode, in_place, load_result, result=None):
 
 
 def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None,
-               load_result=True, *args, **kwargs):
+               load_result=True, encrypted_regex=None, *args, **kwargs):
     global ENVGENE_AGE_PRIVATE_KEY, PUBLIC_AGE_KEYS
     if not secret_key or not public_key:
         if ENVGENE_AGE_PRIVATE_KEY is None:
@@ -128,18 +114,6 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         secret_key = ENVGENE_AGE_PRIVATE_KEY
     if not public_key:
         public_key = PUBLIC_AGE_KEYS
-
-    if _is_empty_cred_file(file_path):
-        logger.info(f'File is empty, skipping de/encryption. Path: {file_path}')
-        return get_empty_yaml() if load_result else None
-
-    encrypted = is_encrypted_SOPS(file_path)
-    if encrypted and mode == "encrypt":
-        logger.warning(f'File is already encrypted. Path: {file_path}')
-        return openYaml(file_path) if load_result else None
-    if not encrypted and mode == "decrypt":
-        logger.warning(f'File is not encrypted. Path: {file_path}')
-        return openYaml(file_path) if load_result else None
 
     if minimize_diff and mode != "decrypt":
         tmp_path = _get_minimized_diff(file_path, old_file_path, public_key, secret_key=secret_key)
@@ -156,12 +130,12 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         logger.info(f'The file has been {mode}ed. Path: {file_path}')
         return result
 
-    sops_args = f' --{SOPS_MODES[mode]} '
-    if mode != "decrypt":
-        sops_args += f' --unencrypted-regex "{UNENCRYPTED_REGEX_STR}"'
+    sops_args = [f"--{SOPS_MODES[mode]}"]
+    if mode != "decrypt" and encrypted_regex is not None:
+        sops_args.extend(["--encrypted-regex", encrypted_regex])
     if in_place:
-        sops_args += ' --in-place'
-    sops_args += f' -age {public_key} {file_path}'
+        sops_args.append("--in-place")
+    sops_args.extend(["-age", public_key, str(file_path)])
     try:
         run_result = _run_SOPS(sops_args, secret_key=secret_key)
         stdout = run_result.stdout if not in_place else None

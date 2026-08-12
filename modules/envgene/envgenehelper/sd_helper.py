@@ -1,4 +1,5 @@
 from envgenehelper import *
+from envgene_shared import *
 
 SD_FILE_NAME = "sd.yaml"
 DELTA_SD_FILE_NAME = "delta_sd.yaml"

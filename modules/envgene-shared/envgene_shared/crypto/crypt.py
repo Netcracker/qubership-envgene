@@ -5,20 +5,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import getenv, path
 from typing import Callable
 
-from .config_helper import get_envgene_config_yaml
-from .yaml_helper import openYaml, get_empty_yaml
-from .file_helper import check_file_exists, get_files_with_filter
-from .logger import logger
-from .collections_helper import split_multi_value_param
+from envgene_shared.utils.yaml_utils import openYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.business_utils import get_schema_dir, get_project_root
+from envgene_shared.utils.file_utils import check_file_exists, get_files_with_filter, is_cred_file
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.collections_utils import split_multi_value_param
+from envgene_shared.utils.crypt_utils import *
+from envgene_shared.utils.constants import FERNET_ID, SOPS_ID
 
-from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
-from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
-
-BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
-VALID_EXTENSIONS = re.compile(r'\.ya?ml$')
-TARGET_REGEX = re.compile(r'(^credentials$|creds$)')
-TARGET_DIR_REGEX = re.compile(r'/[Cc]redentials(/|$)')
-TARGET_PARENT_DIRS = re.compile(r'/(configuration|environments)(/|$)')
+from envgene_shared.crypto.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
+from envgene_shared.crypto.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 
 CRYPT_FUNCTIONS = {
     'SOPS': crypt_SOPS,
@@ -35,33 +31,35 @@ EXTRACT_FUNCTIONS = {
     'Fernet': extract_value_Fernet
 }
 
-
 def get_configured_encryption_type():
     return get_crypt_backend(), get_crypt()
-
-
-def _handle_missing_file(file_path, default_yaml, allow_default):
-    if check_file_exists(file_path):
-        return 0  # sentinel value
-    if not allow_default:
-        raise FileNotFoundError(f"{file_path} not found or is not a file")
-    return default_yaml()
 
 
 def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False,
                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None,
-                 load_result=True, **kwargs):
-    res = _handle_missing_file(file_path, default_yaml, allow_default)
+                 load_result=True, _file_info=None, **kwargs):
+    res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
+    if is_empty_cred_file(file_path):
+        logger.debug(f'File is empty, skipping decryption. Path: {file_path}')
+        return get_empty_yaml() if load_result else None 
+    crypt_backend = detect_crypt_backend_from_file(file_path)
+    encrypted = crypt_backend is not None
     is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:
+        if encrypted:
+            raise ValueError(f'Parameter crypt is set to false in config, but this cred file is encrypted: {file_path}')
         logger.info("'crypt' is set to 'false', skipping decryption")
         if load_result:
             return openYaml(file_path)
         return None
-    crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
+      
+    if not encrypted:
+        logger.warning(f'File is not encrypted. Path: {file_path}')
+        return openYaml(file_path) if load_result else None
+    
     return CRYPT_FUNCTIONS[crypt_backend](
         file_path=file_path, secret_key=secret_key, in_place=in_place,
         public_key=public_key, mode='decrypt', load_result=load_result, **kwargs
@@ -72,6 +70,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
                  ignore_is_crypt=False, is_crypt=None,
                  minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False,
                  load_result=True, **kwargs):
+    crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
     if minimize_diff:
         if not old_file_path:
             raise ValueError('minimize_diff was set to true but old_file_path was not specified')
@@ -81,20 +80,49 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         elif not is_encrypted(old_file_path, crypt_backend):
             minimize_diff = False
             logger.warning(f"Cred file at {old_file_path} is not encrypted, minimize_diff parameter is ignored")
-    res = _handle_missing_file(file_path, default_yaml, allow_default)
+    res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
-    is_crypt = is_crypt if is_crypt is not None else get_crypt()
+    if is_empty_cred_file(file_path):
+        logger.debug(f'File is empty, skipping encryption. Path: {file_path}')
+        return get_empty_yaml() if load_result else None
+    is_crypt = is_crypt if is_crypt is not None else get_crypt()    
+    encrypted = is_encrypted(file_path, crypt_backend)
     if not ignore_is_crypt and not is_crypt:
+        if encrypted:
+            raise ValueError(f'Parameter crypt is set to false in config, but this cred file is encrypted: {file_path}')
         logger.info("'crypt' is set to 'false', skipping encryption")
         if load_result:
             return openYaml(file_path)
-        return None
-    crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
+        return None    
+    if encrypted:
+        logger.warning(f'File is already encrypted. Path: {file_path}')
+        return openYaml(file_path) if load_result else None
+
+    encrypted_regex = None
+    file_content = openYaml(file_path)
+    if is_effective_set_cred_file(file_path):  
+        literal_keys, has_literal, has_reference = analyze_cred_file(file_content)      
+        if not has_literal:
+            logger.debug(f"No literal keys found, skipping encryption. Path: {file_path}")
+            return file_content if load_result else None
+        elif not has_reference:
+            logger.debug(f"full file to be encrypted. Path: {file_path}")
+            encrypted_regex = None
+        else:
+            encrypted_regex = "|".join(
+                f"^{re.escape(key)}$"
+                for key in sorted(literal_keys)
+            )
+        logger.debug(f"encrypted_regex = {encrypted_regex} for file = {file_path}")
+    else:
+        validate_yaml_by_scheme_or_fail(input_yaml_content=file_content, schema_file_path=get_schema_dir() / "credential.schema.json")
+        encrypted_regex = r"^data$"
+
     return CRYPT_FUNCTIONS[crypt_backend](
         file_path=file_path, secret_key=secret_key, in_place=in_place,
         public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
-        old_file_path=old_file_path, load_result=load_result, **kwargs
+        old_file_path=old_file_path, load_result=load_result, encrypted_regex=encrypted_regex, **kwargs
     )
 
 
@@ -108,34 +136,25 @@ def extract_encrypted_data(file_path, attribute_str):
     return EXTRACT_FUNCTIONS[crypt_backend](file_path, attribute_str)
 
 
-def is_cred_file(fp: str) -> bool:
-    name = os.path.basename(fp)
-    name_without_ext = os.path.splitext(name)[0]
-    parent_dirs = os.path.dirname(fp)
-    if not VALID_EXTENSIONS.search(name):
-        return False
-    if not TARGET_PARENT_DIRS.search(parent_dirs):
-        return False
-    if TARGET_REGEX.search(name_without_ext) or re.search(TARGET_DIR_REGEX, parent_dirs):
-        return True
-    return False
-
-
 def get_all_necessary_cred_files() -> set[str]:
+    BASE_DIR = get_project_root()
     env_names = getenv("ENV_NAMES", None)
     if not env_names:
-        logger.info("ENV_NAMES not set, running in test mode")
+        logger.info("ENV_NAMES not set, extracting credential files for full repository")
         return get_files_with_filter(BASE_DIR, is_cred_file)
     env_names_list = split_multi_value_param(env_names)
 
     sources = set()
     sources.add("configuration")
-    sources.add(path.join("environments", "credentials"))
+    
+    global_source_locations = ["credentials", "Credentials", "shared-credentials",]
+    for location in global_source_locations:
+        sources.add(path.join("environments", location))
 
     for env_name in env_names_list:
         cluster, env = env_name.strip().split("/")
         env_specific_source_locations = ["credentials", "cloud-passport", "cloud-passports",
-                                         env]  # relative to BASE_DIR/<cluster_name>/
+                                         env, "Credentials", "shared-credentials",]  # relative to BASE_DIR/<cluster_name>/
         for location in env_specific_source_locations:
             sources.add(path.join("environments", cluster, location))
 
@@ -155,11 +174,12 @@ def is_encrypted(file_path, crypt_backend=None):
     return IS_ENCRYPTED_FUNCTIONS[crypt_backend](file_path)
 
 
-def check_for_encrypted_files(files):
-    err_msg = "Parameter crypt is set to false in config, but this cred file is encrypted: {}"
-    for f in files:
-        if is_encrypted(f):
-            raise ValueError(err_msg.format(f))
+def detect_crypt_backend_from_file(file_path: str) -> str:
+    if is_encrypted_Fernet(file_path):
+        return FERNET_ID
+    if is_encrypted_SOPS(file_path):
+        return SOPS_ID
+    return None
 
 
 def _batch_cred_op(files, op_func, **kwargs):
@@ -200,14 +220,12 @@ def _parallel_cred_op(files, op_func, **kwargs):
 
 
 def decrypt_all_cred_files_for_env(**kwargs):
+    logger.info("Starting decryption of credential files")
     files = get_all_necessary_cred_files()
-    if not get_crypt():
-        check_for_encrypted_files(files)
-        return
-
     backend = get_crypt_backend()
+    validate_crypto_requirements(False)
     t0 = time.perf_counter()
-    _batch_cred_op(files, decrypt_file, **kwargs)
+    _parallel_cred_op(files, decrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
     logger.info(f'Decrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
     logger.debug("Decrypted next cred files:")
@@ -215,21 +233,14 @@ def decrypt_all_cred_files_for_env(**kwargs):
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
+    logger.info("Starting encryption of credential files")
     files = get_all_necessary_cred_files()
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
     backend = get_crypt_backend()
+    validate_crypto_requirements(True)
     t0 = time.perf_counter()
-    _batch_cred_op(files, encrypt_file, **kwargs)
+    _parallel_cred_op(files, encrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
     logger.info(f'Encrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
 
-
-def get_crypt():
-    config = get_envgene_config_yaml()
-    return config.get('crypt', True)
-
-
-def get_crypt_backend():
-    config = get_envgene_config_yaml()
-    return config.get('crypt_backend', 'Fernet')

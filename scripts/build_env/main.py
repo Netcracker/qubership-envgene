@@ -1,4 +1,5 @@
 from envgenehelper import *
+from envgene_shared import *
 from envgenehelper.deployer import *
 
 from build_env.build_env import build_env, process_additional_template_parameters

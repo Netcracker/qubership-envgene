@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from enum import StrEnum
 from os import getenv
 
-from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, \
-    validate_parameters
+from envgene_shared.utils.logger import logger
+from envgene_shared.crypto.crypt import decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env
+from envgenehelper import validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
@@ -30,7 +31,7 @@ from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import fan_out
 from pipeline.pipeline_parameters import PipelineParametersHandler
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 

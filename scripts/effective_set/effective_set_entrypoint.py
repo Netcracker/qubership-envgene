@@ -10,9 +10,9 @@ from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPla
 from envgenehelper.effective_set_helper import ES_DIR_NAME, ES_MAPPING_FILE, ESGenerationContext, GenerationMode, \
     PartialMergeMode
 from envgenehelper.file_helper import delete_dir, delete_dir_if_exists, deleteFileIfExists
-from envgenehelper.logger import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME
-from envgenehelper.yaml_helper import writeYamlToFile, openYaml
+from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
 
 from effective_set.handle_effective_set_config import handle_effective_set_config
 

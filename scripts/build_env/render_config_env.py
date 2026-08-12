@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 from envgenehelper import *
+from envgene_shared import *
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
     get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole, parse_bg_ns_target,

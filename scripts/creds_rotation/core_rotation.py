@@ -2,7 +2,7 @@ from typing import Optional, Dict, List, Any
 from creds_rotation.models import PayloadEntry, RotationResult, ParameterReference, CredMap
 from creds_rotation.utils.search_utils import get_ns_content, get_app_content, resolve_param, search_yaml_files
 from creds_rotation.utils.cred_utils import extract_credential
-import envgenehelper.logger as logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.errors import ValidationError, ReferenceError
 
 

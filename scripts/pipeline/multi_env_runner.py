@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.repo_paths import get_sparse_checkout_paths
 
 _MAX_FAN_OUT_WORKERS = 3

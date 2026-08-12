@@ -6,9 +6,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from git import GitCommandError, Repo
 
-from envgenehelper import decrypt_file, encrypt_file
-from envgenehelper.crypt import get_crypt, is_cred_file
-from envgenehelper.logger import logger
+from envgene_shared.crypto.crypt import decrypt_file, encrypt_file
+from envgene_shared.utils.crypt_utils import get_crypt
+from envgene_shared.utils.file_utils import is_cred_file
+from envgene_shared.utils.logger import logger
 
 
 def _read_head_content(repo: Repo, rel_path: str):
