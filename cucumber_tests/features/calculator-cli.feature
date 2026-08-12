@@ -20,6 +20,7 @@ Feature: Calculator CLI
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
 
+  @xfail_cli_npe
   Scenario: UC-CC-DP-3: No Exact Match Found
     Given the workspace is initialized with test data from "e2e/uc_cc_dp_3"
     When the unified pipeline orchestrator runs

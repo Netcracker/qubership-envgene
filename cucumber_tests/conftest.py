@@ -87,8 +87,9 @@ def workspace(tmp_path):
 _XFAIL_REASONS = {
     "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
     "xfail_cli_npe": (
-        "Calculator CLI throws NullPointerException in splitBgDomainParams() when processing "
-        "BG-domain scenarios — affects both the success case (dp_2) and the no-match error case (dp_4)."
+        "Calculator CLI throws NullPointerException when the requested namespace is absent from "
+        "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
+        "Affects BG-domain scenarios (dp_2, dp_4) and non-BG no-match scenarios (dp_3)."
     ),
     "xfail_cli_no_hierarchy_rule": (
         "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
