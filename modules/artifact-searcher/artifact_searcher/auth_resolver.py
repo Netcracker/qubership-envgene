@@ -3,7 +3,7 @@ import json
 from typing import Optional
 
 from artifact_searcher.utils.models import AuthConfig, Provider, RegistryV2
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.creds_helper import get_cred_data
 
 AUTH_METHOD_USER_PASS = "user_pass"

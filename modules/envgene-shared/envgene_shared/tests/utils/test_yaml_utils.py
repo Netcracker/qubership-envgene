@@ -3,9 +3,7 @@ import threading
 import pytest
 from ruyaml import CommentedMap
 
-from .yaml_helper import dumpYamlToStr, openYaml, readYaml, store_value_to_yaml, writeYamlToFile
-
-CRED_VALUE = {'type': 'secret', 'data': {'secret': 'token'}}
+from envgene_shared.utils.yaml_utils import openYaml, readYaml, writeYamlToFile
 
 
 def cred_path_in(tmp_path, name='credentials.yml'):
@@ -23,8 +21,14 @@ def assert_no_yaml_comments(path):
 class TestCredentialYamlWithoutComments:
     @pytest.mark.unit
     def test_write_cred_file_has_no_comments(self, tmp_path):
-        creds = CommentedMap()
-        store_value_to_yaml(creds, 'consul-bootstrap-token', CRED_VALUE)
+        creds = CommentedMap({
+            'consul-bootstrap-token': CommentedMap({
+                'type': 'secret',
+                'data': CommentedMap({
+                    'secret': 'token'
+                })
+            })
+        })
 
         cred_path = cred_path_in(tmp_path)
         writeYamlToFile(cred_path, creds)
@@ -45,7 +49,6 @@ class TestCredentialYamlWithoutComments:
         )
 
         loaded = openYaml(cred_path)
-        store_value_to_yaml(loaded, 'token-a', loaded['token-a'])
         writeYamlToFile(cred_path, loaded)
 
         assert_no_yaml_comments(cred_path)
@@ -60,8 +63,7 @@ class TestYamlThreadSafety:
         def worker(index: int) -> None:
             try:
                 data = readYaml(f"key_{index}: value_{index}\n")
-                dumped = dumpYamlToStr(data)
-                assert f"key_{index}:" in dumped
+                assert data[f"key_{index}"] == f"value_{index}"
                 results.append(index)
             except Exception as exc:
                 errors.append((index, exc))

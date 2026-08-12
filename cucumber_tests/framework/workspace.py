@@ -51,13 +51,13 @@ class EnvGeneWorkspace(BaseWorkspace):
         with open(self.creds_dir / "credentials.yml", "w") as f:
             yaml.dump({
                 "test-registry": {
+                    "type": "usernamePassword",
                     "data": {
                         "username": "dummy-user",
                         "password": "dummy-password",
-                        "secret": "dummy-secret-value"
                     }
                 }
-            }, f)
+         }, f)
 
         with open(self.config_dir / "registry.yml", "w") as f:
             yaml.dump({
