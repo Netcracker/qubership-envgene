@@ -73,6 +73,10 @@ class PipelineParametersHandler(BaseModel):
             "SSL_CERTIFICATES_BUNDLE": getenv("SSL_CERTIFICATES_BUNDLE"),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
             "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
+            "DEPLOY_POSTFIXES_FILTER": getenv("DEPLOY_POSTFIXES_FILTER", ""),
+            "NAMESPACE_NAMES_FILTER": getenv("NAMESPACE_NAMES_FILTER", ""),
+            "COMPONENT_NAMES_FILTER": getenv("COMPONENT_NAMES_FILTER", ""),
+            "WAVE_NAMES_FILTER": getenv("WAVE_NAMES_FILTER", ""),
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
         }
 
