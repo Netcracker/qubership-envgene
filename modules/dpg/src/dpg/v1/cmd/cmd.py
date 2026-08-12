@@ -111,7 +111,7 @@ class DeploymentPlanGeneratorCommand:
         return filtered_plan
 
     @staticmethod
-    def merge(deploy_plans: List[Union[DeployPlan, path, str]], output_file: Path = "deploy-plan.yaml") -> Optional[DeployPlan]:
+    def merge(deploy_plans: List[Union[DeployPlan, Path, str]], output_file: Path = "deploy-plan.yaml") -> Optional[DeployPlan]:
         if len(deploy_plans) == 0:
             return None
         if len(deploy_plans) == 1:
