@@ -1,5 +1,6 @@
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 from envgenehelper import *
+from envgene_shared import *
 
 NAMESPACE_MAP_FILE = "namespace-map.yml"
 

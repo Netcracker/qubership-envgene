@@ -1,4 +1,5 @@
 from envgenehelper import *
+from envgene_shared import *
 from utils.schema_validation import checkCloudPassportBySchema
 
 # const

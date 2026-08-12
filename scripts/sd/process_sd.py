@@ -7,10 +7,10 @@ from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from build_env.namespace_render import compute_namespace_map
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_version
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
-from envgenehelper.logger import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
                                      SD_FILE_NAME, DELTA_SD_FILE_NAME)

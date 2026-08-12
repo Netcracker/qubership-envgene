@@ -3,7 +3,7 @@ import shlex
 from os import getenv
 from pathlib import Path
 
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.models import PipelineType
 
 RESOLVED_ENV_FILE = "envgene-resolved.env"
