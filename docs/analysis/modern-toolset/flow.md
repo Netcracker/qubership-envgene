@@ -6,12 +6,17 @@
   - [Data exchange Rules](#data-exchange-rules)
   - [Defaults](#defaults)
   - [DD and zip layout](#dd-and-zip-layout)
-  - [`deploy-plan.yml`](#deploy-planyml)
+  - [Deploy plan](#deploy-plan)
+    - [Merge algorithm](#merge-algorithm)
   - [`namespace-map.yml`](#namespace-mapyml)
-  - [`APPLICATION_VERSIONS`](#application_versions)
-  - [`OPERATION_TYPE`](#operation_type)
-  - [`PIPELINE_TYPE`](#pipeline_type)
-  - [`BG_NS_TARGET`](#bg_ns_target)
+  - [Instance pipeline parameters](#instance-pipeline-parameters)
+    - [`APPLICATION_VERSIONS`](#application_versions)
+    - [CLUSTER\_NAME](#cluster_name)
+    - [ENVIRONMENT\_NAME](#environment_name)
+    - [DELTA\_DEPLOY](#delta_deploy)
+    - [`OPERATION_TYPE`](#operation_type)
+    - [`PIPELINE_TYPE`](#pipeline_type)
+    - [`BG_NS_TARGET`](#bg_ns_target)
   - [`bg_domain` in topology context](#bg_domain-in-topology-context)
   - [Locations](#locations)
   - [Uniq names](#uniq-names)
@@ -22,23 +27,25 @@
   - [Flow](#flow)
     - [1 job `env_prepare`](#1-job-env_prepare)
       - [1.1 step `preprocess`](#11-step-preprocess)
-      - [1.2 step `trigger_passport`](#12-step-trigger_passport)
-      - [1.3 step `get_cloud_passport`](#13-step-get_cloud_passport)
-      - [1.4 step `credential_rotation`](#14-step-credential_rotation)
-      - [1.5 step `bg_manage`](#15-step-bg_manage)
+      - [1.2 step `get_passport`](#12-step-get_passport)
+      - [1.3 step `credential_rotation`](#13-step-credential_rotation)
+      - [1.4 step `change_bg_state`](#14-step-change_bg_state)
+      - [1.5 step `warmup`](#15-step-warmup)
       - [1.6 step `env_inventory_generation`](#16-step-env_inventory_generation)
       - [1.7 step `registry_discovery`](#17-step-registry_discovery)
-      - [1.8 step `process_env_template`](#18-step-process_env_template)
-      - [1.9 step `app_reg_def_process`](#19-step-app_reg_def_process)
-      - [1.10 step `process_sd`](#110-step-process_sd)
-      - [1.11 step `generate_deployment_plan` (`dpg`)](#111-step-generate_deployment_plan-dpg)
-      - [1.12 step `env_build`](#112-step-env_build)
-      - [1.13 step `generate_effective_set`](#113-step-generate_effective_set)
-      - [1.14 step `generate_argocd_repo` (`argo-cd dpg`)](#114-step-generate_argocd_repo-argo-cd-dpg)
-      - [1.15 step `cmdb_import`](#115-step-cmdb_import)
-      - [1.16 step `postprocess`](#116-step-postprocess)
-      - [1.17 step `git_commit`](#117-step-git_commit)
-      - [1.18 step `es_pusher`](#118-step-es_pusher)
+      - [1.8 step `set_template_version`](#18-step-set_template_version)
+      - [1.9 step `process_env_template`](#19-step-process_env_template)
+      - [1.10 step `appregdef_render`](#110-step-appregdef_render)
+      - [1.11 step `deploy_postfix_namespace_map`](#111-step-deploy_postfix_namespace_map)
+      - [1.12 step `process_sd`](#112-step-process_sd)
+      - [1.13 step `generate_deployment_plan`](#113-step-generate_deployment_plan)
+      - [1.14 step `env_build`](#114-step-env_build)
+      - [1.15 step `generate_effective_set`](#115-step-generate_effective_set)
+      - [1.16 step `generate_argocd_repo` (`argo-cd dpg`)](#116-step-generate_argocd_repo-argo-cd-dpg)
+      - [1.17 step `cmdb_import`](#117-step-cmdb_import)
+      - [1.18 step `postprocess`](#118-step-postprocess)
+      - [1.19 step `git_commit`](#119-step-git_commit)
+      - [1.20 step `es_pusher`](#120-step-es_pusher)
     - [2 job `sync`](#2-job-sync)
       - [2.1 step `preprocess`](#21-step-preprocess)
       - [2.2 step `sync`](#22-step-sync)
@@ -48,7 +55,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 ## OQ
 
-1. Нужны ли `process_env_template` / `app_reg_def_process` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
+1. Нужны ли `process_env_template` / `appregdef_render` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
    можно скипать? Сейчас (PoC) отрабатывают все.
 2. [Done]`generate_deployment_plan`
    1. всегда требует `APPLICATION_VERSION`?
@@ -119,7 +126,7 @@ ${APP_ARTIFACTS_DIR}/
       dd/                 # unzipped content
 ```
 
-## `deploy-plan.yml`
+## Deploy plan
 
 ```yaml
 - # Mandatory
@@ -161,13 +168,37 @@ Example:
   generationId: 0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f
 ```
 
+The deployment plan exists in two forms:
+
+- **Full plan** (`deploy-plan.yaml`) — the environment's accumulated set of deployed applications, persisted in the
+  repository. It is the source of truth for the current app-set (for example, the state a warmup replicates from).
+- **Delta plan** (`delta-deploy-plan.yaml`) — the plan for a single operation, listing only the applications acted on
+  in it. Transient, not persisted.
+
+Per operation: `generate_deployment_plan` builds the delta from the `APPLICATION_VERSION` input, then
+`merge_deployment_plan` merges the delta onto the repository full plan and commits the result.
+
+### Merge algorithm
+
+Each operation merges its delta plan with the repository full plan to produce the next full plan.
+
+**Entry identity.** Two entries are the same deployment when they share `<app-name>` (from `version`) and
+`namespace`. `generationType: UniqForVersion` adds `version` to the identity and `UniqForRun` adds `generationId`,
+so under those modes a new version or run is a distinct entry rather than a replacement of the previous one.
+
+**Merge rule.** A delta entry with no counterpart in the full plan is added. A delta entry that matches an existing
+one is collapsed into a single entry whose `wave` is the higher of the two.
+
+**Invariant.** The merge only adds entries and raises `wave`, it never removes. An entry present in the full plan
+but absent from the delta is retained. This is the stale-app corner case.
+
 ## `namespace-map.yml`
 
 Flat map keyed by the `deployPostfix`, value the rendered namespace name (already resolved to one concrete
 namespace per postfix).
 
 For a `deployPostfix` that belongs to a BG domain the value is resolved to the `ORIGIN` or
-`PEER` namespace by `BG_NS_TARGET` (see `compute_namespace_map`, step 1.9, which resolves the BG suffix from the
+`PEER` namespace by `BG_NS_TARGET` (see `compute_namespace_map`, step 1.11, which resolves the BG suffix from the
 rendered BG domain). Non-BG postfixes resolve to their single namespace.
 
 ```yaml
@@ -183,21 +214,27 @@ oss: env-1-oss
 bss: env-1-bss-origin   # BG domain member, resolved to the ORIGIN side
 ```
 
-## `APPLICATION_VERSIONS`
+## Instance pipeline parameters
 
-TBD
+### `APPLICATION_VERSIONS`
 
-## `OPERATION_TYPE`
+### CLUSTER_NAME
 
-`OPERATION_TYPE`: enum[ `CLEAN`, `DEPLOY`, `BGD-INIT`, `BGD-WARMUP`, `BGD-PROMOTE`, `BGD-ROLLBACK`, `BGD-COMMIT` ]
+### ENVIRONMENT_NAME
+
+### DELTA_DEPLOY
+
+### `OPERATION_TYPE`
+
+`OPERATION_TYPE`: enum[ `CLEAN`, `DEPLOY`, `BGD_INIT`, `BGD_WARMUP`, `BGD_PROMOTE`, `BGD_ROLLBACK`, `BGD_COMMIT` ]
 default: `DEPLOY`
 
-## `PIPELINE_TYPE`
+### `PIPELINE_TYPE`
 
 `PIPELINE_TYPE`: enum [ `GITLAB_DEPLOY`, `LEGACY` ]
 default: `LEGACY`
 
-## `BG_NS_TARGET`
+### `BG_NS_TARGET`
 
 `BG_NS_TARGET`: enum [ `ORIGIN`, `PEER` ]
 default: None
@@ -241,7 +278,8 @@ bg_domain:
     env_definition.yml            # env_definition
     solution-descriptor/
       sd.yaml                     # SD
-    deploy-plan.yml               # DP (new)
+    deploy-plan.yml               # full DP
+    delta-deploy-plan.yml         # delta DP
     parameters/...                # env specific paramsets
     resource_profiles/...         # env specific RPO
     credentials/...               # shared creds
@@ -314,14 +352,26 @@ bg_domain:
 2. GAV notation
 3. Template testing
 4. `ENV_INVENTORY_INIT: true`
-5. `registry_discovery`
-6. `SD_SOURCE_TYPE: artifact`
-7. `BG_MANAGE`
-8. extended merge (removed)
-9. `NS_BUILD_FILTER`
-10. `BG_STATE`
+5. `ENV_TEMPLATE_NAME`
+6. `registry_discovery`
+7. `SD_SOURCE_TYPE: artifact`
+8. `BG_MANAGE`
+9. extended merge (removed)
+10. `NS_BUILD_FILTER`
+11. `BG_STATE`
 
 ## Flow
+
+Three levels: **job**, **step**, **function**.
+
+**Job** - a CI unit.
+
+**Step** - the unit of orchestration, a `PipelineStep` in code. It has a `should_run` gate (the "Triggers"
+below), plus a name, status, and duration reported in `PIPELINE SUMMARY`. Steps execute as the ordered list
+in `run_single_env_pipeline`. A step whose `should_run` returns `False` is `SKIPPED`.
+
+**Function** - the unit of implementation, a plain callable with domain logic invoked by a step's `execute()`.
+It has no gate, status, or timing of its own. A step may call several functions.
 
 ### 1 job `env_prepare`
 
@@ -333,7 +383,7 @@ Triggers:
 
 Triggers:
 
-- always when the job runs
+- always
 
 Functions:
 
@@ -345,16 +395,13 @@ Functions:
       - env variables
     - actions:
       - set defaults
-    - AI[phase1]: add `APP_ARTIFACTS_DIR`
 2. `cert_apply`
-    - [phase1] unchanged
     - AI[techDebt-P1]: move out of the before script
 3. `git_fetch`
-    - [phase1] unchanged
 4. `crypt.decrypt`
-    - [phase1] unchanged
+    - AI[techDebt-P1]: Create as a step. Currently inside `env_build` and `generate_effective_set`
 
-#### 1.2 step `trigger_passport`
+#### 1.2 step `get_passport`
 
 Triggers:
 
@@ -372,30 +419,18 @@ Functions:
       - triggered downstream pipeline
     - actions:
       - trigger discovery repository pipeline
-    - [phase1] unchanged
 
-#### 1.3 step `get_cloud_passport`
+2. `get_cloud_passport`
+   - input:
+     - `integration.yaml`
+     - cloud passport in `trigger_passport` downstream pipeline
+   - output:
+     - cloud passport
+   - actions:
+     - find the downstream discovery pipeline via bridges, download its artifacts
+     - Fernet-decrypt or re-encrypt
 
-Triggers:
-
-- `OPERATION_TYPE: DEPLOY` and
-- `GET_PASSPORT: true`
-
-Functions:
-
-TBD
-
-- input:
-  - `integration.yaml`
-  - cloud passport in `trigger_passport` downstream pipeline
-- output:
-  - cloud passport
-- actions:
-  - find the downstream discovery pipeline via bridges, download its artifacts
-  - Fernet-decrypt or re-encrypt
-- [phase1] unchanged
-
-#### 1.4 step `credential_rotation`
+#### 1.3 step `credential_rotation`
 
 Triggers:
 
@@ -406,15 +441,11 @@ Functions:
 
 TBD
 
-- [phase1] unchanged
-- AI[phase1]: check UC readiness of [credential-rotation](https://github.com/Netcracker/qubership-envgene/blob/docs/modern-toolset-dev/docs/use-cases/credential-rotation.md)
-- AI[phase1]: check test coverage
-
-#### 1.5 step `bg_manage`
+#### 1.4 step `change_bg_state`
 
 Triggers:
 
-- `OPERATION_TYPE: BGD-*` and
+- `OPERATION_TYPE: BGD_*` and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
@@ -427,19 +458,27 @@ Functions:
     - actions:
       - derive the target state from `OPERATION_TYPE` + current state files, create/update BG state files
     - AI[bgd]: support state change based on `OPERATION_TYPE`
-    - AI[bgd]: remove `BG_STATE`.
-    - AI[bgd]: support "target" state files (design is not done) (nice to have)
-2. `warmup`
-    - triggers:
-      - `OPERATION_TYPE: BGD-WARMUP`
+    - AI[bgd]: remove `BG_STATE`, `BG_MANAGE`
+    - AI[bgd-2]: support fail states
+    - AI[bgd-2]: support "target" state files
+
+#### 1.5 step `warmup`
+
+Triggers:
+
+- `OPERATION_TYPE: BGD_WARMUP` and
+- `PIPELINE_TYPE: GITLAB_DEPLOY`
+
+Functions:
+
+1. `warmup`
     - input:
       - env instance
     - output:
       - updated env instance
     - actions:
-        - copy active -> candidate namespace/applications
-    - AI[bgd]: no updates
-    <!-- - AI[bgd]: support warmup on ES instead of env instance (design is not done) -->
+      - copy active -> candidate namespace/applications
+    - AI[bgd]: no updates(???)
 
 #### 1.6 step `env_inventory_generation`
 
@@ -454,7 +493,6 @@ TBD
 
 - output:
   - env_definition
-- [phase1] unchanged
 - AI[techDebt-P2]: remove `ENV_INVENTORY_INIT: true` (with bwc)
 
 #### 1.7 step `registry_discovery`
@@ -475,19 +513,17 @@ TBD
 - actions:
   - generate artdef base from CMDB/central appreg storage
 - remove or extend (add integration with the central appregdef storage)?
-- AI[phase1]: keep it off
 - AI[techDebt-P2]: delete functionality
 
-#### 1.8 step `process_env_template`
+#### 1.8 step `set_template_version`
 
 Triggers:
 
-- `OPERATION_TYPE: DEPLOY` and
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
+- `ENV_TEMPLATE_VERSION` present
 
 Functions:
 
-1. `set_template_version`
+1. `update_version`
     - input:
       - `ENV_TEMPLATE_VERSION`
       - `BG_NS_TARGET`
@@ -497,24 +533,10 @@ Functions:
       - updated env_definition
     - actions:
       - set template version
-    - [phase1] unchanged
-    - AI[bgd] поддержать изменение версий темплейта пира/ориджина на основе `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`,
-                   с учетом `ENV_TEMPLATE_VERSION_UPDATE_MODE`. (design is not done)
-    - AI[bgd] понять имплементировали ли `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`. если да - удалить
-2. `download_env_template`
-    - input:
-      - env definition
-      - artifact definition
-    - output:
-      - downloaded template files
-    - actions:
-      - validate env definition, artifact definition
-      - download env template
-    - [phase1] unchanged
-    - AI[phase1]: fix the template-version-setting bug
-    - AI[techDebt-LOGS]: move template downloading from `app_reg_def_process`
+    - AI[bgd] support template version change base on `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`, `ENV_TEMPLATE_VERSION_UPDATE_MODE`.
+    - AI[bgd] remove `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`
 
-#### 1.9 step `app_reg_def_process`
+#### 1.9 step `process_env_template`
 
 Triggers:
 
@@ -523,7 +545,27 @@ Triggers:
 
 Functions:
 
-1. `compute_template_macros` (`render_config_env.generate_config`)
+1. `process_env_template`
+    - input:
+      - env definition
+      - artifact definition
+    - output:
+      - downloaded template files
+    - actions:
+      - validate env definition, artifact definition
+      - download env template
+    - AI[techDebt-LOGS]: move template downloading from `appregdef_render`
+
+#### 1.10 step `appregdef_render`
+
+Triggers:
+
+- `OPERATION_TYPE: DEPLOY` and
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
+
+Functions:
+
+1. `generate_config`
     - input:
       - env_definition
       - cloud passport
@@ -533,7 +575,7 @@ Functions:
     - actions:
       - generates the macro values above
     - AI[techDebt-LOGS]: rename `generate_config` -> `compute_template_macros`
-2. `load_template_descriptor` (`render_config_env.set_env_templates`)
+2. `set_env_templates`
     - input:
       - env_definition
       - downloaded template files
@@ -555,7 +597,28 @@ Functions:
     - actions:
       - renders the bg domain into the env instance
       - no-op if no bg domain
-4. `generate_namespace_files`
+4. `generate_composite_structure`
+    - input:
+      - downloaded template files
+      - `ctx.current_env`
+      - `ctx.current_env_template`
+    - output:
+      - rendered composite structure into env instance
+    - actions:
+      - render the composite structure template, validate (no-op if none)
+    - AI[bgd-2]: PoC renders composite in `env_build` after namespaces. Render it here, before
+      `compute_namespace_map`, because a BG domain inside a composite carries origin/peer namespaces there
+5. `generate_bgd_from_composite` (new)
+    - input:
+      - rendered composite structure into env instance
+    - output:
+      - rendered bg domain into env instance
+    - actions:
+      - if the composite structure embeds a `bgdomain` member, derive `bg_domain.yml` from it so it is read as before
+      - no-op if the composite structure embeds no `bgdomain`
+    - AI[bgd]: create the function
+    - AI[bgd-2]: drops out when the flow moves to the target topology (replaces `bg_domain` and the composite)
+6. `generate_namespace_files_and_map`
     - input:
       - downloaded template files
       - `ctx.current_env`
@@ -564,19 +627,7 @@ Functions:
       - rendered namespaces into env instance
     - actions:
       - render all namespaces into env instance
-5. `compute_namespace_map`
-    - input:
-      - `FULL_ENV_NAME`
-      - `BG_NS_TARGET`
-      - rendered namespace in env instance
-      - rendered bg domain in env instance
-    - output:
-      - `namespace-map.yml`
-    - actions:
-      - read rendered namespace name + deployPostfix for each env namespace
-      - calculate deployPostfix to namespace mapping (incl. BG suffix)
-    - AI[phase1]: create the function
-6. `run_appregdef_render`
+7. `run_appregdef_render`
     - input:
       - downloaded template files
       - env instance
@@ -588,11 +639,31 @@ Functions:
       - render appreg defs, validate
       - skip appregdefs already present in env instance if `APPREG_DEF_STRATEGY` == `create_if_not_exist`
         (default). do not skip if `APPREG_DEF_STRATEGY` == `replace`
-    - [phase1] unchanged
     - AI[techDebt-PERF]: renders only required appregdef
     - AI[techDebt-PERF]: implement create_if_not_exist | replace strategies
 
-#### 1.10 step `process_sd`
+#### 1.11 step `deploy_postfix_namespace_map`
+
+Triggers:
+
+- `OPERATION_TYPE: DEPLOY` and
+- `PIPELINE_TYPE: GITLAB_DEPLOY`
+
+Functions:
+
+1. `compute_namespace_map`
+    - input:
+      - `FULL_ENV_NAME`
+      - `BG_NS_TARGET`
+      - rendered namespace in env instance
+      - rendered bg domain in env instance
+    - output:
+      - `namespace-map.yml`
+    - actions:
+      - read rendered namespace name + deployPostfix for each env namespace
+      - calculate deployPostfix to namespace mapping (incl. BG suffix)
+
+#### 1.12 step `process_sd`
 
 Triggers:
 
@@ -616,25 +687,25 @@ Functions:
     - [phase1] unchanged
     - AI[phase1]: do not call in the new flow, call in the old flow
     - AI[techDebt-P2]: remove `SD_SOURCE_TYPE`
-2. `sd_dp_adapter`
+2. `adapt_sd_to_deploy_plan`
     - input:
       - `updated sd.yaml`
     - output:
-      - `deploy-plan.yml`
+      - `delta-deploy-plan.yml`
     - actions:
       - generate dp based on sd
     - [phase1] add the function
 
-#### 1.11 step `generate_deployment_plan` (`dpg`)
+#### 1.13 step `generate_deployment_plan`
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD-WARMUP`) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
 
-1. `generate_deployment_plan` (`dpg`)
+1. `run_generate_deployment_plan`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -648,32 +719,25 @@ Functions:
         - `COMPONENT_NAMES_FILTER`
         - `WAVE_NAMES_FILTER`
     - output:
-      - `deploy-plan.yml`
+      - `delta-deploy-plan.yml`
     - actions:
       - process `APPLICATION_VERSION` (download SD, merge), calculate (APPLICATION_VERSION)
       - enrich DP, plan map (namespace_map)
       - filter DP, plan filter (filter vars)
-    - AI[phase1]: do not call in the old flow, call in the new flow
-    - AI[phase1]: move to GitHub
-    - AI[phase1]: implement uniq app names (Artem)
     - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
-    - AI[bgd]: desing BG cases
-    - AI[bgd]: support BG cases (Artem)
-2. `discovery_deployment_plan`
+2. `merge_deployment_plan`
     - triggers:
-      - `OPERATION_TYPE: BGD-WARMUP`
+      - `OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`
     - input:
-      - effective set (где его взять?)
-        - argo url + cred - TBD
-      - namespace - TBD
+      - `deploy-plan.yml` from repository
+      - `delta-deploy-plan.yml`
     - output:
-      - `deploy-plan.yml`
+      - updated `deploy-plan.yml`
     - actions:
-      - TBD
-    - AI[bgd]: design inputs
-    - AI[bgd]: implement the function (Artem)
+      - merges deployment plans
+    - AI[bgd]: Add the functions
 
-#### 1.12 step `env_build`
+#### 1.14 step `env_build`
 
 Triggers:
 
@@ -682,18 +746,7 @@ Triggers:
 
 Functions:
 
-1. `generate_composite_structure`
-    - triggers:
-      - `OPERATION_TYPE: DEPLOY`
-    - input:
-      - downloaded template files
-      - `ctx.current_env`
-      - `ctx.current_env_template`
-    - output:
-      - rendered composite structure into env instance
-    - actions:
-      - render the composite structure template, validate (no-op if none)
-2. `compute_composite_topology` (new)
+1. `compute_composite_topology`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -703,7 +756,7 @@ Functions:
       - `ctx.current_env.composite_topology`
     - actions:
       - resolve baseline + satellites, each member resolves its namespace template to the rendered namespace name
-3. `generate_solution_structure`
+2. `generate_solution_structure`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -716,7 +769,7 @@ Functions:
     - AI[phase1]: support DP as well as SD
     - AI[phase1]: remove SD support
     - AI[techDebt-P1]: add `namespace-map.yml` as input to optimize execution time
-4. `run_build_environment`
+3. `run_build_environment`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
@@ -743,7 +796,7 @@ Functions:
     - AI[techDebt-P1]: prepare a UC, add tests
     - AI[bgd]: `apply_ns_build_filter` заменить на СД-скоуп генерации: рендерить только нс из СД,
       file-replace-merge в закоммиченный инстанс. Тогда `NS_BUILD_FILTER` уходит в deprecate.
-5. `set_cleaned_mark`
+4. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
     - input:
@@ -755,7 +808,7 @@ Functions:
       - set `cleaned: true` on `NAMESPACE_NAMES` namespaces (all if empty. error if a namespace is not found)
     - AI[techDebt-LOGS]: extract from `run_build_environment`
 
-#### 1.13 step `generate_effective_set`
+#### 1.15 step `generate_effective_set`
 
 Triggers:
 
@@ -763,66 +816,49 @@ Triggers:
 
 Functions:
 
-1. `dd_downloading`
+1. `validate_creds` + `validate_parameters`
+    - input:
+      - env instance credentials and parameters
+    - output:
+      - validation pass or fail (the job fails on invalid input)
+    - actions:
+      - validate credentials (reserved values, required overrides)
+      - validate parameters
+2. `sboms_retention_policy`
+    - actions:
+      - delete sboms beyond the retention policy
+3. `get_sboms`
     - input:
       - appreg defs
-      - `sd.yaml` or `deploy-plan.yml`
+      - `delta-deploy-plan.yml` if `OPERATION_TYPE: !BGD_WARMUP`
+      - `deploy-plan.yml` if `OPERATION_TYPE: BGD_WARMUP`
       - `APP_ARTIFACTS_DIR`
     - output:
-      - DD and zip at `${APP_ARTIFACTS_DIR}`
+      - DD and zip at `${APP_ARTIFACTS_DIR}`, sboms
     - actions:
-      - resolve DD + zip per app with appreg defs
-      - download DD + zip, unzip
-    - AI[phase1]: add `APP_ARTIFACTS_DIR`
-    - AI[phase1]: support DP
-    - AI[phase1]: remove SD support
-    - AI[techDebt-PERF]: оптимизировать скачивание DD/zip. https://docs.gitlab.com/ci/caching/
-      - (??) не скачивать zip для `generate_argocd_repo`
-      - (??) кэшировать ДД.json по аналогии с sbom
-2. `sbom_generation`
-    - input:
-      - local DD + zip
-      - appreg defs
-      - `APP_ARTIFACTS_DIR`
-    - output:
-      - sboms
-    - actions:
+      - resolve DD per app with appreg defs
+      - download DD+zip, unzip
       - generate SBOM from local DD + zip
-      - sbom retention
-    - AI[phase1]: consume local DD + zip. download moved to `dd_downloading`
-    - AI[techDebt-PERF]: оптимизировать генерацию sbom https://docs.gitlab.com/ci/caching/
+    - AI[techDebt-PERF]: оптимизировать скачивание DD/zip + генерацию sbom. https://docs.gitlab.com/ci/caching/
       - (??) не скачивать zip для `generate_argocd_repo`
       - (??) кэшировать ДД.json по аналогии с sbom
-3. `null_validation`
-    - AI[phase1]: check what exists
-4. `ES Calc CLI`
+4. `effective_set_entrypoint`
     - input:
       - env instance
-      - `sd.yaml` or `deploy-plan.yml`
+      - `delta-deploy-plan.yml` if `OPERATION_TYPE: !BGD_WARMUP`
+      - `deploy-plan.yml` if `OPERATION_TYPE: BGD_WARMUP`
       - sboms
       - `OPERATION_TYPE`
     - output:
       - Effective Set
     - actions:
-      - generates ES
+      - runs the ES Calc CLI to generate ES
+      - full or partial merge by `ctx.partial_merge_mode`
     - AI[phase1]: support DP
     - AI[phase1]: remove SD support
     - AI[phase1]: implement uniq app names
     - AI[bgd]: Поддержка бг кейса в ES структуре - `<namespace-folder-01>` включает peer|origin постфиксы
-    <!-- - AI[bgd]: add `state` to `bg_domain` in topology context -->
-    <!-- - AI[bgd]: post-ES python patcher writes bg_domain.status (state-only ops), no full recalc. (nice to have) -->
-5. `partial_es_processing`
-    - triggers:
-      - `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`
-    - input:
-      - Effective Set from previous function `ES Calc CLI`
-      - Effective Set from previous operation, repository
-    - output:
-      - Effective Set
-    - actions:
-      - в ES мержится реплейсом application слайсы которые изменились в текущей операции генерации
-    - AI[phase1!]: set `PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true` trigger
-6. `external_credential_provisioning`
+5. `external_credential_provisioning`
     - input:
       - Effective Set
     - output:
@@ -830,12 +866,13 @@ Functions:
     - actions:
       - if the Effective Set includes external credential context, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
       - if it does not, no-op
+    - AI[phase2]: merge external creds feature
 
-#### 1.14 step `generate_argocd_repo` (`argo-cd dpg`)
+#### 1.16 step `generate_argocd_repo` (`argo-cd dpg`)
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD-WARMUP`) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD_WARMUP`) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
@@ -853,12 +890,10 @@ Functions:
       - encrypted by `ENVGENE_AGE_PUBLIC_KEY` dotenv ARGO_DPG_CONTEXT.env
     - actions:
       - TBD
-    - AI[phase1]: remove DP generation (Artem)
-    - AI[phase1]: add local DD (Artem)
-    - AI[phase1]: encrypt ARGO_DPG_CONTEXT.env (Artem)
+    - AI[phase2]: move into the orchestrator as a PipelineStep
     - AI[phase3]: move to GitHub
 
-#### 1.15 step `cmdb_import`
+#### 1.17 step `cmdb_import`
 
 Triggers:
 
@@ -874,8 +909,9 @@ Functions:
     - AI[phase1]: do not call in the new flow, call in the old flow
     - AI[phase1!]: add the step into `env_prepare` job
     - AI[phase1]: remove envgene dot env file
+    - AI[phase2]: move into the orchestrator as a PipelineStep
 
-#### 1.16 step `postprocess`
+#### 1.18 step `postprocess`
 
 Triggers:
 
@@ -884,8 +920,9 @@ Triggers:
 Functions:
 
 1. `crypt.encrypt`
+    - AI[techDebt-P1]: Create as a step. Currently inside `env_build` and `generate_effective_set`
 
-#### 1.17 step `git_commit`
+#### 1.19 step `git_commit`
 
 Triggers:
 
@@ -901,9 +938,9 @@ Functions:
       - env instance
       - effective set
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/sd.yaml to artifacts or not
-    - AI[phase3]: unify with `es-pusher`
+    - AI[phase2]: unify with `es-pusher`
 
-#### 1.18 step `es_pusher`
+#### 1.20 step `es_pusher`
 
 Triggers:
 
@@ -940,7 +977,7 @@ Functions:
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD-WARMUP`) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: BGD_WARMUP`) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 #### 2.1 step `preprocess`
@@ -953,10 +990,8 @@ Functions:
 
 1. `cert_apply`
    - AI[phase2] Unify by cert config source with Envgene, currently - ca_bundle
-   - AI[phase2] Unify code (?)
 2. `crypt.decrypt`
-   - AI[phase2] Unify by key config source with Envgene, currently - `ENVGENE_AGE_PRIVATE_KEY`. Узнать у Темы нужно ли это
-   - AI[phase2] Unify code (?)
+   - AI[phase2] Unify by key config source with Envgene, currently - `ENVGENE_AGE_PRIVATE_KEY`.
 
 #### 2.2 step `sync`
 
@@ -974,5 +1009,4 @@ Functions:
       - TBD
     - actions:
       - TBD
-    - AI[phase1]: do not call in the old flow, call in the new flow
     - AI[phase3]: move to GitHub
