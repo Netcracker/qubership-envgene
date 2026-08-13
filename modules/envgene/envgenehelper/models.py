@@ -31,6 +31,7 @@ class SbomRetentionConfig(BaseModel):
 class OperationType(CaseInsensitiveEnum):
     DEPLOY = "DEPLOY"
     CLEAN = "CLEAN"
+    BGD = "BGD"
 
     @classmethod
     def _missing_(cls, value):
@@ -38,6 +39,15 @@ class OperationType(CaseInsensitiveEnum):
             return cls.DEPLOY
 
         return super()._missing_(value)
+
+
+class BgdOperation(CaseInsensitiveEnum):
+    WARMUP = "WARMUP"
+    COMMIT = "COMMIT"
+    PROMOTE = "PROMOTE"
+    ROLLBACK = "ROLLBACK"
+    INIT_DOMAIN = "INIT-DOMAIN"
+
 
 class DeltaDeployType(CaseInsensitiveEnum):
     NONE = "NONE"

@@ -349,15 +349,12 @@ class NamespaceRole(StrEnum):
 
 
 def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
-    if not bgd_object:
-        bgd_object = get_bgd_object()
-    if not bgd_object:
-        return NamespaceRole.COMMON
-    if bgd_object['originNamespace']['name'] == ns_name:
-        return NamespaceRole.ORIGIN
-    if bgd_object['peerNamespace']['name'] == ns_name:
-        return NamespaceRole.PEER
-    return NamespaceRole.COMMON
+    bgd_object = bgd_object or get_bgd_object()
+    roles = {
+        bgd_object.get('originNamespace', {}).get('name'): NamespaceRole.ORIGIN,
+        bgd_object.get('peerNamespace', {}).get('name'): NamespaceRole.PEER,
+    }
+    return roles.get(ns_name, NamespaceRole.COMMON)
 
 
 @dataclass
