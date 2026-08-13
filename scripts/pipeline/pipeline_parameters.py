@@ -61,7 +61,7 @@ class PipelineParametersHandler(BaseModel):
             'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
             'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
             "BG_STATE": getenv("BG_STATE"),
-            "BG_MANAGE": getenv("BG_MANAGE", "false").lower() == "true",
+            "BGD_OPERATION": getenv("BGD_OPERATION"),
             "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
             "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
             "CUSTOM_PARAMS": getenv("CUSTOM_PARAMS"),

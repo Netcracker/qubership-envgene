@@ -13,7 +13,7 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
-from bg_manage.bg_manage import run_bg_manage
+from bg_manage.bg_manage import run_warmup
 from build_env.appregdef_render import run_appregdef_render
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
@@ -23,7 +23,7 @@ from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import effective_set_entrypoint
 from effective_set.sboms_retention_policy import sboms_retention_policy
 from deployment_plan.generate_deployment_plan import run_generate_deployment_plan
-from envgenehelper.models import TemplateVersionUpdateMode, OperationType
+from envgenehelper.models import TemplateVersionUpdateMode, OperationType, BgdOperation
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import fan_out
@@ -88,16 +88,18 @@ class CredentialRotationStep(PipelineStep):
         run_cred_rotation()
 
 
-class BgManageStep(PipelineStep):
+class WarmupStep(PipelineStep):
     @property
     def name(self) -> str:
-        return "bg_manage"
+        return "warmup"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get('BG_MANAGE'))
+        return (ctx.is_gitlab_deploy()
+                and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.BGD
+                and BgdOperation(ctx.params.get('BGD_OPERATION')) == BgdOperation.WARMUP)
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_bg_manage()
+        run_warmup()
 
 
 class InventoryGenerationStep(PipelineStep):
@@ -275,6 +277,7 @@ def run_single_env_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
+        WarmupStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),
