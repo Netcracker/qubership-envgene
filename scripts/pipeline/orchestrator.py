@@ -13,7 +13,7 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
-from bg_manage.bg_manage import run_bg_manage
+from bg_manage.bg_manage import run_change_bg_state
 from build_env.appregdef_render import run_appregdef_render
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
@@ -88,7 +88,7 @@ class CredentialRotationStep(PipelineStep):
         run_cred_rotation()
 
 
-class BgStateManageStep(PipelineStep):
+class ChangeBgState(PipelineStep):
     @property
     def name(self) -> str:
         return "change_bg_state"
@@ -100,7 +100,7 @@ class BgStateManageStep(PipelineStep):
         return ctx.is_gitlab_deploy() and operation_type in options
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_bg_manage()
+        run_change_bg_state(ctx)
 
 
 class InventoryGenerationStep(PipelineStep):
@@ -278,7 +278,7 @@ def run_single_env_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
-        BgStateManageStep(),
+        ChangeBgState(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),

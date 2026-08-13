@@ -3,11 +3,9 @@ import shutil
 from enum import auto, Enum
 from pathlib import Path
 
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, getenv_with_error, get_namespaces, \
-    get_bgd_object, NamespaceRole
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, NamespaceRole
 from envgenehelper.file_helper import deleteFileIfExists
-from envgenehelper.yaml_helper import openYaml
-from envgenehelper import logger, writeYamlToFile
+from envgenehelper import logger
 
 
 class State(Enum):
@@ -78,12 +76,6 @@ for _op, _transitions in VALID_TRANSITIONS_BASE.items():
     VALID_TRANSITIONS[_op] = _op_table
 
 
-def get_opeartion_type() -> OperationType | None:
-    raw = getenv_with_error("OPERATION_TYPE")
-    op = OperationType.from_str(raw)
-    return op 
-
-
 def get_current_state() -> Pair:
     env_path = get_current_env_dir_from_env_vars()
     origin_state = S.NONE
@@ -135,39 +127,9 @@ def update_current_state(curr_state: Pair, new_state: Pair):
     logger.info("Successfully updated state files")
 
 
-def make_operation_specific_changes(op: OperationType, new_state: Pair):
-    if op != OperationType.BGD_WARMUP:
-        logger.info(f"Operation '{op.value} has no namespace sideffects")
-        return
-        
-    logger.info('Operation is warmup, copying content of "active" namespace to "candidate"')
-    bgd = get_bgd_object()
-
-    if new_state[0] == S.ACTIVE:
-        active_ns_name = bgd['originNamespace']['name']
-        candidate_ns_name = bgd['peerNamespace']['name']
-    else:
-        active_ns_name = bgd['peerNamespace']['name']
-        candidate_ns_name = bgd['originNamespace']['name']
-    logger.info(f'Active ns: {active_ns_name}, Candidate ns: {candidate_ns_name}')
-
-    namespaces = get_namespaces()
-    active_ns = next(ns for ns in namespaces if ns.name == active_ns_name)
-    candidate_ns = next(ns for ns in namespaces if ns.name == candidate_ns_name)
-
-    shutil.rmtree(candidate_ns.path, ignore_errors=True)
-    shutil.copytree(active_ns.path, candidate_ns.path)
-
-    candidate_ns_file_path = candidate_ns.definition_path
-    candidate_ns_file = openYaml(candidate_ns_file_path)
-    candidate_ns_file['name'] = candidate_ns.name
-    writeYamlToFile(candidate_ns_file_path, candidate_ns_file)
-
-    logger.info('Copying and sync were successful')
-
-
-def run_bg_manage():
-    op = get_opeartion_type()
+def run_change_bg_state(ctx):
+    op_raw = ctx.params.get("OPERATION_TYPE")
+    op = OperationType.from_str(op_raw)
     if op is None:
         logger.info("OPERATION_TYPE not set to a recognised BGD value, skipping bg_manage")
         return
@@ -176,5 +138,4 @@ def run_bg_manage():
     new_state = get_new_state(op, curr_state)
     logger.info(f"Operation '{op.value}' is allowed: {pair_to_str(curr_state)} -> {pair_to_str(new_state)}")
 
-    make_operation_specific_changes(op, new_state)
     update_current_state(curr_state, new_state)
