@@ -5,7 +5,6 @@ Feature: Calculator CLI
 
   Background:
     Given the pipeline has GENERATE_EFFECTIVE_SET set to "true"
-    And the Calculator CLI mock validates rules
 
   # ── deployPostfix Matching (UC-CC-DP-*) ──────────────────────────────────────
 

@@ -6,7 +6,7 @@ All generic Given/When/Then steps come from shared_steps and are imported in tes
 import re
 import yaml
 
-from pytest_bdd import given, then, parsers
+from pytest_bdd import then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
@@ -25,20 +25,6 @@ _MOCK_REGISTRY = {
         },
     }
 }
-
-
-@given("the Calculator CLI mock validates rules")
-def install_real_cli(workspace: EnvGeneWorkspace) -> None:
-    registry_file = workspace.config_dir / "registry.yml"
-    existing = {}
-    if registry_file.exists():
-        existing = yaml.safe_load(registry_file.read_text(encoding="utf-8")) or {}
-    existing.update(_MOCK_REGISTRY)
-    registry_file.write_text(yaml.dump(existing), encoding="utf-8")
-
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = _PRODUCTION_CLI
 
 
 @then(parsers.parse('the effective set deployment parameters contain "{key_value}"'))
