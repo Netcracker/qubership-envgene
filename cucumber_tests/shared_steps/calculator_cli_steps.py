@@ -2,11 +2,9 @@
 UC-CC-PM-*, UC-CC-GI-*, UC-CC-CP-*).
 
 All generic Given/When/Then steps come from shared_steps and are imported in test_calculator_cli.py.
-This file wires the real effective-set-generator CLI into the BDD runner.
 """
 import re
 import yaml
-from pathlib import Path
 
 from pytest_bdd import given, then, parsers
 
@@ -29,9 +27,8 @@ _MOCK_REGISTRY = {
 }
 
 
-def _install_cli_wrapper(workspace: EnvGeneWorkspace) -> None:
-    """Point EFFECTIVE_SET_CLI_PATH at the production CLI script already present in the image."""
-    # Add mock-reg to workspace registry.yml so the CLI resolves SBOM purl entries.
+@given("the Calculator CLI mock validates rules")
+def install_real_cli(workspace: EnvGeneWorkspace) -> None:
     registry_file = workspace.config_dir / "registry.yml"
     existing = {}
     if registry_file.exists():
@@ -44,31 +41,8 @@ def _install_cli_wrapper(workspace: EnvGeneWorkspace) -> None:
     workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = _PRODUCTION_CLI
 
 
-@given("the Calculator CLI mock validates rules")
-def install_real_cli(workspace: EnvGeneWorkspace) -> None:
-    """Install a wrapper that invokes the real effective-set-generator JAR.
-
-    This step is present in the Background of calculator-cli.feature, so every
-    scenario automatically uses the real JAR — enabling both success and failure
-    assertions against real CLI behaviour.
-    """
-    _install_cli_wrapper(workspace)
-
-
-@given("the Calculator CLI uses the real JAR")
-def calculator_cli_uses_real_jar(workspace: EnvGeneWorkspace) -> None:
-    """Explicit alias for _install_cli_wrapper — used in scenarios that need the real JAR
-    but are NOT covered by the Background (e.g. scenarios in other feature files)."""
-    _install_cli_wrapper(workspace)
-
-
 @then(parsers.parse('the effective set deployment parameters contain "{key_value}"'))
 def effective_set_deployment_params_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
-    """Assert that any *.yaml under effective-set/deployment/ contains the given string.
-
-    Searches deployment-parameters.yaml and custom-params.yaml (CLI writes CUSTOM_PARAMS
-    overrides to custom-params.yaml, not deployment-parameters.yaml).
-    """
     es_dir = (
         workspace.base_dir
         / "environments" / workspace.cluster_name / workspace.env_name
@@ -88,7 +62,6 @@ def effective_set_deployment_params_contain(workspace: EnvGeneWorkspace, key_val
 
 @then(parsers.parse('the effective set contains a generation id subdirectory for "{app_name}"'))
 def effective_set_contains_generation_id_subdir(workspace: EnvGeneWorkspace, app_name: str) -> None:
-    """Assert that the app output directory has a UUID-named subdirectory (UniqForRun)."""
     es_dir = (
         workspace.base_dir
         / "environments" / workspace.cluster_name / workspace.env_name
@@ -109,7 +82,6 @@ def effective_set_contains_generation_id_subdir(workspace: EnvGeneWorkspace, app
 
 @then(parsers.parse('the effective set deployment parameters for "{app_name}" exist under version "{version}"'))
 def effective_set_params_exist_under_version(workspace: EnvGeneWorkspace, app_name: str, version: str) -> None:
-    """Assert that the app output has a version-named subdirectory (UniqForVersion)."""
     es_dir = (
         workspace.base_dir
         / "environments" / workspace.cluster_name / workspace.env_name
