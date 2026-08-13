@@ -1,3 +1,4 @@
+from os import getenv
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
@@ -106,6 +107,17 @@ def build_minimal_render_context(env_name: str, cluster_name: str, env_dir: str,
         "cloud_passport_file_path": cloud_passport_file_path,
         "env_instances_dir": render_dir,
     }
+
+
+def parse_bg_ns_target(raw: str | None) -> NamespaceRole | None:
+    if raw is None or str(raw).strip() == "":
+        return None
+    normalized = str(raw).strip().lower()
+    if normalized == "origin":
+        return NamespaceRole.ORIGIN
+    if normalized == "peer":
+        return NamespaceRole.PEER
+    raise ValueError("BG_NS_TARGET must be 'origin' or 'peer', got '%s'" % raw)
 
 
 class EnvGenerator:
@@ -260,8 +272,11 @@ class EnvGenerator:
                     return ns
         return None
 
+    def get_ns_base_postfix(self, ns: dict, ns_template_path: str) -> str:
+        return ns.get("deploy_postfix") or self.get_template_name(ns_template_path)
+
     def generate_ns_postfix(self, ns: dict, ns_template_path: str) -> str:
-        base_name = ns.get("deploy_postfix") or self.get_template_name(ns_template_path)
+        base_name = self.get_ns_base_postfix(ns, ns_template_path)
         ns_name = self._get_ns_name_for_bgd(ns, ns_template_path)
         return base_name + self._get_bgd_suffix(ns_name)
 
@@ -365,11 +380,13 @@ class EnvGenerator:
     def generate_namespace_files_and_map(self) -> dict:
         context = self.ctx.as_dict()
         bgd = get_bgd_object(Path(self.ctx.current_env_dir))
-        namespace_by_deploy_postfix = {}
+        bg_ns_target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
 
+        namespace_by_deploy_postfix = {}
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
-            postfix = self.generate_ns_postfix(ns, ns_template_path)
+            map_key = self.get_ns_base_postfix(ns, ns_template_path)
+            folder_postfix = self.generate_ns_postfix(ns, ns_template_path)
 
             ns_name = self._get_ns_name_for_bgd(ns, ns_template_path)
             role = get_namespace_role(ns_name, bgd) if ns_name else NamespaceRole.COMMON
@@ -388,12 +405,21 @@ class EnvGenerator:
                                                                           role_templates_dir)
                     logger.info(f"Using {role.name} template for namespace {ns_name}")
 
-            logger.info(f"Generate Namespace yaml for {postfix}")
-            ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / postfix
+            logger.info(f"Generate Namespace yaml for {folder_postfix}")
+            ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / folder_postfix
             rendered_ns = self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
-            namespace_by_deploy_postfix[postfix] = rendered_ns.get("name")
+            namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
             self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override",
-                                            postfix)
+                                            folder_postfix)
+
+            if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
+                if bg_ns_target is None:
+                    raise ValueError(
+                        f"BG_NS_TARGET is required to resolve deployPostfix '{map_key}'"
+                    )
+                if role != bg_ns_target:
+                    continue
+            namespace_by_deploy_postfix[map_key] = namespace_name
 
         self.ctx.namespace_by_deploy_postfix = namespace_by_deploy_postfix
         return namespace_by_deploy_postfix

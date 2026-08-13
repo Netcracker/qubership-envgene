@@ -77,6 +77,7 @@ class PipelineParametersHandler(BaseModel):
             "NAMESPACE_NAMES_FILTER": getenv("NAMESPACE_NAMES_FILTER", ""),
             "COMPONENT_NAMES_FILTER": getenv("COMPONENT_NAMES_FILTER", ""),
             "WAVE_NAMES_FILTER": getenv("WAVE_NAMES_FILTER", ""),
+            "BG_NS_TARGET": getenv("BG_NS_TARGET", ""),
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
         }
 
