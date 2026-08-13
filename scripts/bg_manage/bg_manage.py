@@ -1,10 +1,10 @@
 import os
-import shutil
 from enum import auto, Enum
 from pathlib import Path
 
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, NamespaceRole
 from envgenehelper.file_helper import deleteFileIfExists
+from envgenehelper.models import OperationType
 from envgenehelper import logger
 
 
@@ -17,21 +17,6 @@ class State(Enum):
 
     def __str__(self):
         return self.name.lower()
-
-
-class OperationType(Enum):
-    BGD_INIT = "BGD-INIT"
-    BGD_WARMUP = "BGD-WARMUP"
-    BGD_PROMOTE = "BGD-PROMOTE"
-    BGD_COMMIT = "BGD-COMMIT"
-    BGD_ROLLBACK = "BGD-ROLLBACK"
-    
-    @classmethod
-    def from_str(cls, value: str) -> "OperationType | None":
-        for member in cls:
-            if member.value == value:
-                return member
-        return None
 
 
 Pair = tuple[State, State]
@@ -128,10 +113,9 @@ def update_current_state(curr_state: Pair, new_state: Pair):
 
 
 def run_change_bg_state(ctx):
-    op_raw = ctx.params.get("OPERATION_TYPE")
-    op = OperationType.from_str(op_raw)
-    if op is None:
-        logger.info("OPERATION_TYPE not set to a recognised BGD value, skipping bg_manage")
+    op = OperationType(ctx.params.get("OPERATION_TYPE"))
+    if op not in VALID_TRANSITIONS:
+        logger.info(f"OPERATION_TYPE '{op.value}' is not a BGD operation, skipping bg_manage")
         return
     
     curr_state = get_current_state()
