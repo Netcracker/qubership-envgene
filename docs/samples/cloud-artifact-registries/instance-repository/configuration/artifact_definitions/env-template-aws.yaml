@@ -3,6 +3,7 @@ name: "env-template"
 groupId: "com.example.templates"
 artifactId: "env-template"
 registry:
+  version: "2.0"
   name: "aws-codeartifact"
   authConfig:
     aws-auth:

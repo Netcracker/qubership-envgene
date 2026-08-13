@@ -19,10 +19,14 @@
   - [Supported auth methods reference](#supported-auth-methods-reference)
   - [See also](#see-also)
 
-EnvGene downloads Maven artifacts ([Solution Descriptors](/docs/envgene-objects.md#solution-descriptor), Deployment Descriptors, and environment templates) from external cloud registries like AWS CodeArtifact and GCP Artifact Registry using [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20) with an `authConfig` block. This guide walks through each provider step by step.
+EnvGene downloads Maven artifacts ([Solution Descriptors](/docs/envgene-objects.md#solution-descriptor),
+Deployment Descriptors, and environment templates) from external cloud registries like AWS CodeArtifact and
+GCP Artifact Registry using [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)
+with an `authConfig` block. This guide walks through each provider step by step.
 
 > [!IMPORTANT]
-> **Pulling EnvGene Docker images from cloud registries (GAR, ECR) during pipeline execution is supported only in the GitHub workflow.**
+> **Pulling EnvGene Docker images from cloud registries (GAR) during pipeline execution is supported only
+> in the GitHub workflow. ECR requires additional configuration not provided out of the box.**
 >
 > GitLab CI does not support pulling images from cloud registries. Use an internal Nexus or Artifactory mirror instead.
 >
@@ -134,7 +138,7 @@ copy the **Connection instructions - Maven** endpoint URL.
 **For SD/DD artifacts ([Application Definition v1.0](/docs/envgene-objects.md#application-definition) + [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)):**
 
 ```yaml
-# configuration/app_definitions/my-app.yaml
+# configuration/appdefs/my-app.yaml
 name: "my-app"
 registryName: "aws-codeartifact"
 groupId: "com.example"
@@ -144,12 +148,13 @@ artifactId: "my-app"
 **For environment templates ([Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20)):**
 
 ```yaml
-# configuration/appdefs/env-template.yaml
+# configuration/artifact_definitions/env-template.yaml
 version: "2.0"
 name: "env-template"
 groupId: "com.example.templates"
 artifactId: "env-template"
 registry:
+  version: "2.0"
   name: "aws-codeartifact"
   authConfig:
     aws-auth:
@@ -210,7 +215,7 @@ gcp-artifact-registry-key:
         "type": "service_account",
         "project_id": "my-project",
         "private_key_id": "key-id-placeholder",
-        "private_key": "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----\n",
+        "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
         "client_email": "envgene-artifact-reader@my-project.iam.gserviceaccount.com",
         "client_id": "123456789",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -237,7 +242,6 @@ authConfig:
     provider: "gcp"
     authMethod: "service_account"
     credentialsId: "gcp-artifact-registry-key"
-    gcpRegion: "us-central1"
 mavenConfig:
   authConfig: "gcp-auth"
   repositoryDomainName: "https://us-central1-maven.pkg.dev/my-project/my-maven-repo"
@@ -250,7 +254,6 @@ Field reference:
 | `authConfig.<key>.provider`        | Must be `gcp`                                                                      |
 | `authConfig.<key>.authMethod`      | Must be `service_account` (the only implemented GCP auth method)                   |
 | `authConfig.<key>.credentialsId`   | Must match the key in `credentials.yml`                                            |
-| `authConfig.<key>.gcpRegion`       | GCP region where the repository is hosted (for example, `us-central1`)             |
 | `mavenConfig.authConfig`           | Must match the auth config key defined above (for example, `gcp-auth`)             |
 | `mavenConfig.repositoryDomainName` | Full Maven endpoint URL: `https://REGION-maven.pkg.dev/PROJECT_ID/REPOSITORY_NAME` |
 
@@ -262,7 +265,7 @@ repository, and copy the endpoint URL from the repository details panel.
 **For SD/DD artifacts ([Application Definition v1.0](/docs/envgene-objects.md#application-definition) + [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)):**
 
 ```yaml
-# configuration/app_definitions/my-app.yaml
+# configuration/appdefs/my-app.yaml
 name: "my-app"
 registryName: "gcp-artifact-registry"
 groupId: "com.example"
@@ -272,7 +275,7 @@ artifactId: "my-app"
 **For environment templates ([Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20)):**
 
 ```yaml
-# configuration/appdefs/env-template.yaml
+# configuration/artifact_definitions/env-template.yaml
 version: "2.0"
 name: "env-template"
 groupId: "com.example.templates"
@@ -285,7 +288,6 @@ registry:
       provider: "gcp"
       authMethod: "service_account"
       credentialsId: "gcp-artifact-registry-key"
-      gcpRegion: "us-central1"
   mavenConfig:
     authConfig: "gcp-auth"
     repositoryDomainName: "https://us-central1-maven.pkg.dev/my-project/my-maven-repo"
@@ -294,8 +296,10 @@ registry:
 ### GCP authentication flow
 
 1. EnvGene resolves the `authConfig` block with `provider: gcp` and `authMethod: service_account`.
-2. The credential identified by `credentialsId` is loaded from `credentials.yml`. The `secret` field must contain the full JSON of a GCP service account key.
-3. EnvGene exchanges the service account key for a short-lived OAuth 2.0 access token using the GCP credentials provider library.
+2. The credential identified by `credentialsId` is loaded from `credentials.yml`. The `secret`
+   field must contain the full JSON of a GCP service account key.
+3. EnvGene exchanges the service account key for a short-lived OAuth 2.0 access token using the
+   GCP credentials provider library.
 4. The access token is attached to all Maven download requests as `Authorization: Bearer <token>`.
 5. Maven artifacts are downloaded from the `repositoryDomainName` endpoint.
 
@@ -321,7 +325,7 @@ when different environments use different registries or accounts.
 ## Supported auth methods reference
 
 | Provider       | Auth method        | Implemented       | Credential type    | Credential fields                                   |
-|----------------|--------------------|-------------------|--------------------|--------------------------------------------------- -|
+|----------------|--------------------|--------------------|--------------------|----------------------------------------------------|
 | `aws`          | `secret`           | Yes               | `usernamePassword` | `username` = access key ID, `password` = secret key |
 | `aws`          | `assume_role`      | No (raises error) | -                  | -                                                   |
 | `gcp`          | `service_account`  | Yes               | `secret`           | `secret` = full JSON of GCP service account key     |
