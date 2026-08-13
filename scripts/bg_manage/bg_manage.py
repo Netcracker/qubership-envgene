@@ -29,7 +29,7 @@ class OperationType(Enum):
     BGD_ROLLBACK = "BGD-ROLLBACK"
     
     @classmethod
-    def from_str(cls, value: str) -> OperationType | None:
+    def from_str(cls, value: str) -> "OperationType | None":
         for member in cls:
             if member.value == value:
                 return member
