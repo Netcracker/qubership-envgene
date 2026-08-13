@@ -706,11 +706,11 @@ Deployment (BGD) lifecycle values.
 
 BGD values:
 
-- `BGD-INIT`
-- `BGD-WARMUP`
-- `BGD-PROMOTE`
-- `BGD-ROLLBACK`
-- `BGD-COMMIT`
+- `BGD_INIT`
+- `BGD_WARMUP`
+- `BGD_PROMOTE`
+- `BGD_ROLLBACK`
+- `BGD_COMMIT`
 
 A BGD value runs the [`bg_manage`](/docs/envgene-pipelines.md) step. State transitions, warmup
 processing, and validation are described in
@@ -725,7 +725,7 @@ Solution Descriptor for the applications to deploy and, when origin and peer sha
 
 **Mandatory**: No
 
-**Example**: `BGD-WARMUP`
+**Example**: `BGD_WARMUP`
 
 ## Deprecated Parameters
 

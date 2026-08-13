@@ -9,14 +9,6 @@
   - [Deploy-side namespace targeting](#deploy-side-namespace-targeting)
   - [`bg_manage` step](#bg_manage-step)
   - [BG Domain lifecycle](#bg-domain-lifecycle)
-  - [Operation semantics](#operation-semantics)
-    - [BGD-INIT](#bgd-init)
-    - [BGD-WARMUP](#bgd-warmup)
-    - [BGD-PROMOTE](#bgd-promote)
-    - [BGD-COMMIT](#bgd-commit)
-    - [BGD-ROLLBACK](#bgd-rollback)
-  - [State storage](#state-storage)
-    - [State transition validation](#state-transition-validation)
   - [Warmup behaviour](#warmup-behaviour)
   - [CMDB import](#cmdb-import)
   - [BG-related parameters in Effective Set](#bg-related-parameters-in-effective-set)
@@ -39,7 +31,7 @@ For BGD, EnvGene:
   [Namespace map](/docs/tech/namespace-map.md)
 - re-renders only the Namespaces selected from the Solution Descriptor via the Namespace map
   ([Namespace render filtering](/docs/features/namespace-render-filtering.md))
-- creates and updates [BG state files](#state-storage) for lifecycle operations
+- creates and updates [BG state files](#bg-domain-lifecycle) for lifecycle operations
 - copies namespace contents during [warmup](#warmup-behaviour)
 - adds BG Domain parameters to the
   [Effective Set](#bg-related-parameters-in-effective-set)
@@ -56,7 +48,7 @@ Origin and peer are fixed positions in a BG Domain. They do not decide which sid
 
 State files decide the purpose of each side at a point in time (for example origin `ACTIVE`, peer
 `IDLE`). After a full cycle the states swap. EnvGene resolves active, idle, candidate, or legacy
-from state files, not from the origin or peer role. That supports both forward and reverse cycles.
+from state files. That supports both forward and reverse cycles.
 
 ## Operation-driven control
 
@@ -64,8 +56,7 @@ Lifecycle control uses
 [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type).
 
 EnvGene reads the current origin and peer states from the state files, derives the next states from
-`OPERATION_TYPE`, and writes the new state files. The caller does not pass the next origin or peer
-states.
+`OPERATION_TYPE`, and writes the new state files.
 
 Application deploy into a BG Domain side is not a lifecycle operation. It uses a Solution Descriptor
 for the applications to deploy and
@@ -101,7 +92,7 @@ sequenceDiagram
     Note over BGP,EGP: ENV_NAMES and OPERATION_TYPE
 
     EGP->>EGR: Read the BG Domain and state files
-    opt BGD-WARMUP
+    opt BGD_WARMUP
         EGP->>EGR: Copy namespace content and synchronise bgNsArtifacts
     end
     EGP->>EGR: Update BG state files
@@ -120,11 +111,8 @@ Two effects, with one shared `BG_NS_TARGET` input to Namespace map:
    `compute_namespace_map` requires `BG_NS_TARGET` and writes the matching Namespace `name` into
    [`namespace-map.yml`](/docs/envgene-objects.md#namespace-map).
 2. **Render filtering** - `env_build` re-renders only the Namespace `name` values selected from the
-   SD through that map. `BG_NS_TARGET` is not converted into a render filter. See
+   SD through that map. See
    [Namespace render filtering](/docs/features/namespace-render-filtering.md).
-
-`BG_NS_TARGET` does not mean `ACTIVE`, `IDLE`, or `CANDIDATE`. State files are not inputs to these
-two effects.
 
 ```mermaid
 sequenceDiagram
@@ -151,9 +139,10 @@ The Instance pipeline step that applies a BGD
 
 - Resolves origin, peer, and controller names from the
   [BG Domain](/docs/envgene-objects.md#bg-domain).
-- Applies [Operation-driven control](#operation-driven-control) and
-  [State transition validation](#state-transition-validation).
-- For `BGD-WARMUP`, runs [Warmup behaviour](#warmup-behaviour).
+- Applies [Operation-driven control](#operation-driven-control) and the
+  [lifecycle transition table](#bg-domain-lifecycle).
+- For every BGD `OPERATION_TYPE`, updates BG state files.
+- For `BGD_WARMUP`, also runs [Warmup behaviour](#warmup-behaviour).
 
 When the step runs and how it orders relative to other steps is described in
 [EnvGene pipelines](/docs/envgene-pipelines.md).
@@ -168,8 +157,9 @@ Related pipeline parameters:
 
 ## BG Domain lifecycle
 
-Forward transitions as `(origin, peer)`. Every state except `(ACTIVE, NONE)` also has a mirrored
-form with origin and peer swapped.
+Each side carries a runtime state: `ACTIVE`, `IDLE`, `CANDIDATE`, or `LEGACY`. The diagram shows
+state pairs as `(origin, peer)`. The table below lists the same pairs with the corresponding state
+files before and after each `OPERATION_TYPE`.
 
 ```mermaid
 stateDiagram-v2
@@ -180,108 +170,80 @@ stateDiagram-v2
     state "LEGACY + ACTIVE" as Promoted
     state "IDLE + ACTIVE" as Committed
 
-    Initial --> Stable: BGD-INIT
-    Stable --> Candidate: BGD-WARMUP
-    Candidate --> Promoted: BGD-PROMOTE
-    Promoted --> Committed: BGD-COMMIT or BGD-ROLLBACK
+    Initial --> Stable: BGD_INIT
+    Stable --> Candidate: BGD_WARMUP
+    Candidate --> Promoted: BGD_PROMOTE
+    Promoted --> Committed: BGD_COMMIT or BGD_ROLLBACK
 ```
 
 After `LEGACY + ACTIVE` → `IDLE + ACTIVE`, the former candidate stays active and the former active
-side becomes idle.
+side becomes idle. The next `BGD_WARMUP` uses the mirrored rows in the table.
 
-## Operation semantics
-
-State transitions for each value are in
-[State transition validation](#state-transition-validation). The notes below add only what the table
-does not carry.
-
-### BGD-INIT
-
-Creates the initial pair when one side is `ACTIVE` and the other has no state file.
-
-### BGD-WARMUP
-
-Also synchronises namespace content and template artefacts - see
-[Warmup behaviour](#warmup-behaviour).
-
-### BGD-PROMOTE
-
-Updates state files only. The external system switches traffic.
-
-### BGD-COMMIT
-
-Updates state files only. The external system stops or cleans up the legacy workload.
-
-### BGD-ROLLBACK
-
-Same state-file outcome as `BGD-COMMIT`. The difference (successful cycle versus revert) is outside
-EnvGene.
-
-## State storage
-
-BG state files are empty markers in the Environment root. The name encodes role and state:
-
-`.<role>-<state>`
-
-Valid states: `active`, `idle`, `candidate`, `legacy`.
-
-Examples:
-
-- `.origin-active` / `.peer-idle` - stable pair
-- `.peer-candidate` - peer prepared for promotion
-- `.origin-legacy` - origin demoted after promote
-
-Each role has at most one state file. On change, EnvGene removes the old marker and creates the new
-one. Path and naming:
+**State files** are empty markers in `/environments/<cluster>/<env>/`. The file body has no
+content. Each role has at most one marker named `.<role>-<state>` (for example `.origin-active`,
+`.peer-idle`). On change, EnvGene removes the old marker and creates the new one. Who is origin
+and who is peer comes from `bg_domain.yml`. See
 [BG State Files](/docs/envgene-objects.md#bg-state-files).
 
-### State transition validation
+When no state files exist, the current pair is `(ACTIVE, NONE)` - the state before `BGD_INIT`.
+`BGD_INIT` is not mirrored.
 
-The `bg_manage` step accepts a BGD
-[`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) only when all of the
-following hold. On the first violated check, the step fails with an error describing the violation
-and leaves state files unchanged.
+| Operation                     | Cycle    | State files before                    | `(origin, peer)` before | `(origin, peer)` after | State files after                     | EnvGene actions              |
+|-------------------------------|----------|---------------------------------------|-------------------------|------------------------|---------------------------------------|------------------------------|
+| `BGD_INIT`                    | forward  | (none)                                | `(ACTIVE, NONE)`        | `(ACTIVE, IDLE)`       | `.origin-active`, `.peer-idle`        | State files only             |
+| `BGD_WARMUP`                  | forward  | `.origin-active`, `.peer-idle`        | `(ACTIVE, IDLE)`        | `(ACTIVE, CANDIDATE)`  | `.origin-active`, `.peer-candidate`   | State files + warmup actions |
+| `BGD_PROMOTE`                 | forward  | `.origin-active`, `.peer-candidate`   | `(ACTIVE, CANDIDATE)`   | `(LEGACY, ACTIVE)`     | `.origin-legacy`, `.peer-active`      | State files only             |
+| `BGD_COMMIT` / `BGD_ROLLBACK` | forward  | `.origin-legacy`, `.peer-active`      | `(LEGACY, ACTIVE)`      | `(IDLE, ACTIVE)`       | `.origin-idle`, `.peer-active`        | State files only             |
+| `BGD_WARMUP`                  | mirrored | `.origin-idle`, `.peer-active`        | `(IDLE, ACTIVE)`        | `(CANDIDATE, ACTIVE)`  | `.origin-candidate`, `.peer-active`   | State files + warmup actions |
+| `BGD_PROMOTE`                 | mirrored | `.origin-candidate`, `.peer-active`   | `(CANDIDATE, ACTIVE)`   | `(ACTIVE, LEGACY)`     | `.origin-active`, `.peer-legacy`      | State files only             |
+| `BGD_COMMIT` / `BGD_ROLLBACK` | mirrored | `.origin-active`, `.peer-legacy`       | `(ACTIVE, LEGACY)`      | `(ACTIVE, IDLE)`       | `.origin-active`, `.peer-idle`        | State files only             |
 
-- **BG Domain present.** The Environment Instance contains a BG Domain object. Namespace names for
-  origin, peer, and controller come from that object.
-- **Single state file per role.** At most one `.origin-<state>` and one `.peer-<state>` file exists
-  in the environment root.
-- **Known current state.** The `.origin-<state>` and `.peer-<state>` files form a state pair listed
-  in the transition table. When no state files exist, the step treats the current state as
-  `(ACTIVE, NONE)`.
-- **Allowed transition.** The next state for the current pair and `OPERATION_TYPE` appears in the
-  transition table below.
+The **State files before** column is the required input. EnvGene looks up the row for
+`OPERATION_TYPE` and the current markers. If no row matches, the step fails and leaves state files
+unchanged.
 
-The table lists the allowed transitions as `(origin, peer)` state pairs. `NONE` means no state file
-exists for that namespace - the initial state before `BGD-INIT`.
-
-| Operation                     | Current state         | Next state            |
-|-------------------------------|-----------------------|-----------------------|
-| `BGD-INIT`                    | `(ACTIVE, NONE)`      | `(ACTIVE, IDLE)`      |
-| `BGD-WARMUP`                  | `(ACTIVE, IDLE)`      | `(ACTIVE, CANDIDATE)` |
-| `BGD-PROMOTE`                 | `(ACTIVE, CANDIDATE)` | `(LEGACY, ACTIVE)`    |
-| `BGD-COMMIT` / `BGD-ROLLBACK` | `(LEGACY, ACTIVE)`    | `(IDLE, ACTIVE)`      |
-
-Every current state except `(ACTIVE, NONE)` also allows the mirrored transitions, with the origin
-and peer states swapped. The mirrored transitions cover the reverse flow: reverse warmup, reverse
-promote, and reverse commit.
+`BGD_ROLLBACK` produces the same state files as `BGD_COMMIT`. The difference between a successful
+cycle and a revert is outside EnvGene.
 
 ## Warmup behaviour
 
-Warmup is the only lifecycle operation that synchronises namespace content in the Instance
-Repository.
+`BGD_WARMUP` is the only lifecycle operation that changes the Instance Repository beyond state
+files. See the [lifecycle transition table](#bg-domain-lifecycle) for required state files before
+and after.
 
-EnvGene replaces the candidate folder contents with the active folder contents, including nested
-[Application](/docs/envgene-objects.md#application) objects, and keeps the candidate `name`. The two
-namespaces then differ only by name. The copy runs for `(ACTIVE, IDLE)` → `(ACTIVE, CANDIDATE)` and
-its mirror.
+EnvGene:
 
-EnvGene also synchronises `envTemplate.bgNsArtifacts`:
+1. Copies the active namespace folder to the idle side that becomes candidate, including nested
+   [Application](/docs/envgene-objects.md#application) objects, and keeps the candidate Namespace
+   `name`.
+2. Sets `envTemplate.bgNsArtifacts.<candidate> := envTemplate.bgNsArtifacts.<active>` in
+   `Inventory/env_definition.yml` (preparing peer: `peer := origin`; preparing origin:
+   `origin := peer`).
+3. Updates state files as in the table.
 
-- preparing peer: `origin` → `peer`
-- preparing origin: `peer` → `origin`
+`envTemplate.artifact` does not change. It renders the controller, plugin, and non-BG namespaces.
 
-The candidate then uses the same template artefact version as the active side.
+**Example** - forward `BGD_WARMUP`, mid-rollout (required state files before:
+`.origin-active`, `.peer-idle`):
+
+```yaml
+# Before
+envTemplate:
+  artifact: "my-env-templates:2.0.0"
+  bgNsArtifacts:
+    origin: "my-env-templates:2.1.0"
+    peer: "my-env-templates:2.0.0"
+
+# After - state files: .origin-active, .peer-candidate
+envTemplate:
+  artifact: "my-env-templates:2.0.0"
+  bgNsArtifacts:
+    origin: "my-env-templates:2.1.0"
+    peer: "my-env-templates:2.1.0"
+```
+
+Peer namespace folder content matches origin, except the peer Namespace `name`. For the mirrored row,
+origin is the candidate and the same rules apply with origin and peer swapped.
 
 ## CMDB import
 

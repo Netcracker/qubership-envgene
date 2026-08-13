@@ -54,7 +54,7 @@ flowchart TB
 
 4. **bg_manage** (step):
    - **Condition**: Runs if [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) is one
-     of `BGD-INIT`, `BGD-WARMUP`, `BGD-PROMOTE`, `BGD-ROLLBACK`, or `BGD-COMMIT`.
+     of `BGD_INIT`, `BGD_WARMUP`, `BGD_PROMOTE`, `BGD_ROLLBACK`, or `BGD_COMMIT`.
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **env_inventory_generation**:
