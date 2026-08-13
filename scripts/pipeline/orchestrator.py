@@ -88,16 +88,16 @@ class CredentialRotationStep(PipelineStep):
         run_cred_rotation()
 
 
-class BgManageStep(PipelineStep):
+class BgStateManageStep(PipelineStep):
     @property
     def name(self) -> str:
-        return "bg_manage"
+        return "change_bg_state"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         operation_type = ctx.params.get("OPERATION_TYPE")
         options = {"BGD-INIT", "BGD-WARMUP", "BGD-PROMOTE", "BGD-COMMIT", "BGD-ROLLBACK"}
         
-        return operation_type in options
+        return ctx.is_gitlab_deploy() and operation_type in options
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_bg_manage()
@@ -278,6 +278,7 @@ def run_single_env_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
+        BgStateManageStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),
