@@ -107,7 +107,7 @@ def getCloudCreds(cloudContent, tenantName, cloudName, is_external_cred_env=Fals
 def get_bg_domain_creds(content, name, is_external_cred_env=False, external_cred_ids=None):
     creds = []
     bg_domain_comment = f"bg domain {name}"
-    checkCredAndAppend(content["controllerNamespace"]["credentials"], creds, CRED_TYPE_SECRET, bg_domain_comment, is_external_cred_env, external_cred_ids)
+    checkCredAndAppend(content["controllerNamespace"]["credentials"], creds, CRED_TYPE_USERPASS, bg_domain_comment, is_external_cred_env, external_cred_ids)
     return creds
 
 def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName, is_external_cred_env=False, external_cred_ids=None):
