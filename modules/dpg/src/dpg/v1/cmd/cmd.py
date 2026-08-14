@@ -5,7 +5,8 @@ import re
 import yaml
 import logging
 from pathlib import Path
-from typing import Optional, Union
+from dataclasses import dataclass, field
+from typing import Optional, Union, List, Optional
 
 from dpg.v1.internal.deployment_plan import DeploymentPlanCalculator, DeployPlan
 import dpg.v1.utils as utils
@@ -109,6 +110,24 @@ class DeploymentPlanGeneratorCommand:
 
         return filtered_plan
 
+    @staticmethod
+    def merge(deploy_plans: List[Union[DeployPlan, Path, str]], output_file: Path = "deploy-plan.yaml") -> Optional[DeployPlan]:
+        if len(deploy_plans) == 0:
+            return None
+        if len(deploy_plans) == 1:
+            return deploy_plans[0]
+
+        source = None
+
+        for i in range(1, len(deploy_plans)):
+            source = DeploymentPlanCalculator.merge(resolve_deploy_plan(deploy_plans[i-1]), resolve_deploy_plan(deploy_plans[i]))
+
+        logging.debug(f"Merging plan details:\n{source}")
+        logging.info(f"Writing deploy plan to {output_file}..")
+        with open(output_file, "w") as f:
+            f.write(yaml.dump(source.to_dict(), sort_keys=False))
+
+        return source
 
 def resolve_deploy_plan(deploy_plan: Union[DeployPlan, Path, str]) -> DeployPlan:
     if isinstance(deploy_plan, DeployPlan):
@@ -122,22 +141,40 @@ def resolve_deploy_plan(deploy_plan: Union[DeployPlan, Path, str]) -> DeployPlan
 _FILTER_SEPARATOR_RE = re.compile(r"[;,\n ]+")
 
 
-def _parse_filter(value: str | None) -> set[str]:
-    """Parse a multi-value filter string into a set of non-empty tokens.
+@dataclass
+class Filter:
+    include: set[str] = field(default_factory=set)
+    exclude: set[str] = field(default_factory=set)
 
-    Recognises semicolons, commas, newlines, and spaces as separators so that
-    callers can pass values in any of those forms.
+    def is_empty(self) -> bool:
+        return not self.include and not self.exclude
 
-    Args:
-        value: Raw filter string from input params, or ``None``.
 
-    Returns:
-        Set of stripped, non-empty tokens.  An empty set means *no filter*
-        (accept everything).
+def _parse_filter(value: str | None) -> Filter:
+    """Parse a multi-value filter string into include/exclude sets.
+
+    Tokens prefixed with ``!`` are treated as exclusions; all others as
+    inclusions. Recognises semicolons, commas, newlines, and spaces as
+    separators. An empty ``Filter`` (both sets empty) means *no filter*
+    (accept everything).
+
+    Examples::
+
+        "core,ns"       → Filter(include={"core", "ns"})
+        "!core"         → Filter(exclude={"core"})
+        "core,!other"   → Filter(include={"core"}, exclude={"other"})
     """
     if not value:
-        return set()
-    return {token for token in _FILTER_SEPARATOR_RE.split(value) if token}
+        return Filter()
+    include, exclude = set(), set()
+    for token in _FILTER_SEPARATOR_RE.split(value):
+        if not token:
+            continue
+        if token.startswith("!"):
+            exclude.add(token[1:])
+        else:
+            include.add(token)
+    return Filter(include=include, exclude=exclude)
 
 
 _APPLICATION_SEPARATOR_RE = re.compile(r"[;,\n ]+")
@@ -154,41 +191,41 @@ def _split_application_list(value: str) -> list[str]:
     return [token for token in _APPLICATION_SEPARATOR_RE.split(value) if token]
 
 
-def _matches_filter(value: str, filter_set: set[str]) -> bool:
-    """Check whether *value* passes an include-only filter.
+def _matches_filter(value: str, f: Filter) -> bool:
+    """Check whether *value* passes the filter.
 
-    An empty *filter_set* means the filter is disabled and every value is
-    accepted.
-
-    Args:
-        value: The entity attribute to test.
-        filter_set: Allowed values.  Empty means *accept all*.
-
-    Returns:
-        ``True`` when the value should be retained.
+    - Empty filter → accept all.
+    - Include set non-empty → value must be in it.
+    - Exclude set non-empty → value must not be in it.
+    Both conditions apply simultaneously when both sets are non-empty.
     """
-    return not filter_set or value in filter_set
+    if f.is_empty():
+        return True
+    if f.include and value not in f.include:
+        return False
+    if value in f.exclude:
+        return False
+    return True
 
 
 def _apply_filters(
     plan: DeployPlan,
-    deploy_postfix_filter: set[str],
-    component_names_filter: set[str],
-    wave_filter: set[str],
-    namespace_filter: set[str],
+    deploy_postfix_filter: Filter,
+    component_names_filter: Filter,
+    wave_filter: Filter,
+    namespace_filter: Filter,
 ) -> DeployPlan:
     """Return a new :class:`DeployPlan` containing only entities that pass all active filters.
 
-    Every filter is *inclusive*: an entity must match **all** supplied filters
-    to be retained.  Omitting a filter (empty set) means that dimension is
-    not constrained.
+    Every filter is *inclusive* by default; prefix a token with ``!`` to
+    exclude it. An entity must pass **all** supplied filters to be retained.
 
     Args:
         plan: Source deployment plan.
-        deploy_postfix_filter: Allowed ``deployPostfix`` values.
-        component_names_filter: Allowed component names (prefix before ``:`` in version).
-        wave_filter: Allowed wave numbers expressed as strings (e.g. ``{"0", "1"}``).
-        namespace_filter: Allowed namespace values.
+        deploy_postfix_filter: Filter on ``deployPostfix`` values.
+        component_names_filter: Filter on component names (prefix before ``:`` in version).
+        wave_filter: Filter on wave numbers expressed as strings (e.g. ``{"0", "1"}``).
+        namespace_filter: Filter on namespace values.
 
     Returns:
         Filtered :class:`DeployPlan` instance.
