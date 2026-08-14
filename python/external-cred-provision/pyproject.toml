@@ -43,8 +43,8 @@ classifiers = [
 ]
 dependencies = [
   "click==8.1.7",
-  "pyyaml==6.0.2",
-  "qubership-pipelines-common-library==2.0.12",
+  "pyyaml==6.0.3",
+  "qubership-pipelines-common-library==2.0.15",
 ]
 
 [project.urls]
