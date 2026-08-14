@@ -4,7 +4,7 @@ from pathlib import Path
 
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, NamespaceRole
 from envgenehelper.file_helper import deleteFileIfExists
-from envgenehelper.models import OperationType
+from envgenehelper.models import BgdOperation
 from envgenehelper import logger
 
 
@@ -32,27 +32,27 @@ def pair_to_str(pair: Pair) -> str:
 
 S = State
 
-VALID_TRANSITIONS_BASE: dict[OperationType, dict[Pair, Pair]] = {
-    OperationType.BGD_INIT: {
+VALID_TRANSITIONS_BASE: dict[BgdOperation, dict[Pair, Pair]] = {
+    BgdOperation.INIT_DOMAIN: {
         (S.ACTIVE, S.NONE): (S.ACTIVE, S.IDLE),
     },
-    OperationType.BGD_WARMUP: {
+    BgdOperation.WARMUP: {
         (S.ACTIVE, S.IDLE): (S.ACTIVE, S.CANDIDATE),
     },
-    OperationType.BGD_PROMOTE: {
+    BgdOperation.PROMOTE: {
         (S.ACTIVE, S.CANDIDATE): (S.LEGACY, S.ACTIVE),
     },
-    OperationType.BGD_COMMIT: {
+    BgdOperation.COMMIT: {
         (S.LEGACY, S.ACTIVE): (S.IDLE, S.ACTIVE),
     },
-    OperationType.BGD_ROLLBACK: {
+    BgdOperation.ROLLBACK: {
         (S.LEGACY, S.ACTIVE): (S.IDLE, S.ACTIVE),
     },
 }
 
-NON_MIRRORABLE_OPERATIONS: set[OperationType] = {OperationType.BGD_INIT}
+NON_MIRRORABLE_OPERATIONS: set[BgdOperation] = {BgdOperation.INIT_DOMAIN}
 
-VALID_TRANSITIONS: dict[OperationType, dict[Pair, Pair]] = {}
+VALID_TRANSITIONS: dict[BgdOperation, dict[Pair, Pair]] = {}
 for _op, _transitions in VALID_TRANSITIONS_BASE.items():
     _op_table = dict(_transitions)
     if _op not in NON_MIRRORABLE_OPERATIONS:
@@ -95,7 +95,7 @@ def get_current_state() -> Pair:
     return origin_state, peer_state
 
 
-def get_new_state(op: OperationType, curr_state: Pair) -> Pair:
+def get_new_state(op: BgdOperation, curr_state: Pair) -> Pair:
     op_table = VALID_TRANSITIONS.get(op)
     if op_table is None or curr_state not in op_table:
         raise ValueError(f"Operation {op.value} is not allowed from state {pair_to_str(curr_state)}")
@@ -113,9 +113,9 @@ def update_current_state(curr_state: Pair, new_state: Pair):
 
 
 def run_change_bg_state(ctx):
-    op = OperationType(ctx.params.get("OPERATION_TYPE"))
+    op = BgdOperation(ctx.params.get("BGD_OPERATION"))
     if op not in VALID_TRANSITIONS:
-        logger.info(f"OPERATION_TYPE '{op.value}' is not a BGD operation, skipping bg_manage")
+        logger.info(f"BGD_OPERATION '{op.value}' is not a BGD operation, skipping bg_manage")
         return
     
     curr_state = get_current_state()

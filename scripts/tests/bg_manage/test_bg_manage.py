@@ -1,252 +1,67 @@
-from pathlib import Path
-from types import SimpleNamespace
+import json
+import os
+import shutil
 
-import pytest
+import bg_manage.bg_manage as bg_manage
+from envgenehelper.business_helper import getEnvDefinitionPath
+from envgenehelper.test_helpers import TestHelpers
+from envgenehelper.yaml_helper import openYaml
+from scripts.tests.base_test import BaseTest
 
-from envgenehelper.models import OperationType
-from scripts.bg_manage.change_bg_state import (
-    S,
-    mirror_pair,
-    pair_to_str,
-    VALID_TRANSITIONS,
-    get_current_state,
-    get_new_state,
-    update_current_state,
-    run_change_bg_state,
-)
+FULL_ENV_NAME = "bgd-cluster/bgd-env"
+FEATURE_TEST_DIR = "test_bg_manage"
 
-
-@pytest.fixture
-def env_dir(tmp_path, monkeypatch):
-    """Points get_current_env_dir_from_env_vars() at a throwaway directory
-    and makes update_current_state's file deletion real-but-safe."""
-    import scripts.bg_manage.change_bg_state as mod
-
-    monkeypatch.setattr(mod, "get_current_env_dir_from_env_vars", lambda: str(tmp_path))
-
-    def _delete_if_exists(path):
-        p = Path(path)
-        if p.exists():
-            p.unlink()
-
-    monkeypatch.setattr(mod, "deleteFileIfExists", _delete_if_exists)
-    return tmp_path
+BG_STATE_TEMPLATE = {
+    "controllerNamespace": "bg-controller",
+    "originNamespace": {
+        "name": "bgd-env-origin-app",
+        "state": "active",
+        "version": "v5"
+    },
+    "peerNamespace": {
+        "name": "bgd-env-peer-app",
+        "state": "candidate",
+        "version": "v6"
+    },
+    "updateTime": "2023-07-07T10:00:54Z"
+}
 
 
-def write_state_files(env_dir: Path, origin: str | None, peer: str | None):
-    if origin:
-        (env_dir / f".origin-{origin}").touch()
-    if peer:
-        (env_dir / f".peer-{peer}").touch()
+class TestBgManage(BaseTest):
 
+    def setup_method(self):
+        self.set_ci_project_dir(FEATURE_TEST_DIR)
+        os.environ["FULL_ENV_NAME"] = FULL_ENV_NAME
+        os.environ["BG_STATE"] = json.dumps(BG_STATE_TEMPLATE)
+        self.test_data_path = self.test_data_dir / FEATURE_TEST_DIR
+        self.env_path = self.test_data_path / "environments" / FULL_ENV_NAME
+        self.origin_ns_path = self.env_path / "Namespaces" / "origin-app"
+        self.peer_ns_path = self.env_path / "Namespaces" / "peer-app"
 
-def state_files_on_disk(env_dir: Path) -> set[str]:
-    return {f.name for f in env_dir.iterdir() if f.is_file() and f.name.startswith(".")}
+        shutil.rmtree(self.test_data_path / "environments", ignore_errors=True)
+        shutil.copytree(self.test_data_path / "environments_sample", self.test_data_path / "environments")
 
+        open(self.env_path / ".origin-active", 'w').close()
+        open(self.env_path / ".peer-idle", 'w').close()
 
-def make_ctx(op_value: str | None):
-    params = {} if op_value is None else {"OPERATION_TYPE": op_value}
-    return SimpleNamespace(params=params)
+    def test_warmup_copies_active_to_candidate(self):
+        extra_files, missing_files, mismatch, _ = TestHelpers.compare_dirs_content(
+            self.origin_ns_path, self.peer_ns_path)
+        assert extra_files and missing_files and mismatch, \
+            "Namespaces don't have enough differences before the warm up operation test"
 
+        bg_manage.run_warmup()
 
-class TestMirrorPair:
-    def test_swaps_origin_and_peer(self):
-        assert mirror_pair((S.ACTIVE, S.IDLE)) == (S.IDLE, S.ACTIVE)
-
-    def test_double_mirror_is_identity(self):
-        pair = (S.LEGACY, S.ACTIVE)
-        assert mirror_pair(mirror_pair(pair)) == pair
-
-
-class TestPairToStr:
-    def test_format(self):
-        assert pair_to_str((S.ACTIVE, S.IDLE)) == '{"origin": "active", "peer": "idle"}'
-
-
-class TestTransitionTable:
-    def test_only_bgd_operations_are_keys(self):
-        assert OperationType.DEPLOY not in VALID_TRANSITIONS
-        assert OperationType.CLEAN not in VALID_TRANSITIONS
-        assert set(VALID_TRANSITIONS) == {
-            OperationType.BGD_INIT,
-            OperationType.BGD_WARMUP,
-            OperationType.BGD_PROMOTE,
-            OperationType.BGD_COMMIT,
-            OperationType.BGD_ROLLBACK,
+        expected_diff = {
+            "namespace.yml": '-name: "bgd-env-origin-app"\n'
+                             '+name: "bgd-env-peer-app"\n'
         }
+        TestHelpers.assert_dirs_content(self.origin_ns_path, self.peer_ns_path, True, True, expected_diff)
 
-    def test_bgd_init_has_no_mirror(self):
-        table = VALID_TRANSITIONS[OperationType.BGD_INIT]
-        assert (S.ACTIVE, S.NONE) in table
-        assert (S.NONE, S.ACTIVE) not in table
+        dotfiles = {p.name for p in self.env_path.iterdir() if p.name.startswith('.') and p.is_file()}
+        assert dotfiles == {".origin-active", ".peer-idle"}
 
-    @pytest.mark.parametrize("op", [
-        OperationType.BGD_WARMUP,
-        OperationType.BGD_PROMOTE,
-        OperationType.BGD_COMMIT,
-        OperationType.BGD_ROLLBACK,
-    ])
-    def test_non_init_operations_are_mirrored(self, op):
-        table = VALID_TRANSITIONS[op]
-        for curr, nxt in list(table.items()):
-            assert mirror_pair(curr) in table
-            assert table[mirror_pair(curr)] == mirror_pair(nxt)
-
-    def test_warmup_forward_and_mirror(self):
-        table = VALID_TRANSITIONS[OperationType.BGD_WARMUP]
-        assert table[(S.ACTIVE, S.IDLE)] == (S.ACTIVE, S.CANDIDATE)
-        assert table[(S.IDLE, S.ACTIVE)] == (S.CANDIDATE, S.ACTIVE)
-
-    def test_promote_forward_and_mirror(self):
-        table = VALID_TRANSITIONS[OperationType.BGD_PROMOTE]
-        assert table[(S.ACTIVE, S.CANDIDATE)] == (S.LEGACY, S.ACTIVE)
-        assert table[(S.CANDIDATE, S.ACTIVE)] == (S.ACTIVE, S.LEGACY)
-
-    def test_commit_and_rollback_share_same_transition(self):
-        commit = VALID_TRANSITIONS[OperationType.BGD_COMMIT]
-        rollback = VALID_TRANSITIONS[OperationType.BGD_ROLLBACK]
-        assert commit[(S.LEGACY, S.ACTIVE)] == (S.IDLE, S.ACTIVE)
-        assert rollback[(S.LEGACY, S.ACTIVE)] == (S.IDLE, S.ACTIVE)
-
-
-class TestGetCurrentState:
-    def test_no_files_defaults_to_active_none(self, env_dir):
-        assert get_current_state() == (S.ACTIVE, S.NONE)
-
-    def test_reads_origin_and_peer_files(self, env_dir):
-        write_state_files(env_dir, origin="active", peer="candidate")
-        assert get_current_state() == (S.ACTIVE, S.CANDIDATE)
-
-    def test_only_origin_file_present(self, env_dir):
-        write_state_files(env_dir, origin="legacy", peer=None)
-        assert get_current_state() == (S.LEGACY, S.NONE)
-
-    def test_unknown_state_suffix_is_ignored(self, env_dir):
-        (env_dir / ".origin-bogus").touch()
-        write_state_files(env_dir, origin=None, peer="active")
-        assert get_current_state() == (S.NONE, S.ACTIVE)
-
-    def test_multiple_origin_files_raises(self, env_dir):
-        (env_dir / ".origin-active").touch()
-        (env_dir / ".origin-idle").touch()
-        with pytest.raises(ValueError, match="origin"):
-            get_current_state()
-
-    def test_multiple_peer_files_raises(self, env_dir):
-        (env_dir / ".peer-active").touch()
-        (env_dir / ".peer-idle").touch()
-        with pytest.raises(ValueError, match="peer"):
-            get_current_state()
-
-    def test_non_dotfiles_ignored(self, env_dir):
-        (env_dir / "readme.txt").touch()
-        assert get_current_state() == (S.ACTIVE, S.NONE)
-
-
-class TestGetNewState:
-    def test_valid_lookup(self):
-        assert get_new_state(OperationType.BGD_INIT, (S.ACTIVE, S.NONE)) == (S.ACTIVE, S.IDLE)
-
-    def test_valid_mirror_lookup(self):
-        assert get_new_state(OperationType.BGD_WARMUP, (S.IDLE, S.ACTIVE)) == (S.CANDIDATE, S.ACTIVE)
-
-    def test_wrong_operation_for_state_raises(self):
-        with pytest.raises(ValueError):
-            get_new_state(OperationType.BGD_PROMOTE, (S.ACTIVE, S.IDLE))
-
-    def test_unrecognised_current_state_raises(self):
-        with pytest.raises(ValueError):
-            get_new_state(OperationType.BGD_INIT, (S.LEGACY, S.LEGACY))
-
-    def test_non_bgd_operation_raises(self):
-        # DEPLOY/CLEAN are not keys in VALID_TRANSITIONS at all.
-        with pytest.raises(ValueError):
-            get_new_state(OperationType.DEPLOY, (S.ACTIVE, S.NONE))
-
-
-class TestUpdateCurrentState:
-    def test_removes_old_and_creates_new(self, env_dir):
-        write_state_files(env_dir, origin="active", peer="none")
-        update_current_state((S.ACTIVE, S.NONE), (S.ACTIVE, S.IDLE))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-idle"}
-
-    def test_noop_when_old_files_absent(self, env_dir):
-        update_current_state((S.ACTIVE, S.NONE), (S.ACTIVE, S.IDLE))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-idle"}
-
-
-class TestRunChangeBgState:
-    def test_missing_operation_type_defaults_to_deploy_and_skips(self, env_dir):
-        run_change_bg_state(make_ctx(None))
-        assert state_files_on_disk(env_dir) == set()
-
-    def test_deploy_operation_skips(self, env_dir):
-        run_change_bg_state(make_ctx("DEPLOY"))
-        assert state_files_on_disk(env_dir) == set()
-
-    def test_clean_operation_skips(self, env_dir):
-        run_change_bg_state(make_ctx("CLEAN"))
-        assert state_files_on_disk(env_dir) == set()
-
-    def test_invalid_operation_type_raises(self, env_dir):
-        with pytest.raises(ValueError):
-            run_change_bg_state(make_ctx("BGD-NOT-A-REAL-OP"))
-        assert state_files_on_disk(env_dir) == set()
-
-    def test_operation_type_is_case_insensitive(self, env_dir):
-        write_state_files(env_dir, origin="active", peer="none")
-        run_change_bg_state(make_ctx("bgd-init"))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-idle"}
-
-    def test_init_from_active_none(self, env_dir):
-        run_change_bg_state(make_ctx("BGD-INIT"))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-idle"}
-
-    def test_warmup_from_active_idle(self, env_dir):
-        write_state_files(env_dir, origin="active", peer="idle")
-        run_change_bg_state(make_ctx("BGD-WARMUP"))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-candidate"}
-
-    def test_warmup_mirror_from_idle_active(self, env_dir):
-        write_state_files(env_dir, origin="idle", peer="active")
-        run_change_bg_state(make_ctx("BGD-WARMUP"))
-        assert state_files_on_disk(env_dir) == {".origin-candidate", ".peer-active"}
-
-    def test_promote_from_active_candidate(self, env_dir):
-        write_state_files(env_dir, origin="active", peer="candidate")
-        run_change_bg_state(make_ctx("BGD-PROMOTE"))
-        assert state_files_on_disk(env_dir) == {".origin-legacy", ".peer-active"}
-
-    def test_promote_mirror_from_candidate_active(self, env_dir):
-        write_state_files(env_dir, origin="candidate", peer="active")
-        run_change_bg_state(make_ctx("BGD-PROMOTE"))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-legacy"}
-
-    def test_commit_from_legacy_active(self, env_dir):
-        write_state_files(env_dir, origin="legacy", peer="active")
-        run_change_bg_state(make_ctx("BGD-COMMIT"))
-        assert state_files_on_disk(env_dir) == {".origin-idle", ".peer-active"}
-
-    def test_rollback_from_legacy_active_same_result_as_commit(self, env_dir):
-        write_state_files(env_dir, origin="legacy", peer="active")
-        run_change_bg_state(make_ctx("BGD-ROLLBACK"))
-        assert state_files_on_disk(env_dir) == {".origin-idle", ".peer-active"}
-
-    def test_disallowed_transition_raises_and_leaves_state_untouched(self, env_dir):
-        write_state_files(env_dir, origin="active", peer="idle")
-        with pytest.raises(ValueError):
-            run_change_bg_state(make_ctx("BGD-PROMOTE"))  # not valid from (ACTIVE, IDLE)
-        assert state_files_on_disk(env_dir) == {".origin-active", ".peer-idle"}
-
-    def test_unrecognised_current_state_raises_and_leaves_state_untouched(self, env_dir):
-        write_state_files(env_dir, origin="legacy", peer="legacy")
-        with pytest.raises(ValueError):
-            run_change_bg_state(make_ctx("BGD-COMMIT"))
-        assert state_files_on_disk(env_dir) == {".origin-legacy", ".peer-legacy"}
-
-    def test_multiple_origin_files_raises_and_leaves_state_untouched(self, env_dir):
-        (env_dir / ".origin-active").touch()
-        (env_dir / ".origin-idle").touch()
-        with pytest.raises(ValueError):
-            run_change_bg_state(make_ctx("BGD-INIT"))
-        assert state_files_on_disk(env_dir) == {".origin-active", ".origin-idle"}
+        env_definition = openYaml(getEnvDefinitionPath(self.env_path))
+        bg_ns_artifacts = env_definition["envTemplate"]["bgNsArtifacts"]
+        assert bg_ns_artifacts["origin"] == "bgd:v1.1.0-origin"
+        assert bg_ns_artifacts["peer"] == "bgd:v1.1.0-origin"

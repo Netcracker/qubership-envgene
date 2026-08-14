@@ -10,6 +10,10 @@ _INTERMEDIATE_PLAN_FILE = "deploy-plan-calculated.yml"
 
 def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
     application_versions = ctx.params.get("APPLICATION_VERSIONS")
+    deploy_postfixes_filter = ctx.params.get("DEPLOY_POSTFIXES_FILTER")
+    namespace_names_filter = ctx.params.get("NAMESPACE_NAMES_FILTER")
+    component_names_filter = ctx.params.get("COMPONENT_NAMES_FILTER")
+    wave_names_filter = ctx.params.get("WAVE_NAMES_FILTER")
     if not application_versions:
         raise ValueError("APPLICATION_VERSIONS is required when PIPELINE_TYPE=GITLAB_DEPLOY")
 
@@ -32,6 +36,15 @@ def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
         map=namespace_map_path,
         output_file=deploy_plan_path,
     )
-    ctx.deploy_plan = EnvgeneDeployPlan(entities=deploy_plan.entities)
+
+    filtered_deploy_plan = DeploymentPlanGeneratorCommand.filter(
+        deploy_plan=deploy_plan,
+        deploy_postfix_filter=deploy_postfixes_filter,
+        component_names_filter=component_names_filter,
+        wave_filter=wave_names_filter,
+        namespace_filter=namespace_names_filter
+    )
+
+    ctx.deploy_plan = EnvgeneDeployPlan(entities=filtered_deploy_plan.entities)
 
     intermediate_plan_path.unlink(missing_ok=True)
