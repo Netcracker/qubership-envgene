@@ -139,7 +139,8 @@
             "type": "string",
             "description": "Type of the satellite component",
             "enum": [
-              "namespace"
+              "namespace",
+               "bgdomain"
             ]
           }
         },
