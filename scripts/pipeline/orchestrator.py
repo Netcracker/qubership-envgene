@@ -13,6 +13,7 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
+from bg_manage.change_bg_state import run_change_bg_state
 from bg_manage.bg_manage import run_warmup
 from build_env.appregdef_render import run_appregdef_render
 from build_env.namespace_render import compute_namespace_map
@@ -86,6 +87,19 @@ class CredentialRotationStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_cred_rotation()
+
+
+class ChangeBgState(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "change_bg_state"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return (ctx.is_gitlab_deploy()
+                and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.BGD)
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_change_bg_state(ctx)
 
 
 class WarmupStep(PipelineStep):
@@ -277,6 +291,7 @@ def run_single_env_pipeline() -> None:
     steps: list[PipelineStep] = [
         PassportStep(),
         CredentialRotationStep(),
+        ChangeBgState(),
         WarmupStep(),
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
