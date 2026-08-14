@@ -42,7 +42,7 @@
       - [1.14 step `env_build`](#114-step-env_build)
       - [1.15 step `generate_effective_set`](#115-step-generate_effective_set)
       - [1.16 step `git_commit`](#116-step-git_commit)
-      - [1.17 step `generate_argocd_repo` TO DO](#117-step-generate_argocd_repo-to-do)
+      - [1.17 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#117-step-generate_argocd_repo-to-be-implemented-not-implemented-yet)
       - [1.18 step `es_pusher`](#118-step-es_pusher)
       - [1.19 step `cmdb_import`](#119-step-cmdb_import)
       - [1.20 step `postprocess`](#120-step-postprocess)
@@ -673,7 +673,7 @@ migrate sd to deploy plan
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
@@ -698,7 +698,19 @@ Functions:
       - enrich DP, plan map (namespace_map)
       - filter DP, plan filter (filter vars)
     - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
-2. warmup
+2. `resolve_warmup_delta`
+    - triggers:
+      - `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
+    - input:
+      - full `deploy-plan.yml` from repository
+      - state files (resolve the `active` / `candidate` physical side, driven by `BG_NS_TARGET`)
+    - output:
+      - `delta-deploy-plan.yml`
+    - actions:
+      - filter the full plan to the active side (`namespace` == the active namespace)
+      - rebind each entry `namespace` := the candidate namespace (keep `deployPostfix`, `version`,
+        `generationId`, `wave`)
+      - write as `delta-deploy-plan.yml`, the calculator input over the copied candidate namespace
 3. `merge_deployment_plan`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
@@ -827,8 +839,7 @@ Functions:
 3. `get_sboms`
     - input:
       - appreg defs
-      - `delta-deploy-plan.yml` if `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
-      - `deploy-plan.yml` if `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
+      - `delta-deploy-plan.yml` (for warmup, the delta synthesized in step 1.5)
       - `APP_ARTIFACTS_DIR`
     - output:
       - DD and zip at `${APP_ARTIFACTS_DIR}`, sboms
@@ -842,8 +853,7 @@ Functions:
 4. `effective_set_entrypoint`
     - input:
       - env instance
-      - `delta-deploy-plan.yml` if `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
-      - `deploy-plan.yml` if `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
+      - `delta-deploy-plan.yml` (for warmup, the delta synthesized in step 1.5)
       - sboms
       - `OPERATION_TYPE`
       - `BGD_OPERATION`
@@ -884,7 +894,7 @@ Functions:
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/deploy-plan.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
 
-#### 1.17 step `generate_argocd_repo` TO DO
+#### 1.17 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
 
 Triggers:
 
