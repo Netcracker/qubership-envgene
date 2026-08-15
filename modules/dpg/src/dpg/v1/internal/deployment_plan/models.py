@@ -5,11 +5,13 @@ from enum import StrEnum, unique
 import uuid
 import uuid6
 
+
 @unique
 class GenerationType(StrEnum):
     UNIQ_FOR_APP = "UniqForApp"
     UNIQ_FOR_VERSION = "UniqForVersion"
     UNIQ_FOR_RUN = "UniqForRun"
+
 
 class DeployPlanEntity(BaseModel):
     wave: int = 0
@@ -34,6 +36,7 @@ class DeployPlanEntity(BaseModel):
 
     def __repr__(self):
         return f"DeployPlanEntity(wave={self.wave}, version='{self.version}', namespace='{self.namespace}', deploy_postfix='{self.deploy_postfix}')"
+
 
 class DeployPlan(BaseModel):
     entities: List[DeployPlanEntity] = Field(default_factory=list)
@@ -60,4 +63,3 @@ class DeployPlan(BaseModel):
             for entity in by_wave[wave]:
                 output += f"     - {entity}\n"
         return output
-

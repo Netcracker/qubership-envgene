@@ -1,18 +1,15 @@
 import shutil
-import json
 from enum import auto, Enum
 from pathlib import Path
 
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, getenv_with_error, get_namespaces, \
+from dpg.v1.cmd import DeploymentPlanGeneratorCommand
+from envgenehelper import logger, writeYamlToFile
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_namespaces, \
     NamespaceRole, getEnvDefinitionPath
 from envgenehelper.yaml_helper import openYaml
-from envgenehelper import logger, writeYamlToFile
-
-
-def _bg_state():
-    bg_state_str = getenv_with_error('BG_STATE')
-    logger.info(f"Content of BG_STATE: {bg_state_str}")
-    return json.loads(bg_state_str)
+from build_env.namespace_render import compute_namespace_map
+from modules.envgene.envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from pipeline.pipeline_parameters import PipelineParametersHandler
 
 
 class State(Enum):
@@ -65,20 +62,15 @@ def get_current_state() -> Pair:
     return origin_state, peer_state
 
 
-def run_warmup():
+def run_warmup(ctx: PipelineParametersHandler):
     curr_state = get_current_state()
-    bg_state = _bg_state()
-    if curr_state[0] == S.ACTIVE:
-        active_ns = bg_state['originNamespace']['name']
-        candidate_ns = bg_state['peerNamespace']['name']
-    else:
-        active_ns = bg_state['peerNamespace']['name']
-        candidate_ns = bg_state['originNamespace']['name']
-    logger.info(f'Active ns: {active_ns}, Candidate ns: {candidate_ns}')
+    active_role = NamespaceRole.ORIGIN if curr_state[0] == S.ACTIVE else NamespaceRole.PEER
+    candidate_role = NamespaceRole.PEER if active_role == NamespaceRole.ORIGIN else NamespaceRole.ORIGIN
 
     namespaces = get_namespaces()
-    active_ns = next((ns for ns in namespaces if ns.name == active_ns))
-    candidate_ns = next((ns for ns in namespaces if ns.name == candidate_ns))
+    active_ns = next((ns for ns in namespaces if ns.role == active_role))
+    candidate_ns = next((ns for ns in namespaces if ns.role == candidate_role))
+    logger.info(f'Active ns: {active_ns.name}, Candidate ns: {candidate_ns.name}')
 
     shutil.rmtree(candidate_ns.path, ignore_errors=True)
     shutil.copytree(active_ns.path, candidate_ns.path)
@@ -91,6 +83,28 @@ def run_warmup():
     logger.info('Copying was successful')
 
     sync_bg_ns_artifacts(active_ns.role, candidate_ns.role)
+    create_dp_for_warmup(ctx, active_ns.name, candidate_ns.name)
+
+
+def create_dp_for_warmup(ctx: PipelineParametersHandler, active_namespace: str, candidate_namespace: str):
+    full_plan = ctx.deploy_plan
+    active_entities = DeploymentPlanGeneratorCommand.filter(
+        deploy_plan=full_plan, namespace_filter=active_namespace).entities
+    if not active_entities:
+        raise ValueError(
+            f"Cannot create warmup delta: full deploy plan has no entries for active namespace '{active_namespace}'")
+
+    namespace_by_deploy_postfix = compute_namespace_map()
+    candidate_deploy_postfix = next(
+        dp for dp, ns in namespace_by_deploy_postfix.items() if ns == candidate_namespace)
+
+    candidate_entities = [
+        entity.model_copy(update={"deploy_postfix": candidate_deploy_postfix, "namespace": candidate_namespace})
+        for entity in active_entities
+    ]
+    ctx.deploy_plan_delta = EnvgeneDeployPlan(entities=candidate_entities)
+    ctx.deploy_plan_delta.write(EnvgeneDeployPlan.delta_path())
+    logger.info(f"Created warmup delta for candidate '{candidate_namespace}':\n{ctx.deploy_plan_delta}")
 
 
 def sync_bg_ns_artifacts(active_role: NamespaceRole, candidate_role: NamespaceRole):

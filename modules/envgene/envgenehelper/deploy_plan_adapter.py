@@ -11,6 +11,8 @@ DELTA_DEPLOY_PLAN_FILE_NAME = "delta-deploy-plan.yml"
 
 
 class EnvgeneDeployPlan(DeployPlan):
+    dp_path: Path | None = None
+
     @staticmethod
     def path() -> Path:
         return get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME / DEPLOY_PLAN_FILE_NAME
@@ -23,10 +25,14 @@ class EnvgeneDeployPlan(DeployPlan):
     def read(cls, deploy_plan_path: Path = None) -> "EnvgeneDeployPlan":
         deploy_plan_path = deploy_plan_path or cls.path()
         raw = openYaml(deploy_plan_path, allow_default=True, default_yaml=list) or []
-        return cls.from_dict(raw)
+        plan = cls.from_dict(raw)
+        plan.dp_path = deploy_plan_path
+        return plan
 
     def write(self, deploy_plan_path: Path = None) -> None:
-        writeYamlToFile(deploy_plan_path or self.path(), self.to_dict())
+        deploy_plan_path = deploy_plan_path or self.path()
+        writeYamlToFile(deploy_plan_path, self.to_dict())
+        self.dp_path = deploy_plan_path
 
 
 def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = SD_FILE_NAME,

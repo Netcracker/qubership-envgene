@@ -4,6 +4,7 @@ import shutil
 
 import bg_manage.bg_manage as bg_manage
 from envgenehelper.business_helper import getEnvDefinitionPath
+from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan
 from envgenehelper.test_helpers import TestHelpers
 from envgenehelper.yaml_helper import openYaml
 from scripts.tests.base_test import BaseTest
@@ -44,13 +45,22 @@ class TestBgManage(BaseTest):
         open(self.env_path / ".origin-active", 'w').close()
         open(self.env_path / ".peer-idle", 'w').close()
 
-    def test_warmup_copies_active_to_candidate(self):
+    def test_warmup_copies_active_to_candidate(self, monkeypatch):
         extra_files, missing_files, mismatch, _ = TestHelpers.compare_dirs_content(
             self.origin_ns_path, self.peer_ns_path)
         assert extra_files and missing_files and mismatch, \
             "Namespaces don't have enough differences before the warm up operation test"
 
-        bg_manage.run_warmup()
+        # only compute_namespace_map() is stubbed — no Template Repository in this fixture
+        monkeypatch.setattr(bg_manage, "compute_namespace_map",
+                             lambda: {"origin-app": "bgd-env-origin-app", "peer-app": "bgd-env-peer-app"})
+
+        ctx = type("Ctx", (), {})()
+        ctx.deploy_plan = EnvgeneDeployPlan(entities=[
+            DeployPlanEntity(version="some-app:1.0", deployPostfix="origin-app", namespace="bgd-env-origin-app"),
+        ])
+
+        bg_manage.run_warmup(ctx)
 
         expected_diff = {
             "namespace.yml": '-name: "bgd-env-origin-app"\n'
@@ -65,3 +75,8 @@ class TestBgManage(BaseTest):
         bg_ns_artifacts = env_definition["envTemplate"]["bgNsArtifacts"]
         assert bg_ns_artifacts["origin"] == "bgd:v1.1.0-origin"
         assert bg_ns_artifacts["peer"] == "bgd:v1.1.0-origin"
+
+        assert [e.namespace for e in ctx.deploy_plan_delta.entities] == ["bgd-env-peer-app"]
+        assert [e.deploy_postfix for e in ctx.deploy_plan_delta.entities] == ["peer-app"]
+        assert ctx.deploy_plan_delta.dp_path == EnvgeneDeployPlan.delta_path()
+        assert EnvgeneDeployPlan.delta_path().is_file()

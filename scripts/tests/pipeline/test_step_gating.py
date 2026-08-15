@@ -13,7 +13,7 @@ from pipeline.orchestrator import (
     AppregdefRenderStep,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
-    GenerateDeploymentPlanStep,
+    ProcessDeploymentPlanStep,
     ProcessSdStep,
 )
 from pipeline.pipeline_parameters import PipelineParametersHandler
@@ -44,7 +44,7 @@ class TestStepGating:
 
         assert AppregdefRenderStep().should_run(ctx)
         assert DeployPostfixNamespaceMapStep().should_run(ctx)
-        assert GenerateDeploymentPlanStep().should_run(ctx)
+        assert ProcessDeploymentPlanStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
         assert not ProcessSdStep().should_run(ctx)
 
@@ -56,7 +56,7 @@ class TestStepGating:
         assert not DeployPostfixNamespaceMapStep().should_run(ctx)
         assert ProcessSdStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
-        assert not GenerateDeploymentPlanStep().should_run(ctx)
+        assert not ProcessDeploymentPlanStep().should_run(ctx)
 
     @pytest.mark.unit
     def test_process_sd_skipped_for_gitlab_deploy_even_with_application_versions(self):

@@ -50,3 +50,45 @@ class TestAdaptSdToDeployPlan:
         deploy_plan = adapt_sd_to_deploy_plan({})
 
         assert deploy_plan.entities == []
+
+
+class TestEnvgeneDeployPlanDpPath:
+    @pytest.mark.unit
+    def test_bare_construction_has_no_dp_path(self, env_dir):
+        assert EnvgeneDeployPlan(entities=[]).dp_path is None
+
+    @pytest.mark.unit
+    def test_read_binds_dp_path_to_explicit_source(self, env_dir):
+        dp_path = env_dir / "Inventory" / "delta-deploy-plan.yml"
+        writeYamlToFile(dp_path, [])
+
+        plan = EnvgeneDeployPlan.read(dp_path)
+
+        assert plan.dp_path == dp_path
+
+    @pytest.mark.unit
+    def test_read_defaults_dp_path_to_full_path(self, env_dir):
+        writeYamlToFile(EnvgeneDeployPlan.path(), [])
+
+        plan = EnvgeneDeployPlan.read()
+
+        assert plan.dp_path == EnvgeneDeployPlan.path()
+
+    @pytest.mark.unit
+    def test_write_binds_dp_path_to_explicit_target(self, env_dir):
+        delta_path = EnvgeneDeployPlan.delta_path()
+        plan = EnvgeneDeployPlan(entities=[])
+
+        plan.write(delta_path)
+
+        assert plan.dp_path == delta_path
+        assert delta_path.is_file()
+
+    @pytest.mark.unit
+    def test_write_defaults_dp_path_to_full_path(self, env_dir):
+        plan = EnvgeneDeployPlan(entities=[])
+
+        plan.write()
+
+        assert plan.dp_path == EnvgeneDeployPlan.path()
+        assert EnvgeneDeployPlan.path().is_file()
