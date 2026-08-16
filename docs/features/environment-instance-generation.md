@@ -56,6 +56,14 @@ If the namespace is part of a BG Domain as `origin` or `peer`:
 
 **Note:** The `controller` namespace in BG Domain follows the same rules as namespaces not in BG Domain (no suffix is added).
 
+> [!NOTE]
+> Environment Instance generation validates the keys of `envTemplate.envSpecificParamsets`,
+> `envTemplate.envSpecificE2EParamsets`, `envTemplate.envSpecificTechnicalParamsets`, and
+> `envTemplate.envSpecificResourceProfiles` in the Environment Inventory against these rules.
+> Every key is either `cloud` or one of the generated namespace folder names. Generation fails on any
+> other key with an error that lists the available keys. When the key plus `-origin` or `-peer` matches
+> an existing folder name, the error suggests the suffixed name.
+
 ## Template Artifacts
 
 The Environment Inventory specifies which Environment Template artifact(s) to use for rendering the Environment Instance. The artifact selection depends on whether the environment uses Blue-Green Deployment (BGD) support.

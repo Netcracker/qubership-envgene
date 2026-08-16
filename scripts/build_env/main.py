@@ -5,6 +5,7 @@ from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from render_config_env import EnvGenerator
+from env_specific_overrides import validate_env_specific_override_keys
 from resource_profiles import get_env_specific_resource_profiles
 
 from filter_namespaces import apply_ns_build_filter
@@ -180,6 +181,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
+    validate_env_specific_override_keys(Path(render_env_dir))
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
