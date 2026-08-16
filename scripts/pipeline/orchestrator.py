@@ -226,8 +226,7 @@ class ProcessDeploymentPlanStep(PipelineStep):
         return "process_deployment_plan"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) in (
-            OperationType.DEPLOY, OperationType.CLEAN)
+        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         if OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN:
@@ -242,7 +241,9 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return should_run_appregdef_and_env_build(ctx)
+        if ctx.params.get('ENV_BUILDER'):
+            return True
+        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = run_build_environment()

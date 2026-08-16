@@ -126,6 +126,9 @@ class PipelineParametersHandler(BaseModel):
     def is_clean(self) -> bool:
         return OperationType(self.params.get('OPERATION_TYPE')) == OperationType.CLEAN
 
+    def is_deploy_or_clean(self) -> bool:
+        return OperationType(self.params.get('OPERATION_TYPE')) in (OperationType.DEPLOY, OperationType.CLEAN)
+
     def log_pipeline_params(self) -> None:
         params = {**self.internal_params, **copy.deepcopy(self.params)}
         if params.get("CRED_ROTATION_PAYLOAD"):
