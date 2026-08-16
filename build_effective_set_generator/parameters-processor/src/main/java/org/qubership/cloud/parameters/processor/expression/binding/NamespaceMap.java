@@ -105,42 +105,39 @@ public class NamespaceMap extends DynamicMap {
                     BgDomainEntityDTO.NamespaceDTO peer = bgDomainEntityDTO.getPeerNamespace();
                     BgDomainEntityDTO.NamespaceDTO controller = bgDomainEntityDTO.getControllerNamespace();
 
+                    if (origin == null || peer == null || controller == null) {
+                        throw new NotFoundException("Origin, peer, and controller namespaces must all be present");
+                    }
+
                     //Primary Namespace & Secondary Namespace
-                    if (origin.getName().equalsIgnoreCase(originalNamespace)) {
-                        map.put(ORIGIN_NAMESPACE, originalNamespace);
+                    if (origin.getName().equalsIgnoreCase(originalNamespace)
+                            || peer.getName().equalsIgnoreCase(originalNamespace)
+                            || controller.getName().equalsIgnoreCase(originalNamespace)) {
+                        map.put(ORIGIN_NAMESPACE, origin.getName());
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
-                    } else if (controller.getName().equalsIgnoreCase(originalNamespace)) { //Controller Namespace
-                        if (origin != null) {
-                            map.put(ORIGIN_NAMESPACE, origin.getName());
+                    }
+                    if (controller.getName().equalsIgnoreCase(originalNamespace)) { //Controller Namespace
+                        if (controller.getUrl() != null && !controller.getUrl().isEmpty()) {
+                            map.put(BG_CONTROLLER_URL, controller.getUrl());
                         } else {
-                            map.put(ORIGIN_NAMESPACE, originalNamespace);
+                            String bg_url = String.format("%s://bluegreen-controller-%s.%s", protocol.toLowerCase(), originalNamespace, customHost);
+                            map.put(BG_CONTROLLER_URL, bg_url);
                         }
-                        map.put(PEER_NAMESPACE, peer.getName());
-                        map.put(CONTROLLER_NAMESPACE, controller.getName());
 
-                        if (controller != null) {
-                            if (controller.getUrl() != null && !controller.getUrl().isEmpty()) {
-                                map.put(BG_CONTROLLER_URL, controller.getUrl());
-                            } else {
-                                String bg_url = String.format("%s://bluegreen-controller-%s.%s", protocol.toLowerCase(), originalNamespace, customHost);
-                                map.put(BG_CONTROLLER_URL, bg_url);
+                        if (controller.getCredentials() != null && !controller.getCredentials().isEmpty()) {
+                            Credential credentialPojo = credentialUtils.getCredentialsById(controller.getCredentials());
+                            if (credentialPojo instanceof ExternalCredentials) {
+                                map.put("BG_CONTROLLER_LOGIN", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "username", nsOrigin));
+                                map.put("BG_CONTROLLER_PASSWORD", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "password", nsOrigin));
+                            } else if (credentialPojo instanceof UsernamePasswordCredentials) {
+                                UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
+                                map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername());
+                                map.put(BG_CONTROLLER_PASSWORD, usernamePasswordCredentials.getPassword());
                             }
-
-                            if (controller.getCredentials() != null && !controller.getCredentials().isEmpty()) {
-                                Credential credentialPojo = credentialUtils.getCredentialsById(controller.getCredentials());
-                                if (credentialPojo instanceof ExternalCredentials) {
-                                    map.put("BG_CONTROLLER_LOGIN", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "username", nsOrigin));
-                                    map.put("BG_CONTROLLER_PASSWORD", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "password", nsOrigin));
-                                } else if (credentialPojo instanceof UsernamePasswordCredentials) {
-                                    UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
-                                    map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername());
-                                    map.put(BG_CONTROLLER_PASSWORD, usernamePasswordCredentials.getPassword());
-                                }
-                            } else {
-                                map.put(BG_CONTROLLER_LOGIN, "bgoperator");
-                                map.put(BG_CONTROLLER_PASSWORD, "F21wuZNRpw");
-                            }
+                        } else {
+                            map.put(BG_CONTROLLER_LOGIN, "bgoperator");
+                            map.put(BG_CONTROLLER_PASSWORD, "F21wuZNRpw");
                         }
 
 //                        String rootUrl = Injector.getInstance().get(URLUtils.class).getRootUrl();
@@ -151,17 +148,15 @@ public class NamespaceMap extends DynamicMap {
 //                        map.put(CMDB_CALLBACK_URL, String.format("%s/cm/v1/tenants/%s/clouds/%s/bgdomains/clone",
 //                                rootUrl, tenant, cloud));
                     }
+                    else {
+                        map.put(ORIGIN_NAMESPACE, originalNamespace);
+                    }
                 } else {
                     map.put(ORIGIN_NAMESPACE, originalNamespace);
                 }
 
-                if (compositeStructureDTO != null) {
+                if (isCurrentNamespaceSatellite(compositeStructureDTO, bgDomainEntityDTO, originalNamespace)) {
                     setBaselineVars(map, compositeStructureDTO.getBaseline(), bgDomainEntityDTO);
-                } else if (bgDomainEntityDTO != null && compositeStructureDTO != null) {
-                    if (bgDomainEntityDTO.getType().equalsIgnoreCase(BG_DOMAIN)) {
-                        setBaselineVars(map, compositeStructureDTO.getBaseline(), bgDomainEntityDTO);
-                    }
-
                 }
 
                 // Deprecated deployer parameters
@@ -225,8 +220,7 @@ public class NamespaceMap extends DynamicMap {
                 map.put(BASELINE_PEER, bgDomainEntityDTO.getPeerNamespace().getName());
                 map.put(BASELINE_CONTROLLER, bgDomainEntityDTO.getControllerNamespace().getName());
                 map.put(BASELINE_PROJ, bgDomainEntityDTO.getControllerNamespace().getName());
-            } else if (baselineEntity.getType().equalsIgnoreCase(NAMESPACE) &&
-                    !baselineEntity.getName().equalsIgnoreCase(originalNamespace)) {
+            } else if (baselineEntity.getType().equalsIgnoreCase(NAMESPACE))  {
                 map.put(BASELINE_ORIGIN, baselineEntity.getName());
                 map.put(BASELINE_PROJ, baselineEntity.getName());
             }
@@ -271,6 +265,25 @@ public class NamespaceMap extends DynamicMap {
         }
         map.putIfAbsent(gatewayUrl, defaultGatewayUrl);
         map.putIfAbsent(identityProviderUrl, defaultIdpUrl);
+    }
+
+    private boolean isCurrentNamespaceSatellite(CompositeStructureDTO compositeStructureDTO,
+                                                BgDomainEntityDTO bgDomainEntityDTO, String currentNamespace) {
+        if (compositeStructureDTO == null || compositeStructureDTO.getSatellites().isEmpty()) {
+            return false;
+        }
+        return compositeStructureDTO.getSatellites().stream().anyMatch(satellite -> {
+            if (NAMESPACE.equalsIgnoreCase(satellite.getType())) {
+                return currentNamespace.equalsIgnoreCase(satellite.getName());
+            }
+
+            return BG_DOMAIN.equalsIgnoreCase(satellite.getType())
+                    && bgDomainEntityDTO != null
+                    && satellite.getName().equalsIgnoreCase(bgDomainEntityDTO.getName())
+                    && (currentNamespace.equalsIgnoreCase(bgDomainEntityDTO.getOriginNamespace().getName())
+                    || currentNamespace.equalsIgnoreCase(bgDomainEntityDTO.getPeerNamespace().getName())
+                    || currentNamespace.equalsIgnoreCase(bgDomainEntityDTO.getControllerNamespace().getName()));
+        });
     }
 
 }
