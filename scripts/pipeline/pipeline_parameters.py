@@ -13,7 +13,8 @@ from pydantic import BaseModel, Field
 from envgenehelper import logger, writeToFile
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
-from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, DeltaDeployType
+from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, BgdOperation, \
+    DeltaDeployType
 from envgenehelper.plugin_engine import PluginEngine
 
 
@@ -77,7 +78,6 @@ class PipelineParametersHandler(BaseModel):
             "WAVE_NAMES_FILTER": getenv("WAVE_NAMES_FILTER", ""),
             "BG_NS_TARGET": getenv("BG_NS_TARGET", ""),
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
-            "OPERATION_TYPE": getenv("OPERATION_TYPE"),
             "BGD_OPERATION": getenv("BGD_OPERATION"),
         }
 
@@ -118,6 +118,26 @@ class PipelineParametersHandler(BaseModel):
 
     def is_gitlab_deploy(self) -> bool:
         return self.params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
+
+    def is_bgd_warmup(self) -> bool:
+        return (OperationType(self.params.get('OPERATION_TYPE')) == OperationType.BGD
+                and BgdOperation(self.params.get('BGD_OPERATION')) == BgdOperation.WARMUP)
+
+    def is_clean(self) -> bool:
+        return OperationType(self.params.get('OPERATION_TYPE')) == OperationType.CLEAN
+
+    def is_deploy_or_clean(self) -> bool:
+        return OperationType(self.params.get('OPERATION_TYPE')) in (OperationType.DEPLOY, OperationType.CLEAN)
+
+    # temporary, for get_sboms only - drop once sbom generation moves into effective_set_entrypoint.py
+    def resolve_source_dp(self) -> EnvgeneDeployPlan | None:
+        if self.is_gitlab_deploy():
+            return None if self.is_clean() else self.deploy_plan_delta
+        if self.es_generation_mode == GenerationMode.FULL:
+            return self.deploy_plan
+        if self.partial_merge_mode == PartialMergeMode.FORWARD:
+            return self.deploy_plan_delta
+        return None
 
     def log_pipeline_params(self) -> None:
         params = {**self.internal_params, **copy.deepcopy(self.params)}

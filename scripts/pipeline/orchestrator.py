@@ -10,7 +10,8 @@ from os import getenv
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled
+from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
+    apply_no_sd_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.change_bg_state import run_change_bg_state
@@ -21,10 +22,10 @@ from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
-from effective_set.effective_set_entrypoint import effective_set_entrypoint
+from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
 from effective_set.sboms_retention_policy import sboms_retention_policy
-from deployment_plan.generate_deployment_plan import run_generate_deployment_plan
-from envgenehelper.models import TemplateVersionUpdateMode, OperationType, BgdOperation
+from deployment_plan.process_deployment_plan import merge_deployment_plan, reduce_deployment_plan
+from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import fan_out
@@ -108,12 +109,10 @@ class WarmupStep(PipelineStep):
         return "warmup"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return (ctx.is_gitlab_deploy()
-                and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.BGD
-                and BgdOperation(ctx.params.get('BGD_OPERATION')) == BgdOperation.WARMUP)
+        return ctx.is_gitlab_deploy() and ctx.is_bgd_warmup()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_warmup()
+        run_warmup(ctx)
 
 
 class InventoryGenerationStep(PipelineStep):
@@ -222,16 +221,19 @@ class DeployPostfixNamespaceMapStep(PipelineStep):
         ctx.namespace_by_deploy_postfix = compute_namespace_map()
 
 
-class GenerateDeploymentPlanStep(PipelineStep):
+class ProcessDeploymentPlanStep(PipelineStep):
     @property
     def name(self) -> str:
-        return "generate_deployment_plan"
+        return "process_deployment_plan"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
+        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_generate_deployment_plan(ctx)
+        if OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN:
+            reduce_deployment_plan(ctx)
+        else:
+            merge_deployment_plan(ctx)
 
 
 class EnvBuildStep(PipelineStep):
@@ -240,7 +242,9 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return should_run_appregdef_and_env_build(ctx)
+        if ctx.params.get('ENV_BUILDER'):
+            return True
+        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.namespace_by_deploy_postfix = run_build_environment()
@@ -261,11 +265,16 @@ class GenerateEffectiveSetStep(PipelineStep):
         decrypt_all_cred_files_for_env()
         validate_creds()
         validate_parameters()
+        if not ctx.is_gitlab_deploy():
+            apply_no_sd_mode(ctx)
         sboms_retention_policy()
         get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
         if get_sboms.modules:
-            get_sboms.run()
-        effective_set_entrypoint(ctx)
+            get_sboms.run(ctx.resolve_source_dp())
+        if ctx.is_gitlab_deploy():
+            run_gitlab_deploy_effective_set(ctx)
+        else:
+            run_legacy_sd_effective_set(ctx)
         encrypt_all_cred_files_for_env()
 
 
@@ -299,7 +308,7 @@ def run_single_env_pipeline() -> None:
         DeployPostfixNamespaceMapStep(),
         ProcessSdStep(),
         MigrateSdToDeployPlanStep(),
-        GenerateDeploymentPlanStep(),
+        ProcessDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
         GitCommitStep()

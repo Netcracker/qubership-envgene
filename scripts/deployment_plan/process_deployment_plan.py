@@ -1,14 +1,17 @@
 from dpg.v1.cmd import DeploymentPlanGeneratorCommand
+from dpg.v1.internal.deployment_plan.deployment_plan import DeploymentPlanCalculator
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, INVENTORY_DIR_NAME
-from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
+from envgenehelper.collections_helper import split_multi_value_param
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 
 from build_env.namespace_render import NAMESPACE_MAP_FILE
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
-_INTERMEDIATE_PLAN_FILE = "deploy-plan-calculated.yml"
+_INTERMEDIATE_CALCULATED_FILE = "deploy-plan-calculated.yml"
+_INTERMEDIATE_MAPPED_FILE = "deploy-plan-mapped.yml"
 
 
-def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
+def merge_deployment_plan(ctx: PipelineParametersHandler) -> None:
     application_versions = ctx.params.get("APPLICATION_VERSIONS")
     deploy_postfixes_filter = ctx.params.get("DEPLOY_POSTFIXES_FILTER")
     namespace_names_filter = ctx.params.get("NAMESPACE_NAMES_FILTER")
@@ -22,19 +25,19 @@ def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
     if not namespace_map_path.is_file():
         raise FileNotFoundError(f"Missing namespace map at {namespace_map_path}")
 
-    intermediate_plan_path = inventory_dir / _INTERMEDIATE_PLAN_FILE
-    deploy_plan_path = inventory_dir / DEPLOY_PLAN_FILE_NAME
+    calculated_plan_path = inventory_dir / _INTERMEDIATE_CALCULATED_FILE
+    mapped_plan_path = inventory_dir / _INTERMEDIATE_MAPPED_FILE
 
     # calculate() - what to deploy and in what order, map() - in which namespace "
     calculated_plan = DeploymentPlanGeneratorCommand.calculate(
         applications=application_versions,
-        output_file=intermediate_plan_path,
+        output_file=calculated_plan_path,
         rootdir=ctx.work_dir,
     )
     deploy_plan = DeploymentPlanGeneratorCommand.map(
         deploy_plan=calculated_plan,
         map=namespace_map_path,
-        output_file=deploy_plan_path,
+        output_file=mapped_plan_path,
     )
 
     filtered_deploy_plan = DeploymentPlanGeneratorCommand.filter(
@@ -45,6 +48,25 @@ def run_generate_deployment_plan(ctx: PipelineParametersHandler) -> None:
         namespace_filter=namespace_names_filter
     )
 
-    ctx.deploy_plan = EnvgeneDeployPlan(entities=filtered_deploy_plan.entities)
+    delta = EnvgeneDeployPlan(entities=filtered_deploy_plan.entities)
+    merged = DeploymentPlanCalculator.merge(source=ctx.deploy_plan, dest=delta)
+    ctx.deploy_plan = EnvgeneDeployPlan(entities=merged.entities)
+    ctx.deploy_plan.write()
+    ctx.deploy_plan_delta = delta
+    ctx.deploy_plan_delta.write(EnvgeneDeployPlan.delta_path())
 
-    intermediate_plan_path.unlink(missing_ok=True)
+    calculated_plan_path.unlink(missing_ok=True)
+    mapped_plan_path.unlink(missing_ok=True)
+
+
+def reduce_deployment_plan(ctx: PipelineParametersHandler) -> None:
+    namespace_names = split_multi_value_param(ctx.params.get("NAMESPACE_NAMES") or "")
+    if not namespace_names:
+        raise ValueError("NAMESPACE_NAMES is required when OPERATION_TYPE=CLEAN")
+
+    reduced_deploy_plan = DeploymentPlanGeneratorCommand.filter(
+        deploy_plan=ctx.deploy_plan,
+        namespace_filter=";".join(f"!{ns}" for ns in namespace_names),
+    )
+    ctx.deploy_plan = EnvgeneDeployPlan(entities=reduced_deploy_plan.entities)
+    ctx.deploy_plan.write()
