@@ -34,7 +34,7 @@ Write the file:
 - Follow with the `creating-cr.md` sections in order. Omit optional sections that are empty rather
   than leaving hollow placeholders.
 - Keep items terse and link-driven.
-- Apply the `AGENTS.md` house rules from the start so the body is publish-ready.
+- Apply the `writing-docs` skill house rules from the start so the body is publish-ready.
 
 Print the path. Tell the user to edit it by hand and to say `file it` when ready.
 

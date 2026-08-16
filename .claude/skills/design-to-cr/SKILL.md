@@ -159,9 +159,9 @@ Match the GitHub issue type to the change's nature and prefix the draft's H1 acc
 (`[Story:]`, or `[Docs:]` for a documentation ticket). The H1 carries the prefix, so the filed issue
 title carries it too.
 
-### AGENTS.md compliance
+### House-rule compliance
 
-Keep the body publish-ready under the repository house rules in `AGENTS.md`, even though the draft file
+Keep the body publish-ready under the repository house rules in the `writing-docs` skill, even though the draft file
 lives outside the repository: plain hyphen-minus for dashes (no em or en dash), no semicolons in
 prose, wrap prose at 120 characters, vertically aligned table pipes, sentence-case headings, and
 GitHub native callouts. Chat may be Russian, but the artifact ships in English. Run the pre-file gate
@@ -180,7 +180,7 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   docs. If it does not, replace it with the observable outcome.
 - Links: no repo-relative `/docs/...` links in the issue body - GitHub renders them as dead paths.
   Use commit-SHA permalinks, pinned to the doc PR head commit when the doc has not merged yet.
-- House rules (as stated under AGENTS.md compliance): no em or en dashes, no semicolons in prose,
+- House rules (as stated under House-rule compliance): no em or en dashes, no semicolons in prose,
   prose wrapped at 120.
 
 ### File the issue

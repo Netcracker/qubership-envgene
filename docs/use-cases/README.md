@@ -50,8 +50,8 @@ does not control.
 
 These align with modern API documentation style. See the
 [Google API Design Guide](https://cloud.google.com/apis/design), Stripe API docs, and GitHub
-REST API docs. For the AGENTS.md statement with INCORRECT/CORRECT examples, see
-[AGENTS.md > Use case design](/AGENTS.md#use-case-design).
+REST API docs. For the full rule with INCORRECT/CORRECT examples, see the
+[use-case design rules](/.claude/skills/writing-docs/references/use-cases.md) in the `writing-docs` skill.
 
 ## Use Case Organization
 
@@ -198,7 +198,7 @@ Use format: `UC-<PREFIX>-<GROUP>-<NUMBER>: <Descriptive Title>`
 
 - **Title**: Concise, descriptive title
   - Should clearly indicate what the use case demonstrates
-  - Use sentence case (see [Heading case](/AGENTS.md#heading-case))
+  - Use sentence case (see [Heading case](/.claude/skills/writing-docs/references/prose-style.md#heading-case))
 
 ### Numbering Rules
 
