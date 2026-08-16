@@ -117,6 +117,9 @@ public class NamespaceMap extends DynamicMap {
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
                     }
+                    else {
+                        map.put(ORIGIN_NAMESPACE, originalNamespace);
+                    }
                     if (controller.getName().equalsIgnoreCase(originalNamespace)) { //Controller Namespace
                         if (controller.getUrl() != null && !controller.getUrl().isEmpty()) {
                             map.put(BG_CONTROLLER_URL, controller.getUrl());
@@ -148,9 +151,7 @@ public class NamespaceMap extends DynamicMap {
 //                        map.put(CMDB_CALLBACK_URL, String.format("%s/cm/v1/tenants/%s/clouds/%s/bgdomains/clone",
 //                                rootUrl, tenant, cloud));
                     }
-                    else {
-                        map.put(ORIGIN_NAMESPACE, originalNamespace);
-                    }
+
                 } else {
                     map.put(ORIGIN_NAMESPACE, originalNamespace);
                 }
