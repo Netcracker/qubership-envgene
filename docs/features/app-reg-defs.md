@@ -115,11 +115,11 @@ definition override applies later and replaces the whole definition, including a
 An External Job is an extension point: a job, not implemented by EnvGene, produces AppDef and RegDef YAML files in its
 job artifact. The following Instance pipeline parameters configure it:
 
-- [`APP_REG_DEFS_JOB`](/docs/instance-pipeline-parameters.md#app_reg_defs_job) - specifies the job that produces the
+- `APP_REG_DEFS_JOB` - specifies the job that produces the
   artifact
-- [`APP_DEFS_PATH`](/docs/instance-pipeline-parameters.md#app_defs_path) - specifies the path within the artifact where
+- `APP_DEFS_PATH` - specifies the path within the artifact where
   Application Definitions are located
-- [`REG_DEFS_PATH`](/docs/instance-pipeline-parameters.md#reg_defs_path) - specifies the path within the artifact where
+- `REG_DEFS_PATH` - specifies the path within the artifact where
   Registry Definitions are located
 
 The pipeline copies the files from the artifact into the per-environment folders before Solution Descriptor processing

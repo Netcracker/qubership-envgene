@@ -53,7 +53,7 @@ flowchart TB
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 4. **bg_manage**
-   - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
+   - **Condition**: Runs if `BG_MANAGE: true`.
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **env_inventory_generation**:
@@ -75,7 +75,7 @@ flowchart TB
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 7. **process_sd**:
-   - **Condition**: Runs if ( [`SD_SOURCE_TYPE: json`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( [`SD_SOURCE_TYPE: artifact`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
+   - **Condition**: Runs if ( `SD_SOURCE_TYPE: json` AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( `SD_SOURCE_TYPE: artifact` AND [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 8. **env_build**:
