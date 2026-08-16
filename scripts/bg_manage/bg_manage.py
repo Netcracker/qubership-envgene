@@ -7,7 +7,6 @@ from envgenehelper import logger, writeYamlToFile
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_namespaces, \
     NamespaceRole, getEnvDefinitionPath
 from envgenehelper.yaml_helper import openYaml
-from build_env.namespace_render import compute_namespace_map
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
@@ -94,12 +93,8 @@ def create_dp_for_warmup(ctx: PipelineParametersHandler, active_namespace: str, 
         raise ValueError(
             f"Cannot create warmup delta: full deploy plan has no entries for active namespace '{active_namespace}'")
 
-    namespace_by_deploy_postfix = compute_namespace_map()
-    candidate_deploy_postfix = next(
-        dp for dp, ns in namespace_by_deploy_postfix.items() if ns == candidate_namespace)
-
     candidate_entities = [
-        entity.model_copy(update={"deploy_postfix": candidate_deploy_postfix, "namespace": candidate_namespace})
+        entity.model_copy(update={"namespace": candidate_namespace})
         for entity in active_entities
     ]
     ctx.deploy_plan_delta = EnvgeneDeployPlan(entities=candidate_entities)

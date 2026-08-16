@@ -45,15 +45,11 @@ class TestBgManage(BaseTest):
         open(self.env_path / ".origin-active", 'w').close()
         open(self.env_path / ".peer-idle", 'w').close()
 
-    def test_warmup_copies_active_to_candidate(self, monkeypatch):
+    def test_warmup_copies_active_to_candidate(self):
         extra_files, missing_files, mismatch, _ = TestHelpers.compare_dirs_content(
             self.origin_ns_path, self.peer_ns_path)
         assert extra_files and missing_files and mismatch, \
             "Namespaces don't have enough differences before the warm up operation test"
-
-        # only compute_namespace_map() is stubbed — no Template Repository in this fixture
-        monkeypatch.setattr(bg_manage, "compute_namespace_map",
-                             lambda: {"origin-app": "bgd-env-origin-app", "peer-app": "bgd-env-peer-app"})
 
         ctx = type("Ctx", (), {})()
         ctx.deploy_plan = EnvgeneDeployPlan(entities=[
@@ -77,6 +73,6 @@ class TestBgManage(BaseTest):
         assert bg_ns_artifacts["peer"] == "bgd:v1.1.0-origin"
 
         assert [e.namespace for e in ctx.deploy_plan_delta.entities] == ["bgd-env-peer-app"]
-        assert [e.deploy_postfix for e in ctx.deploy_plan_delta.entities] == ["peer-app"]
+        assert [e.deploy_postfix for e in ctx.deploy_plan_delta.entities] == ["origin-app"]
         assert ctx.deploy_plan_delta.dp_path == EnvgeneDeployPlan.delta_path()
         assert EnvgeneDeployPlan.delta_path().is_file()
