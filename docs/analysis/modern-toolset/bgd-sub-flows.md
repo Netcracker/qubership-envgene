@@ -1,27 +1,27 @@
 # BGD sub-flows
 
-This document projects the main pipeline described in [`flow.md`](./flow.md) onto the Blue-Green Deployment
-(BGD) scenarios. Each sub-flow lists only the steps that actually fire for a given `OPERATION_TYPE` and
-`BGD_OPERATION`, plus the launch parameters that produce it. The step triggers are the single source of truth and live in `flow.md` -
-this document does not redefine them, it only resolves them per scenario.
-
 - [BGD sub-flows](#bgd-sub-flows)
   - [Launch parameters](#launch-parameters)
   - [Sub-flow 1 - BGD state operations](#sub-flow-1---bgd-state-operations)
   - [Sub-flow 2 - BGD warmup](#sub-flow-2---bgd-warmup)
   - [Sub-flow 3 - deploy to active or candidate](#sub-flow-3---deploy-to-active-or-candidate)
 
+This document projects the main pipeline described in [`flow.md`](/docs/analysis/modern-toolset/flow.md) onto the Blue-Green Deployment
+(BGD) scenarios. Each sub-flow lists only the steps that actually fire for a given `OPERATION_TYPE` and
+`BGD_OPERATION`, plus the launch parameters that produce it. The step triggers are the single source of
+truth and live in `flow.md` - this document does not redefine them, it only resolves them per scenario.
+
 ## Launch parameters
 
 The parameters below select a sub-flow. See `flow.md` for the full definition of each variable.
 
-| Parameter              | Values                                                                          | Role in BGD                          |
-|------------------------|---------------------------------------------------------------------------------|--------------------------------------|
-| `PIPELINE_TYPE`        | `GITLAB_DEPLOY`, `LEGACY`                                                       | BGD requires `GITLAB_DEPLOY`         |
-| `OPERATION_TYPE`       | `BGD`, `DEPLOY`                                                                 | `BGD` for any Blue-Green operation   |
-| `BGD_OPERATION`        | `warmup`, `commit`, `promote`, `rollback`, `init-domain`                        | the Blue-Green operation, only when `OPERATION_TYPE: BGD` |
-| `BG_NS_TARGET`         | `ORIGIN`, `PEER`                                                                | physical side; `ACTIVE`/`CANDIDATE` intent resolved upstream via bg-controller API |
-| `APPLICATION_VERSIONS` | SD or application versions                                                      | required only when a deploy happens  |
+| Parameter              | Values                                                   | Role in BGD                                                                        |
+|------------------------|----------------------------------------------------------|------------------------------------------------------------------------------------|
+| `PIPELINE_TYPE`        | `GITLAB_DEPLOY`, `LEGACY`                                | BGD requires `GITLAB_DEPLOY`                                                       |
+| `OPERATION_TYPE`       | `BGD`, `DEPLOY`                                          | `BGD` for any Blue-Green operation                                                 |
+| `BGD_OPERATION`        | `warmup`, `commit`, `promote`, `rollback`, `init-domain` | the Blue-Green operation, only when `OPERATION_TYPE: BGD`                          |
+| `BG_NS_TARGET`         | `ORIGIN`, `PEER`                                         | physical side; `ACTIVE`/`CANDIDATE` intent resolved upstream via bg-controller API |
+| `APPLICATION_VERSIONS` | SD or DD                                                 | required only when a deploy happens                                                |
 
 ## Sub-flow 1 - BGD state operations
 

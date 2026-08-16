@@ -730,10 +730,9 @@ Functions:
       - `NAMESPACE_NAMES`
     - output:
       - updated `deploy-plan.yml`
-      - `delta-deploy-plan.yml`
     - actions:
       - run the plan filter in exclude mode, passing each namespace in `NAMESPACE_NAMES` as a `!<namespace>` token
-      - writes the repository plan minus the cleaned namespaces
+      - writes the repository plan minus the cleaned namespaces (no delta, no plan passed to the calculator)
     - AI[bgd]: Add the functions
 
 #### 1.14 step `env_build`
@@ -841,7 +840,7 @@ Functions:
 3. `get_sboms`
     - input:
       - appreg defs
-      - `delta-deploy-plan.yml` (produced in 1.13 per operation)
+      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.13); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
       - DD and zip at `${APP_ARTIFACTS_DIR}`, sboms
@@ -855,7 +854,7 @@ Functions:
 4. `effective_set_entrypoint`
     - input:
       - env instance
-      - `delta-deploy-plan.yml` (produced in 1.13 per operation)
+      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.13); no plan for `CLEAN` (marker-driven)
       - sboms
       - `OPERATION_TYPE`
       - `BGD_OPERATION`
