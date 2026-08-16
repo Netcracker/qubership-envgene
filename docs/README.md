@@ -55,6 +55,7 @@
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 - [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Configure Cloud Artifact Registries**](/docs/how-to/configure-cloud-artifact-registries.md) - Set up AWS CodeArtifact and GCP Artifact Registry for Maven artifact downloads
 - [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
 ## Migrations
@@ -92,6 +93,7 @@
 - [**Template Examples**](/docs/samples/template-repository/) - Ready-to-use template examples
 - [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
 - [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/) - Template and inventory examples for non-BG to BGD migration
+- [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
 
 ## Development
 
