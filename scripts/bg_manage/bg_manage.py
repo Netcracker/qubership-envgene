@@ -8,7 +8,7 @@ from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get
     NamespaceRole, getEnvDefinitionPath
 from envgenehelper.yaml_helper import openYaml
 from build_env.namespace_render import compute_namespace_map
-from modules.envgene.envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 
