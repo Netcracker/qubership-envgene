@@ -61,12 +61,15 @@ def merge_deployment_plan(ctx: PipelineParametersHandler) -> None:
 
 def reduce_deployment_plan(ctx: PipelineParametersHandler) -> None:
     namespace_names = split_multi_value_param(ctx.params.get("NAMESPACE_NAMES") or "")
-    if not namespace_names:
-        raise ValueError("NAMESPACE_NAMES is required when OPERATION_TYPE=CLEAN")
 
-    reduced_deploy_plan = DeploymentPlanGeneratorCommand.filter(
-        deploy_plan=ctx.deploy_plan,
-        namespace_filter=";".join(f"!{ns}" for ns in namespace_names),
-    )
-    ctx.deploy_plan = EnvgeneDeployPlan(entities=reduced_deploy_plan.entities)
+    if namespace_names:
+        reduced_deploy_plan = DeploymentPlanGeneratorCommand.filter(
+            deploy_plan=ctx.deploy_plan,
+            namespace_filter=";".join(f"!{ns}" for ns in namespace_names),
+        )
+        reduced_entities = reduced_deploy_plan.entities
+    else:
+        reduced_entities = []
+
+    ctx.deploy_plan = EnvgeneDeployPlan(entities=reduced_entities)
     ctx.deploy_plan.write()
