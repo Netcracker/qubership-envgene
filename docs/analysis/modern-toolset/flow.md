@@ -58,21 +58,20 @@ for the target flow. The per-component docs in this directory elaborate individu
 1. Нужны ли `process_env_template` / `appregdef_render` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
    можно скипать? Сейчас (PoC) отрабатывают все.
 2. [Done]`generate_deployment_plan`
-   1. всегда требует `APPLICATION_VERSION`?
+   1. всегда требует `APPLICATION_VERSIONS`?
       1. A: Да
    2. использует ли `deploy-plan.yml` из предыдущей операции (из репо) как инпут
       1. А: Нет, дискаверится из арги
 3. `APPLICATION_VERSIONS` ?
    1. без него будет генерится только topology + pipeline
    2. с ним все контексты
-      1. если `OPERATION_TYPE: !CLEAN` то `APPLICATION_VERSION` мандаторен
+      1. если `OPERATION_TYPE: !CLEAN` то `APPLICATION_VERSIONS` мандаторен
    3. в nocmdb только
 4. Кто и когда чекаутит ES репо?
    1. argo dpg
 5. Как менять бг стейт в ES
-   1. **Пересчитывать ES полностью**
-   2. Ввести лайт режим калькулятора который правит только стейты
-   3. Ввести пост калькулятор, питон функцию которая будет править стейты
+   1. **Стейт пока не кладём в ES**. Планируется переход на унифицированную топологию за пределами ES.
+      Поэтому стейт-операции калькулятор не вызывают (см. 1.15).
 6. Как обрабатываем `COMMIT` бг операцию? Делаем ли клин legacy нс?
    1. нет, при коммите только меняем стейт
 7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`?
@@ -175,7 +174,7 @@ The deployment plan exists in two forms:
 - **Delta plan** (`delta-deploy-plan.yaml`) — the plan for a single operation, listing only the applications acted on
   in it. Transient, not persisted.
 
-On `DEPLOY`: `generate_deployment_plan` builds the delta from the `APPLICATION_VERSION` input, then
+On `DEPLOY`: `generate_deployment_plan` builds the delta from the `APPLICATION_VERSIONS` input, then
 `merge_deployment_plan` merges the delta onto the repository full plan and commits the result. On `CLEAN` there is
 no delta and no merge (see Removal on clean below).
 
@@ -312,7 +311,7 @@ default: None
 
 ### ES Calc
 
-- Читает `deploy-plan.yml`. Для `generationType != UniqForApp` вставляет между `<application-name>`
+- Читает `delta-deploy-plan.yml`. Для `generationType != UniqForApp` вставляет между `<application-name>`
   и `values` подпапку, равную `generationId`:
 
   ```text
@@ -682,7 +681,7 @@ Functions:
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
     - input:
-      - `APPLICATION_VERSION`
+      - `APPLICATION_VERSIONS`
       - params.environment_id -> `build.env.FULL_ENV_NAME`
       - app defs
       - `namespace-map.yml`
@@ -694,7 +693,7 @@ Functions:
     - output:
       - `delta-deploy-plan.yml`
     - actions:
-      - process `APPLICATION_VERSION` (download SD, merge), calculate (APPLICATION_VERSION)
+      - process `APPLICATION_VERSIONS` (download SD, merge), calculate (APPLICATION_VERSIONS)
       - enrich DP, plan map (namespace_map)
       - filter DP, plan filter (filter vars)
     - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
@@ -702,15 +701,16 @@ Functions:
     - triggers:
       - `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
     - input:
-      - full `deploy-plan.yml` from repository
-      - state files (resolve the `active` / `candidate` physical side, driven by `BG_NS_TARGET`)
+      - `deploy-plan.yml` from repository
+      - state files
     - output:
       - `delta-deploy-plan.yml`
+      - updated `deploy-plan.yml` (candidate slice replaced)
     - actions:
-      - filter the full plan to the active side (`namespace` == the active namespace)
-      - rebind each entry `namespace` := the candidate namespace (keep `deployPostfix`, `version`,
-        `generationId`, `wave`)
-      - write as `delta-deploy-plan.yml`, the calculator input over the copied candidate namespace
+      - filter the full plan to the active side and rebind each entry `namespace` to the candidate
+        namespace (keep `deployPostfix`, `version`, `generationId`, `wave`), write as `delta-deploy-plan.yml`
+      - replace the candidate slice in the repository `deploy-plan.yml` (filter-exclude `!<candidate>` then merge
+        the rebound active).
 3. `merge_deployment_plan`
     - triggers:
       - `OPERATION_TYPE: DEPLOY`
@@ -730,9 +730,10 @@ Functions:
       - `NAMESPACE_NAMES`
     - output:
       - updated `deploy-plan.yml`
+      - `delta-deploy-plan.yml`
     - actions:
       - run the plan filter in exclude mode, passing each namespace in `NAMESPACE_NAMES` as a `!<namespace>` token
-      - writes the repository full plan minus the cleaned namespaces (no delta, no merge)
+      - writes the repository plan minus the cleaned namespaces
     - AI[bgd]: Add the functions
 
 #### 1.14 step `env_build`
@@ -774,7 +775,7 @@ Functions:
       - `ctx.current_env.solution_structure`
     - actions:
       - join applications by deployPostfix with namespace_map
-      - `deploy-plan.yml`
+      - no-op if no `deploy-plan.yml`
     - AI[phase1]: support DP as well as SD
     - AI[phase1]: remove SD support
     - AI[techDebt-P1]: add `namespace-map.yml` as input to optimize execution time
@@ -821,7 +822,8 @@ Functions:
 
 Triggers:
 
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`))
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`)) and
+- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`))
 
 Functions:
 
@@ -839,7 +841,7 @@ Functions:
 3. `get_sboms`
     - input:
       - appreg defs
-      - `delta-deploy-plan.yml` (for warmup, the delta synthesized in step 1.5)
+      - `delta-deploy-plan.yml` (produced in 1.13 per operation)
       - `APP_ARTIFACTS_DIR`
     - output:
       - DD and zip at `${APP_ARTIFACTS_DIR}`, sboms
@@ -853,7 +855,7 @@ Functions:
 4. `effective_set_entrypoint`
     - input:
       - env instance
-      - `delta-deploy-plan.yml` (for warmup, the delta synthesized in step 1.5)
+      - `delta-deploy-plan.yml` (produced in 1.13 per operation)
       - sboms
       - `OPERATION_TYPE`
       - `BGD_OPERATION`
@@ -905,7 +907,7 @@ Functions:
 
 1. `generate_argocd_repo` argo dpg generate structure
     - input:
-      - `deploy-plan.yml`
+      - `delta-deploy-plan.yml`
       - effective set
       - local DD (from `dd_downloading`)
       - `APP_ARTIFACTS_DIR`
@@ -940,6 +942,7 @@ Functions:
         - `DCL_CONFIG_GITLAB_TOKEN`
         - `GITLAB_USER_NAME`
         - `GITLAB_USER_EMAIL`
+        - ...
       - COMMIT_FILTER
       - params.environment_id -> `build.env.FULL_ENV_NAME`
       - params.commit_message -> `DEPLOYMENT_TICKET_ID`

@@ -31,8 +31,7 @@ Pure state change with no new deploy.
 Flow:
 
 ```text
-1.1 preprocess -> 1.4 change_bg_state -> 1.15 generate_effective_set -> 1.16 git_commit
-              -> 1.18 es_pusher -> 1.20 postprocess
+1.1 preprocess -> 1.4 change_bg_state -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
 ```
 
 Launch parameters:
@@ -45,7 +44,8 @@ BGD_OPERATION: init-domain      # or promote, rollback, commit
 # APPLICATION_VERSIONS is not an input
 ```
 
-Actions: `change_bg_state` applies the state transition on the state files.
+Actions: `change_bg_state` applies the state transition on the state files. The effective set calculator is
+not invoked: a state operation only flips BG state, it does not recompute the effective set.
 
 ## Sub-flow 2 - BGD warmup
 
@@ -67,10 +67,11 @@ OPERATION_TYPE: BGD
 BGD_OPERATION: warmup
 ```
 
-Actions: `change_bg_state` applies the state transition on the state files. `warmup` copies the active env instance
-into the candidate. `generate_deployment_plan`, `generate_effective_set`, and `generate_argocd_repo` then run over
-that candidate copy, and `sync` applies it. The candidate ends up as a replica of the active, with versions taken
-from the copied instance rather than a new `APPLICATION_VERSIONS`.
+Actions: `change_bg_state` applies the state transition on the state files. `warmup` copies the active namespace
+into the candidate (rename). `generate_deployment_plan` synthesizes the delta from the `deploy-plan` (filter
+the active side, rebind the namespace to the candidate). `generate_effective_set` and `generate_argocd_repo` then
+run over the copied candidate namespace with that delta, and `sync` applies it. The candidate ends up as a replica
+of the active, with versions taken from the full plan rather than a new `APPLICATION_VERSIONS`.
 
 `1.14 env_build` deliberately does not fire. The candidate already carries the built env instance copied by
 `warmup`, so there is nothing to render. The effective set is generated over that copy rather than over a
