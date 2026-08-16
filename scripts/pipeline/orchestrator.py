@@ -256,7 +256,9 @@ class GenerateEffectiveSetStep(PipelineStep):
         return "generate_effective_set"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or ctx.is_gitlab_deploy()
+        will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or (
+            ctx.is_gitlab_deploy() and (ctx.is_deploy_or_clean() or ctx.is_bgd_warmup())
+        )
         if not will_run and ctx.params.get('CUSTOM_PARAMS'):
             logger.warning("'CUSTOM_PARAMS' is set but generate_effective_set is not running - CUSTOM_PARAMS has no effect here")
         return will_run

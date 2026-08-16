@@ -13,6 +13,7 @@ from pipeline.orchestrator import (
     AppregdefRenderStep,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
+    GenerateEffectiveSetStep,
     ProcessDeploymentPlanStep,
     ProcessSdStep,
 )
@@ -77,3 +78,17 @@ class TestStepGating:
 
         assert AppregdefRenderStep().should_run(ctx)
         assert not EnvBuildStep().should_run(ctx)
+
+    @pytest.mark.unit
+    def test_generate_effective_set_runs_for_deploy_clean_and_warmup(self):
+        for operation, bgd_operation in (("DEPLOY", ""), ("CLEAN", ""), ("BGD", "warmup")):
+            ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE=operation, BGD_OPERATION=bgd_operation)
+
+            assert GenerateEffectiveSetStep().should_run(ctx)
+
+    @pytest.mark.unit
+    def test_generate_effective_set_skipped_for_other_bgd_operations(self):
+        for bgd_operation in ("promote", "commit", "rollback", "init-domain"):
+            ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION=bgd_operation)
+
+            assert not GenerateEffectiveSetStep().should_run(ctx)
