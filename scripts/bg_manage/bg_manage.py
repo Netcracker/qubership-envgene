@@ -3,6 +3,7 @@ from enum import auto, Enum
 from pathlib import Path
 
 from dpg.v1.cmd import DeploymentPlanGeneratorCommand
+from dpg.v1.internal.deployment_plan.deployment_plan import DeploymentPlanCalculator
 from envgenehelper import logger, writeYamlToFile
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_namespaces, \
     NamespaceRole, getEnvDefinitionPath
@@ -97,9 +98,17 @@ def create_dp_for_warmup(ctx: PipelineParametersHandler, active_namespace: str, 
         entity.model_copy(update={"namespace": candidate_namespace})
         for entity in active_entities
     ]
-    ctx.deploy_plan_delta = EnvgeneDeployPlan(entities=candidate_entities)
+    delta = EnvgeneDeployPlan(entities=candidate_entities)
+    ctx.deploy_plan_delta = delta
     ctx.deploy_plan_delta.write(EnvgeneDeployPlan.delta_path())
     logger.info(f"Created warmup delta for candidate '{candidate_namespace}':\n{ctx.deploy_plan_delta}")
+
+    reduced_full_plan = DeploymentPlanGeneratorCommand.filter(
+        deploy_plan=full_plan, namespace_filter=f"!{candidate_namespace}")
+    merged = DeploymentPlanCalculator.merge(
+        source=EnvgeneDeployPlan(entities=reduced_full_plan.entities), dest=delta)
+    ctx.deploy_plan = EnvgeneDeployPlan(entities=merged.entities)
+    ctx.deploy_plan.write()
 
 
 def sync_bg_ns_artifacts(active_role: NamespaceRole, candidate_role: NamespaceRole):

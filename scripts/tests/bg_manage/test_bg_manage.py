@@ -54,6 +54,7 @@ class TestBgManage(BaseTest):
         ctx = type("Ctx", (), {})()
         ctx.deploy_plan = EnvgeneDeployPlan(entities=[
             DeployPlanEntity(version="some-app:1.0", deployPostfix="origin-app", namespace="bgd-env-origin-app"),
+            DeployPlanEntity(version="stale-app:0.9", deployPostfix="peer-app", namespace="bgd-env-peer-app"),
         ])
 
         bg_manage.run_warmup(ctx)
@@ -76,3 +77,9 @@ class TestBgManage(BaseTest):
         assert [e.deploy_postfix for e in ctx.deploy_plan_delta.entities] == ["origin-app"]
         assert ctx.deploy_plan_delta.dp_path == EnvgeneDeployPlan.delta_path()
         assert EnvgeneDeployPlan.delta_path().is_file()
+
+        full_ids = {(e.version, e.namespace) for e in ctx.deploy_plan.entities}
+        assert full_ids == {("some-app:1.0", "bgd-env-origin-app"), ("some-app:1.0", "bgd-env-peer-app")}, \
+            "stale candidate entry must be replaced, not duplicated"
+        assert ctx.deploy_plan.dp_path == EnvgeneDeployPlan.path()
+        assert EnvgeneDeployPlan.path().is_file()
