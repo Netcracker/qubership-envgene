@@ -43,6 +43,7 @@ MAVEN_REPO_DEV_NAME: mvn.group
 MAVEN_REPO_NAME: mvn.group
 MAVEN_REPO_STAGING_NAME: mvn.group
 MAVEN_REPO_URL: https://artifactory.qubership.org
+ORIGIN_NAMESPACE: pl-01-pg
 MONITORING_ENABLED: 'true'
 NAMESPACE: pl-01-pg
 OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
@@ -134,6 +135,7 @@ global: &id003
   MAVEN_REPO_NAME: mvn.group
   MAVEN_REPO_STAGING_NAME: mvn.group
   MAVEN_REPO_URL: https://artifactory.qubership.org
+  ORIGIN_NAMESPACE: pl-01-pg
   MONITORING_ENABLED: 'true'
   NAMESPACE: pl-01-pg
   OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
