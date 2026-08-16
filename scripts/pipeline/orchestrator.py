@@ -10,7 +10,8 @@ from os import getenv
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled
+from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
+    apply_no_sd_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.change_bg_state import run_change_bg_state
@@ -264,10 +265,12 @@ class GenerateEffectiveSetStep(PipelineStep):
         decrypt_all_cred_files_for_env()
         validate_creds()
         validate_parameters()
+        if not ctx.is_gitlab_deploy():
+            apply_no_sd_mode(ctx)
         sboms_retention_policy()
         get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
         if get_sboms.modules:
-            get_sboms.run()
+            get_sboms.run(ctx.resolve_source_dp())
         if ctx.is_gitlab_deploy():
             run_gitlab_deploy_effective_set(ctx)
         else:

@@ -129,6 +129,16 @@ class PipelineParametersHandler(BaseModel):
     def is_deploy_or_clean(self) -> bool:
         return OperationType(self.params.get('OPERATION_TYPE')) in (OperationType.DEPLOY, OperationType.CLEAN)
 
+    # temporary, for get_sboms only - drop once sbom generation moves into effective_set_entrypoint.py
+    def resolve_source_dp(self) -> EnvgeneDeployPlan | None:
+        if self.is_gitlab_deploy():
+            return None if self.is_clean() else self.deploy_plan_delta
+        if self.es_generation_mode == GenerationMode.FULL:
+            return self.deploy_plan
+        if self.partial_merge_mode == PartialMergeMode.FORWARD:
+            return self.deploy_plan_delta
+        return None
+
     def log_pipeline_params(self) -> None:
         params = {**self.internal_params, **copy.deepcopy(self.params)}
         if params.get("CRED_ROTATION_PAYLOAD"):

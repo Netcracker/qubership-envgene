@@ -8,7 +8,7 @@ from pathlib import Path
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ES_DIR_NAME, ES_MAPPING_FILE, ESGenerationContext, GenerationMode, \
-    PartialMergeMode, apply_no_sd_mode
+    PartialMergeMode
 from envgenehelper.file_helper import delete_dir, delete_dir_if_exists, deleteFileIfExists
 from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME
@@ -33,7 +33,6 @@ def run_gitlab_deploy_effective_set(ctx):
 def run_legacy_sd_effective_set(ctx):
     full_env_name = getenv("FULL_ENV_NAME")
     effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
-    apply_no_sd_mode(ctx)
 
     if ctx.es_generation_mode == GenerationMode.FULL:
         _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan)
