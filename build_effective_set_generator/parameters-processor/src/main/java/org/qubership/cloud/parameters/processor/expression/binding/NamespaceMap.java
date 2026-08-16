@@ -98,21 +98,14 @@ public class NamespaceMap extends DynamicMap {
 
                 CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
 
-
                 if (bgDomainEntityDTO != null) {
 
                     BgDomainEntityDTO.NamespaceDTO origin = bgDomainEntityDTO.getOriginNamespace();
                     BgDomainEntityDTO.NamespaceDTO peer = bgDomainEntityDTO.getPeerNamespace();
                     BgDomainEntityDTO.NamespaceDTO controller = bgDomainEntityDTO.getControllerNamespace();
 
-                    if (origin == null || peer == null || controller == null) {
-                        throw new NotFoundException("Origin, peer, and controller namespaces must all be present");
-                    }
-
                     //Primary Namespace & Secondary Namespace
-                    if (origin.getName().equalsIgnoreCase(originalNamespace)
-                            || peer.getName().equalsIgnoreCase(originalNamespace)
-                            || controller.getName().equalsIgnoreCase(originalNamespace)) {
+                    if (isNamespacePartOfBgDomain(originalNamespace, bgDomainEntityDTO)) {
                         map.put(ORIGIN_NAMESPACE, origin.getName());
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
@@ -156,7 +149,7 @@ public class NamespaceMap extends DynamicMap {
                     map.put(ORIGIN_NAMESPACE, originalNamespace);
                 }
 
-                if (isCurrentNamespaceSatellite(compositeStructureDTO, bgDomainEntityDTO, originalNamespace)) {
+                if (isNamespacePartOfSatellites(originalNamespace, compositeStructureDTO, bgDomainEntityDTO)) {
                     setBaselineVars(map, compositeStructureDTO.getBaseline(), bgDomainEntityDTO);
                 }
 
@@ -164,35 +157,28 @@ public class NamespaceMap extends DynamicMap {
                 map.putIfAbsent(GATEWAY_URL, "http://internal-gateway-service:8080");
                 map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname));
 
-                String gatewayNamespace = "";
-                String idpUrlNamespace = "";
+                String namespaceGatewayUrl = "";
+                String namespaceIdpUrl = "";
 
-                if (bgDomainEntityDTO != null) {
-                    if (bgDomainEntityDTO.getType().equalsIgnoreCase(BG_DOMAIN)) {
-                        gatewayNamespace = bgDomainEntityDTO.getOriginNamespace().getName();
-                        idpUrlNamespace = bgDomainEntityDTO.getName();
+                if (isNamespacePartOfBgDomain(originalNamespace, bgDomainEntityDTO)) {
+                    if (isNamespacePartOfComposite(originalNamespace, compositeStructureDTO, bgDomainEntityDTO)) {
+                        namespaceGatewayUrl = bgDomainEntityDTO.getOriginNamespace().getName();
+                        namespaceIdpUrl = getBaselineNamespace(compositeStructureDTO, bgDomainEntityDTO);
                     } else {
-                        String originNamespaceName = bgDomainEntityDTO.getOriginNamespace().getName();
-                        gatewayNamespace = originNamespaceName;
-                        idpUrlNamespace = originNamespaceName;
+                        namespaceGatewayUrl = bgDomainEntityDTO.getOriginNamespace().getName();
+                        namespaceIdpUrl = namespaceGatewayUrl;
                     }
-                } else if (compositeStructureDTO != null) {
-                    CompositeEntityDTO compositeEntityBase = compositeStructureDTO.getBaseline();
-                    String namespaceFromBaseline = compositeEntityBase.getName();
-                    gatewayNamespace = originalNamespace;
-                    idpUrlNamespace = originalNamespace;
-                    if(!originalNamespace.equalsIgnoreCase(compositeEntityBase.getName())){
-                        gatewayNamespace = originalNamespace;
-                        idpUrlNamespace = namespaceFromBaseline;
-                    }
+                } else if (isNamespacePartOfComposite(originalNamespace, compositeStructureDTO, bgDomainEntityDTO)) {
+                    namespaceGatewayUrl = originalNamespace;
+                    namespaceIdpUrl = getBaselineNamespace(compositeStructureDTO, bgDomainEntityDTO);
                 } else {
-                    gatewayNamespace = originalNamespace;
-                    idpUrlNamespace = originalNamespace;
+                    namespaceGatewayUrl = originalNamespace;
+                    namespaceIdpUrl = originalNamespace;
                 }
 
                 // Deployer parameters
-                addGatewayIdentityUrls(config.getCustomParameters(), map, false, protocol.toLowerCase(), customHost, gatewayNamespace, idpUrlNamespace);
-                addGatewayIdentityUrls(config.getCustomParameters(), map, true, protocol.toLowerCase(), cloudHostname, gatewayNamespace, idpUrlNamespace);
+                addGatewayIdentityUrls(config.getCustomParameters(), map, false, protocol.toLowerCase(), customHost, namespaceGatewayUrl, namespaceIdpUrl);
+                addGatewayIdentityUrls(config.getCustomParameters(), map, true, protocol.toLowerCase(), cloudHostname, namespaceGatewayUrl, namespaceIdpUrl);
 //                map.putIfAbsent(SSL_SECRET, "defaultsslcertificate"); setting this value after being validated finally
                 map.putIfAbsent(BUILD_TAG_NEW, "keycloak-database");
                 if (binding.getDeployerInputs() != null) {
@@ -268,23 +254,64 @@ public class NamespaceMap extends DynamicMap {
         map.putIfAbsent(identityProviderUrl, defaultIdpUrl);
     }
 
-    private boolean isCurrentNamespaceSatellite(CompositeStructureDTO compositeStructureDTO,
-                                                BgDomainEntityDTO bgDomainEntityDTO, String currentNamespace) {
+    private boolean isNamespacePartOfSatellites(String namespace, CompositeStructureDTO compositeStructureDTO,
+                                                BgDomainEntityDTO bgDomainEntityDTO) {
         if (compositeStructureDTO == null || compositeStructureDTO.getSatellites().isEmpty()) {
             return false;
         }
         return compositeStructureDTO.getSatellites().stream().anyMatch(satellite -> {
             if (NAMESPACE.equalsIgnoreCase(satellite.getType())) {
-                return currentNamespace.equalsIgnoreCase(satellite.getName());
+                return namespace.equalsIgnoreCase(satellite.getName());
             }
-
             return BG_DOMAIN.equalsIgnoreCase(satellite.getType())
                     && bgDomainEntityDTO != null
                     && satellite.getName().equalsIgnoreCase(bgDomainEntityDTO.getName())
-                    && (currentNamespace.equalsIgnoreCase(bgDomainEntityDTO.getOriginNamespace().getName())
-                    || currentNamespace.equalsIgnoreCase(bgDomainEntityDTO.getPeerNamespace().getName())
-                    || currentNamespace.equalsIgnoreCase(bgDomainEntityDTO.getControllerNamespace().getName()));
+                    && isNamespacePartOfBgDomain(namespace, bgDomainEntityDTO);
         });
+    }
+
+    private boolean isNamespacePartOfBgDomain(String namespace, BgDomainEntityDTO bgDomain) {
+        if (bgDomain == null || namespace == null) {
+            return false;
+        }
+        BgDomainEntityDTO.NamespaceDTO origin = bgDomain.getOriginNamespace();
+        BgDomainEntityDTO.NamespaceDTO peer = bgDomain.getPeerNamespace();
+        BgDomainEntityDTO.NamespaceDTO controller = bgDomain.getControllerNamespace();
+        if (origin == null || peer == null || controller == null) {
+            throw new NotFoundException("Origin, peer, and controller namespaces must all be present");
+        }
+        return namespace.equalsIgnoreCase(origin.getName())
+                || namespace.equalsIgnoreCase(peer.getName())
+                || namespace.equalsIgnoreCase(controller.getName());
+    }
+
+    private boolean isNamespacePartOfComposite(String namespace, CompositeStructureDTO compositeStructureDTO,
+                                               BgDomainEntityDTO bgDomainEntityDTO) {
+        if (namespace == null || compositeStructureDTO == null || bgDomainEntityDTO == null) {
+            return false;
+        }
+        CompositeEntityDTO baseline = compositeStructureDTO.getBaseline();
+        if (baseline != null) {
+            if (NAMESPACE.equalsIgnoreCase(baseline.getType()) && namespace.equalsIgnoreCase(baseline.getName())) {
+                return true;
+            }
+            if (BG_DOMAIN.equalsIgnoreCase(baseline.getType()) && bgDomainEntityDTO != null
+                    && baseline.getName().equalsIgnoreCase(bgDomainEntityDTO.getName())) {
+                return isNamespacePartOfBgDomain(namespace, bgDomainEntityDTO);
+            }
+        }
+        return isNamespacePartOfSatellites(namespace, compositeStructureDTO, bgDomainEntityDTO);
+    }
+
+    private String getBaselineNamespace(CompositeStructureDTO compositeStructureDTO, BgDomainEntityDTO bgDomainEntityDTO) {
+        CompositeEntityDTO baseline = compositeStructureDTO.getBaseline();
+        if (NAMESPACE.equalsIgnoreCase(baseline.getType())) {
+            return baseline.getName();
+        }
+        if (BG_DOMAIN.equalsIgnoreCase(baseline.getType()) && bgDomainEntityDTO != null && bgDomainEntityDTO.getOriginNamespace() != null) {
+            return bgDomainEntityDTO.getOriginNamespace().getName();
+        }
+        return null;
     }
 
 }
