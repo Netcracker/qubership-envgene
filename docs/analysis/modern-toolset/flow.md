@@ -5,7 +5,7 @@
   - [AI](#ai)
   - [Data exchange Rules](#data-exchange-rules)
   - [Defaults](#defaults)
-  - [DD and zip layout](#dd-and-zip-layout)
+  - [DD and ZIP layout](#dd-and-zip-layout)
   - [Deploy plan](#deploy-plan)
     - [Merge algorithm](#merge-algorithm)
     - [Removal on clean](#removal-on-clean)
@@ -113,7 +113,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 3. `PIPELINE_TYPE: LEGACY`
 4. `DCL_GIT_BRANCH: master`
 
-## DD and zip layout
+## DD and ZIP layout
 
 `dd_downloading` stores artifacts at `APP_ARTIFACTS_DIR`:
 
@@ -354,7 +354,7 @@ BGState:
 
 **Опция 1:**
 
-Качать DD всегда, zip по отсутствию SBOM (сейчас качается DD + zip по отсутствию SBOM)
+Качать DD всегда, ZIP по отсутствию SBOM (сейчас качается DD + ZIP по отсутствию SBOM)
 
 (-) DD качается зря в ряде кейсов
 
@@ -435,7 +435,7 @@ Triggers:
 
 Functions:
 
-1. Функция которая делает что то 
+1. Функция которая делает что то
     - input:
       - `integration.yaml`
       - `credentials.yaml`
@@ -868,13 +868,13 @@ Functions:
       - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.13); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
-      - DD and zip at `${APP_ARTIFACTS_DIR}`, sboms
+      - DD and ZIP at `${APP_ARTIFACTS_DIR}`, sboms
     - actions:
       - resolve DD per app with appreg defs
-      - download DD+zip, unzip
-      - generate SBOM from local DD + zip
-    - AI[techDebt-PERF]: оптимизировать скачивание DD/zip + генерацию sbom. https://docs.gitlab.com/ci/caching/
-      - (??) не скачивать zip для `generate_argocd_repo`
+      - download DD+ZIP, unzip
+      - generate SBOM from local DD + ZIP
+    - AI[techDebt-PERF]: оптимизировать скачивание DD/ZIP + генерацию sbom. <https://docs.gitlab.com/ci/caching/>
+      - (??) не скачивать ZIP для `generate_argocd_repo`
       - (??) кэшировать ДД.json по аналогии с sbom
 4. `effective_set_entrypoint`
     - input:
@@ -973,9 +973,9 @@ Functions:
       - params.rootdir -> x
       - path filter
     - output:
-      - instance repo commit
+      - instance repository commit
     - actions:
-      - push effective set and appsets to the deploy target repo
+      - push effective set and appsets to the deploy target repository
     - AI[phase3]: move to GitHub
     - AI[phase3]: unify with `git_commit`
 

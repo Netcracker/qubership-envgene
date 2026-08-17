@@ -25,7 +25,7 @@ The CLI is published on PyPI as `qubership-external-cred-provision`. The install
 pip install qubership-external-cred-provision
 ```
 
-Package source and user readme: [/python/external-cred-provision/](/python/external-cred-provision/).
+Package and user readme: [qubership-external-cred-provision on PyPI](https://pypi.org/project/qubership-external-cred-provision/).
 
 For how EnvGene generates the context YAML and invokes the CLI in CI, see
 [External Credentials Management](/docs/features/external-creds.md#credential-provisioning).
