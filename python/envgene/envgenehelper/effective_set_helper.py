@@ -1,5 +1,6 @@
 from enum import Enum
 from os import getenv
+from pathlib import Path
 
 from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType, logger, get_sd_dir, SD_FILE_NAME, \
     get_sd_dir_by_env_cluster_name, getenv_with_error
@@ -37,6 +38,15 @@ def resolve_partial_merge_mode():
         return PartialMergeMode.FORWARD
 
     raise ValueError(f"Unsupported merge mode for partial: {merge_mode}")
+
+
+def get_full_generation_sd_path() -> Path | None:
+    sd_input = bool(getenv("SD_DATA") or getenv("SD_VERSION"))
+    use_committed_sd = get_envgene_config_yaml().get("use_committed_sd", True)
+    if not sd_input and not use_committed_sd:
+        logger.info("No-SD Mode: no incoming SD and use_committed_sd=false")
+        return None
+    return get_sd_dir().joinpath(SD_FILE_NAME)
 
 
 def resolve_es_generation_mode(cluster_name, env_name):

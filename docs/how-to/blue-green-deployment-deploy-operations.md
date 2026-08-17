@@ -62,8 +62,8 @@ origin and peer swap the `active` and `candidate`
    - Persist it in the Environment Inventory: `envTemplate.bgNsArtifacts.origin` or
      `envTemplate.bgNsArtifacts.peer`.
    - Set the pipeline parameter
-     [`ENV_TEMPLATE_VERSION_ORIGIN`](/docs/instance-pipeline-parameters.md#env_template_version_origin)
-     or [`ENV_TEMPLATE_VERSION_PEER`](/docs/instance-pipeline-parameters.md#env_template_version_peer)
+     `ENV_TEMPLATE_VERSION_ORIGIN`
+     or `ENV_TEMPLATE_VERSION_PEER`
      for this run. EnvGene writes the value into the matching `bgNsArtifacts` field.
 
    When neither is set, the namespace renders from the common `envTemplate.artifact`.
@@ -145,19 +145,19 @@ be selected by exclusion: `! @peer,@origin,@controller`.
 
 ## Pipeline parameters by deploy operation
 
-| Parameter                                                                                          | Used for                                                        |
-|----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)                                     | Target environment, `<cluster-name>/<environment-name>`         |
-| [`ENV_BUILDER`](/docs/instance-pipeline-parameters.md#env_builder)                                 | Enable Environment Instance generation                          |
-| [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter)                         | Limit which namespaces are regenerated                          |
-| [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version)               | Override `envTemplate.artifact` for this run                    |
-| [`ENV_TEMPLATE_VERSION_ORIGIN`](/docs/instance-pipeline-parameters.md#env_template_version_origin) | Override `envTemplate.bgNsArtifacts.origin`                     |
-| [`ENV_TEMPLATE_VERSION_PEER`](/docs/instance-pipeline-parameters.md#env_template_version_peer)     | Override `envTemplate.bgNsArtifacts.peer`                       |
-| [`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set)           | Produce the Effective Set                                       |
-| [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import)                                 | Export the Environment Instance to a CMDB                       |
-| [`BG_MANAGE`](/docs/instance-pipeline-parameters.md#bg_manage)                                     | Run BG lifecycle job (not used for ordinary deploy-only runs)   |
-| [`BG_STATE`](/docs/instance-pipeline-parameters.md#bg_state)                                       | Target BG states for `bg_manage`                                |
-| [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)               | Carrier for parameters without dedicated GitHub workflow inputs |
+| Parameter                                                                                | Used for                                                        |
+|------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)                           | Target environment, `<cluster-name>/<environment-name>`         |
+| [`ENV_BUILDER`](/docs/instance-pipeline-parameters.md#env_builder)                       | Enable Environment Instance generation                          |
+| `NS_BUILD_FILTER`                                                                        | Limit which namespaces are regenerated                          |
+| [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version)     | Override `envTemplate.artifact` for this run                    |
+| `ENV_TEMPLATE_VERSION_ORIGIN`                                                            | Override `envTemplate.bgNsArtifacts.origin`                     |
+| `ENV_TEMPLATE_VERSION_PEER`                                                              | Override `envTemplate.bgNsArtifacts.peer`                       |
+| [`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set) | Produce the Effective Set                                       |
+| [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import)                       | Export the Environment Instance to a CMDB                       |
+| `BG_MANAGE`                                                                              | Run BG lifecycle job (not used for ordinary deploy-only runs)   |
+| `BG_STATE`                                                                               | Target BG states for `bg_manage`                                |
+| [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)     | Carrier for parameters without dedicated GitHub workflow inputs |
 
 For BG lifecycle operations (warmup, promote, commit), see
 [Blue-Green Deployment Use Cases](/docs/use-cases/blue-green-deployment.md).

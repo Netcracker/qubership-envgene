@@ -70,3 +70,6 @@ form sets the folder to request from that single repository:
 - **Unique snapshot version.** EnvGene tries both folders, each requested directly: `<base>-SNAPSHOT` (the
   `-<timestamp>-<buildNumber>` suffix replaced with `-SNAPSHOT`) and `<version>`.
 - **Release version.** The folder is `<version>`, requested directly.
+
+For step-by-step instructions on configuring AWS CodeArtifact and GCP Artifact Registry, see
+[Configure cloud artifact registries](/docs/how-to/configure-cloud-artifact-registries.md).

@@ -123,8 +123,8 @@ The criteria for running the job and its order relative to other jobs are descri
 ## BG-related Instance pipeline parameters
 
 - [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)
-- [`BG_MANAGE`](/docs/instance-pipeline-parameters.md#bg_manage)
-- [`BG_STATE`](/docs/instance-pipeline-parameters.md#bg_state)
+- `BG_MANAGE`
+- `BG_STATE`
 - [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)
 
 The parameter set differs between the GitLab and GitHub pipelines.
