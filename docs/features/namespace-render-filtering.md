@@ -1,82 +1,115 @@
-# Namespace Render Filter
+# Namespace render filtering
+
+- [Namespace render filtering](#namespace-render-filtering)
+  - [Description](#description)
+  - [Flow](#flow)
+  - [Behaviour](#behaviour)
+  - [Role of `BG_NS_TARGET`](#role-of-bg_ns_target)
+  - [Examples](#examples)
+    - [One ordinary Namespace](#one-ordinary-namespace)
+    - [Several applications](#several-applications)
+    - [Template Namespaces outside the SD](#template-namespaces-outside-the-sd)
+    - [BG Domain origin or peer](#bg-domain-origin-or-peer)
+    - [No Solution Descriptor](#no-solution-descriptor)
+  - [Error handling](#error-handling)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
-Namespace render filter feature lets select which Environment [Namespaces](/docs/envgene-objects.md#namespace) will be rendered. It does not affect rendering of other objects like cloud or tenant.
+When a pipeline run supplies a [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor)
+(SD), EnvGene limits which Environment [Namespaces](/docs/envgene-objects.md#namespace) `env_build`
+re-renders. Cloud, Tenant, and other non-Namespace objects are still rendered.
 
-This feature uses the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#parameters) Instance pipeline parameter. This parameter is used during the Environment Instance generation in the `env_build` job.
+Selection is automatic. EnvGene does not accept a manual Namespace render filter parameter.
 
-It allows to generate or update only specific Namespaces without touching the others. This is useful, for example, in Blue-Green deployment scenarios.
+The selection answers which Namespaces `env_build` may rewrite. Resolution of SD
+[`deployPostfix`](/docs/glossary.md#deploy-postfix) values to Namespace `name` values belongs to
+[Namespace map](/docs/tech/namespace-map.md).
 
-## Syntax
+## Flow
 
-You can set the value of `NS_BUILD_FILTER` in two ways:
-
-### BG Domain role aliases
-
-You can use BG Domain role aliases as namespace selectors:
-
-- `@controller` - controller namespace
-- `@origin` - origin namespace  
-- `@peer` - peer namespace
-
-EnvGene resolves these aliases using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
-
-### Direct namespace names
-
-You can specify the namespace name directly, as defined in the `name` attribute of the Namespace object:
-
-- `env-name-api` - full namespace name
-
-### Operators
-
-The following operators are available:
-
-- `!` - exclusion operator. When used at the beginning, it excludes the specified namespaces from processing. **Important**: The `!` operator applies to the entire expression, not to individual namespaces within a comma-separated list.
-- `,` - multiple selection operator. Separates multiple namespace selectors
-
-## Usage examples
-
-### Update all except the peer NS
-
-```yaml
-NS_BUILD_FILTER: "! @peer"
-# or
-NS_BUILD_FILTER: "! env-name-peer"
+```text
+Solution Descriptor
+    → Namespace map
+    → list of selected Namespace.name values
+    → env_build
+    → render only the selected Namespaces
 ```
 
-### Update only the peer NS
+1. The run supplies an SD (applications and their `deployPostfix` values).
+2. `compute_namespace_map` builds [`namespace-map.yml`](/docs/envgene-objects.md#namespace-map) and
+   resolves each relevant `deployPostfix` to a Namespace `name`. For a
+   [BG Domain](/docs/envgene-objects.md#bg-domain),
+   [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) selects origin or peer at
+   map-build time.
+3. EnvGene passes the resulting list of Namespace `name` values into `env_build`.
+4. `env_build` re-renders only those Namespaces. It does not re-derive `deployPostfix` →
+   Namespace `name`, and it does not convert `BG_NS_TARGET` into a render filter expression.
+
+## Behaviour
+
+| Situation                                                         | Result                                              |
+|-------------------------------------------------------------------|-----------------------------------------------------|
+| SD has one ordinary Namespace                                     | Only that Namespace is rendered                     |
+| SD has several applications                                       | Every Namespace mapped from those apps is rendered  |
+| Environment Template has Namespaces not referenced by the SD      | Those Namespaces are not rendered                   |
+| BG Domain and `BG_NS_TARGET=origin`                                | Namespace map selects origin; only origin is rendered |
+| BG Domain and `BG_NS_TARGET=peer`                                  | Namespace map selects peer; only peer is rendered   |
+| No SD for the run, and the process supports that scenario         | All Namespaces are rendered (unchanged default)     |
+
+## Role of `BG_NS_TARGET`
+
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) is an input to Namespace map
+resolution when origin and peer share a `deployPostfix`. It is not a render filter and is not
+translated into `@origin` or `@peer` selectors for `env_build`.
+
+After the map contains concrete Namespace `name` values, `env_build` uses only that list.
+
+## Examples
+
+### One ordinary Namespace
+
+SD applications use `deployPostfix: core`. The map contains `core: env-1-core`. `env_build`
+renders only `env-1-core`.
+
+### Several applications
+
+SD applications use `deployPostfix` values `core` and `bss`. The map resolves both. `env_build`
+renders the corresponding Namespace `name` values.
+
+### Template Namespaces outside the SD
+
+The Environment Template also defines a Namespace that no SD application maps to. That Namespace is
+not rendered in this run.
+
+### BG Domain origin or peer
+
+Pipeline:
 
 ```yaml
-NS_BUILD_FILTER: "@peer"
-# or
-NS_BUILD_FILTER: "env-name-peer"
+BG_NS_TARGET: peer
 ```
 
-### Update all
+SD applications use `deployPostfix: bss`. The map writes `bss: env-1-bss-peer`. `env_build`
+renders only `env-1-bss-peer`. The origin Namespace is left unchanged.
 
-```yaml
-NS_BUILD_FILTER: ""
-# or
-NS_BUILD_FILTER is not provided
-```
+With `BG_NS_TARGET: origin`, the map writes `bss: env-1-bss-origin` and `env_build` renders only
+that Namespace.
 
-### Multiple selection
+### No Solution Descriptor
 
-```yaml
-# Update controller and origin
-NS_BUILD_FILTER: "@peer,@origin"
+When the run does not supply an SD and that scenario is supported, EnvGene renders all Namespaces.
 
-# Update all except peer and controller
-NS_BUILD_FILTER: "! @peer,@controller"
+## Error handling
 
-# Update specific namespaces by name
-NS_BUILD_FILTER: "env-name-api,env-name-frontend"
-```
+Unmapped or BG-ambiguous `deployPostfix` values follow the
+[Namespace map validation](/docs/tech/namespace-map.md#validation) policy. `env_build` does not add
+a separate duplicate error path for the same cases.
 
-Mixed use of aliases and names is not allowed
+## Related documentation
 
-## Error Handling
-
-- Invalid/non-existent namespace names: Pipeline fails
-- Missing BG Domain: Pipeline fails when using aliases without BG Domain
+- [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)
+- [Namespace map](/docs/tech/namespace-map.md)
+- [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor)
+- [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+- [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md)

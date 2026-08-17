@@ -25,6 +25,8 @@
       - [Composite Structure](#composite-structure)
       - [BG Domain](#bg-domain)
     - [BG State Files](#bg-state-files)
+    - [Namespace map](#namespace-map)
+    - [Deployment Plan](#deployment-plan)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -530,10 +532,14 @@ satellites: []
 
 #### BG Domain Template
 
-This is a Jinja template file used to render the standalone [BG Domain](#bg-domain) object for environments that use
-Blue-Green Domain (BGD) support and are not part of a [Composite Structure](#composite-structure). For a BG Domain
-that is part of a composite structure, the [Composite Structure Template](#composite-structure-template) renders the
-inline `bgdomain` member instead.
+This is a Jinja template file used to render the standalone [BG Domain](#bg-domain) object when the
+Environment Template descriptor has a `bg_domain` key. That explicit hook takes precedence over
+generation from a [Composite Structure](#composite-structure). Generation from the composite runs
+only when the descriptor omits `bg_domain`. See
+[BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md).
+
+For Environments that embed the domain only in the composite, authors may omit this template and
+rely on generation from the composite instead.
 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
@@ -1341,21 +1347,20 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The standalone BG Domain object is the file `bg_domain.yml` in the Environment Instance. EnvGene
+produces it from either:
 
-The standalone BG Domain object represents a BG Domain that is not part of a
-[Composite Structure](#composite-structure).
-When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
-member and no standalone BG Domain object is generated.
+- the [BG Domain Template](#bg-domain-template) when the Environment Template descriptor has a
+  `bg_domain` key, or
+- an inline `type: bgdomain` member of the [Composite Structure](#composite-structure), by
+  generation from the composite when the descriptor omits `bg_domain`
 
-The standalone BG Domain object represents a BG Domain that is not part of a
-[Composite Structure](#composite-structure).
-When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
-member and no standalone BG Domain object is generated.
+When both the descriptor key and an inline member exist, EnvGene uses the BG Domain Template and
+warns that the inline member is not used for `bg_domain.yml`. See
+[BG Domain from Composite Structure](/docs/features/bg-domain-from-composite-structure.md).
 
-The BG Domain object is generated during Environment Instance generation based on:
-
-- [BG Domain Template](#bg-domain-template)
+The BG Domain object is used for Blue-Green Domain structure, Namespace map resolution with
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target), and BGD lifecycle management.
 
 **Location:** `/environments/<cluster-name>/<environment-name>/bg_domain.yml`
 
@@ -1438,19 +1443,20 @@ bg_domain:
     url: https://controller-env-1-controller.qubership.org
 ```
 
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+**BG Domain roles:** The object names the origin, peer, and controller Namespaces used by Namespace
+map resolution and BGD lifecycle management:
 
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
+- `originNamespace` - origin Namespace
+- `peerNamespace` - peer Namespace
+- `controllerNamespace` - controller Namespace
 
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
-The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
+The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) step.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#state-storage).
 
 **Filename patterns:**
 
@@ -1480,6 +1486,49 @@ State files are located in the environment root directory:
 ├── .peer-candidate
 ```
 
+### Namespace map
+
+The namespace map is a flat YAML file that maps each
+[`deployPostfix`](/docs/glossary.md#deploy-postfix) to the Namespace `name` in the
+Environment Instance.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/Inventory/namespace-map.yml`
+
+```yaml
+# Mandatory keys are deployPostfix values from the Solution Descriptor (or equivalent application list)
+# Values are Namespace object name fields from Namespaces/<folder>/namespace.yml
+<deployPostfix>: <namespace-name>
+```
+
+**Example (BG Domain, peer selected):**
+
+```yaml
+bss: env-1-bss-peer
+core: env-1-core
+```
+
+EnvGene builds the file in `compute_namespace_map`. For Blue-Green Domains where origin and peer
+share one `deployPostfix`, resolution requires
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target).
+
+### Deployment Plan
+
+The Deployment Plan is an internal Environment Inventory file. EnvGene builds it from the
+application list (Solution Descriptor or equivalent) and the
+[Namespace map](#namespace-map). Downstream steps, including Effective Set generation, consume it.
+Operators do not author it by hand.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/Inventory/deploy-plan.yml`
+
+Each list entry extends an application deploy item with the resolved Namespace `name`:
+
+```yaml
+- wave: <wave>
+  version: <application-name>:<application-version>
+  deployPostfix: <deploy-postfix>
+  namespace: <namespace-name>
+```
+
 ### Solution Descriptor
 
 The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the [`current_env.solution_structure`](/docs/template-macros.md#current_envsolution_structure) variable.
@@ -1487,6 +1536,12 @@ The Solution Descriptor (SD) defines the application composition of a solution. 
 Other systems can use it for other reasons, for example as a deployment blueprint for external systems.
 
 Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
+
+Application entries use a [`deployPostfix`](/docs/glossary.md#deploy-postfix). In a
+[BG Domain](#bg-domain), origin and peer may share that postfix while their Namespace `name` values
+differ. The SD does not carry [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) or
+`originNamespace.name` / `peerNamespace.name`. EnvGene resolves the Namespace `name` through the
+[Namespace map](#namespace-map).
 
 For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 

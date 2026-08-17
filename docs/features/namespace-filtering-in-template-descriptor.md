@@ -81,12 +81,15 @@ If a namespace is disabled by a condition:
 - The namespace does **not** appear in the Effective Set
 
 > [!NOTE]
-> If you are using `NS_BUILD_FILTER`, keep in mind that this parameter only limits which namespaces are processed during a specific pipeline run — it does not add namespaces to the Environment structure.
+> [Namespace render filtering](/docs/features/namespace-render-filtering.md) only limits which
+> Namespaces `env_build` re-renders in a specific pipeline run. It does not add Namespaces to the
+> Environment structure.
 >
-> If a namespace is excluded during Template Descriptor rendering (Jinja condition = `false`), it will not be generated and will not appear in the Instance Repository or Effective Set.
+> If a Namespace is excluded during Template Descriptor rendering (Jinja condition = `false`), it is
+> not generated and does not appear in the Instance Repository or Effective Set.
 >
-> Therefore, such a namespace cannot be processed via `NS_BUILD_FILTER`, because it does not exist in the Environment model.
-> For details about `NS_BUILD_FILTER` syntax and usage, see: [Namespace Render Filter](../features/namespace-render-filtering.md)
+> Therefore such a Namespace cannot be selected through the Solution Descriptor and Namespace map,
+> because it does not exist in the Environment model.
 
 ## How-To
 
