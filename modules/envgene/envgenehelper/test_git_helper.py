@@ -41,6 +41,8 @@ class TestGetExcludedPaths:
             "FULL_ENV_NAME": "cluster/env",
         }, clear=False):
             assert manager._get_excluded_paths() == [
+                "environments/cluster/env/Inventory/delta-deploy-plan.yml",
+                "environments/cluster/env/Inventory/namespace-map.yml",
                 "environments/cluster/env/effective-set/deployment",
                 "environments/cluster/env/effective-set/cleanup",
                 "environments/cluster/env/effective-set/runtime",
@@ -52,13 +54,16 @@ class TestGetExcludedPaths:
             os.environ.pop("FULL_ENV_NAME", None)
             assert manager._get_excluded_paths() == []
 
-    def test_returns_empty_for_non_deploy_pipeline(self):
+    def test_returns_deploy_plan_paths_only_for_non_deploy_pipeline(self):
         manager = make_manager()
         with patch.dict(os.environ, {
             "PIPELINE_TYPE": "ENV_BUILDER",
             "FULL_ENV_NAME": "cluster/env",
         }, clear=False):
-            assert manager._get_excluded_paths() == []
+            assert manager._get_excluded_paths() == [
+                "environments/cluster/env/Inventory/delta-deploy-plan.yml",
+                "environments/cluster/env/Inventory/namespace-map.yml",
+            ]
 
 
 class TestResolveRemoteUrl:

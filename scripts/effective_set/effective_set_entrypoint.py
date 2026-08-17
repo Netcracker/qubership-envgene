@@ -27,7 +27,7 @@ def run_gitlab_deploy_effective_set(ctx):
     else:
         _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan_delta)
 
-    _cleanup_delta_artifacts()
+    deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
 
 
 def run_legacy_sd_effective_set(ctx):
@@ -41,12 +41,7 @@ def run_legacy_sd_effective_set(ctx):
     elif ctx.partial_merge_mode == PartialMergeMode.REVERSE:
         _run_reverse_merge(effective_set_dir, ctx.deploy_plan, ctx.deploy_plan_delta)
 
-    _cleanup_delta_artifacts()
-
-
-def _cleanup_delta_artifacts():
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
-    deleteFileIfExists(EnvgeneDeployPlan.delta_path())
 
 
 def _run_deploy_plan_full(effective_set_dir, full_env_name, deploy_plan: EnvgeneDeployPlan):

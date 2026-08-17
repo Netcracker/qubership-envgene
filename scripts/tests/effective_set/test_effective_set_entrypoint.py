@@ -333,7 +333,6 @@ class TestEffectiveSetEntrypointDispatch:
                              lambda *a: called.setdefault("partial", True))
         monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
                              lambda *a: called.setdefault("full", True))
-        monkeypatch.setattr(effective_set_entrypoint.EnvgeneDeployPlan, "delta_path", staticmethod(lambda: tmp_path / "delta-deploy-plan.yml"))
 
         class Ctx:
             deploy_plan = type("DP", (), {"entities": [entry(APP_1, APP_VERSION, DP_1)]})()

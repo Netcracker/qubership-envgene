@@ -121,15 +121,19 @@ class GitRepoManager:
             raise RuntimeError(f"Failed to prepare repository for '{ref}': {exc}") from exc
 
     def _get_excluded_paths(self) -> list[str]:
-        if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
-            return []
         full_env_name = os.getenv("FULL_ENV_NAME")
         if not full_env_name:
             return []
-        # effective set is pushed to a separate deploy target repo by es_pusher
-        return [f"environments/{full_env_name}/effective-set/deployment",
-                f"environments/{full_env_name}/effective-set/cleanup",
-                f"environments/{full_env_name}/effective-set/runtime"]
+
+        excluded_paths = [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
+                           f"environments/{full_env_name}/Inventory/namespace-map.yml"]
+
+        if os.getenv("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY:
+            excluded_paths += [f"environments/{full_env_name}/effective-set/deployment",
+                                f"environments/{full_env_name}/effective-set/cleanup",
+                                f"environments/{full_env_name}/effective-set/runtime"]
+
+        return excluded_paths
 
     @property
     def _repo_root(self) -> Path:
