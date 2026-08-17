@@ -1456,7 +1456,7 @@ This object, which is an empty file, is used to represent the current Blue-Green
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) step.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#state-storage).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-domain-lifecycle).
 
 **Filename patterns:**
 

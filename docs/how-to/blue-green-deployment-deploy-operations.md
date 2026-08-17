@@ -60,7 +60,7 @@ The examples below show the Effective Set flow. For the CMDB import flow, replac
 EnvGene regenerates the BG-role Namespace selected by the Namespace map from a template artifact
 version and recalculates its parameters. The other role's Namespace is untouched. Either Namespace
 can be the deploy target: origin and peer swap the `active` and `candidate`
-[BG states](/docs/features/blue-green-deployment.md#state-storage) from release to release.
+[BG states](/docs/features/blue-green-deployment.md#bg-domain-lifecycle) from release to release.
 
 1. Choose the template artifact version that renders the namespace, one of:
 

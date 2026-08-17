@@ -34,7 +34,7 @@ This document covers use cases for [Calculator CLI](/docs/features/calculator-cl
 
 ## deployPostfix Matching Logic
 
-This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic). The matching logic matches `deployPostfix` values from Solution Descriptor(SD) to Namespace folders in Environment Instance.
+This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deployment-plan-namespace-matching). The matching logic matches `deployPostfix` values from Solution Descriptor(SD) to Namespace folders in Environment Instance.
 
 ### UC-CC-DP-1: Exact Match
 
