@@ -29,6 +29,8 @@ def run_gitlab_deploy_effective_set(ctx):
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
 
+    _run_external_credential_provision_cli(effective_set_dir)
+
 
 def run_legacy_sd_effective_set(ctx):
     full_env_name = getenv("FULL_ENV_NAME")
