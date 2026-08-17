@@ -14,8 +14,7 @@ from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_m
     apply_no_sd_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
-from bg_manage.change_bg_state import run_change_bg_state
-from bg_manage.bg_manage import run_warmup
+from bg_manage.bg_manage import run_change_bg_state, run_warmup
 from build_env.appregdef_render import run_appregdef_render
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version

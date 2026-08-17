@@ -1,5 +1,7 @@
+import json
 import shutil
 from enum import auto, Enum
+from glob import glob
 from pathlib import Path
 
 from dpg.v1.cmd import DeploymentPlanGeneratorCommand
@@ -7,6 +9,7 @@ from dpg.v1.internal.deployment_plan.deployment_plan import DeploymentPlanCalcul
 from envgenehelper import logger, writeYamlToFile
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_namespaces, \
     NamespaceRole, getEnvDefinitionPath
+from envgenehelper.file_helper import deleteFileIfExists, writeToFile
 from envgenehelper.yaml_helper import openYaml
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from pipeline.pipeline_parameters import PipelineParametersHandler
@@ -123,3 +126,17 @@ def sync_bg_ns_artifacts(active_role: NamespaceRole, candidate_role: NamespaceRo
     logger.info(f'Syncing envTemplate.bgNsArtifacts: "{candidate_role}" := "{active_role}"')
     bg_ns_artifacts[candidate_role] = bg_ns_artifacts[active_role]
     writeYamlToFile(env_definition_path, env_definition)
+
+
+def run_change_bg_state(ctx) -> None:
+    bg_state = json.loads(ctx.params.get("BG_STATE"))["BGState"]
+    origin_state = bg_state["originNamespace"]["state"]
+    peer_state = bg_state["peerNamespace"]["state"]
+
+    env_path = get_current_env_dir_from_env_vars()
+    logger.info("Updating state files")
+    for role, state in ((NamespaceRole.ORIGIN, origin_state), (NamespaceRole.PEER, peer_state)):
+        for old in glob(str(Path(env_path, f".{role}-*"))):
+            deleteFileIfExists(old)
+        writeToFile(Path(env_path, f".{role}-{state}"), "")
+    logger.info(f"Successfully updated state files: origin={origin_state}, peer={peer_state}")
