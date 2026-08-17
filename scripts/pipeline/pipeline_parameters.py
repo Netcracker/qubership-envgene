@@ -79,6 +79,7 @@ class PipelineParametersHandler(BaseModel):
             "BG_NS_TARGET": getenv("BG_NS_TARGET", "peer"),
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
             "BGD_OPERATION": getenv("BGD_OPERATION"),
+            "BG_STATE": getenv("BG_STATE"),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
