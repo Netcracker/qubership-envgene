@@ -19,6 +19,7 @@
     - [`BGD_OPERATION`](#bgd_operation)
     - [`PIPELINE_TYPE`](#pipeline_type)
     - [`BG_NS_TARGET`](#bg_ns_target)
+    - [`BG_STATE`](#bg_state)
   - [Locations](#locations)
   - [Uniq names](#uniq-names)
     - [`generate_deployment_plan`](#generate_deployment_plan)
@@ -269,6 +270,31 @@ default: None
    1. На основе `BG_NS_TARGET` вычисляется для какого ns обновить версию темплейта `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
 2. Используется в `compute_namespace_map` для резолвинга deployPostfix пира ориджина в нс
 
+### `BG_STATE`
+
+`BG_STATE`: the declarative target Blue-Green state, a full BGState object.
+default: None
+
+Processed only when `OPERATION_TYPE: BGD`. Only `BGState.originNamespace.state` and
+`BGState.peerNamespace.state` are read. All other fields (`name`, `version`, `updateTime`,
+`controllerNamespace`) are ignored. Consumed by `change_bg_state` to set the BG state files directly,
+without validation.
+
+```yaml
+# full content, read surface is BGState.originNamespace.state and BGState.peerNamespace.state
+BGState:
+  controllerNamespace: dev-14-datahub
+  originNamespace:
+    name: dev-14-bss-origin
+    state: active
+    version: v1
+  peerNamespace:
+    name: dev-14-bss-peer
+    state: idle
+    version: null
+  updateTime: 2026-08-17T11:14:31Z
+```
+
 ## Locations
 
 ```text
@@ -358,7 +384,6 @@ default: None
 8. `BG_MANAGE`
 9. extended merge (removed)
 10. `NS_BUILD_FILTER`
-11. `BG_STATE`
 
 ## Flow
 
@@ -452,14 +477,14 @@ Functions:
 
 1. `change_bg_state`
     - input:
-      - `BGD_OPERATION`
-      - bg domain object
+      - `BG_STATE`
     - output:
       - BG state files
     - actions:
-      - derive the target state from `BGD_OPERATION` + current state files, create/update BG state files
-    - AI[bgd]: support state change based on `BGD_OPERATION`
-    - AI[bgd]: remove `BG_STATE`, `BG_MANAGE`
+      - write the origin and peer `state` of the BG state files directly from `BG_STATE`. No validation and no
+        computation from the current state or `BGD_OPERATION`
+    - AI[bgd]: implement `change_bg_state` based on `BG_STATE` without any validation
+    - AI[bgd-2]: implement validation
     - AI[bgd-2]: support fail states
     - AI[bgd-2]: support "target" state files
 
