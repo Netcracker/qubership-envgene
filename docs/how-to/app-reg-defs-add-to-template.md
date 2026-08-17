@@ -21,7 +21,7 @@ You need to add a template for each AppDef and RegDef the template repository de
 - An **AppDef** template is required for every application whose configuration is maintained in this template
   repository.
 - A **RegDef** template is required only for off-site registries that those AppDefs reference. The on-site RegDef is
-  added as a user-provided file in the instance repository (see
+  added as a definition override in the instance repository (see
   [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)).
 
 ### 2. Get base definitions from the centralized storage
@@ -43,7 +43,7 @@ If you plan to parameterize them (next step), rename to `.yml.j2` to mark them a
 - `/templates/appdefs/<application-name>.yml.j2`
 - `/templates/regdefs/<registry-name>.yml.j2`
 
-### 4. Parameterize for environment-specific values
+### 4. Parameterize for environment-specific values.
 
 The value that typically differs between instance repositories is the registry an AppDef references (the
 `registryName` field), since different deployment sites use different registries (off-site source registries vs an
@@ -80,7 +80,7 @@ The `default('off-site-registry-A')` preserves the value from the downloaded bas
 
 > [!NOTE]
 > The on-site RegDef itself is **not** added to the template repository. It is created in the instance repository as a
-> user-provided file - see
+> definition override - see
 > [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md).
 > The template repository holds only off-site RegDef templates.
 
@@ -107,7 +107,7 @@ appdefs:
     registryName: customer-onsite-registry
 ```
 
-Then create the on-site RegDef as a user-provided file at `/configuration/regdefs/customer-onsite-registry.yml` -
+Then create the on-site RegDef as a definition override at `/configuration/regdefs/customer-onsite-registry.yml` -
 see [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)
 for the procedure.
 

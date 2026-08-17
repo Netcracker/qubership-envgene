@@ -1,6 +1,5 @@
 ---
 inventory:
-  cloudPassport: cluster
   deployer: deployer
 envTemplate:
   name: external-cred-sample
