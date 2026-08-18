@@ -13,18 +13,20 @@ FULL_ENV_NAME = "bgd-cluster/bgd-env"
 FEATURE_TEST_DIR = "test_bg_manage"
 
 BG_STATE_TEMPLATE = {
-    "controllerNamespace": "bg-controller",
-    "originNamespace": {
-        "name": "bgd-env-origin-app",
-        "state": "active",
-        "version": "v5"
-    },
-    "peerNamespace": {
-        "name": "bgd-env-peer-app",
-        "state": "candidate",
-        "version": "v6"
-    },
-    "updateTime": "2023-07-07T10:00:54Z"
+    "BGState": {
+        "controllerNamespace": "bgd-env-app",
+        "originNamespace": {
+            "name": "bgd-env-origin-app",
+            "state": "active",
+            "version": "v5"
+        },
+        "peerNamespace": {
+            "name": "bgd-env-peer-app",
+            "state": "candidate",
+            "version": "v6"
+        },
+        "updateTime": "2023-07-07T10:00:54Z"
+    }
 }
 
 
@@ -83,3 +85,12 @@ class TestBgManage(BaseTest):
             "stale candidate entry must be replaced, not duplicated"
         assert ctx.deploy_plan.dp_path == EnvgeneDeployPlan.path()
         assert EnvgeneDeployPlan.path().is_file()
+
+    def test_change_bg_state_writes_state_files(self):
+        ctx = type("Ctx", (), {})()
+        ctx.params = {"BG_STATE": os.environ["BG_STATE"]}
+
+        bg_manage.run_change_bg_state(ctx)
+
+        dotfiles = {p.name for p in self.env_path.iterdir() if p.name.startswith('.') and p.is_file()}
+        assert dotfiles == {".origin-active", ".peer-candidate"}
