@@ -52,8 +52,9 @@ flowchart TB
    - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-4. **bg_manage**
-   - **Condition**: Runs if `BG_MANAGE: true`.
+4. **bg_manage** (step):
+   - **Condition**: Runs if [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) is one
+     of `BGD_INIT`, `BGD_WARMUP`, `BGD_PROMOTE`, `BGD_ROLLBACK`, or `BGD_COMMIT`.
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **env_inventory_generation**:
@@ -87,7 +88,8 @@ flowchart TB
        5. Handles template Parameter Set and Resource profiles.
        6. Handles environment-specific Parameter Set and Resource profiles.
        7. Creates Credentials including shared Credentials
-   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder).
+       8. When a Solution Descriptor is supplied for the run, re-renders only the Namespaces selected via [Namespace map](/docs/tech/namespace-map.md) and [Namespace render filtering](/docs/features/namespace-render-filtering.md). When no SD is supplied and that scenario is supported, renders all Namespaces
+   - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 9. **generate_effective_set**:
