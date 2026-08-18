@@ -35,7 +35,7 @@ For BGD, EnvGene:
 - [imports](#cmdb-import) the BG Domain object into CMDB
 
 To prepare an Environment for BGD, see
-[Migrate to Blue-Green Deployment](/docs/how-to/blue-green-deployment-migration.md). To select
+[Configure Blue-Green Deployment](/docs/how-to/blue-green-deployment-configure.md). To select
 parameters for a deploy operation, see
 [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md).
 
@@ -280,7 +280,7 @@ Environment:
 
 ## Related documentation
 
-- [Migrate to Blue-Green Deployment](/docs/how-to/blue-green-deployment-migration.md)
+- [Configure Blue-Green Deployment](/docs/how-to/blue-green-deployment-configure.md)
 - [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md)
 - [Blue-Green Deployment Use Cases](/docs/use-cases/blue-green-deployment.md)
 - [Namespace Render Filter](/docs/features/namespace-render-filtering.md)
