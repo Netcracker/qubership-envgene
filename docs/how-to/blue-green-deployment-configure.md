@@ -47,7 +47,7 @@ options. Keep the namespaces your solution already has and drop the rest.
 ## Step 2: Add the BG Domain template
 
 Create `bg_domain.yml.j2`. It declares the namespace names for the origin, peer,
-and controller roles, and the controller url and credentials. This is a standalone object authored in the
+and controller roles, and the controller URL and credentials. This is a standalone object authored in the
 template. EnvGene does not derive it from the Composite Structure.
 
 ```yaml
@@ -73,7 +73,7 @@ Required fields are documented in [BG Domain](/docs/envgene-objects.md#bg-domain
 
 Create `composite_structure.yml.j2`. It groups the namespaces into a `baseline` and `satellites`. A member
 is either a plain `namespace` or a `bgdomain`. The `bgdomain` member holds only a reference to the BG
-Domain by name. The domain namespaces and the controller url and credentials stay in `bg_domain.yml`.
+Domain by name. The domain namespaces and the controller URL and credentials stay in `bg_domain.yml`.
 
 ```yaml
 name: "{{ current_env.name }}-composite-structure"
