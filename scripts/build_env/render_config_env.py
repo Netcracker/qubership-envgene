@@ -629,7 +629,7 @@ class EnvGenerator:
             self.generate_bgd_file()
             return self.generate_namespace_files_and_map()
 
-    def _resolve_composite_member(self, member: dict) -> dict:
+    def _resolve_composite_member(self, member: dict, bgd: dict | None = None) -> dict:
         member_type = member.get("type")
 
         if member_type == "namespace":
@@ -638,15 +638,42 @@ class EnvGenerator:
             }
 
         if member_type == "bgdomain":
+            if bgd is None:
+                raise ValueError(
+                    f"BG Domain '{member.get('name')}' cannot be resolved "
+                    "because bg_domain.yml is missing or empty"
+                )
+
+            bgd_name = member.get("name")
+
+            if bgd.get("name") != bgd_name:
+                raise ValueError(
+                    f"Composite Structure references BG Domain '{bgd_name}', "
+                    f"but bg_domain.yml contains '{bgd.get('name')}'"
+                )
+
             return {
-                "originNamespace": member["originNamespace"]["name"],
-                "peerNamespace": member["peerNamespace"]["name"],
-                "controllerNamespace": member["controllerNamespace"]["name"],
+                "originNamespace": bgd["originNamespace"]["name"],
+                "peerNamespace": bgd["peerNamespace"]["name"],
+                "controllerNamespace": bgd["controllerNamespace"]["name"],
             }
 
         raise ValueError(f"Unknown composite member type: {member_type}")
 
-    def compute_composite_topology (self):
+    def _load_bg_domain(self) -> dict:
+        bgd_file = Path(self.ctx.current_env_dir) / "bg_domain.yml"
+
+        if not bgd_file.exists():
+            raise ValueError(
+                f"Composite Structure references a BG Domain, "
+                f"but BG Domain file was not generated: {bgd_file}"
+            )
+        bgd = openYaml(bgd_file)
+        if not bgd:
+            raise ValueError(f"BG Domain file is empty: {bgd_file}")
+        return bgd
+
+    def compute_composite_topology(self):
         cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
 
         if not cs_file.exists():
@@ -659,18 +686,32 @@ class EnvGenerator:
         baseline = composite.get("baseline")
         if not baseline:
             raise ValueError("Composite Structure is missing required 'baseline'")
+
+        # Load BGD only when the Composite Structure actually references one.
+        members = [baseline] + composite.get("satellites", [])
+        has_bgd = any(member.get("type") == "bgdomain" for member in members)
+
+        bgd = None
+        if has_bgd:
+            bgd = self._load_bg_domain()
+
         topology = {
-            "baseline": self._resolve_composite_member(baseline)
+            "baseline": self._resolve_composite_member(baseline, bgd)
         }
+
         satellites = [
-            self._resolve_composite_member(member)
+            self._resolve_composite_member(member, bgd)
             for member in composite.get("satellites", [])
         ]
+
         if satellites:
             topology["satellites"] = satellites
+
         self.ctx.current_env["composite_topology"] = topology
+
         logger.info(
-            f"Resolved composite_topology:\n{dump_as_yaml_format(topology)}"
+            f"Resolved composite_topology:\n"
+            f"{dump_as_yaml_format(topology)}"
         )
 
     def render_config_env(self, env_name: str, extra_env: dict):
@@ -705,9 +746,9 @@ class EnvGenerator:
             current_env_dir = f'{self.ctx.render_dir}/{self.ctx.env}'
             self.ctx.current_env_dir = current_env_dir
             self.set_env_templates()
+            self.generate_bgd_file()
             self.generate_composite_structure()
             self.compute_composite_topology ()
-            self.generate_bgd_file()
             self.generate_solution_structure()
             self.generate_namespace_files_and_map()
             self.generate_tenant_file()
