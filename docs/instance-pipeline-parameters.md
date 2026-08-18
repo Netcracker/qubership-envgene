@@ -38,6 +38,7 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
+    - [`SAVE_ARTIFACTS_STRATEGY`](#save_artifacts_strategy)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -965,6 +966,18 @@ curl -X POST \
         }
       }'
 ```
+
+### `SAVE_ARTIFACTS_STRATEGY`
+
+**Description**: Per-run override for the repository-wide `save_artifacts_strategy` policy in `/configuration/config.yml`. Controls whether the troubleshooting artifact (the run work directory) is saved. `ALWAYS` saves on every run, `NEVER` saves nothing. A troubleshooting rerun typically sets `ALWAYS`.
+
+See details in [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `ALWAYS`
 
 ## Deprecated Parameters
 

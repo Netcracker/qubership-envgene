@@ -394,6 +394,12 @@ sbom_retention:
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
   # exceeds 600 MB)
   keep_versions_per_app: integer
+# Optional. Default value - `ALWAYS`
+# Controls whether the troubleshooting artifact (the run work directory) is saved after the pipeline
+# `ALWAYS` - save on every run
+# `NEVER` - do not save, unless overridden per-run by the `SAVE_ARTIFACTS_STRATEGY` CI/CD variable
+# See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
+save_artifacts_strategy: enum [`ALWAYS`, `NEVER`]
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
 # `partial` - Partial Generation is enabled. Selected automatically when applicable, otherwise Full Generation is used
