@@ -31,11 +31,11 @@ envgene-external-context-generator [--out <path>]
 envgene-external-context-generator --plan <migration-plan.yaml> --repo <repo-root> [--out <path>]
 ```
 
-Reads the migration plan + repo and emits the CLI-context YAML that `external-cred-provision`
+Reads the migration plan + repository and emits the CLI-context YAML that `external-cred-provision`
 consumes. `envgene-migrate apply` invokes this internally; the standalone form is available for
 debug / one-off runs.
 
-Expected repo state: `envgene-migrate plan` already run (`migration-plan.yaml` present),
+Expected repository state: `envgene-migrate plan` already run (`migration-plan.yaml` present),
 Secret Store configured (`configuration/secret-stores.yml` present), source cred files still
 contain `data` (apply's Git rewrites not yet applied - so anywhere between `plan` and `apply`).
 
