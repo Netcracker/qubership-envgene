@@ -1,10 +1,10 @@
 from os import environ, getenv
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import responses
-from aioresponses import aioresponses
-from env_template.process_env_template import process_env_template
+from env_template import process_env_template as env_template_processor
 from envgenehelper.test_helpers import TestHelpers
 
 GROUP_ID = "org.qubership"
@@ -64,12 +64,6 @@ TMPL_ZIP_URL = (
 )
 
 
-@pytest.fixture
-def mock_aio_response():
-    with aioresponses() as m:
-        yield m
-
-
 metadata_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <metadata modelVersion="1.1.0">
   <groupId>{GROUP_ID}</groupId>
@@ -123,17 +117,9 @@ def set_env(name: str):
     environ["FULL_ENV_NAME"] = f"{getenv("CLUSTER_NAME")}/{getenv("ENVIRONMENT_NAME")}"
 
 
-def mock_metadata(aio_mock, url=METADATA_URL, repeat=1):
-    aio_mock.get(url, body=metadata_xml, content_type="application/xml", status=200, repeat=repeat)
-
-
-def mock_dd_exists(aio_mock=None, exists=True):
+def mock_dd_exists(exists=True):
     status = 200 if exists else 404
-
-    if aio_mock:
-        aio_mock.head(DD_URL, payload="", status=status)
-    else:
-        responses.add(responses.HEAD, DD_URL, status=status)
+    responses.add(responses.HEAD, DD_URL, status=status)
 
 
 def mock_dd_response():
@@ -176,46 +162,44 @@ class TestEnvTemplate:
         environ.pop("FULL_ENV_NAME", None)
 
     @responses.activate
-    def test_new_logic_with_dd(self, mock_aio_response):
+    def test_new_logic_with_dd(self):
         set_env("env-01")
 
-        mock_metadata(mock_aio_response)
-        mock_dd_exists(mock_aio_response, exists=True)
         mock_dd_response()
         mock_zip(STAGING_ZIP_URL)
 
-        process_env_template()
+        with patch.object(env_template_processor.artifact, 'check_artifact_async', new_callable=AsyncMock) as mock_async:
+            mock_async.return_value = (DD_URL, ("mvn.snapshot", "targetSnapshot"))
+            env_template_processor.process_env_template()
 
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
         assert responses.calls[1].request.url == STAGING_ZIP_URL
 
     @responses.activate
-    def test_new_logic_with_dd_without_mvn_repo(self, mock_aio_response):
+    def test_new_logic_with_dd_without_mvn_repo(self):
         set_env("env-01")
 
-        mock_metadata(mock_aio_response)
-        mock_dd_exists(mock_aio_response, exists=True)
         mock_dd_response_without_mvn_repo()
         mock_zip(SNAPSHOT_ZIP_URL)
 
-        process_env_template()
+        with patch.object(env_template_processor.artifact, 'check_artifact_async', new_callable=AsyncMock) as mock_async:
+            mock_async.return_value = (DD_URL, ("mvn.snapshot", "targetSnapshot"))
+            env_template_processor.process_env_template()
 
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
         assert responses.calls[1].request.url == SNAPSHOT_ZIP_URL
 
     @responses.activate
-    def test_new_logic_with_zip(self, mock_aio_response):
+    def test_new_logic_with_zip(self):
         set_env("env-01")
 
-        mock_metadata(mock_aio_response, repeat=2)
-        mock_dd_exists(mock_aio_response, exists=False)
-
-        mock_aio_response.head(ZIP_URL, payload="", status=200)
         mock_zip(ZIP_URL)
 
-        process_env_template()
+        with patch.object(env_template_processor.artifact, 'check_artifact_async', new_callable=AsyncMock) as mock_async:
+            mock_async.side_effect = [None, (ZIP_URL, ("mvn.snapshot", "targetSnapshot"))]
+            env_template_processor.process_env_template()
 
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == ZIP_URL
@@ -230,7 +214,7 @@ class TestEnvTemplate:
         responses.add(responses.GET, DD_URL, json=dd_json, status=200)
         mock_zip(TMPL_ZIP_URL)
 
-        process_env_template()
+        env_template_processor.process_env_template()
 
         called_urls = [call.request.url for call in responses.calls]
 
@@ -252,7 +236,7 @@ class TestEnvTemplate:
 
         mock_zip(tmpl_zip_url)
 
-        process_env_template()
+        env_template_processor.process_env_template()
 
         called_urls = [call.request.url for call in responses.calls]
 
