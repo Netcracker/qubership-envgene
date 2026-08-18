@@ -98,7 +98,9 @@ _XFAIL_REASONS = {
     "xfail_cli_no_context_rule": (
         "Calculator CLI does not enforce the documented rule that e2eParameters and "
         "technicalConfigurationParameters cannot cross-reference deployParameters "
-        "(doc-vs-code divergence; only deployParameters→e2eParameters/techConfig direction is caught)."
+        "(doc-vs-code divergence; caught directions: deployParameters->e2eParameters and "
+        "deployParameters->technicalConfigurationParameters; uncaught: the reverse and all "
+        "other cross-context directions)."
     ),
 }
 
@@ -106,7 +108,7 @@ _XFAIL_REASONS = {
 def pytest_bdd_apply_tag(tag, function):
     """Handle custom Gherkin tags as pytest marks."""
     if tag in _XFAIL_REASONS:
-        marker = pytest.mark.xfail(reason=_XFAIL_REASONS[tag], strict=False)
+        marker = pytest.mark.xfail(reason=_XFAIL_REASONS[tag], strict=True)
         marker(function)
         return True
     return None

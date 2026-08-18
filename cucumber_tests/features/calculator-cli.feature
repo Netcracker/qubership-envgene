@@ -12,6 +12,7 @@ Feature: Calculator CLI
     Given the workspace is initialized with test data from "e2e/uc_cc_dp_1"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+    And the effective set deployment parameters contain "NAMESPACE: core"
 
   @xfail_cli_npe
   Scenario: UC-CC-DP-2: BG Domain deployPostfix Match
@@ -59,11 +60,15 @@ Feature: Calculator CLI
     Given the workspace is initialized with test data from "e2e/uc_cc_mr_1"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+    And the effective set deployment parameters contain "api_port: 8080"
+    And the effective set deployment parameters contain "use_ssl: true"
 
   Scenario: UC-CC-MR-2: Complex Structure Resolution
     Given the workspace is initialized with test data from "e2e/uc_cc_mr_2"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+    And the effective set deployment parameters contain "api_config:"
+    And the effective set deployment parameters contain "host: db.example.com"
 
   Scenario: UC-CC-MR-3: Multi-Step Macro Chain Resolution
     Given the workspace is initialized with test data from "e2e/uc_cc_mr_3"
@@ -75,7 +80,7 @@ Feature: Calculator CLI
     Given the workspace is initialized with test data from "e2e/uc_cc_mr_4"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the effective set deployment parameters contain "ns_timeout:"
+    And the effective set deployment parameters contain "ns_timeout: 30"
 
   # ── Custom Parameters Injection (UC-CC-CP-*) ─────────────────────────────────
 
@@ -98,6 +103,8 @@ Feature: Calculator CLI
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"key\":\"val\"},\"namespaces\":{\"core\":{\"key\":\"val\"}}}"
     When the unified pipeline orchestrator runs
     Then the pipeline fails
+    And the pipeline log shows "namespaces"
+    And the pipeline log shows "deployment"
 
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
 
@@ -119,16 +126,19 @@ Feature: Calculator CLI
     Given the workspace is initialized with test data from "e2e/uc_cc_hr_1"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+    And the effective set deployment parameters contain "service_url: https://api.example.com"
 
   Scenario: UC-CC-HR-2: Namespace to Tenant Reference
     Given the workspace is initialized with test data from "e2e/uc_cc_hr_2"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+    And the effective set deployment parameters contain "organization: acme-corp"
 
   Scenario: UC-CC-HR-3: Cloud to Tenant Reference
     Given the workspace is initialized with test data from "e2e/uc_cc_hr_3"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
+    And the effective set deployment parameters contain "cloud_label: acme-corp"
 
   Scenario: UC-CC-HR-4: Cloud to Namespace Reference Error
     Given the workspace is initialized with test data from "e2e/uc_cc_hr_4"
