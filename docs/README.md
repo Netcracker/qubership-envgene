@@ -56,13 +56,13 @@
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 - [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
 - [**Configure Cloud Artifact Registries**](/docs/how-to/configure-cloud-artifact-registries.md) - Set up AWS CodeArtifact and GCP Artifact Registry for Maven artifact downloads
+- [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
 - [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
 ## Migrations
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
-- [**Migrate to Blue-Green Deployment**](/docs/how-to/blue-green-deployment-migration.md) - Convert a non-BG template and environment to BGD
 
 ## Advanced Features
 
