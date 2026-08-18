@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from envgenehelper.deploy_plan_adapter import DeployPlanEntity, GenerationType
+from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
     PartialMergeMode
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
@@ -9,7 +9,7 @@ from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 from effective_set import effective_set_entrypoint
 from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
-    _clear_uniq_for_version_dirs, effective_set_entrypoint as run_entrypoint
+    _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, run_legacy_sd_effective_set as run_entrypoint
 
 
 PARAMETERS_CONTENT = '{"param": "value"}'
@@ -27,6 +27,10 @@ def entry(app: str, version: str, deploy_postfix: str, *, generation_type=Genera
           generation_id: str = "") -> DeployPlanEntity:
     return DeployPlanEntity(version=f"{app}:{version}", deployPostfix=deploy_postfix, namespace=deploy_postfix,
                              generationType=generation_type, generationId=generation_id)
+
+
+def fake_plan(entries, dp_path=None):
+    return EnvgeneDeployPlan(entities=entries, dp_path=dp_path)
 
 
 def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str, generation_id: str = None):
@@ -51,7 +55,12 @@ def create_es_cleanup_dir(effective_set_dir: Path, deploy_postfix: str) -> None:
 
 
 def mock_cli(monkeypatch, on_run=None):
-    monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a: "fake_cmd")
+    monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a, **k: "fake_cmd")
+    monkeypatch.setattr(
+        effective_set_entrypoint.EnvgeneDeployPlan,
+        "delta_path",
+        staticmethod(lambda: Path("/tmp/delta-deploy-plan.yml")),
+    )
 
     def fake_run(cmd, check=False, shell=False):
         if on_run:
@@ -62,6 +71,25 @@ def mock_cli(monkeypatch, on_run=None):
 
 class TestRunDeployPlanPartial:
     @pytest.mark.unit
+    def test_invokes_cli_with_delta_deploy_plan(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        delta_dp = tmp_path / "Inventory" / "delta-deploy-plan.yml"
+        delta_dp.parent.mkdir(parents=True)
+        delta_dp.write_text("- version: app-1:1.0\n")
+        captured = {}
+
+        def capture_build_cli(es_dir, env_name, deploy_plan_path=None):
+            captured["deploy_plan_path"] = deploy_plan_path
+            return "fake_cmd"
+
+        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)], dp_path=delta_dp))
+
+        assert captured["deploy_plan_path"] == delta_dp
+
+    @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
         (es / ESGenerationContext.TOPOLOGY.value).mkdir(parents=True)
@@ -69,7 +97,7 @@ class TestRunDeployPlanPartial:
         create_es_app_dirs(es, DP_1, APP_1)
         mock_cli(monkeypatch)
 
-        _run_deploy_plan_partial(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
 
         assert not (es / ESGenerationContext.TOPOLOGY.value).exists()
         assert not (es / ESGenerationContext.PIPELINE.value).exists()
@@ -80,7 +108,7 @@ class TestRunDeployPlanPartial:
         create_es_app_dirs(es, DP_1, APP_1)
         mock_cli(monkeypatch)
 
-        _run_deploy_plan_partial(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
 
         assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
         assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
@@ -93,10 +121,10 @@ class TestRunDeployPlanPartial:
         create_es_cleanup_dir(es, "dp-3")
         mock_cli(monkeypatch)
 
-        _run_deploy_plan_partial(es, FULL_ENV_NAME, [
+        _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([
             entry(APP_1, APP_VERSION, DP_1),
             entry(APP_2, APP_VERSION, DP_2),
-        ])
+        ]))
 
         assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
         assert not (es / ESGenerationContext.CLEANUP.value / DP_2).exists()
@@ -110,7 +138,7 @@ class TestRunDeployPlanFull:
         create_es_app_dirs(es, DP_1, APP_1)
         mock_cli(monkeypatch)
 
-        _run_deploy_plan_full(es, FULL_ENV_NAME, [entry(APP_1, APP_VERSION, DP_1)])
+        _run_deploy_plan_full(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
 
         assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
 
@@ -120,9 +148,9 @@ class TestRunDeployPlanFull:
         create_es_app_dirs(es, DP_1, APP_1, generation_id=OLD_RUN_ID)
         mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id=RUN_ID))
 
-        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+        _run_deploy_plan_full(es, FULL_ENV_NAME, fake_plan([
             entry(APP_1, APP_VERSION, DP_1, generation_type=GenerationType.UNIQ_FOR_RUN, generation_id=RUN_ID),
-        ])
+        ]))
 
         assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / OLD_RUN_ID / "parameters.yaml").exists()
         assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / OLD_RUN_ID / "values").exists()
@@ -135,9 +163,9 @@ class TestRunDeployPlanFull:
         create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0")
         mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id="2.0"))
 
-        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+        _run_deploy_plan_full(es, FULL_ENV_NAME, fake_plan([
             entry(APP_1, "2.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
-        ])
+        ]))
 
         assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
         assert (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1 / "1.0" / "values").exists()
@@ -151,9 +179,9 @@ class TestRunDeployPlanFull:
         stale_file.write_text(PARAMETERS_CONTENT)
         mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1, generation_id="1.0"))
 
-        _run_deploy_plan_full(es, FULL_ENV_NAME, [
+        _run_deploy_plan_full(es, FULL_ENV_NAME, fake_plan([
             entry(APP_1, "1.0", DP_1, generation_type=GenerationType.UNIQ_FOR_VERSION),
-        ])
+        ]))
 
         assert not stale_file.exists()
         assert (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1 / "1.0" / "parameters.yaml").exists()
@@ -254,7 +282,7 @@ class TestRunReverseMerge:
         create_es_app_dirs(es, DP_1, APP_1)
         create_es_app_dirs(es, DP_1, APP_2)
 
-        _run_reverse_merge(es, [entry(APP_2, APP_VERSION, DP_1)], [entry(APP_1, APP_VERSION, DP_1)])
+        _run_reverse_merge(es, fake_plan([entry(APP_2, APP_VERSION, DP_1)]), fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
 
         assert not (es / ESGenerationContext.RUNTIME.value / DP_1 / APP_1).exists()
         assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1 / APP_1).exists()
@@ -267,7 +295,7 @@ class TestRunReverseMerge:
         create_es_app_dirs(es, DP_1, APP_1)
         create_es_cleanup_dir(es, DP_1)
 
-        _run_reverse_merge(es, [], [entry(APP_1, APP_VERSION, DP_1)])
+        _run_reverse_merge(es, fake_plan([]), fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
 
         assert not (es / ESGenerationContext.RUNTIME.value / DP_1).exists()
         assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1).exists()
@@ -281,7 +309,7 @@ class TestRunReverseMerge:
         runtime_mapping_path.parent.mkdir(parents=True, exist_ok=True)
         writeYamlToFile(runtime_mapping_path, {f"{DP_1}/{APP_1}": {"some": "mapping"}, "dp-3/app-3": {}})
 
-        _run_reverse_merge(es, [], [entry(APP_1, APP_VERSION, DP_1)])
+        _run_reverse_merge(es, fake_plan([]), fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
 
         mapping = openYaml(runtime_mapping_path, allow_default=True)
         assert f"{DP_1}/{APP_1}" not in mapping
@@ -294,6 +322,7 @@ class TestEffectiveSetEntrypointDispatch:
         es = tmp_path / ES_DIR_NAME
         create_es_app_dirs(es, DP_1, APP_1)
         monkeypatch.setenv("FULL_ENV_NAME", FULL_ENV_NAME)
+        monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
         monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
         monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path)
 
@@ -304,7 +333,6 @@ class TestEffectiveSetEntrypointDispatch:
                              lambda *a: called.setdefault("partial", True))
         monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
                              lambda *a: called.setdefault("full", True))
-        monkeypatch.setattr(effective_set_entrypoint.EnvgeneDeployPlan, "delta_path", staticmethod(lambda: tmp_path / "delta-deploy-plan.yml"))
 
         class Ctx:
             deploy_plan = type("DP", (), {"entities": [entry(APP_1, APP_VERSION, DP_1)]})()
@@ -318,3 +346,56 @@ class TestEffectiveSetEntrypointDispatch:
         run_entrypoint(Ctx())
 
         assert called == {"cleanup": True}
+
+
+class TestRunGitlabDeployEffectiveSet:
+    @pytest.mark.unit
+    def test_clean_invokes_cli_without_deploy_plan_path(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("FULL_ENV_NAME", FULL_ENV_NAME)
+        monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
+        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path)
+
+        captured = {}
+
+        def capture_build_cli(es_dir, env_name, dp_path=None):
+            captured["dp_path"] = dp_path
+            return "fake_cmd"
+
+        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
+                             lambda *a, **k: called.setdefault("full", True))
+
+        class Ctx:
+            def is_clean(self):
+                return True
+
+        run_gitlab_deploy_effective_set(Ctx())
+
+        assert captured["dp_path"] is None
+        assert "full" not in called
+
+    @pytest.mark.unit
+    def test_deploy_regenerates_from_delta_plan(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("FULL_ENV_NAME", FULL_ENV_NAME)
+        monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
+        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path)
+
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
+                             lambda es_dir, env_name, deploy_plan: called.setdefault("deploy_plan", deploy_plan))
+
+        delta_plan = fake_plan([entry(APP_1, APP_VERSION, DP_1)])
+
+        class Ctx:
+            deploy_plan_delta = delta_plan
+
+            def is_clean(self):
+                return False
+
+        run_gitlab_deploy_effective_set(Ctx())
+
+        assert called["deploy_plan"] is delta_plan

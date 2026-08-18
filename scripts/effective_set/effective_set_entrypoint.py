@@ -17,33 +17,46 @@ from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 from effective_set.handle_effective_set_config import handle_effective_set_config
 
 
-def effective_set_entrypoint(ctx):
+def run_gitlab_deploy_effective_set(ctx):
     full_env_name = getenv("FULL_ENV_NAME")
     effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
-    entries = ctx.deploy_plan.entities
 
-    if ctx.es_generation_mode == GenerationMode.FULL:
-        _run_deploy_plan_full(effective_set_dir, full_env_name, entries)
-    elif ctx.partial_merge_mode == PartialMergeMode.FORWARD:
-        _run_deploy_plan_partial(effective_set_dir, full_env_name, ctx.deploy_plan_delta.entities)
-    elif ctx.partial_merge_mode == PartialMergeMode.REVERSE:
-        _run_reverse_merge(effective_set_dir, entries, ctx.deploy_plan_delta.entities)
+    if ctx.is_clean():
+        cmd = _build_cli_cmd(effective_set_dir, full_env_name, dp_path=None)
+        subprocess.run(cmd, shell=True, check=True)
+    else:
+        _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan_delta)
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
-    deleteFileIfExists(EnvgeneDeployPlan.delta_path())
 
 
-def _run_deploy_plan_full(effective_set_dir, full_env_name, entries: list[DeployPlanEntity]):
+def run_legacy_sd_effective_set(ctx):
+    full_env_name = getenv("FULL_ENV_NAME")
+    effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
+
+    if ctx.es_generation_mode == GenerationMode.FULL:
+        _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan)
+    elif ctx.partial_merge_mode == PartialMergeMode.FORWARD:
+        _run_deploy_plan_partial(effective_set_dir, full_env_name, ctx.deploy_plan_delta)
+    elif ctx.partial_merge_mode == PartialMergeMode.REVERSE:
+        _run_reverse_merge(effective_set_dir, ctx.deploy_plan, ctx.deploy_plan_delta)
+
+    deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
+
+
+def _run_deploy_plan_full(effective_set_dir, full_env_name, deploy_plan: EnvgeneDeployPlan):
+    entries = deploy_plan.entities
     tmp_root, saved = _save_es_app_dirs(effective_set_dir, entries)
     delete_dir(effective_set_dir)
     _restore_saved_dirs(tmp_root, saved)
     _clear_uniq_for_version_dirs(effective_set_dir, entries)
 
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan.dp_path)
     subprocess.run(cmd, shell=True, check=True)
 
 
-def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[DeployPlanEntity]):
+def _run_deploy_plan_partial(effective_set_dir, full_env_name, deploy_plan_delta: EnvgeneDeployPlan):
+    entries = deploy_plan_delta.entities
     for ns in {e.namespace for e in entries}:
         delete_dir_if_exists(effective_set_dir / ESGenerationContext.CLEANUP.value / ns)
     for entry in entries:
@@ -60,7 +73,7 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[Dep
     runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan_delta.dp_path)
     subprocess.run(cmd, shell=True, check=True)
 
     cleanup_mapping.update(openYaml(cleanup_mapping_path, allow_default=True))
@@ -71,7 +84,9 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, entries: list[Dep
     writeYamlToFile(deployment_mapping_path, deployment_mapping)
 
 
-def _run_reverse_merge(effective_set_dir, entries: list[DeployPlanEntity], delta_entries: list[DeployPlanEntity]):
+def _run_reverse_merge(effective_set_dir, deploy_plan: EnvgeneDeployPlan, deploy_plan_delta: EnvgeneDeployPlan):
+    entries = deploy_plan.entities
+    delta_entries = deploy_plan_delta.entities
     remaining_namespaces = {e.namespace for e in entries}
     deleted_namespaces = set()
 
@@ -160,8 +175,7 @@ def _restore_saved_dirs(tmp_root, saved):
         shutil.rmtree(tmp_root, ignore_errors=True)
 
 
-def _build_cli_cmd(effective_set_dir, full_env_name):
-    dp_path = EnvgeneDeployPlan.path()
+def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):
     cmd = [
         getenv("EFFECTIVE_SET_CLI_PATH", "/module/scripts/utils/run_effective_set_cli.sh"),
         f"--env-id={full_env_name}",
@@ -169,7 +183,7 @@ def _build_cli_cmd(effective_set_dir, full_env_name):
         f"--output={effective_set_dir}",
     ]
 
-    if dp_path.is_file():
+    if dp_path is not None and dp_path.is_file():
         cmd.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
             "--sboms-path=$CI_PROJECT_DIR/sboms",

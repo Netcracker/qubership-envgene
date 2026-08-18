@@ -21,7 +21,7 @@ You need to add a template for each AppDef and RegDef the template repository de
 - An **AppDef** template is required for every application whose configuration is maintained in this template
   repository.
 - A **RegDef** template is required only for off-site registries that those AppDefs reference. The on-site RegDef is
-  added as a user-provided file in the instance repository (see
+  added as a definition override in the instance repository (see
   [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)).
 
 ### 2. Get base definitions from the centralized storage
@@ -80,18 +80,26 @@ The `default('off-site-registry-A')` preserves the value from the downloaded bas
 
 > [!NOTE]
 > The on-site RegDef itself is **not** added to the template repository. It is created in the instance repository as a
-> user-provided file - see
+> definition override - see
 > [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md).
 > The template repository holds only off-site RegDef templates.
 
-### 5. Configure override values in the instance repository
+### 5. Configure override values in the instance repository. Optional
 
-In each instance repository that consumes these templates, configure override values in
-`/configuration/appregdef_config.yaml`.
+In on-site instance repository that consumes these templates, set override values in `appregdef_config.yaml`. Place
+the file at one of two scopes:
 
-**Off-site instance** - no overrides. Defaults from templates apply (file can be absent or empty).
+- Global (all clusters and environments): `/environments/configuration/appregdef_config.yaml`
+- Cluster-wide (all environments in one cluster): `/environments/<cluster>/configuration/appregdef_config.yaml`
 
-**On-site instance** - redirect AppDefs to the on-site registry:
+A cluster-wide file takes precedence over the global file on conflicting keys. Per-environment configuration is
+not supported: all environments in a cluster share one registry. For the full scope rules, see
+[`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+**Off-site instance repositories** - no overrides. Defaults from templates apply (`appregdef_config.yaml` can be absent
+or empty).
+
+**On-site instance repositories** - redirect AppDefs to the on-site registry:
 
 ```yaml
 appdefs:
@@ -99,7 +107,7 @@ appdefs:
     registryName: customer-onsite-registry
 ```
 
-Then create the on-site RegDef as a user-provided file at `/configuration/regdefs/customer-onsite-registry.yml` -
+Then create the on-site RegDef as a definition override at `/configuration/regdefs/customer-onsite-registry.yml` -
 see [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)
 for the procedure.
 

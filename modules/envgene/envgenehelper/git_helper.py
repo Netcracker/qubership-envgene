@@ -2,8 +2,12 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
+
+import requests
 
 from envgenehelper import logger
+from envgenehelper.errors import IntegrationError
 from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
@@ -117,15 +121,19 @@ class GitRepoManager:
             raise RuntimeError(f"Failed to prepare repository for '{ref}': {exc}") from exc
 
     def _get_excluded_paths(self) -> list[str]:
-        if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
-            return []
         full_env_name = os.getenv("FULL_ENV_NAME")
         if not full_env_name:
             return []
-        # effective set is pushed to a separate deploy target repo by es_pusher
-        return [f"environments/{full_env_name}/effective-set/deployment",
-                f"environments/{full_env_name}/effective-set/cleanup",
-                f"environments/{full_env_name}/effective-set/runtime"]
+
+        excluded_paths = [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
+                           f"environments/{full_env_name}/Inventory/namespace-map.yml"]
+
+        if os.getenv("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY:
+            excluded_paths += [f"environments/{full_env_name}/effective-set/deployment",
+                                f"environments/{full_env_name}/effective-set/cleanup",
+                                f"environments/{full_env_name}/effective-set/runtime"]
+
+        return excluded_paths
 
     @property
     def _repo_root(self) -> Path:
@@ -258,18 +266,43 @@ class GitLabClient:
     def headers(self):
         return {"PRIVATE-TOKEN": self.token}
 
-    def get_pipeline_bridges(self, project_id, pipeline_id):
-        url = f"{self.api_url}/projects/{project_id}/pipelines/{pipeline_id}/bridges"
+    @staticmethod
+    def _project_url_segment(project: str | int) -> str:
+        return quote(str(project), safe="")
+
+    def get_pipeline_jobs(self, project, pipeline_id):
+        project_segment = self._project_url_segment(project)
+        url = f"{self.api_url}/projects/{project_segment}/pipelines/{pipeline_id}/jobs"
         return self.http.get_json(url, headers=self.headers)
 
-    def get_pipeline_jobs(self, project_id, pipeline_id):
-        url = f"{self.api_url}/projects/{project_id}/pipelines/{pipeline_id}/jobs"
-        return self.http.get_json(url, headers=self.headers)
-
-    def download_job_artifacts(self, project_id, job_id, dest_artifacts_path):
-        url = f"{self.api_url}/projects/{project_id}/jobs/{job_id}/artifacts"
+    def download_job_artifacts(self, project, job_id, dest_artifacts_path):
+        project_segment = self._project_url_segment(project)
+        url = f"{self.api_url}/projects/{project_segment}/jobs/{job_id}/artifacts"
         self.http.download_file(url, dest_artifacts_path, headers=self.headers)
 
-    def get_project_variables(self, project_id):
-        url = f"{self.api_url}/projects/{project_id}/variables"
+    def get_project_variables(self, project):
+        project_segment = self._project_url_segment(project)
+        url = f"{self.api_url}/projects/{project_segment}/variables"
         return self.http.get_json(url, headers=self.headers)
+
+    def trigger_pipeline(self, project_path: str, ref: str, variables: dict) -> dict:
+        project_segment = self._project_url_segment(project_path)
+        url = f"{self.api_url}/projects/{project_segment}/pipeline"
+        payload = {
+            "ref": ref,
+            "variables": [{"key": key, "value": value} for key, value in variables.items()],
+        }
+        try:
+            response = requests.post(
+                url,
+                headers=self.headers,
+                json=payload,
+                verify=self.http.verify_ssl,
+                timeout=30,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise IntegrationError(
+                f"Pipeline trigger failed for {project_path}@{ref}: {e}"
+            )

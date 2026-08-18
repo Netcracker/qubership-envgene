@@ -54,6 +54,11 @@ class TestEnvBuild(BaseTest):
         environ['ENVIRONMENT_NAME'] = env_name
         environ['CI_PROJECT_DIR'] = str(self.test_data_dir)
 
+        if version in ("bgd", "bgd-ns-artifacts"):
+            os.environ["BG_NS_TARGET"] = "origin"
+        else:
+            os.environ.pop("BG_NS_TARGET", None)
+
         render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, g_output_dir, self.test_data_dir)
         source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
         generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"

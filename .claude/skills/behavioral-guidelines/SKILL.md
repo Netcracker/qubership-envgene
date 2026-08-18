@@ -1,7 +1,6 @@
 ---
 name: behavioral-guidelines
 description: Coding principles — think before acting, keep it simple, make surgical changes, verify with clear success criteria. Biases toward caution over speed.
-when_to_use: Use when planning an implementation, reviewing code, refactoring, or writing new features in this repository.
 disable-model-invocation: false
 ---
 

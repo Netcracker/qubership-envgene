@@ -10,6 +10,7 @@
   - [Acceptance](#acceptance)
   - [Implementation notes](#implementation-notes)
 - [Issue body template](#issue-body-template)
+- [Issue type and title](#issue-type-and-title)
 - [Creating the issue](#creating-the-issue)
 
 ## Description
@@ -93,7 +94,11 @@ If no design reference exists, the work is not ready for a CR.
 ### In scope changes
 
 Required. A numbered list of changes this CR makes. Each item names what is modified or added,
-and at what level (file, schema field, job, parameter).
+and at what level (file, schema field, job, parameter). Name that level in the design's own
+terms, not in implementation internals such as a private function name, a module path, or a source
+file location. The CR hands a settled design to a developer, who locates the code. A
+code-level pointer dates the ticket and locks the solution to one implementation before the
+developer has looked at the code.
 
 Each item must include an inline link to the specific design section that describes it. Use an
 anchor link in the SHA-pinned permalink to the design doc:
@@ -135,6 +140,16 @@ Bad:
 The bad example does not let the reader judge whether the scope is sized correctly, and has no
 link to the design section that describes the change.
 
+Also avoid the opposite pitfall - naming implementation internals rather than the design's entities:
+
+Bad (code-level):
+
+> 1. Change the `get_repo_value_pointer_dict` function in `python/.../artifact.py` to branch on the
+>    version.
+
+Name the observable behavior and the entities the design defines, as the Good example above does. A
+code-level pointer pins one implementation and breaks when the code moves.
+
 ### Out of scope changes
 
 Optional. Recommended whenever the design covers more ground than the implementation slice,
@@ -166,20 +181,32 @@ Required. Observable, testable conditions that determine the CR is complete.
 
 Each condition should be:
 
-- **Observable.** Verifiable by someone external to the implementer.
+- **Observable.** Verifiable by someone external to the implementer, through an existing channel: a
+  job log, a mock registry, an emitted request, or an error message. Name the observed channel, not
+  internal state. Prefer "the artifact is requested from registry X" over "resolution uses the X copy".
+  Give fixtures distinguishing traits so the outcome is checkable, for example a distinct registry name
+  per copy so the request target reveals which copy won.
 - **Specific.** Names concrete values, files, or behaviors, not generalities like "works well".
 - **Falsifiable.** Binary yes/no, not subjective.
 - **Independent.** Verifiable without depending on other conditions where possible.
 - **Distinct from implementation.** States what is true, not how it was built.
 
-Cover both happy path and failure cases.
+Cover both happy path and failure cases. Enumerate every case that can fail independently. A
+condition is redundant only when it cannot fail independently of the others, not when it is logically
+derivable from them. Do not fold distinct failure modes, such as a missing folder versus a missing
+file, into one condition.
 
 Each condition is self-contained. State the test context (backend, fixture, mode) inline within
-the conditions that depend on it, not as a global preamble. Test context that applies to every
-condition uniformly belongs in Implementation notes.
+the conditions that depend on it, not as a global preamble. Do not link to use cases or design
+sections from inside a condition - inline the observable contract instead. Test context that applies
+to every condition uniformly belongs in Implementation notes. When a placement or run mode appears in
+a condition, treat it as setup only. The rule "do not branch the implementation on the mode" is
+implementer guidance for Implementation notes, not an acceptance condition.
 
-Use either declarative form ("X resolves to Y") or Given/When/Then. Both are valid - the
-principles above apply equally.
+Write each condition in collapsed Gherkin: `Given <fixture>, <observable outcome>`. The Given states
+the prepared state, committed fixtures, and any run or placement mode. The rest collapses Gherkin's
+When and Then into one observable-outcome clause. The declarative form ("X resolves to Y") is also
+valid for a simple condition. The principles above apply to both.
 
 Good:
 
@@ -250,12 +277,26 @@ same structure. Sections marked optional may be omitted when empty.
 <optional - branch, libraries, contacts, horizon hints>
 ````
 
+## Issue type and title
+
+The GitHub issue type and the title prefix reflect the change's nature:
+
+- **Feature** - a new capability. Title prefix `[Feat:]`.
+- **Bug** - a defect in existing behavior. Title prefix `[Bug:]`.
+- **Story** - a change that is neither a new capability nor a defect, for example a gap in an existing
+  feature. Title prefix `[Story:]`.
+
+A ticket that only creates or updates documentation is a Story with the `[Docs:]` title prefix.
+
+So a title reads `[Feat:] Support Azure single-repository resolution`, and the issue is created with
+the matching type.
+
 ## Creating the issue
 
-Use the local skill `doc-pr-to-issue`. The skill takes a documentation PR URL or a path to a
-feature doc, parses the content, and produces a draft issue body that follows the template
-above. Review the draft, fill out of scope changes and implementation notes where the skill
-cannot derive them, and post.
+Use the skill `design-to-cr`. It turns a settled design into a CR issue that follows the
+template above. The design can come from a doc PR, a feature doc, or the working context. The skill
+drafts the body, you review and fill any sections it cannot derive, and it files the issue on your
+go-ahead.
 
-The skill lives at `~/.claude/skills/doc-pr-to-issue/` for now. Team publication is a separate
-decision.
+The skill lives in the repository at `.claude/skills/design-to-cr/`, so Claude Code picks it up
+automatically when working in this repository.

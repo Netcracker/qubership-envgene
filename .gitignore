@@ -10,3 +10,7 @@ __pycache__
 .DS_Store
 pyrightconfig.json
 junit*
+
+# Claude Code local (per-user) files - the shared skill under .claude/skills/ is committed
+.claude/settings.local.json
+.claude/*.lock

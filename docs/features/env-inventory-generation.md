@@ -127,7 +127,9 @@ The exact target folder depends on the object type and the `place` value.
 
 ##### Processing Model
 
-All operations specified in `ENV_INVENTORY_CONTENT` are processed atomically: either all requested changes are applied successfully, or none of them are applied. If any validation fails or any operation encounters an error, the entire transaction is rolled back and no files are modified.
+All operations specified in `ENV_INVENTORY_CONTENT` are validated before any file is modified. If validation
+fails, the job fails and no files are changed. If an operation fails during processing, the job fails and the
+pipeline stops before the `git_commit` step, so no changes are committed to the Instance repository.
 
 The order in which different object types are processed is not guaranteed and may vary. Objects within the same type (e.g., multiple items in `paramSets` array) are also processed in an arbitrary order.
 
@@ -137,7 +139,8 @@ Before processing any files, the system performs the following validations:
 
 **Parameter exclusivity validation:**
 
-If both `ENV_INVENTORY_CONTENT` and any of `ENV_INVENTORY_INIT` or `ENV_SPECIFIC_PARAMS` are provided, validation fails
+If both `ENV_INVENTORY_CONTENT` and any of `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` or `ENV_TEMPLATE_NAME`
+are provided, validation fails
 
 **JSON schema validation:**
 
@@ -476,7 +479,7 @@ prod-integration-creds:
 **Result**: a Resource Profile Override file is generated from resourceProfiles[].content and stored based on resourceProfiles[].place.
 
 ```yaml
-# /environments/<cluster-name>/Inventory/resource_profiles/cloud-specific-profile.yml
+# /environments/<cluster-name>/resource_profiles/cloud-specific-profile.yml
 
 name: "cloud-specific-profile"
 baseline: "dev"

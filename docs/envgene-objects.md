@@ -496,9 +496,44 @@ satellites:
     type: "namespace"
 ```
 
+The `baseline` and each `satellites` member render either a namespace or an inline BG Domain. The following template
+renders a namespace baseline with a BG Domain satellite.
+
+```yaml
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-core"
+  type: "namespace"
+satellites:
+  - type: bgdomain
+    name: "{{ current_env.name }}-bss-bg-domain"
+    originNamespace:
+      type: namespace
+      name: "{{ current_env.name }}-bss-origin"
+    peerNamespace:
+      type: namespace
+      name: "{{ current_env.name }}-bss-peer"
+    controllerNamespace:
+      type: namespace
+      name: "{{ current_env.name }}-bss-controller"
+```
+
+For a baseline-only composite, render an empty `satellites` list.
+
+```yaml
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-core"
+  type: "namespace"
+satellites: []
+```
+
 #### BG Domain Template
 
-This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
+This is a Jinja template file used to render the standalone [BG Domain](#bg-domain) object for environments that use
+Blue-Green Domain (BGD) support and are not part of a [Composite Structure](#composite-structure). For a BG Domain
+that is part of a composite structure, the [Composite Structure Template](#composite-structure-template) renders the
+inline `bgdomain` member instead.
 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
@@ -1224,9 +1259,22 @@ The `baseline` can be either:
 - A namespace (`type: namespace`) that serves as the core infrastructure
 - A BG Domain (`type: bgdomain`) that includes `originNamespace`, `peerNamespace`, and `controllerNamespace` for Blue-Green deployment scenarios
 
-The `satellites` array defines one or more namespaces that depend on the baseline. The Composite Structure is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTROLLER`) to automatically resolve baseline references for satellite namespaces.
+Each `satellites` member depends on the baseline and is either:
 
-The Composite Structure object is generated during Environment Instance generation from the [Composite Structure Template](#composite-structure-template) specified in the Environment Template descriptor.
+- A namespace (`type: namespace`)
+- A BG Domain (`type: bgdomain`) that includes `originNamespace`, `peerNamespace`, and `controllerNamespace` for
+  Blue-Green deployment scenarios
+
+The `satellites` array holds zero or more members. It is empty for a baseline-only composite. The Composite Structure
+is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTROLLER`) to resolve baseline references
+for satellite namespaces.
+
+A BG Domain that is part of a composite structure is embedded inline as a member with `type: bgdomain`, in the
+`baseline` or in a `satellites` member. In this case the composite structure carries the domain and no standalone
+[BG Domain](#bg-domain) object is used. A BG Domain that is not part of a composite structure is represented by a
+standalone [BG Domain](#bg-domain) object.
+The Composite Structure object is generated during Environment Instance generation from the [Composite Structure
+Template](#composite-structure-template) specified in the Environment Template descriptor.
 
 It has the following structure:
 
@@ -1260,13 +1308,25 @@ satellites:
     type: "namespace"
 ```
 
-**BD Deployment Example:**
+**Baseline-only Example:**
 
 ```yaml
-composite_structure:
-  name: "clusterA-env-1-composite-structure"
-  baseline:
-    type: bgdomain
+name: "clusterA-env-1-composite-structure"
+baseline:
+  name: "env-1-core"
+  type: "namespace"
+satellites: []
+```
+
+**Namespace baseline with BG Domain satellite Example:**
+
+```yaml
+name: "clusterA-env-1-composite-structure"
+baseline:
+  name: "env-1-core"
+  type: "namespace"
+satellites:
+  - type: bgdomain
     name: env-1-bg-domain
     originNamespace:
       type: namespace
@@ -1277,14 +1337,21 @@ composite_structure:
     controllerNamespace:
       type: namespace
       name: env-1-bss-controller
-  satellites:
-    - type: "namespace"
-      name: "env-1-data-management"
 ```
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+
+The standalone BG Domain object represents a BG Domain that is not part of a
+[Composite Structure](#composite-structure).
+When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
+member and no standalone BG Domain object is generated.
+
+The standalone BG Domain object represents a BG Domain that is not part of a
+[Composite Structure](#composite-structure).
+When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
+member and no standalone BG Domain object is generated.
 
 The BG Domain object is generated during Environment Instance generation based on:
 
@@ -1383,7 +1450,7 @@ This object, which is an empty file, is used to represent the current Blue-Green
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
 
 **Filename patterns:**
 
@@ -1866,11 +1933,17 @@ Contains non-sensitive Cloud Passport parameters
 
 **Location:** `/environments/<cluster-name>/cloud-passport/<any-string>.yml|yaml`
 
+The recommended name is `passport.yml`, which auto-associates with every environment in the cluster. An
+additional infra passport (business/infra split) is named `passport-infra.yml`.
+
 #### Credential File
 
 Contains sensitive Cloud Passport parameters
 
 **Location:** `/environments/<cluster-name>/cloud-passport/<any-string>-creds.yml|yaml`
+
+The recommended name is `passport-creds.yml` (and `passport-infra-creds.yml` for the infra passport),
+pairing with the Main File.
 
 ### Artifact Definition
 
@@ -1913,8 +1986,7 @@ registry:
     repositoryDomainName: string
     # Mandatory
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Mandatory
     # Staging repository name
@@ -2073,21 +2145,20 @@ registry:
     # Domain name of the registry
     repositoryDomainName: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Staging repository name
     targetStaging: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Release repository name
     targetRelease: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot Maven repository group name
     snapshotGroup: string
     # Optional
@@ -2142,11 +2213,6 @@ registry:
   mavenConfig:
     authConfig: aws-maven
     repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
-    targetSnapshot: "snapshots"
-    targetStaging: "staging"
-    targetRelease: "releases"
-    snapshotGroup: "snapshot-group"
-    releaseGroup: "release-group"
 ```
 
 **Example with GCP Artifact Registry:**
@@ -2172,15 +2238,10 @@ registry:
       gcpRegProject: "123456789012"
       gcpRegPoolId: "idp-pool-id"
       gcpRegProviderId: "idp-provider"
-      gcpRegSAEmail: "test@test.iam.gserviceaccount.com"
+      gcpRegSAEmail: "example@example.com"
   mavenConfig:
     authConfig: gcp-maven
-    repositoryDomainName: "https://artifactregistry.googleapis.com"
-    targetSnapshot: "maven-snapshots"
-    targetStaging: "maven-staging"
-    targetRelease: "maven-releases"
-    snapshotGroup: "maven-snapshots-group"
-    releaseGroup: "maven-releases-group"
+    repositoryDomainName: "https://europe-west1-maven.pkg.dev/123456789012/maven-repo"
 ```
 
 **Example with Azure Artifacts:**
@@ -2262,7 +2323,10 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/regdefs/<registry-name>.yml`
 
-Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Registry Definitions can also be supplied as definition overrides at `/configuration/regdefs/<registry-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 The `credentialsId` field may reference an external Credential. See
 [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
@@ -2522,19 +2586,19 @@ mavenConfig:
   # Domain name of the registry
   repositoryDomainName: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   targetSnapshot: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Staging Maven repository name
   targetStaging: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Release Maven repository name
   targetRelease: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   snapshotGroup: string
   # Optional
@@ -2728,7 +2792,7 @@ authConfig:
     gcpRegProject: 123456789012
     gcpRegPoolId: idp-pool-id
     gcpRegProviderId: idp-provider
-    gcpRegSAEmail: test@test.iam.gserviceaccount.com
+    gcpRegSAEmail: example@example.com
 
   maven-gcp-sa:
     authType: shortLived
@@ -2782,11 +2846,6 @@ authConfig:
 mavenConfig:
   authConfig: aws
   repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
-  targetSnapshot: snapshots
-  targetStaging: staging
-  targetRelease: releases
-  snapshotGroup: snapshot-group
-  releaseGroup: staging-group
 dockerConfig:
   authConfig: aws
   snapshotUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18080
@@ -2843,7 +2902,7 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/appdefs/<application-name>.yml`
 
-Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Application Definitions can also be supplied as definition overrides at `/configuration/appdefs/<application-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
 
 ```yaml
 # Optional

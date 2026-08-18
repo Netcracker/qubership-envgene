@@ -3,6 +3,7 @@ from os import getenv
 
 from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType, logger, get_sd_dir, SD_FILE_NAME, \
     get_sd_dir_by_env_cluster_name, getenv_with_error
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from .models import PipelineType
 
 
@@ -26,6 +27,18 @@ class GenerationMode(Enum):
 class PartialMergeMode(Enum):
     FORWARD = "forward"
     REVERSE = "reverse"
+
+
+def is_committed_sd_enabled() -> bool:
+    return get_envgene_config_yaml().get("use_committed_sd", True)
+
+
+def apply_no_sd_mode(ctx) -> None:
+    sd_input = bool(getenv("SD_DATA") or getenv("SD_VERSION"))
+    application_versions = getenv("APPLICATION_VERSIONS")
+    if not sd_input and not application_versions and not is_committed_sd_enabled():
+        logger.info("No-SD Mode: no incoming SD/application_versions and use_committed_sd=false — skipping committed DP")
+        ctx.deploy_plan = EnvgeneDeployPlan(entities=[])
 
 
 def resolve_partial_merge_mode():

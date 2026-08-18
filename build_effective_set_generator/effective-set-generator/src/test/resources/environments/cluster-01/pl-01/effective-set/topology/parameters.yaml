@@ -6,7 +6,7 @@ bg_domain:
     type: namespace
     credentials: null
   peerNamespace:
-    name: pl-01-pg-test
+    name: pl-01-pg
     type: namespace
     credentials: null
   controllerNamespace:

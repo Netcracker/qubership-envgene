@@ -444,8 +444,8 @@ For a local-category Environment Instance these files hold literal secret values
 Sensitive parameters specified via a `credRef` Credential Reference and external Credentials are written as
 references (VALS URIs or ESO descriptors), at the same parameter paths, to the per-context `credentials.yaml`
 files. The targets are the deployment, pipeline, per-consumer pipeline, and topology files from the
-[Local Sensitive parameters](#version-20-local-sensitive-parameters) list. The runtime `credentials.yaml`,
-`collision-credentials.yaml`, and `custom-params.yaml` never carry external references.
+[Local Sensitive parameters](#version-20-local-sensitive-parameters) list. The runtime `credentials.yaml` and
+`custom-params.yaml` never carry external references.
 
 An Environment Instance is single-category, so a given `credentials.yaml` holds local secrets or references,
 never both. A `credentials.yaml` that holds only references stays plaintext, because references are not
@@ -665,6 +665,17 @@ These parameters establish a dedicated rendering context exclusively applied dur
 
 This context is formed as a result of merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects. Parameters from the Application SBOM and `Resource Profile` objects of the Environment Instance also contribute to the formation of this context.
 
+> [!NOTE]
+> Consumers apply these files as an ordered merge sequence when materializing per-application values (for
+> example, as ordered `-f` files for Helm). The canonical order is:
+>
+> 1. `deploy-descriptor.yaml`
+> 2. `credentials.yaml`
+> 3. `deployment-parameters.yaml`
+> 4. `collision-deployment-parameters.yaml`
+> 5. `collision-credentials.yaml`
+> 6. `per-service-parameters/<service-name|app-chart-name>/deployment-parameters.yaml`
+
 For each namespace (identified by its folder name), the context contains files:
 
 ##### \[Version 2.0][Deployment Parameter Context] `deployment-parameters.yaml`
@@ -738,8 +749,8 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `SSL_SECRET`                      | yes       | string  | Specifies the name of the Kubernetes secret that holds the SSL certificate bundle. This parameter can be explicitly set by the user at the `Tenant`, `Cloud`, `Namespace`, or `Application` level. If not provided, the default value will be used.                                                                                                                                                                                                                                                               | `defaultsslcertificate`                                                        | N/A                                                                                          |
 | `CERTIFICATE_BUNDLE_MD5SUM`       | no        | string  | Hash sum of the value provided in `DEFAULT_SSL_CERTIFICATES_BUNDLE`, calculated using the MD5 algorithm                                                                                                                                                                                                                                                                                                                                                                                                           | None                                                                           | N/A                                                                                          |
 | `ORIGIN_NAMESPACE`                | yes       | string  | The name of the origin namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`                                                                                                                                                                                                                                                                                                                                                | `${NAMESPACE}`                                                                 | N/A                                                                                          |
-| `PEER_NAMESPACE`                  | yes       | string  | The name of the peer namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`                                                                                                                                                                                                                                                                                                                                                  | `${NAMESPACE}`                                                                 | N/A                                                                                          |
-| `CONTROLLER_NAMESPACE`            | yes       | string  | The name of the controller namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`                                                                                                                                                                                                                                                                                                                                            | `${NAMESPACE}`                                                                 | N/A                                                                                          |
+| `PEER_NAMESPACE`                  | no        | string  | The name of the peer namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, the value is undefined                                                                                                                                                                                                                                                                                                                                                                        | None                                                                           | N/A                                                                                          |
+| `CONTROLLER_NAMESPACE`            | no        | string  | The name of the controller namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, the value is undefined                                                                                                                                                                                                                                                                                                                                                                  | None                                                                           | N/A                                                                                          |
 | `BG_CONTROLLER_URL`               | no        | string  | URL from the [BG Domain](/docs/envgene-objects.md#bg-domain) credential.                                                                                                                                                                                                                                                                                                                                                                                                                                          | None                                                                           | N/A                                                                                          |
 | `BG_CONTROLLER_LOGIN`             | no        | string  | Username from the [BG Domain](/docs/envgene-objects.md#bg-domain) credential.                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                           | N/A                                                                                          |
 | `BG_CONTROLLER_PASSWORD`          | no        | string  | Password from the [BG Domain](/docs/envgene-objects.md#bg-domain) credential.                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                           | N/A                                                                                          |
@@ -824,13 +835,14 @@ Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` ar
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
 
-Parameters that resolve to external Credentials (references in `credentials.yaml`) are **not** inputs to this
-logic. They never move to `collision-credentials.yaml` or `collision-deployment-parameters.yaml`.
+The rule applies to every sensitive value in `credentials.yaml`, whether the value is a literal secret
+(local-category Environment Instance) or a VALS or ESO reference (external-category Environment Instance).
+The `collision-credentials.yaml` inherits the category of its source `credentials.yaml`.
 
 **Destination files:**
 
-- `collision-deployment-parameters.yaml` — for non-sensitive parameters
-- `collision-credentials.yaml` — for **local** sensitive parameters (defined via `${creds.get(...)}` only)
+- `collision-deployment-parameters.yaml` - for non-sensitive parameters
+- `collision-credentials.yaml` - for sensitive parameters.
 
 > [!NOTE]
 > Only root-level parameters are processed by this collision logic. If a parameter with a service name as its key is nested under a service section, it is not moved to the collision files and remains in its original location.
@@ -1296,7 +1308,7 @@ This context only contains parameters generated by EnvGene:
 |`k8s_tokens`|Mandatory|Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml`|None|[example](#version-20topology-context-k8s_tokens-example)|
 |`environments`|Mandatory|Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a `deployPostfix` attribute. The `deployPostfix` value is derived from the namespace folder name (a child of `Namespaces` and parent of `namespace.yml`). For namespaces that are part of a BG Domain with roles `peer` or `origin`, the `deployPostfix` is obtained by removing the suffix `-peer` or `-origin` respectively from the namespace folder name. For all other namespaces (including `controller` namespace in BG Domain), the `deployPostfix` equals the namespace folder name. The namespace folder name is determined according to [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) rules. This variable is located in `parameters.yaml`|None|[example](#version-20topology-context-environments-example)|
 |`cluster`|Mandatory|Contains information about the cluster where the Environment Instance is deployed. Includes cluster name, type, and other cluster-specific metadata taken from the [Cloud](/docs/envgene-objects.md#cloud) object. This variable is located in `parameters.yaml`|`{}`|[example](#version-20topology-context-cluster-example)|
-|`bg_domain`|Mandatory|Contains the [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`.|`{}`|[example](#version-20topology-context-bg_domain-example)|
+|`bg_domain`|Mandatory|Contains the standalone [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. This variable is `{}` for an environment without a standalone BG Domain object, including one whose BG Domain is embedded inline in `composite_structure`. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`.|`{}`|[example](#version-20topology-context-bg_domain-example)|
 
 ##### \[Version 2.0][Topology Context] `composite_structure` Example
 
@@ -1317,20 +1329,29 @@ composite_structure:
 composite_structure:
   name: "clusterA-env-1-composite-structure"
   baseline:
-    type: bgdomain
-    name: env-1-bg-domain
-    originNamespace:
-      type: namespace
-      name: env-1-bss-origin
-    peerNamespace:
-      type: namespace
-      name: env-1-bss-peer
-    controllerNamespace:
-      type: namespace
-      name: env-1-bss-controller
+    name: "env-1-core"
+    type: "namespace"
+  satellites: []
+```
+
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  baseline:
+    name: "env-1-core"
+    type: "namespace"
   satellites:
-    - type: "namespace"
-      name: "env-1-data-management"
+    - type: bgdomain
+      name: env-1-bss-bg-domain
+      originNamespace:
+        type: namespace
+        name: env-1-bss-origin
+      peerNamespace:
+        type: namespace
+        name: env-1-bss-peer
+      controllerNamespace:
+        type: namespace
+        name: env-1-bss-controller
 ```
 
 ##### \[Version 2.0][Topology Context] `k8s_tokens` Example
