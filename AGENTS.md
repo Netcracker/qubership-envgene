@@ -46,6 +46,14 @@ Body (when needed):
 - Wrap at 72 characters.
 - Reference issues in a footer (`Closes #123`, `Refs #456`).
 
+### Secret scanning
+
+A pre-commit hook runs a secret scanner (CyberFerret) on every commit. Never bypass it. Do not add a
+skip token to the commit message (`@cf_skip`, `@cf_ignore`, `@ignore_cf`, `@skip_cf`), do not pass
+`git commit --no-verify`, and do not sidestep the hook by committing through the GitHub API or web
+editor. If the hook blocks a commit, resolve the finding or make the scan runnable, for example by
+setting the scanner's dictionary password. A blocked commit is a signal to investigate, not to skip.
+
 ### Commit type for docs-only changes
 
 If a commit touches only documentation files (`*.md`, `AGENTS.md`, `CLAUDE.md`, files under `docs/`), use
