@@ -573,7 +573,7 @@ integration-deploy-offsite   # topology suffix where it genuinely varies
 cloud-env-specific           # scope in the name, the file location already says environment
 qa01-bss-deploy              # environment name baked in
 bss-deploy-r23-3             # release baked in
-etbss-51477                  # ticket id, opaque
+project-51477                  # ticket id, opaque
 bss                          # category missing
 ```
 
@@ -600,7 +600,7 @@ prod-oss-override
 dev-core-override-hawk
 # Not OK
 sit-dm-override                # baseline is dev, so the leading token contradicts the field
-telus-dv2-multi-sql-override   # environment name baked in
+project-dv2-multi-sql-override   # environment name baked in
 ```
 
 ### NAME-6 - Name a credential ID by purpose (SHOULD)
