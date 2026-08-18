@@ -204,24 +204,28 @@ The filter is applied to the repository full plan and writes the reduced plan, w
 
 ## `namespace-map.yml`
 
-Flat map keyed by the `deployPostfix`, value the rendered namespace name (already resolved to one concrete
-namespace per postfix).
-
-For a `deployPostfix` that belongs to a BG domain the value is resolved to the `ORIGIN` or
-`PEER` namespace by `BG_NS_TARGET` (see `compute_namespace_map`, step 1.11, which resolves the BG suffix from the
-rendered BG domain). Non-BG postfixes resolve to their single namespace.
+Map keyed by `deployPostfix`, covering all `deployPostfix`es of the environment. A non-BG `deployPostfix` maps to its
+single namespace name. A BG `deployPostfix` maps to a per-side entry holding both the `origin` and `peer` namespace
+names. The side is set at build from the rendered BG domain, so the map holds both sides and is built independently of
+`BG_NS_TARGET`. Selecting the side for a bare BG `deployPostfix` happens at bind by `BG_NS_TARGET` (see
+`generate_deployment_plan`, step 1.13).
 
 ```yaml
-<deployPostfix>: <namespace-name>
+<deployPostfix>: <namespace-name>          # non-BG
+<deployPostfix>:                           # BG
+  origin: <namespace-name>
+  peer: <namespace-name>
 ```
 
 Example:
 
 ```yaml
-# composite, BG_NS_TARGET: ORIGIN
+# composite
 core: env-1-core
 oss: env-1-oss
-bss: env-1-bss-origin   # BG domain member, resolved to the ORIGIN side
+bss:                       # BG domain member
+  origin: env-1-bss-origin
+  peer: env-1-bss-peer
 ```
 
 ## Instance pipeline parameters
@@ -268,7 +272,10 @@ default: None
 
 1. Используется в связке с `ENV_TEMPLATE_VERSION`:
    1. На основе `BG_NS_TARGET` вычисляется для какого ns обновить версию темплейта `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
-2. Используется в `compute_namespace_map` для резолвинга deployPostfix пира ориджина в нс
+2. Used at bind in `generate_deployment_plan` (step 1.13) to select the origin or peer namespace for a bare BG
+   `deployPostfix`. `compute_namespace_map` does not consult it.
+3. Required only when binding a bare BG `deployPostfix` (a `name:version` entry whose postfix is a BG member). Not
+   needed for non-BG deploys, controller-only deploys, or entries given as `namespace:name:version`.
 
 ### `BG_STATE`
 
@@ -430,12 +437,11 @@ Functions:
 
 Triggers:
 
-- `OPERATION_TYPE: DEPLOY` and
 - `GET_PASSPORT: true`
 
 Functions:
 
-1. Функция которая делает что то
+1. `get_passport`
     - input:
       - `integration.yaml`
       - `credentials.yaml`
@@ -459,7 +465,6 @@ Functions:
 
 Triggers:
 
-- `OPERATION_TYPE: DEPLOY` and
 - `CRED_ROTATION_PAYLOAD`
 
 Functions:
@@ -519,8 +524,7 @@ Functions:
 
 Triggers:
 
-- `OPERATION_TYPE: DEPLOY` and
-- (`ENV_INVENTORY_CONTENT` or `ENV_SPECIFIC_PARAMS`)
+- `ENV_INVENTORY_CONTENT` or `ENV_SPECIFIC_PARAMS`
 
 Functions:
 
@@ -534,7 +538,7 @@ TBD
 
 Triggers:
 
-- `ENV_TEMPLATE_VERSION` present
+- `ENV_TEMPLATE_VERSION`
 
 Functions:
 
@@ -648,14 +652,14 @@ Functions:
 1. `compute_namespace_map`
     - input:
       - `FULL_ENV_NAME`
-      - `BG_NS_TARGET`
       - rendered namespace in env instance
       - rendered bg domain in env instance
     - output:
       - `namespace-map.yml`
     - actions:
-      - read rendered namespace name + deployPostfix for each env namespace
-      - calculate deployPostfix to namespace mapping (incl. BG suffix)
+      - read rendered namespace name + deployPostfix + BG role for each env namespace (both BG sides)
+      - build the map keyed by deployPostfix: non-BG postfix -> namespace name, BG postfix -> per-side entry with
+        both `origin` and `peer` namespace names (side from the rendered BG domain)
 
 #### 1.12 step `process_sd`
 
@@ -687,10 +691,13 @@ migrate sd to deploy plan
 1. `adapt_sd_to_deploy_plan`
     - input:
       - updated `sd.yaml`
+      - rendered namespace in env instance
     - output:
       - `delta-deploy-plan.yml`
     - actions:
       - generate dp based on sd
+      - resolve each entry namespace name from the committed env instance (deployPostfix -> namespace name)
+      - fail if a deployPostfix has no matching namespace in the committed env instance
     - [phase1] add the function
 
 #### 1.13 step `generate_deployment_plan`
@@ -710,6 +717,7 @@ Functions:
       - params.environment_id -> `build.env.FULL_ENV_NAME`
       - app defs
       - `namespace-map.yml`
+      - `BG_NS_TARGET`
       - filters:
         - `DEPLOY_POSTFIXES_FILTER`
         - `NAMESPACE_NAMES_FILTER`
@@ -719,7 +727,13 @@ Functions:
       - `delta-deploy-plan.yml`
     - actions:
       - process `APPLICATION_VERSIONS` (download SD, merge), calculate (APPLICATION_VERSIONS)
-      - enrich DP, plan map (namespace_map)
+      - enrich DP, plan map (namespace_map):
+        - bare `deployPostfix` entry: look up `namespace-map.yml[deployPostfix]`. A scalar value binds directly
+          (non-BG). A per-side value (BG) binds `[BG_NS_TARGET]`, and if `BG_NS_TARGET` is not set fail asking for it.
+          An absent key fails naming the `deployPostfix`
+        - `namespace:name:version` entry: take the namespace as given, recover its `deployPostfix` as the key whose
+          value names the namespace (scalar, or `origin`/`peer` of a per-side entry), `BG_NS_TARGET`-independent. No
+          match fails naming the namespace
       - filter DP, plan filter (filter vars)
     - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
 2. `resolve_warmup_delta`
