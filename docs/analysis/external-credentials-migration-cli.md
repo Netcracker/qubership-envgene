@@ -56,7 +56,7 @@ migration-cli \
 | Параметр                     | Обязательный | Зачем |
 |------------------------------|--------------|-------|
 | `--instance-repo`            | да           | Корень Instance Repository. Источник Credential-файлов и `data`. |
-| `--secret-store`             | да           | Id Secret Store для сборки VALS. |
+| `--secret-store`             | да           | ID Secret Store для сборки VALS. |
 | `--store-type`               | да           | Тип store для сборки VALS (`vault`, `gcp`, `aws`, …). |
 | параметры store              | да, от type  | Например `--mount-path` (Vault), `--project-id` (GCP), `--region` (AWS). |
 | `--remote-ref-path-template` | да           | Правило префикса пути в store. `credId` в конец шаблона не входит. |

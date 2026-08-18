@@ -53,7 +53,7 @@ Confirm before you start:
   `create: true` later). Complete
   [UC-MIG-1](/docs/analysis/external-credentials-migration-cli.md) (draft) before this how-to -
   do not start YAML cutover until that transfer is done
-- `/configuration/secret-stores.yml` defines every Secret Store id you reference (Step 2)
+- `/configuration/secret-stores.yml` defines every Secret Store ID you reference (Step 2)
 - CI/CD authentication variables for those stores are configured
 - for each Credential you know whether: the value already exists in the Secret Store (omit
   `create`), or a freshly generated value is acceptable (`create: true`)
@@ -81,7 +81,7 @@ Also list every Credential file:
 | `environments/<cluster>/cloud-passport/*.yml`         | Cloud Passport main files                             |
 | `environments/<cluster>/shared-credentials/*.yml`     | Shared Credentials                                    |
 | `environments/<cluster>/app-deployer/deployer-creds.yml` | Deployer System Credentials                        |
-| `/configuration/credentials/credentials.yml`          | System Credentials (git token, registry)              |
+| `/configuration/credentials/credentials.yml`          | System Credentials (Git token, registry)              |
 | `environments/<cluster>/<env>/Credentials/credentials.yml` | Generated files - do not edit. Delete in Step 7. |
 
 For each local Credential (`type: usernamePassword` or `type: secret`), record:
@@ -282,7 +282,7 @@ updated where needed.
 
 ## Step 5. Convert System Credentials
 
-System Credentials cover git tokens, registry authentication, and deployer credentials. They live in:
+System Credentials cover Git tokens, registry authentication, and deployer credentials. They live in:
 
 - `/configuration/credentials/credentials.yml` - `self_token`, `cp_discovery` token, registry
 - `environments/<cluster>/app-deployer/deployer-creds.yml` - deployer username and token
@@ -385,7 +385,7 @@ Check:
 - every Environment Instance, when its sources are merged, produces External Credentials only
 - no Credential file has a leftover `data` block for converted entries
 - `credRef.property` matches a name in the Credential's `properties` list
-- every `secretStore` id exists in `/configuration/secret-stores.yml`
+- every `secretStore` ID exists in `/configuration/secret-stores.yml`
 - no `$type: credRef` in `technicalConfigurationParameters`
 - secrets exist in the store for all entries where `create` is omitted
 - `sharedMasterCredentialFiles` entries do not have the `.yml` extension

@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-1. One Secret Store per repository - a single `default_store` covers all credentials in the repo.
+1. One Secret Store per repository - a single `default_store` covers all credentials in the repository.
    Since the store is fixed and default, no cred entry carries a `secretStore` field.
 2. Repository already uses the No-CMDB flow - deployer credentials are out of migration scope.
 3. Migration processes SOURCE credential files only. Generated env-scoped files
@@ -15,7 +15,7 @@
 5. Migration does NOT handle credential macros in `technicalConfigurationParameters` (SEC-3
    violations). They remain as `${creds.get(...)}` - a residual violation post-migration. Proper
    fix requires removing the cred macro from the template and setting the value from the instance
-   repo instead. Complex and low-priority for this iteration.
+   repository instead. Complex and low-priority for this iteration.
 
 ## Gaps
 
@@ -91,10 +91,10 @@ Python module packaged with EnvGene. Two subcommands:
 
 | Subcommand | Effect                                                                                     |
 |------------|--------------------------------------------------------------------------------------------|
-| `plan`     | Scans repo. Writes `migration-plan.yaml` artifact. Emits stdout plan-report. No writes.    |
+| `plan`     | Scans repository. Writes `migration-plan.yaml` artifact. Emits stdout plan-report. No writes.    |
 | `apply`    | Reads `migration-plan.yaml`. Writes to Git + Secret Store. Emits stdout migration-report.  |
 
-Invocation. Repo type is passed explicitly via `--repo=<instance|template>`; script errors if the
+Invocation. Repository type is passed explicitly via `--repo=<instance|template>`; script errors if the
 flag is missing.
 
 ```bash
@@ -104,7 +104,7 @@ python -m envgene.migrate apply --repo=instance
 python -m envgene.migrate apply --repo=template
 ```
 
-If the repo has SOPS-encrypted cred files, the SOPS key MUST be provided via the `SOPS_AGE_KEY`
+If the repository has SOPS-encrypted cred files, the SOPS key MUST be provided via the `SOPS_AGE_KEY`
 env var (same variable used by env-gen and `external-cred-provision`) to both `plan` and `apply`.
 The script decrypts sources on read. If the var is not set, the script errors on the first
 encrypted file.
@@ -157,7 +157,7 @@ writes each to its own Store path and surfaces a warning for operator review.
 - **Cloud Passport creds** - `environments/<cluster>/cloud-passport/*-creds.yml`. Rewrite + write
   plaintext to Store.
 - **Shared Credential files** at three scopes:
-  - Repo: `environments/credentials/*.yml`
+  - Repository: `environments/credentials/*.yml`
   - Cluster: `environments/<cluster>/credentials/*.yml`
   - Env: `environments/<cluster>/<env>/Inventory/credentials/*.yml`
 
@@ -320,7 +320,7 @@ replace it with any Jinja template.
 
 ### Plan actions
 
-#### Template repo
+#### Template repository (plan)
 
 `python -m envgene.migrate plan --repo=template` performs, in order:
 
@@ -348,7 +348,7 @@ replace it with any Jinja template.
 4. Writes `migration-plan.yaml`
 5. Emits stdout plan-report (see "Plan-report sample" below)
 
-#### Instance repo
+#### Instance repository (plan)
 
 `python -m envgene.migrate plan --repo=instance` performs, in order:
 
@@ -365,7 +365,7 @@ replace it with any Jinja template.
 
 ### Apply actions
 
-#### Template repo
+#### Template repository (apply)
 
 `python -m envgene.migrate apply --repo=template` performs, in order:
 
@@ -398,7 +398,7 @@ replace it with any Jinja template.
 7. Streams per-item progress to stderr (`tail -f`-able). Emits stdout migration-report on
    completion (see "Migration-report sample" below)
 
-#### Instance repo
+#### Instance repository (apply)
 
 `python -m envgene.migrate apply --repo=instance` performs, in order:
 
@@ -433,7 +433,7 @@ replace it with any Jinja template.
 7. Streams per-item progress to stderr (`tail -f`-able). Emits stdout migration-report on
    completion
 
-Notes (Instance repo):
+Notes (Instance repository):
 
 - Secret Store population happens in step 3 - no separate manual provisioning step during migration
 - Generated env-scoped credential files are deleted in step 5 - env-gen regenerates them
@@ -582,7 +582,7 @@ Signals (all case-insensitive matching):
    `known_creds.py`. Exact-match on `credId` → cred is a known Cloud Passport cred; treat as
    passport-tier candidate.
 
-2. **Known-platform-service pattern on cred-id.** Regex on `credId` (anchored, matches whole id):
+2. **Known-platform-service pattern on cred-id.** regular expression on `credId` (anchored, matches whole ID):
    - `^(dbaas|argocd|arango|cluster|consul|keycloak|maas|vault|k8s|kube)([-_].+)?$`
    Any match → shadow-platform integration suspected. Suggestion: promote to `passport-tier` shape
    (`remoteRefPath=/<cluster>`, `create=false`).
@@ -597,7 +597,7 @@ Signals (all case-insensitive matching):
    Comment content classified verbatim in the suggestion (`# cloud passport: X` → suggest
    passport-tier).
 
-5. **Cross-namespace consumer analysis** (TODO - algorithm not specified yet). Placeholder in
+5. **Cross-namespace consumer analysis** (todo - algorithm not specified yet). Placeholder in
    the plan skeleton; do not fire in initial implementation. See Open items.
 
 Combining signals:
@@ -605,7 +605,7 @@ Combining signals:
 - Any signal fires → `to_review`. Template-phase plan also **flips defaults to passport-tier
   shape** (`remoteRefPath: "{{ current_env.cloud }}"`, `create: false`) and attaches a
   suggestion warning the operator that the cred looks like a Cloud Passport cred (value comes
-  from Cloud Passport in the Instance repo; operator should remove from plan if so, keep only
+  from Cloud Passport in the Instance repository; operator should remove from plan if so, keep only
   if EnvGene should manage this cluster-wide cred).
 - No signals → `to_confirm` with tier defaults per file location.
 
@@ -626,7 +626,7 @@ Applies during `apply` to consumer files. Grammar and transformations:
 - `${envgen.creds.get('<credId>').X}` - alias, `envgen.` prefix stripped, then same as above
 - `${cmdb.creds.get('<credId>').X}` - alias, `cmdb.` prefix stripped, then same as above
 
-Regex (anchored to full value; whitespace tolerant around identifiers):
+Regular expression (anchored to full value; whitespace tolerant around identifiers):
 
 ```text
 ^\s*\$\{\s*(?:envgen\.|cmdb\.)?creds\.get\(\s*['"]([\w.-]+)['"]\s*\)\.(username|password|secret)\s*\}\s*$
@@ -676,7 +676,7 @@ Built-in cred field references (`credentialsId`, `defaultCredentialsId`, `tokenS
 
 #### YAML formatting preservation
 
-Rewrites MUST preserve source formatting: comments, blank lines, YAML anchors, aliases,
+Rewrites MUST preserve source formatting: comments, empty lines, YAML anchors, aliases,
 key order. Use `envgenehelper.yaml_helper` primitives (`openYaml`, `writeYamlToFile`,
 `beautifyYaml`), which wrap `ruamel.yaml` round-trip mode. Do not fall back to PyYAML for
 consumer-file rewrites.
@@ -719,7 +719,7 @@ Standard Linux conventions. Exit codes:
 | 0    | Success                                                                      |
 | 1    | Apply failed (Store write error, Git rewrite error, verification failure)    |
 | 2    | Plan invalid (schema error, unknown cred type, partial-migration detected)   |
-| 3    | Pre-flight failed (missing auth env vars, missing SOPS key, dirty git tree)  |
+| 3    | Pre-flight failed (missing auth env vars, missing SOPS key, dirty Git tree)  |
 | 130  | User interrupt (SIGINT) - see "State handling"                               |
 
 Logs are free-text on stdout (structured reports) and stderr (per-item progress + errors). No
@@ -730,7 +730,7 @@ JSON output. Failure lines follow the pattern `[<cred-id>] FAILED: <reason>` for
 **Plan already exists.** `plan` overwrites `migration-plan.yaml` in the current working directory
 without prompting. Operator commits the plan explicitly.
 
-**Dirty git working tree at apply.** Apply runs `git status --porcelain` before writing. If any
+**Dirty Git working tree at apply.** Apply runs `git status --porcelain` before writing. If any
 tracked file is modified/staged/deleted, apply aborts with exit code 3 and message listing dirty
 paths. Untracked files are ignored. Operator commits or stashes before retrying.
 
@@ -746,7 +746,7 @@ bookkeeping. Operator re-runs `envgene.migrate apply` after fixing the root caus
 
 ### Orphaned Shared credential detection
 
-Algorithm for `plan` step 4 (Instance repo) - identifying Shared cred files marked to delete
+Algorithm for `plan` step 4 (Instance repository) - identifying Shared cred files marked to delete
 because no env references them:
 
 1. Build the set of **all declared cred-ids** across all Shared cred files (repo/cluster scope).
@@ -840,12 +840,12 @@ SOPS coverage deferred.
 
 **Test matrix (initial):**
 
-- Instance repo: passport-tier + env-tier + external-tier creds, all three macro forms in
+- Instance repository: passport-tier + env-tier + external-tier creds, all three macro forms in
   consumers, hash-style key macros, orphaned Shared file, deployer creds deletion.
-- Template repo: Credential Template rewrite, Template Descriptor update, ParameterSet macro
+- Template repository: Credential Template rewrite, Template Descriptor update, ParameterSet macro
   rewrite.
 - Failure modes: composite macro in consumer, unsupported cred type, partial-migration source,
-  dirty git working tree.
+  dirty Git working tree.
 
 ## Flow
 
@@ -890,7 +890,7 @@ happen on this branch.
 
 #### I1 - Configure Secret Store
 
-Under the "one cred store per repo" assumption, define a single default store in
+Under the "one cred store per repository" assumption, define a single default store in
 `/configuration/secret-stores.yml`:
 
 ```yaml
@@ -921,7 +921,7 @@ python -m envgene.migrate plan --repo=instance
 ```
 
 See "Plan actions" in Migration script section. Instance-phase warnings surface shadow-platform
-candidates most heavily here - cross-env hashing runs against all envs in repo.
+candidates most heavily here - cross-env hashing runs against all envs in repository.
 
 #### I3 - Review and edit plan
 
@@ -980,7 +980,7 @@ Peer review both PRs.
 
 ## Rollback
 
-Rollback happens through git - restore repo state to pre-migration.
+Rollback happens through Git - restore repository state to pre-migration.
 
 ## Open items during draft
 
