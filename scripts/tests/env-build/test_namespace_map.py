@@ -3,6 +3,7 @@ import shutil
 
 import pytest
 
+from build_env import render_config_env
 from build_env.namespace_render import compute_namespace_map
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 from scripts.tests.base_test import BaseTest
@@ -50,9 +51,26 @@ class TestNamespaceMap(BaseTest):
         assert namespace_map["app"] == "bgd-env-origin-app"
 
     @pytest.mark.unit
-    def test_bgd_ambiguous_without_bg_ns_target_fails(self):
-        with pytest.raises(ValueError, match="BG_NS_TARGET is required to resolve deployPostfix 'app'"):
-            self._render_map("bgd-cluster", "bgd-env")
+    def test_bgd_without_bg_ns_target_skips_role_map_entry(self, monkeypatch):
+        warnings = []
+
+        def record_warning(message, *args):
+            warnings.append(message % args if args else message)
+
+        monkeypatch.setattr(render_config_env.logger, "warning", record_warning)
+        namespace_map = self._render_map("bgd-cluster", "bgd-env")
+
+        assert "app" not in namespace_map
+        assert any("BG_NS_TARGET is not set, skipping deployPostfix 'app'" in message for message in warnings)
+
+    @pytest.mark.parametrize("operation", ["CLEAN", "DEPLOY"])
+    def test_non_bgd_operations_work_without_bg_ns_target(self, operation):
+        self._set_env("cluster-01", "env-01")
+        os.environ["OPERATION_TYPE"] = operation
+
+        namespace_map = self._render_map("cluster-01", "env-01")
+
+        assert namespace_map
 
     @pytest.mark.unit
     def test_invalid_bg_ns_target_fails_without_collision(self):

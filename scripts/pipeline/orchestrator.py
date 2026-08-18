@@ -8,7 +8,7 @@ from enum import StrEnum
 from os import getenv
 
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
-from envgenehelper.business_helper import is_inventory_generation_needed
+from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -188,7 +188,8 @@ class SetTemplateVersionStep(PipelineStep):
         update_version(
             env_instances_dir,
             ctx.params.get('ENV_TEMPLATE_VERSION'),
-            TemplateVersionUpdateMode(ctx.params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE'))
+            TemplateVersionUpdateMode(ctx.params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')),
+            parse_bg_ns_target(ctx.params.get("BG_NS_TARGET")),
         )
 
 
