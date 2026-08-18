@@ -235,11 +235,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                         Path namespaceYaml = dir.resolve("namespace.yml");
                         if (Files.exists(namespaceYaml)) {
                             NamespaceDTO namespaceDTO = fileDataConverter.parseInputFile(NamespaceDTO.class, namespaceYaml.toFile());
+                            namespaceToFolder.putIfAbsent(namespaceDTO.getName(), namespace);
                             if (!nsWithAppsFromSD.containsKey(namespaceDTO.getName())) {
                                 inputData.getNamespaceDTOMap().put(namespace, namespaceDTO);
                                 return FileVisitResult.SKIP_SUBTREE;
                             }
-                            namespaceToFolder.put(namespaceDTO.getName(), namespace);
                             namespaceMap.putIfAbsent(namespace, namespaceDTO);
                         }
                     }
