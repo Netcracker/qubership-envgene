@@ -434,7 +434,7 @@ class EnvGenerator:
             cs_file.parent.mkdir(parents=True, exist_ok=True)
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
             validate_yaml_by_scheme_or_fail(cs_file, COMPOSITE_SCHEMA)
-    
+
     def generate_external_cred(self):
         #render external creds
         external_credential_template = self.ctx.current_env_template.get("external_credential_template")
@@ -618,6 +618,90 @@ class EnvGenerator:
             self.render_reg_defs()
 
             self.validate_appregdefs()
+    def _resolve_composite_member(self, member: dict, bgd: dict | None = None) -> dict:
+        member_type = member.get("type")
+
+        if member_type == "namespace":
+            return {
+                "originNamespace": member["name"]
+            }
+
+        if member_type == "bgdomain":
+            if bgd is None:
+                raise ValueError(
+                    f"BG Domain '{member.get('name')}' cannot be resolved "
+                    "because bg_domain.yml is missing or empty"
+                )
+
+            bgd_name = member.get("name")
+
+            if bgd.get("name") != bgd_name:
+                raise ValueError(
+                    f"Composite Structure references BG Domain '{bgd_name}', "
+                    f"but bg_domain.yml contains '{bgd.get('name')}'"
+                )
+
+            return {
+                "originNamespace": bgd["originNamespace"]["name"],
+                "peerNamespace": bgd["peerNamespace"]["name"],
+                "controllerNamespace": bgd["controllerNamespace"]["name"],
+            }
+
+        raise ValueError(f"Unknown composite member type: {member_type}")
+
+    def _load_bg_domain(self) -> dict:
+        bgd_file = Path(self.ctx.current_env_dir) / "bg_domain.yml"
+
+        if not bgd_file.exists():
+            raise ValueError(
+                f"Composite Structure references a BG Domain, "
+                f"but BG Domain file was not generated: {bgd_file}"
+            )
+        bgd = openYaml(bgd_file)
+        if not bgd:
+            raise ValueError(f"BG Domain file is empty: {bgd_file}")
+        return bgd
+
+    def compute_composite_topology(self):
+        cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
+
+        if not cs_file.exists():
+            logger.info("Composite Structure not found. composite_topology={}")
+            self.ctx.current_env["composite_topology"] = {}
+            return
+
+        composite = openYaml(cs_file)
+
+        baseline = composite.get("baseline")
+        if not baseline:
+            raise ValueError("Composite Structure is missing required 'baseline'")
+
+        # Load BGD only when the Composite Structure actually references one.
+        members = [baseline] + composite.get("satellites", [])
+        has_bgd = any(member.get("type") == "bgdomain" for member in members)
+
+        bgd = None
+        if has_bgd:
+            bgd = self._load_bg_domain()
+
+        topology = {
+            "baseline": self._resolve_composite_member(baseline, bgd)
+        }
+
+        satellites = [
+            self._resolve_composite_member(member, bgd)
+            for member in composite.get("satellites", [])
+        ]
+
+        if satellites:
+            topology["satellites"] = satellites
+
+        self.ctx.current_env["composite_topology"] = topology
+
+        logger.info(
+            f"Resolved composite_topology:\n"
+            f"{dump_as_yaml_format(topology)}"
+        )
 
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
