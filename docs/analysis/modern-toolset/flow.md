@@ -56,27 +56,27 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 ## OQ
 
-1. Нужны ли `process_env_template` / `appregdef_render` / `process_sd` при `OPERATION_TYPE: CLEAN`, или их
-   можно скипать? Сейчас (PoC) отрабатывают все.
+1. Are `process_env_template` / `appregdef_render` / `process_sd` needed for `OPERATION_TYPE: CLEAN`, or can
+   they be skipped? The proof of concept runs all of them.
 2. [Done]`generate_deployment_plan`
-   1. всегда требует `APPLICATION_VERSIONS`?
-      1. A: Да
-   2. использует ли `deploy-plan.yml` из предыдущей операции (из репо) как инпут
-      1. А: Нет, дискаверится из арги
+   1. Does it always require `APPLICATION_VERSIONS`?
+      1. A: Yes
+   2. Does it use `deploy-plan.yml` from the previous operation (from the repository) as input?
+      1. A: No, it is discovered from Argo.
 3. `APPLICATION_VERSIONS` ?
-   1. без него будет генерится только topology + pipeline
-   2. с ним все контексты
-      1. если `OPERATION_TYPE: !CLEAN` то `APPLICATION_VERSIONS` мандаторен
-   3. в nocmdb только
-4. Кто и когда чекаутит ES репо?
+   1. Without it, only topology and pipeline are generated.
+   2. With it, all contexts are generated.
+      1. If `OPERATION_TYPE: !CLEAN`, `APPLICATION_VERSIONS` is mandatory.
+   3. Only in NoCMDB.
+4. Who checks out the ES repository, and when?
    1. argo dpg
-5. Как менять бг стейт в ES
-   1. **Стейт пока не кладём в ES**. Планируется переход на унифицированную топологию за пределами ES.
-      Поэтому стейт-операции калькулятор не вызывают (см. 1.15).
-6. Как обрабатываем `COMMIT` бг операцию? Делаем ли клин legacy нс?
-   1. нет, при коммите только меняем стейт
-7. Вводим ли бг-специфик фильтры (на основе `BG_NS_TARGET` и стейт файлов) в `generate_deployment_plan`?
-   1. нет.
+5. How do we change the BG state in the ES?
+   1. **The state is not stored in the ES yet.** The plan is to move to a unified topology outside the ES.
+      Therefore, state operations do not call the calculator (see 1.15).
+6. How do we process a `COMMIT` BG operation? Do we clean up legacy namespaces?
+   1. No, a commit only changes the state.
+7. Do we add BG-specific filters based on `BG_NS_TARGET` and state files to `generate_deployment_plan`?
+   1. No.
 
 ## AI
 
@@ -87,7 +87,7 @@ for the target flow. The per-component docs in this directory elaborate individu
 4. Design `git_commit`
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES or not
 5. After the flow is finalized analyze the flow for optimization
-6. Стейт файл из нью лука
+6. State file from New Look
 
 ## Data exchange Rules
 
@@ -270,8 +270,9 @@ default: `LEGACY`
 `BG_NS_TARGET`: enum [ `ORIGIN`, `PEER` ]
 default: None
 
-1. Используется в связке с `ENV_TEMPLATE_VERSION`:
-   1. На основе `BG_NS_TARGET` вычисляется для какого ns обновить версию темплейта `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
+1. Used with `ENV_TEMPLATE_VERSION`:
+   1. `BG_NS_TARGET` determines which namespace receives the updated `bgNsArtifacts.origin` / `bgNsArtifacts.peer`
+      template version.
 2. Used at bind in `generate_deployment_plan` (step 1.13) to select the origin or peer namespace for a bare BG
    `deployPostfix`. `compute_namespace_map` does not consult it.
 3. Required only when binding a bare BG `deployPostfix` (a `name:version` entry whose postfix is a BG member). Not
@@ -336,48 +337,49 @@ BGState:
 
 ### `generate_deployment_plan`
 
-- Путь App Def становятся одним из инпутов для `generate_deployment_plan`
-- Задает `generationType` из атрибута `metadata.netcracker.com/argo-app-generation-type`
-  соответствующего App Def. При отсутствии атрибута — `UniqForApp`.
-- Задает `generationId` значение которое зависит от `generationType` - "", `<version>`, UUID7
-- Когда необходимо `generate_deployment_plan` генерирует UUID7
+- The App Def path becomes one of the inputs to `generate_deployment_plan`.
+- It sets `generationType` from the `metadata.netcracker.com/argo-app-generation-type` attribute of the
+  corresponding App Def. If the attribute is absent, it uses `UniqForApp`.
+- It sets `generationId` to a value based on `generationType`: `""`, `<version>`, or UUID7.
+- When needed, `generate_deployment_plan` generates a UUID7.
 
 ### ES Calc
 
-- Читает `delta-deploy-plan.yml`. Для `generationType != UniqForApp` вставляет между `<application-name>`
-  и `values` подпапку, равную `generationId`:
+- Reads `delta-deploy-plan.yml`. For `generationType != UniqForApp`, it inserts a subdirectory named
+  `generationId` between `<application-name>` and `values`:
 
   ```text
   /environments/<cluster>/<env>/effective-set/deployment/<deployPostfix>/<application-name>/<generationId>/values/...
   ```
 
-- Для `UniqForApp` подпапка не добавляется (поведение как сейчас).
-- `UniqForVersion`: последующая операция реплейсит предыдущую папку (как сейчас).
-- `UniqForRun`: папки накапливаются — каждый запуск добавляет новую, предыдущие остаются.
-- Решение по каждому приложению принимается независимо от остальных.
-- Политика ретеншена в ES Calc не предусмотренна
+- For `UniqForApp`, no subdirectory is added. This matches the current behavior.
+- `UniqForVersion`: the next operation replaces the previous directory. This matches the current behavior.
+- `UniqForRun`: directories accumulate. Each run adds a new directory, and previous directories remain.
+- The system makes the decision independently for each application.
+- ES Calc does not define a retention policy.
 
 ## DD for `generate_argocd_repo`
 
-**Опция 1:**
+**Option 1:**
 
-Качать DD всегда, ZIP по отсутствию SBOM (сейчас качается DD + ZIP по отсутствию SBOM)
+Always download DD. Download ZIP only when SBOM is missing. The current flow downloads DD and ZIP when SBOM is missing.
 
-(-) DD качается зря в ряде кейсов
+(-) DD is downloaded unnecessarily in some cases.
 
-**Опция 2:**
+**Option 2:**
 
-`generate_argocd_repo` в GOPA кейсах переходит на SBOM вместо DD
+In GOPA cases, `generate_argocd_repo` uses SBOM instead of DD.
 
-(-) Требуется разовое изменение `sbom_generation` (расширение `application/vnd.qubership.app.chart`)  
-(-) Будущие изменения в `generate_argocd_repo` которые потребуют новых полей DD могут потребовать изменения `sbom_generation`  
-(-) Требуется реализации процедуры регенерации SBOM при новой версии SBOM-спеки (изменилась версия спеки, перегенери даже если есть кэш)  
+(-) Requires a one-time change to `sbom_generation` (the `application/vnd.qubership.app.chart` extension).
+(-) Future changes to `generate_argocd_repo` that require new DD fields may require changes to `sbom_generation`.
+(-) Requires an SBOM regeneration procedure for a new SBOM specification version. If the specification version
+    changes, regenerate the SBOM even when a cache exists.
 
-**Опция 3:**
+**Option 3:**
 
-Кэшировать DD, sbom средствами гитлаба
+Cache DD and SBOMs using GitLab features.
 
-(-) Высокая вероятность мискэша, потому что кэш пер раннер нода, есть ретеншен полиси кэша  
+(-) A cache miss is highly likely because the cache is per runner node and has a retention policy.
 
 ## To deprecate
 
@@ -842,8 +844,8 @@ Functions:
     - [phase1] unchanged
     - AI[phase1]: test manually
     - AI[techDebt-P1]: prepare a UC, add tests
-    - AI[bgd]: `apply_ns_build_filter` заменить на СД-скоуп генерации: рендерить только нс из СД,
-      file-replace-merge в закоммиченный инстанс. Тогда `NS_BUILD_FILTER` уходит в deprecate.
+    - AI[bgd]: Replace `apply_ns_build_filter` with SD-scoped generation. Render only namespaces from the SD,
+      then apply file-replace-merge to the committed instance. `NS_BUILD_FILTER` can then be deprecated.
 5. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
@@ -887,9 +889,10 @@ Functions:
       - resolve DD per app with appreg defs
       - download DD+ZIP, unzip
       - generate SBOM from local DD + ZIP
-    - AI[techDebt-PERF]: оптимизировать скачивание DD/ZIP + генерацию sbom. <https://docs.gitlab.com/ci/caching/>
-      - (??) не скачивать ZIP для `generate_argocd_repo`
-      - (??) кэшировать ДД.json по аналогии с sbom
+    - AI[techDebt-PERF]: Optimize DD and ZIP downloads and SBOM generation.
+      <https://docs.gitlab.com/ci/caching/>
+      - (??) Do not download ZIP for `generate_argocd_repo`.
+      - (??) Cache DD.json in the same way as SBOM.
 4. `effective_set_entrypoint`
     - input:
       - env instance
@@ -905,7 +908,7 @@ Functions:
     - AI[phase1]: support DP
     - AI[phase1]: remove SD support
     - AI[phase1]: implement uniq app names
-    - AI[bgd]: Поддержка бг кейса в ES структуре - `<namespace-folder-01>` включает peer|origin постфиксы
+    - AI[bgd]: Support the BG case in the ES structure. `<namespace-folder-01>` includes peer and origin postfixes.
 5. `external_credential_provisioning`
     - input:
       - Effective Set
