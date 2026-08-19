@@ -51,6 +51,16 @@ jobs:
                --junitxml=reports/sbom_retention.xml \
                | tee -a /workspace/e2e_tests.log"
 
+      - name: Run SBOM Migration BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_sbom_storage_migration.py \
+               -v -s \
+               --junitxml=reports/sbom_migration.xml \
+               | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
