@@ -371,7 +371,6 @@ class EnvGenerator:
     def generate_namespace_files_and_map(self) -> dict:
         context = self.ctx.as_dict()
         bgd = get_bgd_object(Path(self.ctx.current_env_dir))
-        bg_ns_target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
         namespace_by_deploy_postfix = {}
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
@@ -403,14 +402,10 @@ class EnvGenerator:
                                             folder_postfix)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
-                if bg_ns_target is None:
-                    logger.warning(
-                        f"BG_NS_TARGET is not set, skipping deployPostfix '{map_key}' for {role.name} namespace"
-                    )
-                    continue
-                if role != bg_ns_target:
-                    continue
-            namespace_by_deploy_postfix[map_key] = namespace_name
+                sides = namespace_by_deploy_postfix.setdefault(map_key, {})
+                sides[role.name.lower()] = namespace_name
+            else:
+                namespace_by_deploy_postfix[map_key] = namespace_name
 
         self.ctx.namespace_by_deploy_postfix = namespace_by_deploy_postfix
         return namespace_by_deploy_postfix
