@@ -2,11 +2,14 @@ from pathlib import Path
 from os import getenv
 
 from dpg.v1.internal.deployment_plan.models import DeployPlan, DeployPlanEntity, GenerationType  # noqa: F401 - re-exported
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, INVENTORY_DIR_NAME
+from envgenehelper.business_helper import (
+    get_current_env_dir_from_env_vars,
+    INVENTORY_DIR_NAME,
+    parse_bg_ns_target,
+)
 from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
-from envgenehelper.business_helper import parse_bg_ns_target
 
 DEPLOY_PLAN_FILE_NAME = "deploy-plan.yml"
 DELTA_DEPLOY_PLAN_FILE_NAME = "delta-deploy-plan.yml"
@@ -37,6 +40,17 @@ class EnvgeneDeployPlan(DeployPlan):
         self.dp_path = deploy_plan_path
 
 
+def resolve_namespace_entry(namespace_entry, bg_ns_target, deploy_postfix: str):
+    if not isinstance(namespace_entry, dict):
+        return namespace_entry
+    if bg_ns_target is None:
+        raise ValueError(
+            f"BG_NS_TARGET must be set to 'ORIGIN' or 'PEER' "
+            f"for deployPostfix '{deploy_postfix}'"
+        )
+    return namespace_entry[bg_ns_target.name.lower()]
+
+
 def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = SD_FILE_NAME,
                              output_path: Path = None) -> EnvgeneDeployPlan:
     sd_path = get_sd_dir().joinpath(file_name)
@@ -47,14 +61,11 @@ def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = 
     for app in apps:
         deploy_postfix = app.get("deployPostfix")
         namespace = namespace_by_deploy_postfix.get(deploy_postfix, deploy_postfix)
-        if isinstance(namespace, dict):
-            target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
-            if target is None:
-                raise ValueError(
-                    f"BG_NS_TARGET must be set to 'ORIGIN' or 'PEER' "
-                    f"for deployPostfix '{deploy_postfix}'"
-                )
-            namespace = namespace[target.name.lower()]
+        namespace = resolve_namespace_entry(
+            namespace,
+            parse_bg_ns_target(getenv("BG_NS_TARGET")),
+            deploy_postfix,
+        )
         entities.append(DeployPlanEntity(version=app.get("version"), deployPostfix=deploy_postfix, namespace=namespace))
 
     logger.info(f"Adapted {sd_path} into a deploy plan ({len(entities)} application(s))")

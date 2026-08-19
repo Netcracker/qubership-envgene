@@ -6,7 +6,7 @@ from envgenehelper.business_helper import (
     parse_bg_ns_target,
 )
 from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, resolve_namespace_entry
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 from build_env.namespace_render import NAMESPACE_MAP_FILE
@@ -18,7 +18,6 @@ _INTERMEDIATE_MAPPED_FILE = "deploy-plan-mapped.yml"
 
 def bind_namespaces(deploy_plan, namespace_map: dict, bg_ns_target):
     bound_plan = deploy_plan.model_copy(deep=True)
-    target = bg_ns_target.name.lower() if bg_ns_target else None
 
     for entity in bound_plan.entities:
         if entity.deploy_postfix:
@@ -27,15 +26,11 @@ def bind_namespaces(deploy_plan, namespace_map: dict, bg_ns_target):
                 raise ValueError(
                     f"deployPostfix '{entity.deploy_postfix}' is not present in the namespace map"
                 )
-            if isinstance(namespace_entry, dict):
-                if target is None:
-                    raise ValueError(
-                        f"BG_NS_TARGET must be set to 'ORIGIN' or 'PEER' "
-                        f"for deployPostfix '{entity.deploy_postfix}'"
-                    )
-                entity.namespace = namespace_entry[target]
-            else:
-                entity.namespace = namespace_entry
+            entity.namespace = resolve_namespace_entry(
+                namespace_entry,
+                bg_ns_target,
+                entity.deploy_postfix,
+            )
             continue
 
         for deploy_postfix, namespace_entry in namespace_map.items():
