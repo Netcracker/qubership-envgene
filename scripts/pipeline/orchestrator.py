@@ -8,7 +8,7 @@ from enum import StrEnum
 from os import getenv
 
 from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
-from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target
+from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -170,6 +170,11 @@ class MigrateSdToDeployPlanStep(PipelineStep):
         return needs_migration
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
+        if ctx.params.get('ENV_BUILDER'):
+            ctx.namespace_by_deploy_postfix = compute_namespace_map()
+        else:
+            ctx.namespace_by_deploy_postfix = {ns.postfix: ns.name for ns in get_namespaces()}
+
         ctx.deploy_plan = adapt_sd_to_deploy_plan(ctx.namespace_by_deploy_postfix, SD_FILE_NAME)
         ctx.deploy_plan_delta = adapt_sd_to_deploy_plan(
             ctx.namespace_by_deploy_postfix, DELTA_SD_FILE_NAME, output_path=EnvgeneDeployPlan.delta_path())
@@ -247,7 +252,7 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        ctx.namespace_by_deploy_postfix = run_build_environment()
+        run_build_environment()
 
 
 class GenerateEffectiveSetStep(PipelineStep):
