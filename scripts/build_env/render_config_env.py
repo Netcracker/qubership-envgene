@@ -618,6 +618,7 @@ class EnvGenerator:
             self.render_reg_defs()
 
             self.validate_appregdefs()
+
     def _resolve_composite_member(self, member: dict, bgd: dict | None = None) -> dict:
         member_type = member.get("type")
 
@@ -737,11 +738,12 @@ class EnvGenerator:
             self.set_env_templates()
 
             self.generate_bgd_file()
+            self.generate_composite_structure()
+            self.compute_composite_topology ()
             self.generate_solution_structure()
             self.generate_tenant_file()
             self.generate_cloud_file()
             self.generate_namespace_files()
-            self.generate_composite_structure()
             self.generate_external_cred()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
