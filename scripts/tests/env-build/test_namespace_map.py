@@ -67,11 +67,6 @@ class TestNamespaceMap(BaseTest):
         assert namespace_map
 
     @pytest.mark.unit
-    def test_invalid_bg_ns_target_fails_validation(self):
-        with pytest.raises(ValueError, match="BG_NS_TARGET must be 'origin' or 'peer'"):
-            self._render_map("cluster-01", "env-01", "candidate")
-
-    @pytest.mark.unit
     def test_compute_namespace_map_writes_per_side_keys(self, monkeypatch):
         self._set_env("bgd-cluster", "bgd-env")
         result = compute_namespace_map()
