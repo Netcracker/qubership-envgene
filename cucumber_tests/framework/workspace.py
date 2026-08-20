@@ -141,6 +141,21 @@ class EnvGeneWorkspace(BaseWorkspace):
         import sys
         python_exe = sys.executable
 
+        if os.environ.get("ENVGENE_DEBUG_IMPORT_PROBE"):
+            probe = subprocess.run(
+                [python_exe, "-c",
+                 "import build_env.render_config_env as m, inspect, hashlib;"
+                 "src=inspect.getsource(m.EnvGenerator.generate_namespace_files_and_map);"
+                 "print('PROBE build_env.render_config_env.__file__ =', m.__file__);"
+                 "print('PROBE generate_namespace_files_and_map sha256 =', hashlib.sha256(src.encode()).hexdigest());"
+                 "print('PROBE generate_namespace_files_and_map source:\\n' + src)"],
+                env=env, capture_output=True, text=True, cwd=project_root,
+            )
+            print("=== ENVGENE_DEBUG_IMPORT_PROBE stdout ===")
+            print(probe.stdout)
+            print("=== ENVGENE_DEBUG_IMPORT_PROBE stderr ===")
+            print(probe.stderr)
+
         result = subprocess.run(
             [python_exe, "-m", module_name],
             env=env,
