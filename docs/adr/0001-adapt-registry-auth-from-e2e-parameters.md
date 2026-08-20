@@ -24,7 +24,8 @@ The transform is gated in two levels. A `configuration/config.yml` feature flag 
 off. When on, a per-registry pub_reg discriminator triggers it. A committed RegDef already at
 `version: "2.0"` is passed through. We remove the adapter once the rest of the toolset supports RegDef v2.
 
-Consumers of the synthesized object:
+Consumers do not choose between the RegDef and `ctx`. They all resolve through the single `get_registry_info`
+seam, which returns the synthesized `RegistryInfo` for the run in place of the on-disk stub:
 
 - `process_sd`, `run_generate_deployment_plan`, and `get_sboms` read the synthesized `RegistryInfo` through
   the shared dpg download path.
@@ -49,3 +50,5 @@ Rejected:
 - The adapter must expand credential macros itself, because `create_credentials` runs later. This adds a
   dependency on credentials being decrypted at that point.
 - Auth values cannot depend on `solution_structure`, because the early Cloud render precedes SD processing.
+- The resolver seam does not exist yet. `get_registry_info` currently reads the on-disk RegDef and stubs
+  the auth, and its cache is per-name memoization, not an injection point, so the adapter must add it.
