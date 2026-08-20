@@ -56,10 +56,7 @@ Domain, Profiles, and credential files.
 
    4. The step copies Template Repository `resource_profiles/` into `tmp/resource_profiles/`.
 
-   5. When directory `environments/<cluster-name>/<env-name>/Namespaces/` exists, the step saves its
-      content to `build_env/tmp/initial_namespaces_content/Namespaces/`.
-
-   6. The step removes selected targets under the Environment Instance output path:
+   5. The step removes selected targets under the Environment Instance output path:
       `Applications/`, `Namespaces/`, `Profiles/`, `cloud.yml`, `tenant.yml`, `bg_domain.yml`, and
       `composite_structure.yml`.
 
@@ -152,10 +149,7 @@ Domain, Profiles, and credential files.
       `environments/<cluster-name>/<env-name>/`, restoring committed `env_definition.yml` from the
       pre-copy Inventory source before overwrite.
 
-   3. Namespace directories not selected in block 5 keep their pre-run content from
-      `build_env/tmp/initial_namespaces_content/Namespaces/` when a pre-run copy exists.
-
-   4. The step encrypts credential files under
+   3. The step encrypts credential files under
       `environments/<cluster-name>/<env-name>/Credentials/`.
 
 ## Result

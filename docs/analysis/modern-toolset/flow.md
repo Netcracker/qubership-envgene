@@ -392,7 +392,6 @@ Cache DD and SBOMs using GitLab features.
 7. `SD_SOURCE_TYPE: artifact`
 8. `BG_MANAGE`
 9. extended merge (removed)
-10. `NS_BUILD_FILTER`
 
 ## Flow
 
@@ -838,12 +837,9 @@ Functions:
       - `.create_external_credentials`
       - `.generate_paramset_templates`
       - `.create_credentials`
-      - `apply_ns_build_filter`
     - [phase1] unchanged
     - AI[phase1]: test manually
     - AI[techDebt-P1]: prepare a UC, add tests
-    - AI[bgd]: Replace `apply_ns_build_filter` with SD-scoped generation. Render only namespaces from the SD,
-      then apply file-replace-merge to the committed instance. `NS_BUILD_FILTER` can then be deprecated.
 5. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
