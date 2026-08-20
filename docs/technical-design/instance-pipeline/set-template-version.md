@@ -112,5 +112,5 @@ The Inventory file is not updated.
 
 ## Related documentation
 
-- [Environment Inventory](/docs/envgene-objects.md#environment-inventory)
+- [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
 - [`appregdef_render`](/docs/technical-design/instance-pipeline/appregdef-render.md)
