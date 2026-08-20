@@ -50,5 +50,3 @@ Rejected:
 - The adapter must expand credential macros itself, because `create_credentials` runs later. This adds a
   dependency on credentials being decrypted at that point.
 - Auth values cannot depend on `solution_structure`, because the early Cloud render precedes SD processing.
-- The resolver seam does not exist yet. `get_registry_info` currently reads the on-disk RegDef and stubs
-  the auth, and its cache is per-name memoization, not an injection point, so the adapter must add it.
