@@ -94,11 +94,18 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "crm:1.0"
 
   # ── Sub-flow 3 - deploy to active or candidate ────────────────────────────────
-  # A regular DEPLOY scoped by BG_NS_TARGET. Unlike warmup this is the full deploy
-  # chain, including env_build, and it deploys the versions from
-  # APPLICATION_VERSIONS rather than a copy of the active side.
+  # A regular DEPLOY scoped to one physical BG side by an explicit "namespace:name:version"
+  # APPLICATION_VERSIONS entry. Unlike warmup this is the full deploy chain, including
+  # env_build, and it deploys the versions from APPLICATION_VERSIONS rather than a copy
+  # of the active side. Per docs/technical-design/instance-pipeline/deploy-postfix-namespace-map.md
+  # and process-deployment-plan.md: namespace-map.yml always holds both origin and peer
+  # for a BG deployPostfix, and a "namespace:name:version" entry resolves its deployPostfix
+  # by searching for the given namespace in either side of the map - BG_NS_TARGET plays no
+  # role for this entry form (it only gates a bare "deployPostfix:version" entry, which is
+  # not exercised here). BG_NS_TARGET is still supplied below because a real BGD deploy
+  # pipeline run would set it regardless of entry form.
 
-  Scenario: Sub-flow 3 - deploy targets the origin namespace when BG_NS_TARGET is ORIGIN
+  Scenario: Sub-flow 3 - deploy targets the origin namespace via an explicit namespace:name:version entry
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "BG_NS_TARGET" is set to "ORIGIN"
@@ -109,10 +116,10 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
-    And the namespace map contains "bss" bound to "bss-origin"
+    And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
     And the deploy plan contains an entry for namespace "bss-origin" with version "app1:1.0"
 
-  Scenario: Sub-flow 3 - deploy targets the peer namespace when BG_NS_TARGET is PEER
+  Scenario: Sub-flow 3 - deploy targets the peer namespace via an explicit namespace:name:version entry
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "BG_NS_TARGET" is set to "PEER"
@@ -123,22 +130,19 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
-    And the namespace map contains "bss" bound to "bss-peer"
+    And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
     And the deploy plan contains an entry for namespace "bss-peer" with version "app1:1.0"
 
-  Scenario: Sub-flow 3 - deploy fails when APPLICATION_VERSIONS targets a namespace BG_NS_TARGET did not resolve
-    # BG_NS_TARGET gates which physical side gets rendered into namespace-map.yml
-    # (see "the namespace map contains ..." above). An explicit namespace in
-    # APPLICATION_VERSIONS that belongs to the other, unresolved side has no
-    # entry to bind against and the deployment plan step fails loudly instead of
-    # silently deploying to the wrong side.
+  Scenario: Sub-flow 3 - deploy fails when the deployed namespace is absent from the namespace map
+    # process-deployment-plan.md error case 5c: a "namespace:name:version" entry naming a
+    # namespace that appears in no namespace-map.yml value (neither scalar nor either BG
+    # side) fails the process_deployment_plan step instead of silently deploying nowhere.
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
-    And the pipeline parameter "BG_NS_TARGET" is set to "PEER"
-    And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-origin:app1:1.0"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-nonexistent:app1:1.0"
     And the pipeline parameter "LOCAL_APPDEFS_PATH" is set to "environments/test-cluster/test-env/AppDefs"
     And the pipeline parameter "LOCAL_REGDEFS_PATH" is set to "environments/test-cluster/test-env/RegDefs"
     When the unified pipeline orchestrator runs
     Then the pipeline fails
     And the pipeline step "process_deployment_plan" has status "FAILED"
-    And the pipeline log contains "KeyError: 'bss-origin'"
+    And the pipeline log contains "bss-nonexistent"

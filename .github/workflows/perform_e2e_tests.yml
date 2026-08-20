@@ -58,15 +58,11 @@ jobs:
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
             "set -o pipefail && \
              export PYTHONPATH=/workspace && \
-             export ENVGENE_DEBUG_IMPORT_PROBE=1 && \
              cd /workspace && \
              pytest cucumber_tests/step_defs/test_bgd_sub_flows.py \
                -v -s \
                --junitxml=reports/bgd_sub_flows.xml \
                | tee -a /workspace/e2e_tests.log"
-        # ENVGENE_DEBUG_IMPORT_PROBE is a temporary diagnostic (see cucumber_tests/framework/workspace.py)
-        # added to track down why CI's namespace-map.yml differs in shape from every local reproduction
-        # of this exact commit. Remove this env var and the probe code once root-caused.
 
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2

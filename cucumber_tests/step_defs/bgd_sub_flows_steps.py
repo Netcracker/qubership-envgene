@@ -130,14 +130,19 @@ def then_pipeline_step_status(workspace: EnvGeneWorkspace, step_name: str, statu
     )
 
 
-@then(parsers.parse('the namespace map contains "{deploy_postfix}" bound to "{namespace}"'))
-def then_namespace_map_contains(workspace: EnvGeneWorkspace, deploy_postfix: str, namespace: str):
+@then(parsers.parse(
+    'the namespace map contains "{deploy_postfix}" with origin "{origin_ns}" and peer "{peer_ns}"'))
+def then_namespace_map_has_both_sides(workspace: EnvGeneWorkspace, deploy_postfix: str, origin_ns: str, peer_ns: str):
+    # Per docs/technical-design/instance-pipeline/deploy-postfix-namespace-map.md: a BG deployPostfix
+    # always maps to an object holding both origin and peer namespace names; BG_NS_TARGET does not
+    # affect this file at all.
     env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
     map_path = env_dir / "Inventory" / "namespace-map.yml"
     workspace.assert_file_exists(map_path)
     namespace_map = yaml.safe_load(map_path.read_text(encoding="utf-8"))
-    assert namespace_map.get(deploy_postfix) == namespace, (
-        f"Expected namespace-map.yml['{deploy_postfix}'] == '{namespace}', got {namespace_map}"
+    expected = {"origin": origin_ns, "peer": peer_ns}
+    assert namespace_map.get(deploy_postfix) == expected, (
+        f"Expected namespace-map.yml['{deploy_postfix}'] == {expected}, got {namespace_map}"
     )
 
 
