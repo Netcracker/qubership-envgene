@@ -223,33 +223,6 @@
             }
           }
         },
-        "bgNsArtifacts": {
-          "type": "object",
-          "title": "Blue-Green Namespace Artifacts",
-          "description": "Per-side template artifact version pins for Blue-Green namespaces",
-          "properties": {
-            "origin": {
-              "type": "string",
-              "title": "Origin Artifact Version",
-              "description": "Template artifact version pinned for the origin namespace",
-              "examples": [
-                "bgd:v1.1.0-origin"
-              ]
-            },
-            "peer": {
-              "type": "string",
-              "title": "Peer Artifact Version",
-              "description": "Template artifact version pinned for the peer namespace",
-              "examples": [
-                "bgd:v1.1.0-peer"
-              ]
-            }
-          },
-          "required": [
-            "origin",
-            "peer"
-          ]
-        },
         "sharedMasterCredentialFiles": {
           "type": "array",
           "title": "Shared Master Credential Files",
