@@ -1,12 +1,13 @@
 # `change_bg_state`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`change_bg_state`](#change_bg_state)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -16,12 +17,12 @@ The `change_bg_state` step writes BG state marker files
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `BGD` |
-| `OPERATION_TYPE` | Pipeline | Yes | None | `BGD` | Step runs only when value is `BGD` |
-| `BG_STATE` | Pipeline | Yes | None | JSON with root key `BGState` | Supplies `originNamespace.state` and `peerNamespace.state` |
+| Parameter        | Source   | Required | Default | Values / format              | Effect                                                                     |
+| ---------------- | -------- | -------- | ------- | ---------------------------- | -------------------------------------------------------------------------- |
+| `ENV_NAMES`      | Pipeline | Yes      | None    | `<cluster-name>/<env-name>`  | Selects `environments/<cluster-name>/<env-name>/`                          |
+| `PIPELINE_TYPE`  | Pipeline | Yes      | None    | `GITLAB_DEPLOY`              | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `BGD` |
+| `OPERATION_TYPE` | Pipeline | Yes      | None    | `BGD`                        | Step runs only when value is `BGD`                                         |
+| `BG_STATE`       | Pipeline | Yes      | None    | JSON with root key `BGState` | Supplies `originNamespace.state` and `peerNamespace.state`                 |
 
 ## Processing flow
 
@@ -87,4 +88,4 @@ absent. BG state marker files are not written.
 ## Related documentation
 
 - [BG State Files](/docs/envgene-objects.md#bg-state-files)
-- [`warmup`](/docs/technical-design/instance-pipeline/warmup.md)
+- [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md)

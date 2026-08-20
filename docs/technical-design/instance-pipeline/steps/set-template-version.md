@@ -1,12 +1,13 @@
 # `set_template_version`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`set_template_version`](#set_template_version)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -16,12 +17,12 @@ The `set_template_version` step updates Environment Inventory field `envTemplate
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `ENV_TEMPLATE_VERSION` | Pipeline | Yes | None | artifact coordinates | Step runs only when set; supplies the version value to write |
-| `ENV_TEMPLATE_VERSION_UPDATE_MODE` | Pipeline | No | `PERSISTENT` | `PERSISTENT`, `TEMPORARY` | `PERSISTENT` writes the version to Inventory; `TEMPORARY` skips Inventory update |
-| `BG_NS_TARGET` | Pipeline | No | None | `origin`, `peer` | Selects which `envTemplate` field receives the version |
+| Parameter                          | Source   | Required | Default      | Values / format             | Effect                                                                           |
+| ---------------------------------- | -------- | -------- | ------------ | --------------------------- | -------------------------------------------------------------------------------- |
+| `ENV_NAMES`                        | Pipeline | Yes      | None         | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                |
+| `ENV_TEMPLATE_VERSION`             | Pipeline | Yes      | None         | artifact coordinates        | Step runs only when set; supplies the version value to write                     |
+| `ENV_TEMPLATE_VERSION_UPDATE_MODE` | Pipeline | No       | `PERSISTENT` | `PERSISTENT`, `TEMPORARY`   | `PERSISTENT` writes the version to Inventory; `TEMPORARY` skips Inventory update |
+| `BG_NS_TARGET`                     | Pipeline | No       | None         | `origin`, `peer`            | Selects which `envTemplate` field receives the version                           |
 
 ## Processing flow
 
@@ -113,4 +114,4 @@ The Inventory file is not updated.
 ## Related documentation
 
 - [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
-- [`appregdef_render`](/docs/technical-design/instance-pipeline/appregdef-render.md)
+- [`appregdef_render`](/docs/technical-design/instance-pipeline/steps/appregdef-render.md)

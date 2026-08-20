@@ -1,12 +1,13 @@
 # `warmup`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`warmup`](#warmup)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -16,12 +17,12 @@ The `warmup` step copies the active BG Namespace into the candidate Namespace, u
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Step runs only when value is `GITLAB_DEPLOY`, `OPERATION_TYPE` is `BGD`, and `BGD_OPERATION` is `warmup` |
-| `OPERATION_TYPE` | Pipeline | Yes | None | `BGD` | Step runs only when value is `BGD` |
-| `BGD_OPERATION` | Pipeline | Yes | None | `warmup` | Step runs only when value is `warmup` |
+| Parameter        | Source   | Required | Default | Values / format             | Effect                                                                                                   |
+| ---------------- | -------- | -------- | ------- | --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ENV_NAMES`      | Pipeline | Yes      | None    | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                                        |
+| `PIPELINE_TYPE`  | Pipeline | Yes      | None    | `GITLAB_DEPLOY`             | Step runs only when value is `GITLAB_DEPLOY`, `OPERATION_TYPE` is `BGD`, and `BGD_OPERATION` is `warmup` |
+| `OPERATION_TYPE` | Pipeline | Yes      | None    | `BGD`                       | Step runs only when value is `BGD`                                                                       |
+| `BGD_OPERATION`  | Pipeline | Yes      | None    | `warmup`                    | Step runs only when value is `warmup`                                                                    |
 
 ## Processing flow
 
@@ -94,7 +95,7 @@ The `warmup` step copies the active BG Namespace into the candidate Namespace, u
 
 6. **Build warmup deploy-plan delta**
 
-   Delegates to [`process_deployment_plan` - `create_dp_for_warmup`](/docs/technical-design/instance-pipeline/process-deployment-plan.md#warmup-deploy-plan-delta-create_dp_for_warmup).
+   Delegates to [`process_deployment_plan` - `create_dp_for_warmup`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md#warmup-deploy-plan-delta-create_dp_for_warmup).
 
 ## Result
 
@@ -107,7 +108,7 @@ The `warmup` step copies the active BG Namespace into the candidate Namespace, u
    ran in step 5.
 
 3. Deploy-plan results are described in
-   [`process_deployment_plan` - `create_dp_for_warmup`](/docs/technical-design/instance-pipeline/process-deployment-plan.md#warmup-deploy-plan-delta-create_dp_for_warmup).
+   [`process_deployment_plan` - `create_dp_for_warmup`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md#warmup-deploy-plan-delta-create_dp_for_warmup).
 
 ## Error handling
 
@@ -126,6 +127,6 @@ The `warmup` step copies the active BG Namespace into the candidate Namespace, u
 
 ## Related documentation
 
-- [`change_bg_state`](/docs/technical-design/instance-pipeline/change-bg-state.md)
-- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/process-deployment-plan.md)
-- [`generate_effective_set`](/docs/technical-design/instance-pipeline/generate-effective-set.md)
+- [`change_bg_state`](/docs/technical-design/instance-pipeline/steps/change-bg-state.md)
+- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
+- [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md)

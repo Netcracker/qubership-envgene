@@ -1,12 +1,13 @@
 # `env_build`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`env_build`](#env_build)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -16,13 +17,13 @@ Domain, Profiles, and credential files.
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Step runs when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN`, unless `ENV_BUILDER: true` |
-| `OPERATION_TYPE` | Pipeline | Yes | None | `DEPLOY`, `CLEAN` | On `CLEAN`, marks cleaned Namespaces in rendered objects |
-| `ENV_BUILDER` | Pipeline | No | `false` | `true`, `false` | When `true`, step runs regardless of `PIPELINE_TYPE` |
-| `BG_NS_TARGET` | Pipeline | Conditional | None | `origin`, `peer` | Selects origin or peer Namespace from per-side `namespace-map.yml` entries when deploy plan contains a BG `deployPostfix` |
+| Parameter        | Source   | Required    | Default | Values / format             | Effect                                                                                                                    |
+| ---------------- | -------- | ----------- | ------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `ENV_NAMES`      | Pipeline | Yes         | None    | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                                                         |
+| `PIPELINE_TYPE`  | Pipeline | Yes         | None    | `GITLAB_DEPLOY`             | Step runs when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN`, unless `ENV_BUILDER: true`           |
+| `OPERATION_TYPE` | Pipeline | Yes         | None    | `DEPLOY`, `CLEAN`           | On `CLEAN`, marks cleaned Namespaces in rendered objects                                                                  |
+| `ENV_BUILDER`    | Pipeline | No          | `false` | `true`, `false`             | When `true`, step runs regardless of `PIPELINE_TYPE`                                                                      |
+| `BG_NS_TARGET`   | Pipeline | Conditional | None    | `origin`, `peer`            | Selects origin or peer Namespace from per-side `namespace-map.yml` entries when deploy plan contains a BG `deployPostfix` |
 
 ## Processing flow
 
@@ -206,5 +207,5 @@ The Environment Instance is not rebuilt.
 
 ## Related documentation
 
-- [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/deploy-postfix-namespace-map.md)
-- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/process-deployment-plan.md)
+- [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/steps/deploy-postfix-namespace-map.md)
+- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)

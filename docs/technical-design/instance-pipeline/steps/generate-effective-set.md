@@ -1,12 +1,13 @@
 # `generate_effective_set`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`generate_effective_set`](#generate_effective_set)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -15,16 +16,16 @@ The `generate_effective_set` step writes the Effective Set under
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Selects GitLab deploy Effective Set path |
-| `OPERATION_TYPE` | Pipeline | Yes | None | `DEPLOY`, `CLEAN`, `BGD` | Selects deploy, clean, or BGD warmup generation path |
-| `BGD_OPERATION` | Pipeline | Conditional | None | `warmup` | With `OPERATION_TYPE: BGD`, only `warmup` triggers this step under `GITLAB_DEPLOY` |
-| `GENERATE_EFFECTIVE_SET` | Pipeline | No | `false` | `true`, `false` | When `true`, step runs even outside `GITLAB_DEPLOY` deploy/clean/warmup triggers |
-| `EFFECTIVE_SET_CONFIG` | Pipeline | No | None | JSON config | Passes extra Calculator CLI arguments |
-| `CUSTOM_PARAMS` | Pipeline | No | None | JSON-in-string | Injects session-scoped parameters into the Effective Set |
-| `DEPLOYMENT_SESSION_ID` | Pipeline | No | generated UUID | string | Passed to Calculator CLI as extra parameter |
+| Parameter                | Source   | Required    | Default        | Values / format             | Effect                                                                             |
+| ------------------------ | -------- | ----------- | -------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| `ENV_NAMES`              | Pipeline | Yes         | None           | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                  |
+| `PIPELINE_TYPE`          | Pipeline | Yes         | None           | `GITLAB_DEPLOY`             | Selects GitLab deploy Effective Set path                                           |
+| `OPERATION_TYPE`         | Pipeline | Yes         | None           | `DEPLOY`, `CLEAN`, `BGD`    | Selects deploy, clean, or BGD warmup generation path                               |
+| `BGD_OPERATION`          | Pipeline | Conditional | None           | `warmup`                    | With `OPERATION_TYPE: BGD`, only `warmup` triggers this step under `GITLAB_DEPLOY` |
+| `GENERATE_EFFECTIVE_SET` | Pipeline | No          | `false`        | `true`, `false`             | When `true`, step runs even outside `GITLAB_DEPLOY` deploy/clean/warmup triggers   |
+| `EFFECTIVE_SET_CONFIG`   | Pipeline | No          | None           | JSON config                 | Passes extra Calculator CLI arguments                                              |
+| `CUSTOM_PARAMS`          | Pipeline | No          | None           | JSON-in-string              | Injects session-scoped parameters into the Effective Set                           |
+| `DEPLOYMENT_SESSION_ID`  | Pipeline | No          | generated UUID | string                      | Passed to Calculator CLI as extra parameter                                        |
 
 ## Processing flow
 
@@ -145,5 +146,5 @@ Effective Set is not generated.
 ## Related documentation
 
 - [Effective Set Generation](/docs/features/effective-set-generation.md)
-- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/process-deployment-plan.md)
-- [`warmup`](/docs/technical-design/instance-pipeline/warmup.md)
+- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
+- [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md)
