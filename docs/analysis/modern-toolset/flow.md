@@ -646,8 +646,7 @@ Functions:
 
 Triggers:
 
-- `OPERATION_TYPE: DEPLOY` and
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
+- `OPERATION_TYPE: DEPLOY`
 
 Functions:
 
@@ -688,18 +687,17 @@ Functions:
     - AI[phase1]: do not call in the new flow, call in the old flow
     - AI[techDebt-P2]: remove `SD_SOURCE_TYPE`
 
-migrate sd to deploy plan
-
-1. `adapt_sd_to_deploy_plan`
+2. `adapt_sd_to_deploy_plan`
     - input:
       - updated `sd.yaml`
-      - rendered namespace in env instance
+      - `namespace-map.yml`
     - output:
       - `delta-deploy-plan.yml`
     - actions:
       - generate dp based on sd
-      - resolve each entry namespace name from the committed env instance (deployPostfix -> namespace name)
-      - fail if a deployPostfix has no matching namespace in the committed env instance
+      - resolve each entry namespace name from `namespace-map.yml` (deployPostfix -> namespace name)
+      - fail if a deployPostfix has no matching namespace in `namespace-map.yml`
+      - non-BG only
     - [phase1] add the function
 
 #### 1.13 step `generate_deployment_plan`
