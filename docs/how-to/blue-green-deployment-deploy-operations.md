@@ -46,7 +46,7 @@ for a manual run. Working examples are in
 
 EnvGene renders the selected side from a template artifact version and recalculates its parameters. The
 other side stays as it was. Origin and peer swap the `active` and `candidate`
-[BG states](/docs/features/blue-green-deployment.md#bg-state-files) from release to release, so either
+[BG states](/docs/features/blue-green-deployment.md#what-state-files-tell-you) from release to release, so either
 side can be the deploy target.
 
 1. Choose the template artifact version for the side, one of:
