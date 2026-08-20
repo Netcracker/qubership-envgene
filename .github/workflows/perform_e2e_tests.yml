@@ -34,7 +34,8 @@ jobs:
         run: |
           mkdir -p reports
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "export PYTHONPATH=/workspace && \
+            "set -o pipefail && \
+             export PYTHONPATH=/workspace && \
              cd /workspace && \
              pytest cucumber_tests/step_defs/test_environment_inventory_generation.py \
                -v -s \
@@ -44,7 +45,8 @@ jobs:
       - name: Run SBOM Retention BDD tests
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "export PYTHONPATH=/workspace && \
+            "set -o pipefail && \
+             export PYTHONPATH=/workspace && \
              cd /workspace && \
              pytest cucumber_tests/step_defs/test_sbom_retention.py \
                -v -s \
@@ -54,7 +56,8 @@ jobs:
       - name: Run BGD Sub-flows BDD tests
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "export PYTHONPATH=/workspace && \
+            "set -o pipefail && \
+             export PYTHONPATH=/workspace && \
              cd /workspace && \
              pytest cucumber_tests/step_defs/test_bgd_sub_flows.py \
                -v -s \
