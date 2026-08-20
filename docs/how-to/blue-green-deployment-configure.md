@@ -202,7 +202,7 @@ Confirm the generated output under `/environments/<cluster-name>/<environment-na
 - `bg_domain.controllerNamespace.credentials` in the generated Credentials file. EnvGene creates it during
   generation.
 - BG parameters in the Effective Set Topology Context. See
-  [BG-related parameters in Effective Set](/docs/features/blue-green-deployment.md#bg-related-parameters-in-effective-set).
+  [BG Domain parameters in Effective Set](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example).
 
 For the BG lifecycle operations (initialize the domain, warmup, promote, rollback, commit), which run with
 [`OPERATION_TYPE: BGD`](/docs/instance-pipeline-parameters.md#operation_type),

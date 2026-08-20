@@ -1341,7 +1341,7 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. EnvGene uses it for BGD lifecycle management and for resolving origin, peer, and controller namespace names.
 
 The standalone BG Domain object represents a BG Domain that is not part of a
 [Composite Structure](#composite-structure).
@@ -1438,19 +1438,13 @@ bg_domain:
     url: https://controller-env-1-controller.qubership.org
 ```
 
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
-
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
-
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
 
 **Filename patterns:**
 

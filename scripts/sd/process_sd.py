@@ -42,7 +42,12 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_by_d
             if "deployPostfix" in app and isinstance(app["deployPostfix"], str):
                 namespace_name = app["deployPostfix"]
                 replacement = next(
-                    (postfix for postfix, name in namespace_by_deploy_postfix.items() if name == namespace_name),
+                    (
+                        postfix
+                        for postfix, name in namespace_by_deploy_postfix.items()
+                        if name == namespace_name
+                        or isinstance(name, dict) and namespace_name in name.values()
+                    ),
                     None)
                 if replacement:
                     logger.info(f"Replacing deployPostfix '{namespace_name}' with '{replacement}'")

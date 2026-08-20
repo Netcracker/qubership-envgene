@@ -36,6 +36,17 @@ class EnvgeneDeployPlan(DeployPlan):
         self.dp_path = deploy_plan_path
 
 
+def resolve_namespace_entry(namespace_entry, bg_ns_target, deploy_postfix: str):
+    if not isinstance(namespace_entry, dict):
+        return namespace_entry
+    if bg_ns_target is None:
+        raise ValueError(
+            f"BG_NS_TARGET must be set to 'ORIGIN' or 'PEER' "
+            f"for deployPostfix '{deploy_postfix}'"
+        )
+    return namespace_entry[bg_ns_target.name.lower()]
+
+
 def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = SD_FILE_NAME,
                              output_path: Path = None) -> EnvgeneDeployPlan:
     sd_path = get_sd_dir().joinpath(file_name)
