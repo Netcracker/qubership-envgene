@@ -8,6 +8,8 @@ from envgenehelper import openYaml, get_empty_yaml, getenv_with_error
 from envgenehelper.yaml_helper import validate_yaml_by_scheme_or_fail
 import jsonschema
 from .logger import logger
+from .constants import CI_JOB_ARTIFACT_MAX_SIZE_MB, SBOM_RETENTION_MAX_SIZE_MB
+from .models import SaveArtifactsStrategy
 
 ENVGENE_AGE_PUBLIC_KEY_ID = "ENVGENE_AGE_PUBLIC_KEY"
 ENVGENE_AGE_PRIVATE_KEY_ID = "ENVGENE_AGE_PRIVATE_KEY"
@@ -84,6 +86,28 @@ def validate_config_file(config_yaml):
             logger.info(f'list_of_empty_parameters: {empty_parameters}')
             raise Exception(
                 f'Following CI/CD variables are not set: \n{empty_parameters}.\nThese variables are mandatory for crypt_backend: {SOPS_ID}')
+
+
+def get_artifact_size_limit_mb() -> int:
+    env_override = getenv("ARTIFACT_SIZE_LIMIT_MB")
+    if env_override:
+        return int(env_override)
+    return get_envgene_config_yaml().get("save_artifacts", {}).get("size_limit_mb", CI_JOB_ARTIFACT_MAX_SIZE_MB)
+
+
+def get_save_artifacts_strategy() -> SaveArtifactsStrategy:
+    env_override = getenv("SAVE_ARTIFACTS_STRATEGY")
+    if env_override:
+        return SaveArtifactsStrategy(env_override)
+    value = get_envgene_config_yaml().get("save_artifacts", {}).get("strategy", "ALWAYS")
+    return SaveArtifactsStrategy(value)
+
+
+def get_sbom_retention_size_limit_mb() -> int:
+    env_override = getenv("SBOM_RETENTION_SIZE_LIMIT_MB")
+    if env_override:
+        return int(env_override)
+    return get_envgene_config_yaml().get("sbom_retention", {}).get("size_limit_mb", SBOM_RETENTION_MAX_SIZE_MB)
 
 
 @lru_cache(maxsize=1)

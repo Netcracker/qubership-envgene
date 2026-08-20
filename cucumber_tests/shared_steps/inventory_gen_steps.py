@@ -177,7 +177,7 @@ def repo_state_identical(workspace):
     compare_directories(
         workspace.pre_run_snapshot_dir,
         workspace.base_dir,
-        ignore_patterns=["build.env", "envgene-vars.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*"],
+        ignore_patterns=["build.env", "envgene-vars.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*", "artifacts"],
     )
 
 
@@ -214,10 +214,10 @@ def env_dir_is_deleted(workspace):
 def decrypted_creds_match(workspace, filename, scope, ref_name):
     key = b"c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
     fernet = Fernet(key)
-    
+
     path = workspace.entity_dir("credentials", scope) / filename
     actual_yaml = yaml.safe_load(path.read_text(encoding='utf-8'))
-    
+
     # Decrypt values
     def decrypt_node(node):
         if isinstance(node, dict):
@@ -230,7 +230,7 @@ def decrypted_creds_match(workspace, filename, scope, ref_name):
         return node
 
     decrypted_actual = decrypt_node(actual_yaml)
-    
+
     # Read the golden reference
     ref_path = Path(__file__).parent.parent / "test_data" / "goldens" / ref_name / "environments"
     if scope == "env":
@@ -239,7 +239,7 @@ def decrypted_creds_match(workspace, filename, scope, ref_name):
         ref_path = ref_path / workspace.cluster_name / "credentials" / filename
     else:
         ref_path = ref_path / "credentials" / filename
-        
+
     import os
     if os.environ.get('UPDATE_GOLDEN') == '1':
         ref_path.parent.mkdir(parents=True, exist_ok=True)
@@ -248,7 +248,7 @@ def decrypted_creds_match(workspace, filename, scope, ref_name):
         return
 
     expected_yaml = yaml.safe_load(ref_path.read_text(encoding='utf-8'))
-    
+
     assert decrypted_actual == expected_yaml, f"Decrypted credentials do not match expected reference {ref_name}"
 
 

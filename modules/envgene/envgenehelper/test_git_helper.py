@@ -106,6 +106,32 @@ class TestStageChanges:
             manager.stage_changes([])
 
 
+class TestSparseCheckout:
+    def test_cleans_untracked_leftovers_under_sparse_paths(self):
+        manager = make_manager()
+        manager._fetch = MagicMock()
+        manager.repo.git.clean = MagicMock()
+        manager.repo.git.sparse_checkout = MagicMock()
+        manager.repo.git.read_tree = MagicMock()
+
+        manager.sparse_checkout(["environments/cluster/env"])
+
+        manager.repo.git.clean.assert_called_once_with(
+            "-fd", "--", "environments/cluster/env"
+        )
+
+    def test_skips_clean_when_no_sparse_paths(self):
+        manager = make_manager()
+        manager._fetch = MagicMock()
+        manager.repo.git.clean = MagicMock()
+        manager.repo.git.sparse_checkout = MagicMock()
+        manager.repo.git.read_tree = MagicMock()
+
+        manager.sparse_checkout([])
+
+        manager.repo.git.clean.assert_not_called()
+
+
 class TestCherryPickAndPush:
     def test_aborts_on_cherry_pick_git_error(self):
         manager = make_manager()

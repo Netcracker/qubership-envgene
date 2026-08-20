@@ -247,6 +247,10 @@ class GitRepoManager:
                 create_remote=True,
             )
 
+        if sparse_paths:
+            logger.info(f"git clean -fd ({len(sparse_paths)} paths)")
+            self.repo.git.clean("-fd", "--", *sparse_paths)
+
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
