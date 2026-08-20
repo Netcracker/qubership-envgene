@@ -1341,7 +1341,7 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. EnvGene uses it for BGD lifecycle management and for resolving origin, peer, and controller namespace names.
 
 The standalone BG Domain object represents a BG Domain that is not part of a
 [Composite Structure](#composite-structure).
@@ -1437,12 +1437,6 @@ bg_domain:
     type: namespace
     url: https://controller-env-1-controller.qubership.org
 ```
-
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
-
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
 
 ### BG State Files
 
