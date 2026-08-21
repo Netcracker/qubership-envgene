@@ -125,15 +125,17 @@ class GitRepoManager:
         if not full_env_name:
             return []
 
-        excluded_paths = [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
-                           f"environments/{full_env_name}/Inventory/namespace-map.yml"]
+        return [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
+                f"environments/{full_env_name}/Inventory/namespace-map.yml"]
 
-        if os.getenv("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY:
-            excluded_paths += [f"environments/{full_env_name}/effective-set/deployment",
-                                f"environments/{full_env_name}/effective-set/cleanup",
-                                f"environments/{full_env_name}/effective-set/runtime"]
+    def _get_dcl_paths(self) -> list[str]:
+        full_env_name = os.getenv("FULL_ENV_NAME")
+        if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY or not full_env_name:
+            return []
 
-        return excluded_paths
+        return [f"environments/{full_env_name}/effective-set/deployment",
+                f"environments/{full_env_name}/effective-set/cleanup",
+                f"environments/{full_env_name}/effective-set/runtime"]
 
     @property
     def _repo_root(self) -> Path:
@@ -147,7 +149,7 @@ class GitRepoManager:
         snapshot_root = self._snapshot_root()
 
         snapshot_paths = []
-        for rel_path in self._get_excluded_paths():
+        for rel_path in self._get_excluded_paths() + self._get_dcl_paths():
             src = self._repo_root / rel_path
             if not src.exists():
                 continue
@@ -159,6 +161,14 @@ class GitRepoManager:
             snapshot_paths.append(rel_path)
 
         return snapshot_paths
+
+    def remove_dcl_paths_from_index(self) -> None:
+        dcl_paths = self._get_dcl_paths()
+        if not dcl_paths:
+            return
+
+        logger.info("Removing DCL contexts from the repository index...")
+        self.repo.git.rm("--cached", "-r", "--ignore-unmatch", "--", *dcl_paths)
 
     def restore_excluded_paths(self, rel_paths: list[str]) -> None:
         snapshot_root = self._snapshot_root()
@@ -205,7 +215,7 @@ class GitRepoManager:
             commit_args = ["-p", parent_sha, "-m", message]
         except ValueError:
             commit_args = ["-m", message]
-            
+
         commit_sha = self.repo.git.commit_tree(tree_sha, *commit_args).strip()
         logger.info(f"Created hidden commit {commit_sha} (not attached to any branch)")
         return commit_sha
@@ -214,7 +224,7 @@ class GitRepoManager:
         if os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
             logger.info("Local test mode: skipping cherry-pick and push")
             return
-            
+
         self._fetch(ref=self.ctx.ref_name, checkout="FETCH_HEAD", checkout_option=["--force", "--detach"])
         try:
             logger.info(f"git cherry-pick {snapshot_sha}")
