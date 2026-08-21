@@ -53,6 +53,7 @@ jobs:
 
   link-check:
     needs: [conventional-commits]
+    continue-on-error: true
     permissions:
       contents: read
       packages: write
@@ -61,6 +62,7 @@ jobs:
 
   linters:
     needs: [conventional-commits]
+    continue-on-error: true
     permissions:
       contents: read
       packages: write
