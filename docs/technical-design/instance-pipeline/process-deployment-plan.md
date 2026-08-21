@@ -200,7 +200,7 @@ Triggers: `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup` and `PIPELINE_TYPE: 
 
 8. The function writes updated `Inventory/deploy-plan.yml`.
 
-### Result
+### Warmup delta result
 
 1. File `Inventory/deploy-plan.yml` replaces the candidate slice with rebound active entries.
 
