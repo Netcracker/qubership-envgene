@@ -1,12 +1,13 @@
 # `deploy_postfix_namespace_map`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`deploy_postfix_namespace_map`](#deploy_postfix_namespace_map)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -15,11 +16,11 @@ The `deploy_postfix_namespace_map` step writes file
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` |
-| `OPERATION_TYPE` | Pipeline | No | `DEPLOY` | `DEPLOY` | Step runs only when value is `DEPLOY` |
+| Parameter        | Source   | Required | Default  | Values / format             | Effect                                                                        |
+| ---------------- | -------- | -------- | -------- | --------------------------- | ----------------------------------------------------------------------------- |
+| `ENV_NAMES`      | Pipeline | Yes      | None     | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                             |
+| `PIPELINE_TYPE`  | Pipeline | Yes      | None     | `GITLAB_DEPLOY`             | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` |
+| `OPERATION_TYPE` | Pipeline | No       | `DEPLOY` | `DEPLOY`                    | Step runs only when value is `DEPLOY`                                         |
 
 ## Processing flow
 
@@ -158,5 +159,5 @@ written.
 ## Related documentation
 
 - [Template Descriptor](/docs/envgene-objects.md#template-descriptor)
-- [`appregdef_render`](/docs/technical-design/instance-pipeline/appregdef-render.md)
-- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/process-deployment-plan.md)
+- [`appregdef_render`](/docs/technical-design/instance-pipeline/steps/appregdef-render.md)
+- [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)

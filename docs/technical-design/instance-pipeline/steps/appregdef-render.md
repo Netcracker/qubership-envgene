@@ -1,12 +1,13 @@
 # `appregdef_render`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`appregdef_render`](#appregdef_render)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -17,12 +18,12 @@ Template artifacts into `tmp/templates/`, `tmp/origin/templates/`, and `tmp/peer
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects Environment Inventory and output paths |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Step runs on every `GITLAB_DEPLOY` pipeline run |
-| `ENV_BUILDER` | Pipeline | No | `false` | `true`, `false` | When `true`, the step runs even when `PIPELINE_TYPE` is not `GITLAB_DEPLOY` |
-| `ENV_TEMPLATE_VERSION` | Pipeline | No | None | artifact coordinates | When set, step `set_template_version` may update Inventory before this step runs |
+| Parameter              | Source   | Required | Default | Values / format             | Effect                                                                           |
+| ---------------------- | -------- | -------- | ------- | --------------------------- | -------------------------------------------------------------------------------- |
+| `ENV_NAMES`            | Pipeline | Yes      | None    | `<cluster-name>/<env-name>` | Selects Environment Inventory and output paths                                   |
+| `PIPELINE_TYPE`        | Pipeline | Yes      | None    | `GITLAB_DEPLOY`             | Step runs on every `GITLAB_DEPLOY` pipeline run                                  |
+| `ENV_BUILDER`          | Pipeline | No       | `false` | `true`, `false`             | When `true`, the step runs even when `PIPELINE_TYPE` is not `GITLAB_DEPLOY`      |
+| `ENV_TEMPLATE_VERSION` | Pipeline | No       | None    | artifact coordinates        | When set, step `set_template_version` may update Inventory before this step runs |
 
 ## Processing flow
 
@@ -129,4 +130,4 @@ validation. Published definition files are not updated.
 ## Related documentation
 
 - [Application and Registry Definition](/docs/features/app-reg-defs.md)
-- [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/deploy-postfix-namespace-map.md)
+- [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/steps/deploy-postfix-namespace-map.md)

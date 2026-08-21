@@ -1,12 +1,16 @@
 # `process_deployment_plan`
 
-- [Description](#description)
-- [Input parameters](#input-parameters)
-- [Processing flow](#processing-flow)
-- [Result](#result)
-- [Error handling](#error-handling)
-- [Example](#example)
-- [Related documentation](#related-documentation)
+- [`process_deployment_plan`](#process_deployment_plan)
+  - [Description](#description)
+  - [Input parameters](#input-parameters)
+  - [Processing flow](#processing-flow)
+  - [Result](#result)
+  - [Error handling](#error-handling)
+  - [Example](#example)
+  - [Warmup deploy-plan delta (`create_dp_for_warmup`)](#warmup-deploy-plan-delta-create_dp_for_warmup)
+    - [Warmup result](#warmup-result)
+  - [Merge algorithm](#merge-algorithm)
+  - [Related documentation](#related-documentation)
 
 ## Description
 
@@ -17,18 +21,18 @@ step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-
 
 ## Input parameters
 
-| Parameter | Source | Required | Default | Values / format | Effect |
-| --- | --- | --- | --- | --- | --- |
-| `ENV_NAMES` | Pipeline | Yes | None | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/` |
-| `PIPELINE_TYPE` | Pipeline | Yes | None | `GITLAB_DEPLOY` | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN` |
-| `OPERATION_TYPE` | Pipeline | Yes | None | `DEPLOY`, `CLEAN` | Selects merge path (`DEPLOY`) or reduce path (`CLEAN`) |
-| `APPLICATION_VERSIONS` | Pipeline | Conditional | None | SD or application-version list | Required on `DEPLOY`; supplies applications to calculate |
-| `DEPLOY_POSTFIXES_FILTER` | Pipeline | No | empty | filter expression | Filters calculated deploy plan by deploy postfix |
-| `NAMESPACE_NAMES_FILTER` | Pipeline | No | empty | filter expression | Filters calculated deploy plan by namespace name |
-| `COMPONENT_NAMES_FILTER` | Pipeline | No | empty | filter expression | Filters calculated deploy plan by component name |
-| `WAVE_NAMES_FILTER` | Pipeline | No | empty | filter expression | Filters calculated deploy plan by wave name |
-| `BG_NS_TARGET` | Pipeline | Conditional | None | `origin`, `peer` | On `DEPLOY` with BG postfixes, selects origin or peer Namespace from `namespace-map.yml` |
-| `NAMESPACE_NAMES` | Pipeline | Conditional | empty | comma-separated namespace names | On `CLEAN`, namespaces to remove; empty removes all entries |
+| Parameter                 | Source   | Required    | Default | Values / format                 | Effect                                                                                   |
+| ------------------------- | -------- | ----------- | ------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ENV_NAMES`               | Pipeline | Yes         | None    | `<cluster-name>/<env-name>`     | Selects `environments/<cluster-name>/<env-name>/`                                        |
+| `PIPELINE_TYPE`           | Pipeline | Yes         | None    | `GITLAB_DEPLOY`                 | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN` |
+| `OPERATION_TYPE`          | Pipeline | Yes         | None    | `DEPLOY`, `CLEAN`               | Selects merge path (`DEPLOY`) or reduce path (`CLEAN`)                                   |
+| `APPLICATION_VERSIONS`    | Pipeline | Conditional | None    | SD or application-version list  | Required on `DEPLOY`; supplies applications to calculate                                 |
+| `DEPLOY_POSTFIXES_FILTER` | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by deploy postfix                                         |
+| `NAMESPACE_NAMES_FILTER`  | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by namespace name                                         |
+| `COMPONENT_NAMES_FILTER`  | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by component name                                         |
+| `WAVE_NAMES_FILTER`       | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by wave name                                              |
+| `BG_NS_TARGET`            | Pipeline | Conditional | None    | `origin`, `peer`                | On `DEPLOY` with BG postfixes, selects origin or peer Namespace from `namespace-map.yml` |
+| `NAMESPACE_NAMES`         | Pipeline | Conditional | empty   | comma-separated namespace names | On `CLEAN`, namespaces to remove; empty removes all entries                              |
 
 ## Processing flow
 
@@ -200,7 +204,7 @@ Triggers: `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup` and `PIPELINE_TYPE: 
 
 8. The function writes updated `Inventory/deploy-plan.yml`.
 
-### Result
+### Warmup result
 
 1. File `Inventory/deploy-plan.yml` replaces the candidate slice with rebound active entries.
 
@@ -219,6 +223,6 @@ retained.
 
 ## Related documentation
 
-- [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/deploy-postfix-namespace-map.md)
-- [`warmup`](/docs/technical-design/instance-pipeline/warmup.md)
-- [`generate_effective_set`](/docs/technical-design/instance-pipeline/generate-effective-set.md)
+- [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/steps/deploy-postfix-namespace-map.md)
+- [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md)
+- [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md)

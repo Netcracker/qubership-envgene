@@ -266,4 +266,4 @@ Use this page for **understanding**. Follow the links below for **doing**, **loo
 | See folder naming and per-side template artifacts | [Environment Instance generation](/docs/features/environment-instance-generation.md) |
 | See BG parameters in the Effective Set | [Effective Set calculator - `bg_domain` example](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example) |
 | Copy a complete template and instance layout | [BGD samples](/docs/samples/blue-green-deployment/) |
-| Study pipeline step behavior (implementers) | [BGD sub-flows](/docs/analysis/modern-toolset/bgd-sub-flows.md), [`change_bg_state`](/docs/technical-design/instance-pipeline/change-bg-state.md), [`warmup`](/docs/technical-design/instance-pipeline/warmup.md) |
+| Study pipeline step behavior (implementers) | [BGD sub-flows](/docs/technical-design/instance-pipeline/sub-flows/bgd.md), [`change_bg_state`](/docs/technical-design/instance-pipeline/steps/change-bg-state.md), [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md) |
