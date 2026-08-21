@@ -11,7 +11,9 @@ from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 from envgenehelper import *
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
-from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
+from envgenehelper.business_helper import (
+    get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole, parse_bg_ns_target,
+)
 from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
 
 EXTERNAL_CRED_COMMENT = "external credential template"
@@ -107,17 +109,6 @@ def build_minimal_render_context(env_name: str, cluster_name: str, env_dir: str,
         "cloud_passport_file_path": cloud_passport_file_path,
         "env_instances_dir": render_dir,
     }
-
-
-def parse_bg_ns_target(raw: str | None) -> NamespaceRole | None:
-    if raw is None or str(raw).strip() == "":
-        return None
-    normalized = str(raw).strip().lower()
-    if normalized == "origin":
-        return NamespaceRole.ORIGIN
-    if normalized == "peer":
-        return NamespaceRole.PEER
-    raise ValueError("BG_NS_TARGET must be 'origin' or 'peer', got '%s'" % raw)
 
 
 class EnvGenerator:
@@ -380,8 +371,6 @@ class EnvGenerator:
     def generate_namespace_files_and_map(self) -> dict:
         context = self.ctx.as_dict()
         bgd = get_bgd_object(Path(self.ctx.current_env_dir))
-        bg_ns_target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
-
         namespace_by_deploy_postfix = {}
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
@@ -413,13 +402,10 @@ class EnvGenerator:
                                             folder_postfix)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
-                if bg_ns_target is None:
-                    raise ValueError(
-                        f"BG_NS_TARGET is required to resolve deployPostfix '{map_key}'"
-                    )
-                if role != bg_ns_target:
-                    continue
-            namespace_by_deploy_postfix[map_key] = namespace_name
+                sides = namespace_by_deploy_postfix.setdefault(map_key, {})
+                sides[role.name.lower()] = namespace_name
+            else:
+                namespace_by_deploy_postfix[map_key] = namespace_name
 
         self.ctx.namespace_by_deploy_postfix = namespace_by_deploy_postfix
         return namespace_by_deploy_postfix

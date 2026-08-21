@@ -75,7 +75,8 @@ The generation path is chosen automatically based on the outcome of SD processin
 The entire ES is rebuilt from the current Full SD and environment instance data. All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) are produced. Applied when:
 
 - `SD_REPO_MERGE_MODE=replace`, or
-- The pipeline runs without an incoming SD and a Full SD already exists in the repository, or
+- The pipeline runs without an incoming SD, a Full SD already exists in the repository, and
+  `use_committed_sd` is `true` (the default), or
 - An incoming SD is supplied with a merge mode but no Full SD exists yet — the incoming SD becomes the Full SD, there is nothing to merge against.
 
 Application and Registry Definitions for every application in the Full SD must be available.
@@ -112,9 +113,21 @@ Under partial generation, the `generate_effective_set` stage follows the Delta S
 
 ### No-SD Mode
 
-Applied when the pipeline runs without an incoming SD and no Full SD exists in the repository. Only `topology` and `pipeline` contexts are produced; `deployment`, `runtime`, and `cleanup` require application data from a Solution Descriptor and cannot be generated without one. SBOMs are not required and are not requested.
+Applied when the pipeline runs without an incoming SD and one of the following holds:
 
-See [Generate Without a Solution Descriptor](/docs/how-to/generate-effective-set.md#generate-without-a-solution-descriptor) in the how-to guide.
+- No Full SD exists in the repository, or
+- A Full SD exists but `use_committed_sd` is `false` in
+  [`config.yml`](/docs/envgene-configs.md#configyml).
+
+Only `topology` and `pipeline` contexts are produced. `deployment`, `runtime`, and `cleanup` require
+application data from a Solution Descriptor and cannot be generated without one. SBOMs are not required
+so are not generated.
+
+By default (`use_committed_sd: true`) a run with no incoming SD uses the committed Full SD and Full
+Generation runs.
+
+See [Generate Without a Solution Descriptor](/docs/how-to/generate-effective-set.md#generate-without-a-solution-descriptor)
+in the how-to guide.
 
 ## Configuration
 

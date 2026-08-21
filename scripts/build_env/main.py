@@ -159,7 +159,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
     logger.info(f"External cred env is set as {render_context.is_external_cred_env}")
-    return resulting_dir, render_context.is_external_cred_env, render_context.ctx.namespace_by_deploy_postfix
+    return resulting_dir, render_context.is_external_cred_env
 
 
 def get_duplicate_names(param_files):
@@ -260,11 +260,10 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
-    resulting_env_dir, is_external_cred_env, namespace_by_deploy_postfix = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
+    resulting_env_dir, is_external_cred_env = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
                                           output_dir, work_dir)
     create_credentials(resulting_env_dir, env_dir, all_instances_dir, is_external_cred_env)
     apply_ns_build_filter()
-    return namespace_by_deploy_postfix
 
 
 def run_build_environment():
@@ -277,6 +276,5 @@ def run_build_environment():
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
     decrypt_all_cred_files_for_env()
-    namespace_by_deploy_postfix = render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
+    render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
     encrypt_all_cred_files_for_env()
-    return namespace_by_deploy_postfix

@@ -1,19 +1,23 @@
 ---
-# BGD template descriptor (after migration).
-# The filename must match envTemplate.name in the Environment Inventory.
-# Package with tenant/cloud templates from your template repository.
+# BGD template descriptor.
 tenant: "{{ templates_dir }}/env_templates/common/tenant.yml.j2"
 cloud:
   template_path: "{{ templates_dir }}/env_templates/common/cloud.yml.j2"
 namespaces:
-  - template_path: "{{ templates_dir }}/env_templates/bss/bss.yml.j2"
+  # BG Domain pair: one namespace template, two entries with distinct override names.
+  - template_path: "{{ templates_dir }}/env_templates/bgd/namespaces/bss.yml.j2"
     template_override:
-      name: "{{ current_env.name }}-peer-bss"
-  - template_path: "{{ templates_dir }}/env_templates/bss/bss.yml.j2"
+      name: "{{ current_env.name }}-bss-origin"
+  - template_path: "{{ templates_dir }}/env_templates/bgd/namespaces/bss.yml.j2"
     template_override:
-      name: "{{ current_env.name }}-origin-bss"
-  - template_path: "{{ templates_dir }}/env_templates/bgd/bg-plugin.yml.j2"
-  - template_path: "{{ templates_dir }}/env_templates/bgd/bg-controller.yml.j2"
-  - template_path: "{{ templates_dir }}/env_templates/bgd/data-management.yml.j2"
+      name: "{{ current_env.name }}-bss-peer"
+  # BG Domain controller.
+  - template_path: "{{ templates_dir }}/env_templates/bgd/namespaces/bg-controller.yml.j2"
+  # Composite members outside the BG Domain: baseline and a plain satellite.
+  - template_path: "{{ templates_dir }}/env_templates/bgd/namespaces/core.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/bgd/namespaces/oss.yml.j2"
+  # Standalone namespace, outside the Composite Structure and the BG Domain.
+  # supplementary is a plain application namespace, unrelated to Blue-Green.
+  - template_path: "{{ templates_dir }}/env_templates/bgd/namespaces/supplementary.yml.j2"
+composite_structure: "{{ templates_dir }}/env_templates/bgd/composite_structure.yml.j2"
 bg_domain: "{{ templates_dir }}/env_templates/bgd/bg_domain.yml.j2"
-parametersets: []

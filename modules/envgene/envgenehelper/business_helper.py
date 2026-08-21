@@ -348,6 +348,17 @@ class NamespaceRole(StrEnum):
     PEER = auto()
 
 
+def parse_bg_ns_target(raw: str | None) -> NamespaceRole | None:
+    if raw is None or str(raw).strip() == "":
+        return None
+    normalized = str(raw).strip().lower()
+    if normalized == "origin":
+        return NamespaceRole.ORIGIN
+    if normalized == "peer":
+        return NamespaceRole.PEER
+    raise ValueError("BG_NS_TARGET must be 'origin' or 'peer', got '%s'" % raw)
+
+
 def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
     bgd_object = bgd_object or get_bgd_object()
     roles = {

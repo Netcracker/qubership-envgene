@@ -1,0 +1,16 @@
+---
+# Composite baseline namespace. A plain namespace, not part of the BG Domain.
+name: "{{ current_env.name }}-core"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{ current_env.name }}"
+  - "solution-Application"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

@@ -1,0 +1,16 @@
+---
+# Standalone supplementary namespace, unrelated to the BG Domain and the Composite Structure.
+name: "{{ current_env.name }}-supplementary"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{ current_env.name }}"
+  - "solution-Application"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

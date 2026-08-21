@@ -1,6 +1,7 @@
 import pytest
 
 from .deploy_plan_adapter import EnvgeneDeployPlan, adapt_sd_to_deploy_plan
+from .errors import ReferenceError
 from .yaml_helper import openYaml, writeYamlToFile
 
 
@@ -26,13 +27,12 @@ class TestAdaptSdToDeployPlan:
         assert entity.namespace == "dev-bss"
 
     @pytest.mark.unit
-    def test_falls_back_to_deploy_postfix_when_not_in_namespace_map(self, env_dir):
+    def test_raises_when_deploy_postfix_not_in_namespace_map(self, env_dir):
         sd_path = env_dir / "Inventory" / "solution-descriptor" / "sd.yaml"
         writeYamlToFile(sd_path, {"applications": [{"version": "App:1.0", "deployPostfix": "bss"}]})
 
-        deploy_plan = adapt_sd_to_deploy_plan({})
-
-        assert deploy_plan.entities[0].namespace == "bss"
+        with pytest.raises(ReferenceError, match="bss"):
+            adapt_sd_to_deploy_plan({})
 
     @pytest.mark.unit
     def test_writes_deploy_plan_to_disk(self, env_dir):

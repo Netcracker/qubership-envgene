@@ -1,0 +1,13 @@
+---
+# Composite Structure object. Groups the environment namespaces into a baseline and satellites.
+# The bgdomain satellite references the BG Domain by name. The domain namespaces, controller url,
+# and controller credentials live in bg_domain.yml, not here.
+name: "{{ current_env.name }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-core"
+  type: namespace
+satellites:
+  - name: "{{ current_env.name }}-bss-domain"
+    type: bgdomain
+  - name: "{{ current_env.name }}-oss"
+    type: namespace

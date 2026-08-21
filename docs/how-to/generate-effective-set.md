@@ -165,7 +165,7 @@ The `git_commit` job commits these files to the Instance Repository automaticall
 
 ### Generate Without a Solution Descriptor
 
-When no Solution Descriptor is provided - for example when setting up infrastructure-only namespaces or preparing an environment before any applications are defined - the Effective Set is generated in a partial mode.
+When no Solution Descriptor is provided - for example when setting up infrastructure-only namespaces or preparing an environment before any applications are defined - the Effective Set is generated in No-SD Mode.
 
 Without an SD, EnvGene does not know which applications belong to which namespaces, so the application-specific contexts cannot be produced. The following contexts are generated normally:
 
@@ -178,7 +178,13 @@ The following contexts are **not generated**:
 - `runtime` - requires application definitions from the SD
 - `cleanup` - requires application definitions from the SD
 
-To use this mode, simply omit `SD_VERSION` and `SD_SOURCE_TYPE` from the pipeline variables. If no SD artifact is passed and no `sd.yaml` exists in the repository, EnvGene skips all application-level processing automatically.
+To use this mode, omit `SD_VERSION` and `SD_SOURCE_TYPE` from the pipeline variables. If no SD artifact is
+passed and no `sd.yaml` exists in the repository, EnvGene enters No-SD Mode automatically.
+
+If a `sd.yaml` is committed but you still want No-SD Mode - for example when the committed SD references
+application versions that can no longer be downloaded from the registry - set `use_committed_sd: false` in
+[`config.yml`](/docs/envgene-configs.md#configyml). With `use_committed_sd` set to `false`, a run with no
+incoming SD stays in No-SD Mode instead of using the committed SD.
 
 ---
 

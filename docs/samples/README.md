@@ -65,9 +65,9 @@ environments/
 
 ### Blue-Green Deployment
 
-Migration of a non-BG template and environment to BGD: the before and after Environment Templates and
-per-variant sample environments. See [BGD samples](/docs/samples/blue-green-deployment/), the
-[migration how-to](/docs/how-to/blue-green-deployment-migration.md), and the
+Setting up a BGD template and environment, or converting a non-BG one: the `bgd` Environment Template and
+the `env-01` sample environment. See [BGD samples](/docs/samples/blue-green-deployment/), the
+[configure how-to](/docs/how-to/blue-green-deployment-configure.md), and the
 [deploy operations how-to](/docs/how-to/blue-green-deployment-deploy-operations.md).
 
 ### Cloud artifact registries

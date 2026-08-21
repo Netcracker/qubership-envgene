@@ -1,0 +1,3 @@
+# Placeholder (structure only). Env-specific parameterset - the real file holds name, version,
+# and parameters. Bound to a namespace through envTemplate.envSpecificParamsets in env_definition.yml,
+# keyed by the namespace deploy postfix (bss-origin / bss-peer for the BG sides).
