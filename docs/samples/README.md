@@ -5,6 +5,7 @@
   - [Instance repository layout](#instance-repository-layout)
   - [Feature samples](#feature-samples)
     - [Blue-Green Deployment](#blue-green-deployment)
+    - [Cloud artifact registries](#cloud-artifact-registries)
     - [External credentials](#external-credentials)
 
 EnvGene samples are copyable file sets of two kinds: the generic repository layouts below and
@@ -64,10 +65,17 @@ environments/
 
 ### Blue-Green Deployment
 
-Migration of a non-BG template and environment to BGD: the before and after Environment Templates and
-per-variant sample environments. See [BGD samples](/docs/samples/blue-green-deployment/), the
-[migration how-to](/docs/how-to/blue-green-deployment-migration.md), and the
+Setting up a BGD template and environment, or converting a non-BG one: the `bgd` Environment Template and
+the `env-01` sample environment. See [BGD samples](/docs/samples/blue-green-deployment/), the
+[configure how-to](/docs/how-to/blue-green-deployment-configure.md), and the
 [deploy operations how-to](/docs/how-to/blue-green-deployment-deploy-operations.md).
+
+### Cloud artifact registries
+
+Registry Definition v2.0 and Artifact Definition v2.0 sample files for AWS CodeArtifact and GCP
+Artifact Registry, plus a credentials file with placeholder values for both providers. See the
+[cloud artifact registries samples](/docs/samples/cloud-artifact-registries/) and
+[Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
 
 ### External credentials
 

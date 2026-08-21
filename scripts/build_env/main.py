@@ -6,7 +6,6 @@ from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
 from build_env.resource_profiles import get_env_specific_resource_profiles
-from bg_manage.filter_namespaces import apply_ns_build_filter
 
 
 INVENTORY_DIR_NAME = "Inventory"
@@ -105,11 +104,6 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
 
 
-    namespaces_path = get_namespaces_path()
-    if check_dir_exists(str(namespaces_path.absolute())):
-        logger.info("Namespaces found, saving them into tmp location")
-        shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
-
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)
@@ -159,7 +153,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
     logger.info(f"External cred env is set as {render_context.is_external_cred_env}")
-    return resulting_dir, render_context.is_external_cred_env, render_context.ctx.namespace_by_deploy_postfix
+    return resulting_dir, render_context.is_external_cred_env
 
 
 def get_duplicate_names(param_files):
@@ -260,11 +254,9 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
-    resulting_env_dir, is_external_cred_env, namespace_by_deploy_postfix = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
+    resulting_env_dir, is_external_cred_env = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
                                           output_dir, work_dir)
     create_credentials(resulting_env_dir, env_dir, all_instances_dir, is_external_cred_env)
-    apply_ns_build_filter()
-    return namespace_by_deploy_postfix
 
 
 def run_build_environment():
@@ -277,6 +269,5 @@ def run_build_environment():
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
     decrypt_all_cred_files_for_env()
-    namespace_by_deploy_postfix = render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
+    render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
     encrypt_all_cred_files_for_env()
-    return namespace_by_deploy_postfix

@@ -72,6 +72,13 @@ inventory:
   # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
   # Should be listed in configuration/deployer.yml
   deployer: string
+  # Optional. Default value - `v1`
+  # Version of the No-CMDB deployment architecture: `v1` or `v2`
+  # Set manually by users. NOT processed by EnvGene Core
+  # Read by DevOps toolset components to determine how the Environment is delivered and deployed
+  # When set, takes precedence over `deployer`
+  # See Deployment architecture: /docs/deployment-architecture.md
+  noCmdbVersion: string
   # Optional
   # Environment description
   # This attribute's value is available for template rendering via the `current_env.description` variable
@@ -395,6 +402,15 @@ sbom_retention:
 # and [Full Generation](/docs/features/effective-set-generation.md#full-generation)
 # for generation mode behavior
 effective_set_generation_strategy: enum [`full`, `partial`]
+# Optional. Default value - `true`
+# Controls whether the committed Full SD is used when a pipeline run provides no incoming SD
+# `true` - the committed Full SD is used, so Full Generation or Partial Generation runs
+# `false` - the committed Full SD is ignored when no SD is passed, so No-SD Mode runs and only
+# `topology` and `pipeline` contexts are produced
+# Set to `false` to avoid failures when the committed Full SD references application versions that can no
+# longer be downloaded from the registry
+# See [No-SD Mode](/docs/features/effective-set-generation.md#no-sd-mode)
+use_committed_sd: boolean
 ```
 
 ## `integration.yml`

@@ -77,8 +77,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, environment buil
 
      ```yaml
      ENV_NAMES: <cluster-name>/<env-name>
-     ENV_BUILDER: True
-     ENV_TEMPLATE_VERSION: <env-template-version>
+     ENV_BUILDER: True     ENV_TEMPLATE_VERSION: <env-template-version>
      DEPLOYMENT_SESSION_ID: b8278696-82ba-4893-97d7-7ac3a9fe1a18
      CMDB_IMPORT: True
      ```
@@ -121,8 +120,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, SD processing, e
 
      ```yaml
      ENV_NAMES: <cluster-name>/<env-name>
-     ENV_BUILDER: True
-     GENERATE_EFFECTIVE_SET: True
+     ENV_BUILDER: True     GENERATE_EFFECTIVE_SET: True
      SD_SOURCE_TYPE: json
      SD_DATA: <sd-data-json>
      SD_REPO_MERGE_MODE: basic-merge

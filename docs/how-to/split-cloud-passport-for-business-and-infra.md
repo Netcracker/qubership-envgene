@@ -39,10 +39,10 @@ The pattern uses two passport files in the same `cloud-passport/` directory:
 └── environments/
     └── <cluster-name>/
         └── cloud-passport/
-            ├── <cluster-name>.yml            ← business passport (full parameter set)
-            ├── <cluster-name>-creds.yml      ← credentials for the business passport
-            ├── <cluster-name>-infra.yml      ← infra passport (minimal parameter set)
-            └── <cluster-name>-infra-creds.yml ← credentials for the infra passport
+            ├── passport.yml              ← business passport (full parameter set)
+            ├── passport-creds.yml        ← credentials for the business passport
+            ├── passport-infra.yml        ← infra passport (minimal parameter set)
+            └── passport-infra-creds.yml  ← credentials for the infra passport
 ```
 
 Business environments resolve the first file via auto-association. Infra environments reference
@@ -52,7 +52,7 @@ the second file explicitly via the `cloudPassport` field in their `env_definitio
 
 ### 1. Configure the business passport (default)
 
-Keep your existing full passport as the **business default**, for example `cluster-01.yml`:
+Keep your existing full passport as the **business default**, named `passport.yml`:
 
 ```yaml
 version: 1.5
@@ -112,12 +112,12 @@ field set, auto-association resolves the business passport by default:
 # cluster-01/env-business-payments/Inventory/env_definition.yml
 inventory:
   environmentName: env-business-payments
-  # cloudPassport field absent → auto-association resolves cluster-01.yml
+  # cloudPassport field absent → auto-association resolves passport.yml
 ```
 
 ### 2. Configure the infra passport (minimal)
 
-Create a minimal infra passport, for example `cluster-01-infra.yml`, with only the `cloud` and
+Create a minimal infra passport, named `passport-infra.yml`, with only the `cloud` and
 `global` sections (cluster connectivity + observability):
 
 ```yaml
@@ -149,7 +149,7 @@ Update the infra environment's `env_definition.yml` to reference the infra passp
 # cluster-01/env-infra/Inventory/env_definition.yml
 inventory:
   environmentName: env-infra
-  cloudPassport: cluster-01-infra    # explicit, resolves cluster-01-infra.yml
+  cloudPassport: passport-infra    # explicit, resolves passport-infra.yml
 ```
 
 ### 3. Verify the result
@@ -159,10 +159,10 @@ Regenerate the affected environments and inspect the generated
 
 - The business environment's Cloud object contains keys from the business passport
   (`cloud + dbaas + maas + storage + core + global`). Inline traceability comments reference
-  `cloud passport: <cluster-name> version: <passport-version>`.
+  `cloud passport: passport version: <passport-version>`.
 - The infra environment's Cloud object contains only the keys from the infra passport
   (`cloud + global`). Inline traceability comments reference
-  `cloud passport: <cluster-name>-infra version: <passport-version>`.
+  `cloud passport: passport-infra version: <passport-version>`.
 
 If the infra environment's Cloud object still contains business-only keys, recheck that the
 `cloudPassport` field is set to the infra passport name and that the infra passport file exists
@@ -177,21 +177,21 @@ environments resolving them independently:
 environments/
 └── cluster-01/
     ├── cloud-passport/
-    │   ├── cluster-01.yml                   ← full passport (business envs, default)
-    │   ├── cluster-01-creds.yml
-    │   ├── cluster-01-infra.yml             ← minimal passport (infra envs, explicit)
-    │   └── cluster-01-infra-creds.yml
+    │   ├── passport.yml                     ← full passport (business envs, default)
+    │   ├── passport-creds.yml
+    │   ├── passport-infra.yml               ← minimal passport (infra envs, explicit)
+    │   └── passport-infra-creds.yml
     │
     ├── env-business-payments/               ← BUSINESS env
     │   └── Inventory/
     │       └── env_definition.yml           ← no cloudPassport field (auto-association)
-    │                                           resolves: cluster-01.yml
+    │                                           resolves: passport.yml
     │                                           receives: cloud + dbaas + maas + storage + core + global
     │
     └── env-infra/                ← INFRA env
         └── Inventory/
-            └── env_definition.yml           ← cloudPassport: cluster-01-infra (explicit)
-                                                resolves: cluster-01-infra.yml
+            └── env_definition.yml           ← cloudPassport: passport-infra (explicit)
+                                                resolves: passport-infra.yml
                                                 receives: cloud + global only
 ```
 

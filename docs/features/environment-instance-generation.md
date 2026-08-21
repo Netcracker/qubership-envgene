@@ -119,7 +119,6 @@ In this example:
 
 ## Related Features
 
-- [Namespace Render Filter](/docs/features/namespace-render-filtering.md) - Select which Namespaces to render in a specific pipeline run
 - [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter which Namespaces are included in Environment structure during Template Descriptor rendering
-- [Blue-Green Deployment](/docs/features/blue-green-deployment.md) - BG domains and state management
+- [Blue-Green Deployment](/docs/features/blue-green-deployment.md) - BG domains, lifecycle, and deploy to one side
 - [Effective Set Calculator](/docs/features/calculator-cli.md) - Uses folder names for effective set structure

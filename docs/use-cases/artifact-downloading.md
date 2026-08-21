@@ -1054,14 +1054,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters that trigger art
 **Steps:**
 
 1. Artifact download process attempts to resolve Application Definition
-2. Definition file is not found at expected location
+2. Definition file is not found in the root-level folder or in the per-environment folder
 3. Pipeline job fails with clear error message indicating missing AppDef
 
 **Results:**
 
 1. Pipeline execution fails
 2. Error message clearly indicates which Application Definition is missing
-3. Error message includes expected file path
+3. Error message includes both checked locations
 
 ### UC-AD-ERR-2: Handle Missing Registry Definition
 
@@ -1077,14 +1077,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters that trigger art
 **Steps:**
 
 1. Artifact download process attempts to resolve Registry Definition
-2. Definition file is not found at expected location
+2. Definition file is not found in the root-level folder or in the per-environment folder
 3. Pipeline job fails with clear error message indicating missing RegDef
 
 **Results:**
 
 1. Pipeline execution fails
 2. Error message clearly indicates which Registry Definition is missing
-3. Error message includes expected file path and registry name
+3. Error message includes both checked locations and the registry name
 
 ### UC-AD-ERR-3: Handle Authentication Failure
 
