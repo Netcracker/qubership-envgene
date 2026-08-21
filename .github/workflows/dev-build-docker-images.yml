@@ -82,7 +82,6 @@ jobs:
         uses: ./.github/actions/run-tests
 
   build-qubership-envgene:
-    needs: [linters, tests, link-check]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -107,11 +106,6 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-instance-repo-pipeline:
-    needs:
-      - linters
-      - tests
-      - link-check
-      - build-qubership-envgene
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
       (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
@@ -143,11 +137,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-gsf-instance:
-    needs:
-      - linters
-      - tests
-      - link-check
-      - build-qubership-envgene
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-instance == 'true') ||
       (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
@@ -179,11 +168,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-gsf-discovery:
-    needs:
-      - linters
-      - tests
-      - link-check
-      - build-qubership-envgene
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-discovery == 'true') ||
       (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
