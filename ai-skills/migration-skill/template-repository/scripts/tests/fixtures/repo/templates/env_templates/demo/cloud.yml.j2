@@ -1,0 +1,5 @@
+---
+deployParameters:
+  DB_USER: "${creds.get('app-db-cred').username}"
+  DB_PASS: "${creds.get('app-db-cred').password}"
+  TOKEN: "${creds.get('app-token').secret}"

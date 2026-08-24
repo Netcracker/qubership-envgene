@@ -58,6 +58,9 @@
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate Template Repository to External Credentials**](/docs/how-to/migrate-template-repository-to-external-credentials.md) - Prepare Environment Templates (Credential Template, ParameterSets, `credRef`), publish concrete version
+- [**Generate External Credential Context for migration**](/docs/how-to/generate-external-credentials-migration-context.md) - Build Context YAML from local Credentials for `external-cred-provision` before Instance cutover
+- [**Migrate Instance Repository to External Credentials**](/docs/how-to/migrate-instance-repository-to-external-credentials.md) - Migrate the Instance Repository to External Credentials (pipeline on environments, then test deployment)
 
 ## Advanced Features
 

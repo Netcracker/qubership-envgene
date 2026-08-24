@@ -3,16 +3,17 @@
 - [Description](#description)
 - [Prerequisites](#prerequisites)
 - [Step 1. Inventory the Instance Repository](#step-1-inventory-the-instance-repository)
-- [Step 2. Configure Secret Store](#step-2-configure-secret-store)
-- [Step 3. Convert Cloud Passport Credentials and main file](#step-3-convert-cloud-passport-credentials-and-main-file)
-- [Step 4. Convert Shared Credentials](#step-4-convert-shared-credentials)
-- [Step 5. Convert System Credentials](#step-5-convert-system-credentials)
-- [Step 6. Update environment-specific parameters](#step-6-update-environment-specific-parameters)
-- [Step 7. Remove stale generated Credentials files](#step-7-remove-stale-generated-credentials-files)
-- [Step 8. Validate before the pipeline](#step-8-validate-before-the-pipeline)
-- [Step 9. Run the Instance pipeline](#step-9-run-the-instance-pipeline)
-- [Step 10. Verify the generated result](#step-10-verify-the-generated-result)
-- [Step 11. Run a test deployment](#step-11-run-a-test-deployment)
+- [Step 2. Decide create and remoteRefPath](#step-2-decide-create-and-remoterefpath)
+- [Step 3. Configure Secret Store](#step-3-configure-secret-store)
+- [Step 4. Convert Cloud Passport Credentials and main file](#step-4-convert-cloud-passport-credentials-and-main-file)
+- [Step 5. Convert Shared Credentials](#step-5-convert-shared-credentials)
+- [Step 6. Convert System Credentials](#step-6-convert-system-credentials)
+- [Step 7. Update environment-specific parameters](#step-7-update-environment-specific-parameters)
+- [Step 8. Remove stale generated Credentials files](#step-8-remove-stale-generated-credentials-files)
+- [Step 9. Validate before the pipeline](#step-9-validate-before-the-pipeline)
+- [Step 10. Run the Instance pipeline](#step-10-run-the-instance-pipeline)
+- [Step 11. Verify the generated result](#step-11-verify-the-generated-result)
+- [Step 12. Run a test deployment](#step-12-run-a-test-deployment)
 - [Rollback](#rollback)
 - [See also](#see-also)
 
@@ -51,12 +52,12 @@ Confirm before you start:
 - a concrete Template version with `external_credential_template` is published
 - real secret values that must be kept are already in the Secret Store (stubs may wait for
   `create: true` later). Complete
-  [UC-MIG-1](/docs/analysis/external-credentials-migration-cli.md) (draft) before this how-to -
-  do not start YAML cutover until that transfer is done
+  [Generate External Credential Context for migration](/docs/how-to/generate-external-credentials-migration-context.md)
+  before this how-to - do not start YAML cutover until that transfer is done
 - `/configuration/secret-stores.yml` defines every Secret Store id you reference (Step 2)
 - CI/CD authentication variables for those stores are configured
-- for each Credential you know whether: the value already exists in the Secret Store (omit
-  `create`), or a freshly generated value is acceptable (`create: true`)
+- for each Credential you know who creates the value (EnvGene, pre-existing, or provider) and the
+  Store path prefix before you remove `data`
 
 ## Step 1. Inventory the Instance Repository
 
@@ -95,7 +96,46 @@ referenced from any `env_definition.yml`. Convert them the same way.
 
 **Result:** full inventory of Environment Instances, Credential sources, and per-`credId` values.
 
-## Step 2. Configure Secret Store
+## Step 2. Decide create and remoteRefPath
+
+For every local Credential from the inventory, decide in this order:
+
+1. **Scope** - cluster (Cloud Passport), environment, shared across environments, system, or
+   provider.
+2. **Who creates the value** - EnvGene, pre-existing, or provider. If unclear, stop and confirm.
+3. **`create`** - see the matrix.
+4. **`remoteRefPath`** - prefix only. EnvGene appends the normalised `credId`.
+5. **Confirm ambiguous cases** before you convert YAML or delete `data`.
+
+### Decision matrix
+
+| Who creates the value | Migration notes | Final Credential YAML |
+|-----------------------|-----------------|------------------------|
+| EnvGene may generate | `create: true` | `create: true` |
+| Secret must already exist | `create: false` | omit `create` |
+| External provider creates it | `create: false` | omit `create` |
+| Unknown | do not convert yet | leave unchanged |
+
+`create` is EnvGene runtime behaviour when the secret is absent. Separately, if you copy an
+existing plaintext value from Git into the Secret Store during migration, track that transfer in
+your migration checklist only. That transfer flag never appears in the final Credential YAML.
+
+### Default proposals by source (confirm before apply)
+
+| Source | Typical path proposal | Typical create proposal |
+|--------|-----------------------|-------------------------|
+| Cloud Passport | `<cluster>` | omit (`false` in notes) |
+| Environment-level Shared | `<cluster>/<environment>` | `true` if new values are OK |
+| Cluster / repo Shared | `external` or approved shared path | omit |
+| System Credentials | approved system path (fallback `external`) | always omit |
+
+Do not set `create: true` for System Credentials or confirmed provider-managed Credentials.
+Names such as `consul`, `dbaas`, or `service-account` in a `credId` are review signals only -
+confirm ownership and path before converting.
+
+**Result:** confirmed create and path decisions for every Credential you will convert.
+
+## Step 3. Configure Secret Store
 
 Create or update `/configuration/secret-stores.yml`:
 
@@ -115,7 +155,7 @@ Do not store tokens or keys in Git.
 
 **Result:** Secret Store defined.
 
-## Step 3. Convert Cloud Passport Credentials and main file
+## Step 4. Convert Cloud Passport Credentials and main file
 
 Work through one Cloud Passport at a time: convert its `*-creds.yml` and its main file together
 before moving to the next.
@@ -134,7 +174,7 @@ dbaas:
     password: <password>
 ```
 
-After (secret already in the store - omit `create`):
+After (secret already in the store or provider-managed - omit `create`):
 
 ```yaml
 dbaas:
@@ -146,7 +186,7 @@ dbaas:
     - name: password
 ```
 
-After (new generated value is acceptable):
+After (EnvGene generation of a new value is confirmed):
 
 ```yaml
 cloud-deploy-sa-token:
@@ -158,12 +198,13 @@ cloud-deploy-sa-token:
 
 Rules:
 
-- remove `data`
+- remove `data` only after the value is in the Store or generation is confirmed
 - `properties` entries must be objects: `- name: username`, not bare strings
 - do not append `credId` to `remoteRefPath` - EnvGene appends it automatically
 - for Azure, AWS, or GCP, keep `credId` to at most 32 characters
-- omit `create` when the secret already exists
-- set `create: true` only when a generated value is acceptable
+- omit `create` when the secret already exists or a provider creates it
+- set `create: true` only when EnvGene generation is explicitly allowed
+- default path proposal is `<cluster>` - confirm before apply
 - do not change built-in fields that store only a `credId` string
 
 ### Update the Cloud Passport main file
@@ -242,12 +283,16 @@ Do not edit generated files under `effective-set/` by hand.
 **Result:** Cloud Passport Credentials and main files use External Credentials and Credential
 References.
 
-## Step 4. Convert Shared Credentials
+## Step 5. Convert Shared Credentials
 
 Open each file listed in `envTemplate.sharedMasterCredentialFiles` across all `env_definition.yml`
-files, and also any unbound Shared Credential files.
+files, and also any unbound Shared Credential files you chose to include.
 
-Apply the same rules as Step 3 for Credential YAML.
+Apply the same conversion rules as Step 4 for Credential YAML, using the decisions from Step 2:
+
+- cluster / repository Shared - typical path `external` (or an approved shared path), omit `create`
+- environment-level Shared - typical path `<cluster>/<environment>`, `create: true` only when new
+  values are allowed
 
 Before:
 
@@ -265,7 +310,7 @@ After:
 ID_TOCP_CLIENT_CREDS:
   type: external
   secretStore: default_store
-  remoteRefPath: <cluster>/shared
+  remoteRefPath: external
   properties:
     - name: username
     - name: password
@@ -280,18 +325,19 @@ ID_TOCP_CLIENT_CREDS:
 **Result:** Shared Credentials are External Credentials and `env_definition.yml` references are
 updated where needed.
 
-## Step 5. Convert System Credentials
+## Step 6. Convert System Credentials
 
 System Credentials cover git tokens, registry authentication, and deployer credentials. They live in:
 
 - `/configuration/credentials/credentials.yml` - `self_token`, `cp_discovery` token, registry
 - `environments/<cluster>/app-deployer/deployer-creds.yml` - deployer username and token
 
-Apply the same conversion rules as Step 3 for Credential YAML, with these additional constraints:
+Apply the same conversion rules as Step 4 for Credential YAML, with these additional constraints:
 
 - omit `create` - `create: true` is not allowed for System Credentials
 - only Vault and GCP are supported as Secret Stores for System Credentials
 - the secret must already exist in the Secret Store (from the prerequisite transfer)
+- use an approved system path (fallback `external`)
 
 After converting the Credential entries, update references in the configuration files.
 
@@ -343,23 +389,23 @@ See [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system
 
 **Result:** System Credentials converted to External Credentials.
 
-## Step 6. Update environment-specific parameters
+## Step 7. Update environment-specific parameters
 
-Replace the same macros as in Step 3 (`creds.get`, `envgen.creds.get`, `cmdb.creds.get`, `#creds`,
+Replace the same macros as in Step 4 (`creds.get`, `envgen.creds.get`, `cmdb.creds.get`, `#creds`,
 `#credscl`, `#credsns`) with `$type: credRef` in:
 
 - environment-specific `deployParameters` and `e2eParameters`
 - ParameterSets under `environments/<cluster>/<env>/Inventory/parameters/`,
   `environments/<cluster>/parameters/`, and `environments/parameters/`
 
-Use the same before/after shapes as in Step 3.
+Use the same before/after shapes as in Step 4.
 
 Do not add `$type: credRef` to `technicalConfigurationParameters`. Do not edit `effective-set/`
 files by hand.
 
 **Result:** environment-specific parameters use Credential References.
 
-## Step 7. Remove stale generated Credentials files
+## Step 8. Remove stale generated Credentials files
 
 Each Environment Instance has a generated file at:
 
@@ -377,22 +423,24 @@ The pipeline regenerates this file from the new Template (only `type: external` 
 
 **Result:** stale generated Credentials files removed.
 
-## Step 8. Validate before the pipeline
+## Step 9. Validate before the pipeline
 
 Check:
 
 - all changed YAML files are syntactically valid
 - every Environment Instance, when its sources are merged, produces External Credentials only
 - no Credential file has a leftover `data` block for converted entries
+- every converted Credential had a confirmed creation owner and path
 - `credRef.property` matches a name in the Credential's `properties` list
 - every `secretStore` id exists in `/configuration/secret-stores.yml`
 - no `$type: credRef` in `technicalConfigurationParameters`
 - secrets exist in the store for all entries where `create` is omitted
+- no `create: false` written in YAML (omit the field instead)
 - `sharedMasterCredentialFiles` entries do not have the `.yml` extension
 
 **Result:** Instance Repository ready for the Instance pipeline.
 
-## Step 9. Run the Instance pipeline
+## Step 10. Run the Instance pipeline
 
 Start with a non-production Environment Instance.
 
@@ -415,7 +463,7 @@ Do not run a test deployment if generation fails.
 
 **Result:** Environment Instance generated with External Credentials.
 
-## Step 10. Verify the generated result
+## Step 11. Verify the generated result
 
 For each Environment Instance you ran, check:
 
@@ -423,11 +471,11 @@ For each Environment Instance you ran, check:
 - `effective-set/external-credential/external-credentials.yaml` - expected Credentials listed
 - `effective-set/deployment/` - deployment contexts use VALS or ESO references, not plaintext
 
-If verification fails, fix the configuration and re-run Step 9 for those environments.
+If verification fails, fix the configuration and re-run Step 10 for those environments.
 
 **Result:** generated External Credentials validated.
 
-## Step 11. Run a test deployment
+## Step 12. Run a test deployment
 
 Run a test deployment for the same environments. Confirm that applications start and that
 authentication to dependent services works.
@@ -455,6 +503,7 @@ the same way.
 ## See also
 
 - [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md)
+- [Generate External Credential Context for migration](/docs/how-to/generate-external-credentials-migration-context.md)
 - [UC-MIG-1 Migration CLI](/docs/analysis/external-credentials-migration-cli.md)
 - [External Credentials Management](/docs/features/external-creds.md)
 - [Update template version](/docs/how-to/update-template-version.md)
