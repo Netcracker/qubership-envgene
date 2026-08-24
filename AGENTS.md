@@ -4,7 +4,7 @@ This document contains guidelines and rules for AI coding assistants working wit
 
 ## Writing documentation and text
 
-All rules for how text is written in this repository - documentation under `docs/`, the README files,
+All rules for how text is written in this repository - documentation under `docs/`, the readme files,
 and prose for issues, change requests, and pull requests - live in the `writing-docs` skill at
 `.claude/skills/writing-docs/`. Read that skill before you write or edit any `.md` file, any doc under
 `docs/`, or any issue, CR, or PR prose for this repository. Its `SKILL.md` routes to the reference file
