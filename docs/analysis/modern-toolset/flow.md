@@ -82,12 +82,10 @@ for the target flow. The per-component docs in this directory elaborate individu
 
 1. [phase2] Consider create_if_not_exist | replace strategies for appregdef processing
 2. [phase2] Design integration with the central appregdef storage
-3. [phase2] Design SAVE_ARTIFACTS_STRATEGY
-    1. save env_instance/ES to a job artifact on SAVE_ALL
-4. Design `git_commit`
+3. Design `git_commit`
     1. Depending on `PIPELINE_TYPE` and `SAVE_ARTIFACTS_STRATEGY`, commit env_instance/ES or not
-5. After the flow is finalized analyze the flow for optimization
-6. Стейт файл из нью лука
+4. After the flow is finalized analyze the flow for optimization
+5. Стейт файл из нью лука
 
 ## Data exchange Rules
 
@@ -931,7 +929,6 @@ Functions:
     - AI[phase1]: If `PIPELINE_TYPE: GITLAB_DEPLOY` then do not commit into inventory repository:
       - env instance
       - effective set
-    - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/deploy-plan.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
 
 #### 1.17 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET

@@ -969,7 +969,10 @@ curl -X POST \
 
 ### `SAVE_ARTIFACTS_STRATEGY`
 
-**Description**: Per-run override for the repository-wide `save_artifacts_strategy` policy in `/configuration/config.yml`. Controls whether the troubleshooting artifact (the run work directory) is saved. `ALWAYS` saves on every run, `NEVER` saves nothing. A troubleshooting rerun typically sets `ALWAYS`.
+**Description**: Per-run override for the repository-wide `save_artifacts.strategy` policy in
+`/configuration/config.yml`. Controls whether the troubleshooting artifact (the run work directory and the
+per-environment logs) is saved. `ALWAYS` saves on every run, `NEVER` saves nothing. A troubleshooting rerun
+typically sets `ALWAYS`.
 
 See details in [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
 
