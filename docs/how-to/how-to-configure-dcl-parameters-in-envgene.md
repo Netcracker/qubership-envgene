@@ -7,9 +7,6 @@
   - [Reference example](#reference-example)
 - [Result - generated effective set](#result---generated-effective-set)
 
-DCL (Deployment Configuration Lifecycle) is a GitLab pipeline that deploys Kubernetes applications
-through ArgoCD.
-
 EnvGene provides the DCL parameter values to the deployment tooling but does not own or define them.
 This document covers the delivery mechanism - how to configure the cloud-passport so EnvGene can read
 and distribute the values at generation time. For the meaning and constraints of individual DCL
