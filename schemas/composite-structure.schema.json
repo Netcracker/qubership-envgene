@@ -114,8 +114,7 @@
   },
   "required": [
     "name",
-    "baseline",
-    "satellites"
+    "baseline"
   ],
   "additionalProperties": false
 }
