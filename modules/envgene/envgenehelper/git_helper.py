@@ -227,8 +227,8 @@ class GitRepoManager:
 
         self._fetch(ref=self.ctx.ref_name, checkout="FETCH_HEAD", checkout_option=["--force", "--detach"])
         try:
-            logger.info(f"git cherry-pick {snapshot_sha}")
-            self.repo.git.cherry_pick(snapshot_sha)
+            logger.info(f"git cherry-pick --strategy=recursive -X no-renames {snapshot_sha}")
+            self.repo.git.cherry_pick("--strategy=recursive", "-X", "no-renames", snapshot_sha)
             logger.info(f"git push origin HEAD:{self.ctx.ref_name}")
             self.repo.git.push("origin", f"HEAD:{self.ctx.ref_name}")
         except Exception as e:
