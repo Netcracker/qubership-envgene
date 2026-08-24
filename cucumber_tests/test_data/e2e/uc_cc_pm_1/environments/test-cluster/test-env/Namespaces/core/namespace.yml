@@ -1,0 +1,8 @@
+name: core
+deployParameters:
+  shared_key: "from-namespace"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

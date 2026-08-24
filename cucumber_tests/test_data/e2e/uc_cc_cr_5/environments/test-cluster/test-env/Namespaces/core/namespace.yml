@@ -1,0 +1,9 @@
+name: core
+deployParameters:
+  deploy_url: "https://deploy.example.com"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  runtime_config: ${deploy_url}
+technicalConfigurationParameterSets: []

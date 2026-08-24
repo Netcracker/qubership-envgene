@@ -1,0 +1,9 @@
+name: core
+deployParameters:
+  organization: ${tenant_id}
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  config_org: ${tenant_config_id}
+technicalConfigurationParameterSets: []

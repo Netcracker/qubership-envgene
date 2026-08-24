@@ -8,7 +8,7 @@ import zipfile
 import urllib.request
 from pathlib import Path
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
-from cucumber_tests.step_defs.common_steps import *
+from cucumber_tests.shared_steps.common_steps import *
 
 @pytest.fixture(scope="session", autouse=True)
 def mock_nexus(tmp_path_factory):
@@ -84,16 +84,31 @@ def workspace(tmp_path):
     return EnvGeneWorkspace(tmp_path)
 
 
-def pytest_bdd_apply_tag(tag, function):
-    """Handle custom Gherkin tags as pytest marks.
+_XFAIL_REASONS = {
+    "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
+    "xfail_cli_npe": (
+        "Calculator CLI throws NullPointerException when the requested namespace is absent from "
+        "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
+        "Affects BG-domain scenarios (dp_2, dp_4) and non-BG no-match scenarios (dp_3)."
+    ),
+    "xfail_cli_no_hierarchy_rule": (
+        "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
+        "cannot reference Cloud- or Namespace-level parameters (doc-vs-code divergence)."
+    ),
+    "xfail_cli_no_context_rule": (
+        "Calculator CLI does not enforce the documented rule that e2eParameters and "
+        "technicalConfigurationParameters cannot cross-reference deployParameters "
+        "(doc-vs-code divergence; caught directions: deployParameters->e2eParameters and "
+        "deployParameters->technicalConfigurationParameters; uncaught: the reverse and all "
+        "other cross-context directions)."
+    ),
+}
 
-    @xfail  — marks the test as expected to fail (known framework gap, not a test bug).
-    """
-    if tag == "xfail":
-        marker = pytest.mark.xfail(
-            reason="Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
-            strict=False,
-        )
+
+def pytest_bdd_apply_tag(tag, function):
+    """Handle custom Gherkin tags as pytest marks."""
+    if tag in _XFAIL_REASONS:
+        marker = pytest.mark.xfail(reason=_XFAIL_REASONS[tag], strict=True)
         marker(function)
-        return True  # tag handled, do not raise unknown-tag warning
-    return None  # let pytest-bdd handle all other tags normally
+        return True
+    return None
