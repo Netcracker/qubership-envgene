@@ -83,12 +83,12 @@ The `generate_effective_set` step writes the Effective Set under
 
 5. **Invoke Calculator CLI**
 
-   1. On `OPERATION_TYPE: DEPLOY` or BGD warmup, the step invokes Calculator CLI with environment ID
+   1. On `OPERATION_TYPE: DEPLOY` or BGD warmup, the step invokes Calculator CLI with environment id
       `<cluster-name>/<env-name>`, output path `effective-set/`, registry file
       `configuration/registry.yml`, SBOM path `sboms/`, and deploy-plan path
       `Inventory/delta-deploy-plan.yml`.
 
-   2. On `OPERATION_TYPE: CLEAN`, the step invokes Calculator CLI with environment ID
+   2. On `OPERATION_TYPE: CLEAN`, the step invokes Calculator CLI with environment id
       `<cluster-name>/<env-name>` and output path `effective-set/` without deploy-plan file path.
 
    3. When pipeline parameter `EFFECTIVE_SET_CONFIG` is set, the step appends configured extra CLI
