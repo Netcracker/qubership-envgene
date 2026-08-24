@@ -55,6 +55,7 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the orchestrator completes successfully
     And the BG state files are origin "idle" and peer "active"
     And the deploy plan file is unchanged
+    And the pipeline step "change_bg_state" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SKIPPED"
 
   Scenario: Sub-flow 1 - commit settles origin to idle after a successful promotion
@@ -67,6 +68,7 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the orchestrator completes successfully
     And the BG state files are origin "idle" and peer "active"
     And the deploy plan file is unchanged
+    And the pipeline step "change_bg_state" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SKIPPED"
 
   # ── Sub-flow 2 - BGD warmup ────────────────────────────────────────────────────
@@ -88,6 +90,7 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "generate_effective_set" has status "SUCCESS"
     # Not part of the documented flow for this sub-flow either, but real current behaviour.
     And the pipeline step "appregdef_render" has status "SUCCESS"
+    And the pipeline step "change_bg_state" has status "SUCCESS"
     And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
     And the namespace directories "bss-origin" and "bss-peer" have identical content except the namespace name
     And the environment inventory field "envTemplate.bgNsArtifacts.peer" equals "test-artifact:v1"
@@ -116,6 +119,10 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the pipeline step "warmup" has status "SKIPPED"
+    And the pipeline step "deploy_postfix_namespace_map" has status "SUCCESS"
+    And the pipeline step "process_deployment_plan" has status "SUCCESS"
+    And the pipeline step "change_bg_state" has status "SKIPPED"
     And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
     And the deploy plan contains an entry for namespace "bss-origin" with version "app1:1.0"
 
@@ -130,6 +137,9 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the pipeline step "warmup" has status "SKIPPED"
+    And the pipeline step "deploy_postfix_namespace_map" has status "SUCCESS"
+    And the pipeline step "process_deployment_plan" has status "SUCCESS"
     And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
     And the deploy plan contains an entry for namespace "bss-peer" with version "app1:1.0"
 
