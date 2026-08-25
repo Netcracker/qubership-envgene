@@ -12,7 +12,7 @@ This document covers the delivery mechanism - how to configure the cloud-passpor
 and distribute the values at generation time. For the meaning and constraints of individual DCL
 parameters, see the DCL documentation.
 
-The recommended approach is to provide DCL parameters through the EnvGene effective set as E2E
+The recommended approach is to provide DCL parameters through the EnvGene effective set as end-to-end
 parameters. To configure this, complete the steps in each section below.
 
 ## Template repository - reference the parameter set
