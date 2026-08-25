@@ -17,8 +17,7 @@ parameters. To configure this, complete the steps in each section below.
 
 ## Template repository - reference the parameter set
 
-The `dcl-deploy-configuration` parameter set template is available in the
-[starter set](/docs/cmdb-migration/templates/parameters) template repository. Copy
+The `dcl-deploy-configuration` parameter set template is available in the starter set template repository. Copy
 `dcl-deploy-configuration.yml.j2` from the starter template repository and place it at the following
 location in the template repository:
 
