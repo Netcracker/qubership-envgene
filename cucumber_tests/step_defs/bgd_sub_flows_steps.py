@@ -146,14 +146,64 @@ def then_namespace_map_has_both_sides(workspace: EnvGeneWorkspace, deploy_postfi
     )
 
 
-@then(parsers.parse('the deploy plan contains an entry for namespace "{namespace}" with version "{version}"'))
-def then_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, version: str):
+def _assert_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, version: str):
     env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
     plan_path = env_dir / "Inventory" / "deploy-plan.yml"
     workspace.assert_file_exists(plan_path)
     entries = yaml.safe_load(plan_path.read_text(encoding="utf-8")) or []
     matches = [e for e in entries if e.get("namespace") == namespace and e.get("version") == version]
     assert matches, f"No deploy-plan.yml entry for namespace='{namespace}' version='{version}'. Entries: {entries}"
+
+
+@then(parsers.parse('the deploy plan contains an entry for namespace "{namespace}" with version "{version}"'))
+def then_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, version: str):
+    _assert_deploy_plan_has_entry(workspace, namespace, version)
+
+
+@given(parsers.parse('the deploy plan contains an entry for namespace "{namespace}" with version "{version}"'))
+def given_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, version: str):
+    # Precondition, not an outcome: warmup's create_dp_for_warmup fails when no deploy-plan.yml
+    # entry names the active namespace (see process-deployment-plan.md's warmup delta rules), so
+    # scenarios that rely on this fixture data document the dependency explicitly here.
+    _assert_deploy_plan_has_entry(workspace, namespace, version)
+
+
+@given('the environment AppDefs and RegDefs paths are resolved for the deploy')
+def given_local_appdefs_regdefs_resolved(workspace: EnvGeneWorkspace):
+    # LOCAL_APPDEFS_PATH/LOCAL_REGDEFS_PATH are not pipeline parameters a caller sets - in a real
+    # pipeline run they are derived by scripts/pipeline/resolve_env_names.py from CI_PROJECT_DIR
+    # and ENV_NAMES before the orchestrator ever starts, and consumed as plain env vars by
+    # modules/dpg's LocalClient. The BDD harness invokes the orchestrator directly and skips that
+    # dotenv step, so this step reproduces the same derivation instead of modelling the paths as
+    # externally-supplied pipeline input.
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    env_dir = f"environments/{workspace.cluster_name}/{workspace.env_name}"
+    workspace.extra_env["LOCAL_APPDEFS_PATH"] = f"{env_dir}/AppDefs"
+    workspace.extra_env["LOCAL_REGDEFS_PATH"] = f"{env_dir}/RegDefs"
+
+
+@given(parsers.parse(
+    'the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with '
+    'deployPostfix "{deploy_postfix}" for "{app_version}"'))
+def given_application_versions_as_solution_descriptor(workspace: EnvGeneWorkspace, deploy_postfix: str, app_version: str):
+    # A bare deployPostfix entry (process-deployment-plan.md 5.1-5.5, the path BG_NS_TARGET
+    # gates) only arises from an actual Solution Descriptor - dpg.DeploymentPlanCalculator only
+    # ever produces a populated `deployPostfix` field via SolutionDescriptor_2_x.collect_waves().
+    # APPLICATION_VERSIONS is pointed at a local SD file (type: solutionDeploy) so dpg reads it
+    # straight off disk (utils.is_file_path) instead of resolving an AppDef + fetching an
+    # artifact over the network.
+    sd_dir = workspace.base_dir / "solution_descriptors"
+    sd_dir.mkdir(parents=True, exist_ok=True)
+    sd_path = sd_dir / "bgd-sd.yml"
+    sd_path.write_text(yaml.dump({
+        "version": 2.2,
+        "type": "solutionDeploy",
+        "applications": [{"version": app_version, "deployPostfix": deploy_postfix}],
+    }))
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["APPLICATION_VERSIONS"] = str(sd_path)
 
 
 @then(parsers.parse(
