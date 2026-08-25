@@ -17,12 +17,12 @@ We save the job work directory and the per-environment logs as a single `artifac
   faster and tighter than the runner's ZIP. The runner is set to its lowest compression so it does not try to
   re-shrink the already-compressed archive, keeping its mandatory ZIP pass cheap.
 - A repository-wide `save_artifacts.strategy` (`ALWAYS` default, `NEVER`), overridable per run by
-  `SAVE_ARTIFACTS_STRATEGY`, decides whether the archive is saved. `ALWAYS` is the default so evidence exists
-  even for a run that looks green but produced wrong output.
+  `SAVE_ARTIFACTS_STRATEGY`, decides whether the work directory is saved. `NEVER` saves the logs only.
+  `ALWAYS` is the default so evidence exists even for a run that looks green but produced wrong output.
 - A size guard compares the compressed archive to `save_artifacts.size_limit_mb` (default 100 MB, the GitLab
   default job artifact cap, so the stored archive is accepted as-is). Over it, EnvGene republishes the archive
   with only the logs and a `NOT-PUBLISHED.txt`, without failing the job.
-- The logs are small, so they are exempt from the size limit and kept unless the strategy is `NEVER`. As files
+- The logs are small, so they are always saved, exempt from both the strategy and the size limit. As files
   they bypass the GitLab job log truncation (4 MB default, `ci_jobs_trace_size_limit`), which in a
   multi-environment run would otherwise leave no complete record of the console output.
 - To keep `/sboms/` a small share of the artifact, the SBOM retention total-size-limit default is lowered
@@ -31,9 +31,9 @@ We save the job work directory and the per-environment logs as a single `artifac
 
 Rejected:
 
-- `ON_FAILURE` strategy, because the size guard already bounds each artifact and `NEVER` covers opting out,
-  while a run that looks green can still produce wrong output that needs the artifact. A failure-only mode
-  would only lose those cases.
+- `ON_FAILURE` strategy, because the size guard already bounds each artifact and `NEVER` opts out of the
+  work directory, while a run that looks green can still produce wrong output that needs the artifact. A
+  failure-only mode would only lose those cases.
 - Outputs-only scope (env instance, Effective Set, deploy plan), because inputs such as templates and
   application definitions also aid troubleshooting.
 - De-duplicating the shared layer into one copy, because application definitions, registry definitions and

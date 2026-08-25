@@ -37,7 +37,8 @@ independently, laid out under a `<cluster-name>-<environment-name>/` wrapper. Th
 
 ```text
 <cluster-name>-<environment-name>/               # isolated worktree of one run (multi-env: one sibling per environment)
-├── pipeline.log                                 # this environment's pipeline log, always present unless NEVER
+├── pipeline.log                                 # this environment's pipeline log, always saved
+├── ARGO_DPG_CONTEXT.env                         # encrypted dotenv for the ArgoCD sync job, not troubleshooting content
 ├── appdefs/                                     # Effective Application Definitions
 ├── regdefs/                                     # Effective Registry Definitions
 ├── configuration/                               # Repository wide configuration
@@ -76,16 +77,16 @@ Two checks decide what is saved:
 - [Strategy](#strategy)
 - [Size limit](#size-limit)
 
-The strategy `NEVER` saves nothing. Otherwise EnvGene compresses the work directory and logs into
-`artifacts.tar.zst` and checks its size. Within the limit, the full archive is published. Over the limit,
-EnvGene republishes `artifacts.tar.zst` with only the per-environment logs and adds a plain
-`NOT-PUBLISHED.txt` at the artifact root, stating that the work directory exceeded the size limit. So the
-logs are kept unless the strategy is `NEVER`.
+The per-environment logs are always saved. The strategy and the size limit decide only whether the work
+directory is saved with them. `NEVER` saves the logs only. Under `ALWAYS`, EnvGene compresses the work
+directory and logs into `artifacts.tar.zst` and checks its size: within the limit the full archive is
+published, over the limit EnvGene republishes it with only the logs. Whenever the work directory is dropped,
+by `NEVER` or by size, a plain `NOT-PUBLISHED.txt` at the artifact root states the reason.
 
 ```mermaid
 flowchart TD
     A([Pipeline job ends]) --> B{Resolved strategy}
-    B -->|NEVER| C[Save nothing]
+    B -->|NEVER| C[Save logs only, add NOT-PUBLISHED.txt]
     B -->|ALWAYS| D[Compress work directory and logs into artifacts.tar.zst]
     D --> E{Compressed size within save_artifacts.size_limit_mb?}
     E -->|yes| F[Publish full artifacts.tar.zst]
@@ -143,8 +144,8 @@ When [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) lists more t
 environment runs in its own isolated Git worktree and commits its result independently. Each environment
 produces its own `<cluster-name>-<environment-name>/` artifact wrapper, one per environment. An environment that
 fails partway through still publishes the partial output produced up to the failure point. The per-environment
-logs are saved regardless of the size limit, so a failed run's logs stay available even when its work directory
-is incomplete or dropped for size.
+logs are always saved, so a failed run's logs stay available even when its work directory is incomplete or
+dropped by size or by `NEVER`.
 
 To avoid a large work directory in the artifact on every run, set `save_artifacts.strategy: NEVER` in
 `config.yml`. To troubleshoot, rerun the affected environment with `SAVE_ARTIFACTS_STRATEGY: ALWAYS`.

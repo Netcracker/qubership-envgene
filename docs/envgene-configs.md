@@ -399,14 +399,14 @@ sbom_retention:
 # See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
 save_artifacts:
   # Optional. Default value - `ALWAYS`
-  # Controls whether the troubleshooting artifact (the run work directory and per-environment logs) is saved
-  # `ALWAYS` - save on every run
-  # `NEVER` - do not save, unless overridden per-run by the `SAVE_ARTIFACTS_STRATEGY` CI/CD variable
+  # Controls whether the work directory is saved. Per-environment logs are always saved
+  # `ALWAYS` - save the work directory on every run
+  # `NEVER` - save only the logs, unless overridden per-run by the `SAVE_ARTIFACTS_STRATEGY` CI/CD variable
   strategy: enum [`ALWAYS`, `NEVER`]
   # Optional. Default value - 100
   # Maximum size, in MB, of the compressed `artifacts.tar.zst`. Above it the work directory is dropped,
   # only the per-environment logs are kept, and a `NOT-PUBLISHED.txt` is published. The job does not fail
-  # on size. Per-environment logs are kept unless `strategy` is `NEVER`
+  # on size. Per-environment logs are always saved
   size_limit_mb: integer
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
