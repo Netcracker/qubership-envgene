@@ -52,6 +52,7 @@ def git_commit() -> None:
         if not repo_manager.stage_changes():
             logger.info("No changes. Skip.")
             return
+        repo_manager.remove_dcl_paths_from_index()
         message = build_commit_message()
         sha = repo_manager.create_detached_commit(message)
 

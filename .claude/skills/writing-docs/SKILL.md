@@ -17,12 +17,12 @@ description: >-
 # writing-docs
 
 House rules for how text is written in this repository. They apply to documentation under `docs/`, the
-README files, and any prose the repository produces for issues, change requests, and pull requests. The
+readme files, and any prose the repository produces for issues, change requests, and pull requests. The
 rules live in reference files, each carrying the full rule with its rationale and examples. This file
 routes you to the right one - open it before you write, do not work from memory.
 
 The rules are the source of truth for prose and Markdown style. The repository `AGENTS.md` keeps only
-the git and pull-request process rules that sit outside the text itself: commit messages, commit
+the Git and pull-request process rules that sit outside the text itself: commit messages, commit
 granularity, and pull-request scope. When those processes need a style decision, they defer here.
 
 ## How to use this skill
@@ -33,7 +33,7 @@ add the file that fits the specific job.
 
 | Task                                                                         | Read                                 |
 |------------------------------------------------------------------------------|--------------------------------------|
-| Write or edit any prose - a doc, README, issue, CR, or PR description        | `references/prose-style.md`          |
+| Write or edit any prose - a doc, readme, issue, CR, or PR description        | `references/prose-style.md`          |
 | Format Markdown - lists, tables, ToC, callouts, links, line length, headings | `references/markdown.md`             |
 | Structure a document or shape its sections - Diataxis type, section value    | `references/doc-structure.md`        |
 | State an identifier, define a term, or link between in-repo files            | `references/content-integrity.md`    |

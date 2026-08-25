@@ -1,14 +1,50 @@
 from dpg.v1.cmd import DeploymentPlanGeneratorCommand
 from dpg.v1.internal.deployment_plan.deployment_plan import DeploymentPlanCalculator
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, INVENTORY_DIR_NAME
+from envgenehelper.business_helper import (
+    get_current_env_dir_from_env_vars,
+    INVENTORY_DIR_NAME,
+    parse_bg_ns_target,
+)
 from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, resolve_namespace_entry
+from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 from build_env.namespace_render import NAMESPACE_MAP_FILE
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 _INTERMEDIATE_CALCULATED_FILE = "deploy-plan-calculated.yml"
 _INTERMEDIATE_MAPPED_FILE = "deploy-plan-mapped.yml"
+
+
+def bind_namespaces(deploy_plan, namespace_map: dict, bg_ns_target):
+    bound_plan = deploy_plan.model_copy(deep=True)
+
+    for entity in bound_plan.entities:
+        if entity.deploy_postfix:
+            namespace_entry = namespace_map.get(entity.deploy_postfix)
+            if namespace_entry is None:
+                raise ValueError(
+                    f"deployPostfix '{entity.deploy_postfix}' is not present in the namespace map"
+                )
+            entity.namespace = resolve_namespace_entry(
+                namespace_entry,
+                bg_ns_target,
+                entity.deploy_postfix,
+            )
+            continue
+
+        for deploy_postfix, namespace_entry in namespace_map.items():
+            if namespace_entry == entity.namespace or (
+                isinstance(namespace_entry, dict) and entity.namespace in namespace_entry.values()
+            ):
+                entity.deploy_postfix = deploy_postfix
+                break
+        else:
+            raise ValueError(
+                f"namespace '{entity.namespace}' is not present in the namespace map"
+            )
+
+    return bound_plan
 
 
 def merge_deployment_plan(ctx: PipelineParametersHandler) -> None:
@@ -34,11 +70,13 @@ def merge_deployment_plan(ctx: PipelineParametersHandler) -> None:
         output_file=calculated_plan_path,
         rootdir=ctx.work_dir,
     )
-    deploy_plan = DeploymentPlanGeneratorCommand.map(
-        deploy_plan=calculated_plan,
-        map=namespace_map_path,
-        output_file=mapped_plan_path,
+    namespace_map = openYaml(namespace_map_path, allow_default=True, default_yaml=dict) or {}
+    deploy_plan = bind_namespaces(
+        calculated_plan,
+        namespace_map,
+        parse_bg_ns_target(ctx.params.get("BG_NS_TARGET")),
     )
+    writeYamlToFile(mapped_plan_path, deploy_plan.to_dict())
 
     filtered_deploy_plan = DeploymentPlanGeneratorCommand.filter(
         deploy_plan=deploy_plan,
