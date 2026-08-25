@@ -1,0 +1,39 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:b6b6a380-dfa0-4d4f-9d69-defdd6eb2443",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00.000000+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "app-controller-bom-ref",
+      "name": "app-controller",
+      "version": "1.0.0",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "app-controller-dd-bom-ref",
+          "group": "com.test",
+          "name": "test_app_artifact",
+          "version": "1.0.0",
+          "purl": "pkg:maven/com.test/test_app_artifact@1.0.0?registry_id=mock-reg&repository_id=release"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "container",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "app-controller-chart-bom-ref",
+      "name": "app-controller",
+      "version": "1.0.0",
+      "purl": "pkg:oci/app-controller@1.0.0"
+    }
+  ],
+  "dependencies": []
+}
