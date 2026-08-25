@@ -14,8 +14,8 @@ out to isolated worktrees that are torn down at the end, so their evidence is ot
 We save the job work directory and the per-environment logs as a single `artifacts.tar.zst`, on every run.
 
 - EnvGene compresses the archive with zstd itself. This measures the exact compressed size, and zstd is
-  faster and tighter than the runner's zip. The runner is set to its lowest compression so it does not try to
-  re-shrink the already-compressed archive, keeping its mandatory zip pass cheap.
+  faster and tighter than the runner's ZIP. The runner is set to its lowest compression so it does not try to
+  re-shrink the already-compressed archive, keeping its mandatory ZIP pass cheap.
 - A repository-wide `save_artifacts.strategy` (`ALWAYS` default, `NEVER`), overridable per run by
   `SAVE_ARTIFACTS_STRATEGY`, decides whether the archive is saved. `ALWAYS` is the default so evidence exists
   even for a run that looks green but produced wrong output.
