@@ -27,6 +27,18 @@ class TestAdaptSdToDeployPlan:
         assert entity.namespace == "dev-bss"
 
     @pytest.mark.unit
+    def test_uses_selected_bgd_namespace_when_map_contains_both_sides(self, env_dir, monkeypatch):
+        sd_path = env_dir / "Inventory" / "solution-descriptor" / "sd.yaml"
+        writeYamlToFile(sd_path, {"applications": [{"version": "App:1.0", "deployPostfix": "bss"}]})
+        monkeypatch.setenv("BG_NS_TARGET", "origin")
+
+        deploy_plan = adapt_sd_to_deploy_plan(
+            {"bss": {"origin": "dev-bss-origin", "peer": "dev-bss-peer"}}
+        )
+
+        assert deploy_plan.entities[0].namespace == "dev-bss-origin"
+
+    @pytest.mark.unit
     def test_raises_when_deploy_postfix_not_in_namespace_map(self, env_dir):
         sd_path = env_dir / "Inventory" / "solution-descriptor" / "sd.yaml"
         writeYamlToFile(sd_path, {"applications": [{"version": "App:1.0", "deployPostfix": "bss"}]})
