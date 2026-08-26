@@ -11,23 +11,23 @@ out to isolated worktrees that are torn down at the end, so their evidence is ot
 
 ## Decision
 
-We save the job work directory and the per-environment logs as a single `artifacts.tar.zst`, on every run.
+We save the job work directory and the per-environment logs as a job artifact, on every run.
 
-- EnvGene compresses the archive with zstd itself. This measures the exact compressed size, and zstd is
-  faster and tighter than the runner's ZIP. The runner is set to its lowest compression so it does not try to
-  re-shrink the already-compressed archive, keeping its mandatory ZIP pass cheap.
 - A repository-wide `save_artifacts.strategy` (`ALWAYS` default, `NEVER`), overridable per run by
   `SAVE_ARTIFACTS_STRATEGY`, decides whether the work directory is saved. `NEVER` saves the logs only.
   `ALWAYS` is the default so evidence exists even for a run that looks green but produced wrong output.
-- A size guard compares the compressed archive to `save_artifacts.size_limit_mb` (default 100 MB, the GitLab
-  default job artifact cap, so the stored archive is accepted as-is). Over it, EnvGene republishes the archive
-  with only the logs and a `NOT-PUBLISHED.txt`, without failing the job.
+- A size guard measures the uncompressed size of the work directory against `save_artifacts.size_limit_mb`
+  (default 800 MB, which keeps the archived artifact under about 300 MB even at the worst-case 2.7x
+  compression of encrypted credentials). Over it, EnvGene keeps only the logs and a `NOT-PUBLISHED.txt`,
+  without failing the job. EnvGene does not compress the artifact: the runner archives the saved work
+  directory as usual, so it stays browsable.
 - The logs are small, so they are always saved, exempt from both the strategy and the size limit. As files
   they bypass the GitLab job log truncation (4 MB default, `ci_jobs_trace_size_limit`), which in a
   multi-environment run would otherwise leave no complete record of the console output.
-- To keep `/sboms/` a small share of the artifact, the SBOM retention total-size-limit default is lowered
-  from 600 MB to 200 MB (about 14 MB compressed, near 14% of the artifact). That is a 3x cut from 600 that
-  still caches enough to avoid frequent regeneration.
+- The SBOM retention total-size-limit default is lowered from 600 MB to 50 MB. At about 28 KB per SBOM that
+  is roughly 1,800 files, a safety ceiling well above the roughly 7 MB a real `/sboms/` cache holds. SBOMs
+  compress about 14x, so 50 MB is about 3.6 MB in the archive, near 1% of the roughly 300 MB archived
+  artifact and 6% of the 800 MB uncompressed budget.
 
 Rejected:
 
@@ -40,9 +40,8 @@ Rejected:
   SBOMs are all mutated per environment, so the saving does not justify the complexity.
 - Gating on environment count, because per-environment size varies roughly 200-fold, so a count is a false
   proxy for size.
-- Letting the CI runner archive the raw work directory, because it recompresses an already-large tree.
-- Estimating the size from uncompressed bytes, because zstd measures the exact compressed size in about 3
-  seconds worst case.
+- Compressing the artifact inside EnvGene to gate on the exact compressed size, because it adds a compression
+  step and a store-mode runner setting, and makes the artifact an opaque blob the CI web UI cannot browse.
 
 ## Consequences
 
@@ -51,12 +50,9 @@ Rejected:
   re-encryption, leaves them in plaintext. There is no requirement to remove them, replacing them with dummy
   values would add complexity, and troubleshooting needs the real values, so we accept this and document it as
   a security note.
-- A multi-environment run whose compressed archive exceeds the 100 MB limit (roughly 60 or more
-  credential-heavy environments) keeps only the logs and a `NOT-PUBLISHED.txt`. Accepted.
-- The artifact is a single compressed archive, so the CI web UI cannot browse into it. Operators download and
-  extract it to inspect. Accepted.
-- The implementation must stage each environment's work directory before its worktree is torn down, and set
-  the runner to its lowest compression so it does not re-shrink the archive.
+- A multi-environment run whose work directory exceeds the 800 MB limit (roughly 150 or more credential-heavy
+  environments) keeps only the logs and a `NOT-PUBLISHED.txt`.
+- The implementation must stage each environment's work directory before its worktree is torn down.
 
 See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md) and the pipeline flow
 analysis for depth.

@@ -17,9 +17,8 @@ operator can inspect them without rerunning the pipeline. When `ENV_NAMES` lists
 runs in its own isolated work directory, and the artifact includes all of them, one per environment, together
 with the per-environment pipeline logs.
 
-EnvGene compresses everything into a single `artifacts.tar.zst`, and the runner adds no further compression to
-it. To inspect a run, download `artifacts.tar.zst` and extract it. It is a single archive, so the CI web UI
-cannot browse into it.
+The CI runner packages the work directory into the job artifact, so you can browse and download individual
+files in the CI web UI.
 
 ## Security
 
@@ -30,10 +29,10 @@ credential values in a failed run's artifact. Treat failure artifacts as potenti
 
 ## Scope
 
-The job artifact is `artifacts.tar.zst`, plus a plain `NOT-PUBLISHED.txt` at the root only when the work
-directory is dropped (see [Save criteria](#save-criteria)). Extracted, `artifacts.tar.zst` holds the work
-directory as the run left it. Each run works in its own isolated Git worktree that commits its result
-independently, laid out under a `<cluster-name>-<environment-name>/` wrapper. The tree below shows the full layout.
+The job artifact is the work directory as the run left it, plus a plain `NOT-PUBLISHED.txt` at the root only
+when the work directory is dropped (see [Save criteria](#save-criteria)). Each run works in its own isolated
+Git worktree that commits its result independently, laid out under a `<cluster-name>-<environment-name>/`
+wrapper. The tree below shows the full layout.
 
 ```text
 <cluster-name>-<environment-name>/               # isolated worktree of one run (multi-env: one sibling per environment)
@@ -78,19 +77,19 @@ Two checks decide what is saved:
 - [Size limit](#size-limit)
 
 The per-environment logs are always saved. The strategy and the size limit decide only whether the work
-directory is saved with them. `NEVER` saves the logs only. Under `ALWAYS`, EnvGene compresses the work
-directory and logs into `artifacts.tar.zst` and checks its size: within the limit the full archive is
-published, over the limit EnvGene republishes it with only the logs. Whenever the work directory is dropped,
-by `NEVER` or by size, a plain `NOT-PUBLISHED.txt` at the artifact root states the reason.
+directory is saved with them. `NEVER` saves the logs only. Under `ALWAYS`, EnvGene measures the work
+directory and saves it when it is within the size limit, keeping only the logs when it is over. Whenever the
+work directory is dropped, by `NEVER` or by size, a plain `NOT-PUBLISHED.txt` at the artifact root states the
+reason.
 
 ```mermaid
 flowchart TD
     A([Pipeline job ends]) --> B{Resolved strategy}
     B -->|NEVER| C[Save logs only, add NOT-PUBLISHED.txt]
-    B -->|ALWAYS| D[Compress work directory and logs into artifacts.tar.zst]
-    D --> E{Compressed size within save_artifacts.size_limit_mb?}
-    E -->|yes| F[Publish full artifacts.tar.zst]
-    E -->|no| G[Publish artifacts.tar.zst with logs only, add NOT-PUBLISHED.txt]
+    B -->|ALWAYS| D[Measure work directory size]
+    D --> E{Uncompressed size within save_artifacts.size_limit_mb?}
+    E -->|yes| F[Save work directory and logs]
+    E -->|no| G[Save logs only, add NOT-PUBLISHED.txt]
 ```
 
 The resolved strategy is the `SAVE_ARTIFACTS_STRATEGY` CI/CD variable, then `save_artifacts.strategy`, then
@@ -114,7 +113,7 @@ Repository policy in `/configuration/config.yml`:
 save_artifacts:
   # Optional. Default value - `ALWAYS`
   strategy: enum [`ALWAYS`, `NEVER`]
-  # Optional. Default value - 100. Maximum compressed size in MB of `artifacts.tar.zst`
+  # Optional. Default value - 800. Maximum uncompressed size in MB of the work directory
   size_limit_mb: integer
 ```
 
@@ -127,16 +126,16 @@ SAVE_ARTIFACTS_STRATEGY: enum [`ALWAYS`, `NEVER`]
 
 ### Size limit
 
-EnvGene compresses the work directory and logs into `artifacts.tar.zst` with zstd, then compares the size of
-that archive to the limit. The default limit is 100 MB. Over it, EnvGene drops the work directory and keeps
-only the per-environment logs, so a run's logs stay available even when its work directory is too large. The
-job does not fail on size, so `ALWAYS` is safe even when runs produce large output.
+EnvGene measures the uncompressed size of the work directory and saves it only when that size is within the
+limit. The default limit is 800 MB. Over it, EnvGene drops the work directory and keeps only the
+per-environment logs, so a run's logs stay available even when its work directory is too large. The job does
+not fail on size, so `ALWAYS` is safe even when runs produce large output.
 
 The limit is set by [`save_artifacts.size_limit_mb`](/docs/envgene-configs.md#configyml) in
-`/configuration/config.yml`, and is the size of the compressed archive. The runner is set to its lowest
-compression (`FF_USE_FASTZIP` with `ARTIFACT_COMPRESSION_LEVEL: fastest` on GitLab, `compression-level: 0` on
-GitHub), so it adds no further compression to `artifacts.tar.zst` and the published artifact matches the
-measured size, fitting the CI platform's default job artifact limit (100 MB on GitLab).
+`/configuration/config.yml`, and is the uncompressed size of the work directory folder, not the size of the
+archived artifact. EnvGene does not compress the artifact itself: the CI runner archives the saved work
+directory as usual, so it stays browsable in the CI web UI. 800 MB keeps the archived artifact under about
+300 MB even at the worst-case 2.7x compression of encrypted credentials.
 
 ## Multi-environment runs
 
