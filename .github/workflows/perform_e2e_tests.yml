@@ -53,6 +53,7 @@ jobs:
                --junitxml=reports/sbom_retention.xml \
                | tee -a /workspace/e2e_tests.log"
 
+
       - name: Run BGD Sub-flows BDD tests
         run: |
           docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
@@ -62,6 +63,16 @@ jobs:
              pytest cucumber_tests/step_defs/test_bgd_sub_flows.py \
                -v -s \
                --junitxml=reports/bgd_sub_flows.xml \
+               | tee -a /workspace/e2e_tests.log"
+            
+      - name: Run Calculator CLI BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_calculator_cli.py \
+               -v -s \
+               --junitxml=reports/calculator_cli.xml \
                | tee -a /workspace/e2e_tests.log"
 
       - name: Publish Test Report

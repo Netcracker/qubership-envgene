@@ -1,10 +1,8 @@
 # Report format
 
 Published title: "Test review: scenarios and test data". Five sections, in this order: Per-scenario
-verdicts, Proposed scenarios, Test data per scenario, Notes, Related issues (context only). When the
-draft becomes file-based (SKILL.md owns that mode switch), it lives in the scratch directory beside
-the repository clone (`<repo-parent>/stuff/pr-<N>-test-review.md`, outside the repository, never
-committed). The published comment is the draft's English translation.
+verdicts, Proposed scenarios, Test data per scenario, Notes, Related issues (context only). The
+published comment is the draft's English translation.
 
 House style everywhere: no semicolons in prose, hyphen-minus only (no em or en dashes), prose wrapped at
 120 characters (tables and URLs exempt), all tables with vertically aligned pipes and dash-padded

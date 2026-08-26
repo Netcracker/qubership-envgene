@@ -1,6 +1,6 @@
 # Prose and text style
 
-General English style for any text this repository ships: documentation, README prose, issue and
+General English style for any text this repository ships: documentation, readme prose, issue and
 change-request bodies, and pull-request descriptions. Read this file whenever you write or edit prose.
 
 - [Prose and text style](#prose-and-text-style)

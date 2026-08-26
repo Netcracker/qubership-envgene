@@ -1,0 +1,11 @@
+name: test-tenant
+registryName: mock-reg
+credential: dummy-cred
+globalE2EParameters: {}
+deployParameters:
+  tenant_config: ${cloud_region}
+deploymentParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameters:
+  tenant_config_param: ${cloud_config_region}
+technicalParameterSets: []
