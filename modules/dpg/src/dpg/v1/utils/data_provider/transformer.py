@@ -11,7 +11,7 @@ def transform_params_registry(registry: UnifiedRegDef, params: dict) -> Registry
 
     __url = registry.maven.get('repo_domain_name', '')
     if not __url:
-        __url = registry.maven.get.get('full_repo_url', '')
+        __url = registry.maven.get('full_repo_url', '')
 
     __auth_config = AuthUserPassword(
             registry_url=__url,
