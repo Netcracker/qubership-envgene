@@ -123,7 +123,7 @@ class ArtifactoryUtils:
                     oidc_custom_params=pub_reg_oidc_custom_params,
                 )
             elif authmethod == "service_account":  
-                reg_secret = __clean_and_validate_json_string(reg_secret)
+                reg_secret = _clean_and_validate_json_string(reg_secret)
                 return AuthGCPServiceAccount(
                     service_account_key_content=reg_secret,
                     project=reg_project,
@@ -259,7 +259,7 @@ class ArtifactoryUtils:
         return SNAPSHOT_TIMESTAMP_RE.sub("", stem).endswith(f"-{base_version}")
 
 
-def __clean_and_validate_json_string(json_string: str) -> str:
+def _clean_and_validate_json_string(json_string: str) -> str:
     """
     Clean and validate a JSON string, handling common formatting issues.
     
