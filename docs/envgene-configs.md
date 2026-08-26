@@ -394,6 +394,15 @@ sbom_retention:
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
   # exceeds 600 MB)
   keep_versions_per_app: integer
+# Optional
+# Application SBOM generation configuration
+sbom_generation:
+  # Optional. Default value - `false`
+  # Temporary rollback toggle for Application SBOM component identity
+  # `false` - Application SBOM components are derived solely from the Deployment Descriptor (DD)
+  # `true` - additionally expands umbrella chart sub-charts into extra components (previous behavior)
+  # Temporary compatibility switch retained for rollback
+  chart_subchart_expansion: boolean
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
 # `partial` - Partial Generation is enabled. Selected automatically when applicable, otherwise Full Generation is used
