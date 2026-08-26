@@ -46,10 +46,47 @@ function debugPrintCertsFromFile {
     echo "[DEBUG] === End ${label} ==="
 }
 
+validate_bundle() {
+    local file="$1"
+    local count=0
+    local failed=0
+    local tmpdir
+    tmpdir=$(mktemp -d)
+
+    awk -v dir="$tmpdir" '
+        /-----BEGIN CERTIFICATE-----/ { n++; out = dir "/cert-" n ".pem" }
+        out { print > out }
+        /-----END CERTIFICATE-----/ { close(out); out="" }
+    ' "$file"
+
+    for part in "$tmpdir"/cert-*.pem; do
+        [[ -s "$part" ]] || continue
+        count=$((count + 1))
+        if ! openssl x509 -in "$part" -noout -checkend 0 2>/dev/null; then
+            log "[WARNING]: Certificate #$count in ${file} is expired or invalid"
+            failed=1
+        fi
+    done
+
+    rm -rf "$tmpdir"
+
+    if [[ $count -eq 0 ]]; then
+        log "[WARNING]: No valid PEM certificate blocks found in ${file}"
+        failed=1
+    fi
+
+    return $failed
+}
+
 function updateCertificates {
     local CA_FILE="$1"
     if [[ -e "${CA_FILE}" && -n "${CA_FILE}" ]]; then
         debugPrintCertsFromFile "${CA_FILE}" "Certificates in source file BEFORE import (${CA_FILE})"
+
+        if ! validate_bundle "${CA_FILE}"; then
+            log "[ERROR]: Certificate validation failed for ${CA_FILE}"
+            exit 1
+        fi
 
         local LOCAL_NAME
         LOCAL_NAME="$(basename "${CA_FILE}" | sed 's/\.[^.]*$//').crt"
