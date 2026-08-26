@@ -760,8 +760,12 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `PRIVATE_IDENTITY_PROVIDER_URL`   | yes       | string  | URL of the private gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace's private gateway even if the current namespace is a satellite. Computed as the URL of the private gateway where the IDP is published: Use the value of `PRIVATE_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PRIVATE_GATEWAY_URL}` from the current namespace | `${PRIVATE_GATEWAY_URL}`                                                       | N/A                                                                                          |
 
 > [!IMPORTANT]
-> Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> A root-level parameter whose key matches the name of one of the services would collide with that
+> service's section, so it is not kept at the root level. It stays in the `global` section and remains
+> reachable inside each service through the per-service alias (`<service-name>: *id001`), and a copy is
+> written to [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters).
+> See [Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
+> for the same global-plus-alias mechanism.
 
 ###### [Version 2.0] Image parameters derived from `deploy_param`
 
@@ -824,12 +828,15 @@ global: &id001
 | `CA_BUNDLE_CERTIFICATE`                  | no        | string | SSL Certificate bundle                                                                                                 | None    | The value is taken from the deployment parameter `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which can be set at the `Tenant`, `Cloud`, `Namespace`, or `Application`                                                          |
 
 > [!IMPORTANT]
-> Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> A root-level parameter whose key matches the name of one of the services would collide with that
+> service's section, so it is not kept at the root level. It stays in the `global` section and remains
+> reachable inside each service through the per-service alias (`<service-name>: *id001`), and a copy is
+> written to [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters).
 
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
-Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are moved to collision files if they meet **both** conditions:
+Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are removed from the root
+level and copied to collision files if they meet **both** conditions:
 
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
