@@ -1,0 +1,8 @@
+{
+  "configurations": [
+    {
+      "maven_repository": "http://localhost:8000/release",
+      "artifacts": [{"id": "org.test:test-artifact:v1"}]
+    }
+  ]
+}

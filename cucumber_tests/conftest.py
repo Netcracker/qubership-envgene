@@ -1,67 +1,67 @@
 import sys
 import pytest
 import os
+import shutil
 import subprocess
 import time
-import json
 import zipfile
 import urllib.request
 from pathlib import Path
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from cucumber_tests.shared_steps.common_steps import *
 
+# Fixture data for the mock_nexus server: one JSON manifest per artifact, plus the Jinja
+# templates that get zipped up for the env-template artifacts. Kept as real files under
+# test_data/mock_nexus/ (instead of inline strings) so their content is readable and diffable.
+_MOCK_NEXUS_FIXTURES = Path(__file__).parent / "test_data" / "mock_nexus"
+
+
+def _write_manifest(dest_dir: Path, filename: str) -> None:
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(_MOCK_NEXUS_FIXTURES / "manifests" / filename, dest_dir / filename)
+
+
+def _add_dir_to_zip(zf: zipfile.ZipFile, source_dir: Path, arc_prefix: str) -> None:
+    for path in sorted(source_dir.rglob("*")):
+        if path.is_file():
+            zf.write(path, arcname=f"{arc_prefix}/{path.relative_to(source_dir).as_posix()}")
+
+
+def _build_env_template_zip(dest_path: Path, bundle_name: str) -> None:
+    """Zip templates/ from the shared "common" fixtures plus the bundle's own overrides,
+    mirroring the "{{ templates_dirs.common }}" split the templates themselves reference."""
+    with zipfile.ZipFile(dest_path, "w") as z:
+        _add_dir_to_zip(z, _MOCK_NEXUS_FIXTURES / "common", "templates")
+        _add_dir_to_zip(z, _MOCK_NEXUS_FIXTURES / bundle_name, "templates")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def mock_nexus(tmp_path_factory):
     base_dir = tmp_path_factory.mktemp("mock_nexus")
-    
-    art_dir = base_dir / "release" / "org" / "test" / "test-artifact" / "v1"
-    art_dir.mkdir(parents=True, exist_ok=True)
-    with open(art_dir / "test-artifact-v1.json", "w") as f:
-        json.dump({"configurations": [{"maven_repository": "http://localhost:8000/release", "artifacts": [{"id": "org.test:test-artifact:v1"}]}]}, f)
-    with zipfile.ZipFile(art_dir / "test-artifact-v1.zip", "w") as z:
-        z.writestr("templates/env_templates/test.yml", "tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'\ncloud: '{{ templates_dirs.common }}/Cloud.yml.j2'\nbg_domain: '{{ templates_dirs.common }}/BgDomain.yml.j2'\nnamespaces:\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: core\n    template_override: {name: core}\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: bss\n    template_override: {name: bss-origin}\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: bss\n    template_override: {name: bss-peer}\n")
-        z.writestr("templates/BgDomain.yml.j2", "name: dummy-bg-domain\ncontrollerNamespace: {name: controller-ns, credentials: dummy}\noriginNamespace: {name: bss-origin, credentials: dummy}\npeerNamespace: {name: bss-peer, credentials: dummy}\n")
-        z.writestr("templates/env_templates/composite-prod.yml", "tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'\ncloud: '{{ templates_dirs.common }}/Cloud.yml.j2'\nnamespaces: []\n")
-        z.writestr("templates/Tenant.yml.j2", "name: dummy-tenant\nregistryName: default\ncredential: dummy-cred\nglobalE2EParameters: {}\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\n")
-        z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
-        z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
-        z.writestr("templates/appdefs/app1.yml.j2", "name: app1\nregistryName: default-registry\ngroupId: org.test\nartifactId: test-app\nsupportParallelDeploy: false\ndeployParameters: {}\ntechnicalConfigurationParameters: {}\n")
-        z.writestr("templates/regdefs/registry1.yml.j2", "name: default-registry\ncredentialsId: dummy\ndockerConfig:\n  groupName: dummy\n  groupUri: dummy\n  releaseRepoName: dummy\n  releaseUri: dummy\n  snapshotRepoName: dummy\n  snapshotUri: dummy\n  stagingRepoName: dummy\n  stagingUri: dummy\nmavenConfig:\n  fullRepositoryUrl: dummy\n  releaseGroup: dummy\n  repositoryDomainName: dummy\n  snapshotGroup: dummy\n  targetRelease: dummy\n  targetSnapshot: dummy\n  targetStaging: dummy\n")
-        z.writestr("templates/appdefs/app3.yml.j2", "name: app3\ngroupId: org.test\nartifactId: app3\nregistryName: \"{{ appdefs.overrides.registryName | default('off-site-registry-X') }}\"\nsupportParallelDeploy: false\ndeployParameters: {}\ntechnicalConfigurationParameters: {}\n")
-        z.writestr("templates/regdefs/off-site-registry-X.yml.j2", "name: off-site-registry-X\ncredentialsId: dummy\ndockerConfig:\n  groupName: dummy\n  groupUri: dummy\n  releaseRepoName: dummy\n  releaseUri: dummy\n  snapshotRepoName: dummy\n  snapshotUri: dummy\n  stagingRepoName: dummy\n  stagingUri: dummy\nmavenConfig:\n  fullRepositoryUrl: dummy\n  releaseGroup: dummy\n  repositoryDomainName: dummy\n  snapshotGroup: dummy\n  targetRelease: dummy\n  targetSnapshot: dummy\n  targetStaging: dummy\n")
-    foo_dir = base_dir / "release" / "org" / "test" / "foo" / "1.0"
-    foo_dir.mkdir(parents=True, exist_ok=True)
-    with open(foo_dir / "foo-1.0.json", "w") as f:
-        json.dump({"configurations": [{"maven_repository": "http://localhost:8000/release", "artifacts": [{"id": "org.test:foo:1.0"}]}]}, f)
-    with zipfile.ZipFile(foo_dir / "foo-1.0.zip", "w") as z:
-        z.writestr("templates/env_templates/test.yml", "tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'\ncloud: '{{ templates_dirs.common }}/Cloud.yml.j2'\nbg_domain: '{{ templates_dirs.common }}/BgDomain.yml.j2'\nnamespaces:\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: core\n    template_override: {name: core}\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: bss\n    template_override: {name: bss-origin}\n")
-        z.writestr("templates/BgDomain.yml.j2", "name: dummy-bg-domain\ncontrollerNamespace: {name: controller-ns, credentials: dummy}\noriginNamespace: {name: bss-origin, credentials: dummy}\npeerNamespace: {name: bss-peer, credentials: dummy}\n")
-        z.writestr("templates/env_templates/composite-prod.yml", "tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'\ncloud: '{{ templates_dirs.common }}/Cloud.yml.j2'\nnamespaces: []\n")
-        z.writestr("templates/Tenant.yml.j2", "name: dummy-tenant\nregistryName: default\ncredential: dummy-cred\nglobalE2EParameters: {}\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\n")
-        z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
-        z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
 
+    # "test-artifact:v1" - the default env template, used as-is by most scenarios and as the
+    # BG Domain origin-side artifact in the BGD warmup scenarios.
+    art_dir = base_dir / "release" / "org" / "test" / "test-artifact" / "v1"
+    _write_manifest(art_dir, "test-artifact-v1.json")
+    _build_env_template_zip(art_dir / "test-artifact-v1.zip", "default-env-template")
+
+    # "foo:1.0" - the BG Domain peer-side artifact in the BGD warmup scenarios, deliberately
+    # a different template from the origin side so the two can be told apart.
+    foo_dir = base_dir / "release" / "org" / "test" / "foo" / "1.0"
+    _write_manifest(foo_dir, "foo-1.0.json")
+    _build_env_template_zip(foo_dir / "foo-1.0.zip", "bg-peer-env-template")
+
+    # "project-env-template:v1.2.3" - used by the env-inventory-generation and template-version
+    # scenarios, where the artifact's own semantic version is what's under test.
     pet_dir = base_dir / "release" / "org" / "test" / "project-env-template" / "v1.2.3"
-    pet_dir.mkdir(parents=True, exist_ok=True)
-    with open(pet_dir / "project-env-template-v1.2.3.json", "w") as f:
-        json.dump({"configurations": [{"maven_repository": "http://localhost:8000/release", "artifacts": [{"id": "org.test:project-env-template:v1.2.3"}]}]}, f)
-    with zipfile.ZipFile(pet_dir / "project-env-template-v1.2.3.zip", "w") as z:
-        z.writestr("templates/env_templates/test.yml", "tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'\ncloud: '{{ templates_dirs.common }}/Cloud.yml.j2'\nbg_domain: '{{ templates_dirs.common }}/BgDomain.yml.j2'\nnamespaces:\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: core\n    template_override: {name: core}\n  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'\n    deploy_postfix: bss\n    template_override: {name: bss-origin}\n")
-        z.writestr("templates/BgDomain.yml.j2", "name: dummy-bg-domain\ncontrollerNamespace: {name: controller-ns, credentials: dummy}\noriginNamespace: {name: bss-origin, credentials: dummy}\npeerNamespace: {name: bss-peer, credentials: dummy}\n")
-        z.writestr("templates/env_templates/composite-prod.yml", "tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'\ncloud: '{{ templates_dirs.common }}/Cloud.yml.j2'\nnamespaces: []\n")
-        z.writestr("templates/Tenant.yml.j2", "name: dummy-tenant\nregistryName: default\ncredential: dummy-cred\nglobalE2EParameters: {}\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\n")
-        z.writestr("templates/Cloud.yml.j2", "name: dummy-cloud\nnamespacePrefix: dummy\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\napiUrl: dummy\napiPort: 80\ndashboardUrl: dummy\nlabels: []\ndefaultCredentialsId: dummy\nprotocol: dummy\nmaasConfig: {credentialsId: dummy}\nvaultConfig: {credentialsId: dummy}\nconsulConfig: {credentialsId: dummy, tokenSecret: dummy}\ndbaasConfigs: []\n")
-        z.writestr("templates/Namespace.yml.j2", "name: dummy-namespace\nlabels: []\ndeployParameters: {}\ndeployParameterSets: []\ne2eParameters: {}\ne2eParameterSets: []\ntechnicalConfigurationParameters: {}\ntechnicalConfigurationParameterSets: []\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\nmergeDeployParametersAndE2EParameters: false\ncredentialsId: dummy\n")
+    _write_manifest(pet_dir, "project-env-template-v1.2.3.json")
+    _build_env_template_zip(pet_dir / "project-env-template-v1.2.3.zip", "env-inventory-template")
 
     test_app_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.0.0"
-    test_app_dir.mkdir(parents=True, exist_ok=True)
-    with open(test_app_dir / "test_app_artifact-1.0.0.json", "w") as f:
-        json.dump({"applications": [{"version": "test_app:1.0.0", "deployPostfix": "dp1"}], "deployGraph": [{"chunkName": "wave1", "apps": ["test_app:dp1"]}]}, f)
-        
+    _write_manifest(test_app_dir, "test_app_artifact-1.0.0.json")
+
     test_app2_dir = base_dir / "release" / "com" / "test" / "test_app_2_artifact" / "2.0.0"
-    test_app2_dir.mkdir(parents=True, exist_ok=True)
-    with open(test_app2_dir / "test_app_2_artifact-2.0.0.json", "w") as f:
-        json.dump({"applications": [{"version": "test_app_2:2.0.0", "deployPostfix": "dp2"}], "deployGraph": [{"chunkName": "wave1", "apps": ["test_app_2:dp2"]}]}, f)
+    _write_manifest(test_app2_dir, "test_app_2_artifact-2.0.0.json")
 
     proc = subprocess.Popen([sys.executable, "cucumber_tests/mock_server.py", "8000", str(base_dir)])
     
@@ -86,22 +86,6 @@ def workspace(tmp_path):
 
 _XFAIL_REASONS = {
     "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
-    "xfail_cli_npe": (
-        "Calculator CLI throws NullPointerException when the requested namespace is absent from "
-        "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
-        "Affects BG-domain scenarios (dp_2, dp_4) and non-BG no-match scenarios (dp_3)."
-    ),
-    "xfail_cli_no_hierarchy_rule": (
-        "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
-        "cannot reference Cloud- or Namespace-level parameters (doc-vs-code divergence)."
-    ),
-    "xfail_cli_no_context_rule": (
-        "Calculator CLI does not enforce the documented rule that e2eParameters and "
-        "technicalConfigurationParameters cannot cross-reference deployParameters "
-        "(doc-vs-code divergence; caught directions: deployParameters->e2eParameters and "
-        "deployParameters->technicalConfigurationParameters; uncaught: the reverse and all "
-        "other cross-context directions)."
-    ),
 }
 
 

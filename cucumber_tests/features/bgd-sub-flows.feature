@@ -182,6 +182,8 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
+    And the pipeline step "env_build" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
     And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
     And the deploy plan contains an entry for namespace "bss-origin" with version "app1:1.0"
 
@@ -194,6 +196,8 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
+    And the pipeline step "env_build" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
     And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
     And the deploy plan contains an entry for namespace "bss-peer" with version "app1:1.0"
 

@@ -1,0 +1,10 @@
+tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'
+cloud: '{{ templates_dirs.common }}/Cloud.yml.j2'
+bg_domain: '{{ templates_dirs.common }}/BgDomain.yml.j2'
+namespaces:
+  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'
+    deploy_postfix: core
+    template_override: {name: core}
+  - template_path: '{{ templates_dirs.common }}/Namespace.yml.j2'
+    deploy_postfix: bss
+    template_override: {name: bss-origin}

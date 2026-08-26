@@ -1,0 +1,3 @@
+tenant: '{{ templates_dirs.common }}/Tenant.yml.j2'
+cloud: '{{ templates_dirs.common }}/Cloud.yml.j2'
+namespaces: []
