@@ -77,7 +77,12 @@ class TestCompositeTopology:
                 "originNamespace": "env-1-bss-origin",
                 "peerNamespace": "env-1-bss-peer",
                 "controllerNamespace": "env-1-controller",
-            }
+            },
+             "satellites": [
+                            {
+                                "originNamespace": "env-1-data-management",
+                            }
+                        ],
         }
 
     def test_bgdomain_satellite(self):
