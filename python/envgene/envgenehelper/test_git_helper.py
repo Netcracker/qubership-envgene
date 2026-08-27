@@ -25,8 +25,7 @@ def make_manager(ctx=None):
     if ctx is None:
         ctx = make_context()
     with patch("envgenehelper.git_helper.Repo"), \
-            patch.object(GitContext, "from_env", return_value=ctx), \
-            patch.object(GitRepoManager, "get_sparse_checkout_paths", return_value=[]):
+            patch.object(GitContext, "from_env", return_value=ctx):
         manager = GitRepoManager()
     manager.repo.git.execute = MagicMock()
     return manager
@@ -56,27 +55,13 @@ class TestResolveRemoteUrl:
 
 
 class TestStageChanges:
-    def test_filters_nonexistent_paths(self, tmp_path):
-        existing = tmp_path / "environments" / "cluster" / "env"
-        existing.mkdir(parents=True)
-
-        manager = make_manager()
-        manager.repo.git.add = MagicMock()
-        manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
-
-        manager.stage_changes([str(existing), "/nonexistent/path"])
-
-        added_paths = manager.repo.git.add.call_args[0]
-        assert str(existing) in added_paths
-        assert "/nonexistent/path" not in added_paths
-
     def test_raises_on_unexpected_exit_code(self):
         manager = make_manager()
         manager.repo.git.add = MagicMock()
         manager.repo.git.diff = MagicMock(side_effect=["", (2, "", "")])
 
         with pytest.raises(RuntimeError):
-            manager.stage_changes([])
+            manager.stage_changes()
 
 
 class TestCherryPickAndPush:
