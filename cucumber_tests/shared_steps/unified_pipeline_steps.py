@@ -1,6 +1,7 @@
 """Shared step definitions for unified pipeline orchestrator scenarios."""
 from pytest_bdd import given, when, then, parsers
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
+import re
 import shutil
 from pathlib import Path
 import os
@@ -123,3 +124,30 @@ def set_credential_null(workspace: EnvGeneWorkspace, cred_id: str, value: str):
     creds_dir.mkdir(parents=True, exist_ok=True)
     creds_file = creds_dir / "credentials.yml"
     creds_file.write_text(yaml.dump({cred_id: {"type": "usernamePassword", "data": {"username": value, "password": value}}}))
+
+
+@then(parsers.parse('the pipeline step "{step_name}" has status "{status}"'))
+def then_pipeline_step_status(workspace: EnvGeneWorkspace, step_name: str, status: str):
+    output = workspace.stdout + "\n" + workspace.stderr
+    pattern = rf"^{re.escape(step_name)}\s+{re.escape(status)}\b"
+    found = re.search(pattern, output, re.MULTILINE)
+    assert found, (
+        f"Expected pipeline step '{step_name}' to have status '{status}' in the PIPELINE SUMMARY, "
+        f"but it was not found.\nOutput:\n{output}"
+    )
+
+
+@given(parsers.parse('the BG state files are origin "{origin_state}" and peer "{peer_state}"'))
+def given_bg_state_files(workspace: EnvGeneWorkspace, origin_state: str, peer_state: str):
+    workspace.builder.set_bg_state_files(origin_state, peer_state, workspace.cluster_name, workspace.env_name)
+
+
+@then(parsers.parse('the BG state files are origin "{origin_state}" and peer "{peer_state}"'))
+def then_bg_state_files(workspace: EnvGeneWorkspace, origin_state: str, peer_state: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    dotfiles = {p.name for p in env_dir.iterdir() if p.is_file() and p.name.startswith(".")}
+    expected = {f".origin-{origin_state}", f".peer-{peer_state}"}
+    assert dotfiles == expected, (
+        f"Expected BG state files {expected}, found {dotfiles}.\n"
+        f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
+    )
