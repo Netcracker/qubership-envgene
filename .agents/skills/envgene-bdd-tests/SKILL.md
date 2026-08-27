@@ -631,9 +631,9 @@ golden references. Pass `ignore_patterns=['Credentials']` to
 `parsers.parse`, whose `{value}` placeholder requires at least one character. A step written as
 `Given the pipeline parameter "NAMESPACE_NAMES" is set to ""` raises
 `StepDefinitionNotFoundError`, not a value error — it looks like a missing step, not an empty
-one. When a doc's launch-parameters table says "empty means default" (e.g. `NAMESPACE_NAMES: ""
-# empty cleans the whole environment`), do not try to set the value to `""`. Omit the `Given`
-step entirely — an env var that is never set reads back as falsy the same way an explicit empty
+one. When a doc's launch-parameters table says "empty means default" (e.g. `NAMESPACE_NAMES: ""`,
+commented as cleaning the whole environment), do not try to set the value to `""`. Omit the
+`Given` step entirely — an env var that is never set reads back as falsy the same way an explicit empty
 string does (`ctx.params.get("X") or ""`), so the two are equivalent from the pipeline's side.
 Leave a one-line comment in the feature file explaining the omission is deliberate, not an
 oversight.
@@ -686,7 +686,7 @@ rendering `core` / `bss-origin` / `bss-peer`). Before adding a new artifact bloc
 feature, check whether an existing one already renders the namespace shapes the new scenarios
 need — `clean-sub-flows.feature` reuses `test-artifact:v1` as-is rather than registering a
 `clean`-specific artifact. Each new artifact block is a new GAV to host, manifest to write, and
-zip to build; only add one when the scenario genuinely needs content an existing artifact cannot
+ZIP to build; only add one when the scenario genuinely needs content an existing artifact cannot
 provide (e.g. `bgNsArtifacts` warmup scenarios need a *second*, distinguishable artifact
-version — see the `test-artifact:v2` block and its history in this file's own git log for why it
-is a version of the same artifactId, not an unrelated one).
+version — see the `test-artifact:v2` block and its history in this repository's own Git log for
+why it is a version of the same artifactId, not an unrelated one).
