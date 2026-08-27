@@ -143,12 +143,27 @@ class TestStageChanges:
 
 
 class TestCherryPickAndPush:
-    def test_aborts_on_cherry_pick_git_error(self):
+    def test_skips_commit_on_empty_cherry_pick_after_conflict_resolution(self):
         manager = make_manager()
         manager._fetch = MagicMock()
         manager.repo.git.cherry_pick = MagicMock(
             side_effect=[GitCommandError("cherry-pick", 1, "conflict"), None]
         )
+        manager.repo.git.status = MagicMock(return_value="")
+        manager._has_staged_changes = MagicMock(return_value=False)
+
+        manager._cherry_pick_and_push("deadbeef")
+
+        manager.repo.git.cherry_pick.assert_called_with("--skip", with_exceptions=False)
+        manager.repo.git.push.assert_not_called()
+
+    def test_aborts_on_cherry_pick_with_unresolved_conflicts(self):
+        manager = make_manager()
+        manager._fetch = MagicMock()
+        manager.repo.git.cherry_pick = MagicMock(
+            side_effect=[GitCommandError("cherry-pick", 1, "conflict"), None]
+        )
+        manager.repo.git.status = MagicMock(return_value="UU some/file.yml")
 
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
@@ -165,7 +180,7 @@ class TestCherryPickAndPush:
 
         manager.repo.git.cherry_pick.assert_called_with("--abort", with_exceptions=False)
 
-    def test_aborts_on_push_error(self):
+    def test_raises_without_abort_on_push_error(self):
         manager = make_manager()
         manager._fetch = MagicMock()
         manager.repo.git.cherry_pick = MagicMock()
@@ -174,4 +189,4 @@ class TestCherryPickAndPush:
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
 
-        manager.repo.git.cherry_pick.assert_called_with("--abort", with_exceptions=False)
+        manager.repo.git.cherry_pick.assert_called_once()
