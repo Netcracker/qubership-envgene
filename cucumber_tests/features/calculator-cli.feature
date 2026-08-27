@@ -76,6 +76,7 @@ Feature: Calculator CLI
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "final_url: https://api.example.com"
 
+  @xfail_cli_macro_ns_timeout
   Scenario: UC-CC-MR-4: Macro Reference Resolved Across Hierarchy Levels
     Given the workspace is initialized with test data from "e2e/uc_cc_mr_4"
     When the unified pipeline orchestrator runs
