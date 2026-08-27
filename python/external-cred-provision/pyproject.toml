@@ -42,7 +42,7 @@ classifiers = [
   "Topic :: System :: Systems Administration",
 ]
 dependencies = [
-  "click==8.1.7",
+  "click==8.3.3",
   "pyyaml==6.0.2",
   "qubership-pipelines-common-library==2.0.12",
 ]

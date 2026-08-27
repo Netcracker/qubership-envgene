@@ -1,17 +1,17 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_vulnerabilities AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libffi-dev=3.4.4-r3 \
-    openssl-dev=3.1.8-r1 \
-    python3-dev=3.11.14-r0 \
-    cargo=1.76.0-r0 \
-    rust=1.76.0-r0 \
+    libffi-dev=3.4.6-r0 \
+    openssl-dev=3.3.7-r0 \
+    python3-dev=3.12.13-r0 \
+    cargo=1.78.0-r1 \
+    rust=1.78.0-r1 \
     build-base=0.5-r3
 
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
@@ -39,9 +39,9 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_vulnerabilities AS runtime
 
-ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
+ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.16_p8-r0
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en'
@@ -49,7 +49,7 @@ ENV LANG='en_US.UTF-8' \
 # Install ONLY runtime dependencies (NO dev packages)
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc=13.2.1_git20231014-r0 \
+    libgcc=13.2.1_git20240309-r1 \
     ${JAVA_PACKAGE}
 
 COPY --from=build /python /python
