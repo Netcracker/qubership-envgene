@@ -12,7 +12,7 @@
       - [1.8 step `set_template_version`](#18-step-set_template_version)
       - [1.9 step `process_env_template` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#19-step-process_env_template-to-be-implemented-not-implemented-yet)
       - [1.10 step `appregdef_render`](#110-step-appregdef_render)
-      - [1.11 step `registry_auth_adapter`](#111-step-registry_auth_adapter)
+      - [1.11 step `regdefv2_adapter`](#111-step-regdefv2_adapter)
       - [1.12 step `deploy_postfix_namespace_map`](#112-step-deploy_postfix_namespace_map)
       - [1.13 step `process_sd`](#113-step-process_sd)
       - [1.14 step `generate_deployment_plan`](#114-step-generate_deployment_plan)
@@ -288,28 +288,34 @@ Functions:
     - AI[techDebt-PERF]: renders only required appregdef
     - AI[techDebt-PERF]: implement create_if_not_exist | replace strategies
 
-#### 1.11 step `registry_auth_adapter`
+#### 1.11 step `regdefv2_adapter`
+
+Design: [`regdefv2_adapter`](/docs/technical-design/instance-pipeline/steps/regdefv2-adapter.md)
 
 Triggers:
 
-TBD
+- `PIPELINE_TYPE: GITLAB_DEPLOY` and
+  (`OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
+- `PIPELINE_TYPE: LEGACY` and `OPERATION_TYPE: DEPLOY` and
+  (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`)
 
 Functions:
 
-1. `registry_auth_adapter`
+1. `regdefv2_adapter`
     - input:
       - downloaded template files
       - credentials
-      - `PUB_REG_*`, `NON_PUB_REG_*` parameters
+      - `LOCAL_PUBREG_FILE`
       - RegDefs v1
-      - `config.yaml`
     - output:
-      - in-memory `RegistryInfo` per registry in `ctx`
+      - `pubreg_params.yaml`
+      - RegDefs v2
+      - credential the RegDef v2
     - actions:
-      - render the Cloud object , fold paramsets into parameters, read the whole `e2eParameters`
+      - render the Cloud object, fold paramsets into parameters, read the whole `e2eParameters`
         section, expand credential macros to resolve secret values
-      - assemble a `RegistryInfo` from the committed RegDef v1 coordinates plus the pub_reg parameters.
-        The in-process Python downloaders (SD, DD, SBOM) consume it, and the Java calculator does not
+      - write the resolved registry auth parameters to `pubreg_params.yaml` for dpg
+      - when `MAVEN_PROVIDER` is a public cloud provider create RegDefs v2 and corresponding credential
 
 #### 1.12 step `deploy_postfix_namespace_map`
 
@@ -349,7 +355,7 @@ Functions:
       - `SD_SOURCE_TYPE`
       - `SD_REPO_MERGE_MODE`
       - `sd.yaml`
-      - appreg defs v1 or synthesized `ctx.RegistryInfo` from `registry_auth_adapter`
+      - appreg defs v1 or the synthesized RegDef v2 from `regdefv2_adapter`
     - output:
       - updated `sd.yaml`
     - actions:
@@ -391,7 +397,7 @@ Functions:
       - app defs
       - `namespace-map.yml`
       - `BG_NS_TARGET`
-      - synthesized `RegistryInfo` from `ctx`
+      - (`pubreg_params.yaml`
       - filters:
         - `DEPLOY_POSTFIXES_FILTER`
         - `NAMESPACE_NAMES_FILTER`
@@ -556,7 +562,7 @@ Functions:
       - delete sboms beyond the retention policy
 3. `get_sboms`
     - input:
-      - appreg defs v1 or synthesized `ctx.RegistryInfo` from `registry_auth_adapter`
+      - appreg defs v1 or the synthesized RegDef v2 from `regdefv2_adapter`
       - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
