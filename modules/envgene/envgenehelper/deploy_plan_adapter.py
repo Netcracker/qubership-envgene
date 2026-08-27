@@ -1,7 +1,12 @@
+from os import getenv
 from pathlib import Path
 
 from dpg.v1.internal.deployment_plan.models import DeployPlan, DeployPlanEntity, GenerationType  # noqa: F401 - re-exported
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, INVENTORY_DIR_NAME
+from envgenehelper.business_helper import (
+    INVENTORY_DIR_NAME,
+    get_current_env_dir_from_env_vars,
+    parse_bg_ns_target,
+)
 from envgenehelper.errors import ReferenceError
 from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME
@@ -52,6 +57,7 @@ def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = 
     sd_path = get_sd_dir().joinpath(file_name)
     sd_data = openYaml(sd_path, allow_default=True, default_yaml=dict) or {}
     apps = sd_data.get("applications", [])
+    bg_ns_target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
 
     entities = []
     for app in apps:
@@ -60,6 +66,7 @@ def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = 
         if namespace is None:
             raise ReferenceError(
                 f"No namespace found for deployPostfix '{deploy_postfix}' in the committed environment instance")
+        namespace = resolve_namespace_entry(namespace, bg_ns_target, deploy_postfix)
         entities.append(DeployPlanEntity(version=app.get("version"), deployPostfix=deploy_postfix, namespace=namespace))
 
     logger.info(f"Adapted {sd_path} into a deploy plan ({len(entities)} application(s))")
