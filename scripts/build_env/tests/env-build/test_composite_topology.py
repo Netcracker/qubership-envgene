@@ -26,18 +26,10 @@ class TestCompositeTopology:
 
         assert generator.ctx.current_env["composite_topology"] == {}
 
-    def test_baseline_only(self, tmp_path):
-        composite_structure = tmp_path / "composite_structure.yml"
-        composite_structure.write_text(
-            """
-    baseline:
-      type: namespace
-      name: env-1-core
-    """,
-            encoding="utf-8",
-        )
+    def test_baseline_only(self):
+        test_dir = TEST_DATA_DIR / "baseline-only"
 
-        generator = self._create_generator(tmp_path)
+        generator = self._create_generator(test_dir)
 
         generator.compute_composite_topology()
 
