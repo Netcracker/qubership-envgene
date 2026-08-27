@@ -60,7 +60,7 @@ class TestCompositeTopology:
             ],
         }
 
-    @patch("build_env.render_config_env.get_bgd_object")
+    @patch("scripts.build_env.render_config_env.get_bgd_object")
     def test_bgdomain_baseline(self, mock_get_bgd_object):
         test_dir = TEST_DATA_DIR / "bgdomain-baseline"
 
@@ -89,7 +89,7 @@ class TestCompositeTopology:
             }
         }
 
-    @patch("build_env.render_config_env.get_bgd_object")
+    @patch("scripts.build_env.render_config_env.get_bgd_object")
     def test_bgdomain_satellite(self, mock_get_bgd_object):
         test_dir = TEST_DATA_DIR / "bgdomain-satellite"
 
@@ -123,7 +123,7 @@ class TestCompositeTopology:
             ],
         }
 
-    @patch("build_env.render_config_env.get_bgd_object")
+    @patch("scripts.build_env.render_config_env.get_bgd_object")
     def test_bgdomain_baseline_and_satellites(self, mock_get_bgd_object):
         test_dir = TEST_DATA_DIR / "bgdomain-baseline-satellites"
 
