@@ -80,11 +80,10 @@ class GitRepoManager:
                 f"{self.ctx.server_host}/{self.ctx.project_path}.git"
             )
 
-    def _fetch(self, ref: str, checkout: str, checkout_option: list[str], create_remote: bool = False) -> None:
-        if create_remote:
-            self.repo.create_remote("origin", self._resolve_remote_url())
-        else:
-            self.repo.remote("origin").set_url(self._resolve_remote_url(), push=True)
+    def _fetch(self, ref: str, checkout: str, checkout_option: list[str]) -> None:
+        origin = self.repo.remote("origin")
+        origin.set_url(self._resolve_remote_url())
+        origin.set_url(self._resolve_remote_url(), push=True)
 
         try:
             logger.info(f"git fetch --depth=1 origin {ref}")
