@@ -21,18 +21,13 @@ class TestCompositeTopology:
 
     def test_no_composite_structure(self, tmp_path):
         generator = self._create_generator(tmp_path)
-
         generator.compute_composite_topology()
-
         assert generator.ctx.current_env["composite_topology"] == {}
 
     def test_baseline_only(self):
         test_dir = TEST_DATA_DIR / "baseline-only"
-
         generator = self._create_generator(test_dir)
-
         generator.compute_composite_topology()
-
         assert generator.ctx.current_env["composite_topology"] == {
             "baseline": {
                 "originNamespace": "env-1-core",
@@ -41,11 +36,8 @@ class TestCompositeTopology:
 
     def test_namespace_baseline_and_satellites(self):
         test_dir = TEST_DATA_DIR / "namespace-baseline-satellites"
-
         generator = self._create_generator(test_dir)
-
         generator.compute_composite_topology()
-
         assert generator.ctx.current_env["composite_topology"] == {
             "baseline": {
                 "originNamespace": "env-1-core",
@@ -62,11 +54,8 @@ class TestCompositeTopology:
 
     def test_bgdomain_baseline(self):
         test_dir = TEST_DATA_DIR / "bgdomain-baseline"
-
         generator = self._create_generator(test_dir)
-
         generator.compute_composite_topology()
-
         assert generator.ctx.current_env["composite_topology"] == {
             "baseline": {
                 "originNamespace": "env-1-bss-origin",
@@ -82,11 +71,8 @@ class TestCompositeTopology:
 
     def test_bgdomain_satellite(self):
         test_dir = TEST_DATA_DIR / "bgdomain-satellite"
-
         generator = self._create_generator(test_dir)
-
         generator.compute_composite_topology()
-
         assert generator.ctx.current_env["composite_topology"] == {
             "baseline": {
                 "originNamespace": "env-1-core",
@@ -102,11 +88,8 @@ class TestCompositeTopology:
 
     def test_bgdomain_baseline_and_satellites(self):
         test_dir = TEST_DATA_DIR / "bgdomain-baseline-satellites"
-
         generator = self._create_generator(test_dir)
-
         generator.compute_composite_topology()
-
         assert generator.ctx.current_env["composite_topology"] == {
             "baseline": {
                 "originNamespace": "env-1-bss-origin",
