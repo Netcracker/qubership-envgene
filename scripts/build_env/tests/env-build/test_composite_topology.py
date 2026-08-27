@@ -31,6 +31,11 @@ class TestCompositeTopology:
 
         generator = self._create_generator(test_dir)
 
+        # Debug: Check if file exists
+        cs_file = Path(generator.ctx.current_env_dir) / "composite_structure.yml"
+        print(f"Looking for file at: {cs_file}")
+        print(f"File exists: {cs_file.exists()}")
+
         generator.compute_composite_topology()
 
         assert generator.ctx.current_env["composite_topology"] == {
