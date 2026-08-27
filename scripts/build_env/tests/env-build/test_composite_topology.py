@@ -1,7 +1,7 @@
 from pathlib import Path
-from unittest.mock import patch
 
 from scripts.build_env.render_config_env import EnvGenerator
+
 
 TEST_DATA_DIR = (
     Path(__file__).resolve().parents[4]
@@ -60,24 +60,10 @@ class TestCompositeTopology:
             ],
         }
 
-    @patch("scripts.build_env.render_config_env.get_bgd_object")
-    def test_bgdomain_baseline(self, mock_get_bgd_object):
+    def test_bgdomain_baseline(self):
         test_dir = TEST_DATA_DIR / "bgdomain-baseline"
 
         generator = self._create_generator(test_dir)
-
-        mock_get_bgd_object.return_value = {
-            "name": "bss",
-            "originNamespace": {
-                "name": "env-1-bss-origin",
-            },
-            "peerNamespace": {
-                "name": "env-1-bss-peer",
-            },
-            "controllerNamespace": {
-                "name": "env-1-controller",
-            },
-        }
 
         generator.compute_composite_topology()
 
@@ -89,24 +75,10 @@ class TestCompositeTopology:
             }
         }
 
-    @patch("scripts.build_env.render_config_env.get_bgd_object")
-    def test_bgdomain_satellite(self, mock_get_bgd_object):
+    def test_bgdomain_satellite(self):
         test_dir = TEST_DATA_DIR / "bgdomain-satellite"
 
         generator = self._create_generator(test_dir)
-
-        mock_get_bgd_object.return_value = {
-            "name": "bss",
-            "originNamespace": {
-                "name": "env-1-bss-origin",
-            },
-            "peerNamespace": {
-                "name": "env-1-bss-peer",
-            },
-            "controllerNamespace": {
-                "name": "env-1-controller",
-            },
-        }
 
         generator.compute_composite_topology()
 
@@ -123,24 +95,10 @@ class TestCompositeTopology:
             ],
         }
 
-    @patch("scripts.build_env.render_config_env.get_bgd_object")
-    def test_bgdomain_baseline_and_satellites(self, mock_get_bgd_object):
+    def test_bgdomain_baseline_and_satellites(self):
         test_dir = TEST_DATA_DIR / "bgdomain-baseline-satellites"
 
         generator = self._create_generator(test_dir)
-
-        mock_get_bgd_object.return_value = {
-            "name": "bss",
-            "originNamespace": {
-                "name": "env-1-bss-origin",
-            },
-            "peerNamespace": {
-                "name": "env-1-bss-peer",
-            },
-            "controllerNamespace": {
-                "name": "env-1-controller",
-            },
-        }
 
         generator.compute_composite_topology()
 
