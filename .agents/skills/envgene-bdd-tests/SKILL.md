@@ -41,6 +41,20 @@ Every use-case document under `docs/use-cases/` is the authoritative source for
 what tests must exist. Before writing any code, read the target document
 completely and list all `UC-<PREFIX>-<N>:` entries.
 
+**Alternate source: technical-design sub-flow docs.** Not every feature has a `docs/use-cases/`
+entry. `docs/technical-design/instance-pipeline/sub-flows/*.md` (`bgd.md`, `clean.md`, `deploy.md`,
+`management-operations.md`) also drive test files (`bgd-sub-flows.feature`,
+`clean-sub-flows.feature`) — one scenario per documented sub-flow/section, titled with a plain
+descriptive sentence instead of `UC-<PREFIX>-<N>:` (e.g. `Scenario: CLEAN a whole environment
+marks every namespace as cleaned and empties the deploy plan`). These docs state pipeline step
+gating in prose ("the rendering functions are DEPLOY only") that can be stale relative to the
+orchestrator — see the "Trust code over doc prose" pattern in §11 before asserting step statuses
+from the doc text alone. `flow.md`'s step names are the single source of truth for orchestrator
+step identifiers; a sub-flow doc's own step numbering (`1.13`, `1.14`, ...) does not always match
+the `PipelineStep.name` strings used in `the pipeline step "{name}" has status "{status}"` — read
+`scripts/pipeline/orchestrator.py`'s `PipelineStep` subclasses directly to get the real names and
+`should_run()` gating per `OPERATION_TYPE`/`PIPELINE_TYPE`.
+
 ### Use-Case Document Structure
 
 Each use case follows this template:
@@ -163,8 +177,15 @@ Feature: <Title> - <use-case-doc-name>.md
    every scenario in the file (e.g., `Given the pipeline has ENV_BUILD set to "false"`).
 5. **Always add validation steps** beyond "pipeline succeeds". Check file
    state, log messages, or generated content from the UC Results section.
-6. **Use `@xfail` tag** for known gaps — scenarios that document expected
-   behavior that is not yet implemented.
+6. **Use an `@xfail_<reason>` tag** for known gaps — scenarios that document expected
+   behavior that is not yet implemented. The tag text alone does nothing: `conftest.py`'s
+   `pytest_bdd_apply_tag()` only turns a tag into a real `pytest.mark.xfail(strict=True)` when
+   that exact tag string is a key in `_XFAIL_REASONS`. A tag that looks meaningful
+   (`@xfail_cli_npe`) but was never added to `_XFAIL_REASONS` is purely decorative — pytest
+   emits `PytestUnknownMarkWarning: Unknown pytest.mark.xfail_...` and the scenario runs and
+   fails normally instead of being reported as an expected failure. When adding a new
+   `@xfail_<reason>` tag, always add a matching entry to `_XFAIL_REASONS` in the same change, and
+   verify with a real run that the scenario shows `XFAIL` in the pytest output, not `FAILED`.
 
 ---
 
@@ -303,6 +324,13 @@ def file_is_created(workspace: EnvGeneWorkspace, filename: str):
    searches both `workspace.stdout` and `workspace.stderr` (case-insensitive).
 7. **Set extra environment variables** via `workspace.extra_env[KEY] = value`.
    Always check `if not hasattr(workspace, 'extra_env'): workspace.extra_env = {}`.
+8. **Before writing a new step, grep sibling `step_defs/<other>_steps.py` files for the same step
+   text.** If a step you're about to add (e.g. `the pipeline step "{name}" has status "{status}"`,
+   or a BG state assertion) already exists in another feature's step-defs file and isn't actually
+   feature-specific, **move it** to `shared_steps/unified_pipeline_steps.py` instead of copying it
+   — two `@given`/`@then` functions bound to the same step text raise
+   `AmbiguousStepDefinition` at collection time across the *whole* `step_defs/` package, not just
+   your new file. After moving, re-run the original feature's tests to confirm nothing broke.
 
 ---
 
@@ -321,6 +349,33 @@ scenarios('../features/<feature-name>.feature')
 ```
 
 Without this file, pytest-bdd will not discover or run the scenarios.
+
+**Also add a CI step.** `.github/workflows/perform_e2e_tests.yml` runs each feature's
+`test_<name>.py` as its own explicit step (build/compose-up/package-install are shared, once).
+Copy the existing "Run BGD Sub-flows BDD tests" step, rename it, and point it at the new test
+file:
+
+```yaml
+      - name: Run <Feature> BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "set -o pipefail && \
+             export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_<feature>.py \
+               -v -s \
+               --junitxml=reports/<feature>.xml \
+               | tee -a /workspace/e2e_tests.log"
+```
+
+Local `./run_bdd_tests.sh` is not a stand-in for this — it sets a wider `PYTHONPATH`
+(`/workspace:/workspace/scripts:/envgene-src`) and passes `-c cucumber_tests/pytest.ini`
+explicitly, neither of which the CI step does. A new test file that only ever ran through
+`run_bdd_tests.sh` has not been proven to work in CI. Before calling the work done, exercise the
+new `test_<feature>.py` through the exact CI invocation at least once: `docker build` +
+`docker compose up -d --build cucumber` + the `up.sh` install step, then the `pytest
+cucumber_tests/step_defs/test_<feature>.py ...` command above, run manually via `docker compose
+exec`.
 
 ---
 
@@ -465,6 +520,14 @@ When reviewing a feature file against its use-case documentation, verify:
 - [ ] **Golden reference exists**: `test_data/golden/` has expected data (if used)
 - [ ] **Test runner exists**: `step_defs/test_<feature>.py` wires the feature
 - [ ] **No shared step re-implementation**: Feature steps do not duplicate shared steps
+- [ ] **CI step added**: `.github/workflows/perform_e2e_tests.yml` has a "Run <Feature> BDD
+  tests" step pointing at the new `test_<feature>.py` (§6) — a suite that only runs locally never
+  catches a regression in CI
+- [ ] **New test file exercised via the exact CI invocation** at least once (narrower
+  `PYTHONPATH`, no `-c cucumber_tests/pytest.ini`), not only through `run_bdd_tests.sh`
+- [ ] **Doc-vs-code prose checked**: any doc claim about what a step does or skips ("X is DEPLOY
+  only", "Y is left untouched") re-verified against the actual `PipelineStep.should_run()`/
+  `execute()` in `scripts/pipeline/orchestrator.py`, not asserted from the doc text alone
 
 ---
 
@@ -561,3 +624,69 @@ shared_steps before implementing a new step.
 Files encrypted with Fernet (non-deterministic keys) cannot be compared via
 golden references. Pass `ignore_patterns=['Credentials']` to
 `compare_directories()`.
+
+### Pitfall: `parsers.parse` cannot match an empty quoted value
+
+`the pipeline parameter "{param}" is set to "{value}"` (and any step shaped like it) uses
+`parsers.parse`, whose `{value}` placeholder requires at least one character. A step written as
+`Given the pipeline parameter "NAMESPACE_NAMES" is set to ""` raises
+`StepDefinitionNotFoundError`, not a value error — it looks like a missing step, not an empty
+one. When a doc's launch-parameters table says "empty means default" (e.g. `NAMESPACE_NAMES: ""
+# empty cleans the whole environment`), do not try to set the value to `""`. Omit the `Given`
+step entirely — an env var that is never set reads back as falsy the same way an explicit empty
+string does (`ctx.params.get("X") or ""`), so the two are equivalent from the pipeline's side.
+Leave a one-line comment in the feature file explaining the omission is deliberate, not an
+oversight.
+
+### Pattern: Trust code over doc prose for step gating and side effects
+
+Sub-flow docs (§1) describe behavior in prose that can lag the orchestrator. Before asserting a
+pipeline step's status or claiming a step "leaves X untouched", read the step's
+`should_run()`/`execute()` in `scripts/pipeline/orchestrator.py` (and whatever it calls) directly.
+Two concrete traps hit while writing `clean-sub-flows.feature`:
+
+- `clean.md` claims CLEAN's rendering functions are "DEPLOY only", but
+  `EnvBuildStep.should_run()` returns true for both DEPLOY and CLEAN, and `build_env()` always
+  re-renders every namespace from the template before the CLEAN-only `set_cleaned_mark()` runs at
+  the end. The doc's *effective* claim (other content is unchanged) still holds, because the
+  re-render is idempotent against the same template inputs — but a test asserting the render
+  functions literally do not execute would be wrong. Assert the *effective* outcome (existing
+  namespace content plus `cleaned: true`), not the doc's mechanism claim.
+- A sub-flow doc's own step numbers (`1.13 generate_deployment_plan`) do not always match the
+  orchestrator's step `name` strings (`process_deployment_plan`) — get the real name from the
+  `PipelineStep` subclass, never from the doc's flow diagram text.
+
+When code and doc genuinely disagree (not just differently worded), follow the existing
+convention already used in `bgd-sub-flows.feature`: keep the code-derived assertion and add an
+inline comment such as `# Not part of the documented flow for this sub-flow, but this is real,
+current orchestrator behaviour.` so a future doc fix and a future behavior change are both caught
+by a diff instead of silently drifting further apart.
+
+### Pattern: Verify cross-referenced identifiers from source before writing fixtures
+
+A single `NAMESPACE_NAMES`-style parameter can be matched against several *different* on-disk
+identifiers by different code paths: `reduce_deployment_plan()` filters `deploy-plan.yml` entries
+by their bare `namespace:` field, while `set_cleaned_mark()` matches namespace *objects* by
+`NamespaceFile.name` — the internal `name:` field read from each `namespace.yml`
+(`self.name = openYaml(self.definition_path)['name']`), which is not necessarily the same string
+as the `Namespaces/<postfix>/` folder name (`self.postfix = self.path.name`) or an
+environment-prefixed physical namespace name a doc example might show (`env-1-bss-origin`).
+Nothing in the code cross-checks these against each other — a test fixture fully controls all of
+them, so a naming mismatch between a `deploy-plan.yml` fixture and a template's
+`template_override: {name: ...}` fails an assertion silently (namespace "not found") rather than
+erroring loudly. Before writing deploy-plan/namespace fixtures for a new scenario, grep the
+implementation for how each identifier is populated and read, and use one consistent identifier
+across every fixture file the scenario touches.
+
+### Pattern: Reuse an existing mock template artifact before registering a new one
+
+`conftest.py`'s `mock_nexus` fixture already serves several pre-built template artifacts (see the
+comments above each block in `mock_nexus()`, e.g. `test-artifact:v1` / `default-env-template`
+rendering `core` / `bss-origin` / `bss-peer`). Before adding a new artifact block for a new
+feature, check whether an existing one already renders the namespace shapes the new scenarios
+need — `clean-sub-flows.feature` reuses `test-artifact:v1` as-is rather than registering a
+`clean`-specific artifact. Each new artifact block is a new GAV to host, manifest to write, and
+zip to build; only add one when the scenario genuinely needs content an existing artifact cannot
+provide (e.g. `bgNsArtifacts` warmup scenarios need a *second*, distinguishable artifact
+version — see the `test-artifact:v2` block and its history in this file's own git log for why it
+is a version of the same artifactId, not an unrelated one).
