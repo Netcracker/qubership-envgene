@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.2@sha256:70fb89ab2a333efbfee3fd1eae3e8a7c59f5245546d84a4bdd83ea707d32eec0 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
@@ -39,7 +39,7 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.2@sha256:70fb89ab2a333efbfee3fd1eae3e8a7c59f5245546d84a4bdd83ea707d32eec0 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
 
