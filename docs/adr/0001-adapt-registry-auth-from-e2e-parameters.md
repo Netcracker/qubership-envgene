@@ -1,52 +1,61 @@
-# ADR-0001: Generate RegDef v2 on the fly from RegDef v1 and pub_reg parameters
+# ADR-0001: Adapt registry auth parameters into per-downloader auth for EnvGene
 
 Status: Proposed
 Date: 2026-08-20
 
 ## Context
 
-EnvGene supports the new RegDef v2, but the rest of the DevOps toolset (deployer, ArgoCD, builder) does not
-yet. Those components read registry auth from the legacy pub_reg parameters in the pipeline context. Until
-they support v2, requiring both a RegDef v2 `authConfig` for EnvGene and the pub_reg parameters for everyone
-else would force operators to author the same auth twice.
+EnvGene downloads Maven artifacts (SD, DD, SBOM inputs) for effective set generation and needs registry auth
+for public cloud and non-public registries. The same auth is already authored as registry auth parameters
+(`PUB_REG_*` and `NON_PUB_REG_*`) for the rest of the DevOps toolset. Requiring operators to also author a
+RegDef v2 `authConfig` for EnvGene would make them enter it twice. EnvGene's two download paths differ. The
+artifact-searcher path already consumes a RegDef v2 `authConfig`, while the dpg path was stubbed and did no
+auth.
 
 ## Decision
 
-We add a temporary adapter step after `appregdef_render` that assembles a runtime `RegistryInfo` object in
-memory, the resolved form of a RegDef v2 and not a RegDef v2 file: the committed RegDef v1 coordinates plus
-an `authConfig` synthesized from the resolved pub_reg parameters (`PUB_REG_*`). It
-renders the Cloud object, folds paramsets into parameters, reads the whole `e2eParameters` section,
-expands its credential macros to resolve secret values, and takes the pub_reg parameters it needs. The whole
-object stays in memory and is never saved in the repository. The Java calculator is not a consumer, because
-it reads committed coordinates and needs no auth. The per-step consumer map is below.
+We add a transitional adapter step after `appregdef_render`. It resolves the registry auth parameters once
+(render the Cloud object in memory, expand credential macros) and feeds each downloader in the form its
+library consumes natively:
 
-The transform is gated in two levels. A `configuration/config.yml` feature flag is the master switch, default
-off. When on, a per-registry pub_reg discriminator triggers it. A committed RegDef already at
-`version: "2.0"` is passed through. We remove the adapter once the rest of the toolset supports RegDef v2.
+- **dpg** gets a transient file of the resolved parameters. dpg reads it and builds its runtime registry
+  object.
+- **artifact-searcher** gets a synthesized RegDef v2 that reuses the v1 RegDef's Maven coordinates and
+  replaces only the auth: its `authConfig` references a `credentialsId`. The step creates that credential from
+  the resolved key and secret, and the resolver reads it from the transient location the downloaders are
+  pointed at.
 
-Consumers do not choose between the RegDef and `ctx`. They all resolve through the single `get_registry_info`
-seam, which returns the synthesized `RegistryInfo` for the run in place of the on-disk stub:
-
-- `process_sd`, `run_generate_deployment_plan`, and `get_sboms` read the synthesized `RegistryInfo` through
-  the shared dpg download path.
-- `process_env_template` (env template) is out of scope and authenticates through its Artifact Definition v2.
-- `generate_argocd_repo` performs no download and reads the local DD cache from `dd_downloading`.
+None of these outputs is committed. The downloaders read them from outside the committed instance repository,
+so the committed RegDefs stay at v1 for consumers that do not read v2 and the committed credential store is
+untouched. The RegDef v2 is synthesized only for public cloud registries (`MAVEN_PROVIDER` is `aws`, `azure`,
+or `gcp`) that are not already at `version: "2.0"`. A non-public registry keeps its RegDef v1. The env
+template download authenticates through its Artifact Definition, the Java calculator reads committed
+coordinates and needs no auth, and `generate_argocd_repo` reads a local cache, so none is a consumer. We
+remove the adapter once the registry auth parameters are retired in favor of RegDef v2.
 
 Rejected:
 
 - Teach the rest of the toolset to read RegDef v2 now, because that is a large multi-team change outside
-  EnvGene and is the end state this adapter bridges toward, not something available during the transition.
-- Keep operators authoring both the pub_reg parameters and a RegDef v2, because removing that double
-  authoring is the point of this decision.
-- Produce only an in-memory `authConfig` overlay on the v1 RegDef, because a full v2 object lets every
-  downloader read one uniform shape.
+  EnvGene and does not remove the parameters operators already maintain.
+- Keep operators authoring both the parameters and a RegDef v2, because removing that double authoring is the
+  point of this decision.
+- Feed one uniform object to both paths, because dpg and artifact-searcher consume different native shapes, a
+  flat parameter file versus a RegDef v2.
+- Gate the step with a feature flag, because the pipeline run condition and the `MAVEN_PROVIDER` provider
+  already decide when it synthesizes, and a disabled flag with the parameters set would only break the
+  download.
 
 ## Consequences
 
-- Operators author registry auth once, as pub_reg parameters, during the transition, and RegDef v2 works for
-  EnvGene with no duplicate entry.
-- The adapter is flag-gated and disposable. It carries throwaway code until the toolset supports v2, at which
-  point it and the flag are removed.
+- Operators author registry auth once, and EnvGene authenticates to public cloud and non-public registries
+  with no duplicate entry.
+- The adapter is transitional and disposable, removed once RegDef v2 is authored directly.
 - The adapter must expand credential macros itself, because `create_credentials` runs later. This adds a
   dependency on credentials being decrypted at that point.
 - Auth values cannot depend on `solution_structure`, because the early Cloud render precedes SD processing.
+- The auth is global, one per instance, applied to every Maven registry, because EnvGene downloads only
+  Maven and `MAVEN_PROVIDER` is a single value. This assumes a single Maven registry type per instance.
+- The adapter's outputs are transient and read from outside the committed repository, so nothing it produces
+  is committed. The cost is that the downloaders depend on those transient locations for the run.
+- This decision covers the producer of the parameter file. The dpg consumer that reads it is implemented
+  separately, and no path writes the file yet.
