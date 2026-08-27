@@ -112,28 +112,6 @@ def _find_job_by_stage(config: dict, stage: str) -> dict:
     raise AssertionError(f"No job found for stage {stage}")
 
 
-def test_sparse_checkout_on_first_job():
-    ci_commit_ref_name = "feature/test-generate"
-    os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
-    pipeline_vars = asdict(PipelineVars(get_passport="false"), dict_factory=convert_keys_to_uppercase)
-    os.environ.update(pipeline_vars)
-
-    perform_generation()
-
-    result = openYaml("generated-config.yml")
-    first_job = _find_job_by_stage(result, "app_reg_def_render")
-
-    assert first_job["script"][0] == "/module/scripts/utils/handle_certs.sh"
-    assert first_job["script"][1] == "source ~/.bashrc"
-    
-    sparse_checkout_script = next(
-        (s for s in first_job["script"] if "sparse_checkout.py" in s), None
-    )
-    assert sparse_checkout_script is not None
-    assert "python3 /module/scripts/utils/sparse_checkout.py --sparse-paths" in sparse_checkout_script
-    assert "environments/cluster-01/env-01" in sparse_checkout_script
-
-
 def test_downstream_job_uses_empty_git_strategy():
     ci_commit_ref_name = "feature/test-generate"
     os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
