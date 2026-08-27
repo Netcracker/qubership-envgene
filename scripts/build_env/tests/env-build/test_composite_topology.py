@@ -1,8 +1,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from build_env.render_config_env import EnvGenerator
-
+from scripts.build_env.render_config_env import EnvGenerator
 
 TEST_DATA_DIR = (
     Path(__file__).resolve().parents[4]
