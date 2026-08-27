@@ -7,6 +7,16 @@ on:
   pull_request:
     branches:
       - '**'
+  workflow_call:
+    inputs:
+      image-ref:
+        description: >
+          Full ref of an already-built local-envgene-main image to pull instead of building from
+          source (e.g. ghcr.io/netcracker/qubership-envgene:main_20260101-000000). Leave unset to
+          build from the checked-out source, as on a standalone push/pull_request run.
+        required: false
+        type: string
+        default: ''
 
 jobs:
   eig-e2e-tests:
@@ -15,15 +25,32 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+      packages: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build production image and start cucumber container
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'workflow_call'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull pre-built production image
+        if: github.event_name == 'workflow_call'
         run: |
-          docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
-          docker compose -f devtools/docker-compose.yml up -d --build cucumber
+          docker pull "${{ inputs.image-ref }}"
+          docker tag "${{ inputs.image-ref }}" local-envgene-main
+
+      - name: Build production image from source
+        if: github.event_name != 'workflow_call'
+        run: docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+
+      - name: Start cucumber container
+        run: docker compose -f devtools/docker-compose.yml up -d --build cucumber
 
       - name: Install Python packages inside container
         run: |

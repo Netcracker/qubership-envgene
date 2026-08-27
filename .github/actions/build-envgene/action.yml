@@ -29,10 +29,17 @@ inputs:
     description: 'Version for Docker tag'
     required: false
     default: ''
+  push-final-tags:
+    description: >
+      When 'false', push only the custom_tag (scratch tag) and skip branch_latest_tag, the
+      version tag, and the metadata-action tags. Use this to test the image before it becomes
+      reachable under its final tags, then call the promote-envgene action once tests pass.
+    required: false
+    default: 'true'
 
 outputs:
   custom_tag:
-    description: 'Custom tag with timestamp'
+    description: 'Custom tag with timestamp - always pushed, safe to pull immediately after this action runs'
     value: ${{ steps.tags.outputs.custom_tag }}
   branch_tag:
     description: 'Branch-based tag'
@@ -43,6 +50,12 @@ outputs:
   branch_latest_tag:
     description: 'Branch latest tag'
     value: ${{ steps.tags.outputs.branch_latest_tag }}
+  image_ref:
+    description: 'Full ref of the always-pushed custom_tag image, e.g. ghcr.io/netcracker/qubership-envgene:main_20260101-000000'
+    value: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
+  meta_tags:
+    description: 'Newline-separated tags from docker/metadata-action, for promote-envgene to apply later'
+    value: ${{ steps.meta.outputs.tags }}
 
 runs:
   using: composite
@@ -89,7 +102,7 @@ runs:
         push: true
         tags: |
           ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
-          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
-          ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
-          ${{ steps.meta.outputs.tags }}
+          ${{ inputs.push-final-tags == 'true' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, steps.tags.outputs.branch_latest_tag) || '' }}
+          ${{ inputs.push-final-tags == 'true' && inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
+          ${{ inputs.push-final-tags == 'true' && steps.meta.outputs.tags || '' }}
         labels: ${{ steps.meta.outputs.labels }}

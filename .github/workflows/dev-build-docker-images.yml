@@ -94,16 +94,52 @@ jobs:
       branch_tag: ${{ steps.build-envgene.outputs.branch_tag }}
       timestamp: ${{ steps.build-envgene.outputs.timestamp }}
       branch_latest_tag: ${{ steps.build-envgene.outputs.branch_latest_tag }}
+      image_ref: ${{ steps.build-envgene.outputs.image_ref }}
+      meta_tags: ${{ steps.build-envgene.outputs.meta_tags }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # Pushes only the custom_tag (scratch tag). branch_latest_tag / version / metadata tags are
+    # NOT live in the registry yet - the promote-qubership-envgene job adds them once e2e-tests
+    # passes, so nothing pulls a broken image under a "real" tag.
     - name: Build Qubership Envgene Docker Image
       uses: ./.github/actions/build-envgene
       id: build-envgene
       with:
         registry: ${{ env.REGISTRY }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        push-final-tags: 'false'
+
+  e2e-tests:
+    needs: [build-qubership-envgene]
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      packages: read
+    uses: ./.github/workflows/perform_e2e_tests.yml
+    with:
+      image-ref: ${{ needs.build-qubership-envgene.outputs.image_ref }}
+
+  promote-qubership-envgene:
+    needs: [build-qubership-envgene, e2e-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Promote tested image to its final tags
+        uses: ./.github/actions/promote-envgene
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          source-tag: ${{ needs.build-qubership-envgene.outputs.custom_tag }}
+          branch-latest-tag: ${{ needs.build-qubership-envgene.outputs.branch_latest_tag }}
+          meta-tags: ${{ needs.build-qubership-envgene.outputs.meta_tags }}
 
   build-instance-repo-pipeline:
     if: |
