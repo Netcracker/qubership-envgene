@@ -47,7 +47,7 @@ wrapper. The tree below shows the full layout.
 │   └── <cluster-name>/
 │       ├── <shared-cluster-dirs>/               # Shared cluster wide paramsets, resource profiles, credentials. Cloud Passport
 │       └── <environment-name>/                  # env instance, Inventory, effective-set, sd.yml, deploy-plan.yml, namespace-map.yml
-├── cmdb-import/                                 # CMDB import structure
+├── cmdb_import/                                 # CMDB import structure
 ├── templates/                                   # downloaded env template
 │   ├── common/                                  # non Blue-Green or Blue-Green common template
 │   ├── origin/                                  # Blue-Green origin template
