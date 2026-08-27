@@ -16,15 +16,15 @@ DD builder's job, which EnvGene neither owns nor validates.
 
 We derive every Application SBOM component solely from the DD (`services`, `smartplug`, and
 `configurations`), named by its DD name. We remove the chart directory scan and the sub-chart expansion
-for all three component types. A temporary, instance-scoped toggle `sbom_generation.chart_subchart_expansion`
-in `config.yml`, disabled by default, restores the old expansion for rollback.
+for all three component types, and we add no rollback toggle.
 
 Rejected:
 
 - Emit a warning for chart sub-charts missing from the DD, because producing it requires the chart scan
   we are removing.
-- Put the toggle per application, because SBOM generation runs in the pipeline where only the
-  instance-scoped `config.yml` is available, and per-application divergence is a DD-builder fix.
+- Gate the removal behind a temporary `config.yml` toggle, because temporary switches tend to become
+  permanent, and the observed per-service entries only alias values Helm already propagates through
+  `global`, so a lasting rollback surface is not warranted.
 
 ## Consequences
 
@@ -33,6 +33,6 @@ Rejected:
   duplicated the parent component.
 - Cost we accept: an umbrella chart whose sub-charts depend on the expanded chart-named per-service
   entries for their Helm value overrides can lose those overrides. The risk is real and cannot be
-  verified across the whole chart fleet, so the temporary toggle exists as an instance-wide rollback.
-- Rollback is coarse. It reverts a whole instance, not one application. Per-application chart-versus-DD
-  divergence is resolved by the DD builder aligning names, not by EnvGene.
+  verified across the whole chart fleet, and there is no runtime switch to restore the old behavior.
+  Rollback means reverting the generator change.
+- Per-application chart-versus-DD divergence is resolved by the DD builder aligning names, not by EnvGene.
