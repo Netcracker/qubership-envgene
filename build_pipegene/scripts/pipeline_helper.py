@@ -23,15 +23,6 @@ class JobExtended(Job):
                          tags=tags)
         self.timeout = timeout
 
-    def set_sparse_checkout(self, paths: List[str]) -> None:
-        paths_args = " ".join(shlex.quote(path) for path in paths)
-        self.add_variables(GIT_STRATEGY="empty")
-        self.prepend_scripts(
-            '/module/scripts/utils/handle_certs.sh',
-            'source ~/.bashrc',
-            f"python3 /module/scripts/utils/sparse_checkout.py --sparse-paths {paths_args}"
-        )
-
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
         job_data['timeout'] = self.timeout
@@ -54,6 +45,8 @@ def job_instance(params, vars, needs=None, rules=None):
 
     global_before = [
         'python /module/scripts/utils/log_pipe_params.py',
+        '/module/scripts/utils/handle_certs.sh',
+        'source ~/.bashrc',
     ]
     job.prepend_scripts(*global_before)
 

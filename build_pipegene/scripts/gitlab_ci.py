@@ -4,7 +4,6 @@ from os import listdir
 
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.effective_set_helper import resolve_es_generation_mode
-from envgenehelper.git_helper import GitRepoManager
 from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
@@ -200,8 +199,6 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             sorted_pipeline.add_variables(**{key: value})
     sorted_pipeline.add_tags(params["GITLAB_RUNNER_TAG_NAME"])
 
-    cred_rotation_active = bool(params.get("CRED_ROTATION_PAYLOAD"))
-
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     for job in sorted_pipeline.find_jobs(JobFilter()):
         if pipeline_helper.is_trigger_job(job):
@@ -217,17 +214,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         job.artifacts.add_paths('.git')
 
         if pipeline_helper.do_checkout(job):
-            sparse_paths = GitRepoManager.get_sparse_checkout_paths(
-                job_cluster_name,
-                job_env_name,
-                include_full_cluster=cred_rotation_active,
-            )
-            job.set_sparse_checkout(sparse_paths)
+            job.add_variables(GIT_DEPTH="1")
         else:
             job.add_variables(GIT_STRATEGY="empty")
-            job.prepend_scripts(
-                '/module/scripts/utils/handle_certs.sh',
-                'source ~/.bashrc',
-            )
 
     sorted_pipeline.write_yaml()
