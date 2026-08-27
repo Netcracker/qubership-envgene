@@ -9,6 +9,9 @@
     - [AWS Step 2: Create the registry definition](#aws-step-2-create-the-registry-definition)
     - [AWS Step 3: Reference the registry in an Artifact or Application Definition](#aws-step-3-reference-the-registry-in-an-artifact-or-application-definition)
     - [AWS authentication flow](#aws-authentication-flow)
+    - [GitLab CI: pulling images from AWS ECR using `DOCKER_AUTH_CONFIG`](#gitlab-ci-pulling-images-from-aws-ecr-using-docker_auth_config)
+      - [Step 1: Generate a base64-encoded auth string](#step-1-generate-a-base64-encoded-auth-string)
+      - [Step 2: Set `DOCKER_AUTH_CONFIG` as a CI/CD variable](#step-2-set-docker_auth_config-as-a-cicd-variable)
   - [GCP Artifact Registry configuration](#gcp-artifact-registry-configuration)
     - [GCP-side: required permissions](#gcp-side-required-permissions)
     - [GCP Step 1: Create the credential entry](#gcp-step-1-create-the-credential-entry)
@@ -26,9 +29,9 @@ with an `authConfig` block. This guide walks through each provider step by step.
 
 > [!IMPORTANT]
 > **Pulling EnvGene Docker images from cloud registries (GAR) during pipeline execution is supported only
-> in the GitHub workflow. ECR requires additional configuration not provided out of the box.**
->
-> GitLab CI does not support pulling images from cloud registries. Use an internal Nexus or Artifactory mirror instead.
+> in the GitHub workflow** via the `DOCKER_REGISTRY` and `DOCKER_CLOUD_REGISTRY_PROVIDER` variables.
+> For GitLab CI pipelines, use the `DOCKER_AUTH_CONFIG` variable to authenticate with AWS ECR -
+> see [GitLab CI: pulling images from AWS ECR using `DOCKER_AUTH_CONFIG`](#gitlab-ci-pulling-images-from-aws-ecr-using-docker_auth_config).
 >
 > **Publishing environment template build artifacts to external cloud registries (GAR, ECR) is not currently supported.**
 
@@ -183,6 +186,48 @@ registry:
 4. The short-lived bearer token is attached to all Maven download requests as
    `Authorization: Bearer <token>`.
 5. Maven artifacts are downloaded from the `repositoryDomainName` endpoint.
+
+### GitLab CI: pulling images from AWS ECR using `DOCKER_AUTH_CONFIG`
+
+To pull Docker images from AWS ECR in a GitLab CI pipeline, set the predefined
+[`DOCKER_AUTH_CONFIG`](https://docs.gitlab.com/ci/docker/authenticate_registry/) CI/CD variable
+with AWS ECR credentials. GitLab uses this variable to authenticate Docker image pulls for all jobs
+in the pipeline.
+
+#### Step 1: Generate a base64-encoded auth string
+
+```bash
+echo -n "AWS:$(aws ecr get-login-password --region <region>)" | base64
+```
+
+#### Step 2: Set `DOCKER_AUTH_CONFIG` as a CI/CD variable
+
+In **Settings → CI/CD → Variables**, add:
+
+| Variable             | Value          |
+|----------------------|----------------|
+| `DOCKER_AUTH_CONFIG` | See JSON below |
+
+```json
+{
+    "auths": {
+        "<aws_account_id>.dkr.ecr.<region>.amazonaws.com": {
+            "auth": "<base64-encoded-string-from-step-1>"
+        }
+    }
+}
+```
+
+Replace `<aws_account_id>`, `<region>`, and `<base64-encoded-string-from-step-1>` with your values.
+
+> [!NOTE]
+> AWS ECR tokens are valid for 12 hours. For long-running pipelines or scheduled jobs, regenerate
+> the token and update the variable before it expires.
+
+> [!NOTE]
+> `DOCKER_AUTH_CONFIG` authenticates Docker image pulls for GitLab CI jobs. It is separate from
+> the Maven artifact registry configuration described in the sections above, which uses
+> `credentials.yml` and Registry Definitions.
 
 ## GCP Artifact Registry configuration
 
