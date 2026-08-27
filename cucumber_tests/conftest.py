@@ -45,11 +45,12 @@ def mock_nexus(tmp_path_factory):
     _write_manifest(art_dir, "test-artifact-v1.json")
     _build_env_template_zip(art_dir / "test-artifact-v1.zip", "default-env-template")
 
-    # "foo:1.0" - the BG Domain peer-side artifact in the BGD warmup scenarios, deliberately
-    # a different template from the origin side so the two can be told apart.
-    foo_dir = base_dir / "release" / "org" / "test" / "foo" / "1.0"
-    _write_manifest(foo_dir, "foo-1.0.json")
-    _build_env_template_zip(foo_dir / "foo-1.0.zip", "bg-peer-env-template")
+    # "test-artifact:v2" - the BG Domain peer-side artifact in the BGD warmup scenarios: a newer
+    # version of the SAME template artifact (not a differently-named one), deliberately a
+    # different template from v1 so the two can be told apart.
+    art_v2_dir = base_dir / "release" / "org" / "test" / "test-artifact" / "v2"
+    _write_manifest(art_v2_dir, "test-artifact-v2.json")
+    _build_env_template_zip(art_v2_dir / "test-artifact-v2.zip", "bg-peer-env-template")
 
     # "project-env-template:v1.2.3" - used by the env-inventory-generation and template-version
     # scenarios, where the artifact's own semantic version is what's under test.
@@ -86,6 +87,16 @@ def workspace(tmp_path):
 
 _XFAIL_REASONS = {
     "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
+    "xfail_cli_npe": "Known bug: Calculator CLI throws a NullPointerException on "
+                      "NamespaceDTO.isCleaned() when matching BG Domain deployPostfix.",
+    "xfail_cli_no_hierarchy_rule": "Known gap: the hierarchy validation rule (Tenant level "
+                                    "parameters cannot reference Cloud/Namespace level parameters) "
+                                    "is not enforced by the Calculator CLI.",
+    "xfail_cli_no_context_rule": "Known gap: the cross-context validation rule (e2eParameters/"
+                                  "technicalConfigurationParameters/deployParameters cannot "
+                                  "reference each other) is not enforced by the Calculator CLI.",
+    "xfail_cli_macro_ns_timeout": "Known bug: a macro reference resolved across hierarchy levels "
+                                   "is dropped from the effective set deployment parameters.",
 }
 
 

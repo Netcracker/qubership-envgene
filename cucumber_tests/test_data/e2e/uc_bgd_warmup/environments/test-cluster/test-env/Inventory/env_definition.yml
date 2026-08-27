@@ -6,4 +6,4 @@ envTemplate:
   artifact: "test-artifact:v1"
   bgNsArtifacts:
     origin: "test-artifact:v1"
-    peer: "foo:1.0"
+    peer: "test-artifact:v2"
