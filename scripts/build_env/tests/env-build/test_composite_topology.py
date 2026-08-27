@@ -26,15 +26,18 @@ class TestCompositeTopology:
 
         assert generator.ctx.current_env["composite_topology"] == {}
 
-    def test_baseline_only(self):
-        test_dir = TEST_DATA_DIR / "baseline-only"
+    def test_baseline_only(self, tmp_path):
+        composite_structure = tmp_path / "composite_structure.yml"
+        composite_structure.write_text(
+            """
+    baseline:
+      type: namespace
+      name: env-1-core
+    """,
+            encoding="utf-8",
+        )
 
-        generator = self._create_generator(test_dir)
-
-        # Debug: Check if file exists
-        cs_file = Path(generator.ctx.current_env_dir) / "composite_structure.yml"
-        print(f"Looking for file at: {cs_file}")
-        print(f"File exists: {cs_file.exists()}")
+        generator = self._create_generator(tmp_path)
 
         generator.compute_composite_topology()
 
