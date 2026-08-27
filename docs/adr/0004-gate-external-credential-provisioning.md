@@ -1,4 +1,4 @@
-# ADR-0001: Gate external credential provisioning with a pipeline parameter
+# ADR-0004: Gate external credential provisioning with a pipeline parameter
 
 Status: Proposed
 Date: 2026-08-28
