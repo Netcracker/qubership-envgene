@@ -215,3 +215,16 @@ def then_namespace_application_param_equals(workspace: EnvGeneWorkspace, ns_dir:
     content = yaml.safe_load(app_path.read_text(encoding="utf-8"))
     actual = content.get("deployParameters", {}).get(param)
     assert actual == value, f"Expected {app_path}.deployParameters.{param} == '{value}', got '{actual}'"
+
+
+@then(parsers.parse('the rendered namespace.yml for "{ns_dir}" has deploy parameter "{param}" equal to "{value}"'))
+def then_namespace_deploy_parameter_equals(workspace: EnvGeneWorkspace, ns_dir: str, param: str, value: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    ns_path = env_dir / "Namespaces" / ns_dir / "namespace.yml"
+    workspace.assert_file_exists(ns_path)
+    content = yaml.safe_load(ns_path.read_text(encoding="utf-8"))
+    actual = content.get("deployParameters", {}).get(param)
+    assert actual == value, (
+        f"Expected {ns_path}.deployParameters.{param} == '{value}', got '{actual}'.\n"
+        f"Full namespace.yml: {content}"
+    )

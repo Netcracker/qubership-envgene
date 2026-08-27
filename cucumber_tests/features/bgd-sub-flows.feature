@@ -223,3 +223,26 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Then the pipeline fails
     And the pipeline step "process_deployment_plan" has status "FAILED"
     And the pipeline log contains "bss-nonexistent"
+
+  # ── Sub-flow 4 - origin/peer sides render from structurally distinct templates ─
+  # envTemplate.bgNsArtifacts.origin/peer may each name a genuinely different Environment
+  # Template artifact, not just a different version of the one envTemplate.artifact names.
+  # process_env_template() downloads each into its own tmp/origin or tmp/peer dir (see
+  # docs/technical-design/instance-pipeline/steps/appregdef-render.md); when a role-specific
+  # artifact defines the same-named namespace with a different template_override,
+  # generate_namespace_files_and_map() (render_config_env.py) renders that namespace from the
+  # role-specific template instead of the common one. This is the download-and-render path
+  # end to end - scripts/tests/env-build/test_render_envs.py covers only the render half, with
+  # templates_dirs hand-built rather than resolved from bgNsArtifacts.
+
+  Scenario: Sub-flow 4 - origin and peer namespaces render from their own distinct templates
+    Given the workspace is initialized with test data from "e2e/uc_bgd_ns_templates"
+    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-origin:app1:1.0"
+    And the environment AppDefs and RegDefs paths are resolved for the deploy
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "appregdef_render" has status "SUCCESS"
+    And the pipeline step "env_build" has status "SUCCESS"
+    And the rendered namespace.yml for "bss-origin" has deploy parameter "ROLE_SPECIFIC_PARAM" equal to "origin-value"
+    And the rendered namespace.yml for "bss-peer" has deploy parameter "ROLE_SPECIFIC_PARAM" equal to "peer-value"

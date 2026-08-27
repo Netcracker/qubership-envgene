@@ -1,8 +1,0 @@
-{
-  "configurations": [
-    {
-      "maven_repository": "http://localhost:8000/release",
-      "artifacts": [{"id": "org.test:project-env-template:v1.2.3"}]
-    }
-  ]
-}

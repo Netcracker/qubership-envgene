@@ -1,4 +1,0 @@
-{
-  "applications": [{"version": "test_app_2:2.0.0", "deployPostfix": "dp2"}],
-  "deployGraph": [{"chunkName": "wave1", "apps": ["test_app_2:dp2"]}]
-}
