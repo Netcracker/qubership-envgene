@@ -4,7 +4,7 @@ from scripts.build_env.render_config_env import EnvGenerator
 
 
 TEST_DATA_DIR = (
-    Path(__file__).resolve().parents[4]
+    Path(__file__).resolve().parents[3]
     / "test_data"
     / "test_environments"
     / "composite-topology"
