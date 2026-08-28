@@ -556,6 +556,23 @@ Importing `*` from multiple step modules can cause `AmbiguousSteDefinition`
 errors if the same step text is defined in more than one module. Always check
 shared_steps before implementing a new step.
 
+### Pitfall: A new step pattern that is a relaxed subset of an existing one
+
+This is subtler than an exact duplicate and `--collect-only` will not catch it. If an existing
+step is `the namespace "{ns_dir}" application "{app}" deploy parameter "{param}" equals
+"{value}"` and a new step is added as `the namespace "{ns_dir}" deploy parameter "{param}"
+equals "{value}"` (same prefix and suffix, just missing the middle clause),
+`parsers.parse`'s non-greedy `{}` matching can bind the NEW step's `{ns_dir}` across the OLD
+step's `application "{app}"` clause when both are registered and a Gherkin line matches the old
+step's full text — e.g. `the namespace "bss-peer" application "crm" deploy parameter "PARAM_1"
+equals "active-value"` gets misrouted to the new handler with `ns_dir = 'bss-peer" application
+"crm'`, silently breaking a scenario that never touched the new step or its feature file. This
+surfaces only when a full suite run happens to execute both scenarios, as a confusing
+`does not exist` file-path error containing stray quote characters - not as a collection error.
+Give a new step's literal text a structurally distinct shape from any existing step sharing its
+prefix and suffix (e.g. `the rendered namespace.yml for "{ns_dir}" has deploy parameter
+"{param}" equal to "{value}"`), not just a version with one clause removed.
+
 ### Pitfall: Credential Files with Non-Deterministic Encryption
 
 Files encrypted with Fernet (non-deterministic keys) cannot be compared via
