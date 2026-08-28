@@ -119,9 +119,12 @@ def then_namespace_dirs_identical(workspace: EnvGeneWorkspace, origin_ns: str, p
     assert not mismatches, f"Content differs (excluding the namespace name) for: {mismatches}"
 
 
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
 @then(parsers.parse('the pipeline step "{step_name}" has status "{status}"'))
 def then_pipeline_step_status(workspace: EnvGeneWorkspace, step_name: str, status: str):
-    output = workspace.stdout + "\n" + workspace.stderr
+    output = _ANSI_ESCAPE_RE.sub("", workspace.stdout + "\n" + workspace.stderr)
     pattern = rf"^{re.escape(step_name)}\s+{re.escape(status)}\b"
     found = re.search(pattern, output, re.MULTILINE)
     assert found, (
