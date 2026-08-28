@@ -62,7 +62,6 @@ class GitRepoManager:
     def __init__(self):
         self.repo = Repo.init(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
         self.ctx = GitContext.from_env()
-        self.env_paths = self.get_env_paths()
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
