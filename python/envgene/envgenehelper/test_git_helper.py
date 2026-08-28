@@ -61,7 +61,7 @@ class TestStageChanges:
         manager.repo.git.diff = MagicMock(side_effect=["", (2, "", "")])
 
         with pytest.raises(RuntimeError):
-            manager.stage_changes()
+            manager.stage_changes([])
 
 
 class TestCherryPickAndPush:
