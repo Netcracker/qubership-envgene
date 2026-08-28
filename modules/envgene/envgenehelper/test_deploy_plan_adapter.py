@@ -44,7 +44,7 @@ class TestAdaptSdToDeployPlan:
         writeYamlToFile(sd_path, {"applications": [{"version": "App:1.0", "deployPostfix": "bss"}]})
 
         with pytest.raises(ReferenceError, match="bss"):
-            adapt_sd_to_deploy_plan({})
+            adapt_sd_to_deploy_plan({"other-postfix": "dev-other"})
 
     @pytest.mark.unit
     def test_writes_deploy_plan_to_disk(self, env_dir):
