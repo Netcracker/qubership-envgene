@@ -62,6 +62,7 @@ class GitRepoManager:
     def __init__(self):
         self.repo = Repo.init(Path(os.getenv("CI_PROJECT_DIR", os.getcwd())))
         self.ctx = GitContext.from_env()
+        self.env_paths = self.get_env_paths()
 
     def configure(self) -> None:
         with self.repo.config_writer() as cfg:
@@ -93,10 +94,11 @@ class GitRepoManager:
         except GitCommandError as exc:
             raise RuntimeError(f"Failed to prepare repository for '{ref}': {exc}") from exc
 
-    def stage_changes(self) -> bool:
+    def stage_changes(self, paths: list[str]) -> bool:
         logger.info("Staging changes...")
 
-        self.repo.git.add("--all", "--")
+        existing_paths = [path for path in paths if Path(path).exists()]
+        self.repo.git.add("--all", "--", *existing_paths)
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():

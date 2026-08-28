@@ -1,6 +1,7 @@
 import os
 
 from envgenehelper import logger
+from envgenehelper.repo_paths import get_job_paths
 from envgenehelper.git_helper import GitRepoManager
 
 from minimize_cred_diffs import minimize_cred_diffs
@@ -32,7 +33,9 @@ def git_commit() -> None:
 
     logger.info("Minimizing credential file diffs...")
     minimize_cred_diffs()
-    if not repo_manager.stage_changes():
+    
+    job_paths = get_job_paths()
+    if not repo_manager.stage_changes(job_paths):
         logger.info("No changes. Skip.")
         return
     message = build_commit_message()

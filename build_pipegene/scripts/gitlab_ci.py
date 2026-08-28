@@ -16,7 +16,7 @@ from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
 from effective_set_job import prepare_generate_effective_set_job
 from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper.repo_paths import get_env_artifact_paths, REPO_ROOT_PATHS
+from envgenehelper.repo_paths import get_job_paths, REPO_ROOT_PATHS
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -207,7 +207,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         job_full_name = job.variables["FULL_ENV_NAME"]
         job_cluster_name, job_env_name = job_full_name.split("/")
 
-        env_artifact_paths = get_env_artifact_paths(job_cluster_name, job_env_name)
+        cred_rotation_active = bool(params.get("CRED_ROTATION_PAYLOAD"))
+        env_artifact_paths = get_job_paths(job_cluster_name, job_env_name, include_full_cluster=cred_rotation_active)
         job.artifacts.add_paths(*env_artifact_paths)
 
         job.artifacts.add_paths(*REPO_ROOT_PATHS, 'tmp/')
