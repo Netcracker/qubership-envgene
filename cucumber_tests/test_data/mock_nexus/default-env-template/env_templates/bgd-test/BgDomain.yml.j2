@@ -9,5 +9,5 @@ peerNamespace:
 controllerNamespace:
   name: "{{current_env.environmentName}}-controller"
   type: namespace
-  credentials: controller-cred
+  credentials: dummy-cred
   url: {{ current_env.cloud_passport.cloud.CLOUD_PROTOCOL }}://bluegreen-controller-{{current_env.environmentName}}-controller.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST }}

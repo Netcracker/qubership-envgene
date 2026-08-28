@@ -139,7 +139,7 @@ Feature: BGD sub-flows - bgd-sub-flows.md
   Scenario: Sub-flow 3 - deploy targets the origin namespace via an explicit namespace:name:version entry
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
-    And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-origin:app1:1.0"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-origin:app1:1.0"
     And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
@@ -149,13 +149,13 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "deploy_postfix_namespace_map" has status "SUCCESS"
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
     And the pipeline step "change_bg_state" has status "SKIPPED"
-    And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
-    And the deploy plan contains an entry for namespace "bss-origin" with version "app1:1.0"
+    And the namespace map contains "bss" with origin "test-env-bss-origin" and peer "test-env-bss-peer"
+    And the deploy plan contains an entry for namespace "test-env-bss-origin" with version "app1:1.0"
 
   Scenario: Sub-flow 3 - deploy targets the peer namespace via an explicit namespace:name:version entry
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
-    And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-peer:app1:1.0"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-peer:app1:1.0"
     And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
@@ -165,8 +165,8 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "deploy_postfix_namespace_map" has status "SUCCESS"
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
     And the pipeline step "change_bg_state" has status "SKIPPED"
-    And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
-    And the deploy plan contains an entry for namespace "bss-peer" with version "app1:1.0"
+    And the namespace map contains "bss" with origin "test-env-bss-origin" and peer "test-env-bss-peer"
+    And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "app1:1.0"
 
   # ── Sub-flow 3 (SD path) - BG_NS_TARGET gates a bare deployPostfix entry ───────
   # process-deployment-plan.md 5.2-5.5: a bare deployPostfix entry (produced here via a
@@ -184,8 +184,8 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
-    And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
-    And the deploy plan contains an entry for namespace "bss-origin" with version "app1:1.0"
+    And the namespace map contains "bss" with origin "test-env-bss-origin" and peer "test-env-bss-peer"
+    And the deploy plan contains an entry for namespace "test-env-bss-origin" with version "app1:1.0"
 
   Scenario: Sub-flow 3 (SD path) - deploy targets the peer namespace when BG_NS_TARGET is PEER
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
@@ -198,8 +198,8 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
-    And the namespace map contains "bss" with origin "bss-origin" and peer "bss-peer"
-    And the deploy plan contains an entry for namespace "bss-peer" with version "app1:1.0"
+    And the namespace map contains "bss" with origin "test-env-bss-origin" and peer "test-env-bss-peer"
+    And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "app1:1.0"
 
   Scenario: Sub-flow 3 (SD path) - deploy fails when BG_NS_TARGET is not set
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
@@ -238,7 +238,7 @@ Feature: BGD sub-flows - bgd-sub-flows.md
   Scenario: Sub-flow 4 - origin and peer namespaces render from their own distinct templates
     Given the workspace is initialized with test data from "e2e/uc_bgd_ns_templates"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
-    And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-origin:app1:1.0"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-origin:app1:1.0"
     And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully

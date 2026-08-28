@@ -60,17 +60,20 @@ def _build_env_template_zip(dest_path: Path, bundle_name: str) -> None:
 # name, so the origin artifact's namespace MUST be named "bss-origin" and the peer artifact's
 # "bss-peer" for either to be picked up at all. Kept as one file (like the rest of mock_nexus/)
 # with a __ROLE__ placeholder instead of two hand-copied fixture files.
-_BG_ROLE_TEMPLATE_PATH = _MOCK_NEXUS_FIXTURES / "bg-role-template" / "env_templates" / "test.yml"
+_BG_ROLE_TEMPLATE_PATH = _MOCK_NEXUS_FIXTURES / "bg-role-template" / "env_templates" / "bdg-test.yml"
 
 
 def _build_bg_role_zip(dest_path: Path, role: str) -> None:
-    """Zip a single env_templates/test.yml, substituting the given BG Domain role ("origin" or
-    "peer") into _BG_ROLE_TEMPLATE_PATH's __ROLE__ placeholder. No "common" merge is needed:
+    """Zip a single env_templates/bdg-test.yml, substituting the given BG Domain role ("origin"
+    or "peer") into _BG_ROLE_TEMPLATE_PATH's __ROLE__ placeholder. No "common" merge is needed:
     this file's own "{{ templates_dirs.common }}" paths resolve against the
-    separately-downloaded common artifact, not against this zip's own contents."""
+    separately-downloaded common artifact, not against this zip's own contents. Named
+    "bdg-test.yml" (not "test.yml") to match the "bdg-test" envTemplate.name that the BGD
+    sub-flow fixtures set, since find_env_template_in_dir() looks up the origin/peer manifest by
+    that same basename."""
     content = _BG_ROLE_TEMPLATE_PATH.read_text(encoding="utf-8").replace("__ROLE__", role)
     with zipfile.ZipFile(dest_path, "w") as z:
-        z.writestr("templates/env_templates/test.yml", content)
+        z.writestr("templates/env_templates/bdg-test.yml", content)
 
 
 @pytest.fixture(scope="session", autouse=True)

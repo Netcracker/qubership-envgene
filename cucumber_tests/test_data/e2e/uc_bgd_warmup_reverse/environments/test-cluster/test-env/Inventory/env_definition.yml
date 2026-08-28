@@ -2,7 +2,7 @@ inventory:
   environmentName: "test-env"
   cloudName: "test-cluster"
 envTemplate:
-  name: "test"
+  name: "bdg-test"
   artifact: "test-artifact:v1"
   bgNsArtifacts:
     origin: "test-artifact:v2"
