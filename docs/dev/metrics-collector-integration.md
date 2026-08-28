@@ -21,8 +21,8 @@ Implementation reference for EnvGene activity events sent to Metrics Collector S
 1. Generate a new UUID v4 for `id` before each POST.
 2. Resolve `traceid` from `METRICS_COLLECTOR_TRACE_ID` when passed by the parent pipeline.
    Otherwise generate a new UUID v4.
-3. When `METRICS_COLLECTOR_PARENT_ID` is set, include `parentid` with that value. When the
-   variable is empty or absent, omit `parentid` from the request body.
+3. Set `parentid` from `METRICS_COLLECTOR_PARENT_ID`. When the variable is empty, absent, or not
+   passed, send `""`. EnvGene does not generate a `parentid`.
 4. EnvGene sends `type: start` with `status: IN_PROGRESS` at the beginning of the Instance
    pipeline run, before the step loop.
 5. EnvGene sends `type: stop` with a terminal status when the run finishes.
@@ -35,7 +35,7 @@ Implementation reference for EnvGene activity events sent to Metrics Collector S
 |--------------------------------|--------|---------|-------------|
 | `METRICS_COLLECTOR_URL`        | string | —       | Base URL of Metrics Collector Service. Events POST to `{METRICS_COLLECTOR_URL}/api/v1/activity`. |
 | `METRICS_COLLECTOR_TRACE_ID`   | string | —       | End-to-end correlation identifier. Passed from the parent pipeline. When empty or absent, EnvGene generates a new UUID v4. |
-| `METRICS_COLLECTOR_PARENT_ID`  | string | —       | `id` of the parent pipeline activity event. Passed from the parent pipeline when it triggers EnvGene. When empty or absent, `parentid` is omitted from the request. |
+| `METRICS_COLLECTOR_PARENT_ID`  | string | —       | `id` of the parent pipeline activity event. Passed from the parent pipeline when it triggers EnvGene. When empty or absent, `parentid` is sent as `""`. |
 
 ## HTTP request format
 
@@ -95,7 +95,7 @@ The `start` event does not include `steps` in `data`. Step results are reported 
 | `kind`          | yes      | `"pipeline"`      | `"pipeline"`                             | Pipeline activity. |
 | `kindversion`   | yes      | `"1.0"`           | `"1.0"`                                  | Must be `1.0`. |
 | `traceid`       | yes      | `METRICS_COLLECTOR_TRACE_ID` or EnvGene (UUID v4) | `"4bf92f3577b34da6a3ce929d0e0e4736"` | End-to-end correlation identifier. |
-| `parentid`      | no       | `METRICS_COLLECTOR_PARENT_ID` | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"` | Parent activity event `id`. Omit when not set. |
+| `parentid`      | no       | `METRICS_COLLECTOR_PARENT_ID` | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"` | Parent activity event `id`. Send `""` when not set. |
 | `technicalname` | yes      | `$CI_JOB_NAME`    | `"instance_pipeline"`                    | Machine-readable entity name (non-empty string). |
 | `displayname`   | no       | Pipeline context  | *(set at runtime)*                       | Human-readable name derived from the pipeline context. |
 | `jobid`         | yes      | `$CI_JOB_ID`      | `"5550001"`                              | Job identifier. |
@@ -168,7 +168,7 @@ run order, including steps skipped by trigger parameters.
 | `projectid`     | yes      | `$CI_PROJECT_ID`  | `"12345"`                                | Project identifier. |
 | `data`          | yes      | —                 | *(see [`start` event](#start-event))*    | Required JSON object. Includes `steps` on `stop`. |
 | `time`          | yes      | Current UTC time  | `"2026-06-12T14:30:00Z"`                 | RFC 3339 activity timestamp. |
-| `parentid`      | no       | Same as `start`   | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"` | Same as the matching `start` event. Omit when not set. |
+| `parentid`      | no       | Same as `start`   | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"` | Same as the matching `start` event. Send `""` when not set. |
 | `traceid`       | yes      | Same as `start`   | `"4bf92f3577b34da6a3ce929d0e0e4736"`     | Same value as the matching `start` event. |
 | `status`        | no       | `$CI_JOB_STATUS`  | `"SUCCESS"`                              | Terminal status. See [Activity status](#activity-status). |
 
