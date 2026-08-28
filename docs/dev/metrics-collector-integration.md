@@ -23,8 +23,9 @@ Implementation reference for EnvGene activity events sent to Metrics Collector S
    Otherwise generate a new UUID v4.
 3. When `METRICS_COLLECTOR_PARENT_ID` is set, include `parentid` with that value. When the
    variable is empty or absent, omit `parentid` from the request body.
-4. **First executed job** sends `type: start` with `status: IN_PROGRESS`.
-5. **Last executed job** sends `type: stop` with a terminal status.
+4. EnvGene sends `type: start` with `status: IN_PROGRESS` at the beginning of the Instance
+   pipeline run, before the step loop.
+5. EnvGene sends `type: stop` with a terminal status when the run finishes.
 6. On API error, log and continue. When Metrics Collector Service is unavailable, retries are
    not performed.
 
@@ -66,13 +67,24 @@ Allowed values: `NOT_STARTED`, `SKIPPED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `C
 |---------------|-----------------------|
 | `IN_PROGRESS` | `start` event at the beginning of the run |
 | `SUCCESS`     | `stop` when the run completes successfully |
-| `FAILED`      | `stop` when a job fails |
+| `FAILED`      | `stop` when a step fails |
 | `CANCELLED`   | `stop` when the run is cancelled |
-| `SKIPPED`     | `stop` when the pipeline or the terminating job was skipped |
+| `SKIPPED`     | `stop` when the run was skipped |
 | `UNKNOWN`     | `stop` in cases not covered above |
 | `NOT_STARTED` | Never |
 
 ### `start` event
+
+EnvGene sends the `start` event at the beginning of the Instance pipeline run, before the step
+loop runs. The Instance pipeline runs as one orchestrator process per environment. One CI job
+invocation sends one `start` event.
+
+When pipeline parameter `ENV_NAMES` lists multiple environments, EnvGene fans out to one run per
+environment. Each run sends its own `start` event. Child events share `traceid` from
+`METRICS_COLLECTOR_TRACE_ID` when the parent run sets it.
+
+The `start` event does not include `steps` in `data`. Step results are reported on the matching
+`stop` event only.
 
 | Attribute       | Required | Source            | Example                                  | Description |
 |-----------------|----------|-------------------|------------------------------------------|-------------|
@@ -84,7 +96,7 @@ Allowed values: `NOT_STARTED`, `SKIPPED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `C
 | `kindversion`   | yes      | `"1.0"`           | `"1.0"`                                  | Must be `1.0`. |
 | `traceid`       | yes      | `METRICS_COLLECTOR_TRACE_ID` or EnvGene (UUID v4) | `"4bf92f3577b34da6a3ce929d0e0e4736"` | End-to-end correlation identifier. |
 | `parentid`      | no       | `METRICS_COLLECTOR_PARENT_ID` | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"` | Parent activity event `id`. Omit when not set. |
-| `technicalname` | yes      | `$CI_JOB_NAME`    | `"env_inventory_generation"`             | Machine-readable entity name (non-empty string). |
+| `technicalname` | yes      | `$CI_JOB_NAME`    | `"instance_pipeline"`                    | Machine-readable entity name (non-empty string). |
 | `displayname`   | no       | Pipeline context  | *(set at runtime)*                       | Human-readable name derived from the pipeline context. |
 | `jobid`         | yes      | `$CI_JOB_ID`      | `"5550001"`                              | Job identifier. |
 | `pipelineid`    | yes      | `$CI_PIPELINE_ID` | `"987654"`                               | Pipeline identifier. |
@@ -95,29 +107,24 @@ Allowed values: `NOT_STARTED`, `SKIPPED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `C
 
 `data` fields (execution details not covered by the event attributes above):
 
-| Field             | Required | Description |
-|-------------------|----------|-------------|
-| `url`             | yes      | Pipeline URL. |
-| `startedAt`       | yes      | RFC 3339 pipeline start timestamp. |
-| `finishedAt`      | no       | RFC 3339 pipeline end timestamp. On `stop` only. |
-| `version`         | yes      | EnvGene build version. Not the deployed environment version. |
-| `nestedPipeline`  | no       | Nested pipelines triggered by EnvGene. |
+| Field        | Required | Description |
+|--------------|----------|-------------|
+| `url`        | yes      | Pipeline URL. |
+| `startedAt`  | yes      | RFC 3339 pipeline start timestamp. |
+| `finishedAt` | no       | RFC 3339 pipeline end timestamp. On `stop` only. |
+| `version`    | yes      | EnvGene build version. Not the deployed environment version. |
+| `steps`      | no       | Instance pipeline step results. On `stop` only. |
 
-`nestedPipeline` item fields:
+`steps` item fields:
 
-| Field           | Required | Source               | Description |
-|-----------------|----------|----------------------|-------------|
-| `technicalname` | yes      | `"trigger_passport"` | Nested pipeline job name. |
-| `url`           | yes      | GitLab API           | Pipeline URL. |
-| `status`        | yes      | GitLab API           | Pipeline status. |
-| `startedAt`     | yes      | GitLab API           | RFC 3339 pipeline start timestamp. |
-| `finishedAt`    | no       | GitLab API           | RFC 3339 pipeline end timestamp. |
-| `jobid`         | yes      | GitLab API           | Job identifier. |
-| `pipelineid`    | yes      | GitLab API           | Pipeline identifier. |
-| `projectid`     | yes      | GitLab API           | Project identifier. |
+| Field        | Required | Description |
+|--------------|----------|-------------|
+| `name`       | yes      | Step name (for example `get_passport`, `env_build`, `git_commit`). |
+| `status`     | yes      | `SUCCESS`, `FAILED`, or `SKIPPED`. |
+| `durationMs` | no       | Step duration in milliseconds. Omitted when the step was skipped. |
 
-EnvGene includes `nestedPipeline` on `stop` when a nested pipeline was triggered during the
-run (for example, the Discovery pipeline).
+EnvGene includes `steps` on `stop` with one entry per registered Instance pipeline step in fixed
+run order, including steps skipped by trigger parameters.
 
 ```json
 {
@@ -133,7 +140,7 @@ run (for example, the Discovery pipeline).
   "status": "IN_PROGRESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_inventory_generation",
+  "technicalname": "instance_pipeline",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:00:00Z",
   "data": {
@@ -153,13 +160,13 @@ run (for example, the Discovery pipeline).
 | `specversion`   | yes      | `"1.0"`           | `"1.0"`                                  | Event specification version. Must be `1.0`. |
 | `id`            | yes      | EnvGene (UUID v4) | `"223e4567-e89b-12d3-a456-426614174001"` | Event UUID. Generated by EnvGene before POST. |
 | `displayname`   | no       | Pipeline context  | *(set at runtime)*                       | Human-readable name derived from the pipeline context. |
-| `jobid`         | yes      | `$CI_JOB_ID`      | `"5550099"`                              | Job identifier. |
-| `technicalname` | yes      | `$CI_JOB_NAME`    | `"cmdb_import"`                          | Machine-readable entity name (non-empty string). |
+| `jobid`         | yes      | `$CI_JOB_ID`      | `"5550001"`                              | Job identifier. |
+| `technicalname` | yes      | `$CI_JOB_NAME`    | `"instance_pipeline"`                    | Machine-readable entity name (non-empty string). |
 | `kindversion`   | yes      | `"1.0"`           | `"1.0"`                                  | Must be `1.0`. |
 | `kind`          | yes      | `"pipeline"`      | `"pipeline"`                             | Pipeline activity. |
 | `pipelineid`    | yes      | `$CI_PIPELINE_ID` | `"987654"`                               | Pipeline identifier. |
 | `projectid`     | yes      | `$CI_PROJECT_ID`  | `"12345"`                                | Project identifier. |
-| `data`          | yes      | —                 | *(see [`start` event](#start-event))*    | Required JSON object. Includes `nestedPipeline` when a nested pipeline ran. |
+| `data`          | yes      | —                 | *(see [`start` event](#start-event))*    | Required JSON object. Includes `steps` on `stop`. |
 | `time`          | yes      | Current UTC time  | `"2026-06-12T14:30:00Z"`                 | RFC 3339 activity timestamp. |
 | `parentid`      | no       | Same as `start`   | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"` | Same as the matching `start` event. Omit when not set. |
 | `traceid`       | yes      | Same as `start`   | `"4bf92f3577b34da6a3ce929d0e0e4736"`     | Same value as the matching `start` event. |
@@ -173,13 +180,13 @@ run (for example, the Discovery pipeline).
   "type": "stop",
   "kind": "pipeline",
   "kindversion": "1.0",
-  "jobid": "5550099",
+  "jobid": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "SUCCESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "cmdb_import",
+  "technicalname": "instance_pipeline",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:30:00Z",
   "data": {
@@ -187,16 +194,136 @@ run (for example, the Discovery pipeline).
     "startedAt": "2026-06-12T14:00:00Z",
     "finishedAt": "2026-06-12T14:30:00Z",
     "version": "1.2.3",
-    "nestedPipeline": [
+    "steps": [
       {
-        "technicalname": "trigger_passport",
-        "url": "https://gitlab.example.com/platform/discovery-repo/-/pipelines/111222",
+        "name": "get_passport",
         "status": "SUCCESS",
-        "startedAt": "2026-06-12T14:00:05Z",
-        "finishedAt": "2026-06-12T14:05:00Z",
-        "jobid": "777001",
-        "pipelineid": "111222",
-        "projectid": "99"
+        "durationMs": 305000
+      },
+      {
+        "name": "credential_rotation",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "env_inventory_generation",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "set_template_version",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "appregdef_render",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "deploy_postfix_namespace_map",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "process_sd",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "migrate_sd_to_deploy_plan",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "generate_deployment_plan",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "env_build",
+        "status": "SUCCESS",
+        "durationMs": 120000
+      },
+      {
+        "name": "generate_effective_set",
+        "status": "SUCCESS",
+        "durationMs": 450000
+      },
+      {
+        "name": "git_commit",
+        "status": "SUCCESS",
+        "durationMs": 15000
+      }
+    ]
+  }
+}
+```
+
+### `start_and_stop` event
+
+```json
+{
+  "specversion": "1.0",
+  "id": "323e4567-e89b-12d3-a456-426614174002",
+  "source": "https://gitlab.example.com/platform/env-instance-repo",
+  "type": "start_and_stop",
+  "kind": "pipeline",
+  "kindversion": "1.0",
+  "jobid": "5550001",
+  "pipelineid": "987654",
+  "projectid": "12345",
+  "status": "SKIPPED",
+  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
+  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "technicalname": "instance_pipeline",
+  "displayname": "EnvGene Instance Pipeline",
+  "time": "2026-06-12T14:00:01Z",
+  "data": {
+    "url": "https://gitlab.example.com/platform/env-instance-repo/-/pipelines/987654",
+    "startedAt": "2026-06-12T14:00:00Z",
+    "finishedAt": "2026-06-12T14:00:01Z",
+    "version": "1.2.3",
+    "steps": [
+      {
+        "name": "get_passport",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "credential_rotation",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "env_inventory_generation",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "set_template_version",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "appregdef_render",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "deploy_postfix_namespace_map",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "process_sd",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "migrate_sd_to_deploy_plan",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "generate_deployment_plan",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "env_build",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "generate_effective_set",
+        "status": "SKIPPED"
+      },
+      {
+        "name": "git_commit",
+        "status": "SKIPPED"
       }
     ]
   }
