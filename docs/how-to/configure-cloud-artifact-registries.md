@@ -223,8 +223,6 @@ Replace `<aws_account_id>`, `<region>`, and `<base64-encoded-string-from-step-1>
 > [!NOTE]
 > AWS ECR tokens are valid for 12 hours. For long-running pipelines or scheduled jobs, regenerate
 > the token and update the variable before it expires.
-
-> [!NOTE]
 > `DOCKER_AUTH_CONFIG` authenticates Docker image pulls for GitLab CI jobs. It is separate from
 > the Maven artifact registry configuration described in the sections above, which uses
 > `credentials.yml` and Registry Definitions.
