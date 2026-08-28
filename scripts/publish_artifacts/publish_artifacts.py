@@ -26,9 +26,10 @@ def copy_env_artifact(ctx) -> None:
 
 def finalize_artifacts(output_root: Path, limit_mb: int) -> None:
     if get_save_artifacts_strategy() == SaveArtifactsStrategy.NEVER:
+        logger.info(f"save_artifacts_strategy is NEVER")
         writeToFile(output_root / NOT_PUBLISHED_FILE_NAME, "save_artifacts_strategy is NEVER\n")
         return
-
+    logger.info(f"save_artifacts_strategy is ALWAYS (default), checking size limit for {output_root}")
     output_root.mkdir(parents=True, exist_ok=True)
 
     effective_limit_mb = limit_mb * LIMIT_MULTIPLIER
