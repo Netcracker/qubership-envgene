@@ -34,7 +34,7 @@ def make_manager(ctx=None):
 
 
 class TestGetExcludedPaths:
-    def test_returns_effective_set_path_for_gitlab_deploy(self):
+    def test_gitlab_deploy_keeps_topology_and_pipeline_stageable(self):
         manager = make_manager()
         with patch.dict(os.environ, {
             "PIPELINE_TYPE": PipelineType.GITLAB_DEPLOY.value,
@@ -43,10 +43,46 @@ class TestGetExcludedPaths:
             assert manager._get_excluded_paths() == [
                 "environments/cluster/env/Inventory/delta-deploy-plan.yml",
                 "environments/cluster/env/Inventory/namespace-map.yml",
+            ]
+
+    def test_gitlab_deploy_identifies_contexts_for_dcl(self):
+        manager = make_manager()
+        with patch.dict(os.environ, {
+            "PIPELINE_TYPE": PipelineType.GITLAB_DEPLOY.value,
+            "FULL_ENV_NAME": "cluster/env",
+        }, clear=False):
+            assert manager._get_dcl_paths() == [
                 "environments/cluster/env/effective-set/deployment",
                 "environments/cluster/env/effective-set/cleanup",
                 "environments/cluster/env/effective-set/runtime",
             ]
+
+    def test_legacy_keeps_all_effective_set_contexts_stageable(self):
+        manager = make_manager()
+        with patch.dict(os.environ, {
+            "PIPELINE_TYPE": "LEGACY",
+            "FULL_ENV_NAME": "cluster/env",
+        }, clear=False):
+            assert manager._get_dcl_paths() == []
+
+    def test_gitlab_deploy_removes_dcl_contexts_from_index(self):
+        manager = make_manager()
+        manager.repo.git.rm = MagicMock()
+        with patch.dict(os.environ, {
+            "PIPELINE_TYPE": PipelineType.GITLAB_DEPLOY.value,
+            "FULL_ENV_NAME": "cluster/env",
+        }, clear=False):
+            manager.remove_dcl_paths_from_index()
+
+        manager.repo.git.rm.assert_called_once_with(
+            "--cached",
+            "-r",
+            "--ignore-unmatch",
+            "--",
+            "environments/cluster/env/effective-set/deployment",
+            "environments/cluster/env/effective-set/cleanup",
+            "environments/cluster/env/effective-set/runtime",
+        )
 
     def test_returns_empty_when_full_env_name_missing(self):
         manager = make_manager()
@@ -133,12 +169,27 @@ class TestSparseCheckout:
 
 
 class TestCherryPickAndPush:
-    def test_aborts_on_cherry_pick_git_error(self):
+    def test_skips_commit_on_empty_cherry_pick_after_conflict_resolution(self):
         manager = make_manager()
         manager._fetch = MagicMock()
         manager.repo.git.cherry_pick = MagicMock(
             side_effect=[GitCommandError("cherry-pick", 1, "conflict"), None]
         )
+        manager.repo.git.status = MagicMock(return_value="")
+        manager._has_staged_changes = MagicMock(return_value=False)
+
+        manager._cherry_pick_and_push("deadbeef")
+
+        manager.repo.git.cherry_pick.assert_called_with("--skip", with_exceptions=False)
+        manager.repo.git.push.assert_not_called()
+
+    def test_aborts_on_cherry_pick_with_unresolved_conflicts(self):
+        manager = make_manager()
+        manager._fetch = MagicMock()
+        manager.repo.git.cherry_pick = MagicMock(
+            side_effect=[GitCommandError("cherry-pick", 1, "conflict"), None]
+        )
+        manager.repo.git.status = MagicMock(return_value="UU some/file.yml")
 
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
@@ -155,7 +206,7 @@ class TestCherryPickAndPush:
 
         manager.repo.git.cherry_pick.assert_called_with("--abort", with_exceptions=False)
 
-    def test_aborts_on_push_error(self):
+    def test_raises_without_abort_on_push_error(self):
         manager = make_manager()
         manager._fetch = MagicMock()
         manager.repo.git.cherry_pick = MagicMock()
@@ -164,4 +215,4 @@ class TestCherryPickAndPush:
         with pytest.raises(RuntimeError):
             manager._cherry_pick_and_push("deadbeef")
 
-        manager.repo.git.cherry_pick.assert_called_with("--abort", with_exceptions=False)
+        manager.repo.git.cherry_pick.assert_called_once()

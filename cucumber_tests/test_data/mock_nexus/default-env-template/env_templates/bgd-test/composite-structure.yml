@@ -1,0 +1,9 @@
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.environmentName }}-core"
+  type: namespace
+satellites:
+  - name: "{{ current_env.environmentName }}-controller"
+    type: namespace
+  - name: "{{ current_env.environmentName }}-bg-domain"
+    type: bgdomain
