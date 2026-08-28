@@ -3,6 +3,8 @@ cloud: '{{ templates_dirs.common }}/env_templates/bgd-test/Cloud.yml.j2'
 namespaces:
   - template_path: '{{ templates_dirs.common }}/env_templates/bgd-test/Namespace.yml.j2'
     deploy_postfix: core
+    template_override:
+      name: "{{current_env.environmentName}}-core"
   - template_path: '{{ templates_dirs.common }}/env_templates/bgd-test/Namespace.yml.j2'
     deploy_postfix: controller
     template_override:
