@@ -31,11 +31,11 @@ credential values in a failed run's artifact. Treat failure artifacts as potenti
 
 The job artifact is the work directory as the run left it, plus a plain `NOT-PUBLISHED.txt` at the root only
 when the work directory is dropped (see [Save criteria](#save-criteria)). Each run works in its own isolated
-Git worktree that commits its result independently, laid out under a `<cluster-name>-<environment-name>/`
+Git worktree that commits its result independently, laid out under a `<cluster-name>/<environment-name>/`
 wrapper. The tree below shows the full layout.
 
 ```text
-<cluster-name>-<environment-name>/               # isolated worktree of one run (multi-env: one sibling per environment)
+<cluster-name>/<environment-name>/               # isolated worktree of one run (multi-env: one sibling per environment)
 ├── pipeline.log                                 # this environment's pipeline log, always saved
 ├── ARGO_DPG_CONTEXT.env                         # encrypted dotenv for the ArgoCD sync job, not troubleshooting content
 ├── appdefs/                                     # Effective Application Definitions
@@ -141,7 +141,7 @@ directory as usual, so it stays browsable in the CI web UI. 800 MB keeps the arc
 
 When [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) lists more than one environment, each
 environment runs in its own isolated Git worktree and commits its result independently. Each environment
-produces its own `<cluster-name>-<environment-name>/` artifact wrapper, one per environment. An environment that
+produces its own `<cluster-name>/<environment-name>/` artifact wrapper, one per environment. An environment that
 fails partway through still publishes the partial output produced up to the failure point. The per-environment
 logs are always saved, so a failed run's logs stay available even when its work directory is incomplete or
 dropped by size or by `NEVER`.
