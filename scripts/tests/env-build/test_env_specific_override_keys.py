@@ -65,6 +65,7 @@ class TestEnvSpecificOverrideKeys:
         with tempfile.TemporaryDirectory(prefix="env-override-keys-") as tmp:
             env_dir = Path(tmp)
             _write_namespace(env_dir, "bss-origin")
+            _write_namespace(env_dir, "bss-peer")
             _write_env_definition(
                 env_dir,
                 {
@@ -77,7 +78,12 @@ class TestEnvSpecificOverrideKeys:
                 validate_env_specific_override_keys(env_dir)
 
             message = str(exc_info.value)
-            assert "Did you mean 'bss-origin'?" in message
+            assert (
+                "Invalid key 'bss' in envTemplate.envSpecificParamsets. "
+                "Expected 'cloud' or one of the namespace folders: "
+                "'bss-origin', 'bss-peer', 'cloud'. "
+                "Did you mean 'bss-origin' or 'bss-peer'?"
+            ) == message
 
     def test_empty_or_missing_maps_pass(self):
         with tempfile.TemporaryDirectory(prefix="env-override-keys-") as tmp:

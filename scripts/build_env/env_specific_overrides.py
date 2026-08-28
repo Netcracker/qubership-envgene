@@ -31,22 +31,16 @@ def validate_env_specific_override_keys(env_dir: Path | str) -> None:
             sorted_keys = sorted(available_keys)
             available_label = ", ".join(f"'{available_key}'" for available_key in sorted_keys) or "(none)"
             message = (
-                f"Key '{key}' in envTemplate.{field_name} does not match "
-                f"'cloud' or any namespace folder name under Namespaces/ in the "
-                f"Environment Instance. Keys must be the namespace folder name "
-                f"(the folder under Namespaces/, or 'cloud' for the cloud template). "
-                f"Available keys: {available_label}."
+                f"Invalid key '{key}' in envTemplate.{field_name}. "
+                f"Expected 'cloud' or one of the namespace folders: {available_label}."
             )
 
             hints = []
-            for suffix, role_label in (("-origin", "origin"), ("-peer", "peer")):
+            for suffix in ("-origin", "-peer"):
                 candidate = f"{key}{suffix}"
                 if candidate in available_keys:
-                    hints.append(
-                        f"Did you mean '{candidate}'? Blue-green namespace templates append "
-                        f"'{suffix}' to the deploy postfix for the {role_label} namespace."
-                    )
+                    hints.append(f"'{candidate}'")
             if hints:
-                message += " " + " ".join(hints)
+                message += f" Did you mean {' or '.join(hints)}?"
 
             raise ReferenceError(message)
