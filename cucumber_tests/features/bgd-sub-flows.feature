@@ -28,10 +28,10 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "env_build" has status "SKIPPED"
     And the pipeline step "generate_effective_set" has status "SKIPPED"
     And the pipeline step "git_commit" has status "SUCCESS"
-    # Not part of the documented flow for this sub-flow, but this is real, current
-    # orchestrator behaviour: appregdef_render runs on every GITLAB_DEPLOY run
-    # regardless of OPERATION_TYPE. Pinned here so a change either way is caught.
-    And the pipeline step "appregdef_render" has status "SUCCESS"
+    # appregdef_render/env_build only run for DEPLOY and CLEAN operations (or when
+    # ENV_BUILDER is set) - not for BGD state-only operations. Pinned here so a
+    # change either way is caught.
+    And the pipeline step "appregdef_render" has status "SKIPPED"
 
   Scenario: Sub-flow 1 - promote flips origin to legacy and peer to active
     Given the BG state files are origin "active" and peer "candidate"
@@ -92,8 +92,8 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "warmup" has status "SUCCESS"
     And the pipeline step "env_build" has status "SKIPPED"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
-    # Not part of the documented flow for this sub-flow either, but real current behaviour.
-    And the pipeline step "appregdef_render" has status "SUCCESS"
+    # appregdef_render only runs for DEPLOY and CLEAN operations, not for BGD warmup.
+    And the pipeline step "appregdef_render" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SUCCESS"
     And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
     And the namespace directories "bss-origin" and "bss-peer" have identical content except the namespace name
@@ -114,7 +114,7 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline step "warmup" has status "SUCCESS"
     And the pipeline step "env_build" has status "SKIPPED"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
-    And the pipeline step "appregdef_render" has status "SUCCESS"
+    And the pipeline step "appregdef_render" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SUCCESS"
     And the namespace "bss-origin" application "crm" deploy parameter "PARAM_1" equals "active-value"
     And the namespace directories "bss-origin" and "bss-peer" have identical content except the namespace name

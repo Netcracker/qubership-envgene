@@ -73,10 +73,10 @@ class TestStepGating:
         assert EnvBuildStep().should_run(ctx)
 
     @pytest.mark.unit
-    def test_env_build_skipped_for_bgd(self):
+    def test_appregdef_render_and_env_build_skipped_for_bgd(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="warmup")
 
-        assert AppregdefRenderStep().should_run(ctx)
+        assert not AppregdefRenderStep().should_run(ctx)
         assert not EnvBuildStep().should_run(ctx)
 
     @pytest.mark.unit
