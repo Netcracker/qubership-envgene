@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from ruamel.yaml import YAML
 
-from env_specific_overrides import validate_env_specific_override_keys
+from build_env.env_specific_overrides import validate_env_specific_override_keys
 
 
 def _write_env_definition(env_dir: Path, env_template: dict) -> None:
