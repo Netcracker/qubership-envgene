@@ -150,8 +150,14 @@ def collision_key_moved(workspace: EnvGeneWorkspace, key: str, collision_file: s
             found_in_collision = True
             spath = cpath.parent / source_file
             source_data = (yaml.safe_load(spath.read_text(encoding="utf-8")) or {}) if spath.exists() else {}
-            assert key not in source_data, (
-                f"'{key}' expected absent from the root of {spath}, but was found: {source_data.get(key)!r}"
+            # NOTE: the root of deployment-parameters.yaml legitimately has a top-level key
+            # named after every service (its own parameter section, see calculator-cli.md),
+            # so "test-app" as a bare *key* is always present there when a service is named
+            # "test-app" - that's unrelated to collision handling. What must actually be
+            # absent from the root is the *scalar* colliding value itself.
+            assert source_data.get(key) != collision_data[key], (
+                f"'{key}' expected removed from the root of {spath} after moving to the "
+                f"collision file, but the same scalar value {collision_data[key]!r} is still there"
             )
             break
     assert found_in_collision, f"'{key}' not found in any {collision_file} under {es_dir}"
@@ -170,6 +176,10 @@ def value_identical_across_all_files(workspace: EnvGeneWorkspace, key: str) -> N
                 values_by_file[str(yaml_path)] = m.group(1).strip().strip('"\'')
                 break
     assert values_by_file, f"'{key}' not found in any file under {es_dir}"
+    assert len(values_by_file) >= 2, (
+        f"'{key}' was found in only one file, so 'identical across all files' is trivially true "
+        f"and proves nothing: {values_by_file}"
+    )
     distinct = set(values_by_file.values())
     assert len(distinct) == 1, f"'{key}' has differing values across files: {values_by_file}"
 

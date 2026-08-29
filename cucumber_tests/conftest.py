@@ -163,26 +163,6 @@ _XFAIL_REASONS = {
         "not resolve transitively), so a chained integer reference through a String-valued "
         "intermediate macro collapses to a string (divergence D6)."
     ),
-    "xfail_cli_no_application_level": (
-        "Calculator CLI does not merge the env-root Application object "
-        "(/environments/<cluster>/<env>/Applications/<name>.yml) into deployment parameters: "
-        "ApplicationServiceCliImpl.getApplication() has zero callers anywhere in "
-        "effective-set-generator, so priority ranks 6-8 (Application level) of the documented "
-        "Parameters Priority table are dead code (doc-vs-code divergence)."
-    ),
-    "xfail_cli_no_managed_by": (
-        "Calculator CLI does not emit the documented MANAGED_BY predefined parameter (default "
-        "'argocd') into deployment-parameters.yaml, deploy-descriptor.yaml, custom-params.yaml, or "
-        "per-service-parameters output for any application - verified empirically, the key is absent "
-        "from every generated file (doc-vs-code divergence)."
-    ),
-    "xfail_cli_collision_not_removed": (
-        "Calculator CLI copies a root-level deployment parameter whose key matches a service name "
-        "into collision-deployment-parameters.yaml, but does not remove it from the root of "
-        "deployment-parameters.yaml as documented ('Root-level parameters ... are moved to "
-        "collision files') - verified empirically, the key is present in both files "
-        "(doc-vs-code divergence)."
-    ),
     "xfail_topology_1691": (
         "Per-namespace composite/BG topology injection (ORIGIN_NAMESPACE, PEER_NAMESPACE, "
         "CONTROLLER_NAMESPACE, BASELINE_ORIGIN, BASELINE_CONTROLLER, BASELINE_PEER, "

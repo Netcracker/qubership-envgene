@@ -71,8 +71,9 @@ Feature: Calculator CLI
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "shared_key: from-namespace"
 
-  # why: PM covers Tenant/Cloud/Namespace only; Application level (priority rank 6) beats Namespace (rank 9)
-  @xfail_cli_no_application_level
+  # PM covers Tenant/Cloud/Namespace only; Application level (priority rank 6) beats Namespace (rank 9).
+  # The Application object must live at Namespaces/<ns>/Applications/<app>.yml - an env-root
+  # Applications/<app>.yml is a Cloud-level object instead and cannot exercise this override.
   Scenario: UC-CC-PM-4: Application Parameter Overrides Namespace Parameter
     Given the workspace is initialized with test data from "e2e/uc_cc_pm_4"
     When the unified pipeline orchestrator runs
@@ -264,8 +265,6 @@ Feature: Calculator CLI
 
   # ── Predefined Parameters (UC-CC-PD-*) ────────────────────────────────────────
 
-  # why: MANAGED_BY is a calculator-generated default with no coverage (NAMESPACE is covered by DP-1)
-  @xfail_cli_no_managed_by
   Scenario: UC-CC-PD-1: MANAGED_BY Defaults to argocd
     Given the workspace is initialized with test data from "e2e/uc_cc_pd_1"
     When the unified pipeline orchestrator runs
@@ -332,7 +331,6 @@ Feature: Calculator CLI
   # ── Collision Handling (UC-CC-CO-*) ───────────────────────────────────────────
 
   # why: a deployParameter whose key equals a service name must move to the collision file
-  @xfail_cli_collision_not_removed
   Scenario: UC-CC-CO-1: Service-Named deployParameter Moved to Collision File
     Given the workspace is initialized with test data from "e2e/uc_cc_co_1"
     When the unified pipeline orchestrator runs
