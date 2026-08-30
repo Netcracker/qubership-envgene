@@ -806,7 +806,7 @@ name: string
 # The URL of the API endpoint of the cloud
 # Used to connect to the Kubernetes cluster API server
 apiUrl: string
-# Mandatory
+# Optional
 # The port on which the API runs
 # Used to connect to the Kubernetes cluster API server
 apiPort: integer|string
@@ -814,24 +814,24 @@ apiPort: integer|string
 # The private-facing URL for internal access
 # Used to form service URLs accessible from within the cluster
 privateUrl: string
-# Optional
+# Mandatory
 # The public-facing URL for external access
 # Used to form service URLs accessible from outside the cluster
 # Calculator macros are generated based on this URL
 publicUrl: string
-# Mandatory
+# Optional
 # The URL for accessing the cloud's k8s dashboard
 # Used for monitoring and management
 dashboardUrl: string
-# Mandatory
+# Optional
 # A list of labels for categorizing or tagging the cloud
 # Used for filtering, organization, and grouping
 labels: list
-# Mandatory
+# Optional
 # The identifier for credentials used by the deployment
 # Used for authentication when performing deployment
 defaultCredentialsId: string
-# Mandatory
+# Optional
 # The communication protocol used
 # HTTP or HTTPS
 protocol: string
@@ -851,14 +851,14 @@ databases: array
 # Deprecated
 # Not processed by EnvGene
 mergeDeployParametersAndE2EParameters: boolean
-# Mandatory
+# Optional
 # Configuration for the monitoring-as-a-service (MaaS)
 maasConfig:
   # Optional
   # Credentials identifier for MaaS
   # Used for authentication when accessing MaaS
   credentialsId: string
-  # Mandatory
+  # Optional
   # Flag to enable or disable MaaS
   # Controls whether MaaS-related parameters appear in the Effective Set
   enable: boolean
@@ -870,14 +870,14 @@ maasConfig:
   # Internal address for MaaS
   # Used to configure internal cluster access to MaaS
   maasInternalAddress: string
-# Mandatory
+# Optional
 # Configuration for the vault service
 vaultConfig:
   # Optional
   # Credentials identifier for the vault
   # Used for authentication when accessing Vault
   credentialsId: string
-  # Mandatory
+  # Optional
   # Flag to enable or disable vault integration
   # Controls whether Vault-related parameters appear in the Effective Set
   enable: boolean
@@ -893,7 +893,7 @@ dbaasConfigs:
     # Credentials identifier for DBaaS
     # Used for authentication when accessing DBaaS
     credentialsId: string
-    # Mandatory
+    # Optional
     # Flag to enable or disable DBaaS
     # Controls whether DBaaS-related parameters appear in the Effective Set
     enable: boolean
@@ -905,14 +905,14 @@ dbaasConfigs:
     # URL for the DBaaS aggregator
     # Used to configure external access to DBaaS
     aggregatorUrl: string
-# Mandatory
+# Optional
 # Configuration for Consul service integration
 consulConfig:
   # Optional
   # Secret token for Consul authentication
   # Used for authentication when accessing Consul
   tokenSecret: string
-  # Mandatory
+  # Optional
   # Flag to enable or disable Consul integration
   # Controls whether Consul-related parameters appear in the Effective Set
   enabled: boolean
@@ -1003,6 +1003,8 @@ technicalConfigurationParameterSets: []
 ```
 
 [Cloud JSON schema](/schemas/cloud.schema.json)
+
+> **Note:** A minimal `cloud.yml` can contain only the mandatory attributes: `name`, `apiUrl`, and `publicUrl`. All other attributes are optional. When optional attributes are omitted, the Calculator cli resolve them using their documented default values. Missing optional integration blocks (`maasConfig`, `vaultConfig`, `consulConfig`, and `dbaasConfigs`) are treated as disabled by default
 
 #### Namespace
 
