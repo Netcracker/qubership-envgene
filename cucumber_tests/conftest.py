@@ -87,13 +87,22 @@ def workspace(tmp_path):
 def pytest_bdd_apply_tag(tag, function):
     """Handle custom Gherkin tags as pytest marks.
 
-    @xfail  — marks the test as expected to fail (known framework gap, not a test bug).
+    @xfail       — marks the test as expected to fail (known framework gap, not a test bug).
+    @skip_win32  — skips the test on Windows (e.g. scenarios requiring a Unix binary mock).
     """
+    import sys as _sys
     if tag == "xfail":
         marker = pytest.mark.xfail(
             reason="Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
             strict=False,
         )
         marker(function)
-        return True  # tag handled, do not raise unknown-tag warning
+        return True
+    if tag == "skip_win32":
+        marker = pytest.mark.skipif(
+            _sys.platform == "win32",
+            reason="Requires a Unix shell-script binary mock; not supported on Windows.",
+        )
+        marker(function)
+        return True
     return None  # let pytest-bdd handle all other tags normally
