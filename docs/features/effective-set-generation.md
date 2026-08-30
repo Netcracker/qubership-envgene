@@ -14,20 +14,21 @@
       - [Limitation](#limitation)
     - [No-SD Mode](#no-sd-mode)
   - [Configuration](#configuration)
+  - [External export](#external-export)
+    - [Processing order](#processing-order)
+    - [External repository location](#external-repository-location)
   - [See also](#see-also)
 
 ## Overview
 
-The Effective Set (ES) is the resolved parameter set for an environment — the output consumed by deployment tooling such as ArgoCD. It is produced by merging inputs from the Solution Descriptor, the environment instance objects, Application SBOMs, and registry configuration according to strict priority rules.
-
-ES generation runs as a dedicated stage in the Instance Repository pipeline and commits its output back to the repository.
+The Effective Set (ES) is the resolved parameter set for an environment - the output consumed by deployment tooling such as ArgoCD. It is produced by merging inputs from the Solution Descriptor, the environment instance objects, Application SBOMs, and registry configuration according to strict priority rules.
 
 ## Location
 
 The generated ES is stored alongside its environment:
 
 ```text
-/environments/<cloud-name>/<env-name>/effective-set/
+/environments/<cluster-name>/<env-name>/effective-set/
 ├── topology/
 ├── pipeline/
 ├── deployment/
@@ -36,6 +37,11 @@ The generated ES is stored alongside its environment:
 ```
 
 `topology/` and `pipeline/` hold solution-level data. `deployment/`, `runtime/`, and `cleanup/` contain per-namespace (and per-application for `deployment` and `runtime`) data.
+
+> [!NOTE]
+> The `generate_effective_set` job writes this tree during generation. Depending on `PIPELINE_TYPE`, the published
+> result is committed under the path above in the Instance repository, or exported to an external repository at
+> `/environments/<cluster-name>/<env-name>/effective-set/`. See [External export](#external-export).
 
 The detailed file-level layout and contents are documented in [Calculator CLI](/docs/features/calculator-cli.md#version-20-effective-set-structure).
 
@@ -124,13 +130,54 @@ Key pipeline parameters that affect ES generation:
 - `SD_REPO_MERGE_MODE` — how the incoming SD is merged with the existing one; determines whether partial or full generation applies.
 - `EFFECTIVE_SET_CONFIG` — effective-set version selection and related options.
 - `CUSTOM_PARAMS` — optional overrides injected into `deployment`, `runtime`, and `cleanup` contexts.
+- `PIPELINE_TYPE` — selects where the Effective Set is published after generation. See
+  [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type) and
+  [External export](#external-export).
 
 See [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for the full list.
 
+## External export
+
+External export publishes the generated Effective Set to a separate GitLab repository. The export path is controlled by
+the pipeline variable `PIPELINE_TYPE`.
+
+### Processing order
+
+When [`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set) is `true`, the
+`generate_effective_set` job validates `PIPELINE_TYPE`:
+
+1. **`GITLAB_DEPLOY`** - export to external repository. Connection parameters are read from the pipeline context:
+   `DCL_GIT_URL`, `DCL_GIT_BRANCH`, `DCL_CONFIG_GITLAB_USER`, `DCL_CONFIG_GITLAB_TOKEN`.
+2. **Not passed** - commit to the Instance repository under [Location](#location).
+3. **`null`** - same as not passed.
+4. **Empty string** - same as not passed.
+5. **Any other value** (`PIPELINE_TYPE != GITLAB_DEPLOY`) - the job fails before generation starts.
+
+```mermaid
+flowchart TD
+    A["generate_effective_set starts"] --> B{"PIPELINE_TYPE"}
+    B -->|"not passed, null, or empty string"| C["Generate Effective Set"]
+    B -->|"GITLAB_DEPLOY"| C
+    B -->|"any other value"| H["Job fails"]
+    C --> D{"PIPELINE_TYPE"}
+    D -->|"GITLAB_DEPLOY"| E["Publish using DCL parameters from pipeline context"]
+    E --> F["Remove local Effective Set from Instance repository"]
+    D -->|"not passed, null, or empty string"| G["Commit Effective Set to Instance repository"]
+```
+
+### External repository location
+
+```text
+/environments/<cluster-name>/<env-name>/effective-set/
+```
+
+See [Effective Set external export use cases](/docs/use-cases/effective-set-external-export.md) for worked examples.
+
 ## See also
 
-- [Calculator CLI](/docs/features/calculator-cli.md) — the underlying tool and the detailed ES file-structure reference.
-- [How to generate an Effective Set](/docs/how-to/generate-effective-set.md) — operational guide.
-- [Tutorial: Understanding the Effective Set](/docs/tutorials/effective-set.md) — walkthrough of ES contents and parameter flow.
-- [SD processing](/docs/features/sd-processing.md) — how the Solution Descriptor is merged and stored.
-- [SBOM](/docs/features/sbom.md) — how Application SBOMs are produced and cached.
+- [Calculator CLI](/docs/features/calculator-cli.md) - the underlying tool and the detailed ES file-structure reference.
+- [How to generate an Effective Set](/docs/how-to/generate-effective-set.md) - operational guide.
+- [Tutorial: Understanding the Effective Set](/docs/tutorials/effective-set.md) - walkthrough of ES contents and
+  parameter flow.
+- [SD processing](/docs/features/sd-processing.md) - how the Solution Descriptor is merged and stored.
+- [SBOM](/docs/features/sbom.md) - how Application SBOMs are produced and cached.
