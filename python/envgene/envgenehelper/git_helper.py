@@ -84,11 +84,12 @@ class GitRepoManager:
                 f"{self.ctx.server_host}/{self.ctx.project_path}.git"
             )
 
-    def _fetch(self, ref: str, checkout: str, checkout_option: list[str], create_remote: bool = False) -> None:
-        if create_remote:
-            self.repo.create_remote("origin", self._resolve_remote_url())
+    def _fetch(self, ref: str, checkout: str, checkout_option: list[str]) -> None:
+        remote = next((r for r in self.repo.remotes if r.name == "origin"), None)
+        if remote:
+            remote.set_url(self._resolve_remote_url(), push=True)
         else:
-            self.repo.remote("origin").set_url(self._resolve_remote_url(), push=True)
+            self.repo.create_remote("origin", self._resolve_remote_url())        
 
         try:
             logger.info(f"git fetch --depth=1 origin {ref}")
@@ -159,7 +160,6 @@ class GitRepoManager:
             ref=self.ctx.commit_sha,
             checkout=self.ctx.commit_sha,
             checkout_option=["--force"],
-            create_remote=True,
         )
 
         logger.info("git sparse-checkout init --cone")
