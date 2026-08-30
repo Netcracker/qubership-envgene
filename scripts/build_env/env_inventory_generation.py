@@ -180,9 +180,9 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
     for obj in objects:
         place = Place(obj["place"])
         action = Action(obj["action"])
-        content = obj["content"]
+        content = obj.get("content")
 
-        name = content["name"] if content.get("name") else obj["name"]
+        name = content["name"] if content and content.get("name") else obj["name"]
         obj_path = resolve_path(env_dir, place, subdir, name, inventory)
 
         logger.info(f"Processing {subdir}, action={action.value}, place={place.value}. Target path: {obj_path}")
