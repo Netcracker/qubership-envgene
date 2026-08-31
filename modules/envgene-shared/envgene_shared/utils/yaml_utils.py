@@ -58,7 +58,7 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
         validator = _get_validator_from_schema_file(str(Path(schema_file_path).absolute()))
         errors = sorted(validator.iter_errors(yaml_content), key=lambda error: error.path)
     else:
-        errors = validate_yaml_data_by_schema(yaml_content, schema_content)
+        errors = validate_yaml_data_by_schema(yaml_content, input_schema_content)
     if len(errors) > 0:
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
