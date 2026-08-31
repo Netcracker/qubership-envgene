@@ -1,9 +1,11 @@
+import json
 import pytest
 import os
 
 from scripts.tests.base_test import BaseTest
 from envgenehelper import *
 from creds_rotation.creds_rotation_handler import run_cred_rotation
+from creds_rotation.utils.error_constants import ErrorMessages
 import yaml
 
 test_data = [
@@ -41,6 +43,27 @@ def test_rotation_fails_without_force(setup_env, cluster_name, env_name):
     with open(f"{g_test_dir}/affected-sensitive-parameters.yaml") as f:
         generated = yaml.safe_load(f)
     assert expected == generated
+
+
+@pytest.mark.parametrize("cluster_name, env_name", test_data)
+def test_entity_not_found_raises_reference_error(setup_env, cluster_name, env_name):
+    """Regression: missing ErrorMessages import caused NameError instead of ReferenceError."""
+    os.environ["CRED_ROTATION_FORCE"] = "false"
+    os.environ["CRED_ROTATION_PAYLOAD"] = json.dumps({
+        "rotation_items": [
+            {
+                "namespace": "nonexistent-namespace",
+                "parameter_key": "SOME_PARAM",
+                "context": "deployment",
+                "parameter_value": "some-value"
+            }
+        ]
+    })
+    with pytest.raises(Exception) as exc_info:
+        run_cred_rotation()
+    error_text = str(exc_info.value)
+    assert "NameError" not in error_text, "Got NameError — ErrorMessages import is missing"
+    assert ErrorMessages.ENTITY_FILE_NOT_FOUND.format(param_key="SOME_PARAM") in error_text
 
 
 @pytest.mark.parametrize("cluster_name, env_name", test_data)
