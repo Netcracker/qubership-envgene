@@ -48,9 +48,9 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
-    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
     if schemas_dir:
+        schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
         resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
         errors = validate_yaml_data_by_schema(yaml_content, schema_content, resolver=resolver)
