@@ -1,0 +1,6 @@
+inventory:
+  environmentName: "test-env"
+  cloudName: "test-cluster"
+envTemplate:
+  name: "ext-creds-tcp"
+  artifact: "ext-creds-artifact:v1"

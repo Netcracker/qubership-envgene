@@ -1,0 +1,6 @@
+tenant: '{{ templates_dirs.common }}/env_templates/ext-creds/Tenant.yml.j2'
+cloud: '{{ templates_dirs.common }}/env_templates/ext-creds/Cloud-unresolved.yml.j2'
+namespaces:
+  - template_path: '{{ templates_dirs.common }}/env_templates/ext-creds/Namespace.yml.j2'
+    deploy_postfix: core
+external_credential_template: '{{ templates_dirs.common }}/env_templates/ext-creds/credentials-explicit.yml'

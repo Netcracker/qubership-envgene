@@ -1,0 +1,11 @@
+name: "ext-creds-artifact"
+groupId: "org.test"
+artifactId: "ext-creds-artifact"
+registry:
+  name: "test-registry"
+  credentialsId: "test-registry"
+  mavenConfig:
+    repositoryDomainName: "http://localhost:8000/"
+    targetRelease: "release"
+    targetSnapshot: "release"
+    targetStaging: "release"
