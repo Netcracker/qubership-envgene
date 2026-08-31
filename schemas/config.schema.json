@@ -58,16 +58,6 @@
         "local"
       ]
     },
-    "use_committed_sd": {
-      "type": "boolean",
-      "title": "Use Committed Full SD",
-      "description": "When false and no incoming SD is provided, EnvGene enters No-SD Mode: only topology and pipeline contexts are generated, registry requests are skipped. When true (default) or omitted, the committed Full SD is used and Full Generation runs as normal.",
-      "default": true,
-      "examples": [
-        true,
-        false
-      ]
-    },
     "sbom_retention": {
       "type": "object",
       "title": "SBOM Retention Configuration",
