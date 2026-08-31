@@ -1,0 +1,21 @@
+name: dummy-cloud
+namespacePrefix: dummy
+deployParameters:
+  service.password:
+    $type: credRef
+    credId: missing-cred
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
+apiUrl: dummy
+apiPort: 80
+dashboardUrl: dummy
+labels: []
+defaultCredentialsId: streaming-cred
+protocol: dummy
+maasConfig: {credentialsId: streaming-cred}
+vaultConfig: {credentialsId: streaming-cred}
+consulConfig: {credentialsId: streaming-cred, tokenSecret: streaming-cred}
+dbaasConfigs: []
