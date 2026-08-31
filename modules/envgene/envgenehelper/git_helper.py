@@ -275,6 +275,7 @@ class GitRepoManager:
         self.repo.git.sparse_checkout("set", *sparse_paths)
         logger.info("git checkout -f FETCH_HEAD")
         self.repo.git.checkout("-f", "FETCH_HEAD")
+        logger.info("sparse checkout complete")
 
 
 class GitLabClient:
