@@ -116,12 +116,12 @@ env:
     #CONFIGURATION
     SECRET_POSTFIX: ${{ vars.SECRET_POSTFIX || 'secret_postfix' }}
     DOCKER_CLOUD_REGISTRY_PROVIDER: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER || '' }}
-    
+
     # GitLab-compatible paths for scripts inside the EnvGene image
     CI_PROJECT_DIR: ${{ github.workspace }}
     INSTANCES_DIR: ${{ github.workspace }}/environments
     CI_COMMIT_REF_NAME: ${{ github.ref_name }}
-    
+
 
 jobs:
   env-prepare:
