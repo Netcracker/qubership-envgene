@@ -177,6 +177,74 @@ public class CmdbCliTest {
     }
 
     @Test
+    void testCustomParamsEmptyDeployment(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/custom-params-empty.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-empty-custom-params-expected.yaml"),
+                pgCustomParams);
+    }
+
+    @Test
+    void testCustomParamsMapValue(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/custom-params-map.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-map-custom-params-expected.yaml"),
+                pgCustomParams);
+    }
+
+    @Test
     void testGenerateEffectiveSetRejectsUnknownNamespaceInCustomParams(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");

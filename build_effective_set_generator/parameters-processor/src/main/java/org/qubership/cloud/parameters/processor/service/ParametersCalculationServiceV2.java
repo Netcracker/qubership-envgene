@@ -390,15 +390,37 @@ public class ParametersCalculationServiceV2 {
         Map<String, Object> decomposed = new LinkedHashMap<>();
         decomposed.putAll(rootParams);
         if (!rootParams.isEmpty()) {
-            decomposed.put("global", new LinkedHashMap<>(rootParams));
+            decomposed.put("global", deepCopyMap(rootParams));
             for (String serviceName : serviceNames) {
                 if (!collision.containsKey(serviceName)) {
-                    decomposed.put(serviceName, new LinkedHashMap<>(rootParams));
+                    decomposed.put(serviceName, deepCopyMap(rootParams));
                 }
             }
         }
 
         return new DecomposedCustom(decomposed, collision);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> deepCopyMap(Map<String, Object> source) {
+        Map<String, Object> copy = new LinkedHashMap<>();
+        source.forEach((k, v) -> copy.put(k, deepCopyValue(v)));
+        return copy;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object deepCopyValue(Object value) {
+        if (value instanceof Map) {
+            return deepCopyMap((Map<String, Object>) value);
+        } else if (value instanceof List) {
+            List<Object> listCopy = new ArrayList<>();
+            for (Object item : (List<Object>) value) {
+                listCopy.add(deepCopyValue(item));
+            }
+            return listCopy;
+        } else {
+            return value;
+        }
     }
 
 
