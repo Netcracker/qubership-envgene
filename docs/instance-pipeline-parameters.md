@@ -531,11 +531,13 @@ hierarchy, and are treated as sensitive.
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
-`CUSTOM_PARAMS` is only applied when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`. If
-`GENERATE_EFFECTIVE_SET` is `false`, the `generate_effective_set` job does not run and `CUSTOM_PARAMS` has no effect.
-
 EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator
 CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+
+A `deployment` override is laid out at the root, in the `global` block, and per-service, the same as a deployment
+parameter, so it applies inside each service. Custom Params override deployment and runtime parameters. They do not
+override image or artifact metadata such as `docker_tag`, `docker_registry`, or `image`, which come from the
+Application's SBOM.
 
 **Format**: A map conforming to the [schema](/schemas/custom-params.schema.json). See
 [Parameter value formats](#parameter-value-formats).
