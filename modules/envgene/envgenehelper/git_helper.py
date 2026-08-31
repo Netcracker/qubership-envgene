@@ -269,6 +269,9 @@ class GitRepoManager:
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
     def sparse_checkout(self, sparse_paths: list[str]) -> None:
+        logger.info("git update-ref HEAD FETCH_HEAD")
+        self.repo.git.update_ref("HEAD", "FETCH_HEAD")
+        
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
