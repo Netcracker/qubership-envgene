@@ -460,6 +460,7 @@ resourceProfiles:
         - name: GATEWAY_CPU_REQUEST
           value: 50m
     version: 0
+```
 
 
 ### `GENERATE_EFFECTIVE_SET`
