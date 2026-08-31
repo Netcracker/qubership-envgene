@@ -149,7 +149,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
 def extract_value_SOPS(file_path, attribute_str):
     attribute_list = attribute_str.split('.')
     attribute_param = ''.join(f'["{item}"]' for item in attribute_list)
-    sops_args = f'--extract {attribute_param} {file_path}'
+    sops_args = ["--extract", attribute_param, str(file_path)]
     try:
         result = _run_SOPS(sops_args).stdout
     except ValueError:

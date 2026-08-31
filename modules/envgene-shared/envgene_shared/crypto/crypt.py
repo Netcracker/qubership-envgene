@@ -175,10 +175,10 @@ def is_encrypted(file_path, crypt_backend=None):
 
 
 def detect_crypt_backend_from_file(file_path: str) -> str:
+    if is_encrypted_SOPS(file_path):
+            return SOPS_ID
     if is_encrypted_Fernet(file_path):
         return FERNET_ID
-    if is_encrypted_SOPS(file_path):
-        return SOPS_ID
     return None
 
 
