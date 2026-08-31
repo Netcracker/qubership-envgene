@@ -204,9 +204,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
                     "prod-integration-creds"
                 ],
                 "envSpecificResourceProfiles": {
-                    "cloud": [
-                        "cloud-specific-profile"
-                    ]
+                    "cloud": "cloud-specific-profile"
                 }
             }
         }
@@ -305,7 +303,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
 ##### ENV_INVENTORY_CONTENT in JSON-in-string format
 
 ```json
-"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":[\"cloud-specific-profile\"]}}}},\"paramSets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-integration-creds\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}],\"sharedTemplateVariables\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-template-variables\",\"content\":{\"TEMPLATE_VAR_1\":\"prod-value-1\",\"TEMPLATE_VAR_2\":\"prod-value-2\",\"nested\":{\"key1\":\"nested-prod-value-1\",\"key2\":\"nested-prod-value-2\"}}},{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"name\":\"sample-cloud-template-variables\",\"content\":{\"CLOUD_VAR_1\":\"cloud-value-1\",\"CLOUD_VAR_2\":\"cloud-value-2\"}}]}"
+"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":\"cloud-specific-profile\"}}}},\"paramSets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-integration-creds\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}],\"sharedTemplateVariables\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-template-variables\",\"content\":{\"TEMPLATE_VAR_1\":\"prod-value-1\",\"TEMPLATE_VAR_2\":\"prod-value-2\",\"nested\":{\"key1\":\"nested-prod-value-1\",\"key2\":\"nested-prod-value-2\"}}},{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"name\":\"sample-cloud-template-variables\",\"content\":{\"CLOUD_VAR_1\":\"cloud-value-1\",\"CLOUD_VAR_2\":\"cloud-value-2\"}}]}"
 ```
 
 #### `ENV_SPECIFIC_PARAMS`
@@ -338,7 +336,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
     "tenantName": "<value>",
     "deployer": "<value>",
     "envSpecificParamsets": {
-      "<ns-template-name>": [
+      "<namespace-folder-name>": [
         "paramsetA"
       ],
       "cloud": [
@@ -441,8 +439,7 @@ envTemplate:
     - "prod-integration-creds"
 
   envSpecificResourceProfiles:
-    cloud:
-      - "cloud-specific-profile"
+    cloud: "cloud-specific-profile"
 ```
 
 ##### Parameter Sets
@@ -663,7 +660,7 @@ envTemplate:
     <key>: <value>
   envSpecificParamsets:
     cloud: [ "paramsetA" ]
-    <ns-template-name>: [ "paramsetB" ]
+    <namespace-folder-name>: [ "paramsetB" ]
   sharedMasterCredentialFiles: [ "inventory_generation_creds" ]
   name: <env-template-name>
   artifact: <app:ver>

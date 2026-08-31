@@ -460,7 +460,7 @@ resourceProfiles:
         - name: GATEWAY_CPU_REQUEST
           value: 50m
     version: 0
-```
+
 
 ### `GENERATE_EFFECTIVE_SET`
 
@@ -1011,7 +1011,7 @@ additionalTemplateVariables:
   <key>: <value>
 cloudName: <value>
 envSpecificParamsets:
-  <ns-template-name>:
+  <namespace-folder-name>:
   - paramsetA
   cloud:
   - paramsetB
