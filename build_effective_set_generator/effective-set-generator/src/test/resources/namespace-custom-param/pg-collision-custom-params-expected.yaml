@@ -1,0 +1,15 @@
+ordinary_key: ok-value
+global:
+  ordinary_key: ok-value
+pg_patroni:
+  ordinary_key: ok-value
+pg_upgrade:
+  ordinary_key: ok-value
+pgbackrest_sidecar:
+  ordinary_key: ok-value
+postgres_operator_init:
+  ordinary_key: ok-value
+postgres_operator_tests:
+  ordinary_key: ok-value
+vault_env:
+  ordinary_key: ok-value

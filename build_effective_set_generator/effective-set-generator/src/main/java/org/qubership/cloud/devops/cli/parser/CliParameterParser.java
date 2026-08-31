@@ -398,6 +398,9 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
+            if (MapUtils.isNotEmpty(parameterBundle.getCollisionCustomDeployParameters())) {
+                fileDataConverter.writeToFile(parameterBundle.getCollisionCustomDeployParameters(), deploymentDir, "collision-custom-params.yaml");
+            }
 
             //parameters with external creds
             if (parameterBundle.getDeployParamsWithExtCreds() != null && !parameterBundle.getDeployParamsWithExtCreds().isEmpty()) {

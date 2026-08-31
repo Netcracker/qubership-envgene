@@ -114,6 +114,7 @@ public class ParametersCalculationServiceV2 {
                     : Collections.emptySet();
             DecomposedCustom decomposed = decomposeCustomDeployParams(customDeployMap, serviceNames);
             parameterBundle.setCustomDeployParameters(decomposed.decomposed);
+            parameterBundle.setCollisionCustomDeployParameters(decomposed.collision);
             parameterBundle.setCustomTechParameters(ParametersProcessor.convertParameterMapToObject(customParams.getTechnicalParams()));
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace, extCredEntities);
@@ -360,7 +361,7 @@ public class ParametersCalculationServiceV2 {
         }
     }
 
-    static class DecomposedCustom {
+    private static class DecomposedCustom {
         final Map<String, Object> decomposed;
         final Map<String, Object> collision;
 
