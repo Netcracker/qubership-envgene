@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from os import getenv
 
-from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, validate_parameters
+from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, \
+    validate_parameters
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
@@ -198,17 +199,13 @@ class SetTemplateVersionStep(PipelineStep):
         )
 
 
-def should_run_appregdef_and_env_build(ctx: PipelineParametersHandler) -> bool:
-    return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
-
-
 class AppregdefRenderStep(PipelineStep):
     @property
     def name(self) -> str:
         return "appregdef_render"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return should_run_appregdef_and_env_build(ctx)
+        return ctx.is_gitlab_deploy() or bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
@@ -262,10 +259,11 @@ class GenerateEffectiveSetStep(PipelineStep):
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or (
-            ctx.is_gitlab_deploy() and (ctx.is_deploy_or_clean() or ctx.is_bgd_warmup())
+                ctx.is_gitlab_deploy() and (ctx.is_deploy_or_clean() or ctx.is_bgd_warmup())
         )
         if not will_run and ctx.params.get('CUSTOM_PARAMS'):
-            logger.warning("'CUSTOM_PARAMS' is set but generate_effective_set is not running - CUSTOM_PARAMS has no effect here")
+            logger.warning(
+                "'CUSTOM_PARAMS' is set but generate_effective_set is not running - CUSTOM_PARAMS has no effect here")
         return will_run
 
     def execute(self, ctx: PipelineParametersHandler) -> None:

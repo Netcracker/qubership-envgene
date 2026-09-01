@@ -49,10 +49,17 @@ def git_commit() -> None:
 
         logger.info("Minimizing credential file diffs...")
         minimize_cred_diffs()
-        if not repo_manager.stage_changes():
-            logger.info("No changes. Skip.")
-            return
+
+        repo_manager.stage_changes()
         repo_manager.remove_dcl_paths_from_index()
+
+        if not repo_manager._has_staged_changes():
+            logger.info(
+                "No local changes to commit after staging "
+                "(working tree already matches HEAD); skipping commit, cherry-pick and push."
+            )
+            return
+
         message = build_commit_message()
         sha = repo_manager.create_detached_commit(message)
 

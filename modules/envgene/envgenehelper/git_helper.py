@@ -198,14 +198,7 @@ class GitRepoManager:
         for file in staged_files.splitlines():
             logger.info(file)
 
-        status, _, _ = self.repo.git.diff("--cached", "--quiet", with_exceptions=False, with_extended_output=True)
-        if status == 0:
-            return False
-
-        if status == 1:
-            return True
-
-        raise RuntimeError(f"git diff failed with exit code {status}")
+        return self._has_staged_changes()
 
     def create_detached_commit(self, message: str) -> str:
         # git commit-tree "$(git write-tree)" -p HEAD -m "${message}"
@@ -220,20 +213,48 @@ class GitRepoManager:
         logger.info(f"Created hidden commit {commit_sha} (not attached to any branch)")
         return commit_sha
 
+    def _has_staged_changes(self) -> bool:
+        status, _, _ = self.repo.git.diff(
+            "--cached", "--quiet", with_exceptions=False, with_extended_output=True
+        )
+        if status not in (0, 1):
+            raise RuntimeError(f"git diff failed with exit code {status}")
+        return status == 1
+
     def _cherry_pick_and_push(self, snapshot_sha: str) -> None:
         if os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
             logger.info("Local test mode: skipping cherry-pick and push")
             return
 
         self._fetch(ref=self.ctx.ref_name, checkout="FETCH_HEAD", checkout_option=["--force", "--detach"])
+
         try:
             logger.info(f"git cherry-pick --strategy=recursive -X no-renames {snapshot_sha}")
             self.repo.git.cherry_pick("--strategy=recursive", "-X", "no-renames", snapshot_sha)
+        except GitCommandError as e:
+            status = self.repo.git.status("--porcelain=v1")
+            unmerged_codes = {"UU", "AA", "DD", "AU", "UA", "UD", "DU"}
+            has_unresolved_conflicts = any(line[:2] in unmerged_codes for line in status.splitlines())
+
+            if not has_unresolved_conflicts and not self._has_staged_changes():
+                logger.info(
+                    f"Cherry-pick of {snapshot_sha} is empty after conflict resolution "
+                    f"(changes already present on {self.ctx.ref_name}); skipping commit, nothing to push."
+                )
+                self.repo.git.cherry_pick("--skip", with_exceptions=False)
+                return
+
+            self.repo.git.cherry_pick("--abort", with_exceptions=False)
+            raise RuntimeError(f"Cherry-pick failed on {snapshot_sha}: {e}") from e
+        except Exception as e:
+            self.repo.git.cherry_pick("--abort", with_exceptions=False)
+            raise RuntimeError(f"Cherry-pick failed on {snapshot_sha}: {e}") from e
+
+        try:
             logger.info(f"git push origin HEAD:{self.ctx.ref_name}")
             self.repo.git.push("origin", f"HEAD:{self.ctx.ref_name}")
         except Exception as e:
-            self.repo.git.cherry_pick("--abort", with_exceptions=False)
-            raise RuntimeError(f"Cherry-pick or push failed on {snapshot_sha}: {e}") from e
+            raise RuntimeError(f"Push failed after cherry-pick of {snapshot_sha}: {e}") from e
 
     def retry_cherry_pick_and_push(self, snapshot_sha: str, retry_policy: RetryPolicy = GIT_RETRY_POLICY) -> None:
         attempt = {"count": 0}
