@@ -26,6 +26,8 @@ class JobExtended(Job):
     def set_sparse_checkout(self, paths: List[str]) -> None:
         paths_args = " ".join(shlex.quote(path) for path in paths)
         self.add_variables(GIT_STRATEGY="fetch")
+        self.add_variables(GIT_DEPTH="1")
+        self.add_variables(GIT_CHECKOUT="false")
         self.prepend_scripts(
             f"python3 /module/scripts/utils/sparse_checkout.py --sparse-paths {paths_args}"
         )
@@ -136,7 +138,7 @@ def is_trigger_job(job):
     return isinstance(job, TriggerJob)
 
 
-def do_checkout(job):
+def do_sparse_checkout(job):
     is_first_job = job.needs is None or len(job.needs) == 0
     if is_first_job or any(is_trigger_job(need) for need in job.needs):
         logger.info(
