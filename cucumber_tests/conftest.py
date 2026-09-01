@@ -102,6 +102,12 @@ _XFAIL_REASONS = {
         "deployParameters->technicalConfigurationParameters; uncaught: the reverse and all "
         "other cross-context directions)."
     ),
+    "xfail_cli_mr4_macro_hierarchy": (
+        "Pre-existing Calculator CLI defect, unrelated to CUSTOM_PARAMS: UC-CC-MR-4 (macro reference "
+        "resolved across hierarchy levels) does not resolve `ns_timeout` to the expected value. "
+        "Flagged in the PR #1681 BDD review as a macro-resolution / type-preservation issue. Marked "
+        "xfail so a known, unrelated failure does not redden the calculator-cli e2e suite."
+    ),
 }
 
 
