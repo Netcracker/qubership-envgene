@@ -48,17 +48,14 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
     if schemas_dir:
-        schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
         resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
         errors = validate_yaml_data_by_schema(yaml_content, schema_content, resolver=resolver)
-    elif schema_file_path:
-        validator = _get_validator_from_schema_file(str(Path(schema_file_path).absolute()))
-        errors = sorted(validator.iter_errors(yaml_content), key=lambda error: error.path)
     else:
-        errors = validate_yaml_data_by_schema(yaml_content, input_schema_content)
+        errors = validate_yaml_data_by_schema(yaml_content, schema_content)
     if len(errors) > 0:
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
@@ -75,14 +72,6 @@ def validate_yaml_data_by_schema(data, schema, cls=None, *args, **kwargs):
     validator = cls(schema, *args, **kwargs)
     errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
     return errors
-
-
-@lru_cache(maxsize=16)
-def _get_validator_from_schema_file(schema_file_path: str):
-    schema = openJson(schema_file_path)
-    validator_cls = jsonschema.validators.validator_for(schema)
-    validator_cls.check_schema(schema)
-    return validator_cls(schema)
 
 
 def log_jsonschema_validation_error(error: jsonschema.ValidationError) -> None:
