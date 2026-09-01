@@ -84,11 +84,10 @@ class GitRepoManager:
                 f"{self.ctx.server_host}/{self.ctx.project_path}.git"
             )
 
-    def _fetch(self, ref: str, checkout: str, checkout_option: list[str], create_remote: bool = False) -> None:
-        if create_remote:
-            self.repo.create_remote("origin", self._resolve_remote_url())
-        else:
-            self.repo.remote("origin").set_url(self._resolve_remote_url(), push=True)
+    def _fetch(self, ref: str, checkout: str, checkout_option: list[str]) -> None:
+        origin = self.repo.remote("origin")
+        origin.set_url(self._resolve_remote_url())
+        origin.set_url(self._resolve_remote_url(), push=True)
 
         try:
             logger.info(f"git fetch --depth=1 origin {ref}")
@@ -151,23 +150,16 @@ class GitRepoManager:
 
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
-    def sparse_checkout(self, sparse_paths: Optional[list[str]] = None) -> None:
-        if sparse_paths is None:
-            sparse_paths = self.sparse_paths
-
-        self._fetch(
-            ref=self.ctx.commit_sha,
-            checkout=self.ctx.commit_sha,
-            checkout_option=["--force"],
-            create_remote=True,
-        )
-
+    def sparse_checkout(self, sparse_paths: list[str]) -> None:
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
+
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
-        logger.info("git read-tree -mu HEAD")
-        self.repo.git.read_tree("-mu", "HEAD")
+
+        logger.info(f"git checkout -f {self.ctx.commit_sha}")
+        self.repo.git.checkout("-f", self.ctx.commit_sha)
+
         logger.info("sparse checkout complete")
 
     @staticmethod
