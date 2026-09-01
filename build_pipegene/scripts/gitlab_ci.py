@@ -223,11 +223,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
                 include_full_cluster=cred_rotation_active,
             )
             job.set_sparse_checkout(sparse_paths)
+            job.add_variables(GIT_DEPTH="1")
         else:
             job.add_variables(GIT_STRATEGY="empty")
-            job.prepend_scripts(
-                '/module/scripts/utils/handle_certs.sh',
-                'source ~/.bashrc',
-            )
 
     sorted_pipeline.write_yaml()
