@@ -60,6 +60,12 @@ class TestStepGating:
         assert not ProcessDeploymentPlanStep().should_run(ctx)
 
     @pytest.mark.unit
+    def test_legacy_sd_version_runs_appregdef_render_without_env_builder(self):
+        ctx = _ctx(ENV_BUILDER="false", SD_VERSION="Cloud-Core:1.0")
+
+        assert AppregdefRenderStep().should_run(ctx)
+
+    @pytest.mark.unit
     def test_process_sd_skipped_for_gitlab_deploy_even_with_application_versions(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, APPLICATION_VERSIONS="Cloud-Core:1.0")
 
