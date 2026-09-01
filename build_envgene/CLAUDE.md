@@ -11,17 +11,19 @@ This directory only holds Docker build context now (`build/Dockerfile`, `build/r
 **Algorithm:**
 
 1. `git diff --name-only HEAD` → list of changed files
-2. Filter to credential files via `is_cred_file()`
+2. Filter to credential files via `is_cred_file()` (`envgene_shared.utils.file_utils`)
 3. For each changed cred file:
    - Read HEAD blob content
-   - Decrypt working-tree version in-place
-   - Re-encrypt with `minimize_diff=True, old_file_path=<HEAD-temp-file>`
+   - Decrypt working-tree version in-place via `envgene_shared.crypto.crypt.decrypt_file`
+   - Re-encrypt via `envgene_shared.crypto.crypt.encrypt_file` with `minimize_diff=True, old_file_path=<HEAD-temp-file>`
 4. Cache result keyed by `(head_blob_sha, source_sha)` in `MINIMIZE_CRED_DIFF_CACHE_DIR`
 
 **Skipped when:**
 
-- `get_crypt()` returns False (encryption disabled in config.yml)
+- `get_crypt()` (`envgene_shared.utils.crypt_utils`) returns False (encryption disabled in config.yml)
 - File is new (not in HEAD) — no old tokens to reuse
 - Old file is not encrypted
+
+The minimize-diff mechanism for Fernet (`_reuse_old_fernet_tokens`) lives in `envgene_shared.crypto.fernet_handler`; for SOPS (`_sops_edit`) in `envgene_shared.crypto.sops_handler`.
 
 The actual Git plumbing (`GitRepoManager`, `GitContext`, `GitLabClient`, sparse-checkout path list) lives in `modules/envgene/envgenehelper/git_helper.py` and `repo_paths.py`, not here.
