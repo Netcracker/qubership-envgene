@@ -19,6 +19,9 @@ def resolve_env_names() -> list[str]:
     if env_names:
         names = split_multi_value_param(env_names)
 
+    if (not cluster_name and env_name) or (cluster_name and not env_name):
+        raise ValueError("Set both CLUSTER_NAME and ENVIRONMENT_NAME")
+
     if cluster_name and env_name:
         env_names = f"{cluster_name}/{env_name}"
         os.environ["ENV_NAMES"] = env_names
