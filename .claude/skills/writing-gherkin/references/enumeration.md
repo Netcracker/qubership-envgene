@@ -16,10 +16,24 @@ Take the variation axes from phase 1 and cross them. Typical axes in this reposi
 - **place** - tenant, cloud, namespace, application, or the topology positions baseline and satellite.
 - **mode** - dry-run versus apply, a toggle set versus absent, a run mode.
 - **object shape** - the discrete shapes a payload can take (a credential type, a topology case).
+- **output surface** - every distinct artifact or context the behavior writes to: each generated file,
+  each effective-set context, each output channel. A behavior that writes several outputs usually
+  applies a different rule per output, so each surface is its own axis. A surface that explicitly
+  EXCLUDES the behavior is a case too - the exclusion is a testable rule, not an absence to skip.
+- **entity category** - every kind or role of the central entity the behavior handles: for example a
+  user-supplied instance of it, a system-supplied one, and a built-in reference to one. Each category
+  often carries its own rules and its own failures, on its own code path.
 
 Cross the axes that actually interact. Do not cross axes that are independent - a full Cartesian product
 of unrelated axes produces cases that cannot fail independently, and those are noise. The matrix is a
 tool for finding combinations you would otherwise miss, not a mandate to enumerate every cell.
+
+Before you leave Step 1, list every output surface and every entity category the docs name, out loud,
+and confirm each one has at least one case or a stated reason it does not apply. The most common miss is
+a surface or a category that the docs mention once and the enumeration never returns to - a second
+output context that carries the same references under a different rule, or a system or built-in variant
+of the entity with its own constraints. Naming them explicitly is what stops the matrix from silently
+collapsing to the one surface and the one category you started with.
 
 ## Step 2 - one happy path per valid combination
 
