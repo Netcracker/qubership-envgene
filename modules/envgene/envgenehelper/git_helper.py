@@ -271,10 +271,13 @@ class GitRepoManager:
     def sparse_checkout(self, sparse_paths: list[str]) -> None:
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
+
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
-        logger.info("git checkout -f FETCH_HEAD")
-        self.repo.git.checkout("-f", "FETCH_HEAD")
+
+        logger.info(f"git checkout -f {self.ctx.commit_sha}")
+        self.repo.git.checkout("-f", self.ctx.commit_sha)
+
         logger.info("sparse checkout complete")
 
 
