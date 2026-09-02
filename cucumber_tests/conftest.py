@@ -140,16 +140,37 @@ def workspace(tmp_path):
 
 _XFAIL_REASONS = {
     "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
-    "xfail_cli_npe": "Known bug: Calculator CLI throws a NullPointerException on "
-                      "NamespaceDTO.isCleaned() when matching BG Domain deployPostfix.",
-    "xfail_cli_no_hierarchy_rule": "Known gap: the hierarchy validation rule (Tenant level "
-                                    "parameters cannot reference Cloud/Namespace level parameters) "
-                                    "is not enforced by the Calculator CLI.",
-    "xfail_cli_no_context_rule": "Known gap: the cross-context validation rule (e2eParameters/"
-                                  "technicalConfigurationParameters/deployParameters cannot "
-                                  "reference each other) is not enforced by the Calculator CLI.",
-    "xfail_cli_macro_ns_timeout": "Known bug: a macro reference resolved across hierarchy levels "
-                                   "is dropped from the effective set deployment parameters.",
+    "xfail_cli_npe": (
+        "Calculator CLI throws NullPointerException when the requested namespace is absent from "
+        "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
+        "Affects BG-domain scenarios (dp_2, dp_4, dp_5) and non-BG no-match scenarios (dp_3)."
+    ),
+    "xfail_cli_no_hierarchy_rule": (
+        "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
+        "cannot reference Cloud- or Namespace-level parameters (doc-vs-code divergence)."
+    ),
+    "xfail_cli_no_context_rule": (
+        "Calculator CLI does not enforce the documented rule that e2eParameters and "
+        "technicalConfigurationParameters cannot cross-reference deployParameters "
+        "(doc-vs-code divergence; caught directions: deployParameters->e2eParameters and "
+        "deployParameters->technicalConfigurationParameters; uncaught: the reverse and all "
+        "other cross-context directions)."
+    ),
+    "xfail_cli_type_not_transitive": (
+        "Calculator CLI type preservation is not transitive across a chained macro reference: "
+        "ExpressionLanguage.java preserves a value's type only when the sole reference points at an "
+        "already-typed object in the merged binding (it reads the raw, unresolved referent and does "
+        "not resolve transitively), so a chained integer reference through a String-valued "
+        "intermediate macro collapses to a string (divergence D6)."
+    ),
+    "xfail_topology_1691": (
+        "Per-namespace composite/BG topology injection (ORIGIN_NAMESPACE, PEER_NAMESPACE, "
+        "CONTROLLER_NAMESPACE, BASELINE_ORIGIN, BASELINE_CONTROLLER, BASELINE_PEER, "
+        "BG_CONTROLLER_*) from composite_structure.yml/bg_domain.yml is not implemented: "
+        "CliParameterParser only passes composite_structure/bg_domain through as raw topology "
+        "objects, no code path derives per-namespace deployment parameters from them. Target "
+        "contract tracked in issue #1691."
+    ),
 }
 
 
