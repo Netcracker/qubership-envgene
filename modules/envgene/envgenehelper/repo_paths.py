@@ -6,6 +6,7 @@ REPO_ROOT_PATHS = [
     "configuration/",
     "sboms/",
     "templates/",
+    "ca_bundle",
 ]
 
 
