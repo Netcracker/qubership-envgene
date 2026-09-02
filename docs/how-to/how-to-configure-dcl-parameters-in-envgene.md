@@ -25,8 +25,7 @@ location in the template repository:
 envgene-templates/templates/parameters/dcl-deploy-configuration.yml.j2
 ```
 
-The template reads its values from the environment's cloud-passport at generation time. It does not
-contain hardcoded environment-specific values.
+The template reads the required values from the environment's Cloud Passport at generation time. It does not contain any hardcoded, environment-specific values.
 
 To include the parameter set in the environment configuration, add `dcl-deploy-configuration` to the
 `e2eParameterSets` list in `cloud.yml.j2`:
