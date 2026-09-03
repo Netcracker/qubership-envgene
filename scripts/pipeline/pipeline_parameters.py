@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from envgenehelper import logger, writeToFile
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
+from envgenehelper.sd_helper import MergeType
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, BgdOperation, \
     DeltaDeployType
 from envgenehelper.plugin_engine import PluginEngine
@@ -50,7 +51,7 @@ class PipelineParametersHandler(BaseModel):
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
-            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
+            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE", MergeType.BASIC.value),
             "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
             "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
