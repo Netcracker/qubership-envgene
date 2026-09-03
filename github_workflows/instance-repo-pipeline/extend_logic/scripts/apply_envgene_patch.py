@@ -159,12 +159,24 @@ def do_merge_yaml_path(target_file, content, path_str):
 
     if to_add:
         from io import StringIO
-        buf = StringIO()
-        yaml.dump(to_add, buf)
-        text = buf.getvalue().rstrip()
         spaces = " " * block_indent
-        indented = "\n".join(spaces + (s.lstrip() if s.startswith(" ") else s) for s in text.split("\n"))
-        lines.insert(block_line + 1, indented + "\n")
+
+        def _indent_yaml(text: str) -> str:
+            return "\n".join(
+                spaces + (s.lstrip() if s.startswith(" ") else s) for s in text.split("\n")
+            )
+
+        if path_str == "jobs":
+            chunks = []
+            for key, value in to_add.items():
+                buf = StringIO()
+                yaml.dump({key: value}, buf)
+                chunks.append(wrap_job_section_markers(_indent_yaml(buf.getvalue().rstrip())))
+            lines.insert(block_line + 1, "\n\n".join(chunks) + "\n")
+        else:
+            buf = StringIO()
+            yaml.dump(to_add, buf)
+            lines.insert(block_line + 1, _indent_yaml(buf.getvalue().rstrip()) + "\n")
 
     target_file.write_text("".join(lines), encoding="utf-8")
 
@@ -320,10 +332,76 @@ def fix_indent(text, spaces=4):
     return "\n".join(result)
 
 
+_SECTION_MARKER_RE = re.compile(r"### .+ - (START|END) ###")
+_JOB_KEY_RE = re.compile(r"^(\s*)([A-Za-z_][\w-]*)\s*:")
+
+
+def wrap_job_section_markers(content: str) -> str:
+    """Wrap each top-level job mapping with ### <job-id> - START/END ###.
+
+    No-op for step lists (`- name:`), already-wrapped content, or non-job YAML.
+    """
+    text = content.strip("\n")
+    if not text or _SECTION_MARKER_RE.search(text):
+        return content
+    lines = text.split("\n")
+    spans = _top_level_job_spans(lines)
+    if not spans:
+        return content
+    out = []
+    cursor = 0
+    for start, end, job_id, lead in spans:
+        out.extend(lines[cursor:start])
+        out.append(f"{lead}### {job_id} - START ###")
+        block = lines[start:end]
+        while block and not block[-1].strip():
+            block.pop()
+        out.extend(block)
+        out.append(f"{lead}### {job_id} - END ###")
+        cursor = end
+    out.extend(lines[cursor:])
+    return "\n".join(out)
+
+
+def _top_level_job_spans(lines):
+    """(start, end_exclusive, job_id, lead_ws) for each top-level mapping key.
+
+    Returns [] if the block looks like a step list.
+    """
+    keyed = []
+    for i, raw in enumerate(lines):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("-"):
+            return []
+        m = _JOB_KEY_RE.match(raw)
+        if m:
+            keyed.append((i, m.group(1), m.group(2)))
+    if not keyed:
+        return []
+    min_indent = min(len(lead) for _, lead, _ in keyed)
+    jobs = [(i, lead, name) for i, lead, name in keyed if len(lead) == min_indent]
+    spans = []
+    for idx, (start, lead, name) in enumerate(jobs):
+        end = jobs[idx + 1][0] if idx + 1 < len(jobs) else len(lines)
+        spans.append((start, end, name, lead))
+    return spans
+
+
 def _make_insertion(content, base_indent, pos, total_lines):
-    """Build insertion string with 2 empty lines before and after content."""
-    content = fix_indent(content.rstrip(), spaces=max(base_indent, 4))
-    return "\n\n" + content + "\n\n"
+    """Build insertion string with 2 empty lines before and after content.
+
+    Indent follows the anchor line so job-level markers (2 spaces) stay at job
+    indent. Default to 4 only when the marker has no indent (column 0).
+    Job mappings inserted at job indent get ### <job-id> - START/END ### wrappers.
+    """
+    indent = base_indent if base_indent > 0 else 4
+    body = content.rstrip()
+    if indent <= 2:
+        body = wrap_job_section_markers(body)
+    body = fix_indent(body, spaces=indent)
+    return "\n\n" + body + "\n\n"
 
 
 def do_insert(target_file, content, after_section=None, before_section=None,

@@ -124,6 +124,7 @@ env:
 
 
 jobs:
+  ### env-prepare - START ###
   env-prepare:
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
@@ -215,7 +216,9 @@ jobs:
             tmp/
             ARGO_DPG_CONTEXT.env
           include-hidden-files: true
+  ### env-prepare - END ###
 
+  ### sync - START ###
   sync:
     needs: env-prepare
     if: inputs.PIPELINE_TYPE == 'GITLAB_DEPLOY' && inputs.OPERATION_TYPE != 'CLEAN'
@@ -267,3 +270,4 @@ jobs:
             deploy-report.json
           if-no-files-found: ignore
           retention-days: 1
+  ### sync - END ###
