@@ -118,6 +118,27 @@ class TestResolveRemoteUrl:
         assert manager._resolve_remote_url() == "https://gh-tok@github.com/org/repo.git"
 
 
+class TestFetch:
+    def test_creates_origin_for_empty_repository(self):
+        manager = make_manager()
+        origin = MagicMock()
+        manager.repo.remote.side_effect = ValueError("origin does not exist")
+        manager.repo.create_remote.return_value = origin
+
+        manager._fetch("main", "FETCH_HEAD", ["--force"])
+
+        manager.repo.create_remote.assert_called_once_with(
+            "origin", "https://ci-bot:secret-token@gitlab.example.com/org/repo.git"
+        )
+        origin.set_url.assert_any_call(
+            "https://ci-bot:secret-token@gitlab.example.com/org/repo.git"
+        )
+        origin.set_url.assert_any_call(
+            "https://ci-bot:secret-token@gitlab.example.com/org/repo.git",
+            push=True,
+        )
+
+
 class TestStageChanges:
     def test_filters_nonexistent_paths(self, tmp_path):
         existing = tmp_path / "environments" / "cluster" / "env"
