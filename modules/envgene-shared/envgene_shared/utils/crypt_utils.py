@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.constants import *
@@ -61,7 +62,7 @@ def is_empty_cred_file(file_path: str) -> bool:
 
 
 def is_effective_set_cred_file(filepath: str) -> bool:
-    return "effective-set" in filepath.split(os.sep)
+    return "effective-set" in Path(filepath).parts
 
 
 def is_external_reference_file(value) -> bool:
