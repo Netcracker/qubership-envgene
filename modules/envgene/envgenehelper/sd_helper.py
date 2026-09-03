@@ -138,7 +138,7 @@ class MergeType(Enum):
 
 
 def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    if sd_merge_mode is not None:
+    if sd_merge_mode:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
     # sd_delta var is deprecated
     elif sd_delta == "false":
