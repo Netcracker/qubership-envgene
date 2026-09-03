@@ -10,6 +10,8 @@ from pathlib import Path
 
 from .logger import logger
 
+from envgene_shared.utils.file_utils import check_file_exists, getRelPath, get_files_with_filter, writeToFile
+
 
 def extractNameFromFile(filePath):
     return Path(filePath).stem
@@ -41,11 +43,6 @@ def identify_yaml_extension(file_path: str) -> str:
 
 def find_all_sub_dir(dir_path):
     return os.walk(dir_path)
-
-
-def check_file_exists(file_path):
-    file = Path(file_path)
-    return file.exists() and file.is_file()
 
 
 def check_dir_exist_and_create(dir_path):
@@ -144,21 +141,8 @@ def deleteFileIfExists(filePath):
         os.remove(filePath)
 
 
-def writeToFile(filePath, contents):
-    os.makedirs(os.path.dirname(filePath), exist_ok=True)
-    with open(filePath, 'w+') as f:
-        f.write(contents)
-    return
-
-
 def getAbsPath(path):
     return os.path.abspath(path)
-
-
-def getRelPath(path, start_path=None):
-    if start_path:
-        return os.path.relpath(path, start_path)
-    return os.path.relpath(path, os.getenv('CI_PROJECT_DIR'))
 
 
 def get_parent_dir_for_dir(dirPath):
@@ -172,16 +156,6 @@ def getDirName(filePath):
 
 def getParentDirName(filePath):
     return os.path.dirname(getDirName(filePath))
-
-
-def get_files_with_filter(path_to_filter: str, filter: Callable[[str], bool]) -> set[str]:
-    matching_files = set()
-    for root, _, files in os.walk(path_to_filter):
-        for file in files:
-            filepath = os.path.join(root, file)
-            if filter(filepath):
-                matching_files.add(filepath)
-    return matching_files
 
 
 def findAllFilesInDir(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
