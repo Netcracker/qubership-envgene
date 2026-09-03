@@ -86,6 +86,16 @@ jobs:
                --junitxml=reports/calculator_cli.xml \
                | tee -a /workspace/e2e_tests.log"
 
+      - name: Run Credential Rotation BDD tests
+        run: |
+          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "export PYTHONPATH=/workspace && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/test_credential_rotation.py \
+               -v -s \
+               --junitxml=reports/credential_rotation.xml \
+               | tee -a /workspace/e2e_tests.log"
+
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
