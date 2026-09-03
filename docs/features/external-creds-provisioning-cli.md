@@ -55,9 +55,10 @@ external-cred-provision --dry-run effective-set/external-credential/external-cre
 
 ### Options
 
-| Flag                       | Default | Meaning                                              |
-|----------------------------|---------|------------------------------------------------------|
-| `--dry-run`                | off     | Run checks only, no writes                           |
+| Flag                  | Default | Meaning                                                        |
+|-----------------------|---------|----------------------------------------------------------------|
+| `--dry-run`           | off     | Run checks only, no writes                                     |
+| `--log-level <LEVEL>` | `DEBUG` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
 
 When `--dry-run` is set, the CLI runs the [Dry-run phase](#dry-run-phase). No writes happen.
 
@@ -215,11 +216,11 @@ failures. The summary line tallies them.
 In dry-run mode the CLI performs no writes. For each strategy, the CLI runs the
 prerequisite check shown below.
 
-| Strategy           | Dry-run check                                              |
-|--------------------|------------------------------------------------------------|
-| `fail_if_absent`   | the credential exists at the target path                   |
-| `create_if_absent` | the authenticated principal can create at the target path  |
-| `overwrite`        | the authenticated principal can create at the target path  |
+| Strategy           | Dry-run check                                                                         |
+|--------------------|---------------------------------------------------------------------------------------|
+| `fail_if_absent`   | the credential exists at the target path                                              |
+| `create_if_absent` | the store is reachable and authentication succeeds (write permission is not verified) |
+| `overwrite`        | the store is reachable and authentication succeeds (write permission is not verified) |
 
 ## Value generation
 
