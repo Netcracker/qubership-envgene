@@ -1,8 +1,6 @@
+from build_env.env_template.process_env_template import process_env_template
+from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 from envgenehelper import *
-
-from build_env import process_additional_template_parameters
-from env_template.process_env_template import process_env_template
-from render_config_env import EnvGenerator
 
 
 def write_app_reg_defs(base_dir: str, render_dir: str, env_dir: str, placement_mode: str) -> None:
@@ -14,10 +12,10 @@ def write_app_reg_defs(base_dir: str, render_dir: str, env_dir: str, placement_m
         src = Path(render_dir) / dir_name
         env_dst = Path(env_dir) / dir_name
         root_dst = Path(base_dir) / dir_name.lower()
-        
+
         if not src.exists():
             continue
-        
+
         shutil.copytree(src, root_dst, dirs_exist_ok=True)
         if env_dst.exists():
             shutil.rmtree(env_dst)
@@ -50,41 +48,19 @@ def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> N
                 logger.debug(f"Override applied: {yaml_file} -> {env_dst}")
 
 
-def main():
-    template_version = process_env_template()
-
+def run_appregdef_render() -> None:
+    template_versions = process_env_template()
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
-    instances_dir = getenv_with_error("INSTANCES_DIR")
+    base_dir = getenv_with_error("CI_PROJECT_DIR")
+    env_dir = str(get_current_env_dir_from_env_vars())
 
-    output_dir = f"{base_dir}/environments"
-    render_dir = f"/tmp/render/{env_name}"
-    templates_dirs = get_template_dirs()
+    render_context_vars = build_minimal_render_context(env_name, cluster_name, env_dir, base_dir)
+    render_dir = render_context_vars["render_dir"]
 
-    env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)
-    cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)
-    copy_path(f'{env_dir}/Inventory', f'{render_dir}/Inventory')
-    process_additional_template_parameters(render_dir, env_dir, instances_dir)
+    EnvGenerator().render_app_reg_defs(env_name, render_context_vars)
 
-    render_context_vars = {
-        "cluster_name": cluster_name,
-        "output_dir": output_dir,
-        "current_env_dir": render_dir,
-        "templates_dirs": templates_dirs,
-        "cloud_passport_file_path": cloud_passport_file_path,
-        "env_instances_dir": render_dir
-    }
-    config = get_envgene_config_yaml()
-    placement_mode = config.get("app_reg_defs_placement", "dual").lower()
-
-    render_context = EnvGenerator()
-    render_context.process_app_reg_defs(env_name, render_context_vars)
-    
+    placement_mode = get_envgene_config_yaml().get("app_reg_defs_placement", "dual").lower()
     write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode)
     override_app_reg_defs(base_dir, env_dir, placement_mode)
-    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version[NamespaceRole.COMMON])
-
-
-if __name__ == '__main__':
-    main()
+    update_generated_versions(env_dir, BUILD_ENV_TAG, template_versions[NamespaceRole.COMMON])

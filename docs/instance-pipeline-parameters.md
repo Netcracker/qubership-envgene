@@ -10,6 +10,7 @@
     - [`OPERATION_TYPE`](#operation_type)
     - [`BGD_OPERATION`](#bgd_operation)
     - [`BG_NS_TARGET`](#bg_ns_target)
+    - [`BG_STATE`](#bg_state)
     - [`NAMESPACE_NAMES`](#namespace_names)
     - [`DELTA_DEPLOY`](#delta_deploy)
     - [`ENV_BUILDER`](#env_builder)
@@ -144,7 +145,8 @@ Processed at both pipeline types. The `CLEAN` and `BGD` values are processed onl
 
 ### `BGD_OPERATION`
 
-**Description**: Selects the Blue-Green operation. Processed only when `OPERATION_TYPE: BGD`.
+**Description**: Selects the Blue-Green operation. Processed only when `OPERATION_TYPE: BGD`. The
+state-transition operations consume `BG_STATE` to set the state files. Warmup does not.
 
 Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`.
 
@@ -171,6 +173,35 @@ Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`.
 **Mandatory**: No
 
 **Example**: `ORIGIN`
+
+### `BG_STATE`
+
+**Description**: The target Blue-Green state. Its value is a BGState object under a root `BGState` key. Only
+`BGState.originNamespace.state` and `BGState.peerNamespace.state` are read. All other fields (`name`,
+`version`, `updateTime`, `controllerNamespace`) are ignored. The Blue-Green state-setting step writes the
+origin and peer state of the state files directly from it, without validation.
+
+Processed only when `OPERATION_TYPE: BGD`. Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```yaml
+BGState:
+  controllerNamespace: dev-14-datahub
+  originNamespace:
+    name: dev-14-bss-origin
+    state: active
+    version: v1
+  peerNamespace:
+    name: dev-14-bss-peer
+    state: idle
+    version: null
+  updateTime: 2026-08-17T11:14:31Z
+```
 
 ### `NAMESPACE_NAMES`
 
@@ -431,6 +462,7 @@ resourceProfiles:
     version: 0
 ```
 
+
 ### `GENERATE_EFFECTIVE_SET`
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
@@ -475,7 +507,7 @@ contexts:
 | **contexts.pipeline.consumers**           | Optional  | Each entry in this list adds a [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context) to the Effective Set. EnvGene passes the path to the corresponding JSON schema file to the Calculator command-line tool using the `--pipeline-consumer-specific-schema-path` argument. Each list element is passed as a separate argument.                                                                                                                                                                     | None                                   | None                                               |
 | **contexts.pipeline.consumers[].name**    | Mandatory | The name of the [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene                                                                                                                                                                                                                                                                                                                      | None                                   | `dcl`                                              |
 | **contexts.pipeline.consumers[].version** | Mandatory | The version of the [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene.                                                                                                                                                                                                                                                                                                                  | None                                   | `v1.0`                                             |
-| **contexts.pipeline.consumers[].schema**  | Optional  | The content of the consumer-specific pipeline context component JSON schema transformed into a string. It is used to generate a consumer-specific pipeline context for a consumer not registered in EnvGene. EnvGene saves the value as a JSON file with the name `<contexts.pipeline[].name>-<contexts.pipeline[].version>.schema.json` and passes the path to it to the Calculator command-line tool via `--pipeline-consumer-specific-schema-path` attribute. The schema obtained in this way is not saved between pipeline runs and must be passed for each run. | None                                   | [consumer-v1.0.json](/examples/consumer-v1.0.json) |
+| **contexts.pipeline.consumers[].schema**  | Optional  | The content of the consumer-specific pipeline context component JSON schema transformed into a string. It is used to generate a consumer-specific pipeline context for a consumer not registered in EnvGene. EnvGene saves the value as a JSON file with the name `<contexts.pipeline[].name>-<contexts.pipeline[].version>.schema.json` and passes the path to it to the Calculator command-line tool via `--pipeline-consumer-specific-schema-path` attribute. The schema obtained in this way is not saved between pipeline runs and must be passed for each run. | None                                   | [consumer-v1.0.json](/docs/examples/consumer-v1.0.json) |
 
 Registered component JSON schemas are stored in the EnvGene Docker image as JSON files named:
 `<consumers-name>-<consumer-version>.schema.json`
@@ -980,7 +1012,7 @@ additionalTemplateVariables:
   <key>: <value>
 cloudName: <value>
 envSpecificParamsets:
-  <ns-template-name>:
+  <namespace-folder-name>:
   - paramsetA
   cloud:
   - paramsetB

@@ -43,10 +43,6 @@ template: |
   - **[qubership-envgene-instance-gsf-gitlab](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-gsf-instance)** - `ghcr.io/netcracker/qubership-gsf-instance:$RESOLVED_VERSION`
   - **[qubership-envgene-discovery-gsf-gitlab](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-gsf-discovery)** - `ghcr.io/netcracker/qubership-gsf-discovery:$RESOLVED_VERSION`
 
-  ### 📦 PyPI Packages
-
-  - **[qubership-external-cred-provision:1.0.2](https://pypi.org/project/qubership-external-cred-provision/1.0.2/)**
-
   ---
 
   **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
