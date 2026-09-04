@@ -2,6 +2,7 @@ import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from os import getenv, path
 from typing import Callable
 
@@ -203,7 +204,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
     if not get_crypt():
         check_for_encrypted_files(files)
-        return
+        return files
 
     backend = get_crypt_backend()
     t0 = time.perf_counter()
@@ -212,6 +213,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
     logger.info(f'Decrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
     logger.debug("Decrypted next cred files:")
     logger.debug(files)
+    return files
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
@@ -228,6 +230,13 @@ def encrypt_all_cred_files_for_env(**kwargs):
 def get_crypt():
     config = get_envgene_config_yaml()
     return config.get('crypt', True)
+
+
+@contextmanager
+def decrypted_cred_files(**kwargs):
+    decrypt_all_cred_files_for_env(**kwargs)
+    yield
+    encrypt_all_cred_files_for_env(**kwargs)
 
 
 def get_crypt_backend():

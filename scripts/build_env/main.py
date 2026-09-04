@@ -270,6 +270,5 @@ def run_build_environment():
     g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
-    decrypt_all_cred_files_for_env()
-    render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
-    encrypt_all_cred_files_for_env()
+    with decrypted_cred_files():
+        render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)

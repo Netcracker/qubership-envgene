@@ -26,6 +26,9 @@ from qubership_pipelines_common_library.v2.artifacts_finder.artifact_finder impo
 
 shared_session = requests.Session()
 
+SNAPSHOT_TIMESTAMP_RE = re.compile(r"-\d{8}\.\d{6}-\d+$")
+
+
 class ArtifactoryUtils:
 
     AWS_DOMAIN_NAME_MATCH = r"https:\/\/([a-zA-Z0-9_-]+)-[a-zA-Z0-9]+\.d\.codeartifact\.[a-z0-9-]+\.amazonaws\.com"
@@ -226,7 +229,7 @@ class ArtifactoryUtils:
             rurl = None
             for url in urls:
                 partsurl = url.split("/")
-                if f"{app_version}.{artifact_extension}" in partsurl[-1] or f"{app_version}-RELEASE.{artifact_extension}" in partsurl[-1]:
+                if ArtifactoryUtils._matches_requested_version(partsurl[-1], app_version, artifact_extension):
                     rurl = url
                     break
 
@@ -244,6 +247,16 @@ class ArtifactoryUtils:
                 return rurl, rurl.replace("%2F", "/").split('/')[-1], {"release_status": registry_type == "targetRelease"}, registry_type
 
         raise ValueError(f"Unable to locate artifact `{app_name}:{app_version}` in registry: {registry_info.url}; Type: {registry_info.type}; MavenConfig: {registry_info.maven_config}.")
+
+    @staticmethod
+    def _matches_requested_version(filename: str, app_version: str, artifact_extension: str) -> bool:
+        if f"{app_version}.{artifact_extension}" in filename or f"{app_version}-RELEASE.{artifact_extension}" in filename:
+            return True
+        if not app_version.endswith("-SNAPSHOT"):
+            return False
+        base_version = app_version.removesuffix("-SNAPSHOT")
+        stem = filename.removesuffix(f".{artifact_extension}")
+        return SNAPSHOT_TIMESTAMP_RE.sub("", stem).endswith(f"-{base_version}")
 
 
 def __clean_and_validate_json_string(json_string: str) -> str:

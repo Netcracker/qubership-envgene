@@ -107,9 +107,14 @@ class GitRepoManager:
             )
 
     def _fetch(self, ref: str, checkout: str, checkout_option: list[str]) -> None:
-        origin = self.repo.remote("origin")
-        origin.set_url(self._resolve_remote_url())
-        origin.set_url(self._resolve_remote_url(), push=True)
+        remote_url = self._resolve_remote_url()
+        try:
+            origin = self.repo.remote("origin")
+        except ValueError:
+            origin = self.repo.create_remote("origin", remote_url)
+
+        origin.set_url(remote_url)
+        origin.set_url(remote_url, push=True)
 
         try:
             logger.info(f"git fetch --depth=1 origin {ref}")
@@ -268,7 +273,18 @@ class GitRepoManager:
 
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
-    def sparse_checkout(self, sparse_paths: list[str]) -> None:
+    def sparse_checkout(self, sparse_paths: list[str], *, fetch: bool = True) -> None:
+        if fetch:
+            self._fetch(
+                ref=self.ctx.commit_sha,
+                checkout=self.ctx.commit_sha,
+                checkout_option=["--force"],
+            )
+
+        if sparse_paths:
+            logger.info(f"git clean -fd ({len(sparse_paths)} paths)")
+            self.repo.git.clean("-fd", "--", *sparse_paths)
+
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
 

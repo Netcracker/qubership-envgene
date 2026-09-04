@@ -6,9 +6,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
 from os import getenv
+from pathlib import Path
 
-from envgenehelper import logger, decrypt_all_cred_files_for_env, encrypt_all_cred_files_for_env, validate_creds, \
-    validate_parameters
+from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
@@ -28,8 +28,9 @@ from deployment_plan.process_deployment_plan import merge_deployment_plan, reduc
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
-from pipeline.multi_env_runner import fan_out
+from pipeline.multi_env_runner import run_multi_env_pipeline
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
@@ -39,6 +40,13 @@ class StepStatus(StrEnum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+
+
+_STATUS_COLOR = {
+    StepStatus.SUCCESS: CustomFormatter.BOLD_GREEN,
+    StepStatus.FAILED: CustomFormatter.BOLD_RED,
+    StepStatus.SKIPPED: CustomFormatter.YELLOW,
+}
 
 
 @dataclass
@@ -269,20 +277,19 @@ class GenerateEffectiveSetStep(PipelineStep):
         return will_run
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        decrypt_all_cred_files_for_env()
-        validate_creds()
-        validate_parameters()
-        if not ctx.is_gitlab_deploy():
-            apply_no_sd_mode(ctx)
-        sboms_retention_policy()
-        get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
-        if get_sboms.modules:
-            get_sboms.run(ctx.resolve_source_dp())
-        if ctx.is_gitlab_deploy():
-            run_gitlab_deploy_effective_set(ctx)
-        else:
-            run_legacy_sd_effective_set(ctx)
-        encrypt_all_cred_files_for_env()
+        with decrypted_cred_files():
+            validate_creds()
+            validate_parameters()
+            if not ctx.is_gitlab_deploy():
+                apply_no_sd_mode(ctx)
+            sboms_retention_policy()
+            get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
+            if get_sboms.modules:
+                get_sboms.run(ctx.resolve_source_dp())
+            if ctx.is_gitlab_deploy():
+                run_gitlab_deploy_effective_set(ctx)
+            else:
+                run_legacy_sd_effective_set(ctx)
 
 
 class GitCommitStep(PipelineStep):
@@ -325,37 +332,61 @@ def run_single_env_pipeline() -> None:
     try:
         for step in steps:
             if not step.should_run(ctx):
-                logger.info(f"Step '{step.name}' skipped.")
+                logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
                 results.append(StepResult(step.name, StepStatus.SKIPPED))
                 continue
 
-            logger.info(f"========== START: {step.name} ==========")
-            start = time.time_ns()
-            status = StepStatus.SUCCESS
-            try:
-                step.execute(ctx)
-            except Exception:
-                status = StepStatus.FAILED
-                raise
-            finally:
-                duration_ms = (time.time_ns() - start) // 1_000_000
-                results.append(StepResult(step.name, status, duration_ms))
-                logger.info(f"========== END: {step.name} ({_format_duration(duration_ms)}) - {status} ==========")
+            start_banner = colorize_segment(
+                banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
+            with log_section(f"step_{step.name}", header=start_banner):
+                start = time.time_ns()
+                status = StepStatus.SUCCESS
+                try:
+                    step.execute(ctx)
+                except Exception:
+                    status = StepStatus.FAILED
+                    raise
+                finally:
+                    duration_ms = (time.time_ns() - start) // 1_000_000
+                    results.append(StepResult(step.name, status, duration_ms))
+                    end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
+                    end_banner = colorize_segment(
+                        banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
+                    logger.info(end_banner)
     finally:
+        start = time.time_ns()
+        status = StepStatus.SUCCESS
+        try:
+            copy_env_artifact(ctx)
+        except Exception as ex:
+            status = StepStatus.FAILED
+            logger.exception(f"copy_env_artifact failed: {ex}")
+        finally:
+            duration_ms = (time.time_ns() - start) // 1_000_000
+            results.append(StepResult("copy_env_artifact", status, duration_ms))
         log_pipeline_summary(results)
 
 
 def dispatch() -> int:
-    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
-    if len(env_names) == 1:
+    if os.getenv("ENVGENE_FAN_OUT_CHILD"):
         run_single_env_pipeline()
         return 0
 
-    os.environ["ENV_NAMES"] = env_names[0]
-    handler = PipelineParametersHandler.from_env()
-    handler.write_dotenv(exclude_keys={"ENV_NAMES"})
+    # main process
+    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
+    try:
+        if len(env_names) == 1:
+            run_single_env_pipeline()
+            return 0
 
-    return fan_out(env_names)
+        os.environ["ENV_NAMES"] = env_names[0]
+        handler = PipelineParametersHandler.from_env()
+        handler.write_dotenv(exclude_keys={"ENV_NAMES"})
+
+        return run_multi_env_pipeline(env_names)
+    finally:
+        work_dir = Path(getenv("CI_PROJECT_DIR"))
+        finalize_artifacts(artifacts_output_root(work_dir), get_artifact_size_limit_mb())
 
 
 def _format_duration(duration_ms: int | None) -> str:
@@ -368,7 +399,8 @@ def log_pipeline_summary(results: list[StepResult]) -> None:
     name_width = max((len(r.name) for r in results), default=0)
     lines = ["========== PIPELINE SUMMARY =========="]
     for r in results:
-        lines.append(f"{r.name.ljust(name_width)}  {r.status:<7}  {_format_duration(r.duration_ms)}")
+        status_str = colorize(f"{r.status:<7}", _STATUS_COLOR.get(r.status, ""))
+        lines.append(f"{r.name.ljust(name_width)}  {status_str}  {_format_duration(r.duration_ms)}")
     total_ms = sum(r.duration_ms for r in results if r.duration_ms is not None)
     lines.append(f"Total: {_format_duration(total_ms)}")
     lines.append("========================================")

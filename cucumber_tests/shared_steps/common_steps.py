@@ -32,7 +32,7 @@ def pipeline_log_shows(workspace, message):
 def set_pipeline_param(workspace, param, value):
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}
-        
+
     # Special case: allow empty strings if value is exactly empty
     if value == "":
         workspace.extra_env[param] = ""
@@ -55,17 +55,17 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     both internal and external workspace implementations.
     """
     actual_dir = workspace.builder.get_env_dir(cluster, env)
-    
+
     # Resolve reference path relative to the test execution root (project root)
     base_expected_dir = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path
-    
+
     # Support both legacy flat golden directories and new nested structure
     nested_expected_dir = base_expected_dir / "environments" / cluster / env
     if nested_expected_dir.exists():
         expected_dir = nested_expected_dir
     else:
         expected_dir = base_expected_dir
-    
+
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
     compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
 
@@ -77,11 +77,11 @@ def workspace_matches_reference(workspace, reference_path):
     """
     actual_dir = workspace.base_dir
     expected_dir = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path
-    
+
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
     import os
     # Ignore extra framework generated files
-    ignore_patterns = ['Credentials', os.path.normpath('configuration/credentials'), os.path.normpath('configuration/config.yml'), 'tmp', 'sops', 'sops.bat', os.path.normpath('configuration/registry.yml'), 'build.env', '__pycache__', 'sboms', 'inventory', 'blueprints', 'environments']
+    ignore_patterns = ['Credentials', os.path.normpath('configuration/credentials'), os.path.normpath('configuration/config.yml'), 'tmp', 'sops', 'sops.bat', os.path.normpath('configuration/registry.yml'), 'build.env', '__pycache__', 'sboms', 'inventory', 'blueprints', 'environments', 'artifacts']
     compare_directories(expected_dir, actual_dir, ignore_patterns=ignore_patterns)
 
 @then(parsers.parse('the generated definitions match the reference "{reference_path}"'))
