@@ -107,7 +107,14 @@ public class ParametersCalculationServiceV2 {
         }
         if (MapUtils.isNotEmpty(customParams.getAllParams())) {
             prepareCustomParams(customParams, parameters.getDeployParams(), parameters.getTechParams());
-            parameterBundle.setCustomDeployParameters(ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams()));
+            Map<String, Object> customDeployMap = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
+            Parameter servicesParam = parameters.getDeployParams().get(SERVICES);
+            Set<String> serviceNames = (servicesParam != null && servicesParam.getValue() instanceof Map)
+                    ? ((Map<String, Object>) servicesParam.getValue()).keySet()
+                    : Collections.emptySet();
+            DecomposedCustom decomposed = decomposeCustomDeployParams(customDeployMap, serviceNames);
+            parameterBundle.setCustomDeployParameters(decomposed.decomposed);
+            parameterBundle.setCollisionCustomDeployParameters(decomposed.collision);
             parameterBundle.setCustomTechParameters(ParametersProcessor.convertParameterMapToObject(customParams.getTechnicalParams()));
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace, extCredEntities);
@@ -351,6 +358,68 @@ public class ParametersCalculationServiceV2 {
             if (entities.contains(entry.getKey())) {
                 inSecuredParams.put(entry.getKey(), entry.getValue());
             }
+        }
+    }
+
+    private static class DecomposedCustom {
+        final Map<String, Object> decomposed;
+        final Map<String, Object> collision;
+
+        DecomposedCustom(Map<String, Object> decomposed, Map<String, Object> collision) {
+            this.decomposed = decomposed;
+            this.collision = collision;
+        }
+    }
+
+    private DecomposedCustom decomposeCustomDeployParams(Map<String, Object> customDeploy, Set<String> serviceNames) {
+        if (MapUtils.isEmpty(customDeploy)) {
+            return new DecomposedCustom(Collections.emptyMap(), Collections.emptyMap());
+        }
+
+        Map<String, Object> collision = new LinkedHashMap<>();
+        Map<String, Object> rootParams = new LinkedHashMap<>();
+
+        customDeploy.forEach((key, value) -> {
+            if (serviceNames.contains(key)) {
+                collision.put(key, value);
+            } else {
+                rootParams.put(key, value);
+            }
+        });
+
+        Map<String, Object> decomposed = new LinkedHashMap<>();
+        decomposed.putAll(rootParams);
+        if (!rootParams.isEmpty()) {
+            decomposed.put("global", deepCopyMap(rootParams));
+            for (String serviceName : serviceNames) {
+                if (!collision.containsKey(serviceName)) {
+                    decomposed.put(serviceName, deepCopyMap(rootParams));
+                }
+            }
+        }
+
+        return new DecomposedCustom(decomposed, collision);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> deepCopyMap(Map<String, Object> source) {
+        Map<String, Object> copy = new LinkedHashMap<>();
+        source.forEach((k, v) -> copy.put(k, deepCopyValue(v)));
+        return copy;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object deepCopyValue(Object value) {
+        if (value instanceof Map) {
+            return deepCopyMap((Map<String, Object>) value);
+        } else if (value instanceof List) {
+            List<Object> listCopy = new ArrayList<>();
+            for (Object item : (List<Object>) value) {
+                listCopy.add(deepCopyValue(item));
+            }
+            return listCopy;
+        } else {
+            return value;
         }
     }
 

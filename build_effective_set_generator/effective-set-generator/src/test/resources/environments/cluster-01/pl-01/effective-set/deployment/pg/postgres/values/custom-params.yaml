@@ -1,1 +1,17 @@
 username: user-placeholder-123
+global:
+  username: user-placeholder-123
+patroni-core:
+  username: user-placeholder-123
+pg_patroni:
+  username: user-placeholder-123
+pg_upgrade:
+  username: user-placeholder-123
+pgbackrest_sidecar:
+  username: user-placeholder-123
+postgres_operator_init:
+  username: user-placeholder-123
+postgres_operator_tests:
+  username: user-placeholder-123
+vault_env:
+  username: user-placeholder-123
