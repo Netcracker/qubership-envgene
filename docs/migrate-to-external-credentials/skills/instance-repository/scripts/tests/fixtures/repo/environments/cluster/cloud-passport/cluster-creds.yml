@@ -1,0 +1,10 @@
+---
+dbaas:
+  type: usernamePassword
+  data:
+    username: stub-user
+    password: stub-pass
+consul:
+  type: secret
+  data:
+    secret: stub-token

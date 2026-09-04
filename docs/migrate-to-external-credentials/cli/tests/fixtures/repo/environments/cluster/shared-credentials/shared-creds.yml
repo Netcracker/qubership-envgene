@@ -1,0 +1,4 @@
+credentials:
+  ID_SHARED_ONLY:
+    type: secret
+    secret: shared-secret

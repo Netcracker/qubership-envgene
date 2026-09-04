@@ -1,0 +1,12 @@
+---
+name: "{{ current_env.name }}-ns"
+{% if current_env.additionalTemplateVariables.site == "offsite" %}
+deployParameterSets:
+  - paramset-with-creds
+{% elif current_env.additionalTemplateVariables.site == "onsite" %}
+deployParameterSets:
+  - other-set
+{% endif %}
+{{ current_env.additionalTemplateVariables.cloudParameters | to_nice_yaml | indent(2) }}
+credentialsId: ns-deploy-cred
+template_path: "{{ templates_dir }}/env_templates/demo/cloud.yml.j2"

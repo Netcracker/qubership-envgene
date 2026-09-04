@@ -1,0 +1,28 @@
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{include = "migration_cli", from = "src"}]
+
+[project]
+name = "qubership-migration-cli"
+version = "0.1.0"
+description = "EnvGene migration CLI: collect credential plaintext, export from Jenkins, and fill External Credential Context."
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = "~=3.12"
+authors = [{name = "Qubership"}]
+dependencies = [
+  "click==8.1.7",
+  "pyyaml==6.0.2",
+]
+
+[project.optional-dependencies]
+decrypt = ["cryptography>=42.0.0"]
+
+[project.scripts]
+migration-cli = "migration_cli.main:cli"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-v -ra"

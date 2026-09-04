@@ -1,0 +1,5 @@
+credentials:
+  ID_CLOUD_ONLY:
+    type: usernamePassword
+    username: cloud-user
+    password: cloud-pass

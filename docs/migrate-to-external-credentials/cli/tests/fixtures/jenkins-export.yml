@@ -1,0 +1,17 @@
+demo-cloud-env-a-app-client-creds:
+  type: usernamePassword
+  username: jenkins-user
+  password: jenkins-pass
+demo-cloud-env-a-token2:
+  type: secret
+  secret: jenkins-secret
+demo-cloud-env-b-app-client-creds:
+  type: usernamePassword
+  username: other-env-user
+  password: other-env-pass
+# Cluster-level only (no env-a id) — used by fallback match
+demo-cloud-cluster-ID_CLUSTER_ONLY:
+  type: usernamePassword
+  data:
+    username: cluster-user
+    password: cluster-pass

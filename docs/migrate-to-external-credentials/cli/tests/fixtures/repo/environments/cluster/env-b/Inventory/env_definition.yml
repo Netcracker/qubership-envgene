@@ -1,0 +1,8 @@
+---
+inventory:
+  cloudPassport: cluster
+envTemplate:
+  name: demo
+  sharedMasterCredentialFiles:
+    - env-creds
+    - shared-creds

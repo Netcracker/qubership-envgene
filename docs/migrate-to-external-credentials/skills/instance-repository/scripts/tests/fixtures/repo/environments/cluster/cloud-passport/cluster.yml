@@ -1,0 +1,10 @@
+---
+dbaas:
+  DBAAS_USER: "${creds.get('dbaas').username}"
+  DBAAS_PASS: "${creds.get('dbaas').password}"
+consul:
+  CONSUL_ADMIN_TOKEN: "${creds.get('consul').secret}"
+technicalConfigurationParameters:
+  KEEP: "${creds.get('consul').secret}"
+deployParameters:
+  '#creds{LOGIN, PASSWORD}': test-cred
