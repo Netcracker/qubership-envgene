@@ -2,6 +2,7 @@ from pathlib import Path
 
 from yaml import safe_load, safe_dump
 from envgenehelper.yaml_helper import beautifyYaml
+from envgenehelper import get_schema_dir
 
 
 def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:
@@ -27,7 +28,9 @@ def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:
     return sensitive_data
 
 
-def update_creds_to_cmdb_format(creds_path: str, schema_path: str = "/build_env/schemas/credential.schema.json"):
+def update_creds_to_cmdb_format(creds_path: str, schema_path: str = None):
+    if not schema_path:
+        schema_path = f"{get_schema_dir()}/credential.schema.json"
     creds_path = Path(creds_path)
     data = safe_load(creds_path.read_text(encoding="utf-8"))
     cmdb_mapped = map_creds_to_cmdb_format(data)

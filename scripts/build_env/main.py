@@ -1,20 +1,16 @@
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env import build_env, process_additional_template_parameters
-from cloud_passport import update_env_definition_with_cloud_name
-from create_credentials import create_credentials
-from render_config_env import EnvGenerator
-from resource_profiles import get_env_specific_resource_profiles
+from build_env.build_env import build_env, process_additional_template_parameters
+from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
+from build_env.create_credentials import create_credentials
+from build_env.render_config_env import EnvGenerator
+from build_env.env_specific_overrides import validate_env_specific_override_keys
+from build_env.resource_profiles import get_env_specific_resource_profiles
 
-from filter_namespaces import apply_ns_build_filter
 
 INVENTORY_DIR_NAME = "Inventory"
 ENV_DEFINITION_FILE_NAME = "env_definition.yml"
-PARAMSET_SCHEMA = "schemas/paramset.schema.json"
-CLOUD_SCHEMA = "schemas/cloud.schema.json"
-NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
-ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
@@ -94,9 +90,9 @@ def handle_template_override(render_dir):
         template_path_stem = Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
-            schema_path = CLOUD_SCHEMA
+            schema_path = get_schema_dir() / "cloud.schema.json"
         if template_path_stem == 'namespace':
-            schema_path = NAMESPACE_SCHEMA
+            schema_path = get_schema_dir() / "namespace.schema.json"
         beautifyYaml(template_path, schema_path)
         deleteFile(file)
 
@@ -109,17 +105,12 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
 
 
-    namespaces_path = get_namespaces_path()
-    if check_dir_exists(str(namespaces_path.absolute())):
-        logger.info("Namespaces found, saving them into tmp location")
-        shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
-
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)
     pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
     # get deployer parameters
-    cmdb_url, _, _ = get_deployer_config(f"{cluster_name}/{env_name}", work_dir, all_instances_dir, None, None, False)
+    cmdb_url, _, _ = get_deployer_config()
     # perform rendering with Jinja2
     # Load environment definition and ensure auto-derived environmentName is available
     env_def_path = os.path.join(render_env_dir, "Inventory", "env_definition.yml")
@@ -129,35 +120,11 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
         logger.warning(f"Failed to load environment definition from {env_def_path}: {str(e)}. Using empty definition.")
         env_definition = {}
 
-    # Ensure environmentName is set (auto-derive if missing)
-    # Handle missing inventory section
-    if "inventory" not in env_definition:
-        env_definition["inventory"] = {}
-        logger.debug(f"Created missing inventory section in environment definition")
-
-    if not env_definition["inventory"].get("environmentName"):
-        env_definition["inventory"]["environmentName"] = env_name
-        logger.info(f"Auto-derived environment name '{env_name}' for environment definition")
-        # Write the updated definition back to file so Ansible can access it
-        try:
-            writeYamlToFile(env_def_path, env_definition)
-            logger.debug(f"Successfully updated environment definition with auto-derived name: {env_def_path}")
-        except Exception as e:
-            logger.error(f"Failed to write updated environment definition to {env_def_path}: {str(e)}")
-            # Continue execution - the in-memory definition still has the environmentName
-
-    # Create current_env object with environmentName for Jinja2 template compatibility
-    # This is used by templates that expect current_env.environmentName (like composite_structure.yml.j2)
-    derived_env_name = env_definition.get("inventory", {}).get("environmentName", env_name)
-
-    # Validate environment name
-    if not derived_env_name or not isinstance(derived_env_name, str):
-        logger.warning(f"Invalid environment name '{derived_env_name}', falling back to folder name '{env_name}'")
-        derived_env_name = env_name
+    env_definition = ensure_environment_name(env_definition, env_name, persist_path=env_def_path)
 
     current_env = {
         "name": env_name,  # Always use folder name for consistency
-        "environmentName": derived_env_name  # Use derived or explicit name
+        "environmentName": env_definition["inventory"]["environmentName"]
     }
 
     logger.debug(
@@ -180,8 +147,9 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
+    validate_env_specific_override_keys(Path(render_env_dir))
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
-                                                                           ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
+                                                                           get_schema_dir() / "resource-profile.schema.json")
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.is_external_cred_env)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
@@ -260,7 +228,7 @@ def validate_parameter_files(param_files):
     for param_file_path in param_files:
         rel_param_file_path = os.path.relpath(param_file_path, os.getenv('CI_PROJECT_DIR'))
         try:
-            validate_yaml_by_scheme_or_fail(param_file_path, PARAMSET_SCHEMA)
+            validate_yaml_by_scheme_or_fail(param_file_path, get_schema_dir() / "paramset.schema.json")
         except ValueError:
             errors.append(f'Parameter file at {rel_param_file_path} is invalid, look for details above')
         file_name = extractNameFromFile(param_file_path)
@@ -291,10 +259,9 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     resulting_env_dir, is_external_cred_env = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
                                           output_dir, work_dir)
     create_credentials(resulting_env_dir, env_dir, all_instances_dir, is_external_cred_env)
-    apply_ns_build_filter()
 
 
-if __name__ == "__main__":
+def run_build_environment():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
@@ -303,6 +270,5 @@ if __name__ == "__main__":
     g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
-    decrypt_all_cred_files_for_env()
-    render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
-    encrypt_all_cred_files_for_env()
+    with decrypted_cred_files():
+        render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)

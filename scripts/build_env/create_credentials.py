@@ -107,7 +107,7 @@ def getCloudCreds(cloudContent, tenantName, cloudName, is_external_cred_env=Fals
 def get_bg_domain_creds(content, name, is_external_cred_env=False, external_cred_ids=None):
     creds = []
     bg_domain_comment = f"bg domain {name}"
-    checkCredAndAppend(content["controllerNamespace"]["credentials"], creds, CRED_TYPE_SECRET, bg_domain_comment, is_external_cred_env, external_cred_ids)
+    checkCredAndAppend(content["controllerNamespace"]["credentials"], creds, CRED_TYPE_USERPASS, bg_domain_comment, is_external_cred_env, external_cred_ids)
     return creds
 
 def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName, is_external_cred_env=False, external_cred_ids=None):
@@ -194,7 +194,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     cred_dir_names = ["credentials", "Credentials", "shared-credentials"]
 
     shared_cred_paths = [level / name for level in levels for name in cred_dir_names]
@@ -228,7 +228,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
 def create_credentials(envDir, envInstancesDir, instancesDir, is_external_cred_env) :
     logger.info(f"Start to create credentials: envDir={envDir}, envInstancesDir={envInstancesDir}, instancesDir={instancesDir}")
     logger.info(f"Creating credentials for environment directory: {envDir}")
-    credsSchema="schemas/credential.schema.json"
+    credsSchema = f"{get_schema_dir()}/credential.schema.json"
     resultingCreds = []
     #tenant
     tenantFileName = envDir+"/tenant.yml"

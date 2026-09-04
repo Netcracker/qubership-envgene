@@ -1,0 +1,13 @@
+name: "{{ current_env.environmentName }}-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "{{current_env.environmentName}}-bss-origin"
+  type: namespace
+peerNamespace:
+  name: "{{current_env.environmentName}}-bss-peer"
+  type: namespace
+controllerNamespace:
+  name: "{{current_env.environmentName}}-controller"
+  type: namespace
+  credentials: dummy-cred
+  url: {{ current_env.cloud_passport.cloud.CLOUD_PROTOCOL }}://bluegreen-controller-{{current_env.environmentName}}-controller.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST }}

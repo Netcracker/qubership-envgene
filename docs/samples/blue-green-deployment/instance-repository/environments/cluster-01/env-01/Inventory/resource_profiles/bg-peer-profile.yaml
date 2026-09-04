@@ -1,0 +1,3 @@
+# Placeholder (structure only). Env-specific resource profile - the real file holds the profile.
+# Bound to a namespace through envTemplate.envSpecificResourceProfiles in env_definition.yml,
+# keyed by the namespace deploy postfix. A namespace resolves to a single profile.

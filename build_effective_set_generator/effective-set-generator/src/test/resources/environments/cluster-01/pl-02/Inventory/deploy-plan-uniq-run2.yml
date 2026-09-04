@@ -1,0 +1,11 @@
+- wave: 0
+  version: eso-app:0.2.0-delivery-20261115.141230-4-RELEASE
+  deployPostfix: ns-test
+  namespace: ns-test-pl
+  generationType: UniqForVersion
+- wave: 0
+  version: vals-app:0.1.0-20261215.141230-3-RELEASE
+  deployPostfix: ns-test
+  namespace: ns-test-pl
+  generationType: UniqForRun
+  generationId: 0190c7e2-2b3c-8d4e-9f5a-6b7c8d9e0f1a

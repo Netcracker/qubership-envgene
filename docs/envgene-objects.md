@@ -81,6 +81,9 @@ It has the following structure:
 
 ```yaml
 # Optional
+# Free-form text describing the purpose of this Template Descriptor
+description: string
+# Optional
 # Template Composition configuration
 # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
 parent-templates:
@@ -1273,7 +1276,6 @@ A BG Domain that is part of a composite structure is embedded inline as a member
 `baseline` or in a `satellites` member. In this case the composite structure carries the domain and no standalone
 [BG Domain](#bg-domain) object is used. A BG Domain that is not part of a composite structure is represented by a
 standalone [BG Domain](#bg-domain) object.
-
 The Composite Structure object is generated during Environment Instance generation from the [Composite Structure
 Template](#composite-structure-template) specified in the Environment Template descriptor.
 
@@ -1342,7 +1344,12 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. EnvGene uses it for BGD lifecycle management and for resolving origin, peer, and controller namespace names.
+
+The standalone BG Domain object represents a BG Domain that is not part of a
+[Composite Structure](#composite-structure).
+When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
+member and no standalone BG Domain object is generated.
 
 The standalone BG Domain object represents a BG Domain that is not part of a
 [Composite Structure](#composite-structure).
@@ -1434,19 +1441,13 @@ bg_domain:
     url: https://controller-env-1-controller.qubership.org
 ```
 
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
-
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
-
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
 
 **Filename patterns:**
 
@@ -2324,6 +2325,9 @@ Registry Definitions can also be supplied as definition overrides at `/configura
 The `credentialsId` field may reference an external Credential. See
 [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
+
 Two versions of this object are supported
 
 #### Registry Definition v1.0
@@ -2881,7 +2885,7 @@ rawConfig:
   rawTargetProxy: https://proxy.raw.local/
 ```
 
-**[Registry Definition v2.0](/python/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `python/envgene/envgenehelper/schemas/regdef-v2.schema.json`
+**[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `modules/envgene/envgenehelper/schemas/regdef-v2.schema.json`
 
 ### Application Definition
 

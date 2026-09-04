@@ -1,0 +1,4 @@
+name: "test-env-tenant"
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}

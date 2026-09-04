@@ -1,0 +1,9 @@
+first_cred:
+  type: secret
+  data:
+    secret: '[encrypted:AES256_Fernet]gAAAAABqUUnt8TvBLeWZu_XprAwfOSZ_iRJcIjN7rxDRFuOl-_upOHf9Gts58GL24j6zKB4g46CEdhE97yTpPuuzJG9lks9zYtstJjNLr8XvFr-CAD-R4Pc='
+second_cred:
+  type: usernamePassword
+  data:
+    username: '[encrypted:AES256_Fernet]gAAAAABqUUnt0b_s-P72Yoow1CXS7xEyM8wfSItLalCip4uxfgUD3QHQ-l5ODiLQZkJPtKJW4s3anzmj0SabrAwkxLjmuk7uPX8POeZ8LmICqmPgX7v1KCw='
+    password: '[encrypted:AES256_Fernet]gAAAAABqUUnt9wwTaluZSe6-0_jfJiJmtp7TC6SFu89w0xbuEG8VAP-mpFjdfO9ZIFgI059D2AYcv75R5bayM-LYDXQyw8DIZyDeiMPTi1gruwRqyT5yFRM='

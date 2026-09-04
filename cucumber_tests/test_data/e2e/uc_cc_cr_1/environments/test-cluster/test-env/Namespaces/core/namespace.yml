@@ -1,0 +1,9 @@
+name: core
+deployParameters:
+  service_url: ${test_url}
+deployParameterSets: []
+e2eParameters:
+  test_url: "https://test.example.com"
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

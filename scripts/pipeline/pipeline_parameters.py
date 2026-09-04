@@ -1,0 +1,178 @@
+import copy
+import json
+import os
+import shlex
+import uuid
+from os import getenv
+from pathlib import Path
+from typing import Self
+
+import yaml
+from pydantic import BaseModel, Field
+
+from envgenehelper import logger, writeToFile
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
+from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
+from envgenehelper.sd_helper import MergeType
+from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, BgdOperation, \
+    DeltaDeployType
+from envgenehelper.plugin_engine import PluginEngine
+
+
+class PipelineParametersHandler(BaseModel):
+    model_config = {"arbitrary_types_allowed": True}
+
+    params: dict
+    internal_params: dict
+    sensitive_params: list
+    full_env_name: str
+    cluster_name: str
+    env_name: str
+    es_generation_mode: GenerationMode = GenerationMode.PARTIAL
+    partial_merge_mode: PartialMergeMode | None = None
+    namespace_by_deploy_postfix: dict = Field(default_factory=dict)
+    deploy_plan: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan.read())
+    deploy_plan_delta: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan(entities=[]))
+    work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
+    dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
+
+    @classmethod
+    def from_env(cls) -> Self:
+        full_env_name = getenv("ENV_NAMES")
+
+        params = {
+            'ENV_NAMES': full_env_name,
+            'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
+            'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
+            'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
+            'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
+            'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
+            'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
+            "SD_VERSION": getenv("SD_VERSION"),
+            "SD_DATA": getenv("SD_DATA"),
+            "SD_DELTA": getenv("SD_DELTA"),
+            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE", MergeType.BASIC.value),
+            "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
+            "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
+            "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
+            'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
+            'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
+            'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
+            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
+            'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
+            'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
+            "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
+            "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
+            "CUSTOM_PARAMS": getenv("CUSTOM_PARAMS"),
+            "DEPLOYMENT_TICKET_ID": getenv("DEPLOYMENT_TICKET_ID"),
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
+                "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
+            "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
+            "DELTA_DEPLOY": getenv("DELTA_DEPLOY", DeltaDeployType.NONE.value),
+            "SSL_CERTIFICATES_BUNDLE": getenv("SSL_CERTIFICATES_BUNDLE"),
+            "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
+            "APPLICATION_VERSIONS": getenv("APPLICATION_VERSIONS"),
+            "DEPLOY_POSTFIXES_FILTER": getenv("DEPLOY_POSTFIXES_FILTER", ""),
+            "NAMESPACE_NAMES_FILTER": getenv("NAMESPACE_NAMES_FILTER", ""),
+            "COMPONENT_NAMES_FILTER": getenv("COMPONENT_NAMES_FILTER", ""),
+            "WAVE_NAMES_FILTER": getenv("WAVE_NAMES_FILTER", ""),
+            "BG_NS_TARGET": getenv("BG_NS_TARGET"),
+            "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
+            "BGD_OPERATION": getenv("BGD_OPERATION"),
+            "BG_STATE": getenv("BG_STATE"),
+        }
+
+        pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
+        if pipe_param_plugin.modules:
+            pipe_param_plugin.run(pipeline_params=params)
+
+        for k, v in params.items():
+            try:
+                parsed = yaml.safe_load(v)
+            except (yaml.YAMLError, AttributeError):
+                continue
+            if isinstance(parsed, (dict, list)):
+                params[k] = json.dumps(parsed, separators=(",", ":"), default=str)
+
+        cluster_name, env_name = full_env_name.split("/", 1)
+
+        for k, v in params.items():
+            if v is not None:
+                os.environ[k] = str(v)
+        internal_params = {
+            'FULL_ENV_NAME': full_env_name,
+            'CLUSTER_NAME': cluster_name,
+            'ENVIRONMENT_NAME': env_name,
+        }
+        for k, v in internal_params.items():
+            os.environ[k] = v
+        sensitive_params = ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"]
+        return cls(
+            params=params,
+            sensitive_params=sensitive_params,
+            internal_params=internal_params,
+            full_env_name=full_env_name,
+            cluster_name=cluster_name,
+            env_name=env_name,
+            es_generation_mode=resolve_es_generation_mode(cluster_name, env_name),
+        )
+
+    def is_gitlab_deploy(self) -> bool:
+        return self.params.get("PIPELINE_TYPE") == PipelineType.GITLAB_DEPLOY
+
+    def is_bgd_warmup(self) -> bool:
+        return (OperationType(self.params.get('OPERATION_TYPE')) == OperationType.BGD
+                and BgdOperation(self.params.get('BGD_OPERATION')) == BgdOperation.WARMUP)
+
+    def is_clean(self) -> bool:
+        return OperationType(self.params.get('OPERATION_TYPE')) == OperationType.CLEAN
+
+    def is_deploy_or_clean(self) -> bool:
+        return OperationType(self.params.get('OPERATION_TYPE')) in (OperationType.DEPLOY, OperationType.CLEAN)
+
+    # temporary, for get_sboms only - drop once sbom generation moves into effective_set_entrypoint.py
+    def resolve_source_dp(self) -> EnvgeneDeployPlan | None:
+        if self.is_gitlab_deploy():
+            return None if self.is_clean() else self.deploy_plan_delta
+        if self.es_generation_mode == GenerationMode.FULL:
+            return self.deploy_plan
+        if self.partial_merge_mode == PartialMergeMode.FORWARD:
+            return self.deploy_plan_delta
+        return None
+
+    def log_pipeline_params(self) -> None:
+        params = {**self.internal_params, **copy.deepcopy(self.params)}
+        if params.get("CRED_ROTATION_PAYLOAD"):
+            params["CRED_ROTATION_PAYLOAD"] = "***"
+
+        env_inventory_content = params.get("ENV_INVENTORY_CONTENT")
+        if env_inventory_content:
+            parsed = json.loads(env_inventory_content)
+            self._hide_secrets(parsed)
+            params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
+
+        params_str = "Input parameters are: " + "".join(f"\n{k.upper()}: {v}" for k, v in params.items())
+        logger.info(params_str)
+
+    def write_dotenv(self, exclude_keys: set[str] | None = None) -> None:
+        excluded = exclude_keys or set()
+        lines = []
+        for key, value in {**self.params, **self.internal_params}.items():
+            if value is None or key in self.sensitive_params or key in excluded:
+                continue
+            value = str(value)
+            if "\n" in value:
+                raise ValueError(f"Newlines are not allowed in dotenv values: {key}.")
+            lines.append(f"{key}={shlex.quote(value)}")
+        writeToFile(self.dotenv_path, "\n".join(lines))
+
+    def _hide_secrets(self, data) -> None:
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.lower() in {"username", "password", "secret"}:
+                    data[k] = "***"
+                else:
+                    self._hide_secrets(v)
+        elif isinstance(data, list):
+            for item in data:
+                self._hide_secrets(item)
