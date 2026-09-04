@@ -121,6 +121,20 @@ function main() {
         exit 1
     fi
 
+    # Install Giltab Runner certificate if provided
+    if [ -n "${CI_SERVER_TLS_CA_FILE:-}" ]; then
+        if [ -f "${CI_SERVER_TLS_CA_FILE}" ]; then
+            # 16.6+: already a file path
+            export GIT_SSL_CAINFO="${CI_SERVER_TLS_CA_FILE}"
+            echo "export GIT_SSL_CAINFO=${CI_SERVER_TLS_CA_FILE}" >> ~/.bashrc
+        else
+            # pre-16.6: raw PEM text, write it out ourselves
+            printf '%s\n' "${CI_SERVER_TLS_CA_FILE}" > /tmp/ci_ca.pem
+            export GIT_SSL_CAINFO=/tmp/ci_ca.pem
+            echo "export GIT_SSL_CAINFO=/tmp/ci_ca.pem" >> ~/.bashrc
+        fi
+    fi
+
     local certs_applied=0
 
     # Install SSL_CERTIFICATES_BUNDLE if provided
