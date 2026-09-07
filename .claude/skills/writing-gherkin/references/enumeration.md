@@ -42,10 +42,18 @@ output context that carries the same references under a different rule, or a sys
 of the entity with its own constraints. Naming them explicitly is what stops the matrix from silently
 collapsing to the one surface and the one category you started with.
 
-Do the same for the pipeline flows. If a behavior is reachable through more than one flow, either give
-it a case per flow or state which flow the family covers and why the other is out of scope. Silently
-authoring every case in one flow - the legacy toggles, say, and never the modern-toolset run - is the
-most common way a family looks complete while covering half the behavior.
+Do the same for the pipeline flows. When a behavior is reachable through more than one flow, find where
+the flows actually diverge - the step whose code differs. A step that runs the same code in both flows
+(env build renders the instance identically whether it was reached by a toggle or by a modern-toolset
+deploy) is flow-independent: cover it once and say so. A step that differs (effective-set generation
+dispatches to a different entrypoint per flow) is a real second case. You need not re-run the full shape
+matrix in every flow when the differing step delegates the actual shaping to shared code: cover the
+shape variants once under one flow, then add one reachability smoke under each other flow that confirms
+that entrypoint reaches the surface and emits it. Either way, state the split in the output - which flow
+each case runs under, and why the others are a smoke or omitted - so the flow choice is never left
+implicit. Silently covering one flow, legacy or modern, is the most common way a family looks complete
+while covering half the behavior; a redundant per-flow copy of a step that behaves identically in both
+is the opposite waste. Targeting the divergence avoids both.
 
 ## Step 2 - one happy path per valid combination
 

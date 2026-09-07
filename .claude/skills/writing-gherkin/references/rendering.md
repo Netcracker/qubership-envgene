@@ -40,7 +40,11 @@ paste-ready, because a scenario that invents its own step vocabulary cannot run.
   actually reaches the code path under test (see the trigger requirement in grounding). This is the
   minimal complete set, not a full environment dump: an input that changes neither reachability nor
   outcome stays implicit. A missing gating input makes the scenario pass vacuously, so treat it as a
-  rendering defect, not a stylistic gap.
+  rendering defect, not a stylistic gap. When a flow needs a multi-step preamble - the modern-toolset
+  deploy Given sets a pipeline type, an operation, application versions, and resolves the AppDefs and
+  RegDefs - copy that preamble verbatim from the existing suite scenario that already runs that flow,
+  rather than reconstructing it from memory; a partial preamble fails to reach the behavior exactly as
+  a missing toggle does.
 - **Name each scenario with its case.** Use the family's UC ID scheme, continuing the numbering. When
   proposing additions to an existing family, continue from the last used ID.
 - **The Then asserts the grounded channel.** Every Then checks the observable channel from phase 3 - a
