@@ -25,4 +25,5 @@ migration-cli = "migration_cli.main:cli"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["../cli-tests"]
 addopts = "-v -ra"

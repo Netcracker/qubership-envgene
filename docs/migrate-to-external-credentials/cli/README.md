@@ -21,6 +21,17 @@ pip install -e .
 pip install -e ".[decrypt]"   # Fernet field-level decryption
 ```
 
+## Tests
+
+Dev tests and fixtures live at repo root in `scripts/tests/migration_cli/` (not part of this
+runtime package - keeps the skill pack free of dev-only content). Run from the repository root:
+
+```bash
+pip install -e docs/migrate-to-external-credentials/cli
+pip install pytest
+pytest scripts/tests/migration_cli
+```
+
 ## Collect output shape
 
 One YAML file for the whole Instance Repository. Cluster and shared credentials are stored once, not duplicated per environment:

@@ -1,62 +1,81 @@
-# Migrate to External Credentials
+# Migrate to External Credentials (pack)
 
-One place for EnvGene cutover from local Credentials to External Credentials: how-tos, agent
-skills, and a pointer to the migration CLI.
+P2 self-contained skill pack: one entry skill, three modes, scripts, and migration CLI inside
+this folder. Skill name: `migrate-to-external-credentials`.
 
-- [Layers](#layers)
+- [Discovery](#discovery)
+- [Reading order](#reading-order)
 - [Layout](#layout)
-- [Order](#order)
+- [Install CLI](#install-cli)
 - [Out of scope](#out-of-scope)
 
-## Layers
+## Discovery
 
-| Layer | Location | Does | Does not |
-|-------|----------|------|----------|
-| How-to | [how-to/](how-to/) | Human procedure | Edit YAML for you |
-| Skills | [skills/](skills/) | YAML cutover via scripts + confirmations | Pipeline, Store writes, passwords/tokens |
-| CLI | [cli/](cli/) | `collect` / `export-credentials` / `fill` for Store transfer | Edit Instance Credential YAML |
+Canonical in-repo path: `docs/migrate-to-external-credentials/` (this folder). Scripts and
+CLI stay here so the pack remains self-contained.
 
-Specification: [External Credentials Management](/docs/features/external-creds.md).
+For Cursor / Claude skill discovery, install or junction this folder under a skills root (do not
+fork a second copy of the scripts):
 
-Store write after fill: [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
+| Client | Skills root |
+|--------|-------------|
+| Cursor project | `.cursor/skills/migrate-to-external-credentials/` |
+| Cursor personal | `~/.cursor/skills/migrate-to-external-credentials/` |
+| Claude Code personal | `~/.claude/skills/migrate-to-external-credentials/` |
+
+Prefer a directory junction or symlink to this docs path. If you must copy, sync from this folder
+after changes. Entry file: [SKILL.md](SKILL.md) (`disable-model-invocation: true` - attach or
+invoke explicitly).
+
+## Reading order
+
+| Step | Mode | Reference |
+|------|------|-----------|
+| 0 | - | [references/overview.md](references/overview.md) |
+| 1 | `template` | [references/mode-template.md](references/mode-template.md) |
+| 2 | `transfer` (`collect`) | [references/mode-transfer.md](references/mode-transfer.md) - if values are still in Instance Git |
+| 3 | `instance` | [references/mode-instance.md](references/mode-instance.md) |
+| 4 | `transfer` (`fill` / export) | [references/mode-transfer.md](references/mode-transfer.md) - after Effective Set `skip` |
+
+Invoke the skill once: [SKILL.md](SKILL.md). The agent picks a mode and stays on it until that
+mode ends.
 
 ## Layout
 
 ```text
 docs/migrate-to-external-credentials/
+  SKILL.md                 # only skill entry
   README.md
-  how-to/
+  references/
     overview.md
-    migrate-template-repository.md
-    migrate-instance-repository.md
-    transfer-secrets-to-store.md
-  skills/
-    shared/                 # report format + extcreds_mig Python helpers
-    template-repository/    # SKILL.md + scripts
-    instance-repository/    # SKILL.md + scripts
-
-cli/                        # pip package — collect / export-credentials / fill
+    mode-template.md
+    mode-instance.md
+    mode-transfer.md
+    template/              # Template policy, report format, transforms
+    instance/              # Instance policy, report format, transforms
+  scripts/
+    template/
+    instance/
+    shared/extcreds_mig/
+  cli/                     # migration-cli (runtime only)
 ```
 
-## Order
+Dev tests for `migration-cli` live outside the skill pack, at repo-root
+`scripts/tests/migration_cli/` - alongside the tests for the repo's other `scripts/` modules
+(`creds_rotation/`, etc.). They are not part of what gets junctioned into a skills root.
 
-1. Template Repository YAML cutover (`migrate-template-repository`) → publish a concrete Template
-   version.
-2. If actual passwords and tokens are still in the Instance Repository: `migration-cli collect`
-   **before** Instance cutover.
-3. Instance Repository YAML cutover (`migrate-instance-repository`).
-4. Effective Set with `EXTERNAL_CREDENTIAL_PROVISIONING=skip` (Context only).
-5. Transfer secrets: `export-credentials` (Jenkins path) if needed → `fill` →
-   `external-cred-provision`.
-6. Effective Set with `EXTERNAL_CREDENTIAL_PROVISIONING=apply` (default), then test deploy and
-   remaining environments.
+## Install CLI
 
-See [overview Flow](how-to/overview.md#flow). Skills and how-tos stop at handoff. They do not run
-the pipeline.
+```bash
+cd docs/migrate-to-external-credentials/cli
+pip install -e .
+pip install -e ".[decrypt]"   # Fernet field-level decryption
+```
 
 ## Out of scope
 
-- Pipeline orchestration inside skills
+- Pipeline orchestration inside the skill (clone, branch, commit, pipeline) - later P2
 - Blue-Green and template composition
 - Template Repository system credentials (local-only by design)
 - Putting actual passwords or tokens in Git, MRs, or migration notes
+- Mixing No-CMDB migration into this pack (ask only; do not run that migration here)
