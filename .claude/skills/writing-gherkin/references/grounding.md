@@ -43,9 +43,11 @@ So for every case, trace inputs -> step -> outcome, not only outcome -> channel:
 - Confirm the Given sets every input that step gates on. If it does not, the case is not grounded
   until the missing input is added - record the required input, and do not render the scenario as if
   it already ran.
-- For a positive, prefer an assertion that the producing step actually ran (its status is SUCCESS)
-  over `the orchestrator completes successfully` alone, which cannot tell a real pass from a skipped
-  step. The existing deploy scenarios pin per-step status for exactly this reason.
+- For a positive whose only outcome would otherwise be `the orchestrator completes successfully`
+  (exit 0, which passes even when the producing step was skipped), assert something that proves the
+  step ran: the artifact it writes, or its status in the pipeline summary. Where the Then already
+  checks such an artifact - a file the step writes, a log line it emits from inside the step - that
+  proof is already present, and a separate step-status assertion is redundant, not required.
 - A negative has the same trap one level down. The run must reach the failure point, so the inputs
   must first trigger the step that then fails; a negative that dies before its step runs proves
   nothing - the same miss `bdd-test-review` records for a failure observed at the wrong stage.
