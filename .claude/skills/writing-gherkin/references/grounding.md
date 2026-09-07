@@ -26,6 +26,35 @@ Give fixtures distinguishing traits so the outcome is checkable. When two copies
 both satisfy an outcome, a distinct registry name per copy makes the emitted request reveal which copy
 won. Without the distinguishing trait, the check cannot tell the right outcome from a wrong one.
 
+## The trigger requirement
+
+A channel on the outcome is only half the gate. The other half is that the scenario's own inputs must
+drive execution to the step that produces that outcome. A scenario whose Given omits the input that
+turns the behavior on runs to a clean exit without ever exercising it, and its Then passes vacuously -
+the exact mirror of an unobservable outcome, and just as worthless.
+
+So for every case, trace inputs -> step -> outcome, not only outcome -> channel:
+
+- Identify the step that produces the asserted outcome and read its run condition. In this repository
+  steps gate on pipeline parameters: env build runs only under `ENV_BUILDER` or a GITLAB_DEPLOY
+  deploy/clean, effective-set generation only under `GENERATE_EFFECTIVE_SET` or the same
+  modern-toolset flow. A validation that fires inside env build is never reached by a run that sets
+  neither, however carefully its Then is written.
+- Confirm the Given sets every input that step gates on. If it does not, the case is not grounded
+  until the missing input is added - record the required input, and do not render the scenario as if
+  it already ran.
+- Use `the pipeline step X has status ...` in exactly two situations, and skip it otherwise. First, to
+  pin where a negative fails: assert the failing step is FAILED, and where it matters that an earlier
+  step is SUCCESS, so the failure is observed at the stage the case recorded rather than anywhere.
+  Second, as the sole proof a positive ran, when its only other outcome would be `the orchestrator
+  completes successfully` (exit 0, which passes even when the producing step was skipped). Do not add a
+  SUCCESS status line to a positive that already asserts an artifact, a golden or reference match, or a
+  log line the step emits - that assertion is already the proof the step ran, and the status line is
+  redundant.
+- A negative has the same trap one level down. The run must reach the failure point, so the inputs
+  must first trigger the step that then fails; a negative that dies before its step runs proves
+  nothing - the same miss `bdd-test-review` records for a failure observed at the wrong stage.
+
 ## Truth-adaptive verification
 
 Where you confirm the channel exists depends on whether the code exists yet. Phase 1 recorded which

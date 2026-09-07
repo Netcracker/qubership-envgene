@@ -54,8 +54,9 @@ review existing tests, to file a CR, or to edit prose.
    input modes (CR, topic, doc file).
 2. **Enumeration** - derive the case list: documented variations, the happy path per valid combination,
    and each independent failure mode. Read `references/enumeration.md`.
-3. **Grounding** - attach each case to an observable channel and verify it, adapting to whether code
-   exists yet. Cases with no channel are flagged, not rendered as fake tests. Read
+3. **Grounding** - verify each case two ways: that its inputs reach the behavior and that its outcome
+   is observable, adapting to whether code exists yet. Cases with no channel, or whose inputs never
+   trigger the behavior, are flagged rather than rendered as tests that pass vacuously. Read
    `references/grounding.md`.
 4. **Rendering** - render the grounded case list as collapsed-Gherkin acceptance criteria and full
    Cucumber scenarios, reusing the suite's existing step vocabulary. Read `references/rendering.md`.
@@ -89,6 +90,9 @@ The router in this file picks the mode. Phases 2 to 5 and the core reference fil
 - Every rendered row traces to one enumerated case. No scenario appears without a case, and no grounded
   case is silently dropped.
 - Flag ungroundable cases explicitly. A case with no observable channel cannot become an honest test.
+- Every scenario's Given carries the complete set of inputs that trigger the behavior. A behavior
+  reachable through more than one pipeline flow is covered per flow or explicitly scoped to one - never
+  silently authored in a single flow.
 - When running unattended - invoked by another skill or a batch run with no interactive user - list the
   corpus and the case list for the record and proceed, rather than blocking on a confirmation that will
   never come.
