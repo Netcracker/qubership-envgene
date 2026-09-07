@@ -1,0 +1,12 @@
+name: core
+deployParameters:
+  complex_key:
+    key:
+      username: ${creds.get("nested-cred").username}
+      password: ${creds.get("nested-cred").password}
+      url: "https://example.com"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
