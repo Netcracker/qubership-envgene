@@ -1117,7 +1117,7 @@ Values can be separated using one of the following delimiters:
 - Newline (`\n`)
 - Semicolon (`;`)
 - Comma (`,`)
-- Space (` `)
+- Space (` `) <!-- markdownlint-disable-line MD038 -->
 
 **Example**:
 
