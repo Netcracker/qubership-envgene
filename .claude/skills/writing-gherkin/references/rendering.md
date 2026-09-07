@@ -35,6 +35,12 @@ paste-ready, because a scenario that invents its own step vocabulary cannot run.
   data from ...", "the pipeline parameter ... is set to ...", "the unified pipeline orchestrator runs",
   "the orchestrator completes successfully", "the pipeline log contains ...". A new step is a last
   resort, and when one is unavoidable, call it out so a step definition can be written.
+- **The Given carries the complete triggering input set.** List every input the behavior is gated on -
+  the flow selector, the toggles, the operation, and the discriminating fixture - so the scenario
+  actually reaches the code path under test (see the trigger requirement in grounding). This is the
+  minimal complete set, not a full environment dump: an input that changes neither reachability nor
+  outcome stays implicit. A missing gating input makes the scenario pass vacuously, so treat it as a
+  rendering defect, not a stylistic gap.
 - **Name each scenario with its case.** Use the family's UC ID scheme, continuing the numbering. When
   proposing additions to an existing family, continue from the last used ID.
 - **The Then asserts the grounded channel.** Every Then checks the observable channel from phase 3 - a
@@ -58,6 +64,21 @@ paste-ready, because a scenario that invents its own step vocabulary cannot run.
 - A scenario expected to fail until an issue is fixed carries a comment naming the state: `@xfail(strict)
   with a link to #NNNN until the fix`. This is the same convention `bdd-test-review` uses when a
   divergence is resolved code-side.
+
+## Annotating a correction to an existing family
+
+When the render fixes or extends scenarios a reader already has - a filed CR, an existing family - show
+the full corrected Given, not only the new lines, and mark each input you added or changed with a
+trailing comment naming the step it triggers:
+
+> ```gherkin
+>   And the pipeline parameter "ENV_BUILDER" is set to "true"   # added: env build is skipped without
+>                                                                # it under LEGACY, so the validation
+>                                                                # under test never runs
+> ```
+
+The reader gets a paste-ready complete set and can see, line by line, what was missing and why. A bare
+replacement that silently carries the fix hides the very gap the correction exists to close.
 
 ## When the feature has no test-suite integration yet
 

@@ -15,6 +15,13 @@ Take the variation axes from phase 1 and cross them. Typical axes in this reposi
 - **action** - create, update, delete, warmup, and so on.
 - **place** - tenant, cloud, namespace, application, or the topology positions baseline and satellite.
 - **mode** - dry-run versus apply, a toggle set versus absent, a run mode.
+- **pipeline flow** - the entry path that reaches the behavior. In this repository the same outcome is
+  produced by more than one flow: the legacy a-la-carte run (`PIPELINE_TYPE` LEGACY, selected by the
+  `ENV_BUILDER` / `GENERATE_EFFECTIVE_SET` toggles) and the modern-toolset run (`PIPELINE_TYPE`
+  GITLAB_DEPLOY with an `OPERATION_TYPE`, which reaches env build and effective-set generation with no
+  toggles at all). The two flows often run different code for the same output - they even use different
+  effective-set entrypoints - so each flow is its own case unless the behavior is provably
+  flow-independent.
 - **object shape** - the discrete shapes a payload can take (a credential type, a topology case).
 - **output surface** - every distinct artifact or context the behavior writes to: each generated file,
   each effective-set context, each output channel. A behavior that writes several outputs usually
@@ -34,6 +41,11 @@ a surface or a category that the docs mention once and the enumeration never ret
 output context that carries the same references under a different rule, or a system or built-in variant
 of the entity with its own constraints. Naming them explicitly is what stops the matrix from silently
 collapsing to the one surface and the one category you started with.
+
+Do the same for the pipeline flows. If a behavior is reachable through more than one flow, either give
+it a case per flow or state which flow the family covers and why the other is out of scope. Silently
+authoring every case in one flow - the legacy toggles, say, and never the modern-toolset run - is the
+most common way a family looks complete while covering half the behavior.
 
 ## Step 2 - one happy path per valid combination
 
