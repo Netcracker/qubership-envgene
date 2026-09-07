@@ -35,7 +35,7 @@ All other modules import and use it.
 - Consistent format across the repository
 - Usage of one logging library (`import logging`)
 
-[Link to file](https://github.com/Netcracker/qubership-envgene/blob/main/python/envgene/envgenehelper/logger.py)
+[Link to file](https://github.com/Netcracker/qubership-envgene/blob/main/modules/envgene/envgenehelper/logger.py)
 
 ---
 

@@ -86,7 +86,7 @@ RUN chown -R ci:ci /module /deployments && \
     chmod g+rwX /deployments
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+    CMD ["python", "-c", "import sys; sys.exit(0)"]
 
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write in CI/CD
 # hadolint ignore=DL3002

@@ -384,7 +384,7 @@ Functions:
           value names the namespace (scalar, or `origin`/`peer` of a per-side entry), `BG_NS_TARGET`-independent. No
           match fails naming the namespace
       - filter DP, plan filter (filter vars)
-    - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/python/artifact-searcher) lib to download SD to support public registries (Artem)
+    - AI[techDebt-P1]: use [`artifact-searcher`](https://github.com/Netcracker/qubership-envgene/tree/main/modules/artifact-searcher) lib to download SD to support public registries (Artem)
 2. `resolve_warmup_delta`
     - triggers:
       - `OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`
