@@ -167,7 +167,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    - `/environments/<cluster-name>/<env-name>/Inventory/parameters/*`
    - `/environments/<cluster-name>/<env-name>/Inventory/credentials/*`
    - `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/*`
-   - `/environments/<cluster-name>/<env-name>/shared-template-variables/*`
+   - `/environments/<cluster-name>/<env-name>/Inventory/configurations/*`
 4. Changes are committed.
 
 ---
@@ -602,9 +602,9 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Pre-requisites:**
 
 1. The target Shared Template Variable file does not exist (for the resolved `place` and `name`):
-   - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-   - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-   - `place=site` → `/environments/shared-template-variables/<name>.yml`
+   - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+   - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+   - `place=site` → `/environments/configurations/<name>.yml`
 
 **Trigger:**
 
@@ -632,10 +632,10 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `name` is present
       - `content` is present
    3. Resolves target path by `place`:
-      - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-      - `place=site` → `/environments/shared-template-variables/<name>.yml`
-   4. Creates `shared-template-variables/` directory if missing.
+      - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+      - `place=site` → `/environments/configurations/<name>.yml`
+   4. Creates the `configurations/` directory if missing.
    5. Creates the Shared Template Variable file using `content` (create-or-replace semantics; in this UC the file is expected to be missing).
 
 2. The `git_commit` job runs:
@@ -655,9 +655,9 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Pre-requisites:**
 
 1. The target Shared Template Variable file exists (for the resolved `place` and `name`):
-   - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-   - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-   - `place=site` → `/environments/shared-template-variables/<name>.yml`
+   - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+   - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+   - `place=site` → `/environments/configurations/<name>.yml`
 
 **Trigger:**
 
@@ -703,9 +703,9 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Pre-requisites:**
 
 1. The target Shared Template Variable file exists (for the resolved `place` and `name`):
-   - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-   - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-   - `place=site` → `/environments/shared-template-variables/<name>.yml`
+   - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+   - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+   - `place=site` → `/environments/configurations/<name>.yml`
 
 **Trigger:**
 
@@ -730,9 +730,9 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `place ∈ { env, cluster, site }`
       - `name` is present
    3. Resolves target path by `place`:
-      - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-      - `place=site` → `/environments/shared-template-variables/<name>.yml`
+      - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+      - `place=site` → `/environments/configurations/<name>.yml`
    4. Deletes the target Shared Template Variable file if it exists.
       - Directories are not removed.
 
