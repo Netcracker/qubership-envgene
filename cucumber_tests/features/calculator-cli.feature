@@ -114,12 +114,12 @@ Feature: Calculator CLI
     Then the effective set is generated successfully
     And the "test-app" custom-params.yaml has "LOG_LEVEL: DEBUG" at root, under global, and per-service
 
-  Scenario: UC-CC-CP-8: CUSTOM_PARAMS deployment key matching a service name goes to collision-custom-params.yaml
+  Scenario: UC-CC-CP-8: CUSTOM_PARAMS deployment key matching a service name goes to collision-deployment-parameters.yaml
     Given the workspace is initialized with test data from "e2e/uc_cc_cp_8"
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\",\"LOG_LEVEL\":\"DEBUG\"}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the "test-app" collision-custom-params.yaml contains "web: collision-value"
+    And the "test-app" collision-deployment-parameters.yaml contains "web: collision-value"
     And the "test-app" custom-params.yaml keeps the per-service entry for "worker"
 
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────

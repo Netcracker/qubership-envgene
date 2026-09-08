@@ -105,6 +105,7 @@ public class ParametersCalculationServiceV2 {
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(DEPLOY_DESC)) {
             processDeploymentDescriptorParams(parameters, parameterBundle);
         }
+        Map<String, Object> customDeployCollision = Collections.emptyMap();
         if (MapUtils.isNotEmpty(customParams.getAllParams())) {
             prepareCustomParams(customParams, parameters.getDeployParams(), parameters.getTechParams());
             Map<String, Object> customDeployMap = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
@@ -114,11 +115,21 @@ public class ParametersCalculationServiceV2 {
                     : Collections.emptySet();
             DecomposedCustom decomposed = decomposeCustomDeployParams(customDeployMap, serviceNames);
             parameterBundle.setCustomDeployParameters(decomposed.decomposed);
-            parameterBundle.setCollisionCustomDeployParameters(decomposed.collision);
+            customDeployCollision = decomposed.collision;
             parameterBundle.setCustomTechParameters(ParametersProcessor.convertParameterMapToObject(customParams.getTechnicalParams()));
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace, extCredEntities);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, k8TokenMap, originalNamespace, extCredEntities);
+        // A custom deployment key whose name equals a service name reuses the existing collision handling:
+        // merge it into collision-deployment-parameters.yaml (custom wins), instead of a dedicated file.
+        if (MapUtils.isNotEmpty(customDeployCollision)) {
+            Map<String, Object> mergedCollision = new LinkedHashMap<>();
+            if (MapUtils.isNotEmpty(parameterBundle.getCollisionDeployParameters())) {
+                mergedCollision.putAll(parameterBundle.getCollisionDeployParameters());
+            }
+            mergedCollision.putAll(customDeployCollision);
+            parameterBundle.setCollisionDeployParameters(mergedCollision);
+        }
         return parameterBundle;
     }
 

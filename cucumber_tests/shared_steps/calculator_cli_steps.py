@@ -152,12 +152,12 @@ def custom_params_yaml_has_key_at_root_global_per_service(
     )
 
 
-@then(parsers.parse('the "{app_name}" collision-custom-params.yaml contains "{key_value}"'))
-def collision_custom_params_yaml_contains(
+@then(parsers.parse('the "{app_name}" collision-deployment-parameters.yaml contains "{key_value}"'))
+def collision_deployment_params_yaml_contains(
     workspace: EnvGeneWorkspace, app_name: str, key_value: str
 ) -> None:
-    """Assert that key_value (e.g. 'web: collision-value') is present in collision-custom-params.yaml."""
-    collision_path = _find_custom_params_yaml(workspace, app_name, "collision-custom-params.yaml")
+    """Assert that key_value (e.g. 'web: collision-value') is present in collision-deployment-parameters.yaml."""
+    collision_path = _find_custom_params_yaml(workspace, app_name, "collision-deployment-parameters.yaml")
     data = yaml.safe_load(collision_path.read_text(encoding="utf-8")) or {}
 
     key, _, raw_val = key_value.partition(": ")

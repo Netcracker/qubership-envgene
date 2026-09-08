@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -167,13 +168,18 @@ public class CmdbCliTest {
                 FileTestUtils.resource("namespace-custom-param/pg-collision-custom-params-expected.yaml"),
                 pgCustomParams);
 
-        // patroni-core (service name collision) goes to collision-custom-params.yaml
+        // no dedicated collision-custom-params.yaml is emitted
         Path pgCollisionCustomParams = outputPath.resolve(
                 "deployment/pg/postgres/values/collision-custom-params.yaml");
-        assertTrue(Files.exists(pgCollisionCustomParams));
-        FileTestUtils.compareFiles(
-                FileTestUtils.resource("namespace-custom-param/pg-collision-file-expected.yaml"),
-                pgCollisionCustomParams);
+        assertFalse(Files.exists(pgCollisionCustomParams));
+
+        // patroni-core (service name collision) is merged into the existing collision-deployment-parameters.yaml
+        Path pgCollisionDeploy = outputPath.resolve(
+                "deployment/pg/postgres/values/collision-deployment-parameters.yaml");
+        assertTrue(Files.exists(pgCollisionDeploy));
+        String collisionContent = Files.readString(pgCollisionDeploy);
+        assertTrue(collisionContent.contains("patroni-core: collision-value"),
+                "collision-deployment-parameters.yaml should contain the custom collision entry, was:\n" + collisionContent);
     }
 
     @Test
