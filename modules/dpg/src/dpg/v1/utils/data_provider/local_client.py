@@ -1,8 +1,10 @@
 import os
 import yaml
 import functools
+import logging
 from pathlib import Path
 
+from .transformer import transform_params_registry
 from .middleware import DataProviderInterface, UnifiedAppDef, UnifiedRegDef
 
 from dpg.v1.utils.registry import RegistryInfo, MavenConfig, RegistryType, AuthUserPassword
@@ -10,6 +12,7 @@ from dpg.v1.utils.registry import RegistryInfo, MavenConfig, RegistryType, AuthU
 class LocalClient(DataProviderInterface):
     DEFAULT_PATH_TO_APPDEFS = os.getenv("LOCAL_APPDEFS_PATH", "AppDefs")
     DEFAULT_PATH_TO_REGDEFS = os.getenv("LOCAL_REGDEFS_PATH", "RegDefs")
+    DEFAULT_PATH_TO_PUBREG_FILE = os.getenv("LOCAL_PUBREG_FILE", "pubreg_params.yaml")
 
     def __init__(self, root_dir: Path = None):
         self.root_dir = root_dir
@@ -97,11 +100,18 @@ class LocalClient(DataProviderInterface):
             password=""
         )
 
-        # TODO: need to implement getting auth config from something config
+        pubregfile = self.root_dir / self.DEFAULT_PATH_TO_PUBREG_FILE
+        if not pubregfile.exists():
+            pubregfile = self.root_dir / self.DEFAULT_PATH_TO_REGDEFS / self.DEFAULT_PATH_TO_PUBREG_FILE
+        if not pubregfile.exists():
+            logging.warning(f"File with PUBREG params doesn't exists, skipping auth in registry.")
+            return RegistryInfo(
+                url=__url,
+                type=__type_reg,
+                maven_config=__maven_config,
+                auth_config=__auth_config
+            )
 
-        return RegistryInfo(
-            url=__url,
-            type=__type_reg,
-            maven_config=__maven_config,
-            auth_config=__auth_config
-        )
+        params = yaml.safe_load(pubregfile.read_text())
+        return transform_params_registry(regdef, params)
+
