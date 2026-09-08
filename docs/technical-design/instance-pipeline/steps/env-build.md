@@ -135,8 +135,27 @@ Domain, Profiles, and credential files.
    5. When pipeline parameter `OPERATION_TYPE` is `CLEAN`, the step marks cleaned Namespaces in
        rendered Namespace objects.
 
-   6. The step collects and copies Resource Profiles into `tmp/render/<env-name>/Profiles/`,
-       applying Environment Inventory `envTemplate.envSpecificResourceProfiles` overrides.
+   6. The step combines resource profile overrides for the rendered Cloud and Namespace objects, writing
+      one result file per object under `tmp/render/<env-name>/Profiles/`.
+
+      1. **Resolve the file.** For each `envTemplate.envSpecificResourceProfiles` entry, the step
+         resolves the referenced name to a file, searching the environment `resource_profiles/` folder,
+         then the cluster scope, then the global scope, and taking the first match.
+
+      2. **Merge mode** (`mergeEnvSpecificResourceProfiles: true`, the default) forms a name-keyed union
+         of the template override and the environment-specific override across the application, service,
+         and parameter levels. Entries on one side are kept, entries on both are merged, and on a leaf
+         value and on the top-level `baseline` the environment-specific value wins. Nothing is removed,
+         and the result keeps the template override name.
+
+      3. **Replace mode** (`mergeEnvSpecificResourceProfiles: false`) replaces the template override in
+         full with the environment-specific override. The result keeps the environment-specific name.
+
+      4. **Standalone override.** An environment-specific override that references no template profile on
+         its object is attached to that object.
+
+      The `generate_effective_set` step reads these files during effective set generation. See
+      [resource profiles](/docs/features/resource-profile.md) for the end-to-end model.
 
    7. The step merges `*_override` files into rendered Cloud and Namespace YAML and deletes the
        override files.
@@ -203,3 +222,6 @@ The Environment Instance is not rebuilt.
 
 - [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/steps/deploy-postfix-namespace-map.md)
 - [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
+- [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md)
+- [Resource profiles](/docs/features/resource-profile.md)
+- [Calculator CLI](/docs/features/calculator-cli.md)
