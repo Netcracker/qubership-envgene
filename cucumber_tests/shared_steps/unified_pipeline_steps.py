@@ -1,4 +1,6 @@
 """Shared step definitions for unified pipeline orchestrator scenarios."""
+import json
+
 from pytest_bdd import given, when, then, parsers
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 import shutil
@@ -89,6 +91,14 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
 
     # Copy all contents of the test data directory directly into the workspace base_dir
     shutil.copytree(source_dir, workspace.base_dir, dirs_exist_ok=True)
+
+    print(f"\n=== COPY TEST DATA ===")
+    print(f"Source:      {source_dir}")
+    print(f"Destination: {workspace.base_dir}")
+    print(f"Files now present in {workspace.base_dir}:")
+    for path in workspace.base_dir.rglob("*"):
+        if path.is_file():
+            print(f"  {path.relative_to(workspace.base_dir)}")
 
     # Workaround for legacy test_data using 'configurations' instead of 'configuration'
     legacy_config = workspace.base_dir / "configurations"

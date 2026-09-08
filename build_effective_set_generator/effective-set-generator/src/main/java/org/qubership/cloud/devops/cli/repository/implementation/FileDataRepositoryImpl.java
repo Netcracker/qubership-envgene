@@ -60,7 +60,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.qubership.cloud.devops.cli.constants.GenericConstants.*;
+import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.EFFECTIVE_SET_FAILED;
+import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.SECRET_STORE_FILE_NOT_FOUND;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.MIXED_CREDS;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 
 
 @ApplicationScoped
@@ -468,7 +471,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 };
         Map<String, SecretStoreDTO> secretStores = fileDataConverter.parseInputFile(typeRef, new File(secretStorePath.toString()));
         if (secretStores == null) {
-            throw new ExternalCredProcessingException(String.format("Mandatory file for external cred mode /configuration/secret-stores.yml is not found"));
+            logError(SECRET_STORE_FILE_NOT_FOUND);
+            throw new ExternalCredProcessingException(SECRET_STORE_FILE_NOT_FOUND);
         }
         inputData.setSecretStoreDTOMap(secretStores);
     }

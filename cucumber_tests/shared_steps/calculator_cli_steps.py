@@ -10,6 +10,8 @@ from pytest_bdd import then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
+print("LOADED calculator_cli_steps")
+
 # Production CLI entry point — present in the envgene Docker image under /module/
 _PRODUCTION_CLI = "/module/scripts/utils/run_effective_set_cli.sh"
 
@@ -26,7 +28,7 @@ _MOCK_REGISTRY = {
     }
 }
 
-
+print("REGISTERING EFFECTIVE SET STEP")
 @then(parsers.parse('the effective set deployment parameters contain "{key_value}"'))
 def effective_set_deployment_params_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
     es_dir = (
@@ -39,6 +41,7 @@ def effective_set_deployment_params_contain(workspace: EnvGeneWorkspace, key_val
     for params_file in es_dir.rglob("*.yaml"):
         if key_value in params_file.read_text(encoding="utf-8"):
             found = True
+            print(f">>> FOUND '{key_value}' in {params_file}")
             break
     assert found, (
         f"'{key_value}' not found in any *.yaml under {es_dir}.\n"

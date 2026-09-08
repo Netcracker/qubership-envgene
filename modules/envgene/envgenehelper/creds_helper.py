@@ -296,7 +296,10 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
         return
     if is_external_cred_env:
         if types != {EXTERNAL_CREDENTIAL_TYPE}:
-            raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
+            raise ValueError(
+                f"External credentials Environment Instance must contain Credentials "
+                f"of a single category (external only). Found: {types} in {cred_file}"
+            )
     else:
         if EXTERNAL_CREDENTIAL_TYPE in types:
             raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
