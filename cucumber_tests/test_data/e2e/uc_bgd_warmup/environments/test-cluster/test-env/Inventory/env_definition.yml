@@ -1,0 +1,9 @@
+inventory:
+  environmentName: "test-env"
+  cloudName: "test-cluster"
+envTemplate:
+  name: "bdg-test"
+  artifact: "test-artifact:v1"
+  bgNsArtifacts:
+    origin: "test-artifact:v1"
+    peer: "test-artifact:v2"

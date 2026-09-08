@@ -20,23 +20,32 @@ echo "================================================="
 # Navigate to project root (parent of cucumber_tests)
 cd "${SCRIPT_DIR}/.."
 
-# 1. Build and start the cucumber container
-echo "[1/4] Building and starting cucumber container..."
+# 1. Rebuild the production base image from the current checkout.
+#    The 'cucumber' service (see devtools/cucumber/Dockerfile) is FROM local-envgene-main,
+#    which bakes in scripts/ and modules/dpg at build time. Docker will happily reuse a
+#    stale local-envgene-main tag left over from a previous run, silently testing old code
+#    even though /workspace is volume-mounted with the current checkout - so this rebuild
+#    is not optional. This mirrors what the perform_e2e_tests.yml CI workflow does.
+echo "[1/5] Rebuilding local-envgene-main base image..."
+docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+
+# 2. Build and start the cucumber container
+echo "[2/5] Building and starting cucumber container..."
 docker compose -f devtools/docker-compose.yml up -d --build cucumber
 
 cleanup() {
-    echo "[4/4] Tearing down Docker Compose environment..."
+    echo "[5/5] Tearing down Docker Compose environment..."
     docker compose -f devtools/docker-compose.yml down --rmi local
 }
 trap cleanup EXIT
 
-# 2. Install Python packages from mounted source repo
-echo "[2/4] Installing envgene Python packages from source repo..."
+# 3. Install Python packages from mounted source repo
+echo "[3/5] Installing envgene Python packages from source repo..."
 docker compose -f devtools/docker-compose.yml exec -T cucumber \
     bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
 
-# 3. Run pytest
-echo "[3/4] Executing BDD tests..."
+# 4. Run pytest
+echo "[4/5] Executing BDD tests..."
 mkdir -p reports
 
 if [ -n "${SCENARIOS}" ]; then

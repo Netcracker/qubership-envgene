@@ -111,8 +111,7 @@ This guide provides instructions for creating a Environment Inventory in the Ins
 
     ```yaml
     ENV_NAMES: "<cluster-name>/<env-name>"
-    ENV_INVENTORY_INIT: "true"
-    ENV_SPECIFIC_PARAMS: <...> # Optional. Used to define environment-specific parameters, or credentials
+    ENV_INVENTORY_CONTENT: <...> # JSON in string with the Environment Inventory content
     ```
 
     See details about pipeline parameter options in the [documentation](/docs/instance-pipeline-parameters.md)

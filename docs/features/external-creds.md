@@ -332,6 +332,9 @@ It may contain several secret store objects:
   projectId: string
 ```
 
+For OpenBao, use `type: vault`. OpenBao is Vault-compatible, so EnvGene addresses it through the Vault
+reference scheme, and no separate store type exists.
+
 The map key `<secret-store-name>` is the **store identifier**. It must match the regular expression
 `[A-Za-z_][A-Za-z0-9_]*`, so it is usable as a CI/CD variable prefix at provisioning time (see
 [Store identifier and CI/CD variables](#store-identifier-and-cicd-variables)). Dashes and other characters
@@ -471,8 +474,9 @@ consumed by the [External Credentials provisioning CLI](/docs/features/external-
 The context shape is a `credentials` map. Secret Store definitions and authentication are out of band - the
 CLI reads them from the job environment.
 
-The file is emitted when at least one [Credential](#credential) has `type: external`. Otherwise the file is
-not produced.
+The file is emitted when every [Credential](#credential) in the Environment Instance has `type: external`. If
+all Credentials are local, the file is not produced. Effective Set generation rejects a mix of external and
+local Credentials.
 
 This context is located at:
 
@@ -502,7 +506,7 @@ credentials:
     # `overwrite` is reserved for a future rotation flow and is not emitted by
     # the calculator.
     strategy: enum [fail_if_absent, create_if_absent, overwrite]
-    # Emitted only when `strategy` is `create_if_absent` (or `overwrite`).
+    # Emitted only when `strategy` is `create_if_absent`.
     # Omitted for `fail_if_absent` because the CLI does not write.
     #
     # Calculator-emitted Context carries the reserved marker `_generateValue`.

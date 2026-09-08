@@ -7,13 +7,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from envgenehelper import logger
+from envgenehelper.business_helper import get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.repo_paths import get_sparse_checkout_paths
+from publish_artifacts.publish_artifacts import artifacts_output_root
 
 _MAX_FAN_OUT_WORKERS = 3
 
 
 def _worktree_path(base_dir: Path, full_env_name: str) -> Path:
-    cluster_name, env_name = full_env_name.split("/", 1)
+    cluster_name = get_cluster_name_from_full_name(full_env_name)
+    env_name = get_environment_name_from_full_name(full_env_name)
     return base_dir / "tmp" / "worktrees" / cluster_name / env_name
 
 
@@ -57,14 +60,17 @@ def _remove_worktree(base_repo: Path, worktree_path: Path) -> None:
         )
 
 
-def _child_env_for(worktree_path: Path, full_env_name: str) -> dict[str, str]:
-    cluster_name, env_name = full_env_name.split("/", 1)
+def _child_env_for(worktree_path: Path, full_env_name: str, artifacts_output_dir: Path) -> dict[str, str]:
+    cluster_name = get_cluster_name_from_full_name(full_env_name)
+    env_name = get_environment_name_from_full_name(full_env_name)
     child = dict(os.environ)
     child["CI_PROJECT_DIR"] = str(worktree_path)
     child["ENV_NAMES"] = full_env_name
     child["FULL_ENV_NAME"] = full_env_name
     child["CLUSTER_NAME"] = cluster_name
     child["ENVIRONMENT_NAME"] = env_name
+    child["ARTIFACTS_OUTPUT_DIR"] = str(artifacts_output_dir)
+    child["ENVGENE_FAN_OUT_CHILD"] = "1"
     return child
 
 
@@ -98,7 +104,7 @@ def _sparse_checkout_worktree(worktree_path: Path, full_env_name: str) -> None:
 
 
 def _run_child_subprocess(
-    full_env_name: str, worktree_path: Path, logs_dir: Path
+    full_env_name: str, worktree_path: Path, logs_dir: Path, artifacts_output_dir: Path
 ) -> int:
     log_file_name = full_env_name.replace("/", "_") + ".log"
     log_path = logs_dir / log_file_name
@@ -108,7 +114,7 @@ def _run_child_subprocess(
     )
     proc = subprocess.Popen(
         [sys.executable, "-m", "pipeline.orchestrator"],
-        env=_child_env_for(worktree_path, full_env_name),
+        env=_child_env_for(worktree_path, full_env_name, artifacts_output_dir),
         cwd=worktree_path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -136,7 +142,7 @@ def _run_child_subprocess(
     return returncode
 
 
-def fan_out(env_names: Sequence[str]) -> int:
+def run_multi_env_pipeline(env_names: Sequence[str]) -> int:
     base_repo = Path(os.getenv("CI_PROJECT_DIR", os.getcwd()))
     main_path = base_repo
     commit_sha = os.getenv("CI_COMMIT_SHA", "HEAD")
@@ -159,6 +165,8 @@ def fan_out(env_names: Sequence[str]) -> int:
         f"running parallel subprocess fan-out (max_workers={max_workers})"
     )
 
+    artifacts_output_dir = artifacts_output_root(base_repo)
+
     try:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
@@ -167,6 +175,7 @@ def fan_out(env_names: Sequence[str]) -> int:
                     full_env_name,
                     worktree_path,
                     logs_dir,
+                    artifacts_output_dir,
                 ): full_env_name
                 for full_env_name, worktree_path in env_to_worktree.items()
             }
@@ -179,6 +188,14 @@ def fan_out(env_names: Sequence[str]) -> int:
                     returncode = 1
                 if returncode != 0:
                     failed.append(full_env_name)
+                cluster_name = get_cluster_name_from_full_name(full_env_name)
+                env_name = get_environment_name_from_full_name(full_env_name)
+                log_src = main_path / "tmp" / "logs" / f"{cluster_name}_{env_name}.log"
+                if log_src.exists():
+                    log_name = f"FAILED_{log_src.name}" if returncode != 0 else log_src.name
+                    log_dest = artifacts_output_dir / "logs" / log_name
+                    log_dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(log_src, log_dest)
     finally:
         for worktree_path in env_to_worktree.values():
             _remove_worktree(base_repo, worktree_path)

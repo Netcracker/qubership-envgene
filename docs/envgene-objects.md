@@ -81,6 +81,9 @@ It has the following structure:
 
 ```yaml
 # Optional
+# Free-form text describing the purpose of this Template Descriptor
+description: string
+# Optional
 # Template Composition configuration
 # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
 parent-templates:

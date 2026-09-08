@@ -16,7 +16,16 @@ if (-not $SourceRoot) {
 Write-Host "Starting Environment Inventory Generation Tests in Docker..." -ForegroundColor Cyan
 Write-Host "Source repo: $SourceRoot" -ForegroundColor Gray
 
-# 1. Build and start the cucumber container
+# 1. Rebuild the production base image from the current checkout.
+#    The 'cucumber' service (devtools/cucumber/Dockerfile) is FROM local-envgene-main,
+#    which bakes in scripts/ and modules/dpg at build time. Docker will happily reuse a
+#    stale local-envgene-main tag left over from a previous run, silently testing old code
+#    even though /workspace is volume-mounted with the current checkout - so this rebuild
+#    is not optional. This mirrors what the perform_e2e_tests.yml CI workflow does.
+Write-Host "Rebuilding local-envgene-main base image..." -ForegroundColor Yellow
+docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
+
+# 2. Build and start the cucumber container
 Write-Host "Building and starting the Docker Compose environment..." -ForegroundColor Yellow
 docker compose -f devtools/docker-compose.yml up -d --build cucumber
 

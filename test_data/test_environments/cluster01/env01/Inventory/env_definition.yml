@@ -19,9 +19,9 @@ envTemplate:
   sharedTemplateVariables:
     - shared-template-variables
   envSpecificParamsets:
-    bss: ["env-specific-app"]
+    app: ["env-specific-app"]
   envSpecificTechnicalParamsets:
-    bss: ["env-specific-tech"]
+    app: ["env-specific-tech"]
   sharedMasterCredentialFiles:
     - prod-integration-creds
   templateArtifact:

@@ -96,6 +96,14 @@ For Acceptance, when a condition has a sibling case (a mode set versus absent, a
 missing), put the discriminating precondition in the Given so the outcome cannot be read as applying to
 the sibling.
 
+Carry the design-time seam into Implementation notes. When the design settled a load-bearing implementation
+insight - where the change attaches and how - record it as guidance, because the developer who implements
+this may be a different person or session than the one who designed it, and that insight does not survive
+the handoff unless the CR carries it. The canonical form: reuse the existing mechanism, and if it is not
+directly reusable, extract a helper rather than adding a parallel path. This is what a developer's plan
+turns into a first-task spike. Keep it in documented-surface vocabulary - name the behavior or mechanism
+the design reused, not a function or a file.
+
 ### Acceptance notation
 
 Write each acceptance condition in collapsed Gherkin: `Given <fixture>, <observable outcome>.` The Given
@@ -182,6 +190,10 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   Use commit-SHA permalinks, pinned to the doc PR head commit when the doc has not merged yet.
 - House rules (as stated under House-rule compliance): no em or en dashes, no semicolons in prose,
   prose wrapped at 120.
+- No doc-ahead-of-code meta line: strip any sentence that frames the CR as catching code up to docs,
+  for example "the design docs are ahead of the code" or "this CR wires the described behavior". It is
+  noise, not guidance - the reader is the developer who will write the code, and the code's current
+  state is theirs to change. State the behavior contract and how to verify it, nothing about the gap.
 
 ### File the issue
 

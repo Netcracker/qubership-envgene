@@ -1540,10 +1540,11 @@ credentials:
     # Carries `?secret_store_id=<id>` when the store is not `default_store`.
     vals: string
     # Derived from Credential.create: `fail_if_absent` when absent or false,
-    # `create_if_absent` when true.
+    # `create_if_absent` when true. `overwrite` is reserved for a future rotation
+    # flow and is not emitted by the calculator.
     strategy: enum [ fail_if_absent, create_if_absent, overwrite ]
-    # Emitted only for `create_if_absent` (or `overwrite`), omitted for
-    # `fail_if_absent`. Carries the reserved marker `_generateValue` per field.
+    # Emitted only for `create_if_absent`, omitted for `fail_if_absent`. Carries
+    # the reserved marker `_generateValue` per field.
     data: string | map
 ```
 

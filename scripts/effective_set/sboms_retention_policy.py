@@ -1,6 +1,6 @@
 from envgenehelper import getenv_with_error, get_envgene_config_yaml, logger, deleteFileIfExists, \
     cleanup_dir_by_age, get_sboms_dir, is_over_size_limit
-from envgenehelper.constants import CI_JOB_ARTIFACT_MAX_SIZE_MB
+from envgenehelper.config_helper import get_sbom_retention_size_limit_mb
 from envgenehelper.models import SbomRetentionConfig
 
 
@@ -37,7 +37,7 @@ def sboms_retention_policy():
         for app_sbom_dir in sboms_dir.iterdir():
             cleanup_dir_by_age(app_sbom_dir, sbom_retention.keep_versions_per_app)
 
-    if is_over_size_limit(sboms_dir, CI_JOB_ARTIFACT_MAX_SIZE_MB):
+    if is_over_size_limit(sboms_dir, get_sbom_retention_size_limit_mb()):
         logger.info(f"SBOM directory exceeds size limit, starting cleanup: {sboms_dir}")
         for app_sbom_dir in sboms_dir.iterdir():
             cleanup_dir_by_age(app_sbom_dir, 1)

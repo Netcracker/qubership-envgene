@@ -1,7 +1,8 @@
 from os import getenv
 from pathlib import Path
 
-from dpg.v1.internal.deployment_plan.models import DeployPlan, DeployPlanEntity, GenerationType  # noqa: F401 - re-exported
+from dpg.v1.internal.deployment_plan.models import DeployPlan, DeployPlanEntity, \
+    GenerationType  # noqa: F401 - re-exported
 from envgenehelper.business_helper import (
     INVENTORY_DIR_NAME,
     get_current_env_dir_from_env_vars,
@@ -53,11 +54,17 @@ def resolve_namespace_entry(namespace_entry, bg_ns_target, deploy_postfix: str):
 
 
 def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = SD_FILE_NAME,
-                             output_path: Path = None) -> EnvgeneDeployPlan:
+                            output_path: Path = None) -> EnvgeneDeployPlan:
     sd_path = get_sd_dir().joinpath(file_name)
     sd_data = openYaml(sd_path, allow_default=True, default_yaml=dict) or {}
     apps = sd_data.get("applications", [])
     bg_ns_target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
+
+    if apps and not namespace_by_deploy_postfix:
+        raise RuntimeError(
+            "No namespaces map found for this environment - it looks like it hasn't been built yet. "
+            "Please set ENV_BUILDER=true and run pipeline"
+        )
 
     entities = []
     for app in apps:
