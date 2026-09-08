@@ -42,6 +42,7 @@ mode ends.
 docs/migrate-to-external-credentials/
   SKILL.md                 # only skill entry
   README.md
+  transfer-config.example.yml  # optional fast-start config for mode transfer
   references/
     overview.md
     mode-template.md

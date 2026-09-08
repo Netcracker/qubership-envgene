@@ -12,15 +12,13 @@
 
 ## Who does what
 
-| Action | Owner |
-|--------|-------|
-| Clone, branch, commit, MR, merge, publish Template | You |
+| Action | Performed by |
+|--------|--------------|
+| Clone, branch, commit, MR, merge, publish Template | User |
 | Template / Instance YAML cutover | Agent skill mode `template` / `instance` |
-| Run Instance pipeline / deploy | You |
+| Run Instance pipeline / deploy | User |
 | Read / match passwords and tokens (`collect` / `export` / `fill`) | [migration-cli](../cli/README.md) via mode `transfer` |
 | Write secrets into the Secret Store | [external-cred-provision](/docs/features/external-creds-provisioning-cli.md) |
-
-The skill does not clone, commit, run pipeline, or write the Secret Store.
 
 > [!IMPORTANT]
 > Do not remove Credential `data` from Git until you have collected it (Instance path) or until the
@@ -35,18 +33,9 @@ The skill does not clone, commit, run pipeline, or write the Secret Store.
 - One `default_store` in `configuration/secret-stores.yml`
 - Store auth CI/CD variables configured for your store type
 - For Jenkins export: Jenkins API credentials (see migration-cli README)
-- This pack: [../SKILL.md](../SKILL.md)
+- Instance pipeline parameter `EXTERNAL_CREDENTIAL_PROVISIONING` available (`apply` default, `skip`
+  for the first run - see [Flow](#flow))
 - CLI: `pip install -e docs/migrate-to-external-credentials/cli` (add `[decrypt]` for Fernet)
-
-Migration also needs Instance pipeline parameter `EXTERNAL_CREDENTIAL_PROVISIONING` with values
-`apply` (default) and `skip`. Use `skip` on the first Effective Set run so the job emits External
-Credential Context without calling `external-cred-provision` in the pipeline. After you transfer
-secrets with migration-cli + the provisioning CLI, run Effective Set again with `apply` (or omit the
-parameter).
-
-Always set `secretStore` on external Credential entries (usually `default_store`). JSON Schema
-documents a default, but the Effective Set calculator reads the field as-is with no runtime
-fallback.
 
 ## Flow
 

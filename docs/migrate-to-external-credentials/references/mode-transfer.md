@@ -9,6 +9,24 @@ Entry skill: [../SKILL.md](../SKILL.md). Overview: [overview.md](overview.md).
 Obey entry skill **Hard constraints**. Do not commit collect / export / fill outputs. Never print
 secret values.
 
+## Checkpoints and resuming
+
+Each command below is a single file write to an explicit `--out` (or `--out-dir`) path. Nothing is
+committed and nothing chains automatically - the agent runs one command, reports the result, and
+waits before moving to the next.
+
+- **Safe to re-run.** `collect`, `export-credentials`, and `fill` overwrite their own output path;
+  re-running the same command after an interruption just regenerates it. `fill --seed-strategy
+  create_if_absent` (the default) will not clobber values a previous `fill` run already wrote.
+- **Resuming a stopped session.** If a transfer session stops partway (error, closed chat,
+  `NEEDS_INPUT`), resume by re-running the last command with the same `--out` path - there is no
+  separate state file to restore.
+- **Where the agent stops on its own:** after any command that fails, exits `NEEDS_INPUT` (`--partial`
+  with unmatched entries), or would otherwise have to print a secret value.
+- **Where the agent asks first:** before `external-cred-provision`. `collect` / `export-credentials`
+  / `fill` only produce local files; provisioning writes real secret values into the Secret Store, so
+  the agent shows the command and confirms before running it.
+
 ## When to run which command
 
 | Source of passwords and tokens | Command | When |
@@ -39,6 +57,27 @@ pip install -e ".[decrypt]"   # Fernet field-level decryption
 ```
 
 Full command reference: [cli/README.md](../cli/README.md).
+
+## Fast-start config
+
+Optional - skip this if you're comfortable passing `--instance-root`, `--tenant`, etc. by hand.
+
+Copy [`transfer-config.example.yml`](../transfer-config.example.yml) to `transfer-config.yml` and
+fill in the paths for this migration. **The agent reads this file, not `migration-cli`** - `collect`
+and `fill` take flags only and have no `--config` option. `export-credentials` has its own `--config`
+for multi-tenant Jenkins export jobs (see [cli/README.md](../cli/README.md)); that is a different
+file with a different shape, not this one.
+
+Point the agent at `transfer-config.yml` and it builds the right command - `collect`,
+`export-credentials`, or `fill` - from the fields below and shows the exact command before running
+it. Do not commit `transfer-config.yml`: it names where secrets live, even though it holds no secret
+values itself.
+
+```yaml
+instance_repo_path: /path/to/instance-repo
+values_source: instance   # or: jenkins
+env_filter: cluster/env1,cluster/env2
+```
 
 ## Collect from the Instance Repository
 

@@ -1,0 +1,20 @@
+# Copy to transfer-config.yml and fill in before running mode `transfer`.
+# Do not commit transfer-config.yml - it names where secrets live, even though it
+# holds no secret values itself.
+#
+# This file is read by the AGENT, not by migration-cli. `collect` and `fill` take
+# flags only (no --config option). `export-credentials` has its own --config for
+# multi-tenant Jenkins export jobs (see cli/README.md) - that is a different file
+# with a different shape, not this one.
+
+instance_repo_path: ""        # path to the Instance Repository (collect / fill --repo-root)
+values_source: ""             # "instance" | "jenkins"
+
+# used when values_source: instance
+secret_key_env: "SECRET_KEY"  # env var holding the Fernet key, if fields are encrypted
+
+# used when values_source: jenkins
+jenkins_tenant: ""
+jenkins_url: ""                # leave empty for the CLI default (jenkins.example.com)
+
+env_filter: ""                 # optional: cluster/env1,cluster/env2
