@@ -1,6 +1,6 @@
 # ADR-0005: Decompose custom_params deployment overrides into global and per-service
 
-Status: Proposed
+Status: Accepted
 Date: 2026-08-31
 
 ## Context
@@ -37,13 +37,13 @@ Rejected:
   parameter, and wins the merge, closing the silent no-op.
 - An override now applies at every per-service scope instead of at the root alone. This parity with deployment
   parameters is intended, and the accepted cost is the wider scope compared with the former flat behavior.
-- A custom key equal to a service name reuses the existing collision handling. A custom key equal to `global`,
-  `deployDescriptor`, or a service name, carrying a scalar value, replaces a structural map and breaks the deploy. A
-  map value deep-merges safely. This is documented, not guarded.
+- A custom key equal to a service name reuses the existing collision handling: it is moved to
+  `collision-deployment-parameters.yaml`, where its value wins over any same-key deployment collision entry. No
+  dedicated custom collision file is introduced. A custom key equal to `global` or `deployDescriptor`, carrying a
+  scalar value, replaces a structural map and breaks the deploy; a map value deep-merges safely. Those two keys are
+  documented, not guarded.
 - The schema and `calculator-cli.md` currently imply `custom_params` applies to the cleanup context. This is
   inaccurate against the behavior and is corrected to state deployment and runtime only.
-- This is a decision ahead of implementation. The decomposition is not yet wired, so `custom_params` keeps its flat
-  behavior until that lands.
 
 See [`CUSTOM_PARAMS`](/docs/instance-pipeline-parameters.md#custom_params) and the Effective Set deployment context
 in [Calculator CLI](/docs/features/calculator-cli.md).
