@@ -1,0 +1,159 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:00000000-0000-0000-0000-000000000008",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00.000000+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "test-app-bom-ref",
+      "name": "test-app",
+      "version": "1.0.0",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "test-app-dd-bom-ref",
+          "group": "com.test",
+          "name": "test_app_artifact",
+          "version": "1.0.0",
+          "purl": "pkg:maven/com.test/test_app_artifact@1.0.0?registry_id=mock-reg&repository_id=release"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "test-app-web-bom-ref",
+      "name": "web",
+      "version": "1.0.0",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "web"
+        },
+        {
+          "name": "docker_registry",
+          "value": "registry.example.com"
+        },
+        {
+          "name": "full_image_name",
+          "value": "registry.example.com/test/test-app-web:1.0.0"
+        },
+        {
+          "name": "git_branch",
+          "value": "main"
+        },
+        {
+          "name": "git_revision",
+          "value": "abc1234567890"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.example.com/test-app"
+        },
+        {
+          "name": "git_version",
+          "value": "1.0.0"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "test-app"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "test-app-web-image-bom-ref",
+          "group": "test",
+          "name": "test-app-web",
+          "version": "1.0.0",
+          "purl": "pkg:docker/test/test-app-web@1.0.0?registry_id=mock-reg"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "test-app-worker-bom-ref",
+      "name": "worker",
+      "version": "1.0.0",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "worker"
+        },
+        {
+          "name": "docker_registry",
+          "value": "registry.example.com"
+        },
+        {
+          "name": "full_image_name",
+          "value": "registry.example.com/test/test-app-worker:1.0.0"
+        },
+        {
+          "name": "git_branch",
+          "value": "main"
+        },
+        {
+          "name": "git_revision",
+          "value": "abc1234567890"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.example.com/test-app"
+        },
+        {
+          "name": "git_version",
+          "value": "1.0.0"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "test-app"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "test-app-worker-image-bom-ref",
+          "group": "test",
+          "name": "test-app-worker",
+          "version": "1.0.0",
+          "purl": "pkg:docker/test/test-app-worker@1.0.0?registry_id=mock-reg"
+        }
+      ]
+    },
+    {
+      "type": "container",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "test-app-chart-bom-ref",
+      "name": "test-app",
+      "version": "1.0.0",
+      "purl": "pkg:oci/test-app@1.0.0"
+    }
+  ],
+  "dependencies": []
+}

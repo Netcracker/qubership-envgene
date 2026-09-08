@@ -1,0 +1,26 @@
+feature:
+  flag: true
+global:
+  feature:
+    flag: true
+patroni-core:
+  feature:
+    flag: true
+pg_patroni:
+  feature:
+    flag: true
+pg_upgrade:
+  feature:
+    flag: true
+pgbackrest_sidecar:
+  feature:
+    flag: true
+postgres_operator_init:
+  feature:
+    flag: true
+postgres_operator_tests:
+  feature:
+    flag: true
+vault_env:
+  feature:
+    flag: true
