@@ -230,6 +230,7 @@ def decrypted_creds_match(workspace, filename, scope, ref_name):
         return node
 
     decrypted_actual = decrypt_node(actual_yaml)
+
     # Read the golden reference
     ref_path = Path(__file__).parent.parent / "test_data" / "goldens" / ref_name / "environments"
     if scope == "env":
@@ -238,6 +239,7 @@ def decrypted_creds_match(workspace, filename, scope, ref_name):
         ref_path = ref_path / workspace.cluster_name / "credentials" / filename
     else:
         ref_path = ref_path / "credentials" / filename
+
     import os
     if os.environ.get('UPDATE_GOLDEN') == '1':
         ref_path.parent.mkdir(parents=True, exist_ok=True)
@@ -246,6 +248,7 @@ def decrypted_creds_match(workspace, filename, scope, ref_name):
         return
 
     expected_yaml = yaml.safe_load(ref_path.read_text(encoding='utf-8'))
+
     assert decrypted_actual == expected_yaml, f"Decrypted credentials do not match expected reference {ref_name}"
 
 
@@ -268,7 +271,3 @@ def pipeline_logs_contain_text(workspace, text):
 @then(parsers.parse('the pipeline log does not contain "{text}"'))
 def pipeline_logs_not_contain_text(workspace, text):
     workspace.assert_logs_not_contain(text)
-
-
-
-

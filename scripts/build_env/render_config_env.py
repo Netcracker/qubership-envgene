@@ -751,10 +751,6 @@ class EnvGenerator:
             self.generate_namespace_files_and_map()
             self.generate_tenant_file()
             self.generate_cloud_file()
-<<<<<<< HEAD
-            self.generate_composite_structure()
-=======
->>>>>>> main
             self.generate_external_cred()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")

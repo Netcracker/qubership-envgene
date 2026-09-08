@@ -32,6 +32,7 @@ def pipeline_log_shows(workspace, message):
 def set_pipeline_param(workspace, param, value):
     if not hasattr(workspace, 'extra_env'):
         workspace.extra_env = {}
+
     # Special case: allow empty strings if value is exactly empty
     if value == "":
         workspace.extra_env[param] = ""
@@ -64,6 +65,7 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
         expected_dir = nested_expected_dir
     else:
         expected_dir = base_expected_dir
+
     # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
     compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
 

@@ -1,4 +1,3 @@
-<<<<<<<< HEAD:docs/samples/blue-green-deployment/template-repository/templates/env_templates/bgd/namespaces/oss.yml.j2
 ---
 # Plain composite satellite namespace, not part of the BG Domain.
 name: "{{ current_env.name }}-oss"
@@ -6,13 +5,7 @@ credentialsId: ""
 labels:
   - "solutionInstance-{{ current_env.name }}"
   - "solution-Application"
-========
-name: "test-env-bss-origin"
-credentialsId: ""
->>>>>>>> main:cucumber_tests/test_data/e2e/uc_bgd_warmup_reverse/environments/test-cluster/test-env/Namespaces/bss-origin/namespace.yml
 isServerSideMerge: false
-labels:
-  - "Instance-test-env"
 cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
 deployParameters: {}

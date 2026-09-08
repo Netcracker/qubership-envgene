@@ -9,10 +9,10 @@ from pathlib import Path
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from cucumber_tests.shared_steps.common_steps import *
 
-<<<<<<< HEAD
-@pytest.fixture(scope="session", autouse=True)
-def mock_nexus(tmp_path_factory):
-    base_dir = tmp_path_factory.mktemp("mock_nexus")
+# Fixture data for the mock_nexus server: one JSON manifest per artifact, plus the Jinja
+# templates that get zipped up for the env-template artifacts. Kept as real files under
+# test_data/mock_nexus/ (instead of inline strings) so their content is readable and diffable.
+_MOCK_NEXUS_FIXTURES = Path(__file__).parent / "test_data" / "mock_nexus"
 
 
 # The two manifest shapes every mock_nexus artifact needs: a plain Maven env-template artifact
@@ -116,10 +116,10 @@ def mock_nexus(tmp_path_factory):
 
     test_app2_dir = base_dir / "release" / "com" / "test" / "test_app_2_artifact" / "2.0.0"
     _write_app_manifest(test_app2_dir, "test_app_2_artifact-2.0.0.json", "test_app_2", "2.0.0", "dp2")
->>>>>>> main
 
     proc = subprocess.Popen([sys.executable, "cucumber_tests/mock_server.py", "8000", str(base_dir)])
     
+    # Wait for the mock server to start
     for i in range(10):
         try:
             urllib.request.urlopen("http://localhost:8000/")
