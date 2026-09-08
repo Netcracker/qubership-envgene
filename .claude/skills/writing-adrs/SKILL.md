@@ -20,6 +20,11 @@ short.
   trade-off. Name at least one negative consequence you accept.
 - **No diagrams, no code, no deep dives.** Link them. The ADR carries the choice and the why, nothing
   that needs scrolling.
+- **No implementation-status prose.** An ADR records the decision, not whether the code exists yet. Do not write that
+  the decision is "ahead of implementation", "not yet wired", "doc-ahead", or holds "until that lands". That state
+  lives in the `Status` field (`Proposed` before agreement, `Accepted` after) and in the commit history. A prose status
+  note goes stale the moment the code merges, and a durable record that contradicts reality is worse than none. If you
+  need to point at the implementing change, link the PR or issue at the bottom instead of narrating its progress.
 
 ## Format
 
@@ -94,3 +99,6 @@ Reject these. They are the failure modes that make ADRs unread.
 - Considered options with a good, bad, and neutral table per option. Use titles plus one `because`.
 - A Consequences section listing only benefits. Include the cost.
 - Architecture diagrams or code pasted inline. Link a design doc.
+- A Consequences line that tracks implementation status ("this is ahead of code", "not yet wired", "until the change
+  lands"). The `Status` field carries the lifecycle. Such prose ages into falsehood the moment the code ships, and the
+  next reader trusts a record that is now wrong.
