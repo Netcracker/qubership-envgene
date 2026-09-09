@@ -92,13 +92,9 @@
           ]
         },
         "baseline": {
+          "type": "string",
           "title": "Baseline of RPO",
-          "description": "Baseline name of Resource profile override",
-          "enum": [
-            "dev",
-            "qa",
-            "prod"
-          ],
+          "description": "Baseline name of Resource profile override. Free-form string.",
           "examples": [
             "dev",
             "qa",

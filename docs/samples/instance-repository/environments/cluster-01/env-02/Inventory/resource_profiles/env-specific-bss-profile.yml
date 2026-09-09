@@ -1,4 +1,6 @@
 ---
+name: "env-specific-bss-profile"
+baseline: "dev"
 applications:
 - name: "Core"
   services:
