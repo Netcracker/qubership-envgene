@@ -1,0 +1,6 @@
+inventory:
+  environmentName: "test-env"
+  cloudName: "test-cluster"
+envTemplate:
+  name: "ext_creds_uc_ec_d_1_vals_multi"
+  artifact: "external-secrets-artifact:v1"

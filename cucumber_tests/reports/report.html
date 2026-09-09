@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">report.html</h1>
+    <p>Report generated on 12-Sep-2026 at 11:41:33 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">102 tests took 00:14:09.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled>
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">93 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" >
+            <span class="xfailed">9 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.12.8&#34;, &#34;Platform&#34;: &#34;Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;8.3.5&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;metadata&#34;: &#34;3.1.1&#34;, &#34;bdd&#34;: &#34;8.1.0&#34;, &#34;html&#34;: &#34;4.2.0&#34;}, &#34;CI_PROJECT_DIR&#34;: &#34;/workspace&#34;}, &#34;tests&#34;: {&#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__initdomain_flips_the_bg_state_without_touching_the_deploy_plan&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__initdomain_flips_the_bg_state_without_touching_the_deploy_plan&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_1__initdomain_flips_the_bg_state_without_touching_the_deploy_plan&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__promote_flips_origin_to_legacy_and_peer_to_active&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__promote_flips_origin_to_legacy_and_peer_to_active&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_1__promote_flips_origin_to_legacy_and_peer_to_active&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__rollback_reverts_origin_to_idle_after_a_failed_promotion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__rollback_reverts_origin_to_idle_after_a_failed_promotion&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_1__rollback_reverts_origin_to_idle_after_a_failed_promotion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__commit_settles_origin_to_idle_after_a_successful_promotion&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_1__commit_settles_origin_to_idle_after_a_successful_promotion&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_1__commit_settles_origin_to_idle_after_a_successful_promotion&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_2__warmup_replicates_the_active_namespace_into_the_candidate&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_2__warmup_replicates_the_active_namespace_into_the_candidate&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_2__warmup_replicates_the_active_namespace_into_the_candidate&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_2__reverse_warmup_replicates_the_active_peer_namespace_into_the_candidate_origin&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_2__reverse_warmup_replicates_the_active_peer_namespace_into_the_candidate_origin&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_2__reverse_warmup_replicates_the_active_peer_namespace_into_the_candidate_origin&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_targets_the_origin_namespace_via_an_explicit_namespacenameversion_entry&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_targets_the_origin_namespace_via_an_explicit_namespacenameversion_entry&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_targets_the_origin_namespace_via_an_explicit_namespacenameversion_entry&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_targets_the_peer_namespace_via_an_explicit_namespacenameversion_entry&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_targets_the_peer_namespace_via_an_explicit_namespacenameversion_entry&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_targets_the_peer_namespace_via_an_explicit_namespacenameversion_entry&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_targets_the_origin_namespace_when_bg_ns_target_is_origin&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_targets_the_origin_namespace_when_bg_ns_target_is_origin&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_targets_the_origin_namespace_when_bg_ns_target_is_origin&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_targets_the_peer_namespace_when_bg_ns_target_is_peer&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_targets_the_peer_namespace_when_bg_ns_target_is_peer&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_targets_the_peer_namespace_when_bg_ns_target_is_peer&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_fails_when_bg_ns_target_is_not_set&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_fails_when_bg_ns_target_is_not_set&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_3_sd_path__deploy_fails_when_bg_ns_target_is_not_set&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_fails_when_the_deployed_namespace_is_absent_from_the_namespace_map&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_fails_when_the_deployed_namespace_is_absent_from_the_namespace_map&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_3__deploy_fails_when_the_deployed_namespace_is_absent_from_the_namespace_map&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_bgd_sub_flows.py::test_subflow_4__origin_and_peer_namespaces_render_from_their_own_distinct_templates&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_bgd_sub_flows.py::test_subflow_4__origin_and_peer_namespaces_render_from_their_own_distinct_templates&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_bgd_sub_flows.py::test_subflow_4__origin_and_peer_namespaces_render_from_their_own_distinct_templates&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccdp1_exact_deploypostfix_match&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccdp1_exact_deploypostfix_match&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccdp1_exact_deploypostfix_match&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccdp2_bg_domain_deploypostfix_match&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccdp2_bg_domain_deploypostfix_match&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccdp2_bg_domain_deploypostfix_match&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function effective_set_generated at 0x76b831091760&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_ucccdp2_bg_domain_deploypostfix_match&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b830110f80&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncucumber_tests/shared_steps/common_steps.py:44: in effective_set_generated\n    workspace.assert_success(&amp;quot;Pipeline failed to generate effective set&amp;quot;)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b830110f80&amp;gt;\nmessage = &amp;#x27;Pipeline failed to generate effective set&amp;#x27;\n\n    def assert_success(self, message: str = &amp;quot;Pipeline failed&amp;quot;):\n&amp;gt;       assert self.returncode == 0, f&amp;quot;{message}. Stderr: {self.stderr}&amp;quot;\nE       AssertionError: Pipeline failed to generate effective set. Stderr: 2026-09-12 11:29:47,654 [INFO] Info about project_dir: /tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0 [validations.py:13]\nE       2026-09-12 11:29:48,255 [INFO] Loading CLoader [file_utils.py:12]\nE       2026-09-12 11:29:48,447 [INFO] Searching for plugins in /module/scripts/plugins/pipe_parameters [usecase.py:94]\nE       2026-09-12 11:29:48,448 [INFO] /module/scripts/plugins/pipe_parameters dir doesn&amp;#x27;t exist, search for plugins skipped [usecase.py:96]\nE       2026-09-12 11:29:48,448 [INFO] Resolved effective set generation mode: GenerationMode.FULL. No SD input was provided or SD file does not exist (sd_input=False, sd_path=/tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/environments/test-cluster/test-env/Inventory/solution-descriptor/sd.yaml) [effective_set_helper.py:71]\nE       2026-09-12 11:29:48,451 [INFO] Input parameters are: \nE       FULL_ENV_NAME: test-cluster/test-env\nE       CLUSTER_NAME: test-cluster\nE       ENVIRONMENT_NAME: test-env\nE       ENV_NAMES: test-cluster/test-env\nE       PIPELINE_TYPE: None\nE       ENV_BUILDER: False\nE       GET_PASSPORT: False\nE       GENERATE_EFFECTIVE_SET: True\nE       ENV_TEMPLATE_VERSION: \nE       CI_COMMIT_REF_NAME: \nE       SD_VERSION: None\nE       SD_DATA: None\nE       SD_DELTA: None\nE       SD_REPO_MERGE_MODE: basic-merge\nE       ENV_INVENTORY_INIT: False\nE       ENV_SPECIFIC_PARAMS: None\nE       ENV_TEMPLATE_NAME: None\nE       CRED_ROTATION_FORCE: false\nE       GITLAB_RUNNER_TAG_NAME: \nE       RUNNER_SCRIPT_TIMEOUT: 10m\nE       DEPLOYMENT_SESSION_ID: 3cade3f4-f3e7-401a-bc04-73b7a9c66eb9\nE       ENVGENE_LOG_LEVEL: INFO\nE       CALCULATOR_CLI_JAVA_OPTIONS: \nE       EFFECTIVE_SET_CONFIG: None\nE       ENV_INVENTORY_CONTENT: None\nE       CUSTOM_PARAMS: None\nE       DEPLOYMENT_TICKET_ID: None\nE       ENV_TEMPLATE_VERSION_UPDATE_MODE: PERSISTENT\nE       OPERATION_TYPE: DEPLOY\nE       DELTA_DEPLOY: NONE\nE       SSL_CERTIFICATES_BUNDLE: None\nE       NAMESPACE_NAMES: \nE       APPLICATION_VERSIONS: None\nE       DEPLOY_POSTFIXES_FILTER: \nE       NAMESPACE_NAMES_FILTER: \nE       COMPONENT_NAMES_FILTER: \nE       WAVE_NAMES_FILTER: \nE       BG_NS_TARGET: None\nE       CRED_ROTATION_PAYLOAD: None\nE       BGD_OPERATION: None\nE       BG_STATE: None [pipeline_parameters.py:156]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;get_passport&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;credential_rotation&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;change_bg_state&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;warmup&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;env_inventory_generation&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;set_template_version&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;appregdef_render&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;deploy_postfix_namespace_map&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [INFO] Step &amp;#x27;process_sd&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,452 [WARNING] Failed to read yaml. Returning empty dictionary. Context: File: /tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/configuration/config.yml [yaml_utils.py:42]\nE       2026-09-12 11:29:48,456 [INFO] Step &amp;#x27;migrate_sd_to_deploy_plan&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,456 [INFO] Step &amp;#x27;process_deployment_plan&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,456 [INFO] Step &amp;#x27;env_build&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:48,456 [INFO] Starting decryption of credential files [crypt.py:224]\nE       2026-09-12 11:29:48,459 [WARNING] File is not encrypted. Path: /tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/configuration/credentials/credentials.yml [crypt.py:61]\nE       2026-09-12 11:29:48,459 [INFO] Decrypted 1 cred files in 0.002s (backend=Fernet) [crypt.py:231]\nE       2026-09-12 11:29:48,459 [INFO] Starting validation of credentials [creds_helper.py:246]\nE       2026-09-12 11:29:48,460 [INFO] Validation of credentials is completed [creds_helper.py:259]\nE       2026-09-12 11:29:48,460 [INFO] Starting validation of parameters [params_helper.py:16]\nE       2026-09-12 11:29:48,467 [INFO] Validation of parameters is completed [params_helper.py:56]\nE       2026-09-12 11:29:48,467 [INFO] SBOM retention policy is disabled [sboms_retention_policy.py:24]\nE       2026-09-12 11:29:48,467 [INFO] Searching for plugins in /module/scripts/plugins/get_sboms [usecase.py:94]\nE       2026-09-12 11:29:48,467 [INFO] /module/scripts/plugins/get_sboms dir doesn&amp;#x27;t exist, search for plugins skipped [usecase.py:96]\nE       2026-09-12 11:29:48,467 [WARNING] /tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/environments/test-cluster/test-env/effective-set directory could not be deleted: [Errno 2] No such file or directory: PosixPath(&amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/environments/test-cluster/test-env/effective-set&amp;#x27;) [file_helper.py:57]\nE       2026-09-12 11:29:50,717 [INFO] ============ END: generate_effective_set (2259ms (2.259s)) - FAILED ============ [orchestrator.py:357]\nE       2026-09-12 11:29:50,744 [INFO] ========== PIPELINE SUMMARY ==========\nE       get_passport                  SKIPPED  -\nE       credential_rotation           SKIPPED  -\nE       change_bg_state               SKIPPED  -\nE       warmup                        SKIPPED  -\nE       env_inventory_generation      SKIPPED  -\nE       set_template_version          SKIPPED  -\nE       appregdef_render              SKIPPED  -\nE       deploy_postfix_namespace_map  SKIPPED  -\nE       process_sd                    SKIPPED  -\nE       migrate_sd_to_deploy_plan     SKIPPED  -\nE       process_deployment_plan       SKIPPED  -\nE       env_build                     SKIPPED  -\nE       generate_effective_set        FAILED   2259ms (2.259s)\nE       copy_env_artifact             SUCCESS  27ms (0.027s)\nE       Total: 2286ms (2.286s)\nE       ======================================== [orchestrator.py:409]\nE       2026-09-12 11:29:50,745 [INFO] save_artifacts_strategy is ALWAYS (default), checking size limit for /tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/artifacts [publish_artifacts.py:32]\nE       2026-09-12 11:29:50,746 [CRITICAL] Uncaught exception: [__main__.py:9]\nE       Traceback (most recent call last):\nE         File &amp;quot;&amp;lt;frozen runpy&amp;gt;&amp;quot;, line 198, in _run_module_as_main\nE         File &amp;quot;&amp;lt;frozen runpy&amp;gt;&amp;quot;, line 88, in _run_code\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 413, in &amp;lt;module&amp;gt;\nE           sys.exit(dispatch())\nE                    ^^^^^^^^^^\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 381, in dispatch\nE           run_single_env_pipeline()\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 347, in run_single_env_pipeline\nE           step.execute(ctx)\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 294, in execute\nE           run_legacy_sd_effective_set(ctx)\nE         File &amp;quot;/workspace/scripts/effective_set/effective_set_entrypoint.py&amp;quot;, line 40, in run_legacy_sd_effective_set\nE           _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan)\nE         File &amp;quot;/workspace/scripts/effective_set/effective_set_entrypoint.py&amp;quot;, line 59, in _run_deploy_plan_full\nE           subprocess.run(cmd, shell=True, check=True)\nE         File &amp;quot;/usr/local/lib/python3.12/subprocess.py&amp;quot;, line 571, in run\nE           raise CalledProcessError(retcode, process.args,\nE       subprocess.CalledProcessError: Command &amp;#x27;/module/scripts/utils/run_effective_set_cli.sh --env-id=test-cluster/test-env --envs-path=$CI_PROJECT_DIR/environments --output=/tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/environments/test-cluster/test-env/effective-set --registries=${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=$CI_PROJECT_DIR/sboms --deploy-plan-path=/tmp/pytest-of-root/pytest-17/test_ucccdp2_bg_domain_deployp0/environments/test-cluster/test-env/Inventory/deploy-plan.yml --extra_params=DEPLOYMENT_SESSION_ID=3cade3f4-f3e7-401a-bc04-73b7a9c66eb9&amp;#x27; returned non-zero exit status 1.\n\ncucumber_tests/framework/workspace.py:199: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccdp3_no_exact_match_found&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccdp3_no_exact_match_found&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccdp3_no_exact_match_found&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_log_shows at 0x76b8310913a0&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_ucccdp3_no_exact_match_found&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;message&amp;#x27;: &amp;#x27;nonexistent&amp;#x27;, &amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b8302969c0&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nworkspace = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b8302969c0&amp;gt;, message = &amp;#x27;nonexistent&amp;#x27;\n\n    @then(parsers.parse(&amp;#x27;the pipeline log shows &amp;quot;{message}&amp;quot;&amp;#x27;))\n    def pipeline_log_shows(workspace, message):\n        &amp;quot;&amp;quot;&amp;quot;\n        Generic step to verify that the subprocess stdout/stderr contains a specific message.\n        Automatically handles cross-platform slashes and placeholder replacements.\n        &amp;quot;&amp;quot;&amp;quot;\n        expected = message.replace(&amp;quot;&amp;lt;path&amp;gt;&amp;quot;, str(workspace.base_dir)).replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;)\n        output = workspace.stdout.replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;) + &amp;quot;\\n&amp;quot; + workspace.stderr.replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;)\n    \n        if &amp;quot;&amp;lt;application-name&amp;gt;&amp;quot; in expected:\n            prefix = expected.split(&amp;quot;&amp;lt;application-name&amp;gt;&amp;quot;)[0]\n            found = any(line.endswith(prefix) or prefix in line for line in output.splitlines())\n        else:\n            found = expected in output\n    \n        if not found:\n            clean_msg = message.replace(&amp;quot;&amp;lt;path&amp;gt;&amp;quot;, &amp;quot;&amp;quot;).replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;)\n            if &amp;quot;&amp;lt;application-name&amp;gt;&amp;quot; in clean_msg:\n                prefix = clean_msg.split(&amp;quot;&amp;lt;application-name&amp;gt;&amp;quot;)[0]\n                found = any(prefix in line for line in output.splitlines())\n            else:\n                found = clean_msg in output\n    \n&amp;gt;       assert found, f&amp;quot;Expected message not found in logs: {message}\\nOutput: {output}&amp;quot;\nE       AssertionError: Expected message not found in logs: nonexistent\nE       Output: \u001b[0Ksection_start:1789212596:step_generate_effective_set[collapsed=true]\nE       \u001b[0K======================== START: generate_effective_set =========================\nE       exec java -XX:+ExitOnOutOfMemoryError -cp . -jar /deployments/app.jar --env-id=test-cluster/test-env --envs-path=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments --output=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/effective-set --registries=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/configuration/registry.yml --sboms-path=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/sboms --deploy-plan-path=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/Inventory/deploy-plan.yml --extra_params=DEPLOYMENT_SESSION_ID=5ba3bd6e-fd4e-436c-91b8-cf9a1e24e40e\nE       __  ____  __  _____   ___  __ ____  ______ \nE        --/ __ // / / / _ | / _ // //_/ / / / __/ \nE        -/ /_/ / /_/ / __ |/ , _/ ,&amp;lt; / /_/ // /   \nE       --/___/_/____/_/ |_/_/|_/_/|_|/____/___/   \nE       effective-set-generator master-SNAPSHOT on JVM (powered by Quarkus 3.10.2) started in 0.448s. \nE       Profile prod activated. \nE       Installed features: [cdi, picocli]\nE       2026-09-12 11:29:57,820 [INFO] Starting effective set generation [CmdbCli.java:66]\nE       2026-09-12 11:29:58,101 [ERROR] Generation of effective set failed as Cannot invoke &amp;quot;org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO.isCleaned()&amp;quot; because the return value of &amp;quot;java.util.Map.get(Object)&amp;quot; is null [CmdbCli.java:75]\nE       2026-09-12 11:29:58,103 [ERROR] Stack trace: java.lang.NullPointerException: Cannot invoke &amp;quot;org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO.isCleaned()&amp;quot; because the return value of &amp;quot;java.util.Map.get(Object)&amp;quot; is null\nE       \tat org.qubership.cloud.devops.cli.parser.CliParameterParser.lambda$processAndSaveParameters$1(CliParameterParser.java:133)\nE       \tat java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:178)\nE       \tat java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625)\nE       \tat java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)\nE       \tat java.base/java.util.stream.ForEachOps$ForEachTask.compute(ForEachOps.java:290)\nE       \tat java.base/java.util.concurrent.CountedCompleter.exec(CountedCompleter.java:754)\nE       \tat java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:373)\nE       \tat java.base/java.util.concurrent.ForkJoinTask.invoke(ForkJoinTask.java:686)\nE       \tat java.base/java.util.stream.ForEachOps$ForEachOp.evaluateParallel(ForEachOps.java:159)\nE       \tat java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateParallel(ForEachOps.java:173)\nE       \tat java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:233)\nE       \tat java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)\nE       \tat org.qubership.cloud.devops.cli.parser.CliParameterParser.processAndSaveParameters(CliParameterParser.java:135)\nE       \tat org.qubership.cloud.devops.cli.parser.CliParameterParser.generateEffectiveSet(CliParameterParser.java:105)\nE       \tat org.qubership.cloud.devops.cli.CmdbCli.call(CmdbCli.java:68)\nE       \tat org.qubership.cloud.devops.cli.CmdbCli.call(CmdbCli.java:45)\nE       \tat picocli.CommandLine.executeUserObject(CommandLine.java:2041)\nE       \tat picocli.CommandLine.access$1500(CommandLine.java:148)\nE       \tat picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2461)\nE       \tat picocli.CommandLine$RunLast.handle(CommandLine.java:2453)\nE       \tat picocli.CommandLine$RunLast.handle(CommandLine.java:2415)\nE       \tat picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2273)\nE       \tat picocli.CommandLine$RunLast.execute(CommandLine.java:2417)\nE       \tat io.quarkus.picocli.runtime.PicocliRunner$EventExecutionStrategy.execute(PicocliRunner.java:26)\nE       \tat picocli.CommandLine.execute(CommandLine.java:2170)\nE       \tat io.quarkus.picocli.runtime.PicocliRunner.run(PicocliRunner.java:40)\nE       \tat io.quarkus.runtime.ApplicationLifecycleManager.run(ApplicationLifecycleManager.java:132)\nE       \tat io.quarkus.runtime.Quarkus.run(Quarkus.java:71)\nE       \tat io.quarkus.runtime.Quarkus.run(Quarkus.java:44)\nE       \tat io.quarkus.runner.GeneratedMain.main(Unknown Source)\nE        [CmdbCli.java:76]\nE       effective-set-generator stopped in 0.008s\nE       \u001b[0Ksection_end:1789212598:step_generate_effective_set\nE       \u001b[0K\nE       \nE       2026-09-12 11:29:56,005 [INFO] Info about project_dir: /tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0 [validations.py:13]\nE       2026-09-12 11:29:56,589 [INFO] Loading CLoader [file_utils.py:12]\nE       2026-09-12 11:29:56,784 [INFO] Searching for plugins in /module/scripts/plugins/pipe_parameters [usecase.py:94]\nE       2026-09-12 11:29:56,784 [INFO] /module/scripts/plugins/pipe_parameters dir doesn&amp;#x27;t exist, search for plugins skipped [usecase.py:96]\nE       2026-09-12 11:29:56,785 [INFO] Resolved effective set generation mode: GenerationMode.FULL. No SD input was provided or SD file does not exist (sd_input=False, sd_path=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/Inventory/solution-descriptor/sd.yaml) [effective_set_helper.py:71]\nE       2026-09-12 11:29:56,787 [INFO] Input parameters are: \nE       FULL_ENV_NAME: test-cluster/test-env\nE       CLUSTER_NAME: test-cluster\nE       ENVIRONMENT_NAME: test-env\nE       ENV_NAMES: test-cluster/test-env\nE       PIPELINE_TYPE: None\nE       ENV_BUILDER: False\nE       GET_PASSPORT: False\nE       GENERATE_EFFECTIVE_SET: True\nE       ENV_TEMPLATE_VERSION: \nE       CI_COMMIT_REF_NAME: \nE       SD_VERSION: None\nE       SD_DATA: None\nE       SD_DELTA: None\nE       SD_REPO_MERGE_MODE: basic-merge\nE       ENV_INVENTORY_INIT: False\nE       ENV_SPECIFIC_PARAMS: None\nE       ENV_TEMPLATE_NAME: None\nE       CRED_ROTATION_FORCE: false\nE       GITLAB_RUNNER_TAG_NAME: \nE       RUNNER_SCRIPT_TIMEOUT: 10m\nE       DEPLOYMENT_SESSION_ID: 5ba3bd6e-fd4e-436c-91b8-cf9a1e24e40e\nE       ENVGENE_LOG_LEVEL: INFO\nE       CALCULATOR_CLI_JAVA_OPTIONS: \nE       EFFECTIVE_SET_CONFIG: None\nE       ENV_INVENTORY_CONTENT: None\nE       CUSTOM_PARAMS: None\nE       DEPLOYMENT_TICKET_ID: None\nE       ENV_TEMPLATE_VERSION_UPDATE_MODE: PERSISTENT\nE       OPERATION_TYPE: DEPLOY\nE       DELTA_DEPLOY: NONE\nE       SSL_CERTIFICATES_BUNDLE: None\nE       NAMESPACE_NAMES: \nE       APPLICATION_VERSIONS: None\nE       DEPLOY_POSTFIXES_FILTER: \nE       NAMESPACE_NAMES_FILTER: \nE       COMPONENT_NAMES_FILTER: \nE       WAVE_NAMES_FILTER: \nE       BG_NS_TARGET: None\nE       CRED_ROTATION_PAYLOAD: None\nE       BGD_OPERATION: None\nE       BG_STATE: None [pipeline_parameters.py:156]\nE       2026-09-12 11:29:56,787 [INFO] Step &amp;#x27;get_passport&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;credential_rotation&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;change_bg_state&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;warmup&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;env_inventory_generation&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;set_template_version&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;appregdef_render&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;deploy_postfix_namespace_map&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [INFO] Step &amp;#x27;process_sd&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,788 [WARNING] Failed to read yaml. Returning empty dictionary. Context: File: /tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/configuration/config.yml [yaml_utils.py:42]\nE       2026-09-12 11:29:56,792 [INFO] Step &amp;#x27;migrate_sd_to_deploy_plan&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,792 [INFO] Step &amp;#x27;process_deployment_plan&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,792 [INFO] Step &amp;#x27;env_build&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:29:56,792 [INFO] Starting decryption of credential files [crypt.py:224]\nE       2026-09-12 11:29:56,794 [WARNING] File is not encrypted. Path: /tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/configuration/credentials/credentials.yml [crypt.py:61]\nE       2026-09-12 11:29:56,795 [INFO] Decrypted 1 cred files in 0.002s (backend=Fernet) [crypt.py:231]\nE       2026-09-12 11:29:56,795 [INFO] Starting validation of credentials [creds_helper.py:246]\nE       2026-09-12 11:29:56,795 [INFO] Validation of credentials is completed [creds_helper.py:259]\nE       2026-09-12 11:29:56,795 [INFO] Starting validation of parameters [params_helper.py:16]\nE       2026-09-12 11:29:56,801 [INFO] Validation of parameters is completed [params_helper.py:56]\nE       2026-09-12 11:29:56,801 [INFO] SBOM retention policy is disabled [sboms_retention_policy.py:24]\nE       2026-09-12 11:29:56,801 [INFO] Searching for plugins in /module/scripts/plugins/get_sboms [usecase.py:94]\nE       2026-09-12 11:29:56,801 [INFO] /module/scripts/plugins/get_sboms dir doesn&amp;#x27;t exist, search for plugins skipped [usecase.py:96]\nE       2026-09-12 11:29:56,801 [WARNING] /tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/effective-set directory could not be deleted: [Errno 2] No such file or directory: PosixPath(&amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/effective-set&amp;#x27;) [file_helper.py:57]\nE       2026-09-12 11:29:58,124 [INFO] ============ END: generate_effective_set (1331ms (1.331s)) - FAILED ============ [orchestrator.py:357]\nE       2026-09-12 11:29:58,143 [INFO] ========== PIPELINE SUMMARY ==========\nE       get_passport                  SKIPPED  -\nE       credential_rotation           SKIPPED  -\nE       change_bg_state               SKIPPED  -\nE       warmup                        SKIPPED  -\nE       env_inventory_generation      SKIPPED  -\nE       set_template_version          SKIPPED  -\nE       appregdef_render              SKIPPED  -\nE       deploy_postfix_namespace_map  SKIPPED  -\nE       process_sd                    SKIPPED  -\nE       migrate_sd_to_deploy_plan     SKIPPED  -\nE       process_deployment_plan       SKIPPED  -\nE       env_build                     SKIPPED  -\nE       generate_effective_set        FAILED   1331ms (1.331s)\nE       copy_env_artifact             SUCCESS  19ms (0.019s)\nE       Total: 1350ms (1.350s)\nE       ======================================== [orchestrator.py:409]\nE       2026-09-12 11:29:58,143 [INFO] save_artifacts_strategy is ALWAYS (default), checking size limit for /tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/artifacts [publish_artifacts.py:32]\nE       2026-09-12 11:29:58,144 [CRITICAL] Uncaught exception: [__main__.py:9]\nE       Traceback (most recent call last):\nE         File &amp;quot;&amp;lt;frozen runpy&amp;gt;&amp;quot;, line 198, in _run_module_as_main\nE         File &amp;quot;&amp;lt;frozen runpy&amp;gt;&amp;quot;, line 88, in _run_code\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 413, in &amp;lt;module&amp;gt;\nE           sys.exit(dispatch())\nE                    ^^^^^^^^^^\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 381, in dispatch\nE           run_single_env_pipeline()\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 347, in run_single_env_pipeline\nE           step.execute(ctx)\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 294, in execute\nE           run_legacy_sd_effective_set(ctx)\nE         File &amp;quot;/workspace/scripts/effective_set/effective_set_entrypoint.py&amp;quot;, line 40, in run_legacy_sd_effective_set\nE           _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan)\nE         File &amp;quot;/workspace/scripts/effective_set/effective_set_entrypoint.py&amp;quot;, line 59, in _run_deploy_plan_full\nE           subprocess.run(cmd, shell=True, check=True)\nE         File &amp;quot;/usr/local/lib/python3.12/subprocess.py&amp;quot;, line 571, in run\nE           raise CalledProcessError(retcode, process.args,\nE       subprocess.CalledProcessError: Command &amp;#x27;/module/scripts/utils/run_effective_set_cli.sh --env-id=test-cluster/test-env --envs-path=$CI_PROJECT_DIR/environments --output=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/effective-set --registries=${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=$CI_PROJECT_DIR/sboms --deploy-plan-path=/tmp/pytest-of-root/pytest-17/test_ucccdp3_no_exact_match_fo0/environments/test-cluster/test-env/Inventory/deploy-plan.yml --extra_params=DEPLOYMENT_SESSION_ID=5ba3bd6e-fd4e-436c-91b8-cf9a1e24e40e&amp;#x27; returned non-zero exit status 1.\n\ncucumber_tests/shared_steps/common_steps.py:29: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccdp4_no_bg_domain_match_found&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccdp4_no_bg_domain_match_found&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccdp4_no_bg_domain_match_found&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_log_shows at 0x76b8310913a0&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_ucccdp4_no_bg_domain_match_found&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;message&amp;#x27;: &amp;#x27;xyz&amp;#x27;, &amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b830273560&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nworkspace = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b830273560&amp;gt;, message = &amp;#x27;xyz&amp;#x27;\n\n    @then(parsers.parse(&amp;#x27;the pipeline log shows &amp;quot;{message}&amp;quot;&amp;#x27;))\n    def pipeline_log_shows(workspace, message):\n        &amp;quot;&amp;quot;&amp;quot;\n        Generic step to verify that the subprocess stdout/stderr contains a specific message.\n        Automatically handles cross-platform slashes and placeholder replacements.\n        &amp;quot;&amp;quot;&amp;quot;\n        expected = message.replace(&amp;quot;&amp;lt;path&amp;gt;&amp;quot;, str(workspace.base_dir)).replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;)\n        output = workspace.stdout.replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;) + &amp;quot;\\n&amp;quot; + workspace.stderr.replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;)\n    \n        if &amp;quot;&amp;lt;application-name&amp;gt;&amp;quot; in expected:\n            prefix = expected.split(&amp;quot;&amp;lt;application-name&amp;gt;&amp;quot;)[0]\n            found = any(line.endswith(prefix) or prefix in line for line in output.splitlines())\n        else:\n            found = expected in output\n    \n        if not found:\n            clean_msg = message.replace(&amp;quot;&amp;lt;path&amp;gt;&amp;quot;, &amp;quot;&amp;quot;).replace(&amp;#x27;\\\\&amp;#x27;, &amp;#x27;/&amp;#x27;)\n            if &amp;quot;&amp;lt;application-name&amp;gt;&amp;quot; in clean_msg:\n                prefix = clean_msg.split(&amp;quot;&amp;lt;application-name&amp;gt;&amp;quot;)[0]\n                found = any(prefix in line for line in output.splitlines())\n            else:\n                found = clean_msg in output\n    \n&amp;gt;       assert found, f&amp;quot;Expected message not found in logs: {message}\\nOutput: {output}&amp;quot;\nE       AssertionError: Expected message not found in logs: xyz\nE       Output: \u001b[0Ksection_start:1789212603:step_generate_effective_set[collapsed=true]\nE       \u001b[0K======================== START: generate_effective_set =========================\nE       exec java -XX:+ExitOnOutOfMemoryError -cp . -jar /deployments/app.jar --env-id=test-cluster/test-env --envs-path=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments --output=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/effective-set --registries=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/configuration/registry.yml --sboms-path=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/sboms --deploy-plan-path=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/Inventory/deploy-plan.yml --extra_params=DEPLOYMENT_SESSION_ID=2d4cfef0-ed45-4a52-b5f6-8d0e533ee570\nE       __  ____  __  _____   ___  __ ____  ______ \nE        --/ __ // / / / _ | / _ // //_/ / / / __/ \nE        -/ /_/ / /_/ / __ |/ , _/ ,&amp;lt; / /_/ // /   \nE       --/___/_/____/_/ |_/_/|_/_/|_|/____/___/   \nE       effective-set-generator master-SNAPSHOT on JVM (powered by Quarkus 3.10.2) started in 0.453s. \nE       Profile prod activated. \nE       Installed features: [cdi, picocli]\nE       2026-09-12 11:30:04,770 [INFO] Starting effective set generation [CmdbCli.java:66]\nE       2026-09-12 11:30:05,103 [ERROR] Generation of effective set failed as Cannot invoke &amp;quot;org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO.isCleaned()&amp;quot; because the return value of &amp;quot;java.util.Map.get(Object)&amp;quot; is null [CmdbCli.java:75]\nE       2026-09-12 11:30:05,104 [ERROR] Stack trace: java.lang.NullPointerException: Cannot invoke &amp;quot;org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO.isCleaned()&amp;quot; because the return value of &amp;quot;java.util.Map.get(Object)&amp;quot; is null\nE       \tat org.qubership.cloud.devops.cli.parser.CliParameterParser.lambda$processAndSaveParameters$1(CliParameterParser.java:133)\nE       \tat java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:178)\nE       \tat java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625)\nE       \tat java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)\nE       \tat java.base/java.util.stream.ForEachOps$ForEachTask.compute(ForEachOps.java:290)\nE       \tat java.base/java.util.concurrent.CountedCompleter.exec(CountedCompleter.java:754)\nE       \tat java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:373)\nE       \tat java.base/java.util.concurrent.ForkJoinTask.invoke(ForkJoinTask.java:686)\nE       \tat java.base/java.util.stream.ForEachOps$ForEachOp.evaluateParallel(ForEachOps.java:159)\nE       \tat java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateParallel(ForEachOps.java:173)\nE       \tat java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:233)\nE       \tat java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)\nE       \tat org.qubership.cloud.devops.cli.parser.CliParameterParser.processAndSaveParameters(CliParameterParser.java:135)\nE       \tat org.qubership.cloud.devops.cli.parser.CliParameterParser.generateEffectiveSet(CliParameterParser.java:105)\nE       \tat org.qubership.cloud.devops.cli.CmdbCli.call(CmdbCli.java:68)\nE       \tat org.qubership.cloud.devops.cli.CmdbCli.call(CmdbCli.java:45)\nE       \tat picocli.CommandLine.executeUserObject(CommandLine.java:2041)\nE       \tat picocli.CommandLine.access$1500(CommandLine.java:148)\nE       \tat picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2461)\nE       \tat picocli.CommandLine$RunLast.handle(CommandLine.java:2453)\nE       \tat picocli.CommandLine$RunLast.handle(CommandLine.java:2415)\nE       \tat picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2273)\nE       \tat picocli.CommandLine$RunLast.execute(CommandLine.java:2417)\nE       \tat io.quarkus.picocli.runtime.PicocliRunner$EventExecutionStrategy.execute(PicocliRunner.java:26)\nE       \tat picocli.CommandLine.execute(CommandLine.java:2170)\nE       \tat io.quarkus.picocli.runtime.PicocliRunner.run(PicocliRunner.java:40)\nE       \tat io.quarkus.runtime.ApplicationLifecycleManager.run(ApplicationLifecycleManager.java:132)\nE       \tat io.quarkus.runtime.Quarkus.run(Quarkus.java:71)\nE       \tat io.quarkus.runtime.Quarkus.run(Quarkus.java:44)\nE       \tat io.quarkus.runner.GeneratedMain.main(Unknown Source)\nE        [CmdbCli.java:76]\nE       effective-set-generator stopped in 0.008s\nE       \u001b[0Ksection_end:1789212605:step_generate_effective_set\nE       \u001b[0K\nE       \nE       2026-09-12 11:30:02,955 [INFO] Info about project_dir: /tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0 [validations.py:13]\nE       2026-09-12 11:30:03,526 [INFO] Loading CLoader [file_utils.py:12]\nE       2026-09-12 11:30:03,717 [INFO] Searching for plugins in /module/scripts/plugins/pipe_parameters [usecase.py:94]\nE       2026-09-12 11:30:03,717 [INFO] /module/scripts/plugins/pipe_parameters dir doesn&amp;#x27;t exist, search for plugins skipped [usecase.py:96]\nE       2026-09-12 11:30:03,718 [INFO] Resolved effective set generation mode: GenerationMode.FULL. No SD input was provided or SD file does not exist (sd_input=False, sd_path=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/Inventory/solution-descriptor/sd.yaml) [effective_set_helper.py:71]\nE       2026-09-12 11:30:03,720 [INFO] Input parameters are: \nE       FULL_ENV_NAME: test-cluster/test-env\nE       CLUSTER_NAME: test-cluster\nE       ENVIRONMENT_NAME: test-env\nE       ENV_NAMES: test-cluster/test-env\nE       PIPELINE_TYPE: None\nE       ENV_BUILDER: False\nE       GET_PASSPORT: False\nE       GENERATE_EFFECTIVE_SET: True\nE       ENV_TEMPLATE_VERSION: \nE       CI_COMMIT_REF_NAME: \nE       SD_VERSION: None\nE       SD_DATA: None\nE       SD_DELTA: None\nE       SD_REPO_MERGE_MODE: basic-merge\nE       ENV_INVENTORY_INIT: False\nE       ENV_SPECIFIC_PARAMS: None\nE       ENV_TEMPLATE_NAME: None\nE       CRED_ROTATION_FORCE: false\nE       GITLAB_RUNNER_TAG_NAME: \nE       RUNNER_SCRIPT_TIMEOUT: 10m\nE       DEPLOYMENT_SESSION_ID: 2d4cfef0-ed45-4a52-b5f6-8d0e533ee570\nE       ENVGENE_LOG_LEVEL: INFO\nE       CALCULATOR_CLI_JAVA_OPTIONS: \nE       EFFECTIVE_SET_CONFIG: None\nE       ENV_INVENTORY_CONTENT: None\nE       CUSTOM_PARAMS: None\nE       DEPLOYMENT_TICKET_ID: None\nE       ENV_TEMPLATE_VERSION_UPDATE_MODE: PERSISTENT\nE       OPERATION_TYPE: DEPLOY\nE       DELTA_DEPLOY: NONE\nE       SSL_CERTIFICATES_BUNDLE: None\nE       NAMESPACE_NAMES: \nE       APPLICATION_VERSIONS: None\nE       DEPLOY_POSTFIXES_FILTER: \nE       NAMESPACE_NAMES_FILTER: \nE       COMPONENT_NAMES_FILTER: \nE       WAVE_NAMES_FILTER: \nE       BG_NS_TARGET: None\nE       CRED_ROTATION_PAYLOAD: None\nE       BGD_OPERATION: None\nE       BG_STATE: None [pipeline_parameters.py:156]\nE       2026-09-12 11:30:03,720 [INFO] Step &amp;#x27;get_passport&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,720 [INFO] Step &amp;#x27;credential_rotation&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,720 [INFO] Step &amp;#x27;change_bg_state&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [INFO] Step &amp;#x27;warmup&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [INFO] Step &amp;#x27;env_inventory_generation&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [INFO] Step &amp;#x27;set_template_version&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [INFO] Step &amp;#x27;appregdef_render&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [INFO] Step &amp;#x27;deploy_postfix_namespace_map&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [INFO] Step &amp;#x27;process_sd&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,721 [WARNING] Failed to read yaml. Returning empty dictionary. Context: File: /tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/configuration/config.yml [yaml_utils.py:42]\nE       2026-09-12 11:30:03,725 [INFO] Step &amp;#x27;migrate_sd_to_deploy_plan&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,725 [INFO] Step &amp;#x27;process_deployment_plan&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,725 [INFO] Step &amp;#x27;env_build&amp;#x27; skipped. [orchestrator.py:337]\nE       2026-09-12 11:30:03,725 [INFO] Starting decryption of credential files [crypt.py:224]\nE       2026-09-12 11:30:03,727 [WARNING] File is not encrypted. Path: /tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/configuration/credentials/credentials.yml [crypt.py:61]\nE       2026-09-12 11:30:03,728 [INFO] Decrypted 1 cred files in 0.002s (backend=Fernet) [crypt.py:231]\nE       2026-09-12 11:30:03,728 [INFO] Starting validation of credentials [creds_helper.py:246]\nE       2026-09-12 11:30:03,728 [INFO] Validation of credentials is completed [creds_helper.py:259]\nE       2026-09-12 11:30:03,728 [INFO] Starting validation of parameters [params_helper.py:16]\nE       2026-09-12 11:30:03,736 [INFO] Validation of parameters is completed [params_helper.py:56]\nE       2026-09-12 11:30:03,736 [INFO] SBOM retention policy is disabled [sboms_retention_policy.py:24]\nE       2026-09-12 11:30:03,736 [INFO] Searching for plugins in /module/scripts/plugins/get_sboms [usecase.py:94]\nE       2026-09-12 11:30:03,736 [INFO] /module/scripts/plugins/get_sboms dir doesn&amp;#x27;t exist, search for plugins skipped [usecase.py:96]\nE       2026-09-12 11:30:03,737 [WARNING] /tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/effective-set directory could not be deleted: [Errno 2] No such file or directory: PosixPath(&amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/effective-set&amp;#x27;) [file_helper.py:57]\nE       2026-09-12 11:30:05,126 [INFO] ============ END: generate_effective_set (1401ms (1.401s)) - FAILED ============ [orchestrator.py:357]\nE       2026-09-12 11:30:05,145 [INFO] ========== PIPELINE SUMMARY ==========\nE       get_passport                  SKIPPED  -\nE       credential_rotation           SKIPPED  -\nE       change_bg_state               SKIPPED  -\nE       warmup                        SKIPPED  -\nE       env_inventory_generation      SKIPPED  -\nE       set_template_version          SKIPPED  -\nE       appregdef_render              SKIPPED  -\nE       deploy_postfix_namespace_map  SKIPPED  -\nE       process_sd                    SKIPPED  -\nE       migrate_sd_to_deploy_plan     SKIPPED  -\nE       process_deployment_plan       SKIPPED  -\nE       env_build                     SKIPPED  -\nE       generate_effective_set        FAILED   1401ms (1.401s)\nE       copy_env_artifact             SUCCESS  19ms (0.019s)\nE       Total: 1420ms (1.420s)\nE       ======================================== [orchestrator.py:409]\nE       2026-09-12 11:30:05,146 [INFO] save_artifacts_strategy is ALWAYS (default), checking size limit for /tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/artifacts [publish_artifacts.py:32]\nE       2026-09-12 11:30:05,147 [CRITICAL] Uncaught exception: [__main__.py:9]\nE       Traceback (most recent call last):\nE         File &amp;quot;&amp;lt;frozen runpy&amp;gt;&amp;quot;, line 198, in _run_module_as_main\nE         File &amp;quot;&amp;lt;frozen runpy&amp;gt;&amp;quot;, line 88, in _run_code\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 413, in &amp;lt;module&amp;gt;\nE           sys.exit(dispatch())\nE                    ^^^^^^^^^^\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 381, in dispatch\nE           run_single_env_pipeline()\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 347, in run_single_env_pipeline\nE           step.execute(ctx)\nE         File &amp;quot;/workspace/scripts/pipeline/orchestrator.py&amp;quot;, line 294, in execute\nE           run_legacy_sd_effective_set(ctx)\nE         File &amp;quot;/workspace/scripts/effective_set/effective_set_entrypoint.py&amp;quot;, line 40, in run_legacy_sd_effective_set\nE           _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan)\nE         File &amp;quot;/workspace/scripts/effective_set/effective_set_entrypoint.py&amp;quot;, line 59, in _run_deploy_plan_full\nE           subprocess.run(cmd, shell=True, check=True)\nE         File &amp;quot;/usr/local/lib/python3.12/subprocess.py&amp;quot;, line 571, in run\nE           raise CalledProcessError(retcode, process.args,\nE       subprocess.CalledProcessError: Command &amp;#x27;/module/scripts/utils/run_effective_set_cli.sh --env-id=test-cluster/test-env --envs-path=$CI_PROJECT_DIR/environments --output=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/effective-set --registries=${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=$CI_PROJECT_DIR/sboms --deploy-plan-path=/tmp/pytest-of-root/pytest-17/test_ucccdp4_no_bg_domain_matc0/environments/test-cluster/test-env/Inventory/deploy-plan.yml --extra_params=DEPLOYMENT_SESSION_ID=2d4cfef0-ed45-4a52-b5f6-8d0e533ee570&amp;#x27; returned non-zero exit status 1.\n\ncucumber_tests/shared_steps/common_steps.py:29: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccpm1_namespace_parameter_overrides_cloud_parameter&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccpm1_namespace_parameter_overrides_cloud_parameter&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccpm1_namespace_parameter_overrides_cloud_parameter&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccpm2_cloud_parameter_overrides_tenant_parameter&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccpm2_cloud_parameter_overrides_tenant_parameter&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccpm2_cloud_parameter_overrides_tenant_parameter&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccpm3_namespace_parameter_overrides_tenant_parameter_directly&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccpm3_namespace_parameter_overrides_tenant_parameter_directly&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccpm3_namespace_parameter_overrides_tenant_parameter_directly&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccmr1_simple_type_resolution&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccmr1_simple_type_resolution&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccmr1_simple_type_resolution&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccmr2_complex_structure_resolution&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccmr2_complex_structure_resolution&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccmr2_complex_structure_resolution&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccmr3_multistep_macro_chain_resolution&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccmr3_multistep_macro_chain_resolution&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccmr3_multistep_macro_chain_resolution&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccmr4_macro_reference_resolved_across_hierarchy_levels&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccmr4_macro_reference_resolved_across_hierarchy_levels&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccmr4_macro_reference_resolved_across_hierarchy_levels&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function effective_set_deployment_params_contain at 0x76b830f85940&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_ucccmr4_macro_reference_resolved_across_hierarchy_levels&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;key_value&amp;#x27;: &amp;#x27;ns_timeout: 30&amp;#x27;, &amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b830113770&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nworkspace = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b830113770&amp;gt;\nkey_value = &amp;#x27;ns_timeout: 30&amp;#x27;\n\n    @then(parsers.parse(&amp;#x27;the effective set deployment parameters contain &amp;quot;{key_value}&amp;quot;&amp;#x27;))\n    def effective_set_deployment_params_contain(workspace: EnvGeneWorkspace, key_value: str) -&amp;gt; None:\n        es_dir = (\n            workspace.base_dir\n            / &amp;quot;environments&amp;quot; / workspace.cluster_name / workspace.env_name\n            / &amp;quot;effective-set&amp;quot; / &amp;quot;deployment&amp;quot;\n        )\n        assert es_dir.exists(), f&amp;quot;effective-set/deployment directory does not exist at {es_dir}&amp;quot;\n        found = False\n        for params_file in es_dir.rglob(&amp;quot;*.yaml&amp;quot;):\n            if key_value in params_file.read_text(encoding=&amp;quot;utf-8&amp;quot;):\n                found = True\n                break\n&amp;gt;       assert found, (\n            f&amp;quot;&amp;#x27;{key_value}&amp;#x27; not found in any *.yaml under {es_dir}.\\n&amp;quot;\n            f&amp;quot;YAML files: {[str(p) for p in es_dir.rglob(&amp;#x27;*.yaml&amp;#x27;)]}&amp;quot;\n        )\nE       AssertionError: &amp;#x27;ns_timeout: 30&amp;#x27; not found in any *.yaml under /tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment.\nE       YAML files: [&amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/mapping.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/collision-deployment-parameters.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/deployment-parameters.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/custom-params.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/credentials.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/collision-credentials.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/deploy-descriptor.yaml&amp;#x27;, &amp;#x27;/tmp/pytest-of-root/pytest-17/test_ucccmr4_macro_reference_r0/environments/test-cluster/test-env/effective-set/deployment/core/test-app/values/per-service-parameters/test-app/deployment-parameters.yaml&amp;#x27;]\n\ncucumber_tests/shared_steps/calculator_cli_steps.py:43: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccp1_custom_params_injected_into_deployment_parameters&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccp1_custom_params_injected_into_deployment_parameters&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccp1_custom_params_injected_into_deployment_parameters&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccp2_custom_params_with_unknown_namespace_fails&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccp2_custom_params_with_unknown_namespace_fails&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccp2_custom_params_with_unknown_namespace_fails&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccp3_custom_params_with_mixed_toplevel_and_namespace_keys_fails&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccp3_custom_params_with_mixed_toplevel_and_namespace_keys_fails&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccp3_custom_params_with_mixed_toplevel_and_namespace_keys_fails&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccgi1_uniqforrun_application_gets_unique_generation_directory&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccgi1_uniqforrun_application_gets_unique_generation_directory&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccgi1_uniqforrun_application_gets_unique_generation_directory&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_ucccgi2_uniqforversion_application_gets_versionderived_generation_directory&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_ucccgi2_uniqforversion_application_gets_versionderived_generation_directory&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_ucccgi2_uniqforversion_application_gets_versionderived_generation_directory&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccchr1_namespace_to_cloud_reference&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccchr1_namespace_to_cloud_reference&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccchr1_namespace_to_cloud_reference&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccchr2_namespace_to_tenant_reference&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccchr2_namespace_to_tenant_reference&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccchr2_namespace_to_tenant_reference&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccchr3_cloud_to_tenant_reference&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccchr3_cloud_to_tenant_reference&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccchr3_cloud_to_tenant_reference&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccchr4_cloud_to_namespace_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccchr4_cloud_to_namespace_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccchr4_cloud_to_namespace_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccchr5_tenant_to_cloud_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccchr5_tenant_to_cloud_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccchr5_tenant_to_cloud_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_fails at 0x76b831091940&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_uccchr5_tenant_to_cloud_reference_error&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b83025d610&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncucumber_tests/shared_steps/common_steps.py:48: in pipeline_fails\n    workspace.assert_failure(&amp;quot;Pipeline should have failed but returned 0&amp;quot;)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b83025d610&amp;gt;\nmessage = &amp;#x27;Pipeline should have failed but returned 0&amp;#x27;\n\n    def assert_failure(self, message: str = &amp;quot;Pipeline should have failed&amp;quot;):\n        if self.returncode == 0:\n            print(&amp;quot;STDOUT:\\\\n&amp;quot;, self.stdout)\n            print(&amp;quot;STDERR:\\\\n&amp;quot;, self.stderr)\n&amp;gt;       assert self.returncode != 0, message\nE       AssertionError: Pipeline should have failed but returned 0\n\ncucumber_tests/framework/workspace.py:205: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccchr6_tenant_to_namespace_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccchr6_tenant_to_namespace_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccchr6_tenant_to_namespace_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_fails at 0x76b831091940&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_uccchr6_tenant_to_namespace_reference_error&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b83017c3e0&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncucumber_tests/shared_steps/common_steps.py:48: in pipeline_fails\n    workspace.assert_failure(&amp;quot;Pipeline should have failed but returned 0&amp;quot;)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b83017c3e0&amp;gt;\nmessage = &amp;#x27;Pipeline should have failed but returned 0&amp;#x27;\n\n    def assert_failure(self, message: str = &amp;quot;Pipeline should have failed&amp;quot;):\n        if self.returncode == 0:\n            print(&amp;quot;STDOUT:\\\\n&amp;quot;, self.stdout)\n            print(&amp;quot;STDERR:\\\\n&amp;quot;, self.stderr)\n&amp;gt;       assert self.returncode != 0, message\nE       AssertionError: Pipeline should have failed but returned 0\n\ncucumber_tests/framework/workspace.py:205: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccr1_deployparameters_to_e2eparameters_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccr1_deployparameters_to_e2eparameters_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccr1_deployparameters_to_e2eparameters_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccr2_deployparameters_to_technicalconfigurationparameters_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccr2_deployparameters_to_technicalconfigurationparameters_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccr2_deployparameters_to_technicalconfigurationparameters_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccr3_e2eparameters_to_deployparameters_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccr3_e2eparameters_to_deployparameters_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccr3_e2eparameters_to_deployparameters_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_fails at 0x76b831091940&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_uccccr3_e2eparameters_to_deployparameters_reference_error&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b83025f590&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncucumber_tests/shared_steps/common_steps.py:48: in pipeline_fails\n    workspace.assert_failure(&amp;quot;Pipeline should have failed but returned 0&amp;quot;)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b83025f590&amp;gt;\nmessage = &amp;#x27;Pipeline should have failed but returned 0&amp;#x27;\n\n    def assert_failure(self, message: str = &amp;quot;Pipeline should have failed&amp;quot;):\n        if self.returncode == 0:\n            print(&amp;quot;STDOUT:\\\\n&amp;quot;, self.stdout)\n            print(&amp;quot;STDERR:\\\\n&amp;quot;, self.stderr)\n&amp;gt;       assert self.returncode != 0, message\nE       AssertionError: Pipeline should have failed but returned 0\n\ncucumber_tests/framework/workspace.py:205: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccr4_e2eparameters_to_technicalconfigurationparameters_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccr4_e2eparameters_to_technicalconfigurationparameters_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccr4_e2eparameters_to_technicalconfigurationparameters_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_fails at 0x76b831091940&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_uccccr4_e2eparameters_to_technicalconfigurationparameters_reference_error&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b8301649b0&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncucumber_tests/shared_steps/common_steps.py:48: in pipeline_fails\n    workspace.assert_failure(&amp;quot;Pipeline should have failed but returned 0&amp;quot;)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b8301649b0&amp;gt;\nmessage = &amp;#x27;Pipeline should have failed but returned 0&amp;#x27;\n\n    def assert_failure(self, message: str = &amp;quot;Pipeline should have failed&amp;quot;):\n        if self.returncode == 0:\n            print(&amp;quot;STDOUT:\\\\n&amp;quot;, self.stdout)\n            print(&amp;quot;STDERR:\\\\n&amp;quot;, self.stderr)\n&amp;gt;       assert self.returncode != 0, message\nE       AssertionError: Pipeline should have failed but returned 0\n\ncucumber_tests/framework/workspace.py:205: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccr5_technicalconfigurationparameters_to_deployparameters_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;XFailed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccr5_technicalconfigurationparameters_to_deployparameters_reference_error&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;XFailed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccr5_technicalconfigurationparameters_to_deployparameters_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;fixturefunc = &amp;lt;function pipeline_fails at 0x76b831091940&amp;gt;\nrequest = &amp;lt;FixtureRequest for &amp;lt;Function test_uccccr5_technicalconfigurationparameters_to_deployparameters_reference_error&amp;gt;&amp;gt;\nkwargs = {&amp;#x27;workspace&amp;#x27;: &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b8301658e0&amp;gt;}\n\n    def call_fixture_func(\n        fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs\n    ) -&amp;gt; FixtureValue:\n        if is_generator(fixturefunc):\n            fixturefunc = cast(\n                Callable[..., Generator[FixtureValue, None, None]], fixturefunc\n            )\n            generator = fixturefunc(**kwargs)\n            try:\n                fixture_result = next(generator)\n            except StopIteration:\n                raise ValueError(f&amp;quot;{request.fixturename} did not yield a value&amp;quot;) from None\n            finalizer = functools.partial(_teardown_yield_fixture, fixturefunc, generator)\n            request.addfinalizer(finalizer)\n        else:\n            fixturefunc = cast(Callable[..., FixtureValue], fixturefunc)\n&amp;gt;           fixture_result = fixturefunc(**kwargs)\n\n/module/venv/lib/python3.12/site-packages/_pytest/fixtures.py:898: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ncucumber_tests/shared_steps/common_steps.py:48: in pipeline_fails\n    workspace.assert_failure(&amp;quot;Pipeline should have failed but returned 0&amp;quot;)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = &amp;lt;cucumber_tests.framework.workspace.EnvGeneWorkspace object at 0x76b8301658e0&amp;gt;\nmessage = &amp;#x27;Pipeline should have failed but returned 0&amp;#x27;\n\n    def assert_failure(self, message: str = &amp;quot;Pipeline should have failed&amp;quot;):\n        if self.returncode == 0:\n            print(&amp;quot;STDOUT:\\\\n&amp;quot;, self.stdout)\n            print(&amp;quot;STDERR:\\\\n&amp;quot;, self.stderr)\n&amp;gt;       assert self.returncode != 0, message\nE       AssertionError: Pipeline should have failed but returned 0\n\ncucumber_tests/framework/workspace.py:205: AssertionError\n&#34;}], &#34;step_defs/test_calculator_cli.py::test_uccccr6_technicalconfigurationparameters_to_e2eparameters_reference_error&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_calculator_cli.py::test_uccccr6_technicalconfigurationparameters_to_e2eparameters_reference_error&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_calculator_cli.py::test_uccccr6_technicalconfigurationparameters_to_e2eparameters_reference_error&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_deploy_sub_flows.py::test_nocmdb_v2__deploy_computes_the_deploy_plan_from_application_versions_and_commits_the_effective_set&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_deploy_sub_flows.py::test_nocmdb_v2__deploy_computes_the_deploy_plan_from_application_versions_and_commits_the_effective_set&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_deploy_sub_flows.py::test_nocmdb_v2__deploy_computes_the_deploy_plan_from_application_versions_and_commits_the_effective_set&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_deploy_sub_flows.py::test_nocmdb_v1__a_legacy_sddriven_run_builds_the_env_instance_and_commits_the_effective_set&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_deploy_sub_flows.py::test_nocmdb_v1__a_legacy_sddriven_run_builds_the_env_instance_and_commits_the_effective_set&#34;, &#34;duration&#34;: &#34;00:00:23&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_deploy_sub_flows.py::test_nocmdb_v1__a_legacy_sddriven_run_builds_the_env_instance_and_commits_the_effective_set&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:23&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinved1_create_env_definitionyml&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinved1_create_env_definitionyml&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinved1_create_env_definitionyml&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinved2_replace_env_definitionyml&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinved2_replace_env_definitionyml&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinved2_replace_env_definitionyml&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinved3_delete_env_definitionyml&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinved3_delete_env_definitionyml&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinved3_delete_env_definitionyml&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps1_create_paramset_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps1_create_paramset_file&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvps1_create_paramset_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps2_replace_paramset_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps2_replace_paramset_file&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvps2_replace_paramset_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps3_delete_paramset_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps3_delete_paramset_file&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvps3_delete_paramset_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr1_create_credentials_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr1_create_credentials_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvcr1_create_credentials_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr2_replace_credentials_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr2_replace_credentials_file&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvcr2_replace_credentials_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr3_delete_credentials_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr3_delete_credentials_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvcr3_delete_credentials_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp1_create_resource_profile_override_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp1_create_resource_profile_override_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvrp1_create_resource_profile_override_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp2_replace_resource_profile_override_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp2_replace_resource_profile_override_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvrp2_replace_resource_profile_override_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp3_delete_resource_profile_override_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp3_delete_resource_profile_override_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvrp3_delete_resource_profile_override_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv1_create_shared_template_variable_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv1_create_shared_template_variable_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvstv1_create_shared_template_variable_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv2_replace_shared_template_variable_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv2_replace_shared_template_variable_file&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvstv2_replace_shared_template_variable_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv3_delete_shared_template_variable_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv3_delete_shared_template_variable_file&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvstv3_delete_shared_template_variable_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvbasic1_generate_minimal_environment_inventory_init&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvbasic1_generate_minimal_environment_inventory_init&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvbasic1_generate_minimal_environment_inventory_init&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvatall2_rollback_on_invalid_env_inventory_content_schema_validation_failure&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvatall2_rollback_on_invalid_env_inventory_content_schema_validation_failure&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvatall2_rollback_on_invalid_env_inventory_content_schema_validation_failure&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvatall3_failed_run_does_not_reach_git_commit&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvatall3_failed_run_does_not_reach_git_commit&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvatall3_failed_run_does_not_reach_git_commit&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvmulti1_apply_combined_payload_with_multiple_object_types_in_one_run&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvmulti1_apply_combined_payload_with_multiple_object_types_in_one_run&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvmulti1_apply_combined_payload_with_multiple_object_types_in_one_run&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps4_create_paramset_file_at_place_scope[cluster]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps4_create_paramset_file_at_place_scope[cluster]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvps4_create_paramset_file_at_place_scope[cluster]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps4_create_paramset_file_at_place_scope[site]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvps4_create_paramset_file_at_place_scope[site]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvps4_create_paramset_file_at_place_scope[site]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr4_create_credentials_file_at_place_scope[env]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr4_create_credentials_file_at_place_scope[env]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvcr4_create_credentials_file_at_place_scope[env]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr4_create_credentials_file_at_place_scope[site]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvcr4_create_credentials_file_at_place_scope[site]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvcr4_create_credentials_file_at_place_scope[site]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp4_create_resource_profile_file_at_place_scope[cluster]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp4_create_resource_profile_file_at_place_scope[cluster]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvrp4_create_resource_profile_file_at_place_scope[cluster]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp4_create_resource_profile_file_at_place_scope[site]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvrp4_create_resource_profile_file_at_place_scope[site]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvrp4_create_resource_profile_file_at_place_scope[site]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv4_create_shared_template_variable_file_at_place_scope[cluster]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv4_create_shared_template_variable_file_at_place_scope[cluster]&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvstv4_create_shared_template_variable_file_at_place_scope[cluster]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv4_create_shared_template_variable_file_at_place_scope[site]&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_environment_inventory_generation.py::test_uceinvstv4_create_shared_template_variable_file_at_place_scope[site]&#34;, &#34;duration&#34;: &#34;00:00:05&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_environment_inventory_generation.py::test_uceinvstv4_create_shared_template_variable_file_at_place_scope[site]&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:05&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv1_externalonly_environment_instance_builds_and_writes_externalonly_credentials&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv1_externalonly_environment_instance_builds_and_writes_externalonly_credentials&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv1_externalonly_environment_instance_builds_and_writes_externalonly_credentials&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv1b_legacy_env_build_reaches_external_credential_validation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv1b_legacy_env_build_reaches_external_credential_validation&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv1b_legacy_env_build_reaches_external_credential_validation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv2_localonly_environment_instance_builds_and_writes_no_external_credentials&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv2_localonly_environment_instance_builds_and_writes_no_external_credentials&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv2_localonly_environment_instance_builds_and_writes_no_external_credentials&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv3_unresolved_external_credential_reference_fails_env_build&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv3_unresolved_external_credential_reference_fails_env_build&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv3_unresolved_external_credential_reference_fails_env_build&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv4_external_credential_reference_in_a_localonly_environment_fails_env_build&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv4_external_credential_reference_in_a_localonly_environment_fails_env_build&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv4_external_credential_reference_in_a_localonly_environment_fails_env_build&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv5_local_credential_macro_in_an_externalonly_environment_fails_env_build&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv5_local_credential_macro_in_an_externalonly_environment_fails_env_build&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv5_local_credential_macro_in_an_externalonly_environment_fails_env_build&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv6_mixed_credential_types_in_the_merged_credentials_file_fail_env_build&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv6_mixed_credential_types_in_the_merged_credentials_file_fail_env_build&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv6_mixed_credential_types_in_the_merged_credentials_file_fail_env_build&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv7_external_credref_in_technicalconfigurationparameters_fails_env_build&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv7_external_credref_in_technicalconfigurationparameters_fails_env_build&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv7_external_credref_in_technicalconfigurationparameters_fails_env_build&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecv8_unreferenced_external_credential_warns_but_does_not_fail_env_build&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecv8_unreferenced_external_credential_warns_but_does_not_fail_env_build&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecv8_unreferenced_external_credential_warns_but_does_not_fail_env_build&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd1_helmvalues_multifield_credential_emits_vals_references_with_property_fragments&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd1_helmvalues_multifield_credential_emits_vals_references_with_property_fragments&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd1_helmvalues_multifield_credential_emits_vals_references_with_property_fragments&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd1b_legacy_effectiveset_run_emits_vals_references&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd1b_legacy_effectiveset_run_emits_vals_references&#34;, &#34;duration&#34;: &#34;00:00:12&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd1b_legacy_effectiveset_run_emits_vals_references&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:12&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd2_helmvalues_singlevalue_vault_credential_emits_a_vals_reference_with_value&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd2_helmvalues_singlevalue_vault_credential_emits_a_vals_reference_with_value&#34;, &#34;duration&#34;: &#34;00:00:11&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd2_helmvalues_singlevalue_vault_credential_emits_a_vals_reference_with_value&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:11&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd6_helmvalues_singlevalue_nondefaultstore_credential_omits_the_fragment&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd6_helmvalues_singlevalue_nondefaultstore_credential_omits_the_fragment&#34;, &#34;duration&#34;: &#34;00:00:12&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd6_helmvalues_singlevalue_nondefaultstore_credential_omits_the_fragment&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:12&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd3_externalvalues_multifield_credential_emits_an_eso_reference_object_with_secretkeys&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd3_externalvalues_multifield_credential_emits_an_eso_reference_object_with_secretkeys&#34;, &#34;duration&#34;: &#34;00:00:12&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd3_externalvalues_multifield_credential_emits_an_eso_reference_object_with_secretkeys&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:12&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd4_externalvalues_singlevalue_credential_emits_an_eso_reference_object_with_no_secretkeys&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd4_externalvalues_singlevalue_credential_emits_an_eso_reference_object_with_no_secretkeys&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd4_externalvalues_singlevalue_credential_emits_an_eso_reference_object_with_no_secretkeys&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd5_mixed_secret_flow_shapes_produce_both_vals_and_eso_references_in_one_effective_set&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd5_mixed_secret_flow_shapes_produce_both_vals_and_eso_references_in_one_effective_set&#34;, &#34;duration&#34;: &#34;00:00:11&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd5_mixed_secret_flow_shapes_produce_both_vals_and_eso_references_in_one_effective_set&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:11&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd7_externalvalues_with_eso_disabled_fails_es_generation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd7_externalvalues_with_eso_disabled_fails_es_generation&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd7_externalvalues_with_eso_disabled_fails_es_generation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd8_mixed_external_and_local_credentials_at_es_stage_are_rejected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd8_mixed_external_and_local_credentials_at_es_stage_are_rejected&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd8_mixed_external_and_local_credentials_at_es_stage_are_rejected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd9_credref_property_absent_from_credentialproperties_fails_es_generation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd9_credref_property_absent_from_credentialproperties_fails_es_generation&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd9_credref_property_absent_from_credentialproperties_fails_es_generation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecd10_credential_referencing_undefined_secret_store_fails_es_generation&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecd10_credential_referencing_undefined_secret_store_fails_es_generation&#34;, &#34;duration&#34;: &#34;00:00:08&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecd10_credential_referencing_undefined_secret_store_fails_es_generation&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:08&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecctx1_vault_singlevalue_createtrue_credential_emits_create_if_absent_context_entry_with_value_field&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecctx1_vault_singlevalue_createtrue_credential_emits_create_if_absent_context_entry_with_value_field&#34;, &#34;duration&#34;: &#34;00:00:11&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecctx1_vault_singlevalue_createtrue_credential_emits_create_if_absent_context_entry_with_value_field&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:11&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecctx2_vault_multifield_createtrue_credential_emits_create_if_absent_context_entry_with_property_fields&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecctx2_vault_multifield_createtrue_credential_emits_create_if_absent_context_entry_with_property_fields&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecctx2_vault_multifield_createtrue_credential_emits_create_if_absent_context_entry_with_property_fields&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecctx3_createfalse_credential_emits_fail_if_absent_context_entry_without_data&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecctx3_createfalse_credential_emits_fail_if_absent_context_entry_without_data&#34;, &#34;duration&#34;: &#34;00:00:09&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecctx3_createfalse_credential_emits_fail_if_absent_context_entry_without_data&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:09&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecctx4_gcp_singlevalue_createtrue_credential_emits_create_if_absent_context_entry_with_scalar_data&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecctx4_gcp_singlevalue_createtrue_credential_emits_create_if_absent_context_entry_with_scalar_data&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecctx4_gcp_singlevalue_createtrue_credential_emits_create_if_absent_context_entry_with_scalar_data&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_external_creds.py::test_ucecctx5_localonly_environment_produces_no_external_credential_context_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_external_creds.py::test_ucecctx5_localonly_environment_produces_no_external_credential_context_file&#34;, &#34;duration&#34;: &#34;00:00:10&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_external_creds.py::test_ucecctx5_localonly_environment_produces_no_external_credential_context_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:10&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom1_sbom_retention_disabled__no_cleanup&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom1_sbom_retention_disabled__no_cleanup&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom1_sbom_retention_disabled__no_cleanup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom2_all_applications_within_perapplication_limit__no_files_deleted&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom2_all_applications_within_perapplication_limit__no_files_deleted&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom2_all_applications_within_perapplication_limit__no_files_deleted&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom3_perapplication_retention_keeps_10_most_recent_versions&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom3_perapplication_retention_keeps_10_most_recent_versions&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom3_perapplication_retention_keeps_10_most_recent_versions&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom4_perapplication_retention_with_custom_version_count&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom4_perapplication_retention_with_custom_version_count&#34;, &#34;duration&#34;: &#34;00:00:06&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom4_perapplication_retention_with_custom_version_count&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:06&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom5_total_sboms_size_exceeds_600_mb__keeps_newest_per_application&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom5_total_sboms_size_exceeds_600_mb__keeps_newest_per_application&#34;, &#34;duration&#34;: &#34;00:00:24&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom5_total_sboms_size_exceeds_600_mb__keeps_newest_per_application&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:24&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom6_legacy_flat_sbom_files_at_the_top_of_sboms_are_removed&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom6_legacy_flat_sbom_files_at_the_top_of_sboms_are_removed&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom6_legacy_flat_sbom_files_at_the_top_of_sboms_are_removed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;step_defs/test_sbom_retention.py::test_ucsbom7_enabled_retention_without_keep_versions_per_app_skips_perapplication_cleanup&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;step_defs/test_sbom_retention.py::test_ucsbom7_enabled_retention_without_keep_versions_per_app_skips_perapplication_cleanup&#34;, &#34;duration&#34;: &#34;00:00:07&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;step_defs/test_sbom_retention.py::test_ucsbom7_enabled_retention_without_keep_versions_per_app_skips_perapplication_cleanup&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;00:00:07&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

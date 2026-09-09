@@ -1,0 +1,6 @@
+inventory:
+  environmentName: "test-env"
+  cloudName: "test-cluster"
+envTemplate:
+  name: "ext_creds_uc_ec_ctx_3_fail_if_absent"
+  artifact: "external-secrets-artifact:v1"

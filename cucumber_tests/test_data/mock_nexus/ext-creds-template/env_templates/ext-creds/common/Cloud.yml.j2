@@ -1,0 +1,20 @@
+name: dummy-cloud
+deployParameters:
+  CONSUL_ADMIN_TOKEN:
+    $type: credRef
+    credId: consul-admin-cred
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
+apiUrl: dummy
+apiPort: 80
+dashboardUrl: dummy
+labels: []
+defaultCredentialsId: ""
+protocol: dummy
+maasConfig: {credentialsId: ""}
+vaultConfig: {credentialsId: ""}
+consulConfig: {tokenSecret: ""}
+dbaasConfigs: []

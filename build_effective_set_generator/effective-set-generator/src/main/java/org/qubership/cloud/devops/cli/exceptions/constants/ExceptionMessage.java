@@ -25,4 +25,6 @@ public class ExceptionMessage {
     public static final String REGISTRY_EXTRACT_FAILED = "Could not extract registry information from Application Bom for %s";
 
     public static final String APP_PROCESS_FAILED = "Failed to process application %s from namespace %s \n Reason: %s";
+
+    public static final String SECRET_STORE_FILE_NOT_FOUND = "Mandatory file for external cred mode /configuration/secret-stores.yml is not found";
 }
