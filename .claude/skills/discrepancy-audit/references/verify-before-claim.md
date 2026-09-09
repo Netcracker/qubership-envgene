@@ -9,7 +9,7 @@ The orchestrator fans out to parallel child processes via `multi_env_runner.fan_
 runs. This architecture matters for rule 3: a step that looks absent from the primary flow may be
 invoked as a separate orchestrator phase, not inlined.
 
-## The four rules
+## The rules
 
 1. **Verify on the current HEAD.** Directories move between branches. The `python/` directory was
    renamed to `modules/` in this branch, which made earlier greps silently blind and produced a
@@ -37,3 +37,12 @@ invoked as a separate orchestrator phase, not inlined.
    code or schema line yourself and confirm both say what the finding claims. Rules 1 to 4 apply to
    that re-verification. A candidate whose evidence does not survive is dropped or downgraded, never
    passed through on the subagent's word.
+
+6. **Anchor a claim in the component that implements the behavior, across engines and scope boundaries.**
+   A claim about how a value is resolved, selected, or applied is verified in the component that actually
+   does it, not in the docs or an upstream component that only prepares the input. EnvGene resolves the
+   resource profile baseline in the Java effective set calculator, so "the baseline is not used" could not
+   be settled from the Python environment build step or the docs, and asserting it from them produced a
+   false claim that a later read of the calculator reversed. When the implementing component sits outside
+   the audited corpus, mark the claim unverified and name the component to read, rather than resolving it
+   from a sibling component or the docs.

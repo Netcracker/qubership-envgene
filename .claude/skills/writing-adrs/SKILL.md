@@ -20,6 +20,26 @@ short.
   trade-off. Name at least one negative consequence you accept.
 - **No diagrams, no code, no deep dives.** Link them. The ADR carries the choice and the why, nothing
   that needs scrolling.
+- **No code references, describe abstractly.** State the decision in domain and behavior terms. Do not
+  name files, functions, classes, or modules in the prose. A code reference goes stale and belongs in the
+  linked design doc or PR, not in a durable decision record. Prefer naming the observable behavior or the
+  documented object over the code that implements it, for example "the effective set resolves the profile
+  by signal-gated side selection" over naming the resolver class and the method it calls.
+- **No Date field.** Do not put a Date line in an ADR. The commit history is the authoritative date.
+- **No implementation-status prose.** An ADR records the decision, not whether the code exists yet. Do not write that
+  the decision is "ahead of implementation", "not yet wired", "doc-ahead", or holds "until that lands". That state
+  lives in the `Status` field (`Proposed` before agreement, `Accepted` after) and in the commit history. A prose status
+  note goes stale the moment the code merges, and a durable record that contradicts reality is worse than none. If you
+  need to point at the implementing change, link the PR or issue at the bottom instead of narrating its progress.
+- **Capture the whole decided model.** When writing or revising, cross-check the Decision against
+  the source model and add any rule that is missing, including small normalization or edge-case rules
+  (for example, how an empty value is treated). Do not assume the existing Decision text is complete.
+  Terseness comes from tight wording per item, not from omitting items.
+- **When revising, audit the whole document.** Apply every rule in this skill to the entire ADR, not
+  only the lines you set out to change. This differs from the `writing-docs` scope, which limits
+  style fixes to new and modified content only. An ADR is one page, so a whole-document pass takes
+  seconds and keeps the record consistent. Check all sections against these rules and against the
+  source decision before you submit any revision.
 
 ## Format
 
@@ -29,7 +49,6 @@ Use the five Nygard sections. Nothing more.
 # ADR-NNNN: <short imperative title, for example "Adapt registry auth from e2e params">
 
 Status: Proposed | Accepted | Superseded by ADR-XXXX
-Date: YYYY-MM-DD
 
 ## Context
 
@@ -75,6 +94,24 @@ alternatives.
 - Follow the repo's `writing-docs` rules. In particular: plain hyphens, never em or en dashes. No
   semicolons, split into separate sentences. 120-character lines, sentence-case headings. An ADR is a
   repo doc like any other.
+- When Decision or Consequences enumerate cases, options, warnings, or rules, present each one as a
+  bullet, not as a run-on inline sentence. One item per bullet. A sentence that lists several items
+  separated by semicolons, or by repeated use of "and", is an enumeration and must be rewritten as a
+  bulleted list. This applies when revising existing prose too, even if the surrounding text is
+  unchanged.
+
+  Anti-example: "We emit warnings for missing keys; null values; and unknown fields." becomes:
+
+  ```markdown
+  We emit warnings for:
+
+  - Missing keys
+  - Null values
+  - Unknown fields
+  ```
+- State findings qualitatively, not with exact counts or measurements. "A corpus scan found no
+  divergences" instead of "753 environment definitions, 2033 namespaces". Specific numbers age
+  and belong in the analysis or ledger, not in the durable ADR.
 
 ## Filing
 
@@ -94,3 +131,10 @@ Reject these. They are the failure modes that make ADRs unread.
 - Considered options with a good, bad, and neutral table per option. Use titles plus one `because`.
 - A Consequences section listing only benefits. Include the cost.
 - Architecture diagrams or code pasted inline. Link a design doc.
+- Exact counts or measurements in Decision or Consequences ("753 environments, 2033 namespaces"). State
+  the finding qualitatively. The numbers age and belong in the analysis, not in the durable record.
+- A Decision or Consequences that drops a settled rule to save space. Every case the decision resolves
+  must appear. Make each item tight, not absent.
+- A Consequences line that tracks implementation status ("this is ahead of code", "not yet wired", "until the change
+  lands"). The `Status` field carries the lifecycle. Such prose ages into falsehood the moment the code ships, and the
+  next reader trusts a record that is now wrong.
