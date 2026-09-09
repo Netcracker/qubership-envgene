@@ -9,6 +9,7 @@
     - [Resolution summary](#resolution-summary)
   - [Merge into Cloud](#merge-into-cloud)
     - [Merge behaviour](#merge-behaviour)
+    - [Minimal Cloud Passport Support](#minimal-cloud-passport-support)
   - [Parameter traceability](#parameter-traceability)
   - [Related documentation](#related-documentation)
 
@@ -228,6 +229,30 @@ flow flat into `deployParameters` - see the last row of the table for the patter
 - Higher-priority sources later in the generation pipeline (such as per-environment parameter
   files) can override passport values.
 - Every section in the passport is processed per the mapping table above.
+
+### Minimal Cloud Passport Support
+
+A Cloud Passport requires only the following mandatory keys in the `cloud` section:
+
+- `CLOUD_API_HOST`
+- `CLOUD_PUBLIC_HOST`
+
+All other `cloud` keys are optional, including:
+
+- `CLOUD_API_PORT`
+- `CLOUD_PRIVATE_HOST`
+- `CLOUD_DASHBOARD_URL`
+- `CLOUD_PROTOCOL`
+- `PRODUCTION_MODE`
+
+If an optional key is not present in the Cloud Passport:
+
+- It is **not substituted** into the Cloud object. The corresponding `cloud.yml` attribute remains as defined by the Cloud Template or is omitted if the template does not define it.
+- **No default value is applied** during Cloud Passport processing. Where documented (see [Cloud](/docs/envgene-objects.md#cloud)), default values are applied later by the CMDB Import or the Effective Set Calculator.
+- The attribute is **omitted** from the generated `cloud.yml`; no empty or placeholder value is added.
+- Cloud generation continues successfully without requiring the missing optional key.
+
+The same behavior applies to the optional integration sections (`maas`, `vault`, `dbaas`, and `consul`). If any of these sections are absent from the Cloud Passport, the corresponding `cloud.yml` configuration (`maasConfig`, `vaultConfig`, `dbaasConfigs`, or `consulConfig`) is treated as disabled by default (`enable: false` or `enabled: false`), allowing cloud generation to complete without errors.
 
 ## Parameter traceability
 
