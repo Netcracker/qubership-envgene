@@ -24,7 +24,7 @@ are performance parameters: the baseline is the application's set, custom values
 
 This guide assumes a Template repository with Cloud and Namespace templates and an Instance repository with at
 least one target environment already exist. The baseline names come from the application developer, so check the
-application zip part if you are unsure which baselines an application defines.
+application ZIP part if you are unsure which baselines an application defines.
 
 Each scenario below covers a distinct intent - read its "When to use" line to confirm it matches your
 situation before following the steps. This guide configures profiles on the namespace.
