@@ -271,7 +271,3 @@ def pipeline_logs_contain_text(workspace, text):
 @then(parsers.parse('the pipeline log does not contain "{text}"'))
 def pipeline_logs_not_contain_text(workspace, text):
     workspace.assert_logs_not_contain(text)
-
-
-
-

@@ -93,7 +93,7 @@
           fi
 
       - name: Lint Code Base
-        uses: super-linter/super-linter/slim@2bdd90ed3262e023ac84bf8fe35dc480721fc1f2 # v8.2.1
+        uses: super-linter/super-linter/slim@4ce20838b8ab83717e78138c5b3a1407148e0918 # v8.7.0
         env:
           VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
           # To report GitHub Actions status checks
