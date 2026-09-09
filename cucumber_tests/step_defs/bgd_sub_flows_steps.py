@@ -199,11 +199,21 @@ def given_application_versions_as_solution_descriptor(workspace: EnvGeneWorkspac
     sd_dir = workspace.base_dir / "solution_descriptors"
     sd_dir.mkdir(parents=True, exist_ok=True)
     sd_path = sd_dir / "bgd-sd.yml"
-    sd_path.write_text(yaml.dump({
-        "version": 2.2,
-        "type": "solutionDeploy",
-        "applications": [{"version": app_version, "deployPostfix": deploy_postfix}],
-    }))
+    if sd_path.exists():
+        sd = yaml.safe_load(sd_path.read_text(encoding="utf-8")) or {}
+    else:
+        sd = {
+            "version": 2.2,
+            "type": "solutionDeploy",
+            "applications": [],
+        }
+
+    sd["applications"].append({
+        "version": app_version,
+        "deployPostfix": deploy_postfix,
+    })
+    sd_path.write_text(yaml.safe_dump(sd), encoding="utf-8")
+   
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
     workspace.extra_env["APPLICATION_VERSIONS"] = str(sd_path)
