@@ -482,8 +482,7 @@ public class CliParameterParser {
             if (generateCleanupContext) {
                 logInfo("Generating cleanup output for namespace: " + namespaceName);
                 ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(
-                        tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap,
-                        getExtCredEntities());
+                        tenantName, cloudName, namespaceName, null, originalNamespace, getExtCredEntities());
                 createCleanupParams(cleanupParameterBundle);
 
                 String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
