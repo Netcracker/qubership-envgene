@@ -215,7 +215,7 @@ class AppregdefRenderStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
             return True
-        return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION'))
+        return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION') or ctx.params.get('SD_DATA'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
