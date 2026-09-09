@@ -1,0 +1,22 @@
+name: dummy-cloud
+deployParameters:
+  STORAGE_USERNAME: "${creds.get(\"minio-cred\").username}"
+  STORAGE_PASSWORD: "${creds.get(\"minio-cred\").password}"
+  INTEGRATION_TOKEN:
+    $type: credRef
+    credId: app-sidecar-token
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
+apiUrl: dummy
+apiPort: 80
+dashboardUrl: dummy
+labels: []
+defaultCredentialsId: ""
+protocol: dummy
+maasConfig: {credentialsId: ""}
+vaultConfig: {credentialsId: ""}
+consulConfig: {tokenSecret: ""}
+dbaasConfigs: []

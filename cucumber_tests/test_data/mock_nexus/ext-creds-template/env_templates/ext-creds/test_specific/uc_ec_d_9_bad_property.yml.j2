@@ -1,0 +1,22 @@
+app-db-cred:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/db"
+  properties:
+    - name: username
+consul-admin-cred:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}"
+ns-deploy-cred:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
+tenant-cred:
+  type: external
+  create: true
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}"
