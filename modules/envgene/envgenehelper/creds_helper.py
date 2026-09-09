@@ -299,7 +299,7 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
             raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
     else:
         if EXTERNAL_CREDENTIAL_TYPE in types:
-            raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
+            raise ValueError(f"External credentials not allowed in local only environment. Found: {types} in {cred_file}")
 
 
 def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
