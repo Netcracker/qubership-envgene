@@ -8,6 +8,7 @@ done.
 - [Content integrity](#content-integrity)
   - [Verify, don't fabricate](#verify-dont-fabricate)
   - [Use existing vocabulary](#use-existing-vocabulary)
+  - [No internal-analysis wording in user-facing docs](#no-internal-analysis-wording-in-user-facing-docs)
   - [Define every term](#define-every-term)
   - [Don't re-gloss established terms](#dont-re-gloss-established-terms)
   - [In-repo links](#in-repo-links)
@@ -44,25 +45,66 @@ validation rules, and tooling assumptions.
 
 ## Use existing vocabulary
 
-If the document already defines terms, types, and notations for a domain, reuse them. Parallel
-vocabulary - new section titles, column labels, role names - for concepts the document already covers
-is avoided.
+Before you name a concept, find the term the product already uses for it. Search the other docs, the
+schemas, and the code, not just the current document, and reuse that term. A fresh coinage for a concept
+that already has an established name forces readers to hold two glossaries for one idea.
+
+Three habits prevent the usual coinage traps:
+
+- Reuse the established term. If the concept is already named anywhere in the product (a schema field, a
+  documented object, another doc), use that name, not a parallel one. Coining `tier` for a concept the
+  product calls `baseline` is the classic miss.
+- Check for a collision before minting a term. A candidate label that already means something else in the
+  product, for example `custom parameters` when `custom_params` is a distinct existing concept, is worse
+  than a plain description. Grep for the candidate first.
+- Do not oppose a term against its own umbrella. When two things are both instances of one concept, for
+  example a baseline and custom values are both performance parameters, phrase them by source or role, not
+  as opposites, so the umbrella relationship stays clear.
+
+If the product genuinely has no term for the concept, prefer a plain description over minting a new label,
+even one you define. A coined label is a cost the reader pays on every read. Introduce a real new term only
+when the description is too clumsy to repeat, and then define it once.
 
 ❌ **INCORRECT:**
 
-- Inventing a column name that describes the same property an existing column already covers.
-- Adding a structural subsection that duplicates an existing section type.
-- Coining a new term when the document already names the same concept.
+- Coining a new term (`tier`, `standalone override`) when the product already names the concept or a plain
+  description would do.
+- A label that collides with an existing, different concept.
+- Phrasing a subset and its umbrella as opposites (`baseline` versus `performance parameters`).
 
 ✅ **CORRECT:**
 
-- Reuse the document's existing terms for the same concepts.
-- If new vocabulary is genuinely needed, introduce it in a definitions section.
+- Reuse the product's established term, found by searching docs, schemas, and code.
+- Describe the concept plainly when no term exists, and coin only as a last resort with a definition.
 
 **Scope:** Applies to **new and modified content only**.
 
-**Why:** Parallel vocabulary forces readers to maintain two mental glossaries and produces ambiguous
-cross-references.
+**Why:** Parallel or colliding vocabulary forces readers to maintain two mental glossaries and produces
+ambiguous cross-references. A coinage the reader must learn is a cost that a reused term or a plain
+description avoids.
+
+---
+
+## No internal-analysis wording in user-facing docs
+
+User-facing docs (how-to, feature, use-cases, tutorial) describe observable behavior. Keep internal
+analysis and tooling artifacts out of them: a validation corpus, a scan result, an internal SBOM lookup, a
+debugging note. These belong in design or technical-design docs. State the behavior the reader observes,
+not the evidence or the internal plumbing behind it.
+
+❌ **INCORRECT:**
+
+- A how-to that says a value is safe because the corpus showed no divergence.
+- A feature doc that explains behavior in terms of an internal SBOM scan.
+
+✅ **CORRECT:**
+
+- State the observable rule, and leave the corpus or scan evidence in the design or technical-design doc.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Internal-analysis wording leaks detail that ages out and means nothing to a user, who only sees
+observable behavior.
 
 ---
 

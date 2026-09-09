@@ -89,12 +89,22 @@ most of the weight:
 - Verify before you name. Confirm each macro, field, or behavior against the docs or the code before
   stating it - do not infer which macro carries a value or which engine resolves it. A confident wrong
   claim costs the reader more than describing the effect and letting the implementer bind the mechanism.
+  This includes claims about today's behavior. Before writing that the change happens instead of failing
+  or instead of an error, confirm against the code that the case fails today rather than passing silently,
+  because the phrase instead of X misstates the baseline when X does not actually happen.
 
 State only settled behavior. If the design has not decided something (an extra warning, a side effect),
 leave it out or raise it as an open question - do not write it into In scope or Acceptance as fact.
 For Acceptance, when a condition has a sibling case (a mode set versus absent, a file present versus
 missing), put the discriminating precondition in the Given so the outcome cannot be read as applying to
 the sibling.
+
+Make the In scope changes read as a developer work-map. When the slice touches several components or
+pipeline steps, group the items under the component or step they touch, or lead each item with that
+component or step placed first as the opening phrase rather than buried mid-sentence, so a reader sees
+where the work lands at a glance rather than scanning prose for it. Keep each item atomic to
+one independent change. Do not collapse several components into one item, and do not split one change into
+terse fragments.
 
 Carry the design-time seam into Implementation notes. When the design settled a load-bearing implementation
 insight - where the change attaches and how - record it as guidance, because the developer who implements
@@ -194,6 +204,13 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   for example "the design docs are ahead of the code" or "this CR wires the described behavior". It is
   noise, not guidance - the reader is the developer who will write the code, and the code's current
   state is theirs to change. State the behavior contract and how to verify it, nothing about the gap.
+- No documentation item in scope: no `In scope changes` item asks to write, rewrite, or update
+  documentation, including a feature or explanation doc, an ADR, a use case, or any file under `docs/`.
+  The docs are the design reference the CR links, not implementation work. If a drafted item says to write
+  or update a doc, drop it, or if it names real code work, restate it as that code work.
+- Component visibility: each `In scope changes` item leads with or is grouped under the component or
+  pipeline step it touches, so the slice scans as a work-map. An item that buries the component mid-prose
+  in a flat list fails this check.
 
 ### File the issue
 
