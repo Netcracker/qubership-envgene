@@ -82,8 +82,21 @@ public class ParametersCalculationServiceV2 {
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getCleanupParams(), parameterBundle, ParameterType.CLEANUP, k8TokenMap, originalNamespace, extCredEntities);
-        return parameterBundle;
+        prepareSecureInsecureParams(
+                parameters.getCleanupParams(),
+                parameterBundle,
+                ParameterType.CLEANUP,
+                k8TokenMap,
+                originalNamespace,
+                extCredEntities);
+
+        LOGGER.info(
+                "SECURITY DEBUG CLEANUP: insecure keys={}",
+                parameterBundle.getCleanupParameters().keySet());
+
+        LOGGER.info(
+                "SECURITY DEBUG CLEANUP: secure keys={}",
+                parameterBundle.getCleanupSecureParameters().keySet());        return parameterBundle;
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
