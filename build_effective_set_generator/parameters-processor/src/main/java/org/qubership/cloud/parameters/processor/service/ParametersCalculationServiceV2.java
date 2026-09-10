@@ -198,6 +198,25 @@ public class ParametersCalculationServiceV2 {
             String refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
             extCredEntities.setRefShape(refShape);
         }
+        parameters.forEach((key, param) -> {
+            if (key.equals("DBAAS_AGGREGATOR_USERNAME")
+                    || key.equals("DBAAS_AGGREGATOR_PASSWORD")
+                    || key.equals("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME")
+                    || key.equals("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD")
+                    || key.equals("MAAS_CREDENTIALS_USERNAME")
+                    || key.equals("MAAS_CREDENTIALS_PASSWORD")) {
+
+                LOGGER.info(
+                        "SECURITY DEBUG: type={}, key={}, secured={}, valueType={}",
+                        parameterType,
+                        key,
+                        param != null && param.isSecured(),
+                        param != null && param.getValue() != null
+                                ? param.getValue().getClass().getName()
+                                : "null"
+                );
+            }
+        });
         filterSecuredParams(parameters, securedParams, inSecuredParams, externalCredParams, parameterType, extCredEntities);
         Map<String, Object> externalCredParamsAsObject = externalCredParams != null ? ParametersProcessor.convertParameterMapToObject(externalCredParams) : null;
         Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
