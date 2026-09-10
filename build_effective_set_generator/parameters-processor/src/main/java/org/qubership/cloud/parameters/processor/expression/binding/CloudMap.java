@@ -102,8 +102,8 @@ public class CloudMap extends DynamicMap {
                         map.put("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", buildCredentialRefMap(dbaasCredId, (ExternalCredentials) cred, "username", cloudOrigin));
                         map.put("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", buildCredentialRefMap(dbaasCredId, (ExternalCredentials) cred, "password", cloudOrigin));
                     } else if (cred instanceof UsernamePasswordCredentials) {
-                        Parameter username = securedParameter(credentials.getUsername(), cloudOrigin);
-                        Parameter password = securedParameter(credentials.getPassword(), cloudOrigin);
+                        Parameter username = securedParameter(cred.getUsername(), cloudOrigin);
+                        Parameter password = securedParameter(cred.getPassword(), cloudOrigin);
                         map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", username);
                         map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", password);
                         map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", username);
@@ -135,8 +135,8 @@ public class CloudMap extends DynamicMap {
                         map.put("MAAS_CREDENTIALS_USERNAME", buildCredentialRefMap(maasCredId, (ExternalCredentials) cred, "username", cloudOrigin));
                         map.put("MAAS_CREDENTIALS_PASSWORD", buildCredentialRefMap(maasCredId, (ExternalCredentials) cred, "password", cloudOrigin));
                     }else if (cred instanceof UsernamePasswordCredentials) {
-                        map.putIfAbsent( "MAAS_CREDENTIALS_USERNAME", securedParameter(credentials.getUsername(), cloudOrigin) );
-                        map.putIfAbsent( "MAAS_CREDENTIALS_PASSWORD", securedParameter(credentials.getPassword(), cloudOrigin) );
+                        map.putIfAbsent( "MAAS_CREDENTIALS_USERNAME", securedParameter(cred.getUsername(), cloudOrigin) );
+                        map.putIfAbsent( "MAAS_CREDENTIALS_PASSWORD", securedParameter(cred.getPassword(), cloudOrigin) );
                     } else {
                         map.putIfAbsent( "MAAS_CREDENTIALS_USERNAME", securedParameter(DEFAULT_MAAS_LOGIN, cloudOrigin) );
                         map.putIfAbsent( "MAAS_CREDENTIALS_PASSWORD", securedParameter(DEFAULT_MAAS_PASSWORD, cloudOrigin) );
