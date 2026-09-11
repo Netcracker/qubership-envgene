@@ -13,7 +13,7 @@ def _update_common_artifact_version(data: dict, version_to_add: str, env_definit
                 del data['envTemplate']['templateArtifact']
             data['envTemplate']['artifact'] = version_to_add
         else:
-            logger.error(f"Bad env_definition structure in file {env_definition_path}.")
+            logger.error(f"envTemplate is missing in env definition file{env_definition_path}.")
             raise ReferenceError(f"Can't update version in {env_definition_path}. See logs above.")
     else:
         if 'envTemplate' in data and 'templateArtifact' in data['envTemplate'] and 'artifact' in data['envTemplate'][
@@ -25,7 +25,7 @@ def _update_common_artifact_version(data: dict, version_to_add: str, env_definit
             logger.info(
                 f"Succesfully updated version from {old_version} to {version_to_add} in {env_definition_path}")
         else:
-            logger.error(f"Bad env_definition structure in file {env_definition_path}.")
+            logger.error(f"Invalid ENV_TEMPLATE_VERSION: version-only input expects 'envTemplate.templateArtifact.artifact' structure, but it is not present {env_definition_path}.")
             raise ReferenceError(f"Can't update version in {env_definition_path}. See logs above.")
 
 
