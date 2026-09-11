@@ -390,7 +390,7 @@ app_reg_defs_placement: enum [`dual`, `root`]
 # Runs during Effective Set generation when enabled
 # Applies per-application SBOM retention to subdirectories of `/sboms/` when `keep_versions_per_app` is set
 # A total size limit step keeps only the single most recent file per application subdirectory
-# if the total size of `/sboms/` still exceeds 600 MB after per-application SBOM retention
+# if the total size of `/sboms/` still exceeds 50 MB after per-application SBOM retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
@@ -400,8 +400,22 @@ sbom_retention:
   # Per-application SBOM retention runs only when this is set to a positive integer.
   # If the field is omitted or set to `0`, this step is skipped and only the total size
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
-  # exceeds 600 MB)
+  # exceeds 50 MB)
   keep_versions_per_app: integer
+# Optional
+# Troubleshooting artifact configuration
+# See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
+save_artifacts:
+  # Optional. Default value - `ALWAYS`
+  # Controls whether the work directory is saved. Per-environment logs are always saved
+  # `ALWAYS` - save the work directory on every run
+  # `NEVER` - save only the logs, unless overridden per-run by the `SAVE_ARTIFACTS_STRATEGY` CI/CD variable
+  strategy: enum [`ALWAYS`, `NEVER`]
+  # Optional. Default value - 800
+  # Maximum uncompressed size, in MB, of the work directory. Above it the work directory is dropped,
+  # only the per-environment logs are kept, and a `NOT-PUBLISHED.txt` is published. The job does not fail
+  # on size. Per-environment logs are always saved
+  size_limit_mb: integer
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
 # `partial` - Partial Generation is enabled. Selected automatically when applicable, otherwise Full Generation is used
