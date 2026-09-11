@@ -451,9 +451,18 @@ public class CliParameterParser {
             Files.createDirectories(Path.of(runtimeNsDir));
             fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
             fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
-
+            LOGGER.warn(
+                    "SECURITY DEBUG: entering cleanup generation, namespace={}",
+                    namespaceName);
             // cleanup parameters
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, getExtCredEntities());
+            LOGGER.warn(
+                    "SECURITY DEBUG: cleanup parameters keys={}",
+                    cleanupParameterBundle.getCleanupParameters().keySet());
+
+            LOGGER.warn(
+                    "SECURITY DEBUG: cleanup secure parameters keys={}",
+                    cleanupParameterBundle.getCleanupSecureParameters().keySet());
             createCleanupParams(cleanupParameterBundle);
 
             String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
