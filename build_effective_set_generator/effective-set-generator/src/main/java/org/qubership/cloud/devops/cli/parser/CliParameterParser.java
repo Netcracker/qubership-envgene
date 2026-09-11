@@ -146,9 +146,6 @@ public class CliParameterParser {
                         deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                         runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
-                        log.warn(
-                                "SECURITY DEBUG: after application processing, namespace={}",
-                                namespaceName);
                     } catch (Exception e) {
                         logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
                         logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
@@ -158,7 +155,6 @@ public class CliParameterParser {
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap, getExtCredEntities());
             createExtContextFile();
-            log.warn("SECURITY DEBUG: calling generateCleanedNamespacesOutput");
             generateCleanedNamespacesOutput(tenantName, cloudName, namespaceDTOMap, deployMappingFileData, runtimeMappingFileData, cleanupMappingFileData, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
                 fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
@@ -422,29 +418,14 @@ public class CliParameterParser {
                                                   Map<String, Object> runtimeMappingFileData,
                                                   Map<String, Object> cleanupMappingFileData,
                                                   Map<String, String> k8TokenMap) throws IOException {
-        log.warn(
-                "SECURITY DEBUG: entered generateCleanedNamespacesOutput, namespaces={}",
-                namespaceDTOMap.keySet()
-        );
         Files.createDirectories(Path.of(sharedData.getOutputDir(), "cleanup"));
         for (Map.Entry<String, NamespaceDTO> entry : namespaceDTOMap.entrySet()) {
             String namespaceName = entry.getKey();
             NamespaceDTO namespaceDTO = entry.getValue();
-
-            log.warn(
-                    "SECURITY DEBUG: cleanup candidate namespace={}, cleaned={}",
-                    namespaceName,
-                    namespaceDTO.isCleaned()
-            );
-
             if (!namespaceDTO.isCleaned()) {
                 continue;
             }
-
-            log.warn(
-                    "SECURITY DEBUG: generating cleanup for namespace={}",
-                    namespaceName
-            );
+            logInfo("Generating cleanup output for cleaned namespace: " + namespaceName);
             String originalNamespace = namespaceDTO.getName();
 
             String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
@@ -470,18 +451,8 @@ public class CliParameterParser {
             Files.createDirectories(Path.of(runtimeNsDir));
             fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
             fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
-            log.warn(
-                    "SECURITY DEBUG: entering cleanup generation, namespace={}",
-                    namespaceName);
             // cleanup parameters
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, getExtCredEntities());
-            log.warn(
-                    "SECURITY DEBUG: cleanup parameters keys={}",
-                    cleanupParameterBundle.getCleanupParameters().keySet());
-
-            log.warn(
-                    "SECURITY DEBUG: cleanup secure parameters keys={}",
-                    cleanupParameterBundle.getCleanupSecureParameters().keySet());
             createCleanupParams(cleanupParameterBundle);
 
             String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
