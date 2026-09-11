@@ -212,7 +212,7 @@ Set this as a pipeline variable:
 CUSTOM_PARAMS: '{"deployment":{"FEATURE_FLAG_NEW_BILLING":"true","MAX_RETRIES":"5"}}'
 ```
 
-The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files.
+The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files. A `deployment` override is decomposed the same way as a deployment parameter (root, `global`, and per-service), so it applies inside each service. It cannot change image or artifact metadata such as `docker_tag`, `docker_registry`, or `image`, which come from the Application's SBOM.
 
 To target only specific namespaces instead of all, use the `namespaces` key. Namespaces not listed receive an empty `custom-params.yaml`. This mode is mutually exclusive with top-level `deployment`/`runtime` keys:
 
