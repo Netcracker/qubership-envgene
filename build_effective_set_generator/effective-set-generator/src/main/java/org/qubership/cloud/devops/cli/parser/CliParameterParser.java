@@ -451,6 +451,7 @@ public class CliParameterParser {
             Files.createDirectories(Path.of(runtimeNsDir));
             fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
             fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
+
             // cleanup parameters
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, getExtCredEntities());
             createCleanupParams(cleanupParameterBundle);
