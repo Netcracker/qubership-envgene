@@ -220,7 +220,7 @@ public class ParametersCalculationServiceV2 {
                     || key.equals("MAAS_CREDENTIALS_PASSWORD")) {
 
                 LOGGER.info(
-                        "SECURITY DEBUG: type={}, key={}, secured={}, valueType={}",
+                        "SECURITY DEBUG1: type={}, key={}, secured={}, valueType={}",
                         parameterType,
                         key,
                         param != null && param.isSecured(),
