@@ -146,6 +146,9 @@ public class CliParameterParser {
                         deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                         runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
+                        log.warn(
+                                "SECURITY DEBUG: after application processing, namespace={}",
+                                namespaceName);
                     } catch (Exception e) {
                         logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
                         logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
