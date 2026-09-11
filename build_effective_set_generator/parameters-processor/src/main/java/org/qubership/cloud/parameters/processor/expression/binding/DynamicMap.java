@@ -183,4 +183,7 @@ public abstract class DynamicMap implements Map<String, Parameter>, Serializable
 
         return result;
     }
+    protected Parameter securedParameter(String value, String origin) {
+        return new Parameter(value, origin, true, true, null);
+    }
 }
