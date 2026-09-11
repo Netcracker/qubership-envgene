@@ -158,6 +158,7 @@ public class CliParameterParser {
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap, getExtCredEntities());
             createExtContextFile();
+            log.warn("SECURITY DEBUG: calling generateCleanedNamespacesOutput");
             generateCleanedNamespacesOutput(tenantName, cloudName, namespaceDTOMap, deployMappingFileData, runtimeMappingFileData, cleanupMappingFileData, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
                 fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
@@ -421,14 +422,29 @@ public class CliParameterParser {
                                                   Map<String, Object> runtimeMappingFileData,
                                                   Map<String, Object> cleanupMappingFileData,
                                                   Map<String, String> k8TokenMap) throws IOException {
+        log.warn(
+                "SECURITY DEBUG: entered generateCleanedNamespacesOutput, namespaces={}",
+                namespaceDTOMap.keySet()
+        );
         Files.createDirectories(Path.of(sharedData.getOutputDir(), "cleanup"));
         for (Map.Entry<String, NamespaceDTO> entry : namespaceDTOMap.entrySet()) {
             String namespaceName = entry.getKey();
             NamespaceDTO namespaceDTO = entry.getValue();
+
+            log.warn(
+                    "SECURITY DEBUG: cleanup candidate namespace={}, cleaned={}",
+                    namespaceName,
+                    namespaceDTO.isCleaned()
+            );
+
             if (!namespaceDTO.isCleaned()) {
                 continue;
             }
-            logInfo("Generating cleanup output for cleaned namespace: " + namespaceName);
+
+            log.warn(
+                    "SECURITY DEBUG: generating cleanup for namespace={}",
+                    namespaceName
+            );
             String originalNamespace = namespaceDTO.getName();
 
             String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
