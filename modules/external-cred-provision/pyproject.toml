@@ -48,9 +48,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Netcracker/qubership-envgene/tree/main/python/external-cred-provision"
+Homepage = "https://github.com/Netcracker/qubership-envgene/tree/main/modules/external-cred-provision"
 Documentation = "https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/external-creds-provisioning-cli.md"
-Source = "https://github.com/Netcracker/qubership-envgene/tree/main/python/external-cred-provision"
+Source = "https://github.com/Netcracker/qubership-envgene/tree/main/modules/external-cred-provision"
 Issues = "https://github.com/Netcracker/qubership-envgene/issues"
 "EnvGene external credentials" = "https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/external-creds.md"
 
