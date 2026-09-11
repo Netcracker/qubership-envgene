@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -131,6 +132,155 @@ public class CmdbCliTest {
                 "runtime/monitoring-origin/MONITORING/credentials.yaml");
         assertTrue(Files.exists(monitoringRuntimeCredentials));
         assertEquals(0, Files.size(monitoringRuntimeCredentials));
+    }
+
+    @Test
+    void testCustomParamsServiceNameCollision(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/namespace-custom-param-collision.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        // ordinary_key goes to decomposed custom-params.yaml (propagated to all services)
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-collision-custom-params-expected.yaml"),
+                pgCustomParams);
+
+        // no dedicated collision-custom-params.yaml is emitted
+        Path pgCollisionCustomParams = outputPath.resolve(
+                "deployment/pg/postgres/values/collision-custom-params.yaml");
+        assertFalse(Files.exists(pgCollisionCustomParams));
+
+        // patroni-core (service name collision) is merged into the existing collision-deployment-parameters.yaml
+        Path pgCollisionDeploy = outputPath.resolve(
+                "deployment/pg/postgres/values/collision-deployment-parameters.yaml");
+        assertTrue(Files.exists(pgCollisionDeploy));
+        String collisionContent = Files.readString(pgCollisionDeploy);
+        assertTrue(collisionContent.contains("patroni-core: collision-value"),
+                "collision-deployment-parameters.yaml should contain the custom collision entry, was:\n" + collisionContent);
+    }
+
+    @Test
+    void testCustomParamsEmptyDeployment(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/custom-params-empty.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-empty-custom-params-expected.yaml"),
+                pgCustomParams);
+    }
+
+    @Test
+    void testCustomParamsNotPassed(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-empty-custom-params-expected.yaml"),
+                pgCustomParams);
+    }
+
+    @Test
+    void testCustomParamsMapValue(@TempDir Path tempDir) throws Exception {
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path deployPlanPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+
+        Path outputPath = tempDir.resolve("effective-set");
+
+        CommandLine cmd = new CommandLine(cli);
+
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--deploy-plan-path", deployPlanPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@namespace-custom-param/custom-params-map.json"
+        );
+
+        assertEquals(0, exitCode);
+
+        Path pgCustomParams = outputPath.resolve("deployment/pg/postgres/values/custom-params.yaml");
+        assertTrue(Files.exists(pgCustomParams));
+        FileTestUtils.compareFiles(
+                FileTestUtils.resource("namespace-custom-param/pg-map-custom-params-expected.yaml"),
+                pgCustomParams);
     }
 
     @Test

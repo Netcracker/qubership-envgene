@@ -1,0 +1,10 @@
+{
+  "namespaces": {
+    "pg": {
+      "deployment": {
+        "patroni-core": "collision-value",
+        "ordinary_key": "ok-value"
+      }
+    }
+  }
+}
