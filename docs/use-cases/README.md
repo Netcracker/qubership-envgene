@@ -49,7 +49,7 @@ downstream-authority claims (e.g., "Deployment is blocked") that the documented 
 does not control.
 
 These align with modern API documentation style. See the
-[Google API Design Guide](https://cloud.google.com/apis/design), Stripe API docs, and GitHub
+[Google API Design Guide](https://docs.cloud.google.com/apis/design), Stripe API docs, and GitHub
 REST API docs. For the full rule with INCORRECT/CORRECT examples, see the
 [use-case design rules](/.claude/skills/writing-docs/references/use-cases.md) in the `writing-docs` skill.
 
