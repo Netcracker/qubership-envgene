@@ -123,6 +123,18 @@ def effective_set_deployment_credentials_contain(workspace: EnvGeneWorkspace, ke
     )
 
 
+@then(parsers.parse('the effective set runtime credentials contain "{key_value}"'))
+def effective_set_runtime_credentials_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
+    es_dir = _es_root(workspace) / "runtime"
+    assert es_dir.exists(), f"effective-set/runtime directory does not exist at {es_dir}"
+    cred_files = [p for p in es_dir.rglob("credentials.yaml")]
+    found = any(key_value in p.read_text(encoding="utf-8") for p in cred_files)
+    assert found, (
+        f"'{key_value}' not found in any credentials.yaml under {es_dir}.\n"
+        f"credentials.yaml files: {[str(p) for p in cred_files]}"
+    )
+
+
 @then(parsers.parse('the effective set runtime parameters contain "{key_value}"'))
 def effective_set_runtime_params_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
     es_dir = _es_root(workspace) / "runtime"

@@ -145,6 +145,12 @@ _XFAIL_REASONS = {
         "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
         "Affects BG-domain scenarios (dp_2, dp_4, dp_5) and non-BG no-match scenarios (dp_3)."
     ),
+    "xfail_cli_no_aggregate_unmatched_listing": (
+        "The deployPostfix no-match error lists only the first unmatched postfix, not all of "
+        "them: the deployment-plan guard rejects on the first unmatched entry and never reaches "
+        "the rest, so an aggregate listing of every unmatched postfix is never produced. dp_6 "
+        "supplies two unmatched postfixes and only the first appears in the error."
+    ),
     "xfail_cli_no_hierarchy_rule": (
         "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
         "cannot reference Cloud- or Namespace-level parameters (doc-vs-code divergence)."
@@ -162,14 +168,6 @@ _XFAIL_REASONS = {
         "already-typed object in the merged binding (it reads the raw, unresolved referent and does "
         "not resolve transitively), so a chained integer reference through a String-valued "
         "intermediate macro collapses to a string (divergence D6)."
-    ),
-    "xfail_topology_1691": (
-        "Per-namespace composite/BG topology injection (ORIGIN_NAMESPACE, PEER_NAMESPACE, "
-        "CONTROLLER_NAMESPACE, BASELINE_ORIGIN, BASELINE_CONTROLLER, BASELINE_PEER, "
-        "BG_CONTROLLER_*) from composite_structure.yml/bg_domain.yml is not implemented: "
-        "CliParameterParser only passes composite_structure/bg_domain through as raw topology "
-        "objects, no code path derives per-namespace deployment parameters from them. Target "
-        "contract tracked in issue #1691."
     ),
 }
 
