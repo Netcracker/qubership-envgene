@@ -1,0 +1,4 @@
+name: shared
+parameters:
+  WIN: cluster
+  FROM_CLUSTER: 1

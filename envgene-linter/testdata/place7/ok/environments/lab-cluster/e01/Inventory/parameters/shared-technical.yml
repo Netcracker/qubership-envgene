@@ -1,0 +1,3 @@
+name: shared-technical
+parameters:
+  LOG_LEVEL: info
