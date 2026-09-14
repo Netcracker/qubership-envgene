@@ -1,4 +1,5 @@
 name: test-cloud
+apiUrl: "https://api.test-cloud.example.com"
 deployParameters: {}
 deployParameterSets: []
 e2eParameters: {}
