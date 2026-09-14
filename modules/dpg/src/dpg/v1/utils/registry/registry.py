@@ -36,6 +36,16 @@ class ArtifactoryUtils:
     AWS_REGION_PATTERN = r"^[a-z]{2}-[a-z]+-\d+$"
 
     @staticmethod
+    def extract_aws_domain(url: str):
+        m = re.search(ArtifactoryUtils.AWS_DOMAIN_NAME_MATCH, url)
+        return m.group(1) if m else None
+
+    @staticmethod
+    def extract_aws_region(url: str):
+        m = re.search(ArtifactoryUtils.AWS_REGION_NAME_MATCH, url)
+        return m.group(1) if m else None
+
+    @staticmethod
     def detect_auth_method(
         type_reg: RegistryType,
         url: str,

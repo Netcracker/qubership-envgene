@@ -5,12 +5,13 @@ import shlex
 import uuid
 from os import getenv
 from pathlib import Path
-from typing import Self
+from typing import Optional, Self
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from envgenehelper import logger, writeToFile
+from regdefv2_adapter.regdefv2_adapter import REGDEFS_DIRNAME
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.sd_helper import MergeType
@@ -35,6 +36,16 @@ class PipelineParametersHandler(BaseModel):
     deploy_plan_delta: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan(entities=[]))
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
+    regdef_v2_dir: Optional[Path] = None
+    pubreg_creds_file: Optional[Path] = None
+
+    @model_validator(mode='after')
+    def _init_regdef_v2_dir(self) -> 'PipelineParametersHandler':
+        if self.regdef_v2_dir is None:
+            self.regdef_v2_dir = (
+                self.work_dir / "environments" / self.cluster_name / self.env_name / REGDEFS_DIRNAME
+            )
+        return self
 
     @classmethod
     def from_env(cls) -> Self:
@@ -123,6 +134,13 @@ class PipelineParametersHandler(BaseModel):
     def is_bgd_warmup(self) -> bool:
         return (OperationType(self.params.get('OPERATION_TYPE')) == OperationType.BGD
                 and BgdOperation(self.params.get('BGD_OPERATION')) == BgdOperation.WARMUP)
+
+    def has_sd_input(self) -> bool:
+        sd_version = self.params.get("SD_VERSION")
+        sd_data = self.params.get("SD_DATA")
+        if sd_version and sd_data:
+            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+        return bool(sd_version or sd_data)
 
     def is_clean(self) -> bool:
         return OperationType(self.params.get('OPERATION_TYPE')) == OperationType.CLEAN
