@@ -6,7 +6,7 @@ import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from build_env.namespace_render import compute_namespace_map
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_version
+from envgenehelper.business_helper import get_version
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
@@ -18,6 +18,9 @@ from envgenehelper.yaml_helper import load_json_or_yaml, dumpYamlToStr
 from typing_extensions import deprecated
 
 from pipeline.pipeline_parameters import PipelineParametersHandler
+
+
+APPDEFS_DIRNAME = "AppDefs"
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -102,7 +105,7 @@ def handle_sd(handler: PipelineParametersHandler):
         raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
     sd_source = sd_version or sd_data
     if not sd_source:
-        raise ValueError("Provide either SD_VERSION or SD_DATA")
+        raise ValueError("Provide either SD_VERSION (appver) or SD_DATA (json/yaml)")
 
     env = Environment(str(handler.work_dir), handler.cluster_name, handler.env_name)
     base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
@@ -120,13 +123,10 @@ def handle_sd(handler: PipelineParametersHandler):
     # do not commit delta sd to repo, delete old ones
     deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
 
-    try:
-        if load_json_or_yaml(sd_source):
-            extract_sds_from_content(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
-        else:
-            download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
-    except Exception as e:
-        raise ValueError("SD_VERSION or SD_DATA must be set either appver or json/yaml") from e
+    if load_json_or_yaml(sd_source):
+        extract_sds_from_content(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
+    else:
+        download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode, handler)
 
     logger.info("SD successfully extracted from SD_VERSION or SD_DATA and saved")
 
@@ -182,7 +182,7 @@ def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Pa
             merge_sd(sd_path, full_sd_from_pipe, selected_merge_function)
 
 
-def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions, effective_merge_mode: MergeType):
+def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions, effective_merge_mode: MergeType, ctx):
     app_versions = app_versions.replace("\\n", "\n")
     app_entries = split_multi_value_param(app_versions)
     if not app_entries:
@@ -194,7 +194,7 @@ def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app
         source_name, version = get_version(entry)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, ctx)
 
         app_data_list.append(app_data)
 
@@ -202,8 +202,8 @@ def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app
     extract_sds_from_content(namespace_by_deploy_postfix, base_sd_path, app_data, effective_merge_mode)
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins)
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, ctx) -> dict[str, object]:
+    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins, ctx)
 
     env_creds = helper.get_cred_config()
     auth_headers = app_def.registry.resolve_auth(env_creds)
@@ -215,15 +215,14 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     return artifact.download_json_content(artifact_info.source_url, auth_headers=auth_headers)
 
 
-def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Application:
+def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx) -> artifact_models.Application:
     app_name, _ = get_version(appver)
-    results = plugins.run(appver=appver)
+    results = plugins.run(appver=appver, ctx=ctx)
     for result in results:
         if result is not None:
             return result
-    env_path = get_current_env_dir_from_env_vars()
-    app_defs_path = f"{env_path}/AppDefs"
-    reg_defs_path = f"{env_path}/RegDefs"
+    app_defs_path = str(ctx.committed_regdefs_dir.parent / APPDEFS_DIRNAME.lower())
+    reg_defs_path = str(ctx.transient_regdefs_dir or ctx.committed_regdefs_dir)
     app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
     reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")

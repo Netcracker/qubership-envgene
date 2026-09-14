@@ -1,9 +1,12 @@
 import re
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
+from .collections_helper import dict_merge
 from envgenehelper.yaml_helper import store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
 
 from .logger import logger
@@ -127,7 +130,7 @@ def _remove_first_cred_from_input(value):
     return re.sub(r'\${.*creds\.get\(.*\).*}', "", value, 1)
 
 
-# #creds, #credscl, #credsns macroses are not supported
+# #creds, #credscl, #credsns macros are not supported
 # vault creds are not supported
 def expand_cred_macro_and_return_value(param_key, param_value, env_creds):
     credValue = param_value.strip()
@@ -218,10 +221,31 @@ def fetch_cred_value(val, cred_config) -> str:
         raise ValueError(f"Value '{val}' does not match expected format")
 
 
+_extra_creds: ContextVar[dict | None] = ContextVar("extra_creds", default=None)
+
+
+@contextmanager
+def extra_creds_scope():
+    token = _extra_creds.set({})
+    try:
+        yield
+    finally:
+        _extra_creds.reset(token)
+
+
+def register_extra_creds(creds: dict) -> None:
+    current = _extra_creds.get()
+    if current is None:
+        _extra_creds.set(dict(creds))
+    else:
+        current.update(creds)
+
+
 def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
-    return cred_config
+    extra_creds = _extra_creds.get()
+    return dict_merge(cred_config, extra_creds) if extra_creds else cred_config
 
 
 def validate_creds(creds_path: str = ""):
@@ -231,7 +255,7 @@ def validate_creds(creds_path: str = ""):
         instances_dir = f"{getenv_with_error('CI_PROJECT_DIR')}/environments"
         env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
         creds_path = Path(getEnvCredentialsPath(env_dir)).parent
-    
+
     credsErrors = []
     credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
@@ -246,7 +270,7 @@ def validate_creds(creds_path: str = ""):
         for err in credsErrors:
             errorMessage += f"\t{err}\n"
         raise ValidationError(errorMessage)
-    
+
     logger.info(f"Validation of credentials is completed")
 
 
@@ -298,7 +322,7 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
     else:
         if "external" in types:
             raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
-        
+
 def has_external_creds(creds_map):
     return any(
         isinstance(v, dict) and v.get("type") == "external"
@@ -306,7 +330,7 @@ def has_external_creds(creds_map):
     )
 
 def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
-    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"       
+    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"
     if os.path.exists(env_credentials_path) :
         env_creds_yaml = openYaml(env_credentials_path)
     else:

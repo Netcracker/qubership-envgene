@@ -1,7 +1,7 @@
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env.build_env import build_env, process_additional_template_parameters
+from build_env.build_env import build_env, collect_paramset_sources, process_additional_template_parameters
 from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
@@ -24,20 +24,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
-    for template_type, template_path in templates_dirs.items():
-        if not (template_path and check_dir_exists(f'{template_path}/parameters')):
-            continue
-        if template_type == NamespaceRole.COMMON:
-            param_dir_name = 'from_template'
-        else:
-            param_dir_name = f'from_{template_type}_template'
-        copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
-    cluster_path = getDirName(source_env_dir)
-    instances_dir = getDirName(cluster_path)
-    check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
-    copy_path(f'{instances_dir}/parameters', render_parameters_dir)
-    copy_path(f'{cluster_path}/parameters', render_parameters_dir)
-    copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/parameters', f'{render_parameters_dir}/from_instance')
+    collect_paramset_sources(source_env_dir, templates_dirs, render_parameters_dir)
     # copying all template resource profiles
     copy_path(f'{templates_dirs[NamespaceRole.COMMON]}/resource_profiles', render_profiles_dir)
     return render_env_dir
