@@ -421,8 +421,7 @@ envDefinition:
       sharedMasterCredentialFiles:
       - prod-integration-creds
       envSpecificResourceProfiles:
-        cloud:
-        - cloud-specific-profile
+        cloud: cloud-specific-profile
 paramsets:
 - action: create_or_replace
   place: env
