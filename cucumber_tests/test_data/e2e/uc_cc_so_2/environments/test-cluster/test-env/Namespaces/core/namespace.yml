@@ -1,0 +1,10 @@
+name: core
+deployParameters:
+  zebra_key: "z-value"
+  alpha_key: "a-value"
+  mango_key: "m-value"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
