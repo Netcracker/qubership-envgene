@@ -462,6 +462,7 @@ resourceProfiles:
     version: 0
 ```
 
+
 ### `GENERATE_EFFECTIVE_SET`
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
@@ -1011,7 +1012,7 @@ additionalTemplateVariables:
   <key>: <value>
 cloudName: <value>
 envSpecificParamsets:
-  <ns-template-name>:
+  <namespace-folder-name>:
   - paramsetA
   cloud:
   - paramsetB

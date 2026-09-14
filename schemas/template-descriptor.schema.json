@@ -4,6 +4,14 @@
   "description": "Configuration for environment templates including tenant, cloud, namespaces, optional external credential template path",
   "type": "object",
   "properties": {
+    "description": {
+      "title": "Description",
+      "description": "Free-form text describing the purpose of this Template Descriptor",
+      "type": "string",
+      "examples": [
+        "Environment template for the dev BSS solution"
+      ]
+    },
     "tenant": {
       "title": "Tenant Path",
       "description": "Path to the tenant template file",

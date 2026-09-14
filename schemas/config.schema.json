@@ -58,6 +58,28 @@
         "local"
       ]
     },
+    "save_artifacts": {
+      "type": "object",
+      "title": "Save Artifacts Configuration",
+      "description": "Configures whether and how the pipeline run's work directory is saved and published as a troubleshooting job artifact",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "title": "Save Artifacts Strategy",
+          "enum": ["ALWAYS", "NEVER"],
+          "default": "ALWAYS",
+          "examples": ["ALWAYS", "NEVER"]
+        },
+        "size_limit_mb": {
+          "type": "integer",
+          "title": "Artifact Size Limit (MB)",
+          "description": "Compressed size limit (MB) for the troubleshooting job artifact archive",
+          "minimum": 1,
+          "default": 100,
+          "examples": [100, 200]
+        }
+      }
+    },
     "use_committed_sd": {
       "type": "boolean",
       "title": "Use Committed Full SD",
@@ -71,7 +93,7 @@
     "sbom_retention": {
       "type": "object",
       "title": "SBOM Retention Configuration",
-      "description": "Configuration for automatic SBOM file cleanup. When enabled, per-application SBOM retention is applied to subdirectories of /sboms/ if keep_versions_per_app is set. A total size limit step then keeps only the most recently modified file in each per-application subdirectory if the total size of /sboms/ still exceeds 600 MB.",
+      "description": "Configuration for automatic SBOM file cleanup. When enabled, per-application SBOM retention is applied to subdirectories of /sboms/ if keep_versions_per_app is set. A total size limit step then keeps only the most recently modified file in each per-application subdirectory if the total size of /sboms/ still exceeds size_limit_mb.",
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -94,18 +116,16 @@
             10,
             15
           ]
+        },
+        "size_limit_mb": {
+          "type": "integer",
+          "title": "SBOM Directory Size Limit (MB)",
+          "description": "Uncompressed size limit (MB) for /sboms/ - a separate, smaller budget from save_artifacts.size_limit_mb, since this checks raw on-disk bytes, not the compressed artifact",
+          "minimum": 1,
+          "default": 200,
+          "examples": [200, 600]
         }
       }
-    },
-    "use_committed_sd": {
-      "type": "boolean",
-      "title": "Use Committed Full SD",
-      "description": "When false and no incoming SD is provided, EnvGene enters No-SD Mode: only topology and pipeline contexts are generated, registry requests are skipped. When true (default) or omitted, the committed Full SD is used and Full Generation runs as normal.",
-      "default": true,
-      "examples": [
-        true,
-        false
-      ]
     }
   }
 }

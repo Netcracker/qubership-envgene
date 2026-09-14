@@ -310,7 +310,9 @@ envTemplate:
     bss: "prod-cluster-bss"
 ```
 
-The key (`bss`) must match the **namespace template name** as defined in the environment template. The value is the filename without the extension.
+The key (`bss`) must match the **namespace folder name** under `Namespaces/` in the generated Environment Instance
+(for example `bss`, `core` when `deploy_postfix` is set, or `bss-origin` / `bss-peer` for Blue-Green namespaces).
+The value is the filename without the extension.
 
 By default (`mergeEnvSpecificResourceProfiles: true`) EnvGene **merges** the env-specific file into the template override. The `REPLICAS: 6` and `MEMORY_LIMIT: 6Gi` from `prod-cluster-bss` are applied on top of `prod-bss-override`; all other parameters from the template override are preserved. The resulting Resource Profile Override keeps the name of the Template Override.
 

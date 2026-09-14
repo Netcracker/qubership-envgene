@@ -30,6 +30,9 @@ def pipeline_env(monkeypatch, tmp_path):
     monkeypatch.setenv("GENERATE_EFFECTIVE_SET", "false")
     monkeypatch.setenv("PIPELINE_TYPE", "")
     monkeypatch.setenv("APPLICATION_VERSIONS", "")
+    monkeypatch.setenv("OPERATION_TYPE", "")
+    monkeypatch.setenv("SD_VERSION", "")
+    monkeypatch.setenv("BGD_OPERATION", "")
 
 
 def _ctx(**overrides) -> PipelineParametersHandler:
@@ -58,6 +61,12 @@ class TestStepGating:
         assert ProcessSdStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
         assert not ProcessDeploymentPlanStep().should_run(ctx)
+
+    @pytest.mark.unit
+    def test_legacy_sd_version_runs_appregdef_render_without_env_builder(self):
+        ctx = _ctx(ENV_BUILDER="false", SD_VERSION="Cloud-Core:1.0")
+
+        assert AppregdefRenderStep().should_run(ctx)
 
     @pytest.mark.unit
     def test_process_sd_skipped_for_gitlab_deploy_even_with_application_versions(self):

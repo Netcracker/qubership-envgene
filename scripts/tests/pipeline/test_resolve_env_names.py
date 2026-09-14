@@ -27,19 +27,35 @@ class TestResolveEnvNames:
         [
             {"CLUSTER_NAME": "cluster-01"},
             {"ENVIRONMENT_NAME": "env-01"},
-            {"CLUSTER_NAME": "cluster-01", "ENVIRONMENT_NAME": "env-01"},
+            {"ENV_NAMES": "cluster-02/env-02", "ENVIRONMENT_NAME": "env-01"},
+            {"ENV_NAMES": "cluster-02/env-02", "CLUSTER_NAME": "cluster-01"},
         ],
     )
-    def test_fails_when_env_names_combined_with_per_env_vars(self, monkeypatch, extra_env):
-        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+    def test_fails_when_cluster_name_or_environment_name_is_not_provided(self, monkeypatch, extra_env):
+        monkeypatch.setenv("ENV_NAMES", "cluster-02/env-02")
         for key, value in extra_env.items():
             monkeypatch.setenv(key, value)
 
         with pytest.raises(
             ValueError,
-            match="Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, but not both at the same time",
+            match="Set both CLUSTER_NAME and ENVIRONMENT_NAME",
         ):
             resolve_env_names()
+
+    @pytest.mark.unit
+    def test_fails_when_env_names_has_invalid_format(self, monkeypatch):
+
+        with pytest.raises(ValueError, match="Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME"):
+            resolve_env_names()
+
+    @pytest.mark.unit
+    def test_passes_with_cluster_name_environment_name_even_if_env_names_provided(self, monkeypatch):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+        monkeypatch.setenv("CLUSTER_NAME", "cluster-02")
+        monkeypatch.setenv("ENVIRONMENT_NAME", "env-02")
+
+        assert resolve_env_names() == ["cluster-02/env-02"]
+        assert os.environ["ENV_NAMES"] == "cluster-02/env-02"
 
     @pytest.mark.unit
     def test_passes_with_env_names_only(self, monkeypatch):
@@ -62,13 +78,6 @@ class TestResolveEnvNames:
 
         assert resolve_env_names() == ["cluster-01/env-01"]
         assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
-
-    @pytest.mark.unit
-    def test_fails_when_only_cluster_name_provided(self, monkeypatch):
-        monkeypatch.setenv("CLUSTER_NAME", "cluster-01")
-
-        with pytest.raises(ValueError, match="Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME"):
-            resolve_env_names()
 
     @pytest.mark.unit
     def test_allows_multi_env_when_pipeline_type_unset(self, monkeypatch):

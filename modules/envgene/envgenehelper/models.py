@@ -56,3 +56,8 @@ class DeltaDeployType(CaseInsensitiveEnum):
 
 class PipelineType(CaseInsensitiveEnum):
     GITLAB_DEPLOY = "GITLAB_DEPLOY"
+
+
+class SaveArtifactsStrategy(CaseInsensitiveEnum):
+    ALWAYS = "ALWAYS"
+    NEVER = "NEVER"

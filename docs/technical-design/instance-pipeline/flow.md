@@ -568,7 +568,6 @@ Functions:
     - actions:
       - if the Effective Set includes external credential context, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
       - if it does not, no-op
-    - AI[phase2]: merge external creds feature
 
 #### 1.16 step `git_commit`
 

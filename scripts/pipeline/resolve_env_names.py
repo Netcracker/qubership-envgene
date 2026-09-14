@@ -14,19 +14,20 @@ def resolve_env_names() -> list[str]:
     cluster_name = os.getenv("CLUSTER_NAME")
     env_name = os.getenv("ENVIRONMENT_NAME")
 
-    if env_names and (cluster_name or env_name):
-        raise ValueError(
-            "Set ENV_NAMES only, or both CLUSTER_NAME and ENVIRONMENT_NAME, "
-            "but not both at the same time"
-        )
+    names: list[str] = []
 
     if env_names:
         names = split_multi_value_param(env_names)
-    elif cluster_name and env_name:
+
+    if (not cluster_name and env_name) or (cluster_name and not env_name):
+        raise ValueError("Set both CLUSTER_NAME and ENVIRONMENT_NAME")
+
+    if cluster_name and env_name:
         env_names = f"{cluster_name}/{env_name}"
         os.environ["ENV_NAMES"] = env_names
         names = [env_names]
-    else:
+
+    if not names:
         raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
 
     for name in names:

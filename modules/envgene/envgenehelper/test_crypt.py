@@ -3,12 +3,13 @@ import copy
 import subprocess
 import pytest
 from subprocess import SubprocessError
+from unittest.mock import patch
 
 from ruyaml import CommentedMap
 
 from .collections_helper import compare_dicts
 
-from .crypt import decrypt_file, encrypt_file, is_encrypted, _parallel_cred_op
+from .crypt import decrypt_file, encrypt_file, is_encrypted, _parallel_cred_op, decrypted_cred_files
 from .file_helper import check_file_exists, writeToFile
 from .yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
 
@@ -201,3 +202,22 @@ def test_minimize_diff(crypt_kwargs):
     # test wrong parameter combination
     with pytest.raises(ValueError):
         encrypt_file(**crypt_kwargs, minimize_diff=True)
+
+
+class TestDecryptedCredFiles:
+    def test_success_encrypts_on_exit(self):
+        with patch('envgenehelper.crypt.decrypt_all_cred_files_for_env', return_value={'a.yml'}) as mock_decrypt, \
+             patch('envgenehelper.crypt.encrypt_all_cred_files_for_env') as mock_encrypt:
+            with decrypted_cred_files():
+                pass
+            mock_decrypt.assert_called_once()
+            mock_encrypt.assert_called_once()
+
+    def test_failure_leaves_files_decrypted(self):
+        with patch('envgenehelper.crypt.decrypt_all_cred_files_for_env', return_value={'a.yml', 'b.yml'}) as mock_decrypt, \
+             patch('envgenehelper.crypt.encrypt_all_cred_files_for_env') as mock_encrypt:
+            with pytest.raises(RuntimeError):
+                with decrypted_cred_files():
+                    raise RuntimeError('boom')
+            mock_decrypt.assert_called_once()
+            mock_encrypt.assert_not_called()
