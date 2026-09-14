@@ -1,73 +1,9 @@
 import os
 import subprocess
-import sys
 import yaml
 from pathlib import Path
 from .data_builders import DataBuilder
 from .base_workspace import BaseWorkspace
-
-# Mimics org.qubership.cloud.devops.cli.parser.CliParameterParser.generateCleanedNamespacesOutput:
-# for every rendered namespace marked `cleaned: true`, it writes empty ".cleaned" marker files
-# under deployment/<ns> and runtime/<ns>, an (empty) cleanup/<ns>/parameters.yaml, and a
-# cleanup/mapping.yaml entry keyed by the namespace's full instance name. The real Java CLI is
-# never invoked in these local/CI-container-less tests (see EFFECTIVE_SET_CLI_PATH below), so
-# this mock reproduces just enough of its cleanup-output contract for CLEAN sub-flow assertions.
-_MOCK_EFFECTIVE_SET_CLI_SCRIPT = '''\
-import sys
-from pathlib import Path
-import yaml
-
-def main(argv):
-    opts = {}
-    for arg in argv:
-        if arg.startswith("--") and "=" in arg:
-            key, _, value = arg.partition("=")
-            opts[key[2:]] = value
-
-    envs_path = opts.get("envs-path")
-    env_id = opts.get("env-id")
-    output = opts.get("output")
-    if not envs_path or not env_id or not output:
-        return 0
-
-    ns_root = Path(envs_path) / env_id / "Namespaces"
-    output_dir = Path(output)
-    if not ns_root.is_dir():
-        return 0
-
-    cleanup_mapping_path = output_dir / "cleanup" / "mapping.yaml"
-    cleanup_mapping = {}
-    if cleanup_mapping_path.is_file():
-        cleanup_mapping = yaml.safe_load(cleanup_mapping_path.read_text(encoding="utf-8")) or {}
-
-    for ns_dir in sorted(p for p in ns_root.iterdir() if p.is_dir()):
-        ns_file = ns_dir / "namespace.yml"
-        if not ns_file.is_file():
-            continue
-        content = yaml.safe_load(ns_file.read_text(encoding="utf-8")) or {}
-        if not content.get("cleaned"):
-            continue
-        short_name = ns_dir.name
-        full_name = content.get("name", short_name)
-
-        for section in ("deployment", "runtime", "cleanup"):
-            section_dir = output_dir / section / short_name
-            section_dir.mkdir(parents=True, exist_ok=True)
-
-        (output_dir / "deployment" / short_name / ".cleaned").write_text("")
-        (output_dir / "runtime" / short_name / ".cleaned").write_text("")
-        (output_dir / "cleanup" / short_name / "parameters.yaml").write_text("{}\\n")
-
-        cleanup_mapping[full_name] = f"effective-set/cleanup/{short_name}"
-
-    if cleanup_mapping:
-        cleanup_mapping_path.parent.mkdir(parents=True, exist_ok=True)
-        cleanup_mapping_path.write_text(yaml.safe_dump(cleanup_mapping))
-    return 0
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
-'''
 
 _TEST_DATA_DIR = Path(__file__).parent.parent / "test_data" / "einv" / "common"
 
@@ -182,14 +118,9 @@ class EnvGeneWorkspace(BaseWorkspace):
         env["CI_PROJECT_DIR"] = str(self.base_dir)
         env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
 
-        # Mock run_effective_set_cli for local tests (cross-platform). The mock's Python
-        # source is inlined via heredoc (rather than written to a companion file) so the
-        # only extra file left in the workspace is "run_effective_set_cli.bat" itself,
-        # already covered by rollback/golden-compare ignore_patterns elsewhere.
+        # Mock run_effective_set_cli for local tests (cross-platform)
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
-        effective_set_cli_mock.write_text(
-            f"#!/bin/sh\n{sys.executable} - \"$@\" <<'PYEOF'\n{_MOCK_EFFECTIVE_SET_CLI_SCRIPT}\nPYEOF\n"
-        )
+        effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
         os.chmod(effective_set_cli_mock, 0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
 
@@ -207,6 +138,7 @@ class EnvGeneWorkspace(BaseWorkspace):
         # Add base_dir to PATH so that sops_mock (sops.bat) can be found
         env["PATH"] = f"{str(self.base_dir)}{os.pathsep}{env.get('PATH', '')}"
 
+        import sys
         python_exe = sys.executable
 
         result = subprocess.run(
