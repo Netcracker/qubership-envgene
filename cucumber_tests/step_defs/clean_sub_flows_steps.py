@@ -69,3 +69,37 @@ def then_deploy_plan_missing_namespace(workspace: EnvGeneWorkspace, namespace: s
     entries = _load_deploy_plan(workspace)
     matches = [e for e in entries if e.get("namespace") == namespace]
     assert not matches, f"Expected no deploy-plan.yml entry for namespace='{namespace}', found: {matches}"
+
+
+@then(parsers.parse('the deploy plan contains an entry for namespace "{namespace}"'))
+def then_deploy_plan_has_namespace(workspace: EnvGeneWorkspace, namespace: str):
+    entries = _load_deploy_plan(workspace)
+    matches = [e for e in entries if e.get("namespace") == namespace]
+    assert matches, f"Expected a deploy-plan.yml entry for namespace='{namespace}', found none. Entries: {entries}"
+
+
+def _effective_set_dir(workspace: EnvGeneWorkspace):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    return env_dir / "effective-set"
+
+
+@then(parsers.parse('the effective set folder "{folder}" contains marker file "{marker}"'))
+def then_effective_set_folder_contains_marker(workspace: EnvGeneWorkspace, folder: str, marker: str):
+    marker_path = _effective_set_dir(workspace) / folder / marker
+    workspace.assert_file_exists(marker_path)
+
+
+@then(parsers.parse('the effective set folder "{folder}" contains file "{filename}"'))
+def then_effective_set_folder_contains_file(workspace: EnvGeneWorkspace, folder: str, filename: str):
+    file_path = _effective_set_dir(workspace) / folder / filename
+    workspace.assert_file_exists(file_path)
+
+
+@then(parsers.parse('the effective set cleanup mapping contains namespace "{namespace}"'))
+def then_effective_set_cleanup_mapping_contains_namespace(workspace: EnvGeneWorkspace, namespace: str):
+    mapping_path = _effective_set_dir(workspace) / "cleanup" / "mapping.yaml"
+    workspace.assert_file_exists(mapping_path)
+    mapping = yaml.safe_load(mapping_path.read_text(encoding="utf-8")) or {}
+    assert namespace in mapping, (
+        f"Expected namespace '{namespace}' as a key in cleanup/mapping.yaml, got keys: {list(mapping)}"
+    )
