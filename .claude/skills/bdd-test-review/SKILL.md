@@ -206,7 +206,10 @@ Publication, only on the user's explicit command:
 2. Critic-author loop: a FRESH-context agent checks translation fidelity against the source, internal
    consistency, 3-4 repository spot-facts, and house style (no semicolons, no em or en dashes, aligned table
    pipes, prose at 120 chars). Fix and re-run until a clean round. If the user capped the iterations and
-   complaints remain at the cap, stop and surface them instead of publishing.
+   complaints remain at the cap, stop and surface them instead of publishing. Critic findings are
+   advisory: verify each against the report-format intent before applying, since a fresh-context critic
+   lacks the review's reasoning and can over-reach - for example demanding a format change these rules
+   already resolve differently - so push back in that case rather than auto-applying.
 3. Post as a PR comment. Never publish, commit or push anything without an explicit go-ahead.
 
 ## Iteration discipline
