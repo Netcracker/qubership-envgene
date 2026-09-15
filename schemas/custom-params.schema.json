@@ -8,7 +8,7 @@
    "properties":{
       "deployment":{
          "type":"object",
-         "description":"Overrides applied to the deployment and cleanup context of Effective Set"
+         "description":"Overrides applied to the deployment context of Effective Set"
       },
       "runtime":{
          "type":"object",
