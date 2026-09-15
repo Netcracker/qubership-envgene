@@ -1,134 +1,209 @@
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
+import jsonschema
+
 import envgenehelper as helper
-from envgenehelper import getenv_with_error
+from envgenehelper.business_helper import NamespaceRole, get_current_env_dir_from_env_vars, get_schema_dir
+from envgenehelper.config_helper import get_regdef_v2_schema
 from envgenehelper.logger import logger
 from dpg.v1.utils.registry.registry import ArtifactoryUtils
 
-_MAVEN_PROVIDER = "MAVEN_PROVIDER"
-_PROVIDER_AWS = "aws"
+from build_env.build_env import create_paramset_map, initParametersStructure, processTemplate
+from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 
-_TRANSIENT_DIR = Path(tempfile.gettempdir()) / "envgene-regdefv2-adapter"
-_TRANSIENT_PUBREG_PARAMS_FILE = _TRANSIENT_DIR / "pubreg_params.yaml"
+MAVEN_PROVIDER = "MAVEN_PROVIDER"
+PROVIDER_AWS = "aws"
+PUBLIC_CLOUD_PROVIDERS = ("aws", "gcp", "azure")
+
+TRANSIENT_DIR = Path(tempfile.gettempdir()) / "envgene-regdefv2-adapter"
+TRANSIENT_PUBREG_PARAMS_FILE = TRANSIENT_DIR / "pubreg_params.yaml"
 REGDEFS_DIRNAME = "RegDefs"
-REGDEF_V2_TMP_DIR = _TRANSIENT_DIR / REGDEFS_DIRNAME
-PUBREG_CREDS_TMP_FILE = _TRANSIENT_DIR / "transient-creds.yml"
+REGDEF_V2_TMP_DIR = TRANSIENT_DIR / REGDEFS_DIRNAME
+PUBREG_CREDS_TMP_FILE = TRANSIENT_DIR / "transient-creds.yml"
 
 TRANSIENT_CRED_ID = "transient-pub-reg-creds"
-_AUTH_CONFIG_KEY = "pub-reg-auth"
+AUTH_CONFIG_KEY = "pub-reg-auth"
+
+REGISTRY_AUTH_PARAM_PREFIXES = ("PUB_REG_", "NON_PUB_REG_")
+REGISTRY_AUTH_PARAM_NAMES = (MAVEN_PROVIDER, "HELM_REPO_BASE_URL")
+
+V2_MAVEN_CONFIG_FIELDS = (
+    "repositoryDomainName",
+    "targetSnapshot",
+    "targetStaging",
+    "targetRelease",
+    "snapshotGroup",
+    "releaseGroup",
+)
+
+PUB_REG_TO_AUTH_CONFIG_FIELD = {
+    "PUB_REG_REGION": "awsRegion",
+    "PUB_REG_DOMAIN": "awsDomain",
+    "PUB_REG_ROLE_ARN": "awsRoleARN",
+    "PUB_REG_ROLE_SESSION_PREFIX": "awsRoleSessionPrefix",
+    "PUB_REG_PROJECT": "gcpRegProject",
+    "PUB_REG_POOL_ID": "gcpRegPoolId",
+    "PUB_REG_PROVIDER_ID": "gcpRegProviderId",
+    "PUB_REG_SA_EMAIL": "gcpRegSAEmail",
+    "PUB_REG_TENANT_ID": "azureTenantId",
+    "PUB_REG_ACR_RESOURCE": "azureACRResource",
+    "PUB_REG_ACR_NAME": "azureACRName",
+}
 
 
-def _collect_pubreg_params() -> dict:
+def _render_cloud_e2e_parameters(env_name: str, cluster_name: str, env_dir: str, base_dir: str) -> dict:
+    render_context_vars = build_minimal_render_context(env_name, cluster_name, env_dir, base_dir)
+
+    cloud_file = EnvGenerator().render_cloud_file(env_name, render_context_vars)
+
+    template_params_dir = Path(render_context_vars["templates_dir"]) / "parameters"
+    scratch_params_dir = TRANSIENT_DIR / "parameters"
+    if scratch_params_dir.exists():
+        shutil.rmtree(scratch_params_dir)
+    if template_params_dir.is_dir():
+        helper.copy_path(str(template_params_dir), str(scratch_params_dir / "from_template"))
+    paramset_map = create_paramset_map(str(scratch_params_dir), NamespaceRole.COMMON, False, False)
+
+    env_specific_map = {}
+    initParametersStructure(env_specific_map, "cloud")
+    processTemplate(
+        str(cloud_file),
+        "cloud",
+        env_dir,
+        str(get_schema_dir() / "cloud.schema.json"),
+        paramset_map,
+        env_specific_map["cloud"],
+        resource_profiles_map={},
+        process_env_specific=True,
+    )
+
+    return helper.openYaml(cloud_file).get("e2eParameters", {}) or {}
+
+
+def _resolve_pubreg_params(e2e_parameters: dict) -> dict:
+    env_creds = helper.get_cred_config()
     params = {}
-    for key, value in os.environ.items():
-        if key.startswith(("PUB_REG_", "NON_PUB_REG_")) and value.strip():
-            params[key] = value.strip()
-    for key in (_MAVEN_PROVIDER, "HELM_REPO_BASE_URL"):
-        value = os.getenv(key, "").strip()
-        if value:
-            params[key] = value
+    for key, value in e2e_parameters.items():
+        is_registry_auth_param = key.startswith(REGISTRY_AUTH_PARAM_PREFIXES) or key in REGISTRY_AUTH_PARAM_NAMES
+        if not isinstance(value, str) or not is_registry_auth_param:
+            continue
+        resolved = helper.expand_cred_macro_and_return_value(key, value, env_creds).strip()
+        if resolved:
+            params[key] = resolved
     return params
 
 
-def _synthesize_v2_from_v1(v1_data: dict, aws_domain: str, aws_region: str, cred_id: str) -> dict:
+def _validate_required_pubreg_params(params: dict, auth_method: str) -> None:
+    if auth_method != "anonymous":
+        if not params.get("PUB_REG_KEY"):
+            raise ValueError("PUB_REG_KEY is required in Cloud e2eParameters unless PUB_REG_METHOD=anonymous")
+        if not params.get("PUB_REG_SECRET"):
+            raise ValueError("PUB_REG_SECRET is required in Cloud e2eParameters unless PUB_REG_METHOD=anonymous")
+    if not params.get("PUB_REG_PROVIDER"):
+        raise ValueError("PUB_REG_PROVIDER is required in Cloud e2eParameters for public cloud MAVEN_PROVIDER")
+    if not auth_method:
+        raise ValueError("PUB_REG_METHOD is required in Cloud e2eParameters for public cloud MAVEN_PROVIDER")
+
+
+def _build_auth_config(params: dict, cred_id: str) -> dict:
+    auth_method = params.get("PUB_REG_METHOD", "")
+    auth_config = {
+        "provider": params.get("PUB_REG_PROVIDER", ""),
+        "authMethod": auth_method,
+        "authType": "longLived" if auth_method == "secret" else "shortLived",
+        "credentialsId": cred_id,
+    }
+    for param_key, auth_key in PUB_REG_TO_AUTH_CONFIG_FIELD.items():
+        value = params.get(param_key, "").strip()
+        if value:
+            auth_config[auth_key] = value
+    oidc_url = params.get("PUB_REG_OIDC_URL", "").strip()
+    if oidc_url:
+        auth_config["gcpOIDC"] = {"URL": oidc_url}
+    return auth_config
+
+
+def _convert_v2_from_v1(v1_data: dict, auth_config: dict) -> dict:
     v1_maven = v1_data.get("mavenConfig", {})
+    v2_maven = {key: v1_maven[key] for key in V2_MAVEN_CONFIG_FIELDS if key in v1_maven}
+    v2_maven["authConfig"] = AUTH_CONFIG_KEY
     return {
         "version": "2.0",
         "name": v1_data["name"],
-        "authConfig": {
-            _AUTH_CONFIG_KEY: {
-                "provider": "aws",
-                "authMethod": "secret",
-                "credentialsId": cred_id,
-                "awsDomain": aws_domain,
-                "awsRegion": aws_region,
-            }
-        },
-        "mavenConfig": {
-            "authConfig": _AUTH_CONFIG_KEY,
-            **v1_maven,
-        },
+        "authConfig": {AUTH_CONFIG_KEY: auth_config},
+        "mavenConfig": v2_maven,
     }
 
 
-def _build_transient_creds(cred_id: str, username: str, password: str) -> dict:
-    return {
-        cred_id: {
-            "data": {
-                "username": username,
-                "password": password,
-            }
-        }
-    }
 
 
 def run_regdefv2_adapter(ctx) -> None:
-    maven_provider = os.getenv(_MAVEN_PROVIDER, "").strip().lower()
+    env_dir = str(get_current_env_dir_from_env_vars())
+    e2e_parameters = _render_cloud_e2e_parameters(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
+    params = _resolve_pubreg_params(e2e_parameters)
+
+    maven_provider = params.get(MAVEN_PROVIDER, "").strip().lower()
 
     if not maven_provider:
-        logger.info("regdefv2_adapter: MAVEN_PROVIDER not set — no-op")
+        logger.info("MAVEN_PROVIDER not set in Cloud e2eParameters — skipping registry auth setup")
         return
 
-    _TRANSIENT_DIR.mkdir(parents=True, exist_ok=True)
+    TRANSIENT_DIR.mkdir(parents=True, exist_ok=True)
 
-    params = _collect_pubreg_params()
-    helper.writeYamlToFile(_TRANSIENT_PUBREG_PARAMS_FILE, params)
-    os.environ["LOCAL_PUBREG_FILE"] = str(_TRANSIENT_PUBREG_PARAMS_FILE)
-    logger.info(f"regdefv2_adapter: pubreg params → {_TRANSIENT_PUBREG_PARAMS_FILE}")
+    helper.writeYamlToFile(TRANSIENT_PUBREG_PARAMS_FILE, params)
+    os.environ["LOCAL_PUBREG_FILE"] = str(TRANSIENT_PUBREG_PARAMS_FILE)
+    logger.info(f"Registry auth parameters written to {TRANSIENT_PUBREG_PARAMS_FILE}")
 
-    if maven_provider != _PROVIDER_AWS:
-        logger.info(
-            f"regdefv2_adapter: MAVEN_PROVIDER={maven_provider!r} — flat params written, no RegDef v2 synthesized"
-        )
+    if maven_provider not in PUBLIC_CLOUD_PROVIDERS:
+        logger.info(f"MAVEN_PROVIDER={maven_provider!r} — registry auth parameters written, no RegDef v2 synthesized")
         return
 
-    logger.info("regdefv2_adapter: MAVEN_PROVIDER=aws — synthesizing transient RegDef v2 from committed v1")
+    logger.info(f"MAVEN_PROVIDER={maven_provider!r} — synthesizing transient RegDef v2 from committed v1")
 
-    access_key = getenv_with_error("PUB_REG_KEY")
-    secret_key = getenv_with_error("PUB_REG_SECRET")
-    aws_domain_override = os.getenv("PUB_REG_DOMAIN", "").strip()
-    aws_region_override = os.getenv("PUB_REG_REGION", "").strip()
+    auth_method = params.get("PUB_REG_METHOD", "")
+    access_key = params.get("PUB_REG_KEY")
+    secret_key = params.get("PUB_REG_SECRET")
+    _validate_required_pubreg_params(params, auth_method)
 
-    source_regdefs_path = (
-        ctx.work_dir / "environments" / ctx.cluster_name / ctx.env_name / "RegDefs"
-    )
+    source_regdefs_path = ctx.committed_regdefs_dir
     if not source_regdefs_path.is_dir():
-        raise ValueError(
-            f"regdefv2_adapter: {source_regdefs_path} is not a directory; cannot synthesize RegDef v2"
-        )
+        raise ValueError(f"{source_regdefs_path} does not exist; cannot synthesize RegDef v2")
 
+    synthesized_registries = []
     REGDEF_V2_TMP_DIR.mkdir(parents=True, exist_ok=True)
-    for regdef_file in source_regdefs_path.iterdir():
-        if regdef_file.suffix not in ('.yml', '.yaml'):
-            continue
+    for regdef_file_path in helper.findAllYamlsInDir(source_regdefs_path, recursively=False):
+        regdef_file = Path(regdef_file_path)
         v1_data = helper.openYaml(regdef_file)
-        if v1_data.get("version") == "2.0" or "authConfig" in v1_data:
+
+        file_auth_config = _build_auth_config(params, TRANSIENT_CRED_ID)
+        if maven_provider == PROVIDER_AWS:
+            reg_url = v1_data.get("mavenConfig", {}).get("repositoryDomainName", "")
+            if "awsDomain" not in file_auth_config:
+                aws_domain = ArtifactoryUtils.extract_aws_domain(reg_url)
+                if aws_domain:
+                    file_auth_config["awsDomain"] = aws_domain
+            if "awsRegion" not in file_auth_config:
+                aws_region = ArtifactoryUtils.extract_aws_region(reg_url)
+                if aws_region:
+                    file_auth_config["awsRegion"] = aws_region
+
+        v2_data = _convert_v2_from_v1(v1_data, file_auth_config)
+        try:
+            jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
+        except jsonschema.ValidationError as e:
             helper.writeYamlToFile(REGDEF_V2_TMP_DIR / regdef_file.name, v1_data)
-            logger.info(f"regdefv2_adapter: {regdef_file.name} already v2 — copied as-is")
+            logger.info(f"{regdef_file.name} — kept as-is, cannot derive a valid v2 authConfig: {e.message}")
             continue
-
-        reg_url = v1_data.get("mavenConfig", {}).get("repositoryDomainName", "")
-        aws_domain = aws_domain_override or ArtifactoryUtils.extract_aws_domain(reg_url)
-        if not aws_domain:
-            raise ValueError(
-                f"regdefv2_adapter: Cannot determine AWS CodeArtifact domain for {regdef_file.name} — "
-                "set PUB_REG_DOMAIN or ensure mavenConfig.repositoryDomainName contains a CodeArtifact URL"
-            )
-        aws_region = aws_region_override or ArtifactoryUtils.extract_aws_region(reg_url)
-        if not aws_region:
-            raise ValueError(
-                f"regdefv2_adapter: Cannot determine AWS region for {regdef_file.name} — "
-                "set PUB_REG_REGION or ensure mavenConfig.repositoryDomainName contains a CodeArtifact URL"
-            )
-
-        v2_data = _synthesize_v2_from_v1(v1_data, aws_domain, aws_region, TRANSIENT_CRED_ID)
         helper.writeYamlToFile(REGDEF_V2_TMP_DIR / regdef_file.name, v2_data)
-        logger.info(f"regdefv2_adapter: synthesized v2 for {regdef_file.name}")
+        logger.info(f"synthesized v2 for {regdef_file.name}")
+        synthesized_registries.append(regdef_file.name)
 
-    creds = _build_transient_creds(TRANSIENT_CRED_ID, access_key, secret_key)
+    creds = {TRANSIENT_CRED_ID: {"data": {"username": access_key, "password": secret_key}}}
     helper.writeYamlToFile(PUBREG_CREDS_TMP_FILE, creds)
-    ctx.regdef_v2_dir = REGDEF_V2_TMP_DIR
-    ctx.pubreg_creds_file = PUBREG_CREDS_TMP_FILE
-    logger.info(f"regdefv2_adapter: transient dir → {_TRANSIENT_DIR}")
+    ctx.transient_regdefs_dir = REGDEF_V2_TMP_DIR
+    logger.info(
+        f"Transient registry auth directory for {synthesized_registries}: {TRANSIENT_DIR}"
+    )

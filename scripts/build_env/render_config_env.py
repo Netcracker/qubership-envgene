@@ -640,6 +640,20 @@ class EnvGenerator:
             self.generate_bgd_file()
             return self.generate_namespace_files_and_map()
 
+    def render_cloud_file(self, env_name: str, extra_env: dict) -> Path:
+        logger.info(
+            f"Starting rendering cloud for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        with self.ctx.use():
+            self.setup_base_context(extra_env)
+            current_env = self.ctx.current_env
+            self.ctx.cloud = self.calculate_cloud_name()
+            self.ctx.tenant = current_env.get("tenant", '')
+            self.ctx.deployer = current_env.get('deployer', '')
+            self.ctx.bgd = current_env.get('bg_domain', '')
+            self.set_env_templates()
+            self.generate_cloud_file()
+        return Path(self.ctx.current_env_dir) / "cloud.yml"
+
 
     def _resolve_composite_member(self, member: dict, bgd: dict | None = None) -> dict:
         member_type = member.get("type")

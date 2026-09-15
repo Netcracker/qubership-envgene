@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional, Self
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from envgenehelper import logger, writeToFile
 from regdefv2_adapter.regdefv2_adapter import REGDEFS_DIRNAME
@@ -36,16 +36,11 @@ class PipelineParametersHandler(BaseModel):
     deploy_plan_delta: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan(entities=[]))
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
-    regdef_v2_dir: Optional[Path] = None
-    pubreg_creds_file: Optional[Path] = None
-
-    @model_validator(mode='after')
-    def _init_regdef_v2_dir(self) -> 'PipelineParametersHandler':
-        if self.regdef_v2_dir is None:
-            self.regdef_v2_dir = (
-                self.work_dir / "environments" / self.cluster_name / self.env_name / REGDEFS_DIRNAME
-            )
-        return self
+    committed_regdefs_dir: Path = Field(
+        default_factory=lambda: Path(getenv('CI_PROJECT_DIR')) / REGDEFS_DIRNAME.lower()
+    )
+    # for reg defs v2 calculated from cloud e2e params
+    transient_regdefs_dir: Optional[Path] = None
 
     @classmethod
     def from_env(cls) -> Self:

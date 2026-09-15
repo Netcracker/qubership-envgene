@@ -17,6 +17,9 @@ from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_
 from envgenehelper.yaml_helper import load_json_or_yaml, dumpYamlToStr
 from typing_extensions import deprecated
 
+from pipeline.pipeline_parameters import PipelineParametersHandler
+from regdefv2_adapter.regdefv2_adapter import PUBREG_CREDS_TMP_FILE
+
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -205,10 +208,10 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, ct
     app_def = get_appdef_for_app(f"{app_name}:{version}", plugins, ctx)
 
     env_creds = helper.get_cred_config()
-    if ctx.pubreg_creds_file is not None:
-        transient_creds = helper.openYaml(ctx.pubreg_creds_file)
+    if ctx.transient_regdefs_dir is not None:
+        transient_creds = helper.openYaml(PUBREG_CREDS_TMP_FILE)
         if transient_creds:
-            env_creds = {**env_creds, **transient_creds}
+            env_creds = helper.dict_merge(env_creds, transient_creds)
     auth_headers = app_def.registry.resolve_auth(env_creds)
 
     artifact_info = asyncio.run(
@@ -226,7 +229,7 @@ def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx) -> artifact_mode
             return result
     env_path = get_current_env_dir_from_env_vars()
     app_defs_path = f"{env_path}/AppDefs"
-    reg_defs_path = str(ctx.regdef_v2_dir)
+    reg_defs_path = str(ctx.transient_regdefs_dir or ctx.committed_regdefs_dir)
     app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
     reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")
