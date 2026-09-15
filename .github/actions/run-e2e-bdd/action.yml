@@ -1,0 +1,100 @@
+name: "Run E2E BDD tests"
+description: "Pull a pre-built EnvGene image, start the cucumber container, and run all BDD suites"
+
+inputs:
+  envgene-image:
+    description: "Already-built EnvGene image to test (registry/name:tag)"
+    required: true
+  github-token:
+    description: "Token used to pull the image from the container registry"
+    required: true
+  registry:
+    description: "Container registry for docker login"
+    required: false
+    default: "ghcr.io"
+
+runs:
+  using: composite
+  steps:
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+
+    - name: Pull EnvGene image and start cucumber container
+      shell: bash
+      env:
+        ENVGENE_IMAGE: ${{ inputs.envgene-image }}
+      run: |
+        set -euo pipefail
+        docker pull "${ENVGENE_IMAGE}"
+        docker tag "${ENVGENE_IMAGE}" local-envgene-main
+        docker compose -f devtools/docker-compose.yml up -d --build cucumber
+
+    - name: Install Python packages inside container
+      shell: bash
+      run: |
+        set -euo pipefail
+        docker compose -f devtools/docker-compose.yml exec -T cucumber \
+          bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
+
+    - name: Run BDD test suites
+      shell: bash
+      run: |
+        set -uo pipefail
+        mkdir -p reports
+        : > e2e_tests.log
+
+        failed=0
+        run_suite() {
+          local py_file="$1"
+          local xml_name="$2"
+
+          echo "::group::${py_file}"
+          if docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
+            "set -o pipefail && \
+             export PYTHONPATH=/workspace:/workspace/scripts && \
+             cd /workspace && \
+             pytest cucumber_tests/step_defs/${py_file} \
+               -c cucumber_tests/pytest.ini \
+               -v -s \
+               --junitxml=reports/${xml_name} \
+               | tee -a /workspace/e2e_tests.log"; then
+            echo "${py_file} passed"
+          else
+            echo "::error::${py_file} failed"
+            failed=1
+          fi
+          echo "::endgroup::"
+        }
+
+        run_suite test_environment_inventory_generation.py environment_inventory_generation.xml
+        run_suite test_sbom_retention.py sbom_retention.xml
+        run_suite test_bgd_sub_flows.py bgd_sub_flows.xml
+        run_suite test_deploy_sub_flows.py deploy_sub_flows.xml
+        run_suite test_calculator_cli.py calculator_cli.xml
+
+        exit "${failed}"
+
+    - name: Publish Test Report
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: "reports/**/*.xml"
+        check_name: "E2E BDD Test Results (Dev pipeline)"
+
+    - name: Upload test logs and reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-test-results-dev
+        path: |
+          e2e_tests.log
+          reports/
+
+    - name: Tear down
+      if: always()
+      shell: bash
+      run: docker compose -f devtools/docker-compose.yml down
