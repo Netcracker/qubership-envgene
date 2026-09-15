@@ -1,0 +1,12 @@
+- version: "app1:1.0"
+  deployPostfix: "core"
+  namespace: "test-env-core"
+  wave: 0
+  generationType: "UniqForApp"
+  generationId: ""
+- version: "app2:1.0"
+  deployPostfix: "bss"
+  namespace: "test-env-bss"
+  wave: 0
+  generationType: "UniqForApp"
+  generationId: ""

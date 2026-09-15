@@ -28,7 +28,7 @@ Feature: Deploy sub-flows - deploy.md
     And the pipeline step "warmup" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SKIPPED"
     And the pipeline step "process_sd" has status "SKIPPED"
-    And the deploy plan contains an entry for namespace "dummy-namespace" with version "app1:1.0"
+    And the deploy plan contains an entry for namespace "test-env-core" with version "app1:1.0"
 
   # ── No-CMDB v1 ───────────────────────────────────────────────────────────────
   # PIPELINE_TYPE defaults to LEGACY. ENV_BUILDER + GENERATE_EFFECTIVE_SET select an
