@@ -6,7 +6,11 @@ published comment is the draft's English translation.
 
 House style everywhere: no semicolons in prose, hyphen-minus only (no em or en dashes), prose wrapped at
 120 characters (tables and URLs exempt), all tables with vertically aligned pipes and dash-padded
-separator rows (align programmatically, skip fenced code blocks). Plain language: allowed jargon is
+separator rows (align programmatically, skip fenced code blocks). Align the leading fixed-width columns
+(Scenario, Verdict, symbol columns), but the final free-prose column (Reason, or any multi-hundred-character
+cell) is EXEMPT from trailing-pipe alignment - padding such a cell is impractical and GitHub renders it
+correctly regardless, so the critic loop must not flag trailing-pipe drift on that column as a violation.
+Plain language: allowed jargon is
 limited to test-approach terms (golden, snapshot, negative, the verdict values, @xfail) and product
 terminology as spelled in the docs. Everything else - paraphrase (no "oracle", "no-op", "advisory",
 "camelCase" and similar in reasons). After issues are filed, reference them as bare #NNNN (GitHub

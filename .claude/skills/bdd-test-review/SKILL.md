@@ -45,6 +45,11 @@ Work on the CURRENT PR head in a worktree (`git fetch origin pull/<N>/head:<bran
 - the JSON schemas the payloads are validated against.
 - the implementation entry points the scenarios exercise.
 
+When the PR SUPERSEDES an already-reviewed PR (a re-apply onto a new base plus review fixes), scope the
+review to the PR's contribution - the new and changed scenarios plus the specific fixes it claims - and
+state that scope in the report's opening line. Carry the unchanged scenarios' prior verdicts by reference
+rather than re-tabling them.
+
 Build the self-blessing map: diff the PR against ITS OWN base branch (not main) and list every product
 file, schema and doc the PR itself changed. A scenario verifying behavior introduced by the same PR is
 flagged under oracle independence.
@@ -61,6 +66,13 @@ Verification rules - each of these cost a wrong claim once:
   reused by many scenarios), assess the blast radius before trusting a green run. Other scenarios that
   reuse the fixture can break or be silently masked by the same change. Grep the old values across every
   feature and step file to confirm nothing else depended on them.
+- An xfail or skip REASON string is itself a claim about WHERE and WHY a scenario fails - verify it against
+  the code path the scenario ACTUALLY executes, never by plausibility. Establish which orchestrator steps
+  run for the scenario's env by checking each step's `should_run` gating: a deployment-plan guard gated on
+  `is_gitlab_deploy()` never runs for a scenario whose Background sets only `GENERATE_EFFECTIVE_SET=true`,
+  so a reason blaming that guard is wrong - the scenario really fails later, in the Java CLI. A reason
+  naming an off-path guard is a finding even when the scenario still xfails green, because it misleads the
+  next reader and can hide that two scenarios fail for the same underlying reason.
 
 ## Phase 2 - completeness matrix
 
@@ -180,9 +192,10 @@ The report format - sections, verdict scale, legends, table rules, worked exampl
 
 Self-checks before showing the report:
 
-- the rows for existing scenarios (every verdict except `missing`) must equal the scenario count in the
-  feature file, one to one by UC ID (a row was silently lost once - counting the whole table would mask
-  exactly that loss whenever missing rows are present).
+- the rows for existing scenarios (every verdict except `missing`) must equal the scenario count under
+  review (the whole feature file, or - for a scoped delta re-review - the reviewed subset), one to one by
+  UC ID (a row was silently lost once - counting the whole table would mask exactly that loss whenever
+  missing rows are present).
 - bidirectional check: every `missing` row has a Gherkin draft or is named in a pattern comment, and every
   draft has a row.
 - every legend covers every value actually used in its table.
