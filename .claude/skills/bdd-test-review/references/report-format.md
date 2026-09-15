@@ -84,6 +84,10 @@ PR-scoped action items ONLY - everything here is addressed to the author of the 
 
 - dead data and the dead steps that reference it (list the files, name what stays alive and why).
 - dead or unused fixture fields.
+- enrichments to a scenario that stays valid: extra assertions it should carry (a fuller golden, one more
+  context to check). These are author action items and belong here, NOT as a `missing` row or a Proposed
+  draft. `missing` and Proposed are reserved for scenarios that do not exist at all - a gap that only
+  strengthens an existing scenario is a Note.
 
 Nothing tracked in a separate issue belongs here: mixing them made a reader take the filed tickets for
 the review's requested scope once.
