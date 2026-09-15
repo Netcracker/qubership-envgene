@@ -131,7 +131,7 @@ jobs:
     outputs:
       PACKAGE_NAME: ${{ steps.set-outputs.outputs.PACKAGE_NAME }}
     container:
-      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.0.2' }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.0.4' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
@@ -201,7 +201,7 @@ jobs:
             python3 /python/es-pusher/src/espusher/main.py push -p params.environment_id="${FULL_ENV_NAME}" -p params.commit_message="DEVOPS-001 Push effective set for \"${FULL_ENV_NAME}\"" -p params.overwrite="${ESPUSHER_OVERWRITE}" --log-level "${ENVGENE_LOG_LEVEL}"
           fi
 
-          if [[ "${PIPELINE_TYPE}" != "GITLAB_DEPLOY" && "${CMDB_IMPORT}" == "true" ]]; then
+          if [[ "${PIPELINE_TYPE}" != "GITLAB_DEPLOY" && "${CMDB_IMPORT,,}" == "true" ]]; then
             /module/scripts/cmdb_import/cmdb_import.sh
           fi
 
