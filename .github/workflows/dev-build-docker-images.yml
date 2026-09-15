@@ -44,6 +44,7 @@ permissions:
 
 jobs:
   conventional-commits:
+    name: Conventional Commits
     permissions:
       contents: read
       packages: write
@@ -52,6 +53,7 @@ jobs:
     uses: ./.github/workflows/pr-conventional-commits.yaml
 
   link-check:
+    name: Link Checking
     needs: [conventional-commits]
     permissions:
       contents: read
@@ -60,6 +62,7 @@ jobs:
     uses: ./.github/workflows/link-checker.yaml
 
   linters:
+    name: Linting
     needs: [conventional-commits]
     permissions:
       contents: read
@@ -70,7 +73,9 @@ jobs:
       full_scan: false
 
   tests:
+    name: Unit Tests
     needs: [conventional-commits]
+    if: github.event_name != 'push' || !(startsWith(github.event.head_commit.message, 'docs:') || startsWith(github.event.head_commit.message, 'docs('))
     runs-on: ubuntu-latest
     container:
       image: python:3.12-slim-bookworm
@@ -107,6 +112,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-bdd-tests:
+    name: E2E BDD Tests
     needs: [conventional-commits, build-qubership-envgene]
     runs-on: ubuntu-latest
     permissions:
