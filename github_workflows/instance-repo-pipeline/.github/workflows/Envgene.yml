@@ -201,7 +201,7 @@ jobs:
             python3 /python/es-pusher/src/espusher/main.py push -p params.environment_id="${FULL_ENV_NAME}" -p params.commit_message="DEVOPS-001 Push effective set for \"${FULL_ENV_NAME}\"" -p params.overwrite="${ESPUSHER_OVERWRITE}" --log-level "${ENVGENE_LOG_LEVEL}"
           fi
 
-          if [[ "${PIPELINE_TYPE}" != "GITLAB_DEPLOY" && "${CMDB_IMPORT}" == "true" ]]; then
+          if [[ "${PIPELINE_TYPE}" != "GITLAB_DEPLOY" && "${CMDB_IMPORT,,}" == "true" ]]; then
             /module/scripts/cmdb_import/cmdb_import.sh
           fi
 
