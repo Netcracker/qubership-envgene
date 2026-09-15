@@ -52,6 +52,10 @@ One fenced gherkin block. For every `missing` row either a full draft or an expl
 comment that names the UC ID, so searching any ID finds its draft. Rules:
 
 - Reuse the existing step vocabulary of the suite verbatim - drafts must be paste-ready.
+- The proposed `UC-X-PS-N` identifier belongs only in the verdict-table row and in the draft's
+  `# why: closes UC-X-PS-N` comment. The Gherkin `Scenario:` title stays paste-ready under the suite's
+  own naming convention (real UC IDs from the docs) and never carries the `PS-N` token - it is a report
+  artifact, not a scenario name.
 - Use Scenario Outline plus an Examples table for place or mode variants instead of copypaste.
 - Every draft starts with a short `# why:` comment stating the gap it closes.
 - Data that does not exist yet appears as "<new payload>"-style placeholders. Paths that already exist in
