@@ -1,1 +1,17 @@
 customparam1: deployment-custom-value-1
+global:
+  customparam1: deployment-custom-value-1
+patroni-core:
+  customparam1: deployment-custom-value-1
+pg_patroni:
+  customparam1: deployment-custom-value-1
+pg_upgrade:
+  customparam1: deployment-custom-value-1
+pgbackrest_sidecar:
+  customparam1: deployment-custom-value-1
+postgres_operator_init:
+  customparam1: deployment-custom-value-1
+postgres_operator_tests:
+  customparam1: deployment-custom-value-1
+vault_env:
+  customparam1: deployment-custom-value-1
