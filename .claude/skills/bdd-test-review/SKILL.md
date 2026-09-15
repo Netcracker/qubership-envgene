@@ -57,6 +57,10 @@ Verification rules - each of these cost a wrong claim once:
 - A claim about a written artifact needs BOTH its writer and its reader located. A writer whose output no
   reader consumes is a different and worse finding than a naming mismatch.
 - Verify where a payload actually fails and where data actually differs - never trust names and comments.
+- When the PR changes a shared fixture or shared test data (a template, a common env object, a registry
+  reused by many scenarios), assess the blast radius before trusting a green run. Other scenarios that
+  reuse the fixture can break or be silently masked by the same change. Grep the old values across every
+  feature and step file to confirm nothing else depended on them.
 
 ## Phase 2 - completeness matrix
 
@@ -111,7 +115,11 @@ Judge payload, initial state and golden separately for each scenario:
   findings.
 - discriminating power - initial state, payload and golden must differ wherever the semantics require.
   If two scenarios would pass on identical data, or a replace test cannot be told from a no-op, that is
-  the finding. Deletion tests need a surviving sibling file to make over-deletion observable.
+  the finding. Deletion tests need a surviving sibling file to make over-deletion observable. The same
+  trap applies to any all-negative check set: a group of only-absence assertions (every "does not
+  contain") is non-discriminating whenever the checked artifact might not be produced at all, since a
+  mapping or index that was never regenerated passes them all. Pair absence assertions with a presence
+  assertion on a sibling that must survive, so the empty-or-missing-artifact case is caught.
 - realism notes (plain-text credentials where real repositories store encrypted ones) - minor, recorded.
 
 Goldens additionally: the comparison must be strict in both directions (missing AND extra files), and the
@@ -130,6 +138,12 @@ Actions per verdict:
 - doc wrong, mechanical fix (names, paths, copypaste) - direct docs PR.
 - doc wrong, semantic (contract rewrite, removal of a promised feature) - issue first.
 - defer - issue carrying the question.
+
+A code-wrong divergence may instead be recorded as a neutral observation in the report ("this looks like a
+product bug"), with no action push, no @xfail directive, and no filed issue - the observation stands on its
+own and the owner decides. Prefer this lighter form when the fix is out of the test PR's scope and no
+scenario in the suite yet depends on the target behavior. It is an alternative to the @xfail-and-issue path
+below, not a replacement for it.
 
 All resulting issues and PRs are proposed to the user as one batch. Nothing is filed, committed or
 pushed without explicit confirmation - a verdict on a divergence authorizes drafting, not publishing.
