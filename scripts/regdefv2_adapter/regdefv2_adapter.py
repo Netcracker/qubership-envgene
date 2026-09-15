@@ -1,17 +1,15 @@
 import os
-import shutil
 import tempfile
 from pathlib import Path
 
 import jsonschema
 
 import envgenehelper as helper
-from envgenehelper.business_helper import NamespaceRole, get_current_env_dir_from_env_vars, get_schema_dir
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.config_helper import get_regdef_v2_schema
 from envgenehelper.logger import logger
 from dpg.v1.utils.registry.registry import ArtifactoryUtils
 
-from build_env.build_env import create_paramset_map, initParametersStructure, processTemplate
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 
 MAVEN_PROVIDER = "MAVEN_PROVIDER"
@@ -52,35 +50,6 @@ PUB_REG_TO_AUTH_CONFIG_FIELD = {
     "PUB_REG_ACR_RESOURCE": "azureACRResource",
     "PUB_REG_ACR_NAME": "azureACRName",
 }
-
-
-def _render_cloud_e2e_parameters(env_name: str, cluster_name: str, env_dir: str, base_dir: str) -> dict:
-    render_context_vars = build_minimal_render_context(env_name, cluster_name, env_dir, base_dir)
-
-    cloud_file = EnvGenerator().render_cloud_file(env_name, render_context_vars)
-
-    template_params_dir = Path(render_context_vars["templates_dir"]) / "parameters"
-    scratch_params_dir = TRANSIENT_DIR / "parameters"
-    if scratch_params_dir.exists():
-        shutil.rmtree(scratch_params_dir)
-    if template_params_dir.is_dir():
-        helper.copy_path(str(template_params_dir), str(scratch_params_dir / "from_template"))
-    paramset_map = create_paramset_map(str(scratch_params_dir), NamespaceRole.COMMON, False, False)
-
-    env_specific_map = {}
-    initParametersStructure(env_specific_map, "cloud")
-    processTemplate(
-        str(cloud_file),
-        "cloud",
-        env_dir,
-        str(get_schema_dir() / "cloud.schema.json"),
-        paramset_map,
-        env_specific_map["cloud"],
-        resource_profiles_map={},
-        process_env_specific=True,
-    )
-
-    return helper.openYaml(cloud_file).get("e2eParameters", {}) or {}
 
 
 def _resolve_pubreg_params(e2e_parameters: dict) -> dict:
@@ -142,7 +111,10 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict) -> dict:
 
 def run_regdefv2_adapter(ctx) -> None:
     env_dir = str(get_current_env_dir_from_env_vars())
-    e2e_parameters = _render_cloud_e2e_parameters(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
+    render_context_vars = build_minimal_render_context(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
+    e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
+        ctx.env_name, render_context_vars, env_dir, TRANSIENT_DIR / "parameters"
+    )
     params = _resolve_pubreg_params(e2e_parameters)
 
     maven_provider = params.get(MAVEN_PROVIDER, "").strip().lower()
@@ -195,12 +167,9 @@ def run_regdefv2_adapter(ctx) -> None:
                     file_auth_config["awsRegion"] = aws_region
 
         v2_data = _convert_v2_from_v1(v1_data, file_auth_config)
-        try:
-            jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
-        except jsonschema.ValidationError as e:
-            raise ValueError(f"Synthesized RegDef v2 for {regdef_file.name} is invalid: {e.message}") from e
+        jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
         helper.writeYamlToFile(REGDEF_V2_TMP_DIR / regdef_file.name, v2_data)
-        logger.info(f"synthesized v2 for {regdef_file.name}")
+        logger.info(f"Synthesized v2 for {regdef_file.name}")
 
     creds = {TRANSIENT_CRED_ID: {"data": {"username": access_key, "password": secret_key}}}
     helper.writeYamlToFile(PUBREG_CREDS_TMP_FILE, creds)
