@@ -172,11 +172,15 @@ def run_regdefv2_adapter(ctx) -> None:
     if not source_regdefs_path.is_dir():
         raise ValueError(f"{source_regdefs_path} does not exist; cannot synthesize RegDef v2")
 
-    synthesized_registries = []
     REGDEF_V2_TMP_DIR.mkdir(parents=True, exist_ok=True)
     for regdef_file_path in helper.findAllYamlsInDir(source_regdefs_path, recursively=False):
         regdef_file = Path(regdef_file_path)
         v1_data = helper.openYaml(regdef_file)
+
+        if v1_data.get("version") == "2.0" or "authConfig" in v1_data:
+            helper.writeYamlToFile(REGDEF_V2_TMP_DIR / regdef_file.name, v1_data)
+            logger.info(f"{regdef_file.name} already v2 — copied as-is")
+            continue
 
         file_auth_config = _build_auth_config(params, TRANSIENT_CRED_ID)
         if maven_provider == PROVIDER_AWS:
@@ -194,16 +198,11 @@ def run_regdefv2_adapter(ctx) -> None:
         try:
             jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
         except jsonschema.ValidationError as e:
-            helper.writeYamlToFile(REGDEF_V2_TMP_DIR / regdef_file.name, v1_data)
-            logger.info(f"{regdef_file.name} — kept as-is, cannot derive a valid v2 authConfig: {e.message}")
-            continue
+            raise ValueError(f"Synthesized RegDef v2 for {regdef_file.name} is invalid: {e.message}") from e
         helper.writeYamlToFile(REGDEF_V2_TMP_DIR / regdef_file.name, v2_data)
         logger.info(f"synthesized v2 for {regdef_file.name}")
-        synthesized_registries.append(regdef_file.name)
 
     creds = {TRANSIENT_CRED_ID: {"data": {"username": access_key, "password": secret_key}}}
     helper.writeYamlToFile(PUBREG_CREDS_TMP_FILE, creds)
     ctx.transient_regdefs_dir = REGDEF_V2_TMP_DIR
-    logger.info(
-        f"Transient registry auth directory for {synthesized_registries}: {TRANSIENT_DIR}"
-    )
+    logger.info(f"Transient public registry auth directory: {TRANSIENT_DIR}")
