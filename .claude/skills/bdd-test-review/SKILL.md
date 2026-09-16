@@ -84,12 +84,24 @@ a new test there forces the divergence to be resolved.
 
 ## Phase 3 - scenario validity, four questions each
 
-1. Doc conformance - Given/When/Then does not contradict the documented behavior.
+1. Doc conformance - Given/When/Then does not contradict the documented contract. When sources disagree,
+   rank them before judging: the feature doc's normative Requirements and rules are the contract, the
+   use-case doc is derived from them and can lag or contradict them, and the current code can be buggy.
+   "The scenario matches the code" is NOT conformance when a Requirement says otherwise - that is a
+   divergence, and the code may be the wrong side. Fix the contract in your head from the authoritative
+   source first, so a scenario that faithfully encodes a bug is not waved through as valid.
 2. Oracle strength - what state transition does the assertion distinguish? Ask: would the test pass if the
    code did nothing? If it produced a wrong result? Existence-only asserts on a file that existed before
    the run are void, and comparing output against the very payload that produced it is an echo, not an
    oracle. This is informal mutation testing: imagine the smallest realistic break and check the test
    would catch it.
+
+   One trap the mutation questions miss: a scenario can be green precisely BECAUSE the code is currently
+   broken, when its assertion encodes the current wrong outcome. The questions above compare against
+   current behavior, so they pass it. Judge the asserted outcome against the intended contract too - if the
+   scenario would have to CHANGE once the code is fixed, it is `invalid`, not `valid`, because it locks in
+   the defect. Rewrite it to the target behavior and carry it as @xfail(strict) until the fix (Phase 5
+   governs the @xfail reason and whether anything is filed).
 3. Oracle independence - the scenario must not be confirmed by the product code changed in the same PR
    (self-blessing). Goldens produced by UPDATE_GOLDEN-style runs are code-blessed: verify their content is
    independently derivable from the documented contract. Carry the result inside the verdict reason cell
@@ -144,12 +156,24 @@ silently. Present each one as: what the doc says (quote), what the code does (fi
 manifests, recommendation. Verdict options: doc wrong / code wrong / both wrong / behavior OK but
 undocumented / defer to the product owner.
 
+Determine the DIRECTION before choosing an action. A doc-vs-code contradiction does not mean the doc is
+wrong. Check which side matches the authoritative contract (the feature doc's Requirements). If the code
+violates a Requirement, the code is the wrong side even though it "is the code" and even when a second,
+derived doc (a use-case doc) happens to match it. Never "fix" a doc downward to match buggy code - aligning
+a doc to a defect buries the bug and makes the next reader trust it. When the code is the wrong side, the
+doc that describes the intended behavior is already correct - leave or restore it rather than rewriting it
+down to the code.
+
 Actions per verdict:
 
 - code wrong - CR issue (use the design-to-cr skill when available, body format: `docs/dev/creating-cr.md`).
 - doc wrong, mechanical fix (names, paths, copypaste) - direct docs PR.
 - doc wrong, semantic (contract rewrite, removal of a promised feature) - issue first.
 - defer - issue carrying the question.
+
+When you do edit or describe a mode or parameter, use the docs' own term for it. Do not coin an operational
+label - a force flag that scopes how far a change reaches is not a "dry run". Invented vocabulary misleads
+the reader and gets rejected.
 
 A code-wrong divergence may instead be recorded as a neutral observation in the report ("this looks like a
 product bug"), with no action push, no @xfail directive, and no filed issue - the observation stands on its
