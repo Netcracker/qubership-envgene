@@ -120,9 +120,9 @@ Applied when the pipeline runs without an incoming SD and one of the following h
 - A Full SD exists but `use_committed_sd` is `false` in
   [`config.yml`](/docs/envgene-configs.md#configyml).
 
-Only `topology` and `pipeline` contexts are produced. `deployment` and `runtime` require application data
-from a Solution Descriptor. The `cleanup` context is not produced in this mode. SBOMs are not required so
-are not generated.
+Only `topology`, `pipeline`, and `cleanup` contexts are produced. `deployment` and `runtime` require application
+data from a Solution Descriptor, so they are not produced. The `cleanup` context does not depend on the Solution
+Descriptor and is produced for every namespace of the environment. SBOMs are not required so are not generated.
 
 By default (`use_committed_sd: true`) a run with no incoming SD uses the committed Full SD and Full
 Generation runs.
@@ -144,7 +144,7 @@ Which namespaces receive it depends on the [deployment architecture](/docs/deplo
 | No-CMDB v2   | `DEPLOY`  | no namespace                       |
 | No-CMDB v2   | `CLEAN`   | no namespace                       |
 
-In No-CMDB v1 deploy, a namespace with no application versions deployed to it still receives a cleanup context and a `cleanup/mapping.yaml` entry, so a later teardown of the whole environment covers every namespace. No `.cleaned` marker is written for these namespaces. In [No-SD Mode](#no-sd-mode) no cleanup context is produced.
+In No-CMDB v1 deploy, a namespace with no application versions deployed to it still receives a cleanup context and a `cleanup/mapping.yaml` entry, so a later teardown of the whole environment covers every namespace. No `.cleaned` marker is written for these namespaces. The cleanup context is produced the same way in [No-SD Mode](#no-sd-mode), where the environment has namespaces but no current solution.
 
 In No-CMDB v2 clean, no cleanup context is produced. The `CLEAN` operation marks the target namespaces' deployment and runtime for removal, writing a `.cleaned` marker into `deployment/<ns>/` and `runtime/<ns>/` and dropping them from `deployment/mapping.yaml` and `runtime/mapping.yaml`. See [CLEAN sub-flows](/docs/technical-design/instance-pipeline/sub-flows/clean.md).
 

@@ -749,7 +749,6 @@ This section covers use cases for [Cleanup context](/docs/features/effective-set
 **Pre-requisites:**
 
 1. The environment has more than one namespace, and at least one namespace has no application versions deployed to it.
-2. A Solution Descriptor is available for the environment.
 
 **Trigger:**
 
