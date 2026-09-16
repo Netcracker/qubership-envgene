@@ -1,0 +1,6 @@
+---
+# Baseline-only override: changes the baseline for the core namespace in this environment only.
+# Paired with mergeEnvSpecificResourceProfiles: false (replace mode) in env_definition.yml, so it
+# replaces the template override entirely and the environment uses this baseline with no custom values.
+name: "env-specific-core-baseline"
+baseline: "dev"
