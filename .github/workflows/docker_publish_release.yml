@@ -2,10 +2,6 @@ name: "Release: EnvGene"
 
 run-name: "Release EnvGene: ${{ inputs.version }}"
 
-env:
-  REGISTRY: ghcr.io
-  CI_PROJECT_DIR: ${{ github.workspace }}
-
 on:
   workflow_dispatch:
     inputs:
@@ -18,11 +14,26 @@ on:
         required: false
         default: true
         type: boolean
-        description: 'Publish the release'
+        description: 'Publish the GitHub release (images are always pushed)'
+
+concurrency:
+  group: envgene-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  CI_PROJECT_DIR: ${{ github.workspace }}
 
 jobs:
   tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     container:
       image: python:3.12-slim-bookworm
     steps:
@@ -33,12 +44,12 @@ jobs:
         uses: ./.github/actions/run-tests
 
   check-tag:
-    needs: [tests]
+    name: Check tag
     runs-on: ubuntu-latest
     steps:
       - name: Input parameters
         run: |
-          echo "Version: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,175 +58,173 @@ jobs:
         id: check_tag
         uses: netcracker/qubership-workflow-hub/actions/tag-checker@v1.0.3
         with:
-          tag: 'v${{ github.event.inputs.version }}'
+          tag: 'v${{ inputs.version }}'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Output result
         run: |
           echo "Tag exists: ${{ steps.check_tag.outputs.exists }}"
-          echo "Tag name: v${{ github.event.inputs.version }}"
+          echo "Tag name: v${{ inputs.version }}"
 
       - name: Fail if tag exists
         if: steps.check_tag.outputs.exists == 'true'
         run: |
-          echo "Tag already exists: v${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "Tag already exists: v${{ github.event.inputs.version }}"
+          echo "Tag already exists: v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Tag already exists: v${{ inputs.version }}"
           exit 1
 
-  update_image_tags:
-    needs: [check-tag]
+  bump-versions:
+    name: Bump versions
+    needs: [tests, check-tag]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
-      attestations: write
-      id-token: write
+    outputs:
+      sha: ${{ steps.bump.outputs.sha }}
     steps:
-        - name: "Prepare app token"
-          if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
-          uses: actions/create-github-app-token@v2
-          id: app-token
-          with:
-            app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
-            private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+      - name: Prepare app token
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
 
-        - name: Checkout repository
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
-            token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
-        - name: Add the Envgene version to pipeline and GSF
-          run: |
-            # Paths to files
-            TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
-            ENVGENE_COOKIECUTTER_JSON_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/cookiecutter.json"
-            GSF_INSTANCE_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
-            GSF_DISCOVERY_PACKAGE_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/package.yaml"
+      - name: Bump EnvGene version in pipeline and GSF
+        id: bump
+        run: |
+          TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
+          ENVGENE_COOKIECUTTER_JSON_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/cookiecutter.json"
+          GSF_INSTANCE_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
+          GSF_DISCOVERY_PACKAGE_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/package.yaml"
+          NEW_TAG="${{ inputs.version }}"
 
-            # New tag
-            NEW_TAG="${{ github.event.inputs.version }}"
+          sed -i "s/vars.ENVGENE_VERSION || '[^']*'/vars.ENVGENE_VERSION || '${NEW_TAG}'/" "$TARGET_FILE"
+          sed -i 's/"envgene_version": "[^"]*"/"envgene_version": "'"${NEW_TAG}"'"/' "$ENVGENE_COOKIECUTTER_JSON_FILE"
+          sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_INSTANCE_PACKAGE_FILE"
+          sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_DISCOVERY_PACKAGE_FILE"
 
-            # Single EnvGene image: bump the default in vars.ENVGENE_VERSION || '...'
-            sed -i "s/vars.ENVGENE_VERSION || '[^']*'/vars.ENVGENE_VERSION || '${NEW_TAG}'/" "$TARGET_FILE"
+          git diff
 
-            # Update envgene_version in cookiecutter.json for GSF EnvGene instance
-            sed -i 's/"envgene_version": "[^"]*"/"envgene_version": "'"${NEW_TAG}"'"/' "$ENVGENE_COOKIECUTTER_JSON_FILE"
-
-            # Update version in GSF Instance package.yaml
-            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_INSTANCE_PACKAGE_FILE"
-
-            # Update version in GSF Discovery package.yaml
-            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_DISCOVERY_PACKAGE_FILE"
-
-            git diff
-
-            git config --global user.name "qubership-actions[bot]"
-            git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
-            git add .
-            if ! git diff --quiet --cached; then
-              git commit -m "chore: Update envgene image version for branch ${{ github.ref_name }} [skip ci]"
-              git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
-            else
-              echo "No changes to commit - working tree clean"
-            fi
-
-  tag:
-    needs: [update_image_tags]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
-    with:
-      tag-name: v${{ github.event.inputs.version }}
+          git config --global user.name "qubership-actions[bot]"
+          git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
+          git add \
+            "$TARGET_FILE" \
+            "$ENVGENE_COOKIECUTTER_JSON_FILE" \
+            "$GSF_INSTANCE_PACKAGE_FILE" \
+            "$GSF_DISCOVERY_PACKAGE_FILE"
+          if ! git diff --quiet --cached; then
+            git commit -m "chore: Update envgene image version for branch ${{ github.ref_name }} [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          else
+            echo "No changes to commit - working tree clean"
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   build-qubership-envgene:
-    needs: [tag]
+    name: Build EnvGene image
+    needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
-    outputs:
-      custom_tag: ${{ steps.build-envgene.outputs.custom_tag }}
-      branch_tag: ${{ steps.build-envgene.outputs.branch_tag }}
-      timestamp: ${{ steps.build-envgene.outputs.timestamp }}
-      branch_latest_tag: ${{ steps.build-envgene.outputs.branch_latest_tag }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Build Qubership Envgene Docker Image
-      uses: ./.github/actions/build-envgene
-      id: build-envgene
-      with:
-        registry: ${{ env.REGISTRY }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        version: ${{ inputs.version }}
+      - name: Build Qubership Envgene Docker Image
+        uses: ./.github/actions/build-envgene
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          ref: ${{ needs.bump-versions.outputs.sha }}
 
   build-instance-repo-pipeline:
-    needs: [tag]
+    name: Build pipeline image
+    needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       attestations: write
       id-token: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Build Instance Repo Pipeline Docker Image
-      uses: ./.github/actions/build-pipeline
-      with:
-        registry: ${{ env.REGISTRY }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        version: ${{ inputs.version }}
+      - name: Build Instance Repo Pipeline Docker Image
+        uses: ./.github/actions/build-pipeline
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          ref: ${{ needs.bump-versions.outputs.sha }}
 
   build-gsf-envgene-instance:
-    needs: [tag]
+    name: Build GSF instance image
+    needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       attestations: write
       id-token: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Build GSF Envgene Instance
-      uses: ./.github/actions/build-gsf-instance
-      with:
-        registry: ${{ env.REGISTRY }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        version: ${{ inputs.version }}
+      - name: Build GSF Envgene Instance
+        uses: ./.github/actions/build-gsf-instance
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          ref: ${{ needs.bump-versions.outputs.sha }}
 
   build-gsf-envgene-discovery:
-    needs: [tag]
+    name: Build GSF discovery image
+    needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       attestations: write
       id-token: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Build GSF Envgene Discovery
+        uses: ./.github/actions/build-gsf-discovery
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          ref: ${{ needs.bump-versions.outputs.sha }}
 
-    - name: Build GSF Envgene Instance
-      uses: ./.github/actions/build-gsf-discovery
-      with:
-        registry: ${{ env.REGISTRY }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        version: ${{ inputs.version }}
-
-  github-release:
+  tag:
+    name: Create tag
     needs:
+      - bump-versions
       - build-qubership-envgene
       - build-instance-repo-pipeline
       - build-gsf-envgene-instance
       - build-gsf-envgene-discovery
+    permissions:
+      contents: write
+    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
+    with:
+      tag-name: v${{ inputs.version }}
+      ref: ${{ needs.bump-versions.outputs.sha }}
+
+  github-release:
+    name: GitHub Release
+    needs:
+      - tag
+      - bump-versions
+    permissions:
+      contents: write
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v2.0.5
     with:
-      version: ${{ github.event.inputs.version }}
+      version: ${{ inputs.version }}
       publish: ${{ github.event.inputs.publish }}
+      ref: ${{ needs.bump-versions.outputs.sha }}
+      tag: v${{ inputs.version }}
