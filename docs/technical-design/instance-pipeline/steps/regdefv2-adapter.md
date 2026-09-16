@@ -65,9 +65,9 @@ flowchart TD
 ## Input parameters
 
 | Parameter                | Source                | Required    | Default | Values / format                       | Effect                                                                              |
-| -------------------------| --------------------- | ----------- | ------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
+| ------------------------ | --------------------- | ----------- | ------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
 | registry auth parameters | Cloud `e2eParameters` | Conditional | None    | see [Parameter file](#parameter-file) | Provider-specific auth values the step resolves and maps                            |
-| `credentials.yml`        | Instance repo         | Yes         | None    | decrypted at pipeline start           | Source of the registry secret, and where the step writes the created credential     |
+| `credentials.yml`        | Instance repository   | Yes         | None    | decrypted at pipeline start           | Source of the registry secret, and where the step writes the created credential     |
 | `LOCAL_PUBREG_FILE`      | Environment           | Yes         | None    | file path                             | Destination path for the dpg parameter file (see [Parameter file](#parameter-file)) |
 
 ## Processing flow
@@ -158,10 +158,10 @@ The complete parameter list:
 
 | Parameter                     | Scope      | Purpose                                                                           |
 | ----------------------------- | ---------- | --------------------------------------------------------------------------------- |
-| `MAVEN_PROVIDER`              | common     | Registry type: nexus, artifactory, aws, azure, gcp                                |
+| `MAVEN_PROVIDER`              | common     | Registry type: `nexus`, `artifactory`, `aws`, `azure`, `gcp`                      |
 | `PUB_REG_PROVIDER`            | common     | Public cloud provider                                                             |
 | `PUB_REG_METHOD`              | common     | Auth method: secret, assume_role, federation, service_account, oauth2, basic_auth |
-| `PUB_REG_KEY`                 | common     | Access key or client id                                                           |
+| `PUB_REG_KEY`                 | common     | Access key or client ID                                                           |
 | `PUB_REG_SECRET`              | common     | Secret key, client secret, or service account JSON                                |
 | `PUB_REG_REGION`              | aws        | Region                                                                            |
 | `PUB_REG_DOMAIN`              | aws        | CodeArtifact domain                                                               |
@@ -169,23 +169,23 @@ The complete parameter list:
 | `PUB_REG_ROLE_ARN`            | aws        | Role ARN, assume_role only                                                        |
 | `PUB_REG_ROLE_SESSION_PREFIX` | aws        | Session name prefix, assume_role only                                             |
 | `PUB_REG_PROJECT`             | gcp        | Project number                                                                    |
-| `PUB_REG_PROVIDER_ID`         | gcp        | Workload identity provider id, federation only                                    |
-| `PUB_REG_POOL_ID`             | gcp        | Workload identity pool id, federation only                                        |
+| `PUB_REG_PROVIDER_ID`         | gcp        | Workload identity provider ID, federation only                                    |
+| `PUB_REG_POOL_ID`             | gcp        | Workload identity pool ID, federation only                                        |
 | `PUB_REG_SA_EMAIL`            | gcp        | Service account email                                                             |
-| `PUB_REG_OIDC_URL`            | gcp        | External OIDC server url, federation only                                         |
+| `PUB_REG_OIDC_URL`            | gcp        | External OIDC server URL, federation only                                         |
 | `PUB_REG_OIDC_METHOD`         | gcp        | External OIDC auth method, federation only                                        |
 | `PUB_REG_OIDC_CUSTOM_PARAM`   | gcp        | Extra OIDC request params, federation only                                        |
 | `PUB_REG_OIDC_PROVIDER`       | gcp        | OIDC provider, dpg reader only                                                    |
-| `PUB_REG_OIDC_CLIENT_ID`      | gcp        | OIDC client id, dpg reader only                                                   |
+| `PUB_REG_OIDC_CLIENT_ID`      | gcp        | OIDC client ID, dpg reader only                                                   |
 | `PUB_REG_OIDC_CLIENT_SECRET`  | gcp        | OIDC client secret, dpg reader only                                               |
-| `PUB_REG_TENANT_ID`           | azure      | AD tenant id                                                                      |
-| `PUB_REG_ACR_RESOURCE`        | azure      | ACR target resource                                                               |
-| `PUB_REG_ACR_NAME`            | azure      | ACR name                                                                          |
-| `PUB_REG_AA_RESOURCE`         | azure      | Azure Artifacts resource                                                          |
+| `PUB_REG_TENANT_ID`           | Azure      | AD tenant ID                                                                      |
+| `PUB_REG_ACR_RESOURCE`        | Azure      | ACR target resource                                                               |
+| `PUB_REG_ACR_NAME`            | Azure      | ACR name                                                                          |
+| `PUB_REG_AA_RESOURCE`         | Azure      | Azure Artifacts resource                                                          |
 | `NON_PUB_REG_METHOD`          | non-public | none or basic_auth                                                                |
 | `NON_PUB_REG_KEY`             | non-public | User, basic_auth only                                                             |
 | `NON_PUB_REG_SECRET`          | non-public | Password, basic_auth only                                                         |
-| `HELM_REPO_BASE_URL`          | helm       | Helm repo base url                                                                |
+| `HELM_REPO_BASE_URL`          | helm       | Helm repository base URL                                                          |
 
 ## Result
 
