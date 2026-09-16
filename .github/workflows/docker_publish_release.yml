@@ -138,6 +138,9 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Build Qubership Envgene Docker Image
         uses: ./.github/actions/build-envgene
         with:
@@ -156,6 +159,9 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Build Instance Repo Pipeline Docker Image
         uses: ./.github/actions/build-pipeline
         with:
@@ -174,6 +180,9 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Build GSF Envgene Instance
         uses: ./.github/actions/build-gsf-instance
         with:
@@ -192,6 +201,9 @@ jobs:
       attestations: write
       id-token: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Build GSF Envgene Discovery
         uses: ./.github/actions/build-gsf-discovery
         with:
