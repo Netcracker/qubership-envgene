@@ -1,0 +1,9 @@
+{
+  "namespaces": {
+    "pg": {
+      "deployment": {
+        "feature": {"flag": true}
+      }
+    }
+  }
+}
