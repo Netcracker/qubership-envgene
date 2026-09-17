@@ -294,10 +294,8 @@ Design: [`regdefv2_adapter`](/docs/technical-design/instance-pipeline/steps/regd
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY` and
-  (`OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
-- `PIPELINE_TYPE: LEGACY` and `OPERATION_TYPE: DEPLOY` and
-  (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`)
+- `PIPELINE_TYPE: GITLAB_DEPLOY`, or
+- `PIPELINE_TYPE: LEGACY` and (`SD_DATA` or `SD_VERSION`)
 
 Functions:
 
@@ -316,6 +314,8 @@ Functions:
         section, expand credential macros to resolve secret values
       - write the resolved registry auth parameters to `pubreg_params.yaml` for dpg
       - when `MAVEN_PROVIDER` is a public cloud provider create RegDefs v2 and corresponding credential
+      - a rendered RegDef already at `version` (v2) is left as is, not transformed, used with priority over
+        the parameters, and a warning is logged recommending RegDef v1 + registry auth parameters
 
 #### 1.12 step `deploy_postfix_namespace_map`
 
