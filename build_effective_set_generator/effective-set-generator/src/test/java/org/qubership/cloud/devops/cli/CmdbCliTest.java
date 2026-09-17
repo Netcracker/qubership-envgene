@@ -251,6 +251,37 @@ public class CmdbCliTest {
     }
 
     @Test
+    void testGenerateCleanupContextForEveryNamespaceIncludingNamespaceWithoutApplication(@TempDir Path tempDir)
+            throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        Path emptyNamespace = envsPath.resolve("cluster-01/pl-01/Namespaces/empty/namespace.yml");
+        Files.createDirectories(emptyNamespace.getParent());
+        Files.writeString(emptyNamespace, Files.readString(
+                envsPath.resolve("cluster-01/pl-01/Namespaces/pg/namespace.yml"))
+                .replace("pl-01-pg", "pl-01-empty"));
+
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", envsPath.resolve("cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--generate-cleanup-context",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false");
+
+        assertEquals(0, exitCode);
+        assertTrue(Files.exists(outputPath.resolve("cleanup/pg/parameters.yaml")));
+        assertTrue(Files.exists(outputPath.resolve("cleanup/monitoring-origin/parameters.yaml")));
+        assertTrue(Files.exists(outputPath.resolve("cleanup/empty/parameters.yaml")));
+        assertTrue(Files.readString(outputPath.resolve("cleanup/mapping.yaml")).contains("pl-01-empty"));
+    }
+
+    @Test
     void testUniqForAppAndUniqForRunNestUnderSameDeployPostfix(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");
@@ -358,6 +389,7 @@ public class CmdbCliTest {
             sharedData.setNamespaceCustomRuntimeParamMap(Collections.emptyMap());
             sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
             sharedData.setDeployPlanPath(Optional.empty());
+            sharedData.setGenerateCleanupContext(false);
         }
     }
 }
