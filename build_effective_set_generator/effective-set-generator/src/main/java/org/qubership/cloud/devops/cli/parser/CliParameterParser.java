@@ -454,16 +454,19 @@ public class CliParameterParser {
                 cleanupPostFixDir = cleanupPostFixDir.substring(index);
             }
 
-            // .cleaned marker files
-            String deployNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName);
-            String runtimeNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName);
-            Files.createDirectories(Path.of(deployNsDir));
-            Files.createDirectories(Path.of(runtimeNsDir));
-            fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
-            fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
+            if (!generateCleanupContext || namespaceDTO.isCleaned()) {
+                // .cleaned marker files
+                String deployNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName);
+                String runtimeNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName);
+                Files.createDirectories(Path.of(deployNsDir));
+                Files.createDirectories(Path.of(runtimeNsDir));
+                fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
+                fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
 
-            deployMappingFileData.put(originalNamespace, deployPostFixDir);
-            runtimeMappingFileData.put(originalNamespace, runtimePostFixDir);
+                deployMappingFileData.put(originalNamespace, deployPostFixDir);
+                runtimeMappingFileData.put(originalNamespace, runtimePostFixDir);
+            }
+
             if (generateCleanupContext) {
                 ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(
                         tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap,

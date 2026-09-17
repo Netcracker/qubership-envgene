@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -279,6 +280,8 @@ public class CmdbCliTest {
         assertTrue(Files.exists(outputPath.resolve("cleanup/monitoring-origin/parameters.yaml")));
         assertTrue(Files.exists(outputPath.resolve("cleanup/empty/parameters.yaml")));
         assertTrue(Files.readString(outputPath.resolve("cleanup/mapping.yaml")).contains("pl-01-empty"));
+        assertFalse(Files.exists(outputPath.resolve("deployment/empty/.cleaned")));
+        assertFalse(Files.exists(outputPath.resolve("runtime/empty/.cleaned")));
     }
 
     @Test
