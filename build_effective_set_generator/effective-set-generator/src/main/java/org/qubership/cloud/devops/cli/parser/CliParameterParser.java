@@ -428,14 +428,11 @@ public class CliParameterParser {
         for (Map.Entry<String, NamespaceDTO> entry : namespaceDTOMap.entrySet()) {
             String namespaceName = entry.getKey();
             NamespaceDTO namespaceDTO = entry.getValue();
-            if (!generateCleanupContext && !namespaceDTO.isCleaned()) {
+            boolean namespaceIsCleaned = namespaceDTO.isCleaned();
+            if (!namespaceIsCleaned && !generateCleanupContext) {
                 continue;
             }
-            if (generateCleanupContext) {
-                logInfo("Generating cleanup output for namespace: " + namespaceName);
-            } else {
-                logInfo("Generating cleanup marker for cleaned namespace: " + namespaceName);
-            }
+
             String originalNamespace = namespaceDTO.getName();
 
             String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
@@ -454,7 +451,8 @@ public class CliParameterParser {
                 cleanupPostFixDir = cleanupPostFixDir.substring(index);
             }
 
-            if (!generateCleanupContext || namespaceDTO.isCleaned()) {
+            if (namespaceIsCleaned) {
+                logInfo("Generating cleanup marker for cleaned namespace: " + namespaceName);
                 // .cleaned marker files
                 String deployNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName);
                 String runtimeNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName);
@@ -468,6 +466,7 @@ public class CliParameterParser {
             }
 
             if (generateCleanupContext) {
+                logInfo("Generating cleanup output for namespace: " + namespaceName);
                 ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(
                         tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap,
                         getExtCredEntities());
