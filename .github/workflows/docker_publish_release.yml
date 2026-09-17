@@ -82,6 +82,8 @@ jobs:
       contents: write
     outputs:
       sha: ${{ steps.bump.outputs.sha }}
+      promotable: ${{ steps.bump.outputs.promotable }}
+      wip_ref: ${{ steps.bump.outputs.wip_ref }}
     steps:
       - name: Prepare app token
         if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
@@ -105,6 +107,7 @@ jobs:
           GSF_INSTANCE_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
           GSF_DISCOVERY_PACKAGE_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/package.yaml"
           NEW_TAG="${{ inputs.version }}"
+          WIP_REF="refs/release-wip/${NEW_TAG}"
 
           sed -i "s/vars.ENVGENE_VERSION || '[^']*'/vars.ENVGENE_VERSION || '${NEW_TAG}'/" "$TARGET_FILE"
           sed -i 's/"envgene_version": "[^"]*"/"envgene_version": "'"${NEW_TAG}"'"/' "$ENVGENE_COOKIECUTTER_JSON_FILE"
@@ -120,16 +123,19 @@ jobs:
             "$ENVGENE_COOKIECUTTER_JSON_FILE" \
             "$GSF_INSTANCE_PACKAGE_FILE" \
             "$GSF_DISCOVERY_PACKAGE_FILE"
+          echo "wip_ref=${WIP_REF}" >> "$GITHUB_OUTPUT"
           if ! git diff --quiet --cached; then
             git commit -m "chore: Update envgene image version for branch ${{ github.ref_name }} [skip ci]"
-            git push origin HEAD:${{ github.ref_name }}
+            git push origin "HEAD:${WIP_REF}"
+            echo "promotable=true" >> "$GITHUB_OUTPUT"
           else
             echo "No changes to commit - working tree clean"
+            echo "promotable=false" >> "$GITHUB_OUTPUT"
           fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   build-qubership-envgene:
-    name: Build EnvGene image
+    name: Build EnvGene
     needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
@@ -137,20 +143,45 @@ jobs:
       packages: write
       attestations: write
       id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-envgene.outputs.custom_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Build Qubership Envgene Docker Image
         uses: ./.github/actions/build-envgene
+        id: build-envgene
         with:
           registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          ref: ${{ needs.bump-versions.outputs.sha }}
+          ref: ${{ needs.bump-versions.outputs.promotable == 'true' && needs.bump-versions.outputs.wip_ref || needs.bump-versions.outputs.sha }}
+
+  e2e-bdd-tests:
+    name: E2E BDD Tests
+    needs: [build-qubership-envgene]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      checks: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run E2E BDD tests
+        uses: ./.github/actions/run-e2e-bdd
+        with:
+          envgene-image: ${{ env.REGISTRY }}/netcracker/qubership-envgene:${{ needs.build-qubership-envgene.outputs.custom_tag }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          check-name: E2E BDD Test Results (Release)
+          artifact-name: e2e-test-results-release
 
   build-instance-repo-pipeline:
-    name: Build pipeline image
+    name: Build Instance pipeline
     needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
@@ -168,10 +199,10 @@ jobs:
           registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          ref: ${{ needs.bump-versions.outputs.sha }}
+          ref: ${{ needs.bump-versions.outputs.promotable == 'true' && needs.bump-versions.outputs.wip_ref || needs.bump-versions.outputs.sha }}
 
   build-gsf-envgene-instance:
-    name: Build GSF instance image
+    name: Build GSF instance
     needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
@@ -189,10 +220,10 @@ jobs:
           registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          ref: ${{ needs.bump-versions.outputs.sha }}
+          ref: ${{ needs.bump-versions.outputs.promotable == 'true' && needs.bump-versions.outputs.wip_ref || needs.bump-versions.outputs.sha }}
 
   build-gsf-envgene-discovery:
-    name: Build GSF discovery image
+    name: Build GSF discovery
     needs: [bump-versions]
     runs-on: ubuntu-latest
     permissions:
@@ -210,16 +241,82 @@ jobs:
           registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          ref: ${{ needs.bump-versions.outputs.sha }}
+          ref: ${{ needs.bump-versions.outputs.promotable == 'true' && needs.bump-versions.outputs.wip_ref || needs.bump-versions.outputs.sha }}
+
+  promote-git:
+    name: Promote version bump
+    needs:
+      - bump-versions
+      - build-qubership-envgene
+      - e2e-bdd-tests
+      - build-instance-repo-pipeline
+      - build-gsf-envgene-instance
+      - build-gsf-envgene-discovery
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Prepare app token
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Fast-forward branch to the release commit
+        env:
+          RELEASE_SHA: ${{ needs.bump-versions.outputs.sha }}
+          PROMOTABLE: ${{ needs.bump-versions.outputs.promotable }}
+          WIP_REF: ${{ needs.bump-versions.outputs.wip_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "${PROMOTABLE}" != "true" ]]; then
+            echo "No version-bump commit to promote"
+            exit 0
+          fi
+          git fetch origin "${WIP_REF}"
+          git push origin "${RELEASE_SHA}:${{ github.ref_name }}"
+          git push origin ":${WIP_REF}"
+
+  cleanup-wip-ref:
+    name: Drop unused release WIP ref
+    needs: [bump-versions, promote-git]
+    if: always() && needs.bump-versions.result == 'success' && needs.bump-versions.outputs.promotable == 'true' && needs.promote-git.result != 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Prepare app token
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Delete WIP ref
+        env:
+          WIP_REF: ${{ needs.bump-versions.outputs.wip_ref }}
+        run: git push origin ":${WIP_REF}" || true
 
   tag:
     name: Create tag
     needs:
       - bump-versions
-      - build-qubership-envgene
-      - build-instance-repo-pipeline
-      - build-gsf-envgene-instance
-      - build-gsf-envgene-discovery
+      - promote-git
     permissions:
       contents: write
     uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3

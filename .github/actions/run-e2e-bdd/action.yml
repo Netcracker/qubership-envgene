@@ -12,6 +12,14 @@ inputs:
     description: "Container registry for docker login"
     required: false
     default: "ghcr.io"
+  check-name:
+    description: "Name of the GitHub check for the test report"
+    required: false
+    default: "E2E BDD Test Results (Dev pipeline)"
+  artifact-name:
+    description: "Name of the uploaded test results artifact"
+    required: false
+    default: "e2e-test-results-dev"
 
 runs:
   using: composite
@@ -83,13 +91,13 @@ runs:
       if: always()
       with:
         files: "reports/**/*.xml"
-        check_name: "E2E BDD Test Results (Dev pipeline)"
+        check_name: ${{ inputs.check-name }}
 
     - name: Upload test logs and reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: e2e-test-results-dev
+        name: ${{ inputs.artifact-name }}
         path: |
           e2e_tests.log
           reports/
