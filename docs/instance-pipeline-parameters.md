@@ -24,6 +24,7 @@
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`EXTERNAL_CREDENTIAL_PROVISIONING`](#external_credential_provisioning)
     - [`CUSTOM_PARAMS`](#custom_params)
     - [`APPLICATION_VERSIONS`](#application_versions)
     - [`DEPLOY_POSTFIXES_FILTER`](#deploy_postfixes_filter)
@@ -522,6 +523,29 @@ Consumer-specific pipeline context components registered in EnvGene:
 version: v2.0
 app_chart_validation: 'false'
 ```
+
+### `EXTERNAL_CREDENTIAL_PROVISIONING`
+
+**Description**: Selects the provisioning mode for external Credentials in the `generate_effective_set` job. The
+Effective Set calculator always writes the [External Credential Context](/docs/features/external-creds.md#external-credential-context),
+regardless of this value. This parameter controls only whether EnvGene then invokes the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
+
+Valid values:
+
+- `apply`: EnvGene invokes the CLI in apply mode. Each Credential is created or validated in its Secret Store.
+- `skip`: EnvGene does not invoke the CLI. No Credential is created or validated and no Secret Store is read. Use
+  this mode during migration to external Credentials, when the target Secret Store is not yet populated.
+
+The value `dry-run` is reserved for a future validate-only mode and is not yet implemented.
+
+See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning).
+
+**Default Value**: `apply`
+
+**Mandatory**: No
+
+**Example**: `skip`
 
 ### `CUSTOM_PARAMS`
 
