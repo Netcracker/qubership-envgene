@@ -58,7 +58,7 @@ The workflow runs EnvGene inside the `qubership-envgene` image. One job (`env-pr
 
 Orchestrator capabilities include environment inventory generation, application and registry definition rendering,
 Solution Descriptor (SD) processing, environment build, Effective Set generation, Blue-Green operations, credential
-rotation, and git commit of generated artifacts.
+rotation, and Git commit of generated artifacts.
 
 ## Installation
 
@@ -237,7 +237,7 @@ in [Instance pipeline parameters](/docs/instance-pipeline-parameters.md).
 | `ENV_TEMPLATE_VERSION`   | No       | `""`    | string  | Template version to apply                                      |
 | `ENV_INVENTORY_CONTENT`  | No       | `""`    | string  | Inventory generation payload                                   |
 | `CUSTOM_PARAMS`          | No       | `""`    | string  | Extra parameters for Effective Set generation                  |
-| `DEPLOYMENT_SESSION_ID`  | No       | `""`    | string  | Session id appended to the commit message                      |
+| `DEPLOYMENT_SESSION_ID`  | No       | `""`    | string  | Session ID appended to the commit message                      |
 | `APPLICATION_VERSIONS`   | No       | `""`    | string  | Application versions for the deploy plan                       |
 | `ENV_BUILDER`            | No       | `true`  | boolean | Enable environment build                                       |
 | `GENERATE_EFFECTIVE_SET` | No       | `false` | boolean | Enable Effective Set generation on the legacy path             |
