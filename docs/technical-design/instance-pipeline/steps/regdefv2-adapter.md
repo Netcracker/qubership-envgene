@@ -74,10 +74,8 @@ flowchart TD
 
 1. **Decide whether to run**
 
-   - `PIPELINE_TYPE: GITLAB_DEPLOY` and
-     (`OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
-   - `PIPELINE_TYPE: LEGACY` and `OPERATION_TYPE: DEPLOY` and
-     (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`)
+   - `PIPELINE_TYPE: GITLAB_DEPLOY`, or
+   - `PIPELINE_TYPE: LEGACY` and (`SD_DATA` or `SD_VERSION`)
 
 2. **Resolve the registry auth parameters**
 
@@ -95,7 +93,7 @@ flowchart TD
 4. **Synthesize RegDef v2 for artifact-searcher**
 
    When `MAVEN_PROVIDER` is a public cloud provider (`aws`, `azure`, `gcp`), the step synthesizes a RegDef v2
-   for each Maven registry that is not already at `version: "2.0"`. It builds the v2 from the existing v1
+   for each Maven registry whose rendered RegDef is still v1. It builds the v2 from the existing v1
    RegDef, copying the v1 `mavenConfig` coordinates unchanged and replacing only the auth: it maps the
    parameters to an `authConfig` (see [Parameter mapping](#parameter-mapping)) and sets `version: "2.0"`. The
    Maven coordinates are not present in the registry auth parameters, so they come only from the committed v1
@@ -104,6 +102,11 @@ flowchart TD
    and the credential are written to transient locations that the artifact downloaders read for the run, not
    into the committed instance repository. When `MAVEN_PROVIDER` is `nexus` or `artifactory`, the registry
    keeps its RegDef v1, which already carries its basic auth, so the step synthesizes no v2.
+
+   A rendered RegDef that already carries a `version` (a v2 RegDef) is left as is. The step does not transform
+   it and does not apply the registry auth parameters to it, even when they are set and the v2 `authConfig` is
+   incomplete. A v2 RegDef comes from the template, which the adapter cannot reach, so the template's v2 takes
+   priority. The step logs a warning for it (see [Error handling](#error-handling)).
 
    The auth is global. EnvGene downloads only Maven artifacts and `MAVEN_PROVIDER` is a single value, so one
    auth applies to every Maven registry the solution uses, while coordinates come from each RegDef. This
@@ -212,6 +215,11 @@ The complete parameter list:
 
 2. The step fails when a resolved registry auth parameter references a credential that is not present in the
    decrypted credentials. The error names the credential reference.
+
+3. The step logs a warning, and does not fail, when a rendered RegDef already carries a `version` (a v2
+   RegDef). The warning names the registry, states that its auth is used as is and the registry auth
+   parameters are ignored for it, and recommends authoring RegDef v1 with the registry auth parameters during
+   the transition so EnvGene and the rest of the toolset share one auth source.
 
 ## Related documentation
 
