@@ -1,0 +1,8 @@
+name: core
+deployParameters:
+  test-app: "should-move-to-collision"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
