@@ -136,7 +136,7 @@ def run_regdefv2_adapter(ctx) -> None:
     helper.writeYamlToFile(transient_pubreg_params_file, params)
     os.environ["LOCAL_PUBREG_FILE"] = str(transient_pubreg_params_file)
     logger.info(f"Registry auth parameters written to {transient_pubreg_params_file}")
-    logger.info(f"DEBUG pubreg_params content: {params}")
+    logger.debug(f"pubreg_params content: {helper.mask_sensitive(params, keys_to_mask=(helper.CRED_VALUE_TYPE_SECRET, helper.CRED_VALUE_TYPE_PASSWORD, helper.CRED_VALUE_TYPE_USERNAME, 'key'))}")
 
     if maven_provider not in PUBLIC_CLOUD_PROVIDERS:
         return
@@ -173,6 +173,6 @@ def run_regdefv2_adapter(ctx) -> None:
     creds = {TRANSIENT_CRED_ID: {"data": {"username": access_key, "password": secret_key}}}
     helper.register_extra_creds(creds)
     logger.info(f"Registered transient credential {TRANSIENT_CRED_ID!r}")
-    logger.info(f"DEBUG transient creds content: {creds}")
+    logger.debug(f"transient creds content: {helper.mask_sensitive(creds)}")
     ctx.transient_regdefs_dir = regdef_v2_tmp_dir
     logger.info(f"Transient public registry auth directory: {run_transient_dir}")
