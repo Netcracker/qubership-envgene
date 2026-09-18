@@ -984,8 +984,8 @@ Effective Set output is determined by the invoking context.
    suffix** from step 2:
 
    - **Base URI** depends on the [Secret Store](#secret-store) `type` (use `normalizedSecretName` from step 1 and fields from the Secret Store):
-     - **`vault`:** `ref+vault://<mountPath>/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`).
-     - **`openbao`:** `ref+openbao://<mountPath>/<normalizedSecretName>`. Same composition as `vault`, with the `ref+openbao://` scheme.
+     - **`vault`:** `ref+vault://<mountPath>/data/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`). The `/data/` infix is the KV v2 read path segment.
+     - **`openbao`:** `ref+openbao://<mountPath>/data/<normalizedSecretName>`. Same composition as `vault`, with the `ref+openbao://` scheme.
      - **`azure`:** `ref+azurekeyvault://<vaultName>/<normalizedSecretName>` (`vaultName` from the Secret Store).
      - **`aws`:** `ref+awssecrets://<normalizedSecretName>?region=<region>` (`region` from the Secret Store as a query parameter).
      - **`gcp`:** `ref+gcpsecrets://<projectId>/<normalizedSecretName>` (`projectId` from the Secret Store).
