@@ -314,3 +314,15 @@ Feature: External Credentials Management
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the external credential context file does not exist
+
+# Why: EC-CTX-6 Skips external credential provisioning when EXTERNAL_CREDENTIAL_PROVISIONING parameter is set to 'skip'
+  Scenario: UC-EC-CTX-6: An Environment Instance with EXTERNAL_CREDENTIAL_PROVISIONING set to skip bypasses the provisioning CLI call
+    Given the workspace is initialized with test data from "e2e/uc_ec_v_1_external_only"
+    And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
+    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
+    And the pipeline parameter "EXTERNAL_CREDENTIAL_PROVISIONING" is set to "skip"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
+    And the environment AppDefs and RegDefs paths are resolved for the deploy
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the pipeline log shows "Skipping credential creation in external store"
