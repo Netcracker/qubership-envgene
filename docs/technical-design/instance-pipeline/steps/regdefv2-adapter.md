@@ -114,11 +114,12 @@ flowchart TD
 
 ## Parameter mapping
 
-For a public cloud registry the step maps the `PUB_REG_*` parameters onto a RegDef v2 `authConfig`.
+For a public cloud registry the step maps the `MAVEN_PROVIDER` and `PUB_REG_*` parameters onto a RegDef v2
+`authConfig`.
 
 | registry auth parameter         | `authConfig` field     |
 | ------------------------------- | ---------------------- |
-| `PUB_REG_PROVIDER`              | `provider`             |
+| `MAVEN_PROVIDER`                | `provider`             |
 | `PUB_REG_METHOD`                | `authMethod`           |
 | `PUB_REG_KEY`, `PUB_REG_SECRET` | `<credentialsId>`      |
 | `PUB_REG_REGION`                | `awsRegion`            |
@@ -162,7 +163,6 @@ The complete parameter list:
 | Parameter                     | Scope      | Purpose                                                                           |
 | ----------------------------- | ---------- | --------------------------------------------------------------------------------- |
 | `MAVEN_PROVIDER`              | common     | Registry type: `nexus`, `artifactory`, `aws`, `azure`, `gcp`                      |
-| `PUB_REG_PROVIDER`            | common     | Public cloud provider                                                             |
 | `PUB_REG_METHOD`              | common     | Auth method: secret, assume_role, federation, service_account, oauth2, basic_auth |
 | `PUB_REG_KEY`                 | common     | Access key or client ID                                                           |
 | `PUB_REG_SECRET`              | common     | Secret key, client secret, or service account JSON                                |
