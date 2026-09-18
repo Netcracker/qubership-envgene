@@ -449,35 +449,50 @@ class TestRunGitlabDeployEffectiveSet:
         assert called["deploy_plan"] is delta_plan
 
 
-def test_cli_skips_when_file_missing(tmp_path, monkeypatch):
-    es = tmp_path
-    called = {"run": False}
-    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+class TestExternalCredentialProvisioning:
+    @pytest.mark.unit
+    def test_cli_skips_when_file_missing(self, tmp_path, monkeypatch):
+        es = tmp_path
+        called = {"run": False}
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
 
-    _run_external_credential_provision_cli(es)
+        _run_external_credential_provision_cli(es)
 
-    assert called["run"] is False
+        assert called["run"] is False
+        
+
+    @pytest.mark.unit
+    def test_cli_skips_when_gate_is_set_to_skip(self, tmp_path, monkeypatch):
+        es = tmp_path
+        called = {"run": False}
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+        monkeypatch.setenv("EXTERNAL_CREDENTIAL_PROVISIONING", "skip")
+
+        _run_external_credential_provision_cli(es)
+
+        assert called["run"] is False
 
 
-def test_cli_runs_with_expected_command(tmp_path, monkeypatch):
-    es = tmp_path / ES_DIR_NAME
-    context_file = es / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
-    context_file.parent.mkdir(parents=True, exist_ok=True)
-    context_file.write_text("{}")
+    @pytest.mark.unit
+    def test_cli_runs_with_expected_command(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        context_file = es / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+        context_file.parent.mkdir(parents=True, exist_ok=True)
+        context_file.write_text("{}")
 
-    captured = {}
-    def fake_run(cmd, **kwargs):
-        captured["cmd"] = cmd
-        captured.update(kwargs)
+        captured = {}
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            captured.update(kwargs)
 
-    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
 
-    _run_external_credential_provision_cli(es)
+        _run_external_credential_provision_cli(es)
 
-    assert captured["check"] is True
-    assert captured["cmd"] == [
-        "external-cred-provision",
-        "--log-level",
-        "INFO",
-        str(context_file),
-    ]
+        assert captured["check"] is True
+        assert captured["cmd"] == [
+            "external-cred-provision",
+            "--log-level",
+            "INFO",
+            str(context_file),
+        ]

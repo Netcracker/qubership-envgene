@@ -15,6 +15,7 @@ from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
 
 from effective_set.handle_effective_set_config import handle_effective_set_config
+from envgenehelper.models import ExternalCredentialProvisioning
 
 
 def run_gitlab_deploy_effective_set(ctx):
@@ -211,9 +212,10 @@ def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):
 
 def _run_external_credential_provision_cli(effective_set_dir) -> None:
     context_file = effective_set_dir / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
-    
-    if not context_file.is_file():
-        logger.info("External credential context file not found, skipping credential creation in external store")
+    ext_cred_provisioning_gate = ExternalCredentialProvisioning(getenv("EXTERNAL_CREDENTIAL_PROVISIONING", "apply"))
+    if (ext_cred_provisioning_gate is ExternalCredentialProvisioning.SKIP or not context_file.is_file()):
+        logger.info("Skipping credential creation in external store: "
+                "either EXTERNAL_CREDENTIAL_PROVISIONING is set to skip or context file is missing.")
         return
 
     log_level = getenv("ENVGENE_LOG_LEVEL", "INFO").upper()
