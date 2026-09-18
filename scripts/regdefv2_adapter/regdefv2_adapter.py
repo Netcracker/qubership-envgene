@@ -47,8 +47,8 @@ PUB_REG_TO_AUTH_CONFIG_FIELD = {
 }
 
 
-def _resolve_pubreg_params(e2e_parameters: dict) -> dict:
-    env_creds = helper.get_cred_config()
+def _resolve_pubreg_params(e2e_parameters: dict, env_dir: str) -> dict:
+    env_creds = helper.decrypt_file(helper.getEnvCredentialsPath(env_dir), in_place=False, allow_default=True)
     params = {}
     for key, value in e2e_parameters.items():
         is_registry_auth_param = key.startswith(REGISTRY_AUTH_PARAM_PREFIXES) or key in REGISTRY_AUTH_PARAM_NAMES
@@ -120,7 +120,7 @@ def _get_cloud_e2e_parameters(ctx, env_dir: str) -> dict:
 
 def run_regdefv2_adapter(ctx) -> None:
     env_dir = str(get_current_env_dir_from_env_vars())
-    params = _resolve_pubreg_params(_get_cloud_e2e_parameters(ctx, env_dir))
+    params = _resolve_pubreg_params(_get_cloud_e2e_parameters(ctx, env_dir), env_dir)
 
     maven_provider = params.get(MAVEN_PROVIDER, "").strip().lower()
 
