@@ -95,6 +95,12 @@ def then_effective_set_folder_contains_file(workspace: EnvGeneWorkspace, folder:
     workspace.assert_file_exists(file_path)
 
 
+@then(parsers.parse('the effective set folder "{folder}" does not exist'))
+def then_effective_set_folder_does_not_exist(workspace: EnvGeneWorkspace, folder: str):
+    folder_path = _effective_set_dir(workspace) / folder
+    assert not folder_path.exists(), f"Expected effective-set/{folder} not to exist"
+
+
 @then(parsers.parse('the effective set cleanup mapping contains namespace "{namespace}"'))
 def then_effective_set_cleanup_mapping_contains_namespace(workspace: EnvGeneWorkspace, namespace: str):
     mapping_path = _effective_set_dir(workspace) / "cleanup" / "mapping.yaml"

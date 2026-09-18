@@ -121,6 +121,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
+        sharedData.setGenerateCleanupContext(envParams.generateCleanupContext);
         prepareCustomParameters(getCustomParams(envParams.customParams));
         populateDeploymentSessionId(envParams.extraParams);
     }
@@ -238,6 +239,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-acv", "--app_chart_validation"}, description = "App chart validation parameter on sbom", arity = "1")
         boolean appChartValidation = true;
+
+        @CommandLine.Option(names = "--generate-cleanup-context", description = "Generate cleanup context for every namespace")
+        boolean generateCleanupContext;
 
         @CommandLine.Option(names = {"-cp", "--custom-params"}, description = "Custom Parameters")
         String customParams;

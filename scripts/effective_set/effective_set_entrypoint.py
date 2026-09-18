@@ -11,7 +11,7 @@ from envgenehelper.effective_set_helper import ES_DIR_NAME, ES_MAPPING_FILE, ESG
     PartialMergeMode
 from envgenehelper.file_helper import delete_dir, delete_dir_if_exists, deleteFileIfExists
 from envgenehelper.logger import logger
-from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME
+from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 
 from effective_set.handle_effective_set_config import handle_effective_set_config
@@ -91,7 +91,6 @@ def _run_reverse_merge(effective_set_dir, deploy_plan: EnvgeneDeployPlan, deploy
     deleted_namespaces = set()
 
     mapping_paths = [
-        effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE,
         effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE,
         effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE,
     ]
@@ -102,7 +101,6 @@ def _run_reverse_merge(effective_set_dir, deploy_plan: EnvgeneDeployPlan, deploy
 
         runtime_ns = effective_set_dir / ESGenerationContext.RUNTIME.value / ns
         deployment_ns = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ns
-        cleanup_ns = effective_set_dir / ESGenerationContext.CLEANUP.value / ns
 
         delete_dir_if_exists(runtime_ns / app)
         delete_dir_if_exists(deployment_ns / app)
@@ -113,7 +111,6 @@ def _run_reverse_merge(effective_set_dir, deploy_plan: EnvgeneDeployPlan, deploy
         if ns not in remaining_namespaces:
             delete_dir_if_exists(runtime_ns)
             delete_dir_if_exists(deployment_ns)
-            delete_dir_if_exists(cleanup_ns)
             deleted_namespaces.add(ns)
 
             for path in mapping_paths:
@@ -189,6 +186,9 @@ def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):
             "--sboms-path=$CI_PROJECT_DIR/sboms",
             f"--deploy-plan-path={dp_path}",
         ])
+
+    if getenv("PIPELINE_TYPE") != "GITLAB_DEPLOY" and (get_sd_dir() / SD_FILE_NAME).is_file():
+        cmd.append("--generate-cleanup-context")
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
     if effective_set_config:

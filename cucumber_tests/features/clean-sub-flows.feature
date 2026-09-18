@@ -34,16 +34,11 @@ Feature: CLEAN sub-flows - clean.md
     And the deploy plan is empty
     And the effective set folder "deployment/core" contains marker file ".cleaned"
     And the effective set folder "runtime/core" contains marker file ".cleaned"
-    And the effective set folder "cleanup/core" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-core"
+    And the effective set folder "cleanup" does not exist
     And the effective set folder "deployment/bss-origin" contains marker file ".cleaned"
     And the effective set folder "runtime/bss-origin" contains marker file ".cleaned"
-    And the effective set folder "cleanup/bss-origin" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-bss-origin"
     And the effective set folder "deployment/bss-peer" contains marker file ".cleaned"
     And the effective set folder "runtime/bss-peer" contains marker file ".cleaned"
-    And the effective set folder "cleanup/bss-peer" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-bss-peer"
 
   # ── CLEAN selected namespaces ───────────────────────────────────────────────────
   # NAMESPACE_NAMES lists the namespaces to clean; reduce_deployment_plan removes only the
@@ -62,12 +57,9 @@ Feature: CLEAN sub-flows - clean.md
     And the deploy plan contains an entry for namespace "test-env-bss-origin"
     And the effective set folder "deployment/core" contains marker file ".cleaned"
     And the effective set folder "runtime/core" contains marker file ".cleaned"
-    And the effective set folder "cleanup/core" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-core"
+    And the effective set folder "cleanup" does not exist
     And the effective set folder "deployment/bss-peer" contains marker file ".cleaned"
     And the effective set folder "runtime/bss-peer" contains marker file ".cleaned"
-    And the effective set folder "cleanup/bss-peer" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-bss-peer"
 
   # A Blue-Green side namespace (origin or peer) is cleaned as any other namespace; the other
   # side and the BG state files are not touched - CLEAN is not a state operation.
@@ -87,8 +79,7 @@ Feature: CLEAN sub-flows - clean.md
     And the deploy plan contains an entry for namespace "test-env-bss-peer"
     And the effective set folder "deployment/bss-origin" contains marker file ".cleaned"
     And the effective set folder "runtime/bss-origin" contains marker file ".cleaned"
-    And the effective set folder "cleanup/bss-origin" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-bss-origin"
+    And the effective set folder "cleanup" does not exist
 
   # bdg-test's "controller" namespace is COMMON-role (it names neither the BG Domain's
   # originNamespace nor peerNamespace), so it is cleaned like "core" - not like the BG sides -
@@ -111,8 +102,6 @@ Feature: CLEAN sub-flows - clean.md
     And the deploy plan contains an entry for namespace "test-env-bss-peer"
     And the effective set folder "deployment/controller" contains marker file ".cleaned"
     And the effective set folder "runtime/controller" contains marker file ".cleaned"
-    And the effective set folder "cleanup/controller" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-controller"
 
   # ── CLEAN error case ────────────────────────────────────────────────────────────
   # set_cleaned_mark (build_env.py) fails fast instead of silently skipping a namespace name
@@ -152,12 +141,9 @@ Feature: CLEAN sub-flows - clean.md
     And the deploy plan is empty
     And the effective set folder "deployment/core" contains marker file ".cleaned"
     And the effective set folder "runtime/core" contains marker file ".cleaned"
-    And the effective set folder "cleanup/core" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-core"
+    And the effective set folder "cleanup" does not exist
     And the effective set folder "deployment/bss" contains marker file ".cleaned"
     And the effective set folder "runtime/bss" contains marker file ".cleaned"
-    And the effective set folder "cleanup/bss" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-bss"
 
   Scenario: CLEAN selected namespaces without a Blue-Green Domain marks only the listed namespace and leaves the rest of the plan
     Given the workspace is initialized with test data from "e2e/uc_clean_deploy_no_bgd"
@@ -171,8 +157,6 @@ Feature: CLEAN sub-flows - clean.md
     And the deploy plan contains an entry for namespace "test-env-bss"
     And the effective set folder "deployment/core" contains marker file ".cleaned"
     And the effective set folder "runtime/core" contains marker file ".cleaned"
-    And the effective set folder "cleanup/core" contains file "parameters.yaml"
-    And the effective set cleanup mapping contains namespace "test-env-core"
 
   # ── CLEAN and SBOM files ──────────────────────────────────────────────────────────
   # CLEAN never passes --deploy-plan-path/--registries/--sboms-path to the effective set

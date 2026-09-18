@@ -53,6 +53,8 @@ public class SharedData {
 
     private boolean appChartValidation;
 
+    private boolean generateCleanupContext;
+
     @Builder.Default
     private Map<String, Object> customDeployParamMap = Collections.emptyMap();
     @Builder.Default

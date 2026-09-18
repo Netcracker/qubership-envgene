@@ -9,7 +9,8 @@ from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 from effective_set import effective_set_entrypoint
 from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
-    _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, run_legacy_sd_effective_set as run_entrypoint
+    _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, \
+    run_legacy_sd_effective_set as run_entrypoint
 
 
 PARAMETERS_CONTENT = '{"param": "value"}'
@@ -299,7 +300,7 @@ class TestRunReverseMerge:
 
         assert not (es / ESGenerationContext.RUNTIME.value / DP_1).exists()
         assert not (es / ESGenerationContext.DEPLOYMENT.value / DP_1).exists()
-        assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
+        assert (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
 
     @pytest.mark.unit
     def test_removes_emptied_namespace_from_mapping_files(self, tmp_path):
@@ -314,6 +315,53 @@ class TestRunReverseMerge:
         mapping = openYaml(runtime_mapping_path, allow_default=True)
         assert f"{DP_1}/{APP_1}" not in mapping
         assert "dp-3/app-3" in mapping
+
+    @pytest.mark.unit
+    def test_removes_empty_namespace_from_deployment_runtime_mappings_only(self, tmp_path):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        create_es_cleanup_dir(es, DP_1)
+        cleanup_mapping_path = es / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE
+        writeYamlToFile(cleanup_mapping_path, {DP_1: "/cleanup/path"})
+
+        _run_reverse_merge(es, fake_plan([]), fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
+
+        assert openYaml(cleanup_mapping_path, allow_default=True) == {DP_1: "/cleanup/path"}
+
+
+class TestCleanupContextFlag:
+    @pytest.mark.unit
+    def test_legacy_sd_run_adds_cleanup_context_flag(self, tmp_path, monkeypatch):
+        sd_dir = tmp_path / "solution-descriptor"
+        sd_dir.mkdir()
+        (sd_dir / "sd.yaml").write_text("applications: []\n")
+        monkeypatch.setenv("PIPELINE_TYPE", "LEGACY")
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: sd_dir)
+
+        command = effective_set_entrypoint._build_cli_cmd(tmp_path, FULL_ENV_NAME, None)
+
+        assert "--generate-cleanup-context" in command
+
+    @pytest.mark.unit
+    def test_gitlab_run_does_not_add_cleanup_context_flag(self, tmp_path, monkeypatch):
+        sd_dir = tmp_path / "solution-descriptor"
+        sd_dir.mkdir()
+        (sd_dir / "sd.yaml").write_text("applications: []\n")
+        monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: sd_dir)
+
+        command = effective_set_entrypoint._build_cli_cmd(tmp_path, FULL_ENV_NAME, None)
+
+        assert "--generate-cleanup-context" not in command
+
+    @pytest.mark.unit
+    def test_legacy_run_without_sd_does_not_add_cleanup_context_flag(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("PIPELINE_TYPE", "LEGACY")
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path / "missing")
+
+        command = effective_set_entrypoint._build_cli_cmd(tmp_path, FULL_ENV_NAME, None)
+
+        assert "--generate-cleanup-context" not in command
 
 
 class TestEffectiveSetEntrypointDispatch:

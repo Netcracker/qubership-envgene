@@ -155,12 +155,15 @@ public class CliParameterParser {
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap, getExtCredEntities());
             createExtContextFile();
-            generateCleanedNamespacesOutput(tenantName, cloudName, namespaceDTOMap, deployMappingFileData, runtimeMappingFileData, cleanupMappingFileData, k8TokenMap);
+            generateCleanedNamespacesOutput(tenantName, cloudName, namespaceDTOMap, deployMappingFileData,
+                    runtimeMappingFileData, cleanupMappingFileData, k8TokenMap, sharedData.isGenerateCleanupContext());
             if (solutionDescriptor.isPresent()) {
                 fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
                 fileDataConverter.writeToFile(new TreeMap<>(runtimeMappingFileData), sharedData.getOutputDir(), "runtime", "mapping.yaml");
             }
-            fileDataConverter.writeToFile(new TreeMap<>(cleanupMappingFileData), sharedData.getOutputDir(), "cleanup", "mapping.yaml");
+            if (sharedData.isGenerateCleanupContext()) {
+                fileDataConverter.writeToFile(new TreeMap<>(cleanupMappingFileData), sharedData.getOutputDir(), "cleanup", "mapping.yaml");
+            }
         } else {
             fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "mapping.yaml");
         }
@@ -417,15 +420,19 @@ public class CliParameterParser {
                                                   Map<String, Object> deployMappingFileData,
                                                   Map<String, Object> runtimeMappingFileData,
                                                   Map<String, Object> cleanupMappingFileData,
-                                                  Map<String, String> k8TokenMap) throws IOException {
-        Files.createDirectories(Path.of(sharedData.getOutputDir(), "cleanup"));
+                                                  Map<String, String> k8TokenMap,
+                                                  boolean generateCleanupContext) throws IOException {
+        if (generateCleanupContext) {
+            Files.createDirectories(Path.of(sharedData.getOutputDir(), "cleanup"));
+        }
         for (Map.Entry<String, NamespaceDTO> entry : namespaceDTOMap.entrySet()) {
             String namespaceName = entry.getKey();
             NamespaceDTO namespaceDTO = entry.getValue();
-            if (!namespaceDTO.isCleaned()) {
+            boolean namespaceIsCleaned = namespaceDTO.isCleaned();
+            if (!namespaceIsCleaned && !generateCleanupContext) {
                 continue;
             }
-            logInfo("Generating cleanup output for cleaned namespace: " + namespaceName);
+
             String originalNamespace = namespaceDTO.getName();
 
             String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
@@ -444,26 +451,34 @@ public class CliParameterParser {
                 cleanupPostFixDir = cleanupPostFixDir.substring(index);
             }
 
-            // .cleaned marker files
-            String deployNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName);
-            String runtimeNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName);
-            Files.createDirectories(Path.of(deployNsDir));
-            Files.createDirectories(Path.of(runtimeNsDir));
-            fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
-            fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
+            if (namespaceIsCleaned) {
+                logInfo("Generating cleanup marker for cleaned namespace: " + namespaceName);
+                // .cleaned marker files
+                String deployNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName);
+                String runtimeNsDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName);
+                Files.createDirectories(Path.of(deployNsDir));
+                Files.createDirectories(Path.of(runtimeNsDir));
+                fileDataConverter.writeToFile(new HashMap<>(), deployNsDir, ".cleaned");
+                fileDataConverter.writeToFile(new HashMap<>(), runtimeNsDir, ".cleaned");
 
-            // cleanup parameters
-            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap, getExtCredEntities());
-            createCleanupParams(cleanupParameterBundle);
+                deployMappingFileData.put(originalNamespace, deployPostFixDir);
+                runtimeMappingFileData.put(originalNamespace, runtimePostFixDir);
+            }
 
-            String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
-            Files.createDirectories(Path.of(cleanupDir));
-            fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
-            fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+            if (generateCleanupContext) {
+                logInfo("Generating cleanup output for namespace: " + namespaceName);
+                ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(
+                        tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap,
+                        getExtCredEntities());
+                createCleanupParams(cleanupParameterBundle);
 
-            deployMappingFileData.put(originalNamespace, deployPostFixDir);
-            runtimeMappingFileData.put(originalNamespace, runtimePostFixDir);
-            cleanupMappingFileData.put(originalNamespace, cleanupPostFixDir);
+                String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
+                Files.createDirectories(Path.of(cleanupDir));
+                fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
+                fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+
+                cleanupMappingFileData.put(originalNamespace, cleanupPostFixDir);
+            }
         }
     }
 
