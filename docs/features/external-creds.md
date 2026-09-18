@@ -28,6 +28,7 @@
       - [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)
       - [Normalization to `normalizedSecretName`](#normalization-to-normalizedsecretname)
         - [Vault](#vault)
+        - [OpenBao](#openbao)
         - [Azure Key Vault](#azure-key-vault)
         - [AWS Secrets Manager](#aws-secrets-manager)
         - [GCP Secret Manager](#gcp-secret-manager)
@@ -321,8 +322,8 @@ It may contain several secret store objects:
 
 ```yaml
 <secret-store-name>:
-  type: enum [ vault, azure, aws, gcp ]
-  # Required when type is vault
+  type: enum [ vault, openbao, azure, aws, gcp ]
+  # Required when type is vault or openbao
   mountPath: string
   # Required when type is azure
   vaultName: string
@@ -332,8 +333,9 @@ It may contain several secret store objects:
   projectId: string
 ```
 
-For OpenBao, use `type: vault`. OpenBao is Vault-compatible, so EnvGene addresses it through the Vault
-reference scheme, and no separate store type exists.
+`openbao` and `vault` share the same configuration shape and normalization rules. They differ only in
+the emitted VALS reference scheme (`ref+openbao://` and `ref+vault://` respectively). Pick the type
+that matches the actual backend, so emitted references and logs identify the store honestly.
 
 The map key `<secret-store-name>` is the **store identifier**. It must match the regular expression
 `[A-Za-z_][A-Za-z0-9_]*`, so it is usable as a CI/CD variable prefix at provisioning time (see
@@ -736,12 +738,12 @@ Authentication parameters for that store come from two sources:
 - the [Secret Store](#secret-store) object in `/configuration/secret-stores.yml` for non-sensitive values.
 - CI/CD variables for sensitive values.
 
-Vault auth:
+Vault and OpenBao auth:
 
 | Parameter        | Source              | Description                                 |
 |------------------|---------------------|---------------------------------------------|
-| `type`           | Secret Store object | `vault`                                     |
-| `VAULT_ADDR`     | CI/CD variable      | Vault server URL                            |
+| `type`           | Secret Store object | `vault` or `openbao`                        |
+| `VAULT_ADDR`     | CI/CD variable      | Server URL                                  |
 | `VAULT_TOKEN`    | CI/CD variable      | Token-based authentication                  |
 
 GCP auth:
@@ -874,6 +876,11 @@ The algorithm is vendor-specific. Effective Set calculator applies the rules for
 1. Validate characters
 2. `<normalizedSecretName> = <remoteRefPath>/<credId>` (no segment truncation)
 
+##### OpenBao
+
+OpenBao is API-compatible with Vault and uses the same normalization rules. Constraints, allowed
+characters, and the algorithm above apply verbatim.
+
 ##### Azure Key Vault
 
 **Constraints:**
@@ -969,7 +976,7 @@ Effective Set output is determined by the invoking context.
    - **The reference has no `property`** (single-value credentials):
      - Validate that referenced Credential has **no** `properties`. If it has, fail the Effective Set generation.
      - Choose the fragment from the [Secret Store](#secret-store) `type` (the reference does not supply `property`):
-       - **`vault`**: use `#/value` as the logical key for the single JSON field vals should read.
+       - **`vault`, `openbao`**: use `#/value` as the logical key for the single JSON field vals should read.
        - **`azure`, `aws`, `gcp`**: the secret is treated as plain text. **Omit** the `#/...` fragment entirely.
 
 3. Build the **vals URI** by concatenating, in order, a **base URI** (scheme, host path, and store-specific
@@ -978,6 +985,7 @@ Effective Set output is determined by the invoking context.
 
    - **Base URI** depends on the [Secret Store](#secret-store) `type` (use `normalizedSecretName` from step 1 and fields from the Secret Store):
      - **`vault`:** `ref+vault://<mountPath>/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`).
+     - **`openbao`:** `ref+openbao://<mountPath>/<normalizedSecretName>`. Same composition as `vault`, with the `ref+openbao://` scheme.
      - **`azure`:** `ref+azurekeyvault://<vaultName>/<normalizedSecretName>` (`vaultName` from the Secret Store).
      - **`aws`:** `ref+awssecrets://<normalizedSecretName>?region=<region>` (`region` from the Secret Store as a query parameter).
      - **`gcp`:** `ref+gcpsecrets://<projectId>/<normalizedSecretName>` (`projectId` from the Secret Store).
@@ -1087,9 +1095,9 @@ schema shown under [External Credential Context](#external-credential-context).
      `name`, each value set to `_generateValue`.
    - **Single-value Credential** in a store that addresses the secret directly (`gcp`, `aws`, `azure`): emit the
      scalar marker `_generateValue`.
-   - **Single-value Credential** in `vault` (the Vault path must carry a field segment): emit a map with a single
-     `value` field set to `_generateValue`. The `value` field name matches the convention used by
-     [VALS reference generation](#vals-reference-generation) for single-value vault secrets.
+   - **Single-value Credential** in `vault` or `openbao` (the KV path must carry a field segment): emit a map
+     with a single `value` field set to `_generateValue`. The `value` field name matches the convention used
+     by [VALS reference generation](#vals-reference-generation) for single-value secrets in these stores.
 
 3. Write the `credentials` map from step 2 to `external-credentials.yaml` at the path defined in
    [External Credential Context](#external-credential-context).
@@ -1324,8 +1332,8 @@ Git operations, and others).
    [External Credential Context](#external-credential-context) creation entries.
 
 2. **System Credential Secret Store type.** Every system Credential with `type: external` references a
-   [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure` are not supported as Secret
-   Stores for system credentials.
+   [Secret Store](#secret-store) of type `vault`, `openbao`, or `gcp`. `aws` and `azure` are not supported
+   as Secret Stores for system credentials.
 
 #### During CMDB import
 
