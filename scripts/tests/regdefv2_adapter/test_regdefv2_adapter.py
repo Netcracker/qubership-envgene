@@ -83,6 +83,7 @@ PUBREG_PARAMSET = textwrap.dedent("""\
       PUB_REG_SECRET: "secret"
       PUB_REG_DOMAIN: "my-domain"
       PUB_REG_REGION: "us-east-1"
+      PUB_REG_REPOSITORY: "my-repo"
     """)
 
 
@@ -143,7 +144,7 @@ class TestRegdefV2Adapter:
         assert "fullRepositoryUrl" not in synthesized["mavenConfig"]
         jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
 
-        assert get_cred_config()["transient-pub-reg-creds"]["data"]["username"] == "key"
+        assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"username": "key", "password": "secret"}
 
     @pytest.mark.unit
     def test_gcp_synthesizes_schema_valid_v2_regdef(self, tmp_path):
@@ -153,7 +154,6 @@ class TestRegdefV2Adapter:
               MAVEN_PROVIDER: "gcp"
               PUB_REG_PROVIDER: "gcp"
               PUB_REG_METHOD: "service_account"
-              PUB_REG_KEY: "key"
               PUB_REG_SECRET: "secret"
               PUB_REG_PROJECT: "my-project"
               PUB_REG_SA_EMAIL: "sa@my-project.iam.gserviceaccount.com"
@@ -170,6 +170,8 @@ class TestRegdefV2Adapter:
         assert auth_config["gcpRegProject"] == "my-project"
         assert auth_config["gcpRegSAEmail"] == "sa@my-project.iam.gserviceaccount.com"
         jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+
+        assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"secret": "secret"}
 
     @pytest.mark.unit
     def test_azure_synthesizes_schema_valid_v2_regdef(self, tmp_path):
@@ -195,6 +197,29 @@ class TestRegdefV2Adapter:
         assert auth_config["azureTenantId"] == "tenant-1"
         assert auth_config["azureACRName"] == "myacr"
         jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("missing", ["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
+    def test_aws_secret_requires_all_params(self, tmp_path, missing):
+        paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if f"{missing}:" not in line)
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
+
+        with pytest.raises(ValueError, match=missing):
+            run_regdefv2_adapter(_ctx())
+
+    @pytest.mark.unit
+    def test_gcp_service_account_requires_secret(self, tmp_path):
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(textwrap.dedent("""\
+            name: "pubreg"
+            parameters:
+              MAVEN_PROVIDER: "gcp"
+              PUB_REG_PROVIDER: "gcp"
+              PUB_REG_METHOD: "service_account"
+              PUB_REG_KEY: "key"
+            """))
+
+        with pytest.raises(ValueError, match="PUB_REG_SECRET"):
+            run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
     def test_anonymous_method_does_not_require_key_or_secret(self, tmp_path):
@@ -272,6 +297,7 @@ class TestRegdefV2Adapter:
             "PUB_REG_SECRET": "built-secret",
             "PUB_REG_DOMAIN": "built-domain",
             "PUB_REG_REGION": "us-east-1",
+            "PUB_REG_REPOSITORY": "built-repo",
         }}))
         ctx = _ctx()
 

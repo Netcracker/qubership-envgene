@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 
 import jsonschema
+from artifact_searcher.auth_resolver import (
+    AUTH_METHOD_ANONYMOUS, AUTH_METHOD_SECRET, AUTH_METHOD_SERVICE_ACCOUNT, CRED_FIELD_DATA, CRED_FIELD_PASSWORD, CRED_FIELD_SECRET, CRED_FIELD_USERNAME,
+)
 
 import envgenehelper as helper
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_template_dirs, NamespaceRole
@@ -60,14 +63,29 @@ def _resolve_pubreg_params(e2e_parameters: dict, env_dir: str) -> dict:
     return params
 
 
-def _validate_required_pubreg_params(params: dict, auth_method: str) -> None:
-    if auth_method != "anonymous":
-        if not params.get("PUB_REG_KEY"):
-            raise ValueError("PUB_REG_KEY is required in Cloud e2eParameters unless PUB_REG_METHOD=anonymous")
-        if not params.get("PUB_REG_SECRET"):
-            raise ValueError("PUB_REG_SECRET is required in Cloud e2eParameters unless PUB_REG_METHOD=anonymous")
+def _require_pubreg_param(params: dict, param_name: str, maven_provider: str, auth_method: str) -> None:
+    if not params.get(param_name):
+        raise ValueError(f"{param_name} is required in Cloud e2eParameters "
+                         f"for MAVEN_PROVIDER={maven_provider} and PUB_REG_METHOD={auth_method}")
+
+
+def _validate_required_pubreg_params(params: dict, maven_provider: str, auth_method: str) -> None:
     if not auth_method:
         raise ValueError("PUB_REG_METHOD is required in Cloud e2eParameters for public cloud MAVEN_PROVIDER")
+
+    if auth_method == AUTH_METHOD_ANONYMOUS:
+        return
+
+    if maven_provider == "aws" and auth_method == AUTH_METHOD_SECRET:
+        _require_pubreg_param(params, "PUB_REG_KEY", maven_provider, auth_method)
+        _require_pubreg_param(params, "PUB_REG_SECRET", maven_provider, auth_method)
+        _require_pubreg_param(params, "PUB_REG_REGION", maven_provider, auth_method)
+        _require_pubreg_param(params, "PUB_REG_DOMAIN", maven_provider, auth_method)
+        _require_pubreg_param(params, "PUB_REG_REPOSITORY", maven_provider, auth_method)
+        return
+
+    if maven_provider == "gcp" and auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+        _require_pubreg_param(params, "PUB_REG_SECRET", maven_provider, auth_method)
 
 
 def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
@@ -146,7 +164,7 @@ def run_regdefv2_adapter(ctx) -> None:
     auth_method = params.get("PUB_REG_METHOD", "")
     access_key = params.get("PUB_REG_KEY")
     secret_key = params.get("PUB_REG_SECRET")
-    _validate_required_pubreg_params(params, auth_method)
+    _validate_required_pubreg_params(params, maven_provider, auth_method)
 
     source_regdefs_path = ctx.committed_regdefs_dir
     if not source_regdefs_path.is_dir():
@@ -170,7 +188,11 @@ def run_regdefv2_adapter(ctx) -> None:
         helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data)
         logger.info(f"Synthesized v2 for {regdef_file.name}")
 
-    creds = {TRANSIENT_CRED_ID: {"data": {"username": access_key, "password": secret_key}}}
+    if auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+        cred_data = {CRED_FIELD_SECRET: secret_key}
+    else:
+        cred_data = {CRED_FIELD_USERNAME: access_key, CRED_FIELD_PASSWORD: secret_key}
+    creds = {TRANSIENT_CRED_ID: {CRED_FIELD_DATA: cred_data}}
     helper.register_extra_creds(creds)
     logger.info(f"Registered transient credential {TRANSIENT_CRED_ID!r}")
     logger.debug(f"transient creds content: {helper.mask_sensitive(creds)}")
