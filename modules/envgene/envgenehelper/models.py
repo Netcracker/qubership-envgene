@@ -63,6 +63,11 @@ class SaveArtifactsStrategy(CaseInsensitiveEnum):
     NEVER = "NEVER"
 
 
+class ExternalCredentialProvisioning(CaseInsensitiveEnum):
+    APPLY = "APPLY"
+    SKIP = "SKIP"
+
+
 class SecretStore(BaseModel):
     type: Literal["vault", "gcp", "aws", "azure"]
     projectId: Optional[str] = None
