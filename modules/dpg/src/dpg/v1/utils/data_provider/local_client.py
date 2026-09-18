@@ -23,7 +23,7 @@ class LocalClient(DataProviderInterface):
     def get_app_def(self, application: str) -> UnifiedAppDef:
         apppath = self.root_dir / Path(self.DEFAULT_PATH_TO_APPDEFS) / f"{application}.yml"
         if not apppath.exists():
-            raise Exception("File with appdef & fallback client doesn't exists.")
+            raise Exception(f"File with appdef & fallback client doesn't exists for `{application}` application")
 
         appdef_d = yaml.safe_load(apppath.read_text())
         if appdef_d is None:
@@ -43,7 +43,7 @@ class LocalClient(DataProviderInterface):
     def get_reg_def(self, registry: str) -> UnifiedAppDef:
         regpath = self.root_dir / Path(self.DEFAULT_PATH_TO_REGDEFS) / f"{registry}.yml"
         if not regpath.exists():
-            raise Exception("File with appdef & fallback client doesn't exists.")
+            raise Exception(f"File with regdef & fallback client doesn't exists for `{registry}` registry")
 
         regdef_d = yaml.safe_load(regpath.read_text())
         if regdef_d is None:
