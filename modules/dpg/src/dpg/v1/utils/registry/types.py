@@ -13,12 +13,13 @@ class RegistryType(Enum):
 class MavenConfig(BaseModel):
     targetRelease : str
     targetStaging : str
-    targetSnapshot : str 
+    targetSnapshot : str
 
 class AuthRegistry(BaseModel):
     pass
 
 class AuthSTSSecret(AuthRegistry):
+    auth_type: str = "DIRECT"
     access_key: str
     secret_key: str
     domain: str = ""
