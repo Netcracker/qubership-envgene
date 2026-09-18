@@ -29,6 +29,7 @@ from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import run_multi_env_pipeline
+from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
 from envgenehelper.collections_helper import split_multi_value_param
@@ -40,6 +41,14 @@ class StepStatus(StrEnum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+
+
+class PipelineStatus(StrEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    SKIPPED = "SKIPPED"
+    UNKNOWN = "UNKNOWN"
 
 
 _STATUS_COLOR = {
@@ -307,6 +316,8 @@ class GitCommitStep(PipelineStep):
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
+    if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+        resolve_trace_id()
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
@@ -329,7 +340,10 @@ def run_single_env_pipeline() -> None:
     ]
 
     results: list[StepResult] = []
+    metrics = MetricsCollectorActivity(ctx)
+    terminal_status = PipelineStatus.UNKNOWN
     try:
+        metrics.send_running()
         for step in steps:
             if not step.should_run(ctx):
                 logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
@@ -353,6 +367,17 @@ def run_single_env_pipeline() -> None:
                     end_banner = colorize_segment(
                         banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
                     logger.info(end_banner)
+        terminal_status = PipelineStatus.SKIPPED if all(r.status == StepStatus.SKIPPED for r in results) \
+            else PipelineStatus.SUCCESS
+    except KeyboardInterrupt:
+        terminal_status = PipelineStatus.CANCELLED
+        raise
+    except SystemExit as exc:
+        terminal_status = PipelineStatus.SUCCESS if exc.code in (0, None) else PipelineStatus.FAILED
+        raise
+    except Exception:
+        terminal_status = PipelineStatus.FAILED
+        raise
     finally:
         start = time.time_ns()
         status = StepStatus.SUCCESS
@@ -364,6 +389,11 @@ def run_single_env_pipeline() -> None:
         finally:
             duration_ms = (time.time_ns() - start) // 1_000_000
             results.append(StepResult("copy_env_artifact", status, duration_ms))
+            if terminal_status == PipelineStatus.SUCCESS and status == StepStatus.FAILED:
+                terminal_status = PipelineStatus.FAILED
+            recorded = {result.name: result for result in results}
+            metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps]
+            metrics.send_running(str(terminal_status), metrics_results)
         log_pipeline_summary(results)
 
 
@@ -380,6 +410,8 @@ def dispatch() -> int:
             return 0
 
         os.environ["ENV_NAMES"] = env_names[0]
+        if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+            resolve_trace_id()
         handler = PipelineParametersHandler.from_env()
         handler.write_dotenv(exclude_keys={"ENV_NAMES"})
 
