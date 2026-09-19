@@ -93,9 +93,10 @@ def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
     auth_config = {
         "provider": maven_provider,
         "authMethod": auth_method,
-        "authType": "longLived" if auth_method == "secret" else "shortLived",
-        "credentialsId": cred_id,
     }
+    if auth_method != AUTH_METHOD_ANONYMOUS:
+        auth_config["authType"] = "longLived" if auth_method == AUTH_METHOD_SECRET else "shortLived"
+        auth_config["credentialsId"] = cred_id
     for param_key, auth_key in PUB_REG_TO_AUTH_CONFIG_FIELD.items():
         value = params.get(param_key, "").strip()
         if value:
@@ -188,13 +189,14 @@ def run_regdefv2_adapter(ctx) -> None:
         helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data)
         logger.info(f"Synthesized v2 for {regdef_file.name}")
 
-    if auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
-        cred_data = {CRED_FIELD_SECRET: secret_key}
-    else:
-        cred_data = {CRED_FIELD_USERNAME: access_key, CRED_FIELD_PASSWORD: secret_key}
-    creds = {TRANSIENT_CRED_ID: {CRED_FIELD_DATA: cred_data}}
-    helper.register_extra_creds(creds)
-    logger.info(f"Registered transient credential {TRANSIENT_CRED_ID!r}")
-    logger.debug(f"transient creds content: {helper.mask_sensitive(creds)}")
+    if auth_method != AUTH_METHOD_ANONYMOUS:
+        if auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+            cred_data = {CRED_FIELD_SECRET: secret_key}
+        else:
+            cred_data = {CRED_FIELD_USERNAME: access_key, CRED_FIELD_PASSWORD: secret_key}
+        creds = {TRANSIENT_CRED_ID: {CRED_FIELD_DATA: cred_data}}
+        helper.register_extra_creds(creds)
+        logger.info(f"Registered transient credential {TRANSIENT_CRED_ID!r}")
+        logger.debug(f"transient creds content: {helper.mask_sensitive(creds)}")
     ctx.transient_regdefs_dir = regdef_v2_tmp_dir
     logger.info(f"Transient public registry auth directory: {run_transient_dir}")

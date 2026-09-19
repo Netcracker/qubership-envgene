@@ -237,6 +237,8 @@ class TestRegdefV2Adapter:
         synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         auth_config = synthesized["authConfig"]["pub-reg-auth"]
         assert auth_config["authMethod"] == "anonymous"
+        assert "credentialsId" not in auth_config
+        assert "authType" not in auth_config
         jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
 
     @pytest.mark.unit
