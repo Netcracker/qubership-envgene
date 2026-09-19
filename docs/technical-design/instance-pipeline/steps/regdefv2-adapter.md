@@ -80,9 +80,9 @@ flowchart TD
 2. **Resolve the registry auth parameters**
 
    The step renders the Cloud object, processes the Cloud paramsets into parameters, reads the whole
-   `e2eParameters` section, and expands credential macros to resolve the secret values against the
-   credentials decrypted at pipeline start. This render is not consumed by later pipeline steps
-   and is not written to the repository.
+   `e2eParameters` section, and expands credential macros in any parameter value against the credentials
+   decrypted at pipeline start. This render is not consumed by later pipeline steps and is not written to the
+   repository.
 
 3. **Write the parameter file for dpg**
 
@@ -114,35 +114,39 @@ flowchart TD
 
 ## Parameter mapping
 
-For a public cloud registry the step maps the `MAVEN_PROVIDER` and `PUB_REG_*` parameters onto a RegDef v2
-`authConfig`.
+For a public cloud registry the step builds the RegDef v2 `authConfig` from the `MAVEN_PROVIDER` and
+`PUB_REG_*` parameters:
 
-| registry auth parameter         | `authConfig` field     |
-| ------------------------------- | ---------------------- |
-| `MAVEN_PROVIDER`                | `provider`             |
-| `PUB_REG_METHOD`                | `authMethod`           |
-| `PUB_REG_KEY`, `PUB_REG_SECRET` | `<credentialsId>`      |
-| `PUB_REG_REGION`                | `awsRegion`            |
-| `PUB_REG_DOMAIN`                | `awsDomain`            |
-| `PUB_REG_ROLE_ARN`              | `awsRoleARN`           |
-| `PUB_REG_ROLE_SESSION_PREFIX`   | `awsRoleSessionPrefix` |
-| `PUB_REG_OIDC_URL`              | `gcpOIDC.URL`          |
-| `PUB_REG_PROJECT`               | `gcpRegProject`        |
-| `PUB_REG_POOL_ID`               | `gcpRegPoolId`         |
-| `PUB_REG_PROVIDER_ID`           | `gcpRegProviderId`     |
-| `PUB_REG_SA_EMAIL`              | `gcpRegSAEmail`        |
-| `PUB_REG_TENANT_ID`             | `azureTenantId`        |
-| `PUB_REG_ACR_RESOURCE`          | `azureACRResource`     |
-| `PUB_REG_ACR_NAME`              | `azureACRName`         |
+| `authConfig` field     | source                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `provider`             | `MAVEN_PROVIDER`                                                                          |
+| `authMethod`           | `PUB_REG_METHOD`                                                                          |
+| `authType`             | derived from `PUB_REG_METHOD` (`secret` = `longLived`, others = `shortLived`)             |
+| `credentialsId`        | name of the credential the step creates from `PUB_REG_KEY` / `PUB_REG_SECRET` (see below) |
+| `awsRegion`            | `PUB_REG_REGION`                                                                          |
+| `awsDomain`            | `PUB_REG_DOMAIN`                                                                          |
+| `awsRoleARN`           | `PUB_REG_ROLE_ARN`                                                                        |
+| `awsRoleSessionPrefix` | `PUB_REG_ROLE_SESSION_PREFIX`                                                             |
+| `gcpOIDC.URL`          | `PUB_REG_OIDC_URL`                                                                        |
+| `gcpRegProject`        | `PUB_REG_PROJECT`                                                                         |
+| `gcpRegPoolId`         | `PUB_REG_POOL_ID`                                                                         |
+| `gcpRegProviderId`     | `PUB_REG_PROVIDER_ID`                                                                     |
+| `gcpRegSAEmail`        | `PUB_REG_SA_EMAIL`                                                                        |
+| `azureTenantId`        | `PUB_REG_TENANT_ID`                                                                       |
+| `azureACRResource`     | `PUB_REG_ACR_RESOURCE`                                                                    |
+| `azureACRName`         | `PUB_REG_ACR_NAME`                                                                        |
 
-Two fields are not a direct copy:
+The step creates the credential named by `credentialsId` from the resolved values. Its `type` and `data`
+fields follow the provider and method:
 
-- `authType` is derived from `PUB_REG_METHOD`. Method `secret` maps to `longLived`. The other methods map to
-  `shortLived`.
-- `credentialsId` is a reference, while the registry auth key and secret arrive as values. For the
-  artifact-searcher path the step creates a credential, holding the key as the username and the secret as the
-  password, and sets `credentialsId` to it. This credential is transient and is not written into the
-  committed credential store.
+| provider and method          | credential `type`  | `data` fields                                                   |
+| ---------------------------- | ------------------ | --------------------------------------------------------------- |
+| `aws` with `secret`          | `usernamePassword` | `username` from `PUB_REG_KEY`, `password` from `PUB_REG_SECRET` |
+| `gcp` with `service_account` | `secret`           | `secret` from `PUB_REG_SECRET`                                  |
+
+The other public cloud methods (`aws` `assume_role`, `gcp` `federation`, `azure` `oauth2`) follow the same
+derivation, but the artifact-searcher resolver does not implement them yet. This credential is transient and
+is not written into the committed credential store.
 
 ## Parameter file
 
