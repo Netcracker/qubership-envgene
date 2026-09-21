@@ -1579,8 +1579,8 @@ A **Secret Store** is a named entry in the instance repository configuration tha
 ```yaml
 <secret-store-name>:
   # Mandatory
-  type: enum [ vault, azure, aws, gcp ]
-  # Required when type is vault
+  type: enum [ vault, openbao, azure, aws, gcp ]
+  # Required when type is vault or openbao
   mountPath: string
   # Required when type is azure
   vaultName: string
