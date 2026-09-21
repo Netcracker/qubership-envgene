@@ -59,7 +59,8 @@ A JSON file compliant with the CycloneDX specification, describing the following
 
 Generated SBOM files are cached in the `/sboms/` directory of the Instance Repository to avoid expensive regeneration. Each application's SBOMs are stored in a subdirectory named after the application.
 
-To manage repository size and prevent reaching the 1500 MB limit, EnvGene provides automatic SBOM retention. See [SBOM Retention](/docs/features/sbom-retention.md) for configuration details.
+To manage repository size, EnvGene provides automatic SBOM retention. See
+[SBOM Retention](/docs/features/sbom-retention.md) for configuration details.
 
 ### SBOM directory layout
 

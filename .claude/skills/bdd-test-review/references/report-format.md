@@ -6,7 +6,11 @@ published comment is the draft's English translation.
 
 House style everywhere: no semicolons in prose, hyphen-minus only (no em or en dashes), prose wrapped at
 120 characters (tables and URLs exempt), all tables with vertically aligned pipes and dash-padded
-separator rows (align programmatically, skip fenced code blocks). Plain language: allowed jargon is
+separator rows (align programmatically, skip fenced code blocks). Align the leading fixed-width columns
+(Scenario, Verdict, symbol columns), but the final free-prose column (Reason, or any multi-hundred-character
+cell) is EXEMPT from trailing-pipe alignment - padding such a cell is impractical and GitHub renders it
+correctly regardless, so the critic loop must not flag trailing-pipe drift on that column as a violation.
+Plain language: allowed jargon is
 limited to test-approach terms (golden, snapshot, negative, the verdict values, @xfail) and product
 terminology as spelled in the docs. Everything else - paraphrase (no "oracle", "no-op", "advisory",
 "camelCase" and similar in reasons). After issues are filed, reference them as bare #NNNN (GitHub
@@ -48,6 +52,10 @@ One fenced gherkin block. For every `missing` row either a full draft or an expl
 comment that names the UC ID, so searching any ID finds its draft. Rules:
 
 - Reuse the existing step vocabulary of the suite verbatim - drafts must be paste-ready.
+- The proposed `UC-X-PS-N` identifier belongs only in the verdict-table row and in the draft's
+  `# why: closes UC-X-PS-N` comment. The Gherkin `Scenario:` title stays paste-ready under the suite's
+  own naming convention (real UC IDs from the docs) and never carries the `PS-N` token - it is a report
+  artifact, not a scenario name.
 - Use Scenario Outline plus an Examples table for place or mode variants instead of copypaste.
 - Every draft starts with a short `# why:` comment stating the gap it closes.
 - Data that does not exist yet appears as "<new payload>"-style placeholders. Paths that already exist in
@@ -84,6 +92,10 @@ PR-scoped action items ONLY - everything here is addressed to the author of the 
 
 - dead data and the dead steps that reference it (list the files, name what stays alive and why).
 - dead or unused fixture fields.
+- enrichments to a scenario that stays valid: extra assertions it should carry (a fuller golden, one more
+  context to check). These are author action items and belong here, NOT as a `missing` row or a Proposed
+  draft. `missing` and Proposed are reserved for scenarios that do not exist at all - a gap that only
+  strengthens an existing scenario is a Note.
 
 Nothing tracked in a separate issue belongs here: mixing them made a reader take the filed tickets for
 the review's requested scope once.

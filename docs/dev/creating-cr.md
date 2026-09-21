@@ -150,6 +150,39 @@ Bad (code-level):
 Name the observable behavior and the entities the design defines, as the Good example above does. A
 code-level pointer pins one implementation and breaks when the code moves.
 
+State only what changes. When one operation both changes a behavior and leaves another behavior
+unchanged, the item names only the changed behavior. Move the co-occurring unchanged behavior to an
+"unchanged" boundary bullet in Out of scope changes, or drop it. Describing unchanged behavior inside
+an in-scope item hides the actual change and invites the reader to re-verify work the CR does not
+touch.
+
+Bad (bundles a change with unchanged behavior):
+
+> 1. When the input is off, produce no cleanup context. Mark the namespaces' deployment and runtime
+>    for removal, writing a `.cleaned` marker and dropping them from the deployment and runtime
+>    mapping.
+
+Good (the in-scope item names only the change):
+
+> 1. When the input is off, produce no cleanup context.
+
+The marker and the mapping removal are existing behavior, so they belong in Out of scope changes as an
+unchanged boundary bullet:
+
+> - The `.cleaned` marker and the deployment and runtime mapping removal are unchanged.
+
+State value-to-value mappings concretely. When an item derives a behavior or input from a parameter's
+value, write the concrete value-to-value mapping rather than a paraphrase that forces the reader to
+already know the mapping.
+
+Bad (forces the reader to know which value is which):
+
+> Derive the input from `PIPELINE_TYPE`: on for No-CMDB v1, off for No-CMDB v2.
+
+Good (states the value-to-value mapping):
+
+> `PIPELINE_TYPE: LEGACY` sets the input on, and `PIPELINE_TYPE: GITLAB_DEPLOY` leaves it off.
+
 ### Out of scope changes
 
 Optional. Recommended whenever the design covers more ground than the implementation slice,
@@ -285,6 +318,9 @@ The GitHub issue type and the title prefix reflect the change's nature:
 - **Bug** - a defect in existing behavior. Title prefix `[Bug:]`.
 - **Story** - a change that is neither a new capability nor a defect, for example a gap in an existing
   feature. Title prefix `[Story:]`.
+
+A change that fixes or refines the behavior of an existing feature is a Story, even when it adds a
+parameter or toggle. Reserve Feature for a genuinely new capability.
 
 A ticket that only creates or updates documentation is a Story with the `[Docs:]` title prefix.
 

@@ -38,6 +38,7 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
+    - [`SAVE_ARTIFACTS_STRATEGY`](#save_artifacts_strategy)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -421,8 +422,7 @@ envDefinition:
       sharedMasterCredentialFiles:
       - prod-integration-creds
       envSpecificResourceProfiles:
-        cloud:
-        - cloud-specific-profile
+        cloud: cloud-specific-profile
 paramsets:
 - action: create_or_replace
   place: env
@@ -966,6 +966,21 @@ curl -X POST \
         }
       }'
 ```
+
+### `SAVE_ARTIFACTS_STRATEGY`
+
+**Description**: Per-run override for the repository-wide `save_artifacts.strategy` policy in
+`/configuration/config.yml`. Controls whether the work directory is saved. Per-environment logs are always
+saved. `ALWAYS` saves the work directory on every run, `NEVER` saves only the logs. A troubleshooting rerun
+typically sets `ALWAYS`.
+
+See details in [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `ALWAYS`
 
 ## Deprecated Parameters
 
