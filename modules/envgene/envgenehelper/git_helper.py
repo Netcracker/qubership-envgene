@@ -278,6 +278,9 @@ class GitRepoManager:
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
 
+        logger.info("git clean -ffdx")
+        self.repo.git.clean("-ffdx")
+
         logger.info("sparse checkout complete")
 
 
