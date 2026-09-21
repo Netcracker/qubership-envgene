@@ -274,12 +274,21 @@ class GitRepoManager:
 
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
+        
+        logger.debug(f"git status before clean:\n{self.repo.git.status()}")
+        logger.debug(f"find output before clean:\n{self.repo.git.execute(['find', '.', '-maxdepth', '3'])}")
+
+        logger.debug("git clean -ffdxn (dry run)")
+        dry_run_output = self.repo.git.clean("-ffdxn")
+        logger.debug(f"would remove:\n{dry_run_output}")
 
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
 
         logger.info("git clean -ffdx")
         self.repo.git.clean("-ffdx")
+        
+        logger.debug(f"git status after clean:\n{self.repo.git.status()}")
 
         logger.info("sparse checkout complete")
 
