@@ -1,0 +1,488 @@
+{
+	"$defs": {
+		"DockerConfig": {
+			"properties": {
+				"snapshotUri": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Snapshoturi"
+				},
+				"stagingUri": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Staginguri"
+				},
+				"releaseUri": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Releaseuri"
+				},
+				"groupUri": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Groupuri"
+				},
+				"snapshotRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Snapshotreponame"
+				},
+				"stagingRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Stagingreponame"
+				},
+				"releaseRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Releasereponame"
+				},
+				"groupName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Groupname"
+				}
+			},
+			"title": "DockerConfig",
+			"type": "object"
+		},
+		"GoConfig": {
+			"properties": {
+				"goTargetSnapshot": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Gotargetsnapshot"
+				},
+				"goTargetRelease": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Gotargetrelease"
+				},
+				"goProxyRepository": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Goproxyrepository"
+				}
+			},
+			"title": "GoConfig",
+			"type": "object"
+		},
+		"HelmAppConfig": {
+			"properties": {
+				"helmStagingRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Helmstagingreponame"
+				},
+				"helmReleaseRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Helmreleasereponame"
+				},
+				"helmGroupRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Helmgroupreponame"
+				},
+				"helmDevRepoName": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Helmdevreponame"
+				}
+			},
+			"title": "HelmAppConfig",
+			"type": "object"
+		},
+		"HelmConfig": {
+			"properties": {
+				"helmTargetStaging": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Helmtargetstaging"
+				},
+				"helmTargetRelease": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Helmtargetrelease"
+				}
+			},
+			"title": "HelmConfig",
+			"type": "object"
+		},
+		"MavenConfig": {
+			"properties": {
+				"targetSnapshot": {
+					"title": "Targetsnapshot",
+					"type": "string"
+				},
+				"targetStaging": {
+					"title": "Targetstaging",
+					"type": "string"
+				},
+				"targetRelease": {
+					"title": "Targetrelease",
+					"type": "string"
+				},
+				"fullRepositoryUrl": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Fullrepositoryurl"
+				},
+				"repositoryDomainName": {
+					"error_message": "Application registry does not define URL",
+					"title": "Repositorydomainname",
+					"type": "string"
+				},
+				"snapshotGroup": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Snapshotgroup"
+				},
+				"releaseGroup": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Releasegroup"
+				}
+			},
+			"required": [
+				"targetSnapshot",
+				"targetStaging",
+				"targetRelease",
+				"repositoryDomainName"
+			],
+			"title": "MavenConfig",
+			"type": "object"
+		},
+		"NpmConfig": {
+			"properties": {
+				"npmTargetSnapshot": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Npmtargetsnapshot"
+				},
+				"npmTargetRelease": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Npmtargetrelease"
+				}
+			},
+			"title": "NpmConfig",
+			"type": "object"
+		},
+		"RawConfig": {
+			"properties": {
+				"rawTargetSnapshot": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Rawtargetsnapshot"
+				},
+				"rawTargetRelease": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Rawtargetrelease"
+				},
+				"rawTargetStaging": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Rawtargetstaging"
+				},
+				"rawTargetProxy": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Rawtargetproxy"
+				}
+			},
+			"title": "RawConfig",
+			"type": "object"
+		},
+		"Registry": {
+			"properties": {
+				"credentialsId": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": "",
+					"title": "Credentialsid"
+				},
+				"name": {
+					"title": "Name",
+					"type": "string"
+				},
+				"mavenConfig": {
+					"$ref": "#/$defs/MavenConfig"
+				},
+				"dockerConfig": {
+					"$ref": "#/$defs/DockerConfig"
+				},
+				"goConfig": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/GoConfig"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": null
+				},
+				"rawConfig": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/RawConfig"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": null
+				},
+				"npmConfig": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/NpmConfig"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": null
+				},
+				"helmConfig": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/HelmConfig"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": null
+				},
+				"helmAppConfig": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/HelmAppConfig"
+						},
+						{
+							"type": "null"
+						}
+					],
+					"default": null
+				}
+			},
+			"required": [
+				"name",
+				"mavenConfig",
+				"dockerConfig"
+			],
+			"title": "Registry",
+			"type": "object"
+		}
+	},
+	"properties": {
+		"registries": {
+			"additionalProperties": {
+				"$ref": "#/$defs/Registry"
+			},
+			"title": "Registries",
+			"type": "object"
+		},
+		"sboms": {
+			"title": "Sboms",
+			"type": "object"
+		}
+	},
+	"required": [
+		"registries",
+		"sboms"
+	],
+	"title": "SBOMAndRegistryMaps",
+	"type": "object"
+}

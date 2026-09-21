@@ -10,7 +10,6 @@ from pathlib import Path
 
 from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
-from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
@@ -24,6 +23,7 @@ from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
 from effective_set.sboms_retention_policy import sboms_retention_policy
+from effective_set.generate_sboms import generate_sboms
 from deployment_plan.process_deployment_plan import merge_deployment_plan, reduce_deployment_plan
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
@@ -283,9 +283,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             if not ctx.is_gitlab_deploy():
                 apply_no_sd_mode(ctx)
             sboms_retention_policy()
-            get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
-            if get_sboms.modules:
-                get_sboms.run(ctx.resolve_source_dp())
+            generate_sboms(ctx.resolve_source_dp())
             if ctx.is_gitlab_deploy():
                 run_gitlab_deploy_effective_set(ctx)
             else:

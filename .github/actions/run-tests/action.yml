@@ -43,6 +43,7 @@ runs:
         pip install --no-cache-dir -e "modules/artifact-searcher[dev]"
         pip install --no-cache-dir -e "modules/external-cred-provision"
         pip install --no-cache-dir -e "modules/dpg"
+        pip install --no-cache-dir -e "modules/sbom_generator[dev]"
 
     - name: Configure test environment
       shell: bash
@@ -70,6 +71,13 @@ runs:
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
         cd ../..
         mv junit.xml junit_external_cred_provision.xml
+
+    - name: SBOM GENERATOR test
+      shell: bash
+      run: |
+        cd modules/sbom_generator
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit_sbom_generator.xml
+        cd ../..
 
     - name: ENVGENE SCRIPTS SCOPE tests
       shell: bash

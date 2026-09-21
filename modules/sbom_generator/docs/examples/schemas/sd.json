@@ -1,0 +1,48 @@
+{
+  "$defs": {
+    "ApplicationDescriptor": {
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "deployPostfix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Deploypostfix"
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "title": "ApplicationDescriptor",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "applications": {
+      "items": {
+        "$ref": "#/$defs/ApplicationDescriptor"
+      },
+      "title": "Applications",
+      "type": "array"
+    },
+    "version": {
+      "title": "Version",
+      "type": "number"
+    }
+  },
+  "required": [
+    "applications",
+    "version"
+  ],
+  "title": "SolutionDescriptor",
+  "type": "object"
+}
