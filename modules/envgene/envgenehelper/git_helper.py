@@ -275,20 +275,21 @@ class GitRepoManager:
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
         
-        logger.debug(f"git status before clean:\n{self.repo.git.status()}")
-        logger.debug(f"find output before clean:\n{self.repo.git.execute(['find', '.', '-maxdepth', '3'])}")
-
-        logger.debug("git clean -ffdxn (dry run)")
-        dry_run_output = self.repo.git.clean("-ffdxn")
-        logger.debug(f"would remove:\n{dry_run_output}")
-
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
-
-        logger.info("git clean -ffdx")
-        self.repo.git.clean("-ffdx")
         
-        logger.debug(f"git status after clean:\n{self.repo.git.status()}")
+        logger.warning(f"[before clean] tracked files (with skip-worktree flags):\n{self.repo.git.execute(['git', 'ls-files', '-v'])}")
+        logger.warning(f"[before clean] untracked files:\n{self.repo.git.execute(['git', 'ls-files', '-o', '--exclude-standard'])}")
+
+        logger.warning("git clean -ffdn (dry run)")
+        dry_run_output = self.repo.git.clean("-ffdn")
+        logger.warning(f"would remove:\n{dry_run_output}")
+
+        logger.warning("git clean -ffd")
+        self.repo.git.clean("-ffd")
+        
+        logger.warning(f"[after clean] tracked files (skip-worktree flags):\n{self.repo.git.execute(['git', 'ls-files', '-v'])}")
+        logger.warning(f"[after clean] untracked files:\n{self.repo.git.execute(['git', 'ls-files', '-o', '--exclude-standard'])}")
 
         logger.info("sparse checkout complete")
 
