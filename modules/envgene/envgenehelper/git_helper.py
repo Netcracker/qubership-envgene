@@ -279,7 +279,6 @@ class GitRepoManager:
         self.repo.git.checkout("-f", self.ctx.commit_sha)
         
         ### debug
-        logger.warning(f"[before clean] tracked files (with skip-worktree flags):\n{self.repo.git.execute(['git', 'ls-files', '-v'])}")
         logger.warning(f"[before clean] untracked files:\n{self.repo.git.execute(['git', 'ls-files', '-o', '--exclude-standard'])}")
 
         logger.warning("git clean -ffdn (dry run)")
@@ -291,7 +290,6 @@ class GitRepoManager:
         self.repo.git.clean("-ffd")
         
         ### debug
-        logger.warning(f"[after clean] tracked files (skip-worktree flags):\n{self.repo.git.execute(['git', 'ls-files', '-v'])}")
         logger.warning(f"[after clean] untracked files:\n{self.repo.git.execute(['git', 'ls-files', '-o', '--exclude-standard'])}")
         ###
 
