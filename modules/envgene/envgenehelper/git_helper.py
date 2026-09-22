@@ -277,21 +277,9 @@ class GitRepoManager:
         
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
-        
-        ### debug
-        logger.warning(f"[before clean] untracked files:\n{self.repo.git.execute(['git', 'ls-files', '-o', '--exclude-standard'])}")
-
-        logger.warning("git clean -ffdn (dry run)")
-        dry_run_output = self.repo.git.clean("-ffdn")
-        logger.warning(f"would remove:\n{dry_run_output}")
-        ###
 
         logger.info("git clean -ffd")
         self.repo.git.clean("-ffd")
-        
-        ### debug
-        logger.warning(f"[after clean] untracked files:\n{self.repo.git.execute(['git', 'ls-files', '-o', '--exclude-standard'])}")
-        ###
 
         logger.info("sparse checkout complete")
 
