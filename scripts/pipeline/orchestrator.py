@@ -316,8 +316,9 @@ class CMDB_import(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/cmdb_import')
-        if cmdb_import.modules:
-            cmdb_import.run()
+        if not cmdb_import.modules:
+            raise RuntimeError("cmdb_import plugin failed to load")
+        cmdb_import.run()
 
 
 def run_single_env_pipeline() -> None:
