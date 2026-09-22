@@ -15,3 +15,5 @@
 | `TCP_CONNECTION_LIMIT` | `100`   | Numver of TCP connections which can be opened simultaneously for downloading artifacts from registry |
 
 ## FAQ
+### Configuring Log Level
+Specify environment variable **LOGURU_LEVEL**
