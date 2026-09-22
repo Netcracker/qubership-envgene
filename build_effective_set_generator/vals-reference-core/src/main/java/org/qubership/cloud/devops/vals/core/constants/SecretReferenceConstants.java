@@ -19,11 +19,22 @@ package org.qubership.cloud.devops.vals.core.constants;
 import java.util.regex.Pattern;
 
 public class SecretReferenceConstants {
-    public static final Pattern VAULT_PATTERN = Pattern.compile("^[a-zA-Z0-9/_-]+$");
-    public static final Pattern AZURE_PATTERN = Pattern.compile("^[a-zA-Z0-9-]+$");
-    public static final Pattern AWS_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-/_+=.@!]+$");
-    public static final Pattern GCP_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
-    public static final int MAX_CRED_ID_LENGTH = 32;
+    public static final String VAULT_ALLOWED_CHARS = "a-zA-Z0-9-/_";
+    public static final String AZURE_ALLOWED_CHARS = "a-zA-Z0-9-";
+    public static final String AWS_ALLOWED_CHARS = "a-zA-Z0-9-/_+=.@!";
+    public static final String GCP_ALLOWED_CHARS = "a-zA-Z0-9_-";
+
+    public static final Pattern VAULT_VALIDATION_PATTERN = Pattern.compile("^[" + VAULT_ALLOWED_CHARS + "]+$");
+    public static final Pattern AZURE_VALIDATION_PATTERN = Pattern.compile("^[" + AZURE_ALLOWED_CHARS + "]+$");
+    public static final Pattern AWS_VALIDATION_PATTERN = Pattern.compile("^[" + AWS_ALLOWED_CHARS + "]+$");
+    public static final Pattern GCP_VALIDATION_PATTERN = Pattern.compile("^[" + GCP_ALLOWED_CHARS + "]+$");
+
+    public static final Pattern VAULT_CRED_ID_INVALID_CHAR_PATTERN = Pattern.compile("[^" + VAULT_ALLOWED_CHARS + "]");
+    public static final Pattern AZURE_CRED_ID_INVALID_CHAR_PATTERN = Pattern.compile("[^" + AZURE_ALLOWED_CHARS + "]");
+    public static final Pattern AWS_CRED_ID_INVALID_CHAR_PATTERN = Pattern.compile("[^" + AWS_ALLOWED_CHARS + "]");
+    public static final Pattern GCP_CRED_ID_INVALID_CHAR_PATTERN = Pattern.compile("[^" + GCP_ALLOWED_CHARS + "]");
+
+    public static final int MAX_CRED_ID_LENGTH = 64;
     public static final int AZURE_MAX_LENGTH = 127;
     public static final int AWS_MAX_LENGTH = 512;
     public static final int GCP_MAX_LENGTH = 255;
