@@ -33,7 +33,7 @@ public class SecretNameBuilder {
                     (String.format(NORMALIZATION_INPUT_ERROR,  remoteRefPath, credId, secretStoreType));
         }
         remoteRefPath = remoteRefPath.trim();
-        credId = credId.trim();
+        credId = normalizeCredId(credId.trim(), secretStoreType);
         String type = secretStoreType.name();
         if (secretStoreType != SecretStoreType.vault) {
             validateLength(credId, MAX_CRED_ID_LENGTH, CRED_ID, type);
@@ -41,27 +41,27 @@ public class SecretNameBuilder {
         switch (secretStoreType) {
             case vault:
                 String result = remoteRefPath + "/" + credId;
-                validate(result, VAULT_PATTERN, type);
+                validate(result, VAULT_VALIDATION_PATTERN, type);
                 return result;
             case azure:
                 String azurePath = normalizePath(remoteRefPath, AZURE_SEGMENT_MAX, 4, "--");
                 String azureResult = azurePath + "--" + credId;
 
-                validate(azureResult, AZURE_PATTERN, type);
+                validate(azureResult, AZURE_VALIDATION_PATTERN, type);
                 validateLength(azureResult, AZURE_MAX_LENGTH, SECRET_NAME, type);
                 return azureResult;
             case aws:
                 String awsPath = normalizePath(remoteRefPath, AWS_SEGMENT_MAX, Integer.MAX_VALUE, "/");
                 String awsResult = awsPath + "/" + credId;
 
-                validate(awsResult, AWS_PATTERN, type);
+                validate(awsResult, AWS_VALIDATION_PATTERN, type);
                 validateLength(awsResult, AWS_MAX_LENGTH, SECRET_NAME, type);
                 return awsResult;
             case gcp:
                 String gcpPath = normalizePath(remoteRefPath, GCP_SEGMENT_MAX, Integer.MAX_VALUE, "--");
                 String gcpResult = gcpPath + "--" + credId;
 
-                validate(gcpResult, GCP_PATTERN, type);
+                validate(gcpResult, GCP_VALIDATION_PATTERN, type);
                 validateLength(gcpResult, GCP_MAX_LENGTH, SECRET_NAME, type);
                 return gcpResult;
             default:
@@ -110,7 +110,30 @@ public class SecretNameBuilder {
         }
         return segment.substring(0, prefixLen)  + "-" + DigestUtils.sha256Hex(segment).substring(0, 5);
     }
+
     private static boolean isNullOrBlank(String s) {
         return s == null || s.isBlank();
     }
+
+    private static String normalizeCredId(String credId, SecretStoreType secretStoreType) {
+        Pattern invalidCharPattern;
+        switch (secretStoreType) {
+            case vault:
+                invalidCharPattern = VAULT_CRED_ID_INVALID_CHAR_PATTERN;
+                break;
+            case azure:
+                invalidCharPattern = AZURE_CRED_ID_INVALID_CHAR_PATTERN;
+                break;
+            case aws:
+                invalidCharPattern = AWS_CRED_ID_INVALID_CHAR_PATTERN;
+                break;
+            case gcp:
+                invalidCharPattern = GCP_CRED_ID_INVALID_CHAR_PATTERN;
+                break;
+            default:
+                throw new SecretReferenceException(String.format(UNSUPPORTED_SECRET_TYPE, secretStoreType.name(), credId, ""));
+        }
+        return invalidCharPattern.matcher(credId).replaceAll("-");
+    }
+
 }
