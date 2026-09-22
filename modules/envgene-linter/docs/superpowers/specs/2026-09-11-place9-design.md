@@ -1,7 +1,6 @@
 # PLACE-9: count and placement of used Cloud Passports
 
 Status: implemented. The user approved the exact `passport-infra` role classification.
-Russian version: [ru/2026-09-11-place9-design.md](ru/2026-09-11-place9-design.md).
 
 ## Purpose and scope
 

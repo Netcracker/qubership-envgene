@@ -8,7 +8,6 @@ Date: 2026-09-11
 
 Status at design time: approved and implemented.
 
-Russian copy: [ru/2026-09-11-place8-design.md](ru/2026-09-11-place8-design.md).
 
 ## Scope
 

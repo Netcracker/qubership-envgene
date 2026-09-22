@@ -1,6 +1,5 @@
 # Connected entities
 
-Russian copy: [ru/connections.md](ru/connections.md).
 Design: [connected-only scope](../superpowers/specs/2026-09-11-connected-only-design.md).
 
 ## Eligibility

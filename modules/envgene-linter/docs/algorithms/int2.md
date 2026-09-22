@@ -66,7 +66,6 @@ If the environment's generated `Credentials/credentials.yml` contains `service-a
 ## Related documentation
 
 - [Specification](../superpowers/specs/2026-09-18-int2-design.md)
-- [Russian version](ru/int2.md)
 - [Connected entities](connections.md)
 - [Secret protection](sec5.md)
 - [Usage](../../README.md)

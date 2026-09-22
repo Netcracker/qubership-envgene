@@ -6,7 +6,6 @@ The original global stem-based selection and Jinja retry below are historical. T
 
 Date: 2026-09-07  
 Status at design time: approved in conversation; awaiting file review\
-Russian version: [ru/2026-09-07-place4-design.md](ru/2026-09-07-place4-design.md)
 
 Standard: PLACE-4 SHOULD — a Cloud Passport **contract** key does not live in a ParameterSet. Override it in that environment's cloud-passport, not in a paramset. This cycle **reports** the key and tells the reader to move it. It does **not** edit files.
 

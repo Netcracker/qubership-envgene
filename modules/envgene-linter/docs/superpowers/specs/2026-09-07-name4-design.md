@@ -4,7 +4,6 @@
 
 Date: 2026-09-07  
 Status at design time: approved in conversation; awaiting file review\
-Russian copy (for the reader): [ru/2026-09-07-name4-design.md](ru/2026-09-07-name4-design.md)
 
 Standard: NAME-4 SHOULD — a bound ParameterSet stem is `<subject>-<category>`. The last token is the category and is determined by the `envSpecific*` array that lists the stem, using the mapping below. The subject identifies what the parameters concern and is chosen by the operator, for example `postgresql`. The stem must not bake in a cluster name, environment name, ticket, or release. This cycle **reports** a bad stem. It does **not** rename files or edit `env_definition`. Names are used in generation; renaming them requires a separate refactor. TYPE **Information**, ACTION **Review**.
 

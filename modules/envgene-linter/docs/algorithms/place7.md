@@ -114,7 +114,6 @@ and [valid bindings](../../testdata/place7/ok/environments/lab-cluster/e01/Inven
 ## Related documentation
 
 - [Connected entities](connections.md)
-- [Russian version](ru/place7.md)
 - [PLACE-7: implementation](../../src/envgene_linter/rules/place7.py)
 - [PLACE-7: tests](../../tests/test_place7.py)
 - [`compute_connections`](../../src/envgene_linter/connections.py)

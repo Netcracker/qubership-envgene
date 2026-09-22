@@ -87,7 +87,6 @@ For the cluster-versus-repository case, `environments/parameters/shared.yaml` an
 
 ## Related documentation
 
-- [Russian version](ru/place2.md)
 - [Connections](connections.md)
 - [Effective Set](effective-set.md)
 - [Implementation](../../src/envgene_linter/rules/place2.py)

@@ -120,7 +120,6 @@ neither names nor locations.
 
 ## Related documentation
 
-- [Russian version](ru/name1.md)
 - [Connected entities](connections.md)
 - [Rule implementation](../../src/envgene_linter/rules/name1.py)
 - [Rule tests](../../tests/test_name1.py)

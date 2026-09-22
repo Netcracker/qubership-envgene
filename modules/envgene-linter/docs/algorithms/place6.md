@@ -93,7 +93,6 @@ target is accepted. Moving the `bss` list to `cloud` removes this finding.
 ## Related documentation
 
 - [Connected entities](connections.md)
-- [Russian version](ru/place6.md)
 - [PLACE-6: implementation](../../src/envgene_linter/rules/place6.py)
 - [PLACE-6: tests](../../tests/test_place6.py)
 - [`compute_connections`](../../src/envgene_linter/connections.py)

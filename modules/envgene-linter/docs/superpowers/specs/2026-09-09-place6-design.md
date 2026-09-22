@@ -6,7 +6,6 @@ The original binding-only check below is historical. Under the connected-only co
 
 Date: 2026-09-09  
 Status at design time: approved in conversation; awaiting file review\
-Russian version: [ru/2026-09-09-place6-design.md](ru/2026-09-09-place6-design.md)
 
 Standard: PLACE-6 MUST — a pipeline ParameterSet (`e2eParameters` / `envSpecificE2EParamsets`) associates to the Cloud only. The file may sit at repository, cluster, or environment. Only the **binding target** is fixed to `cloud`. This cycle **reports** a non-Cloud target. It does **not** edit `env_definition`.
 

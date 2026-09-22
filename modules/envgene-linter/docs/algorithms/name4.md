@@ -125,7 +125,6 @@ keep separate categories and owners; an e2e use of one cannot affect the other.
 
 ## Related documentation
 
-- [Russian version](ru/name4.md)
 - [Connected entities](connections.md)
 - [Rule implementation](../../src/envgene_linter/rules/name4.py)
 - [Rule tests](../../tests/test_name4.py)

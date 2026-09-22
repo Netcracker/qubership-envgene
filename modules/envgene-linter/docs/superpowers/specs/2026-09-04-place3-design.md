@@ -6,7 +6,6 @@ This is the original three-check design. [PLACE-4](2026-09-07-place4-design.md) 
 
 Date: 2026-09-04  
 Status at design time: approved in conversation; awaiting file review\
-Russian version: [ru/2026-09-04-place3-design.md](ru/2026-09-04-place3-design.md)
 
 ## Goal
 

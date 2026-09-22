@@ -109,7 +109,6 @@ it to null or `""`, produces one Information / Review finding with hint
 
 ## Related documentation
 
-- [Russian version](ru/name2.md)
 - [Connected entities](connections.md)
 - [Rule implementation](../../src/envgene_linter/rules/name2.py)
 - [Rule tests](../../tests/test_name2.py)

@@ -4,7 +4,6 @@
 
 Date: 2026-09-07  
 Status at design time: amended in conversation (Information / Review; all YAML under `environments/`); awaiting file review\
-Russian copy (for the reader): [ru/2026-09-07-name3-design.md](ru/2026-09-07-name3-design.md)
 
 Standard: NAME-3 SHOULD — filenames, directory names, and namespace names use kebab-case. YAML field names and enum values follow the object's own convention (this rule does **not** check them).
 

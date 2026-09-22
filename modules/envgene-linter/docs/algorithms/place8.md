@@ -158,7 +158,6 @@ leaves the three empty files unreferenced and produces none.
 ## Related documentation
 
 - [Connected entities](connections.md)
-- [Russian version](ru/place8.md)
 - [PLACE-8: implementation](../../src/envgene_linter/rules/place8.py)
 - [PLACE-8: tests](../../tests/test_place8.py)
 - [`compute_connections`](../../src/envgene_linter/connections.py)

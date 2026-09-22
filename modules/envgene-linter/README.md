@@ -303,16 +303,15 @@ python -m pytest -q
 Editable installation makes changes under `src/` available without reinstalling. Test fixtures live in `testdata/`; unit and integration tests live in `tests/`.
 
 Runnable synthetic examples for every implemented rule are available in
-[testdata/rules](testdata/rules/README.md), with an `ok` and `not-ok` repository
+[testdata/rules](testdata/rules/), with an `ok` and `not-ok` repository
 for each rule. The regular pytest suite verifies these examples, including in
 GitHub Actions. Expectations apply to the named rule; other rules may also report
-findings. The NAME-3 example documents its expected `env_definition.yml` finding.
+findings. For NAME-3, `ok` still reports the required `env_definition.yml`
+filename because it contains an underscore; `not-ok` additionally reports
+`Bad_Name.yml`. The tests explicitly account for this existing behavior.
 
 - [Connected entities and rule eligibility](docs/algorithms/connections.md)
 - [Effective Set and parameter merging](docs/algorithms/effective-set.md)
 - [Development specification index](docs/superpowers/specs/README.md) — includes reading order and historical supersession notes
-- [Russian specification index](docs/superpowers/specs/ru/README.md)
-- [Russian connected-entity guide](docs/algorithms/ru/connections.md)
-- [Source file reference (Russian)](docs/code/README.md) — short descriptions of every package module and release script
 
 The linked rule algorithms describe current behavior. Dated specifications preserve design decisions and identify later changes; older report counts or selection requirements should be read with their supersession notes.

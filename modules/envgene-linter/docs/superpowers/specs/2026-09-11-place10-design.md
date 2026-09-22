@@ -1,7 +1,6 @@
 # PLACE-10: each connected entity belongs in its type's directory
 
 Status: implemented. This specification describes the agreed independent directory check.
-Russian version: [ru/2026-09-11-place10-design.md](ru/2026-09-11-place10-design.md).
 
 ## Purpose and scope
 

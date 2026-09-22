@@ -101,7 +101,6 @@ An unbound copy of this file produces none; `CLOUD_API_HOST: {}` also has no lea
 ## Related documentation
 
 - [Connected entities](connections.md)
-- [Russian version](ru/place4.md)
 - [PLACE-4: implementation](../../src/envgene_linter/rules/place4.py)
 - [PLACE-4: tests](../../tests/test_place4.py)
 - [`compute_connections`](../../src/envgene_linter/connections.py)

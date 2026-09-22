@@ -65,7 +65,6 @@ The token is checked structurally; SEC-5 does not decrypt it or authenticate the
 ## Related documentation
 
 - [Specification](../superpowers/specs/2026-09-18-sec5-design.md)
-- [Russian version](ru/sec5.md)
 - [Connected entities](connections.md)
 - [Usage](../../README.md)
 - [Implementation](../../src/envgene_linter/rules/sec5.py)

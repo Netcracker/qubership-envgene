@@ -98,7 +98,6 @@ If `credentials/passport.yml` exists under the selected passport's parent, the l
 
 ## Related documentation
 
-- [Russian version](ru/place9.md)
 - [Connected entities](connections.md)
 - [Passport layer placement: PLACE-3](place3.md)
 - [Implementation](../../src/envgene_linter/rules/place9.py)

@@ -6,7 +6,6 @@ The original iteration and report order are preserved below. Current [PLACE-2](.
 
 Date: 2026-09-02  
 Status at design time: approved\
-Russian version: [ru/2026-09-02-place2-design.md](ru/2026-09-02-place2-design.md)
 
 ## Goal
 

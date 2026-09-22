@@ -4,7 +4,6 @@
 
 Date: 2026-09-05  
 Status at design time: approved in conversation; awaiting file review\
-Russian copy (for the reader): [ru/2026-09-05-name1-design.md](ru/2026-09-05-name1-design.md)
 
 Standard: NAME-1 SHOULD — collapse true aliases to one canonical key. Equal values are not proof of an alias. This cycle reports **Information / Review only**, without automatic fixes or instructions for an AI to change keys.
 

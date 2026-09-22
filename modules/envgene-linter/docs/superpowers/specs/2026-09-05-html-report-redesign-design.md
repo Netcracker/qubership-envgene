@@ -2,7 +2,6 @@
 
 Date: 2026-09-05  
 Status at design time: approved in conversation; awaiting file review\
-Russian copy (for the reader): [ru/2026-09-05-html-report-redesign-design.md](ru/2026-09-05-html-report-redesign-design.md)
 
 ## Reading order and later changes
 

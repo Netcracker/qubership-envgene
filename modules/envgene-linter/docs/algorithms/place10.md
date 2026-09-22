@@ -96,7 +96,6 @@ A Shared Template Variable selected as `common` from `Inventory/configuration/co
 
 ## Related documentation
 
-- [Russian version](ru/place10.md)
 - [Connected entities](connections.md)
 - [Implementation](../../src/envgene_linter/rules/place10.py)
 - [Tests](../../tests/test_place10.py)

@@ -65,7 +65,6 @@ A ParameterSet containing the same reference under `parameters.SOME_VALUE` also 
 
 - [Specification](../superpowers/specs/2026-09-16-sec3-design.md)
 
-- [Russian version](ru/sec3.md)
 - [Connected entities](connections.md)
 - [SEC-1](sec1.md)
 - [Usage](../../README.md)

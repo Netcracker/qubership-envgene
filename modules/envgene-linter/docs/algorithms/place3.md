@@ -69,7 +69,6 @@ A selected `environments/c/cloud-passport/cp.yml` is correctly placed and produc
 
 ## Related documentation
 
-- [Russian version](ru/place3.md)
 - [Connections](connections.md)
 - [Effective Set](effective-set.md)
 - [Implementation](../../src/envgene_linter/rules/place3.py)

@@ -61,7 +61,6 @@ Both IDs are `tenant-admin`, so there is no finding, even if its definition is u
 ## Related documentation
 
 - [Specification](../superpowers/specs/2026-09-16-sec4-design.md)
-- [Russian version](ru/sec4.md)
 - [Connected entities](connections.md)
 - [Usage](../../README.md)
 - [Implementation](../../src/envgene_linter/rules/sec4.py)

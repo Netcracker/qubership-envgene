@@ -127,7 +127,6 @@ finding disappears. A standalone unused `Cluster_01` directory or an unbound
 
 ## Related documentation
 
-- [Russian version](ru/name3.md)
 - [Connected entities](connections.md)
 - [Rule implementation](../../src/envgene_linter/rules/name3.py)
 - [Rule tests](../../tests/test_name3.py)

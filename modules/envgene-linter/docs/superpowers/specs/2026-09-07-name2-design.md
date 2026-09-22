@@ -4,7 +4,6 @@
 
 Date: 2026-09-07  
 Status at design time: approved in conversation; awaiting file review\
-Russian copy (for the reader): [ru/2026-09-07-name2-design.md](ru/2026-09-07-name2-design.md)
 
 Standard: NAME-2 SHOULD — the filename stem equals the object's `name` field. The stem is the reference key (`env_definition` lists `cloud-deploy`, not the YAML `name`). A mismatch can be determined by direct comparison. This cycle **reports** it and tells the reader to set `name` to the stem. It does **not** edit files.
 

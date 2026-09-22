@@ -1,6 +1,6 @@
 # Specifications
 
-This directory contains 22 development specifications, each with English and Russian versions.
+This directory contains 22 development specifications in English.
 
 ## Reading order
 
@@ -39,5 +39,3 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [INT-2](2026-09-18-int2-design.md) | 2026-09-18 | [Algorithm](../../algorithms/int2.md) |
 
 ## Language versions
-
-[Russian index](ru/README.md)

@@ -91,7 +91,6 @@ If both environments also bind a cluster file that already supplies `LOG_LEVEL: 
 
 ## Related documentation
 
-- [Russian version](ru/place1.md)
 - [Connections](connections.md)
 - [Effective Set](effective-set.md)
 - [Implementation](../../src/envgene_linter/rules/place1.py)

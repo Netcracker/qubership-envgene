@@ -8,7 +8,6 @@ Date: 2026-09-11
 
 Status at design time: approved for implementation
 
-Russian copy: [ru/2026-09-11-place7-design.md](ru/2026-09-11-place7-design.md)
 
 ## Contract and scope
 

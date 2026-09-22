@@ -1,7 +1,6 @@
 # Check only connected or used entities
 
 Status: implemented following the user's request to apply connected-only checks across all rules, including NAME-3.
-Russian version: [ru/2026-09-11-connected-only-design.md](ru/2026-09-11-connected-only-design.md).
 
 This specification supersedes the eligibility scope in earlier rule specifications. Their naming, value-comparison and reporting requirements remain in force unless explicitly replaced here. Later [PLACE-9](2026-09-11-place9-design.md) adds passport ambiguity checks; [PLACE-10](2026-09-11-place10-design.md) adds Shared Template Variable selection.
 

@@ -6,7 +6,6 @@ The original iteration is preserved below, including its report format and exclu
 
 Date: 2026-09-01  
 Status at design time: approved\
-Russian version: [ru/2026-09-01-place1-design.md](ru/2026-09-01-place1-design.md)
 
 ## Goal
 

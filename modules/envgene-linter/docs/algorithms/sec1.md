@@ -61,7 +61,6 @@ parameters:
 
 - [Specification](../superpowers/specs/2026-09-16-sec1-design.md)
 
-- [Russian version](ru/sec1.md)
 - [Connected entities](connections.md)
 - [Usage](../../README.md)
 - [Implementation](../../src/envgene_linter/rules/sec1.py)
