@@ -312,7 +312,7 @@ class CMDB_import(PipelineStep):
         return "CMDB_import"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() and ctx.params.get('CMDB_IMPORT')
+        return not ctx.is_gitlab_deploy() and ctx.params.get('CMDB_IMPORT')
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/cmdb_import')
