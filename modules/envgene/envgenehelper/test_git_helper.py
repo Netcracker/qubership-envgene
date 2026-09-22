@@ -125,6 +125,7 @@ class TestStageChanges:
 
         manager = make_manager()
         manager.repo.git.add = MagicMock()
+        manager.repo.git.ls_files = MagicMock(return_value="")
         manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
 
         manager.stage_changes([str(existing), "/nonexistent/path"])
@@ -132,6 +133,19 @@ class TestStageChanges:
         added_paths = manager.repo.git.add.call_args[0]
         assert str(existing) in added_paths
         assert "/nonexistent/path" not in added_paths
+
+    def test_includes_deleted_tracked_paths(self, tmp_path):
+        deleted = tmp_path / "environments" / "cluster" / "env" / "deleted.yml"
+
+        manager = make_manager()
+        manager.repo.git.add = MagicMock()
+        manager.repo.git.ls_files = MagicMock(return_value=str(deleted))
+        manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
+
+        manager.stage_changes([str(deleted)])
+
+        added_paths = manager.repo.git.add.call_args[0]
+        assert str(deleted) in added_paths
 
     def test_raises_on_unexpected_exit_code(self):
         manager = make_manager()

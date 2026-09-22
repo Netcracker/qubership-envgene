@@ -189,9 +189,13 @@ class GitRepoManager:
         if sparse_paths is None:
             sparse_paths = get_sparse_checkout_paths(os.environ["FULL_ENV_NAME"])
 
-        existing_paths = [path for path in sparse_paths if Path(path).exists()]
+        stageable_paths = [
+            path
+            for path in sparse_paths
+            if Path(path).exists() or self.repo.git.ls_files("--cached", "--", path).strip()
+        ]
         exclude_args = [f":(exclude){path}" for path in self._get_excluded_paths()]
-        self.repo.git.add("--all", "--", *existing_paths, *exclude_args)
+        self.repo.git.add("--all", "--", *stageable_paths, *exclude_args)
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():
