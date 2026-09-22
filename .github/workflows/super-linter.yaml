@@ -33,25 +33,7 @@
     contents: read
 
   jobs:
-    prepare-configs:
-      runs-on: ubuntu-latest
-      steps:
-      - name: "Get the common linters configuration"
-        uses: actions/checkout@v5 # v5.0.0
-        with:
-          ref: main # fix/superlinter-config
-          repository: netcracker/.github
-          persist-credentials: false
-          sparse-checkout: |
-            config/linters
-      - name: "Upload the common linters configuration"
-        uses: actions/upload-artifact@v4 # v4.6.2
-        with:
-          name: linter-config
-          path: "${{ github.workspace }}/config"
-          include-hidden-files: true
     run-lint:
-      needs: [prepare-configs]
       runs-on: ubuntu-latest
       permissions:
         contents: read
@@ -66,16 +48,20 @@
           fetch-depth: 0
           persist-credentials: false
       - name: "Get the common linters configuration"
-        uses: actions/download-artifact@v5 # v5.0.0
-        id: download
+        uses: actions/checkout@v5 # v5.0.0
         with:
-          name: linter-config
-          path: /tmp/linter-config
+          ref: main # fix/superlinter-config
+          repository: netcracker/.github
+          persist-credentials: false
+          path: .tmp-netcracker-github
+          sparse-checkout: |
+            config/linters
       - name: "Apply the common linters configuration"
-        if: ${{ steps.download.outputs.download-path != '' }}
+        shell: bash
         run: |
           mkdir -p ./.github/linters
-          cp --update=none -vRT /tmp/linter-config/linters ./.github/linters
+          cp --update=none -vRT .tmp-netcracker-github/config/linters ./.github/linters
+          rm -rf .tmp-netcracker-github
 
       - name: "Load super-linter environment file"
         shell: bash
@@ -85,11 +71,11 @@
             echo "Applying local linter environment:"
             grep "\S" ${GITHUB_WORKSPACE}/.github/super-linter.env | grep -v "^#"
             grep "\S" ${GITHUB_WORKSPACE}/.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
-          elif [ -f "/tmp/linter-config/linters/super-linter.env" ]; then
+          elif [ -f "${GITHUB_WORKSPACE}/.github/linters/super-linter.env" ]; then
             echo "::warning:: Local linter environment file .github/super-linter.env is not found"
             echo "Applying common linter environment:"
-            grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#"
-            grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
+            grep "\S" ${GITHUB_WORKSPACE}/.github/linters/super-linter.env | grep -v "^#"
+            grep "\S" ${GITHUB_WORKSPACE}/.github/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
           fi
 
       - name: Lint Code Base

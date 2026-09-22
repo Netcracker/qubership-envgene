@@ -86,6 +86,11 @@ most of the weight:
   function, a file path, an intermediate field the tool writes for itself - the reader cannot look it
   up, so describe the observable outcome instead. For example, prefer "the `current_env.cloud` macro
   resolves to the cluster name" over naming the resolver function and the internal field it writes.
+  This also rules out an invented descriptive paraphrase, even a clear-sounding one, when a documented
+  term exists - the reader looks up the documented term, so prefer "reverse merge
+  (`SD_REPO_MERGE_MODE: basic-exclusion-merge`)" over the coined phrase "the application-removal path".
+  This is a distinct failure from naming code internals: the paraphrase points at no code, but it still
+  is not findable in the docs.
 - Verify before you name. Confirm each macro, field, or behavior against the docs or the code before
   stating it - do not infer which macro carries a value or which engine resolves it. A confident wrong
   claim costs the reader more than describing the effect and letting the implementer bind the mechanism.
@@ -174,8 +179,9 @@ rather than trusting the last write. Do not file until the user says so with wor
 
 Match the GitHub issue type to the change's nature and prefix the draft's H1 accordingly, per the
 `Issue type and title` section of `creating-cr.md`: Feature (`[Feat:]`), Bug (`[Bug:]`), or Story
-(`[Story:]`, or `[Docs:]` for a documentation ticket). The H1 carries the prefix, so the filed issue
-title carries it too.
+(`[Story:]`, or `[Docs:]` for a documentation ticket). A change that fixes or refines an existing
+feature is a Story, even when it adds a parameter or toggle. Reserve Feature for a genuinely new
+capability. The H1 carries the prefix, so the filed issue title carries it too.
 
 ### House-rule compliance
 

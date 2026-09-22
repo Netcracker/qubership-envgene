@@ -29,6 +29,10 @@ inputs:
     description: 'Version for Docker tag'
     required: false
     default: ''
+  ref:
+    description: 'Git ref (SHA, branch, or tag) to checkout for the build'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -36,7 +40,7 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.version != '' && format('v{0}', inputs.version) || github.ref }}
+        ref: ${{ inputs.ref || (inputs.version != '' && format('v{0}', inputs.version) || github.ref) }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
