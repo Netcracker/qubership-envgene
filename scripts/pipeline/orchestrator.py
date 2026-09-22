@@ -315,7 +315,7 @@ class CMDB_import(PipelineStep):
         return not ctx.is_gitlab_deploy() and ctx.params.get('CMDB_IMPORT')
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/cmdb_import')
+        cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/nc_cmdb_import')
         if not cmdb_import.modules:
             raise RuntimeError("cmdb_import plugin failed to load")
         cmdb_import.run()
