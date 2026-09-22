@@ -8,7 +8,8 @@ from enum import StrEnum
 from os import getenv
 from pathlib import Path
 
-from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
+from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, \
+    decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
@@ -304,6 +305,22 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
+class CMDB_import(PipelineStep):
+
+    @property
+    def name(self) -> str:
+        return "CMDB_import"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return not ctx.is_gitlab_deploy() and ctx.params.get('CMDB_IMPORT')
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/nc_cmdb_import')
+        if not cmdb_import.modules:
+            raise RuntimeError("cmdb_import plugin failed to load")
+        cmdb_import.run()
+
+
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
@@ -325,7 +342,8 @@ def run_single_env_pipeline() -> None:
         ProcessDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
-        GitCommitStep()
+        GitCommitStep(),
+        CMDB_import()
     ]
 
     results: list[StepResult] = []
