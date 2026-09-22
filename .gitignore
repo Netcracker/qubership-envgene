@@ -19,3 +19,5 @@ junit*
 .superpowers/
 
 *.egg-info
+*.pytest_cache
+.venv
