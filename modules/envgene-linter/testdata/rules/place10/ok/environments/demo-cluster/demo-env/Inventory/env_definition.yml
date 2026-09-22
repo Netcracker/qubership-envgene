@@ -1,0 +1,6 @@
+inventory:
+  environmentName: demo-env
+envTemplate:
+  name: composite
+  envSpecificResourceProfiles:
+    cloud: demo-profile

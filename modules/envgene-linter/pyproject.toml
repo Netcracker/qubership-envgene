@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "envgene-linter"
+version = "0.0.1"
+description = "Linter for EnvGene instance repositories"
+readme = "PYPI_README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "click>=8.1",
+    "ruamel.yaml>=0.18",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+]
+release = [
+    "build>=1.2",
+    "twine>=6",
+]
+
+[project.scripts]
+envgene-linter = "envgene_linter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["envgene_linter*"]
+namespaces = false
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

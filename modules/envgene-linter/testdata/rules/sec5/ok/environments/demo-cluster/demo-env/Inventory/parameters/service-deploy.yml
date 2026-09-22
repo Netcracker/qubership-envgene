@@ -1,0 +1,5 @@
+name: service-deploy
+parameters:
+  DB_PASSWORD:
+    $type: credRef
+    credId: demo-db

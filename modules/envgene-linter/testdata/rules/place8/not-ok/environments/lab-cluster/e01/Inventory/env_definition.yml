@@ -1,0 +1,9 @@
+inventory:
+  environmentName: e01
+envTemplate:
+  name: composite
+  envSpecificParamsets:
+    bss: [empty]
+  envSpecificResourceProfiles:
+    bss: empty-profile
+  sharedMasterCredentialFiles: [empty-creds]

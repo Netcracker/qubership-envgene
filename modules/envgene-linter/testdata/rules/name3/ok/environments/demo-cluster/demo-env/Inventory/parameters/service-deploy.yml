@@ -1,0 +1,3 @@
+name: service-deploy
+parameters:
+  LOG_LEVEL: info

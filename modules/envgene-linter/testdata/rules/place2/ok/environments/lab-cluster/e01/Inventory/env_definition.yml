@@ -1,0 +1,8 @@
+inventory:
+  environmentName: e01
+envTemplate:
+  name: composite
+  envSpecificParamsets:
+    cloud:
+      - shared
+      - env-deploy

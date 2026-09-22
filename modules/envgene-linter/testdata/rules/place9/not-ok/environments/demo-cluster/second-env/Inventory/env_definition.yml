@@ -1,0 +1,5 @@
+inventory:
+  environmentName: second-env
+  cloudPassport: two
+envTemplate:
+  name: composite

@@ -1,0 +1,3 @@
+name: env-deploy
+parameters:
+  MONITORING_URL: https://monitoring.cluster-01.example.com

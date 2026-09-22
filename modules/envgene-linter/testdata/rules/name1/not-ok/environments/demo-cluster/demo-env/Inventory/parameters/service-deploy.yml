@@ -1,0 +1,5 @@
+name: service-deploy
+parameters:
+  KAFKA_URL: broker.example.test:9092
+  BOOTSTRAP_SERVERS: broker.example.test:9092
+  STREAMING_BROKER_ADDRESS: broker.example.test:9092

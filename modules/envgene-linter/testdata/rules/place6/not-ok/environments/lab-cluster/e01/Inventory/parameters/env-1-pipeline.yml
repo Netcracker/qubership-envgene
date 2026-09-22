@@ -1,0 +1,3 @@
+name: env-1-pipeline
+parameters:
+  E2E_ENABLED: true
