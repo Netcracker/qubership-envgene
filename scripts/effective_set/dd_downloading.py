@@ -69,15 +69,37 @@ def extract_artifact_contents(zip_artifacts: list[ArtifactDownload]) -> None:
     logger.info(f"Unpacked {len(zip_artifacts)} zip artifacts: {time.perf_counter() - start_time:.6f} sec")
 
 
+async def _download_zips(zip_artifacts: list[ArtifactDownload]) -> list[ArtifactDownload]:
+    downloaded: list[ArtifactDownload] = []
+    for zip_artifact in zip_artifacts:
+        try:
+            downloaded.extend(await artifact.download_all_async([zip_artifact]))
+        except ValueError:
+            logger.warning(
+                f"Zip artifact not downloaded, continuing without it: {zip_artifact.source.source_url}"
+            )
+    return downloaded
+
+
+async def _download_dd_required_zips_optional(
+        dd_artifacts: list[ArtifactDownload],
+        zip_artifacts: list[ArtifactDownload],
+) -> list[ArtifactDownload]:
+    await artifact.download_all_async(dd_artifacts)
+    return await _download_zips(zip_artifacts)
+
+
 def download_dd_and_zip_artifacts(app_versions: list[str]) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
     dd_artifacts, zip_artifacts = resolve_artifacts(app_versions)
-    logger.info(f"Start downloading {len(dd_artifacts) + len(zip_artifacts)} DD+zip artifacts")
-    start_time = time.perf_counter()
-    asyncio.run(artifact.download_all_async(dd_artifacts + zip_artifacts))
     logger.info(
-        f"Downloaded {len(dd_artifacts) + len(zip_artifacts)} DD+zip artifacts: "
+        f"Start downloading {len(dd_artifacts)} DD artifacts "
+        f"(and up to {len(zip_artifacts)} optional zip sidecars)")
+    start_time = time.perf_counter()
+    downloaded_zips = asyncio.run(_download_dd_required_zips_optional(dd_artifacts, zip_artifacts))
+    logger.info(
+        f"Downloaded {len(dd_artifacts)} DD + {len(downloaded_zips)}/{len(zip_artifacts)} zip artifacts: "
         f"{time.perf_counter() - start_time:.6f} sec")
 
-    extract_artifact_contents(zip_artifacts)
+    extract_artifact_contents(downloaded_zips)
 
-    return dd_artifacts, zip_artifacts
+    return dd_artifacts, downloaded_zips
