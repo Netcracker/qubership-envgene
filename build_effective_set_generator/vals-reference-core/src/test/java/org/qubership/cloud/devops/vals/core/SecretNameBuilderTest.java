@@ -76,4 +76,30 @@ public class SecretNameBuilderTest {
         String result = SecretNameBuilder.buildNormalizedSecretName(longSegment, "credId", SecretStoreType.azure);
         assertEquals("abcdefghijklmn-71c48--credId", result);
     }
+
+    private static Stream<Arguments> normalizationSecretNameCases() {
+        return Stream.of(
+                Arguments.of("vault", "cred@id#123", "cluster/env", "cluster/env/cred-id-123"),
+                Arguments.of("azure", "cred_id#123", "cluster/env", "cluster--env--cred-id-123"),
+                Arguments.of("aws", "cred%id#@123", "cluster/env", "cluster/env/cred-id-@123"),
+                Arguments.of("gcp", "cred_id#@123", "cluster/env", "cluster--env--cred_id--123")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("normalizationSecretNameCases")
+    void buildNormalizedSecretNameWithNormalization(String type, String credId, String remoteRefPath, String expected) {
+        SecretStoreType storeType = SecretStoreType.valueOf(type);
+        String result = SecretNameBuilder.buildNormalizedSecretName(remoteRefPath, credId, storeType);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void exceptionWhenCredIdExceedsMaxLengthAfterNormalization() {
+        String longInvalidCredId = "a_b".repeat(65);
+        assertThrows(
+                SecretReferenceException.class,
+                () -> SecretNameBuilder.buildNormalizedSecretName("path", longInvalidCredId, SecretStoreType.azure)
+        );
+    }
 }
