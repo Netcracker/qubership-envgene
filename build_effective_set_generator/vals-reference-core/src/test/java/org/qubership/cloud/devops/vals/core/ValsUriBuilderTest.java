@@ -38,6 +38,10 @@ public class ValsUriBuilderTest {
                         "ref+vault://secret/cluster/env/cred"
                 ),
                 Arguments.of(
+                        SecretStoreDTO.builder().type(SecretStoreType.openbao).mountPath("secret").build(),
+                        "ref+openbao://secret/cluster/env/cred"
+                ),
+                Arguments.of(
                         SecretStoreDTO.builder().type(SecretStoreType.azure).vaultName("myvault").build(),
                         "ref+azurekeyvault://myvault/cluster--env--cred"
                 ),

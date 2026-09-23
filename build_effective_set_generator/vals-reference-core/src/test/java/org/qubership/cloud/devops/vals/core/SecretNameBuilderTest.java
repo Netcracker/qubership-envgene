@@ -31,6 +31,7 @@ public class SecretNameBuilderTest {
     private static Stream<Arguments> validSecretNameCases() {
         return Stream.of(
                 Arguments.of("vault", "cred-id", "cluster/env", "cluster/env/cred-id"),
+                Arguments.of("openbao", "cred-id", "cluster/env", "cluster/env/cred-id"),
                 Arguments.of("azure", "cred-id", "cluster/env", "cluster--env--cred-id"),
                 Arguments.of("aws", "cred-id", "cluster/env", "cluster/env/cred-id"),
                 Arguments.of("gcp", "cred-id", "cluster/env", "cluster--env--cred-id")
@@ -80,6 +81,7 @@ public class SecretNameBuilderTest {
     private static Stream<Arguments> normalizationSecretNameCases() {
         return Stream.of(
                 Arguments.of("vault", "cred@id#123", "cluster/env", "cluster/env/cred-id-123"),
+                Arguments.of("openbao", "cred@id#123", "cluster/env", "cluster/env/cred-id-123"),
                 Arguments.of("azure", "cred_id#123", "cluster/env", "cluster--env--cred-id-123"),
                 Arguments.of("aws", "cred%id#@123", "cluster/env", "cluster/env/cred-id-@123"),
                 Arguments.of("gcp", "cred_id#@123", "cluster/env", "cluster--env--cred_id--123")

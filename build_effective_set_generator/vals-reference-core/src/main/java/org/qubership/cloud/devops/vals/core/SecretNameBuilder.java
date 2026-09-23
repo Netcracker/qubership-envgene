@@ -35,10 +35,11 @@ public class SecretNameBuilder {
         remoteRefPath = remoteRefPath.trim();
         credId = normalizeCredId(credId.trim(), secretStoreType);
         String type = secretStoreType.name();
-        if (secretStoreType != SecretStoreType.vault) {
+        if (!isVaultLike(secretStoreType)) {
             validateLength(credId, MAX_CRED_ID_LENGTH, CRED_ID, type);
         }
         switch (secretStoreType) {
+            case openbao: // Falls through to vault since it shares the same pattern
             case vault:
                 String result = remoteRefPath + "/" + credId;
                 validate(result, VAULT_VALIDATION_PATTERN, type);
@@ -118,6 +119,7 @@ public class SecretNameBuilder {
     private static String normalizeCredId(String credId, SecretStoreType secretStoreType) {
         Pattern invalidCharPattern;
         switch (secretStoreType) {
+            case openbao:
             case vault:
                 invalidCharPattern = VAULT_CRED_ID_INVALID_CHAR_PATTERN;
                 break;
@@ -135,5 +137,11 @@ public class SecretNameBuilder {
         }
         return invalidCharPattern.matcher(credId).replaceAll("-");
     }
+
+    public static boolean isVaultLike(SecretStoreType secretStoreType) {
+        return secretStoreType == SecretStoreType.vault
+                || secretStoreType == SecretStoreType.openbao;
+    }
+
 
 }

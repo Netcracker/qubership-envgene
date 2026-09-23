@@ -18,6 +18,7 @@ package org.qubership.cloud.devops.vals.core.dto;
 
 public enum SecretStoreType {
     vault,
+    openbao,
     azure,
     aws,
     gcp

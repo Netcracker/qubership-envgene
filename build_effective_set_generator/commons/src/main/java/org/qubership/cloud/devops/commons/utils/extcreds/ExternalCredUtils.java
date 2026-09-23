@@ -125,7 +125,7 @@ public class ExternalCredUtils {
                 fragment = "#/" + property;
             } else {
                 checkSingleValProperty(credId, properties);
-                if (type == SecretStoreType.vault) {
+                if (SecretNameBuilder.isVaultLike(type)) {
                     fragment = "#/value";
                 }
             }
@@ -229,7 +229,7 @@ public class ExternalCredUtils {
             }
             return dataMap;
         }
-        if (store.getType() == SecretStoreType.vault) {
+        if (SecretNameBuilder.isVaultLike(store.getType())) {
             return Map.of(VALUE, GENERATE_MARKER);
         }
         return GENERATE_MARKER;

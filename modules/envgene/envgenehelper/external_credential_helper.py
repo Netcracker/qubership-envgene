@@ -21,13 +21,15 @@ CONFIGURATION_DIR = "configuration"
 
 def resolve_external_credential_reference(credential_reference: dict, credentials_config: dict,) -> str:
     cred_id = extract_external_cred(credential_reference)
+    if not cred_id:
+        raise ValueError(f"Missing or invalid 'credId' in reference: {credential_reference}")
     property_name = credential_reference.get("property")
-    external_credential  = find_external_credential_by_id(cred_id, credentials_config)
+    external_credential = find_external_credential_by_id(cred_id, credentials_config)
     secret_store_type, secret_payload = _get_secret_store_payload_cached(cred_id, external_credential.model_dump_json())
     return _get_property_value(cred_id, property_name, secret_store_type, secret_payload)
 
 
-def extract_external_cred(cred_map: dict) -> Optional[str]:
+def extract_external_cred(cred_map: dict) -> str | None:
     if not is_external_credential_reference(cred_map):
         return None
     cred_id = cred_map.get("credId")
@@ -69,7 +71,7 @@ def find_secret_store_by_id(secret_store_id: str, cred_id: str) -> SecretStore:
     return secret_store
 
 
-def load_all_secret_stores(base_dir: Optional[Path] = None) -> dict:
+def load_all_secret_stores(base_dir: Path | None = None) -> dict:
     base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))    
     secret_store_config = base_dir / CONFIGURATION_DIR / SECRET_STORE_FILE
     if not secret_store_config.is_file():
@@ -104,7 +106,7 @@ def _fetch_secret_from_store(vals_reference_uri: str) -> dict[str, Any] | str | 
     parsed_payload = _parse_secret_payload(raw_payload)  
     return parsed_payload
 
-def _parse_secret_payload(raw_payload: dict) -> dict[str, Any] | str | None:
+def _parse_secret_payload(raw_payload: str | None) -> dict[str, Any] | str | None:
     if raw_payload is None or not raw_payload.strip():
         return None
     try:
@@ -119,22 +121,16 @@ def _parse_secret_payload(raw_payload: dict) -> dict[str, Any] | str | None:
     
 def _get_property_value(cred_id: str, property_name: str | None, secret_store_type: str, secret_payload: Any,) -> str:
     if isinstance(secret_payload, dict):
-        key = property_name or ("value" if secret_store_type == "vault" else None)
-
+        key = property_name or ("value" if secret_store_type in ("vault", "openbao") else None)
         if key is None:
             return str(secret_payload)
-
         if key not in secret_payload:
             raise ValueError(f"Secret store did not return expected property '{key}' for credential {cred_id}.")
-
         return str(secret_payload[key])
 
     return str(secret_payload)
 
-def resolve_external_credential_data(
-    cred_id: str,
-    credentials_config: dict,
-) -> dict[str, str]:
+def resolve_external_credential_data(cred_id: str, credentials_config: dict) -> dict[str, str]:
     external_credential = find_external_credential_by_id(cred_id, credentials_config)
 
     secret_store_type, secret_payload = _get_secret_store_payload_cached(cred_id, external_credential.model_dump_json())
