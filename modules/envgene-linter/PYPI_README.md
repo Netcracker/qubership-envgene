@@ -15,9 +15,12 @@ Requires Python 3.12 or newer.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install envgene-linter==0.0.1
+python -m pip install qubership-envgene-linter==0.0.1
 envgene-linter --help
 ```
+
+The PyPI project name is `qubership-envgene-linter`. The installed command is
+`envgene-linter`.
 
 On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
 
@@ -43,7 +46,7 @@ usage; unused files are not automatically included.
 
 - Placement: PLACE-1, PLACE-2, PLACE-3, PLACE-4, PLACE-6, PLACE-7, PLACE-8,
   PLACE-9, PLACE-10.
-- Naming: NAME-1, NAME-2, NAME-3, NAME-4.
+- Naming: NAME-2.
 - Secrets: SEC-1, SEC-3, SEC-4, SEC-5.
 - Integrity: INT-2.
 
@@ -54,11 +57,11 @@ other configuration information may still be sensitive.
 ## Rule configuration
 
 Package builders can set each rule to `True` or `False` in
-`src/envgene_linter/rule_config.py` before rebuilding. The current source disables
-NAME-1, NAME-3 and NAME-4; other implemented rules are enabled. Installed packages
-use the configuration included in their build. There is no repository-level
-configuration file or CLI override. Disabled rules do not run and are listed as
-disabled in terminal and HTML reports. Invalid flags cause exit code `2`.
+`src/envgene_linter/rule_config.py` before rebuilding. The rules listed above
+are enabled in this build. Installed packages use the configuration included in
+their build. There is no repository-level configuration file or CLI override.
+Disabled rules do not run and are listed as disabled in terminal and HTML
+reports. Invalid flags cause exit code `2`.
 
 ## Exit status
 

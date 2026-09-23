@@ -9,28 +9,27 @@ such as `0.0.1a1`.
 The project is already a standalone package. Copy these files if preparing a
 separate release checkout:
 
-- `src/envgene_linter/` — the complete Python package, including all rules;
-- `pyproject.toml` — metadata, runtime dependencies and the CLI entry point;
-- `MANIFEST.in` — the source archive allowlist;
-- `README.md` and `PYPI_README.md` — repository and package-index documentation;
-- `LICENSE`, once the project owner has confirmed the license and it is added;
-- `tests/` and `testdata/` — local synthetic tests, not distribution contents;
-- `scripts/check_dist.py` — distribution-content verification;
-- `docs/releasing.md` and `.gitignore` — release instructions and local ignores.
+- `src/envgene_linter/` - the complete Python package, including all rules
+- `pyproject.toml` - metadata, runtime dependencies, and the CLI entry point
+- `README.md` and `PYPI_README.md` - repository and package-index documentation
+- `tests/` and `testdata/` - local synthetic tests, not distribution contents
+- `scripts/check_dist.py` - distribution-content verification
+- `docs/releasing.md` and `.gitignore` - release instructions and local ignores
 
-The `external-cred-provision` example uses the same setuptools build backend and
-console-script mechanism. Do not copy its application code or dependencies.
-This project retains its existing `src/` layout and its own dependencies.
+Packaging follows `external-cred-provision`: `poetry-core` is the build backend,
+`[project]` holds the metadata, and the console script is shorter than the PyPI
+name. Do not copy its application code or dependencies. This project keeps its
+`src/` layout and its own dependencies. `tests/`, `testdata/`, `docs/` and
+`scripts/` are excluded from the source archive.
 
 Do not copy real instance repositories, `.superpowers/`, `.venv/`, `.git/`,
 local reports or session transcripts into a public release checkout.
 
 ## Before publishing
 
-1. Confirm the project license with its owner. Add the approved license text and
-   metadata; include it in `MANIFEST.in`. No license has been inferred from another
-   repository.
-2. Confirm ownership/availability of the `envgene-linter` project on PyPI.
+1. The package metadata declares the Apache-2.0 license, the same license as the
+   EnvGene repository and `qubership-external-cred-provision`.
+2. Confirm ownership/availability of the `qubership-envgene-linter` project on PyPI.
 3. Review and commit the intended source changes on `dev`. In this working copy,
    several implemented rules and their tests were still untracked when release
    preparation began. A build uses the working tree, not only committed files.
@@ -48,7 +47,7 @@ source .release-venv/bin/activate
 python -m pip install -e '.[dev,release]'
 python -m pytest -q
 python -m build
-python -m twine check --strict dist/envgene_linter-0.0.1.tar.gz dist/envgene_linter-0.0.1-py3-none-any.whl
+python -m twine check --strict dist/qubership_envgene_linter-0.0.1.tar.gz dist/qubership_envgene_linter-0.0.1-py3-none-any.whl
 python scripts/check_dist.py
 ```
 
@@ -61,7 +60,7 @@ Test the wheel in another virtual environment, outside the source checkout:
 
 ```bash
 python3 -m venv /tmp/envgene-linter-smoke
-/tmp/envgene-linter-smoke/bin/python -m pip install dist/envgene_linter-0.0.1-py3-none-any.whl
+/tmp/envgene-linter-smoke/bin/python -m pip install dist/qubership_envgene_linter-0.0.1-py3-none-any.whl
 /tmp/envgene-linter-smoke/bin/python -m pip check
 /tmp/envgene-linter-smoke/bin/envgene-linter --help
 /tmp/envgene-linter-smoke/bin/envgene-linter check --help
@@ -70,24 +69,40 @@ python3 -m venv /tmp/envgene-linter-smoke
 Use a disposable synthetic instance repository to check terminal and `--html`
 output. The HTML option writes a report and updates `.gitignore` in its target.
 
+## Publish from GitHub Actions
+
+Run **Publish to PyPI: qubership-envgene-linter** from the Actions tab. Enter the
+release version as strict SemVer (`X.Y.Z`, for example `0.0.1`).
+
+The workflow publishes when the run is on upstream `feature/envgene-linter-dev`
+or `main` in `Netcracker/qubership-envgene`. Forks and other branches build and
+test only. The repository secret `PYPI_API_TOKEN` supplies the PyPI token.
+
+The workflow runs the test suite, builds the sdist and wheel, checks the
+archive allowlist, smoke-tests `envgene-linter`, uploads both files to PyPI,
+and commits the release version back to `pyproject.toml` when it differs.
+
+Workflow file:
+[envgene-linter-pypi-publish.yaml](/.github/workflows/envgene-linter-pypi-publish.yaml).
+
 ## Publish manually
 
 Only run this after completing the checks and confirming the release contents:
 
 ```bash
-python -m twine upload dist/envgene_linter-0.0.1.tar.gz dist/envgene_linter-0.0.1-py3-none-any.whl
+python -m twine upload dist/qubership_envgene_linter-0.0.1.tar.gz dist/qubership_envgene_linter-0.0.1-py3-none-any.whl
 ```
 
 Authenticate through Twine's supported interactive or trusted-publishing flow.
 For API-token authentication, the username is `__token__` and the password is
 the PyPI token. Never put a token in source files, command arguments or commits.
 Upload the two explicit reviewed files, not a wildcard that could include old
-builds. There is no automatic publishing workflow in this alpha preparation.
+builds. Prefer the GitHub Actions workflow above for a normal release.
 
 After publication, verify installation in a fresh environment:
 
 ```bash
-python -m pip install --no-cache-dir envgene-linter==0.0.1
+python -m pip install --no-cache-dir qubership-envgene-linter==0.0.1
 envgene-linter --help
 ```
 

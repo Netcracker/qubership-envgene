@@ -180,10 +180,7 @@ Each link opens the current processing algorithm. The descriptions below summari
 | [SEC-4](docs/algorithms/sec4.md) | Named user/password pairs reference the same Credential ID | Information / Review |
 | [SEC-5](docs/algorithms/sec5.md) | Protection of connected secret candidates, supported references and selected Credential sources | Information / Review |
 | [INT-2](docs/algorithms/int2.md) | Every supported connected reference resolves to an object in its applicable context | Warning / Fix or Information / Review |
-| [NAME-1](docs/algorithms/name1.md) | Different parameter keys may represent the same concept based on equal values | Information / Review |
 | [NAME-2](docs/algorithms/name2.md) | A selected entity's filename stem differs from its `name` field | Warning / Fix |
-| [NAME-3](docs/algorithms/name3.md) | Eligible filenames and used cluster, environment or namespace names are not kebab-case | Information / Review |
-| [NAME-4](docs/algorithms/name4.md) | A connected ParameterSet name violates the subject/category convention or embeds scope, ticket or release identifiers | Information / Review |
 
 PLACE-5 and other rules not listed above are not implemented.
 
@@ -239,7 +236,6 @@ Checks apply only to entities with supported evidence of use:
 - Known fixed-path inventory-generation credentials and used passport credential companions, for the applicable rules.
 - Artifact Definitions selected through supported artifact selectors.
 - Security sources used by SEC-5 and applicable INT-2 references: generated environment Credentials; selected passport and deployer companions; bound system integration, root-credentials, active legacy registry and selected artifact-registry Credential references.
-- Used environment definitions and relevant directories for NAME-3.
 
 Unused files do not contribute rule findings, values, categories or locations. Discovery can still encounter them and emit skip notes. PLACE-9 also diagnoses an ambiguous **used passport lookup** even when it cannot choose one file.
 
@@ -260,16 +256,12 @@ Edit `RULE_ENABLED` in
 building the package. Every implemented rule has its own Python boolean:
 
 ```python
-"NAME-1": False,
 "NAME-2": True,
-"NAME-3": False,
-"NAME-4": False,
 ```
 
-`True` runs the rule; `False` skips its check function. NAME-1, NAME-3 and NAME-4
-are disabled in the current source configuration; all other implemented rules
-are enabled. Change any flag and rebuild in GitHub Actions to distribute your
-chosen configuration. This is a package setting, not a YAML file in the checked
+`True` runs the rule; `False` skips its check function. The rules in the table
+above are enabled in the current source. Change any flag and rebuild in GitHub
+Actions to distribute your chosen configuration. This is a package setting, not a YAML file in the checked
 repository or a command-line override. Use `True`/`False`, not quoted strings or
 numbers, and keep all rule entries. Invalid entries produce exit code 2.
 
@@ -338,9 +330,7 @@ Runnable synthetic examples for every implemented rule are available in
 [testdata/rules](testdata/rules/), with an `ok` and `not-ok` repository
 for each rule. The regular pytest suite verifies these examples, including in
 GitHub Actions. Expectations apply to the named rule; other rules may also report
-findings. When NAME-3 is enabled, `ok` still reports the required `env_definition.yml`
-filename because it contains an underscore; `not-ok` additionally reports
-`Bad_Name.yml`. The tests explicitly account for this existing behavior.
+findings.
 
 - [Connected entities and rule eligibility](docs/algorithms/connections.md)
 - [Effective Set and parameter merging](docs/algorithms/effective-set.md)

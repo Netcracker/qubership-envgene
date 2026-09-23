@@ -1,5 +1,0 @@
-# Publish only package sources and public packaging documentation.
-global-exclude *
-include pyproject.toml MANIFEST.in README.md PYPI_README.md
-recursive-include src/envgene_linter *.py
-global-exclude __pycache__ *.py[cod]

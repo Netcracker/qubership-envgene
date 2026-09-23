@@ -1,43 +1,69 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{include = "envgene_linter", from = "src"}]
+exclude = [
+  "tests",
+  "testdata",
+  "docs",
+  "scripts",
+]
 
 [project]
-name = "envgene-linter"
+name = "qubership-envgene-linter"
 version = "0.0.1"
-description = "Linter for EnvGene instance repositories"
-readme = "PYPI_README.md"
-requires-python = ">=3.12"
+description = "Qubership EnvGene CLI that checks instance repositories for configuration placement, naming, secret handling, and reference integrity."
+readme = {file = "PYPI_README.md", content-type = "text/markdown"}
+requires-python = "~=3.12"
+authors = [
+  {name = "Qubership"},
+]
+maintainers = [
+  {name = "Qubership"},
+]
+keywords = [
+  "envgene",
+  "linter",
+  "lint",
+  "configuration",
+  "yaml",
+  "quality",
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Environment :: Console",
-    "Programming Language :: Python :: 3",
-    "Topic :: Software Development :: Quality Assurance",
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
-    "click>=8.1",
-    "ruamel.yaml>=0.18",
+  "click==8.1.7",
+  "ruamel.yaml==0.18.17",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3",
+  "pytest>=8.3",
 ]
 release = [
-    "build>=1.2",
-    "twine>=6",
+  "build>=1.2",
+  "twine>=6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Netcracker/qubership-envgene/tree/feature/envgene-linter-dev/modules/envgene-linter"
+Documentation = "https://github.com/Netcracker/qubership-envgene/blob/feature/envgene-linter-dev/modules/envgene-linter/README.md"
+Source = "https://github.com/Netcracker/qubership-envgene/tree/feature/envgene-linter-dev/modules/envgene-linter"
+Issues = "https://github.com/Netcracker/qubership-envgene/issues"
 
 [project.scripts]
 envgene-linter = "envgene_linter.cli:main"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["envgene_linter*"]
-namespaces = false
-
-[tool.setuptools]
-include-package-data = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
