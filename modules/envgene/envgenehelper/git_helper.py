@@ -278,9 +278,12 @@ class GitRepoManager:
 
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
-
+        
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
+
+        logger.info("git clean -ffd")
+        self.repo.git.clean("-ffd")
 
         logger.info("sparse checkout complete")
 
