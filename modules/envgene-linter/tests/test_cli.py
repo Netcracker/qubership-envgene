@@ -338,7 +338,7 @@ def test_missing_environments_exits_2(tmp_path):
 def test_html_flag_writes_report_and_keeps_console(repo):
     repo.env("cluster-01", "env-01", deploy={"cloud": ["env-params"]})
     repo.env_paramset("cluster-01", "env-01", "env-params", {"ONLY": 1})
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     plain = runner.invoke(main, ["check", str(repo.root)])
     html = runner.invoke(main, ["check", str(repo.root), "--html"])
     assert html.exit_code == 0
@@ -393,7 +393,7 @@ def test_html_non_utf8_gitignore_keeps_exit_0(repo):
     repo.env("cluster-01", "env-01", deploy={"cloud": ["env-params"]})
     repo.env_paramset("cluster-01", "env-01", "env-params", {"ONLY": 1})
     (repo.root / ".gitignore").write_bytes(b"\xff\xfe*.pyc\n")
-    result = CliRunner().invoke(main, ["check", str(repo.root), "--html"])
+    result = CliRunner(mix_stderr=False).invoke(main, ["check", str(repo.root), "--html"])
     assert result.exit_code == 0
     assert (repo.root / REPORT_FILENAME).is_file()
     assert (
@@ -409,7 +409,7 @@ def test_html_gitignore_failure_warns_and_keeps_exit_0(repo):
     repo.env("cluster-01", "env-01", deploy={"cloud": ["env-params"]})
     repo.env_paramset("cluster-01", "env-01", "env-params", {"ONLY": 1})
     (repo.root / ".gitignore").mkdir()
-    result = CliRunner().invoke(main, ["check", str(repo.root), "--html"])
+    result = CliRunner(mix_stderr=False).invoke(main, ["check", str(repo.root), "--html"])
     assert result.exit_code == 0
     assert (repo.root / REPORT_FILENAME).is_file()
     assert "cannot update .gitignore" in result.stderr
@@ -421,7 +421,7 @@ def test_html_write_failure_exits_2_after_console(repo):
     repo.env_paramset("cluster-01", "env-01", "env-params", {"ONLY": 1})
     blocker = repo.root / REPORT_FILENAME
     blocker.mkdir()
-    result = CliRunner().invoke(main, ["check", str(repo.root), "--html"])
+    result = CliRunner(mix_stderr=False).invoke(main, ["check", str(repo.root), "--html"])
     assert result.exit_code == 2
     assert result.stdout.startswith("PLACE-1\n")
     assert "cannot write HTML report" in result.stderr
