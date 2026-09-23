@@ -78,7 +78,7 @@ class ArtifactoryUtils:
                 return None
 
         if (type_reg == RegistryType.GCP or
-            type_reg == RegistryType.AWS or 
+            type_reg == RegistryType.AWS or
             type_reg == RegistryType.AZURE) and authmethod:
             if authmethod == "assume_role":
                 return AuthSTSAssumeRole(
@@ -87,7 +87,6 @@ class ArtifactoryUtils:
                     domain=reg_domain,
                     region_name=reg_region,
                     repository=reg_repo,
-                    auth_type=authmethod,
                     session_prefix=reg_session_prefix,
                     role_arn=reg_role_arn,
                 )
@@ -106,13 +105,12 @@ class ArtifactoryUtils:
                 else:
                     effective_client_id = pub_reg_oidc_client_id
                     effective_client_secret = pub_reg_oidc_client_secret
-                
-                
+
+
                 return AuthGCPFederation(
                     project=reg_project,
                     region_name=reg_region,
                     repository=reg_repo,
-                    auth_type=authmethod,
                     oidc_url=pub_reg_oidc_url,
                     oidc_method=pub_reg_oidc_method,
                     provider_id=pub_reg_provider_id,
@@ -122,8 +120,8 @@ class ArtifactoryUtils:
                     oidc_client_secret=effective_client_secret or "",
                     oidc_custom_params=pub_reg_oidc_custom_params,
                 )
-            elif authmethod == "service_account":  
-                reg_secret = __clean_and_validate_json_string(reg_secret)
+            elif authmethod == "service_account":
+                reg_secret = _clean_and_validate_json_string(reg_secret)
                 return AuthGCPServiceAccount(
                     service_account_key_content=reg_secret,
                     project=reg_project,
@@ -155,7 +153,7 @@ class ArtifactoryUtils:
         if registry_info.auth_config is not None:
             __auth_config = dict(registry_info.auth_config)
 
-        provider = None 
+        provider = None
 
         try:
             if registry_info.type == RegistryType.ARTIFACTORY:
@@ -163,6 +161,7 @@ class ArtifactoryUtils:
             elif registry_info.type == RegistryType.NEXUS:
                 provider = ArtifactProviderFactory.create_nexus_provider(__auth_config, dict())
             elif registry_info.type == RegistryType.AWS:
+                __auth_config["package_format"] = "maven"
                 provider = ArtifactProviderFactory.create_aws_provider(__auth_config, dict())
             elif registry_info.type == RegistryType.GCP:
                 provider = ArtifactProviderFactory.create_gcp_provider(__auth_config, dict())
@@ -191,7 +190,7 @@ class ArtifactoryUtils:
 
     @staticmethod
     def search_artifacts_on_registry(app_name: str, app_version: str, app_info: dict,
-                                    artifact_extension: str, registry_info: RegistryInfo): 
+                                    artifact_extension: str, registry_info: RegistryInfo):
         artifact = Artifact(
             group_id=app_info.group_id,
             artifact_id=app_info.artifact_id,
@@ -228,13 +227,17 @@ class ArtifactoryUtils:
             # need to verify which artifact has valid expectation
             rurl = None
             for url in urls:
+                if "-SNAPSHOT" in app_version:
+                    rurl = url
+                    break
+
                 partsurl = url.split("/")
                 if ArtifactoryUtils._matches_requested_version(partsurl[-1], app_version, artifact_extension):
                     rurl = url
                     break
 
             if rurl is not None:
-                registry_type = k 
+                registry_type = k
                 for reg, repo in {
                     "targetRelease": registry_info.maven_config.targetRelease,
                     "targetSnapshot": registry_info.maven_config.targetSnapshot,
@@ -259,26 +262,26 @@ class ArtifactoryUtils:
         return SNAPSHOT_TIMESTAMP_RE.sub("", stem).endswith(f"-{base_version}")
 
 
-def __clean_and_validate_json_string(json_string: str) -> str:
+def _clean_and_validate_json_string(json_string: str) -> str:
     """
     Clean and validate a JSON string, handling common formatting issues.
-    
+
     This function attempts to parse and clean JSON strings that may contain:
     - Single quotes instead of double quotes
     - Escaped quotes that need to be unescaped
     - Escaped newlines in private_key fields that need to be converted to actual newlines
-    
+
     Args:
         json_string: The JSON string to clean and validate
-        
+
     Returns:
         str: A clean, valid JSON string
-        
+
     Raises:
         ValueError: If the JSON string cannot be cleaned and validated
     """
     import json
-    
+
     try:
         json_data = json.loads(json_string)
         # Handle \\n to \n conversion in private_key field
@@ -288,7 +291,7 @@ def __clean_and_validate_json_string(json_string: str) -> str:
         return cleaned_json
     except json.JSONDecodeError:
         pass
-    
+
     # If parsing fails, try cleaning single quotes first
     try:
         cleaned_secret = json_string.replace("'", '"')
@@ -299,7 +302,7 @@ def __clean_and_validate_json_string(json_string: str) -> str:
         return cleaned_json
     except json.JSONDecodeError:
         pass
-    
+
     # If still fails, try more aggressive cleaning
     try:
         cleaned_secret = json_string.replace("'", '"')

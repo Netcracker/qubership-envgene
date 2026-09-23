@@ -78,7 +78,7 @@ def _gcp_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     creds = GcpCredentialsProvider().with_service_account_key(
         service_account_key_content=sa_key,
     ).get_credentials()
-    logger.debug(f"GCP token obtained for registry '{auth_cfg.gcp_reg_project}'")
+    logger.debug("GCP token obtained via service account key")
     return {"Authorization": f"Bearer {getattr(creds, GCP_TOKEN_ATTR)}"}
 
 

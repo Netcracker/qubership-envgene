@@ -3,6 +3,7 @@ import shlex
 from os import getenv
 from pathlib import Path
 
+from envgenehelper.business_helper import PUBREG_PARAMS_FILENAME, pubreg_transient_dir
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.models import PipelineType
 
@@ -51,10 +52,12 @@ def main() -> None:
 
     variables: dict[str, str] = {"ENV_NAMES": ",".join(env_names)}
     if len(env_names) == 1:
-        env_dir = f"{os.getenv('CI_PROJECT_DIR')}/environments/{env_names[0]}"
+        ci_project_dir = os.getenv('CI_PROJECT_DIR')
+        env_dir = f"{ci_project_dir}/environments/{env_names[0]}"
         variables.update({
             "LOCAL_APPDEFS_PATH": f"{env_dir}/AppDefs",
             "LOCAL_REGDEFS_PATH": f"{env_dir}/RegDefs",
+            "LOCAL_PUBREG_FILE": str(pubreg_transient_dir(ci_project_dir) / PUBREG_PARAMS_FILENAME),
         })
 
     lines = [f"{key}={shlex.quote(value)}" for key, value in variables.items()]

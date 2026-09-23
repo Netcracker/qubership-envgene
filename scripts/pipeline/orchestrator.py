@@ -8,8 +8,7 @@ from enum import StrEnum
 from os import getenv
 from pathlib import Path
 
-from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, \
-    decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
+from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
@@ -18,6 +17,7 @@ from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_change_bg_state, run_warmup
 from build_env.appregdef_render import run_appregdef_render
+from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
@@ -144,11 +144,7 @@ class ProcessSdStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy() or OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
             return False
-        sd_version = ctx.params.get("SD_VERSION")
-        sd_data = ctx.params.get("SD_DATA")
-        if sd_version and sd_data:
-            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
-        return bool(sd_version or sd_data)
+        return ctx.has_sd_input()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)
@@ -222,6 +218,20 @@ class AppregdefRenderStep(PipelineStep):
         run_appregdef_render()
 
 
+class RegdefV2AdapterStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "regdefv2_adapter"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        if ctx.is_gitlab_deploy():
+            return ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
+        return ctx.has_sd_input() and bool(ctx.params.get("GENERATE_EFFECTIVE_SET")) and bool(ctx.params.get('ENV_BUILDER'))
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_regdefv2_adapter(ctx)
+
+
 class DeployPostfixNamespaceMapStep(PipelineStep):
     @property
     def name(self) -> str:
@@ -286,7 +296,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             sboms_retention_policy()
             get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
             if get_sboms.modules:
-                get_sboms.run(ctx.resolve_source_dp())
+                get_sboms.run(ctx=ctx)
             if ctx.is_gitlab_deploy():
                 run_gitlab_deploy_effective_set(ctx)
             else:
@@ -321,6 +331,7 @@ class CMDB_import(PipelineStep):
         cmdb_import.run()
 
 
+@extra_creds_scope()
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
@@ -336,6 +347,7 @@ def run_single_env_pipeline() -> None:
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),
+        RegdefV2AdapterStep(),
         DeployPostfixNamespaceMapStep(),
         ProcessSdStep(),
         MigrateSdToDeployPlanStep(),

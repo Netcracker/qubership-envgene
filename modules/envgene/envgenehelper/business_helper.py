@@ -27,6 +27,7 @@ CMDB_IMPORT_TAG = "CMDB_IMPORT"
 DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
 INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
+PUBREG_PARAMS_FILENAME = "pubreg_params.yaml"
 
 TEMPLATE_DIR_PATTERN = re.compile(r'/from_(\w+_)?template/')
 
@@ -95,7 +96,7 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
     env_definition_path = f"{env_dir}/Inventory/env_definition.yml"
     if skip_env_definition_check:
         logger.info("Validation of env_definition is skipped")
-        logger.info(f"Environment {cluster_name}/{environment_name} validation is succesful")
+        logger.info(f"Environment {cluster_name}/{environment_name} validation is successful")
         return
     if not check_file_exists(env_definition_path):
         logger.error(
@@ -103,7 +104,7 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
         raise ReferenceError(f"Validation of environment folder '{env_dir}' failed. See logs above.")
     if validate_env_definition_by_schema:
         check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir)
-    logger.info(f"Environment {cluster_name}/{environment_name} validation is succesful")
+    logger.info(f"Environment {cluster_name}/{environment_name} validation is successful")
 
 
 def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
@@ -435,6 +436,10 @@ def is_from_template_dir(file_path: str) -> bool:
 
 def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
+
+
+def pubreg_transient_dir(work_dir) -> Path:
+    return Path(work_dir) / "tmp" / "envgene-regdefv2-adapter"
 
 
 def get_app_artifacts_dir() -> Path:
