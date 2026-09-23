@@ -18,12 +18,10 @@ package org.qubership.cloud.parameters.processor.expression.binding;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang.StringUtils;
 import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.pojo.applications.model.ApplicationParams;
 import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
-import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
@@ -107,19 +105,8 @@ public class NamespaceApplicationMap extends DynamicMap {
     }
 
     private ApplicationBomDTO getApplicationBomDto(String appName, String appFileRef) {
-        String baselineProfile = namespace.getBaseline();
-        Profile overrideProfile = namespace.getProfile();
-        if (StringUtils.isEmpty(baselineProfile)) {
-            baselineProfile = namespace.getCloud().getBaseline();
-            overrideProfile = namespace.getCloud().getProfile();
-        }
+        ProfileSelection selection = ProfileSelection.of(namespace);
         BomReaderUtils bomReaderUtils = Injector.getInstance().get(BomReaderUtils.class);
-        String baseline = null;
-        if (overrideProfile != null) {
-            baseline = overrideProfile.getBaseline();
-        } else if (StringUtils.isNotEmpty(baselineProfile)) {
-            baseline = baselineProfile;
-        }
-        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, baseline, overrideProfile);
+        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, selection.baseline(), selection.override());
     }
 }

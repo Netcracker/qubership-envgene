@@ -358,7 +358,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         String folderName = parent.getFileName().toString();
         if (folderName.equals(GenericConstants.PROFILES_FOLDER)) {
             ProfileFullDto profileFullDto = fileDataConverter.parseInputFile(ProfileFullDto.class, file.toFile());
-            profileFullDto.setApplications(profileFullDto.getApplications().stream()
+            profileFullDto.setApplications(Optional.ofNullable(profileFullDto.getApplications()).orElse(List.of()).stream()
                     .filter(app -> appsToProcess.contains(app.getName())).collect(Collectors.toList()));
             profilesMap.putIfAbsent(profileFullDto.getName(), profileFullDto);
 
