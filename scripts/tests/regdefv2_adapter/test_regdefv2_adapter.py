@@ -1,5 +1,4 @@
 import os
-import shutil
 import textwrap
 from pathlib import Path
 
@@ -112,6 +111,9 @@ def pipeline_env(monkeypatch, tmp_path):
     regdefs_dir = tmp_path / "regdefs"
     regdefs_dir.mkdir()
     (regdefs_dir / "registry-1.yml").write_text(yaml.safe_dump(V1_REGDEF))
+    rendered_regdefs_dir = tmp_path / "tmp" / "render" / "env-01" / "RegDefs"
+    rendered_regdefs_dir.mkdir(parents=True)
+    (rendered_regdefs_dir / "registry-1.yml").write_text(yaml.safe_dump(V1_REGDEF))
 
     templates_dir = tmp_path / "tmp" / "templates"
     env_templates_dir = templates_dir / "env_templates"
@@ -278,40 +280,6 @@ class TestRegdefV2Adapter:
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(
             "name: \"pubreg\"\nparameters: {}\n"
         )
-        os.environ.pop("LOCAL_PUBREG_FILE", None)
-        ctx = _ctx()
-
-        run_regdefv2_adapter(ctx)
-
-        assert ctx.transient_regdefs_dir is None
-        assert "LOCAL_PUBREG_FILE" not in os.environ
-
-    @pytest.mark.unit
-    def test_e2e_parameters_are_read_from_committed_cloud_when_no_templates_fetched(self, tmp_path):
-        # appregdef_render didn't run this pass - no template repo, so nothing to render from
-        shutil.rmtree(tmp_path / "tmp" / "templates")
-        cloud_file = tmp_path / "environments" / "cluster-01" / "env-01" / "cloud.yml"
-        cloud_file.write_text(yaml.safe_dump({"e2eParameters": {
-            "MAVEN_PROVIDER": "aws",
-            "PUB_REG_PROVIDER": "aws",
-            "PUB_REG_METHOD": "secret",
-            "PUB_REG_KEY": "built-key",
-            "PUB_REG_SECRET": "built-secret",
-            "PUB_REG_DOMAIN": "built-domain",
-            "PUB_REG_REGION": "us-east-1",
-            "PUB_REG_REPOSITORY": "built-repo",
-        }}))
-        ctx = _ctx()
-
-        run_regdefv2_adapter(ctx)
-
-        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
-        assert synthesized["authConfig"]["pub-reg-auth"]["awsDomain"] == "built-domain"
-        assert get_cred_config()["transient-pub-reg-creds"]["data"]["username"] == "built-key"
-
-    @pytest.mark.unit
-    def test_no_cloud_file_and_no_templates_is_noop(self, tmp_path):
-        shutil.rmtree(tmp_path / "tmp" / "templates")
         os.environ.pop("LOCAL_PUBREG_FILE", None)
         ctx = _ctx()
 

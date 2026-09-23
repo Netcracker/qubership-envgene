@@ -7,7 +7,7 @@ from artifact_searcher.auth_resolver import (
 )
 
 import envgenehelper as helper
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_template_dirs, NamespaceRole
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.config_helper import get_regdef_v2_schema
 from envgenehelper.logger import logger
 
@@ -121,25 +121,13 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict) -> dict:
 
 
 
-def _get_cloud_e2e_parameters(ctx, env_dir: str) -> dict:
-    templates_dir = get_template_dirs().get(NamespaceRole.COMMON)
-    if templates_dir and Path(templates_dir).is_dir():
-        render_context_vars = build_minimal_render_context(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
-        return EnvGenerator().render_cloud_e2e_parameters(
-            ctx.env_name, render_context_vars, env_dir, helper.pubreg_transient_dir(ctx.work_dir) / "parameters"
-        )
-
-    # no template repo fetched this run (appregdef_render didn't run) - nothing to render from, read the committed cloud.yml
-    cloud_file = Path(env_dir) / "cloud.yml"
-    if not cloud_file.is_file():
-        logger.info(f"{cloud_file} is not found - no Cloud e2eParameters to read")
-        return {}
-    return helper.openYaml(cloud_file).get("e2eParameters", {}) or {}
-
-
 def run_regdefv2_adapter(ctx) -> None:
     env_dir = str(get_current_env_dir_from_env_vars())
-    params = _resolve_pubreg_params(_get_cloud_e2e_parameters(ctx, env_dir), env_dir)
+    render_context_vars = build_minimal_render_context(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
+    e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
+        ctx.env_name, render_context_vars, env_dir, helper.pubreg_transient_dir(ctx.work_dir) / "parameters"
+    )
+    params = _resolve_pubreg_params(e2e_parameters, env_dir)
 
     maven_provider = params.get(MAVEN_PROVIDER, "").strip().lower()
 
@@ -170,10 +158,11 @@ def run_regdefv2_adapter(ctx) -> None:
     source_regdefs_path = ctx.committed_regdefs_dir
     if not source_regdefs_path.is_dir():
         raise ValueError(f"{source_regdefs_path} does not exist; cannot synthesize RegDef v2")
+    template_regdefs_dir = Path(render_context_vars["render_dir"]) / REGDEFS_DIRNAME
 
     regdef_v2_tmp_dir.mkdir(parents=True, exist_ok=True)
-    for regdef_file_path in helper.findAllYamlsInDir(source_regdefs_path, recursively=False):
-        regdef_file = Path(regdef_file_path)
+    for template_regdef_file_path in helper.findAllYamlsInDir(template_regdefs_dir, recursively=False):
+        regdef_file = source_regdefs_path / Path(template_regdef_file_path).name
         v1_data = helper.openYaml(regdef_file)
 
         if v1_data.get("version") == "2.0" or "authConfig" in v1_data:
