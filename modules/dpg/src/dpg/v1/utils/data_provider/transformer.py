@@ -1,3 +1,6 @@
+import json
+import logging
+
 from .middleware import UnifiedRegDef
 from dpg.v1.utils.registry import RegistryInfo, MavenConfig, RegistryType, AuthUserPassword, ArtifactoryUtils
 
@@ -28,6 +31,16 @@ def transform_params_registry(registry: UnifiedRegDef, params: dict) -> Registry
     reg_domain = params.get('PUB_REG_DOMAIN', "")
     reg_repo = params.get('PUB_REG_REPOSITORY', "")
     reg_project = params.get('PUB_REG_PROJECT', "")
+    if not reg_project and params.get('PUB_REG_METHOD') == 'service_account':
+        sa_secret = params.get('PUB_REG_SECRET', '')
+        try:
+            reg_project = json.loads(sa_secret).get('project_id', '')
+            if reg_project:
+                logging.debug(f"reg_project extracted from SA key: {reg_project}")
+            else:
+                logging.warning("PUB_REG_PROJECT is not set and SA key has no project_id — GCP registry query will fail")
+        except json.JSONDecodeError:
+            logging.warning("PUB_REG_PROJECT is not set and PUB_REG_SECRET is not valid JSON — GCP registry query will fail")
     non_pub_reg_key = params.get('NON_PUB_REG_KEY', None)
     non_pub_reg_secret = params.get('NON_PUB_REG_SECRET', None)
     secret_key= params.get('PUB_REG_SECRET', None)
