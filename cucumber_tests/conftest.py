@@ -114,6 +114,10 @@ def mock_nexus(tmp_path_factory):
     test_app_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.0.0"
     _write_app_manifest(test_app_dir, "test_app_artifact-1.0.0.json", "test_app", "1.0.0", "dp1")
 
+    # "test_app_artifact:1.2.3" - used by UC-CC-GI-2 (UniqForVersion generation directory).
+    test_app_123_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.2.3"
+    _write_app_manifest(test_app_123_dir, "test_app_artifact-1.2.3.json", "test_app", "1.2.3", "core")
+
     test_app2_dir = base_dir / "release" / "com" / "test" / "test_app_2_artifact" / "2.0.0"
     _write_app_manifest(test_app2_dir, "test_app_2_artifact-2.0.0.json", "test_app_2", "2.0.0", "dp2")
 
