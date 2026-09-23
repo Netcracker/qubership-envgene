@@ -118,27 +118,6 @@ class TestResolveRemoteUrl:
         assert manager._resolve_remote_url() == "https://gh-tok@github.com/org/repo.git"
 
 
-class TestFetch:
-    def test_creates_origin_for_empty_repository(self):
-        manager = make_manager()
-        origin = MagicMock()
-        manager.repo.remote.side_effect = ValueError("origin does not exist")
-        manager.repo.create_remote.return_value = origin
-
-        manager._fetch("main", "FETCH_HEAD", ["--force"])
-
-        manager.repo.create_remote.assert_called_once_with(
-            "origin", "https://ci-bot:secret-token@gitlab.example.com/org/repo.git"
-        )
-        origin.set_url.assert_any_call(
-            "https://ci-bot:secret-token@gitlab.example.com/org/repo.git"
-        )
-        origin.set_url.assert_any_call(
-            "https://ci-bot:secret-token@gitlab.example.com/org/repo.git",
-            push=True,
-        )
-
-
 class TestStageChanges:
     def test_filters_nonexistent_paths(self, tmp_path):
         existing = tmp_path / "environments" / "cluster" / "env"
@@ -146,6 +125,7 @@ class TestStageChanges:
 
         manager = make_manager()
         manager.repo.git.add = MagicMock()
+        manager.repo.git.ls_files = MagicMock(return_value="")
         manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
 
         manager.stage_changes([str(existing), "/nonexistent/path"])
@@ -154,6 +134,19 @@ class TestStageChanges:
         assert str(existing) in added_paths
         assert "/nonexistent/path" not in added_paths
 
+    def test_includes_deleted_tracked_paths(self, tmp_path):
+        deleted = tmp_path / "environments" / "cluster" / "env" / "deleted.yml"
+
+        manager = make_manager()
+        manager.repo.git.add = MagicMock()
+        manager.repo.git.ls_files = MagicMock(return_value=str(deleted))
+        manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
+
+        manager.stage_changes([str(deleted)])
+
+        added_paths = manager.repo.git.add.call_args[0]
+        assert str(deleted) in added_paths
+
     def test_raises_on_unexpected_exit_code(self):
         manager = make_manager()
         manager.repo.git.add = MagicMock()
@@ -161,33 +154,6 @@ class TestStageChanges:
 
         with pytest.raises(RuntimeError):
             manager.stage_changes([])
-
-
-class TestSparseCheckout:
-    def test_cleans_untracked_leftovers_under_sparse_paths(self):
-        manager = make_manager()
-        manager._fetch = MagicMock()
-        manager.repo.git.clean = MagicMock()
-        manager.repo.git.sparse_checkout = MagicMock()
-        manager.repo.git.read_tree = MagicMock()
-
-        manager.sparse_checkout(["environments/cluster/env"])
-
-        manager.repo.git.clean.assert_called_once_with(
-            "-fd", "--", "environments/cluster/env"
-        )
-
-    def test_skips_clean_when_no_sparse_paths(self):
-        manager = make_manager()
-        manager._fetch = MagicMock()
-        manager.repo.git.clean = MagicMock()
-        manager.repo.git.sparse_checkout = MagicMock()
-        manager.repo.git.read_tree = MagicMock()
-
-        manager.sparse_checkout([])
-
-        manager.repo.git.clean.assert_not_called()
-
 
 class TestCherryPickAndPush:
     def test_skips_commit_on_empty_cherry_pick_after_conflict_resolution(self):

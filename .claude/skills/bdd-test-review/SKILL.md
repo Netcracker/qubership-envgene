@@ -45,6 +45,11 @@ Work on the CURRENT PR head in a worktree (`git fetch origin pull/<N>/head:<bran
 - the JSON schemas the payloads are validated against.
 - the implementation entry points the scenarios exercise.
 
+When the PR SUPERSEDES an already-reviewed PR (a re-apply onto a new base plus review fixes), scope the
+review to the PR's contribution - the new and changed scenarios plus the specific fixes it claims - and
+state that scope in the report's opening line. Carry the unchanged scenarios' prior verdicts by reference
+rather than re-tabling them.
+
 Build the self-blessing map: diff the PR against ITS OWN base branch (not main) and list every product
 file, schema and doc the PR itself changed. A scenario verifying behavior introduced by the same PR is
 flagged under oracle independence.
@@ -57,6 +62,17 @@ Verification rules - each of these cost a wrong claim once:
 - A claim about a written artifact needs BOTH its writer and its reader located. A writer whose output no
   reader consumes is a different and worse finding than a naming mismatch.
 - Verify where a payload actually fails and where data actually differs - never trust names and comments.
+- When the PR changes a shared fixture or shared test data (a template, a common env object, a registry
+  reused by many scenarios), assess the blast radius before trusting a green run. Other scenarios that
+  reuse the fixture can break or be silently masked by the same change. Grep the old values across every
+  feature and step file to confirm nothing else depended on them.
+- An xfail or skip REASON string is itself a claim about WHERE and WHY a scenario fails - verify it against
+  the code path the scenario ACTUALLY executes, never by plausibility. Establish which orchestrator steps
+  run for the scenario's env by checking each step's `should_run` gating: a deployment-plan guard gated on
+  `is_gitlab_deploy()` never runs for a scenario whose Background sets only `GENERATE_EFFECTIVE_SET=true`,
+  so a reason blaming that guard is wrong - the scenario really fails later, in the Java CLI. A reason
+  naming an off-path guard is a finding even when the scenario still xfails green, because it misleads the
+  next reader and can hide that two scenarios fail for the same underlying reason.
 
 ## Phase 2 - completeness matrix
 
@@ -68,12 +84,24 @@ a new test there forces the divergence to be resolved.
 
 ## Phase 3 - scenario validity, four questions each
 
-1. Doc conformance - Given/When/Then does not contradict the documented behavior.
+1. Doc conformance - Given/When/Then does not contradict the documented contract. When sources disagree,
+   rank them before judging: the feature doc's normative Requirements and rules are the contract, the
+   use-case doc is derived from them and can lag or contradict them, and the current code can be buggy.
+   "The scenario matches the code" is NOT conformance when a Requirement says otherwise - that is a
+   divergence, and the code may be the wrong side. Fix the contract in your head from the authoritative
+   source first, so a scenario that faithfully encodes a bug is not waved through as valid.
 2. Oracle strength - what state transition does the assertion distinguish? Ask: would the test pass if the
    code did nothing? If it produced a wrong result? Existence-only asserts on a file that existed before
    the run are void, and comparing output against the very payload that produced it is an echo, not an
    oracle. This is informal mutation testing: imagine the smallest realistic break and check the test
    would catch it.
+
+   One trap the mutation questions miss: a scenario can be green precisely BECAUSE the code is currently
+   broken, when its assertion encodes the current wrong outcome. The questions above compare against
+   current behavior, so they pass it. Judge the asserted outcome against the intended contract too - if the
+   scenario would have to CHANGE once the code is fixed, it is `invalid`, not `valid`, because it locks in
+   the defect. Rewrite it to the target behavior and carry it as @xfail(strict) until the fix (Phase 5
+   governs the @xfail reason and whether anything is filed).
 3. Oracle independence - the scenario must not be confirmed by the product code changed in the same PR
    (self-blessing). Goldens produced by UPDATE_GOLDEN-style runs are code-blessed: verify their content is
    independently derivable from the documented contract. Carry the result inside the verdict reason cell
@@ -111,7 +139,11 @@ Judge payload, initial state and golden separately for each scenario:
   findings.
 - discriminating power - initial state, payload and golden must differ wherever the semantics require.
   If two scenarios would pass on identical data, or a replace test cannot be told from a no-op, that is
-  the finding. Deletion tests need a surviving sibling file to make over-deletion observable.
+  the finding. Deletion tests need a surviving sibling file to make over-deletion observable. The same
+  trap applies to any all-negative check set: a group of only-absence assertions (every "does not
+  contain") is non-discriminating whenever the checked artifact might not be produced at all, since a
+  mapping or index that was never regenerated passes them all. Pair absence assertions with a presence
+  assertion on a sibling that must survive, so the empty-or-missing-artifact case is caught.
 - realism notes (plain-text credentials where real repositories store encrypted ones) - minor, recorded.
 
 Goldens additionally: the comparison must be strict in both directions (missing AND extra files), and the
@@ -124,12 +156,30 @@ silently. Present each one as: what the doc says (quote), what the code does (fi
 manifests, recommendation. Verdict options: doc wrong / code wrong / both wrong / behavior OK but
 undocumented / defer to the product owner.
 
+Determine the DIRECTION before choosing an action. A doc-vs-code contradiction does not mean the doc is
+wrong. Check which side matches the authoritative contract (the feature doc's Requirements). If the code
+violates a Requirement, the code is the wrong side even though it "is the code" and even when a second,
+derived doc (a use-case doc) happens to match it. Never "fix" a doc downward to match buggy code - aligning
+a doc to a defect buries the bug and makes the next reader trust it. When the code is the wrong side, the
+doc that describes the intended behavior is already correct - leave or restore it rather than rewriting it
+down to the code.
+
 Actions per verdict:
 
 - code wrong - CR issue (use the design-to-cr skill when available, body format: `docs/dev/creating-cr.md`).
 - doc wrong, mechanical fix (names, paths, copypaste) - direct docs PR.
 - doc wrong, semantic (contract rewrite, removal of a promised feature) - issue first.
 - defer - issue carrying the question.
+
+When you do edit or describe a mode or parameter, use the docs' own term for it. Do not coin an operational
+label - a force flag that scopes how far a change reaches is not a "dry run". Invented vocabulary misleads
+the reader and gets rejected.
+
+A code-wrong divergence may instead be recorded as a neutral observation in the report ("this looks like a
+product bug"), with no action push, no @xfail directive, and no filed issue - the observation stands on its
+own and the owner decides. Prefer this lighter form when the fix is out of the test PR's scope and no
+scenario in the suite yet depends on the target behavior. It is an alternative to the @xfail-and-issue path
+below, not a replacement for it.
 
 All resulting issues and PRs are proposed to the user as one batch. Nothing is filed, committed or
 pushed without explicit confirmation - a verdict on a divergence authorizes drafting, not publishing.
@@ -166,9 +216,10 @@ The report format - sections, verdict scale, legends, table rules, worked exampl
 
 Self-checks before showing the report:
 
-- the rows for existing scenarios (every verdict except `missing`) must equal the scenario count in the
-  feature file, one to one by UC ID (a row was silently lost once - counting the whole table would mask
-  exactly that loss whenever missing rows are present).
+- the rows for existing scenarios (every verdict except `missing`) must equal the scenario count under
+  review (the whole feature file, or - for a scoped delta re-review - the reviewed subset), one to one by
+  UC ID (a row was silently lost once - counting the whole table would mask exactly that loss whenever
+  missing rows are present).
 - bidirectional check: every `missing` row has a Gherkin draft or is named in a pattern comment, and every
   draft has a row.
 - every legend covers every value actually used in its table.
@@ -179,7 +230,10 @@ Publication, only on the user's explicit command:
 2. Critic-author loop: a FRESH-context agent checks translation fidelity against the source, internal
    consistency, 3-4 repository spot-facts, and house style (no semicolons, no em or en dashes, aligned table
    pipes, prose at 120 chars). Fix and re-run until a clean round. If the user capped the iterations and
-   complaints remain at the cap, stop and surface them instead of publishing.
+   complaints remain at the cap, stop and surface them instead of publishing. Critic findings are
+   advisory: verify each against the report-format intent before applying, since a fresh-context critic
+   lacks the review's reasoning and can over-reach - for example demanding a format change these rules
+   already resolve differently - so push back in that case rather than auto-applying.
 3. Post as a PR comment. Never publish, commit or push anything without an explicit go-ahead.
 
 ## Iteration discipline

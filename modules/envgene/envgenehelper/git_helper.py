@@ -107,14 +107,9 @@ class GitRepoManager:
             )
 
     def _fetch(self, ref: str, checkout: str, checkout_option: list[str]) -> None:
-        remote_url = self._resolve_remote_url()
-        try:
-            origin = self.repo.remote("origin")
-        except ValueError:
-            origin = self.repo.create_remote("origin", remote_url)
-
-        origin.set_url(remote_url)
-        origin.set_url(remote_url, push=True)
+        origin = self.repo.remote("origin")
+        origin.set_url(self._resolve_remote_url())
+        origin.set_url(self._resolve_remote_url(), push=True)
 
         try:
             logger.info(f"git fetch --depth=1 origin {ref}")
@@ -194,9 +189,13 @@ class GitRepoManager:
         if sparse_paths is None:
             sparse_paths = get_sparse_checkout_paths(os.environ["FULL_ENV_NAME"])
 
-        existing_paths = [path for path in sparse_paths if Path(path).exists()]
+        stageable_paths = [
+            path
+            for path in sparse_paths
+            if Path(path).exists() or self.repo.git.ls_files("--cached", "--", path).strip()
+        ]
         exclude_args = [f":(exclude){path}" for path in self._get_excluded_paths()]
-        self.repo.git.add("--all", "--", *existing_paths, *exclude_args)
+        self.repo.git.add("--all", "--", *stageable_paths, *exclude_args)
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():
@@ -273,26 +272,18 @@ class GitRepoManager:
 
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
-    def sparse_checkout(self, sparse_paths: list[str], *, fetch: bool = True) -> None:
-        if fetch:
-            self._fetch(
-                ref=self.ctx.commit_sha,
-                checkout=self.ctx.commit_sha,
-                checkout_option=["--force"],
-            )
-
-        if sparse_paths:
-            logger.info(f"git clean -fd ({len(sparse_paths)} paths)")
-            self.repo.git.clean("-fd", "--", *sparse_paths)
-
+    def sparse_checkout(self, sparse_paths: list[str]) -> None:
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
 
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
-
+        
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
+
+        logger.info("git clean -ffd")
+        self.repo.git.clean("-ffd")
 
         logger.info("sparse checkout complete")
 

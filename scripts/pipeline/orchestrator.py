@@ -317,6 +317,22 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
+class CMDB_import(PipelineStep):
+
+    @property
+    def name(self) -> str:
+        return "CMDB_import"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return not ctx.is_gitlab_deploy() and ctx.params.get('CMDB_IMPORT')
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/nc_cmdb_import')
+        if not cmdb_import.modules:
+            raise RuntimeError("cmdb_import plugin failed to load")
+        cmdb_import.run()
+
+
 @extra_creds_scope()
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
@@ -340,7 +356,8 @@ def run_single_env_pipeline() -> None:
         ProcessDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
-        GitCommitStep()
+        GitCommitStep(),
+        CMDB_import()
     ]
 
     results: list[StepResult] = []

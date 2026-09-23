@@ -28,7 +28,7 @@ Feature: Deploy sub-flows - deploy.md
     And the pipeline step "warmup" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SKIPPED"
     And the pipeline step "process_sd" has status "SKIPPED"
-    And the deploy plan contains an entry for namespace "dummy-namespace" with version "app1:1.0"
+    And the deploy plan contains an entry for namespace "test-env-core" with version "app1:1.0"
 
   # ── No-CMDB v1 ───────────────────────────────────────────────────────────────
   # PIPELINE_TYPE defaults to LEGACY. ENV_BUILDER + GENERATE_EFFECTIVE_SET select an
@@ -48,6 +48,10 @@ Feature: Deploy sub-flows - deploy.md
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
     And the pipeline step "git_commit" has status "SUCCESS"
+    And the effective set folder "cleanup/core" contains file "parameters.yaml"
+    And the effective set cleanup mapping contains namespace "test-env-core"
+    And the effective set folder "cleanup/bss" contains file "parameters.yaml"
+    And the effective set cleanup mapping contains namespace "test-env-bss"
     # Per code, not the doc's flow list: DeployPostfixNamespaceMapStep itself requires
     # GITLAB_DEPLOY, so it does not run for LEGACY - the namespace map that process_sd needs is
     # instead seeded by MigrateSdToDeployPlanStep.execute() via compute_namespace_map() when
