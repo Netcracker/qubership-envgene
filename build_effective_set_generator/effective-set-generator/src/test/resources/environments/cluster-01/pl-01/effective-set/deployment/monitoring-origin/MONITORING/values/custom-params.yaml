@@ -1,1 +1,93 @@
 username: user-placeholder-123
+global:
+  username: user-placeholder-123
+oauth2-proxy:
+  username: user-placeholder-123
+configurations-streamer:
+  username: user-placeholder-123
+stackdriver-exporter:
+  username: user-placeholder-123
+vmagent:
+  username: user-placeholder-123
+grafana-plugins-init:
+  username: user-placeholder-123
+version-exporter:
+  username: user-placeholder-123
+configmap-reload:
+  username: user-placeholder-123
+grafana-image-renderer:
+  username: user-placeholder-123
+node-exporter:
+  username: user-placeholder-123
+prometheus-adapter:
+  username: user-placeholder-123
+vmauth:
+  username: user-placeholder-123
+cloud-events-exporter:
+  username: user-placeholder-123
+graphite-remote-adapter:
+  username: user-placeholder-123
+prometheus:
+  username: user-placeholder-123
+victoriametrics-operator:
+  username: user-placeholder-123
+prometheus-adapter-converter:
+  username: user-placeholder-123
+alertmanager:
+  username: user-placeholder-123
+prometheus-adapter-operator:
+  username: user-placeholder-123
+cloudwatch-exporter:
+  username: user-placeholder-123
+vmselect:
+  username: user-placeholder-123
+kube-rbac-proxy:
+  username: user-placeholder-123
+monitoring-operator:
+  username: user-placeholder-123
+json-exporter:
+  username: user-placeholder-123
+cloud-events-reader:
+  username: user-placeholder-123
+network-latency-exporter:
+  username: user-placeholder-123
+blackbox-exporter:
+  username: user-placeholder-123
+platform_monitoring_tests:
+  username: user-placeholder-123
+vmalert:
+  username: user-placeholder-123
+vmoperator_config_reloader:
+  username: user-placeholder-123
+grafana-operator:
+  username: user-placeholder-123
+kube-state-metrics:
+  username: user-placeholder-123
+cert-exporter:
+  username: user-placeholder-123
+vmcleanup:
+  username: user-placeholder-123
+promitor-agent-scraper:
+  username: user-placeholder-123
+vminsert:
+  username: user-placeholder-123
+common-dashboards:
+  username: user-placeholder-123
+grafana:
+  username: user-placeholder-123
+vmsingle:
+  username: user-placeholder-123
+promxy:
+  username: user-placeholder-123
+promitor-agent-resource-discovery:
+  username: user-placeholder-123
+prometheus-config-reloader:
+  username: user-placeholder-123
+pushgateway:
+  username: user-placeholder-123
+vmoperator:
+  username: user-placeholder-123
+prometheus-operator:
+  username: user-placeholder-123
+vmstorage:
+  username: user-placeholder-123

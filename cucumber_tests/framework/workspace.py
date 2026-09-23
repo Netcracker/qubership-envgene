@@ -128,12 +128,11 @@ class EnvGeneWorkspace(BaseWorkspace):
             env.update(extra_env)
 
         project_root = str(Path(__file__).parent.parent.parent.resolve())
-        python_root = str(Path(project_root) / "python" / "envgene")
-        artifact_searcher = str(Path(project_root) / "python" / "artifact-searcher")
-        integration = str(Path(project_root) / "python" / "integration")
-        jschon_sort = str(Path(project_root) / "python" / "jschon-sort")
+        # modules/ is the canonical location in this branch (renamed from python/)
+        modules_envgene = str(Path(project_root) / "modules" / "envgene")
+        modules_artifact_searcher = str(Path(project_root) / "modules" / "artifact-searcher")
         scripts_root = str(Path(project_root) / "scripts")
-        env["PYTHONPATH"] = f"{project_root}{os.pathsep}{python_root}{os.pathsep}{artifact_searcher}{os.pathsep}{integration}{os.pathsep}{jschon_sort}{os.pathsep}{scripts_root}"
+        env["PYTHONPATH"] = f"{project_root}{os.pathsep}{modules_envgene}{os.pathsep}{modules_artifact_searcher}{os.pathsep}{scripts_root}"
         
         # Add base_dir to PATH so that sops_mock (sops.bat) can be found
         env["PATH"] = f"{str(self.base_dir)}{os.pathsep}{env.get('PATH', '')}"
