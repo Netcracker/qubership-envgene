@@ -24,6 +24,10 @@
     - [UC-CC-CR-4: E2EParameters to TechnicalConfigurationParameters Reference Error](#uc-cc-cr-4-e2eparameters-to-technicalconfigurationparameters-reference-error)
     - [UC-CC-CR-5: TechnicalConfigurationParameters to DeployParameters Reference Error](#uc-cc-cr-5-technicalconfigurationparameters-to-deployparameters-reference-error)
     - [UC-CC-CR-6: TechnicalConfigurationParameters to E2EParameters Reference Error](#uc-cc-cr-6-technicalconfigurationparameters-to-e2eparameters-reference-error)
+  - [Cleanup context generation](#cleanup-context-generation)
+    - [UC-CC-CG-1: Cleanup context for every namespace in No-CMDB v1 deploy](#uc-cc-cg-1-cleanup-context-for-every-namespace-in-no-cmdb-v1-deploy)
+    - [UC-CC-CG-2: No cleanup context in No-CMDB v2 deploy](#uc-cc-cg-2-no-cleanup-context-in-no-cmdb-v2-deploy)
+    - [UC-CC-CG-3: No cleanup context in No-CMDB v2 clean](#uc-cc-cg-3-no-cleanup-context-in-no-cmdb-v2-clean)
 
 ## Overview
 
@@ -735,3 +739,81 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. Effective Set generation fails with an error message indicating that references from `technicalConfigurationParameters` to `e2eParameters` are prohibited (e.g., `Invalid parameter reference '${e2e_endpoint}' in Namespace '<namespace-name>': Parameters in 'technicalConfigurationParameters' cannot reference parameters from 'e2eParameters'`)
+
+## Cleanup context generation
+
+This section covers use cases for [Cleanup context](/docs/features/effective-set-generation.md#cleanup-context) generation by the `generate_effective_set` job. The cleanup context is the part of the Effective Set that downstream tooling reads to undeploy a namespace. Which namespaces receive it depends on the deployment architecture and the operation.
+
+### UC-CC-CG-1: Cleanup context for every namespace in No-CMDB v1 deploy
+
+**Pre-requisites:**
+
+1. The environment has more than one namespace, and at least one namespace has no application versions deployed to it.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `PIPELINE_TYPE: LEGACY`
+3. `OPERATION_TYPE: DEPLOY`
+4. `GENERATE_EFFECTIVE_SET: true`
+
+**Steps:**
+
+1. The `generate_effective_set` job runs.
+2. The job produces the cleanup context for every namespace of the environment.
+
+**Results:**
+
+1. `effective-set/cleanup/<namespace>/parameters.yaml` and `credentials.yaml` exist for every namespace of the environment.
+2. `effective-set/cleanup/mapping.yaml` lists every namespace of the environment, including the namespace with no deployed application versions.
+
+### UC-CC-CG-2: No cleanup context in No-CMDB v2 deploy
+
+**Pre-requisites:**
+
+1. The environment exists and has at least one namespace.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `PIPELINE_TYPE: GITLAB_DEPLOY`
+3. `OPERATION_TYPE: DEPLOY`
+
+**Steps:**
+
+1. The `generate_effective_set` job runs.
+2. The job produces the topology, pipeline, deployment, and runtime contexts.
+
+**Results:**
+
+1. No `effective-set/cleanup/<namespace>/` content is produced by the deploy operation.
+
+### UC-CC-CG-3: No cleanup context in No-CMDB v2 clean
+
+**Pre-requisites:**
+
+1. The environment exists and has at least one namespace.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `PIPELINE_TYPE: GITLAB_DEPLOY`
+3. `OPERATION_TYPE: CLEAN`
+4. `NAMESPACE_NAMES: <namespace>` (empty cleans the whole environment)
+
+**Steps:**
+
+1. The `generate_effective_set` job runs.
+2. The job marks the target namespaces' deployment and runtime for removal and produces no cleanup context.
+
+**Results:**
+
+1. `effective-set/deployment/<namespace>/` and `effective-set/runtime/<namespace>/` contain a `.cleaned` marker and no application content.
+2. The marked namespaces are absent from `effective-set/deployment/mapping.yaml` and `effective-set/runtime/mapping.yaml`.
+3. No `effective-set/cleanup/` content is produced by the clean operation.

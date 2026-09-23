@@ -118,6 +118,7 @@ Below is a **complete** list of attributes
 | `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
 | `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
 | `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to deployment, runtime, and cleanup contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params) | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
+| `--generate-cleanup-context`/`-gcc`                 | boolean | no        | Determines whether the cleanup context is generated for every namespace of the environment. If `true`, it is produced for all namespaces. If `false`, no cleanup context is produced                                                                                                                          | `false` | `true`                                                                    |
 
 ### Registry Configuration
 
@@ -1491,6 +1492,8 @@ The contents of this file are identical to [mapping.yaml in the Deployment Param
 
 The cleanup context is used by systems that perform cleanup operations on cluster entities within a specific namespace. This context is formed by merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
 
+Whether the cleanup context is generated for every namespace of the environment is controlled by [`--generate-cleanup-context`](#calculator-command-line-tool-execution-attributes). See [Cleanup context](/docs/features/effective-set-generation.md#cleanup-context) for when it applies.
+
 For each namespace (identified by its folder name), the context contains the following files:
 
 ##### \[Version 2.0][Cleanup Context] `parameters.yaml`
@@ -1510,7 +1513,7 @@ This file contains
 
 1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing)
 
-2. Parameters from the `runtime` section of the object passed to `--custom-params`
+2. Parameters from the `deployment` section of the object passed to `--custom-params`
 
 Parameters from `--custom-params` have higher priority.
 
