@@ -69,7 +69,7 @@ class ExternalCredentialProvisioning(CaseInsensitiveEnum):
 
 
 class SecretStore(BaseModel):
-    type: Literal["vault", "gcp", "aws", "azure"]
+    type: Literal["vault", "openbao", "gcp", "aws", "azure"]
     projectId: Optional[str] = None
     mountPath: Optional[str] = None
     vaultName: Optional[str] = None
