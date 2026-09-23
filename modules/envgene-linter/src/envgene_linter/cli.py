@@ -9,6 +9,7 @@ from .discovery import DiscoveryError
 from .engine import run_check
 from .html_report import ensure_report_ignored, report_path, render_html
 from .report import render
+from .rule_config import RuleConfigError
 
 
 @click.group()
@@ -27,17 +28,20 @@ def main() -> None:
 def check_cmd(repo: Path, write_html: bool) -> None:
     try:
         result = run_check(repo)
-    except DiscoveryError as exc:
+    except (DiscoveryError, RuleConfigError) as exc:
         click.echo(str(exc), err=True)
         raise SystemExit(2) from exc
-    click.echo(render(result.findings), nl=False)
+    click.echo(render(result.findings, disabled_rules=result.disabled_rules), nl=False)
     for note in result.skipped:
         click.echo(note, err=True)
     if not write_html:
         return
     path = report_path(repo)
     try:
-        path.write_text(render_html(result.findings, repo), encoding="utf-8")
+        path.write_text(
+            render_html(result.findings, repo, disabled_rules=result.disabled_rules),
+            encoding="utf-8",
+        )
     except OSError as exc:
         click.echo(f"cannot write HTML report {path}: {exc}", err=True)
         raise SystemExit(2) from exc

@@ -99,3 +99,12 @@ class RepoBuilder:
 @pytest.fixture
 def repo(tmp_path: Path) -> RepoBuilder:
     return RepoBuilder(tmp_path)
+
+
+@pytest.fixture
+def all_rules_enabled(monkeypatch):
+    """Exercise every rule regardless of the flags chosen for a release build."""
+    from envgene_linter import rule_config
+    from envgene_linter.rulemeta import RULES
+
+    monkeypatch.setattr(rule_config, "RULE_ENABLED", dict.fromkeys(RULES, True))

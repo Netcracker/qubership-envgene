@@ -279,3 +279,6 @@ def test_unavailable_system_or_external_target_is_skipped(repo, reference):
     else:
         write(repo.root / 'configuration/integration.yml', {'self_token': reference})
     assert findings(repo) == []
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

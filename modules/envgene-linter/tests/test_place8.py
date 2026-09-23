@@ -464,3 +464,6 @@ def test_nonempty_inventory_generation_credentials_are_not_reported(repo):
     repo.env("c", "e")
     _write(repo, "environments/c/e/Inventory/credentials/inventory_generation_creds.yml", "synthetic: {}\n")
     assert _place8(repo) == []
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

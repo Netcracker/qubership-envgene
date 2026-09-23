@@ -1,3 +1,5 @@
+import pytest
+
 from envgene_linter.discovery import build_index
 from envgene_linter.model import Action, IssueType, Severity
 from envgene_linter.rules.name3 import check
@@ -249,3 +251,6 @@ def test_namespace_target_must_be_exact_child_name(repo):
     repo.env_paramset("c", "e", "p")
     (repo.root / "environments/c/e/Namespaces/good").mkdir(parents=True)
     assert [item for item in _name3(repo) if item.scope == "Namespace"] == []
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

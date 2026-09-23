@@ -39,3 +39,6 @@ def test_rule_example(rule, case):
             assert finding.line >= 1 and finding.column >= 1
             assert finding.issue_type == RULES[rule].default_issue_type
             assert finding.action == RULES[rule].default_action
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

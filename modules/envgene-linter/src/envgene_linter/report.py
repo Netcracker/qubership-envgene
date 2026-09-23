@@ -24,8 +24,12 @@ def _block(rule: str, findings: list[Finding]) -> str:
     return f"{rule}\n" + "\n\n".join(chunks)
 
 
-def render(findings: list[Finding]) -> str:
+def render(findings: list[Finding], *, disabled_rules: tuple[str, ...] = ()) -> str:
     by_rule: dict[str, list[Finding]] = {rule: [] for rule in RULE_ORDER}
     for item in findings:
-        by_rule.setdefault(item.rule, []).append(item)
-    return "\n\n".join(_block(rule, items) for rule, items in by_rule.items()) + "\n"
+        if item.rule not in disabled_rules:
+            by_rule.setdefault(item.rule, []).append(item)
+    return "\n\n".join(
+        f"{rule}\nDisabled" if rule in disabled_rules else _block(rule, items)
+        for rule, items in by_rule.items()
+    ) + "\n"

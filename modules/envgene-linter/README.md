@@ -14,6 +14,7 @@ The linter checks files selected by supported local references or known generato
 - [Reading findings](#reading-findings)
 - [HTML reports](#html-reports)
 - [Implemented rules](#implemented-rules)
+- [Build-time rule switches](#build-time-rule-switches)
 - [What is checked](#what-is-checked)
 - [Exit codes and CI](#exit-codes-and-ci)
 - [Troubleshooting](#troubleshooting)
@@ -252,12 +253,43 @@ Current limitations:
 
 See [Connected entities](docs/algorithms/connections.md) and [Effective Set](docs/algorithms/effective-set.md) for selection, precedence and merge details.
 
+## Build-time rule switches
+
+Edit `RULE_ENABLED` in
+[`src/envgene_linter/rule_config.py`](src/envgene_linter/rule_config.py) before
+building the package. Every implemented rule has its own Python boolean:
+
+```python
+"NAME-1": False,
+"NAME-2": True,
+"NAME-3": False,
+"NAME-4": False,
+```
+
+`True` runs the rule; `False` skips its check function. NAME-1, NAME-3 and NAME-4
+are disabled in the current source configuration; all other implemented rules
+are enabled. Change any flag and rebuild in GitHub Actions to distribute your
+chosen configuration. This is a package setting, not a YAML file in the checked
+repository or a command-line override. Use `True`/`False`, not quoted strings or
+numbers, and keep all rule entries. Invalid entries produce exit code 2.
+
+The console shows `Disabled` for skipped rules; HTML lists them under
+`Disabled rules`. Disabled rules are not reported as successfully checked with
+`No findings`. If every rule is disabled, repository analysis is skipped and the
+HTML report says `No rules enabled`.
+
+Regression tests explicitly enable rules to preserve coverage regardless of the
+release configuration. Separate tests verify switches, validation and reports.
+The build includes `rule_config.py` automatically. Previously installed wheels
+retain their original settings until replaced by a rebuilt package. When
+publishing another build on PyPI, use a new distribution version.
+
 ## Exit codes and CI
 
 | Exit code | Meaning |
 | --- | --- |
 | `0` | The command completed, including runs with Warning or Information findings |
-| `2` | Invalid CLI arguments, no `environments/` directory, or failure to write the HTML report |
+| `2` | Invalid CLI arguments or rule flags, no `environments/` directory when checks are enabled, or failure to write the HTML report |
 
 Skip notes do not by themselves change the exit code. Failure to update `.gitignore` is reported on stderr after the HTML file is written and does not make the command fail. Unexpected runtime failures are outside these handled cases.
 
@@ -289,7 +321,7 @@ The redirected text files are written in the shell's current directory. The HTML
 | An existing HTML report did not change | Run with `--html`; a console-only check leaves the previous report untouched. |
 | `cannot write HTML report` | Check write permissions for the checked repository and its existing report file. The command exits with code 2. |
 | `cannot update .gitignore` | The report was written, but the ignore file could not be updated. Check permissions or encoding and add the report entry manually if appropriate. |
-| A directory named `ok` still reports findings | Bundled fixtures are specific to one rule; all implemented rules run during a CLI check. |
+| A directory named `ok` still reports findings | Bundled fixtures are specific to one rule; all enabled rules run during a CLI check. |
 
 ## Development and further documentation
 
@@ -306,7 +338,7 @@ Runnable synthetic examples for every implemented rule are available in
 [testdata/rules](testdata/rules/), with an `ok` and `not-ok` repository
 for each rule. The regular pytest suite verifies these examples, including in
 GitHub Actions. Expectations apply to the named rule; other rules may also report
-findings. For NAME-3, `ok` still reports the required `env_definition.yml`
+findings. When NAME-3 is enabled, `ok` still reports the required `env_definition.yml`
 filename because it contains an underscore; `not-ok` additionally reports
 `Bad_Name.yml`. The tests explicitly account for this existing behavior.
 

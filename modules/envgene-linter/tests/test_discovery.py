@@ -109,3 +109,6 @@ def test_place8_entities_are_separate_from_name2_entities(repo):
     assert [item.path for item in index.resource_profiles if item.path == profile] == [profile]
     assert [item.path for item in index.credential_files] == [credential]
     assert not {profile, credential} & {item.path for item in index.named_entities}
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

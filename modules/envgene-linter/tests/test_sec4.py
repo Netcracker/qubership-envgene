@@ -192,3 +192,6 @@ def test_multiple_user_aliases_compare_only_against_password(repo):
 def test_names_ignore_case_but_ids_do_not(repo):
     setup(repo, {'db_User': ref('username', 'Example'), 'DB_PASSWORD': ref('password', 'example')}, definitions={})
     assert len(findings(repo)) == 1
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

@@ -51,6 +51,15 @@ Findings include a location, rule identifier and message. Security findings
 avoid displaying secret values. Review reports before sharing them: paths and
 other configuration information may still be sensitive.
 
+## Rule configuration
+
+Package builders can set each rule to `True` or `False` in
+`src/envgene_linter/rule_config.py` before rebuilding. The current source disables
+NAME-1, NAME-3 and NAME-4; other implemented rules are enabled. Installed packages
+use the configuration included in their build. There is no repository-level
+configuration file or CLI override. Disabled rules do not run and are listed as
+disabled in terminal and HTML reports. Invalid flags cause exit code `2`.
+
 ## Exit status
 
 Exit code `0` means the check completed, even when findings were reported.

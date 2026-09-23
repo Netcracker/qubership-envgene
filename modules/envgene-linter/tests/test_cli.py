@@ -1,3 +1,5 @@
+import pytest
+
 from click.testing import CliRunner
 
 from envgene_linter.cli import main
@@ -439,3 +441,6 @@ def test_sec5_reviews_generated_plaintext_without_disclosing_it(repo):
     for output in (result.output, html):
         assert 'private-identifier' not in output
         assert 'synthetic-private-secret' not in output
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

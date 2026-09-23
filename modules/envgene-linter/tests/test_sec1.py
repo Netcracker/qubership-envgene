@@ -163,3 +163,6 @@ def test_engine_and_cli_report_integration(repo):
     html = (repo.root / 'envgene-linter-report.html').read_text()
     assert 'SEC-1: No literal secrets in parameters' in html
     assert SECRET not in html
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

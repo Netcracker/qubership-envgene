@@ -1,3 +1,5 @@
+import pytest
+
 from envgene_linter.connections import Connections, compute_connections
 from envgene_linter.discovery import build_index
 from envgene_linter.engine import run_check
@@ -311,3 +313,6 @@ def test_unbound_jinja_alias_cannot_suppress_selected_parameter_records(repo):
     assert len(engine_name1) == 1
     assert {location.path for location in engine_name1[0].locations} == {service}
     assert [(item.path, item.key) for item in engine_place8] == [(empty, "empty-deploy")]
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

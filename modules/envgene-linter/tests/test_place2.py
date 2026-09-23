@@ -1,3 +1,5 @@
+import pytest
+
 from envgene_linter.discovery import build_index
 from envgene_linter.effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
 from envgene_linter.engine import run_check
@@ -92,3 +94,6 @@ def test_restated_env_key_is_place2_not_place1(repo):
     place1 = [item for item in result.findings if item.rule == "PLACE-1" and item.key == "LOG_LEVEL"]
     assert len(place2) == 2
     assert place1 == []
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

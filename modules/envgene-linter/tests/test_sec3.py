@@ -152,3 +152,6 @@ def test_external_cloud_not_read(repo, tmp_path):
 def test_quoted_credential_text_inside_other_macro_is_not_reference(repo):
     paramset(repo, '${"creds.get(example)"}')
     assert findings(repo) == []
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

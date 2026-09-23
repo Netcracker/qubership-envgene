@@ -1,3 +1,5 @@
+import pytest
+
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -365,3 +367,6 @@ def test_console_and_html_place10_catalog_order_and_warning_fix(repo):
     assert "NAME-1:" not in body
     assert "chip-warning" in body
     assert "chip-fix" in body
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

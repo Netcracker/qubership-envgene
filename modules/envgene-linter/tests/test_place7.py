@@ -268,3 +268,6 @@ def test_unresolved_name_in_multiple_categories_is_silent(repo):
         technical={"cloud": ["missing"]},
     )
     assert _place7(repo) == []
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

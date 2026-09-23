@@ -1,3 +1,5 @@
+import pytest
+
 from pathlib import Path
 
 from envgene_linter.connections import compute_connections
@@ -271,3 +273,6 @@ def test_direct_check_matches_engine_and_findings_are_sorted(repo):
     assert [(finding.path.as_posix(), finding.key, finding.line) for finding in direct] == sorted(
         (finding.path.as_posix(), finding.key, finding.line) for finding in direct
     )
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

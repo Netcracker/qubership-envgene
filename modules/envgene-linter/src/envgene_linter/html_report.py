@@ -148,10 +148,13 @@ def _card(item: Finding, root: Path) -> list[str]:
     return parts
 
 
-def render_html(findings: list[Finding], root: Path) -> str:
+def render_html(
+    findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = ()
+) -> str:
     by_rule: dict[str, list[Finding]] = defaultdict(list)
     for item in findings:
-        by_rule[item.rule].append(item)
+        if item.rule not in disabled_rules:
+            by_rule[item.rule].append(item)
     parts = [
         "<!DOCTYPE html>",
         '<html lang="en">',
@@ -163,8 +166,14 @@ def render_html(findings: list[Finding], root: Path) -> str:
         "<body>",
         "<h1>Envgene Linter Report</h1>",
     ]
-    if not findings:
-        parts.append("<p>No findings</p>")
+    if disabled_rules:
+        labels = ", ".join(html.escape(rule) for rule in sorted(disabled_rules, key=_rule_sort_key))
+        parts.append(f'<p class="disabled-rules">Disabled rules: {labels}</p>')
+    if not by_rule:
+        if set(RULE_ORDER).issubset(disabled_rules):
+            parts.append("<p>No rules enabled</p>")
+        else:
+            parts.append("<p>No findings</p>")
     else:
         for rule in sorted(by_rule, key=_rule_sort_key):
             meta = RULES.get(rule)

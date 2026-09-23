@@ -1,3 +1,5 @@
+import pytest
+
 from envgene_linter.engine import run_check
 
 
@@ -74,3 +76,6 @@ def test_place8_not_ok(testdata):
 
 def test_place8_ok(testdata):
     assert not [f for f in run_check(testdata / "place8/ok").findings if f.rule == "PLACE-8"]
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")

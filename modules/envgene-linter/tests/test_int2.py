@@ -320,3 +320,6 @@ def test_unsafe_paramset_target_is_unknown(repo, tmp_path):
     alias.parent.mkdir(parents=True)
     alias.symlink_to(external)
     assert_kind(findings(repo), 'unknown')
+
+
+pytestmark = pytest.mark.usefixtures("all_rules_enabled")
