@@ -106,7 +106,7 @@ python -m pip install --no-cache-dir qubership-envgene-linter==0.0.1
 envgene-linter --help
 ```
 
-Official reference: https://packaging.python.org/en/latest/tutorials/packaging-projects/
+Official reference: [Packaging Python Projects](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
 
 ## Local verification on 2026-09-22
 

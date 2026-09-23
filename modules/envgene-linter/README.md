@@ -170,8 +170,8 @@ Each link opens the current processing algorithm. The descriptions below summari
 | [PLACE-2](docs/algorithms/place2.md) | An environment or cluster repeats an inherited value | Warning / Fix |
 | [PLACE-3](docs/algorithms/place3.md) | A selected Cloud Passport is outside the cluster layer | Warning / Fix |
 | [PLACE-4](docs/algorithms/place4.md) | Cloud Passport contract keys occur in selected ParameterSets | Warning / Fix |
-| [PLACE-6](docs/algorithms/place6.md) | Connected pipeline/E2E ParameterSets bind to a target other than Cloud | Warning / Fix |
-| [PLACE-7](docs/algorithms/place7.md) | A connected ParameterSet reference is shared across deploy, E2E or technical categories in an environment | Warning / Fix |
+| [PLACE-6](docs/algorithms/place6.md) | Connected pipeline and end-to-end ParameterSets bind to a target other than Cloud | Warning / Fix |
+| [PLACE-7](docs/algorithms/place7.md) | A connected ParameterSet reference is shared across deploy, end-to-end, or technical categories in an environment | Warning / Fix |
 | [PLACE-8](docs/algorithms/place8.md) | Connected or used ParameterSets, resource profiles or credentials are empty | Information / Review |
 | [PLACE-9](docs/algorithms/place9.md) | Used passport ambiguity, multiple passports per cluster role, and passport/companion placement | Warning / Fix |
 | [PLACE-10](docs/algorithms/place10.md) | Connected entities are outside their type's required directory | Warning / Fix |
@@ -206,13 +206,13 @@ SEC-1 uses explicit secret-name suffixes (such as `password`, `token` and `api_k
 
 ### SEC-3 runtime parameters
 
-SEC-3 reports direct `${creds.get(...)}` calls and structured `$type: credRef` references in `technicalConfigurationParameters`, including nested values. It also checks ParameterSets selected through `envSpecificTechnicalParamsets`. Parameter names do not affect this check. Deploy/E2E-only inputs are excluded. Move the secret to deployment parameters while retaining its Credential reference; see the [SEC-3 algorithm](docs/algorithms/sec3.md).
+SEC-3 reports direct `${creds.get(...)}` calls and structured `$type: credRef` references in `technicalConfigurationParameters`, including nested values. It also checks ParameterSets selected through `envSpecificTechnicalParamsets`. Parameter names do not affect this check. Deploy and end-to-end inputs are excluded. Move the secret to deployment parameters while retaining its Credential reference; see the [SEC-3 algorithm](docs/algorithms/sec3.md).
 
 ### SEC-4 Credential pair references
 
 SEC-4 identifies sibling user/password parameters with a matching prefix and compares the Credential IDs in their references. Supported user endings are `LOGIN`, `USERNAME`, `USER`, `USER_NAME`; password endings are `PASSWORD`, `PASSWD`, `PASS`, `PWD`. Names support case normalization, camelCase, underscores and dots. Different IDs produce Information / Review at both parameters; equal IDs pass without inspecting Credential definitions.
 
-Pairs remain within one mapping. A lone parameter, literal counterpart or unparseable reference does not produce an ID mismatch. `USER` / `TOKEN`, `CLIENT_ID` / `CLIENT_SECRET` and `accessKey` / `accessSecret` are not included. Messages omit Credential IDs and secret values. See [SEC-4](docs/algorithms/sec4.md).
+Pairs remain within one mapping. A lone parameter, literal counterpart or unparsable reference does not produce an ID mismatch. `USER` / `TOKEN`, `CLIENT_ID` / `CLIENT_SECRET` and `accessKey` / `accessSecret` are not included. Messages omit Credential IDs and secret values. See [SEC-4](docs/algorithms/sec4.md).
 
 ### SEC-5 secret-protection review
 
@@ -230,7 +230,7 @@ Generated environment Credentials are authoritative when present. Without that c
 
 Checks apply only to entities with supported evidence of use:
 
-- ParameterSets referenced through local deploy, E2E or technical bindings.
+- ParameterSets referenced through local deploy, end-to-end, or technical bindings.
 - Cloud Passports selected explicitly or by supported automatic lookup.
 - Resource profiles, shared credentials and Shared Template Variables selected through supported bindings.
 - Known fixed-path inventory-generation credentials and used passport credential companions, for the applicable rules.
