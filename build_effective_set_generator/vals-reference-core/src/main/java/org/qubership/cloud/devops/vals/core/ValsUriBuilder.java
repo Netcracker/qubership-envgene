@@ -36,6 +36,7 @@ public class ValsUriBuilder {
         SecretStoreType type = store.getType();
         String baseUri = switch (type) {
             case vault -> "ref+vault://" + store.getMountPath() + "/" + normalizedSecretName;
+            case openbao -> "ref+openbao://" + store.getMountPath() + "/" + normalizedSecretName;
             case azure -> "ref+azurekeyvault://" + store.getVaultName() + "/" + normalizedSecretName;
             case aws -> "ref+awssecrets://" + normalizedSecretName + "?region=" + store.getRegion();
             case gcp -> "ref+gcpsecrets://" + store.getProjectId() + "/" + normalizedSecretName;

@@ -249,6 +249,18 @@ Feature: External Credentials Management
     And the pipeline step "generate_effective_set" has status "FAILED"
     And the pipeline log shows "not found in secret file for credential"
 
+# why: EC-D-11 VALS multi-field openbao credential — each leaf is a ref+openbao://…#/<property> string
+  Scenario: UC-EC-D-11: helm-values multi-field credential emits openbao VALS references with property fragments
+    Given the workspace is initialized with test data from "e2e/uc_ec_d_11_openbao"
+    And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
+    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
+    And the environment AppDefs and RegDefs paths are resolved for the deploy
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the effective set deployment parameters contain "DB_ADMIN_USER: ref+openbao://secret/test-cluster/test-env/db/app-db-cred#/username"
+    And the effective set deployment parameters contain "DB_ADMIN_PASSWORD: ref+openbao://secret/test-cluster/test-env/db/app-db-cred#/password"
+
 #===================================================================================
 #Group CTX — external-credential context file (stage: generate_effective_set)
 #Feature: External Credentials - deployment effective-set references
