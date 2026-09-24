@@ -41,7 +41,6 @@ _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
     "gcp": {
         "PUB_REG_PROJECT": "gcpRegProject",
         "PUB_REG_SA_EMAIL": "gcpRegSAEmail",
-        "PUB_REG_REGION": "gcpRegion",
     },
 }
 
