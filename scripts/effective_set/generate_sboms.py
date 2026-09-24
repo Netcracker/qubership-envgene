@@ -9,7 +9,7 @@ from sbom_generator.generate_bom import Generator, SBOMOutput, exclude_resolved_
 
 
 
-def generate_sboms(deploy_plan) -> None:
+def generate_sboms(deploy_plan, ctx=None) -> None:
     work_dir = getenv_with_error('CI_PROJECT_DIR')
     app_sboms_path = get_sboms_dir(work_dir)
 
@@ -23,7 +23,7 @@ def generate_sboms(deploy_plan) -> None:
         return
 
     deploy_plan.entities = apps_needing_sbom
-    dd_artifacts, _ = download_dd_and_zip_artifacts([app.version for app in apps_needing_sbom])
+    dd_artifacts, _ = download_dd_and_zip_artifacts([app.version for app in apps_needing_sbom], ctx=ctx)
     sbom_and_regs: SBOMOutput = Generator.generate_bom_by_content(
         sd_content=deploy_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path)
 

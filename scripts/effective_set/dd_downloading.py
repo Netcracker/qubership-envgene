@@ -19,9 +19,9 @@ def _replace_extension(url: str, new_extension: str) -> str:
 
 
 async def resolve_dd_and_zip_info(appver: str, app_artifacts_dir: str, env_creds: dict,
-                                   plugins: PluginEngine) -> tuple[ArtifactDownload, ArtifactDownload]:
+                                   plugins: PluginEngine, ctx=None) -> tuple[ArtifactDownload, ArtifactDownload]:
     app_name, version = get_version(appver)
-    app_def = get_appdef_for_app(appver, plugins)
+    app_def = get_appdef_for_app(appver, plugins, ctx=ctx)
     auth_headers = app_def.registry.resolve_auth(env_creds)
 
     dd_source = await artifact.check_artifact_async(app_def, FileExtension.JSON, version, auth_headers=auth_headers)
@@ -37,14 +37,14 @@ async def resolve_dd_and_zip_info(appver: str, app_artifacts_dir: str, env_creds
     return dd_artifact, zip_artifact
 
 
-def resolve_artifacts(app_versions: list[str]) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
+def resolve_artifacts(app_versions: list[str], ctx=None) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
     env_creds = helper.get_cred_config()
     app_artifacts_dir = get_app_artifacts_dir()
     app_def_getter_plugins = PluginEngine(plugins_dir=APP_DEF_GETTER_PLUGINS_DIR)
 
     async def _gather() -> list[tuple[ArtifactDownload, ArtifactDownload]]:
         return await asyncio.gather(*(
-            resolve_dd_and_zip_info(appver, app_artifacts_dir, env_creds, app_def_getter_plugins)
+            resolve_dd_and_zip_info(appver, app_artifacts_dir, env_creds, app_def_getter_plugins, ctx=ctx)
             for appver in app_versions
         ))
 
@@ -89,8 +89,8 @@ async def _download_dd_required_zips_optional(
     return await _download_zips(zip_artifacts)
 
 
-def download_dd_and_zip_artifacts(app_versions: list[str]) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
-    dd_artifacts, zip_artifacts = resolve_artifacts(app_versions)
+def download_dd_and_zip_artifacts(app_versions: list[str], ctx=None) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
+    dd_artifacts, zip_artifacts = resolve_artifacts(app_versions, ctx=ctx)
     logger.info(
         f"Start downloading {len(dd_artifacts)} DD artifacts "
         f"(and up to {len(zip_artifacts)} optional zip sidecars)")

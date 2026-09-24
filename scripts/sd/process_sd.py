@@ -124,7 +124,7 @@ def handle_sd(handler: PipelineParametersHandler):
         if load_json_or_yaml(sd_source):
             extract_sds_from_content(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
         else:
-            download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
+            download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode, ctx=handler)
     except Exception as e:
         raise ValueError("SD_VERSION or SD_DATA must be set either appver or json/yaml") from e
 
@@ -182,7 +182,7 @@ def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Pa
             merge_sd(sd_path, full_sd_from_pipe, selected_merge_function)
 
 
-def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions, effective_merge_mode: MergeType):
+def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions, effective_merge_mode: MergeType, ctx=None):
     app_versions = app_versions.replace("\\n", "\n")
     app_entries = split_multi_value_param(app_versions)
     if not app_entries:
@@ -194,7 +194,7 @@ def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app
         source_name, version = get_version(entry)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, ctx=ctx)
 
         app_data_list.append(app_data)
 
@@ -202,8 +202,8 @@ def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app
     extract_sds_from_content(namespace_by_deploy_postfix, base_sd_path, app_data, effective_merge_mode)
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins)
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, ctx=None) -> dict[str, object]:
+    app_def = get_appdef_for_app(f"{app_name}:{version}", plugins, ctx=ctx)
 
     env_creds = helper.get_cred_config()
     auth_headers = app_def.registry.resolve_auth(env_creds)
@@ -215,9 +215,9 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     return artifact.download_json_content(artifact_info.source_url, auth_headers=auth_headers)
 
 
-def get_appdef_for_app(appver: str, plugins: PluginEngine) -> artifact_models.Application:
+def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx=None) -> artifact_models.Application:
     app_name, _ = get_version(appver)
-    results = plugins.run(appver=appver)
+    results = plugins.run(appver=appver, ctx=ctx)
     for result in results:
         if result is not None:
             return result
