@@ -258,7 +258,7 @@ def create_credentials(envDir, envInstancesDir, instancesDir, is_external_cred_e
     if check_file_exists(bgdFileName):
         bgd_yaml = openYaml(bgdFileName)
         bgd_name = bgd_yaml["name"]
-        mergeResult = mergeCreds(get_bg_domain_creds(bgd_yaml, bgd_name), resultingCreds)
+        mergeResult = mergeCreds(get_bg_domain_creds(bgd_yaml, bgd_name, is_external_cred_env, external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added from bg domain {bgdFileName}')
         resultingCreds = mergeResult["mergedCreds"]
     else:

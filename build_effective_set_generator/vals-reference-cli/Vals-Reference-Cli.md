@@ -46,7 +46,7 @@ The tool accepts configuration input either via standard input (stdin) or by spe
 |------------------|----------|-------------------------------------------------------------------|
 | `credentialId`   | yes      | Unique credential identifier                                      |
 | `credential`     | yes      | [Credential](/docs/features/external-creds.md#credential)         |
-| `secretStore`    | yes      | Secret store details corresponding to the given credential [Secret Store](/docs/features/external-creds.md#secret-store) |
+| `secretStore`    | yes      | Secret store details corresponding to the given credential        |
 
 ## Output
 

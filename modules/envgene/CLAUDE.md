@@ -5,7 +5,7 @@ Pip-installable package (`envgenehelper`, v0.0.1 — version is a setuptools for
 ## Module Reference
 
 | File | Responsibility |
-|------|---------------|
+| ------ | --------------- |
 | `yaml_helper.py` | All YAML I/O (ruyaml), deep merge with comment preservation, schema-ordered sort (`sortYaml` → `jschon_tools.process_json_doc`, an external pip dependency in this branch, not a local package), JSON schema validation (`validate_yaml_by_scheme_or_fail`) |
 | `business_helper.py` | Env directory navigation (`find_env_instances_dir`, `get_current_env_dir_from_env_vars`), `env_definition.yml` read/write, `NamespaceFile` / `NamespaceRole`, cloud passport lookup, BG domain helpers |
 | `creds_helper.py` | Credential macro detection (`check_is_cred`), macro expansion (`expand_cred_macro_and_return_value`), credential YAML merging, `validate_creds` |
@@ -30,8 +30,9 @@ Pip-installable package (`envgenehelper`, v0.0.1 — version is a setuptools for
 ## Important Conventions
 
 - `envgeneNullValue` (case-insensitive) is the sentinel for mandatory-but-unset values; `is_envgenenullvalue()` checks it.
-- `ruyaml` is used everywhere (not PyYAML) — it preserves comments and round-trips safely. YAML null is rendered as `"null"` string; the thread-local processor and `jschon.create_catalog('2020-12')` call are defined in `envgene_shared.utils.yaml_utils` and re-exported by `yaml_helper.py`.
-- Credential file conventions (`UNENCRYPTED_REGEX_STR`, `is_cred_file`) live in `envgene_shared.utils.constants` / `envgene_shared.utils.file_utils` — see `modules/envgene-shared/CLAUDE.md`.
+- `ruyaml` is used everywhere (not PyYAML) — it preserves comments and round-trips safely.
+- YAML null is rendered as `"null"` string (processor configured that way).
+- The thread-local processor and `jschon.create_catalog('2020-12')` call are defined in `envgene_shared.utils.yaml_utils`  is called at module import time.
 
 ## Tests
 

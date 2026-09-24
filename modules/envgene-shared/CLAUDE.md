@@ -7,7 +7,7 @@ Pip-installable package (`envgene_shared` — version is a setuptools formality,
 ### `crypto/`
 
 | File | Responsibility |
-|------|---------------|
+| ------ | --------------- |
 | `crypt.py` | Encrypt/decrypt entry points: `encrypt_file`, `decrypt_file`; batch ops: `encrypt_all_cred_files_for_env`, `decrypt_all_cred_files_for_env`; `is_encrypted`, `detect_crypt_backend_from_file`, `get_all_necessary_cred_files` (respects `ENV_NAMES` for scoped discovery) |
 | `fernet_handler.py` | AES-256 Fernet: `crypt_Fernet`, `is_encrypted_Fernet`, `_reuse_old_fernet_tokens` for minimize-diff |
 | `sops_handler.py` | SOPS/AGE via subprocess: `crypt_SOPS`, `is_encrypted_SOPS`, `_sops_edit` trick for minimize-diff |
@@ -15,7 +15,7 @@ Pip-installable package (`envgene_shared` — version is a setuptools formality,
 ### `utils/`
 
 | File | Responsibility |
-|------|---------------|
+| ------ | --------------- |
 | `constants.py` | Crypto and file-detection constants: `FERNET_STR`, `UNENCRYPTED_REGEX_STR` (`"^type$"` — the `type` field is never encrypted), `VALID_EXTENSIONS`, `TARGET_REGEX`, `FERNET_ID`, `SOPS_ID` |
 | `crypt_utils.py` | `get_crypt()`, `get_crypt_backend()` (reads `configuration/config.yml`), `validate_crypto_requirements`, `is_empty_cred_file`, `is_effective_set_cred_file`, `analyze_cred_file` |
 | `file_utils.py` | `check_file_exists`, `getRelPath`, `get_files_with_filter`, `is_cred_file` (credential file detection by name/path pattern), `writeToFile` |
