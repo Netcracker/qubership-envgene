@@ -40,7 +40,7 @@ def create_artifact_path(app: Application, version: str, repo: str = "",
     group_id = app.group_id.replace(".", "/")
     folder = version if use_exact_version_folder else version_to_folder_name(version)
 
-    # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
+    # Empty repo: AWS/GCP without target repos, repositoryDomainName already contains full path
     if repo:
         path = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
     else:
@@ -298,17 +298,17 @@ def _is_cloud_provider(registry) -> bool:
 
 # TODO: delete after models are refactored to use polymorphism
 def get_repos(registry) -> list[Repo]:
-    """V2 cloud providers: use empty repo (domain already contains full path).
-    V1/Nexus/Artifactory: use target fields."""
-    if _is_cloud_provider(registry):
-        return [Repo(value="", type=RepoType.REPOSITORY_NAME)]
+    """Use target fields; V2 cloud providers use only set ones, or empty repo if none (domain contains full path)."""
     maven = registry.maven_config
-    return [
+    repos = [
         Repo(value=maven.target_snapshot, type=RepoType.TARGET_SNAPSHOT),
         Repo(value=maven.target_staging, type=RepoType.TARGET_STAGING),
         Repo(value=maven.target_release, type=RepoType.TARGET_RELEASE),
         Repo(value=maven.snapshot_group, type=RepoType.SNAPSHOT_GROUP),
     ]
+    if _is_cloud_provider(registry):
+        return [repo for repo in repos if repo.value] or [Repo(value="", type=RepoType.REPOSITORY_NAME)]
+    return repos
 
 
 def get_repo_pointer(repo_value: str, registry) -> Optional[RepoType]:
@@ -397,9 +397,6 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
     # Single repo: no parallelism
     if len(repos) == 1:
         repo = repos[0]
-        if not repo.value and repo.type != RepoType.REPOSITORY_NAME:
-            logger.warning(f"[Registry: {app.registry.name}] - {repo.type.value} is not configured")
-            return None
         domain = app.registry.maven_config.repository_domain_name
         repo_url = domain if not repo.value else domain.rstrip('/') + '/' + repo.value
         url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
