@@ -7,7 +7,7 @@ EnvGene is a Git-native tool that generates and versions cloud environment confi
 This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipeline/orchestrator.py::dispatch`), not as separate per-job Docker images/scripts. `dispatch()` runs `run_single_env_pipeline()` for one `ENV_NAMES` value, or fans out to parallel child processes via `multi_env_runner.fan_out()` when `ENV_NAMES` lists multiple environments. Most job logic lives under `scripts/`.
 
 | Directory | Purpose |
-|-----------|---------|
+| ----------- | --------- |
 | `scripts/` | Single-job pipeline: `pipeline/` (orchestrator + params), `build_env/`, `cloud_passport/`, `creds_rotation/`, `effective_set/`, `bg_manage/`, `inventory/`, `sd/`, `build_template/`, `utils/`, `tests/`, `git_commit/` (`git_commit.py`, `minimize_cred_diffs.py`); also `report.py` (moved here from `build_envgene/scripts/`) |
 | `modules/envgene/` | `envgenehelper` pip package — core Python library shared by all modules |
 | `modules/artifact-searcher/` | `artifact_searcher` pip package — async Maven artifact URL resolver (multi-cloud auth) |
