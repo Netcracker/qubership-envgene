@@ -79,7 +79,7 @@ def find_env_deployer_definition(env_name, instances_dir) -> Path | None:
     return None
 
 
-def get_deployer_config():
+def get_deployer_config(*_args, **_kwargs):
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
