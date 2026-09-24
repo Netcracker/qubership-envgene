@@ -1,0 +1,12 @@
+- wave: 0
+  version: app-core:1.0.0
+  deployPostfix: dev-1-core
+  namespace: dev-1-core
+- wave: 0
+  version: app-oss:1.0.0
+  deployPostfix: dev-1-oss
+  namespace: dev-1-oss
+- wave: 0
+  version: app-bss:1.0.0
+  deployPostfix: dev-1-bss
+  namespace: dev-1-bss
