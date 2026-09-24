@@ -4,6 +4,9 @@ The initial alpha release is `0.0.1`. Its PyPI development-status classifier is
 Alpha; the version itself is a normal release version, not a PEP 440 prerelease
 such as `0.0.1a1`.
 
+For installation and use without publication, follow
+[Build and run locally](/modules/envgene-linter/docs/local-build.md).
+
 ## Files to keep together
 
 The project is already a standalone package. Copy these files if preparing a

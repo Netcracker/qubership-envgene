@@ -320,6 +320,10 @@ The report path and diagnostics go to `lint-diagnostics.txt`. Output files are o
 
 ## Development and further documentation
 
+To install the current checkout or build and run a wheel without publishing it, follow
+[Build and run locally](/modules/envgene-linter/docs/local-build.md).
+For PyPI publication, see [Releasing EnvGene Linter](/modules/envgene-linter/docs/releasing.md).
+
 For development, clone the EnvGene repository and activate a virtual environment.
 From the EnvGene repository root, install the linter with test dependencies:
 
