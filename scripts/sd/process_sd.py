@@ -217,7 +217,11 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, ct
 
 def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx=None) -> artifact_models.Application:
     app_name, _ = get_version(appver)
-    results = plugins.run(appver=appver, ctx=ctx)
+    try:
+        results = plugins.run(appver=appver, ctx=ctx)
+    except Exception as e:
+        logger.warning(f"AppDef plugin lookup failed for {app_name}, falling back to local files: {e}")
+        results = []
     for result in results:
         if result is not None:
             return result
