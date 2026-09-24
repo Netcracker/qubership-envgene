@@ -109,6 +109,12 @@ Hidden definitions participate in INT-3 locations without becoming selected cont
 Credential references here are shared filenames, not Credential IDs. ParameterSet conflicts describe the naming standard
 even when generation merges the files. Physical aliases are deduplicated before scopes are counted.
 
+## INT-4 usage analysis
+
+[INT-4](/modules/envgene-linter/docs/algorithms/int4.md) catalogs recognized unconnected authored entities separately.
+It uses scoped local reference evidence and reports remaining candidates as Information / Review with uncertainty reasons.
+This exception to connected-only analysis does not mutate Connections or expand inputs to other rules.
+
 ## PLACE-8 and reporting
 
 PLACE-8 keeps Information / Review for known empty selected or used files.
@@ -117,13 +123,13 @@ Known fixed-path credentials may be absent without a finding; the generator uses
 a default then. Alias matching and ambiguous first buckets retain PLACE-8's existing
 behavior. PLACE-10 follows PLACE-9; SEC-1 follows PLACE-10; SEC-3 follows SEC-1;
 SEC-4 follows SEC-3, SEC-5 follows SEC-4, and INT-2 follows SEC-5.
-INT-3 follows INT-2 and precedes NAME-1. The console has nineteen rule headers.
+INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. The console has twenty rule headers.
 There are no new CLI flags, other severity changes, autofix, or network calls.
 
 ## Examples
 
-An unreferenced `parameters/unused.yml` is silent even if its name is wrong or its
-keys would otherwise trigger NAME-1/2 or PLACE-4. Adding a binding to its exact stem
+An unreferenced `parameters/unused.yml` remains silent for NAME-1/2 and PLACE-4.
+INT-4 can report it independently as a candidate for review. Adding a binding to its exact stem
 makes the physical file eligible for the appropriate checks.
 
 In two clusters, `service-deploy.yml` used as deploy in the first cluster and e2e

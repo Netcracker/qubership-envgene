@@ -6,7 +6,10 @@ Use `--console` to also print findings in the terminal.
 
 See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes and migration instructions.
 
-The linter checks files selected by supported local references or known generator usage. It does not generate environments, render Jinja templates or automatically fix configuration files. Checks run locally without network calls.
+The linter checks files selected by supported local references or known generator usage.
+INT-4 also examines recognized unconnected authored entities for review.
+The linter does not generate environments, render Jinja templates, or automatically fix configuration files.
+Checks run locally without network calls.
 
 ## Contents
 
@@ -132,7 +135,7 @@ All implemented rules run on each check. There are currently no CLI options for 
 
 ## Reading findings
 
-With `--console`, the terminal report groups findings by rule and prints all 19 rule headings.
+With `--console`, the terminal report groups findings by rule and prints all 20 rule headings.
 An enabled rule without findings shows `No findings`. Disabled rules show `Disabled`.
 
 Each finding contains one or more `path:line:column` locations, followed by its severity, a description and a suggested action. Line and column numbers start at 1. File-level checks use `1:1`, which does not mean that the first YAML key is invalid.
@@ -189,6 +192,7 @@ Each link opens the current processing algorithm. The descriptions below summari
 | [SEC-5](docs/algorithms/sec5.md) | Protection of connected secret candidates, supported references and selected Credential sources | Information / Review |
 | [INT-2](docs/algorithms/int2.md) | Every supported connected reference resolves to an object in its applicable context | Warning / Fix or Information / Review |
 | [INT-3](/modules/envgene-linter/docs/algorithms/int3.md) | A used reference name is defined at multiple environment, cluster, or repository scopes | Warning / Fix |
+| [INT-4](/modules/envgene-linter/docs/algorithms/int4.md) | No reference to a recognized authored entity was found in available local sources | Information / Review |
 | [NAME-2](docs/algorithms/name2.md) | A selected entity's filename stem differs from its `name` field | Warning / Fix |
 
 PLACE-5 and other rules not listed above are not implemented.
@@ -235,6 +239,14 @@ INT-2 checks connected Credential, ParameterSet and Resource Profile references.
 
 Generated environment Credentials are authoritative when present. Without that catalog, connected shared/passport inputs can establish that an ID exists, but an absent ID remains unknown because generation may provide it. ParameterSet layers merge deterministically rather than becoming ambiguous. Template-supplied ParameterSets and profiles remain unknown when their context is unavailable. Resource Profile overrides follow directory priority; multiple physical matches within the selected directory are ambiguous. INT-2 uses local inputs without fetching templates, rendering Jinja or decrypting values. See [INT-2](docs/algorithms/int2.md).
 
+### INT-4 candidates for review
+
+INT-4 checks authored ParameterSets, Shared Template Variable files, Resource Profile Overrides, and individual
+Credential entries. It reports candidates with no observed reference as Information / Review and explains uncertainty.
+System consumers and local generated objects can establish references. External templates and rendered references
+are not fully analyzed, so a finding does not prove that removal is safe. No automatic deletion is performed.
+See the [INT-4 algorithm](/modules/envgene-linter/docs/algorithms/int4.md) for coverage and exclusions.
+
 ### INT-3 definitions at multiple scopes
 
 INT-3 reports used ParameterSet, shared Credential file, Shared Template Variable, and Resource Profile Override names
@@ -248,7 +260,7 @@ See the [INT-3 algorithm](/modules/envgene-linter/docs/algorithms/int3.md) for l
 
 ## What is checked
 
-Checks apply only to entities with supported evidence of use:
+Except for INT-4, checks apply only to entities with supported evidence of use:
 
 - ParameterSets referenced through local deploy, end-to-end, or technical bindings.
 - Cloud Passports selected explicitly or by supported automatic lookup.
@@ -257,8 +269,10 @@ Checks apply only to entities with supported evidence of use:
 - Artifact Definitions selected through supported artifact selectors.
 - Security sources used by SEC-5 and applicable INT-2 references: generated environment Credentials; selected passport and deployer companions; bound system integration, root-credentials, active legacy registry and selected artifact-registry Credential references.
 
-Unreferenced names do not produce findings. Discovery can still encounter unused files and emit skip notes.
+Except for INT-4, unreferenced names do not produce findings.
+Discovery can still encounter unused files and emit skip notes.
 INT-3 includes definitions hidden by a used reference's lookup, without adding them to other rules' inputs.
+INT-4 catalogs recognized unconnected authored entities separately to review their references.
 PLACE-9 also diagnoses an ambiguous **used passport lookup** even when it cannot choose one file.
 
 Current limitations:

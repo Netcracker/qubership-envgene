@@ -39,6 +39,8 @@ class SecurityInputs:
     sources: list[SecuritySource] = field(default_factory=list)
     bags: list[SecurityBag] = field(default_factory=list)
     issues: list[SecurityIssue] = field(default_factory=list)
+    # Optional provenance for consumers that impose stricter logical-path guards.
+    logical_paths: dict[Path, set[Path]] = field(default_factory=dict)
 
 
 _UNSAFE = object()
@@ -105,11 +107,20 @@ def _issue(inputs: SecurityInputs, path: Path, prefix: tuple = ()) -> None:
     _append_unique(inputs.issues, SecurityIssue(path, prefix))
 
 
+def _remember_path(inputs: SecurityInputs, physical: Path, logical: Path) -> None:
+    if physical == logical and physical in inputs.logical_paths:
+        return
+    inputs.logical_paths.setdefault(physical, set()).add(logical)
+
+
 def _catalog(
     index: RepoIndex,
     candidate: Path,
+    inputs: SecurityInputs,
 ) -> Path | None:
     selected = _safe_file(index, candidate)
+    if isinstance(selected, Path):
+        _remember_path(inputs, selected, candidate)
     return selected if isinstance(selected, Path) else None
 
 
@@ -125,6 +136,8 @@ def _add_source(
     selected = _safe_file(index, candidate)
     if selected is None:
         return None
+    if isinstance(selected, Path):
+        _remember_path(inputs, selected, candidate)
     if selected is _UNSAFE or _read(selected) is _UNSAFE:
         _issue(inputs, issue_path or candidate.absolute())
         return None
@@ -162,6 +175,7 @@ def _parameter_set_bags(
         if selected is _UNSAFE or selected is None:
             _issue(inputs, candidate)
             continue
+        _remember_path(inputs, selected, candidate)
         doc = _read(selected)
         if doc is _UNSAFE:
             _issue(inputs, selected)
@@ -255,6 +269,7 @@ def _parameter_object_bags(
         if selected is _UNSAFE:
             _issue(inputs, candidate.absolute())
             continue
+        _remember_path(inputs, selected, candidate)
         doc = _read(selected)
         if doc is _UNSAFE or not isinstance(doc, dict):
             _issue(inputs, selected)
@@ -310,6 +325,7 @@ def _passport_bags(
         if selected is _UNSAFE or selected is None:
             _issue(inputs, record.path)
             continue
+        _remember_path(inputs, selected, record.path)
         companion = _passport_companion(index, record.path, environment, inputs)
         if record.is_jinja or record.error or _read(selected) is _UNSAFE:
             _issue(inputs, selected)
@@ -319,10 +335,12 @@ def _passport_bags(
 
 def _root_catalog(
     index: RepoIndex,
+    inputs: SecurityInputs,
 ) -> Path | None:
     return _catalog(
         index,
         index.root / "configuration/credentials/credentials.yml",
+        inputs,
     )
 
 
@@ -334,6 +352,7 @@ def _integration_bags(index: RepoIndex, inputs: SecurityInputs) -> None:
     if selected is _UNSAFE:
         _issue(inputs, candidate.absolute())
         return
+    _remember_path(inputs, selected, candidate)
     doc = _read(selected)
     if doc is _UNSAFE or not isinstance(doc, dict):
         _issue(inputs, selected)
@@ -348,7 +367,7 @@ def _integration_bags(index: RepoIndex, inputs: SecurityInputs) -> None:
     )
     if not explicit_self_token and not active_discovery:
         return
-    catalog = _root_catalog(index)
+    catalog = _root_catalog(index, inputs)
     if explicit_self_token:
         _append_unique(
             inputs.bags,
@@ -382,6 +401,7 @@ def _artifact_definition_bags(
             if selected is _UNSAFE or selected is None:
                 _issue(inputs, candidate)
                 continue
+            _remember_path(inputs, selected, candidate)
             doc = _read(selected)
             if doc is _UNSAFE or not isinstance(doc, dict):
                 _issue(inputs, selected)
@@ -423,11 +443,12 @@ def _legacy_registry_bag(
     if selected is _UNSAFE or selected is None:
         _issue(inputs, consumer, prefix)
         return
+    _remember_path(inputs, selected, candidate)
     doc = _read(selected)
     if doc is _UNSAFE or not isinstance(doc, dict) or not isinstance(doc.get(registry_name), dict):
         _issue(inputs, consumer, prefix)
         return
-    catalog = _root_catalog(index)
+    catalog = _root_catalog(index, inputs)
     _append_unique(
         inputs.bags,
         SecurityBag(
@@ -467,6 +488,7 @@ def _first_deployer_definition(
 def _deployer_catalog(
     index: RepoIndex,
     definition: Path,
+    inputs: SecurityInputs,
 ) -> Path | None:
     candidates = (
         definition.parent / "deployer-creds.yml",
@@ -475,7 +497,7 @@ def _deployer_catalog(
     for candidate in candidates:
         if not _present(candidate):
             continue
-        return _catalog(index, candidate)
+        return _catalog(index, candidate, inputs)
     return None
 
 
@@ -526,7 +548,8 @@ def _deployer_bag(
     if logical_selected is None or physical_selected is None:
         _issue(inputs, consumer, prefix)
         return
-    catalog = _deployer_catalog(index, logical_selected)
+    _remember_path(inputs, physical_selected, logical_selected)
+    catalog = _deployer_catalog(index, logical_selected, inputs)
     _append_unique(
         inputs.bags,
         SecurityBag(
@@ -548,6 +571,7 @@ def _environment_system_bags(
         if selected is _UNSAFE or selected is None:
             _issue(inputs, definition.absolute())
             continue
+        _remember_path(inputs, selected, definition)
         doc = _read(selected)
         if doc is _UNSAFE or not isinstance(doc, dict):
             _issue(inputs, selected)
@@ -560,6 +584,8 @@ def collect_security_sources(index: RepoIndex, connections: Connections) -> Secu
     """Return connected whole sources, consumer bags and generic selection issues."""
 
     inputs = SecurityInputs()
+    for (_, physical), logical in connections.selected_aliases.items():
+        _remember_path(inputs, physical, logical)
     _collect_shared_sources(index, connections, inputs)
 
     catalogs: dict[str, Path | None] = {}

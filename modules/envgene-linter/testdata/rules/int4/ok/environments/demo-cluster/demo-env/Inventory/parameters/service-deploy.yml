@@ -1,0 +1,3 @@
+name: "service-deploy"
+parameters:
+  CREDENTIAL: "${creds.get(\"demo-credential\")}"

@@ -20,6 +20,7 @@ RULE_ENABLED: dict[str, bool] = {
     "SEC-5": True,
     "INT-2": True,
     "INT-3": True,
+    "INT-4": True,
     "NAME-1": False,
     "NAME-2": True,
     "NAME-3": False,

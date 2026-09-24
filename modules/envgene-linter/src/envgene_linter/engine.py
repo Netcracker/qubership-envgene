@@ -24,6 +24,7 @@ from .rules.sec4 import check as check_sec4
 from .rules.sec5 import check as check_sec5
 from .rules.int2 import check as check_int2
 from .rules.int3 import check as check_int3
+from .rules.int4 import check as check_int4
 from .rules.name1 import check as check_name1
 from .rules.name2 import check as check_name2
 from .rules.name3 import check as check_name3
@@ -63,6 +64,7 @@ def run_check(root: Path) -> CheckResult:
         ("SEC-5", check_sec5, (index, connections)),
         ("INT-2", check_int2, (index, connections)),
         ("INT-3", check_int3, (index, connections)),
+        ("INT-4", check_int4, (index, connections)),
         ("NAME-1", check_name1, (index, connections)),
         ("NAME-2", check_name2, (index, connections)),
         ("NAME-3", check_name3, (index, connections)),

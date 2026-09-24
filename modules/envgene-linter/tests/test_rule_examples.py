@@ -22,7 +22,15 @@ def test_rule_example(rule, case):
     repo = folder / case
     assert (repo / 'environments').is_dir()
     result = run_check(repo)
-    assert not result.skipped, result.skipped
+    if rule == 'PLACE-8':
+        # These examples deliberately contain empty authored entities. INT-4
+        # records why it cannot treat them as cleanup candidates.
+        assert set(result.skipped) == {
+            'INT-4: skipped unreadable or invalid ParameterSet candidate: environments/parameters/empty.yml',
+            'INT-4: skipped unreadable or invalid Resource Profile Override candidate: environments/resource_profiles/empty-profile.yml',
+        }
+    else:
+        assert not result.skipped, result.skipped
     findings = [f for f in result.findings if f.rule == rule]
     if rule == 'NAME-3':
         expected = {'env_definition.yml'} if case == 'ok' else {'env_definition.yml', 'Bad_Name.yml'}
