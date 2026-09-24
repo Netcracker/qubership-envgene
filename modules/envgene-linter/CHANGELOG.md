@@ -1,9 +1,18 @@
 # EnvGene Linter changelog
 
-- [0.0.2 (unreleased)](#002-unreleased)
+- [0.0.3](#003)
+- [0.0.2](#002)
 - [0.0.1](#001)
 
-## 0.0.2 (unreleased)
+## 0.0.3
+
+- Simplify installation to one pip command and show how to run a check and open the HTML report.
+- Include the complete changelog directly in the PyPI description, after the usage instructions.
+- Verify that both distribution archives contain the instructions and changelog in their descriptions.
+
+The CLI behavior and linter rules are unchanged from `0.0.2`.
+
+## 0.0.2
 
 - Allow `envgene-linter check` without a repository argument to check the current directory.
   Explicit repository paths remain supported.

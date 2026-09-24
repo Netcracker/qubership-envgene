@@ -26,41 +26,29 @@ The linter checks files selected by supported local references or known generato
 
 ## Requirements
 
-- Python **3.12 or newer**, with `pip` and virtual environment support.
+- Python **3.12 or newer**, with `pip`.
 - A local EnvGene instance repository containing an `environments/` directory.
-
-The commands below use a POSIX shell, such as Bash on Linux or macOS.
 
 ## Installation
 
-Install the package from PyPI in a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade qubership-envgene-linter
-envgene-linter --help
-```
-
-Use Python 3.12 or newer to create the virtual environment. The package name is
-`qubership-envgene-linter`, and the installed command is `envgene-linter`.
-A source checkout and local build are not required.
-
-Activate the same virtual environment in each new shell before using the command.
-On Windows PowerShell, activate it with `.venv\Scripts\Activate.ps1`.
-
-To update an existing installation, run this command with the virtual environment activated:
+Run this command in a terminal to install or update the tool from PyPI:
 
 ```bash
 python -m pip install --upgrade qubership-envgene-linter
 ```
+
+If your system uses `python3` instead of `python`, use `python3 -m pip` in that command.
+The package name is `qubership-envgene-linter`, and the installed command is `envgene-linter`.
+You do not need a source checkout or a local build.
+
+A virtual environment is optional for the linter. If pip reports `externally-managed-environment`,
+install in a virtual environment as required by your Python installation.
 
 ## Quick start
 
-With the virtual environment activated, navigate to your instance repository root and run:
+Open a terminal in your instance repository root, the directory containing `environments/`, and run:
 
 ```bash
-cd /path/to/instance-repository
 envgene-linter check
 ```
 
@@ -320,7 +308,7 @@ The report path and diagnostics go to `lint-diagnostics.txt`. Output files are o
 
 | Symptom | What to check |
 | --- | --- |
-| `envgene-linter: command not found` | Activate the virtual environment used for installation. |
+| `envgene-linter: command not found` | Check that your Python scripts directory is on `PATH`. If you used a virtual environment, activate it. |
 | Installation rejects the Python version | Create the virtual environment using Python 3.12 or newer. |
 | `not an instance repository: no environments/ directory` | Pass the repository root, not `environments/` or an individual environment directory. |
 | A file produces no finding | Confirm that it is connected through a supported binding or known usage; inspect stderr for skip notes and check the rule's algorithm. |

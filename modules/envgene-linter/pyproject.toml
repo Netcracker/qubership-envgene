@@ -4,6 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 packages = [{include = "envgene_linter", from = "src"}]
+readme = ["PYPI_README.md", "CHANGELOG.md"]
 exclude = [
   "tests",
   "testdata",
@@ -15,7 +16,7 @@ exclude = [
 name = "qubership-envgene-linter"
 version = "0.0.2"
 description = "Qubership EnvGene CLI that checks instance repositories for configuration placement, naming, secret handling, and reference integrity."
-readme = {file = "PYPI_README.md", content-type = "text/markdown"}
+dynamic = ["readme"]
 requires-python = "~=3.12"
 authors = [
   {name = "Qubership"},
