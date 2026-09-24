@@ -57,7 +57,7 @@ This diagram shows parent and child templates with their components. The color o
      - Tenant template (cannot be overridden)
      - Cloud template (override allowed)
      - Namespace template (override allowed)
-   - **Overrideable Attributes** (for Cloud/Namespace templates only):
+   - **Overridable Attributes** (for Cloud/Namespace templates only):
      - `profile`
      - `deployParameters`
      - `e2eParameters`
