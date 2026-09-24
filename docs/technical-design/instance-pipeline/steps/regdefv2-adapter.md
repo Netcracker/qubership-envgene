@@ -75,7 +75,7 @@ flowchart TD
 1. **Decide whether to run**
 
    - `PIPELINE_TYPE: GITLAB_DEPLOY`, or
-   - `PIPELINE_TYPE: LEGACY` and (`SD_DATA` or `SD_VERSION`)
+   - `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `GENERATE_EFFECTIVE_SET: true`) and `ENV_BUILDER: true`
 
 2. **Resolve the registry auth parameters**
 

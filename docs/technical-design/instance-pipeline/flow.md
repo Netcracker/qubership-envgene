@@ -295,7 +295,7 @@ Design: [`regdefv2_adapter`](/docs/technical-design/instance-pipeline/steps/regd
 Triggers:
 
 - `PIPELINE_TYPE: GITLAB_DEPLOY`, or
-- `PIPELINE_TYPE: LEGACY` and (`SD_DATA` or `SD_VERSION`)
+- `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `GENERATE_EFFECTIVE_SET: true`) and `ENV_BUILDER: true`
 
 Functions:
 
