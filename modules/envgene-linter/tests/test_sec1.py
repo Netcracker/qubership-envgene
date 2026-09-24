@@ -156,7 +156,7 @@ def test_git_target_cloud_is_not_checked(repo):
 
 def test_engine_and_cli_report_integration(repo):
     bound(repo, {'DB_PASSWORD': SECRET})
-    result = CliRunner().invoke(main, ['check', str(repo.root), '--html'])
+    result = CliRunner().invoke(main, ['check', str(repo.root), '--console'])
     assert result.exit_code == 0
     assert result.output.index('PLACE-10') < result.output.index('SEC-1') < result.output.index('NAME-1')
     assert SECRET not in result.output

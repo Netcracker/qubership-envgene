@@ -12,6 +12,7 @@ separate release checkout:
 - `src/envgene_linter/` - the complete Python package, including all rules
 - `pyproject.toml` - metadata, runtime dependencies, and the CLI entry point
 - `README.md` and `PYPI_README.md` - repository and package-index documentation
+- `CHANGELOG.md` - changes by version and migration instructions
 - `tests/` and `testdata/` - local synthetic tests, not distribution contents
 - `scripts/check_dist.py` - distribution-content verification
 - `docs/releasing.md` and `.gitignore` - release instructions and local ignores
@@ -30,16 +31,19 @@ local reports or session transcripts into a public release checkout.
 1. The package metadata declares the Apache-2.0 license, the same license as the
    EnvGene repository and `qubership-external-cred-provision`.
 2. Confirm ownership/availability of the `qubership-envgene-linter` project on PyPI.
-3. Review and commit the intended source changes on `dev`. In this working copy,
-   several implemented rules and their tests were still untracked when release
-   preparation began. A build uses the working tree, not only committed files.
-   Do not use an indiscriminate `git add .` to prepare a public repository.
-4. Check that `pyproject.toml` contains the intended version. PyPI does not allow
-   replacing an already uploaded distribution with another file of the same name.
+3. Review and commit the intended changes on the branch selected for publication.
+   A local build uses the working tree, including uncommitted files.
+4. Update the [changelog](/modules/envgene-linter/CHANGELOG.md) with the release changes and migration instructions.
+   Keep the next version marked as unreleased during development. Record the release date after publication.
+5. Choose a new version, such as `0.0.2`. The GitHub Actions workflow sets it in the build
+   and synchronizes `pyproject.toml` after publication. For a manual build, set the version before building.
+   PyPI does not allow replacing an uploaded distribution with another file of the same name.
 
 ## Build and check locally
 
-Use Python 3.12 or newer:
+Run from `modules/envgene-linter` with Python 3.12 or newer.
+The commands below use `0.0.2` as the release version. For a manual build, set
+`project.version` in `pyproject.toml` to `0.0.2` first:
 
 ```bash
 python3 -m venv .release-venv
@@ -47,7 +51,7 @@ source .release-venv/bin/activate
 python -m pip install -e '.[dev,release]'
 python -m pytest -q
 python -m build
-python -m twine check --strict dist/qubership_envgene_linter-0.0.1.tar.gz dist/qubership_envgene_linter-0.0.1-py3-none-any.whl
+python -m twine check --strict dist/qubership_envgene_linter-0.0.2.tar.gz dist/qubership_envgene_linter-0.0.2-py3-none-any.whl
 python scripts/check_dist.py
 ```
 
@@ -60,19 +64,21 @@ Test the wheel in another virtual environment, outside the source checkout:
 
 ```bash
 python3 -m venv /tmp/envgene-linter-smoke
-/tmp/envgene-linter-smoke/bin/python -m pip install dist/qubership_envgene_linter-0.0.1-py3-none-any.whl
+/tmp/envgene-linter-smoke/bin/python -m pip install dist/qubership_envgene_linter-0.0.2-py3-none-any.whl
 /tmp/envgene-linter-smoke/bin/python -m pip check
 /tmp/envgene-linter-smoke/bin/envgene-linter --help
 /tmp/envgene-linter-smoke/bin/envgene-linter check --help
 ```
 
-Use a disposable synthetic instance repository to check terminal and `--html`
-output. The HTML option writes a report and updates `.gitignore` in its target.
+Use a disposable synthetic instance repository to check default HTML output and `--console` output.
+Run `envgene-linter check` from its root, then repeat with an explicit path from another directory.
+Both commands write a report and update `.gitignore` in the checked repository.
+Confirm that the default output contains the absolute report path and no findings.
 
 ## Publish from GitHub Actions
 
 Run **Publish to PyPI: qubership-envgene-linter** from the Actions tab. Enter the
-release version as strict SemVer (`X.Y.Z`, for example `0.0.1`).
+release version as strict SemVer (`X.Y.Z`, for example `0.0.2`).
 
 The workflow publishes when the run is on upstream `feature/envgene-linter-dev`
 or `main` in `Netcracker/qubership-envgene`. Forks and other branches build and
@@ -90,7 +96,7 @@ Workflow file:
 Only run this after completing the checks and confirming the release contents:
 
 ```bash
-python -m twine upload dist/qubership_envgene_linter-0.0.1.tar.gz dist/qubership_envgene_linter-0.0.1-py3-none-any.whl
+python -m twine upload dist/qubership_envgene_linter-0.0.2.tar.gz dist/qubership_envgene_linter-0.0.2-py3-none-any.whl
 ```
 
 Authenticate through Twine's supported interactive or trusted-publishing flow.
@@ -102,7 +108,7 @@ builds. Prefer the GitHub Actions workflow above for a normal release.
 After publication, verify installation in a fresh environment:
 
 ```bash
-python -m pip install --no-cache-dir qubership-envgene-linter==0.0.1
+python -m pip install --no-cache-dir qubership-envgene-linter==0.0.2
 envgene-linter --help
 ```
 

@@ -350,7 +350,7 @@ def test_console_and_html_place10_catalog_order_and_warning_fix(repo):
     _append_template(repo, "c", "e", "  envSpecificResourceProfiles: {cloud: profile}\n")
     _write(repo, "environments/rp_override/profile.yml")
 
-    result = CliRunner().invoke(main, ["check", str(repo.root), "--html"])
+    result = CliRunner().invoke(main, ["check", str(repo.root), "--console"])
 
     assert result.exit_code == 0
     assert (

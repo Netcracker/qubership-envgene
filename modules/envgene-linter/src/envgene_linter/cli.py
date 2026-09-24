@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import click
@@ -18,24 +17,24 @@ def main() -> None:
 
 
 @main.command("check")
-@click.argument("repo", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.argument("repo", default=".", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.option(
-    "--html",
-    "write_html",
+    "--console",
     is_flag=True,
-    help="Write envgene-linter-report.html in the repository root and ignore it.",
+    help="Also print findings in the console.",
 )
-def check_cmd(repo: Path, write_html: bool) -> None:
+def check_cmd(repo: Path, console: bool) -> None:
+    """Check REPO (the current directory by default) and save an HTML report."""
+    repo = repo.resolve()
     try:
         result = run_check(repo)
     except (DiscoveryError, RuleConfigError) as exc:
         click.echo(str(exc), err=True)
         raise SystemExit(2) from exc
-    click.echo(render(result.findings, disabled_rules=result.disabled_rules), nl=False)
+    if console:
+        click.echo(render(result.findings, disabled_rules=result.disabled_rules), nl=False)
     for note in result.skipped:
         click.echo(note, err=True)
-    if not write_html:
-        return
     path = report_path(repo)
     try:
         path.write_text(
@@ -49,4 +48,4 @@ def check_cmd(repo: Path, write_html: bool) -> None:
         ensure_report_ignored(repo)
     except (OSError, UnicodeDecodeError) as exc:
         click.echo(f"cannot update .gitignore {repo / '.gitignore'}: {exc}", err=True)
-    click.echo("Wrote HTML report to envgene-linter-report.html", err=True)
+    click.echo(f"Report saved to: {path}", err=True)

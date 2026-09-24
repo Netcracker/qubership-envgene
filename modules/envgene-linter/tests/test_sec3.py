@@ -103,7 +103,7 @@ def test_direct_call_and_cli_html(repo):
     paramset(repo)
     from envgene_linter.rules.sec3 import check
     assert check(build_index(repo.root)) == findings(repo)
-    result = CliRunner().invoke(main, ['check', str(repo.root), '--html'])
+    result = CliRunner().invoke(main, ['check', str(repo.root), '--console'])
     assert result.exit_code == 0
     assert result.output.index('SEC-1') < result.output.index('SEC-3') < result.output.index('NAME-1')
     assert 'SEC-3: No credentials in runtime parameters' in (repo.root / 'envgene-linter-report.html').read_text()

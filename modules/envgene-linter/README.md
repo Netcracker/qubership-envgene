@@ -1,6 +1,10 @@
 # EnvGene Linter
 
-EnvGene Linter checks local **EnvGene instance repositories** for configuration placement, naming and empty connected entities. It prints findings in the terminal and can generate a standalone HTML report.
+EnvGene Linter checks local **EnvGene instance repositories** for configuration placement, naming,
+secret handling, and reference integrity. It saves an HTML report and prints its absolute path.
+Use `--console` to also print findings in the terminal.
+
+See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes and migration instructions.
 
 The linter checks files selected by supported local references or known generator usage. It does not generate environments, render Jinja templates or automatically fix configuration files. Checks run locally without network calls.
 
@@ -23,62 +27,69 @@ The linter checks files selected by supported local references or known generato
 ## Requirements
 
 - Python **3.12 or newer**, with `pip` and virtual environment support.
-- A local checkout of this project.
 - A local EnvGene instance repository containing an `environments/` directory.
 
-The installation commands below use a POSIX shell, such as Bash on Linux or macOS. Python dependencies are declared in [pyproject.toml](pyproject.toml) and installed by `pip`; installation may require access to your configured package index.
+The commands below use a POSIX shell, such as Bash on Linux or macOS.
 
 ## Installation
 
-From the root of your **envgene-linter checkout**:
+Install the package from PyPI in a virtual environment:
 
 ```bash
-python3 --version
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install .
+python -m pip install --upgrade qubership-envgene-linter
 envgene-linter --help
 ```
 
-Ensure the version printed by the first command is at least 3.12. If your system's `python3` is older, use a suitable executable, such as `python3.12`, to create the virtual environment.
+Use Python 3.12 or newer to create the virtual environment. The package name is
+`qubership-envgene-linter`, and the installed command is `envgene-linter`.
+A source checkout and local build are not required.
 
-Activate the same virtual environment in each new shell before using `envgene-linter`. Alternatively, invoke its executable directly from the project root:
+Activate the same virtual environment in each new shell before using the command.
+On Windows PowerShell, activate it with `.venv\Scripts\Activate.ps1`.
+
+To update an existing installation, run this command with the virtual environment activated:
 
 ```bash
-.venv/bin/envgene-linter --help
+python -m pip install --upgrade qubership-envgene-linter
 ```
-
-On Windows, activate the environment with `.venv\Scripts\Activate.ps1` in PowerShell instead of `source .venv/bin/activate`; its executable is `.venv\Scripts\envgene-linter.exe`.
-
-To update a regular installation after updating this checkout, run `python -m pip install .` again from the project root with the environment activated. For an editable development installation, see [Development](#development-and-further-documentation).
 
 ## Quick start
 
-With the virtual environment activated, pass the root of the instance repository you want to inspect:
+With the virtual environment activated, navigate to your instance repository root and run:
+
+```bash
+cd /path/to/instance-repository
+envgene-linter check
+```
+
+The command creates an HTML report and prints its absolute path:
+
+```text
+Report saved to: /path/to/instance-repository/envgene-linter-report.html
+```
+
+Open that file in a browser. To also print findings in the terminal:
+
+```bash
+envgene-linter check --console
+```
+
+To check another repository, pass its path:
 
 ```bash
 envgene-linter check /path/to/instance-repository
 ```
 
-For a terminal report and an HTML report:
-
-```bash
-envgene-linter check /path/to/instance-repository --html
-```
-
-Open `/path/to/instance-repository/envgene-linter-report.html` in a browser. HTML generation writes this file and updates the **checked repository's** `.gitignore`; see [HTML reports](#html-reports).
-
-To try the linter on the bundled synthetic examples, run this from the linter project root:
-
-```bash
-envgene-linter check testdata/place8/not-ok
-```
-
-This fixture includes three connected empty entities that produce PLACE-8 findings. Other rules also run and may report findings. The `ok` and `not-ok` fixture names refer to the particular rule being demonstrated, not to the absence or presence of all linter findings.
+Every successful check writes the report and adds it to the checked repository's `.gitignore`.
+See [HTML reports](#html-reports) for details.
 
 ## Choosing the repository to check
 
-The argument is the **instance repository root**, not its `environments/` directory, an individual environment or a template repository. Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
+The optional argument identifies the **instance repository root**, which must contain `environments/`.
+Without an argument, the linter checks the current directory. It does not search parent directories.
+Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
 
 A typical layout is:
 
@@ -115,14 +126,14 @@ Here `service-deploy` refers to a supported file such as `service-deploy.yml`. T
 ## Command reference
 
 ```text
-envgene-linter check [OPTIONS] REPO
+envgene-linter check [OPTIONS] [REPO]
 ```
 
-| Argument or option | Meaning |
-| --- | --- |
-| `REPO` | Existing instance repository directory containing `environments/` |
-| `--html` | Also write `envgene-linter-report.html` in `REPO` and ensure an ignore entry exists |
-| `--help` | Show command help and exit |
+| Argument or option | Meaning                                                       |
+|--------------------|---------------------------------------------------------------|
+| `REPO`             | Instance repository root. Defaults to the current directory.  |
+| `--console`        | Also print findings in the terminal. HTML is still generated. |
+| `--help`           | Show command help and exit.                                   |
 
 ```bash
 envgene-linter --help
@@ -133,7 +144,8 @@ All implemented rules run on each check. There are currently no CLI options for 
 
 ## Reading findings
 
-The console groups findings by rule. It always prints all 18 rule headings; a rule without findings shows `No findings`.
+With `--console`, the terminal report groups findings by rule and prints all 18 rule headings.
+An enabled rule without findings shows `No findings`. Disabled rules show `Disabled`.
 
 Each finding contains one or more `path:line:column` locations, followed by its severity, a description and a suggested action. Line and column numbers start at 1. File-level checks use `1:1`, which does not mean that the first YAML key is invalid.
 
@@ -144,19 +156,27 @@ Each finding contains one or more `path:line:column` locations, followed by its 
 
 `Fix` describes the recommended action; the tool does not perform it. Several locations in one finding identify the files involved in the same condition. Several rules may report independent issues on the same file.
 
-Discovery and parsing skip notes go to **stderr**, separately from findings on **stdout**. A skipped input may not have been checked fully. `No findings` means that the rule found no reportable condition in its eligible inputs, not that every file in the repository was validated.
+Discovery and parsing skip notes always go to **stderr**, even without `--console`.
+With `--console`, findings go to **stdout**. A skipped input may not have been checked fully.
+`No findings` means that the rule found no reportable condition in its eligible inputs.
+It does not mean that every file in the repository was validated.
 
 ## HTML reports
 
-`--html` preserves the console report and then writes a self-contained HTML file. The page works offline, uses collapsible rule sections and includes only rules with findings. Each finding lists its files, issue, type, action and fix suggestion. A report with no findings displays `No findings`.
+Every successful check writes a self-contained HTML report, including runs with no findings.
+The page works offline and uses collapsible sections for rules with findings.
+Each finding lists its files, issue, type, action, and fix suggestion.
+A report with no findings displays `No findings`.
 
-On each run with `--html`:
+On each check:
 
-1. `<REPO>/envgene-linter-report.html` is created or overwritten.
-2. After a successful write, the linter creates or updates `<REPO>/.gitignore` to include `envgene-linter-report.html`, unless an accepted entry is already present. Other entries are preserved.
-3. A completion message is printed to stderr.
+1. The linter creates or overwrites `<REPO>/envgene-linter-report.html`.
+2. After writing the report, it adds `envgene-linter-report.html` to `<REPO>/.gitignore` if needed.
+   Existing ignore entries are preserved.
+3. It prints `Report saved to: <absolute-path>` to stderr.
 
-Without `--html`, the linter writes neither the report nor `.gitignore`; an existing report is left untouched. Configuration files are not changed by either mode.
+The `--console` flag adds a terminal report. Configuration files are not changed.
+The `--html` flag was removed in `0.0.2`. Remove it from existing commands.
 
 Reports from some rules can contain configuration values in finding messages. SEC-5 redacts secret values, Credential IDs, variable names, source expressions and remote-store paths from its findings, and INT-2 uses generic reference-kind keys and messages without IDs, expressions or secret values. These guarantees are specific to those rules. The tool does not upload reports; inspect their contents before sharing them or publishing them as CI artifacts.
 
@@ -287,39 +307,36 @@ Skip notes do not by themselves change the exit code. Failure to update `.gitign
 
 **A successful exit is not a “no findings” gate.** Strict mode is not implemented. Use the reports for review; do not rely on the current exit code to reject configurations with findings.
 
-To capture findings and diagnostics separately in a shell with the tool installed:
+To capture findings and diagnostics separately:
 
 ```bash
-envgene-linter check /path/to/instance-repository > lint-findings.txt 2> lint-diagnostics.txt
+envgene-linter check /path/to/instance-repository --console > lint-findings.txt 2> lint-diagnostics.txt
 ```
 
-To also generate a browsable report:
-
-```bash
-envgene-linter check /path/to/instance-repository --html > lint-findings.txt 2> lint-diagnostics.txt
-```
-
-The redirected text files are written in the shell's current directory. The HTML file is written in the checked repository. These output files are overwritten on subsequent runs of the same commands.
+The text files are written in the shell's current directory. The HTML report is written in the checked repository.
+The report path and diagnostics go to `lint-diagnostics.txt`. Output files are overwritten on subsequent runs.
 
 ## Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |
-| `envgene-linter: command not found` | Activate the environment used for installation, or invoke `.venv/bin/envgene-linter` from the linter checkout. |
+| `envgene-linter: command not found` | Activate the virtual environment used for installation. |
 | Installation rejects the Python version | Create the virtual environment using Python 3.12 or newer. |
 | `not an instance repository: no environments/ directory` | Pass the repository root, not `environments/` or an individual environment directory. |
 | A file produces no finding | Confirm that it is connected through a supported binding or known usage; inspect stderr for skip notes and check the rule's algorithm. |
 | An environment is missing from results | Check for `<cluster>/<environment>/Inventory/env_definition.yml` and inspect parsing diagnostics. |
-| An existing HTML report did not change | Run with `--html`; a console-only check leaves the previous report untouched. |
+| An existing HTML report did not change | Check the printed absolute path and stderr for errors. Each successful check overwrites the report. |
 | `cannot write HTML report` | Check write permissions for the checked repository and its existing report file. The command exits with code 2. |
 | `cannot update .gitignore` | The report was written, but the ignore file could not be updated. Check permissions or encoding and add the report entry manually if appropriate. |
 | A directory named `ok` still reports findings | Bundled fixtures are specific to one rule; all enabled rules run during a CLI check. |
 
 ## Development and further documentation
 
-For an editable installation with test dependencies, run from the linter checkout with its virtual environment activated:
+For development, clone the EnvGene repository and activate a virtual environment.
+From the EnvGene repository root, install the linter with test dependencies:
 
 ```bash
+cd modules/envgene-linter
 python -m pip install -e '.[dev]'
 python -m pytest -q
 ```

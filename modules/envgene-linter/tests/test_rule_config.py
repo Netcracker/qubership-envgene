@@ -1,4 +1,5 @@
 from pathlib import Path
+from shutil import copytree
 from unittest.mock import Mock
 
 import pytest
@@ -29,8 +30,9 @@ def test_source_flags_are_valid():
     assert set(disabled) == {rule for rule, enabled in config().RULE_ENABLED.items() if not enabled}
 
 
-def test_default_disabled_rules_are_not_reported_as_passed(naming_disabled):
-    result = CliRunner().invoke(main, ['check', str(EXAMPLES / 'name1/not-ok')])
+def test_default_disabled_rules_are_not_reported_as_passed(naming_disabled, tmp_path):
+    target = copytree(EXAMPLES / 'name1/not-ok', tmp_path / 'instance')
+    result = CliRunner().invoke(main, ['check', str(target), '--console'])
     assert result.exit_code == 0, result.output
     for rule in ('NAME-1', 'NAME-3', 'NAME-4'):
         assert f'{rule}\nDisabled' in result.output
@@ -62,7 +64,7 @@ def test_disabled_default_can_be_enabled(monkeypatch, rule, naming_disabled):
 def test_all_disabled_skips_preparation_and_produces_explicit_report(monkeypatch, tmp_path):
     monkeypatch.setattr(config(), 'RULE_ENABLED', dict.fromkeys(RULES, False))
     monkeypatch.setattr(engine, 'build_index', Mock(side_effect=AssertionError('unnecessary scan')))
-    result = CliRunner().invoke(main, ['check', str(tmp_path), '--html'])
+    result = CliRunner().invoke(main, ['check', str(tmp_path), '--console'])
     assert result.exit_code == 0, result.output
     assert result.output.count('\nDisabled') == len(RULES)
     assert 'No findings' not in result.output
@@ -89,7 +91,7 @@ def test_invalid_flags_fail_before_scanning(monkeypatch, tmp_path, change):
 
 def test_cli_html_records_disabled_defaults(tmp_path, naming_disabled):
     (tmp_path / 'environments').mkdir()
-    result = CliRunner().invoke(main, ['check', str(tmp_path), '--html'])
+    result = CliRunner().invoke(main, ['check', str(tmp_path)])
     assert result.exit_code == 0, result.output
     body = (tmp_path / 'envgene-linter-report.html').read_text()
     assert 'Disabled rules' in body

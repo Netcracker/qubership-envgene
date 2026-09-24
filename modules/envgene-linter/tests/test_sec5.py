@@ -208,7 +208,7 @@ def test_full_cli_integration_does_not_print_credential_values(repo):
     from click.testing import CliRunner
     from envgene_linter.cli import main
     setup(repo)
-    result = CliRunner().invoke(main, ['check', str(repo.root), '--html'])
+    result = CliRunner().invoke(main, ['check', str(repo.root), '--console'])
     assert result.exit_code == 0
     assert 'SEC-5\nNo findings' not in result.output
     assert result.output.index('SEC-4') < result.output.index('SEC-5') < result.output.index('NAME-1')

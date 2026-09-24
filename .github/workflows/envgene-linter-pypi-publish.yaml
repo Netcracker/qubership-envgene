@@ -274,6 +274,17 @@ jobs:
           "${CLI_NAME}" check --help
           "${CLI_NAME}" check "${SMOKE_REPO}"
 
+          SMOKE_DIR="$(mktemp -d)"
+          cp -R "${SMOKE_REPO}" "${SMOKE_DIR}/instance repository"
+          pushd "${SMOKE_DIR}/instance repository"
+          "${CLI_NAME}" check > check.stdout 2> check.stderr
+          test -s envgene-linter-report.html
+          test ! -s check.stdout
+          grep -F "Report saved to: ${PWD}/envgene-linter-report.html" check.stderr
+          "${CLI_NAME}" check --console > console.stdout
+          grep -F "PLACE-1" console.stdout
+          popd
+
           echo "OK: CLI entrypoint works."
 
       - name: List built distributions

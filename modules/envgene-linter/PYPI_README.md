@@ -1,8 +1,15 @@
 # EnvGene Linter
 
+- [Installation](#installation)
+- [Usage](#usage)
+- [Implemented rules](#implemented-rules)
+- [Rule configuration](#rule-configuration)
+- [Exit status](#exit-status)
+- [Release history](#release-history)
+
 EnvGene Linter checks local EnvGene instance repositories for configuration
-placement, naming, secret handling and reference integrity. It prints findings
-in the terminal and can generate a standalone HTML report.
+placement, naming, secret handling and reference integrity. It saves an HTML report and prints its absolute path.
+Use `--console` to also print findings in the terminal.
 
 This is an **alpha release**. Rule coverage is incomplete and findings should
 be reviewed before changing configuration. INT-1 schema validation is not yet
@@ -15,7 +22,7 @@ Requires Python 3.12 or newer.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install qubership-envgene-linter==0.0.1
+python -m pip install --upgrade qubership-envgene-linter
 envgene-linter --help
 ```
 
@@ -26,16 +33,25 @@ On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
 
 ## Usage
 
-Pass the root of an EnvGene instance repository containing an `environments/`
-directory:
+From an EnvGene instance repository root containing `environments/`, run:
 
 ```bash
-envgene-linter check /path/to/instance-repository
-envgene-linter check /path/to/instance-repository --html
+envgene-linter check
 ```
 
-The `--html` option writes `envgene-linter-report.html` in the checked repository
-and adds it to that repository's `.gitignore`. The report is self-contained.
+The command creates or overwrites `envgene-linter-report.html` in that repository
+and prints its absolute path. Open the report in a browser.
+The report is self-contained and is added to the repository's `.gitignore`.
+
+To also print findings in the terminal, or to check another repository:
+
+```bash
+envgene-linter check --console
+envgene-linter check /path/to/instance-repository
+```
+
+Errors and parsing diagnostics remain visible without `--console`.
+The `--html` flag was removed in `0.0.2`. Remove it from existing commands.
 
 Checks run locally without network calls. The tool does not render Jinja,
 decrypt secrets, generate environments or automatically fix configuration.
@@ -68,3 +84,8 @@ reports. Invalid flags cause exit code `2`.
 Exit code `0` means the check completed, even when findings were reported.
 Exit code `2` indicates a command or operational error. This alpha does not
 provide a findings-based CI failure threshold.
+
+## Release history
+
+See the [changelog](https://github.com/Netcracker/qubership-envgene/blob/feature/envgene-linter-dev/modules/envgene-linter/CHANGELOG.md)
+for changes by version and migration instructions.
