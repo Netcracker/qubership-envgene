@@ -130,6 +130,10 @@ class PipelineParametersHandler(BaseModel):
     def is_deploy_or_clean(self) -> bool:
         return OperationType(self.params.get('OPERATION_TYPE')) in (OperationType.DEPLOY, OperationType.CLEAN)
 
+    @property
+    def committed_regdefs_dir(self) -> Path:
+        return self.work_dir / "environments" / self.full_env_name / "RegDefs"
+
     # temporary, for get_sboms only - drop once sbom generation moves into effective_set_entrypoint.py
     def resolve_source_dp(self) -> EnvgeneDeployPlan | None:
         if self.is_gitlab_deploy():
