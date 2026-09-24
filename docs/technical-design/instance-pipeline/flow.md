@@ -227,7 +227,7 @@ Design: [`appregdef_render`](/docs/technical-design/instance-pipeline/steps/appr
 Triggers:
 
 - `OPERATION_TYPE: DEPLOY` and
-- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
+- (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `GENERATE_EFFECTIVE_SET: true`) and `ENV_BUILDER: true`))
 
 Functions:
 
