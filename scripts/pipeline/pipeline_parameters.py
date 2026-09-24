@@ -86,9 +86,6 @@ class PipelineParametersHandler(BaseModel):
         if pipe_param_plugin.modules:
             pipe_param_plugin.run(pipeline_params=params)
 
-        if params.get("CRED_ROTATION_PAYLOAD") and params.get("GET_PASSPORT"):
-            raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
-
         for k, v in params.items():
             try:
                 parsed = yaml.safe_load(v)

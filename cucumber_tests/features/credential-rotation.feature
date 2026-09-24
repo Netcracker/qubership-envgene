@@ -128,7 +128,7 @@ Feature: Credential Rotation - credential-rotation.md
     And the pipeline parameter "CRED_ROTATION_PAYLOAD" is set to "{\"rotation_items\":[{\"namespace\":\"test-ns\",\"context\":\"pipeline\",\"parameter_key\":\"SOME_PARAM\",\"parameter_value\":\"ignored\"}]}"
     And the pipeline parameter "GET_PASSPORT" is set to "true"
     And the pipeline parameter "CRED_ROTATION_FORCE" is set to "true"
-    When the unified pipeline orchestrator runs
+    When I run the credential rotation parameter check
     Then the orchestrator fails
     And the pipeline log contains "CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together"
 

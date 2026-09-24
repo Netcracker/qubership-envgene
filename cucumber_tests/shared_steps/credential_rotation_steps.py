@@ -1,8 +1,46 @@
 """Step definitions for credential rotation scenarios."""
+import os
+import subprocess
+import sys
 from pathlib import Path
 import yaml
-from pytest_bdd import then, parsers
+from pytest_bdd import when, then, parsers
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
+
+
+@when('I run the credential rotation parameter check')
+def run_cr_parameter_check(workspace: EnvGeneWorkspace):
+    project_root = str(Path(__file__).parent.parent.parent.resolve())
+    scripts_root = str(Path(project_root) / "scripts")
+
+    env = os.environ.copy()
+    env["CI_PROJECT_DIR"] = str(workspace.base_dir)
+    env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
+    env["ENV_NAMES"] = f"{workspace.cluster_name}/{workspace.env_name}"
+    env["FULL_ENV_NAME"] = f"{workspace.cluster_name}/{workspace.env_name}"
+    env["IS_LOCAL_DEV_TEST_ENVGENE"] = "true"
+    env["PYTHONPATH"] = f"{project_root}{os.pathsep}{scripts_root}"
+
+    if hasattr(workspace, "extra_env") and workspace.extra_env:
+        env.update(workspace.extra_env)
+
+    code = (
+        "from pipeline.pipeline_parameters import PipelineParametersHandler; "
+        "from pipeline.orchestrator import CredentialRotationStep; "
+        "ctx = PipelineParametersHandler.from_env(); "
+        "CredentialRotationStep().should_run(ctx)"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        env=env,
+        capture_output=True,
+        text=True,
+        cwd=project_root,
+    )
+    workspace.stdout = result.stdout
+    workspace.stderr = result.stderr
+    workspace.returncode = result.returncode
 
 
 @then(parsers.parse('the "{filename}" file exists at the workspace root'))

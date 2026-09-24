@@ -89,7 +89,10 @@ class CredentialRotationStep(PipelineStep):
         return "credential_rotation"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get("CRED_ROTATION_PAYLOAD"))
+        cred_rotation = ctx.params.get("CRED_ROTATION_PAYLOAD")
+        if cred_rotation and ctx.params.get('GET_PASSPORT'):
+            raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
+        return cred_rotation
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_cred_rotation()
