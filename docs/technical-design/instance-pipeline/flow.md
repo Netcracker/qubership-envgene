@@ -12,16 +12,17 @@
       - [1.8 step `set_template_version`](#18-step-set_template_version)
       - [1.9 step `process_env_template` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#19-step-process_env_template-to-be-implemented-not-implemented-yet)
       - [1.10 step `appregdef_render`](#110-step-appregdef_render)
-      - [1.11 step `deploy_postfix_namespace_map`](#111-step-deploy_postfix_namespace_map)
-      - [1.12 step `process_sd`](#112-step-process_sd)
-      - [1.13 step `generate_deployment_plan`](#113-step-generate_deployment_plan)
-      - [1.14 step `env_build`](#114-step-env_build)
-      - [1.15 step `generate_effective_set`](#115-step-generate_effective_set)
-      - [1.16 step `git_commit`](#116-step-git_commit)
-      - [1.17 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#117-step-generate_argocd_repo-to-be-implemented-not-implemented-yet)
-      - [1.18 step `es_pusher`](#118-step-es_pusher)
-      - [1.19 step `cmdb_import`](#119-step-cmdb_import)
-      - [1.20 step `postprocess`](#120-step-postprocess)
+      - [1.11 step `regdefv2_adapter`](#111-step-regdefv2_adapter)
+      - [1.12 step `deploy_postfix_namespace_map`](#112-step-deploy_postfix_namespace_map)
+      - [1.13 step `process_sd`](#113-step-process_sd)
+      - [1.14 step `generate_deployment_plan`](#114-step-generate_deployment_plan)
+      - [1.15 step `env_build`](#115-step-env_build)
+      - [1.16 step `generate_effective_set`](#116-step-generate_effective_set)
+      - [1.17 step `git_commit`](#117-step-git_commit)
+      - [1.18 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#118-step-generate_argocd_repo-to-be-implemented-not-implemented-yet)
+      - [1.19 step `es_pusher`](#119-step-es_pusher)
+      - [1.20 step `cmdb_import`](#120-step-cmdb_import)
+      - [1.21 step `postprocess`](#121-step-postprocess)
     - [2 job `sync`](#2-job-sync)
       - [2.1 step `preprocess` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#21-step-preprocess-to-be-implemented-not-implemented-yet)
       - [2.2 step `sync` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#22-step-sync-to-be-implemented-not-implemented-yet)
@@ -287,7 +288,36 @@ Functions:
     - AI[techDebt-PERF]: renders only required appregdef
     - AI[techDebt-PERF]: implement create_if_not_exist | replace strategies
 
-#### 1.11 step `deploy_postfix_namespace_map`
+#### 1.11 step `regdefv2_adapter`
+
+Design: [`regdefv2_adapter`](/docs/technical-design/instance-pipeline/steps/regdefv2-adapter.md)
+
+Triggers:
+
+- `PIPELINE_TYPE: GITLAB_DEPLOY`, or
+- `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `GENERATE_EFFECTIVE_SET: true`) and `ENV_BUILDER: true`
+
+Functions:
+
+1. `regdefv2_adapter`
+    - input:
+      - downloaded template files
+      - credentials
+      - `LOCAL_PUBREG_FILE`
+      - RegDefs v1
+    - output:
+      - `pubreg_params.yaml`
+      - RegDefs v2
+      - credential the RegDef v2
+    - actions:
+      - render the Cloud object, fold paramsets into parameters, read the whole `e2eParameters`
+        section, expand credential macros to resolve secret values
+      - write the resolved registry auth parameters to `pubreg_params.yaml` for dpg
+      - when `MAVEN_PROVIDER` is a public cloud provider create RegDefs v2 and corresponding credential
+      - a rendered RegDef already at `version` (v2) is left as is, not transformed, used with priority over
+        the parameters, and a warning is logged recommending RegDef v1 + registry auth parameters
+
+#### 1.12 step `deploy_postfix_namespace_map`
 
 Design: [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/steps/deploy-postfix-namespace-map.md)
 
@@ -309,7 +339,7 @@ Functions:
       - build the map keyed by deployPostfix: non-BG postfix -> namespace name, BG postfix -> per-side entry with
         both `origin` and `peer` namespace names (side from the rendered BG domain)
 
-#### 1.12 step `process_sd`
+#### 1.13 step `process_sd`
 
 Triggers:
 
@@ -325,7 +355,7 @@ Functions:
       - `SD_SOURCE_TYPE`
       - `SD_REPO_MERGE_MODE`
       - `sd.yaml`
-      - appreg defs
+      - appreg defs v1 or the synthesized RegDef v2 from `regdefv2_adapter`
     - output:
       - updated `sd.yaml`
     - actions:
@@ -347,7 +377,7 @@ Functions:
       - non-BG only
     - [phase1] add the function
 
-#### 1.13 step `generate_deployment_plan`
+#### 1.14 step `generate_deployment_plan`
 
 Design: [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
 
@@ -363,10 +393,11 @@ Functions:
       - `OPERATION_TYPE: DEPLOY`
     - input:
       - `APPLICATION_VERSIONS`
-      - params.environment_id -> `build.env.FULL_ENV_NAME`
+      - `FULL_ENV_NAME`
       - app defs
       - `namespace-map.yml`
       - `BG_NS_TARGET`
+      - (`pubreg_params.yaml`
       - filters:
         - `DEPLOY_POSTFIXES_FILTER`
         - `NAMESPACE_NAMES_FILTER`
@@ -423,7 +454,7 @@ Functions:
       - writes the repository plan minus the cleaned namespaces (no delta, no plan passed to the calculator)
     - AI[bgd]: Add the functions
 
-#### 1.14 step `env_build`
+#### 1.15 step `env_build`
 
 Design: [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md)
 
@@ -507,7 +538,7 @@ Functions:
       - set `cleaned: true` on `NAMESPACE_NAMES` namespaces (all if empty. error if a namespace is not found)
     - AI[techDebt-LOGS]: extract from `run_build_environment`
 
-#### 1.15 step `generate_effective_set`
+#### 1.16 step `generate_effective_set`
 
 Design: [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md)
 
@@ -531,8 +562,8 @@ Functions:
       - delete sboms beyond the retention policy
 3. `get_sboms`
     - input:
-      - appreg defs
-      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.13); no plan for `CLEAN` (marker-driven)
+      - appreg defs v1 or the synthesized RegDef v2 from `regdefv2_adapter`
+      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
       - DD and ZIP at `${APP_ARTIFACTS_DIR}`, sboms
@@ -547,7 +578,7 @@ Functions:
 4. `effective_set_entrypoint`
     - input:
       - env instance
-      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.13); no plan for `CLEAN` (marker-driven)
+      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
       - sboms
       - `OPERATION_TYPE`
       - `BGD_OPERATION`
@@ -569,7 +600,7 @@ Functions:
       - if the Effective Set includes external credential context, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
       - if it does not, no-op
 
-#### 1.16 step `git_commit`
+#### 1.17 step `git_commit`
 
 Triggers:
 
@@ -587,7 +618,7 @@ Functions:
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/deploy-plan.yaml to artifacts or not
     - AI[phase2]: unify with `es-pusher`
 
-#### 1.17 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
+#### 1.18 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
 
 Triggers:
 
@@ -612,7 +643,7 @@ Functions:
     - AI[phase2]: move into the orchestrator as a PipelineStep
     - AI[phase3]: move to GitHub
 
-#### 1.18 step `es_pusher`
+#### 1.19 step `es_pusher`
 
 Triggers:
 
@@ -646,7 +677,7 @@ Functions:
     - AI[phase3]: move to GitHub
     - AI[phase3]: unify with `git_commit`
 
-#### 1.19 step `cmdb_import`
+#### 1.20 step `cmdb_import`
 
 Triggers:
 
@@ -664,7 +695,7 @@ Functions:
     - AI[phase1]: remove envgene dot env file
     - AI[phase2]: move into the orchestrator as a PipelineStep
 
-#### 1.20 step `postprocess`
+#### 1.21 step `postprocess`
 
 Triggers:
 
