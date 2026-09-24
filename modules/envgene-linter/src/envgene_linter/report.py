@@ -4,7 +4,7 @@ from .model import Finding
 
 RULE_ORDER = (
     "PLACE-1", "PLACE-2", "PLACE-3", "PLACE-4", "PLACE-6", "PLACE-7", "PLACE-8", "PLACE-9", "PLACE-10",
-    "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "NAME-1", "NAME-2", "NAME-3", "NAME-4",
+    "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "INT-3", "NAME-1", "NAME-2", "NAME-3", "NAME-4",
 )
 
 

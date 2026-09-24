@@ -33,6 +33,7 @@ def test_check_no_findings(repo):
         "SEC-4\nNo findings\n\n"
         "SEC-5\nNo findings\n\n"
         "INT-2\nNo findings\n\n"
+        "INT-3\nNo findings\n\n"
         "NAME-1\nNo findings\n\n"
         "NAME-2\nNo findings\n\nNAME-3\n"
     )

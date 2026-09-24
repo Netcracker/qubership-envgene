@@ -41,7 +41,8 @@ For `profile.name`, `profile.baseline` and `profile.override_name`, first search
 | Ambiguous target in the selected lookup bucket | Warning / Fix |
 | Dynamic, unreadable or unavailable context | Information / Review |
 
-The catalog description is `Every reference resolves`. The console prints eighteen rule headings, with INT-2 after SEC-5 and before NAME-1. HTML contains INT-2 only when findings exist. Findings preserve CLI exit code `0`; Fix is a manual recommendation.
+The catalog description is `Every reference resolves`. INT-2 follows SEC-5 and precedes INT-3 in reports.
+HTML contains INT-2 only when findings exist. Findings preserve CLI exit code `0`. Fix is a manual recommendation.
 
 ## Error handling
 

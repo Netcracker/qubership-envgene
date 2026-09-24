@@ -7,8 +7,9 @@ Design: [connected-only scope](../superpowers/specs/2026-09-11-connected-only-de
 All rules check only entities selected by visible local references or known
 generator usage. NAME-3 also checks used environment definitions and their
 cluster/environment directories; see [name3.md](name3.md) for namespace selection.
-An unselected file contributes neither findings nor values, locations, categories,
-or passport keys to another file's finding. Discovery may still index it and emit
+An unselected file normally contributes neither findings nor values, locations, categories,
+or passport keys to another file's finding. INT-3 includes hidden definitions reached by a used reference.
+This exception does not change other rules' input sets. Discovery may still index files and emit
 read-error skip notes. The legacy graph skips unresolved references; [INT-2](int2.md) separately diagnoses supported missing/ambiguous targets or unavailable context.
 
 | Entity | Evidence of use |
@@ -100,6 +101,14 @@ SEC-4 reuses connected security bags to find sibling user/password parameters wi
 
 INT-2 reuses connected security bags and selected Cloud/Namespace objects. Explicit ParameterSet or Resource Profile binding targets also select an existing namespace consumer even when its bound target is unavailable. This scope is local to INT-2. It checks Credential object existence, ParameterSet bindings/lists and Resource Profile references using their applicable catalogs, staging and directory priorities. Definite missing/ambiguous targets produce Warning / Fix; dynamic, unreadable or unavailable template context produces Information / Review. See [INT-2](int2.md) for generated-catalog authority, ordered shared overrides and generated Profiles lookup.
 
+## INT-3 candidates at multiple scopes
+
+[INT-3](/modules/envgene-linter/docs/algorithms/int3.md) starts with used literal bindings in each environment.
+It compares definitions across that environment's Inventory, cluster, and repository scopes.
+Hidden definitions participate in INT-3 locations without becoming selected content inputs for other rules.
+Credential references here are shared filenames, not Credential IDs. ParameterSet conflicts describe the naming standard
+even when generation merges the files. Physical aliases are deduplicated before scopes are counted.
+
 ## PLACE-8 and reporting
 
 PLACE-8 keeps Information / Review for known empty selected or used files.
@@ -107,8 +116,8 @@ Unselected, nonempty, unreadable, and unknown-structure files are silent.
 Known fixed-path credentials may be absent without a finding; the generator uses
 a default then. Alias matching and ambiguous first buckets retain PLACE-8's existing
 behavior. PLACE-10 follows PLACE-9; SEC-1 follows PLACE-10; SEC-3 follows SEC-1;
-SEC-4 follows SEC-3; SEC-5 follows SEC-4; INT-2 follows SEC-5 and precedes NAME-1. The console has
-eighteen rule headers.
+SEC-4 follows SEC-3, SEC-5 follows SEC-4, and INT-2 follows SEC-5.
+INT-3 follows INT-2 and precedes NAME-1. The console has nineteen rule headers.
 There are no new CLI flags, other severity changes, autofix, or network calls.
 
 ## Examples

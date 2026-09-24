@@ -1,0 +1,3 @@
+name: "service-deploy"
+parameters:
+  FEATURE_ENABLED: true

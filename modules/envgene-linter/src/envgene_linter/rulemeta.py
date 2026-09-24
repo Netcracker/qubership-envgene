@@ -93,6 +93,7 @@ RULES: dict[str, RuleMeta] = {
         Action.REVIEW,
     ),
     "INT-2": RuleMeta("INT-2", "Every reference resolves", IssueType.WARNING, Action.FIX),
+    "INT-3": RuleMeta("INT-3", "No shadowed same-name overrides", IssueType.WARNING, Action.FIX),
     "NAME-1": RuleMeta(
         "NAME-1",
         "Different keys may name the same concept",

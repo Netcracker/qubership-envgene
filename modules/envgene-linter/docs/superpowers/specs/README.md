@@ -1,6 +1,6 @@
 # Specifications
 
-This directory contains 22 development specifications in English.
+This directory contains 23 development specifications in English.
 
 ## Reading order
 
@@ -37,5 +37,6 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [SEC-4](2026-09-16-sec4-design.md) | 2026-09-16 | [Algorithm](../../algorithms/sec4.md) |
 | [SEC-5](2026-09-18-sec5-design.md) | 2026-09-18 | Implemented · [Algorithm](../../algorithms/sec5.md) |
 | [INT-2](2026-09-18-int2-design.md) | 2026-09-18 | [Algorithm](../../algorithms/int2.md) |
+| [INT-3](/modules/envgene-linter/docs/superpowers/specs/2026-09-24-int3-design.md) | 2026-09-24 | [Algorithm](/modules/envgene-linter/docs/algorithms/int3.md) |
 
 ## Language versions
