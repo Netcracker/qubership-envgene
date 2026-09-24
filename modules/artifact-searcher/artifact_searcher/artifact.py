@@ -392,6 +392,12 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
     Resolves the full artifact URL and the first repository where it was found.
     Supports both release and snapshot versions.
     """
+    if isinstance(app.registry, RegistryV2):
+        auth_cfg = app.registry.auth_config.get(app.registry.maven_config.auth_config)
+        provider = auth_cfg.provider.value if auth_cfg else None
+        logger.info(f"[Registry: {app.registry.name}] - using RegDef v2, provider: {provider}")
+    else:
+        logger.info(f"[Registry: {app.registry.name}] - using RegDef v1")
     repos = get_repos(app.registry)
 
     # Single repo: no parallelism
