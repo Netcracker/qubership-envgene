@@ -13,7 +13,7 @@ exclude = [
 
 [project]
 name = "qubership-envgene-linter"
-version = "0.0.1"
+version = "0.0.2"
 description = "Qubership EnvGene CLI that checks instance repositories for configuration placement, naming, secret handling, and reference integrity."
 readme = {file = "PYPI_README.md", content-type = "text/markdown"}
 requires-python = "~=3.12"
