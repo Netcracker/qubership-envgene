@@ -131,6 +131,11 @@ class PipelineParametersHandler(BaseModel):
         return OperationType(self.params.get('OPERATION_TYPE')) in (OperationType.DEPLOY, OperationType.CLEAN)
 
     @property
+    def transient_regdefs_dir(self) -> Path | None:
+        path = self.work_dir / "tmp" / "render" / self.env_name / "RegDefs"
+        return path if path.exists() else None
+
+    @property
     def committed_regdefs_dir(self) -> Path:
         return self.work_dir / "environments" / self.full_env_name / "RegDefs"
 
