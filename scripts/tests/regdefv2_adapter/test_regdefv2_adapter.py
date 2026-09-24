@@ -176,31 +176,6 @@ class TestRegdefV2Adapter:
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"secret": "secret"}
 
     @pytest.mark.unit
-    def test_azure_synthesizes_schema_valid_v2_regdef(self, tmp_path):
-        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(textwrap.dedent("""\
-            name: "pubreg"
-            parameters:
-              MAVEN_PROVIDER: "azure"
-              PUB_REG_PROVIDER: "azure"
-              PUB_REG_METHOD: "oauth2"
-              PUB_REG_KEY: "key"
-              PUB_REG_SECRET: "secret"
-              PUB_REG_TENANT_ID: "tenant-1"
-              PUB_REG_ACR_NAME: "myacr"
-            """))
-        ctx = _ctx()
-
-        run_regdefv2_adapter(ctx)
-
-        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
-        auth_config = synthesized["authConfig"]["pub-reg-auth"]
-        assert auth_config["provider"] == "azure"
-        assert auth_config["authType"] == "shortLived"
-        assert auth_config["azureTenantId"] == "tenant-1"
-        assert auth_config["azureACRName"] == "myacr"
-        jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
-
-    @pytest.mark.unit
     @pytest.mark.parametrize("missing", ["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
     def test_aws_secret_requires_all_params(self, tmp_path, missing):
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if f"{missing}:" not in line)

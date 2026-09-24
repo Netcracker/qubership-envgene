@@ -14,7 +14,7 @@ from envgenehelper.logger import logger
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 
 MAVEN_PROVIDER = "MAVEN_PROVIDER"
-PUBLIC_CLOUD_PROVIDERS = ("aws", "gcp", "azure")
+PUBLIC_CLOUD_PROVIDERS = ("aws", "gcp")
 
 REGDEFS_DIRNAME = "RegDefs"
 
@@ -33,20 +33,16 @@ V2_MAVEN_CONFIG_FIELDS = (
     "releaseGroup",
 )
 
-PUB_REG_TO_AUTH_CONFIG_FIELD = {
-    "PUB_REG_REGION": "awsRegion",
-    "PUB_REG_DOMAIN": "awsDomain",
-    "PUB_REG_ROLE_ARN": "awsRoleARN",
-    "PUB_REG_ROLE_SESSION_PREFIX": "awsRoleSessionPrefix",
-
-    "PUB_REG_PROJECT": "gcpRegProject",
-    "PUB_REG_POOL_ID": "gcpRegPoolId",
-    "PUB_REG_PROVIDER_ID": "gcpRegProviderId",
-    "PUB_REG_SA_EMAIL": "gcpRegSAEmail",
-
-    "PUB_REG_TENANT_ID": "azureTenantId",
-    "PUB_REG_ACR_RESOURCE": "azureACRResource",
-    "PUB_REG_ACR_NAME": "azureACRName",
+_PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
+    "aws": {
+        "PUB_REG_REGION": "awsRegion",
+        "PUB_REG_DOMAIN": "awsDomain",
+    },
+    "gcp": {
+        "PUB_REG_PROJECT": "gcpRegProject",
+        "PUB_REG_SA_EMAIL": "gcpRegSAEmail",
+        "PUB_REG_REGION": "gcpRegion",
+    },
 }
 
 
@@ -97,13 +93,10 @@ def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
     if auth_method != AUTH_METHOD_ANONYMOUS:
         auth_config["authType"] = "longLived" if auth_method == AUTH_METHOD_SECRET else "shortLived"
         auth_config["credentialsId"] = cred_id
-    for param_key, auth_key in PUB_REG_TO_AUTH_CONFIG_FIELD.items():
+    for param_key, auth_key in _PUBREG_PROVIDER_AUTH_FIELDS.get(maven_provider, {}).items():
         value = params.get(param_key, "").strip()
         if value:
             auth_config[auth_key] = value
-    oidc_url = params.get("PUB_REG_OIDC_URL", "").strip()
-    if oidc_url:
-        auth_config["gcpOIDC"] = {"URL": oidc_url}
     return auth_config
 
 
