@@ -67,7 +67,7 @@ class TestSBOMGenerator:
     def download_dd_artifacts(applications: list[Application], app_versions: list[str], tmp_path: Path):
         app_by_name = {app.name: app for app in applications}
 
-        def _appdef_for(appver, plugins):
+        def _appdef_for(appver, plugins, ctx=None):
             return app_by_name[appver.split(':')[0]]
 
         with patch("effective_set.dd_downloading.get_appdef_for_app", side_effect=_appdef_for), \
