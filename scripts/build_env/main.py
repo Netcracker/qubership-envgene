@@ -65,25 +65,6 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     return resulting_dir
 
 
-def handle_template_override(render_dir):
-    logger.info(f'start handle_template_override')
-    all_files = findAllFilesInDir(render_dir, "ml_override")
-    for file in all_files:
-        template_path = file.replace("_override", "")
-        yaml_to_override = openYaml(template_path)
-        src = openYaml(file)
-        merge_yaml_into_target(yaml_to_override, '', src)
-        writeYamlToFile(template_path, yaml_to_override)
-        template_path_stem = Path(template_path).stem
-        schema_path = ""
-        if template_path_stem == 'cloud':
-            schema_path = get_schema_dir() / "cloud.schema.json"
-        if template_path_stem == 'namespace':
-            schema_path = get_schema_dir() / "namespace.schema.json"
-        beautifyYaml(template_path, schema_path)
-        deleteFile(file)
-
-
 def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
@@ -133,7 +114,6 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["work_dir"] = str(work_dir)
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
-    handle_template_override(render_dir)
     validate_env_specific_override_keys(Path(render_env_dir))
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            get_schema_dir() / "resource-profile.schema.json")
