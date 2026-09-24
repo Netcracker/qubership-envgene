@@ -18,19 +18,23 @@ Template artifacts into `tmp/templates/`, `tmp/origin/templates/`, and `tmp/peer
 
 ## Input parameters
 
-| Parameter              | Source   | Required | Default | Values / format             | Effect                                                                           |
-| ---------------------- | -------- | -------- | ------- | --------------------------- | -------------------------------------------------------------------------------- |
-| `ENV_NAMES`            | Pipeline | Yes      | None    | `<cluster-name>/<env-name>` | Selects Environment Inventory and output paths                                   |
-| `PIPELINE_TYPE`        | Pipeline | Yes      | None    | `GITLAB_DEPLOY`             | Step runs on every `GITLAB_DEPLOY` pipeline run                                  |
-| `ENV_BUILDER`          | Pipeline | No       | `false` | `true`, `false`             | When `true`, the step runs even when `PIPELINE_TYPE` is not `GITLAB_DEPLOY`      |
-| `ENV_TEMPLATE_VERSION` | Pipeline | No       | None    | artifact coordinates        | When set, step `set_template_version` may update Inventory before this step runs |
+| Parameter                | Source   | Required | Default   | Values / format             | Effect                                                                           |
+| ------------------------ | -------- | -------- | --------- | --------------------------- | -------------------------------------------------------------------------------- |
+| `ENV_NAMES`              | Pipeline | Yes      | None      | `<cluster-name>/<env-name>` | Selects Environment Inventory and output paths                                   |
+| `PIPELINE_TYPE`          | Pipeline | Yes      | `LEGACY`  | `GITLAB_DEPLOY`, `LEGACY`   | Step always runs at `GITLAB_DEPLOY`. At `LEGACY` the run depends on the parameters below |
+| `ENV_BUILDER`            | Pipeline | No       | `false`   | `true`, `false`             | At `PIPELINE_TYPE: LEGACY`, the step runs only when `ENV_BUILDER` is `true`       |
+| `SD_VERSION`             | Pipeline | No       | None      | Solution Descriptor version | At `PIPELINE_TYPE: LEGACY`, when set it satisfies the Solution Descriptor part of the run condition |
+| `GENERATE_EFFECTIVE_SET` | Pipeline | No       | `false`   | `true`, `false`             | At `PIPELINE_TYPE: LEGACY`, `true` satisfies the run condition together with `ENV_BUILDER` |
+| `ENV_TEMPLATE_VERSION`   | Pipeline | No       | None      | artifact coordinates        | When set, step `set_template_version` may update Inventory before this step runs |
 
 ## Processing flow
 
 1. **Decide whether to run**
 
-   The Instance pipeline runs this step when pipeline parameter `PIPELINE_TYPE` is `GITLAB_DEPLOY`
-   or pipeline parameter `ENV_BUILDER` is `true`. Otherwise the Instance pipeline skips this step.
+   The Instance pipeline runs this step when pipeline parameter `PIPELINE_TYPE` is `GITLAB_DEPLOY`.
+   At `PIPELINE_TYPE: LEGACY` the Instance pipeline runs this step when `ENV_BUILDER` is `true` and
+   either `SD_VERSION` is set or `GENERATE_EFFECTIVE_SET` is `true`. Otherwise the Instance pipeline
+   skips this step.
 
 2. **Download Environment Template artifacts**
 
