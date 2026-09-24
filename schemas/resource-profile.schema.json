@@ -138,8 +138,5 @@
         ]
       }
     }
-  },
-  "required": [
-    "applications"
-  ]
+  }
 }

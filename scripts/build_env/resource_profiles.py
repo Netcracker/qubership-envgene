@@ -72,8 +72,30 @@ def get_param_from_resource_profile_service(paramName, service_yaml):
     return None
 
 
+def get_profile_baseline(profile_yaml):
+    return profile_yaml.get("baseline") or None
+
+
+def has_profile_parameters(profile_yaml):
+    return any(service["parameters"]
+               for app in profile_yaml.get("applications") or []
+               for service in app["services"])
+
+
 def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProfileName):
     commentText = f"from {overrideProfileName}"
+    source_baseline = get_profile_baseline(sourceProfileYaml)
+    override_baseline = get_profile_baseline(overrideProfileYaml)
+    if override_baseline:
+        if override_baseline != source_baseline and has_profile_parameters(sourceProfileYaml):
+            logger.warning(f"Merging environment specific profile '{overrideProfileName}' with baseline "
+                           f"'{override_baseline}' into template profile with baseline '{source_baseline}' "
+                           f"that carries parameters. Use replace mode to change the baseline.")
+        merge_dict_key_with_comment("baseline", sourceProfileYaml, "baseline", overrideProfileYaml, commentText)
+    if not overrideProfileYaml.get("applications"):
+        return
+    if sourceProfileYaml.get("applications") is None:
+        sourceProfileYaml["applications"] = []
     for app in overrideProfileYaml["applications"]:
         sourceApp = get_app_from_resource_profile(app["name"], sourceProfileYaml)
         # if app not in template profile, adding it and iterating to make comments
@@ -150,12 +172,10 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
         if profile_key not in all_profiles:
-            raise ReferenceError(
-                f"Environment specific profile '{env_specific_profile_path}' is mapped to key "
-                f"'{profile_key}' in envTemplate.envSpecificResourceProfiles, but the "
-                f"namespace template has no profile.name. Resource profile overrides require "
-                f"a profile.name on the corresponding cloud or namespace template."
-            )
+            logger.info(f"No template profile for profile key '{profile_key}', attaching standalone "
+                        f"environment specific profile {env_specific_profile_path}")
+            override_profile_map[profile_key] = env_specific_profile_path
+            continue
         logger.info(f"Found template override profile for profile key '{profile_key}'"
                     f" with environment specific profile {env_specific_profile_path}")
         template_profile_file_path = all_profiles[profile_key]
@@ -189,6 +209,7 @@ def has_valid_profile_name(content: dict) -> bool:
 
 def update_profile_name(file_path, profile_name):
     data = openYaml(file_path, {})
-    if has_valid_profile_name(data):
-        set_nested_yaml_attribute(data, "profile.name", profile_name)
-        writeYamlToFile(file_path, data)
+    if data.get("profile") is None:
+        data["profile"] = get_empty_yaml()
+    set_nested_yaml_attribute(data, "profile.name", profile_name)
+    writeYamlToFile(file_path, data)
