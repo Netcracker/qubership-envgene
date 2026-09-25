@@ -40,10 +40,10 @@ with an `authConfig` block. This guide walks through each provider step by step.
 EnvGene uses the term "registry" in two distinct contexts. Keep them separate when you read
 documentation or configure the system.
 
-| Context                    | Purpose                                                        | Configured via                                                                                                                                                                 |
-| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Context                    | Purpose                                                        | Configured via                                                                                                                                                    |
+|----------------------------|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **A. Artifact registries** | Download Maven artifacts (SDs, DDs, and environment templates) | [RegDef v2.0](/docs/envgene-objects.md#registry-definition-v20) or [Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20) with `authConfig` |
-| **B. Image registries**    | Pull EnvGene container images during CI                        | GitHub repository variables: `DOCKER_REGISTRY`, `DOCKER_CLOUD_REGISTRY_PROVIDER`, and `GCP_SA_KEY`                                                         |
+| **B. Image registries**    | Pull EnvGene container images during CI                        | GitHub repository variables: `DOCKER_REGISTRY`, `DOCKER_CLOUD_REGISTRY_PROVIDER`, and `GCP_SA_KEY`                                                                |
 
 This guide covers Context A only. For image registry configuration (Context B), see
 [Using Docker Registries in EnvGene GitHub Workflow](/docs/how-to/docker-registry-configuration.md).
@@ -78,7 +78,7 @@ To create an IAM user or role with these permissions and Create an access key pa
 AWS guides:
 
 - [Create an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html)
-- [CodeArtifact permissions reference](https://docs.aws.amazon.com/codeartifact/latest/ug/auth-and-access-control-iam-access-control-identity-based.html)
+- [CodeArtifact permissions reference](https://docs.aws.amazon.com/codeartifact/latest/ug/auth-and-access-control-permissions-reference.html)
 - [Create an IAM access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html)
 
 ### AWS Step 1: Create the credential entry
@@ -206,7 +206,7 @@ authenticate automatically on each pipeline run.
 >
 > This is a one-time runner-level setup. Without it, Docker cannot authenticate to ECR
 > automatically. For details, see
-> [GitLab Runner advanced configuration](https://docs.gitlab.com/runner/configuration/advanced-configuration.html).
+> [GitLab Runner advanced configuration](https://docs.gitlab.com/runner/configuration/advanced-configuration/).
 
 #### Set CI/CD variables
 
@@ -240,9 +240,9 @@ Registry repository:
 To set up a service account with this role and download its JSON key, follow the official Google
 Cloud guides:
 
-- [Create and manage service accounts](https://cloud.google.com/iam/docs/service-accounts-create)
+- [Create and manage service accounts](https://docs.cloud.google.com/iam/docs/service-accounts-create)
 - [Grant an IAM role on an Artifact Registry repository](https://cloud.google.com/artifact-registry/docs/access-control#grant-repo)
-- [Create and manage service account keys](https://cloud.google.com/iam/docs/keys-create-delete)
+- [Create and manage service account keys](https://docs.cloud.google.com/iam/docs/keys-create-delete)
 
 ### GCP Step 1: Create the credential entry
 
@@ -366,15 +366,15 @@ when different environments use different registries or accounts.
 
 ## Supported auth methods reference
 
-| Provider       | Auth method        | Implemented       | Credential type    | Credential fields                                   |
-|----------------|--------------------|--------------------|--------------------|----------------------------------------------------|
-| `aws`          | `secret`           | Yes               | `usernamePassword` | `username` = access key ID, `password` = secret key |
-| `aws`          | `assume_role`      | No (raises error) | -                  | -                                                   |
-| `gcp`          | `service_account`  | Yes               | `secret`           | `secret` = full JSON of GCP service account key     |
-| `gcp`          | `federation`       | No (raises error) | -                  | -                                                   |
-| `nexus`        | `user_pass`        | Yes               | `usernamePassword` | `username`, `password`                              |
-| `artifactory`  | `user_pass`        | Yes               | `usernamePassword` | `username`, `password`                              |
-| any            | `anonymous`        | Yes               | none               | -                                                   |
+| Provider      | Auth method       | Implemented       | Credential type    | Credential fields                                   |
+|---------------|-------------------|-------------------|--------------------|-----------------------------------------------------|
+| `aws`         | `secret`          | Yes               | `usernamePassword` | `username` = access key ID, `password` = secret key |
+| `aws`         | `assume_role`     | No (raises error) | -                  | -                                                   |
+| `gcp`         | `service_account` | Yes               | `secret`           | `secret` = full JSON of GCP service account key     |
+| `gcp`         | `federation`      | No (raises error) | -                  | -                                                   |
+| `nexus`       | `user_pass`       | Yes               | `usernamePassword` | `username`, `password`                              |
+| `artifactory` | `user_pass`       | Yes               | `usernamePassword` | `username`, `password`                              |
+| any           | `anonymous`       | Yes               | none               | -                                                   |
 
 > [!WARNING]
 > The `assume_role` (AWS) and `federation` (GCP) auth methods appear in the schema but are not implemented. Using them causes a runtime error. Use `secret` for AWS and `service_account` for GCP.

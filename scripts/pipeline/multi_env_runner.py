@@ -10,6 +10,7 @@ from envgenehelper import logger
 from envgenehelper.business_helper import get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.repo_paths import get_sparse_checkout_paths
 from publish_artifacts.publish_artifacts import artifacts_output_root
+from pipeline.metrics_collector_activity import completion_root
 
 _MAX_FAN_OUT_WORKERS = 3
 
@@ -64,6 +65,7 @@ def _child_env_for(worktree_path: Path, full_env_name: str, artifacts_output_dir
     cluster_name = get_cluster_name_from_full_name(full_env_name)
     env_name = get_environment_name_from_full_name(full_env_name)
     child = dict(os.environ)
+    child["METRICS_COLLECTOR_RESULTS_ROOT"] = str(completion_root())
     child["CI_PROJECT_DIR"] = str(worktree_path)
     child["ENV_NAMES"] = full_env_name
     child["FULL_ENV_NAME"] = full_env_name
