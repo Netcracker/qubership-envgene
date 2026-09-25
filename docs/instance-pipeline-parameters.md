@@ -798,7 +798,7 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `DEPLOYMENT_SESSION_ID`
 
-**Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
+**Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/info/rfc4122/). This parameter is used in two scenarios:
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 

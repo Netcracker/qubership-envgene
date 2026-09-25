@@ -7,7 +7,6 @@
     - [Detailed Composition Algorithm](#detailed-composition-algorithm)
     - [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs)
       - [Examples (app-reg-defs)](#examples-app-reg-defs)
-    - [Template labels](#template-labels)
     - [Use Cases](#use-cases)
       - [Case 1](#case-1)
       - [Case 2](#case-2)
@@ -57,7 +56,7 @@ This diagram shows parent and child templates with their components. The color o
      - Tenant template (cannot be overridden)
      - Cloud template (override allowed)
      - Namespace template (override allowed)
-   - **Overridable Attributes** (for Cloud/Namespace templates only):
+   - **Overrideable Attributes** (for Cloud/Namespace templates only):
      - `profile`
      - `deployParameters`
      - `e2eParameters`
@@ -137,10 +136,7 @@ The sequence below describes how composition is executed during template build.
 
 7. **Process namespaces**
 
-   - For each namespace with `parent`, select the parent namespace and use it as the base namespace entry in the resulting descriptor. Selection resolves in this order:
-     - By `parent_namespace_template_name` when it is set. The value must exactly match one namespace `name` in the parent template. Preprocessing fails when no parent namespace or more than one parent namespace matches.
-     - Otherwise by `name`. When `deploy_postfix` is set, preprocessing first matches both `name` and `deploy_postfix`, then falls back to matching `name` only when no such parent namespace exists.
-   - The child `name` becomes the namespace name in the generated descriptor. `parent_namespace_template_name` selects the inherited parent namespace only and is not included in the generated descriptor.
+   - For each namespace with `parent`, find the parent namespace by exact `name` and use it as the base namespace entry in the resulting descriptor.
    - Then, if the child namespace defines `template_path`, overwrite the inherited `template_path` with the child value.
 
 8. **Apply `overrides-parent` (Cloud and Namespace only)**
@@ -189,25 +185,6 @@ Application Definitions (`appdefs`) and Registry Definitions (`regdefs`) can be 
 1. Parent ships `templates/appdefs/my-app.yml` and the child adds `templates/appdefs/my-app.yml` with the same relative path. The child's file replaces the parent's. If you only need a small change, duplicate the parent content into the child file and edit the full document there - partial overlays are not applied automatically.
 
 2. Parent defines one application in `templates/appdefs/app-a.yml` and the child adds `templates/appdefs/app-b.yml`. Both paths are distinct, so both files appear in the composed template.
-
-### Template labels
-
-A composed template artifact holds two kinds of Template Descriptors in `env_templates/`: those created in the template application being built, and those copied in from parent artifacts during composition. Each Template Descriptor carries an optional `labels` map, and preprocessing sets `labels.origin` in the build output to record which kind a descriptor is:
-
-| `origin` | Meaning |
-| --- | --- |
-| `self` | The descriptor was created in the template application being built |
-| `parent` | The descriptor was copied from a parent template |
-
-`origin` is relative to the current build. A descriptor that is `self` inside a parent artifact becomes `parent` when that artifact is copied into a later build. A tool that lists only the templates created in an application filters on `origin: self` and hides templates inherited from a parent.
-
-Preprocessing writes `origin` only into the build output, never back into the source tree. Source descriptors can omit `labels`. Authors can set their own label keys. Preprocessing keeps those keys and always overwrites `origin`.
-
-```yaml
-labels:
-  label1: value1
-  origin: self
-```
 
 ### Use Cases
 
@@ -311,15 +288,6 @@ namespaces:
     # Optional
     # Required when multiple `parent-templates` exist or template_path is specified and you want to override
     parent: default-bss
-    # Optional
-    # Parent folder name for the namespace. When set, the parent namespace is matched by
-    # `name` and `deploy_postfix`, with a fallback to `name` only
-    deploy_postfix: bss
-    # Optional
-    # Selects the parent namespace by its `name` in the parent template. Use it when the parent
-    # template has several namespaces with the same `name`, or when the resulting namespace needs
-    # a different name. Must exactly match one namespace `name` in the parent template
-    parent_namespace_template_name: "{env}-bss"
     # Optional
     # Section with parameters that override the parent template's values
     overrides-parent:

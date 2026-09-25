@@ -60,17 +60,6 @@
         }
       ]
     },
-    "labels": {
-      "title": "Labels",
-      "description": "Optional map of labels of any type. Set by template preprocessing: origin is self for descriptors created in the template application being built and parent for descriptors copied from a parent template.",
-      "type": "object",
-      "properties": {
-        "origin": {
-          "description": "Set by template preprocessing. self for the current template application, parent for a descriptor copied from a parent template."
-        }
-      },
-      "additionalProperties": true
-    },
     "composite_structure": {
       "title": "Composite Structure Path",
       "description": "Path to the Composite Structure template file",

@@ -5,7 +5,7 @@ import shlex
 import uuid
 from os import getenv
 from pathlib import Path
-from typing import Optional, Self
+from typing import Any, Optional, Self
 
 import yaml
 from pydantic import BaseModel, Field
@@ -25,7 +25,8 @@ class PipelineParametersHandler(BaseModel):
 
     params: dict
     internal_params: dict
-    sensitive_params: list
+    sensitive_params: list[str] = Field(
+        default_factory=lambda: ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"])
     full_env_name: str
     cluster_name: str
     env_name: str
@@ -41,6 +42,11 @@ class PipelineParametersHandler(BaseModel):
     )
     # for reg defs v2 calculated from cloud e2e params
     transient_regdefs_dir: Optional[Path] = None
+
+    @staticmethod
+    def exclude_sensitive_parameters(params: dict[str, Any], sensitive_params: list[str]) -> dict[str, Any]:
+        sensitive = set(sensitive_params)
+        return {key: value for key, value in params.items() if key not in sensitive and value not in (None, "")}
 
     @classmethod
     def from_env(cls) -> Self:
@@ -86,6 +92,9 @@ class PipelineParametersHandler(BaseModel):
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
             "BGD_OPERATION": getenv("BGD_OPERATION"),
             "BG_STATE": getenv("BG_STATE"),
+            "METRICS_COLLECTOR_URL": getenv("METRICS_COLLECTOR_URL", ""),
+            "METRICS_COLLECTOR_PARENT_ID": getenv("METRICS_COLLECTOR_PARENT_ID", ""),
+            "METRICS_COLLECTOR_TRACE_ID": getenv("METRICS_COLLECTOR_TRACE_ID", ""),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
@@ -112,10 +121,8 @@ class PipelineParametersHandler(BaseModel):
         }
         for k, v in internal_params.items():
             os.environ[k] = v
-        sensitive_params = ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"]
         return cls(
             params=params,
-            sensitive_params=sensitive_params,
             internal_params=internal_params,
             full_env_name=full_env_name,
             cluster_name=cluster_name,

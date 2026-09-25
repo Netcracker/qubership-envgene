@@ -210,15 +210,10 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   for example "the design docs are ahead of the code" or "this CR wires the described behavior". It is
   noise, not guidance - the reader is the developer who will write the code, and the code's current
   state is theirs to change. State the behavior contract and how to verify it, nothing about the gap.
-- Design-reference boundary: no `In scope changes` item modifies a file that already ships in the
-  design-reference PR - the docs text, the schemas, and the samples committed alongside the docs.
-  That PR delivers those, and the CR carries only the code slice that consumes the settled contract.
-  This catches the common case of a documentation item in scope (a feature or explanation doc, an
-  ADR, a use case, or any file under `docs/`), and it catches schema or sample items too when those
-  files ship in the design PR - for example an item like "Update `docs/features/X.md` section Y" or
-  "Add `foo` to the enum in `schemas/X.json`" fails the gate when either file is already committed
-  to the design-reference PR. If a drafted item names such a file, drop it, or if it names real
-  code work behind that file, restate it as that code work.
+- No documentation item in scope: no `In scope changes` item asks to write, rewrite, or update
+  documentation, including a feature or explanation doc, an ADR, a use case, or any file under `docs/`.
+  The docs are the design reference the CR links, not implementation work. If a drafted item says to write
+  or update a doc, drop it, or if it names real code work, restate it as that code work.
 - Component visibility: each `In scope changes` item leads with or is grouped under the component or
   pipeline step it touches, so the slice scans as a work-map. An item that buries the component mid-prose
   in a flat list fails this check.
