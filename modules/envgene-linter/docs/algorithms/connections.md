@@ -123,7 +123,7 @@ Known fixed-path credentials may be absent without a finding; the generator uses
 a default then. Alias matching and ambiguous first buckets retain PLACE-8's existing
 behavior. PLACE-10 follows PLACE-9; SEC-1 follows PLACE-10; SEC-3 follows SEC-1;
 SEC-4 follows SEC-3, SEC-5 follows SEC-4, and INT-2 follows SEC-5.
-INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. The console has twenty rule headers.
+INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. NAME-8 follows NAME-4. The console has 21 rule headers.
 There are no new CLI flags, other severity changes, autofix, or network calls.
 
 ## Examples
@@ -147,3 +147,9 @@ three unbound empty entities produce none.
 ## Shared Template Variables
 
 Explicit `envTemplate.sharedTemplateVariables` bindings now select Shared Template Variable files using the local generator lookup. These physical paths participate in global and per-environment selection. [PLACE-10](place10.md) checks their type directory along with ParameterSets, profiles, shared credentials and passports. Selection does not infer types from arbitrary YAML.
+
+## NAME-8 filename checks
+
+[NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) checks selected default Cloud Passport filenames and
+their selected companion Credential filenames. It excludes `passport-infra`, preserves companion lookup priority,
+and does not add unused files to Connections.

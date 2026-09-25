@@ -7,7 +7,7 @@ from envgene_linter.rulemeta import RULES, defaults_for
 def test_catalog_defaults_for_known_rules():
     assert set(RULES) == {
         "PLACE-1", "PLACE-2", "PLACE-3", "PLACE-4", "PLACE-6", "PLACE-7", "PLACE-8", "PLACE-9", "PLACE-10",
-        "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "INT-3", "INT-4", "NAME-1", "NAME-2", "NAME-3", "NAME-4",
+        "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "INT-3", "INT-4", "NAME-1", "NAME-2", "NAME-3", "NAME-4", "NAME-8",
     }
     assert RULES["PLACE-4"].description == "Cloud Passport keys do not belong in ParameterSets"
     assert RULES["PLACE-4"].default_issue_type is IssueType.WARNING

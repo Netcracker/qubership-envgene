@@ -113,6 +113,7 @@ RULES: dict[str, RuleMeta] = {
         IssueType.INFORMATION,
         Action.REVIEW,
     ),
+    "NAME-8": RuleMeta("NAME-8", "Name the Cloud Passport passport", IssueType.WARNING, Action.FIX),
     "NAME-4": RuleMeta(
         "NAME-4",
         "Bound ParameterSet stem is <subject>-<category>",

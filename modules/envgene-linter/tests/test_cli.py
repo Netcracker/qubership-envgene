@@ -44,7 +44,7 @@ def test_check_no_findings(repo):
     assert "information" in name3
     assert "env_definition" in name3
     assert "File 'env_definition' is not kebab-case." in name3
-    name4 = result.output[result.output.index("NAME-4") :]
+    name4 = result.output[result.output.index("NAME-4") : result.output.index("NAME-8")]
     assert "No findings" not in name4
     assert "information" in name4
     assert "env-params" in name4
@@ -57,7 +57,7 @@ def test_check_reports_name4_after_name3(repo):
     result = CliRunner().invoke(main, ["check", str(repo.root), "--console"])
     assert result.exit_code == 0
     assert result.output.index("NAME-3") < result.output.index("NAME-4")
-    name4 = result.output[result.output.index("NAME-4") :]
+    name4 = result.output[result.output.index("NAME-4") : result.output.index("NAME-8")]
     assert "information" in name4
     assert "bss" in name4
 

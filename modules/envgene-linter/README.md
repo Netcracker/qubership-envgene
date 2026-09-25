@@ -135,7 +135,7 @@ All implemented rules run on each check. There are currently no CLI options for 
 
 ## Reading findings
 
-With `--console`, the terminal report groups findings by rule and prints all 20 rule headings.
+With `--console`, the terminal report groups findings by rule and prints all 21 rule headings.
 An enabled rule without findings shows `No findings`. Disabled rules show `Disabled`.
 
 Each finding contains one or more `path:line:column` locations, followed by its severity, a description and a suggested action. Line and column numbers start at 1. File-level checks use `1:1`, which does not mean that the first YAML key is invalid.
@@ -194,6 +194,7 @@ Each link opens the current processing algorithm. The descriptions below summari
 | [INT-3](/modules/envgene-linter/docs/algorithms/int3.md) | A used reference name is defined at multiple environment, cluster, or repository scopes | Warning / Fix |
 | [INT-4](/modules/envgene-linter/docs/algorithms/int4.md) | No reference to a recognized authored entity was found in available local sources | Information / Review |
 | [NAME-2](docs/algorithms/name2.md) | A selected entity's filename stem differs from its `name` field | Warning / Fix |
+| [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) | A used default Cloud Passport or its selected companion has a noncanonical filename | Warning / Fix |
 
 PLACE-5 and other rules not listed above are not implemented.
 
