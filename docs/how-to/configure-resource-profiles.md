@@ -1,6 +1,7 @@
 # How to Configure Resource Profiles for Different Environment Types
 
 - [How to Configure Resource Profiles for Different Environment Types](#how-to-configure-resource-profiles-for-different-environment-types)
+  - [Running this guide](#running-this-guide)
   - [Description](#description)
   - [Prerequisites](#prerequisites)
   - [Option 1: Create Template Resource Profile Override (Template Repository)](#option-1-create-template-resource-profile-override-template-repository)
@@ -18,6 +19,18 @@
     - [Use Case 3: Single Environment Hot Fix](#use-case-3-single-environment-hot-fix)
   - [Verification](#verification)
   - [Related Documentation](#related-documentation)
+
+## Running this guide
+
+**No installation needed** — run with `npx`. Fill in your values using the template in [Required Inputs](#required-inputs), save to any file (e.g. `my-inputs.txt`), then run:
+
+`(set -a; source my-inputs.txt; npx runme run --all --filename configure-resource-profiles.md)`
+
+See [How to run guides with runme](/docs/how-to/how-to-run-guides-with-runme.md) for full CLI, VS Code, pipeline, and AI agent instructions.
+
+Steps marked **Manual step — cannot be automated** are blockquotes — runme skips them automatically.
+
+---
 
 ## Description
 
@@ -42,7 +55,57 @@ By choosing the appropriate **file location**, you control the override scope:
 
 1. Template Repository exists with Cloud/Namespace templates
 2. Instance Repository exists with the target environment
-3. Understanding of your application's performance parameters
+3. Git and Node.js (v16+) available locally.
+
+Verify tools are available:
+
+```bash
+git --version
+# Expected: git version x.x.x
+node --version
+# Expected: v16.x.x or higher
+```
+
+---
+
+## Required Inputs
+
+Create a file with your values (any filename, e.g. `my-inputs.txt`) and load it with `source` before running.
+
+| Variable | Required for | Example | Description |
+|---|---|---|---|
+| `PROFILE_NAME` | Option 1 | `dev-core-profile` | Profile file name without extension (Template Repository) |
+| `CLUSTER_NAME` | Option 2 | `prod-cluster` | Directory name under `environments/` |
+| `ENV_NAME` | Option 2 | `prod-env-01` | Directory name under `environments/<cluster>/` |
+| `PROFILE_OVERRIDE_NAME` | Option 2 | `core-prod-override` | Profile override file name without extension |
+
+**Template for Option 1 (Template Repository)** — copy, fill in your values, save as any filename:
+
+```bash {"excludeFromRunAll":true,"name":"input-template-option1"}
+PROFILE_NAME=dev-core-profile
+```
+
+**Template for Option 2 (Instance Repository)**:
+
+```bash {"excludeFromRunAll":true,"name":"input-template-option2"}
+CLUSTER_NAME=prod-cluster
+ENV_NAME=prod-env-01
+PROFILE_OVERRIDE_NAME=core-prod-override
+```
+
+Validate inputs (first runnable cell — fails immediately if a required variable is missing):
+
+```bash
+# validate-inputs
+if [ -n "$PROFILE_NAME" ]; then
+  echo "Option 1 selected: PROFILE_NAME=$PROFILE_NAME"
+elif [ -n "$CLUSTER_NAME" ] && [ -n "$ENV_NAME" ] && [ -n "$PROFILE_OVERRIDE_NAME" ]; then
+  echo "Option 2 selected: CLUSTER_NAME=$CLUSTER_NAME  ENV_NAME=$ENV_NAME  PROFILE_OVERRIDE_NAME=$PROFILE_OVERRIDE_NAME"
+else
+  echo "ERROR: Set PROFILE_NAME (Option 1) OR all three of CLUSTER_NAME, ENV_NAME, PROFILE_OVERRIDE_NAME (Option 2)"
+  exit 1
+fi
+```
 
 ---
 
@@ -52,16 +115,15 @@ Use this when you want to set **default** resource profiles for **all environmen
 
 ### Step 1: Create Resource Profile Override File
 
-Create a new file in the Template Repository:
+Create the file `templates/resource_profiles/$PROFILE_NAME.yml`:
 
-**Location:** `/templates/resource_profiles/<profile-name>.yml`
-
-**Example:** `/templates/resource_profiles/dev-core-profile.yml`
-
-```yaml
-name: "dev-core-profile"
+```bash
+if [ -z "$PROFILE_NAME" ]; then echo "Option 1 not selected — skipping"; exit 0; fi
+mkdir -p templates/resource_profiles
+cat > "templates/resource_profiles/$PROFILE_NAME.yml" <<EOF
+name: "$PROFILE_NAME"
 baseline: "dev"
-description: "Development environment resource profile for core services"
+description: "Resource profile for $PROFILE_NAME"
 applications:
   - name: "Cloud-Core"
     services:
@@ -75,42 +137,48 @@ applications:
             value: "100m"
           - name: "resources.requests.memory"
             value: "256Mi"
-      - name: "tenant-manager"
-        parameters:
-          - name: "resources.limits.memory"
-            value: "1Gi"
-          - name: "resources.requests.memory"
-            value: "512Mi"
-          - name: "replicas"
-            value: 2
+EOF
+```
+
+Verify the file was created:
+
+```bash
+if [ -z "$PROFILE_NAME" ]; then exit 0; fi
+cat "templates/resource_profiles/$PROFILE_NAME.yml"
+# Expected: YAML with actual value for name field (not literal $PROFILE_NAME)
 ```
 
 ### Step 2: Reference Profile in Cloud/Namespace Template
 
-Update your Cloud or Namespace template to reference the profile:
+> **Manual step — cannot be automated:** Open the relevant namespace template (e.g. `templates/namespaces/core.yaml`)
+> and add a `profile` block referencing `$PROFILE_NAME`:
 
-**Example:** `/templates/namespaces/core.yaml`
-
-```yaml
----
-name: "{{ current_env.environmentName }}-core"
-# ... other required fields ...
+```yaml {"excludeFromRunAll":true}
 profile:
-  name: "dev-core-profile"
+  name: "<your-profile-name>"
   baseline: "dev"
-# ... other required fields ...
 ```
+
+> Complete this edit before running the commit step below.
 
 ### Step 3: Commit and Publish Template
 
 ```bash
-git add templates/resource_profiles/dev-core-profile.yml
-git add templates/namespaces/core.yaml
-git commit -m "Add dev-core-profile resource profile override"
+if [ -z "$PROFILE_NAME" ]; then echo "Option 1 not selected — skipping"; exit 0; fi
+git add "templates/resource_profiles/$PROFILE_NAME.yml"
+git commit -m "Add $PROFILE_NAME resource profile override"
 git push
 ```
 
-Publish the new template version following your template publishing process.
+Verify the commit was created:
+
+```bash
+if [ -z "$PROFILE_NAME" ]; then exit 0; fi
+git log --oneline -1
+# Expected: "Add <profile-name> resource profile override"
+```
+
+> **Manual step — cannot be automated:** Publish the new template version following your template publishing process.
 
 ---
 
@@ -122,22 +190,23 @@ Use this when you want to **customize** resource profiles for **specific environ
 
 Determine where to place the override based on scope:
 
-| Location                                                                       | Scope                | Use When             |
-|--------------------------------------------------------------------------------|----------------------|----------------------|
-| `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles/` | Environment-specific | One environment only |
-| `/environments/<cluster-name>/resource_profiles/`                              | Cluster-wide         | All environments     |
-| `/environments/resource_profiles/`                                             | Global               | Multiple clusters    |
+| Location                                                                          | Scope                | Use When             |
+|-----------------------------------------------------------------------------------|----------------------|----------------------|
+| `/environments/$CLUSTER_NAME/$ENV_NAME/Inventory/resource_profiles/` | Environment-specific | One environment only |
+| `/environments/$CLUSTER_NAME/resource_profiles/`                      | Cluster-wide         | All environments     |
+| `/environments/resource_profiles/`                                    | Global               | Multiple clusters    |
 
 ### Step 2: Create Environment Specific Override
 
-Create a new file in the Instance Repository at the chosen location:
+Create the profile override file (environment-specific location):
 
-**Example (environment-specific):** `/environments/prod-cluster/prod-env-01/Inventory/resource_profiles/core-prod-override.yml`
-
-```yaml
-name: "core-prod-override"
+```bash
+if [ -z "$CLUSTER_NAME" ]; then echo "Option 2 not selected — skipping"; exit 0; fi
+mkdir -p "environments/$CLUSTER_NAME/$ENV_NAME/Inventory/resource_profiles"
+cat > "environments/$CLUSTER_NAME/$ENV_NAME/Inventory/resource_profiles/$PROFILE_OVERRIDE_NAME.yml" <<EOF
+name: "$PROFILE_OVERRIDE_NAME"
 baseline: "prod"
-description: "Production resource profile override for core services"
+description: "Resource profile override for $ENV_NAME"
 applications:
   - name: "Cloud-Core"
     services:
@@ -151,71 +220,58 @@ applications:
             value: "1000m"
           - name: "resources.requests.memory"
             value: "1Gi"
-      - name: "tenant-manager"
-        parameters:
-          - name: "resources.limits.memory"
-            value: "4Gi"
-          - name: "resources.requests.memory"
-            value: "2Gi"
-          - name: "replicas"
-            value: 5
-      - name: "identity-provider"
-        parameters:
-          - name: "PG_MAX_POOL_SIZE"
-            value: 100
+EOF
 ```
 
-**Example (cluster-wide):** `/environments/prod-cluster/resource_profiles/prod-cluster-baseline.yml`
+Verify the file was created:
 
-```yaml
-name: "prod-cluster-baseline"
-baseline: "prod"
-description: "Production cluster baseline resource profile"
-applications:
-  - name: "Cloud-Core"
-    services:
-      - name: "facade-operator"
-        parameters:
-          - name: "resources.limits.cpu"
-            value: "1500m"
-          - name: "resources.limits.memory"
-            value: "1536Mi"
+```bash
+if [ -z "$CLUSTER_NAME" ]; then exit 0; fi
+cat "environments/$CLUSTER_NAME/$ENV_NAME/Inventory/resource_profiles/$PROFILE_OVERRIDE_NAME.yml"
+# Expected: YAML with actual values for name and env fields
 ```
 
 ### Step 3: Reference Override in `env_definition.yml`
 
-Update the environment inventory to reference the new override:
+> **Manual step — cannot be automated:** Open
+> `environments/$CLUSTER_NAME/$ENV_NAME/Inventory/env_definition.yml`
+> and add the `envSpecificResourceProfiles` block:
 
-**File:** `/environments/prod-cluster/prod-env-01/Inventory/env_definition.yml`
-
-```yaml
-inventory:
-  environmentName: "prod-env-01"
+```yaml {"excludeFromRunAll":true}
 envTemplate:
   envSpecificResourceProfiles:
-    core: "core-prod-override"
+    core: "<your-profile-override-name>"
 ```
 
-**For multiple namespaces:**
-
-```yaml
-envTemplate:
-  envSpecificResourceProfiles:
-    core: "core-prod-override"
-    api: "api-prod-override"
-    worker: "worker-prod-override"
-```
+> Complete this edit before running the commit step below.
 
 ### Step 4: Commit and Test
 
+Stages the profile override file and `env_definition.yml` (if Step 3 was completed):
+
 ```bash
-git add environments/prod-cluster/prod-env-01/Inventory/resource_profiles/core-prod-override.yml
-git add environments/prod-cluster/prod-env-01/Inventory/env_definition.yml
-git commit -m "Add production resource profile override for prod-env-01"
+if [ -z "$CLUSTER_NAME" ]; then echo "Option 2 not selected — skipping"; exit 0; fi
+git add "environments/$CLUSTER_NAME/$ENV_NAME/Inventory/resource_profiles/$PROFILE_OVERRIDE_NAME.yml"
+if ! git diff --ignore-all-space --quiet "environments/$CLUSTER_NAME/$ENV_NAME/Inventory/env_definition.yml" 2>/dev/null; then
+  git add "environments/$CLUSTER_NAME/$ENV_NAME/Inventory/env_definition.yml"
+  echo "env_definition.yml staged (Step 3 changes detected)"
+else
+  echo "env_definition.yml unchanged — skipping (complete Step 3 first if needed)"
+fi
+git commit -m "Add $PROFILE_OVERRIDE_NAME resource profile override for $ENV_NAME"
 git push
 ```
 
-Trigger environment generation to verify the changes.
+Verify the commit was created:
+
+```bash
+if [ -z "$CLUSTER_NAME" ]; then exit 0; fi
+git log --oneline -1
+# Expected: "Add <profile-override-name> resource profile override for <env-name>"
+```
+
+> **Manual step — cannot be automated:** Trigger the instance pipeline from the GitLab UI or via the API to
+> generate the environment and apply the profile override.
 
 ---
 
@@ -225,7 +281,7 @@ Trigger environment generation to verify the changes.
 
 **Template Repository:**
 
-```yaml
+```yaml {"excludeFromRunAll":true}
 # /templates/resource_profiles/dev-baseline.yml
 name: "dev-baseline"
 applications:
@@ -239,7 +295,7 @@ applications:
             value: 1
 ```
 
-```yaml
+```yaml {"excludeFromRunAll":true}
 # /templates/resource_profiles/prod-baseline.yml
 name: "prod-baseline"
 applications:
@@ -255,13 +311,13 @@ applications:
 
 **Reference in templates:**
 
-```yaml
+```yaml {"excludeFromRunAll":true}
 # /templates/namespaces/billing-dev.yaml
 profile:
   name: "dev-baseline"
 ```
 
-```yaml
+```yaml {"excludeFromRunAll":true}
 # /templates/namespaces/billing-prod.yaml
 profile:
   name: "prod-baseline"
@@ -273,7 +329,7 @@ Apply the same resource profile to all environments in a production cluster:
 
 **Instance Repository:** `/environments/prod-cluster-eu/resource_profiles/eu-prod-scaling.yml`
 
-```yaml
+```yaml {"excludeFromRunAll":true}
 name: "eu-prod-scaling"
 description: "EU production cluster scaling profile"
 applications:
@@ -295,7 +351,7 @@ Quickly increase resources for a specific environment under load:
 
 **Instance Repository:** `/environments/prod-cluster/prod-env-03/Inventory/resource_profiles/hotfix-scaling.yml`
 
-```yaml
+```yaml {"excludeFromRunAll":true}
 name: "hotfix-scaling"
 description: "Emergency scaling for prod-env-03"
 applications:
@@ -317,33 +373,56 @@ Update `env_definition.yml` for `prod-env-03` only.
 
 ## Verification
 
-After configuring resource profiles, verify they are applied correctly:
+After configuring resource profiles, verify they are applied correctly.
 
 1. **Generate Environment Instance:**
 
-   Trigger the pipeline with `ENV_NAMES=<cluster-name>/<environment-name>`
+   > **Manual step — cannot be automated:** Trigger the instance pipeline from the GitLab UI or via the API.
+   > Set `ENV_NAMES=$CLUSTER_NAME/$ENV_NAME` as the pipeline variable.
 
 2. **Check Generated Configuration:**
 
-   Look for the Resource Profile Override in the generated output:
+   After the pipeline completes, pull the latest changes:
 
-   ```text
-   environments/<cluster-name>/<environment-name>/Profiles/<profile-name>.yml
+   ```bash {"excludeFromRunAll":true}
+   git pull
+   ```
+
+   Confirm the profile was written to the generated output:
+
+   ```bash {"excludeFromRunAll":true}
+   ls "environments/$CLUSTER_NAME/$ENV_NAME/Profiles/"
+   # Expected: $PROFILE_OVERRIDE_NAME.yml (Option 2) or $PROFILE_NAME.yml (Option 1) appears in the listing
+   ```
+
+   Inspect the merged profile:
+
+   ```bash {"excludeFromRunAll":true}
+   cat "environments/$CLUSTER_NAME/$ENV_NAME/Profiles/$PROFILE_OVERRIDE_NAME.yml"
+   # Expected: merged resource values from the template and override are present
    ```
 
 3. **Verify Merge Result:**
 
-   The generated profile should contain merged values from:
-   - Baseline Resource Profile (referenced in `baseline` field — informational only, not processed by EnvGene)
+   The generated profile contains merged values from:
+   - Baseline Resource Profile (referenced in the `baseline` field — informational only, not processed by EnvGene)
    - Template Resource Profile Override
    - Environment Specific Resource Profile Override
 
 4. **Review Application Manifests:**
 
-   Check that resource limits/requests appear in generated Helm values or manifests:
+   List the generated namespace directories:
 
-   ```text
-   Namespaces/<namespace-name>/Applications/<app-name>/values.yaml
+   ```bash {"excludeFromRunAll":true}
+   ls Namespaces/
+   # Expected: namespace directories for your environment are present
+   ```
+
+   Find values files and spot-check resource configuration:
+
+   ```bash {"excludeFromRunAll":true}
+   find Namespaces/ -name "values.yaml" | head -5
+   # Expected: values files for your applications are listed
    ```
 
 ---
