@@ -27,6 +27,11 @@ V1_REGDEF = {
         "snapshotUri": "x", "stagingUri": "x", "releaseUri": "x", "groupUri": "x",
         "snapshotRepoName": "x", "stagingRepoName": "x", "releaseRepoName": "x", "groupName": "x",
     },
+    "helmConfig": {"helmTargetStaging": "helm-staging", "helmTargetRelease": "helm-release"},
+    "goConfig": {"goTargetSnapshot": "go-snapshot", "goTargetRelease": "go-release", "goProxyRepository": "go-proxy"},
+    "helmAppConfig": {
+        "helmStagingRepoName": "x", "helmReleaseRepoName": "x", "helmGroupRepoName": "x", "helmDevRepoName": "x",
+    },
 }
 
 CLOUD_TEMPLATE = textwrap.dedent("""\
@@ -83,6 +88,8 @@ PUBREG_PARAMSET = textwrap.dedent("""\
       PUB_REG_DOMAIN: "my-domain"
       PUB_REG_REGION: "us-east-1"
       PUB_REG_REPOSITORY: "my-repo"
+      PUB_REG_DOCKER_REPOSITORY: "https://docker.example.com"
+      HELM_REPO_BASE_URL: "https://helm.example.com"
     """)
 
 
@@ -145,6 +152,14 @@ class TestRegdefV2Adapter:
         synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         assert "fullRepositoryUrl" not in synthesized["mavenConfig"]
         jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+        for section in ("dockerConfig", "helmConfig", "helmAppConfig"):
+            assert synthesized[section] == {**V1_REGDEF[section], **synthesized[section]}
+            assert synthesized[section]["authConfig"] == "pub-reg-auth"
+        assert synthesized["mavenConfig"]["repositoryDomainName"] == V1_REGDEF["mavenConfig"]["repositoryDomainName"]
+        assert synthesized["dockerConfig"]["repositoryDomainName"] == "https://docker.example.com"
+        assert synthesized["helmConfig"]["repositoryDomainName"] == "https://helm.example.com"
+        assert synthesized["helmAppConfig"]["repositoryDomainName"] == "https://helm.example.com"
+        assert synthesized["goConfig"]["repositoryDomainName"] == V1_REGDEF["mavenConfig"]["repositoryDomainName"]
 
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"username": "key", "password": "secret"}
 
@@ -159,6 +174,8 @@ class TestRegdefV2Adapter:
               PUB_REG_SECRET: "secret"
               PUB_REG_PROJECT: "my-project"
               PUB_REG_SA_EMAIL: "sa@my-project.iam.gserviceaccount.com"
+              PUB_REG_DOCKER_REPOSITORY: "https://docker.example.com"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
             """))
         ctx = _ctx()
 
@@ -185,6 +202,28 @@ class TestRegdefV2Adapter:
             run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
+    def test_docker_domain_param_required(self, tmp_path):
+        paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "PUB_REG_DOCKER_REPOSITORY:" not in line)
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
+
+        with pytest.raises(ValueError, match="PUB_REG_DOCKER_REPOSITORY"):
+            run_regdefv2_adapter(_ctx())
+
+    @pytest.mark.unit
+    def test_helm_sections_skipped_without_helm_domain_param(self, tmp_path):
+        paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "HELM_REPO_BASE_URL:" not in line)
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert "helmConfig" not in synthesized
+        assert "helmAppConfig" not in synthesized
+        assert "dockerConfig" in synthesized
+        jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+
+    @pytest.mark.unit
     def test_gcp_service_account_requires_secret(self, tmp_path):
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(textwrap.dedent("""\
             name: "pubreg"
@@ -206,6 +245,8 @@ class TestRegdefV2Adapter:
               MAVEN_PROVIDER: "aws"
               PUB_REG_PROVIDER: "aws"
               PUB_REG_METHOD: "anonymous"
+              PUB_REG_DOCKER_REPOSITORY: "https://docker.example.com"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
             """))
         ctx = _ctx()
 

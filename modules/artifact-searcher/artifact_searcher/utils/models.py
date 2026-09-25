@@ -172,6 +172,7 @@ class MavenConfigV2(BaseSchema):
 
 class DockerConfigV2(BaseSchema):
     auth_config: str
+    repository_domain_name: str
     snapshot_uri: str
     staging_uri: str
     release_uri: str

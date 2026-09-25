@@ -33,6 +33,15 @@ V2_MAVEN_CONFIG_FIELDS = (
     "releaseGroup",
 )
 
+V2_SECTION_DOMAIN_PARAMS: dict[str, str | None] = {
+    "dockerConfig": "PUB_REG_DOCKER_REPOSITORY",
+    "helmConfig": "HELM_REPO_BASE_URL",
+    "helmAppConfig": "HELM_REPO_BASE_URL",
+    "goConfig": None,
+    "npmConfig": None,
+    "rawConfig": None,
+}
+
 _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
     "aws": {
         "PUB_REG_REGION": "awsRegion",
@@ -99,16 +108,36 @@ def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
     return auth_config
 
 
-def _convert_v2_from_v1(v1_data: dict, auth_config: dict) -> dict:
+def _resolve_section_domain(section: str, params: dict, v1_maven: dict) -> str | None:
+    param_name = V2_SECTION_DOMAIN_PARAMS[section]
+    if param_name is None:
+        return v1_maven.get("repositoryDomainName", "")
+    if params.get(param_name):
+        return params[param_name]
+    if section == "dockerConfig":
+        raise ValueError(f"{param_name} is required in Cloud e2eParameters to convert {section} to RegDef v2")
+    logger.warning(f"{param_name} not set in Cloud e2eParameters — {section} skipped in RegDef v2")
+    return None
+
+
+def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
     v1_maven = v1_data.get("mavenConfig", {})
     v2_maven = {key: v1_maven[key] for key in V2_MAVEN_CONFIG_FIELDS if key in v1_maven}
     v2_maven["authConfig"] = AUTH_CONFIG_KEY
-    return {
+    v2_data = {
         "version": "2.0",
         "name": v1_data["name"],
         "authConfig": {AUTH_CONFIG_KEY: auth_config},
         "mavenConfig": v2_maven,
     }
+    for section in V2_SECTION_DOMAIN_PARAMS:
+        if section not in v1_data:
+            continue
+        domain = _resolve_section_domain(section, params, v1_maven)
+        if domain is None:
+            continue
+        v2_data[section] = {**v1_data[section], "authConfig": AUTH_CONFIG_KEY, "repositoryDomainName": domain}
+    return v2_data
 
 
 
@@ -165,7 +194,7 @@ def run_regdefv2_adapter(ctx) -> None:
 
         file_auth_config = _build_auth_config(params, TRANSIENT_CRED_ID, maven_provider)
 
-        v2_data = _convert_v2_from_v1(v1_data, file_auth_config)
+        v2_data = _convert_v2_from_v1(v1_data, file_auth_config, params)
         jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
         helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data)
         logger.info(f"Synthesized v2 for {regdef_file.name}")
