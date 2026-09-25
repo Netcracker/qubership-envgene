@@ -34,7 +34,6 @@ V2_MAVEN_CONFIG_FIELDS = (
 )
 
 V2_SECTION_DOMAIN_PARAMS: dict[str, str | None] = {
-    "dockerConfig": "PUB_REG_DOCKER_REPOSITORY",
     "helmConfig": "HELM_REPO_BASE_URL",
     "helmAppConfig": "HELM_REPO_BASE_URL",
     "goConfig": None,
@@ -114,8 +113,6 @@ def _resolve_section_domain(section: str, params: dict, v1_maven: dict) -> str |
         return v1_maven.get("repositoryDomainName", "")
     if params.get(param_name):
         return params[param_name]
-    if section == "dockerConfig":
-        raise ValueError(f"{param_name} is required in Cloud e2eParameters to convert {section} to RegDef v2")
     logger.warning(f"{param_name} not set in Cloud e2eParameters — {section} skipped in RegDef v2")
     return None
 
@@ -130,6 +127,8 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
         "authConfig": {AUTH_CONFIG_KEY: auth_config},
         "mavenConfig": v2_maven,
     }
+    if "dockerConfig" in v1_data:
+        v2_data["dockerConfig"] = {**v1_data["dockerConfig"], "authConfig": AUTH_CONFIG_KEY}
     for section in V2_SECTION_DOMAIN_PARAMS:
         if section not in v1_data:
             continue

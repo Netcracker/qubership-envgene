@@ -299,9 +299,6 @@
         "authConfig": {
           "type": "string"
         },
-        "repositoryDomainName": {
-          "type": "string"
-        },
         "snapshotUri": {
           "type": "string"
         },
@@ -329,7 +326,6 @@
       },
       "required": [
         "authConfig",
-        "repositoryDomainName",
         "groupName",
         "groupUri",
         "releaseRepoName",

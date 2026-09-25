@@ -88,7 +88,6 @@ PUBREG_PARAMSET = textwrap.dedent("""\
       PUB_REG_DOMAIN: "my-domain"
       PUB_REG_REGION: "us-east-1"
       PUB_REG_REPOSITORY: "my-repo"
-      PUB_REG_DOCKER_REPOSITORY: "https://docker.example.com"
       HELM_REPO_BASE_URL: "https://helm.example.com"
     """)
 
@@ -156,7 +155,7 @@ class TestRegdefV2Adapter:
             assert synthesized[section] == {**V1_REGDEF[section], **synthesized[section]}
             assert synthesized[section]["authConfig"] == "pub-reg-auth"
         assert synthesized["mavenConfig"]["repositoryDomainName"] == V1_REGDEF["mavenConfig"]["repositoryDomainName"]
-        assert synthesized["dockerConfig"]["repositoryDomainName"] == "https://docker.example.com"
+        assert synthesized["dockerConfig"] == {**V1_REGDEF["dockerConfig"], "authConfig": "pub-reg-auth"}
         assert synthesized["helmConfig"]["repositoryDomainName"] == "https://helm.example.com"
         assert synthesized["helmAppConfig"]["repositoryDomainName"] == "https://helm.example.com"
         assert synthesized["goConfig"]["repositoryDomainName"] == V1_REGDEF["mavenConfig"]["repositoryDomainName"]
@@ -174,7 +173,6 @@ class TestRegdefV2Adapter:
               PUB_REG_SECRET: "secret"
               PUB_REG_PROJECT: "my-project"
               PUB_REG_SA_EMAIL: "sa@my-project.iam.gserviceaccount.com"
-              PUB_REG_DOCKER_REPOSITORY: "https://docker.example.com"
               HELM_REPO_BASE_URL: "https://helm.example.com"
             """))
         ctx = _ctx()
@@ -199,14 +197,6 @@ class TestRegdefV2Adapter:
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
 
         with pytest.raises(ValueError, match=missing):
-            run_regdefv2_adapter(_ctx())
-
-    @pytest.mark.unit
-    def test_docker_domain_param_required(self, tmp_path):
-        paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "PUB_REG_DOCKER_REPOSITORY:" not in line)
-        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
-
-        with pytest.raises(ValueError, match="PUB_REG_DOCKER_REPOSITORY"):
             run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
@@ -245,7 +235,6 @@ class TestRegdefV2Adapter:
               MAVEN_PROVIDER: "aws"
               PUB_REG_PROVIDER: "aws"
               PUB_REG_METHOD: "anonymous"
-              PUB_REG_DOCKER_REPOSITORY: "https://docker.example.com"
               HELM_REPO_BASE_URL: "https://helm.example.com"
             """))
         ctx = _ctx()
