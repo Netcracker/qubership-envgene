@@ -113,7 +113,7 @@ def _resolve_section_domain(section: str, params: dict, v1_maven: dict) -> str |
         return v1_maven.get("repositoryDomainName", "")
     if params.get(param_name):
         return params[param_name]
-    logger.warning(f"{param_name} not set in Cloud e2eParameters — {section} skipped in RegDef v2")
+    logger.warning(f"{param_name} not set in Cloud e2eParameters — {section}.repositoryDomainName not set in RegDef v2")
     return None
 
 
@@ -132,10 +132,10 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
     for section in V2_SECTION_DOMAIN_PARAMS:
         if section not in v1_data:
             continue
+        v2_data[section] = {**v1_data[section], "authConfig": AUTH_CONFIG_KEY}
         domain = _resolve_section_domain(section, params, v1_maven)
-        if domain is None:
-            continue
-        v2_data[section] = {**v1_data[section], "authConfig": AUTH_CONFIG_KEY, "repositoryDomainName": domain}
+        if domain is not None:
+            v2_data[section]["repositoryDomainName"] = domain
     return v2_data
 
 

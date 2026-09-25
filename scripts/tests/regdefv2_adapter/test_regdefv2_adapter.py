@@ -200,18 +200,12 @@ class TestRegdefV2Adapter:
             run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
-    def test_helm_sections_skipped_without_helm_domain_param(self, tmp_path):
+    def test_helm_sections_fail_schema_without_helm_domain_param(self, tmp_path):
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "HELM_REPO_BASE_URL:" not in line)
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
-        ctx = _ctx()
 
-        run_regdefv2_adapter(ctx)
-
-        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
-        assert "helmConfig" not in synthesized
-        assert "helmAppConfig" not in synthesized
-        assert "dockerConfig" in synthesized
-        jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+        with pytest.raises(jsonschema.ValidationError, match="repositoryDomainName"):
+            run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
     def test_gcp_service_account_requires_secret(self, tmp_path):
