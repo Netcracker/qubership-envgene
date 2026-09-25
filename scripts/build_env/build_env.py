@@ -1,5 +1,6 @@
 import yaml
 from envgenehelper import *
+from envgene_shared import *
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \

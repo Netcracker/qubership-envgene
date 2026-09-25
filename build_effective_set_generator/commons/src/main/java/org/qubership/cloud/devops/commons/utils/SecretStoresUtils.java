@@ -16,7 +16,7 @@
 
 package org.qubership.cloud.devops.commons.utils;
 
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 public interface SecretStoresUtils {
 

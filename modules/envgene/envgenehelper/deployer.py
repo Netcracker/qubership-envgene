@@ -1,12 +1,15 @@
 from pathlib import Path
 
-from .config_helper import get_envgene_config_yaml
+from envgene_shared.utils.business_utils import get_envgene_config_yaml, getenv_with_error
+from envgene_shared.utils.yaml_utils import openYaml, get_or_create_nested_yaml_attribute
+from envgene_shared.utils.file_utils import check_file_exists
+from envgene_shared.utils.logger import logger
+from envgene_shared.crypto.crypt import decrypt_file
 from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
-from .business_helper import find_env_instances_dir, getEnvDefinition, getenv_with_error
-from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute, find_yaml_file
-from .file_helper import getDirName, check_file_exists
-from .logger import logger
-from .crypt import decrypt_file
+from .business_helper import find_env_instances_dir, getEnvDefinition
+from .yaml_helper import find_yaml_file
+from .file_helper import getDirName
+from .external_credential_helper import resolve_external_credential_reference, is_external_credential_reference
 
 
 def get_cred_file_path(deployer_dir):
@@ -39,6 +42,26 @@ def get_value_and_attributes_from_cred(cred_macros, deployer_dir):
             raise ReferenceError(f"Credentials with key {cred_id} is not found in credentials file.")
     else:
         return cred_macros, None
+
+
+def resolve_attribute_value(cred_macros, cred_yaml) -> str:
+    if is_external_credential_reference(cred_macros):
+        return resolve_external_credential_reference(cred_macros, cred_yaml)
+    
+    if check_is_envgen_cred(cred_macros):
+        cred_id, cred_property = get_cred_id_and_property_from_cred_macros(cred_macros)  
+        cred = cred_yaml.get(cred_id)
+        if cred is None:
+            logger.error(f"Credentials with key {cred_id} is not found in credentials file.")
+            raise ReferenceError(f"Credentials with key {cred_id} is not found in credentials file.")
+                      
+        try:
+            return cred["data"][cred_property]
+        except KeyError:
+            logger.error(f"Property {cred_property} is not found in credentials with key {cred_id}.")
+            raise ReferenceError(f"Property {cred_property} is not found in credentials with key {cred_id}.")
+
+    return cred_macros
 
 
 def get_value_with_path_and_attribute(fp, attr_str, default_value=None):
@@ -107,16 +130,12 @@ def get_deployer_config():
             return "", "", ""
 
     deployer_dir = getDirName(env_deployer_file_path)
-    cmdb_username, cmdb_username_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['username'],
-                                                                                     deployer_dir)
-    cmdb_api_token, cmdb_api_token_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['token'],
-                                                                                       deployer_dir)
-    cmdb_url = data[deployer_name]['deployerUrl']
-    envgene_config = get_envgene_config_yaml()
-    is_decryption_necessary = envgene_config.get('crypt')
-    if is_decryption_necessary:
-        cred_path = get_cred_file_path(deployer_dir)
-        cred_yaml = decrypt_file(cred_path, in_place=False)
-        cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
-        cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
-    return cmdb_url, cmdb_username, cmdb_api_token
+    cmdb_url = data[deployer_name]['deployerUrl']   
+
+    cred_path = get_cred_file_path(deployer_dir)
+    cred_yaml = decrypt_file(cred_path, in_place=False)
+
+    cmdb_username = resolve_attribute_value(data[deployer_name]['username'], cred_yaml)
+    cmdb_api_token = resolve_attribute_value(data[deployer_name]['token'], cred_yaml)
+    return cmdb_url, cmdb_username, cmdb_api_token 
+   

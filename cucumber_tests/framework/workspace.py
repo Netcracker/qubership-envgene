@@ -51,13 +51,13 @@ class EnvGeneWorkspace(BaseWorkspace):
         with open(self.creds_dir / "credentials.yml", "w") as f:
             yaml.dump({
                 "test-registry": {
+                    "type": "usernamePassword",
                     "data": {
                         "username": "dummy-user",
                         "password": "dummy-password",
-                        "secret": "dummy-secret-value"
                     }
                 }
-            }, f)
+         }, f)
 
         with open(self.config_dir / "registry.yml", "w") as f:
             yaml.dump({
@@ -123,6 +123,10 @@ class EnvGeneWorkspace(BaseWorkspace):
         effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
         os.chmod(effective_set_cli_mock, 0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
+
+        external_cred_provision_mock = self.base_dir / "external-cred-provision"
+        external_cred_provision_mock.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        os.chmod(external_cred_provision_mock, 0o755)
 
         if extra_env:
             env.update(extra_env)

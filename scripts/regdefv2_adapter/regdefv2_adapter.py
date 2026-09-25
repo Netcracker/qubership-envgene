@@ -3,12 +3,13 @@ from pathlib import Path
 
 import jsonschema
 from artifact_searcher.auth_resolver import (
-    AUTH_METHOD_ANONYMOUS, AUTH_METHOD_SECRET, AUTH_METHOD_SERVICE_ACCOUNT, CRED_FIELD_DATA, CRED_FIELD_PASSWORD, CRED_FIELD_SECRET, CRED_FIELD_USERNAME,
+    AUTH_METHOD_ANONYMOUS, AUTH_METHOD_SECRET, AUTH_METHOD_SERVICE_ACCOUNT, CRED_FIELD_PASSWORD, CRED_FIELD_SECRET, CRED_FIELD_USERNAME,
 )
 
 import envgenehelper as helper
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.config_helper import get_regdef_v2_schema
+from envgenehelper.creds_helper import CRED_FIELD_DATA
 from envgenehelper.logger import logger
 
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context

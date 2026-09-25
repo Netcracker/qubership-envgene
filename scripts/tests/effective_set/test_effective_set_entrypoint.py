@@ -3,11 +3,11 @@ from pathlib import Path
 import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
-    PartialMergeMode
-from envgenehelper.yaml_helper import openYaml, writeYamlToFile
+    PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
-from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
+from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, _run_external_credential_provision_cli, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
     _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, \
     run_legacy_sd_effective_set as run_entrypoint
@@ -447,3 +447,52 @@ class TestRunGitlabDeployEffectiveSet:
         run_gitlab_deploy_effective_set(Ctx())
 
         assert called["deploy_plan"] is delta_plan
+
+
+class TestExternalCredentialProvisioning:
+    @pytest.mark.unit
+    def test_cli_skips_when_file_missing(self, tmp_path, monkeypatch):
+        es = tmp_path
+        called = {"run": False}
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+
+        _run_external_credential_provision_cli(es)
+
+        assert called["run"] is False
+        
+
+    @pytest.mark.unit
+    def test_cli_skips_when_gate_is_set_to_skip(self, tmp_path, monkeypatch):
+        es = tmp_path
+        called = {"run": False}
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+        monkeypatch.setenv("EXTERNAL_CREDENTIAL_PROVISIONING", "skip")
+
+        _run_external_credential_provision_cli(es)
+
+        assert called["run"] is False
+
+
+    @pytest.mark.unit
+    def test_cli_runs_with_expected_command(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        context_file = es / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+        context_file.parent.mkdir(parents=True, exist_ok=True)
+        context_file.write_text("{}")
+
+        captured = {}
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            captured.update(kwargs)
+
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+
+        _run_external_credential_provision_cli(es)
+
+        assert captured["check"] is True
+        assert captured["cmd"] == [
+            "external-cred-provision",
+            "--log-level",
+            "INFO",
+            str(context_file),
+        ]
