@@ -39,10 +39,12 @@
 ### Task 1: HTML renderer
 
 **Files:**
+
 - Create: `src/envgene_linter/html_report.py`
 - Test: `tests/test_html_report.py`
 
 **Interfaces:**
+
 - Consumes: `Finding`, `RULE_ORDER` from `report.py`
 - Produces:
   - `REPORT_FILENAME = "envgene-linter-report.html"`
@@ -252,10 +254,12 @@ git commit -m "Render a self-contained HTML check report grouped by file."
 ### Task 2: `--html` on check
 
 **Files:**
+
 - Modify: `src/envgene_linter/cli.py`
 - Modify: `tests/test_cli.py`
 
 **Interfaces:**
+
 - Consumes: `render_html`, `report_path`, `REPORT_FILENAME`
 - Produces: `check --html` writes the file after stdout; write errors exit 2
 

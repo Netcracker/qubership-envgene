@@ -17,7 +17,7 @@
 - `related` is unchanged and not shown on the page.
 - No JavaScript, no `<script>`, escape every field with `html.escape`.
 - `<details>` for rules with findings must **not** have an `open` attribute.
-- Heading shape: `{id}: {description}` for catalog rules; unknown rule is the id only (no colon).
+- Heading shape: `{id}: {description}` for catalog rules; unknown rule is the ID only (no colon).
 - Empty `locations` → one primary `Location(path, line, column)`.
 - Console empty rule blocks stay `PLACE-2\nNo findings`. Console location lines are `{path}:{line}:{column}`.
 - No new algorithm docs. No JSON / autofix.
@@ -44,10 +44,12 @@
 ### Task 1: Location model and `file_locations`
 
 **Files:**
+
 - Modify: `src/envgene_linter/model.py`
 - Create: `tests/test_model.py`
 
 **Interfaces:**
+
 - Consumes: existing `Finding`
 - Produces:
   - `@dataclass(frozen=True) class Location` with `path: Path`, `line: int`, `column: int`
@@ -153,12 +155,14 @@ EOF
 ### Task 2: Fill locations on PLACE-1 and PLACE-3
 
 **Files:**
+
 - Modify: `src/envgene_linter/rules/place1.py`
 - Modify: `src/envgene_linter/rules/place3.py`
 - Modify: `tests/test_place1.py`
 - Modify: `tests/test_place3.py`
 
 **Interfaces:**
+
 - Consumes: `Location`, `owned.provenance.file.path`, `owned.provenance.position`
 - Produces: PLACE-1 both constructors and PLACE-3 env-agreement set `locations` to unique owner positions, first owner still primary. PLACE-2 and other PLACE-3 constructors leave `locations` default empty.
 
@@ -246,10 +250,12 @@ EOF
 ### Task 3: Console lists every location
 
 **Files:**
+
 - Modify: `src/envgene_linter/report.py`
 - Modify: `tests/test_report.py`
 
 **Interfaces:**
+
 - Consumes: `Finding.file_locations()`
 - Produces: each finding’s first lines are `path:line:column` (one per location), then severity, message, hint.
 
@@ -337,10 +343,12 @@ EOF
 ### Task 4: HTML details, one-line title, multi-line FILE
 
 **Files:**
+
 - Modify: `src/envgene_linter/html_report.py`
 - Modify: `tests/test_html_report.py`
 
 **Interfaces:**
+
 - Consumes: `Finding.file_locations()`, `RULES`, `_relative`
 - Produces: `render_html` as specified below
 

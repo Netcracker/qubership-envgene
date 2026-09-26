@@ -23,11 +23,11 @@ Source: `docs/configuration-standard.md`, PLACE-7, in the local
 This implementation checks each environment's `env_definition.yml` independently,
 using the corresponding instance bindings under `envTemplate`:
 
-| Category | Binding field |
-| --- | --- |
-| deploy | `envSpecificParamsets` |
-| e2e | `envSpecificE2EParamsets` |
-| technical | `envSpecificTechnicalParamsets` |
+| Category   | Binding field                   |
+|------------|---------------------------------|
+| deploy     | `envSpecificParamsets`          |
+| end-to-end | `envSpecificE2EParamsets`       |
+| technical  | `envSpecificTechnicalParamsets` |
 
 It reports a reference name present in at least two categories, across all
 binding targets in that environment. Reuse within a single category is valid,
@@ -68,7 +68,7 @@ Create `rules/place7.py` with `check(index: RepoIndex) -> list[Finding]`.
 
 For each environment:
 
-1. Iterate categories in the order deploy, e2e, technical. For each category,
+1. Iterate categories in the order deploy, end-to-end, technical. For each category,
    read `env.bound_targets(category)` and visit all reference-list entries.
 2. Group entries by reference name. Record distinct categories and each entry's
    YAML path: `("envTemplate", category.binding_field, target, list_index)`.

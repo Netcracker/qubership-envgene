@@ -39,16 +39,16 @@ These are inputs to `check(index, connections=None)`, not additional CLI options
 
 2. **Determine required category tokens**
 
-   1. Map deploy (`envSpecificParamsets`) to `deploy`, e2e
+   1. Map deploy (`envSpecificParamsets`) to `deploy`, end-to-end
       (`envSpecificE2EParamsets`) to `pipeline`, and technical
       (`envSpecificTechnicalParamsets`) to `technical`.
-   2. Form `scope` from the sorted distinct required tokens joined by `, `.
+   2. Form `scope` from the sorted distinct required tokens joined by a comma followed by a space.
       A file selected in multiple categories must satisfy all of them.
 
 3. **Reject embedded scope, ticket or release markers**
 
-   1. Search for ticket regex `(?:^|-)(?:ticket|jira|issue)-\d+`
-      case-insensitively, and release regex
+   1. Search for ticket regular expression `(?:^|-)(?:ticket|jira|issue)-\d+`
+      case-insensitively, and release regular expression
       `(?:^|-)(?:r\d+(?:-\d+)?|20\d{2}[.-]\d{1,2})` case-sensitively.
       These are searches, with no required boundary after the matched marker.
    2. Compare each non-empty actual cluster/environment name case-insensitively
@@ -104,15 +104,15 @@ or `env_definition` update is performed.
 Assume these files are selected by bindings and none of their subjects matches
 an actual cluster/environment name:
 
-| Selected stem | Binding category | NAME-4 result |
-| --- | --- | --- |
-| `bss` | deploy | One tail finding; `scope=deploy` |
-| `bss-deploy` | deploy | No finding |
-| `postgresql-pipeline` | e2e | No finding |
-| `-deploy` | deploy | One tail finding: empty subject |
-| `postgresql-deploy-ha` | deploy | One tail finding: last token is `ha` |
-| `bss-deploy` (one physical file) | deploy and e2e | One tail finding; token `deploy/pipeline`, scope `deploy, pipeline` |
-| `jira-123-bss-deploy` | deploy | One scope/ticket finding |
+| Selected stem                    | Binding category      | NAME-4 result                                                       |
+|----------------------------------|-----------------------|---------------------------------------------------------------------|
+| `bss`                            | deploy                | One tail finding; `scope=deploy`                                    |
+| `bss-deploy`                     | deploy                | No finding                                                          |
+| `postgresql-pipeline`            | end-to-end            | No finding                                                          |
+| `-deploy`                        | deploy                | One tail finding: empty subject                                     |
+| `postgresql-deploy-ha`           | deploy                | One tail finding: last token is `ha`                                |
+| `bss-deploy` (one physical file) | deploy and end-to-end | One tail finding; token `deploy/pipeline`, scope `deploy, pipeline` |
+| `jira-123-bss-deploy`            | deploy                | One scope/ticket finding                                            |
 
 For `bss`, the exact message is:
 
@@ -121,7 +121,7 @@ ParameterSet 'bss' must end with -deploy to match its env_definition binding (de
 ```
 
 An unbound `extra.yml` is silent. Two distinct physical `bss-deploy.yml` files
-keep separate categories and owners; an e2e use of one cannot affect the other.
+keep separate categories and owners; an end-to-end use of one cannot affect the other.
 
 ## Related documentation
 

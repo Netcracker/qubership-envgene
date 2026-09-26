@@ -92,7 +92,7 @@ location and Information / Review chips. An empty block is `NAME-3` followed by
 ## Error handling
 
 **1a.** Unselected and shadowed files contribute no names. Unused clusters and
-namespace directories are ignored, even if their spelling fails the regex.
+namespace directories are ignored, even if their spelling fails the regular expression.
 
 **2a.** An empty or dangling binding does not establish namespace use. Generated
 directory presence and unknown template inputs do not establish use either.

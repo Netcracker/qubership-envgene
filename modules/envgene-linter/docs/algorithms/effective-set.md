@@ -21,7 +21,7 @@ A **scope** is `target × category`, plus an optional `application` name:
 
 - **category** is one of `deploy`, `e2e`, `technical`. Each corresponds to one array in
   `env_definition.yml` under `envTemplate`: `envSpecificParamsets` (deploy),
-  `envSpecificE2EParamsets` (e2e), `envSpecificTechnicalParamsets` (technical).
+  `envSpecificE2EParamsets` (end-to-end), `envSpecificTechnicalParamsets` (technical).
 - **target** is a key of one of those arrays: the literal string `cloud` for the Cloud
   object, or a namespace name for anything else. Each target maps to a list of
   **reference names**.
@@ -112,7 +112,7 @@ every depth, including a bare top-level scalar key — there is no special case 
 Worked micro-example — a cluster file sets `FOO: 5`; a later environment file restates
 `FOO:` with no value (YAML `null`):
 
-```
+```text
 a = 5, b = null
 ```
 

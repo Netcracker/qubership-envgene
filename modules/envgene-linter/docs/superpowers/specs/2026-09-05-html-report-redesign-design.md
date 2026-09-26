@@ -19,7 +19,7 @@ Supersedes the **page layout, card fields, and `.gitignore` policy** in [2026-09
 
 `envgene-linter check <repo> --html` still prints the console report, then writes `<repo>/envgene-linter-report.html`. The page is grouped **by rule**, not by file. Each card is labeled for a later AI fix pass: **FILE**, **ISSUE**, **TYPE**, **ACTION**, **FIX SUGGESTION**.
 
-The report is local-only. On every successful `--html` write, the instance repo `.gitignore` must list `envgene-linter-report.html`.
+The report is local-only. On every successful `--html` write, the instance repository `.gitignore` must list `envgene-linter-report.html`.
 
 ## In plain terms
 
@@ -89,7 +89,7 @@ Section subtitles (fixed copy):
 
 Current defaults: all three rules → TYPE `Warning`, ACTION `Fix`.
 
-A finding whose `rule` is not in the catalog: section heading is the raw id, no subtitle. TYPE and ACTION still come from the finding.
+A finding whose `rule` is not in the catalog: section heading is the raw ID, no subtitle. TYPE and ACTION still come from the finding.
 
 ## Finding model
 
@@ -159,16 +159,16 @@ One HTML document. Inline CSS. No JavaScript. No `<script>` tags. `lang="en"`. E
 ### Header
 
 - Visible title and `<title>`: `Envgene Linter Report`
-- Title font: `Georgia, "Times New Roman", serif` (also the rule id heading)
+- Title font: `Georgia, "Times New Roman", serif` (also the rule ID heading)
 - Body font: system UI, light theme, no extra assets
 - No per-rule counts in the header
 - No “do not commit” note (gitignore handles that)
 
 ### Sections
 
-Only rules that have at least one finding. Order: `PLACE-1`, `PLACE-2`, `PLACE-3`, then any other rule id sorted by name.
+Only rules that have at least one finding. Order: `PLACE-1`, `PLACE-2`, `PLACE-3`, then any other rule ID sorted by name.
 
-```
+```text
 PLACE-1
 Same value belongs on a higher layer
 
@@ -214,16 +214,16 @@ Rounded pill (`border-radius: 999px`). Card: light gray background, 1px `#e2e2e2
 
 ## Code changes
 
-| File | Role |
-| --- | --- |
-| `src/envgene_linter/model.py` | `column`, `issue_type`, `action` (+ small enums) |
-| `src/envgene_linter/rulemeta.py` | Catalog: id, description, defaults |
-| `src/envgene_linter/rules/place1.py` (and 2, 3) | `column`; catalog defaults; new texts |
-| `src/envgene_linter/html_report.py` | Group by rule; table+chips; new title |
-| `src/envgene_linter/cli.py` | After HTML write, ensure instance `.gitignore` |
-| `tests/test_html_report.py` | New page contract |
-| `tests/test_cli.py` | gitignore create/append; no edit without `--html` |
-| Rule / Finding constructors in tests | New fields; updated message/hint assertions |
+| File                                            | Role                                              |
+|-------------------------------------------------|---------------------------------------------------|
+| `src/envgene_linter/model.py`                   | `column`, `issue_type`, `action` (+ small enums)  |
+| `src/envgene_linter/rulemeta.py`                | Catalog: ID, description, defaults                |
+| `src/envgene_linter/rules/place1.py` (and 2, 3) | `column`; catalog defaults; new texts             |
+| `src/envgene_linter/html_report.py`             | Group by rule; table+chips; new title             |
+| `src/envgene_linter/cli.py`                     | After HTML write, ensure instance `.gitignore`    |
+| `tests/test_html_report.py`                     | New page contract                                 |
+| `tests/test_cli.py`                             | gitignore create/append; no edit without `--html` |
+| Rule / Finding constructors in tests            | New fields; updated message/hint assertions       |
 
 `yamlio.position` is unchanged. Engine and Effective Set are unchanged.
 
@@ -233,7 +233,7 @@ Renderer / CLI:
 
 - Grouping is by rule: two PLACE-1 findings in different files → one PLACE-1 heading, two cards, no per-file `h2`
 - A rule with zero findings does not appear
-- Unknown rule id still renders a section titled with that id
+- Unknown rule ID still renders a section titled with that ID
 - FILE contains `:line:column`
 - Labels `FILE`, `ISSUE`, `TYPE`, `ACTION`, `FIX SUGGESTION` are present
 - TYPE/ACTION appear as chips (class or the agreed colors)

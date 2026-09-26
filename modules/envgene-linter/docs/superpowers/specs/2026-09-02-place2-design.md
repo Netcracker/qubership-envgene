@@ -9,7 +9,7 @@ Status at design time: approved\
 
 ## Goal
 
-Terminology: **env** means environment; a **binding** is a reference from `env_definition.yml` to a ParameterSet; a **scope** is target × category, optionally separated by application. Effective Set is the merged parameter result; discovery indexes files and reads bindings.
+Terminology: **env** means environment; a **binding** is a reference from `env_definition.yml` to a ParameterSet; a **scope** is target × category, optionally separated by application. Effective Set is the merged parameter result; discovery catalogs files and reads bindings.
 
 `envgene-linter check <repo>` prints PLACE-1 first, then PLACE-2.
 
@@ -93,7 +93,7 @@ The cluster-versus-repository comparison follows the same rule. Emit one finding
 
 Same shape as PLACE-1:
 
-```
+```text
 PLACE-1
 …
 

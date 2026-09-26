@@ -11,7 +11,7 @@ Standard: PLACE-6 MUST — a pipeline ParameterSet (`e2eParameters` / `envSpecif
 
 ## Goal
 
-Terminology: **env** means environment; **stem** means filename without its extension; discovery indexes files and reads bindings. TYPE is the issue classification; ACTION is the recommended action. `Fix` requests a correction but does not apply it automatically.
+Terminology: **env** means environment; **stem** means filename without its extension; discovery catalogs files and reads bindings. TYPE is the issue classification; ACTION is the recommended action. `Fix` requests a correction but does not apply it automatically.
 
 `check` reports PLACE-6 when an environment's `envSpecificE2EParamsets` has a map key other than `cloud` (case-insensitive). TYPE **Warning**, ACTION **Fix**. One finding per environment + bad target.
 
@@ -31,7 +31,7 @@ envSpecificE2EParamsets:
     - env-1-pipeline
 ```
 
-→ no PLACE-6. `Cloud:` / `CLOUD:` also silent. Missing e2e block, or empty, → silent.
+→ no PLACE-6. `Cloud:` / `CLOUD:` also silent. Missing end-to-end block, or empty, → silent.
 
 `cloud` plus `bss` in the same map → one finding, for `bss` only. Two bad targets → two findings.
 
@@ -40,7 +40,7 @@ The ParameterSet YAML and its layer are irrelevant. PLACE-6 does not look at key
 ## Out of scope
 
 - Autofix / rewriting `env_definition`
-- PLACE-5 (which keys belong in e2e) and PLACE-7 (one category per set)
+- PLACE-5 (which keys belong in end-to-end) and PLACE-7 (one category per set)
 - Checking `envSpecificParamsets` / `envSpecificTechnicalParamsets` targets
 - Matching targets against a generated `Namespaces/` tree
 - Unbound ParameterSet files
@@ -92,7 +92,7 @@ HTML heading: `PLACE-6: Pipeline ParameterSets bind to the Cloud`. Chips: Warnin
 
 Console: `warning`. Exit 0.
 
-A fixture that binds only `envSpecificParamsets.cloud` (no e2e block) is an empty PLACE-6 block. `env-params` / `cloud-deploy` fixtures stay empty for PLACE-6.
+A fixture that binds only `envSpecificParamsets.cloud` (no end-to-end block) is an empty PLACE-6 block. `env-params` / `cloud-deploy` fixtures stay empty for PLACE-6.
 
 ## Engine
 
@@ -109,7 +109,7 @@ In the shorthand below, `e2e` stands for `envTemplate.envSpecificE2EParamsets`; 
 - `e2e: {bss: [env-1-pipeline]}` → one PLACE-6 Warning / Fix; `key == "bss"`; exact message and hint; path is `env_definition.yml`
 - `e2e: {cloud: [env-1-pipeline]}` → no PLACE-6
 - `e2e: {Cloud: [env-1-pipeline]}` → no PLACE-6
-- no e2e block, only deploy → no PLACE-6
+- no end-to-end block, only deploy → no PLACE-6
 - `e2e: {bss: [a, b]}` → still one finding (per target, not per stem)
 - `e2e: {bss: […], oss: […]}` → two findings
 - `e2e: {cloud: […], bss: […]}` → one finding, key `bss`

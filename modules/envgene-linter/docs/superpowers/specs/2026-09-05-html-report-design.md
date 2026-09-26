@@ -25,7 +25,7 @@ No autofix. No suggested YAML. No JSON. Skipped Jinja / unreadable YAML stay on 
 
 - Autofix / suggested edits
 - JSON report, `--strict`, `--rules`, baseline, `[EXCEPTION …]`
-- Editing the instance repo `.gitignore`
+- Editing the instance repository `.gitignore`
 - Changing file discovery, the Effective Set (parameter values after layer merging), or PLACE-1/2/3
 - Changing the console renderer
 
@@ -97,7 +97,7 @@ Zero findings: still write the file. Header + summary of zeros + a single `No fi
 
 ### Card (meaning, not pixels)
 
-```
+```text
 <relative/path.yml>
 
   PLACE-3 · warning · line 4
@@ -118,13 +118,13 @@ Left border or similar so a card is visibly a card. Light theme, system font, re
 
 `report.py` stays the console renderer. `engine.py` stays as it is (`CheckResult.findings` + `skipped`).
 
-`render_html` takes the finding list and the repo root (for relative paths). It does not need suggestion plans.
+`render_html` takes the finding list and the repository root (for relative paths). It does not need suggestion plans.
 
 ## Tests
 
 Add renderer and CLI tests for this stage:
 
-- `--html` creates `envgene-linter-report.html` at the repo root; without the flag no file is created (an existing report is left untouched)
+- `--html` creates `envgene-linter-report.html` at the repository root; without the flag no file is created (an existing report is left untouched)
 - Two findings in one file → one file heading, two cards
 - Findings in two files → two headings
 - Zero findings → file exists, contains `No findings`, no file heading

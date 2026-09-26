@@ -10,11 +10,12 @@
 
 - [x] Replace obsolete SEC-4 tests with failing tests for same-ID complete pairs, different IDs, missing/partial definitions, local/external forms, nested/application/context separation, connected-only scope, unresolved inputs and redacted diagnostics.
 - [x] Implement the consumer-pair algorithm in `src/envgene_linter/rules/sec4.py` and update its catalog description.
-- [x] Update EN/RU SEC-4 specs/algorithms and README, explicitly removing the earlier one-field heuristic.
+- [x] Update EN/RU SEC-4 specs/algorithms and readme, explicitly removing the earlier one-field heuristic.
 - [x] Run focused suites, full pytest, documentation link/format checks and independent review. Fix actionable findings with regression tests.
 - [x] Keep all work local; preserve unrelated modifications and do not upload or commit them.
 
 Validation commands:
+
 ```bash
 .venv/bin/python -m pytest tests/test_sec4.py -q
 .venv/bin/python -m pytest -q

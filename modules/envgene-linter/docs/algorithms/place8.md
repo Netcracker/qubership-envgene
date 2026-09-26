@@ -152,7 +152,7 @@ generator use independently selects them.
 ```
 
 The [not-ok fixture](../../testdata/place8/not-ok/environments/lab-cluster/e01/Inventory/env_definition.yml)
-produces three PLACE-8 findings; the [ok fixture](../../testdata/place8/ok/environments/lab-cluster/e01/Inventory/env_definition.yml)
+produces three PLACE-8 findings; the [`ok` fixture](../../testdata/place8/ok/environments/lab-cluster/e01/Inventory/env_definition.yml)
 leaves the three empty files unreferenced and produces none.
 
 ## Related documentation

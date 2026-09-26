@@ -48,7 +48,7 @@ Python package `envgene_linter`. Six units, each with one job:
 | `report` | Format findings for the console | Compute findings |
 | `cli` | `envgene-linter check <repo>` wires the path above | Embed rule logic |
 
-Data flow: repo path → `Index` → per-env Effective Set (three projections) → `Finding[]` → text.
+Data flow: repository path → `Index` → per-env Effective Set (three projections) → `Finding[]` → text.
 
 ## Discovery
 
@@ -61,15 +61,15 @@ Layout we care about:
 - Environment layer: `environments/<cluster>/<env>/Inventory/parameters/*.yml|yaml`
 - Recipe: `environments/<cluster>/<env>/Inventory/env_definition.yml`
 
-A ParameterSet’s reference name is the filename stem (strip `.yml` / `.yaml` / `.json`, and a trailing `.j2` if present). Discovery indexes files even when they are not bound; Effective Set only applies files that a binding names.
+A ParameterSet’s reference name is the filename stem (strip `.yml` / `.yaml` / `.json`, and a trailing `.j2` if present). Discovery catalogs files even when they are not bound; Effective Set only applies files that a binding names.
 
 `env_definition.yml` bindings (under `envTemplate`):
 
-| Array | Category |
-| --- | --- |
-| `envSpecificParamsets` | deploy |
-| `envSpecificE2EParamsets` | e2e |
-| `envSpecificTechnicalParamsets` | technical |
+| Array                           | Category   |
+|---------------------------------|------------|
+| `envSpecificParamsets`          | deploy     |
+| `envSpecificE2EParamsets`       | end-to-end |
+| `envSpecificTechnicalParamsets` | technical  |
 
 Each binding field maps a target name to a list of reference stems. Target `cloud` is the Cloud object. Any other key is a namespace target. This cycle does not filter targets against a generated `Namespaces/` tree: every key in those maps is a scope.
 
@@ -85,7 +85,7 @@ Jinja ParameterSets (`*.yml.j2`, `*.yaml.j2`) are indexed as skipped, not evalua
 
 Terminology: a **leaf** is an individual parameter value at a key path; **provenance** records its source file, layer, and YAML position. **Site** means the repository layer. A **projection** is the merged result restricted to a specified set of layers.
 
-Input: repo index + one environment.  
+Input: repository index + one environment.\
 Output: for each **scope**, a map of leaf path → `{value, provenance}`.
 
 **Scope** = target (`cloud` or namespace name) × category (`deploy` / `e2e` / `technical`). An optional application name is a separate scope when the ParameterSet carries `applications[].parameters` (matching the generator’s handling of those parameter maps). An environment that does not bind a given target+category does not resolve that scope and is not a PLACE-1 participant for it.
@@ -172,7 +172,7 @@ Anchor on the first participant after sorting names:
 
 One header per rule, then one block per finding:
 
-```
+```text
 PLACE-1
 <path>:<line>
 warning
@@ -181,9 +181,9 @@ warning
 
 ```
 
-Blank line between findings. Zero findings:
+Empty line between findings. Zero findings:
 
-```
+```text
 PLACE-1
 No findings
 ```

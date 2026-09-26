@@ -15,7 +15,7 @@
 - User authorizes connected-only checks; NAME-3 remains unchanged pending explicit clarification because the user excluded it earlier.
 - Physical path + environment context determines usage. No arbitrary stem/name/string matches, external resolution, Jinja rendering, or missing-reference findings.
 - Preserve all existing rule messages except where an existing scope statement needs correction; keep eleven rule headers, severity/action, exit0 for findings.
-- No network or real repository modifications, no real payloads in fixtures or output. Preserve unrelated untracked files; controller handles git mutations.
+- No network or real repository modifications, no real payloads in fixtures or output. Preserve unrelated untracked files; controller handles Git mutations.
 
 ### Task 1: Shared connections, rule integration, and regression tests
 

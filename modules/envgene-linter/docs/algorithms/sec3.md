@@ -19,7 +19,7 @@ Cloud/Namespace selection is shared with SEC-1: a Cloud belongs to a discovered 
 
 ## Processing flow
 
-1. Compute or reuse connections. Select physical ParameterSets having at least one actual technical-category use. A deploy/E2E use alone does not qualify; an unresolved technical reference does not qualify another file.
+1. Compute or reuse connections. Select physical ParameterSets having at least one actual technical-category use. A deploy/end-to-end use alone does not qualify; an unresolved technical reference does not qualify another file.
 2. Skip unreadable, Jinja, external and `.git` inputs. Inspect both root and application parameter maps of each eligible ParameterSet once, even if several environments use it.
 3. Resolve used Cloud/Namespace paths with the shared selection helper. Deduplicate physical object files and inspect only their `technicalConfigurationParameters` maps. Ignore `deployParameters` and `e2eParameters` on those objects.
 4. Walk nested maps and lists, protecting against recursive YAML aliases. Recognize:
@@ -59,7 +59,7 @@ deployParameters:
   SOME_VALUE: ${creds.get("example-cred").password}
 ```
 
-A ParameterSet containing the same reference under `parameters.SOME_VALUE` also produces SEC-3 if selected through `envSpecificTechnicalParamsets`. If selected only through deploy or E2E bindings, it does not. A file used in both technical and deploy categories still receives SEC-3, independently of PLACE-7.
+A ParameterSet containing the same reference under `parameters.SOME_VALUE` also produces SEC-3 if selected through `envSpecificTechnicalParamsets`. If selected only through deploy or end-to-end bindings, it does not. A file used in both technical and deploy categories still receives SEC-3, independently of PLACE-7.
 
 ## Related documentation
 

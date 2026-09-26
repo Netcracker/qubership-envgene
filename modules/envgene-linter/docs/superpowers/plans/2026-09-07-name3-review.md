@@ -16,7 +16,7 @@
 - Do not rename files or directories. No autofix.
 - Do not call `compute` / Effective Set for NAME-3.
 - Do not check YAML keys or enum values.
-- Do not scan files outside `environments/` (no `appdefs/` at repo root).
+- Do not scan files outside `environments/` (no `appdefs/` at repository root).
 - Do not scan non-YAML/JSON/Jinja files (`.md`, `.png`, `.txt`).
 - Do not flag directory names other than cluster, environment, and namespace (`Inventory/`, `parameters/`, `cloud-passport/` stay silent as directories).
 - Kebab-case: full match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
@@ -29,9 +29,9 @@
 - Do not call `str.capitalize()` on `kind`.
 - Catalog description stays `Filenames, directories, and namespaces use kebab-case`.
 - `RULE_ORDER` unchanged.
-- A fixture repo with `env_definition.yml` is not an empty NAME-3 block.
+- A fixture repository with `env_definition.yml` is not an empty NAME-3 block.
 - Prefer `.venv/bin/python -m pytest`.
-- Work in an isolated git worktree (not on `master`). Include the already-amended spec files on the branch if they are still uncommitted.
+- Work in an isolated Git worktree (not on `master`). Include the already-amended spec files on the branch if they are still uncommitted.
 
 ---
 
@@ -53,11 +53,13 @@
 ### Task 1: Catalog Information / Review
 
 **Files:**
+
 - Modify: `src/envgene_linter/rulemeta.py`
 - Modify: `tests/test_rulemeta.py`
 - Include if uncommitted: `docs/superpowers/specs/2026-09-07-name3-design.md`, `docs/superpowers/specs/ru/2026-09-07-name3-design.md`
 
 **Interfaces:**
+
 - Consumes: existing `RuleMeta`, `IssueType`, `Action`
 - Produces: `RULES["NAME-3"].default_issue_type is IssueType.INFORMATION`; `default_action is Action.REVIEW`
 
@@ -118,10 +120,12 @@ If the spec files are already committed, omit them from `git add`.
 ### Task 2: Walk `environments/` and drop the skip-list
 
 **Files:**
+
 - Modify: `src/envgene_linter/rules/name3.py`
 - Modify: `tests/test_name3.py`
 
 **Interfaces:**
+
 - Consumes: `RepoIndex.root`, `RepoIndex.clusters`, `paramset_stem`, `RULES["NAME-3"]`, `Location`
 - Produces: `check(index: RepoIndex) -> list[Finding]` — Information / Review; kind `File` for files; no skip-list
 
@@ -375,9 +379,11 @@ EOF
 ### Task 3: Console and HTML
 
 **Files:**
+
 - Modify: `tests/test_cli.py`
 
 **Interfaces:**
+
 - Consumes: `check_name3` already called from `run_check`; `RULES["NAME-3"]` Information / Review
 - Produces: console prints `information`; HTML chips Information / Review; typical `check` includes `env_definition`
 
@@ -452,10 +458,12 @@ EOF
 ### Task 4: Algorithm docs
 
 **Files:**
+
 - Modify: `docs/algorithms/name3.md`
 - Modify: `docs/algorithms/ru/name3.md`
 
 **Interfaces:**
+
 - Consumes: amended spec
 - Produces: algorithm docs matching Information / Review and the `environments/` walk
 
@@ -465,10 +473,10 @@ Required content (keep the same section numbering style as now):
 
 1. Standard sentence: reports, does not rename; Information / Review because some names are used in generation logic.
 2. What is checked: index for cluster/env; `Namespaces/` children including hidden; walk of matching files under `environments/`; kind `File`; do not iterate paramset/passport/entity lists; do not skip `.` prefix.
-3. Kebab regex. **No skip-list.** File filter suffixes and `.git`. Stem = `paramset_stem`.
+3. Kebab regular expression. **No skip-list.** File filter suffixes and `.git`. Stem = `paramset_stem`.
 4. Finding fields: `Severity.INFORMATION`, Information, Review, new hint.
 5. Console prints `information`. HTML chips Information / Review. Typical fixture with `env_definition.yml` is not an empty NAME-3 block.
-6. Worked example `Cluster_01`: Information / Review. Paramset `Cloud_Deploy.yml` uses kind `File`. Same repo also has `File` `'env_definition'`.
+6. Worked example `Cluster_01`: Information / Review. Paramset `Cloud_Deploy.yml` uses kind `File`. Same repository also has `File` `'env_definition'`.
 7. Non-examples: kebab dirs silent (but `env_definition` still a finding). `env_definition` **is** a finding. `Inventory/` directory is **not** a finding (not cluster/env/namespace). Files outside `environments/` are not checked. `.md` is not checked.
 
 - [ ] **Step 2: Rewrite `docs/algorithms/ru/name3.md` to the same contract** (Russian prose, English identifiers).
@@ -496,7 +504,7 @@ Run: `.venv/bin/python -m pytest -q`
 
 Expected: all passed (count will be higher than 133 because Task 2 added tests).
 
-If `test_html_name1_section` / `test_html_name2_section` fail only because the page now also contains Information/Review from `env_definition`, that is fine — those tests already assert presence of chips, not absence of NAME-3. If any test still expects `NAME-3\nNo findings` from a live `check` of a repo with `env_definition.yml`, update it the same way as `test_check_no_findings`.
+If `test_html_name1_section` / `test_html_name2_section` fail only because the page now also contains Information/Review from `env_definition`, that is fine — those tests already assert presence of chips, not absence of NAME-3. If any test still expects `NAME-3\nNo findings` from a live `check` of a repository with `env_definition.yml`, update it the same way as `test_check_no_findings`.
 
 - [ ] **Step 2: Commit only if you had to change more files**
 

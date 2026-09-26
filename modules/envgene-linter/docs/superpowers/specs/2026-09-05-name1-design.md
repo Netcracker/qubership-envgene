@@ -18,7 +18,7 @@ Integration sections, rule ordering and tests describe the development cycle dat
 
 ## Goal
 
-`check` reports NAME-1 when **different key names** in the instance repo share the same non-empty string value. The page shows TYPE **Information**, ACTION **Review**. The operator (or a later AI rule) looks and leaves the keys alone unless they truly mean one concept for one consumer.
+`check` reports NAME-1 when **different key names** in the instance repository share the same non-empty string value. The page shows TYPE **Information**, ACTION **Review**. The operator (or a later AI rule) looks and leaves the keys alone unless they truly mean one concept for one consumer.
 
 ## In plain terms
 

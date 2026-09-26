@@ -44,11 +44,11 @@ do not add these records to `named_entities`, which NAME-2 already checks.
 Add `EnvModel.resource_profile_bindings: dict[str, str]` and
 `EnvModel.shared_credential_bindings: list[str]`. Read them from `envTemplate`:
 
-| Entity | Binding |
-| --- | --- |
-| ParameterSet | existing deploy, e2e, technical `envSpecific*Paramsets` maps |
-| Resource Profile Override | `envSpecificResourceProfiles`: target to reference name |
-| Shared credentials file | `sharedMasterCredentialFiles`: reference-name list |
+| Entity                    | Binding                                                             |
+|---------------------------|---------------------------------------------------------------------|
+| ParameterSet              | existing deploy, end-to-end, technical `envSpecific*Paramsets` maps |
+| Resource Profile Override | `envSpecificResourceProfiles`: target to reference name             |
+| Shared credentials file   | `sharedMasterCredentialFiles`: reference-name list                  |
 
 Keep valid string reference names exactly, without case folding or removing
 extensions. Ignore malformed new binding containers and non-string entries.

@@ -9,7 +9,7 @@ Status at design time: approved in conversation; awaiting file review\
 
 ## Goal
 
-Terminology: **env** means environment; a **binding** is a reference from `env_definition.yml` to a ParameterSet; a **scope** is target × category, optionally separated by application. Effective Set is the merged parameter result; discovery indexes files and reads bindings.
+Terminology: **env** means environment; a **binding** is a reference from `env_definition.yml` to a ParameterSet; a **scope** is target × category, optionally separated by application. Effective Set is the merged parameter result; discovery catalogs files and reads bindings.
 
 `envgene-linter check <repo>` prints PLACE-1, then PLACE-2, then PLACE-3.
 
@@ -61,7 +61,7 @@ Closed list of Effective Set parameter names **and** the passport YAML keys that
 
 Include derived entries from the same table: `DBAAS_ENABLED`, `MAAS_ENABLED`, `VAULT_ENABLED`, `PUBLIC_VAULT_URL`.
 
-Keep this list in one module constant (the table in code). Do not scrape the markdown at runtime.
+Keep this list in one module constant (the table in code). Do not scrape the Markdown at runtime.
 
 ### Keys from a resolved passport
 
@@ -73,7 +73,7 @@ Unreadable or Jinja passport: skip that file, stderr note, do not add its keys.
 
 - **Env catalog** = table ∪ keys from the passport resolved for that env. If resolve fails or there is no passport, env catalog = table only.
 - **Cluster catalog** = table ∪ union of env catalogs in that cluster ∪ keys from passport files that sit under that cluster's `cloud-passport/` or `cloud-passports/` (so a cluster file still feeds the catalog even if no env resolved it).
-- **Repo catalog** = table ∪ union of every cluster catalog.
+- **Repository catalog** = table ∪ union of every cluster catalog.
 
 A leaf's **top key** is the first path segment (`DBAAS_AGGREGATOR_ADDRESS`, not a dotted child). PLACE-3 and the PLACE-1 skip match on that top key.
 
@@ -119,7 +119,7 @@ Each indexed passport YAML that is not on the cluster → one PLACE-3 warning on
 
 ### 2. Contract key at the repository layer
 
-In the **site** projection, a leaf authored at `repository` whose top key is in the **repo catalog** → one PLACE-3 warning. Dedup `(file, top key)` so two scopes sharing one file print once.
+In the **site** projection, a leaf authored at `repository` whose top key is in the **repository catalog** → one PLACE-3 warning. Dedup `(file, top key)` so two scopes sharing one file print once.
 
 Hint: move the key to the cluster layer.
 
@@ -151,7 +151,7 @@ PLACE-2 is unchanged.
 
 Same four-line block as PLACE-1 / PLACE-2. Always print three headers, in order, each with findings or `No findings`.
 
-```
+```text
 PLACE-1
 …
 

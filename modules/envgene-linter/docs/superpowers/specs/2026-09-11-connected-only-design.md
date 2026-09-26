@@ -73,7 +73,7 @@ Do not read outside the repository boundary or emit YAML values in new skip note
 - PLACE-3: misplaced selected passports only.
 - PLACE-4: contract keys in physically selected ParameterSets only; remove global
   stem-based eligibility. Unrendered Jinja stays outside content checks.
-- PLACE-6: check an E2E target only if at least one reference selects a file.
+- PLACE-6: check an end-to-end target only if at least one reference selects a file.
   Empty lists and unresolved-only lists produce no finding. Original target location
   and message remain unchanged for actual connected files.
 - PLACE-7: count only references selecting files in this environment. Keep one

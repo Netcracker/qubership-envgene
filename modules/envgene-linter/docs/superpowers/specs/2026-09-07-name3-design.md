@@ -32,7 +32,7 @@ Integration sections, rule ordering and tests describe the development cycle dat
 
 - Autofix / renaming files or directories
 - YAML keys and enum values
-- Files outside `environments/` (including `appdefs/` / `regdefs/` / `artifact_definitions` at repo root)
+- Files outside `environments/` (including `appdefs/` / `regdefs/` / `artifact_definitions` at repository root)
 - Files with unsupported extensions under `environments/` (`.md`, `.png`, `.txt`, …)
 - Directory names other than cluster, environment, and namespace (`Inventory/`, `parameters/`, `cloud-passport/`, …)
 - Effective Set (`compute`)
@@ -119,7 +119,7 @@ Update `docs/algorithms/name3.md` and `docs/algorithms/ru/name3.md` in the imple
 
 ## Tests
 
-- Cluster `Cluster_01` → one NAME-3 Information / Review with kind `Cluster directory`; message has `Cluster_01`; hint is the review sentence (the same repo also has `env_definition` as a `File` finding)
+- Cluster `Cluster_01` → one NAME-3 Information / Review with kind `Cluster directory`; message has `Cluster_01`; hint is the review sentence (the same repository also has `env_definition` as a `File` finding)
 - Kebab cluster and env (`cluster-01`, `env-01`) → no finding for those directory names; still a `File` finding for `env_definition`
 - Env `Env_01` → finding `Environment directory`
 - Namespace directory `Foo` under `Namespaces/` → finding `Namespace`
@@ -129,7 +129,7 @@ Update `docs/algorithms/name3.md` and `docs/algorithms/ru/name3.md` in the imple
 - Matching kebab file stem (`cloud-deploy.yml`) → no finding from that file
 - Console: `NAME-3` after `NAME-2`; finding prints `information`
 - HTML heading unchanged; chips Information / Review
-- PLACE-* / NAME-1 / NAME-2 tests that assumed an empty NAME-3 block on a real `check` of a repo with `env_definition.yml` must expect the `env_definition` finding (pure `render()` unit tests with no NAME-3 findings stay empty)
+- PLACE-* / NAME-1 / NAME-2 tests that assumed an empty NAME-3 block on a real `check` of a repository with `env_definition.yml` must expect the `env_definition` finding (pure `render()` unit tests with no NAME-3 findings stay empty)
 
 ## Code changes
 

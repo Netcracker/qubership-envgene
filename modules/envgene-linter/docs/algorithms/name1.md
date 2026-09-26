@@ -74,7 +74,7 @@ These are inputs to `check(index, connections=None)`, not additional CLI options
 The result is a list of `NAME-1` findings with `severity=information`,
 `issue_type=Information`, `action=Review` and `scope=repository`.
 
-- Message: `Keys {sorted names} share the value {value!r}.` Names are joined by `, `.
+- Message: `Keys {sorted names} share the value {value!r}.` Names are joined by a comma followed by a space.
 - Hint: `Review whether they mean the same concept for the same consumer. Do not collapse them unless that is intended.`
 - Catalog description: `Different keys may name the same concept`.
 

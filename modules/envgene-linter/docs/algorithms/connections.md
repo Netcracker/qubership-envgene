@@ -132,9 +132,9 @@ An unreferenced `parameters/unused.yml` remains silent for NAME-1/2 and PLACE-4.
 INT-4 can report it independently as a candidate for review. Adding a binding to its exact stem
 makes the physical file eligible for the appropriate checks.
 
-In two clusters, `service-deploy.yml` used as deploy in the first cluster and e2e
+In two clusters, `service-deploy.yml` used as deploy in the first cluster and end-to-end
 in the second produces a NAME-4 category-tail finding only for the second file.
-A dangling e2e reference in the second cluster cannot change the first file's category.
+A dangling end-to-end reference in the second cluster cannot change the first file's category.
 
 Run the synthetic fixtures with `.venv/bin/envgene-linter check testdata/place8/not-ok`
 and `testdata/place8/ok`: three bound empty entities produce three PLACE-8 findings;

@@ -11,7 +11,7 @@ Standard: PLACE-4 SHOULD — a Cloud Passport **contract** key does not live in 
 
 ## Goal
 
-Terminology: **env** means environment; **stem** means filename without its extension; discovery indexes files and reads bindings. TYPE is the issue classification; ACTION is the recommended action. `Fix` requests a correction but does not apply it automatically.
+Terminology: **env** means environment; **stem** means filename without its extension; discovery catalogs files and reads bindings. TYPE is the issue classification; ACTION is the recommended action. `Fix` requests a correction but does not apply it automatically.
 
 A **top-level key** here is a direct child of the ParameterSet `parameters` map, not a document metadata key such as `name`. `TABLE` is the static set of Cloud Passport contract names in `passport.py`.
 
@@ -100,7 +100,7 @@ A fixture that binds `env-params` with no table keys is still an empty PLACE-4 b
 
 ## Algorithm doc
 
-Write `docs/algorithms/place4.md` and `docs/algorithms/ru/place4.md`. Update PLACE-1…PLACE-3 and NAME-* `RULE_ORDER` prose: PLACE-4 after PLACE-3, then NAME-*. Update `place3.md` so ParameterSet-key checks are PLACE-4.
+Write `docs/algorithms/place4.md` and `docs/algorithms/ru/place4.md`. Update PLACE-1…PLACE-3 and NAME-*`RULE_ORDER` prose: PLACE-4 after PLACE-3, then NAME-*. Update `place3.md` so ParameterSet-key checks are PLACE-4.
 
 ## Tests
 

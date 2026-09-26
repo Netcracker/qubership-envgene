@@ -88,7 +88,7 @@ One summary line, exact shape:
 PLACE-1: Same value belongs on a higher layer
 ```
 
-`{id}: {description}` when the rule is in the catalog. Unknown rule: summary is just the id (no colon, no blurb).
+`{id}: {description}` when the rule is in the catalog. Unknown rule: summary is just the ID (no colon, no blurb).
 
 Georgia, same visual weight as today’s `h2.rule-id`.
 

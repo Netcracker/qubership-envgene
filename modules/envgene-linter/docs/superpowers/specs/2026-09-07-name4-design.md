@@ -27,7 +27,7 @@ Integration sections, rule ordering and tests describe the development cycle dat
 `bss.yml` listed under `envSpecificParamsets` → finding (needs `bss-deploy`).  
 `bss-deploy.yml` in that array → silent.  
 `postgresql-pipeline.yml` in `envSpecificE2EParamsets` → silent.  
-`postgresql-deploy.yml` in the e2e array → finding (wrong tail).  
+`postgresql-deploy.yml` in the end-to-end array → finding (wrong tail).\
 `qa01-bss-deploy.yml` when an environment directory is `qa01` → finding (env in the name).  
 `extra.yml` in `parameters/` but not listed in any env → silent (unbound).
 
@@ -62,7 +62,7 @@ Check each bound stem once, not once per layer file.
 | `e2e` (`envSpecificE2EParamsets`) | `pipeline` |
 | `technical` (`envSpecificTechnicalParamsets`) | `technical` |
 
-Split the stem on `-`. There must be **at least two** tokens. The last token must be exactly the required token for **every** category in `categories(stem)`. If the stem is bound as both deploy and e2e, no single last token can satisfy both → finding.
+Split the stem on `-`. There must be **at least two** tokens. The last token must be exactly the required token for **every** category in `categories(stem)`. If the stem is bound as both deploy and end-to-end, no single last token can satisfy both → finding.
 
 `postgresql-deploy-ha` has last token `ha` → finding (tail must be the category, nothing after it).  
 `deploy` has one token → finding (subject required).  
@@ -74,8 +74,8 @@ If the stem contains any of these, it is a finding even when the tail is correct
 
 - a cluster directory name from `index.clusters` (hyphen-bounded, case-insensitive): whole stem, `-name-` infix, `name-` prefix, or `-name` suffix
 - an environment directory name from every `env.name` on the index (same match)
-- ticket: regex `(?:^|-)(?:ticket|jira|issue)-\d+` (case-insensitive)
-- release: regex `(?:^|-)(?:r\d+(?:-\d+)?|20\d{2}[.-]\d{1,2})`
+- ticket: regular expression `(?:^|-)(?:ticket|jira|issue)-\d+` (case-insensitive)
+- release: regular expression `(?:^|-)(?:r\d+(?:-\d+)?|20\d{2}[.-]\d{1,2})`
 
 Do not treat the words `env` / `cluster` / `site` as forbidden unless they are an actual directory name on the index.
 
@@ -131,8 +131,8 @@ Write `docs/algorithms/name4.md` and `docs/algorithms/ru/name4.md` in the implem
 
 - Bound `bss.yml` in deploy → one NAME-4 Information / Review; key `bss`; message requires `-deploy`
 - Bound `bss-deploy.yml` in deploy → no NAME-4
-- Bound `postgresql-pipeline.yml` in e2e → no NAME-4
-- Bound `postgresql-deploy.yml` in e2e → finding (must end with `-pipeline`)
+- Bound `postgresql-pipeline.yml` in end-to-end → no NAME-4
+- Bound `postgresql-deploy.yml` in end-to-end → finding (must end with `-pipeline`)
 - Bound `postgresql-technical.yml` in technical → no NAME-4
 - Bound `postgresql-deploy-ha.yml` in deploy → finding
 - Bound `deploy.yml` in deploy → finding (subject required)

@@ -48,11 +48,13 @@
 ### Task 1: Finding fields and rule catalog
 
 **Files:**
+
 - Modify: `src/envgene_linter/model.py`
 - Create: `src/envgene_linter/rulemeta.py`
 - Create: `tests/test_rulemeta.py`
 
 **Interfaces:**
+
 - Consumes: existing `Finding`, `Severity`
 - Produces:
   - `class IssueType(Enum)` values `ERROR = "Error"`, `WARNING = "Warning"`, `INFORMATION = "Information"`
@@ -61,7 +63,7 @@
   - `Finding.issue_type: IssueType = IssueType.WARNING`
   - `Finding.action: Action = Action.FIX`
   - `@dataclass(frozen=True) class RuleMeta` with `id: str`, `description: str`, `default_issue_type: IssueType`, `default_action: Action`
-  - `RULES: dict[str, RuleMeta]` keyed by id
+  - `RULES: dict[str, RuleMeta]` keyed by ID
   - `def defaults_for(rule_id: str) -> tuple[IssueType, Action]`
 
 New Finding fields have defaults so existing `Finding(...)` calls and `report.py` tests keep passing.
@@ -212,10 +214,12 @@ EOF
 ### Task 2: HTML page grouped by rule
 
 **Files:**
+
 - Modify: `src/envgene_linter/html_report.py`
 - Modify: `tests/test_html_report.py`
 
 **Interfaces:**
+
 - Consumes: `Finding` (including `column`, `issue_type`, `action`), `RULES` from `rulemeta`, `RULE_ORDER`, existing `report_path` / `_relative` / `REPORT_FILENAME`
 - Produces: `render_html(findings: list[Finding], root: Path) -> str` — title `Envgene Linter Report`; sections only for rules that have findings; cards with labels FILE, ISSUE, TYPE, ACTION, FIX SUGGESTION
 
@@ -499,12 +503,14 @@ EOF
 ### Task 3: Ignore the report in the instance `.gitignore`
 
 **Files:**
+
 - Modify: `src/envgene_linter/html_report.py`
 - Modify: `src/envgene_linter/cli.py`
 - Modify: `tests/test_html_report.py`
 - Modify: `tests/test_cli.py`
 
 **Interfaces:**
+
 - Consumes: `REPORT_FILENAME`, `report_path`, `render_html`
 - Produces: `ensure_report_ignored(root: Path) -> None`  
   Creates or appends `envgene-linter-report.html`. No-op if a trimmed line is already `envgene-linter-report.html` or `/envgene-linter-report.html`.  
@@ -680,6 +686,7 @@ EOF
 ### Task 4: Column, catalog fields, and shorter rule texts
 
 **Files:**
+
 - Modify: `src/envgene_linter/rules/place1.py`
 - Modify: `src/envgene_linter/rules/place2.py`
 - Modify: `src/envgene_linter/rules/place3.py`
@@ -688,6 +695,7 @@ EOF
 - Modify: `tests/test_place3.py` (message still contains `repository` / `cluster-01`; add exact strings where cheap)
 
 **Interfaces:**
+
 - Consumes: `defaults_for` or `RULES[rule_id]`, `leaf.provenance.position -> tuple[int, int]`
 - Produces: every `Finding(...)` sets `column` (passport file findings: `column=1`) and `issue_type` / `action` from the catalog. Messages and hints are exactly the spec strings.
 
@@ -810,7 +818,7 @@ Expected: FAIL on the new exact `message` / `hint` / `column`
 
 Apply the strings and fields above in all six constructors (2 in place1, 1 in place2, 3 in place3).
 
-- [ ] **Step 4: Run place + report + html + cli tests**
+- [ ] **Step 4: Run place + report + HTML + cli tests**
 
 Run: `.venv/bin/python -m pytest tests/test_place1.py tests/test_place2.py tests/test_place3.py tests/test_report.py tests/test_html_report.py tests/test_cli.py -v`
 
