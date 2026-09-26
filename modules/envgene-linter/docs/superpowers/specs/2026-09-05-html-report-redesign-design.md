@@ -5,6 +5,10 @@ Status at design time: approved in conversation; awaiting file review\
 
 ## Reading order and later changes
 
+As of September 26, 2026, HTML cards display FILE, ISSUE, ACTION, and FIX SUGGESTION.
+The TYPE row and its chips have been removed. Internal finding types and console severity remain unchanged.
+This update supersedes the TYPE display requirements below.
+
 These three HTML specs describe successive stages on the same date: [original report](2026-09-05-html-report-design.md) → [redesign](2026-09-05-html-report-redesign-design.md) → [usability](2026-09-05-html-report-usability-design.md). Later stages replace the earlier requirements they explicitly change; the remaining requirements carry forward. Status lines record the original review state.
 
 This is the middle stage, retained as history. The usability stage later replaces the separate rule heading/subtitle with a collapsed section, lists all locations in FILE, adds columns and multiple locations to console output, and reduces label size.

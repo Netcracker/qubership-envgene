@@ -1,8 +1,28 @@
 # EnvGene Linter changelog
 
+- [0.0.4](#004)
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
+
+## 0.0.4
+
+- Add INT-3 to report used reference names defined at multiple environment, cluster, or repository scopes.
+  Checks cover ParameterSets, shared Credential files, Resource Profile Overrides, and Shared Template Variables.
+- Add INT-4 to flag authored entities for which no references were found in available local sources.
+  Findings recommend Review and explain uncertainty, including external templates and rendered references.
+  The rule does not establish that removal is safe or delete entities automatically.
+- Add NAME-8 to check that selected default Cloud Passports use the filename stem `passport`
+  and their selected companion Credential files use `passport-creds`.
+  The `passport-infra` file and its companion are excluded.
+- Enable INT-3, INT-4, and NAME-8 by default, bringing the implemented rule catalog to 21 rules.
+- Remove the Type row and its colored chips from HTML findings.
+  Cards retain File, Issue, Action, and Fix suggestion. Console severity remains unchanged.
+- Show the repository's root folder name below the HTML report heading and in the browser tab title.
+  Escape special characters and show the name even when there are no findings.
+- Document local builds and installation from source.
+- Add English specifications, designs, algorithms, tests, and runnable examples for the new rules.
+  Update the documentation index to cover all 21 implemented rules.
 
 ## 0.0.3
 

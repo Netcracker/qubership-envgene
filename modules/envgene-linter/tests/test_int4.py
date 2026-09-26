@@ -123,7 +123,8 @@ def test_cli_reports_review_and_returns_zero(repo):
     assert pages
     page = pages[0].read_text()
     assert 'No references to this ParameterSet' in page
-    assert 'Information' in page and 'Review' in page
+    assert '>Information</span>' not in page
+    assert 'Review' in page
 
 
 def test_other_rule_findings_are_unchanged_when_int4_is_enabled(repo, monkeypatch):

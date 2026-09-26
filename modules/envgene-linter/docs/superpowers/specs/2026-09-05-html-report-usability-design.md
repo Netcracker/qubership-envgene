@@ -5,6 +5,12 @@ Status at design time: approved in conversation; awaiting file review\
 
 ## Reading order and later changes
 
+As of September 26, 2026, HTML cards display FILE, ISSUE, ACTION, and FIX SUGGESTION.
+The TYPE row and its chips have been removed. Internal finding types and console severity remain unchanged.
+This update supersedes the TYPE display requirements below.
+The page also shows the repository's root folder name below the heading and in the browser tab title.
+The renderer resolves the root path and escapes the folder name as HTML, including reports with no findings.
+
 These three HTML specs describe successive stages on the same date: [original report](2026-09-05-html-report-design.md) → [redesign](2026-09-05-html-report-redesign-design.md) → [usability](2026-09-05-html-report-usability-design.md). Later stages replace the earlier requirements they explicitly change; the remaining requirements carry forward. Status lines record the original review state.
 
 This is the last of the three HTML stages. It replaces the redesign requirements for headings, section expansion, label size, and location display. Later rule specs extend the catalog and `RULE_ORDER`. The PLACE-3 key checks below are historical: [PLACE-4](2026-09-07-place4-design.md) later replaces them with contract-key checks in ParameterSets; PLACE-3 retains passport-file placement checks.

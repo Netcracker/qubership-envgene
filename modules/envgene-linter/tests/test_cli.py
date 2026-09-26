@@ -69,9 +69,9 @@ def test_html_name4_section(repo):
     assert result.exit_code == 0
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "NAME-4: Bound ParameterSet stem is &lt;subject&gt;-&lt;category&gt;" in body
-    assert "Information" in body
+    assert ">Information</span>" not in body
     assert "Review" in body
-    assert "chip-information" in body
+    assert "chip-information" not in body
     assert "chip-review" in body
 
 
@@ -139,9 +139,9 @@ def test_html_name3_section(repo):
     assert result.exit_code == 0
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "NAME-3: Filenames, directories, and namespaces use kebab-case" in body
-    assert "Information" in body
+    assert ">Information</span>" not in body
     assert "Review" in body
-    assert "chip-information" in body
+    assert "chip-information" not in body
     assert "chip-review" in body
 
 
@@ -159,9 +159,9 @@ def test_html_name2_section(repo):
     assert result.exit_code == 0
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "NAME-2: Filename stem must equal the name field" in body
-    assert "Warning" in body
+    assert ">Warning</span>" not in body
     assert "Fix" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 
@@ -177,9 +177,9 @@ def test_html_name1_section(repo):
     assert result.exit_code == 0
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "NAME-1: Different keys may name the same concept" in body
-    assert "Information" in body
+    assert ">Information</span>" not in body
     assert "Review" in body
-    assert "chip-information" in body
+    assert "chip-information" not in body
     assert "chip-review" in body
 
 
@@ -226,9 +226,9 @@ def test_html_place4_section(repo):
     assert result.exit_code == 0
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "PLACE-4: Cloud Passport keys do not belong in ParameterSets" in body
-    assert "Warning" in body
+    assert ">Warning</span>" not in body
     assert "Fix" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 
@@ -251,9 +251,9 @@ def test_html_place6_section(repo):
     assert result.exit_code == 0
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "PLACE-6: Pipeline ParameterSets bind to the Cloud" in body
-    assert "Warning" in body
+    assert ">Warning</span>" not in body
     assert "Fix" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 
@@ -278,9 +278,9 @@ def test_check_and_html_report_place7_before_name1_without_hiding_name4(repo):
 
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "PLACE-7: One category per ParameterSet" in body
-    assert "Warning" in body
+    assert ">Warning</span>" not in body
     assert "Fix" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
     place7_html = body[
         body.index("PLACE-7: One category per ParameterSet") : body.index(
@@ -308,7 +308,7 @@ def test_place8_console_and_html_are_informational_and_exit_zero(repo):
     assert "Credentials file 'empty.yml' is empty but is referenced or used by the generator." in block
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "PLACE-8: Referenced or used entities are empty" in body
-    assert "chip-information" in body
+    assert "chip-information" not in body
     assert "chip-review" in body
 
 
@@ -327,7 +327,7 @@ def test_place9_console_and_html_are_warning_fix_and_exit_zero(repo):
     assert result.output.index("PLACE-8") < result.output.index("PLACE-9") < result.output.index("NAME-1")
     body = (repo.root / REPORT_FILENAME).read_text(encoding="utf-8")
     assert "PLACE-9: One Cloud Passport per cluster" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 

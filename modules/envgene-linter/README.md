@@ -140,10 +140,10 @@ An enabled rule without findings shows `No findings`. Disabled rules show `Disab
 
 Each finding contains one or more `path:line:column` locations, followed by its severity, a description and a suggested action. Line and column numbers start at 1. File-level checks use `1:1`, which does not mean that the first YAML key is invalid.
 
-| Type / action in HTML | Meaning |
+| Action in HTML | Meaning |
 | --- | --- |
-| **Warning / Fix** | The rule identified a condition to correct. Read the suggestion and update the configuration manually. |
-| **Information / Review** | Inspect the case before deciding whether a change is appropriate. For example, an empty connected file may be intentional. |
+| **Fix** | The rule identified a condition to correct. Read the suggestion and update the configuration manually. |
+| **Review** | Inspect the case before deciding whether a change is appropriate. For example, an empty connected file may be intentional. |
 
 `Fix` describes the recommended action; the tool does not perform it. Several locations in one finding identify the files involved in the same condition. Several rules may report independent issues on the same file.
 
@@ -155,8 +155,10 @@ It does not mean that every file in the repository was validated.
 ## HTML reports
 
 Every successful check writes a self-contained HTML report, including runs with no findings.
+The header and browser tab title show the repository's root folder name, without its full local path.
 The page works offline and uses collapsible sections for rules with findings.
-Each finding lists its files, issue, type, action, and fix suggestion.
+Each finding lists its files, issue, action, and fix suggestion.
+The HTML report does not display the finding type.
 A report with no findings displays `No findings`.
 
 On each check:

@@ -6,16 +6,13 @@ import html
 from collections import defaultdict
 from pathlib import Path
 
-from .model import Action, Finding, IssueType
+from .model import Action, Finding
 from .report import RULE_ORDER
 from .rulemeta import RULES
 
 REPORT_FILENAME = "envgene-linter-report.html"
 
 _CHIP_CLASS = {
-    IssueType.WARNING.value: "chip-warning",
-    IssueType.ERROR.value: "chip-error",
-    IssueType.INFORMATION.value: "chip-information",
     Action.FIX.value: "chip-fix",
     Action.REVIEW.value: "chip-review",
 }
@@ -77,9 +74,6 @@ summary.rule-id {
   border: 1px solid #bbb;
   background: #eee;
 }
-.chip-warning { background: #fff3cd; border-color: #e0c36a; }
-.chip-error { background: #fde8e8; border-color: #e39a9a; }
-.chip-information { background: #e8eef5; border-color: #b0bec5; }
 .chip-fix { background: #e8f0fe; border-color: #9db7e8; }
 .chip-review { background: #eee; border-color: #bbb; }
 """
@@ -136,7 +130,6 @@ def _card(item: Finding, root: Path) -> list[str]:
     rows = (
         ("FILE", _file_html(item, root)),
         ("ISSUE", html.escape(item.message)),
-        ("TYPE", _chip(item.issue_type.value)),
         ("ACTION", _chip(item.action.value)),
         ("FIX SUGGESTION", html.escape(item.hint)),
     )
@@ -151,6 +144,8 @@ def _card(item: Finding, root: Path) -> list[str]:
 def render_html(
     findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = ()
 ) -> str:
+    repository_root = root.resolve()
+    repository_name = html.escape(repository_root.name or repository_root.anchor)
     by_rule: dict[str, list[Finding]] = defaultdict(list)
     for item in findings:
         if item.rule not in disabled_rules:
@@ -160,11 +155,12 @@ def render_html(
         '<html lang="en">',
         "<head>",
         '<meta charset="utf-8">',
-        "<title>Envgene Linter Report</title>",
+        f"<title>{repository_name} — Envgene Linter Report</title>",
         f"<style>{_CSS}</style>",
         "</head>",
         "<body>",
         "<h1>Envgene Linter Report</h1>",
+        f'<p class="repository">Repository: <strong>{repository_name}</strong></p>',
     ]
     if disabled_rules:
         labels = ", ".join(html.escape(rule) for rule in sorted(disabled_rules, key=_rule_sort_key))

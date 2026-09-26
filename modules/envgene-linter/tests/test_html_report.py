@@ -25,6 +25,29 @@ def test_report_path_is_visible_file_in_repo_root(tmp_path):
     assert REPORT_FILENAME == "envgene-linter-report.html"
 
 
+def test_repository_name_in_header_and_tab_title():
+    for findings in ([], [_finding()]):
+        body = render_html(findings, Path("/workspace/my-instance-repo"))
+        assert "<title>my-instance-repo — Envgene Linter Report</title>" in body
+        assert '<p class="repository">Repository: <strong>my-instance-repo</strong></p>' in body
+        assert "/workspace/" not in body
+
+
+def test_repository_name_is_escaped():
+    body = render_html([], Path('/workspace/demo<&"repo'))
+    assert '<title>demo&lt;&amp;&quot;repo — Envgene Linter Report</title>' in body
+    assert '<strong>demo&lt;&amp;&quot;repo</strong>' in body
+    assert 'demo<&"repo' not in body
+
+
+def test_repository_name_for_current_directory(tmp_path, monkeypatch):
+    root = tmp_path / "instance-repo"
+    root.mkdir()
+    monkeypatch.chdir(root)
+    body = render_html([], Path("."))
+    assert '<strong>instance-repo</strong>' in body
+
+
 def test_two_place1_findings_one_rule_heading():
     a = _finding(rule="PLACE-1", path=Path("environments/a.yml"), message="ma", hint="ha")
     b = _finding(rule="PLACE-1", path=Path("environments/b.yml"), line=8, column=5, message="mb", hint="hb")
@@ -38,7 +61,8 @@ def test_two_place1_findings_one_rule_heading():
     assert "PLACE-2" not in body
     assert body.count('class="finding"') == 2
     assert "FILE" in body and "ISSUE" in body
-    assert "TYPE" in body and "ACTION" in body and "FIX SUGGESTION" in body
+    assert '<div class="label">TYPE</div>' not in body
+    assert "ACTION" in body and "FIX SUGGESTION" in body
     assert "environments/a.yml:4:3" in body
     assert "environments/b.yml:8:5" in body
     assert 'class="rule-section"' in body
@@ -92,22 +116,22 @@ def test_no_script_tags():
     assert "<script" not in body
     assert "Do not commit this file" not in body
     assert "Envgene Linter Report" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 
-def test_unknown_type_uses_gray_chip():
+def test_review_action_uses_gray_chip_without_type():
     body = render_html(
         [_finding(issue_type=IssueType.INFORMATION, action=Action.REVIEW)],
         Path("/repo"),
     )
-    assert "Information" in body
+    assert ">Information</span>" not in body
     assert "Review" in body
-    assert "chip-information" in body
+    assert "chip-information" not in body
     assert "chip-review" in body
 
 
-def test_place8_uses_catalog_heading_and_information_review_chips():
+def test_place8_uses_catalog_heading_and_review_chip():
     body = render_html(
         [
             _finding(
@@ -120,14 +144,14 @@ def test_place8_uses_catalog_heading_and_information_review_chips():
         Path("/repo"),
     )
     assert "PLACE-8: Referenced or used entities are empty" in body
-    assert "chip-information" in body
+    assert "chip-information" not in body
     assert "chip-review" in body
 
 
-def test_place9_uses_catalog_heading_and_warning_fix_chips():
+def test_place9_uses_catalog_heading_and_fix_chip():
     body = render_html([_finding(rule="PLACE-9")], Path("/repo"))
     assert "PLACE-9: One Cloud Passport per cluster" in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 

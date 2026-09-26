@@ -365,7 +365,7 @@ def test_console_and_html_place10_catalog_order_and_warning_fix(repo):
     assert "PLACE-10: Entities belong in their type directories" in body
     assert "PLACE-9:" not in body
     assert "NAME-1:" not in body
-    assert "chip-warning" in body
+    assert "chip-warning" not in body
     assert "chip-fix" in body
 
 
