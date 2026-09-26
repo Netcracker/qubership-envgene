@@ -34,13 +34,21 @@ Checks run locally without network calls.
 
 ## Installation
 
-Run this command in a terminal to install or update the tool from PyPI:
+The Python command can be named `python` or `python3`, depending on your installation.
+Check which command is available with `python --version` or `python3 --version`.
+Use one of the following commands with Python 3.12 or newer to install or update the tool from PyPI:
 
 ```bash
 python -m pip install --upgrade qubership-envgene-linter
 ```
 
-If your system uses `python3` instead of `python`, use `python3 -m pip` in that command.
+Or, if your Python command is `python3`:
+
+```bash
+python3 -m pip install --upgrade qubership-envgene-linter
+```
+
+On Windows, you can also use `py -m pip` if the Python launcher is installed.
 The package name is `qubership-envgene-linter`, and the installed command is `envgene-linter`.
 You do not need a source checkout or a local build.
 

@@ -10,13 +10,22 @@ EnvGene Linter checks the configuration files in an EnvGene instance repository 
 
 ## Install
 
-You need Python 3.12 or newer with pip. Run this command in a terminal to install or update the tool:
+You need Python 3.12 or newer with pip.
+The Python command can be named `python` or `python3`, depending on your installation.
+Check which command is available with `python --version` or `python3 --version`.
+Use one of the following commands with Python 3.12 or newer to install or update the tool:
 
 ```bash
 python -m pip install --upgrade qubership-envgene-linter
 ```
 
-If your system uses `python3` instead of `python`, use `python3 -m pip` in that command.
+Or, if your Python command is `python3`:
+
+```bash
+python3 -m pip install --upgrade qubership-envgene-linter
+```
+
+On Windows, you can also use `py -m pip` if the Python launcher is installed.
 You do not need to download the source code or build the package.
 
 ## Run a check
