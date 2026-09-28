@@ -1,0 +1,4 @@
+name: app-oss
+registryName: mock-reg
+artifactId: test_app_artifact
+groupId: com.test
