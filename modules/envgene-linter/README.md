@@ -1,13 +1,14 @@
 # EnvGene Linter
 
-EnvGene Linter checks local **EnvGene instance repositories** for configuration placement, naming,
-secret handling, and reference integrity. It saves an HTML report and prints its absolute path.
+EnvGene Linter checks local **EnvGene instance and template repositories**.
+Instance checks cover placement, naming, secret handling, and reference integrity. TPL-1 also checks template repositories. It saves an HTML report and prints its absolute path.
 Use `--console` to also print findings in the terminal.
 
 See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes and migration instructions.
 
-The linter checks files selected by supported local references or known generator usage.
+Most instance rules check files selected by supported local references or known generator usage.
 INT-4 also examines recognized unconnected authored entities for review.
+TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`, regardless of bindings.
 The linter does not generate environments, render Jinja templates, or automatically fix configuration files.
 Checks run locally without network calls.
 
@@ -30,7 +31,7 @@ Checks run locally without network calls.
 ## Requirements
 
 - Python **3.12 or newer**, with `pip`.
-- A local EnvGene instance repository containing an `environments/` directory.
+- A local EnvGene repository containing `environments/`, `templates/`, or both.
 
 ## Installation
 
@@ -57,7 +58,7 @@ install in a virtual environment as required by your Python installation.
 
 ## Quick start
 
-Open a terminal in your instance repository root, the directory containing `environments/`, and run:
+Open a terminal in your repository root, the directory containing `environments/` or `templates/`, and run:
 
 ```bash
 envgene-linter check
@@ -86,7 +87,8 @@ See [HTML reports](#html-reports) for details.
 
 ## Choosing the repository to check
 
-The optional argument identifies the **instance repository root**, which must contain `environments/`.
+The optional argument identifies the **repository root**, which contains `environments/`, `templates/`, or both.
+A template-only repository does not need `environments/`. TPL-1 runs there, and instance rules show Not applicable.
 Without an argument, the linter checks the current directory. It does not search parent directories.
 Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
 
@@ -139,12 +141,13 @@ envgene-linter --help
 envgene-linter check --help
 ```
 
-All implemented rules run on each check. There are currently no CLI options for selecting rules, automatic fixes, strict mode, JSON output, baselines or a custom HTML output path.
+All applicable enabled rules run on each check. There are currently no CLI options for selecting rules, automatic fixes, strict mode, JSON output, baselines or a custom HTML output path.
 
 ## Reading findings
 
-With `--console`, the terminal report groups findings by rule and prints all 22 rule headings.
-An enabled rule without findings shows `No findings`. Disabled rules show `Disabled`.
+With `--console`, the terminal report groups findings by rule and prints all 23 rule headings.
+An applicable enabled rule without findings shows `No findings`. Disabled rules show `Disabled`.
+Instance-only rules show `Not applicable` when checking a template-only repository.
 
 Each finding contains one or more `path:line:column` locations, followed by its severity, a description and a suggested action. Line and column numbers start at 1. File-level checks use `1:1`, which does not mean that the first YAML key is invalid.
 
@@ -206,6 +209,7 @@ Each link opens the current processing algorithm. The descriptions below summari
 | [NAME-2](docs/algorithms/name2.md) | A selected entity's filename stem differs from its `name` field | Warning / Fix |
 | [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) | A used default Cloud Passport or its selected companion has a noncanonical filename | Warning / Fix |
 | [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md) | Connected ParameterSet values contain JSON collections or YAML block collections encoded as strings | Warning / Review |
+| [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) | Jinja outside template files or supported descriptor fields, misplaced `.j2` files, or ambiguous template syntax | Warning / Fix or Information / Review |
 
 PLACE-5 and other rules not listed above are not implemented.
 
@@ -281,7 +285,10 @@ Except for INT-4, checks apply only to entities with supported evidence of use:
 - Artifact Definitions selected through supported artifact selectors.
 - Security sources used by SEC-5 and applicable INT-2 references: generated environment Credentials; selected passport and deployer companions; bound system integration, root-credentials, active legacy registry and selected artifact-registry Credential references.
 
-Except for INT-4, unreferenced names do not produce findings.
+Except for INT-4 and TPL-1, unreferenced names do not produce findings.
+TPL-1 independently checks all YAML and `.j2` files under `templates/`, `environments/`, and `configuration/`.
+It allows generator-rendered descriptor fields and marks ambiguous Helm or application placeholders for Review.
+See [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) for the field exceptions and file scope.
 Discovery can still encounter unused files and emit skip notes.
 INT-3 includes definitions hidden by a used reference's lookup, without adding them to other rules' inputs.
 INT-4 catalogs recognized unconnected authored entities separately to review their references.
@@ -291,8 +298,8 @@ Current limitations:
 
 - Jinja is not rendered. Dynamic or unavailable external/template references are not inferred as connections.
 - INT-2 reports definitely missing or ambiguous supported references; dynamic or unavailable template context receives Review. Other unresolved references do not gain a general missing-file check.
-- Content checks skip unreadable or unsupported documents. Applicable path or naming checks can still report on a selected file without parsing its contents.
-- Application and Registry Definitions are not checked merely because their directories exist. SEC-5 and INT-2 follow only their established active legacy registry and selected artifact-registry consumers.
+- Most content checks skip unreadable or unsupported documents. TPL-1 also scans malformed YAML as text. Applicable path or naming checks can still report on a selected file without parsing its contents.
+- Outside TPL-1, Application and Registry Definitions are not checked merely because their directories exist. SEC-5 and INT-2 follow only their established active legacy registry and selected artifact-registry consumers.
 - The linter implements the rules listed above, not complete schema validation or a full EnvGene generation run.
 
 See [Connected entities](docs/algorithms/connections.md) and [Effective Set](docs/algorithms/effective-set.md) for selection, precedence and merge details.
@@ -350,7 +357,7 @@ The report path and diagnostics go to `lint-diagnostics.txt`. Output files are o
 | --- | --- |
 | `envgene-linter: command not found` | Check that your Python scripts directory is on `PATH`. If you used a virtual environment, activate it. |
 | Installation rejects the Python version | Create the virtual environment using Python 3.12 or newer. |
-| `not an instance repository: no environments/ directory` | Pass the repository root, not `environments/` or an individual environment directory. |
+| `not an EnvGene repository: no environments/ or templates/ directory` | Pass the repository root containing one of these directories. |
 | A file produces no finding | Confirm that it is connected through a supported binding or known usage; inspect stderr for skip notes and check the rule's algorithm. |
 | An environment is missing from results | Check for `<cluster>/<environment>/Inventory/env_definition.yml` and inspect parsing diagnostics. |
 | An existing HTML report did not change | Check the printed absolute path and stderr for errors. Each successful check overwrites the report. |

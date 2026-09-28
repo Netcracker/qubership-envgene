@@ -32,13 +32,15 @@ def check_cmd(repo: Path, console: bool) -> None:
         click.echo(str(exc), err=True)
         raise SystemExit(2) from exc
     if console:
-        click.echo(render(result.findings, disabled_rules=result.disabled_rules), nl=False)
+        click.echo(render(result.findings, disabled_rules=result.disabled_rules,
+                          not_applicable_rules=result.not_applicable_rules), nl=False)
     for note in result.skipped:
         click.echo(note, err=True)
     path = report_path(repo)
     try:
         path.write_text(
-            render_html(result.findings, repo, disabled_rules=result.disabled_rules),
+            render_html(result.findings, repo, disabled_rules=result.disabled_rules,
+                        not_applicable_rules=result.not_applicable_rules),
             encoding="utf-8",
         )
     except OSError as exc:

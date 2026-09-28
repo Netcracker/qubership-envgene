@@ -18,7 +18,7 @@ def test_render_no_findings():
         "INT-3\nNo findings\n\n"
         "INT-4\nNo findings\n\n"
         "NAME-1\nNo findings\n\n"
-        "NAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 
@@ -90,7 +90,7 @@ def test_render_one_finding():
         "\n"
         "NAME-4\n"
         "No findings\n\n"
-        "NAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 
@@ -128,7 +128,7 @@ def test_render_place2_after_place1():
         "INT-3\nNo findings\n\n"
         "INT-4\nNo findings\n\n"
         "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\n"
-        "NAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 
@@ -161,7 +161,7 @@ def test_render_place3_after_place2():
         "INT-2\nNo findings\n\n"
         "INT-3\nNo findings\n\n"
         "INT-4\nNo findings\n\n"
-        "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 
@@ -202,7 +202,7 @@ def test_render_place4_after_place3():
         "INT-2\nNo findings\n\n"
         "INT-3\nNo findings\n\n"
         "INT-4\nNo findings\n\n"
-        "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 
@@ -239,7 +239,7 @@ def test_render_place6_after_place4():
         "INT-2\nNo findings\n\n"
         "INT-3\nNo findings\n\n"
         "INT-4\nNo findings\n\n"
-        "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-1\nNo findings\n\nNAME-2\nNo findings\n\nNAME-3\nNo findings\n\nNAME-4\nNo findings\n\nNAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 
@@ -350,7 +350,7 @@ def test_render_two_findings_one_header():
         "\n"
         "NAME-4\n"
         "No findings\n\n"
-        "NAME-8\nNo findings\n\nVAL-4\nNo findings\n"
+        "NAME-8\nNo findings\n\nVAL-4\nNo findings\n\nTPL-1\nNo findings\n"
     )
 
 

@@ -14,6 +14,7 @@ class RuleMeta:
 
 
 RULES: dict[str, RuleMeta] = {
+    "TPL-1": RuleMeta("TPL-1", "Jinja lives only in .j2 templates", IssueType.ERROR, Action.FIX),
     "VAL-4": RuleMeta("VAL-4", "Complex values are native YAML", IssueType.WARNING, Action.REVIEW),
     "PLACE-1": RuleMeta(
         "PLACE-1",

@@ -338,7 +338,9 @@ def build_index(root: Path) -> RepoIndex:
     root = root.resolve()
     environments_dir = root / "environments"
     if not environments_dir.is_dir():
-        raise DiscoveryError(f"{root} is not an instance repository: no environments/ directory")
+        if (root / "templates").is_dir():
+            return RepoIndex(root=root)
+        raise DiscoveryError(f"{root} is not an EnvGene repository: no environments/ or templates/ directory")
 
     skipped: list[str] = []
     passports: list[PassportFile] = []

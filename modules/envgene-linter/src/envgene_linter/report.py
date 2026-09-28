@@ -4,7 +4,7 @@ from .model import Finding
 
 RULE_ORDER = (
     "PLACE-1", "PLACE-2", "PLACE-3", "PLACE-4", "PLACE-6", "PLACE-7", "PLACE-8", "PLACE-9", "PLACE-10",
-    "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "INT-3", "INT-4", "NAME-1", "NAME-2", "NAME-3", "NAME-4", "NAME-8", "VAL-4",
+    "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "INT-3", "INT-4", "NAME-1", "NAME-2", "NAME-3", "NAME-4", "NAME-8", "VAL-4", "TPL-1",
 )
 
 
@@ -24,12 +24,14 @@ def _block(rule: str, findings: list[Finding]) -> str:
     return f"{rule}\n" + "\n\n".join(chunks)
 
 
-def render(findings: list[Finding], *, disabled_rules: tuple[str, ...] = ()) -> str:
+def render(findings: list[Finding], *, disabled_rules: tuple[str, ...] = (),
+           not_applicable_rules: tuple[str, ...] = ()) -> str:
     by_rule: dict[str, list[Finding]] = {rule: [] for rule in RULE_ORDER}
     for item in findings:
-        if item.rule not in disabled_rules:
+        if item.rule not in disabled_rules and item.rule not in not_applicable_rules:
             by_rule.setdefault(item.rule, []).append(item)
     return "\n\n".join(
-        f"{rule}\nDisabled" if rule in disabled_rules else _block(rule, items)
+        f"{rule}\nDisabled" if rule in disabled_rules else
+        f"{rule}\nNot applicable" if rule in not_applicable_rules else _block(rule, items)
         for rule, items in by_rule.items()
     ) + "\n"

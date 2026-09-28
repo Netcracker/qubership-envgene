@@ -6,7 +6,8 @@
 - [Optional commands](#optional-commands)
 - [Troubleshooting](#troubleshooting)
 
-EnvGene Linter checks the configuration files in an EnvGene instance repository and saves the findings in an HTML report.
+EnvGene Linter checks EnvGene instance and template repositories and saves findings in an HTML report.
+TPL-1 checks template repositories. Other implemented rules apply to instance repositories.
 
 ## Install
 
@@ -30,7 +31,7 @@ You do not need to download the source code or build the package.
 
 ## Run a check
 
-Open a terminal in the root of your instance repository: the directory containing `environments/`.
+Open a terminal in your repository root: the directory containing `environments/`, `templates/`, or both.
 Run:
 
 ```bash
@@ -73,7 +74,9 @@ Both commands also create the HTML report. The old `--html` flag is no longer ne
   A virtual environment is optional for the linter, but some systems require one for pip installations.
 - If the terminal cannot find `envgene-linter`, check that your Python scripts directory is on `PATH`.
   If you installed in a virtual environment, activate that environment first.
-- If the linter reports a missing `environments/` directory, run it from the instance repository root.
+- If neither `environments/` nor `templates/` is found, run the command from the repository root.
+- Instance rules show Not applicable for template-only repositories. TPL-1 still runs unless disabled.
 
-This is an alpha release. Checks cover supported references and generator inputs, not every file in the repository.
+This is an alpha release. Most checks cover supported references and generator inputs.
+TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.

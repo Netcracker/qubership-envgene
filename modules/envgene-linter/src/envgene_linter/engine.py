@@ -31,6 +31,7 @@ from .rules.name3 import check as check_name3
 from .rules.name4 import check as check_name4
 from .rules.name8 import check as check_name8
 from .rules.val4 import check as check_val4
+from .rules.tpl1 import check as check_tpl1
 
 
 @dataclass
@@ -38,6 +39,7 @@ class CheckResult:
     findings: list[Finding]
     skipped: list[str]
     disabled_rules: tuple[str, ...] = ()
+    not_applicable_rules: tuple[str, ...] = ()
 
 
 def run_check(root: Path) -> CheckResult:
@@ -45,6 +47,11 @@ def run_check(root: Path) -> CheckResult:
     if len(disabled) == len(rule_config.RULES):
         return CheckResult(findings=[], skipped=[], disabled_rules=disabled)
     index = build_index(root)
+    if not (index.root / "environments").is_dir():
+        findings = check_tpl1(index) if "TPL-1" not in disabled else []
+        inactive = tuple(rule for rule in rule_config.RULES if rule != "TPL-1" and rule not in disabled)
+        return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
+                           not_applicable_rules=inactive)
     connections = compute_connections(index)
     catalogs = build_catalogs(index, connections)
     full = {env.full_name: compute(index, env, ALL_LAYERS) for env in index.environments}
@@ -73,6 +80,7 @@ def run_check(root: Path) -> CheckResult:
         ("NAME-4", check_name4, (index, connections)),
         ("NAME-8", check_name8, (index, connections)),
         ("VAL-4", check_val4, (index, connections)),
+        ("TPL-1", check_tpl1, (index, connections)),
     ]
     findings = []
     for rule, check, args in checks:

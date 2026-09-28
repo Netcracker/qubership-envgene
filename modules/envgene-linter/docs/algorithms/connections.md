@@ -4,8 +4,8 @@ Design: [connected-only scope](../superpowers/specs/2026-09-11-connected-only-de
 
 ## Eligibility
 
-All rules check only entities selected by visible local references or known
-generator usage. NAME-3 also checks used environment definitions and their
+Most instance rules check only entities selected by visible local references or known
+generator usage. TPL-1 checks repository syntax independently of connections. NAME-3 also checks used environment definitions and their
 cluster/environment directories; see [name3.md](name3.md) for namespace selection.
 An unselected file normally contributes neither findings nor values, locations, categories,
 or passport keys to another file's finding. INT-3 includes hidden definitions reached by a used reference.
@@ -121,6 +121,14 @@ This exception to connected-only analysis does not mutate Connections or expand 
 It walks parameter bags and application parameter bags, including nested values, once per physical file.
 Other entity types and metadata are outside its scope. Serialized collections produce Warning / Review.
 
+## TPL-1 repository syntax
+
+[TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) operates independently of Connections.
+It scans YAML and template placement under `templates/`, `environments/`, and `configuration/`, including unused files.
+Generator-rendered descriptor fields are exempt. Ambiguous template expressions receive Review.
+Template-only repositories run TPL-1 without instance discovery. Other enabled rules show Not applicable.
+This scope does not change Connections or the inputs of other rules.
+
 ## PLACE-8 and reporting
 
 PLACE-8 keeps Information / Review for known empty selected or used files.
@@ -129,7 +137,8 @@ Known fixed-path credentials may be absent without a finding; the generator uses
 a default then. Alias matching and ambiguous first buckets retain PLACE-8's existing
 behavior. PLACE-10 follows PLACE-9; SEC-1 follows PLACE-10; SEC-3 follows SEC-1;
 SEC-4 follows SEC-3, SEC-5 follows SEC-4, and INT-2 follows SEC-5.
-INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. NAME-8 follows NAME-4. VAL-4 follows NAME-8. The console has 22 rule headers.
+INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. NAME-8 follows NAME-4. VAL-4 follows NAME-8.
+TPL-1 follows VAL-4. The console has 23 rule headers.
 There are no new CLI flags, other severity changes, autofix, or network calls.
 
 ## Examples

@@ -409,11 +409,11 @@ def test_check_relative_path_writes_to_target(repo, monkeypatch):
     assert f"Report saved to: {repo.root / REPORT_FILENAME}" in result.stderr
 
 
-def test_check_current_directory_without_environments_fails(tmp_path, monkeypatch):
+def test_check_current_directory_without_repository_roots_fails(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     result = CliRunner().invoke(main, ["check"])
     assert result.exit_code == 2
-    assert "not an instance repository: no environments/ directory" in result.output
+    assert "not an EnvGene repository: no environments/ or templates/ directory" in result.output
     assert not (tmp_path / REPORT_FILENAME).exists()
 
 

@@ -27,6 +27,7 @@ RULE_ENABLED: dict[str, bool] = {
     "NAME-4": False,
     "NAME-8": True,
     "VAL-4": True,
+    "TPL-1": True,
 }
 
 

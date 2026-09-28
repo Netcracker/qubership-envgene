@@ -8,6 +8,12 @@
 
 ## Unreleased
 
+- Support template repositories containing `templates/` without requiring `environments/`.
+  Instance-only rules show Not applicable in console and HTML reports.
+- Add TPL-1, enabled by default, to check YAML and `.j2` placement under `templates/`, `environments/`, and `configuration/`.
+  Allow generator-rendered descriptor fields and EnvGene macros. Report misplaced templates and EnvGene Jinja as Fix,
+  and ambiguous Helm or application placeholders as Review. No automatic conversion or renaming is performed.
+
 - Add VAL-4, enabled by default, to review JSON collections and YAML block collections encoded as strings
   in connected ParameterSets, including application parameters and nested values.
   Findings recommend native YAML after checking the consumer contract. No automatic conversion is performed.

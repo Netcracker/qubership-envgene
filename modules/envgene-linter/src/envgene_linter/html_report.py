@@ -142,13 +142,14 @@ def _card(item: Finding, root: Path) -> list[str]:
 
 
 def render_html(
-    findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = ()
+    findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = (),
+    not_applicable_rules: tuple[str, ...] = ()
 ) -> str:
     repository_root = root.resolve()
     repository_name = html.escape(repository_root.name or repository_root.anchor)
     by_rule: dict[str, list[Finding]] = defaultdict(list)
     for item in findings:
-        if item.rule not in disabled_rules:
+        if item.rule not in disabled_rules and item.rule not in not_applicable_rules:
             by_rule[item.rule].append(item)
     parts = [
         "<!DOCTYPE html>",
@@ -165,9 +166,12 @@ def render_html(
     if disabled_rules:
         labels = ", ".join(html.escape(rule) for rule in sorted(disabled_rules, key=_rule_sort_key))
         parts.append(f'<p class="disabled-rules">Disabled rules: {labels}</p>')
+    if not_applicable_rules:
+        labels = ", ".join(html.escape(rule) for rule in sorted(not_applicable_rules, key=_rule_sort_key))
+        parts.append(f'<p class="not-applicable-rules">Not applicable to this repository: {labels}</p>')
     if not by_rule:
-        if set(RULE_ORDER).issubset(disabled_rules):
-            parts.append("<p>No rules enabled</p>")
+        if set(RULE_ORDER).issubset(set(disabled_rules) | set(not_applicable_rules)):
+            parts.append("<p>No applicable rules enabled</p>" if not_applicable_rules else "<p>No rules enabled</p>")
         else:
             parts.append("<p>No findings</p>")
     else:
