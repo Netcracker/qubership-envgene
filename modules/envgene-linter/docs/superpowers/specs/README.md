@@ -4,7 +4,7 @@
 - [Catalog](#catalog)
 - [Language versions](#language-versions)
 
-This directory contains 25 development specifications in English: 21 rule specifications and four shared designs.
+This directory contains 26 development specifications in English: 22 rule specifications and four shared designs.
 Each rule's `*-design.md` combines its requirements specification and implementation design.
 The catalog links each rule to a separate algorithm reference. Coverage includes rules disabled by default.
 
@@ -46,6 +46,7 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [INT-3](/modules/envgene-linter/docs/superpowers/specs/2026-09-24-int3-design.md) | 2026-09-24 | [Algorithm](/modules/envgene-linter/docs/algorithms/int3.md) |
 | [INT-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-24-int4-design.md) | 2026-09-24 | [Algorithm](/modules/envgene-linter/docs/algorithms/int4.md) |
 | [NAME-8](/modules/envgene-linter/docs/superpowers/specs/2026-09-25-name8-design.md) | 2026-09-25 | [Algorithm](/modules/envgene-linter/docs/algorithms/name8.md) |
+| [VAL-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-28-val4-design.md) | 2026-09-28 | [Algorithm](/modules/envgene-linter/docs/algorithms/val4.md) |
 
 ## Language versions
 

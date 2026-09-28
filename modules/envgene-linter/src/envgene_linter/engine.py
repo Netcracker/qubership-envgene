@@ -30,6 +30,7 @@ from .rules.name2 import check as check_name2
 from .rules.name3 import check as check_name3
 from .rules.name4 import check as check_name4
 from .rules.name8 import check as check_name8
+from .rules.val4 import check as check_val4
 
 
 @dataclass
@@ -71,6 +72,7 @@ def run_check(root: Path) -> CheckResult:
         ("NAME-3", check_name3, (index, connections)),
         ("NAME-4", check_name4, (index, connections)),
         ("NAME-8", check_name8, (index, connections)),
+        ("VAL-4", check_val4, (index, connections)),
     ]
     findings = []
     for rule, check, args in checks:

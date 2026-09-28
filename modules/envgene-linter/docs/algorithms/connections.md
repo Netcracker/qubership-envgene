@@ -115,6 +115,12 @@ even when generation merges the files. Physical aliases are deduplicated before 
 It uses scoped local reference evidence and reports remaining candidates as Information / Review with uncertainty reasons.
 This exception to connected-only analysis does not mutate Connections or expand inputs to other rules.
 
+## VAL-4 structured values
+
+[VAL-4](/modules/envgene-linter/docs/algorithms/val4.md) inspects selected ParameterSets before effective-value merging.
+It walks parameter bags and application parameter bags, including nested values, once per physical file.
+Other entity types and metadata are outside its scope. Serialized collections produce Warning / Review.
+
 ## PLACE-8 and reporting
 
 PLACE-8 keeps Information / Review for known empty selected or used files.
@@ -123,7 +129,7 @@ Known fixed-path credentials may be absent without a finding; the generator uses
 a default then. Alias matching and ambiguous first buckets retain PLACE-8's existing
 behavior. PLACE-10 follows PLACE-9; SEC-1 follows PLACE-10; SEC-3 follows SEC-1;
 SEC-4 follows SEC-3, SEC-5 follows SEC-4, and INT-2 follows SEC-5.
-INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. NAME-8 follows NAME-4. The console has 21 rule headers.
+INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. NAME-8 follows NAME-4. VAL-4 follows NAME-8. The console has 22 rule headers.
 There are no new CLI flags, other severity changes, autofix, or network calls.
 
 ## Examples

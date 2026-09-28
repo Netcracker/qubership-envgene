@@ -1,9 +1,16 @@
 # EnvGene Linter changelog
 
+- [Unreleased](#unreleased)
 - [0.0.4](#004)
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
+
+## Unreleased
+
+- Add VAL-4, enabled by default, to review JSON collections and YAML block collections encoded as strings
+  in connected ParameterSets, including application parameters and nested values.
+  Findings recommend native YAML after checking the consumer contract. No automatic conversion is performed.
 
 ## 0.0.4
 

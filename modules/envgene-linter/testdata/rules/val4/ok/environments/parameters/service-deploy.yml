@@ -1,0 +1,8 @@
+name: "service-deploy"
+parameters:
+  FEATURE_CONFIG:
+    retries: 3
+    targets:
+      - "a"
+      - "b"
+  NOTE: "Note: restart required"
