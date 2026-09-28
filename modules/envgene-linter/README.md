@@ -389,6 +389,7 @@ GitHub Actions. Expectations apply to the named rule; other rules may also repor
 findings.
 
 - [Connected entities and rule eligibility](docs/algorithms/connections.md)
+- [Rule applicability and coverage matrix](/modules/envgene-linter/docs/rule-applicability-matrix.md)
 - [Effective Set and parameter merging](docs/algorithms/effective-set.md)
 - [Development specification index](docs/superpowers/specs/README.md) — includes reading order and historical supersession notes
 
