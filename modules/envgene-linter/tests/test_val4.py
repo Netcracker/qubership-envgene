@@ -133,7 +133,7 @@ def test_redaction_disable_and_cli(repo, monkeypatch):
     disabled = run_check(repo.root)
     assert disabled.findings == [f for f in result.findings if f.rule != 'VAL-4']
     assert 'VAL-4' in disabled.disabled_rules
-    assert 'VAL-4\nDisabled' in render(disabled.findings, disabled_rules=disabled.disabled_rules)
+    assert 'VAL-4' not in render(disabled.findings, disabled_rules=disabled.disabled_rules)
 
 
 @pytest.mark.parametrize('target', ['external', 'git', 'cycle'])

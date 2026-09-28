@@ -233,7 +233,7 @@ def test_disabled_rule_does_not_add_read_notes(repo, monkeypatch):
     monkeypatch.setitem(rule_config.RULE_ENABLED, 'TPL-1', False)
     result = run_check(repo.root)
     assert not [note for note in result.skipped if note.startswith('TPL-1:')]
-    assert 'TPL-1\nDisabled' in render(result.findings, disabled_rules=result.disabled_rules)
+    assert 'TPL-1' not in render(result.findings, disabled_rules=result.disabled_rules)
 
 
 @pytest.mark.parametrize('text', [

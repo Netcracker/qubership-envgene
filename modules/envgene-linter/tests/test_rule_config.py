@@ -7,6 +7,9 @@ from click.testing import CliRunner
 
 from envgene_linter import engine
 from envgene_linter.cli import main
+from envgene_linter.html_report import render_html
+from envgene_linter.model import Finding, Severity
+from envgene_linter.report import render
 from envgene_linter.rulemeta import RULES
 
 EXAMPLES = Path(__file__).resolve().parents[1] / 'testdata/rules'
@@ -35,7 +38,7 @@ def test_default_disabled_rules_are_not_reported_as_passed(naming_disabled, tmp_
     result = CliRunner().invoke(main, ['check', str(target), '--console'])
     assert result.exit_code == 0, result.output
     for rule in ('NAME-1', 'NAME-3', 'NAME-4'):
-        assert f'{rule}\nDisabled' in result.output
+        assert rule not in result.output
         assert f'{rule}\nNo findings' not in result.output
     assert 'share the value' not in result.output
 
@@ -66,11 +69,12 @@ def test_all_disabled_skips_preparation_and_produces_explicit_report(monkeypatch
     monkeypatch.setattr(engine, 'build_index', Mock(side_effect=AssertionError('unnecessary scan')))
     result = CliRunner().invoke(main, ['check', str(tmp_path), '--console'])
     assert result.exit_code == 0, result.output
-    assert result.output.count('\nDisabled') == len(RULES)
+    assert 'No rules enabled' in result.output
+    assert all(rule not in result.output for rule in RULES)
     assert 'No findings' not in result.output
     body = (tmp_path / 'envgene-linter-report.html').read_text()
     assert 'No rules enabled' in body
-    assert all(rule in body for rule in RULES)
+    assert all(rule not in body for rule in RULES)
 
 
 @pytest.mark.parametrize('change', ['unknown', 'missing', 'string', 'number'])
@@ -89,10 +93,29 @@ def test_invalid_flags_fail_before_scanning(monkeypatch, tmp_path, change):
     assert 'Invalid rule configuration' in result.output
 
 
-def test_cli_html_records_disabled_defaults(tmp_path, naming_disabled):
+def test_cli_html_omits_disabled_defaults(tmp_path, naming_disabled):
     (tmp_path / 'environments').mkdir()
     result = CliRunner().invoke(main, ['check', str(tmp_path)])
     assert result.exit_code == 0, result.output
     body = (tmp_path / 'envgene-linter-report.html').read_text()
-    assert 'Disabled rules' in body
-    assert all(rule in body for rule in ('NAME-1', 'NAME-3', 'NAME-4'))
+    assert 'Disabled rules' not in body
+    assert all(rule not in body for rule in ('NAME-1', 'NAME-3', 'NAME-4'))
+
+
+@pytest.mark.parametrize('output_format', ['console', 'html'])
+def test_reports_hide_disabled_findings_and_keep_enabled_results(tmp_path, output_format):
+    findings = [
+        Finding(rule=rule, severity=Severity.WARNING, path=Path('parameters.yml'),
+                line=1, key='K', scope='s', message=message, hint='Review the value')
+        for rule, message in [('NAME-1', 'Hidden finding'), ('VAL-4', 'Visible finding')]
+    ]
+    options = dict(disabled_rules=('NAME-1',), not_applicable_rules=('NAME-1', 'INT-3'))
+    output = (render(findings, **options) if output_format == 'console'
+              else render_html(findings, tmp_path, **options))
+    assert 'NAME-1' not in output
+    assert 'Hidden finding' not in output
+    assert 'Disabled' not in output
+    assert 'VAL-4' in output
+    assert 'Visible finding' in output
+    assert 'INT-3' in output
+    assert 'Not applicable' in output

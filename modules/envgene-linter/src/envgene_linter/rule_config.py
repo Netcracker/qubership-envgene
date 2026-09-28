@@ -2,7 +2,7 @@
 
 from .rulemeta import RULES
 
-# True runs the rule. False skips it and marks it Disabled in CLI/HTML reports.
+# True runs the rule. False skips it and omits it from CLI/HTML reports.
 # Use Python booleans, not strings. Keep an entry for every implemented rule.
 RULE_ENABLED: dict[str, bool] = {
     "PLACE-1": True,

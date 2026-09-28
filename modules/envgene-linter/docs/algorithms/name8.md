@@ -42,7 +42,7 @@ Emit one finding per physical file, aggregating naming requirements and consumin
 If passport and companion aliases share one physical file, recommend separate files with the required names.
 Report the logical filename at line 1, column 1. Recommend renaming and updating dependent references while keeping
 passport and companion names consistent. Do not rename files automatically or disclose Credential IDs or values.
-CLI findings retain exit code 0. Disabling NAME-8 bypasses its check and shows Disabled in reports.
+CLI findings retain exit code 0. Disabling NAME-8 bypasses its check and omits the rule from reports.
 
 The approved bounded design is recorded in the
 [specification and design](/modules/envgene-linter/docs/superpowers/specs/2026-09-25-name8-design.md).

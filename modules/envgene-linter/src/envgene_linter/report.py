@@ -26,12 +26,13 @@ def _block(rule: str, findings: list[Finding]) -> str:
 
 def render(findings: list[Finding], *, disabled_rules: tuple[str, ...] = (),
            not_applicable_rules: tuple[str, ...] = ()) -> str:
-    by_rule: dict[str, list[Finding]] = {rule: [] for rule in RULE_ORDER}
+    by_rule: dict[str, list[Finding]] = {rule: [] for rule in RULE_ORDER if rule not in disabled_rules}
     for item in findings:
         if item.rule not in disabled_rules and item.rule not in not_applicable_rules:
             by_rule.setdefault(item.rule, []).append(item)
+    if not by_rule:
+        return "No rules enabled\n"
     return "\n\n".join(
-        f"{rule}\nDisabled" if rule in disabled_rules else
         f"{rule}\nNot applicable" if rule in not_applicable_rules else _block(rule, items)
         for rule, items in by_rule.items()
     ) + "\n"

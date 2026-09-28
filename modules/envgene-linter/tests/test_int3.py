@@ -307,7 +307,8 @@ def test_cli_reports_conflict_without_credential_content(repo, monkeypatch):
         assert secret not in output
         assert identifier not in output
         assert all(str(path.relative_to(repo.root)) in output for path in paths)
-    assert result.output.index("INT-2\n") < result.output.index("INT-3\n") < result.output.index("NAME-1\n")
+    assert "INT-2\n" not in result.output
+    assert "NAME-1\n" not in result.output
 
 
 def test_disabling_int3_preserves_other_findings(repo, monkeypatch):
@@ -321,6 +322,6 @@ def test_disabling_int3_preserves_other_findings(repo, monkeypatch):
     disabled = run_check(repo.root)
     assert [f for f in enabled.findings if f.rule != "INT-3"] == disabled.findings
     result = CliRunner().invoke(main, ["check", str(repo.root), "--console"])
-    assert "INT-3\nDisabled" in result.output
+    assert "INT-3" not in result.output
     html = (repo.root / "envgene-linter-report.html").read_text()
-    assert "Disabled rules" in html and "INT-3" in html
+    assert "Disabled rules" not in html and "INT-3" not in html

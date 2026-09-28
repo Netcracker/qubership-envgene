@@ -163,15 +163,13 @@ def render_html(
         "<h1>Envgene Linter Report</h1>",
         f'<p class="repository">Repository: <strong>{repository_name}</strong></p>',
     ]
-    if disabled_rules:
-        labels = ", ".join(html.escape(rule) for rule in sorted(disabled_rules, key=_rule_sort_key))
-        parts.append(f'<p class="disabled-rules">Disabled rules: {labels}</p>')
-    if not_applicable_rules:
-        labels = ", ".join(html.escape(rule) for rule in sorted(not_applicable_rules, key=_rule_sort_key))
+    visible_not_applicable = set(not_applicable_rules) - set(disabled_rules)
+    if visible_not_applicable:
+        labels = ", ".join(html.escape(rule) for rule in sorted(visible_not_applicable, key=_rule_sort_key))
         parts.append(f'<p class="not-applicable-rules">Not applicable to this repository: {labels}</p>')
     if not by_rule:
         if set(RULE_ORDER).issubset(set(disabled_rules) | set(not_applicable_rules)):
-            parts.append("<p>No applicable rules enabled</p>" if not_applicable_rules else "<p>No rules enabled</p>")
+            parts.append("<p>No applicable rules enabled</p>" if visible_not_applicable else "<p>No rules enabled</p>")
         else:
             parts.append("<p>No findings</p>")
     else:
