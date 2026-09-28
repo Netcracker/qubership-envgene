@@ -316,11 +316,11 @@ class EnvGenerator:
         logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
-    def render_from_obj_to_file(self, template, target_file_path):
+    def render_from_obj_to_obj(self, template) -> dict:
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
-        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
+        return readYaml(escaping_quotation(rendered))
 
     def generate_tenant_file(self):
         logger.info(f"Generate Tenant yaml for {self.ctx.tenant}")
@@ -328,10 +328,14 @@ class EnvGenerator:
         tenant_tmpl_path = self.ctx.current_env_template["tenant"]
         self.render_from_file_to_file(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
 
-    def generate_override_template(self, template_override, template_path: Path, name):
-        if template_override:
-            logger.info(f"Generate override {template_path.stem} yaml for {name}")
-            self.render_from_obj_to_file(template_override, template_path)
+    def apply_template_override(self, template_override, target_path: Path, schema_path: Path, name):
+        if not template_override:
+            return
+        logger.info(f"Apply template override to {target_path.name} for {name}")
+        target = openYaml(target_path)
+        merge_yaml_into_target(target, '', self.render_from_obj_to_obj(template_override))
+        writeYamlToFile(target_path, target)
+        beautifyYaml(str(target_path), schema_path)
 
     def generate_cloud_file(self):
         cloud = self.calculate_cloud_name()
@@ -346,7 +350,7 @@ class EnvGenerator:
             self.render_from_file_to_file(Template(cloud_tmpl_path).render(context), cloud_file)
 
             template_override = cloud_template.get("template_override")
-            self.generate_override_template(template_override, Path(f'{current_env_dir}/cloud.yml_override'), cloud)
+            self.apply_template_override(template_override, Path(cloud_file), get_schema_dir() / "cloud.schema.json", cloud)
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             self.render_from_file_to_file(Template(cloud_template).render(context), cloud_file)
@@ -399,8 +403,8 @@ class EnvGenerator:
             ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / folder_postfix
             rendered_ns = self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
             namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
-            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override",
-                                            folder_postfix)
+            self.apply_template_override(effective_ns.get("template_override"), ns_dir / "namespace.yml",
+                                         get_schema_dir() / "namespace.schema.json", folder_postfix)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
                 sides = namespace_by_deploy_postfix.setdefault(map_key, {})

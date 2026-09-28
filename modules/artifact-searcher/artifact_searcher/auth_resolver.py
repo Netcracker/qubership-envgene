@@ -60,15 +60,27 @@ def _aws_assume_role(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     raise NotImplementedError("AWS assume_role auth is not yet implemented")
 
 
+def _resolve_sa_key(raw: str) -> str:
+    try:
+        json.loads(raw)
+        return raw
+    except json.JSONDecodeError:
+        pass
+    try:
+        decoded = base64.b64decode(raw).decode()
+        json.loads(decoded)
+        return decoded
+    except Exception:
+        pass
+    raise ValueError("GCP service account key must be valid JSON or base64-encoded JSON")
+
+
 def _gcp_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
-    sa_key = cred_data.get(CRED_FIELD_SECRET)
-    if not sa_key:
+    raw_key = cred_data.get(CRED_FIELD_SECRET)
+    if not raw_key:
         raise ValueError("GCP service_account requires credential with 'secret' field containing SA JSON key")
 
-    try:
-        json.loads(sa_key)
-    except json.JSONDecodeError:
-        raise ValueError("GCP service account key must be valid JSON")
+    sa_key = _resolve_sa_key(raw_key)
 
     try:
         from qubership_pipelines_common_library.v2.artifacts_finder.auth.gcp_credentials import GcpCredentialsProvider

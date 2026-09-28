@@ -226,7 +226,7 @@ class RegdefV2AdapterStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
             return ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
-        return ctx.has_sd_input() and bool(ctx.params.get("GENERATE_EFFECTIVE_SET")) and bool(ctx.params.get('ENV_BUILDER'))
+        return (ctx.has_sd_input() or bool(ctx.params.get("GENERATE_EFFECTIVE_SET"))) and bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_regdefv2_adapter(ctx)
