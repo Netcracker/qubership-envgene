@@ -3,7 +3,8 @@ import json
 from typing import Optional
 
 from artifact_searcher.utils.models import AuthConfig, Provider, RegistryV2
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
+from envgenehelper.creds_helper import get_cred_data
 
 AUTH_METHOD_USER_PASS = "user_pass"
 AUTH_METHOD_SECRET = "secret"
@@ -20,13 +21,6 @@ GCP_TOKEN_ATTR = "gcp_authorization_token"
 CRED_FIELD_USERNAME = "username"
 CRED_FIELD_PASSWORD = "password"
 CRED_FIELD_SECRET = "secret"
-CRED_FIELD_DATA = "data"
-
-
-def _get_cred_data(cred_id: str, env_creds: dict) -> dict:
-    if not env_creds or cred_id not in env_creds:
-        raise ValueError(f"Credential '{cred_id}' not found in decrypted credentials")
-    return env_creds[cred_id].get(CRED_FIELD_DATA, {})
 
 
 def _validate_user_pass_creds(cred_data: dict, context: str) -> tuple[str, str]:
@@ -60,15 +54,27 @@ def _aws_assume_role(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     raise NotImplementedError("AWS assume_role auth is not yet implemented")
 
 
+def _resolve_sa_key(raw: str) -> str:
+    try:
+        json.loads(raw)
+        return raw
+    except json.JSONDecodeError:
+        pass
+    try:
+        decoded = base64.b64decode(raw).decode()
+        json.loads(decoded)
+        return decoded
+    except Exception:
+        pass
+    raise ValueError("GCP service account key must be valid JSON or base64-encoded JSON")
+
+
 def _gcp_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
-    sa_key = cred_data.get(CRED_FIELD_SECRET)
-    if not sa_key:
+    raw_key = cred_data.get(CRED_FIELD_SECRET)
+    if not raw_key:
         raise ValueError("GCP service_account requires credential with 'secret' field containing SA JSON key")
 
-    try:
-        json.loads(sa_key)
-    except json.JSONDecodeError:
-        raise ValueError("GCP service account key must be valid JSON")
+    sa_key = _resolve_sa_key(raw_key)
 
     try:
         from qubership_pipelines_common_library.v2.artifacts_finder.auth.gcp_credentials import GcpCredentialsProvider
@@ -128,7 +134,7 @@ def resolve_v2_auth_headers(registry: RegistryV2, env_creds: dict) -> Optional[d
         logger.debug(f"Anonymous access for registry '{registry.name}'")
         return None
 
-    cred_data = _get_cred_data(auth_cfg.credentials_id, env_creds)
+    cred_data = get_cred_data(auth_cfg.credentials_id, env_creds)
 
     handler = _PROVIDER_HANDLERS.get((auth_cfg.provider, auth_cfg.auth_method))
     if not handler:

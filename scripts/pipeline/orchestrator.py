@@ -8,7 +8,9 @@ from enum import StrEnum
 from os import getenv
 from pathlib import Path
 
-from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
+from envgene_shared.utils.logger import logger, CustomFormatter
+from envgene_shared.crypto.crypt import decrypted_cred_files
+from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
@@ -33,7 +35,7 @@ from pipeline.multi_env_runner import run_multi_env_pipeline
 from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
@@ -235,7 +237,7 @@ class RegdefV2AdapterStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
             return ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
-        return ctx.has_sd_input() and bool(ctx.params.get("GENERATE_EFFECTIVE_SET")) and bool(ctx.params.get('ENV_BUILDER'))
+        return (ctx.has_sd_input() or bool(ctx.params.get("GENERATE_EFFECTIVE_SET"))) and bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_regdefv2_adapter(ctx)
