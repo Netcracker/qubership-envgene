@@ -1,7 +1,8 @@
 # EnvGene Linter
 
 EnvGene Linter checks local **EnvGene instance and template repositories**.
-Instance checks cover placement, naming, secret handling, and reference integrity. TPL-1 also checks template repositories. It saves an HTML report and prints its absolute path.
+Instance checks cover placement, naming, secret handling, reference integrity, and structured values.
+Template-only repositories are checked by TPL-1 only. The linter saves an HTML report and prints its absolute path.
 Use `--console` to also print findings in the terminal.
 
 See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes and migration instructions.
@@ -88,7 +89,8 @@ See [HTML reports](#html-reports) for details.
 ## Choosing the repository to check
 
 The optional argument identifies the **repository root**, which contains `environments/`, `templates/`, or both.
-A template-only repository does not need `environments/`. TPL-1 runs there, and instance rules show Not applicable.
+A template-only repository does not need `environments/`. TPL-1 runs there.
+Other checks are not yet supported in this mode and appear as `Not applicable` in reports.
 Without an argument, the linter checks the current directory. It does not search parent directories.
 Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
 
@@ -111,7 +113,8 @@ instance-repository/
                     └── service-deploy.yml
 ```
 
-Environments are discovered through `<cluster>/<environment>/Inventory/env_definition.yml`. Directory names identify clusters and environments. The root must contain `environments/`; individual entity directories are optional when not used.
+In instance repositories, environments are discovered through `<cluster>/<environment>/Inventory/env_definition.yml`.
+Directory names identify clusters and environments. Individual entity directories are optional when not used.
 
 Merely placing a file in `parameters/` does not make it eligible for rule findings. For example, this fragment in `Inventory/env_definition.yml` connects a ParameterSet by filename stem:
 
@@ -130,11 +133,11 @@ Here `service-deploy` refers to a supported file such as `service-deploy.yml`. T
 envgene-linter check [OPTIONS] [REPO]
 ```
 
-| Argument or option | Meaning                                                       |
-|--------------------|---------------------------------------------------------------|
-| `REPO`             | Instance repository root. Defaults to the current directory.  |
-| `--console`        | Also print findings in the terminal. HTML is still generated. |
-| `--help`           | Show command help and exit.                                   |
+| Argument or option   | Meaning                                                         |
+|----------------------|-----------------------------------------------------------------|
+| `REPO`               | Repository root. Defaults to the current directory.             |
+| `--console`          | Also print findings in the terminal. HTML is still generated.   |
+| `--help`             | Show command help and exit.                                     |
 
 ```bash
 envgene-linter --help
@@ -145,9 +148,10 @@ All applicable enabled rules run on each check. There are currently no CLI optio
 
 ## Reading findings
 
-With `--console`, the terminal report groups findings by rule and prints all 23 rule headings.
-An applicable enabled rule without findings shows `No findings`. Disabled rules show `Disabled`.
-Instance-only rules show `Not applicable` when checking a template-only repository.
+With `--console`, the terminal report groups findings by enabled rule.
+An applicable enabled rule without findings shows `No findings`. Reports omit disabled rules.
+For template-only repositories, `Not applicable` marks checks not yet supported in this mode.
+It does not establish that the corresponding standard rules are irrelevant to template objects.
 
 Each finding contains one or more `path:line:column` locations, followed by its severity, a description and a suggested action. Line and column numbers start at 1. File-level checks use `1:1`, which does not mean that the first YAML key is invalid.
 
@@ -186,74 +190,75 @@ Reports from some rules can contain configuration values in finding messages. SE
 
 ## Implemented rules
 
-Each link opens the current processing algorithm. The descriptions below summarize current behavior; some historical catalog labels are broader than the implemented check.
+The table lists the 20 rules enabled by default. Each link opens the processing algorithm and its coverage limits.
 
-| Rule | Checks | Type / action |
-| --- | --- | --- |
-| [PLACE-1](docs/algorithms/place1.md) | Matching values across contributing environments or clusters that can move to a more general layer | Warning / Fix |
-| [PLACE-2](docs/algorithms/place2.md) | An environment or cluster repeats an inherited value | Warning / Fix |
-| [PLACE-3](docs/algorithms/place3.md) | A selected Cloud Passport is outside the cluster layer | Warning / Fix |
-| [PLACE-4](docs/algorithms/place4.md) | Cloud Passport contract keys occur in selected ParameterSets | Warning / Fix |
-| [PLACE-6](docs/algorithms/place6.md) | Connected pipeline and end-to-end ParameterSets bind to a target other than Cloud | Warning / Fix |
-| [PLACE-7](docs/algorithms/place7.md) | A connected ParameterSet reference is shared across deploy, end-to-end, or technical categories in an environment | Warning / Fix |
-| [PLACE-8](docs/algorithms/place8.md) | Connected or used ParameterSets, resource profiles or credentials are empty | Information / Review |
-| [PLACE-9](docs/algorithms/place9.md) | Used passport ambiguity, multiple passports per cluster role, and passport/companion placement | Warning / Fix |
-| [PLACE-10](docs/algorithms/place10.md) | Connected entities are outside their type's required directory | Warning / Fix |
-| [SEC-1](docs/algorithms/sec1.md) | Literal values in secret-named parameters of connected ParameterSets and supported Cloud/Namespace objects | Warning / Fix |
-| [SEC-3](docs/algorithms/sec3.md) | Credential references in runtime parameters and ParameterSets selected through technical bindings | Warning / Fix |
-| [SEC-4](docs/algorithms/sec4.md) | Named user/password pairs reference the same Credential ID | Information / Review |
-| [SEC-5](docs/algorithms/sec5.md) | Protection of connected secret candidates, supported references and selected Credential sources | Information / Review |
-| [INT-2](docs/algorithms/int2.md) | Every supported connected reference resolves to an object in its applicable context | Warning / Fix or Information / Review |
-| [INT-3](/modules/envgene-linter/docs/algorithms/int3.md) | A used reference name is defined at multiple environment, cluster, or repository scopes | Warning / Fix |
-| [INT-4](/modules/envgene-linter/docs/algorithms/int4.md) | No reference to a recognized authored entity was found in available local sources | Information / Review |
-| [NAME-2](docs/algorithms/name2.md) | A selected entity's filename stem differs from its `name` field | Warning / Fix |
-| [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) | A used default Cloud Passport or its selected companion has a noncanonical filename | Warning / Fix |
-| [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md) | Connected ParameterSet values contain JSON collections or YAML block collections encoded as strings | Warning / Review |
-| [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) | Jinja outside template files or supported descriptor fields, misplaced `.j2` files, or ambiguous template syntax | Warning / Fix or Information / Review |
+| Rule                                                           | Checks                                                                                                              | Severity / action                       |
+|----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| [PLACE-1](/modules/envgene-linter/docs/algorithms/place1.md)   | Matching values across contributing environments or clusters that can move to a more general layer                  | Warning / Fix                           |
+| [PLACE-2](/modules/envgene-linter/docs/algorithms/place2.md)   | An environment or cluster repeats an inherited value                                                                | Warning / Fix                           |
+| [PLACE-3](/modules/envgene-linter/docs/algorithms/place3.md)   | A selected Cloud Passport is outside the cluster layer                                                              | Warning / Fix                           |
+| [PLACE-4](/modules/envgene-linter/docs/algorithms/place4.md)   | Cloud Passport contract keys occur in selected ParameterSets                                                        | Warning / Fix                           |
+| [PLACE-6](/modules/envgene-linter/docs/algorithms/place6.md)   | Connected pipeline and end-to-end ParameterSets bind to a target other than Cloud                                   | Warning / Fix                           |
+| [PLACE-7](/modules/envgene-linter/docs/algorithms/place7.md)   | A connected ParameterSet reference is shared across deploy, end-to-end, or technical categories in an environment   | Warning / Fix                           |
+| [PLACE-8](/modules/envgene-linter/docs/algorithms/place8.md)   | Connected or used ParameterSets, resource profiles or credentials are empty                                         | Information / Review                    |
+| [PLACE-9](/modules/envgene-linter/docs/algorithms/place9.md)   | Used passport ambiguity, multiple passports per cluster role, and passport/companion placement                      | Warning / Fix                           |
+| [PLACE-10](/modules/envgene-linter/docs/algorithms/place10.md) | Connected entities are outside their type's required directory                                                      | Warning / Fix                           |
+| [SEC-1](/modules/envgene-linter/docs/algorithms/sec1.md)       | Literal values in secret-named parameters of connected ParameterSets and supported Cloud/Namespace objects          | Warning / Fix                           |
+| [SEC-3](/modules/envgene-linter/docs/algorithms/sec3.md)       | Credential references in runtime parameters and ParameterSets selected through technical bindings                   | Warning / Fix                           |
+| [SEC-4](/modules/envgene-linter/docs/algorithms/sec4.md)       | Named user/password pairs reference the same Credential ID                                                          | Information / Review                    |
+| [SEC-5](/modules/envgene-linter/docs/algorithms/sec5.md)       | Protection of connected secret candidates, supported references and selected Credential sources                     | Information / Review                    |
+| [INT-2](/modules/envgene-linter/docs/algorithms/int2.md)       | Every supported connected reference resolves to an object in its applicable context                                 | Warning / Fix or Information / Review   |
+| [INT-3](/modules/envgene-linter/docs/algorithms/int3.md)       | A used reference name is defined at multiple environment, cluster, or repository scopes                             | Warning / Fix                           |
+| [INT-4](/modules/envgene-linter/docs/algorithms/int4.md)       | No reference to a recognized authored entity was found in available local sources                                   | Information / Review                    |
+| [NAME-2](/modules/envgene-linter/docs/algorithms/name2.md)     | A selected entity's filename stem differs from its `name` field                                                     | Warning / Fix                           |
+| [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md)     | A used default Cloud Passport or its selected companion has a noncanonical filename                                 | Warning / Fix                           |
+| [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md)       | Connected ParameterSet values contain JSON collections or YAML block collections encoded as strings                 | Warning / Review                        |
+| [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md)       | Jinja outside template files or supported descriptor fields, misplaced `.j2` files, or ambiguous template syntax    | Warning / Fix or Information / Review   |
 
-PLACE-5 and other rules not listed above are not implemented.
+Three additional rules are implemented but disabled by default:
+[NAME-1](/modules/envgene-linter/docs/algorithms/name1.md),
+[NAME-3](/modules/envgene-linter/docs/algorithms/name3.md), and
+[NAME-4](/modules/envgene-linter/docs/algorithms/name4.md).
+See the [coverage matrix](/modules/envgene-linter/docs/rule-applicability-matrix.md) for the remaining standard rules.
 
 ### PLACE-10 directory mapping
 
-PLACE-10 covers all five entity types below, not only ParameterSets:
-
-| Entity | Required directory |
-| --- | --- |
-| ParameterSet | `parameters/` |
-| Resource Profile Override | `resource_profiles/` |
-| Shared Template Variables | `shared-template-variables/` |
-| Shared credentials | `credentials/` |
-| Cloud Passport | `cloud-passport/` |
-
-The directory is checked within the file's actual repository, cluster or environment scope. Nested directories inside the required directory are allowed.
-
-The local generator's Shared Template Variable lookup supports legacy `configuration/` and `configurations/` locations. A connected `environments/configuration/variables/ci-global-vars.yml` can therefore be loaded by the generator and still trigger PLACE-10: the standard requires `shared-template-variables/`. This finding describes a directory-standard mismatch, not a failed generation. Consult the [lookup algorithm](docs/algorithms/place10.md) before moving a file; support for a destination depends on the lookup scope.
+PLACE-10 checks connected ParameterSets, Resource Profile Overrides, Shared Template Variables, shared credentials,
+and Cloud Passports against their required directories. A legacy path can work in the generator and still produce
+an advisory placement finding. Check the supported lookup scope before moving a file.
+See the [PLACE-10 algorithm](/modules/envgene-linter/docs/algorithms/place10.md) for the directory mapping.
 
 ### SEC-1 detection limits
 
-SEC-1 uses explicit secret-name suffixes (such as `password`, `token` and `api_key`), not arbitrary secret detection. It skips empty values and unevaluated expressions. Cloud files belong to discovered environments; Namespace files require resolved ParameterSet or profile bindings. Credential documents themselves are outside this check. SEC-1 messages omit values; other rules may still include configuration values. See the [SEC-1 algorithm](docs/algorithms/sec1.md) for exact matching and limitations.
+SEC-1 uses secret-name suffixes such as `password`, `token`, and `api_key` in connected parameter bags.
+It skips empty values and unevaluated expressions. This heuristic does not identify every secret or inspect Credential
+documents. See the [SEC-1 algorithm](/modules/envgene-linter/docs/algorithms/sec1.md) for matching and source selection.
 
 ### SEC-3 runtime parameters
 
-SEC-3 reports direct `${creds.get(...)}` calls and structured `$type: credRef` references in `technicalConfigurationParameters`, including nested values. It also checks ParameterSets selected through `envSpecificTechnicalParamsets`. Parameter names do not affect this check. Deploy and end-to-end inputs are excluded. Move the secret to deployment parameters while retaining its Credential reference; see the [SEC-3 algorithm](docs/algorithms/sec3.md).
+SEC-3 reports supported Credential references in runtime parameter bags and ParameterSets selected through technical
+bindings. It checks references regardless of the parameter name. Literal secret detection belongs to SEC-1.
+See the [SEC-3 algorithm](/modules/envgene-linter/docs/algorithms/sec3.md) for supported reference forms.
 
 ### SEC-4 Credential pair references
 
-SEC-4 identifies sibling user/password parameters with a matching prefix and compares the Credential IDs in their references. Supported user endings are `LOGIN`, `USERNAME`, `USER`, `USER_NAME`; password endings are `PASSWORD`, `PASSWD`, `PASS`, `PWD`. Names support case normalization, camelCase, underscores and dots. Different IDs produce Information / Review at both parameters; equal IDs pass without inspecting Credential definitions.
-
-Pairs remain within one mapping. A lone parameter, literal counterpart or unparsable reference does not produce an ID mismatch. `USER` / `TOKEN`, `CLIENT_ID` / `CLIENT_SECRET` and `accessKey` / `accessSecret` are not included. Messages omit Credential IDs and secret values. See [SEC-4](docs/algorithms/sec4.md).
+SEC-4 reviews recognized sibling user/password parameters that reference different Credential IDs.
+Matching IDs do not establish that the Credential exists or has the required shape.
+See the [SEC-4 algorithm](/modules/envgene-linter/docs/algorithms/sec4.md) for recognized parameter pairs.
 
 ### SEC-5 secret-protection review
 
-SEC-5 inspects connected secret candidates and selected Credential inputs. It accepts structurally recognizable SOPS values with usable document metadata, supported external Credentials, and EnvGene's automatic CI token fallback. Literal values, unsupported encryption, and sources that cannot be established statically produce Information / Review. A bare `${NAME}` expression is not automatically treated as a protected CI/CD reference. Recognized Credential references (including `credentialsId`) are not secret values. An unavailable catalog or Credential entry does not produce a finding at the reference; available target content is still inspected.
-
-SEC-5 has a larger, separate source set than older rules: generated environment Credentials, the selected Cloud Passport companion, the bound deployer entry and companion, system integration/root-credentials references, active legacy registry consumers, selected Artifact Definitions with `registry.credentialsId`, and ordinary connected ParameterSet and Cloud/Namespace parameter maps. This expansion does not change the credential sets or findings of other rules. SEC-5 does not inspect Effective Set outputs, arbitrary CI workflows, inactive registries, unused deployers, unrelated companions or historical copies. It performs no decryption, environment lookup, network access or external-store validation. See [SEC-5](docs/algorithms/sec5.md).
+SEC-5 reviews protection of selected secret candidates and Credential sources. It recognizes supported SOPS structures,
+external Credentials, and the automatic CI token fallback. Unknown protection remains Information / Review.
+The check does not decrypt values, access secret stores, or establish repository-wide protection.
+See the [SEC-5 algorithm](/modules/envgene-linter/docs/algorithms/sec5.md) for source selection and accepted formats.
 
 ### INT-2 reference resolution
 
-INT-2 checks connected Credential, ParameterSet and Resource Profile references. A definitely missing or ambiguous target produces Warning / Fix; a dynamic reference, unreadable target or unavailable template context produces Information / Review. Credential calls with or without property access, embedded calls, structured `credRef` and known bare Credential-ID fields are supported. The rule checks Credential object existence only; it does not validate types, properties, secret completeness or protection, and it omits IDs and secret values from its findings.
-
-Generated environment Credentials are authoritative when present. Without that catalog, connected shared/passport inputs can establish that an ID exists, but an absent ID remains unknown because generation may provide it. ParameterSet layers merge deterministically rather than becoming ambiguous. Template-supplied ParameterSets and profiles remain unknown when their context is unavailable. Resource Profile overrides follow directory priority; multiple physical matches within the selected directory are ambiguous. INT-2 uses local inputs without fetching templates, rendering Jinja or decrypting values. See [INT-2](docs/algorithms/int2.md).
+INT-2 checks supported Credential, ParameterSet, and Resource Profile references in their selected context.
+Definitely missing or ambiguous targets produce Warning / Fix. Dynamic references and unavailable template context
+produce Information / Review. Credential checks establish object existence, not property or secret validity.
+See the [INT-2 algorithm](/modules/envgene-linter/docs/algorithms/int2.md) for source precedence and resolution limits.
 
 ### INT-4 candidates for review
 
@@ -276,7 +281,7 @@ See the [INT-3 algorithm](/modules/envgene-linter/docs/algorithms/int3.md) for l
 
 ## What is checked
 
-Except for INT-4, checks apply only to entities with supported evidence of use:
+Except for INT-4 and TPL-1, checks apply only to entities with supported evidence of use:
 
 - ParameterSets referenced through local deploy, end-to-end, or technical bindings.
 - Cloud Passports selected explicitly or by supported automatic lookup.
@@ -320,10 +325,8 @@ Actions to distribute your chosen configuration. This is a package setting, not 
 repository or a command-line override. Use `True`/`False`, not quoted strings or
 numbers, and keep all rule entries. Invalid entries produce exit code 2.
 
-The console shows `Disabled` for skipped rules; HTML lists them under
-`Disabled rules`. Disabled rules are not reported as successfully checked with
-`No findings`. If every rule is disabled, repository analysis is skipped and the
-HTML report says `No rules enabled`.
+Console and HTML reports omit disabled rules and their findings.
+If every rule is disabled, repository analysis is skipped and both reports say `No rules enabled`.
 
 Regression tests explicitly enable rules to preserve coverage regardless of the
 release configuration. Separate tests verify switches, validation and reports.
@@ -333,10 +336,10 @@ publishing another build on PyPI, use a new distribution version.
 
 ## Exit codes and CI
 
-| Exit code | Meaning |
-| --- | --- |
-| `0` | The command completed, including runs with Warning or Information findings |
-| `2` | Invalid CLI arguments or rule flags, no `environments/` directory when checks are enabled, or failure to write the HTML report |
+| Exit code | Meaning                                                                                                                                    |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `0`       | The command completed, including runs with Warning or Information findings                                                                 |
+| `2`       | Invalid CLI arguments or rule flags, neither `environments/` nor `templates/` when checks are enabled, or failure to write the HTML report |
 
 Skip notes do not by themselves change the exit code. Failure to update `.gitignore` is reported on stderr after the HTML file is written and does not make the command fail. Unexpected runtime failures are outside these handled cases.
 
@@ -353,17 +356,17 @@ The report path and diagnostics go to `lint-diagnostics.txt`. Output files are o
 
 ## Troubleshooting
 
-| Symptom | What to check |
-| --- | --- |
-| `envgene-linter: command not found` | Check that your Python scripts directory is on `PATH`. If you used a virtual environment, activate it. |
-| Installation rejects the Python version | Create the virtual environment using Python 3.12 or newer. |
-| `not an EnvGene repository: no environments/ or templates/ directory` | Pass the repository root containing one of these directories. |
-| A file produces no finding | Confirm that it is connected through a supported binding or known usage; inspect stderr for skip notes and check the rule's algorithm. |
-| An environment is missing from results | Check for `<cluster>/<environment>/Inventory/env_definition.yml` and inspect parsing diagnostics. |
-| An existing HTML report did not change | Check the printed absolute path and stderr for errors. Each successful check overwrites the report. |
-| `cannot write HTML report` | Check write permissions for the checked repository and its existing report file. The command exits with code 2. |
-| `cannot update .gitignore` | The report was written, but the ignore file could not be updated. Check permissions or encoding and add the report entry manually if appropriate. |
-| A directory named `ok` still reports findings | Bundled fixtures are specific to one rule; all enabled rules run during a CLI check. |
+| Symptom                                                               | What to check                                                                                                                                                  |
+|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `envgene-linter: command not found`                                   | Check that your Python scripts directory is on `PATH`. If you used a virtual environment, activate it.                                                         |
+| Installation rejects the Python version                               | Create the virtual environment using Python 3.12 or newer.                                                                                                     |
+| `not an EnvGene repository: no environments/ or templates/ directory` | Pass the repository root containing one of these directories.                                                                                                  |
+| A file produces no finding                                            | Check the rule's documented scope and stderr for skip notes. Most instance rules require evidence of use. TPL-1 scans its supported directories independently. |
+| An environment is missing from results                                | Check for `<cluster>/<environment>/Inventory/env_definition.yml` and inspect parsing diagnostics.                                                              |
+| An existing HTML report did not change                                | Check the printed absolute path and stderr for errors. Each successful check overwrites the report.                                                            |
+| `cannot write HTML report`                                            | Check write permissions for the checked repository and its existing report file. The command exits with code 2.                                                |
+| `cannot update .gitignore`                                            | The report was written, but the ignore file could not be updated. Check permissions or encoding and add the report entry manually if appropriate.              |
+| A directory named `ok` still reports findings                         | Bundled fixtures are specific to one rule; all enabled rules run during a CLI check.                                                                           |
 
 ## Development and further documentation
 

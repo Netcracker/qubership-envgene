@@ -1,19 +1,19 @@
 # EnvGene Linter changelog
 
-- [Unreleased](#unreleased)
+- [0.0.5](#005)
 - [0.0.4](#004)
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
 
-## Unreleased
+## 0.0.5
 
+- Hide disabled rules in HTML and console reports. If every rule is disabled, show `No rules enabled`.
 - Support template repositories containing `templates/` without requiring `environments/`.
-  Instance-only rules show Not applicable in console and HTML reports.
+  TPL-1 runs on these repositories. Other checks are not yet supported for template-only repositories.
 - Add TPL-1, enabled by default, to check YAML and `.j2` placement under `templates/`, `environments/`, and `configuration/`.
   Allow generator-rendered descriptor fields and EnvGene macros. Report misplaced templates and EnvGene Jinja as Fix,
   and ambiguous Helm or application placeholders as Review. No automatic conversion or renaming is performed.
-
 - Add VAL-4, enabled by default, to review JSON collections and YAML block collections encoded as strings
   in connected ParameterSets, including application parameters and nested values.
   Findings recommend native YAML after checking the consumer contract. No automatic conversion is performed.

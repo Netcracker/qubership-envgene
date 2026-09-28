@@ -7,7 +7,7 @@
 - [Troubleshooting](#troubleshooting)
 
 EnvGene Linter checks EnvGene instance and template repositories and saves findings in an HTML report.
-TPL-1 checks template repositories. Other implemented rules apply to instance repositories.
+Template-only repositories are checked by TPL-1 only. Other implemented checks require instance inputs.
 
 ## Install
 
@@ -66,7 +66,7 @@ To check a repository without changing directories:
 envgene-linter check /path/to/instance-repository
 ```
 
-Both commands also create the HTML report. The old `--html` flag is no longer needed or accepted.
+Both commands also create the HTML report.
 
 ## Troubleshooting
 
@@ -75,7 +75,8 @@ Both commands also create the HTML report. The old `--html` flag is no longer ne
 - If the terminal cannot find `envgene-linter`, check that your Python scripts directory is on `PATH`.
   If you installed in a virtual environment, activate that environment first.
 - If neither `environments/` nor `templates/` is found, run the command from the repository root.
-- Instance rules show Not applicable for template-only repositories. TPL-1 still runs unless disabled.
+- For template-only repositories, `Not applicable` marks checks that are not yet supported in this mode.
+  TPL-1 still runs unless disabled.
 
 This is an alpha release. Most checks cover supported references and generator inputs.
 TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`.
