@@ -1,4 +1,5 @@
 import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import getenv
 from collections.abc import Iterable
 from contextlib import contextmanager
@@ -373,44 +374,55 @@ class EnvGenerator:
             return ""
         return readYaml(rendered).get("name", "")
 
+    def _process_single_namespace(self, ns: dict, context: dict, bgd) -> tuple:
+        ns_template_path = Template(ns["template_path"]).render(context)
+        map_key = self.get_ns_base_postfix(ns, ns_template_path)
+        folder_postfix = self.generate_ns_postfix(ns, ns_template_path)
+
+        ns_name = self._get_ns_name_for_bgd(ns, ns_template_path)
+        role = get_namespace_role(ns_name, bgd) if ns_name else NamespaceRole.COMMON
+
+        role_templates_dir = self._get_template_dir_for_role(role)
+        role_env_template = self._get_env_template_for_role(role)
+
+        effective_ns = ns
+        effective_template_path = ns_template_path
+
+        if role != NamespaceRole.COMMON and role_env_template is not self.ctx.current_env_template:
+            role_ns_config = self._find_ns_config_by_name(role_env_template, ns_name, role_templates_dir)
+            if role_ns_config:
+                effective_ns = role_ns_config
+                effective_template_path = self._resolve_template_path(role_ns_config["template_path"],
+                                                                      role_templates_dir)
+                logger.info(f"Using {role.name} template for namespace {ns_name}")
+
+        logger.info(f"Generate Namespace yaml for {folder_postfix}")
+        ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / folder_postfix
+        rendered_ns = self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
+        namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
+        self.apply_template_override(effective_ns.get("template_override"), ns_dir / "namespace.yml",
+                                     get_schema_dir() / "namespace.schema.json", folder_postfix)
+
+        return map_key, role, namespace_name
+
     def generate_namespace_files_and_map(self) -> dict:
         context = self.ctx.as_dict()
         bgd = get_bgd_object(Path(self.ctx.current_env_dir))
+        namespaces = self.ctx.current_env_template["namespaces"]
         namespace_by_deploy_postfix = {}
-        for ns in self.ctx.current_env_template["namespaces"]:
-            ns_template_path = Template(ns["template_path"]).render(context)
-            map_key = self.get_ns_base_postfix(ns, ns_template_path)
-            folder_postfix = self.generate_ns_postfix(ns, ns_template_path)
 
-            ns_name = self._get_ns_name_for_bgd(ns, ns_template_path)
-            role = get_namespace_role(ns_name, bgd) if ns_name else NamespaceRole.COMMON
-
-            role_templates_dir = self._get_template_dir_for_role(role)
-            role_env_template = self._get_env_template_for_role(role)
-
-            effective_ns = ns
-            effective_template_path = ns_template_path
-
-            if role != NamespaceRole.COMMON and role_env_template is not self.ctx.current_env_template:
-                role_ns_config = self._find_ns_config_by_name(role_env_template, ns_name, role_templates_dir)
-                if role_ns_config:
-                    effective_ns = role_ns_config
-                    effective_template_path = self._resolve_template_path(role_ns_config["template_path"],
-                                                                          role_templates_dir)
-                    logger.info(f"Using {role.name} template for namespace {ns_name}")
-
-            logger.info(f"Generate Namespace yaml for {folder_postfix}")
-            ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / folder_postfix
-            rendered_ns = self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
-            namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
-            self.apply_template_override(effective_ns.get("template_override"), ns_dir / "namespace.yml",
-                                         get_schema_dir() / "namespace.schema.json", folder_postfix)
-
-            if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
-                sides = namespace_by_deploy_postfix.setdefault(map_key, {})
-                sides[role.name.lower()] = namespace_name
-            else:
-                namespace_by_deploy_postfix[map_key] = namespace_name
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(self._process_single_namespace, ns, context, bgd): ns
+                for ns in namespaces
+            }
+            for future in as_completed(futures):
+                map_key, role, namespace_name = future.result()
+                if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
+                    sides = namespace_by_deploy_postfix.setdefault(map_key, {})
+                    sides[role.name.lower()] = namespace_name
+                else:
+                    namespace_by_deploy_postfix[map_key] = namespace_name
 
         self.ctx.namespace_by_deploy_postfix = namespace_by_deploy_postfix
         return namespace_by_deploy_postfix
