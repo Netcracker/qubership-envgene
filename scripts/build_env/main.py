@@ -2,7 +2,8 @@ from envgenehelper import *
 from envgene_shared import *
 from envgenehelper.deployer import *
 
-from build_env.build_env import build_env, collect_paramset_sources, process_additional_template_parameters
+from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
+    process_additional_template_parameters
 from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
@@ -25,10 +26,14 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     if reuse_render_workspace and check_dir_exists(render_parameters_dir):
-        logger.info(f"Using render workspace prepared by previous steps: {render_parameters_dir}")
+        logger.info(f"Using common and instance paramsets copied by regdefv2_adapter to {render_parameters_dir}, "
+                    f"adding origin/peer template paramsets")
+        bg_templates_dirs = {role: path for role, path in templates_dirs.items() if role != NamespaceRole.COMMON}
+        copy_template_paramsets(bg_templates_dirs, render_parameters_dir)
     else:
         delete_dir(render_parameters_dir)
-        collect_paramset_sources(source_env_dir, templates_dirs, render_parameters_dir)
+        copy_template_paramsets(templates_dirs, render_parameters_dir)
+        copy_instance_paramsets(source_env_dir, render_parameters_dir)
     # copying all template resource profiles
     copy_path(f'{templates_dirs[NamespaceRole.COMMON]}/resource_profiles', render_profiles_dir)
     return render_env_dir

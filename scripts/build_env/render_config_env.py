@@ -654,7 +654,8 @@ class EnvGenerator:
 
     def render_cloud_e2e_parameters(self, env_name: str, extra_env: dict, env_dir: str,
                                     render_parameters_dir: Path) -> dict:
-        from build_env.build_env import collect_paramset_sources, create_paramset_map, initParametersStructure, processTemplate
+        from build_env.build_env import copy_instance_paramsets, copy_template_paramsets, create_paramset_map, \
+            initParametersStructure, processTemplate
 
         logger.info(
             f"Starting rendering cloud e2e parameters for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
@@ -673,7 +674,8 @@ class EnvGenerator:
             if render_parameters_dir.exists():
                 shutil.rmtree(render_parameters_dir)
 
-            collect_paramset_sources(env_dir, self.ctx.templates_dirs, str(render_parameters_dir))
+            copy_template_paramsets({NamespaceRole.COMMON: self.ctx.templates_dir}, str(render_parameters_dir))
+            copy_instance_paramsets(env_dir, str(render_parameters_dir))
             self.ctx.render_parameters_dir = str(render_parameters_dir)
             self.generate_paramset_templates(self._cloud_e2e_paramset_names(openYaml(cloud_file)))
 

@@ -216,6 +216,16 @@ class TestRegdefV2Adapter:
         assert (parameters_dir / "pubreg.yaml.j2").exists()
 
     @pytest.mark.unit
+    def test_does_not_touch_bg_template_paramsets(self, tmp_path):
+        origin_parameters_dir = tmp_path / "tmp" / "origin" / "templates" / "parameters"
+        origin_parameters_dir.mkdir(parents=True)
+        (origin_parameters_dir / "pubreg.yaml.j2").write_text('name: "pubreg"\nparameters: {}\n')
+
+        run_regdefv2_adapter(_ctx())
+
+        assert not (render_workspace_dir(tmp_path) / "parameters" / "from_origin_template").exists()
+
+    @pytest.mark.unit
     @pytest.mark.parametrize("missing",["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
     def test_aws_secret_requires_all_params(self, tmp_path, missing):
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if f"{missing}:" not in line)
