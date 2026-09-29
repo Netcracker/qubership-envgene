@@ -7,6 +7,7 @@ import pytest
 import yaml
 
 from envgenehelper import openYaml, get_cred_config, extra_creds_scope
+from envgenehelper.business_helper import render_workspace_dir
 from envgenehelper.config_helper import get_regdef_v2_schema
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
@@ -191,7 +192,67 @@ class TestRegdefV2Adapter:
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"secret": "secret"}
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("missing", ["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
+    def test_renders_jinja_paramset_in_render_workspace(self, tmp_path):
+        parameters_dir = tmp_path / "tmp" / "templates" / "parameters"
+        (parameters_dir / "pubreg.yaml").unlink()
+        (parameters_dir / "pubreg.yaml.j2").write_text(textwrap.dedent("""\
+            name: "pubreg"
+            parameters:
+              MAVEN_PROVIDER: "gcp"
+              PUB_REG_METHOD: "service_account"
+              PUB_REG_SECRET: "secret"
+              PUB_REG_PROJECT: "{{ env }}-project"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
+            """))
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["authConfig"]["pub-reg-auth"]["gcpRegProject"] == "env-01-project"
+        workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
+        assert (workspace_dir / "pubreg.yml").exists()
+        assert not (workspace_dir / "pubreg.yaml.j2").exists()
+        assert (parameters_dir / "pubreg.yaml.j2").exists()
+
+    @pytest.mark.unit
+    def test_uses_env_specific_e2e_paramsets_and_ignores_deploy_ones(self, tmp_path):
+        env_dir = tmp_path / "environments" / "cluster-01" / "env-01"
+        (env_dir / "Inventory" / "env_definition.yml").write_text(yaml.safe_dump({
+            "inventory": {"environmentName": "env-01"},
+            "envTemplate": {
+                "name": "simple",
+                "envSpecificParamsets": {"cloud": ["cloud-deploy"]},
+                "envSpecificE2EParamsets": {"cloud": ["pubreg-override"]},
+            },
+        }))
+        (tmp_path / "tmp" / "templates" / "parameters" / "cloud-deploy.yml.j2").write_text(
+            'name: "cloud-deploy"\nparameters:\n  X: "{{ env }}"\n')
+        instance_parameters_dir = env_dir / "Inventory" / "parameters"
+        instance_parameters_dir.mkdir()
+        (instance_parameters_dir / "pubreg-override.yml").write_text(
+            'name: "pubreg-override"\nparameters:\n  PUB_REG_REGION: "eu-west-1"\n')
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["authConfig"]["pub-reg-auth"]["awsRegion"] == "eu-west-1"
+        workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
+        assert (workspace_dir / "cloud-deploy.yml.j2").exists()
+
+    @pytest.mark.unit
+    def test_does_not_touch_bg_template_paramsets(self, tmp_path):
+        origin_parameters_dir = tmp_path / "tmp" / "origin" / "templates" / "parameters"
+        origin_parameters_dir.mkdir(parents=True)
+        (origin_parameters_dir / "pubreg.yaml.j2").write_text('name: "pubreg"\nparameters: {}\n')
+
+        run_regdefv2_adapter(_ctx())
+
+        assert not (render_workspace_dir(tmp_path) / "parameters" / "from_origin_template").exists()
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("missing",["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
     def test_aws_secret_requires_all_params(self, tmp_path, missing):
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if f"{missing}:" not in line)
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)

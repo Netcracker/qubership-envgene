@@ -59,13 +59,15 @@ def create_paramset_map(dir: str, role: NamespaceRole,
     return result
 
 
-def collect_paramset_sources(env_dir: str, templates_dirs: dict, render_parameters_dir: str) -> None:
+def copy_template_paramsets(templates_dirs: dict, render_parameters_dir: str) -> None:
     for template_type, template_path in templates_dirs.items():
         if not (template_path and check_dir_exists(f'{template_path}/parameters')):
             continue
         param_dir_name = 'from_template' if template_type == NamespaceRole.COMMON else f'from_{template_type}_template'
         copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
 
+
+def copy_instance_paramsets(env_dir: str, render_parameters_dir: str) -> None:
     cluster_path = getDirName(str(env_dir))
     instances_dir = getDirName(cluster_path)
     check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')

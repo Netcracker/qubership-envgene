@@ -435,6 +435,10 @@ def pubreg_transient_dir(work_dir) -> Path:
     return Path(work_dir) / "tmp" / "envgene-regdefv2-adapter"
 
 
+def render_workspace_dir(work_dir) -> Path:
+    return Path(work_dir) / "tmp" / "render-workspace"
+
+
 def get_app_artifacts_dir() -> Path:
     project_dir = getenv_with_error('CI_PROJECT_DIR')
     return Path(project_dir) / "tmp" / "app-artifacts"
