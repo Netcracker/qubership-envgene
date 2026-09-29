@@ -648,14 +648,14 @@ class EnvGenerator:
             self.generate_bgd_file()
             return self.generate_namespace_files_and_map()
 
-    def _cloud_e2e_paramset_names(self, cloud: dict) -> set[str]:
+    def _cloud_e2e_paramset_names(self, cloud: dict) -> list[str]:
         env_specific = self.ctx.env_definition.get("envTemplate", {}).get("envSpecificE2EParamsets") or {}
-        return set(cloud.get("e2eParameterSets") or []) | set(env_specific.get("cloud") or [])
+        return (cloud.get("e2eParameterSets") or []) + (env_specific.get("cloud") or [])
 
     def render_cloud_e2e_parameters(self, env_name: str, extra_env: dict, env_dir: str,
                                     render_parameters_dir: Path) -> dict:
-        from build_env.build_env import copy_instance_paramsets, copy_template_paramsets, create_paramset_map, \
-            initParametersStructure, processTemplate
+        from build_env.build_env import convertParameterSetsToParameters, copy_instance_paramsets, \
+            copy_template_paramsets, create_paramset_map
 
         logger.info(
             f"Starting rendering cloud e2e parameters for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
@@ -677,24 +677,14 @@ class EnvGenerator:
             copy_template_paramsets({NamespaceRole.COMMON: self.ctx.templates_dir}, str(render_parameters_dir))
             copy_instance_paramsets(env_dir, str(render_parameters_dir))
             self.ctx.render_parameters_dir = str(render_parameters_dir)
-            self.generate_paramset_templates(self._cloud_e2e_paramset_names(openYaml(cloud_file)))
+            cloud = openYaml(cloud_file)
+            e2e_paramset_names = self._cloud_e2e_paramset_names(cloud)
+            self.generate_paramset_templates(e2e_paramset_names)
 
         paramset_map = create_paramset_map(str(render_parameters_dir), NamespaceRole.COMMON, False, False)
-
-        env_specific_map = {}
-        initParametersStructure(env_specific_map, "cloud")
-        processTemplate(
-            str(cloud_file),
-            "cloud",
-            env_dir,
-            str(get_schema_dir() / "cloud.schema.json"),
-            paramset_map,
-            env_specific_map["cloud"],
-            resource_profiles_map={},
-            process_env_specific=True,
-        )
-
-        return openYaml(cloud_file).get("e2eParameters", {}) or {}
+        cloud_e2e = {"e2eParameterSets": e2e_paramset_names, "e2eParameters": cloud["e2eParameters"]}
+        return convertParameterSetsToParameters(str(cloud_file), cloud_e2e, "e2eParameterSets", "e2eParameters",
+                                                paramset_map, {}, env_instances_dir=env_dir)
 
 
     def _resolve_composite_member(self, member: dict, bgd: dict | None = None) -> dict:

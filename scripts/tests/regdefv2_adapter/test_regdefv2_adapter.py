@@ -216,6 +216,32 @@ class TestRegdefV2Adapter:
         assert (parameters_dir / "pubreg.yaml.j2").exists()
 
     @pytest.mark.unit
+    def test_uses_env_specific_e2e_paramsets_and_ignores_deploy_ones(self, tmp_path):
+        env_dir = tmp_path / "environments" / "cluster-01" / "env-01"
+        (env_dir / "Inventory" / "env_definition.yml").write_text(yaml.safe_dump({
+            "inventory": {"environmentName": "env-01"},
+            "envTemplate": {
+                "name": "simple",
+                "envSpecificParamsets": {"cloud": ["cloud-deploy"]},
+                "envSpecificE2EParamsets": {"cloud": ["pubreg-override"]},
+            },
+        }))
+        (tmp_path / "tmp" / "templates" / "parameters" / "cloud-deploy.yml.j2").write_text(
+            'name: "cloud-deploy"\nparameters:\n  X: "{{ env }}"\n')
+        instance_parameters_dir = env_dir / "Inventory" / "parameters"
+        instance_parameters_dir.mkdir()
+        (instance_parameters_dir / "pubreg-override.yml").write_text(
+            'name: "pubreg-override"\nparameters:\n  PUB_REG_REGION: "eu-west-1"\n')
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["authConfig"]["pub-reg-auth"]["awsRegion"] == "eu-west-1"
+        workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
+        assert (workspace_dir / "cloud-deploy.yml.j2").exists()
+
+    @pytest.mark.unit
     def test_does_not_touch_bg_template_paramsets(self, tmp_path):
         origin_parameters_dir = tmp_path / "tmp" / "origin" / "templates" / "parameters"
         origin_parameters_dir.mkdir(parents=True)
