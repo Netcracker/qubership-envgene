@@ -4,13 +4,13 @@
 - [Catalog](#catalog)
 - [Language versions](#language-versions)
 
-This directory contains 27 development specifications in English: 23 rule specifications and four shared designs.
+This directory contains 29 development specifications in English: 25 rule specifications and four shared designs.
 Each rule's `*-design.md` combines its requirements specification and implementation design.
 The catalog links each rule to a separate algorithm reference. Coverage includes rules disabled by default.
 
 ## Reading order
 
-1. Start with the [common connected-only scope](2026-09-11-connected-only-design.md). It applies to all rules, including NAME-3, and supersedes earlier file-selection requirements.
+1. Start with the [common connected-only scope](2026-09-11-connected-only-design.md). It applies to connected instance checks, including NAME-3. INT-4 and template rules define their own scope.
 2. Read the relevant rule specification. A notice at the start of each historical document identifies replaced decisions. Its remaining text preserves that development stage.
 3. For the current processing flow, use the [algorithm documentation](../../algorithms/connections.md) and rule links below.
 4. Read the same-day HTML specs in order: initial design → redesign → usability. Each later stage replaces only the requirements it explicitly changes.
@@ -48,6 +48,8 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [NAME-8](/modules/envgene-linter/docs/superpowers/specs/2026-09-25-name8-design.md) | 2026-09-25 | [Algorithm](/modules/envgene-linter/docs/algorithms/name8.md) |
 | [VAL-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-28-val4-design.md) | 2026-09-28 | [Algorithm](/modules/envgene-linter/docs/algorithms/val4.md) |
 | [TPL-1](/modules/envgene-linter/docs/superpowers/specs/2026-09-28-tpl1-design.md) | 2026-09-28 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl1.md) |
+| [TPL-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl4-design.md) | 2026-09-29 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl4.md) |
+| [TPL-6](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl6-design.md) | 2026-09-29 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl6.md) |
 
 ## Language versions
 

@@ -15,7 +15,7 @@ exclude = [
 [project]
 name = "qubership-envgene-linter"
 version = "0.0.5"
-description = "Qubership EnvGene CLI for instance configuration checks and Jinja placement checks in instance and template repositories."
+description = "Qubership EnvGene CLI for instance configuration and template checks in instance and template repositories."
 dynamic = ["readme"]
 requires-python = "~=3.12"
 authors = [
@@ -45,6 +45,7 @@ classifiers = [
 ]
 dependencies = [
   "click==8.1.7",
+  "Jinja2==3.1.6",
   "ruamel.yaml==0.18.17",
 ]
 

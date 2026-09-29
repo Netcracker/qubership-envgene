@@ -7,7 +7,7 @@
 - [Troubleshooting](#troubleshooting)
 
 EnvGene Linter checks EnvGene instance and template repositories and saves findings in an HTML report.
-Template-only repositories are checked by TPL-1 only. Other implemented checks require instance inputs.
+Template-only repositories are checked by TPL-1, TPL-4, and TPL-6. Other implemented checks require instance inputs.
 
 ## Install
 
@@ -76,8 +76,12 @@ Both commands also create the HTML report.
   If you installed in a virtual environment, activate that environment first.
 - If neither `environments/` nor `templates/` is found, run the command from the repository root.
 - For template-only repositories, `Not applicable` marks checks that are not yet supported in this mode.
-  TPL-1 still runs unless disabled.
+  TPL-1, TPL-4, and TPL-6 still run unless disabled.
 
 This is an alpha release. Most checks cover supported references and generator inputs.
 TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.
+
+TPL-4 reviews references without recognized presence protection. It does not prove that generation fails.
+TPL-6 checks template logic and allows recognizable Helm passthrough in raw blocks.
+Both rules inspect `.j2` files under `templates/` and supported descriptor fields without rendering templates.

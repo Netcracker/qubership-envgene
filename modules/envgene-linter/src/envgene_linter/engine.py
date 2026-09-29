@@ -6,6 +6,7 @@ from pathlib import Path
 from . import rule_config
 from .connections import compute_connections
 from .discovery import build_index
+from .jinja_analysis import analyze
 from .effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
 from .model import Finding
 from .passport import build_catalogs
@@ -32,6 +33,8 @@ from .rules.name4 import check as check_name4
 from .rules.name8 import check as check_name8
 from .rules.val4 import check as check_val4
 from .rules.tpl1 import check as check_tpl1
+from .rules.tpl4 import check as check_tpl4
+from .rules.tpl6 import check as check_tpl6
 
 
 @dataclass
@@ -47,9 +50,16 @@ def run_check(root: Path) -> CheckResult:
     if len(disabled) == len(rule_config.RULES):
         return CheckResult(findings=[], skipped=[], disabled_rules=disabled)
     index = build_index(root)
+    template_rules = tuple(rule for rule in ('TPL-4', 'TPL-6') if rule not in disabled)
+    sources = analyze(index, template_rules)
+    template_checks = [('TPL-1', check_tpl1, (index,)),
+                       ('TPL-4', check_tpl4, (index, sources)),
+                       ('TPL-6', check_tpl6, (index, sources))]
     if not (index.root / "environments").is_dir():
-        findings = check_tpl1(index) if "TPL-1" not in disabled else []
-        inactive = tuple(rule for rule in rule_config.RULES if rule != "TPL-1" and rule not in disabled)
+        findings = [finding for rule, check, args in template_checks if rule not in disabled
+                    for finding in check(*args)]
+        inactive = tuple(rule for rule in rule_config.RULES
+                         if rule not in ('TPL-1', 'TPL-4', 'TPL-6') and rule not in disabled)
         return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
                            not_applicable_rules=inactive)
     connections = compute_connections(index)
@@ -80,7 +90,7 @@ def run_check(root: Path) -> CheckResult:
         ("NAME-4", check_name4, (index, connections)),
         ("NAME-8", check_name8, (index, connections)),
         ("VAL-4", check_val4, (index, connections)),
-        ("TPL-1", check_tpl1, (index, connections)),
+        *template_checks,
     ]
     findings = []
     for rule, check, args in checks:

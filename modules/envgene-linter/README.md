@@ -2,7 +2,7 @@
 
 EnvGene Linter checks local **EnvGene instance and template repositories**.
 Instance checks cover placement, naming, secret handling, reference integrity, and structured values.
-Template-only repositories are checked by TPL-1 only. The linter saves an HTML report and prints its absolute path.
+Template-only repositories are checked by TPL-1, TPL-4, and TPL-6. The linter saves an HTML report and prints its absolute path.
 Use `--console` to also print findings in the terminal.
 
 See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes and migration instructions.
@@ -10,6 +10,7 @@ See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes an
 Most instance rules check files selected by supported local references or known generator usage.
 INT-4 also examines recognized unconnected authored entities for review.
 TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`, regardless of bindings.
+TPL-4 reviews missing presence protection. TPL-6 checks template logic and allows recognizable Helm raw blocks.
 The linter does not generate environments, render Jinja templates, or automatically fix configuration files.
 Checks run locally without network calls.
 
@@ -89,7 +90,7 @@ See [HTML reports](#html-reports) for details.
 ## Choosing the repository to check
 
 The optional argument identifies the **repository root**, which contains `environments/`, `templates/`, or both.
-A template-only repository does not need `environments/`. TPL-1 runs there.
+A template-only repository does not need `environments/`. TPL-1, TPL-4, and TPL-6 run there.
 Other checks are not yet supported in this mode and appear as `Not applicable` in reports.
 Without an argument, the linter checks the current directory. It does not search parent directories.
 Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
@@ -190,7 +191,7 @@ Reports from some rules can contain configuration values in finding messages. SE
 
 ## Implemented rules
 
-The table lists the 20 rules enabled by default. Each link opens the processing algorithm and its coverage limits.
+The table lists the 22 rules enabled by default. Each link opens the processing algorithm and its coverage limits.
 
 | Rule                                                           | Checks                                                                                                              | Severity / action                       |
 |----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
@@ -214,6 +215,8 @@ The table lists the 20 rules enabled by default. Each link opens the processing 
 | [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md)     | A used default Cloud Passport or its selected companion has a noncanonical filename                                 | Warning / Fix                           |
 | [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md)       | Connected ParameterSet values contain JSON collections or YAML block collections encoded as strings                 | Warning / Review                        |
 | [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md)       | Jinja outside template files or supported descriptor fields, misplaced `.j2` files, or ambiguous template syntax    | Warning / Fix or Information / Review   |
+| [TPL-4](/modules/envgene-linter/docs/algorithms/tpl4.md)       | Potentially optional Jinja references without recognized presence protection                                        | Information / Review                    |
+| [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md)       | Prohibited or complex template logic, with an exception for recognizable Helm raw blocks                            | Warning / Fix or Information / Review   |
 
 Three additional rules are implemented but disabled by default:
 [NAME-1](/modules/envgene-linter/docs/algorithms/name1.md),
@@ -281,7 +284,7 @@ See the [INT-3 algorithm](/modules/envgene-linter/docs/algorithms/int3.md) for l
 
 ## What is checked
 
-Except for INT-4 and TPL-1, checks apply only to entities with supported evidence of use:
+Except for INT-4, TPL-1, TPL-4, and TPL-6, checks apply only to entities with supported evidence of use:
 
 - ParameterSets referenced through local deploy, end-to-end, or technical bindings.
 - Cloud Passports selected explicitly or by supported automatic lookup.
@@ -290,10 +293,12 @@ Except for INT-4 and TPL-1, checks apply only to entities with supported evidenc
 - Artifact Definitions selected through supported artifact selectors.
 - Security sources used by SEC-5 and applicable INT-2 references: generated environment Credentials; selected passport and deployer companions; bound system integration, root-credentials, active legacy registry and selected artifact-registry Credential references.
 
-Except for INT-4 and TPL-1, unreferenced names do not produce findings.
+Except for INT-4, TPL-1, TPL-4, and TPL-6, unreferenced names do not produce findings.
 TPL-1 independently checks all YAML and `.j2` files under `templates/`, `environments/`, and `configuration/`.
 It allows generator-rendered descriptor fields and marks ambiguous Helm or application placeholders for Review.
 See [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) for the field exceptions and file scope.
+TPL-4 and TPL-6 inspect `.j2` files under `templates/` and generator-rendered descriptor fields without bindings.
+TPL-4 reviews source protection without proving that an input is absent. TPL-6 does not impose a nesting limit.
 Discovery can still encounter unused files and emit skip notes.
 INT-3 includes definitions hidden by a used reference's lookup, without adding them to other rules' inputs.
 INT-4 catalogs recognized unconnected authored entities separately to review their references.
@@ -304,7 +309,7 @@ Current limitations:
 - Jinja is not rendered. Dynamic or unavailable external/template references are not inferred as connections.
 - INT-2 reports definitely missing or ambiguous supported references; dynamic or unavailable template context receives Review. Other unresolved references do not gain a general missing-file check.
 - Most content checks skip unreadable or unsupported documents. TPL-1 also scans malformed YAML as text. Applicable path or naming checks can still report on a selected file without parsing its contents.
-- Outside TPL-1, Application and Registry Definitions are not checked merely because their directories exist. SEC-5 and INT-2 follow only their established active legacy registry and selected artifact-registry consumers.
+- Outside template source checks, Application and Registry Definitions are not checked merely because their directories exist. SEC-5 and INT-2 follow only their established active legacy registry and selected artifact-registry consumers.
 - The linter implements the rules listed above, not complete schema validation or a full EnvGene generation run.
 
 See [Connected entities](docs/algorithms/connections.md) and [Effective Set](docs/algorithms/effective-set.md) for selection, precedence and merge details.

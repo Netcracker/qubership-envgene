@@ -18,9 +18,9 @@ Applicability follows the object's role and available context. A repository type
 apply. A template repository without `environments/` is valid.
 
 This development assessment uses the local [configuration standard](/docs/configuration-standard.md) and working tree
-on September 28, 2026. It includes the uncommitted VAL-4 and TPL-1 implementations, not just released version 0.0.4.
-The standard has 55 active rules. The linter registers 23 rules, including three disabled by default.
-The remaining 32 rules have no registered implementation. NAME-5 is retired and excluded from both counts.
+on September 29, 2026. It includes the TPL-4 and TPL-6 implementations beyond released version 0.0.5.
+The standard has 55 active rules. The linter registers 25 rules, including three disabled by default.
+The remaining 30 rules have no registered implementation. NAME-5 is retired and excluded from both counts.
 Registration does not imply complete coverage of a standard rule.
 
 The instance column concerns authored inputs in an
@@ -38,7 +38,8 @@ A mixed repository contains both sets of objects, so both columns apply to their
 These columns describe intended applicability, not implemented support. For example, a template repository with
 instance fixtures also contains instance roles. Conversely, the absence of an optional object is not a violation.
 
-In the assessed [engine](/modules/envgene-linter/src/envgene_linter/engine.py), a template-only root runs **only TPL-1**.
+In the assessed [engine](/modules/envgene-linter/src/envgene_linter/engine.py),
+a template-only root runs **TPL-1, TPL-4, and TPL-6**.
 Other enabled rules are reported as `Not applicable`. This is an implementation limitation, not a conclusion about
 their applicability under the standard. In mixed roots, other rules retain their instance selection boundaries.
 They do not automatically check every file under `templates/`.
@@ -108,6 +109,8 @@ A dynamic reference is also not evidence that its target is missing.
 |----------------------------------------------------------|----------|----------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md) | Local    | Local    | Parameter values and any consumer requirement for encoded strings | Reviews JSON collections and YAML block collections encoded as strings in connected ParameterSets. Skips dynamic content. No template or general inline parameter-bag coverage.     |
 | [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) | Local    | Local    | File role, Jinja delimiters, and supported descriptor fields      | Scans YAML and `.j2` under `templates/`, `environments/`, and `configuration/` without requiring connections. Allows documented descriptor fields and reviews ambiguous delimiters. |
+| [TPL-4](/modules/envgene-linter/docs/algorithms/tpl4.md) | No       | Context  | Template references and presence guards                           | Reviews unprotected candidates locally without proving input availability.                                                                                                          |
+| [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md) | No       | Local    | Template statements, filters, and raw blocks                      | Checks local template sources and allows recognizable Helm passthrough.                                                                                                             |
 
 TPL-1 accepts `.j2` only under `templates/`. Its descriptor-field exceptions are an approved compatibility decision
 for generator-supported syntax, including the documented namespace selector syntax.
@@ -139,9 +142,7 @@ not a claim that enabling an existing switch activates these checks.
 | VAL-9    | Local    | No       | Instance `envSpecificResourceProfiles` entries and their required string shape.                                     |
 | TPL-2    | Context  | Context  | Jinja pass-through expressions and the layer inputs that supply them.                                               |
 | TPL-3    | Context  | Context  | Template defaults, genuine branching, and the applicable inheritance chain.                                         |
-| TPL-4    | No       | Context  | Jinja references and which generation inputs can be absent.                                                         |
 | TPL-5    | No       | Local    | Jinja presence guards on nested paths.                                                                              |
-| TPL-6    | No       | Local    | Jinja constructs, filters, and logic structure. Resolve the `raw` conflict before enforcement.                      |
 | TPL-7    | Context  | Context  | URL construction, passport host facts, and the originating template.                                                |
 | TPL-8    | No       | Local    | Helm passthrough inside generator-rendered template sources.                                                        |
 | TPL-9    | No       | Context  | Jinja branches, target YAML shape, and explicit render scenarios. Sample renders cannot prove all branches valid.   |
@@ -172,7 +173,7 @@ the implementations.
 | PLACE-10 and NAME-7 | PLACE-10 names `shared-template-variables/`, while NAME-7 describes legacy `configuration/variables/` locations.                               | Clarify canonical locations and supported legacy lookup by scope.                                          |
 | NAME-8              | The standard permits `.yaml`, but companion lookup selects `.yml` only.                                                                        | Keep lookup compatibility explicit. Do not infer that an adjacent `.yaml` companion is selected.           |
 | TPL-1               | Generator-supported descriptor expressions are accepted, and `.j2` placement is restricted to `templates/`.                                    | Preserve these approved refinements in the specification and standard alignment work.                      |
-| TPL-6 and TPL-8     | TPL-6 forbids `raw`, while TPL-8 requires it for Helm passthrough.                                                                             | Define the Helm exception before implementing TPL-6.                                                       |
+| TPL-6 and TPL-8     | TPL-6 forbids `raw`, while TPL-8 requires it for Helm passthrough.                                                                             | Approved: allow recognizable Helm passthrough and review other raw blocks. Preserve this refinement.       |
 | TPL-14              | The target late-resolving macro is not yet available.                                                                                          | Check supported interim lookup behavior. Do not require the illustrative future macro syntax.              |
 | Inline exceptions   | The standard defines `[EXCEPTION RULE-ID]` comments. The linter has no shared exception-handling mechanism.                                    | Specify how declared exceptions affect findings and coverage.                                              |
 

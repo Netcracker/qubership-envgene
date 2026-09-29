@@ -126,7 +126,9 @@ Other entity types and metadata are outside its scope. Serialized collections pr
 [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) operates independently of Connections.
 It scans YAML and template placement under `templates/`, `environments/`, and `configuration/`, including unused files.
 Generator-rendered descriptor fields are exempt. Ambiguous template expressions receive Review.
-Template-only repositories run TPL-1 without instance discovery. Other enabled rules show Not applicable.
+Template-only repositories run TPL-1, TPL-4, and TPL-6 without instance discovery.
+TPL-4 and TPL-6 inspect template sources and generator-rendered descriptor fields.
+Other enabled rules show Not applicable.
 This scope does not change Connections or the inputs of other rules.
 
 ## PLACE-8 and reporting
@@ -138,7 +140,7 @@ a default then. Alias matching and ambiguous first buckets retain PLACE-8's exis
 behavior. PLACE-10 follows PLACE-9; SEC-1 follows PLACE-10; SEC-3 follows SEC-1;
 SEC-4 follows SEC-3, SEC-5 follows SEC-4, and INT-2 follows SEC-5.
 INT-3 follows INT-2. INT-4 follows INT-3 and precedes NAME-1. NAME-8 follows NAME-4. VAL-4 follows NAME-8.
-TPL-1 follows VAL-4. The console has 23 rule headers.
+TPL-1 follows VAL-4, followed by TPL-4 and TPL-6. The catalog contains 25 rules.
 There are no new CLI flags, other severity changes, autofix, or network calls.
 
 ## Examples

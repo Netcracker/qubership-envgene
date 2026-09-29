@@ -1,0 +1,2 @@
+FEATURE: "{{ FEATURE_A | default('off') | upper }}"
+RELEASE: "{% raw %}{{ .Release.Name }}{% endraw %}"

@@ -9,7 +9,8 @@
 ## Repository and file selection
 
 Accept an EnvGene root with `templates/`, `environments/`, or both.
-Run only TPL-1 on template-only repositories. Mark other enabled rules Not applicable in console and HTML reports.
+Run TPL-1, TPL-4, and TPL-6 on template-only repositories.
+Mark other enabled rules Not applicable in console and HTML reports.
 For mixed roots, retain the existing instance checks too.
 
 Walk `templates/`, `environments/`, and `configuration/` recursively for `.yml`, `.yaml`, and `.j2` files.

@@ -20,7 +20,7 @@ def test_example_catalog_covers_registered_rules():
 def test_rule_example(rule, case):
     folder = ROOT / rule.lower().replace('-', '')
     repo = folder / case
-    assert (repo / 'environments').is_dir()
+    assert (repo / 'environments').is_dir() or (repo / 'templates').is_dir()
     result = run_check(repo)
     if rule == 'PLACE-8':
         # These examples deliberately contain empty authored entities. INT-4

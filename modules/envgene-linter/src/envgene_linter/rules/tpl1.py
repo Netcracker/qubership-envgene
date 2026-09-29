@@ -2,22 +2,16 @@
 
 from __future__ import annotations
 
-import os
 import re
 from bisect import bisect_right
 from collections.abc import Iterator
 from pathlib import Path
 
-from ruamel.yaml import YAML
-from ruamel.yaml.error import YAMLError
-from ruamel.yaml.nodes import MappingNode, ScalarNode, SequenceNode
-
 from ..connections import Connections
 from ..model import Action, Finding, IssueType, RepoIndex, Severity
-from ..parameter_objects import safe_parameter_path
+from ..template_sources import configuration_paths, descriptor_spans
 from ..rulemeta import RULES
 
-_ROOTS = ('environments', 'configuration', 'templates')
 _OPENING = re.compile(r'{{|{%|{#')
 _CLOSING = {'{{': '}}', '{%': '%}', '{#': '#}'}
 _ENVGENE_NAME = re.compile(
@@ -25,27 +19,6 @@ _ENVGENE_NAME = re.compile(
     r'templates_dir|templates_dirs|env_definition|cloud_passport|env_vars|namespace_by_deploy_postfix)(?!\w)'
 )
 _QUOTED = re.compile(r'''"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*' ''', re.VERBOSE)
-
-
-def _paths(index: RepoIndex) -> Iterator[Path]:
-    def onerror(error: OSError) -> None:
-        note = 'TPL-1: cannot enumerate a repository configuration directory'
-        if note not in index.skipped:
-            index.skipped.append(note)
-
-    for name in _ROOTS:
-        directory = index.root / name
-        if directory.is_symlink() or not directory.exists():
-            continue
-        for parent, directories, files in os.walk(directory, followlinks=False, onerror=onerror):
-            parent = Path(parent)
-            directories[:] = sorted(child for child in directories
-                                    if child not in ('.git', '.venv', 'node_modules', '__pycache__')
-                                    and not (parent / child).is_symlink())
-            for filename in sorted(files):
-                path = parent / filename
-                if path.suffix in ('.yml', '.yaml', '.j2') and safe_parameter_path(index, path):
-                    yield path
 
 
 def _spans(text: str) -> Iterator[tuple[int, int]]:
@@ -65,73 +38,6 @@ def _spans(text: str) -> Iterator[tuple[int, int]]:
         yield match.start(), offset
 
 
-def _descriptor_exemptions(relative: Path, text: str) -> list[tuple[int, int]]:
-    if relative.parts[:2] != ('templates', 'env_templates'):
-        return []
-    try:
-        root = YAML(typ='safe', pure=True).compose(text)
-    except (YAMLError, ValueError, RecursionError):
-        return []
-    if not isinstance(root, MappingNode):
-        return []
-
-    def fields(node):
-        if not isinstance(node, MappingNode):
-            return {}
-        return {key.value: (key, value) for key, value in node.value if isinstance(key, ScalarNode)}
-
-    top = fields(root)
-    composed = 'parent-templates' in top and isinstance(top['parent-templates'][1], MappingNode)
-    if not composed and not {'tenant', 'cloud', 'namespaces'} <= top.keys():
-        return []
-    if 'namespaces' not in top or not isinstance(top['namespaces'][1], SequenceNode):
-        return []
-    selected = [top[key] for key in ('tenant', 'composite_structure', 'bg_domain', 'external_credential_template')
-                if key in top and isinstance(top[key][1], ScalarNode)]
-    def rendered_fields(node, namespace=False):
-        members = fields(node)
-        for name in ('template_path', 'name') if namespace else ('template_path',):
-            if name in members and isinstance(members[name][1], ScalarNode):
-                selected.append(members[name])
-        if 'template_override' in members and isinstance(members['template_override'][1], MappingNode):
-            selected.append(members['template_override'])
-        implicit_parent = (namespace and composed and len(fields(top['parent-templates'][1])) == 1
-                           and 'template_path' not in members)
-        if composed and ('parent' in members or implicit_parent) and 'overrides-parent' in members:
-            overrides = fields(members['overrides-parent'][1])
-            for name, kind in (('name', ScalarNode), ('deployParameters', MappingNode),
-                               ('e2eParameters', MappingNode), ('technicalConfigurationParameters', MappingNode)):
-                if name in overrides and isinstance(overrides[name][1], kind):
-                    selected.append(overrides[name])
-
-    cloud_key, cloud = top.get('cloud', (None, None))
-    if isinstance(cloud, ScalarNode):
-        selected.append((cloud_key, cloud))
-    else:
-        rendered_fields(cloud)
-    for namespace in top['namespaces'][1].value:
-        rendered_fields(namespace, namespace=True)
-
-    spans = []
-    for key, value in selected:
-        # An alias points to its anchor's node. Do not exempt source outside the allowed field.
-        lower, upper = key.end_mark.index, value.end_mark.index
-        pending = [value]
-        seen = set()
-        while pending:
-            node = pending.pop()
-            if id(node) in seen or not lower <= node.start_mark.index < node.end_mark.index <= upper:
-                continue
-            seen.add(id(node))
-            if isinstance(node, ScalarNode):
-                spans.append((node.start_mark.index, node.end_mark.index))
-            elif isinstance(node, MappingNode):
-                pending.extend(child for pair in node.value for child in pair)
-            elif isinstance(node, SequenceNode):
-                pending.extend(node.value)
-    return spans
-
-
 def _definite(text: str) -> bool:
     if text.startswith(('{%', '{#')):
         return True
@@ -146,7 +52,7 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
     meta = RULES['TPL-1']
     findings: dict[tuple[Path, int], Finding] = {}
     texts: dict[Path, str | None] = {}
-    for path in _paths(index):
+    for path in configuration_paths(index, 'TPL-1'):
         physical = path.resolve()
         relative = path.relative_to(index.root)
         scope = relative.parts[0]
@@ -169,7 +75,7 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
         text = texts[physical]
         if text is None:
             continue
-        exemptions = _descriptor_exemptions(relative, text)
+        exemptions = descriptor_spans(relative, text)
         newlines = [-1, *(match.start() for match in re.finditer('\n', text))]
         for start, end in _spans(text):
             if any(lower <= start and end <= upper for lower, upper in exemptions):
