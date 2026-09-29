@@ -1,10 +1,23 @@
 # EnvGene Linter changelog
 
+- [0.0.6](#006)
 - [0.0.5](#005)
 - [0.0.4](#004)
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
+
+## 0.0.6
+
+- Add TPL-4, enabled by default, to review potentially optional Jinja references without recognized presence protection,
+  such as `default` or an appropriate `is defined` check. Report candidates as Review without claiming that rendering fails.
+- Add TPL-6, enabled by default, to report prohibited Jinja constructs as Fix and uncertain template logic as Review.
+  Allow recognizable Helm passthrough in `raw` blocks and review other raw blocks.
+  Both new rules check `.j2` files under `templates/` and supported descriptor fields in instance and template repositories.
+- Generate `envgene-linter-report.json` alongside HTML on every check, with one object per finding and all related file locations.
+  Include `rule_id`, `rule_title`, `files`, `issue`, `action`, and `fix_suggestion`. Write `[]` when there are no findings.
+  Add the JSON report filename to `.gitignore` automatically.
+- Print separate `HTML report saved here:` and `JSON report saved here:` messages with absolute report paths.
 
 ## 0.0.5
 
