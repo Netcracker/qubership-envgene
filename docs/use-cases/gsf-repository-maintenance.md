@@ -13,6 +13,8 @@
   - [Instance Repository Maintenance via GSF](#instance-repository-maintenance-via-gsf)
     - [UC-GSF-INST-1: Initialize Instance Repository via GSF](#uc-gsf-inst-1-initialize-instance-repository-via-gsf)
     - [UC-GSF-INST-2: Upgrade Instance Repository via GSF](#uc-gsf-inst-2-upgrade-instance-repository-via-gsf)
+    - [UC-GSF-INST-2.1: Re-provision CI/CD Variables (Key Rotation)](#uc-gsf-inst-21-re-provision-cicd-variables-key-rotation)
+    - [UC-GSF-INST-2.2: Failure - Insufficient Token Permissions](#uc-gsf-inst-22-failure---insufficient-token-permissions)
     - [UC-GSF-INST-3: Downgrade Instance Repository via GSF](#uc-gsf-inst-3-downgrade-instance-repository-via-gsf)
 
 ## Overview
@@ -298,7 +300,7 @@ git-system-follower install <path_to_template_package_image> \
 **Pre-requisites:**
 
 1. A new Git repository for the Environment Instance exists in the project Git group.
-2. GitLab project access token with required scopes is available.
+2. GitLab project access token with Maintainer role and API, read_api, read_repository, write_repository scopes is available.
 3. GSF package manager is installed and working on the local machine.
 4. Instance package image path for the chosen EnvGene version is known.
 5. A reference Instance Repository structure for this version is defined.
@@ -311,20 +313,24 @@ User runs GSF on the local machine to initialize the Instance Repository:
 git-system-follower install <path_to_instance_package_image> \
    -r <project_instance_repository_path> \
    -b <project_instance_repository_branch> \
-   -t <gitlab_token>
+   -t <gitlab_token> \
+   --extra GITLAB_TOKEN <gitlab_token> masked \
+   --extra DOCKER_REGISTRY <registry_host> no-masked
 ```
 
 **Steps:**
 
-1. Run GSF with repository URL, branch, token, and package image.
+1. Run GSF with repository URL, branch, token, package image, and CI/CD variable extras.
 2. GSF applies the selected package to the Instance Repository.
 3. GSF creates the required CI/CD and configuration files for the selected version.
+4. GSF sets the supplied extras as GitLab project CI/CD variables on the target repository.
 
 **Results:**
 
 1. Instance Repository is initialized.
 2. Required files from the selected version are present.
 3. Repository matches the reference structure.
+4. `GITLAB_TOKEN` and `DOCKER_REGISTRY` are set as CI/CD variables on the repository. No manual configuration in GitLab Settings is required.
 
 ### UC-GSF-INST-2: Upgrade Instance Repository via GSF
 
@@ -344,22 +350,94 @@ User runs GSF on the local machine to upgrade the Instance Repository:
 git-system-follower install <path_to_instance_package_image> \
    -r <project_instance_repository_path> \
    -b <project_instance_repository_branch> \
-   -t <gitlab_token>
+   -t <gitlab_token> \
+   --extra GITLAB_TOKEN <gitlab_token> masked \
+   --extra DOCKER_REGISTRY <registry_host> no-masked
 ```
 
 **Steps:**
 
-1. Run GSF with repository URL, branch, token, and target package image.
+1. Run GSF with repository URL, branch, token, package image, and CI/CD variable extras.
 2. GSF updates the Instance Repository to the target version.
 3. GSF updates changed files, adds new files, and removes outdated managed files.
-4. Verify `configuration/integration.yml` contains the `cp_discovery` block.
-5. Verify placeholder file `configuration/.gitkeep` is present.
+4. GSF updates the supplied CI/CD variable values on the repository.
+5. Verify `configuration/integration.yml` contains the `cp_discovery` block.
+6. Verify placeholder file `configuration/.gitkeep` is present.
 
 **Results:**
 
 1. Instance Repository is upgraded to the target version.
 2. Repository matches the reference structure.
-3. `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
+3. `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure.
+4. CI/CD variables are updated to the supplied values.
+
+### UC-GSF-INST-2.1: Re-provision CI/CD Variables (Key Rotation)
+
+**Pre-requisites:**
+
+1. Instance Repository already exists and was previously initialized via GSF.
+2. A new GitLab access token is available (key rotation scenario).
+3. GSF package manager is installed and working on the local machine.
+4. Instance package image path is known.
+
+**Trigger:**
+
+User runs GSF with the new token value to rotate the CI/CD variable:
+
+```bash
+git-system-follower install <path_to_instance_package_image> \
+   -r <project_instance_repository_path> \
+   -b <project_instance_repository_branch> \
+   -t <new_gitlab_token> \
+   --extra GITLAB_TOKEN <new_gitlab_token> masked \
+   --extra DOCKER_REGISTRY <registry_host> no-masked
+```
+
+**Steps:**
+
+1. Run GSF with the new token and package image.
+2. GSF detects that `GITLAB_TOKEN` already exists on the repository with a different value.
+3. GSF overwrites the existing variable with the new value.
+
+**Results:**
+
+1. `GITLAB_TOKEN` CI/CD variable is updated to the new token value.
+2. No duplicate variables are created.
+
+### UC-GSF-INST-2.2: Failure - Insufficient Token Permissions
+
+**Pre-requisites:**
+
+1. Instance Repository exists.
+2. The token provided has Developer role (not Maintainer or Owner) on the project.
+
+**Trigger:**
+
+User runs GSF install with a token that lacks Maintainer access:
+
+```bash
+git-system-follower install <path_to_instance_package_image> \
+   -r <project_instance_repository_path> \
+   -b <project_instance_repository_branch> \
+   -t <developer_token> \
+   --extra GITLAB_TOKEN <developer_token> masked
+```
+
+**Steps:**
+
+1. GSF starts the install and processes repository files normally.
+2. GSF attempts to set the `GITLAB_TOKEN` CI/CD variable via the GitLab API.
+3. GitLab rejects the request with a 403 Forbidden error because CI/CD variable management requires Maintainer access.
+4. GSF aborts with an error message naming the required role.
+
+**Results:**
+
+1. GSF exits with an error indicating that Maintainer access is required.
+2. Repository files may have been updated before the failure (file changes run before variable provisioning).
+3. No CI/CD variables are set.
+
+> [!NOTE]
+> To recover: re-run GSF with a token that has the Maintainer role on the target repository.
 
 ### UC-GSF-INST-3: Downgrade Instance Repository via GSF
 
