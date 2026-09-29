@@ -2,7 +2,7 @@
 
 EnvGene Linter checks local **EnvGene instance and template repositories**.
 Instance checks cover placement, naming, secret handling, reference integrity, and structured values.
-Template-only repositories are checked by TPL-1, TPL-4, and TPL-6. The linter saves an HTML report and prints its absolute path.
+Template-only repositories are checked by TPL-1, TPL-4, and TPL-6. The linter saves HTML and JSON reports and prints their absolute paths.
 Use `--console` to also print findings in the terminal.
 
 See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes and migration instructions.
@@ -23,6 +23,7 @@ Checks run locally without network calls.
 - [Command reference](#command-reference)
 - [Reading findings](#reading-findings)
 - [HTML reports](#html-reports)
+- [JSON reports](#json-reports)
 - [Implemented rules](#implemented-rules)
 - [Build-time rule switches](#build-time-rule-switches)
 - [What is checked](#what-is-checked)
@@ -66,13 +67,15 @@ Open a terminal in your repository root, the directory containing `environments/
 envgene-linter check
 ```
 
-The command creates an HTML report and prints its absolute path:
+The command creates both reports and prints their absolute paths:
 
 ```text
-Report saved to: /path/to/instance-repository/envgene-linter-report.html
+HTML report saved here: /path/to/instance-repository/envgene-linter-report.html
+JSON report saved here: /path/to/instance-repository/envgene-linter-report.json
 ```
 
-Open that file in a browser. To also print findings in the terminal:
+Open the HTML file in a browser. Use the JSON file for automated processing or AI tools.
+To also print findings in the terminal:
 
 ```bash
 envgene-linter check --console
@@ -84,14 +87,14 @@ To check another repository, pass its path:
 envgene-linter check /path/to/instance-repository
 ```
 
-Every successful check writes the report and adds it to the checked repository's `.gitignore`.
-See [HTML reports](#html-reports) for details.
+Every successful check writes both reports and adds their filenames to the checked repository's `.gitignore`.
+See [HTML reports](#html-reports) and [JSON reports](#json-reports) for details.
 
 ## Choosing the repository to check
 
 The optional argument identifies the **repository root**, which contains `environments/`, `templates/`, or both.
 A template-only repository does not need `environments/`. TPL-1, TPL-4, and TPL-6 run there.
-Other checks are not yet supported in this mode and appear as `Not applicable` in reports.
+Other checks are not yet supported in this mode and appear as `Not applicable` in HTML and console reports.
 Without an argument, the linter checks the current directory. It does not search parent directories.
 Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
 
@@ -134,18 +137,19 @@ Here `service-deploy` refers to a supported file such as `service-deploy.yml`. T
 envgene-linter check [OPTIONS] [REPO]
 ```
 
-| Argument or option   | Meaning                                                         |
-|----------------------|-----------------------------------------------------------------|
-| `REPO`               | Repository root. Defaults to the current directory.             |
-| `--console`          | Also print findings in the terminal. HTML is still generated.   |
-| `--help`             | Show command help and exit.                                     |
+| Argument or option | Meaning                                                              |
+| ------------------ | -------------------------------------------------------------------- |
+| `REPO`             | Repository root. Defaults to the current directory.                  |
+| `--console`        | Also print findings in the terminal. Both files are still generated. |
+| `--help`           | Show command help and exit.                                          |
 
 ```bash
 envgene-linter --help
 envgene-linter check --help
 ```
 
-All applicable enabled rules run on each check. There are currently no CLI options for selecting rules, automatic fixes, strict mode, JSON output, baselines or a custom HTML output path.
+All applicable enabled rules run on each check. HTML and JSON output are automatic and require no format flag.
+There are no CLI options for selecting rules, automatic fixes, strict mode, baselines, or custom report paths.
 
 ## Reading findings
 
@@ -179,15 +183,52 @@ A report with no findings displays `No findings`.
 
 On each check:
 
-1. The linter creates or overwrites `<REPO>/envgene-linter-report.html`.
-2. After writing the report, it adds `envgene-linter-report.html` to `<REPO>/.gitignore` if needed.
+1. The linter creates or overwrites `<REPO>/envgene-linter-report.html` and `<REPO>/envgene-linter-report.json`.
+2. After writing both reports, it adds their filenames to `<REPO>/.gitignore` if needed.
    Existing ignore entries are preserved.
-3. It prints `Report saved to: <absolute-path>` to stderr.
+3. It prints `HTML report saved here: <absolute-path>` and `JSON report saved here: <absolute-path>` to stderr.
 
 The `--console` flag adds a terminal report. Configuration files are not changed.
 The `--html` flag was removed in `0.0.2`. Remove it from existing commands.
 
 Reports from some rules can contain configuration values in finding messages. SEC-5 redacts secret values, Credential IDs, variable names, source expressions and remote-store paths from its findings, and INT-2 uses generic reference-kind keys and messages without IDs, expressions or secret values. These guarantees are specific to those rules. The tool does not upload reports; inspect their contents before sharing them or publishing them as CI artifacts.
+
+## JSON reports
+
+`envgene-linter-report.json` is a UTF-8 JSON array with one object per finding.
+It contains the same findings as HTML, in the same rule order, with all locations for each finding kept together.
+Messages are plain text, without HTML escaping. The file uses two-space indentation and ends with a newline.
+
+| Field | JSON type | Meaning |
+| --- | --- | --- |
+| `rule_id` | String | Rule identifier, such as `PLACE-1`. |
+| `rule_title` | String | Rule title shown in the HTML heading, without the ID prefix. |
+| `files` | Array of strings | All affected locations as `path:line:column`. Paths inside the checked repository are relative, with `/` separators. |
+| `issue` | String | Description of the finding. |
+| `action` | String | Recommended action: `Fix` or `Review`. |
+| `fix_suggestion` | String | Recommendation for resolving or reviewing the finding. |
+
+The following example uses synthetic repository paths:
+
+```json
+[
+  {
+    "rule_id": "PLACE-1",
+    "rule_title": "Same value belongs on a higher layer",
+    "files": [
+      "environments/cluster-a/env-a/Inventory/parameters/service-deploy.yml:3:3",
+      "environments/cluster-a/env-b/Inventory/parameters/service-deploy.yml:3:3"
+    ],
+    "issue": "Key LOG_LEVEL has the same value in 2 environments of cluster cluster-a.",
+    "action": "Fix",
+    "fix_suggestion": "Move LOG_LEVEL to environments/cluster-a/parameters/ and remove the environment copies."
+  }
+]
+```
+
+No findings produces `[]`, including when all rules are disabled. Disabled and inapplicable rules have no entries.
+The array contains findings only: skip diagnostics remain on stderr, so `[]` does not prove complete coverage.
+JSON serialization uses existing finding messages and recommendations. It does not read or embed source file contents.
 
 ## Implemented rules
 
@@ -330,8 +371,8 @@ Actions to distribute your chosen configuration. This is a package setting, not 
 repository or a command-line override. Use `True`/`False`, not quoted strings or
 numbers, and keep all rule entries. Invalid entries produce exit code 2.
 
-Console and HTML reports omit disabled rules and their findings.
-If every rule is disabled, repository analysis is skipped and both reports say `No rules enabled`.
+All report formats omit disabled rules and their findings.
+If every rule is disabled, repository analysis is skipped. Console and HTML say `No rules enabled`, and JSON contains `[]`.
 
 Regression tests explicitly enable rules to preserve coverage regardless of the
 release configuration. Separate tests verify switches, validation and reports.
@@ -341,12 +382,13 @@ publishing another build on PyPI, use a new distribution version.
 
 ## Exit codes and CI
 
-| Exit code | Meaning                                                                                                                                    |
-|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| `0`       | The command completed, including runs with Warning or Information findings                                                                 |
-| `2`       | Invalid CLI arguments or rule flags, neither `environments/` nor `templates/` when checks are enabled, or failure to write the HTML report |
+| Exit code | Meaning                                                                                                                                  |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`       | The command completed, including runs with Warning or Information findings                                                               |
+| `2`       | Invalid CLI arguments or rule flags, neither `environments/` nor `templates/` when checks are enabled, or failure to write either report |
 
-Skip notes do not by themselves change the exit code. Failure to update `.gitignore` is reported on stderr after the HTML file is written and does not make the command fail. Unexpected runtime failures are outside these handled cases.
+Skip notes do not by themselves change the exit code. Failure to update `.gitignore` is reported on stderr after both reports are written and does not make the command fail. Unexpected runtime failures are outside these handled cases.
+Reports are written sequentially. If JSON writing fails, HTML may already have been updated. The command exits with code 2 and prints no success notices.
 
 **A successful exit is not a “no findings” gate.** Strict mode is not implemented. Use the reports for review; do not rely on the current exit code to reject configurations with findings.
 
@@ -356,21 +398,21 @@ To capture findings and diagnostics separately:
 envgene-linter check /path/to/instance-repository --console > lint-findings.txt 2> lint-diagnostics.txt
 ```
 
-The text files are written in the shell's current directory. The HTML report is written in the checked repository.
-The report path and diagnostics go to `lint-diagnostics.txt`. Output files are overwritten on subsequent runs.
+The text files are written in the shell's current directory. HTML and JSON reports are written in the checked repository.
+The report paths and diagnostics go to `lint-diagnostics.txt`. Output files are overwritten on subsequent runs.
 
 ## Troubleshooting
 
 | Symptom                                                               | What to check                                                                                                                                                  |
-|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `envgene-linter: command not found`                                   | Check that your Python scripts directory is on `PATH`. If you used a virtual environment, activate it.                                                         |
 | Installation rejects the Python version                               | Create the virtual environment using Python 3.12 or newer.                                                                                                     |
 | `not an EnvGene repository: no environments/ or templates/ directory` | Pass the repository root containing one of these directories.                                                                                                  |
 | A file produces no finding                                            | Check the rule's documented scope and stderr for skip notes. Most instance rules require evidence of use. TPL-1 scans its supported directories independently. |
 | An environment is missing from results                                | Check for `<cluster>/<environment>/Inventory/env_definition.yml` and inspect parsing diagnostics.                                                              |
-| An existing HTML report did not change                                | Check the printed absolute path and stderr for errors. Each successful check overwrites the report.                                                            |
-| `cannot write HTML report`                                            | Check write permissions for the checked repository and its existing report file. The command exits with code 2.                                                |
-| `cannot update .gitignore`                                            | The report was written, but the ignore file could not be updated. Check permissions or encoding and add the report entry manually if appropriate.              |
+| An existing report did not change                                     | Check the printed absolute paths and stderr for errors. Each successful check overwrites both reports.                                                         |
+| `cannot write HTML report` or `cannot write JSON report`              | Check write permissions for the checked repository and its existing report files. The command exits with code 2.                                               |
+| `cannot update .gitignore`                                            | Both reports were written, but the ignore file could not be updated. Check permissions or encoding and add the report entries manually if appropriate.         |
 | A directory named `ok` still reports findings                         | Bundled fixtures are specific to one rule; all enabled rules run during a CLI check.                                                                           |
 
 ## Development and further documentation

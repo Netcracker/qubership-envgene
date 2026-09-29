@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from .model import Action, Finding
-from .report import RULE_ORDER
+from .report import RULE_ORDER, relative_path, rule_sort_key
 from .rulemeta import RULES
 
 REPORT_FILENAME = "envgene-linter-report.html"
@@ -83,34 +83,19 @@ def report_path(root: Path) -> Path:
     return root / REPORT_FILENAME
 
 
-def ensure_report_ignored(root: Path) -> None:
+def ensure_report_ignored(root: Path, *additional_filenames: str) -> None:
     path = root / ".gitignore"
-    names = {REPORT_FILENAME, f"/{REPORT_FILENAME}"}
-    if path.exists():
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if any(line.strip() in names for line in text.splitlines()):
-            return
-        if text and not text.endswith("\n"):
-            text += "\n"
-        path.write_text(f"{text}{REPORT_FILENAME}\n", encoding="utf-8")
+    text = path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
+    existing = {line.strip() for line in text.splitlines()}
+    missing = [
+        name for name in (REPORT_FILENAME, *additional_filenames)
+        if name not in existing and f"/{name}" not in existing
+    ]
+    if not missing:
         return
-    path.write_text(f"{REPORT_FILENAME}\n", encoding="utf-8")
-
-
-def _relative(path: Path, root: Path) -> str:
-    try:
-        return path.relative_to(root).as_posix()
-    except ValueError:
-        try:
-            return path.resolve().relative_to(root.resolve()).as_posix()
-        except ValueError:
-            return path.as_posix()
-
-
-def _rule_sort_key(rule: str) -> tuple[int, int | str]:
-    if rule in RULE_ORDER:
-        return (0, RULE_ORDER.index(rule))
-    return (1, rule)
+    if text and not text.endswith("\n"):
+        text += "\n"
+    path.write_text(text + "\n".join(missing) + "\n", encoding="utf-8")
 
 
 def _chip(value: str) -> str:
@@ -121,7 +106,7 @@ def _chip(value: str) -> str:
 def _file_html(item: Finding, root: Path) -> str:
     lines = []
     for loc in item.file_locations():
-        text = f"{_relative(loc.path, root)}:{loc.line}:{loc.column}"
+        text = f"{relative_path(loc.path, root)}:{loc.line}:{loc.column}"
         lines.append(f'<span class="file">{html.escape(text)}</span>')
     return "<br>\n".join(lines)
 
@@ -165,7 +150,7 @@ def render_html(
     ]
     visible_not_applicable = set(not_applicable_rules) - set(disabled_rules)
     if visible_not_applicable:
-        labels = ", ".join(html.escape(rule) for rule in sorted(visible_not_applicable, key=_rule_sort_key))
+        labels = ", ".join(html.escape(rule) for rule in sorted(visible_not_applicable, key=rule_sort_key))
         parts.append(f'<p class="not-applicable-rules">Not applicable to this repository: {labels}</p>')
     if not by_rule:
         if set(RULE_ORDER).issubset(set(disabled_rules) | set(not_applicable_rules)):
@@ -173,7 +158,7 @@ def render_html(
         else:
             parts.append("<p>No findings</p>")
     else:
-        for rule in sorted(by_rule, key=_rule_sort_key):
+        for rule in sorted(by_rule, key=rule_sort_key):
             meta = RULES.get(rule)
             title = f"{rule}: {meta.description}" if meta is not None else rule
             parts.append('<details class="rule-section">')

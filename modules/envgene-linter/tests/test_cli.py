@@ -354,8 +354,8 @@ def test_console_flag_adds_findings_and_keeps_html(repo):
     assert "NAME-4: Bound ParameterSet stem is &lt;subject&gt;-&lt;category&gt;" in body
     assert "env_definition" in body
     assert "env-params" in body
-    assert f"Report saved to: {path.resolve()}" in html.stderr
-    assert f"Report saved to: {path.resolve()}" in plain.stderr
+    assert f"HTML report saved here: {path.resolve()}" in html.stderr
+    assert f"HTML report saved here: {path.resolve()}" in plain.stderr
     assert "envgene-linter-report.html" in (repo.root / ".gitignore").read_text(encoding="utf-8")
 
 
@@ -383,7 +383,7 @@ def test_check_uses_current_directory(repo, monkeypatch, args):
     assert result.exit_code == 0, result.output
     assert (repo.root / REPORT_FILENAME).is_file()
     assert REPORT_FILENAME in (repo.root / ".gitignore").read_text(encoding="utf-8")
-    assert f"Report saved to: {repo.root / REPORT_FILENAME}" in result.stderr
+    assert f"HTML report saved here: {repo.root / REPORT_FILENAME}" in result.stderr
     if "--console" in args:
         assert result.stdout.startswith("PLACE-1\n")
     else:
@@ -406,7 +406,7 @@ def test_check_relative_path_writes_to_target(repo, monkeypatch):
     result = CliRunner(mix_stderr=False).invoke(main, ["check", repo.root.name])
     assert result.exit_code == 0
     assert (repo.root / REPORT_FILENAME).is_file()
-    assert f"Report saved to: {repo.root / REPORT_FILENAME}" in result.stderr
+    assert f"HTML report saved here: {repo.root / REPORT_FILENAME}" in result.stderr
 
 
 def test_check_current_directory_without_repository_roots_fails(tmp_path, monkeypatch):
@@ -426,7 +426,7 @@ def test_default_output_keeps_parsing_diagnostics(repo):
     assert result.exit_code == 0
     assert result.stdout == ""
     assert "env_definition.yml" in result.stderr
-    assert "Report saved to:" in result.stderr
+    assert "HTML report saved here:" in result.stderr
 
 
 def test_removed_html_flag_is_rejected(repo):
@@ -456,7 +456,7 @@ def test_html_non_utf8_gitignore_keeps_exit_0(repo):
     result = CliRunner(mix_stderr=False).invoke(main, ["check", str(repo.root), "--console"])
     assert result.exit_code == 0
     assert (repo.root / REPORT_FILENAME).is_file()
-    assert "Report saved to:" in result.stderr
+    assert "HTML report saved here:" in result.stderr
     combined = f"{result.stdout}{result.stderr}{result.output}"
     assert "Traceback" not in combined
     assert "UnicodeDecodeError" not in combined
@@ -470,7 +470,7 @@ def test_html_gitignore_failure_warns_and_keeps_exit_0(repo):
     assert result.exit_code == 0
     assert (repo.root / REPORT_FILENAME).is_file()
     assert "cannot update .gitignore" in result.stderr
-    assert "Report saved to:" in result.stderr
+    assert "HTML report saved here:" in result.stderr
 
 
 @pytest.mark.parametrize("args", [[], ["--console"]])
@@ -486,7 +486,7 @@ def test_html_write_failure_exits_2(repo, args):
     else:
         assert result.stdout == ""
     assert "cannot write HTML report" in result.stderr
-    assert "Report saved to:" not in result.stderr
+    assert "report saved here:" not in result.stderr
 
 
 def test_sec5_reviews_generated_plaintext_without_disclosing_it(repo):

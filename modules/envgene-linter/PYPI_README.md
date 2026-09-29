@@ -6,7 +6,7 @@
 - [Optional commands](#optional-commands)
 - [Troubleshooting](#troubleshooting)
 
-EnvGene Linter checks EnvGene instance and template repositories and saves findings in an HTML report.
+EnvGene Linter checks EnvGene instance and template repositories and saves findings in HTML and JSON reports.
 Template-only repositories are checked by TPL-1, TPL-4, and TPL-6. Other implemented checks require instance inputs.
 
 ## Install
@@ -40,16 +40,19 @@ envgene-linter check
 
 ## Open the report
 
-When the check finishes, the terminal shows the report location, for example:
+When the check finishes, the terminal shows both report locations, for example:
 
 ```text
-Report saved to: /path/to/instance-repository/envgene-linter-report.html
+HTML report saved here: /path/to/instance-repository/envgene-linter-report.html
+JSON report saved here: /path/to/instance-repository/envgene-linter-report.json
 ```
 
 Open that HTML file in your browser. Each finding shows the affected file, the issue, and a suggested action.
+Use JSON for automated processing or AI tools. It contains an array of findings with `rule_id`, `rule_title`,
+`files`, `issue`, `action`, and `fix_suggestion`. An empty result is `[]`.
 The linter does not fix configuration files automatically.
 
-Every successful check replaces the previous report. The report filename is added to the repository's `.gitignore`.
+Every successful check replaces both reports. Their filenames are added to the repository's `.gitignore`.
 Errors and messages about skipped files appear in the terminal. Review those messages if a file could not be checked.
 
 ## Optional commands
@@ -66,7 +69,7 @@ To check a repository without changing directories:
 envgene-linter check /path/to/instance-repository
 ```
 
-Both commands also create the HTML report.
+Both commands also create HTML and JSON reports.
 
 ## Troubleshooting
 
@@ -75,7 +78,7 @@ Both commands also create the HTML report.
 - If the terminal cannot find `envgene-linter`, check that your Python scripts directory is on `PATH`.
   If you installed in a virtual environment, activate that environment first.
 - If neither `environments/` nor `templates/` is found, run the command from the repository root.
-- For template-only repositories, `Not applicable` marks checks that are not yet supported in this mode.
+- For template-only repositories, HTML and console output mark unsupported checks as `Not applicable`. JSON omits them.
   TPL-1, TPL-4, and TPL-6 still run unless disabled.
 
 This is an alpha release. Most checks cover supported references and generator inputs.

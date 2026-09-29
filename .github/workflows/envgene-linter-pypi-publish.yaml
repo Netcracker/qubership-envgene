@@ -279,8 +279,23 @@ jobs:
           pushd "${SMOKE_DIR}/instance repository"
           "${CLI_NAME}" check > check.stdout 2> check.stderr
           test -s envgene-linter-report.html
+          test -s envgene-linter-report.json
           test ! -s check.stdout
-          grep -F "Report saved to: ${PWD}/envgene-linter-report.html" check.stderr
+          grep -Fx "HTML report saved here: ${PWD}/envgene-linter-report.html" check.stderr
+          grep -Fx "JSON report saved here: ${PWD}/envgene-linter-report.json" check.stderr
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          findings = json.loads(Path("envgene-linter-report.json").read_text(encoding="utf-8"))
+          assert isinstance(findings, list), "JSON report must be an array"
+          fields = {"rule_id", "rule_title", "files", "issue", "action", "fix_suggestion"}
+          for finding in findings:
+              assert isinstance(finding, dict) and set(finding) == fields, "Unexpected JSON finding fields"
+              assert all(isinstance(finding[key], str) for key in fields - {"files"}), "Finding text must be strings"
+              assert isinstance(finding["files"], list), "Finding files must be an array"
+              assert all(isinstance(location, str) for location in finding["files"]), "File locations must be strings"
+          PY
           "${CLI_NAME}" check --console > console.stdout
           grep -F "PLACE-1" console.stdout
           popd
