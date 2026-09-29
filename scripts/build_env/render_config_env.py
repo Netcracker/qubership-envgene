@@ -476,11 +476,13 @@ class EnvGenerator:
         path_str = path_str.replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml")
         return Path(path_str)
 
-    def generate_paramset_templates(self):
+    def generate_paramset_templates(self, paramset_names: Iterable[str] | None = None):
         render_dir = Path(self.ctx.render_parameters_dir).resolve()
         paramset_templates = self.find_templates(render_dir, ["*.yml.j2", "*.yaml.j2"])
         for template_path in paramset_templates:
             template_name = self.get_template_name(template_path)
+            if paramset_names is not None and template_name not in paramset_names:
+                continue
             target_path = self.get_rendered_target_path(template_path)
             try:
                 logger.info(f"Try to render paramset {template_name}")
@@ -646,8 +648,12 @@ class EnvGenerator:
             self.generate_bgd_file()
             return self.generate_namespace_files_and_map()
 
+    def _cloud_e2e_paramset_names(self, cloud: dict) -> set[str]:
+        env_specific = self.ctx.env_definition.get("envTemplate", {}).get("envSpecificE2EParamsets") or {}
+        return set(cloud.get("e2eParameterSets") or []) | set(env_specific.get("cloud") or [])
+
     def render_cloud_e2e_parameters(self, env_name: str, extra_env: dict, env_dir: str,
-                                    scratch_params_dir: Path) -> dict:
+                                    render_parameters_dir: Path) -> dict:
         from build_env.build_env import collect_paramset_sources, create_paramset_map, initParametersStructure, processTemplate
 
         logger.info(
@@ -662,13 +668,16 @@ class EnvGenerator:
             self.set_env_templates()
             self.generate_cloud_file()
 
-        cloud_file = Path(self.ctx.current_env_dir) / "cloud.yml"
+            cloud_file = Path(self.ctx.current_env_dir) / "cloud.yml"
 
-        if scratch_params_dir.exists():
-            shutil.rmtree(scratch_params_dir)
+            if render_parameters_dir.exists():
+                shutil.rmtree(render_parameters_dir)
 
-        collect_paramset_sources(env_dir, {NamespaceRole.COMMON: self.ctx.templates_dir}, str(scratch_params_dir))
-        paramset_map = create_paramset_map(str(scratch_params_dir), NamespaceRole.COMMON, False, False)
+            collect_paramset_sources(env_dir, self.ctx.templates_dirs, str(render_parameters_dir))
+            self.ctx.render_parameters_dir = str(render_parameters_dir)
+            self.generate_paramset_templates(self._cloud_e2e_paramset_names(openYaml(cloud_file)))
+
+        paramset_map = create_paramset_map(str(render_parameters_dir), NamespaceRole.COMMON, False, False)
 
         env_specific_map = {}
         initParametersStructure(env_specific_map, "cloud")

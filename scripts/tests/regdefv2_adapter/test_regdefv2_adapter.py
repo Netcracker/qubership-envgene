@@ -7,6 +7,7 @@ import pytest
 import yaml
 
 from envgenehelper import openYaml, get_cred_config, extra_creds_scope
+from envgenehelper.business_helper import render_workspace_dir
 from envgenehelper.config_helper import get_regdef_v2_schema
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
@@ -191,7 +192,31 @@ class TestRegdefV2Adapter:
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"secret": "secret"}
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("missing", ["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
+    def test_renders_jinja_paramset_in_render_workspace(self, tmp_path):
+        parameters_dir = tmp_path / "tmp" / "templates" / "parameters"
+        (parameters_dir / "pubreg.yaml").unlink()
+        (parameters_dir / "pubreg.yaml.j2").write_text(textwrap.dedent("""\
+            name: "pubreg"
+            parameters:
+              MAVEN_PROVIDER: "gcp"
+              PUB_REG_METHOD: "service_account"
+              PUB_REG_SECRET: "secret"
+              PUB_REG_PROJECT: "{{ env }}-project"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
+            """))
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["authConfig"]["pub-reg-auth"]["gcpRegProject"] == "env-01-project"
+        workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
+        assert (workspace_dir / "pubreg.yml").exists()
+        assert not (workspace_dir / "pubreg.yaml.j2").exists()
+        assert (parameters_dir / "pubreg.yaml.j2").exists()
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("missing",["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
     def test_aws_secret_requires_all_params(self, tmp_path, missing):
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if f"{missing}:" not in line)
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
