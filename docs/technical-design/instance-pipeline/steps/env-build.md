@@ -54,8 +54,9 @@ Domain, Profiles, and credential files.
       `tmp/origin/templates/parameters/`, `tmp/peer/templates/parameters/`, cluster-level
       `environments/<cluster-name>/parameters/`, global `environments/parameters/`, and Environment
       Inventory `Inventory/parameters/` into `tmp/render-workspace/parameters/`. If the
-      `regdefv2_adapter` step already prepared this directory in the current run, the step reuses it
-      as is: Cloud e2e ParameterSet Jinja templates are already rendered there.
+      `regdefv2_adapter` step already prepared this directory in the current run, the step reuses it:
+      Jinja templates of Cloud `e2eParameterSets` are already rendered there, and the step adds only
+      `tmp/origin/templates/parameters/` and `tmp/peer/templates/parameters/`.
 
    4. The step copies Template Repository `resource_profiles/` into `tmp/resource_profiles/`.
 
