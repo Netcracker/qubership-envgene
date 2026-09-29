@@ -4,7 +4,7 @@ import sys
 import time
 from contextlib import contextmanager
 from os import getenv
-from envgene_shared.utils.logger import *
+from envgene_shared.utils.logger import logger, CustomFormatter
 
 
 _SECTION_ID_INVALID_CHARS = re.compile(r"[^a-zA-Z0-9_.-]")
