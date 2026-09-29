@@ -1,4 +1,6 @@
 import yaml
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from envgenehelper import *
 from envgene_shared import *
 
@@ -558,10 +560,11 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     # process namespaces
     template_namespace_names = []
     for ns in namespaces:
-        logger.info(f"Processing namespace: {ns.definition_path}")
-        template_namespace_names.append(ns.postfix)
         initParametersStructure(env_specific_parameters_map['namespaces'], ns.postfix)
+        template_namespace_names.append(ns.postfix)
 
+    def _process_namespace(ns):
+        logger.info(f"Processing namespace: {ns.definition_path}")
         if ns.role == NamespaceRole.ORIGIN:
             ns_paramset_map = origin_paramset_map
         elif ns.role == NamespaceRole.PEER:
@@ -578,6 +581,11 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
             resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text,
         )
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(_process_namespace, ns) for ns in namespaces]
+        for future in as_completed(futures):
+            future.result()
     operation_type = OperationType(getenv("OPERATION_TYPE"))
     if operation_type == OperationType.CLEAN:
         set_cleaned_mark(namespaces)
