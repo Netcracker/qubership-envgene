@@ -59,6 +59,11 @@
 - [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
 - [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
+## Use cases
+
+- [**GSF repository maintenance**](/docs/use-cases/gsf-repository-maintenance.md) - Initialize, upgrade, and downgrade Template and Instance repositories via GSF
+- [**GSF CI/CD variable provisioning**](/docs/use-cases/gsf-cicd-variable-provisioning.md) - Variable provisioning flows: first install, re-provisioning, upgrade, and failure scenarios
+
 ## Migrations
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
