@@ -1,9 +1,10 @@
 import os
 
 import pytest
-from envgenehelper import logger, SD_FILE_NAME, OperationType
+from envgenehelper import SD_FILE_NAME, OperationType
 from envgenehelper.effective_set_helper import GenerationMode
 from envgenehelper.env_helper import Environment
+from envgene_shared.utils.logger import logger
 
 from scripts.tests.base_test import BaseTest
 from scripts.tests.sd.test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data

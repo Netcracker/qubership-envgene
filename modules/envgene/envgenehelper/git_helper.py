@@ -6,9 +6,9 @@ from urllib.parse import quote
 
 import requests
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.business_utils import getenv_with_error
 from envgenehelper.errors import IntegrationError
-from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
