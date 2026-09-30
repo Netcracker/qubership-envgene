@@ -1,6 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import os
 import secrets
+from time import perf_counter
 import yaml
 
 from dataclasses import dataclass
@@ -74,22 +76,40 @@ class ExternalCredProvisioner:
         self._stores: dict[tuple[str, str], str] = {}
         self._provider: MultiStoreProvider | None = None
         self._manager: SecretManager | None = None
+        self.max_workers = int(os.environ.get("MAX_WORKERS", "10"))
 
     def run(self) -> int:
         mode = "DRY-RUN" if self.dry_run else "APPLY"
         logger.info(f"Starting {mode} provisioning from '{self.context_path}'")
 
+        start = perf_counter() 
         try:
             self._load_context()
         except Exception as exc:
             logger.error(f"Failed to load context: {exc}")
             return 1
+        finally:
+            logger.info("_load_context duration=%.3fs", perf_counter() - start)
 
-        if not self._preflight():
-            return 1
+        start = perf_counter()
+        try:
+            if not self._preflight():
+                return 1
+        finally:
+            logger.info("preflight duration=%.3fs", perf_counter() - start)
 
-        result = self._dry_run_phase() if self.dry_run else self._processing_phase()
-        self._print_summary(result)
+        start = perf_counter()
+        logger.info("max_workers=%d", self.max_workers)
+        try:
+            result = self._dry_run_phase() if self.dry_run else self._processing_phase()
+        finally:
+            logger.info("full _processing_phase duration=%.3fs", perf_counter() - start)
+
+        start = perf_counter()
+        try: 
+            self._print_summary(result)
+        finally:
+            logger.info("_print_summary duration=%.3fs", perf_counter() - start)
 
         if self.dry_run:
             return 0 if result.dry_run_fail == 0 else 1
@@ -190,41 +210,64 @@ class ExternalCredProvisioner:
 
     def _processing_phase(self) -> ProvisioningResult:
         result = ProvisioningResult()
-        for cred in self._credentials:
-            try:
-                outcome = self._apply_credential(cred)
-                logger.info(f"[{cred.id}] {outcome}")
-                match outcome:
-                    case "created":     result.created += 1
-                    case "overwritten": result.overwritten += 1
-                    case "skipped":     result.skipped += 1
-                    case "verified":    result.verified += 1
-            except Exception as exc:
-                logger.error(f"[{cred.id}] FAILED: {type(exc).__name__}: {exc}")
-                result.failed += 1
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = {
+                executor.submit(self._apply_credential, cred): cred
+                for cred in self._credentials
+            }
+            for future in as_completed(futures):
+                cred = futures[future]
+                try:
+                    outcome = future.result()
+                    logger.info("[%s] %s", cred.id, outcome)
+                    match outcome:
+                        case "created":
+                            result.created += 1
+                        case "overwritten":
+                            result.overwritten += 1
+                        case "skipped":
+                            result.skipped += 1
+                        case "verified":
+                            result.verified += 1
+                except Exception as exc:
+                    logger.error(f"[{cred.id}] FAILED: {type(exc).__name__}: {exc}")
+                    result.failed += 1
         return result
 
     def _apply_credential(self, cred: CredentialEntry) -> str:
-        exists = self._secret_exists(cred.vals)
+        start_ind_cred = perf_counter()
+        try:
+            start = perf_counter()
+            try:
+                exists = self._secret_exists(cred.vals)
+            finally:
+                logger.info("[%s] _secret_exists check duration=%.3fs", cred.id, perf_counter() - start)
 
-        match cred.strategy:
-            case Strategy.FAIL_IF_ABSENT:
-                if not exists:
-                    raise RuntimeError(f"absent at '{cred.vals}'")
-                return "verified"
 
-            case Strategy.CREATE_IF_ABSENT:
-                if exists:
-                    return "skipped"
-                self._write_secret(cred, overwrite=False)
-                return "created"
+            start = perf_counter()
+            try: 
+                match cred.strategy:
+                    case Strategy.FAIL_IF_ABSENT:
+                        if not exists:
+                            raise RuntimeError(f"absent at '{cred.vals}'")
+                        return "verified"
 
-            case Strategy.OVERWRITE:
-                if exists:
-                    self._write_secret(cred, overwrite=True)
-                    return "overwritten"
-                self._write_secret(cred, overwrite=False)
-                return "created"
+                    case Strategy.CREATE_IF_ABSENT:
+                        if exists:
+                            return "skipped"
+                        self._write_secret(cred, overwrite=False)
+                        return "created"
+
+                    case Strategy.OVERWRITE:
+                        if exists:
+                            self._write_secret(cred, overwrite=True)
+                            return "overwritten"
+                        self._write_secret(cred, overwrite=False)
+                        return "created"
+            finally:
+                logger.info("[%s] strategy/write duration=%.3fs", cred.id, perf_counter() - start)
+        finally:
+            logger.info("[%s], total duration=%.3fs", cred.id, perf_counter() - start_ind_cred)
 
     def _dry_run_phase(self) -> ProvisioningResult:
         result = ProvisioningResult()
