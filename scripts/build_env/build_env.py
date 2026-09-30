@@ -3,7 +3,7 @@ from envgenehelper import *
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
-    update_profile_name
+    get_profile_baseline, set_object_profile_field
 from utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
@@ -576,17 +576,15 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
                                                              render_context)
 
-    if override_profile_map:
-        for profile_key, profile_file_path in override_profile_map.items():
-            all_profiles[profile_key] = profile_file_path
-            profile_name = openYaml(profile_file_path, {}).get("name")
+    object_paths = {"cloud": cloudTemlatePath} | {ns.postfix: ns.definition_path for ns in namespaces}
+    for profile_key, profile_file_path in override_profile_map.items():
+        all_profiles[profile_key] = profile_file_path
+        set_object_profile_field(object_paths[profile_key], "name", openYaml(profile_file_path, {}).get("name"))
 
-            if profile_key == 'cloud':
-                update_profile_name(cloudTemlatePath, profile_name)
-
-            for ns in namespaces:
-                if profile_key == ns.postfix:
-                    update_profile_name(ns.definition_path, profile_name)
+    for profile_key, profile_file_path in all_profiles.items():
+        baseline = get_profile_baseline(openYaml(profile_file_path, {}))
+        if baseline:
+            set_object_profile_field(object_paths[profile_key], "baseline", baseline)
 
     for profile_key, profile_file_path in all_profiles.items():
         logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")
