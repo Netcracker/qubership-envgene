@@ -66,6 +66,8 @@ class BomCommonUtilsProfileTest {
                 .thenAnswer(i -> new HashMap<>(Map.of("replicas", 1, "cpu", "100m")));
         when(converter.decodeAndParse(eq("prod"), any(TypeReference.class)))
                 .thenAnswer(i -> new HashMap<>(Map.of("replicas", 2, "cpu", "1")));
+        when(converter.decodeAndParse(eq("nested"), any(TypeReference.class)))
+                .thenAnswer(i -> new HashMap<>(Map.of("resources.cpu", "1")));
         bomCommonUtils = new BomCommonUtils(converter, null, new ProfileServiceCliImpl(null, null, null));
         consoleLogger.addHandler(warningCollector);
     }
@@ -76,18 +78,24 @@ class BomCommonUtilsProfileTest {
     }
 
     private static Component baselines(String... names) {
+        return baselineFiles(Arrays.stream(names).map(name -> baselineFile(name + ".yaml", name)).toList());
+    }
+
+    private static Component baselineFiles(List<ComponentData> files) {
         Component component = new Component();
-        component.setData(Arrays.stream(names).map(name -> {
-            AttachmentText text = new AttachmentText();
-            text.setText(name);
-            Content content = new Content();
-            content.setAttachment(text);
-            ComponentData data = new ComponentData();
-            data.setName(name + ".yaml");
-            data.setContents(content);
-            return data;
-        }).toList());
+        component.setData(files);
         return component;
+    }
+
+    private static ComponentData baselineFile(String fileName, String contentKey) {
+        AttachmentText text = new AttachmentText();
+        text.setText(contentKey);
+        Content content = new Content();
+        content.setAttachment(text);
+        ComponentData data = new ComponentData();
+        data.setName(fileName);
+        data.setContents(content);
+        return data;
     }
 
     private static Profile override(String service, String param, Object value) {
@@ -157,6 +165,44 @@ class BomCommonUtilsProfileTest {
     void baselineOnlyOverrideWithoutApplications() {
         Profile baselineOnly = Profile.builder().name("over").baseline("prod").build();
         assertEquals(Map.of("replicas", 2, "cpu", "1"), resolve(baselines("dev", "prod"), "prod", baselineOnly));
+    }
+
+    @Test
+    void overrideForOtherApplicationIsIgnored() {
+        ServiceProfile serviceProfile = ServiceProfile.builder().name(SERVICE)
+                .parameters(List.of(ParameterProfile.builder().name("replicas").value(3).build())).build();
+        Profile otherApp = Profile.builder().name("over")
+                .applications(List.of(ApplicationProfile.builder().name("crm").services(List.of(serviceProfile)).build()))
+                .build();
+        assertEquals(Map.of("replicas", 2, "cpu", "1"), resolve(baselines("dev", "prod"), "prod", otherApp));
+    }
+
+    @Test
+    void overrideServiceWithEmptyParametersAppliesNothing() {
+        ServiceProfile serviceProfile = ServiceProfile.builder().name(SERVICE).parameters(List.of()).build();
+        Profile emptyService = Profile.builder().name("over")
+                .applications(List.of(ApplicationProfile.builder().name(APP).services(List.of(serviceProfile)).build()))
+                .build();
+        assertTrue(resolve(baselines("dev", "prod"), null, emptyService).isEmpty());
+        assertTrue(warnings.isEmpty(), warnings.toString());
+    }
+
+    @Test
+    void baselineFileNameMatchedByPartBeforeFirstDot() {
+        Component files = baselineFiles(List.of(baselineFile("dev.v2.yaml", "dev"), baselineFile("prod.yaml", "prod")));
+        assertEquals(Map.of("replicas", 1, "cpu", "100m"), resolve(files, "dev", null));
+    }
+
+    @Test
+    void dottedKeysAreExpandedIntoNestedValues() {
+        Map<String, Object> values = resolve(baselines("nested"), "nested", override(SERVICE, "resources.memory", "2Gi"));
+        assertEquals(Map.of("resources", Map.of("cpu", "1", "memory", "2Gi")), values);
+    }
+
+    @Test
+    void unmatchedBaselineWithoutOverrideWarns() {
+        resolve(baselines("dev", "prod"), "large", null);
+        assertEquals(1, warnings.size(), warnings.toString());
     }
 
     @Test

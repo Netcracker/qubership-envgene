@@ -31,12 +31,12 @@ class ProfileSelectionTest {
 
     @Test
     void overrideBaselineWinsOverObjectBaseline() {
-        assertEquals("prod", ProfileSelection.of(namespace("dev", override("prod"))).baseline());
+        assertEquals("perf", ProfileSelection.of(namespace("dev", override("perf"))).baseline());
     }
 
     @Test
     void overrideBaselineWithoutObjectBaseline() {
-        assertEquals("prod", ProfileSelection.of(namespace(null, override("prod"))).baseline());
+        assertEquals("perf", ProfileSelection.of(namespace(null, override("perf"))).baseline());
     }
 
     @Test
