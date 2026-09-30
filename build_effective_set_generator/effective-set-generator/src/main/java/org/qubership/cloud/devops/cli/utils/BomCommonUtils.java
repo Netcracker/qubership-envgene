@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.REGISTRY_EXTRACT_FAILED;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logDebug;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logWarning;
 
@@ -220,6 +221,8 @@ public class BomCommonUtils {
             }
         }
         boolean overrideApplied = profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
+        logDebug(String.format("Resource profile for service '%s' of application '%s': baseline '%s', override applied: %s",
+                serviceName, appName, baseline, overrideApplied));
         if (overrideApplied && baseline == null) {
             logWarning(String.format("Resource profile override '%s' sets parameters for service '%s' of application '%s' but no baseline is resolved",
                     overrideProfile.getName(), serviceName, appName));

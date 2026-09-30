@@ -37,7 +37,6 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
                 break
         if templateType not in result:
             raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
-    logger.info(f"Env specific resource profiles are: \n{dump_as_yaml_format(result)}")
     return result
 
 
@@ -46,7 +45,6 @@ def getResourceProfilesFromDir(dir):
     rpYamls = findAllYamlsInDir(dir)
     for profileFile in rpYamls:
         result[extractNameFromFile(profileFile)] = profileFile
-    logger.info(f"Resource profiles in folder {dir}: \n{dump_as_yaml_format(result)}")
     return result
 
 
@@ -183,26 +181,25 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
                                       object_baselines):
     override_profile_map = {}
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
+    combination_mode_key = "mergeEnvSpecificResourceProfiles"
+    try:
+        combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
+    except KeyError:
+        logger.info(
+            f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
+        combination_mode = 'true'
+    common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
         if profile_key not in all_profiles:
             logger.info(f"No template profile for profile key '{profile_key}', attaching standalone "
                         f"environment specific profile {env_specific_profile_path}")
             override_profile_map[profile_key] = env_specific_profile_path
             continue
-        logger.info(f"Found template override profile for profile key '{profile_key}'"
-                    f" with environment specific profile {env_specific_profile_path}")
         template_profile_file_path = all_profiles[profile_key]
+        logger.info(f"Profile key '{profile_key}' has template profile '{template_profile_file_path}' "
+                    f"and environment specific profile '{env_specific_profile_path}'")
         template_profile_yaml = openYaml(template_profile_file_path)
         env_specific_profile_yaml = openYaml(env_specific_profile_path)
-
-        combination_mode_key = "mergeEnvSpecificResourceProfiles"
-        try:
-            combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
-        except KeyError:
-            logger.info(
-                f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
-            combination_mode = 'true'
-        common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
 
         if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")

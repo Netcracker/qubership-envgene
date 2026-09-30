@@ -106,6 +106,9 @@ public class NamespaceApplicationMap extends DynamicMap {
 
     private ApplicationBomDTO getApplicationBomDto(String appName, String appFileRef) {
         ProfileSelection selection = ProfileSelection.of(namespace);
+        log.info("Resource profile for namespace '{}', application '{}': baseline '{}', override profile '{}'",
+                namespace.getName(), appName, selection.baseline(),
+                selection.override() != null ? selection.override().getName() : null);
         BomReaderUtils bomReaderUtils = Injector.getInstance().get(BomReaderUtils.class);
         return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, selection.baseline(), selection.override());
     }
