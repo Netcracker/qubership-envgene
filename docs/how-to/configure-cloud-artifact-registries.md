@@ -157,7 +157,6 @@ name: "env-template"
 groupId: "com.example.templates"
 artifactId: "env-template"
 registry:
-  version: "2.0"
   name: "aws-codeartifact"
   authConfig:
     aws-auth:
@@ -323,7 +322,6 @@ name: "env-template"
 groupId: "com.example.templates"
 artifactId: "env-template"
 registry:
-  version: "2.0"
   name: "gcp-artifact-registry"
   authConfig:
     gcp-auth:
@@ -372,12 +370,13 @@ when different environments use different registries or accounts.
 | `aws`         | `assume_role`     | No (raises error) | -                  | -                                                   |
 | `gcp`         | `service_account` | Yes               | `secret`           | `secret` = full JSON of GCP service account key     |
 | `gcp`         | `federation`      | No (raises error) | -                  | -                                                   |
+| `azure`       | `oauth2`          | No (raises error) | -                  | -                                                   |
 | `nexus`       | `user_pass`       | Yes               | `usernamePassword` | `username`, `password`                              |
 | `artifactory` | `user_pass`       | Yes               | `usernamePassword` | `username`, `password`                              |
 | any           | `anonymous`       | Yes               | none               | -                                                   |
 
 > [!WARNING]
-> The `assume_role` (AWS) and `federation` (GCP) auth methods appear in the schema but are not implemented. Using them causes a runtime error. Use `secret` for AWS and `service_account` for GCP.
+> The `assume_role` (AWS), `federation` (GCP), and `oauth2` (Azure) auth methods appear in the schema but are not implemented. Using them causes a runtime error. Use `secret` for AWS and `service_account` for GCP.
 
 ## See also
 
