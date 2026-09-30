@@ -36,7 +36,9 @@ import org.qubership.cloud.parameters.processor.dto.DeploymentConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -52,6 +54,7 @@ public class BomCommonUtils {
     private final FileDataConverter fileDataConverter;
     private final ProfileService profileService;
     private final RegistryConfigurationService registryConfigurationService;
+    private final Set<String> reportedProfileWarnings = ConcurrentHashMap.newKeySet();
     private static final List<String> SERVICE_MIME_TYPES = List.of("application/vnd.qubership.configuration.smartplug", "application/vnd.qubership.configuration.frontend", "application/vnd.qubership.configuration.cdn", "application/vnd.qubership.configuration", "application/vnd.qubership.service", "application/octet-stream");
     private static final Pattern DOCKER_PATTERN = Pattern.compile("(pkg:docker.*)\\?registry_id=(.*)&repository_id=(.*)");
 
@@ -216,7 +219,7 @@ public class BomCommonUtils {
                         new TypeReference<HashMap<String, Object>>() {
                         }));
             } else {
-                logWarning(String.format("Baseline '%s' not found in service '%s' of application '%s', applying override only",
+                warnOnce(String.format("Baseline '%s' not found in service '%s' of application '%s', applying override only",
                         baseline, serviceName, appName));
             }
         }
@@ -224,8 +227,14 @@ public class BomCommonUtils {
         logDebug(String.format("Resource profile for service '%s' of application '%s': baseline '%s', override applied: %s",
                 serviceName, appName, baseline, overrideApplied));
         if (overrideApplied && baseline == null) {
-            logWarning(String.format("Resource profile override '%s' sets parameters for service '%s' of application '%s' but no baseline is resolved",
+            warnOnce(String.format("Resource profile override '%s' sets parameters for service '%s' of application '%s' but no baseline is resolved",
                     overrideProfile.getName(), serviceName, appName));
+        }
+    }
+
+    private void warnOnce(String message) {
+        if (reportedProfileWarnings.add(message)) {
+            logWarning(message);
         }
     }
 }

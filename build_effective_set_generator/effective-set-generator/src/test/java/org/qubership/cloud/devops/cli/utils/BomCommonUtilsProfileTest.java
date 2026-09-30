@@ -206,6 +206,13 @@ class BomCommonUtilsProfileTest {
     }
 
     @Test
+    void sameWarningIsReportedOnce() {
+        resolve(baselines("dev", "prod"), "large", override(SERVICE, "replicas", 3));
+        resolve(baselines("dev", "prod"), "large", override(SERVICE, "replicas", 3));
+        assertEquals(1, warnings.size(), warnings.toString());
+    }
+
+    @Test
     void unmatchedBaselineWarns() {
         resolve(baselines("dev", "prod"), "large", override(SERVICE, "replicas", 3));
         assertEquals(1, warnings.size(), warnings.toString());

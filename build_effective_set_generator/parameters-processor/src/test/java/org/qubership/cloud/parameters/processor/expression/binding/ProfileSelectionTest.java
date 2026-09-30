@@ -50,6 +50,21 @@ class ProfileSelectionTest {
     }
 
     @Test
+    void blankOverrideBaselineIsAbsent() {
+        assertEquals("dev", ProfileSelection.of(namespace("dev", override("   "))).baseline());
+    }
+
+    @Test
+    void blankObjectBaselineIsAbsent() {
+        assertNull(ProfileSelection.of(namespace("   ", override(null))).baseline());
+    }
+
+    @Test
+    void cloudSideWhenNamespaceBaselineIsBlank() {
+        assertSame(CLOUD_OVERRIDE, ProfileSelection.of(namespace("   ", null)).override());
+    }
+
+    @Test
     void emptyObjectBaselineIsAbsent() {
         assertNull(ProfileSelection.of(namespace("", override(null))).baseline());
     }

@@ -348,6 +348,27 @@ public class CmdbCliTest {
                 profileParams(generateProfileEs(tempDir, envsPath)));
     }
 
+    @Test
+    void testProfileServiceWithoutParametersFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, NS_FILE, "ns-over", "dev");
+        Path profiles = envsPath.resolve("cluster-01/pl-02/Profiles");
+        Files.createDirectories(profiles);
+        Files.writeString(profiles.resolve("ns-over.yml"), """
+                name: "ns-over"
+                applications:
+                  - name: "vals-app"
+                    services:
+                      - name: "alertmanager"
+                """);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
     private static final String NS_FILE = "cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
     private static final String CLOUD_FILE = "cluster-01/pl-02/cloud.yml";
     private static final String VALS_APP_SBOM = "vals-app/vals-app-0.1.0-20261215.141230-3-RELEASE.sbom.json";

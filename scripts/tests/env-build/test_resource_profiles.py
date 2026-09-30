@@ -41,9 +41,10 @@ class TestMergeResourceProfiles:
         assert template["baseline"] == "dev"
         assert template["applications"][0]["services"][0]["parameters"][0]["value"] == 2
 
-    def test_empty_env_specific_baseline_is_absent(self):
+    @pytest.mark.parametrize("baseline", ["", "   "])
+    def test_blank_env_specific_baseline_is_absent(self, baseline):
         template = _profile("tmpl", baseline="dev")
-        merge_resource_profiles(template, _profile("env", baseline=""), "env")
+        merge_resource_profiles(template, _profile("env", baseline=baseline), "env")
         assert template["baseline"] == "dev"
 
     def test_warns_on_baseline_change_with_template_parameters(self):

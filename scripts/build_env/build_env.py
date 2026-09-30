@@ -582,6 +582,10 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     for profile_key, profile_file_path in override_profile_map.items():
         all_profiles[profile_key] = profile_file_path
         profile_name = openYaml(profile_file_path, {}).get("name")
+        if not profile_name:
+            logger.warning(f"Environment specific resource profile '{profile_file_path}' for '{profile_key}' has no "
+                           f"'name', so the profile cannot be found during effective set generation and its "
+                           f"parameters are not applied")
         logger.info(f"'{profile_key}' profile.name is '{profile_name}' from environment specific profile "
                     f"'{profile_file_path}'")
         set_object_profile_field(object_paths[profile_key], "name", profile_name)

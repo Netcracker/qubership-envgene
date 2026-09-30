@@ -70,7 +70,8 @@ def get_param_from_resource_profile_service(paramName, service_yaml):
 
 
 def get_profile_baseline(profile_yaml):
-    return profile_yaml.get("baseline") or None
+    baseline = profile_yaml.get("baseline")
+    return baseline if baseline and baseline.strip() else None
 
 
 def has_profile_parameters(profile_yaml):

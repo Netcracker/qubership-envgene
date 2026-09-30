@@ -25,13 +25,13 @@ public record ProfileSelection(String baseline, Profile override) {
     public static ProfileSelection of(Namespace namespace) {
         String objectBaseline = namespace.getBaseline();
         Profile override = namespace.getProfile();
-        if (StringUtils.isEmpty(objectBaseline) && override == null) {
+        if (StringUtils.isBlank(objectBaseline) && override == null) {
             objectBaseline = namespace.getCloud().getBaseline();
             override = namespace.getCloud().getProfile();
         }
-        String baseline = override != null && StringUtils.isNotEmpty(override.getBaseline())
+        String baseline = override != null && StringUtils.isNotBlank(override.getBaseline())
                 ? override.getBaseline()
-                : StringUtils.defaultIfEmpty(objectBaseline, null);
+                : StringUtils.defaultIfBlank(objectBaseline, null);
         return new ProfileSelection(baseline, override);
     }
 }

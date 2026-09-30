@@ -46,7 +46,9 @@ import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ApplicationProfileDto;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ServiceProfileDto;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
@@ -283,7 +285,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 }
             });
         } catch (Exception e) {
-            throw new FileParseException("Failure in reading input Directory", e);
+            throw new FileParseException("Failure in reading input Directory: " + e.getMessage(), e);
         }
         inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
     }
@@ -358,6 +360,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         String folderName = parent.getFileName().toString();
         if (folderName.equals(GenericConstants.PROFILES_FOLDER)) {
             ProfileFullDto profileFullDto = fileDataConverter.parseInputFile(ProfileFullDto.class, file.toFile());
+            validateProfileStructure(file, profileFullDto);
             profileFullDto.setApplications(Optional.ofNullable(profileFullDto.getApplications()).orElse(List.of()).stream()
                     .filter(app -> appsToProcess.contains(app.getName())).collect(Collectors.toList()));
             profilesMap.putIfAbsent(profileFullDto.getName(), profileFullDto);
@@ -488,4 +491,20 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         inputData.setExternalOnly(hasExternal);
     }
 
+
+    private void validateProfileStructure(Path file, ProfileFullDto profile) {
+        for (ApplicationProfileDto app : Optional.ofNullable(profile.getApplications()).orElse(List.of())) {
+            if (app.getServices() == null) {
+                throw new FileParseException(String.format("Resource profile %s: application '%s' has no 'services'",
+                        file, app.getName()));
+            }
+            for (ServiceProfileDto service : app.getServices()) {
+                if (service.getParameters() == null) {
+                    throw new FileParseException(String.format(
+                            "Resource profile %s: service '%s' of application '%s' has no 'parameters'",
+                            file, service.getName(), app.getName()));
+                }
+            }
+        }
+    }
 }
