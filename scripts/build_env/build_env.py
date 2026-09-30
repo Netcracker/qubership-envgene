@@ -602,12 +602,11 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
             logger.info(f"'{profile_key}' has no baseline: neither resource profile '{profile_file_path}' "
                         f"nor the object sets it")
 
-    for profile_key, profile_file_path in all_profiles.items():
-        logger.info(f"Copying '{profile_key}' profile '{profile_file_path}' to resulting directory "
-                    f"'{result_profiles_dir}'")
+    for profile_file_path in dict.fromkeys(all_profiles.values()):
+        logger.info(f"Copying profile '{profile_file_path}' to resulting directory '{result_profiles_dir}'")
         copy_path(profile_file_path, f"{result_profiles_dir}/")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
-        beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
+        beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text, validate=False)
 
 
 def set_cleaned_mark(namespaces: list[NamespaceFile]):

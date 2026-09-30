@@ -1,4 +1,5 @@
 import copy
+import functools
 import json
 import pathlib
 import threading
@@ -159,11 +160,26 @@ def alignYamlComments(yamlContent, extra_indent=0):
     return None
 
 
-def sortYaml(yaml_data, schema_path, remove_additional_props):
-    with open(schema_path, 'r') as f:
-        schema_data = json.load(f)
-    logger.debug(f'Checking yaml with schema: {schema_path}')
-    jsonschema.validate(yaml_data, schema_data)
+@functools.lru_cache(maxsize=None)
+def _load_schema(schema_path: str) -> dict:
+    return openJson(schema_path)
+
+
+@functools.lru_cache(maxsize=None)
+def _schema_validator(schema_path: str):
+    schema = _load_schema(schema_path)
+    cls = jsonschema.validators.validator_for(schema)
+    cls.check_schema(schema)
+    return cls(schema)
+
+
+def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
+    schema_data = _load_schema(str(schema_path))
+    if validate:
+        logger.debug(f'Checking yaml with schema: {schema_path}')
+        error = jsonschema.exceptions.best_match(_schema_validator(str(schema_path)).iter_errors(yaml_data))
+        if error is not None:
+            raise error
     sort_data = jschon_tools.process_json_doc(
         schema_data=schema_data,
         doc_data=yaml_data,
@@ -296,11 +312,11 @@ def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, co
 
 
 def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=False, wrap_all_strings=False,
-                 remove_additional_props=False):
+                 remove_additional_props=False, validate=True):
     logger.info(f'Beautifying yaml: {file_path} with schema: {schema_path}')
     yamlData = openYaml(file_path)
     if schema_path:
-        yamlData = sortYaml(yamlData, schema_path, remove_additional_props)
+        yamlData = sortYaml(yamlData, schema_path, remove_additional_props, validate)
     if wrap_all_strings:
         make_quotes_for_all_strings(yamlData)
     else:
@@ -425,12 +441,14 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
-    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
+    schema_content = _load_schema(str(schema_file_path)) if schema_file_path else input_schema_content
 
     if schemas_dir:
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
         resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
+    elif schema_file_path:
+        errors = sorted(_schema_validator(str(schema_file_path)).iter_errors(yaml_content), key=lambda e: e.path)
     else:
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
     if len(errors) > 0:

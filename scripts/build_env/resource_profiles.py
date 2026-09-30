@@ -143,15 +143,20 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
 
     if not needed_resource_profiles:
         return profiles_map
+    validity_by_path = {}
     for template_name, needed_profile in needed_resource_profiles.items():
         if needed_profile not in source_profiles:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue
         profile_path = source_profiles[needed_profile]
         logger.info(f"Found resource profile {needed_profile} in path: {profile_path}")
-        try:
-            validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
-        except ValueError:
+        if profile_path not in validity_by_path:
+            try:
+                validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
+                validity_by_path[profile_path] = True
+            except ValueError:
+                validity_by_path[profile_path] = False
+        if not validity_by_path[profile_path]:
             not_valid += rp_data_template.format(needed_profile, template_name)
             continue
         profiles_map[template_name] = profile_path
