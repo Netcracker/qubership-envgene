@@ -146,7 +146,7 @@ def run_regdefv2_adapter(ctx) -> None:
     env_dir = str(get_current_env_dir_from_env_vars())
     render_context_vars = build_minimal_render_context(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
     e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
-        ctx.env_name, render_context_vars, env_dir, helper.pubreg_transient_dir(ctx.work_dir) / "parameters"
+        ctx.env_name, render_context_vars, env_dir, helper.render_workspace_dir(ctx.work_dir) / "parameters"
     )
     params = _resolve_pubreg_params(e2e_parameters, env_dir)
 

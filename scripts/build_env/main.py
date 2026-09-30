@@ -2,7 +2,8 @@ from envgenehelper import NamespaceRole, Path, check_dir_exist_and_create, check
 from envgene_shared import decrypted_cred_files
 from envgenehelper.deployer import *
 
-from build_env.build_env import build_env, collect_paramset_sources, process_additional_template_parameters
+from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
+    process_additional_template_parameters
 from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
@@ -15,17 +16,24 @@ ENV_DEFINITION_FILE_NAME = "env_definition.yml"
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
-                                  render_parameters_dir, render_profiles_dir, output_dir):
+                                  render_parameters_dir, render_profiles_dir, output_dir, reuse_render_workspace=False):
     # clearing folders
     delete_dir(render_dir)
-    delete_dir(render_parameters_dir)
     delete_dir(render_profiles_dir)
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
-    collect_paramset_sources(source_env_dir, templates_dirs, render_parameters_dir)
+    if reuse_render_workspace and check_dir_exists(render_parameters_dir):
+        logger.info(f"Using common and instance paramsets copied by regdefv2_adapter to {render_parameters_dir}, "
+                    f"adding origin/peer template paramsets")
+        bg_templates_dirs = {role: path for role, path in templates_dirs.items() if role != NamespaceRole.COMMON}
+        copy_template_paramsets(bg_templates_dirs, render_parameters_dir)
+    else:
+        delete_dir(render_parameters_dir)
+        copy_template_paramsets(templates_dirs, render_parameters_dir)
+        copy_instance_paramsets(source_env_dir, render_parameters_dir)
     # copying all template resource profiles
     copy_path(f'{templates_dirs[NamespaceRole.COMMON]}/resource_profiles', render_profiles_dir)
     return render_env_dir
@@ -66,17 +74,19 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     return resulting_dir
 
 
-def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
+def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir,
+                      reuse_render_workspace=False):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_dir = f"{base_dir}/tmp/render"
-    render_parameters_dir = f"{base_dir}/tmp/parameters_templates"
+    render_parameters_dir = str(render_workspace_dir(base_dir) / "parameters")
     render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
 
 
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
-                                                   render_parameters_dir, render_profiles_dir, output_dir)
+                                                   render_parameters_dir, render_profiles_dir, output_dir,
+                                                   reuse_render_workspace)
     pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
     # get deployer parameters
     cmdb_url, _, _ = get_deployer_config()
@@ -208,7 +218,8 @@ def validate_parameter_files(param_files):
     return errors
 
 
-def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir, output_dir, work_dir):
+def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir, output_dir, work_dir,
+                       reuse_render_workspace=False):
     logger.info(f'env: {env_name}')
     logger.info(f'cluster_name: {cluster_name}')
     logger.info(f'templates_dirs: {templates_dirs}')
@@ -225,11 +236,11 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
     resulting_env_dir, is_external_cred_env = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
-                                          output_dir, work_dir)
+                                          output_dir, work_dir, reuse_render_workspace)
     create_credentials(resulting_env_dir, env_dir, all_instances_dir, is_external_cred_env)
 
 
-def run_build_environment():
+def run_build_environment(reuse_render_workspace=False):
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
@@ -239,4 +250,5 @@ def run_build_environment():
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
     with decrypted_cred_files():
-        render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
+        render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir,
+                           reuse_render_workspace)
