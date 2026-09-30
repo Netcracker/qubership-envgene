@@ -7,9 +7,10 @@ them before use.
 For background on the mechanism, see [System certificate configuration](/docs/features/system-certificate.md).
 
 - [Configure system certificates](#configure-system-certificates)
+  - [Running this guide](#running-this-guide)
   - [Prerequisites](#prerequisites)
+  - [Required Environment Variables](#required-environment-variables)
   - [Steps](#steps)
-  - [Use a CI/CD variable instead of committed files](#use-a-cicd-variable-instead-of-committed-files)
   - [Obtain the required certificates](#obtain-the-required-certificates)
     - [Retrieve server certificates with OpenSSL](#retrieve-server-certificates-with-openssl)
     - [Extract individual certificates from a chain](#extract-individual-certificates-from-a-chain)
@@ -22,16 +23,83 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
   - [Usage examples](#usage-examples)
     - [Secure artifact repositories](#secure-artifact-repositories)
     - [Internal services with self-signed certificates](#internal-services-with-self-signed-certificates)
+  - [Troubleshooting](#troubleshooting)
+
+## Running this guide
+
+**No installation needed** — run with `npx`. Fill in your values using the template in [Required Inputs](#required-inputs), save to any file (e.g. `my-inputs.txt`), then run:
+
+`(set -a; source my-inputs.txt; npx runme run --all --filename configure-system-certificates.md)`
+
+See [How to run guides with runme](/docs/how-to/how-to-run-guides-with-runme.md) for full CLI, VS Code, pipeline, and AI agent instructions.
+
+Steps marked **Manual step — cannot be automated** are blockquotes — runme skips them automatically.
 
 ## Prerequisites
 
-- Write access to the environment instance repository.
+- Write access to the environment instance repository, cloned locally.
 - The CA certificate, or full certificate chain, of each target service in PEM format.
-- OpenSSL and cURL available locally for the verification steps.
+- OpenSSL, cURL, and Node.js (v16+) available locally.
+
+Verify tools are available:
+
+```bash
+openssl version
+# Expected: OpenSSL 1.x.x or 3.x.x
+
+curl --version | head -1
+# Expected: curl x.x.x ...
+
+node --version
+# Expected: v16.x.x or higher
+```
+
+## Required Inputs
+
+Create a file with your values (any filename, e.g. `my-inputs.txt`) and load it with `source` before running.
+
+| Variable | Required | Example | Description |
+|---|---|---|---|
+| `CERT` | Yes | `configuration/certs/ca-chain.pem` | Path to the CA cert file, relative to repo root |
+| `HOST` | Yes | `artifactory.company.com` | Hostname of the TLS service to trust |
+| `PORT` | No | `443` | Port of the TLS service (default: `443`) |
+
+**Template** — copy, fill in your values, save as any filename:
+
+```bash {"excludeFromRunAll":true,"name":"input-template"}
+CERT=configuration/certs/ca-chain.pem
+HOST=artifactory.company.com
+PORT=443
+```
+
+Validate inputs (first runnable cell — fails immediately if a required variable is missing):
+
+```bash
+# validate-inputs
+: "${CERT:?CERT is required — see Required Inputs section}"
+: "${HOST:?HOST is required — see Required Inputs section}"
+PORT="${PORT:-443}"
+echo "Inputs OK: CERT=$CERT  HOST=$HOST  PORT=$PORT"
+```
 
 ## Steps
 
-1. Create a `certs` directory inside the `configuration` folder of your environment instance repository:
+These steps assume you have already cloned your instance repository locally and are running commands from its root.
+
+1. **Create the `certs` directory:**
+
+   ```bash
+   mkdir -p configuration/certs
+   ```
+
+   Verify:
+
+   ```bash
+   ls -d configuration/certs
+   # Expected: configuration/certs
+   ```
+
+   Expected directory layout after adding your certificate files:
 
    ```text
    /configuration
@@ -40,36 +108,36 @@ For background on the mechanism, see [System certificate configuration](/docs/fe
        ca-chain-internal.pem
    ```
 
-2. Place your CA certificate files in this directory. Each file must be PEM-encoded and use a `.crt` or `.pem`
-   extension.
-3. Commit and push the changes to your repository.
-4. Run the pipeline. EnvGene loads the certificates and rebuilds the runner trust store before the other steps run.
+2. **Place your CA certificate files in `configuration/certs/`.**
 
-## Use a CI/CD variable instead of committed files
+   > **Manual step — cannot be automated:** Certificate files must be obtained from the target services
+   > (see [Obtain the required certificates](#obtain-the-required-certificates)) and copied into place manually.
+   > Each file must be PEM-encoded and use a `.crt` or `.pem` extension.
+   >
+   > Verify: run the [Check that the file parses](#check-that-the-file-parses) commands against each file before committing.
 
-To keep certificate files out of the repository, store the base64-encoded PEM bundle in the
-`SSL_CERTIFICATES_BUNDLE` CI/CD variable. EnvGene decodes the value and installs it into the runner trust store
-before the other steps run.
+3. **Commit and push the changes:**
 
-1. Verify the PEM bundle with the steps in [Verify a certificate](#verify-a-certificate).
-2. base64-encode the file as a single line:
+   > **Note:** Run these from the root of your cloned instance repository.
 
-   ```bash
-   base64 -w 0 ca-bundle.pem
+   ```bash {"excludeFromRunAll":true}
+   git add configuration/certs/
+   git commit -m "Add CA certificates for internal services"
+   git push
    ```
 
-   On macOS, use `base64 -i ca-bundle.pem | tr -d '\n'`.
+   Verify:
 
-3. Create a CI/CD variable named `SSL_CERTIFICATES_BUNDLE` with the encoded string as its value. Mask the
-   variable when your CI/CD platform allows it.
-4. Run the pipeline.
+   ```bash {"excludeFromRunAll":true}
+   git log --oneline -1
+   # Expected: commit message matching what you entered above
+   ```
 
-> [!IMPORTANT]
-> The value must be valid base64 of PEM content. If decoding fails, the job stops with an explicit error.
+4. **Run the pipeline.**
 
-`SSL_CERTIFICATES_BUNDLE` and `configuration/certs/` can be used together. EnvGene installs certificates from
-both sources. For a bundle that exceeds your CI/CD platform's variable size limit, use `configuration/certs/`
-instead. See [Certificate sources](/docs/features/system-certificate.md#certificate-sources).
+   > **Manual step — cannot be automated:** Pipeline execution requires GitLab CI access. Trigger the pipeline
+   > from the GitLab UI or via the API. EnvGene loads the certificates and rebuilds the runner trust store
+   > before the other steps run.
 
 ## Obtain the required certificates
 
@@ -77,22 +145,27 @@ Before adding certificates, identify and retrieve them from your target services
 
 ### Retrieve server certificates with OpenSSL
 
-For an HTTPS service:
+Print the full certificate chain presented by a server:
 
-```bash
-# Print the certificate chain presented by a server
-openssl s_client -connect your-site.com:443 -servername your-site.com -showcerts
+```bash {"excludeFromRunAll":true}
+openssl s_client -connect "$HOST:$PORT" -servername "$HOST" -showcerts
+```
 
-# Save the server certificate to a file
-openssl s_client -connect your-site.com:443 -servername your-site.com < /dev/null 2>/dev/null \
+Save the server certificate to a file:
+
+```bash {"excludeFromRunAll":true}
+openssl s_client -connect "$HOST:$PORT" -servername "$HOST" < /dev/null 2>/dev/null \
   | openssl x509 -outform PEM > server-cert.pem
 ```
 
-For a service on a custom port, replace the host and port:
+Verify the saved file parsed correctly:
 
-```bash
-openssl s_client -connect internal-service.company.com:8443 -showcerts
+```bash {"excludeFromRunAll":true}
+openssl x509 -in server-cert.pem -noout -subject -issuer -dates
+# Expected: subject, issuer, and validity date lines with no error
 ```
+
+For a service on a custom port, set `$HOST` and `$PORT` accordingly before running the commands above.
 
 ### Extract individual certificates from a chain
 
@@ -110,11 +183,12 @@ When you run `openssl s_client -showcerts`, the output lists each certificate in
 -----END CERTIFICATE-----
 ```
 
-Copy the CA certificates (intermediate and root) into a single file to use as the chain.
+Copy the CA certificates (intermediate and root) into a single file to use as the chain. The server leaf
+certificate is not needed for trust-store installation.
 
 ### Export certificates from a browser
 
-For a web service you can also export the chain from a browser:
+> **Manual step — cannot be automated:** Certificate export from a browser requires a GUI browser session.
 
 1. Open the site in your browser.
 2. Select the lock icon in the address bar.
@@ -124,15 +198,18 @@ For a web service you can also export the chain from a browser:
 
 ## Build a certificate chain file
 
-You can combine several PEM certificates into one file. Place the root CA first, then any intermediate CAs:
+Combine several PEM certificates into one file using `cat`. Place the root CA first, then any intermediate CAs:
 
-```text
------BEGIN CERTIFICATE-----
-[Root CA certificate]
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-[Intermediate CA certificate]
------END CERTIFICATE-----
+```bash {"excludeFromRunAll":true}
+cat root-ca.pem intermediate-ca.pem > configuration/certs/ca-chain.pem
+```
+
+Verify the combined file lists all expected certificates:
+
+```bash {"excludeFromRunAll":true}
+openssl crl2pkcs7 -nocrl -certfile configuration/certs/ca-chain.pem \
+  | openssl pkcs7 -print_certs -noout
+# Expected: one Subject/Issuer block per certificate in the file
 ```
 
 > [!NOTE]
@@ -144,26 +221,22 @@ Keep separate chains in separate files, for example `ca-chain-internal.pem` and 
 
 ## Verify a certificate
 
-Verify a certificate before you commit it. Set the variables once:
-
-```bash
-CERT=configuration/certs/ca-chain.pem
-HOST=artifactory.company.com
-PORT=443
-```
+Verify a certificate before you commit it. Ensure `$CERT`, `$HOST`, and `$PORT` are set from the
+[Required Environment Variables](#required-environment-variables) section.
 
 ### Check that the file parses
 
 Confirm the file is a valid PEM certificate and read its subject, issuer, and validity dates:
 
-```bash
+```bash {"excludeFromRunAll":true}
 openssl x509 -in "$CERT" -noout -subject -issuer -dates
+# Expected: subject, issuer, and validity date lines — no error
 ```
 
 For a file that holds several certificates, `openssl x509` reads only the first one. To confirm that every block
 parses, list them all:
 
-```bash
+```bash {"excludeFromRunAll":true}
 openssl crl2pkcs7 -nocrl -certfile "$CERT" | openssl pkcs7 -print_certs -noout
 ```
 
@@ -175,7 +248,7 @@ means the file is not a valid PEM certificate.
 Confirm that the CA in `$CERT` is enough to validate the TLS connection to the host. Look for
 `Verify return code: 0 (ok)`:
 
-```bash
+```bash {"excludeFromRunAll":true}
 echo | openssl s_client -connect "$HOST:$PORT" -servername "$HOST" -CAfile "$CERT" 2>&1 \
   | grep -E "Verify return code|verify error"
 ```
@@ -187,7 +260,7 @@ echo | openssl s_client -connect "$HOST:$PORT" -servername "$HOST" -CAfile "$CER
 
 Confirm that a real client trusts the host with this CA. The command exits with `curl OK` on success:
 
-```bash
+```bash {"excludeFromRunAll":true}
 curl --cacert "$CERT" -sSf "https://$HOST:$PORT" -o /dev/null && echo "curl OK"
 ```
 
@@ -201,33 +274,65 @@ curl --cacert "$CERT" -sSf "https://$HOST:$PORT" -o /dev/null && echo "curl OK"
 
 **Scenario**: EnvGene needs to connect to an artifact repository exposed over TLS with a private CA.
 
-**Steps**:
+Create the directory and copy the certificate:
 
-1. Obtain the CA certificate, or chain, of the repository.
-2. Place the file in the `configuration/certs/` directory:
+```bash {"excludeFromRunAll":true}
+mkdir -p configuration/certs
+cp ca-artifactory.pem configuration/certs/ca-artifactory.pem
+```
 
-   ```text
-   /configuration
-     /certs
-       ca-artifactory.pem
-   ```
+Verify the certificate is valid before committing:
 
-3. Verify the certificate with the steps in [Verify a certificate](#verify-a-certificate).
-4. Commit and push. The next pipeline run trusts the repository.
+```bash {"excludeFromRunAll":true}
+CERT="configuration/certs/ca-artifactory.pem"
+openssl x509 -in "$CERT" -noout -subject -issuer -dates
+```
+
+Expected layout:
+
+```text
+/configuration
+  /certs
+    ca-artifactory.pem
+```
+
+Commit and push. The next pipeline run trusts the repository.
 
 ### Internal services with self-signed certificates
 
 **Scenario**: EnvGene needs to reach an internal service that uses a self-signed certificate.
 
-**Steps**:
+Create the directory and copy the certificate:
 
-1. Obtain the self-signed certificate of the internal service.
-2. Place the certificate in the `configuration/certs/` directory:
+```bash {"excludeFromRunAll":true}
+mkdir -p configuration/certs
+cp ca-internal-service.pem configuration/certs/ca-internal-service.pem
+```
 
-   ```text
-   /configuration
-     /certs
-       ca-internal-service.pem
-   ```
+Verify:
 
-3. Commit and push. The next pipeline run adds the certificate to the trust store.
+```bash {"excludeFromRunAll":true}
+CERT="configuration/certs/ca-internal-service.pem"
+openssl x509 -in "$CERT" -noout -subject -issuer -dates
+```
+
+Expected layout:
+
+```text
+/configuration
+  /certs
+    ca-internal-service.pem
+```
+
+Commit and push. The next pipeline run adds the certificate to the trust store.
+
+## Troubleshooting
+
+| Symptom                    | Check                                                       |
+|----------------------------|-------------------------------------------------------------|
+| Certificate not recognized | PEM encoding, `.crt` or `.pem` extension, correct directory |
+| Connection failures        | Certificate not expired, chain complete                     |
+| Pipeline failures          | Pipeline logs show certificate loading errors               |
+
+To check expiry and chain completeness, rerun the commands in [Verify a certificate](#verify-a-certificate)
+against the target host from the runner.
