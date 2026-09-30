@@ -92,14 +92,31 @@ git-system-follower install "$INSTANCE_PACKAGE_IMAGE" \
    --extra DOCKER_REGISTRY "$DOCKER_REGISTRY" no-masked
 ```
 
-GSF sets `GITLAB_TOKEN` and `DOCKER_REGISTRY` as CI/CD variables on the target repository during
-installation. No manual configuration in GitLab Settings is required afterwards.
-Re-running the same command with updated values applies the changes automatically.
-
 > [!NOTE]
 > The token passed via `-t` must have the **Maintainer** role on the target repository.
 > A Developer-role token can push files but cannot set CI/CD variables, and GSF will exit with
 > a 403 error during variable provisioning.
+
+### Step 3: Configure CI/CD Variables
+
+`GITLAB_TOKEN` is mandatory. Additional variables such as `DOCKER_REGISTRY` can be passed if
+required by the project.
+
+| Variable name     | Masked |
+|-------------------|--------|
+| `GITLAB_TOKEN`    | Yes    |
+| `DOCKER_REGISTRY` | No     |
+
+**Option A — Automated (recommended):** Pass each variable as `--extra` in the GSF command as
+shown in Step 2. GSF sets it automatically during installation. The token passed via `-t` must have
+the Maintainer role for this to work.
+
+**Option B — Manual:** If you ran GSF without `--extra`, or if automated provisioning failed,
+set the variables manually:
+
+1. Open the instance repository in GitLab.
+2. Go to **Settings → CI/CD → Variables**.
+3. Add each required variable from the table above.
 
 **Example:**
 
@@ -133,3 +150,4 @@ git clone --branch "$INSTANCE_REPO_BRANCH" \
 git -C instance-verify log --oneline -3
 # Expected: one or more commits from the GSF install run
 ```
+
