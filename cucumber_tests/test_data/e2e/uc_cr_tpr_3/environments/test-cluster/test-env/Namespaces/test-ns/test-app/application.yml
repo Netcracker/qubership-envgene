@@ -1,0 +1,11 @@
+name: test-app
+deployParameters:
+  db.password: "${creds.get('db-cred').password}"
+  db.backup: "${creds.get('db-cred').password}"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  config.secret: "${creds.get('db-cred').password}"
+  config.backup: "${creds.get('db-cred').password}"
+technicalConfigurationParameterSets: []
