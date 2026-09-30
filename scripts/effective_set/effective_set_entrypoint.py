@@ -1,9 +1,11 @@
+import os
 import shlex
 import shutil
 import subprocess
 import tempfile
 from os import getenv
 from pathlib import Path
+from time import perf_counter
 
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
@@ -30,7 +32,11 @@ def run_gitlab_deploy_effective_set(ctx):
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
 
-    _run_external_credential_provision_cli(effective_set_dir)
+    start = perf_counter()
+    try:
+        _run_external_credential_provision_cli(effective_set_dir)
+    finally:
+        logger.info("_run_external_credential_provision_cli duration=%.3fs", perf_counter() - start)
 
 
 def run_legacy_sd_effective_set(ctx):
