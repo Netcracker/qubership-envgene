@@ -329,6 +329,16 @@ public class CmdbCliTest {
     }
 
     @Test
+    void testNamespaceObjectBaselineReachesEffectiveSet(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        Path file = envsPath.resolve(NS_FILE);
+        Files.writeString(file, Files.readString(file) + "\nprofile:\n  baseline: \"dev\"\n");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "dev-mem", "REPLICAS", 1),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
     void testCloudSideUsedWhenNamespaceHasNoProfileSignal(@TempDir Path tempDir) throws Exception {
         Path envsPath = prepareProfileEnv(tempDir);
         setObjectProfile(envsPath, CLOUD_FILE, "cloud-over", "dev");
