@@ -573,18 +573,30 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     result_profiles_dir = Path(f"{env_dir}/Profiles")
     all_profiles = collect_resource_profiles(result_profiles_dir, resource_profiles_dir, profiles_schema,
                                              needed_resource_profiles_map, render_context)
-    override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
-                                                             render_context)
-
     object_paths = {"cloud": cloudTemlatePath} | {ns.postfix: ns.definition_path for ns in namespaces}
+    object_baselines = {key: get_profile_baseline(openYaml(path, {}).get("profile") or {})
+                        for key, path in object_paths.items()}
+    override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
+                                                             render_context, object_baselines)
+
     for profile_key, profile_file_path in override_profile_map.items():
         all_profiles[profile_key] = profile_file_path
-        set_object_profile_field(object_paths[profile_key], "name", openYaml(profile_file_path, {}).get("name"))
+        profile_name = openYaml(profile_file_path, {}).get("name")
+        logger.info(f"'{profile_key}' profile.name is '{profile_name}' from environment specific profile "
+                    f"'{profile_file_path}'")
+        set_object_profile_field(object_paths[profile_key], "name", profile_name)
 
     for profile_key, profile_file_path in all_profiles.items():
         baseline = get_profile_baseline(openYaml(profile_file_path, {}))
         if baseline:
+            logger.info(f"'{profile_key}' profile.baseline is '{baseline}' from resource profile '{profile_file_path}'")
             set_object_profile_field(object_paths[profile_key], "baseline", baseline)
+        elif object_baselines[profile_key]:
+            logger.info(f"'{profile_key}' resource profile '{profile_file_path}' has no baseline field, "
+                        f"profile.baseline '{object_baselines[profile_key]}' of the object is kept")
+        else:
+            logger.info(f"'{profile_key}' has no baseline: neither resource profile '{profile_file_path}' "
+                        f"nor the object sets it")
 
     for profile_key, profile_file_path in all_profiles.items():
         logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")

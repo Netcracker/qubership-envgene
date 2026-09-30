@@ -81,16 +81,29 @@ def has_profile_parameters(profile_yaml):
                for service in app["services"])
 
 
-def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProfileName):
+def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProfileName, object_baseline=None):
     commentText = f"from {overrideProfileName}"
-    source_baseline = get_profile_baseline(sourceProfileYaml)
+    template_name = sourceProfileYaml.get("name")
+    template_baseline = get_profile_baseline(sourceProfileYaml)
+    source_baseline = template_baseline or object_baseline
+    if template_baseline:
+        source_origin = f"baseline '{template_baseline}' from template profile '{template_name}'"
+    elif object_baseline:
+        source_origin = f"baseline '{object_baseline}' from the object"
+    else:
+        source_origin = "no baseline"
     override_baseline = get_profile_baseline(overrideProfileYaml)
     if override_baseline:
         if override_baseline != source_baseline and has_profile_parameters(sourceProfileYaml):
             logger.warning(f"Merging environment specific profile '{overrideProfileName}' with baseline "
-                           f"'{override_baseline}' into template profile with baseline '{source_baseline}' "
-                           f"that carries parameters. Use replace mode to change the baseline.")
+                           f"'{override_baseline}' into template profile '{template_name}' that carries parameters "
+                           f"and has {source_origin}. Use replace mode to change the baseline.")
+        logger.info(f"Template profile '{template_name}' takes baseline '{override_baseline}' from environment "
+                    f"specific profile '{overrideProfileName}', previously {source_origin}")
         merge_dict_key_with_comment("baseline", sourceProfileYaml, "baseline", overrideProfileYaml, commentText)
+    else:
+        logger.info(f"Environment specific profile '{overrideProfileName}' does not change the baseline, "
+                    f"template profile '{template_name}' keeps {source_origin}")
     if not overrideProfileYaml.get("applications"):
         return
     if sourceProfileYaml.get("applications") is None:
@@ -166,7 +179,8 @@ def collect_resource_profiles(result_profiles_dir, render_profiles_dir, profiles
     return profiles_map
 
 
-def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator):
+def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator,
+                                      object_baselines):
     override_profile_map = {}
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
@@ -193,7 +207,8 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
         if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")
             merge_resource_profiles(template_profile_yaml, env_specific_profile_yaml,
-                                    extractNameFromFile(env_specific_profile_path))
+                                    extractNameFromFile(env_specific_profile_path),
+                                    object_baselines.get(profile_key))
             writeYamlToFile(template_profile_file_path, template_profile_yaml)
         else:
             logger.info(f"Replacing {common_msg}")

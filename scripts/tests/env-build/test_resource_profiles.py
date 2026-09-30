@@ -81,6 +81,24 @@ class TestMergeResourceProfiles:
             merge_resource_profiles(template, _profile("env", baseline="dev"), "env")
         logger.warning.assert_not_called()
 
+    def test_no_warning_when_object_baseline_equals_env_specific(self):
+        template = _profile("tmpl", params={"replicas": 1})
+        with patch("build_env.resource_profiles.logger") as logger:
+            merge_resource_profiles(template, _profile("env", baseline="dev"), "env", "dev")
+        logger.warning.assert_not_called()
+
+    def test_warns_when_object_baseline_differs_from_env_specific(self):
+        template = _profile("tmpl", params={"replicas": 1})
+        with patch("build_env.resource_profiles.logger") as logger:
+            merge_resource_profiles(template, _profile("env", baseline="prod"), "env", "dev")
+        logger.warning.assert_called_once()
+
+    def test_template_baseline_takes_precedence_over_object_baseline(self):
+        template = _profile("tmpl", baseline="prod", params={"replicas": 1})
+        with patch("build_env.resource_profiles.logger") as logger:
+            merge_resource_profiles(template, _profile("env", baseline="prod"), "env", "dev")
+        logger.warning.assert_not_called()
+
     def test_no_warning_when_template_services_have_no_parameters(self):
         template = readYaml("name: tmpl\nbaseline: dev\napplications:\n"
                             "  - name: app\n    services:\n      - name: svc\n        parameters: []\n")
@@ -128,20 +146,20 @@ class TestOverrideByEnvSpecificProfiles:
     def test_standalone_override_is_attached(self, tmp_path):
         env_profile = tmp_path / "env-over.yml"
         writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"))
+        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"), {})
         assert result == {"bss": str(env_profile)}
 
     def test_template_only_is_untouched(self, tmp_path):
         template_profile = tmp_path / "tmpl.yml"
         writeYamlToFile(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
-        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {}, _render_context("true"))
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {}, _render_context("true"), {})
         assert result == {}
         assert openYaml(template_profile)["baseline"] == "dev"
 
     def test_standalone_override_is_attached_in_replace_mode(self, tmp_path):
         env_profile = tmp_path / "env-over.yml"
         writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("false"))
+        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
 
     def test_replace_drops_template_profile(self, tmp_path):
@@ -150,7 +168,7 @@ class TestOverrideByEnvSpecificProfiles:
         writeYamlToFile(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
         writeYamlToFile(env_profile, _profile("env-over", baseline="prod", params={"cpu": 2}))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
-                                                   _render_context("false"))
+                                                   _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
         assert openYaml(template_profile)["baseline"] == "dev"
 
@@ -160,9 +178,19 @@ class TestOverrideByEnvSpecificProfiles:
         writeYamlToFile(template_profile, _profile("tmpl", baseline="dev"))
         writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
-                                                   _render_context("true"))
+                                                   _render_context("true"), {})
         assert result == {}
         assert openYaml(template_profile)["baseline"] == "prod"
+
+    def test_merge_compares_with_object_baseline(self, tmp_path):
+        template_profile = tmp_path / "tmpl.yml"
+        env_profile = tmp_path / "env-over.yml"
+        writeYamlToFile(template_profile, _profile("tmpl", params={"replicas": 1}))
+        writeYamlToFile(env_profile, _profile("env-over", baseline="dev"))
+        with patch("build_env.resource_profiles.logger") as logger:
+            override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+                                              _render_context("true"), {"bss": "dev"})
+        logger.warning.assert_not_called()
 
     def test_boolean_false_mode_replaces(self, tmp_path):
         template_profile = tmp_path / "tmpl.yml"
@@ -170,7 +198,7 @@ class TestOverrideByEnvSpecificProfiles:
         writeYamlToFile(template_profile, _profile("tmpl", baseline="dev"))
         writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
-                                                   _render_context(False))
+                                                   _render_context(False), {})
         assert result == {"bss": str(env_profile)}
         assert openYaml(template_profile)["baseline"] == "dev"
 
@@ -182,7 +210,7 @@ class TestOverrideByEnvSpecificProfiles:
         context = MagicMock()
         context.ctx.env_definition = {"inventory": {}}
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
-                                                   context)
+                                                   context, {})
         assert result == {}
         assert openYaml(template_profile)["baseline"] == "prod"
 
