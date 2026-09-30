@@ -2,16 +2,15 @@ from envgenehelper import *
 from build_env.render_config_env import EnvGenerator
 
 
-# TODO unit tests
 def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
     levels = [
         Path(env_dir) / "Inventory",
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     rp_dir_names = ["resource_profiles", "rp_override", "Profiles", "parameters"]
-    
+
     result = {}
     logger.info(f"Finding env specific resource profiles for '{env_dir}' in '{instances_dir}'")
     envDefinitionPath = getEnvDefinitionPath(env_dir)
@@ -207,9 +206,11 @@ def has_valid_profile_name(content: dict) -> bool:
     return isinstance(profile, dict) and bool(profile.get("name"))
 
 
-def update_profile_name(file_path, profile_name):
+def set_object_profile_field(file_path, field, value):
     data = openYaml(file_path, {})
     if data.get("profile") is None:
         data["profile"] = get_empty_yaml()
-    set_nested_yaml_attribute(data, "profile.name", profile_name)
+    elif data["profile"].get(field) == value:
+        return
+    set_nested_yaml_attribute(data, f"profile.{field}", value)
     writeYamlToFile(file_path, data)
