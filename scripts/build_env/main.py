@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceRole, Path, check_dir_exist_and_create, check_environment_is_valid_or_fail, cleanup_targets, copy_path, deleteFile, delete_dir, ensure_environment_name, extractNameFromFile, findAllYamlsInDir, find_all_sub_dir, find_cloud_passport_definition, getAbsPath, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, os, path, validate_yaml_by_scheme_or_fail
+from envgenehelper import NamespaceRole, Path, check_dir_exist_and_create, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, copy_path, deleteFile, delete_dir, ensure_environment_name, extractNameFromFile, findAllYamlsInDir, find_all_sub_dir, find_cloud_passport_definition, getAbsPath, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, os, path, render_workspace_dir, validate_yaml_by_scheme_or_fail
 from envgene_shared import decrypted_cred_files
 from envgenehelper.deployer import *
 
