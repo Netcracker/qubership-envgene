@@ -3,11 +3,10 @@
 - [GSF CI/CD variable provisioning use cases](#gsf-cicd-variable-provisioning-use-cases)
   - [Overview](#overview)
   - [Provisioned variables](#provisioned-variables)
-  - [UC-VAR-1: First install - variables created](#uc-var-1-first-install---variables-created)
-  - [UC-VAR-2: Re-provisioning - variable value updated](#uc-var-2-re-provisioning---variable-value-updated)
-  - [UC-VAR-3: Upgrade - variables updated alongside package files](#uc-var-3-upgrade---variables-updated-alongside-package-files)
-  - [UC-VAR-4: Failure - insufficient token permissions](#uc-var-4-failure---insufficient-token-permissions)
-  - [UC-VAR-5: Failure - required variable not supplied](#uc-var-5-failure---required-variable-not-supplied)
+  - [UC-VAR-1: Initialize - variables created](#uc-var-1-initialize---variables-created)
+  - [UC-VAR-2: Upgrade - variables updated alongside package files](#uc-var-2-upgrade---variables-updated-alongside-package-files)
+  - [UC-VAR-3: Failure - insufficient token permissions](#uc-var-3-failure---insufficient-token-permissions)
+  - [UC-VAR-4: Failure - required variable not supplied](#uc-var-4-failure---required-variable-not-supplied)
 
 ## Overview
 
@@ -15,28 +14,28 @@ During GSF installation of the EnvGene instance package, GSF sets a defined set 
 CI/CD variables on the target repository. This eliminates the manual step of opening GitLab
 **Settings → CI/CD → Variables** after installation.
 
-On repeated installation or upgrade runs, GSF updates the existing variable values rather than
-creating duplicates. Key rotation is applied by re-running GSF with the new value.
+GSF provisions variables on first install and on version upgrade. It does not re-run provisioning
+when the same package version is already installed.
 
 For installation steps, see the
 [Environment Instance Repository Installation Guide](/docs/how-to/envgene-maitanance.md).
 
 ## Provisioned variables
 
-The following variables are set on the target repository during every GSF install or upgrade run
-when supplied as `--extra` inputs:
+`GITLAB_TOKEN` is mandatory. Additional variables such as `DOCKER_REGISTRY` can be passed if
+required by the project.
 
 | Variable name     | Masked | Purpose                                           |
 |-------------------|--------|---------------------------------------------------|
 | `GITLAB_TOKEN`    | yes    | GitLab token for instance pipeline authentication |
 | `DOCKER_REGISTRY` | no     | Docker registry hostname for pipeline image pulls |
 
-Variables are set only when the corresponding `--extra` is provided. Omitting an `--extra` leaves
+A variable is set only when the corresponding `--extra` is provided. Omitting an `--extra` leaves
 the existing variable on the repository unchanged.
 
 ---
 
-### UC-VAR-1: First install - variables created
+### UC-VAR-1: Initialize - variables created
 
 **Pre-requisites:**
 
@@ -76,44 +75,7 @@ git-system-follower install <instance_package_image> \
 
 ---
 
-### UC-VAR-2: Re-provisioning - variable value updated
-
-**Pre-requisites:**
-
-1. Instance Repository was previously initialized via GSF.
-2. `GITLAB_TOKEN` and `DOCKER_REGISTRY` CI/CD variables already exist on the repository.
-3. A new GitLab access token is available (key rotation scenario).
-
-**Trigger:**
-
-User runs GSF with the new token value:
-
-```bash
-git-system-follower install <instance_package_image> \
-  -r <instance_repo_url> \
-  -b <branch> \
-  -t <new_gitlab_token> \
-  --extra GITLAB_TOKEN <new_gitlab_token> masked \
-  --extra DOCKER_REGISTRY <registry_host> no-masked
-```
-
-**Steps:**
-
-1. GSF applies the instance package to the repository.
-2. GSF finds an existing `GITLAB_TOKEN` CI/CD variable on the repository.
-3. GSF overwrites `GITLAB_TOKEN` with the new value.
-4. GSF finds an existing `DOCKER_REGISTRY` CI/CD variable on the repository.
-5. GSF overwrites `DOCKER_REGISTRY` with the supplied value.
-
-**Results:**
-
-1. `GITLAB_TOKEN` CI/CD variable is updated to the new token value.
-2. `DOCKER_REGISTRY` CI/CD variable reflects the supplied value.
-3. No duplicate variables are created.
-
----
-
-### UC-VAR-3: Upgrade - variables updated alongside package files
+### UC-VAR-2: Upgrade - variables updated alongside package files
 
 **Pre-requisites:**
 
@@ -149,7 +111,7 @@ git-system-follower install <new_instance_package_image> \
 
 ---
 
-### UC-VAR-4: Failure - insufficient token permissions
+### UC-VAR-3: Failure - insufficient token permissions
 
 **Pre-requisites:**
 
@@ -189,7 +151,7 @@ git-system-follower install <instance_package_image> \
 
 ---
 
-### UC-VAR-5: Failure - required variable not supplied
+### UC-VAR-4: Failure - required variable not supplied
 
 **Pre-requisites:**
 

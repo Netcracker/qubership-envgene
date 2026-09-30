@@ -13,8 +13,7 @@
   - [Instance Repository Maintenance via GSF](#instance-repository-maintenance-via-gsf)
     - [UC-GSF-INST-1: Initialize Instance Repository via GSF](#uc-gsf-inst-1-initialize-instance-repository-via-gsf)
     - [UC-GSF-INST-2: Upgrade Instance Repository via GSF](#uc-gsf-inst-2-upgrade-instance-repository-via-gsf)
-    - [UC-GSF-INST-2.1: Re-provision CI/CD Variables (Key Rotation)](#uc-gsf-inst-21-re-provision-cicd-variables-key-rotation)
-    - [UC-GSF-INST-2.2: Failure - Insufficient Token Permissions](#uc-gsf-inst-22-failure---insufficient-token-permissions)
+    - [UC-GSF-INST-2.1: Failure - Insufficient Token Permissions](#uc-gsf-inst-21-failure---insufficient-token-permissions)
     - [UC-GSF-INST-3: Downgrade Instance Repository via GSF](#uc-gsf-inst-3-downgrade-instance-repository-via-gsf)
 
 ## Overview
@@ -41,14 +40,16 @@ For detailed installation and maintenance steps, see:
 **Pre-requisites:**
 
 1. A new Git repository for the Environment Template exists in the project Git group and does not yet contain EnvGene-specific files.
-2. GitLab technical user and access token with required permissions are available.
+2. GitLab project access token with Maintainer role and API, read_api, read_repository, write_repository scopes is available.
 3. GSF package manager is installed and working on the local machine.
 4. Template package image path for the desired EnvGene version is known.
 5. A reference (target) Template Repository structure for this version is defined.
 
 **Trigger:**
 
-User runs GSF on the local machine to initialize the Template Repository:
+User runs GSF on the local machine to initialize the Template Repository.
+
+DP builder (default):
 
 ```bash
 git-system-follower install <path_to_template_package_image> \
@@ -56,7 +57,25 @@ git-system-follower install <path_to_template_package_image> \
   -b <project_template_repository_branch> \
   -t <gitlab_token> \
   --extra env_template_artifact_name <template-artifact-name> no-masked \
-  --extra group_id <group_id> no-masked
+  --extra group_id <group_id> no-masked \
+  --extra GITLAB_TOKEN <gitlab_token> masked \
+  --extra PATI_USER <pati_user> no-masked \
+  --extra PATI_PASSWORD <pati_password> masked
+```
+
+GitLab builder:
+
+```bash
+git-system-follower install <path_to_template_package_image> \
+  -r <project_template_repository_path> \
+  -b <project_template_repository_branch> \
+  -t <gitlab_token> \
+  --extra env_template_artifact_name <template-artifact-name> no-masked \
+  --extra group_id <group_id> no-masked \
+  --extra builder_type gitlab no-masked \
+  --extra GITLAB_TOKEN <gitlab_token> masked \
+  --extra ARTIFACTORYCN_USER <artifactory_user> no-masked \
+  --extra ARTIFACTORYCN_PASSWORD <artifactory_password> masked
 ```
 
 > [!NOTE]
@@ -64,9 +83,10 @@ git-system-follower install <path_to_template_package_image> \
 
 **Steps:**
 
-1. Run GSF with repository URL, branch, token, and package image.
+1. Run GSF with repository URL, branch, token, package image, and CI/CD variable extras.
 2. GSF applies the selected package to the Template Repository.
 3. GSF adds required files from the selected version and removes obsolete managed files (if any).
+4. GSF sets the supplied extras as GitLab project CI/CD variables on the target repository.
 
 #### Initialization extra parameter rules
 
@@ -100,20 +120,23 @@ git-system-follower install <path_to_template_package_image> \
 4. `group_id` in `build_vars.sh` is set per the resolution priority above.
 5. `artifact_id` and `application_id` reflect the supplied parameter or their defaults.
 6. Repository matches the reference structure.
+7. CI/CD variables are set on the repository. No manual configuration in GitLab Settings is required.
 
 ### UC-GSF-TMP-2: Upgrade Template Repository via GSF
 
 **Pre-requisites:**
 
 1. Template Repository already exists and contains a previous EnvGene template package version.
-2. GitLab technical user, token, and required CI/CD variables are available.
+2. GitLab project access token with Maintainer role and API, read_api, read_repository, write_repository scopes is available.
 3. GSF package manager is installed and working on the local machine.
 4. Target EnvGene template package image path is known.
 5. A reference Template Repository structure for the target EnvGene version is defined.
 
 **Trigger:**
 
-User runs GSF on the local machine to upgrade the Template Repository to a new EnvGene version:
+User runs GSF on the local machine to upgrade the Template Repository to a new EnvGene version.
+
+DP builder (default):
 
 ```bash
 git-system-follower install <path_to_template_package_image> \
@@ -121,19 +144,38 @@ git-system-follower install <path_to_template_package_image> \
   -b <project_template_repository_branch> \
   -t <gitlab_token> \
   --extra env_template_artifact_name <template-artifact-name> no-masked \
-  --extra group_id <group_id> no-masked
+  --extra group_id <group_id> no-masked \
+  --extra GITLAB_TOKEN <gitlab_token> masked \
+  --extra PATI_USER <pati_user> no-masked \
+  --extra PATI_PASSWORD <pati_password> masked
+```
+
+GitLab builder:
+
+```bash
+git-system-follower install <path_to_template_package_image> \
+  -r <project_template_repository_path> \
+  -b <project_template_repository_branch> \
+  -t <gitlab_token> \
+  --extra env_template_artifact_name <template-artifact-name> no-masked \
+  --extra group_id <group_id> no-masked \
+  --extra builder_type gitlab no-masked \
+  --extra GITLAB_TOKEN <gitlab_token> masked \
+  --extra ARTIFACTORYCN_USER <artifactory_user> no-masked \
+  --extra ARTIFACTORYCN_PASSWORD <artifactory_password> masked
 ```
 
 **Steps:**
 
-1. Run GSF with repository URL, branch, token, and target package image.
+1. Run GSF with repository URL, branch, token, target package image, and CI/CD variable extras.
 2. GSF updates the Template Repository to the target version.
 3. GSF updates changed files, adds new files, and removes outdated managed files.
-4. Verify restricted files for Template Repository:
+4. GSF overwrites the supplied CI/CD variables with the values from the upgrade command.
+5. Verify restricted files for Template Repository:
    - `pipeline_vars.yml` or `pipeline_vars.yaml`
    - `build_vars.sh`
    - `description_template.yml` or `description_template.yaml`
-5. Verify restricted file behavior:
+6. Verify restricted file behavior:
    - `build_vars.sh` preserves repository-specific values unless explicitly updated through input parameters
    - `description_template.*` is regenerated from package defaults, while `deploy.dmp.application_id` is
      preserved or updated according to parameter rules
@@ -154,7 +196,8 @@ git-system-follower install <path_to_template_package_image> \
    - `description_template.*` is regenerated from package defaults, with `deploy.dmp.application_id`
      preserved or updated according to parameter rules.
    - `pipeline_vars.*` is preserved, with structural alignment allowed when required
-4. No regressions related to repository upgrade are observed.
+4. CI/CD variables are updated to the supplied values.
+5. No regressions related to repository upgrade are observed.
 
 ### UC-GSF-TMP-2.1: Upgrade legacy Template Repository (versions before 2.85.0)
 
@@ -371,40 +414,7 @@ git-system-follower install <path_to_instance_package_image> \
 3. `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure.
 4. CI/CD variables are updated to the supplied values.
 
-### UC-GSF-INST-2.1: Re-provision CI/CD Variables (Key Rotation)
-
-**Pre-requisites:**
-
-1. Instance Repository already exists and was previously initialized via GSF.
-2. A new GitLab access token is available (key rotation scenario).
-3. GSF package manager is installed and working on the local machine.
-4. Instance package image path is known.
-
-**Trigger:**
-
-User runs GSF with the new token value to rotate the CI/CD variable:
-
-```bash
-git-system-follower install <path_to_instance_package_image> \
-   -r <project_instance_repository_path> \
-   -b <project_instance_repository_branch> \
-   -t <new_gitlab_token> \
-   --extra GITLAB_TOKEN <new_gitlab_token> masked \
-   --extra DOCKER_REGISTRY <registry_host> no-masked
-```
-
-**Steps:**
-
-1. Run GSF with the new token and package image.
-2. GSF detects that `GITLAB_TOKEN` already exists on the repository with a different value.
-3. GSF overwrites the existing variable with the new value.
-
-**Results:**
-
-1. `GITLAB_TOKEN` CI/CD variable is updated to the new token value.
-2. No duplicate variables are created.
-
-### UC-GSF-INST-2.2: Failure - Insufficient Token Permissions
+### UC-GSF-INST-2.1: Failure - Insufficient Token Permissions
 
 **Pre-requisites:**
 
