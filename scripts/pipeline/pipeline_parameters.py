@@ -110,6 +110,8 @@ class PipelineParametersHandler(BaseModel):
             'CLUSTER_NAME': cluster_name,
             'ENVIRONMENT_NAME': env_name,
         }
+        if getenv("REQUESTS_CA_BUNDLE"):
+            internal_params['REQUESTS_CA_BUNDLE'] = getenv("REQUESTS_CA_BUNDLE")
         for k, v in internal_params.items():
             os.environ[k] = v
         sensitive_params = ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"]

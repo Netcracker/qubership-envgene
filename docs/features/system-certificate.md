@@ -80,8 +80,12 @@ certificates. For how to assemble a chain file, see
 
 ## Technical implementation
 
-EnvGene runs a certificate handling script. For each certificate the script:
+The EnvGene orchestrator installs the certificates in its own process before the first pipeline step.
+It does this after the sparse checkout, because `configuration/certs/` exists only after the checkout.
+The orchestrator:
 
-1. Copies the certificate to `/usr/local/share/ca-certificates/` under a `<basename>.crt` filename,
+1. Copies each certificate to `/usr/local/share/ca-certificates/` under a `<basename>.crt` filename,
    so multiple certificate files do not overwrite each other.
-2. Rebuilds the trust store with `update-ca-certificates`.
+2. Rebuilds the trust store once with `update-ca-certificates`.
+3. Sets `REQUESTS_CA_BUNDLE` to `/etc/ssl/certs/ca-certificates.crt` and writes it to `envgene-vars.env`.
+   Commands that run after the orchestrator in the same job load this file and use the rebuilt trust store.
