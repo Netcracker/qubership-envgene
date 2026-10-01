@@ -1,5 +1,6 @@
 import yaml
 from envgenehelper import *
+from envgene_shared import *
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -56,6 +57,23 @@ def create_paramset_map(dir: str, role: NamespaceRole,
                 f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
     logger.debug(f'List of {dir} paramsets: \n %s', dump_as_yaml_format(result))
     return result
+
+
+def copy_template_paramsets(templates_dirs: dict, render_parameters_dir: str) -> None:
+    for template_type, template_path in templates_dirs.items():
+        if not (template_path and check_dir_exists(f'{template_path}/parameters')):
+            continue
+        param_dir_name = 'from_template' if template_type == NamespaceRole.COMMON else f'from_{template_type}_template'
+        copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
+
+
+def copy_instance_paramsets(env_dir: str, render_parameters_dir: str) -> None:
+    cluster_path = getDirName(str(env_dir))
+    instances_dir = getDirName(cluster_path)
+    check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
+    copy_path(f'{instances_dir}/parameters', str(render_parameters_dir))
+    copy_path(f'{cluster_path}/parameters', str(render_parameters_dir))
+    copy_path(f'{env_dir}/Inventory/parameters', f'{render_parameters_dir}/from_instance')
 
 
 def sortParameters(params):
@@ -499,7 +517,6 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     templateArtifactName = getTemplateArtifactName(envDefinitionYaml)
     generated_header_text = GENERATED_HEADER % templateArtifactName
 
-    # pathes
     tenantTemplatePath = env_dir + "/tenant.yml"
     cloudTemlatePath = env_dir + "/cloud.yml"
     namespaces = get_namespaces(Path(env_dir))

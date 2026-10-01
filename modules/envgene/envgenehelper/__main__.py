@@ -1,5 +1,5 @@
 import sys
-from .logger import logger
+from envgene_shared.utils.logger import logger
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, ReferenceError):

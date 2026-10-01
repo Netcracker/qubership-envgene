@@ -122,6 +122,7 @@ class TestResolvedEnvFile:
             "ENV_NAMES": "cluster-01/env-01",
             "LOCAL_APPDEFS_PATH": "/instance-repo/environments/cluster-01/env-01/AppDefs",
             "LOCAL_REGDEFS_PATH": "/instance-repo/environments/cluster-01/env-01/RegDefs",
+            "LOCAL_PUBREG_FILE": "/instance-repo/tmp/envgene-regdefv2-adapter/pubreg_params.yaml",
         }
 
     @pytest.mark.unit

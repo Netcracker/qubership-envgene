@@ -8,8 +8,12 @@ from enum import StrEnum
 from os import getenv
 from pathlib import Path
 
-from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
-from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
+from envgene_shared.utils.logger import logger, CustomFormatter
+from envgene_shared.crypto.crypt import decrypted_cred_files
+from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
+from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
+    render_workspace_dir
+from envgenehelper import delete_dir_if_exists
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -17,6 +21,7 @@ from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_change_bg_state, run_warmup
 from build_env.appregdef_render import run_appregdef_render
+from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
@@ -31,7 +36,7 @@ from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import run_multi_env_pipeline
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 
@@ -143,11 +148,7 @@ class ProcessSdStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy() or OperationType(ctx.params.get('OPERATION_TYPE')) != OperationType.DEPLOY:
             return False
-        sd_version = ctx.params.get("SD_VERSION")
-        sd_data = ctx.params.get("SD_DATA")
-        if sd_version and sd_data:
-            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
-        return bool(sd_version or sd_data)
+        return ctx.has_sd_input()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         handle_sd(ctx)
@@ -215,10 +216,24 @@ class AppregdefRenderStep(PipelineStep):
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
             return True
-        return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION'))
+        return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION') or ctx.params.get('SD_DATA'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         run_appregdef_render()
+
+
+class RegdefV2AdapterStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "regdefv2_adapter"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        if ctx.is_gitlab_deploy():
+            return ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
+        return (ctx.has_sd_input() or bool(ctx.params.get("GENERATE_EFFECTIVE_SET"))) and bool(ctx.params.get('ENV_BUILDER'))
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_regdefv2_adapter(ctx)
 
 
 class DeployPostfixNamespaceMapStep(PipelineStep):
@@ -259,7 +274,7 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_build_environment()
+        run_build_environment(reuse_render_workspace=True)
 
 
 class GenerateEffectiveSetStep(PipelineStep):
@@ -285,7 +300,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             sboms_retention_policy()
             get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
             if get_sboms.modules:
-                get_sboms.run(ctx.resolve_source_dp())
+                get_sboms.run(ctx=ctx)
             if ctx.is_gitlab_deploy():
                 run_gitlab_deploy_effective_set(ctx)
             else:
@@ -304,12 +319,30 @@ class GitCommitStep(PipelineStep):
         git_commit()
 
 
+class CMDB_import(PipelineStep):
+
+    @property
+    def name(self) -> str:
+        return "CMDB_import"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return not ctx.is_gitlab_deploy() and ctx.params.get('CMDB_IMPORT')
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/nc_cmdb_import')
+        if not cmdb_import.modules:
+            raise RuntimeError("cmdb_import plugin failed to load")
+        cmdb_import.run()
+
+
+@extra_creds_scope()
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
+    delete_dir_if_exists(render_workspace_dir(ctx.work_dir))
 
     steps: list[PipelineStep] = [
         PassportStep(),
@@ -319,13 +352,15 @@ def run_single_env_pipeline() -> None:
         InventoryGenerationStep(),
         SetTemplateVersionStep(),
         AppregdefRenderStep(),
+        RegdefV2AdapterStep(),
         DeployPostfixNamespaceMapStep(),
         ProcessSdStep(),
         MigrateSdToDeployPlanStep(),
         ProcessDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
-        GitCommitStep()
+        GitCommitStep(),
+        CMDB_import()
     ]
 
     results: list[StepResult] = []
