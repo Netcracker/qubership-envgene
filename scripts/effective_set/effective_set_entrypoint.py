@@ -52,7 +52,10 @@ def run_legacy_sd_effective_set(ctx):
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
 
-    _run_external_credential_provision_cli(effective_set_dir)
+    try:
+        _run_external_credential_provision_cli(effective_set_dir)
+    finally:
+        logger.info("_run_external_credential_provision_cli duration=%.3fs", perf_counter() - start)
 
 
 def _run_deploy_plan_full(effective_set_dir, full_env_name, deploy_plan: EnvgeneDeployPlan):
