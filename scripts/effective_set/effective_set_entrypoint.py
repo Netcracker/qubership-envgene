@@ -52,6 +52,7 @@ def run_legacy_sd_effective_set(ctx):
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
 
+    start = perf_counter()
     try:
         _run_external_credential_provision_cli(effective_set_dir)
     finally:
