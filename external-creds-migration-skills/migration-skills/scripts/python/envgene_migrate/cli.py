@@ -50,6 +50,14 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="List auto entries and extra detail (default: summary only)",
     )
+    plan.add_argument(
+        "--manual",
+        action="store_true",
+        help=(
+            "Human CLI run: do not print reply prompts. "
+            "Omit when an agent runs this command."
+        ),
+    )
 
     apply = sub.add_parser("apply", help="Apply migration-plan.yaml")
     apply.add_argument(
@@ -72,6 +80,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--verbose",
         action="store_true",
         help="Per-cred progress on stderr (default: summary only)",
+    )
+    apply.add_argument(
+        "--manual",
+        action="store_true",
+        help=(
+            "Human CLI run: do not print reply prompts. "
+            "Omit when an agent runs this command."
+        ),
     )
 
     check_tv = sub.add_parser(
@@ -167,12 +183,15 @@ def _cmd_strip_technical_macros(root: Path, dry_run: bool) -> int:
     return EXIT_OK
 
 
-def _cmd_plan(repo: str, root: Path, env_filter: str | None, verbose: bool) -> int:
+def _cmd_plan(
+    repo: str, root: Path, env_filter: str | None, verbose: bool, manual: bool
+) -> int:
     if repo == REPO_TEMPLATE:
         from .template.plan_schema import write_plan
-        from .template.reports import emit_plan_report, set_verbose
+        from .template.reports import emit_plan_report, set_manual, set_verbose
 
         set_verbose(verbose)
+        set_manual(manual)
         if env_filter:
             print("[PLAN] FAILED: --env is only valid with --repo=instance", flush=True)
             return EXIT_PLAN_INVALID
@@ -181,9 +200,10 @@ def _cmd_plan(repo: str, root: Path, env_filter: str | None, verbose: bool) -> i
         plan = build_template_plan(root)
     else:
         from .instance.plan_schema import write_plan
-        from .instance.reports import emit_plan_report, set_verbose
+        from .instance.reports import emit_plan_report, set_manual, set_verbose
 
         set_verbose(verbose)
+        set_manual(manual)
         from .instance.plan import build_instance_plan
 
         try:
@@ -200,7 +220,9 @@ def _cmd_plan(repo: str, root: Path, env_filter: str | None, verbose: bool) -> i
     return EXIT_OK
 
 
-def _cmd_apply(repo: str, root: Path, dry_run: bool, verbose: bool) -> int:
+def _cmd_apply(
+    repo: str, root: Path, dry_run: bool, verbose: bool, manual: bool
+) -> int:
     try:
         check_dirty_git(root)
     except PreflightError as exc:
@@ -208,14 +230,16 @@ def _cmd_apply(repo: str, root: Path, dry_run: bool, verbose: bool) -> int:
 
     if repo == REPO_TEMPLATE:
         from .template.plan_schema import read_plan
-        from .template.reports import emit_migration_report, set_verbose
+        from .template.reports import emit_migration_report, set_manual, set_verbose
 
         set_verbose(verbose)
+        set_manual(manual)
     else:
         from .instance.plan_schema import read_plan
-        from .instance.reports import emit_migration_report, set_verbose
+        from .instance.reports import emit_migration_report, set_manual, set_verbose
 
         set_verbose(verbose)
+        set_manual(manual)
 
     try:
         plan = read_plan(cwd=root)
@@ -286,12 +310,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     verbose = bool(getattr(args, "verbose", False))
+    manual = bool(getattr(args, "manual", False))
     root = Path(args.root).resolve()
     try:
         if args.command == "plan":
-            return _cmd_plan(args.repo, root, getattr(args, "env", None), verbose)
+            return _cmd_plan(
+                args.repo, root, getattr(args, "env", None), verbose, manual
+            )
         if args.command == "apply":
-            return _cmd_apply(args.repo, root, getattr(args, "dry_run", False), verbose)
+            return _cmd_apply(
+                args.repo, root, getattr(args, "dry_run", False), verbose, manual
+            )
         if args.command == "check-template-version":
             return _cmd_check_template_version(root, args.expect)
         if args.command == "strip-technical-macros":

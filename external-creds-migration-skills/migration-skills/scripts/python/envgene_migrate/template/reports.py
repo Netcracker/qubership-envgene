@@ -8,6 +8,7 @@ from typing import Any
 from .plan_schema import iter_plan_entries, unbound_parameter_sets
 
 _verbose: bool = False
+_manual: bool = False
 
 def set_verbose(enabled: bool) -> None:
     global _verbose
@@ -16,6 +17,15 @@ def set_verbose(enabled: bool) -> None:
 
 def is_verbose() -> bool:
     return _verbose
+
+
+def set_manual(enabled: bool) -> None:
+    global _manual
+    _manual = bool(enabled)
+
+
+def is_manual() -> bool:
+    return _manual
 
 
 def progress(msg: str, *, force: bool = False) -> None:
@@ -60,7 +70,12 @@ def compute_gate(plan: dict[str, Any]) -> dict[str, Any]:
             "[CRITICAL] Credential macros in technicalConfigurationParameters "
             f"({len(runtime)} hit(s); credIds: {', '.join(ids)}). "
             "Not migrated to credRef — pipeline fails after cutover if left. "
-            f"Files: {file_preview}. Reply A or B, then re-plan."
+            f"Files: {file_preview}. "
+            + (
+                "Edit the Template files or run strip-technical-macros, then re-plan."
+                if _manual
+                else "Reply A or B, then re-plan."
+            )
         )
         questions.append(
             {
@@ -193,7 +208,7 @@ def emit_gate_report(plan: dict[str, Any], *, repo_label: str = "") -> dict[str,
         print(flush=True)
 
     questions = gate.get("questions") or []
-    if questions:
+    if questions and not _manual:
         print("Questions for you:", flush=True)
         reply_bits: list[str] = []
         for q in questions:
@@ -237,11 +252,17 @@ def emit_plan_report(plan: dict[str, Any], *, repo_label: str = "") -> None:
             flush=True,
         )
         if gate["verdict"] == "STOP":
-            print(
-                "Next: answer Questions (A/B/C…) → write decisions into "
-                "migration-plan.yaml.",
-                flush=True,
-            )
+            if _manual:
+                print(
+                    "Next: edit migration-plan.yaml, then re-run plan or apply.",
+                    flush=True,
+                )
+            else:
+                print(
+                    "Next: answer Questions (A/B/C…) → write decisions into "
+                    "migration-plan.yaml.",
+                    flush=True,
+                )
         else:
             print("Next: commit migration-plan.yaml → run apply.", flush=True)
         return
@@ -330,10 +351,16 @@ def emit_plan_report(plan: dict[str, Any], *, repo_label: str = "") -> None:
         print(flush=True)
 
     if gate["verdict"] == "STOP":
-        print(
-            "Next: answer Questions → set decision in migration-plan.yaml.",
-            flush=True,
-        )
+        if _manual:
+            print(
+                "Next: edit migration-plan.yaml, then re-run plan or apply.",
+                flush=True,
+            )
+        else:
+            print(
+                "Next: answer Questions → set decision in migration-plan.yaml.",
+                flush=True,
+            )
     else:
         print("Next: commit migration-plan.yaml → run apply.", flush=True)
 

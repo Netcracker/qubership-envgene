@@ -175,7 +175,7 @@ The CLI skips a credential whose value is `envgeneNullValue`.
 ### Build the Template plan
 
 ```powershell
-python -m envgene_migrate plan --repo=template --root $TEMPLATE
+python -m envgene_migrate plan --repo=template --root $TEMPLATE --manual
 ```
 
 The CLI writes `migration-plan.yaml` at the Template repository root and prints a summary.
@@ -183,7 +183,7 @@ Apply the plan when the summary says `BLOCKERS: none`.
 
 > [!NOTE]
 > `DECISIONS NEEDED` stays in the summary after you review the plan.
-> The CLI does not wait for answers to `Questions for you`.
+> Edit `migration-plan.yaml`, then run apply.
 
 ### Review the Template plan
 
@@ -236,7 +236,7 @@ Commit the result and build the Template plan again.
 ### Apply the Template plan and publish
 
 ```powershell
-python -m envgene_migrate apply --repo=template --root $TEMPLATE
+python -m envgene_migrate apply --repo=template --root $TEMPLATE --manual
 ```
 
 Commit the result and publish the Template.
@@ -266,7 +266,7 @@ This how-to covers `git` and `jenkins`.
 ### Build the Instance plan
 
 ```powershell
-python -m envgene_migrate plan --repo=instance --root $INSTANCE
+python -m envgene_migrate plan --repo=instance --root $INSTANCE --manual
 ```
 
 The CLI fills in `migration-plan.yaml` and keeps `operator_decisions`.
@@ -334,7 +334,7 @@ System credentials are not in this file. You already moved them.
 Commit the Instance repository, then:
 
 ```powershell
-python -m envgene_migrate apply --repo=instance --root $INSTANCE
+python -m envgene_migrate apply --repo=instance --root $INSTANCE --manual
 ```
 
 The CLI sets credentials to `type: external`, replaces `creds.get` macros with `credRef`,

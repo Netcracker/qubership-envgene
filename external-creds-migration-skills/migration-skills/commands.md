@@ -14,6 +14,9 @@ link here instead of repeating install blocks.
 - `external-cred-provision` on PATH — install from this skill (see Set up)
 - SOPS repos: `SOPS_AGE_KEY` (never commit)
 - Fernet collect: `SECRET_KEY` + `pip install -e <kit>/scripts/cli"[decrypt]"`
+- Do not pass `--manual` on `envgene_migrate`. That flag is for a person running
+  the CLI without this skill. It hides Questions and Reply. The skill uses the
+  default output.
 
 ## Set up
 

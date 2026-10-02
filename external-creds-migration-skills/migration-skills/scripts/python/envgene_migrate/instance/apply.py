@@ -20,6 +20,7 @@ from .macros import (
     strip_shared_master_extensions_in_env_definitions,
 )
 from .plan_schema import iter_plan_entries
+from .reports import is_manual
 from ..preflight import PreflightError
 from .store_preflight import (
     load_default_store,
@@ -132,11 +133,21 @@ def require_instance_apply_gate(plan: dict[str, Any]) -> None:
     runtime = plan.get("runtime_credential_macros") or []
     decisions = plan.get("operator_decisions") or {}
     if runtime and not decisions.get("technical_macros_waive"):
+        if is_manual():
+            hint = (
+                "Set operator_decisions.technical_macros_waive: true in "
+                "migration-plan.yaml if the Template is already updated, or "
+                "remove the macros yourself and re-plan."
+            )
+        else:
+            hint = (
+                "Reply A (set operator_decisions.technical_macros_waive: true) if the "
+                "Template is already updated, or Reply B: remove the macros yourself "
+                "and re-plan."
+            )
         raise PreflightError(
             f"runtime_credential_macros still present ({len(runtime)} hit(s)). "
-            "Reply A (set operator_decisions.technical_macros_waive: true) if the "
-            "Template is already updated, or Reply B: remove the macros yourself "
-            "and re-plan. Apply is blocked until then (GATE)."
+            f"{hint} Apply is blocked until then (GATE)."
         )
     deletes = plan.get("to_delete") or {}
     deployer = deletes.get("deployer_credentials") or []
