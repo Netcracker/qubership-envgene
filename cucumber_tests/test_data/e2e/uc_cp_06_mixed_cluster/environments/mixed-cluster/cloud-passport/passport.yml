@@ -1,0 +1,12 @@
+version: "3.0"
+cloud:
+  CLOUD_API_HOST: "https://business-api.example.com"
+  CLOUD_API_PORT: "6443"
+  CLOUD_PRIVATE_HOST: "business-internal.example.com"
+  CLOUD_PUBLIC_HOST: "business-public.example.com"
+  CLOUD_DASHBOARD_URL: "https://business-dashboard.example.com"
+  CLOUD_DEPLOY_TOKEN: "business-deploy-token"
+  CLOUD_PROTOCOL: "https"
+  PRODUCTION_MODE: "false"
+bss:
+  BSS_WORKLOAD_KEY: "business-only-value"
