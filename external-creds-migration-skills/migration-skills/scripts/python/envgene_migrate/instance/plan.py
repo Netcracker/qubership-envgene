@@ -89,14 +89,14 @@ def _path_and_create(
         return GLOBAL_PATH, False
     if kind == "env":
         return (f"{cluster}/{env}" if env else f"{cluster}"), True
-    # shared: env-scoped → {cluster}/{env};
-    # cluster-level (environments/{cluster}/shared-credentials) → {cluster};
-    # repo-level (environments/shared-credentials) → global
+    # shared: env-scoped → {cluster}/{env}, create true;
+    # cluster-level (environments/{cluster}/shared-credentials) → {cluster}, create false;
+    # repo-level (environments/shared-credentials) → global, create false
     if env:
         return f"{cluster}/{env}", True
     if cluster in ("shared-credentials", "unknown"):
-        return GLOBAL_PATH, True
-    return f"{cluster}", True
+        return GLOBAL_PATH, False
+    return f"{cluster}", False
 
 
 def _entries_from_cred_file(path: Path) -> dict[str, dict[str, Any]]:

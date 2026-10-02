@@ -134,8 +134,8 @@ There is **no** leave/include/delete/bind for unbound ParameterSets.
 | Cloud Passport (`*-creds.yml`) | `false` | `<cluster>` | auto (`to_confirm`) |
 | System (`configuration/credentials/`) | `false` | `global` | auto (`to_confirm`); `writeToStore: false` after `collect-system` |
 | Env / env-scoped shared | ask (suggestion `true`) | ask (suggestion `<cluster>/<env>`) | `to_review` |
-| Cluster-level shared (not env-scoped) | ask (suggestion `true`) | ask (suggestion `<cluster>`) | `to_review` |
-| Repo-level shared (`environments/shared-credentials`) | ask (suggestion `true`) | ask (suggestion `global`) | `to_review` |
+| Cluster-level shared (not env-scoped) | ask (suggestion `false`) | ask (suggestion `<cluster>`) | `to_review` |
+| Repo-level shared (`environments/shared-credentials`) | ask (suggestion `false`) | ask (suggestion `global`) | `to_review` |
 
 System Store seed is **I0**: `migration-cli collect-system` → `external-cred-provision`
 (no fill). `create: false` means EnvGene will not create the secret later at
