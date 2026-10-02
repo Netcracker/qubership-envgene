@@ -9,7 +9,7 @@ COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build Python dependencies
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
