@@ -55,7 +55,6 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chmod 754 /module/scripts/*
 
 # Stage 3: Runtime
-# change image before merge
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
