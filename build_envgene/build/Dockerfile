@@ -9,17 +9,17 @@ COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build Python dependencies
-FROM ghcr.io/alex-tolch/qubership-envgene-base-modules:fix_deps_versions AS build
+FROM ghcr.io/alex-tolch/qubership-envgene-base-modules:fix_deps_versions@sha256:5db526371b0b8a93ae7c69a61c81d208e287023a22bab1ab04192eb849e28109 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    'libffi-dev>=3.4.4-r3' \
-    'openssl-dev>=3.1.8-r1' \
-    'python3-dev>=3.11.14-r0' \
-    'cargo>=1.76.0-r0' \
-    'rust>=1.76.0-r0' \
+    'libffi-dev=3.5.2-r0' \
+    'openssl-dev=3.5.9-r0' \
+    'python3-dev=3.12.15-r0' \
+    'cargo=1.91.1-r2' \
+    'rust=1.91.1-r2' \
     'build-base=0.5-r3'
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
@@ -55,7 +55,8 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chmod 754 /module/scripts/*
 
 # Stage 3: Runtime
-FROM ghcr.io/alex-tolch/qubership-envgene-base-modules:fix_deps_versions AS runtime
+# change image before merge
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
 
