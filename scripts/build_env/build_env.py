@@ -4,7 +4,7 @@ from envgene_shared import *
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
-    update_profile_name
+    get_profile_baseline, set_object_profile_field
 from utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
@@ -590,26 +590,40 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     result_profiles_dir = Path(f"{env_dir}/Profiles")
     all_profiles = collect_resource_profiles(result_profiles_dir, resource_profiles_dir, profiles_schema,
                                              needed_resource_profiles_map, render_context)
+    object_paths = {"cloud": cloudTemlatePath} | {ns.postfix: ns.definition_path for ns in namespaces}
+    object_baselines = {key: get_profile_baseline(openYaml(path, {}).get("profile") or {})
+                        for key, path in object_paths.items()}
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
-                                                             render_context)
+                                                             render_context, object_baselines)
 
-    if override_profile_map:
-        for profile_key, profile_file_path in override_profile_map.items():
-            all_profiles[profile_key] = profile_file_path
-            profile_name = openYaml(profile_file_path, {}).get("name")
-
-            if profile_key == 'cloud':
-                update_profile_name(cloudTemlatePath, profile_name)
-
-            for ns in namespaces:
-                if profile_key == ns.postfix:
-                    update_profile_name(ns.definition_path, profile_name)
+    for profile_key, profile_file_path in override_profile_map.items():
+        all_profiles[profile_key] = profile_file_path
+        profile_name = openYaml(profile_file_path, {}).get("name")
+        if not profile_name:
+            logger.warning(f"Environment specific resource profile '{profile_file_path}' for '{profile_key}' has no "
+                           f"'name', so the profile cannot be found during effective set generation and its "
+                           f"parameters are not applied")
+        logger.info(f"'{profile_key}' profile.name is '{profile_name}' from environment specific profile "
+                    f"'{profile_file_path}'")
+        set_object_profile_field(object_paths[profile_key], "name", profile_name)
 
     for profile_key, profile_file_path in all_profiles.items():
-        logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")
+        baseline = get_profile_baseline(openYaml(profile_file_path, {}))
+        if baseline:
+            logger.info(f"'{profile_key}' profile.baseline is '{baseline}'")
+            set_object_profile_field(object_paths[profile_key], "baseline", baseline)
+        elif object_baselines[profile_key]:
+            logger.info(f"'{profile_key}' resource profile '{profile_file_path}' has no baseline field, "
+                        f"profile.baseline '{object_baselines[profile_key]}' of the object is kept")
+        else:
+            logger.info(f"'{profile_key}' has no baseline: neither resource profile '{profile_file_path}' "
+                        f"nor the object sets it")
+
+    for profile_file_path in dict.fromkeys(all_profiles.values()):
+        logger.info(f"Copying profile '{profile_file_path}' to resulting directory '{result_profiles_dir}'")
         copy_path(profile_file_path, f"{result_profiles_dir}/")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
-        beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
+        beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text, validate=False)
 
 
 def set_cleaned_mark(namespaces: list[NamespaceFile]):
