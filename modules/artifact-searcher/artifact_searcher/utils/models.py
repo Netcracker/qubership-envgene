@@ -272,6 +272,7 @@ class RepoType(str, Enum):
     TARGET_RELEASE = "targetRelease"
     SNAPSHOT_GROUP = "snapshotGroup"
     REPOSITORY_NAME = "repositoryName"
+    RELEASE_GROUP = "releaseGroup"
 
 
 class Repo(BaseSchema):
