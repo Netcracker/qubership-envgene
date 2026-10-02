@@ -19,18 +19,18 @@ COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build Python dependencies
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libffi-dev=3.4.4-r3 \
-    openssl-dev=3.1.8-r1 \
-    python3-dev=3.11.14-r0 \
-    cargo=1.76.0-r0 \
-    rust=1.76.0-r0 \
-    build-base=0.5-r3
+    'libffi-dev=3.5.2-r0' \
+    'openssl-dev=3.5.9-r0' \
+    'python3-dev=3.12.15-r0' \
+    'cargo=1.91.1-r2' \
+    'rust=1.91.1-r2' \
+    'build-base=0.5-r3'
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
@@ -66,9 +66,9 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chmod 754 /module/scripts/*
 
 # Stage 3: Runtime
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
 
-ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
+ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
@@ -76,7 +76,7 @@ ENV LANG='en_US.UTF-8' \
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc=13.2.1_git20231014-r0 \
+    libgcc=15.2.0-r2 \
     ${JAVA_PACKAGE}
 
 COPY --from=build /module /module
