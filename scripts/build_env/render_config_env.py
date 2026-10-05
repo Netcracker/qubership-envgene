@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import *
+from envgenehelper import Optional, OrderedDict, Path, beautifyYaml, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, dumpYamlToStr, dump_as_yaml_format, ensure_directory, ensure_environment_name, findAllYamlsInDir, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_regdef_or_fail, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
     get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole, parse_bg_ns_target,
@@ -316,11 +316,11 @@ class EnvGenerator:
         logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
-    def render_from_obj_to_file(self, template, target_file_path):
+    def render_from_obj_to_obj(self, template) -> dict:
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
-        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
+        return readYaml(escaping_quotation(rendered))
 
     def generate_tenant_file(self):
         logger.info(f"Generate Tenant yaml for {self.ctx.tenant}")
@@ -328,10 +328,14 @@ class EnvGenerator:
         tenant_tmpl_path = self.ctx.current_env_template["tenant"]
         self.render_from_file_to_file(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
 
-    def generate_override_template(self, template_override, template_path: Path, name):
-        if template_override:
-            logger.info(f"Generate override {template_path.stem} yaml for {name}")
-            self.render_from_obj_to_file(template_override, template_path)
+    def apply_template_override(self, template_override, target_path: Path, schema_path: Path, name):
+        if not template_override:
+            return
+        logger.info(f"Apply template override to {target_path.name} for {name}")
+        target = openYaml(target_path)
+        merge_yaml_into_target(target, '', self.render_from_obj_to_obj(template_override))
+        writeYamlToFile(target_path, target)
+        beautifyYaml(str(target_path), schema_path)
 
     def generate_cloud_file(self):
         cloud = self.calculate_cloud_name()
@@ -346,7 +350,7 @@ class EnvGenerator:
             self.render_from_file_to_file(Template(cloud_tmpl_path).render(context), cloud_file)
 
             template_override = cloud_template.get("template_override")
-            self.generate_override_template(template_override, Path(f'{current_env_dir}/cloud.yml_override'), cloud)
+            self.apply_template_override(template_override, Path(cloud_file), get_schema_dir() / "cloud.schema.json", cloud)
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             self.render_from_file_to_file(Template(cloud_template).render(context), cloud_file)
@@ -399,8 +403,8 @@ class EnvGenerator:
             ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / folder_postfix
             rendered_ns = self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
             namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
-            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override",
-                                            folder_postfix)
+            self.apply_template_override(effective_ns.get("template_override"), ns_dir / "namespace.yml",
+                                         get_schema_dir() / "namespace.schema.json", folder_postfix)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
                 sides = namespace_by_deploy_postfix.setdefault(map_key, {})
@@ -471,11 +475,13 @@ class EnvGenerator:
         path_str = path_str.replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml")
         return Path(path_str)
 
-    def generate_paramset_templates(self):
+    def generate_paramset_templates(self, paramset_names: Iterable[str] | None = None):
         render_dir = Path(self.ctx.render_parameters_dir).resolve()
         paramset_templates = self.find_templates(render_dir, ["*.yml.j2", "*.yaml.j2"])
         for template_path in paramset_templates:
             template_name = self.get_template_name(template_path)
+            if paramset_names is not None and template_name not in paramset_names:
+                continue
             target_path = self.get_rendered_target_path(template_path)
             try:
                 logger.info(f"Try to render paramset {template_name}")
@@ -641,9 +647,14 @@ class EnvGenerator:
             self.generate_bgd_file()
             return self.generate_namespace_files_and_map()
 
+    def _cloud_e2e_paramset_names(self, cloud: dict) -> list[str]:
+        env_specific = self.ctx.env_definition.get("envTemplate", {}).get("envSpecificE2EParamsets") or {}
+        return (cloud.get("e2eParameterSets") or []) + (env_specific.get("cloud") or [])
+
     def render_cloud_e2e_parameters(self, env_name: str, extra_env: dict, env_dir: str,
-                                    scratch_params_dir: Path) -> dict:
-        from build_env.build_env import collect_paramset_sources, create_paramset_map, initParametersStructure, processTemplate
+                                    render_parameters_dir: Path) -> dict:
+        from build_env.build_env import convertParameterSetsToParameters, copy_instance_paramsets, \
+            copy_template_paramsets, create_paramset_map
 
         logger.info(
             f"Starting rendering cloud e2e parameters for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
@@ -657,28 +668,22 @@ class EnvGenerator:
             self.set_env_templates()
             self.generate_cloud_file()
 
-        cloud_file = Path(self.ctx.current_env_dir) / "cloud.yml"
+            cloud_file = Path(self.ctx.current_env_dir) / "cloud.yml"
 
-        if scratch_params_dir.exists():
-            shutil.rmtree(scratch_params_dir)
+            if render_parameters_dir.exists():
+                shutil.rmtree(render_parameters_dir)
 
-        collect_paramset_sources(env_dir, {NamespaceRole.COMMON: self.ctx.templates_dir}, str(scratch_params_dir))
-        paramset_map = create_paramset_map(str(scratch_params_dir), NamespaceRole.COMMON, False, False)
+            copy_template_paramsets({NamespaceRole.COMMON: self.ctx.templates_dir}, str(render_parameters_dir))
+            copy_instance_paramsets(env_dir, str(render_parameters_dir))
+            self.ctx.render_parameters_dir = str(render_parameters_dir)
+            cloud = openYaml(cloud_file)
+            e2e_paramset_names = self._cloud_e2e_paramset_names(cloud)
+            self.generate_paramset_templates(e2e_paramset_names)
 
-        env_specific_map = {}
-        initParametersStructure(env_specific_map, "cloud")
-        processTemplate(
-            str(cloud_file),
-            "cloud",
-            env_dir,
-            str(get_schema_dir() / "cloud.schema.json"),
-            paramset_map,
-            env_specific_map["cloud"],
-            resource_profiles_map={},
-            process_env_specific=True,
-        )
-
-        return openYaml(cloud_file).get("e2eParameters", {}) or {}
+        paramset_map = create_paramset_map(str(render_parameters_dir), NamespaceRole.COMMON, False, False)
+        cloud_e2e = {"e2eParameterSets": e2e_paramset_names, "e2eParameters": cloud["e2eParameters"]}
+        return convertParameterSetsToParameters(str(cloud_file), cloud_e2e, "e2eParameterSets", "e2eParameters",
+                                                paramset_map, {}, env_instances_dir=env_dir)
 
 
     def _resolve_composite_member(self, member: dict, bgd: dict | None = None) -> dict:

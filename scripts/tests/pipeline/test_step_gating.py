@@ -70,11 +70,12 @@ class TestStepGating:
     @pytest.mark.parametrize("env_builder, sd_version, generate_effective_set, expected", [
         ("true", "Cloud-Core:1.0", "true", True),
         ("false", "Cloud-Core:1.0", "true", False),
-        ("true", "", "true", False),
-        ("true", "Cloud-Core:1.0", "false", False),
+        ("true", "", "true", True),
+        ("true", "Cloud-Core:1.0", "false", True),
+        ("true", "", "false", False),
     ])
-    def test_legacy_regdefv2_adapter_requires_sd_env_builder_and_effective_set(self, env_builder, sd_version,
-                                                                               generate_effective_set, expected):
+    def test_legacy_regdefv2_adapter_requires_env_builder_and_sd_or_effective_set(self, env_builder, sd_version,
+                                                                                  generate_effective_set, expected):
         ctx = _ctx(ENV_BUILDER=env_builder, SD_VERSION=sd_version,
                    GENERATE_EFFECTIVE_SET=generate_effective_set)
 

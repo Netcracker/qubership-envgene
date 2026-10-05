@@ -10,7 +10,8 @@ from typing import Optional, Self, Any
 import yaml
 from pydantic import BaseModel, Field
 
-from envgenehelper import logger, writeToFile
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.file_utils import writeToFile
 from regdefv2_adapter.regdefv2_adapter import REGDEFS_DIRNAME
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
@@ -93,6 +94,7 @@ class PipelineParametersHandler(BaseModel):
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
             "BGD_OPERATION": getenv("BGD_OPERATION"),
             "BG_STATE": getenv("BG_STATE"),
+            "EXTERNAL_CREDENTIAL_PROVISIONING": getenv("EXTERNAL_CREDENTIAL_PROVISIONING", ExternalCredentialProvisioning.APPLY.value),
             "METRICS_COLLECTOR_URL": getenv("METRICS_COLLECTOR_URL", ""),
             "METRICS_COLLECTOR_PARENT_ID": getenv("METRICS_COLLECTOR_PARENT_ID", ""),
             "METRICS_COLLECTOR_TRACE_ID": getenv("METRICS_COLLECTOR_TRACE_ID", ""),

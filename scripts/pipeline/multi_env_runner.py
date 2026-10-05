@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.business_helper import get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.repo_paths import get_sparse_checkout_paths
 from publish_artifacts.publish_artifacts import artifacts_output_root

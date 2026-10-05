@@ -3,7 +3,7 @@ import sys
 from importlib import import_module
 from typing import Any
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 
 from .engine_contract import IPluginRegistry
 

@@ -3,12 +3,13 @@ from pathlib import Path
 
 import jsonschema
 from artifact_searcher.auth_resolver import (
-    AUTH_METHOD_ANONYMOUS, AUTH_METHOD_SECRET, AUTH_METHOD_SERVICE_ACCOUNT, CRED_FIELD_DATA, CRED_FIELD_PASSWORD, CRED_FIELD_SECRET, CRED_FIELD_USERNAME,
+    AUTH_METHOD_ANONYMOUS, AUTH_METHOD_SECRET, AUTH_METHOD_SERVICE_ACCOUNT, CRED_FIELD_PASSWORD, CRED_FIELD_SECRET, CRED_FIELD_USERNAME,
 )
 
 import envgenehelper as helper
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.config_helper import get_regdef_v2_schema
+from envgenehelper.creds_helper import CRED_FIELD_DATA
 from envgenehelper.logger import logger
 
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
@@ -32,6 +33,14 @@ V2_MAVEN_CONFIG_FIELDS = (
     "snapshotGroup",
     "releaseGroup",
 )
+
+V2_SECTION_DOMAIN_PARAMS: dict[str, str | None] = {
+    "helmConfig": "HELM_REPO_BASE_URL",
+    "helmAppConfig": "HELM_REPO_BASE_URL",
+    "goConfig": None,
+    "npmConfig": None,
+    "rawConfig": None,
+}
 
 _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
     "aws": {
@@ -99,16 +108,36 @@ def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
     return auth_config
 
 
-def _convert_v2_from_v1(v1_data: dict, auth_config: dict) -> dict:
+def _resolve_section_domain(section: str, params: dict, v1_maven: dict) -> str | None:
+    param_name = V2_SECTION_DOMAIN_PARAMS[section]
+    if param_name is None:
+        return v1_maven.get("repositoryDomainName", "")
+    if params.get(param_name):
+        return params[param_name]
+    logger.warning(f"{param_name} not set in Cloud e2eParameters — {section}.repositoryDomainName not set in RegDef v2")
+    return None
+
+
+def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
     v1_maven = v1_data.get("mavenConfig", {})
     v2_maven = {key: v1_maven[key] for key in V2_MAVEN_CONFIG_FIELDS if key in v1_maven}
     v2_maven["authConfig"] = AUTH_CONFIG_KEY
-    return {
+    v2_data = {
         "version": "2.0",
         "name": v1_data["name"],
         "authConfig": {AUTH_CONFIG_KEY: auth_config},
         "mavenConfig": v2_maven,
     }
+    if "dockerConfig" in v1_data:
+        v2_data["dockerConfig"] = {**v1_data["dockerConfig"], "authConfig": AUTH_CONFIG_KEY}
+    for section in V2_SECTION_DOMAIN_PARAMS:
+        if section not in v1_data:
+            continue
+        v2_data[section] = {**v1_data[section], "authConfig": AUTH_CONFIG_KEY}
+        domain = _resolve_section_domain(section, params, v1_maven)
+        if domain is not None:
+            v2_data[section]["repositoryDomainName"] = domain
+    return v2_data
 
 
 
@@ -117,7 +146,7 @@ def run_regdefv2_adapter(ctx) -> None:
     env_dir = str(get_current_env_dir_from_env_vars())
     render_context_vars = build_minimal_render_context(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
     e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
-        ctx.env_name, render_context_vars, env_dir, helper.pubreg_transient_dir(ctx.work_dir) / "parameters"
+        ctx.env_name, render_context_vars, env_dir, helper.render_workspace_dir(ctx.work_dir) / "parameters"
     )
     params = _resolve_pubreg_params(e2e_parameters, env_dir)
 
@@ -165,7 +194,7 @@ def run_regdefv2_adapter(ctx) -> None:
 
         file_auth_config = _build_auth_config(params, TRANSIENT_CRED_ID, maven_provider)
 
-        v2_data = _convert_v2_from_v1(v1_data, file_auth_config)
+        v2_data = _convert_v2_from_v1(v1_data, file_auth_config, params)
         jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
         helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data)
         logger.info(f"Synthesized v2 for {regdef_file.name}")

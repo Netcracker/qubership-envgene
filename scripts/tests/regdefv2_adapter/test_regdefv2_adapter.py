@@ -7,6 +7,7 @@ import pytest
 import yaml
 
 from envgenehelper import openYaml, get_cred_config, extra_creds_scope
+from envgenehelper.business_helper import render_workspace_dir
 from envgenehelper.config_helper import get_regdef_v2_schema
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
@@ -26,6 +27,11 @@ V1_REGDEF = {
     "dockerConfig": {
         "snapshotUri": "x", "stagingUri": "x", "releaseUri": "x", "groupUri": "x",
         "snapshotRepoName": "x", "stagingRepoName": "x", "releaseRepoName": "x", "groupName": "x",
+    },
+    "helmConfig": {"helmTargetStaging": "helm-staging", "helmTargetRelease": "helm-release"},
+    "goConfig": {"goTargetSnapshot": "go-snapshot", "goTargetRelease": "go-release", "goProxyRepository": "go-proxy"},
+    "helmAppConfig": {
+        "helmStagingRepoName": "x", "helmReleaseRepoName": "x", "helmGroupRepoName": "x", "helmDevRepoName": "x",
     },
 }
 
@@ -83,6 +89,7 @@ PUBREG_PARAMSET = textwrap.dedent("""\
       PUB_REG_DOMAIN: "my-domain"
       PUB_REG_REGION: "us-east-1"
       PUB_REG_REPOSITORY: "my-repo"
+      HELM_REPO_BASE_URL: "https://helm.example.com"
     """)
 
 
@@ -145,6 +152,14 @@ class TestRegdefV2Adapter:
         synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         assert "fullRepositoryUrl" not in synthesized["mavenConfig"]
         jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+        for section in ("dockerConfig", "helmConfig", "helmAppConfig"):
+            assert synthesized[section] == {**V1_REGDEF[section], **synthesized[section]}
+            assert synthesized[section]["authConfig"] == "pub-reg-auth"
+        assert synthesized["mavenConfig"]["repositoryDomainName"] == V1_REGDEF["mavenConfig"]["repositoryDomainName"]
+        assert synthesized["dockerConfig"] == {**V1_REGDEF["dockerConfig"], "authConfig": "pub-reg-auth"}
+        assert synthesized["helmConfig"]["repositoryDomainName"] == "https://helm.example.com"
+        assert synthesized["helmAppConfig"]["repositoryDomainName"] == "https://helm.example.com"
+        assert synthesized["goConfig"]["repositoryDomainName"] == V1_REGDEF["mavenConfig"]["repositoryDomainName"]
 
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"username": "key", "password": "secret"}
 
@@ -159,6 +174,7 @@ class TestRegdefV2Adapter:
               PUB_REG_SECRET: "secret"
               PUB_REG_PROJECT: "my-project"
               PUB_REG_SA_EMAIL: "sa@my-project.iam.gserviceaccount.com"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
             """))
         ctx = _ctx()
 
@@ -176,12 +192,80 @@ class TestRegdefV2Adapter:
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"secret": "secret"}
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("missing", ["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
+    def test_renders_jinja_paramset_in_render_workspace(self, tmp_path):
+        parameters_dir = tmp_path / "tmp" / "templates" / "parameters"
+        (parameters_dir / "pubreg.yaml").unlink()
+        (parameters_dir / "pubreg.yaml.j2").write_text(textwrap.dedent("""\
+            name: "pubreg"
+            parameters:
+              MAVEN_PROVIDER: "gcp"
+              PUB_REG_METHOD: "service_account"
+              PUB_REG_SECRET: "secret"
+              PUB_REG_PROJECT: "{{ env }}-project"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
+            """))
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["authConfig"]["pub-reg-auth"]["gcpRegProject"] == "env-01-project"
+        workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
+        assert (workspace_dir / "pubreg.yml").exists()
+        assert not (workspace_dir / "pubreg.yaml.j2").exists()
+        assert (parameters_dir / "pubreg.yaml.j2").exists()
+
+    @pytest.mark.unit
+    def test_uses_env_specific_e2e_paramsets_and_ignores_deploy_ones(self, tmp_path):
+        env_dir = tmp_path / "environments" / "cluster-01" / "env-01"
+        (env_dir / "Inventory" / "env_definition.yml").write_text(yaml.safe_dump({
+            "inventory": {"environmentName": "env-01"},
+            "envTemplate": {
+                "name": "simple",
+                "envSpecificParamsets": {"cloud": ["cloud-deploy"]},
+                "envSpecificE2EParamsets": {"cloud": ["pubreg-override"]},
+            },
+        }))
+        (tmp_path / "tmp" / "templates" / "parameters" / "cloud-deploy.yml.j2").write_text(
+            'name: "cloud-deploy"\nparameters:\n  X: "{{ env }}"\n')
+        instance_parameters_dir = env_dir / "Inventory" / "parameters"
+        instance_parameters_dir.mkdir()
+        (instance_parameters_dir / "pubreg-override.yml").write_text(
+            'name: "pubreg-override"\nparameters:\n  PUB_REG_REGION: "eu-west-1"\n')
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["authConfig"]["pub-reg-auth"]["awsRegion"] == "eu-west-1"
+        workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
+        assert (workspace_dir / "cloud-deploy.yml.j2").exists()
+
+    @pytest.mark.unit
+    def test_does_not_touch_bg_template_paramsets(self, tmp_path):
+        origin_parameters_dir = tmp_path / "tmp" / "origin" / "templates" / "parameters"
+        origin_parameters_dir.mkdir(parents=True)
+        (origin_parameters_dir / "pubreg.yaml.j2").write_text('name: "pubreg"\nparameters: {}\n')
+
+        run_regdefv2_adapter(_ctx())
+
+        assert not (render_workspace_dir(tmp_path) / "parameters" / "from_origin_template").exists()
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("missing",["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])
     def test_aws_secret_requires_all_params(self, tmp_path, missing):
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if f"{missing}:" not in line)
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
 
         with pytest.raises(ValueError, match=missing):
+            run_regdefv2_adapter(_ctx())
+
+    @pytest.mark.unit
+    def test_helm_sections_fail_schema_without_helm_domain_param(self, tmp_path):
+        paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "HELM_REPO_BASE_URL:" not in line)
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
+
+        with pytest.raises(jsonschema.ValidationError, match="repositoryDomainName"):
             run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
@@ -206,6 +290,7 @@ class TestRegdefV2Adapter:
               MAVEN_PROVIDER: "aws"
               PUB_REG_PROVIDER: "aws"
               PUB_REG_METHOD: "anonymous"
+              HELM_REPO_BASE_URL: "https://helm.example.com"
             """))
         ctx = _ctx()
 

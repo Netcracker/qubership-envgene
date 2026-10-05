@@ -2,6 +2,16 @@
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write (shutil.copy2 utime) in CI/CD
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
+# Stage 0: Build Native Java CLI Binary
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS java-native-builder
+
+WORKDIR /project
+
+COPY build_effective_set_generator /project
+COPY --chown=quarkus:quarkus build_effective_set_generator /project
+
+RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dnative
+
 # Stage 1: Build Java JAR
 FROM maven:3.9-eclipse-temurin-17 AS maven-build
 
@@ -9,18 +19,18 @@ COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build Python dependencies
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libffi-dev=3.4.4-r3 \
-    openssl-dev=3.1.8-r1 \
-    python3-dev=3.11.14-r0 \
-    cargo=1.76.0-r0 \
-    rust=1.76.0-r0 \
-    build-base=0.5-r3
+    'libffi-dev=3.5.2-r0' \
+    'openssl-dev=3.5.9-r0' \
+    'python3-dev=3.12.15-r0' \
+    'cargo=1.91.1-r2' \
+    'rust=1.91.1-r2' \
+    'build-base=0.5-r3'
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
@@ -36,6 +46,7 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     /modules/envgene \
     /modules/artifact-searcher \
     /modules/external-cred-provision \
+    /modules/envgene-shared \
     /modules/dpg
 
 RUN mkdir -p /deployments && \
@@ -55,9 +66,9 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chmod 754 /module/scripts/*
 
 # Stage 3: Runtime
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
 
-ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
+ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
@@ -65,7 +76,7 @@ ENV LANG='en_US.UTF-8' \
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc=13.2.1_git20231014-r0 \
+    libgcc=15.2.0-r2 \
     ${JAVA_PACKAGE}
 
 COPY --from=build /module /module
@@ -73,6 +84,7 @@ COPY --from=build /schemas /schemas
 COPY --from=build /modules /modules
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
+COPY --from=java-native-builder /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
@@ -81,6 +93,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chown -R ci:ci /module /deployments && \
     chmod +x /module/scripts/*.sh && \
     chmod +x /module/scripts/utils/*.sh && \
+    chmod +x /module/scripts/vals-reference-cli && \
     chmod 644 /module/scripts/*.py 2>/dev/null || true && \
     chmod 540 /deployments/run-java.sh && \
     chmod g+rwX /deployments
