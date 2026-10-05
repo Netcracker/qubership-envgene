@@ -12,8 +12,6 @@ external operating modes, and how it resolves overlaps between sources.
     - [External mode](#external-mode)
   - [Precedence ladder](#precedence-ladder)
   - [Merging behavior](#merging-behavior)
-    - [Local mode](#local-mode-1)
-    - [External mode](#external-mode-1)
   - [Local-macro rewrite in external mode](#local-macro-rewrite-in-external-mode)
   - [Related documentation](#related-documentation)
 
@@ -118,18 +116,14 @@ source can resolve to a Credential entry contributed by another source.
 
 How EnvGene writes the Environment Credentials File depends on mode.
 
-### Local mode
+**In local mode**, the Environment Credentials File persists across runs and holds user-authored values.
+Sources contribute additive and override entries into the file, preserving existing user values for `credId`
+entries not covered by a source.
 
-The Environment Credentials File persists across runs and holds user-authored values. Sources contribute
-additive and override entries into the file, preserving existing user values for `credId` entries not covered
-by a source.
-
-### External mode
-
-The Environment Credentials File is **regenerated on every Environment Instance generation**. It is a derived
-artifact, equivalent to the rendered Cloud or Namespace files, and holds no user-authored values. On every
-generation, EnvGene merges the five sources above into a single file, writing the result once with no
-carryover from previous runs.
+**In external mode**, the Environment Credentials File is **regenerated on every Environment Instance
+generation**. It is a derived artifact, equivalent to the rendered Cloud or Namespace files, and holds no
+user-authored values. On every generation, EnvGene merges the five sources above into a single file, writing
+the result once with no carryover from previous runs.
 
 ## Local-macro rewrite in external mode
 
