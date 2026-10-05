@@ -11,7 +11,7 @@ that actually fire for `OPERATION_TYPE: CLEAN`, plus the launch parameters that 
 the single source of truth and live in `flow.md` - this document does not redefine them, it only resolves them
 for the scenario.
 
-`CLEAN` marks the target namespaces as cleaned and emits a cleanup context in the effective set. EnvGene does not
+`CLEAN` marks the target namespaces' deployment and runtime for removal in the effective set. No cleanup context is produced. EnvGene does not
 perform the cluster-side undeployment itself; downstream tooling consumes the effective set and undeploys. A
 subsequent `DEPLOY` restores the marked namespaces. The two sub-flows differ only in scope, set by
 `NAMESPACE_NAMES`.
@@ -58,9 +58,9 @@ Actions:
   other env instance content is modified.
 - `generate_effective_set` is invoked with no deployment plan. The env-level `topology/` and `pipeline/` contexts
   are generated as always. The rest is marker-driven: for each namespace with `cleaned: true`, `.cleaned` is
-  written into `deployment/<ns>/` and `runtime/<ns>/` (no app content), and `cleanup/<ns>/` is emitted. The
-  cleaned namespaces are removed from `deployment/mapping.yaml` and `runtime/mapping.yaml`, and
-  `cleanup/mapping.yaml` lists the cleaned namespaces only.
+  written into `deployment/<ns>/` and `runtime/<ns>/` (no app content). The
+  cleaned namespaces are removed from `deployment/mapping.yaml` and `runtime/mapping.yaml`. No cleanup context
+  is produced.
 - `es_pusher` pushes the effective set with `ESPUSHER_OVERWRITE: true`, so the deploy target repository reflects
   the reduced state.
 
