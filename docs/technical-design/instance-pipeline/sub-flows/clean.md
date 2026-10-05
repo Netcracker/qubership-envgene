@@ -71,7 +71,10 @@ env instance is left otherwise untouched. `generate_argocd_repo` and the `sync` 
 ## CLEAN selected namespaces
 
 `NAMESPACE_NAMES` lists the namespaces to clean. A Blue-Green side namespace (origin or peer) is cleaned as any
-other namespace; the other side and the BG state files are not touched, `CLEAN` is not a state operation.
+other namespace; the other side and the BG state files are not touched, `CLEAN` is not a state operation. The
+Blue-Green controller namespace, and any namespace that is neither an origin nor a peer side, is cleaned in
+exactly the same way - `CLEAN` marks every target namespace regardless of its Blue-Green role, and
+`reduce_deployment_plan` removes only the deploy plan entries that exist for it.
 
 Flow:
 
