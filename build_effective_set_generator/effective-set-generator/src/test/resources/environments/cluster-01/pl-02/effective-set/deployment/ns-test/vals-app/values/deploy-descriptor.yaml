@@ -1,0 +1,30 @@
+global: &id002
+  deployDescriptor: &id001
+    alertmanager:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v0.28.1
+      full_image_name: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+      image_name: alertmanager
+      image_type: image
+      name: alertmanager
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+deployDescriptor: *id001
+alertmanager:
+  APPLICATION_NAME: vals-app
+  DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+  MANAGED_BY: argocd
+  deployDescriptor: *id001
+  global: *id002
+APPLICATION_NAME: vals-app
+DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+MANAGED_BY: argocd

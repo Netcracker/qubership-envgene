@@ -54,6 +54,20 @@
             "deployer2"
           ]
         },
+        "noCmdbVersion": {
+          "type": "string",
+          "title": "No-CMDB Architecture Version",
+          "description": "Version of the No-CMDB deployment architecture. Set manually by users. NOT processed by EnvGene Core. Read by DevOps toolset components to determine how the environment is deployed. When set, it takes precedence over 'deployer'. Default 'v1'.",
+          "enum": [
+            "v1",
+            "v2"
+          ],
+          "default": "v1",
+          "examples": [
+            "v1",
+            "v2"
+          ]
+        },
         "cloudPassport": {
           "type": "string",
           "title": "Cloud Passport",
@@ -208,6 +222,33 @@
               "type": "string"
             }
           }
+        },
+        "bgNsArtifacts": {
+          "type": "object",
+          "title": "Blue-Green Namespace Artifacts",
+          "description": "Per-side template artifact version pins for Blue-Green namespaces",
+          "properties": {
+            "origin": {
+              "type": "string",
+              "title": "Origin Artifact Version",
+              "description": "Template artifact version pinned for the origin namespace",
+              "examples": [
+                "bgd:v1.1.0-origin"
+              ]
+            },
+            "peer": {
+              "type": "string",
+              "title": "Peer Artifact Version",
+              "description": "Template artifact version pinned for the peer namespace",
+              "examples": [
+                "bgd:v1.1.0-peer"
+              ]
+            }
+          },
+          "required": [
+            "origin",
+            "peer"
+          ]
         },
         "sharedMasterCredentialFiles": {
           "type": "array",

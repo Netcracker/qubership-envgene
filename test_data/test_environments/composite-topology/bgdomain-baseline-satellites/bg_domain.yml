@@ -1,0 +1,7 @@
+name: bss
+originNamespace:
+  name: env-1-bss-origin
+peerNamespace:
+  name: env-1-bss-peer
+controllerNamespace:
+  name: env-1-controller

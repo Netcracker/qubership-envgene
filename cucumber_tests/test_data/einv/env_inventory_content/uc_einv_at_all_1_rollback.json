@@ -1,0 +1,22 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {},
+      "envTemplate": {
+        "name": "test",
+        "artifact": "env-templates:1.0.0"
+      }
+    }
+  },
+  "paramSets": [
+    {
+      "action": "invalid_action_to_fail",
+      "place": "env",
+      "content": {
+        "name": "fail",
+        "parameters": {}
+      }
+    }
+  ]
+}

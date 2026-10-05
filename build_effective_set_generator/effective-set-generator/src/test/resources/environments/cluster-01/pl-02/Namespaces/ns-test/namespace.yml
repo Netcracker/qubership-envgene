@@ -1,0 +1,42 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "ns-test-pl"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: true
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  SECRET_FLOW: "helm-values"
+  DB_TOKEN:
+    DB_ADMIN_SECRET:
+      $type: credRef
+      credId: app-sidecar-token
+    DEPLOY_CFG:
+      param_type: "deploy"
+    SECURED_FLAG: "true"
+  APP_PARAM:
+  - APP_USER:
+      $type: credRef
+      credId: app-maas-cred
+      property: username
+  - STATIC_VAL: "abc"
+  DB_ADMIN_USERNAME:
+    $type: credRef
+    credId: app-db-cred
+    property: username
+  DB_ADMIN_PASSWORD:
+    $type: credRef
+    credId: app-dbaas-cred
+    property: password
+  SECRET_META:
+    normalizedSecretName: test-cluster-01--env-1--app-db-cred
+    secretKeys:
+      - remoteKeyName: password
+    secretStoreId: custom_store
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

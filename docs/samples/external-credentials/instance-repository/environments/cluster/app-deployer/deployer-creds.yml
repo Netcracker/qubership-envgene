@@ -1,0 +1,12 @@
+---
+# System Credentials File for the deployer. EnvGene also accepts deployer credentials here, in a
+# *-creds.yml next to the referencing deployer.yml, in addition to /configuration/credentials/.
+# One paired external Credential: username and token map to the username and password properties.
+# Read-only (no create).
+deployer-cred:
+  type: external
+  secretStore: default_store
+  remoteRefPath: /deployer/sample
+  properties:
+    - name: username
+    - name: password

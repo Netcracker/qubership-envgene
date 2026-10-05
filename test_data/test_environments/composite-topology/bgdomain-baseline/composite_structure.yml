@@ -1,0 +1,7 @@
+baseline:
+  type: bgdomain
+  name: bss
+
+satellites:
+  - type: namespace
+    name: env-1-data-management

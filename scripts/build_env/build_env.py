@@ -1,10 +1,9 @@
-import yaml
-from envgenehelper import *
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, beautifyYaml, check_dir_exist_and_create, check_dir_exists, copy, copy_path, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinition, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_namespaces, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, re, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, writeYamlToFile, yaml
 
-from cloud_passport import process_cloud_passport
-from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
+from cloud_passport.cloud_passport import process_cloud_passport
+from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
     update_profile_name
-from schema_validation import checkEnvSpecificParametersBySchema
+from utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -56,6 +55,23 @@ def create_paramset_map(dir: str, role: NamespaceRole,
                 f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
     logger.debug(f'List of {dir} paramsets: \n %s', dump_as_yaml_format(result))
     return result
+
+
+def copy_template_paramsets(templates_dirs: dict, render_parameters_dir: str) -> None:
+    for template_type, template_path in templates_dirs.items():
+        if not (template_path and check_dir_exists(f'{template_path}/parameters')):
+            continue
+        param_dir_name = 'from_template' if template_type == NamespaceRole.COMMON else f'from_{template_type}_template'
+        copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
+
+
+def copy_instance_paramsets(env_dir: str, render_parameters_dir: str) -> None:
+    cluster_path = getDirName(str(env_dir))
+    instances_dir = getDirName(cluster_path)
+    check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
+    copy_path(f'{instances_dir}/parameters', str(render_parameters_dir))
+    copy_path(f'{cluster_path}/parameters', str(render_parameters_dir))
+    copy_path(f'{env_dir}/Inventory/parameters', f'{render_parameters_dir}/from_instance')
 
 
 def sortParameters(params):
@@ -293,7 +309,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
 
 def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, applicationsParamSets, paramsetName,
                                       parametersTag, isEnvSpecificParamset, env_specific_params_map, header_text=""):
-    application_schema = "schemas/application.schema.json"
+    application_schema = f"{get_schema_dir()}/application.schema.json"
     for appParams in applicationsParamSets:
         appName = appParams["appName"] if "appName" in appParams else appParams["name"]
         applicationParametersFile = os.path.dirname(templatePath) + "/Applications/" + appName + ".yml"
@@ -354,8 +370,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     if "envSpecificE2EParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"][templateName]
@@ -368,8 +384,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     if "envSpecificTechnicalParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"][templateName]
@@ -383,8 +399,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(
-                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    raise ReferenceError(
+                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. Please create the missing parameter file or remove the reference from env_definition.yml.")
     return result
 
 
@@ -439,7 +455,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
         Path(source_env_dir).parent,
         Path(all_instances_dir),
     ]
-    
+
     template_params_dir_names = ["configuration", "configurations"]
     shared_template_vars_paths = [level / name for level in levels for name in template_params_dir_names]
     shared_template_vars_paths.append(Path(source_env_dir) / "Inventory")
@@ -468,7 +484,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
 
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, is_external_cred_env=False):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
@@ -489,17 +505,16 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     logger.info(f"Env dir: {env_dir}")
     logger.info(f"Parameters dir: {parameters_dir}")
     # const
-    tenant_schema = "schemas/tenant.schema.json"
-    cloud_schema = "schemas/cloud.schema.json"
-    namespace_schema = "schemas/namespace.schema.json"
-    profiles_schema = "schemas/resource-profile.schema.json"
+    tenant_schema = f"{get_schema_dir()}/tenant.schema.json"
+    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
+    namespace_schema = f"{get_schema_dir()}/namespace.schema.json"
+    profiles_schema = f"{get_schema_dir()}/resource-profile.schema.json"
 
     envDefinitionYaml = getEnvDefinition(env_dir)
     logger.info(getEnvDefinitionPath(env_dir))
     templateArtifactName = getTemplateArtifactName(envDefinitionYaml)
     generated_header_text = GENERATED_HEADER % templateArtifactName
 
-    # pathes
     tenantTemplatePath = env_dir + "/tenant.yml"
     cloudTemlatePath = env_dir + "/cloud.yml"
     namespaces = get_namespaces(Path(env_dir))
@@ -527,7 +542,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
-    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir)
+    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir, is_external_cred_env)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
         cloudTemlatePath,
@@ -563,6 +578,9 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
             resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text,
         )
+    operation_type = OperationType(getenv("OPERATION_TYPE"))
+    if operation_type == OperationType.CLEAN:
+        set_cleaned_mark(namespaces)
     logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
 
@@ -590,3 +608,24 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         copy_path(profile_file_path, f"{result_profiles_dir}/")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
         beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
+
+
+def set_cleaned_mark(namespaces: list[NamespaceFile]):
+    ns_map = {ns.name: ns for ns in namespaces}
+    ns_names_var = getenv("NAMESPACE_NAMES")
+    if not ns_names_var:
+        logger.info("NAMESPACE_NAMES is empty, marking all namespaces as cleaned (env-cleanup)")
+        filtered_ns = namespaces.copy()
+    else:
+        ns_names = split_multi_value_param(ns_names_var)
+        filtered_ns = []
+        for name in ns_names:
+            ns_obj = ns_map.get(name)
+            if ns_obj is None:
+                raise ValueError(f"Operation type CLEAN: namespace '{name}' not found in env_instance")
+            filtered_ns.append(ns_obj)
+    for ns in filtered_ns:
+        logger.info(f"Operation type CLEAN: setting cleaned=true for namespace '{ns.name}'")
+        ns_yaml = openYaml(ns.definition_path)
+        set_nested_yaml_attribute(ns_yaml, "cleaned", True)
+        writeYamlToFile(ns.definition_path, ns_yaml)

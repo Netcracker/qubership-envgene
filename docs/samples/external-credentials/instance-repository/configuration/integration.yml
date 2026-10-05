@@ -1,0 +1,13 @@
+---
+# System integration config. Each token references a system Credential through the credRef form
+# (used for external Credentials, in place of the envgen.creds.get macro used for local ones).
+self_token:
+  $type: credRef
+  credId: self-token-cred
+cp_discovery:
+  gitlab:
+    project: sample-org/sample-templates
+    branch: main
+    token:
+      $type: credRef
+      credId: cp-discovery-token-cred

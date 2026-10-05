@@ -1,0 +1,150 @@
+---
+name: writing-adrs
+description: Write an Architecture Decision Record (ADR) in a terse, one-page house style. Use whenever the user wants to record, capture, or file an architecture decision. Trigger on phrases like "write an ADR", "record this decision", "make an ADR for X", "document why we chose Y", "add a decision record", or "log this design decision". Also use when a settled design or trade-off from the conversation needs a durable decision log entry. Produces a short Nygard-format ADR under docs/adr/. Keep it to one page and never let it grow into a design doc.
+---
+
+# Writing ADRs
+
+An ADR records one decision and the reasoning behind it, so future contributors understand why, and
+do not silently reverse or re-litigate it. Its value is the rationale, not the length. A bloated ADR
+is a failed ADR: nobody rereads a wall of text, so the decision trail is lost anyway. Default to
+short.
+
+## Non-negotiables
+
+- **One decision per file.** Two decisions mean two ADRs. If you are tempted to add a second
+  `## Decision`, split the file.
+- **One page.** A slide's worth of prose for an easy call, a page for a hard one. If it runs longer,
+  the analysis belongs in a linked design doc, not here.
+- **State a downside.** Every real decision costs something. An ADR with only upsides is hiding the
+  trade-off. Name at least one negative consequence you accept.
+- **No diagrams, no code, no deep dives.** Link them. The ADR carries the choice and the why, nothing
+  that needs scrolling.
+- **No code references, describe abstractly.** State the decision in domain and behavior terms. Do not
+  name files, functions, classes, or modules in the prose. A code reference goes stale and belongs in the
+  linked design doc or PR, not in a durable decision record. Prefer naming the observable behavior or the
+  documented object over the code that implements it, for example "the effective set resolves the profile
+  by signal-gated side selection" over naming the resolver class and the method it calls. A design
+  mechanism that is not a code symbol is still implementation: a flag, toggle, input, knob, or its default
+  and on/off state describes how the decision is wired, so state the observable behavior it produces
+  instead. Prefer "the cleanup context is generated for every namespace in No-CMDB v1 and not in No-CMDB
+  v2" over "an input defaults to off, when on the generator produces the cleanup context, and the pipeline
+  sets the input on for the legacy flow".
+- **No Date field.** Do not put a Date line in an ADR. The commit history is the authoritative date.
+- **No implementation-status prose.** An ADR records the decision, not whether the code exists yet. Do not write that
+  the decision is "ahead of implementation", "not yet wired", "doc-ahead", or holds "until that lands". That state
+  lives in the `Status` field (`Proposed` before agreement, `Accepted` after) and in the commit history. A prose status
+  note goes stale the moment the code merges, and a durable record that contradicts reality is worse than none. If you
+  need to point at the implementing change, link the PR or issue at the bottom instead of narrating its progress.
+- **Capture the whole decided model.** When writing or revising, cross-check the Decision against
+  the source model and add any rule that is missing, including small normalization or edge-case rules
+  (for example, how an empty value is treated). Do not assume the existing Decision text is complete.
+  Terseness comes from tight wording per item, not from omitting items.
+- **When revising, audit the whole document.** Apply every rule in this skill to the entire ADR, not
+  only the lines you set out to change. This differs from the `writing-docs` scope, which limits
+  style fixes to new and modified content only. An ADR is one page, so a whole-document pass takes
+  seconds and keeps the record consistent. Check all sections against these rules and against the
+  source decision before you submit any revision.
+
+## Format
+
+Use the five Nygard sections. Nothing more.
+
+```markdown
+# ADR-NNNN: <short imperative title, for example "Adapt registry auth from e2e params">
+
+Status: Proposed | Accepted | Superseded by ADR-XXXX
+
+## Context
+
+<2-3 sentences. The forces that make a decision necessary: the problem, the constraint, what is in
+tension. Not a history lesson.>
+
+## Decision
+
+<What we do, present tense, 1-3 sentences: "We do X.">
+
+Rejected:
+
+- <option A>, because <one clause>.
+- <option B>, because <one clause>.
+
+## Consequences
+
+- <what gets easier or what this unlocks>
+- <the cost we accept, required, not optional>
+```
+
+- **Title**: a short present-tense imperative, the decision itself, not a topic. Good: "Adapt registry
+  auth from e2e params". Weak: "Registry authentication".
+- **Rejected alternatives**: option titles plus a single `because` clause each, as a bullet list. This
+  is the line people cite years later to avoid redoing dead work, so name the real contenders, but
+  resist per-option pros and cons prose. One clause conveys enough. With one or two contenders you may
+  fold them into the Decision sentence instead.
+  Rejected holds decision-level alternatives, other ways to solve this problem that a reviewer might
+  propose. Litmus: would someone offer this instead of the whole decision? If yes, it belongs here. If
+  it is a knob within the chosen design (how it persists, what it is gated on), it states how the
+  decision works and belongs in Decision, not here.
+- If the whole decision fits one sentence, a Y-statement replaces the prose: *"In the context of \<use
+  case\>, facing \<concern\>, we chose \<option\> to achieve \<quality\>, accepting \<downside\>."*
+
+## Style
+
+Terseness comes from tighter wording and moving detail out, not from dropping the downside or the
+alternatives.
+
+- Cut sales-pitch language. Check every adjective and adverb: is it needed, and is the claim behind it
+  true? If not, delete it. "Clean, elegant, robust" earns nothing.
+- Prefer plain declaratives over hedging. "We do X" beats "It is proposed that X may be".
+- Follow the repo's `writing-docs` rules. In particular: plain hyphens, never em or en dashes. No
+  semicolons, split into separate sentences. 120-character lines, sentence-case headings. An ADR is a
+  repo doc like any other.
+- When Decision or Consequences enumerate cases, options, warnings, or rules, present each one as a
+  bullet, not as a run-on inline sentence. One item per bullet, and one distinct rule per bullet. Do not
+  restate the same fact as both a mechanism bullet and its outcome, or repeat a fact across Decision and
+  Consequences. A sentence that lists several items separated by semicolons, or by repeated use of "and",
+  is an enumeration and must be rewritten as a bulleted list. This applies when revising existing prose
+  too, even if the surrounding text is unchanged.
+
+  Anti-example: "We emit warnings for missing keys; null values; and unknown fields." becomes:
+
+  ```markdown
+  We emit warnings for:
+
+  - Missing keys
+  - Null values
+  - Unknown fields
+  ```
+
+- State findings qualitatively, not with exact counts or measurements. "A corpus scan found no
+  divergences" instead of "753 environment definitions, 2033 namespaces". Specific numbers age
+  and belong in the analysis or ledger, not in the durable ADR.
+
+## Filing
+
+- Path: `docs/adr/NNNN-kebab-title.md`, number zero-padded (`0001`, `0002`, ...). Next number is the
+  highest existing plus one. If `docs/adr/` does not exist yet, start at `0001`.
+- Status lifecycle: `Proposed`, then `Accepted` once agreed, then `Superseded by ADR-XXXX`. Never edit
+  an accepted ADR's decision to reverse it. Write a new ADR that supersedes it and flip the old one's
+  status. The trail is the point.
+- Link out for depth: put "see design doc, issue, or flow.md" references at the bottom so the ADR stays
+  one page while the details live where they belong.
+
+## Anti-examples
+
+Reject these. They are the failure modes that make ADRs unread.
+
+- A Context that recounts the project's history for three paragraphs. Cut to 2-3 sentences of forces.
+- Considered options with a good, bad, and neutral table per option. Use titles plus one `because`.
+- A Consequences section listing only benefits. Include the cost.
+- Architecture diagrams or code pasted inline. Link a design doc.
+- Exact counts or measurements in Decision or Consequences ("753 environments, 2033 namespaces"). State
+  the finding qualitatively. The numbers age and belong in the analysis, not in the durable record.
+- A Decision or Consequences that drops a settled rule to save space. Every case the decision resolves
+  must appear. Make each item tight, not absent.
+- Two bullets that carry the same fact, one as a mechanism and one as its outcome, for example "The
+  GitLab flow leaves the input off" followed by "The GitLab flow produces no cleanup context". The second
+  is just the outcome of the first. Keep one, stated as behavior.
+- A Consequences line that tracks implementation status ("this is ahead of code", "not yet wired", "until the change
+  lands"). The `Status` field carries the lifecycle. Such prose ages into falsehood the moment the code ships, and the
+  next reader trusts a record that is now wrong.
