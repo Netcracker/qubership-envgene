@@ -56,6 +56,11 @@ Supports working with SOPS encryption.
 7. Credential rotation in a single operation for multiple Environments is not supported. `ENV_NAMES` can only contain a single Environment ID.
 8. `CRED_ROTATION_PAYLOAD` and `GET_PASSPORT: true` cannot be combined in one pipeline run.
    The pipeline fails at validation before any per-environment job starts.
+9. Credential rotation runs only in local Instance repositories (`/configuration/secret-stores.yml` absent).
+   In external Instance repositories, Credential values live in the external Secret Store and rotation must
+   be performed at the Secret Store directly. See
+   [Mode detection](/docs/features/credential-processing.md#mode-detection) and
+   [During Credential Rotation](/docs/features/external-creds.md#during-credential-rotation).
 
 ### Requirements
 
