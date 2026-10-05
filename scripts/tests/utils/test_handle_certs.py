@@ -72,6 +72,29 @@ class TestInstallCertificates:
         assert os.environ["REQUESTS_CA_BUNDLE"] == SYSTEM_CA_BUNDLE
 
     @pytest.mark.unit
+    def test_skips_hidden_files_in_certs_dir(self, ca_env):
+        certs_dir = _certs_dir(ca_env)
+        (certs_dir / ".gitkeep").write_bytes(b"")
+        (certs_dir / "corp-root.pem").write_bytes(b"root")
+
+        install_certificates()
+
+        assert [p.name for p in ca_env["ca_dir"].iterdir()] == ["corp-root.crt"]
+
+    @pytest.mark.unit
+    def test_warns_when_certificates_share_target_name(self, monkeypatch, ca_env, caplog):
+        certs_dir = _certs_dir(ca_env)
+        (certs_dir / "corp.crt").write_bytes(b"first")
+        (certs_dir / "corp.pem").write_bytes(b"second")
+        monkeypatch.setattr(logger, "propagate", True)
+
+        with caplog.at_level(logging.WARNING, logger=logger.name):
+            install_certificates()
+
+        assert (ca_env["ca_dir"] / "corp.crt").read_bytes() == b"second"
+        assert "replaces an earlier certificate installed as corp.crt" in caplog.text
+
+    @pytest.mark.unit
     def test_installs_decoded_bundle_and_certs_dir_without_default(self, monkeypatch, ca_env):
         (ca_env["tmp_path"] / "default_cert.pem").write_bytes(b"default")
         (_certs_dir(ca_env) / "corp-root.pem").write_bytes(b"root")

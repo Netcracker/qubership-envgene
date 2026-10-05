@@ -401,14 +401,22 @@ def run_single_env_pipeline() -> None:
 
 def prepare_job() -> list[str]:
     with log_section("prepare_job", header=banner("START: prepare_job")):
-        env_names = resolve_env_names()
-        os.environ.update(build_resolved_variables(env_names))
-        if getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
-            logger.info("Local test mode: skipping sparse checkout")
-        else:
-            run_sparse_checkout(env_names)
-        # Certificates live in configuration/certs, which exists only after the sparse checkout.
-        install_certificates()
+        start = time.time_ns()
+        status = StepStatus.FAILED
+        try:
+            env_names = resolve_env_names()
+            os.environ.update(build_resolved_variables(env_names))
+            if getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+                logger.info("Local test mode: skipping sparse checkout")
+            else:
+                run_sparse_checkout(env_names)
+            # Certificates live in configuration/certs, which exists only after the sparse checkout.
+            install_certificates()
+            status = StepStatus.SUCCESS
+        finally:
+            duration_ms = (time.time_ns() - start) // 1_000_000
+            end_text = f"END: prepare_job ({_format_duration(duration_ms)}) - {status}"
+            logger.info(colorize(banner(end_text), _STATUS_COLOR[status]))
     return env_names
 
 

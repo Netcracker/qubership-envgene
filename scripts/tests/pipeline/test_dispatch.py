@@ -1,7 +1,9 @@
+import logging
 import os
 
 import pytest
 
+from envgenehelper import logger
 from pipeline.orchestrator import dispatch
 
 
@@ -125,20 +127,27 @@ class TestPrepareJob:
         assert "LOCAL_APPDEFS_PATH" not in os.environ
 
     @pytest.mark.unit
-    def test_local_test_mode_skips_checkout(self, monkeypatch, job_preparation_calls):
+    def test_local_test_mode_skips_checkout(self, monkeypatch, job_preparation_calls, caplog):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
         monkeypatch.setenv("IS_LOCAL_DEV_TEST_ENVGENE", "true")
         monkeypatch.setattr("pipeline.orchestrator.run_single_env_pipeline", lambda: None)
+        monkeypatch.setattr(logger, "propagate", True)
 
-        assert dispatch() == 0
+        with caplog.at_level(logging.INFO, logger=logger.name):
+            assert dispatch() == 0
         assert job_preparation_calls == [("install_certificates",)]
         assert os.environ["LOCAL_APPDEFS_PATH"].endswith("/environments/cluster-01/env-01/AppDefs")
+        assert "END: prepare_job" in caplog.text
+        assert "- SUCCESS" in caplog.text
 
     @pytest.mark.unit
-    def test_invalid_env_selection_fails_before_checkout(self, monkeypatch, job_preparation_calls):
+    def test_invalid_env_selection_fails_before_checkout(self, monkeypatch, job_preparation_calls, caplog):
         monkeypatch.delenv("ENV_NAMES", raising=False)
         monkeypatch.setattr("pipeline.orchestrator.run_single_env_pipeline", pytest.fail)
+        monkeypatch.setattr(logger, "propagate", True)
 
-        with pytest.raises(ValueError, match="Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME"):
-            dispatch()
+        with caplog.at_level(logging.INFO, logger=logger.name):
+            with pytest.raises(ValueError, match="Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME"):
+                dispatch()
         assert job_preparation_calls == []
+        assert "- FAILED" in caplog.text

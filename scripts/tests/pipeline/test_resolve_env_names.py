@@ -54,14 +54,13 @@ class TestResolveEnvNames:
         monkeypatch.setenv("ENVIRONMENT_NAME", "env-02")
 
         assert resolve_env_names() == ["cluster-02/env-02"]
-        assert os.environ["ENV_NAMES"] == "cluster-02/env-02"
+        assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
 
     @pytest.mark.unit
     def test_passes_with_env_names_only(self, monkeypatch):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
 
         assert resolve_env_names() == ["cluster-01/env-01"]
-        assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
 
     @pytest.mark.unit
     def test_fails_when_env_names_has_invalid_format(self, monkeypatch):
@@ -76,7 +75,7 @@ class TestResolveEnvNames:
         monkeypatch.setenv("ENVIRONMENT_NAME", "env-01")
 
         assert resolve_env_names() == ["cluster-01/env-01"]
-        assert os.environ["ENV_NAMES"] == "cluster-01/env-01"
+        assert "ENV_NAMES" not in os.environ
 
     @pytest.mark.unit
     def test_allows_multi_env_when_pipeline_type_unset(self, monkeypatch):

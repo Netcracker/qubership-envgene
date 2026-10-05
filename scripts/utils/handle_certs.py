@@ -27,11 +27,16 @@ def install_certificates() -> None:
         logger.info("SSL_CERTIFICATES_BUNDLE is not set, skipping")
 
     certs_dir = Path(os.environ["CI_PROJECT_DIR"]) / CERTS_SUBDIR
-    cert_files = sorted(p for p in certs_dir.iterdir() if p.is_file()) if certs_dir.is_dir() else []
+    cert_files = sorted(
+        p for p in certs_dir.iterdir() if p.is_file() and not p.name.startswith(".")
+    ) if certs_dir.is_dir() else []
     if cert_files:
         logger.info(f"Found certificates in {certs_dir}, installing...")
         for cert_file in cert_files:
-            certs[f"{cert_file.stem}.crt"] = cert_file.read_bytes()
+            name = f"{cert_file.stem}.crt"
+            if name in certs:
+                logger.warning(f"Certificate {cert_file} replaces an earlier certificate installed as {name}")
+            certs[name] = cert_file.read_bytes()
     else:
         logger.info(f"No certificates found in {certs_dir}, skipping")
 
