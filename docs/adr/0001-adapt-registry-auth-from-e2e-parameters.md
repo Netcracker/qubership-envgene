@@ -1,6 +1,6 @@
 # ADR-0001: Adapt registry auth parameters into per-downloader auth for EnvGene
 
-Status: Proposed
+Status: Accepted
 Date: 2026-08-20
 
 ## Context
@@ -20,18 +20,20 @@ library consumes natively:
 
 - **dpg** gets a transient file of the resolved parameters. dpg reads it and builds its runtime registry
   object.
-- **artifact-searcher** gets a synthesized RegDef v2 that reuses the v1 RegDef's Maven coordinates and
-  replaces only the auth: its `authConfig` references a `credentialsId`. The step creates that credential from
-  the resolved key and secret, and the resolver reads it from the transient location the downloaders are
-  pointed at.
+- **artifact-searcher** gets a synthesized RegDef v2 that reuses the v1 RegDef's Maven coordinates and adds an
+  `authConfig` that each registry section references by name. That `authConfig` carries a `credentialsId`. The
+  step creates that credential in memory from the resolved key and secret and merges it into the decrypted
+  credentials the resolver reads for the run.
 
 None of these outputs is committed. The downloaders read them from outside the committed instance repository,
 so the committed RegDefs stay at v1 for consumers that do not read v2 and the committed credential store is
-untouched. The RegDef v2 is synthesized only for public cloud registries (`MAVEN_PROVIDER` is `aws`, `azure`,
-or `gcp`) that are not already at `version: "2.0"`. A non-public registry keeps its RegDef v1. The env
-template download authenticates through its Artifact Definition, the Java calculator reads committed
-coordinates and needs no auth, and `generate_argocd_repo` reads a local cache, so none is a consumer. We
-remove the adapter once the registry auth parameters are retired in favor of RegDef v2.
+untouched. The RegDef v2 is synthesized only for public cloud registries that are not already at
+`version: "2.0"`. The step synthesizes it for `MAVEN_PROVIDER` `aws` and `gcp`. A `nexus` or `artifactory`
+registry keeps its RegDef v1. For `azure`, the dpg path authenticates from the parameter file, but RegDef v2
+synthesis for the artifact-searcher path is planned and not implemented yet. The env template download
+authenticates through its Artifact Definition, the Java calculator reads committed coordinates and needs no
+auth, and `generate_argocd_repo` reads a local cache, so none is a consumer. We remove the adapter once the
+registry auth parameters are retired in favor of RegDef v2.
 
 Rejected:
 
@@ -55,7 +57,8 @@ Rejected:
 - Auth values cannot depend on `solution_structure`, because the early Cloud render precedes SD processing.
 - The auth is global, one per instance, applied to every Maven registry, because EnvGene downloads only
   Maven and `MAVEN_PROVIDER` is a single value. This assumes a single Maven registry type per instance.
-- The adapter's outputs are transient and read from outside the committed repository, so nothing it produces
-  is committed. The cost is that the downloaders depend on those transient locations for the run.
-- This decision covers the producer of the parameter file. The dpg consumer that reads it is implemented
-  separately, and no path writes the file yet.
+- The adapter's outputs are not committed. The parameter file and the RegDef v2 live in a transient
+  directory, and the credential is held in memory for the run. The cost is that the downloaders depend on
+  those transient outputs for the run.
+- The adapter writes the parameter file and sets `LOCAL_PUBREG_FILE` to its path. dpg reads the file from
+  there.

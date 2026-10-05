@@ -300,8 +300,10 @@ Design: [`regdefv2_adapter`](/docs/technical-design/instance-pipeline/steps/regd
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY`, or
-- `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `GENERATE_EFFECTIVE_SET: true`) and `ENV_BUILDER: true`
+- `PIPELINE_TYPE: GITLAB_DEPLOY` and (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or
+  (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
+- `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`) and
+  `ENV_BUILDER: true`
 
 Functions:
 
@@ -314,14 +316,16 @@ Functions:
     - output:
       - `pubreg_params.yaml`
       - RegDefs v2
-      - credential the RegDef v2
+      - credential for the RegDef v2
     - actions:
       - render the Cloud object, fold paramsets into parameters, read the whole `e2eParameters`
         section, expand credential macros to resolve secret values
       - write the resolved registry auth parameters to `pubreg_params.yaml` for dpg
-      - when `MAVEN_PROVIDER` is a public cloud provider create RegDefs v2 and corresponding credential
-      - a rendered RegDef already at `version` (v2) is left as is, not transformed, used with priority over
-        the parameters, and a warning is logged recommending RegDef v1 + registry auth parameters
+      - when `MAVEN_PROVIDER` is `aws` or `gcp` create RegDefs v2 and the corresponding credential
+        (`azure` v2 synthesis is planned, not implemented yet)
+      - a rendered RegDef already at `version` or carrying an `authConfig` (v2) is left as is, not transformed,
+        used with priority over the parameters, and a warning is logged that the parameters are not applied to
+        it
 
 #### 1.12 step `deploy_postfix_namespace_map`
 

@@ -64,18 +64,22 @@ flowchart TD
 
 ## Input parameters
 
-| Parameter                | Source                | Required    | Default | Values / format                       | Effect                                                                              |
-| ------------------------ | --------------------- | ----------- | ------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
-| registry auth parameters | Cloud `e2eParameters` | Conditional | None    | see [Parameter file](#parameter-file) | Provider-specific auth values the step resolves and maps                            |
-| `credentials.yml`        | Instance repository   | Yes         | None    | decrypted at pipeline start           | Source of the registry secret, and where the step writes the created credential     |
-| `LOCAL_PUBREG_FILE`      | Environment           | Yes         | None    | file path                             | Destination path for the dpg parameter file (see [Parameter file](#parameter-file)) |
+| Parameter                | Source                | Required    | Default | Values / format                       | Effect                                                   |
+|--------------------------|-----------------------|-------------|---------|---------------------------------------|----------------------------------------------------------|
+| registry auth parameters | Cloud `e2eParameters` | Conditional | None    | see [Parameter file](#parameter-file) | Provider-specific auth values the step resolves and maps |
+| `credentials.yml`        | Instance repository   | Yes         | None    | decrypted at pipeline start           | Source of the registry secret                            |
+
+The step sets `LOCAL_PUBREG_FILE` itself to the transient path where it writes the parameter file for dpg
+(see [Result](#result)). It does not read a preset value.
 
 ## Processing flow
 
 1. **Decide whether to run**
 
-   - `PIPELINE_TYPE: GITLAB_DEPLOY`, or
-   - `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `GENERATE_EFFECTIVE_SET: true`) and `ENV_BUILDER: true`
+   - `PIPELINE_TYPE: GITLAB_DEPLOY` and (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or
+     (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
+   - `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`) and
+     `ENV_BUILDER: true`
 
 2. **Resolve the registry auth parameters**
 
@@ -92,21 +96,25 @@ flowchart TD
 
 4. **Synthesize RegDef v2 for artifact-searcher**
 
-   When `MAVEN_PROVIDER` is a public cloud provider (`aws`, `azure`, `gcp`), the step synthesizes a RegDef v2
-   for each Maven registry whose rendered RegDef is still v1. It builds the v2 from the existing v1
-   RegDef, copying the v1 `mavenConfig` coordinates unchanged and replacing only the auth: it maps the
-   parameters to an `authConfig` (see [Parameter mapping](#parameter-mapping)) and sets `version: "2.0"`. The
-   Maven coordinates are not present in the registry auth parameters, so they come only from the committed v1
-   RegDef. The `authConfig` references a credential by `credentialsId`, so the step also creates that
-   credential from the resolved key and secret. The RegDef v2
-   and the credential are written to transient locations that the artifact downloaders read for the run, not
-   into the committed instance repository. When `MAVEN_PROVIDER` is `nexus` or `artifactory`, the registry
-   keeps its RegDef v1, which already carries its basic auth, so the step synthesizes no v2.
+   When `MAVEN_PROVIDER` is `aws` or `gcp`, the step synthesizes a RegDef v2 for each Maven registry whose
+   rendered RegDef is still v1. It builds the v2 from the existing v1 RegDef, copying the v1 `mavenConfig`
+   coordinates unchanged and adding an `authConfig` built from the parameters
+   (see [Parameter mapping](#parameter-mapping)), with `version: "2.0"`. Each registry section present in the
+   v1 RegDef (`mavenConfig`, `dockerConfig`, `helmConfig`, and the rest) references that `authConfig` by name,
+   and the step fills the `helmConfig` and `helmAppConfig` `repositoryDomainName` from `HELM_REPO_BASE_URL`.
+   The Maven coordinates are not present in the registry auth parameters, so they come only from the committed
+   v1 RegDef. The `authConfig` references a credential by `credentialsId`, so the step also creates that
+   credential from the resolved key and secret. The RegDef v2 is written to a transient directory the artifact
+   downloaders read for the run, and the credential is held in memory and merged into the decrypted
+   credentials, neither into the committed instance repository. When `MAVEN_PROVIDER` is `nexus` or
+   `artifactory`, the registry keeps its RegDef v1, which already carries its basic auth, so the step
+   synthesizes no v2. For `azure`, the dpg path authenticates from the parameter file, but RegDef v2 synthesis
+   is planned and not implemented yet.
 
-   A rendered RegDef that already carries a `version` (a v2 RegDef) is left as is. The step does not transform
-   it and does not apply the registry auth parameters to it, even when they are set and the v2 `authConfig` is
-   incomplete. A v2 RegDef comes from the template, which the adapter cannot reach, so the template's v2 takes
-   priority. The step logs a warning for it (see [Error handling](#error-handling)).
+   A rendered RegDef that already carries a `version` or an `authConfig` (a v2 RegDef) is left as is. The step
+   does not transform it and does not apply the registry auth parameters to it, even when they are set and the
+   v2 `authConfig` is incomplete. A v2 RegDef comes from the template, which the adapter cannot reach, so the
+   template's v2 takes priority. The step logs a warning for it (see [Error handling](#error-handling)).
 
    The auth is global. EnvGene downloads only Maven artifacts and `MAVEN_PROVIDER` is a single value, so one
    auth applies to every Maven registry the solution uses, while coordinates come from each RegDef. This
@@ -115,38 +123,45 @@ flowchart TD
 ## Parameter mapping
 
 For a public cloud registry the step builds the RegDef v2 `authConfig` from the `MAVEN_PROVIDER` and
-`PUB_REG_*` parameters:
+`PUB_REG_*` parameters. The step synthesizes these fields:
 
-| `authConfig` field     | source                                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------- |
-| `provider`             | `MAVEN_PROVIDER`                                                                          |
-| `authMethod`           | `PUB_REG_METHOD`                                                                          |
-| `authType`             | derived from `PUB_REG_METHOD` (`secret` = `longLived`, others = `shortLived`)             |
-| `credentialsId`        | name of the credential the step creates from `PUB_REG_KEY` / `PUB_REG_SECRET` (see below) |
-| `awsRegion`            | `PUB_REG_REGION`                                                                          |
-| `awsDomain`            | `PUB_REG_DOMAIN`                                                                          |
-| `awsRoleARN`           | `PUB_REG_ROLE_ARN`                                                                        |
-| `awsRoleSessionPrefix` | `PUB_REG_ROLE_SESSION_PREFIX`                                                             |
-| `gcpOIDC.URL`          | `PUB_REG_OIDC_URL`                                                                        |
-| `gcpRegProject`        | `PUB_REG_PROJECT`                                                                         |
-| `gcpRegPoolId`         | `PUB_REG_POOL_ID`                                                                         |
-| `gcpRegProviderId`     | `PUB_REG_PROVIDER_ID`                                                                     |
-| `gcpRegSAEmail`        | `PUB_REG_SA_EMAIL`                                                                        |
-| `azureTenantId`        | `PUB_REG_TENANT_ID`                                                                       |
-| `azureACRResource`     | `PUB_REG_ACR_RESOURCE`                                                                    |
-| `azureACRName`         | `PUB_REG_ACR_NAME`                                                                        |
+| `authConfig` field | source                                                                                    |
+|--------------------|-------------------------------------------------------------------------------------------|
+| `provider`         | `MAVEN_PROVIDER`                                                                          |
+| `authMethod`       | `PUB_REG_METHOD`                                                                          |
+| `authType`         | derived from `PUB_REG_METHOD` (`secret` = `longLived`, others = `shortLived`)             |
+| `credentialsId`    | name of the credential the step creates from `PUB_REG_KEY` / `PUB_REG_SECRET` (see below) |
+| `awsRegion`        | `PUB_REG_REGION` (`aws`)                                                                  |
+| `awsDomain`        | `PUB_REG_DOMAIN` (`aws`)                                                                  |
+| `gcpRegProject`    | `PUB_REG_PROJECT` (`gcp`)                                                                 |
+| `gcpRegSAEmail`    | `PUB_REG_SA_EMAIL` (`gcp`)                                                                |
 
-The step creates the credential named by `credentialsId` from the resolved values. Its `type` and `data`
-fields follow the provider and method:
+The following `authConfig` fields are part of the target mapping but are not synthesized yet. They belong to
+the auth methods the artifact-searcher resolver does not implement (`aws` `assume_role`, `gcp` `federation`,
+`azure` `oauth2`):
 
-| provider and method          | credential `type`  | `data` fields                                                   |
-| ---------------------------- | ------------------ | --------------------------------------------------------------- |
-| `aws` with `secret`          | `usernamePassword` | `username` from `PUB_REG_KEY`, `password` from `PUB_REG_SECRET` |
-| `gcp` with `service_account` | `secret`           | `secret` from `PUB_REG_SECRET`                                  |
+| `authConfig` field     | source                       |
+|------------------------|------------------------------|
+| `awsRoleARN`           | `PUB_REG_ROLE_ARN`           |
+| `awsRoleSessionPrefix` | `PUB_REG_ROLE_SESSION_PREFIX`|
+| `gcpOIDC.URL`          | `PUB_REG_OIDC_URL`           |
+| `gcpRegPoolId`         | `PUB_REG_POOL_ID`            |
+| `gcpRegProviderId`     | `PUB_REG_PROVIDER_ID`        |
+| `azureTenantId`        | `PUB_REG_TENANT_ID`          |
+| `azureACRResource`     | `PUB_REG_ACR_RESOURCE`       |
+| `azureACRName`         | `PUB_REG_ACR_NAME`           |
 
-The other public cloud methods (`aws` `assume_role`, `gcp` `federation`, `azure` `oauth2`) follow the same
-derivation, but the artifact-searcher resolver does not implement them yet. This credential is transient and
-is not written into the committed credential store.
+The step creates the credential named by `credentialsId` from the resolved values. It writes the `data`
+fields and sets no `type`. The resolver reads the `data` fields by method:
+
+| provider and method          | `data` fields                                                   |
+|------------------------------|-----------------------------------------------------------------|
+| `aws` with `secret`          | `username` from `PUB_REG_KEY`, `password` from `PUB_REG_SECRET` |
+| `gcp` with `service_account` | `secret` from `PUB_REG_SECRET`                                  |
+
+The other public cloud methods (`aws` `assume_role`, `gcp` `federation`, `azure` `oauth2`) are planned. The
+artifact-searcher resolver does not implement them yet. This credential is held in memory for the run and is
+not written into the committed credential store.
 
 ## Parameter file
 
@@ -202,12 +217,10 @@ The complete parameter list:
 2. The artifact-searcher path authenticates to public cloud registries using the synthesized RegDef v2, and
    to non-public registries using the existing RegDef v1.
 
-3. The adapter's three outputs (the parameter file, the RegDef v2, and the credential) are transient and live
-   outside the committed instance repository. dpg reads the parameter file and the artifact downloaders read
-   the RegDef v2 and the credential, all from those transient locations for the run. Nothing the adapter
-   produces is committed, so the committed RegDefs stay at v1 for consumers that do not read v2, and the
-   committed
-   credential store is untouched.
+3. The parameter file and the RegDef v2 are transient files outside the committed instance repository, and
+   the credential is held in memory. dpg reads the parameter file, and the artifact downloaders read the
+   RegDef v2 and the credential, for the run only. Nothing the adapter produces is committed, so the committed
+   RegDefs stay at v1 for consumers that do not read v2, and the committed credential store is untouched.
 
 4. The env template download (`process_env_template`) is unaffected. It authenticates through its Artifact
    Definition. `generate_argocd_repo` performs no download and reads the local deployment descriptor cache.
@@ -220,10 +233,11 @@ The complete parameter list:
 2. The step fails when a resolved registry auth parameter references a credential that is not present in the
    decrypted credentials. The error names the credential reference.
 
-3. The step logs a warning, and does not fail, when a rendered RegDef already carries a `version` (a v2
-   RegDef). The warning names the registry, states that its auth is used as is and the registry auth
-   parameters are ignored for it, and recommends authoring RegDef v1 with the registry auth parameters during
-   the transition so EnvGene and the rest of the toolset share one auth source.
+3. The step fails when a synthesized RegDef v2 does not validate against the RegDef v2 schema.
+
+4. The step logs a warning, and does not fail, when a rendered RegDef already carries a `version` or an
+   `authConfig` (a v2 RegDef). The warning names the registry and states that it is already v2, so its auth is
+   used as is and the registry auth parameters are not applied to it.
 
 ## Related documentation
 
