@@ -1,0 +1,12 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {},
+      "envTemplate": {
+        "name": "test",
+        "artifact": "env-templates:1.0.0"
+      }
+    }
+  }
+}

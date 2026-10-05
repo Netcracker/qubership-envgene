@@ -1,0 +1,12 @@
+{
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "cluster",
+      "content": {
+        "name": "app_params",
+        "parameters": {}
+      }
+    }
+  ]
+}

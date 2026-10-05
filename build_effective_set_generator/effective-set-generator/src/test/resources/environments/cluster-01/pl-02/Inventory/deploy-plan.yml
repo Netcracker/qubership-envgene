@@ -1,0 +1,8 @@
+- wave: 0
+  version: eso-app:0.1.0-delivery-20261115.141230-4-RELEASE
+  deployPostfix: ns-test
+  namespace: ns-test-pl
+- wave: 0
+  version: vals-app:0.1.0-20261215.141230-3-RELEASE
+  deployPostfix: ns-test
+  namespace: ns-test-pl

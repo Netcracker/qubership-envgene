@@ -1,0 +1,10 @@
+name: core
+deployParameters:
+  base_url: "https://api.example.com"
+  service_url: "${base_url}"
+  final_url: "${service_url}"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

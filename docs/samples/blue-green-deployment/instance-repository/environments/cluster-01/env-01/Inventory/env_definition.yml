@@ -1,16 +1,26 @@
-# Non-BG Environment Inventory baseline (before migration).
+# BGD Environment Inventory.
 inventory:
-  environmentName: "env-01"
-  tenantName: "Application"
-  cloudName: "sample_cloud"
-  clusterUrl: "https://k8s.example.local:6443"
-  description: "Non-BG baseline for BGD migration sample"
-  owners: "Platform team"
+  # BGD is supported only on the No-CMDB v2 architecture.
+  noCmdbVersion: "v2"
 envTemplate:
-  name: "simple-bss"
-  artifact: "my-env-templates:1.0.0"
-  additionalTemplateVariables: {}
-  sharedTemplateVariables: []
-  envSpecificParamsets: {}
-  envSpecificTechnicalParamsets: {}
-  sharedMasterCredentialFiles: []
+  name: "bgd"
+  artifact: "my-env-templates:2.0.0"
+  bgNsArtifacts:
+    origin: "my-env-templates:2.0.0"
+    peer: "my-env-templates:2.0.0"
+  # Env-specific parametersets, keyed by namespace deploy postfix.
+  # bg-shared-params is listed under both sides, so it applies to origin and peer.
+  # bg-origin-params and bg-peer-params apply to one side only.
+  envSpecificParamsets:
+    bss-origin:
+      - "bg-shared-params"
+      - "bg-origin-params"
+    bss-peer:
+      - "bg-shared-params"
+      - "bg-peer-params"
+  # Env-specific resource profiles, keyed by namespace deploy postfix. A namespace resolves to one
+  # profile, so binding one here replaces the template default (bss-dev-override) for that side.
+  # Both sides are overridden below. Bind only one side to diverge just that side.
+  envSpecificResourceProfiles:
+    bss-origin: "bg-origin-profile"
+    bss-peer: "bg-peer-profile"

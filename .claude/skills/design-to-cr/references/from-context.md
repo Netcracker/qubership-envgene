@@ -7,6 +7,11 @@ compliance) lives in `SKILL.md`. This file covers only the synthesize-and-draft 
 
 ## Phase 1 - draft the local Markdown
 
+Synthesizing from context is the path most likely to leak code into the draft, because your own
+investigation put function names, file paths, and internal fields in your head. Hold to the shared
+`Analyst voice` rule in `SKILL.md`: name only the documented surface, describe the observable outcome
+for anything code-only, and run the pre-file gate before filing.
+
 Gather the inputs, asking only for what is missing:
 
 - The change in one or two sentences (Context - the situation and the problem, not the action).
@@ -29,7 +34,7 @@ Write the file:
 - Follow with the `creating-cr.md` sections in order. Omit optional sections that are empty rather
   than leaving hollow placeholders.
 - Keep items terse and link-driven.
-- Apply the `AGENTS.md` house rules from the start so the body is publish-ready.
+- Apply the `writing-docs` skill house rules from the start so the body is publish-ready.
 
 Print the path. Tell the user to edit it by hand and to say `file it` when ready.
 

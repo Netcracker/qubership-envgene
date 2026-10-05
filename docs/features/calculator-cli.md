@@ -117,13 +117,13 @@ Below is a **complete** list of attributes
 | `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
 | `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
 | `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
-| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to deployment, runtime, and cleanup contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params) | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
+| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to the deployment and runtime contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params)       | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
 
 ### Registry Configuration
 
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](/examples/registry.yml)
+[Registry config example](/docs/examples/registry.yml)
 
 ### Effective Set v1.0
 
@@ -715,7 +715,6 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | Attribute                         | Mandatory | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Default                                                                        | Source in Environment Instance or SBOM                                                       |
 |-----------------------------------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
 | `DEPLOYMENT_SESSION_ID`           | yes       | string  | Effective Set calculation operation ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | None                                                                           | Taken from input parameter `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
-| `MANAGED_BY`                      | yes       | string  | Deployer type. Always `argocd`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `argocd`                                                                       | None                                                                                         |
 | `CLOUD_API_HOST`                  | yes       | string  | Fully Qualified Domain Name of Cluster's API endpoint                                                                                                                                                                                                                                                                                                                                                                                                                                                             | None                                                                           | `apiUrl` in the `Cloud`                                                                      |
 | `CLOUD_PUBLIC_HOST`               | yes       | string  | Cluster's API endpoint accessible within a cluster network                                                                                                                                                                                                                                                                                                                                                                                                                                                        | None                                                                           | `publicUrl` in the `Cloud`                                                                   |
 | `CLOUD_PRIVATE_HOST`              | yes       | string  | Cluster's API endpoint accessible outside the cluster network                                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                           | `privateUrl` in the `Cloud`                                                                  |
@@ -749,8 +748,8 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `SSL_SECRET`                      | yes       | string  | Specifies the name of the Kubernetes secret that holds the SSL certificate bundle. This parameter can be explicitly set by the user at the `Tenant`, `Cloud`, `Namespace`, or `Application` level. If not provided, the default value will be used.                                                                                                                                                                                                                                                               | `defaultsslcertificate`                                                        | N/A                                                                                          |
 | `CERTIFICATE_BUNDLE_MD5SUM`       | no        | string  | Hash sum of the value provided in `DEFAULT_SSL_CERTIFICATES_BUNDLE`, calculated using the MD5 algorithm                                                                                                                                                                                                                                                                                                                                                                                                           | None                                                                           | N/A                                                                                          |
 | `ORIGIN_NAMESPACE`                | yes       | string  | The name of the origin namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`                                                                                                                                                                                                                                                                                                                                                | `${NAMESPACE}`                                                                 | N/A                                                                                          |
-| `PEER_NAMESPACE`                  | yes       | string  | The name of the peer namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`                                                                                                                                                                                                                                                                                                                                                  | `${NAMESPACE}`                                                                 | N/A                                                                                          |
-| `CONTROLLER_NAMESPACE`            | yes       | string  | The name of the controller namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`                                                                                                                                                                                                                                                                                                                                            | `${NAMESPACE}`                                                                 | N/A                                                                                          |
+| `PEER_NAMESPACE`                  | no        | string  | The name of the peer namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, the value is undefined                                                                                                                                                                                                                                                                                                                                                                        | None                                                                           | N/A                                                                                          |
+| `CONTROLLER_NAMESPACE`            | no        | string  | The name of the controller namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, the value is undefined                                                                                                                                                                                                                                                                                                                                                                  | None                                                                           | N/A                                                                                          |
 | `BG_CONTROLLER_URL`               | no        | string  | URL from the [BG Domain](/docs/envgene-objects.md#bg-domain) credential.                                                                                                                                                                                                                                                                                                                                                                                                                                          | None                                                                           | N/A                                                                                          |
 | `BG_CONTROLLER_LOGIN`             | no        | string  | Username from the [BG Domain](/docs/envgene-objects.md#bg-domain) credential.                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                           | N/A                                                                                          |
 | `BG_CONTROLLER_PASSWORD`          | no        | string  | Password from the [BG Domain](/docs/envgene-objects.md#bg-domain) credential.                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                           | N/A                                                                                          |
@@ -761,8 +760,12 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `PRIVATE_IDENTITY_PROVIDER_URL`   | yes       | string  | URL of the private gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace's private gateway even if the current namespace is a satellite. Computed as the URL of the private gateway where the IDP is published: Use the value of `PRIVATE_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PRIVATE_GATEWAY_URL}` from the current namespace | `${PRIVATE_GATEWAY_URL}`                                                       | N/A                                                                                          |
 
 > [!IMPORTANT]
-> Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> A root-level parameter whose key matches the name of one of the services would collide with that
+> service's section, so it is not kept at the root level. It stays in the `global` section and remains
+> reachable inside each service through the per-service alias (`<service-name>: *id001`), and a copy is
+> written to [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters).
+> See [Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
+> for the same global-plus-alias mechanism.
 
 ###### [Version 2.0] Image parameters derived from `deploy_param`
 
@@ -825,12 +828,15 @@ global: &id001
 | `CA_BUNDLE_CERTIFICATE`                  | no        | string | SSL Certificate bundle                                                                                                 | None    | The value is taken from the deployment parameter `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which can be set at the `Tenant`, `Cloud`, `Namespace`, or `Application`                                                          |
 
 > [!IMPORTANT]
-> Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> A root-level parameter whose key matches the name of one of the services would collide with that
+> service's section, so it is not kept at the root level. It stays in the `global` section and remains
+> reachable inside each service through the per-service alias (`<service-name>: *id001`), and a copy is
+> written to [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters).
 
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
-Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are moved to collision files if they meet **both** conditions:
+Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are removed from the root
+level and copied to collision files if they meet **both** conditions:
 
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
@@ -860,7 +866,28 @@ These files must only contain keys that match the name of a [services](#version-
 
 This file is based on the parameter passed to the Calculator via `--custom-params`.
 
-It contains parameters from the `deployment` section of the object passed to `--custom-params`.
+It contains parameters from the `deployment` section of the object passed to `--custom-params`, decomposed into the
+same `global` block and per-service keys as
+[`deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml), generated from the
+application's SBOM. A Custom Param override is then present at the root, in the `global` block, and inside each service,
+so it applies the same way a deployment parameter does. The file keeps the highest priority because it is applied last.
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+global: &id001
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+<service-name-1>: *id001
+<service-name-2>: *id001
+```
+
+Custom Params override deployment parameters, not artifact metadata. The `docker_tag`, `docker_registry`, and `image`
+values come from the Application's SBOM, live in the read-only
+[`deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml), and cannot be overridden
+through `--custom-params`.
 
 If `--custom-params` is not passed, the file is generated empty.
 
@@ -1257,7 +1284,7 @@ principles:
 5. `<consumer-name>-parameters.yaml` and `<consumer-name>-credentials.yaml` are produced when the consumer
    is declared (each file may be empty)
 
-[Example of consumer-specific pipeline context component JSON schema](/examples/consumer-v1.0.json)
+[Example of consumer-specific pipeline context component JSON schema](/docs/examples/consumer-v1.0.json)
 
 ###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-parameters.yaml`
 
@@ -1308,7 +1335,7 @@ This context only contains parameters generated by EnvGene:
 |`k8s_tokens`|Mandatory|Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml`|None|[example](#version-20topology-context-k8s_tokens-example)|
 |`environments`|Mandatory|Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a `deployPostfix` attribute. The `deployPostfix` value is derived from the namespace folder name (a child of `Namespaces` and parent of `namespace.yml`). For namespaces that are part of a BG Domain with roles `peer` or `origin`, the `deployPostfix` is obtained by removing the suffix `-peer` or `-origin` respectively from the namespace folder name. For all other namespaces (including `controller` namespace in BG Domain), the `deployPostfix` equals the namespace folder name. The namespace folder name is determined according to [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) rules. This variable is located in `parameters.yaml`|None|[example](#version-20topology-context-environments-example)|
 |`cluster`|Mandatory|Contains information about the cluster where the Environment Instance is deployed. Includes cluster name, type, and other cluster-specific metadata taken from the [Cloud](/docs/envgene-objects.md#cloud) object. This variable is located in `parameters.yaml`|`{}`|[example](#version-20topology-context-cluster-example)|
-|`bg_domain`|Mandatory|Contains the [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`.|`{}`|[example](#version-20topology-context-bg_domain-example)|
+|`bg_domain`|Mandatory|Contains the standalone [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. This variable is `{}` for an environment without a standalone BG Domain object, including one whose BG Domain is embedded inline in `composite_structure`. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`.|`{}`|[example](#version-20topology-context-bg_domain-example)|
 
 ##### \[Version 2.0][Topology Context] `composite_structure` Example
 
@@ -1329,20 +1356,29 @@ composite_structure:
 composite_structure:
   name: "clusterA-env-1-composite-structure"
   baseline:
-    type: bgdomain
-    name: env-1-bg-domain
-    originNamespace:
-      type: namespace
-      name: env-1-bss-origin
-    peerNamespace:
-      type: namespace
-      name: env-1-bss-peer
-    controllerNamespace:
-      type: namespace
-      name: env-1-bss-controller
+    name: "env-1-core"
+    type: "namespace"
+  satellites: []
+```
+
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  baseline:
+    name: "env-1-core"
+    type: "namespace"
   satellites:
-    - type: "namespace"
-      name: "env-1-data-management"
+    - type: bgdomain
+      name: env-1-bss-bg-domain
+      originNamespace:
+        type: namespace
+        name: env-1-bss-origin
+      peerNamespace:
+        type: namespace
+        name: env-1-bss-peer
+      controllerNamespace:
+        type: namespace
+        name: env-1-bss-controller
 ```
 
 ##### \[Version 2.0][Topology Context] `k8s_tokens` Example
@@ -1491,13 +1527,9 @@ The structure of this file is as follows:
 
 ##### \[Version 2.0][Cleanup Context] `credentials.yaml`
 
-This file contains
-
-1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing)
-
-2. Parameters from the `runtime` section of the object passed to `--custom-params`
-
-Parameters from `--custom-params` have higher priority.
+This file contains sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and
+`Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter
+processing](#version-20-sensitive-parameter-processing).
 
 The structure of this file is as follows:
 
@@ -1525,10 +1557,11 @@ credentials:
     # Carries `?secret_store_id=<id>` when the store is not `default_store`.
     vals: string
     # Derived from Credential.create: `fail_if_absent` when absent or false,
-    # `create_if_absent` when true.
+    # `create_if_absent` when true. `overwrite` is reserved for a future rotation
+    # flow and is not emitted by the calculator.
     strategy: enum [ fail_if_absent, create_if_absent, overwrite ]
-    # Emitted only for `create_if_absent` (or `overwrite`), omitted for
-    # `fail_if_absent`. Carries the reserved marker `_generateValue` per field.
+    # Emitted only for `create_if_absent`, omitted for `fail_if_absent`. Carries
+    # the reserved marker `_generateValue` per field.
     data: string | map
 ```
 

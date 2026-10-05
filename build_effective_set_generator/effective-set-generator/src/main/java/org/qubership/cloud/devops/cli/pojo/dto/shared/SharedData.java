@@ -39,7 +39,7 @@ public class SharedData {
 
     private Optional<String> sbomsPath;
 
-    private Optional<String> sdPath;
+    private Optional<String> deployPlanPath;
 
     private Optional<String> registryPath;
 
@@ -52,6 +52,8 @@ public class SharedData {
     private String deploymentSessionId;
 
     private boolean appChartValidation;
+
+    private boolean generateCleanupContext;
 
     @Builder.Default
     private Map<String, Object> customDeployParamMap = Collections.emptyMap();

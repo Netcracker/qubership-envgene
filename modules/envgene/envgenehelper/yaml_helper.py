@@ -1,0 +1,333 @@
+import copy
+import json
+import pathlib
+import threading
+from io import StringIO
+from pathlib import Path
+from typing import OrderedDict
+
+import jschon
+import jschon_tools
+import jsonschema
+import ruyaml
+from jsonschema import RefResolver
+from ruyaml import CommentedMap, CommentedSeq
+from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+import yaml as pyyaml
+
+from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, writeToFile
+from .json_helper import openJson
+from envgene_shared.utils.logger import logger
+
+from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, \
+    validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
+    remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
+    ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
+    yaml, safe_yaml
+
+
+def convert_dict_to_yaml(d):
+    if isinstance(d, ruyaml.CommentedMap):
+        return d
+    return ruyaml.CommentedMap(d)
+
+
+def dumpYamlToStr(content):
+    buffer = StringIO()
+    yaml.dump(content, buffer)
+    return buffer.getvalue()
+
+
+def addHeaderToYaml(file_path: str, header_text: str):
+    if (header_text):
+        logger.debug(f'Adding header {header_text} to yaml: {file_path}')
+        file_contents = openFileAsString(file_path)
+        if not file_contents or file_contents[0] != "#":
+            comment_text = "# " + header_text.replace("\n", "\n# ")
+            writeToFile(file_path, comment_text + "\n" + file_contents)
+
+
+def alignYamlFileComments(file_path):
+    logger.debug(f'Alligning comments yaml: {file_path}')
+    yamlData = openYaml(file_path)
+    alignYamlComments(yamlData, 0)
+    writeYamlToFile(file_path, yamlData)
+
+
+def deleteCommentByKey(yamlContent, key):
+    if yamlContent.ca:
+        yamlContent.ca.items.pop(key, None)
+
+
+def alignYamlComments(yamlContent, extra_indent=0):
+    is_dict = isinstance(yamlContent, dict)
+    if not is_dict and not isinstance(yamlContent, list):
+        return None
+
+    comments = yamlContent.ca.items.values()
+    if comments:
+        max_col = max(map(lambda x: x[2].column if x[2] else 0, comments), default=0)
+        for comment in comments:
+            if (comment[2]):
+                comment[2].column = max_col + extra_indent
+    for element in (yamlContent.values() if is_dict else yamlContent):
+        alignYamlComments(element, extra_indent=extra_indent)
+    return None
+
+
+def sortYaml(yaml_data, schema_path, remove_additional_props):
+    with open(schema_path, 'r') as f:
+        schema_data = json.load(f)
+    logger.debug(f'Checking yaml with schema: {schema_path}')
+    jsonschema.validate(yaml_data, schema_data)
+    sort_data = jschon_tools.process_json_doc(
+        schema_data=schema_data,
+        doc_data=yaml_data,
+        sort=True,
+        remove_additional_props=remove_additional_props
+    )
+    return sort_data
+
+
+def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
+    keys = attribute_str.split('.')
+    sub_content = yaml_content
+    for key in keys:
+        if not isinstance(sub_content, dict):
+            raise ValueError(f"Failed to find attribute '{attribute_str}', key '{key}' is not a dictionary")
+        if key not in sub_content:
+            raise ValueError(f"Failed to find attribute '{attribute_str}', key '{key}' doesn't exist")
+        sub_content = sub_content[key]
+    return sub_content
+
+
+def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is_overwriting=True):
+    if value is None:
+        return
+    yaml_content, attribute = ensure_nested_attr_parents_exist(yaml_content, attribute_str)
+    if attribute not in yaml_content:
+        store_value_to_yaml(yaml_content, attribute, value, comment)
+        logger.debug(f'Attribute {attribute_str} is set to {value}')
+    elif is_overwriting:
+        old_value = yaml_content[attribute]
+        store_value_to_yaml(yaml_content, attribute, value, comment)
+        logger.debug(f'Attribute {attribute_str} is changed to {value}. Old value was {old_value}')
+    else:
+        logger.debug(f'Setting {attribute_str} is skipped. Attribute already exists and is_overwriting is set to False')
+
+
+primitiveTypes = (int, str, bool, float)
+
+
+def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,
+                           overwrite_existing_comments=True):
+    if source_yaml is None:
+        return
+    source_yaml = convert_dict_to_yaml(source_yaml)
+
+    if target_attribute_str != '':
+        yaml_content, last_key = ensure_nested_attr_exists(yaml_content, target_attribute_str, get_empty_yaml())
+        target_yaml = yaml_content[last_key]
+    else:
+        target_yaml = yaml_content
+
+    for k, v in source_yaml.items():
+        if k not in target_yaml:
+            target_yaml[k] = v
+            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            continue
+
+        if overwrite_existing_comments:
+            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+
+        if isinstance(target_yaml[k], dict) and isinstance(v, dict):
+            merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
+        elif isinstance(target_yaml[k], list) and isinstance(v, list):
+            target_yaml[k].extend(v_el for v_el in v if v_el not in target_yaml[k] and (
+                    isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
+            src_dicts = {}
+            for v_k, v_el in enumerate(v):
+                if isinstance(v_el, dict):
+                    src_dicts.update({v_k: v_el})
+            for t_k, t_el in enumerate(target_yaml[k]):
+                if not isinstance(t_el, dict):
+                    continue
+                if not t_k in src_dicts:
+                    continue
+                merge = False
+                for t_el_k in t_el.keys():
+                    if t_el_k in src_dicts[t_k].keys():
+                        merge = True
+                        break
+                if merge:
+                    target_yaml[k][t_k] = merge_yaml_into_target(t_el, '', src_dicts[t_k], overwrite_existing_values,
+                                                                 overwrite_existing_comments)
+                    del src_dicts[k]
+            for _, src_dicts_el in src_dicts.items():
+                target_yaml[k].append(src_dicts_el)
+        elif overwrite_existing_values:
+            target_yaml[k] = v
+
+
+def store_value_to_yaml(yamlContent, key, value, comment=""):
+    logger.debug(f"Updating key {key} with value {value} in yaml")
+    if key in yamlContent:
+        deleteCommentByKey(yamlContent, key)
+        del yamlContent[key]
+    yamlContent[key] = value
+    if comment:
+        yamlContent.insert(1, key, value, comment)
+    else:
+        yamlContent.insert(1, key, value)
+
+
+def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, comment=""):
+    if sourceKey in sourceYaml:
+        deleteCommentByKey(targetYaml, targetKey)
+        deleteCommentByKey(sourceYaml, sourceKey)
+        store_value_to_yaml(targetYaml, targetKey, sourceYaml[sourceKey], comment)
+
+
+def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=False, wrap_all_strings=False,
+                 remove_additional_props=False):
+    logger.info(f'Beautifying yaml: {file_path} with schema: {schema_path}')
+    yamlData = openYaml(file_path)
+    if schema_path:
+        yamlData = sortYaml(yamlData, schema_path, remove_additional_props)
+    if wrap_all_strings:
+        make_quotes_for_all_strings(yamlData)
+    else:
+        make_quotes_for_strings(yamlData)
+
+    writeYamlToFile(file_path, yamlData)
+    addHeaderToYaml(file_path, header_text)
+    align_spaces_before_comments(file_path)
+    if allign_comments:
+        alignYamlFileComments(file_path)
+
+
+def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) -> Path | None:
+    if not dir_path.exists():
+        return None
+
+    if recursively:
+        for root, _, files in os.walk(dir_path):
+            for f in files:
+                if f.endswith((".yml", ".yaml")):
+                    if Path(f).stem == search_name:
+                        return Path(root) / f
+    else:
+        for entry in os.scandir(dir_path):
+            if entry.is_file() and entry.name.endswith((".yml", ".yaml")):
+                if Path(entry.name).stem == search_name:
+                    return Path(entry.path)
+
+    return None
+
+
+def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
+    fileList = findAllYamlsInDir(dir)
+    return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
+
+
+def findAllYamlsInDir(dir, recursively=True):
+    result = []
+    dirPointer = pathlib.Path(dir)
+    if recursively:
+        fileList     = list(dirPointer.rglob("*.yml"))
+        fileListYaml = list(dirPointer.rglob("*.yaml"))
+    else:
+        fileList     = list(dirPointer.glob("*.yml"))
+        fileListYaml = list(dirPointer.glob("*.yaml"))
+    if len(fileListYaml) > 0:
+        fileList = fileList + fileListYaml
+    for f in fileList:
+        result.append(str(f))
+    return result
+
+
+def mergeYamlInDir(dir_path):
+    result = {}
+    if check_dir_exists(dir_path):
+        yamlList = findAllYamlsInDir(dir_path)
+        for yamlPath in yamlList:
+            result.update(openYaml(yamlPath))
+    return result
+
+
+def make_quotes_for_all_strings(yaml_data):
+    if isinstance(yaml_data, (dict, list, set)):
+        for k, v in (yaml_data.items() if isinstance(yaml_data, dict) else enumerate(yaml_data)):
+            if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString):
+                yaml_data[k] = DoubleQuotedScalarString(v)
+            make_quotes_for_all_strings(v)
+
+
+def make_quotes_for_strings(yaml_data):
+    if isinstance(yaml_data, (dict, list, set)):
+        for k, v in (yaml_data.items() if isinstance(yaml_data, dict) else enumerate(yaml_data)):
+            if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString) and not ("\n" in v):
+                yaml_data[k] = DoubleQuotedScalarString(v)
+            elif isinstance(v, DoubleQuotedScalarString) and ("\n" in v):
+                yaml_data[k] = LiteralScalarString(v)
+            else:
+                make_quotes_for_strings(v)
+
+
+def align_spaces_before_comments(filePath):
+    result = ""
+    f = open(filePath, 'r')
+    fileLines = f.readlines()
+    for line in fileLines:
+        if re.match(r'^(.*):( +)#(.*)$', line):
+            pattern = r'^(.*):( +)#(.*)$'
+            alignedLine = re.sub(pattern, r'\1: #\3', line)
+        else:
+            alignedLine = line
+        result += alignedLine
+
+    writeToFile(filePath, result)
+
+
+def copy_yaml_and_remove_empty_dicts(source_yaml):
+    # copying yaml dict
+    result = copy.deepcopy(source_yaml)
+    # going to recursion for dict entities
+    for key in result.keys():
+        value = result[key]
+        if isinstance(value, dict):
+            result[key] = copy_yaml_and_remove_empty_dicts(value)
+    # removing all empty keys
+    empty_keys = [k for k, v in result.items() if v == {}]
+    for k in empty_keys:
+        del result[k]
+    return result
+
+
+def empty_yaml():
+    result = yaml.load("{}")
+    return result
+
+
+def yaml_from_string(yaml_str):
+    result = yaml.load(yaml_str)
+    return result
+
+
+def find_files_by_basename(path: str, extensions_priority: tuple[str] = ("yml", "yaml")) -> list[Path]:
+    base_path = Path(path)
+    found_files: list[Path] = []
+
+    for ext in extensions_priority:
+        candidate = base_path.with_suffix(f".{ext}")
+        if candidate.exists():
+            found_files.append(candidate)
+    return found_files
+
+
+def load_json_or_yaml(content: str):
+    # TODO change to ruyaml
+    data = pyyaml.safe_load(content)
+    if isinstance(data, (dict, list)):
+        return data
+    return None
