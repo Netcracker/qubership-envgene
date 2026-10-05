@@ -1,0 +1,19 @@
+---
+# Deprecated config, replaced by Artifact Definitions. Kept here so the sample covers every system
+# credential reference point. username and password reference a system Credential through credRef.
+maven-registry:
+  username:
+    $type: credRef
+    credId: registry-cred
+    property: username
+  password:
+    $type: credRef
+    credId: registry-cred
+    property: password
+  releaseRepository: "https://maven.example.com/mvn.release"
+  snapshotRepository: "https://maven.example.com/mvn.snapshot"
+  stagingRepository: "https://maven.example.com/mvn.staging"
+  proxyRepository: "https://maven.example.com/mvn.proxy"
+  releaseTemplateRepository: "https://maven.example.com/mvn.template-release"
+  snapshotTemplateRepository: "https://maven.example.com/mvn.template-snapshot"
+  stagingTemplateRepository: "https://maven.example.com/mvn.template-staging"

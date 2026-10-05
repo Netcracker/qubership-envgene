@@ -1,0 +1,10 @@
+name: core
+deployParameters:
+  namespace_name: "core"
+deployParameterSets: []
+e2eParameters:
+  namespace_test_name: "test-core"
+e2eParameterSets: []
+technicalConfigurationParameters:
+  namespace_config_name: "config-core"
+technicalConfigurationParameterSets: []

@@ -53,7 +53,7 @@ flowchart TB
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 4. **bg_manage**
-   - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
+   - **Condition**: Runs if `BG_MANAGE: true`.
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **env_inventory_generation**:
@@ -71,11 +71,11 @@ flowchart TB
           1. Templates, as described in [Templates](/docs/features/app-reg-defs.md#templates)
           2. External Job, as described in [External Job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated)
        3. Runs [Template transformation](/docs/features/app-reg-defs.md#template-transformation)
-   - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder)
+   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 7. **process_sd**:
-   - **Condition**: Runs if ( [`SD_SOURCE_TYPE: json`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( [`SD_SOURCE_TYPE: artifact`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
+   - **Condition**: Runs if ( `SD_SOURCE_TYPE: json` AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( `SD_SOURCE_TYPE: artifact` AND [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 8. **env_build**:
@@ -87,10 +87,13 @@ flowchart TB
        5. Handles template Parameter Set and Resource profiles.
        6. Handles environment-specific Parameter Set and Resource profiles.
        7. Creates Credentials including shared Credentials
-   - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
+   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 9. **generate_effective_set**:
+   - **What happens in this job**:
+       1. Generates the Effective Set
+       2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. Skipped when the Environment Instance contains no external Credentials. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
    - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 

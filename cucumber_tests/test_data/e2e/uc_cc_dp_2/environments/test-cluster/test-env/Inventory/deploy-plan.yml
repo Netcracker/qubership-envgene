@@ -1,0 +1,4 @@
+- wave: 0
+  version: test-app:1.0.0
+  deployPostfix: bss
+  namespace: bss-origin

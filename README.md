@@ -1,6 +1,6 @@
 # EnvGene
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/Apache-2.0)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/Netcracker/qubership-envgene/actions)
 
 ![Environment generator logo](/docs/images/envgene-logo.png "Environment generator")
@@ -154,6 +154,9 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
+- [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
+- [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
 ### Migrations
 
@@ -166,26 +169,28 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
+- [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
-- [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
-- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
+- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
+- [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
 
 ### Examples & Samples
 
 - [**Sample Configurations**](/docs/samples/README.md)
 - [**Environment Template Examples**](/docs/samples/template-repository/)
 - [**Environment Inventory Examples**](/docs/samples/instance-repository/)
+- [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/)
 
 ### Development
 

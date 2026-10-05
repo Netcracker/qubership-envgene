@@ -21,6 +21,7 @@ import lombok.Getter;
 
 @Getter
 public enum CredentialsTypeEnum {
+    external(Constants.EXTERNAL_VALUE),
     secret(Constants.SECRET_VALUE),
     secretFile(Constants.SECRET_FILE_VALUE),
     usernamePassword(Constants.USERNAME_PASSWORD_VALUE),
@@ -36,5 +37,7 @@ public enum CredentialsTypeEnum {
         public static final String SECRET_FILE_VALUE = "secretFile";
         public static final String USERNAME_PASSWORD_VALUE = "usernamePassword";
         public static final String VAULT_APP_ROLE_VALUE = "vaultAppRole";
+
+        public static final String EXTERNAL_VALUE = "external";
     }
 }

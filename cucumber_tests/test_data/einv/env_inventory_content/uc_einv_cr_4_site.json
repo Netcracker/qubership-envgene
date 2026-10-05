@@ -1,0 +1,18 @@
+{
+  "credentials": [
+    {
+      "action": "create_or_replace",
+      "place": "site",
+      "name": "db_creds",
+      "content": {
+        "db_creds": {
+          "type": "usernamePassword",
+          "data": {
+            "username": "user",
+            "password": "password"
+          }
+        }
+      }
+    }
+  ]
+}

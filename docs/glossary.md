@@ -6,6 +6,9 @@
   - [Environment](#environment)
   - [Environment Inventory](#environment-inventory)
   - [Environment Template](#environment-template)
+  - [Template-rendered Definition](#template-rendered-definition)
+  - [Definition Override](#definition-override)
+  - [Effective Definition](#effective-definition)
   - [Effective Set](#effective-set)
   - [Instance Repository](#instance-repository)
   - [Namespace](#namespace)
@@ -34,6 +37,18 @@ The configuration file describing a specific Environment, including template ref
 A file structure within the Template Repository describing the structure and parameters of a solution type. Consists of a Template Descriptor and component templates (Tenant, Cloud, Namespaces). Template Descriptors can be Jinja templates (`.yml.j2`, `.yaml.j2`) or static YAML files (`.yml`, `.yaml`).
 
 A single Environment Template can be used for multiple projects or environment types (commonly referred to as a "unified Environment Template"), with namespace filtering used to include only relevant components for each specific deployment. See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects) and [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md).
+
+## Template-rendered Definition
+
+An Application or Registry Definition produced by rendering a template from the template repository. The filename comes from the definition's `name` field. See [Templates](/docs/features/app-reg-defs.md#templates).
+
+## Definition Override
+
+A plain YAML file in the instance repository that replaces a Template-rendered Definition with the same filename, or adds a new definition. Applied as-is, never rendered. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides).
+
+## Effective Definition
+
+An Application or Registry Definition after template rendering and Definition Overrides are applied. Lives in the root-level `/appdefs/` and `/regdefs/` folders. See [Output layout](/docs/features/app-reg-defs.md#output-layout).
 
 ## Effective Set
 

@@ -1,0 +1,6 @@
+controllerNamespace:
+  name: controller-ns
+originNamespace:
+  name: alpha-origin
+peerNamespace:
+  name: alpha-peer

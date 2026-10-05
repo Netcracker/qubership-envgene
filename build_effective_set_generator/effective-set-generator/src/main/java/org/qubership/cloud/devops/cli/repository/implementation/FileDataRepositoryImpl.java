@@ -18,24 +18,22 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.cyclonedx.model.Bom;
-import org.cyclonedx.model.Component;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qubership.cloud.devops.cli.constants.GenericConstants;
 import org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
+import org.qubership.cloud.devops.cli.pojo.dto.sd.DeployPlanEntityDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
-import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionDescriptorDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
+import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
 import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
 import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
@@ -43,6 +41,7 @@ import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
@@ -51,7 +50,7 @@ import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataRepository;
-import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,16 +60,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.qubership.cloud.devops.cli.constants.GenericConstants.*;
+import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.SECRET_STORE_FILE_NOT_FOUND;
+import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.MIXED_CREDS;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 
 
 @ApplicationScoped
 public class FileDataRepositoryImpl implements FileDataRepository {
     private final FileDataConverter fileDataConverter;
     private final InputData inputData;
-    private final String sourceDir;
     private final SharedData sharedData;
-
-    private final BomReaderUtils bomReaderUtils;
     private final FileSystemUtils fileSystemUtils;
 
 
@@ -78,14 +77,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     public FileDataRepositoryImpl(FileDataConverter fileDataConverter,
                                   SharedData sharedData,
                                   InputData inputData,
-                                  BomReaderUtils bomReaderUtils,
                                   FileSystemUtils fileSystemUtils) {
         this.fileDataConverter = fileDataConverter;
         this.inputData = inputData;
         this.sharedData = sharedData;
-        this.bomReaderUtils = bomReaderUtils;
         this.fileSystemUtils = fileSystemUtils;
-        this.sourceDir = String.format("%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId());
     }
 
     /*  **
@@ -107,12 +103,13 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         try {
             Map<String, List<String>> nsWithAppsFromSD = new HashMap<>();
             Set<String> appsToProcess = new HashSet<>();
-            loadSDData(nsWithAppsFromSD, appsToProcess);
+            Map<String, String> namespaceToFolder = new HashMap<>();
+            loadApplicationListData(nsWithAppsFromSD, appsToProcess);
             loadRegistryData();
             loadConsumerData();
-            traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
+            traverseSourceDirectory(nsWithAppsFromSD, appsToProcess, namespaceToFolder);
             populateEnvironments();
-            correctDeployPostfix();
+            updateApplicationNamespaces(namespaceToFolder);
             fileSystemUtils.createEffectiveSetFolder(inputData.getSolutionBomDTO());
         } catch (Exception e) {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
@@ -120,11 +117,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
 
     }
 
-    private void correctDeployPostfix() {
+    private void updateApplicationNamespaces(Map<String, String> namespaceToFolder) {
         List<SBApplicationDTO> applicationDTOList = inputData.getSolutionBomDTO().map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
-        applicationDTOList.parallelStream().forEach(app -> {
-            app.setNamespace(getNamespaceName(app.getNamespace()));
+        applicationDTOList.forEach(app -> {
+            app.setNamespace(namespaceToFolder.get(app.getNamespace()));
         });
     }
 
@@ -219,7 +216,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         return finalMap;
     }
 
-    private void traverseSourceDirectory(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+    private void traverseSourceDirectory(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, Map<String, String> namespaceToFolder) {
+        String sourceDir = String.format("%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId());
         Map<String, ProfileFullDto> profilesMap = new HashMap<>();
         Map<String, NamespaceDTO> namespaceMap = new HashMap<>();
         List<ApplicationLinkDTO> cloudApps = new ArrayList<>();
@@ -236,14 +234,15 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     if (dir.getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
                         String namespace = dir.getFileName().toString();
-                        String correctedNamespace = getCorrectedNamespace(dir.getFileName().toString());
-                        if (!nsWithAppsFromSD.containsKey(correctedNamespace)) {
-                            Path namespaceYaml = dir.resolve("namespace.yml");
-                            if (Files.exists(namespaceYaml)) {
-                                NamespaceDTO namespaceDTO = fileDataConverter.parseInputFile(NamespaceDTO.class, namespaceYaml.toFile());
+                        Path namespaceYaml = dir.resolve("namespace.yml");
+                        if (Files.exists(namespaceYaml)) {
+                            NamespaceDTO namespaceDTO = fileDataConverter.parseInputFile(NamespaceDTO.class, namespaceYaml.toFile());
+                            namespaceToFolder.putIfAbsent(namespaceDTO.getName(), namespace);
+                            if (!nsWithAppsFromSD.containsKey(namespaceDTO.getName())) {
                                 inputData.getNamespaceDTOMap().put(namespace, namespaceDTO);
+                                return FileVisitResult.SKIP_SUBTREE;
                             }
-                            return FileVisitResult.SKIP_SUBTREE;
+                            namespaceMap.putIfAbsent(namespace, namespaceDTO);
                         }
                     }
 
@@ -257,7 +256,13 @@ public class FileDataRepositoryImpl implements FileDataRepository {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (file.toString().endsWith(GenericConstants.YAML_EXT) || file.toString().endsWith(GenericConstants.YML_EXT)) {
+                    String fileName = file.getFileName().toString();
+                    boolean isYaml = fileName.endsWith(GenericConstants.YAML_EXT) || fileName.endsWith(GenericConstants.YML_EXT);
+                    boolean isNamespaceFile = ("namespace.yml".equals(fileName) || "namespace.yaml".equals(fileName))
+                            && file.getParent() != null && file.getParent().getParent() != null
+                            && GenericConstants.NS_FOLDER.equals(file.getParent().getParent().getFileName().toString());
+
+                    if (isYaml && !isNamespaceFile) {
                         handleYamlFile(file, profilesMap, namespaceMap, appsOnNamespace, nsWithAppsFromSD, cloudApps, appsToProcess);
                     }
                     return FileVisitResult.CONTINUE;
@@ -283,15 +288,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             throw new FileParseException("Failure in reading input Directory", e);
         }
         inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
-    }
-
-    private String getCorrectedNamespace(String namespace) {
-        if (namespace.endsWith("-origin")) {
-            return namespace.substring(0, namespace.indexOf("-origin"));
-        } else if (namespace.endsWith("-peer")) {
-            return namespace.substring(0, namespace.indexOf("-peer"));
-        }
-        return namespace;
     }
 
     private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
@@ -338,9 +334,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 };
                 Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
                 if (credentialDTOMap != null) {
-                    credentialDTOMap.replaceAll((id, cred) ->
-                            CredentialDTO.builder().credentialsId(id)
-                                    .data(cred.getData()).description(cred.getDescription()).build());
+                    validateUniformCredentialTypes(credentialDTOMap);
+                    loadSecretStores();
                     inputData.setCredentialDTOMap(credentialDTOMap);
                 }
                 break;
@@ -353,14 +348,14 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 inputData.setBgDomainEntityDTO(bgDomainEntityDTO);
                 break;
             default:
-                processOtherFiles(file, parent, profilesMap, appsOnNamespace, nsWithAppsFromSD, cloudApps, appsToProcess);
+                processOtherFiles(file, parent, profilesMap, appsOnNamespace, nsWithAppsFromSD, cloudApps, appsToProcess, namespaceMap);
                 break;
         }
     }
 
     private void processOtherFiles(Path file, Path parent, Map<String, ProfileFullDto> profilesMap,
                                    Map<String, List<ApplicationLinkDTO>> appsOnNamespace, Map<String, List<String>> nsWithAppsFromSD
-            , List<ApplicationLinkDTO> cloudApps, Set<String> appsToProcess) {
+            , List<ApplicationLinkDTO> cloudApps, Set<String> appsToProcess, Map<String, NamespaceDTO> namespaceMap) {
 
         String folderName = parent.getFileName().toString();
         if (folderName.equals(GenericConstants.PROFILES_FOLDER)) {
@@ -370,20 +365,19 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             profilesMap.putIfAbsent(profileFullDto.getName(), profileFullDto);
 
         } else if (folderName.equals(GenericConstants.APPS_FOLDER)) {
-            processApplicationFiles(file, parent, appsOnNamespace, nsWithAppsFromSD, cloudApps, appsToProcess);
+            processApplicationFiles(file, parent, appsOnNamespace, nsWithAppsFromSD, cloudApps, appsToProcess, namespaceMap);
         }
     }
 
     private void processApplicationFiles(Path file, Path parent, Map<String, List<ApplicationLinkDTO>> appsOnNamespace,
                                          Map<String, List<String>> nsWithAppsFromSD, List<ApplicationLinkDTO> cloudApps,
-                                         Set<String> appsToProcess) {
+                                         Set<String> appsToProcess, Map<String, NamespaceDTO> namespaceMap) {
 
         ApplicationLinkDTO applicationLinkDTO = fileDataConverter.parseInputFile(ApplicationLinkDTO.class, file.toFile());
         if (parent.getParent().getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
             String namespace = parent.getParent().getFileName().toString();
-            String correctedNamespace = getCorrectedNamespace(namespace);
             String appName = file.getFileName().toString().replaceFirst("\\.(ya?ml)$", "");
-            if (checkIfAppValid(correctedNamespace, appName, nsWithAppsFromSD)) {
+            if (checkIfAppValid(namespace, appName, nsWithAppsFromSD, namespaceMap)) {
                 appsOnNamespace.computeIfAbsent(namespace, k -> new ArrayList<>()).add(applicationLinkDTO);
             }
         } else {
@@ -391,57 +385,58 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         }
     }
 
-    private boolean checkIfAppValid(String namespace, String app, Map<String, List<String>> nsWithAppsFromSD) {
-        List<String> sdApps = nsWithAppsFromSD.get(namespace);
+    private boolean checkIfAppValid(String namespace, String app, Map<String, List<String>> nsWithAppsFromSD,
+                                    Map<String, NamespaceDTO> namespaceMap) {
+        List<String> sdApps = nsWithAppsFromSD.get(namespaceMap.get(namespace).getName());
         return sdApps != null && sdApps.contains(app);
     }
 
-    private void loadSDData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        Optional<String> sdPath = sharedData.getSdPath();
-        if (sdPath.isPresent()) {
-            SolutionDescriptorDTO solDescDTO = fileDataConverter.parseInputFile(SolutionDescriptorDTO.class, new File(sdPath.get()));
-            List<SBApplicationDTO> applications = solDescDTO.getApplications().stream()
-                    .map(applicationDTO -> getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, applicationDTO))
+    private void loadApplicationListData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+        Optional<String> deployPlanPath = sharedData.getDeployPlanPath();
+        if (deployPlanPath.isPresent()) {
+            List<DeployPlanEntityDTO> entities = fileDataConverter.parseInputFile(
+                    new TypeReference<List<DeployPlanEntityDTO>>() {
+                    }, new File(deployPlanPath.get()));
+            if (CollectionUtils.isEmpty(entities)) {
+                throw new FileParseException("Deploy plan at " + deployPlanPath + " must be a non-empty YAML list");
+            }
+            List<SBApplicationDTO> applications = entities.stream()
+                    .map(entity -> buildSbApplicationDTO(nsWithAppsFromSD, appsToProcess, entity))
                     .collect(Collectors.toList());
 
             inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
         }
     }
 
-    private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, SolutionDescriptorDTO.ApplicationDTO applicationDTO) {
-        String namespace = applicationDTO.getDeployPostfix();
-        String appName = applicationDTO.getVersion().split(":")[0];
-        String appVersion = applicationDTO.getVersion().replace(":", "-");
+    private String resolveGenerationId(DeployPlanEntityDTO entity) {
+        String generationType = entity.getGenerationType();
+        if ("UniqForRun".equals(generationType)) {
+            return entity.getGenerationId();
+        }
+        if ("UniqForVersion".equals(generationType)) {
+            String version = entity.getVersion();
+            int separatorIndex = version.indexOf(':');
+            return separatorIndex >= 0 ? version.substring(separatorIndex + 1) : null;
+        }
+        return null;
+    }
+
+    private SBApplicationDTO buildSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, DeployPlanEntityDTO entity) {
+        String namespace = entity.getNamespace();
+        String version = entity.getVersion();
+        String appName = version.split(":")[0];
+        String appVersion = version.replace(":", "-");
         String appFileRef = String.format("%s/%s/%s", sharedData.getSbomsPath().get(), appName, appVersion + ".sbom.json");
         SBApplicationDTO dto = SBApplicationDTO.builder()
                 .appName(appName)
                 .appVersion(appVersion)
                 .namespace(namespace)
                 .appFileRef(appFileRef)
+                .generationId(resolveGenerationId(entity))
                 .build();
         appsToProcess.add(appName);
         nsWithAppsFromSD.computeIfAbsent(namespace, k -> new ArrayList<>()).add(appName);
         return dto;
-    }
-
-    private String getNamespaceName(String deployPostFix) {
-        if (inputData.getBgDomainEntityDTO() != null) {
-            NamespaceDTO namespaceDTO =
-                    inputData.getNamespaceDTOMap().getOrDefault(deployPostFix,
-                            inputData.getNamespaceDTOMap().getOrDefault(deployPostFix + "-origin",
-                                    inputData.getNamespaceDTOMap().get(deployPostFix + "-peer")));
-            if (namespaceDTO != null) {
-                String originalNamespace = namespaceDTO.getName();
-                BgDomainEntityDTO.NamespaceDTO originNamespaceDTO = inputData.getBgDomainEntityDTO().getOriginNamespace();
-                BgDomainEntityDTO.NamespaceDTO peerNamespaceDTO = inputData.getBgDomainEntityDTO().getPeerNamespace();
-                if (originalNamespace.equalsIgnoreCase(originNamespaceDTO.getName())) {
-                    return deployPostFix + "-origin";
-                } else if (originalNamespace.equalsIgnoreCase(peerNamespaceDTO.getName())) {
-                    return deployPostFix + "-peer";
-                }
-            }
-        }
-        return deployPostFix;
     }
 
     private void loadRegistryData() {
@@ -457,6 +452,44 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             }
             inputData.setRegistryDTOMap(registryMap);
         }
+    }
+
+    private void loadSecretStores() {
+        if (!inputData.isExternalOnly()) {
+            return;
+        }
+        Path envPath = Paths.get(sharedData.getEnvsPath());
+        Path basePath = envPath.getParent();
+
+        Path secretStorePath = basePath
+                .resolve("configuration")
+                .resolve("secret-stores.yml");
+
+        TypeReference<Map<String, SecretStoreDTO>> typeRef =
+                new TypeReference<>() {
+                };
+        Map<String, SecretStoreDTO> secretStores = fileDataConverter.parseInputFile(typeRef, new File(secretStorePath.toString()));
+        if (secretStores == null) {
+            logError(SECRET_STORE_FILE_NOT_FOUND);
+            throw new ExternalCredProcessingException(SECRET_STORE_FILE_NOT_FOUND );
+        }
+        inputData.setSecretStoreDTOMap(secretStores);
+    }
+    private void validateUniformCredentialTypes(Map<String , CredentialDTO> credentials) {
+        boolean hasExternal = false;
+        boolean hasNonExternal = false;
+        for (CredentialDTO c : credentials.values()) {
+            if (c.getType() == CredentialsTypeEnum.external) {
+                hasExternal = true;
+            } else {
+                hasNonExternal = true;
+            }
+            if (hasExternal && hasNonExternal) {
+                logError(MIXED_CREDS);
+                throw new ExternalCredProcessingException(MIXED_CREDS);
+            }
+        }
+        inputData.setExternalOnly(hasExternal);
     }
 
 }
