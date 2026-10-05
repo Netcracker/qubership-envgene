@@ -8,7 +8,7 @@
   - [Affected Credential Handling](#affected-credential-handling)
     - [UC-CR-LCH-1: Reject Affected Credential Update](#uc-cr-lch-1-reject-affected-credential-update)
     - [UC-CR-LCH-2: Update Affected Credentials in Force Mode](#uc-cr-lch-2-update-affected-credentials-in-force-mode)
-    - [UC-CR-VAL-1: Fail When No Affected Parameters Found](#uc-cr-val-1-fail-when-no-affected-parameters-found)
+    - [UC-CR-VAL-1: Rotate Target When No Affected Parameters Exist](#uc-cr-val-1-rotate-target-when-no-affected-parameters-exist)
   - [Encryption Processing](#encryption-processing)
     - [Successful Update with Encryption Enabled](#successful-update-with-encryption-enabled)
       - [UC-CR-ENC-1: Update Credentials with Plaintext Payload when Encryption Is Enabled](#uc-cr-enc-1-update-credentials-with-plaintext-payload-when-encryption-is-enabled)
@@ -253,7 +253,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 3. The `credential_rotation` job completes successfully.
 4. The `affected-sensitive-parameters.yaml` artifact is generated.
 
-### UC-CR-VAL-1: Fail When No Affected Parameters Found
+### UC-CR-VAL-1: Rotate Target When No Affected Parameters Exist
 
 **Pre-requisites:**
 
@@ -275,14 +275,13 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The `credential_rotation` job runs in the pipeline:
    1. Processes all payload items from `CRED_ROTATION_PAYLOAD`.
-   2. Tries to collect affected parameters for each payload item.
-   3. Finishes payload processing without collecting any affected parameters.
-   4. The job finishes with error status.
+   2. Finds no affected parameters for any payload item.
+   3. Updates the target credential values.
 
 **Results:**
 
-1. The `credential_rotation` job fails.
-2. No credential files are updated.
+1. The target credential values are updated to the new values.
+2. The `credential_rotation` job completes with success status.
 3. `affected-sensitive-parameters.yaml` is not created.
 
 ## Encryption Processing

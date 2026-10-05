@@ -24,7 +24,12 @@ short.
   name files, functions, classes, or modules in the prose. A code reference goes stale and belongs in the
   linked design doc or PR, not in a durable decision record. Prefer naming the observable behavior or the
   documented object over the code that implements it, for example "the effective set resolves the profile
-  by signal-gated side selection" over naming the resolver class and the method it calls.
+  by signal-gated side selection" over naming the resolver class and the method it calls. A design
+  mechanism that is not a code symbol is still implementation: a flag, toggle, input, knob, or its default
+  and on/off state describes how the decision is wired, so state the observable behavior it produces
+  instead. Prefer "the cleanup context is generated for every namespace in No-CMDB v1 and not in No-CMDB
+  v2" over "an input defaults to off, when on the generator produces the cleanup context, and the pipeline
+  sets the input on for the legacy flow".
 - **No Date field.** Do not put a Date line in an ADR. The commit history is the authoritative date.
 - **No implementation-status prose.** An ADR records the decision, not whether the code exists yet. Do not write that
   the decision is "ahead of implementation", "not yet wired", "doc-ahead", or holds "until that lands". That state
@@ -95,10 +100,11 @@ alternatives.
   semicolons, split into separate sentences. 120-character lines, sentence-case headings. An ADR is a
   repo doc like any other.
 - When Decision or Consequences enumerate cases, options, warnings, or rules, present each one as a
-  bullet, not as a run-on inline sentence. One item per bullet. A sentence that lists several items
-  separated by semicolons, or by repeated use of "and", is an enumeration and must be rewritten as a
-  bulleted list. This applies when revising existing prose too, even if the surrounding text is
-  unchanged.
+  bullet, not as a run-on inline sentence. One item per bullet, and one distinct rule per bullet. Do not
+  restate the same fact as both a mechanism bullet and its outcome, or repeat a fact across Decision and
+  Consequences. A sentence that lists several items separated by semicolons, or by repeated use of "and",
+  is an enumeration and must be rewritten as a bulleted list. This applies when revising existing prose
+  too, even if the surrounding text is unchanged.
 
   Anti-example: "We emit warnings for missing keys; null values; and unknown fields." becomes:
 
@@ -109,6 +115,7 @@ alternatives.
   - Null values
   - Unknown fields
   ```
+
 - State findings qualitatively, not with exact counts or measurements. "A corpus scan found no
   divergences" instead of "753 environment definitions, 2033 namespaces". Specific numbers age
   and belong in the analysis or ledger, not in the durable ADR.
@@ -135,6 +142,9 @@ Reject these. They are the failure modes that make ADRs unread.
   the finding qualitatively. The numbers age and belong in the analysis, not in the durable record.
 - A Decision or Consequences that drops a settled rule to save space. Every case the decision resolves
   must appear. Make each item tight, not absent.
+- Two bullets that carry the same fact, one as a mechanism and one as its outcome, for example "The
+  GitLab flow leaves the input off" followed by "The GitLab flow produces no cleanup context". The second
+  is just the outcome of the first. Keep one, stated as behavior.
 - A Consequences line that tracks implementation status ("this is ahead of code", "not yet wired", "until the change
   lands"). The `Status` field carries the lifecycle. Such prose ages into falsehood the moment the code ships, and the
   next reader trusts a record that is now wrong.

@@ -32,6 +32,10 @@ inputs:
     description: 'Version for Docker tag'
     required: false
     default: ''
+  ref:
+    description: 'Git ref (SHA, branch, or tag) to checkout for the build'
+    required: false
+    default: ''
 
 outputs:
   custom_tag:
@@ -53,7 +57,7 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.version != '' && format('v{0}', inputs.version) || github.ref }}
+        ref: ${{ inputs.ref || (inputs.version != '' && format('v{0}', inputs.version) || github.ref) }}
 
     - name: Copy config.schema.json to git_hooks
       shell: bash

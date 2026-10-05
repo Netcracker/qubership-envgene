@@ -795,7 +795,7 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
     | `?QUALIFIERS`  | from Step 3. `registry_name=<>` and from Step 2 `file_name=<>` `ARTIFACT-FILE` (only for `github`) |
 
     **Qualifier value encoding.** Qualifier values (including `registry_name` and `file_name`)
-    MUST be percent-encoded according to [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986)
+    MUST be percent-encoded according to [RFC 3986](https://www.rfc-editor.org/info/rfc3986/)
     and the [purl spec](https://github.com/package-url/purl-spec) before being placed in the PURL.
     Registry names are not constrained to URL-safe characters: in particular, the `name` attribute
     of a Registry Definition can contain spaces (e.g. `Sandbox Registry`). Such values

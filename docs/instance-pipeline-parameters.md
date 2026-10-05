@@ -24,6 +24,7 @@
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`EXTERNAL_CREDENTIAL_PROVISIONING`](#external_credential_provisioning)
     - [`CUSTOM_PARAMS`](#custom_params)
     - [`APPLICATION_VERSIONS`](#application_versions)
     - [`DEPLOY_POSTFIXES_FILTER`](#deploy_postfixes_filter)
@@ -523,6 +524,29 @@ version: v2.0
 app_chart_validation: 'false'
 ```
 
+### `EXTERNAL_CREDENTIAL_PROVISIONING`
+
+**Description**: Selects the provisioning mode for external Credentials in the `generate_effective_set` job. The
+Effective Set calculator always writes the [External Credential Context](/docs/features/external-creds.md#external-credential-context),
+regardless of this value. This parameter controls only whether EnvGene then invokes the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
+
+Valid values:
+
+- `apply`: EnvGene invokes the CLI in apply mode. Each Credential is created or validated in its Secret Store.
+- `skip`: EnvGene does not invoke the CLI. No Credential is created or validated and no Secret Store is read. Use
+  this mode during migration to external Credentials, when the target Secret Store is not yet populated.
+
+The value `dry-run` is reserved for a future validate-only mode and is not yet implemented.
+
+See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning).
+
+**Default Value**: `apply`
+
+**Mandatory**: No
+
+**Example**: `skip`
+
 ### `CUSTOM_PARAMS`
 
 **Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params
@@ -531,11 +555,13 @@ hierarchy, and are treated as sensitive.
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
-`CUSTOM_PARAMS` is only applied when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`. If
-`GENERATE_EFFECTIVE_SET` is `false`, the `generate_effective_set` job does not run and `CUSTOM_PARAMS` has no effect.
-
 EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator
 CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+
+A `deployment` override is laid out at the root, in the `global` block, and per-service, the same as a deployment
+parameter, so it applies inside each service. Custom Params override deployment and runtime parameters. They do not
+override image or artifact metadata such as `docker_tag`, `docker_registry`, or `image`, which come from the
+Application's SBOM.
 
 **Format**: A map conforming to the [schema](/schemas/custom-params.schema.json). See
 [Parameter value formats](#parameter-value-formats).
@@ -798,7 +824,7 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `DEPLOYMENT_SESSION_ID`
 
-**Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
+**Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/info/rfc4122/). This parameter is used in two scenarios:
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 

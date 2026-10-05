@@ -86,6 +86,11 @@ most of the weight:
   function, a file path, an intermediate field the tool writes for itself - the reader cannot look it
   up, so describe the observable outcome instead. For example, prefer "the `current_env.cloud` macro
   resolves to the cluster name" over naming the resolver function and the internal field it writes.
+  This also rules out an invented descriptive paraphrase, even a clear-sounding one, when a documented
+  term exists - the reader looks up the documented term, so prefer "reverse merge
+  (`SD_REPO_MERGE_MODE: basic-exclusion-merge`)" over the coined phrase "the application-removal path".
+  This is a distinct failure from naming code internals: the paraphrase points at no code, but it still
+  is not findable in the docs.
 - Verify before you name. Confirm each macro, field, or behavior against the docs or the code before
   stating it - do not infer which macro carries a value or which engine resolves it. A confident wrong
   claim costs the reader more than describing the effect and letting the implementer bind the mechanism.
@@ -174,8 +179,9 @@ rather than trusting the last write. Do not file until the user says so with wor
 
 Match the GitHub issue type to the change's nature and prefix the draft's H1 accordingly, per the
 `Issue type and title` section of `creating-cr.md`: Feature (`[Feat:]`), Bug (`[Bug:]`), or Story
-(`[Story:]`, or `[Docs:]` for a documentation ticket). The H1 carries the prefix, so the filed issue
-title carries it too.
+(`[Story:]`, or `[Docs:]` for a documentation ticket). A change that fixes or refines an existing
+feature is a Story, even when it adds a parameter or toggle. Reserve Feature for a genuinely new
+capability. The H1 carries the prefix, so the filed issue title carries it too.
 
 ### House-rule compliance
 
@@ -204,10 +210,15 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   for example "the design docs are ahead of the code" or "this CR wires the described behavior". It is
   noise, not guidance - the reader is the developer who will write the code, and the code's current
   state is theirs to change. State the behavior contract and how to verify it, nothing about the gap.
-- No documentation item in scope: no `In scope changes` item asks to write, rewrite, or update
-  documentation, including a feature or explanation doc, an ADR, a use case, or any file under `docs/`.
-  The docs are the design reference the CR links, not implementation work. If a drafted item says to write
-  or update a doc, drop it, or if it names real code work, restate it as that code work.
+- Design-reference boundary: no `In scope changes` item modifies a file that already ships in the
+  design-reference PR - the docs text, the schemas, and the samples committed alongside the docs.
+  That PR delivers those, and the CR carries only the code slice that consumes the settled contract.
+  This catches the common case of a documentation item in scope (a feature or explanation doc, an
+  ADR, a use case, or any file under `docs/`), and it catches schema or sample items too when those
+  files ship in the design PR - for example an item like "Update `docs/features/X.md` section Y" or
+  "Add `foo` to the enum in `schemas/X.json`" fails the gate when either file is already committed
+  to the design-reference PR. If a drafted item names such a file, drop it, or if it names real
+  code work behind that file, restate it as that code work.
 - Component visibility: each `In scope changes` item leads with or is grouped under the component or
   pipeline step it touches, so the slice scans as a work-map. An item that buries the component mid-prose
   in a flat list fails this check.
