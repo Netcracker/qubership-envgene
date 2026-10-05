@@ -117,7 +117,7 @@ Below is a **complete** list of attributes
 | `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
 | `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
 | `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
-| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to deployment, runtime, and cleanup contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params) | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
+| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to the deployment and runtime contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params)       | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
 
 ### Registry Configuration
 
@@ -866,7 +866,28 @@ These files must only contain keys that match the name of a [services](#version-
 
 This file is based on the parameter passed to the Calculator via `--custom-params`.
 
-It contains parameters from the `deployment` section of the object passed to `--custom-params`.
+It contains parameters from the `deployment` section of the object passed to `--custom-params`, decomposed into the
+same `global` block and per-service keys as
+[`deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml), generated from the
+application's SBOM. A Custom Param override is then present at the root, in the `global` block, and inside each service,
+so it applies the same way a deployment parameter does. The file keeps the highest priority because it is applied last.
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+global: &id001
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+<service-name-1>: *id001
+<service-name-2>: *id001
+```
+
+Custom Params override deployment parameters, not artifact metadata. The `docker_tag`, `docker_registry`, and `image`
+values come from the Application's SBOM, live in the read-only
+[`deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml), and cannot be overridden
+through `--custom-params`.
 
 If `--custom-params` is not passed, the file is generated empty.
 
@@ -1506,13 +1527,9 @@ The structure of this file is as follows:
 
 ##### \[Version 2.0][Cleanup Context] `credentials.yaml`
 
-This file contains
-
-1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing)
-
-2. Parameters from the `runtime` section of the object passed to `--custom-params`
-
-Parameters from `--custom-params` have higher priority.
+This file contains sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and
+`Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter
+processing](#version-20-sensitive-parameter-processing).
 
 The structure of this file is as follows:
 
