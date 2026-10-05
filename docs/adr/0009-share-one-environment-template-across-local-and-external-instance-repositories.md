@@ -58,7 +58,7 @@ Rejected:
 - One Environment Template serves many instance repositories in mixed modes with no coordinated
   migration.
 - Creating `/configuration/secret-stores.yml` in a repository with prior local Credential entries
-  discards those entries on the next Environment Instance generation. Recovery requires git history.
+  discards those entries on the next Environment Instance generation. Recovery requires Git history.
 - Operators cannot hand-author one-off external Credential entries in the Environment Credentials File.
   Overrides flow through the Shared Credentials File or the Cloud Passport.
 - The Shared Credentials File silently overrides every lower source. The operator accepts responsibility

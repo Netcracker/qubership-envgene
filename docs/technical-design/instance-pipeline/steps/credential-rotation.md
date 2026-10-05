@@ -18,12 +18,12 @@ entry with an explicit error directing the operator to the
 
 ## Input parameters
 
-| Parameter               | Source   | Required    | Default | Values / format             | Effect                                                                                                                                                   |
-| ----------------------- | -------- | ----------- | ------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ENV_NAMES`             | Pipeline | Yes         | None    | `<cluster-name>/<env-name>` | Selects the Environment Instance under `environments/<cluster-name>/<env-name>/`                                                                         |
-| `CRED_ROTATION_PAYLOAD` | Pipeline | Yes         | None    | JSON or base64-encoded JSON | Carries the list of parameters to rotate. See [Payload format](#payload-format)                                                                          |
-| `CRED_ROTATION_FORCE`   | Pipeline | No          | `false` | `true`, `false`             | When `true`, the step writes updates to credential files. When `false`, the step runs in dry-run mode and only writes `affected-sensitive-parameters.yaml` |
-| `GET_PASSPORT`          | Pipeline | Conditional | None    | `true`, `false`             | When `CRED_ROTATION_PAYLOAD` is set and `GET_PASSPORT` is also set, the step fails at entry                                                              |
+| Parameter               | Source   | Required    | Default | Values / format             | Effect                                                                                        |
+| ----------------------- | -------- | ----------- | ------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| `ENV_NAMES`             | Pipeline | Yes         | None    | `<cluster-name>/<env-name>` | Selects the Environment Instance under `environments/<cluster-name>/<env-name>/`              |
+| `CRED_ROTATION_PAYLOAD` | Pipeline | Yes         | None    | JSON or base64-encoded JSON | Carries the list of parameters to rotate. See [Payload format](#payload-format)               |
+| `CRED_ROTATION_FORCE`   | Pipeline | No          | `false` | `true`, `false`             | When `true`, writes updates to credential files. When `false`, dry-run writes the report only |
+| `GET_PASSPORT`          | Pipeline | Conditional | None    | `true`, `false`             | Mutually exclusive with `CRED_ROTATION_PAYLOAD`. The step fails at entry when both are set    |
 
 ### Payload format
 
