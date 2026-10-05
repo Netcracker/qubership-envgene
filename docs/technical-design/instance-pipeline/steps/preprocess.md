@@ -75,7 +75,7 @@ previous runs and other environments are removed. Ignored files and repository m
 
 ## Error handling
 
-The `checkout` and `clean` calls are not wrapped. A failure propagates as the raw git error and the job fails.
+The `checkout` and `clean` calls are not wrapped. A failure propagates as the raw Git error and the job fails.
 `checkout` does no fetch of its own. The runner fetches the objects.
 
 ## Related documentation
