@@ -17,7 +17,7 @@ from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.sd_helper import MergeType
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, BgdOperation, \
-    DeltaDeployType
+    DeltaDeployType, ExternalCredentialProvisioning
 from envgenehelper.plugin_engine import PluginEngine
 
 
