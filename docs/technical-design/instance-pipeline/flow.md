@@ -52,6 +52,8 @@ Triggers:
 
 #### 1.1 step `preprocess` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
 
+Design: [`preprocess`](/docs/technical-design/instance-pipeline/steps/preprocess.md)
+
 Triggers:
 
 - always
@@ -68,7 +70,11 @@ Functions:
       - set defaults
 2. `cert_apply`
     - AI[techDebt-P1]: move out of the before script
-3. `git_fetch`
+3. `checkout`
+    - output:
+      - working tree narrowed to the environment's cone at the built commit
+    - actions:
+      - check out the repository, narrowed to the environment's cone, at the built commit
 4. `crypt.decrypt`
     - AI[techDebt-P1]: Create as a step. Currently inside `env_build` and `generate_effective_set`
 

@@ -56,6 +56,7 @@ Supports working with SOPS encryption.
 7. Credential rotation in a single operation for multiple Environments is not supported. `ENV_NAMES` can only contain a single Environment ID.
 8. `CRED_ROTATION_PAYLOAD` and `GET_PASSPORT: true` cannot be combined in one pipeline run.
    The pipeline fails at validation before any per-environment job starts.
+9. Affected-parameter detection is scoped to the target Environment's cluster. When a rotated credential is shared across clusters, parameters that reference it in other clusters are not reported.
 
 ### Requirements
 
@@ -65,7 +66,7 @@ Supports working with SOPS encryption.
 3. Job logs must clearly show how long the job took to execute
 4. The operation must fail if there are [affected parameters](#affected-parameters) and `CRED_ROTATION_FORCE` is `false` or not specified
 5. Job artifacts must include a file containing [affected parameters](#affected-parameters)
-   1. The file must contain all affected parameters for each parameter from `CRED_ROTATION_PAYLOAD`
+   1. The file must contain all affected parameters within the target Environment's cluster for each parameter from `CRED_ROTATION_PAYLOAD`
 6. The operation must support the following [Credential](/docs/envgene-objects.md#credential) types:
    1. `usernamePassword`
    2. `secret`
