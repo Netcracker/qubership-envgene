@@ -58,9 +58,9 @@ Actions:
   other env instance content is modified.
 - `generate_effective_set` is invoked with no deployment plan. The env-level `topology/` and `pipeline/` contexts
   are generated as always. The rest is marker-driven: for each namespace with `cleaned: true`, `.cleaned` is
-  written into `deployment/<ns>/` and `runtime/<ns>/` (no app content). The
-  cleaned namespaces are removed from `deployment/mapping.yaml` and `runtime/mapping.yaml`. No cleanup context
-  is produced.
+  written into `deployment/<ns>/` and `runtime/<ns>/` (no app content). The cleaned namespaces are not removed
+  from `deployment/mapping.yaml` and `runtime/mapping.yaml` - the `.cleaned` marker in each namespace folder is
+  what tells downstream tooling the namespace is cleaned. No cleanup context is produced.
 - `es_pusher` pushes the effective set with `ESPUSHER_OVERWRITE: true`, so the deploy target repository reflects
   the reduced state.
 
