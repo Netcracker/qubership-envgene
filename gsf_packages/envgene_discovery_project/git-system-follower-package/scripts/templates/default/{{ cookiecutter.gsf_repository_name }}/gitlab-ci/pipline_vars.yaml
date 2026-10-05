@@ -1,8 +1,8 @@
 ---
 variables:
-  ENV_NAMES:
+  ENV_NAME:
     value: "test-cluster/e01"
-    description: "Set ENV_NAMES"
+    description: "Set ENV_NAME"
     options:
         - "test-cluster/e01\"test-cluster/e02"
         - "test-cluster/e01"

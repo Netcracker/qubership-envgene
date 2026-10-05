@@ -1,0 +1,38 @@
+---
+name: "{{current_env.cloudNameWithCluster}}"
+apiUrl: ""
+apiPort: ""
+privateUrl: ""
+publicUrl: ""
+dashboardUrl: ""
+labels: []
+defaultCredentialsId: ""
+protocol: ""
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+mergeDeployParametersAndE2EParameters: false
+dbMode: "db"
+databases: []
+maasConfig:
+  credentialsId: "maas"
+  maasUrl: ""
+  maasInternalAddress: "http://maas-service.maas:8080"
+  enable: false
+vaultConfig:
+  url: ""
+  credentialsId: ""
+  enable: false
+dbaasConfigs:
+  - credentialsId: "dbaas"
+    apiUrl: 'http://dbaas-aggregator.dbaas:8080'
+    aggregatorUrl: ""
+    enable: false
+consulConfig:
+  tokenSecret: "consul-token"
+  publicUrl: ""
+  enabled: false
+  internalUrl: 'http://consul-server.consul:8500'

@@ -117,13 +117,13 @@ Below is a **complete** list of attributes
 | `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
 | `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
 | `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
-| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to deployment, runtime, and cleanup contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params) | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
+| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to the deployment and runtime contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params)       | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
 
 ### Registry Configuration
 
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](/examples/registry.yml)
+[Registry config example](/docs/examples/registry.yml)
 
 ### Effective Set v1.0
 
@@ -715,7 +715,6 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | Attribute                         | Mandatory | Type    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Default                                                                        | Source in Environment Instance or SBOM                                                       |
 |-----------------------------------|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
 | `DEPLOYMENT_SESSION_ID`           | yes       | string  | Effective Set calculation operation ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | None                                                                           | Taken from input parameter `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
-| `MANAGED_BY`                      | yes       | string  | Deployer type. Always `argocd`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `argocd`                                                                       | None                                                                                         |
 | `CLOUD_API_HOST`                  | yes       | string  | Fully Qualified Domain Name of Cluster's API endpoint                                                                                                                                                                                                                                                                                                                                                                                                                                                             | None                                                                           | `apiUrl` in the `Cloud`                                                                      |
 | `CLOUD_PUBLIC_HOST`               | yes       | string  | Cluster's API endpoint accessible within a cluster network                                                                                                                                                                                                                                                                                                                                                                                                                                                        | None                                                                           | `publicUrl` in the `Cloud`                                                                   |
 | `CLOUD_PRIVATE_HOST`              | yes       | string  | Cluster's API endpoint accessible outside the cluster network                                                                                                                                                                                                                                                                                                                                                                                                                                                     | None                                                                           | `privateUrl` in the `Cloud`                                                                  |
@@ -761,8 +760,12 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `PRIVATE_IDENTITY_PROVIDER_URL`   | yes       | string  | URL of the private gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace's private gateway even if the current namespace is a satellite. Computed as the URL of the private gateway where the IDP is published: Use the value of `PRIVATE_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PRIVATE_GATEWAY_URL}` from the current namespace | `${PRIVATE_GATEWAY_URL}`                                                       | N/A                                                                                          |
 
 > [!IMPORTANT]
-> Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> A root-level parameter whose key matches the name of one of the services would collide with that
+> service's section, so it is not kept at the root level. It stays in the `global` section and remains
+> reachable inside each service through the per-service alias (`<service-name>: *id001`), and a copy is
+> written to [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters).
+> See [Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
+> for the same global-plus-alias mechanism.
 
 ###### [Version 2.0] Image parameters derived from `deploy_param`
 
@@ -825,12 +828,15 @@ global: &id001
 | `CA_BUNDLE_CERTIFICATE`                  | no        | string | SSL Certificate bundle                                                                                                 | None    | The value is taken from the deployment parameter `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which can be set at the `Tenant`, `Cloud`, `Namespace`, or `Application`                                                          |
 
 > [!IMPORTANT]
-> Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> A root-level parameter whose key matches the name of one of the services would collide with that
+> service's section, so it is not kept at the root level. It stays in the `global` section and remains
+> reachable inside each service through the per-service alias (`<service-name>: *id001`), and a copy is
+> written to [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters).
 
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
-Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are moved to collision files if they meet **both** conditions:
+Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are removed from the root
+level and copied to collision files if they meet **both** conditions:
 
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
@@ -860,7 +866,28 @@ These files must only contain keys that match the name of a [services](#version-
 
 This file is based on the parameter passed to the Calculator via `--custom-params`.
 
-It contains parameters from the `deployment` section of the object passed to `--custom-params`.
+It contains parameters from the `deployment` section of the object passed to `--custom-params`, decomposed into the
+same `global` block and per-service keys as
+[`deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml), generated from the
+application's SBOM. A Custom Param override is then present at the root, in the `global` block, and inside each service,
+so it applies the same way a deployment parameter does. The file keeps the highest priority because it is applied last.
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+global: &id001
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+<service-name-1>: *id001
+<service-name-2>: *id001
+```
+
+Custom Params override deployment parameters, not artifact metadata. The `docker_tag`, `docker_registry`, and `image`
+values come from the Application's SBOM, live in the read-only
+[`deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml), and cannot be overridden
+through `--custom-params`.
 
 If `--custom-params` is not passed, the file is generated empty.
 
@@ -1257,7 +1284,7 @@ principles:
 5. `<consumer-name>-parameters.yaml` and `<consumer-name>-credentials.yaml` are produced when the consumer
    is declared (each file may be empty)
 
-[Example of consumer-specific pipeline context component JSON schema](/examples/consumer-v1.0.json)
+[Example of consumer-specific pipeline context component JSON schema](/docs/examples/consumer-v1.0.json)
 
 ###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-parameters.yaml`
 
@@ -1500,13 +1527,9 @@ The structure of this file is as follows:
 
 ##### \[Version 2.0][Cleanup Context] `credentials.yaml`
 
-This file contains
-
-1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing)
-
-2. Parameters from the `runtime` section of the object passed to `--custom-params`
-
-Parameters from `--custom-params` have higher priority.
+This file contains sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and
+`Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter
+processing](#version-20-sensitive-parameter-processing).
 
 The structure of this file is as follows:
 
@@ -1534,10 +1557,11 @@ credentials:
     # Carries `?secret_store_id=<id>` when the store is not `default_store`.
     vals: string
     # Derived from Credential.create: `fail_if_absent` when absent or false,
-    # `create_if_absent` when true.
+    # `create_if_absent` when true. `overwrite` is reserved for a future rotation
+    # flow and is not emitted by the calculator.
     strategy: enum [ fail_if_absent, create_if_absent, overwrite ]
-    # Emitted only for `create_if_absent` (or `overwrite`), omitted for
-    # `fail_if_absent`. Carries the reserved marker `_generateValue` per field.
+    # Emitted only for `create_if_absent`, omitted for `fail_if_absent`. Carries
+    # the reserved marker `_generateValue` per field.
     data: string | map
 ```
 

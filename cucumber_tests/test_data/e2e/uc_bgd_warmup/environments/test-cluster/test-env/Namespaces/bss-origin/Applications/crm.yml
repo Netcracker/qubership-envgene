@@ -1,0 +1,4 @@
+name: "crm"
+deployParameters:
+  PARAM_1: "active-value"
+technicalConfigurationParameters: {}

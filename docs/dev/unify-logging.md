@@ -35,7 +35,7 @@ All other modules import and use it.
 - Consistent format across the repository
 - Usage of one logging library (`import logging`)
 
-[Link to file](https://github.com/Netcracker/qubership-envgene/blob/main/python/envgene/envgenehelper/logger.py)
+[Link to file](/modules/envgene/envgenehelper/logger.py)
 
 ---
 
@@ -66,5 +66,3 @@ A script was added that:
 
 - Runs at the start of every generated job
 - Logs input parameters
-
-[How it was implemented](/build_pipegene/scripts/pipeline_helper.py#L47-L50)

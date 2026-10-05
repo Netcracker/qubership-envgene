@@ -1,0 +1,16 @@
+[project]
+name = "deploy-plan-generator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.1"
+dependencies = [
+  "qubership_pipelines_common_library==2.0.14",
+  "pydantic==2.13.2",
+  "packaging==26.2",
+  "uuid6>=2025.0.1",
+]
+
+[project.scripts]
+dpg = "dpg.main:cli"
+

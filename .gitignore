@@ -6,11 +6,6 @@ venv
 tmp/
 /env-builder/deployers
 __pycache__
-*.egg-info/
-dist/
-build/
-*.whl
-*.tar.gz
 .vscode
 .DS_Store
 pyrightconfig.json
@@ -19,3 +14,6 @@ junit*
 # Claude Code local (per-user) files - the shared skill under .claude/skills/ is committed
 .claude/settings.local.json
 .claude/*.lock
+
+# dev-flow and subagent-driven-development scratch (ledgers, briefs, review packages)
+.superpowers/

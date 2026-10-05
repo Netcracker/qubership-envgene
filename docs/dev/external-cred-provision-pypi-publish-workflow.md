@@ -18,7 +18,7 @@ The workflow
 [Publish to PyPI: qubership-external-cred-provision](/.github/workflows/external-cred-provision-pypi-publish.yaml)
 builds, tests, and optionally publishes the `qubership-external-cred-provision` Python package to the public PyPI
 index. After a successful publish on upstream `main`, it commits the release version back to
-`python/external-cred-provision/pyproject.toml`.
+`modules/external-cred-provision/pyproject.toml` and `.github/release-drafter-config.yml`.
 
 Use this workflow when you need a verified wheel and sdist for the External Credentials provisioning CLI, or when
 you are cutting a new PyPI release.
@@ -57,11 +57,12 @@ Key environment variables:
 
 | Variable                    | Value                                      |
 |-----------------------------|--------------------------------------------|
-| `PROJECT_DIR`               | `python/external-cred-provision`           |
+| `PROJECT_DIR`               | `modules/external-cred-provision`          |
 | `PACKAGE_NAME`              | `qubership-external-cred-provision`        |
 | `CLI_NAME`                  | `external-cred-provision`                  |
 | `UPSTREAM_REPO`             | `Netcracker/qubership-envgene`             |
 | `PYPI_SCRIPTS_DIR`          | `.github/scripts/pypi`                     |
+| `RELEASE_DRAFTER_CONFIG`    | `.github/release-drafter-config.yml`       |
 | `POETRY_VERSION`            | `2.1.3`                                    |
 | `PYPI_RETRY_ATTEMPTS`       | `3`                                        |
 | `PYPI_RETRY_DELAY_SECONDS`  | `30`                                       |
@@ -77,13 +78,13 @@ GitHub Actions artifact name: `${PACKAGE_NAME}-dist-${version}` (for example
 gate → validate-input → build-package → publish-package → sync-repo-version
 ```
 
-| Job                 | Runs when                         | Purpose |
-|---------------------|-----------------------------------|---------|
-| `gate`              | Always                            | Sets `can_publish` for upstream `main` only |
-| `validate-input`    | Always                            | Validates SemVer; checks PyPI bump in publish mode |
-| `build-package`     | After validation                  | Tests, builds, smoke-tests CLI, uploads artifact |
-| `publish-package`   | `can_publish == true`             | Publishes to PyPI with Poetry and verifies the release |
-| `sync-repo-version` | Publish succeeded on upstream     | Commits `pyproject.toml` version bump |
+| Job                 | Runs when                         | Purpose                                                   |
+|---------------------|-----------------------------------|-----------------------------------------------------------|
+| `gate`              | Always                            | Sets `can_publish` for upstream `main` only               |
+| `validate-input`    | Always                            | Validates SemVer; checks PyPI bump in publish mode        |
+| `build-package`     | After validation                  | Tests, builds, smoke-tests CLI, uploads artifact          |
+| `publish-package`   | `can_publish == true`             | Publishes to PyPI with Poetry and verifies the release    |
+| `sync-repo-version` | Publish succeeded on upstream     | Commits `pyproject.toml` and release-drafter PyPI version |
 
 Concurrency group `pypi-external-cred-provision` prevents overlapping runs. In-progress runs are not cancelled.
 
@@ -133,30 +134,31 @@ Run the CLI as `external-cred-provision` after install.
 
 Each major job writes a Markdown table to `$GITHUB_STEP_SUMMARY`:
 
-| Job               | Summary contents |
-|-------------------|------------------|
-| `build-package`   | Package name, version, artifact name, build-only vs publish mode |
-| `publish-package` | Package name, version, CLI name, PyPI link |
+| Job                 | Summary contents                                                  |
+|---------------------|-------------------------------------------------------------------|
+| `build-package`     | Package name, version, artifact name, build-only vs publish mode  |
+| `publish-package`   | Package name, version, CLI name, PyPI link                        |
 | `sync-repo-version` | Package name, version, sync commit link (or skip note), PyPI link |
 
 Open the job in the Actions run and expand **Summary** to read them.
 
 ## Helper scripts
 
-| Script | Role |
-|--------|------|
-| [/.github/scripts/pypi/check_pypi_version.py](/.github/scripts/pypi/check_pypi_version.py) | SemVer validation, bump check, post-publish verification |
-| [/.github/scripts/pypi/check_pypi_credentials.py](/.github/scripts/pypi/check_pypi_credentials.py) | PyPI reachability and token shape preflight |
-| [/.github/scripts/pypi/set_pyproject_version.py](/.github/scripts/pypi/set_pyproject_version.py) | Updates `[project].version` in `pyproject.toml` |
-| [/.github/scripts/pypi/retry_command.sh](/.github/scripts/pypi/retry_command.sh) | Shared retry helper for transient PyPI failures |
+| Script                                                                                                                 | Role                                                                  |
+|------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| [/.github/scripts/pypi/check_pypi_version.py](/.github/scripts/pypi/check_pypi_version.py)                             | SemVer validation, bump check, post-publish verification              |
+| [/.github/scripts/pypi/check_pypi_credentials.py](/.github/scripts/pypi/check_pypi_credentials.py)                     | PyPI reachability and token shape preflight                           |
+| [/.github/scripts/pypi/set_pyproject_version.py](/.github/scripts/pypi/set_pyproject_version.py)                       | Updates `[project].version` in `pyproject.toml`                       |
+| [/.github/scripts/pypi/set_release_drafter_pypi_version.py](/.github/scripts/pypi/set_release_drafter_pypi_version.py) | Updates the PyPI version link in `.github/release-drafter-config.yml` |
+| [/.github/scripts/pypi/retry_command.sh](/.github/scripts/pypi/retry_command.sh)                                       | Shared retry helper for transient PyPI failures                       |
 
 Exit codes from `check_pypi_version.py`:
 
-| Code | Meaning |
-|------|---------|
-| `0`  | Success |
-| `1`  | Validation error (bad SemVer or version not bumped) |
-| `2`  | PyPI query error (retried) |
+| Code | Meaning                                                  |
+|------|----------------------------------------------------------|
+| `0`  | Success                                                  |
+| `1`  | Validation error (bad SemVer or version not bumped)      |
+| `2`  | PyPI query error (retried)                               |
 | `3`  | Published version not indexed yet (retried after upload) |
 
 ## Troubleshooting
@@ -194,7 +196,7 @@ Publish runs only on upstream `main`. Merge to `Netcracker/qubership-envgene` `m
 
 ## Related files
 
-- Package source: [/python/external-cred-provision/](/python/external-cred-provision/)
-- Package readme (PyPI long description): [/python/external-cred-provision/README.md](/python/external-cred-provision/README.md)
+- Package source: [/modules/external-cred-provision/](/modules/external-cred-provision/)
+- Package readme (PyPI long description): [/modules/external-cred-provision/README.md](/modules/external-cred-provision/README.md)
 - CLI feature reference: [/docs/features/external-creds-provisioning-cli.md](/docs/features/external-creds-provisioning-cli.md)
 - Artifact naming conventions: [/docs/dev/artifact-naming.md](/docs/dev/artifact-naming.md)

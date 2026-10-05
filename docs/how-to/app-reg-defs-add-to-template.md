@@ -43,7 +43,7 @@ If you plan to parameterize them (next step), rename to `.yml.j2` to mark them a
 - `/templates/appdefs/<application-name>.yml.j2`
 - `/templates/regdefs/<registry-name>.yml.j2`
 
-### 4. Parameterize for environment-specific values.
+### 4. Parameterize for environment-specific values
 
 The value that typically differs between instance repositories is the registry an AppDef references (the
 `registryName` field), since different deployment sites use different registries (off-site source registries vs an

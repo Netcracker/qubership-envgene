@@ -1,0 +1,8 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": "invalid_string_not_object"
+    }
+  }
+}

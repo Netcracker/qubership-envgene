@@ -73,6 +73,52 @@ genuinely exists, and omit it entirely otherwise - an absent section reads bette
   discrete shapes or scenarios worth pinning as YAML, for example topology cases or credential shapes.
   When the change has no such enumerable cases, omit it.
 
+### Analyst voice - name only the documented surface
+
+A CR is read by a developer, but it is written by an analyst: it states the behavior contract and how
+to verify it, and leaves the code mapping to the implementer. Keep the whole body - Context, In scope,
+Acceptance, Implementation notes - in the design's own vocabulary, not the code's. Two habits carry
+most of the weight:
+
+- Name only the documented surface. Every object, job, field, parameter, or macro you mention should
+  be findable in the product docs (feature docs, `envgene-objects.md`, `envgene-configs.md`,
+  `template-macros.md`). If a name lives only in the code or is generated internally - a private
+  function, a file path, an intermediate field the tool writes for itself - the reader cannot look it
+  up, so describe the observable outcome instead. For example, prefer "the `current_env.cloud` macro
+  resolves to the cluster name" over naming the resolver function and the internal field it writes.
+  This also rules out an invented descriptive paraphrase, even a clear-sounding one, when a documented
+  term exists - the reader looks up the documented term, so prefer "reverse merge
+  (`SD_REPO_MERGE_MODE: basic-exclusion-merge`)" over the coined phrase "the application-removal path".
+  This is a distinct failure from naming code internals: the paraphrase points at no code, but it still
+  is not findable in the docs.
+- Verify before you name. Confirm each macro, field, or behavior against the docs or the code before
+  stating it - do not infer which macro carries a value or which engine resolves it. A confident wrong
+  claim costs the reader more than describing the effect and letting the implementer bind the mechanism.
+  This includes claims about today's behavior. Before writing that the change happens instead of failing
+  or instead of an error, confirm against the code that the case fails today rather than passing silently,
+  because the phrase instead of X misstates the baseline when X does not actually happen.
+
+State only settled behavior. If the design has not decided something (an extra warning, a side effect),
+leave it out or raise it as an open question - do not write it into In scope or Acceptance as fact.
+For Acceptance, when a condition has a sibling case (a mode set versus absent, a file present versus
+missing), put the discriminating precondition in the Given so the outcome cannot be read as applying to
+the sibling.
+
+Make the In scope changes read as a developer work-map. When the slice touches several components or
+pipeline steps, group the items under the component or step they touch, or lead each item with that
+component or step placed first as the opening phrase rather than buried mid-sentence, so a reader sees
+where the work lands at a glance rather than scanning prose for it. Keep each item atomic to
+one independent change. Do not collapse several components into one item, and do not split one change into
+terse fragments.
+
+Carry the design-time seam into Implementation notes. When the design settled a load-bearing implementation
+insight - where the change attaches and how - record it as guidance, because the developer who implements
+this may be a different person or session than the one who designed it, and that insight does not survive
+the handoff unless the CR carries it. The canonical form: reuse the existing mechanism, and if it is not
+directly reusable, extract a helper rather than adding a parallel path. This is what a developer's plan
+turns into a first-task spike. Keep it in documented-surface vocabulary - name the behavior or mechanism
+the design reused, not a function or a file.
+
 ### Acceptance notation
 
 Write each acceptance condition in collapsed Gherkin: `Given <fixture>, <observable outcome>.` The Given
@@ -133,8 +179,49 @@ rather than trusting the last write. Do not file until the user says so with wor
 
 Match the GitHub issue type to the change's nature and prefix the draft's H1 accordingly, per the
 `Issue type and title` section of `creating-cr.md`: Feature (`[Feat:]`), Bug (`[Bug:]`), or Story
-(`[Story:]`, or `[Docs:]` for a documentation ticket). The H1 carries the prefix, so the filed issue
-title carries it too.
+(`[Story:]`, or `[Docs:]` for a documentation ticket). A change that fixes or refines an existing
+feature is a Story, even when it adds a parameter or toggle. Reserve Feature for a genuinely new
+capability. The H1 carries the prefix, so the filed issue title carries it too.
+
+### House-rule compliance
+
+Keep the body publish-ready under the repository house rules in the `writing-docs` skill, even though the draft file
+lives outside the repository: plain hyphen-minus for dashes (no em or en dash), no semicolons in
+prose, wrap prose at 120 characters, vertically aligned table pipes, sentence-case headings, and
+GitHub native callouts. Chat may be Russian, but the artifact ships in English. Run the pre-file gate
+below before the `issue_write` call.
+
+### Pre-file gate
+
+Right before the `issue_write` call, re-read the final body and check it mechanically. Each item below
+is a miss that has actually shipped in a filed CR, so treat them as blocking rather than advisory:
+
+- Code references: no source file paths or modules (`python/...`, `scripts/...`, `src/...`, `*.py`,
+  `*.java`, `*.ts`) and no private function or method names (`snake_case(`, `CamelCase(`). Documented
+  product locations are fine (`cloud-passport/`, `configuration/credentials/`) - the test is whether a
+  reader can look the name up in the docs, not whether it contains a slash.
+- Undocumented identifiers: for every backticked object, field, or macro, confirm it appears in the
+  docs. If it does not, replace it with the observable outcome.
+- Links: no repo-relative `/docs/...` links in the issue body - GitHub renders them as dead paths.
+  Use commit-SHA permalinks, pinned to the doc PR head commit when the doc has not merged yet.
+- House rules (as stated under House-rule compliance): no em or en dashes, no semicolons in prose,
+  prose wrapped at 120.
+- No doc-ahead-of-code meta line: strip any sentence that frames the CR as catching code up to docs,
+  for example "the design docs are ahead of the code" or "this CR wires the described behavior". It is
+  noise, not guidance - the reader is the developer who will write the code, and the code's current
+  state is theirs to change. State the behavior contract and how to verify it, nothing about the gap.
+- Design-reference boundary: no `In scope changes` item modifies a file that already ships in the
+  design-reference PR - the docs text, the schemas, and the samples committed alongside the docs.
+  That PR delivers those, and the CR carries only the code slice that consumes the settled contract.
+  This catches the common case of a documentation item in scope (a feature or explanation doc, an
+  ADR, a use case, or any file under `docs/`), and it catches schema or sample items too when those
+  files ship in the design PR - for example an item like "Update `docs/features/X.md` section Y" or
+  "Add `foo` to the enum in `schemas/X.json`" fails the gate when either file is already committed
+  to the design-reference PR. If a drafted item names such a file, drop it, or if it names real
+  code work behind that file, restate it as that code work.
+- Component visibility: each `In scope changes` item leads with or is grouped under the component or
+  pipeline step it touches, so the slice scans as a work-map. An item that buries the component mid-prose
+  in a flat list fails this check.
 
 ### File the issue
 
@@ -150,19 +237,10 @@ On the go-ahead, re-present the final draft, ask one confirmation question, and 
    body starts at `## Context`. Do not set labels.
 3. Return the resulting issue URL.
 
-### AGENTS.md compliance
-
-Keep the body publish-ready under the repository house rules in `AGENTS.md`, even though the draft file
-lives outside the repository: plain hyphen-minus for dashes (no em or en dash), no semicolons in
-prose, wrap prose at 120 characters, vertically aligned table pipes, sentence-case headings, and
-GitHub native callouts. Chat may be Russian, but the artifact ships in English. Before filing, verify the
-body: grep for em or en dashes and semicolons, and check prose line length against 120.
-
 ## Guardrails
 
 - Confirm once before creating the issue. Never create without an explicit go-ahead.
 - Issue types for this org are org-level. Always query `list_issue_types` with owner only.
-- The issue title is the draft H1. The issue body is everything after the H1.
 - Use the GitHub MCP tools, not the `gh` CLI, for reads and writes.
 
 ## Failure modes
