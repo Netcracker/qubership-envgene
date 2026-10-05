@@ -16,6 +16,9 @@ from qubership_pipelines_common_library.v2.sops.sops_client import SopsClient
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_MAX_WORKERS = 16
+MAX_WORKERS_ENV_VAR = "EXTERNAL_CREDENTIAL_PROVISIONING_MAX_WORKERS"
+
 
 class PasswordGenerator:
     CHARS = (
@@ -76,7 +79,6 @@ class ExternalCredProvisioner:
         self._stores: dict[tuple[str, str], str] = {}
         self._provider: MultiStoreProvider | None = None
         self._manager: SecretManager | None = None
-        self.max_workers = int(os.environ.get("MAX_WORKERS", "10"))
 
     def run(self) -> int:
         mode = "DRY-RUN" if self.dry_run else "APPLY"
@@ -126,11 +128,18 @@ class ExternalCredProvisioner:
             ctx = self._decrypt_context()
 
         errors: list[str] = []
+        seen_paths: dict[str, str] = {}
         for cred_id, entry in (ctx.get("credentials") or {}).items():
             cred, cred_errors = self._parse_credential(cred_id, entry)
             if cred_errors:
                 errors.extend(cred_errors)
                 continue
+            if cred.vals in seen_paths:
+                errors.append(
+                    f" [{cred_id}] duplicate credential path '{cred.vals}' (already used by [{seen_paths[cred.vals]}])"
+                )
+                continue
+            seen_paths[cred.vals] = cred_id
             label = cred.store_id or self._DEFAULT_STORE_LABEL
             self._stores.setdefault((cred.provider_type, label), cred.vals)
             self._credentials.append(cred)
@@ -210,7 +219,8 @@ class ExternalCredProvisioner:
 
     def _processing_phase(self) -> ProvisioningResult:
         result = ProvisioningResult()
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        max_workers = self._get_max_workers()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(self._apply_credential, cred): cred
                 for cred in self._credentials
@@ -271,14 +281,21 @@ class ExternalCredProvisioner:
 
     def _dry_run_phase(self) -> ProvisioningResult:
         result = ProvisioningResult()
-        for cred in self._credentials:
-            try:
-                self._check_credential_dry_run(cred)
-                logger.info(f"[{cred.id}] dry_run_ok")
-                result.dry_run_ok += 1
-            except Exception as exc:
-                logger.error(f"[{cred.id}] dry_run_fail: {type(exc).__name__}: {exc}")
-                result.dry_run_fail += 1
+        max_workers = self._get_max_workers()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(self._check_credential_dry_run, credential): credential
+                for credential in self._credentials
+            }
+            for future in as_completed(futures):
+                credential = futures[future]
+                try:
+                    future.result()
+                    logger.info(f"[{credential.id}] dry_run_ok")
+                    result.dry_run_ok += 1
+                except Exception as exc:
+                    logger.error(f"[{credential.id}] dry_run_fail: {type(exc).__name__}: {exc}")
+                    result.dry_run_fail += 1
         return result
 
     def _check_credential_dry_run(self, cred: CredentialEntry) -> None:
@@ -328,3 +345,16 @@ class ExternalCredProvisioner:
             key: PasswordGenerator.generate() if val == self.GENERATE_MARKER else val
             for key, val in data.items()
         }
+
+    def _get_max_workers(self) -> int:
+        raw_val = os.getenv(MAX_WORKERS_ENV_VAR, str(DEFAULT_MAX_WORKERS))
+        try:             
+            configured_workers = int(raw_val)
+            if configured_workers < 1:
+                raise ValueError
+        except (TypeError, ValueError):
+            logger.warning("Invalid %s=%r; using default value %d", MAX_WORKERS_ENV_VAR, raw_val, DEFAULT_MAX_WORKERS)
+            configured_workers = DEFAULT_MAX_WORKERS
+        max_workers = min(configured_workers, len(self._credentials)) or 1
+        logger.info("Using %d worker(s) for %d credential(s)", max_workers, len(self._credentials))
+        return max_workers
