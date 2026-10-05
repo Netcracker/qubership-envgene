@@ -417,11 +417,13 @@ class EnvGenerator:
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
+        cluster_name = self.ctx.cluster_name
         env_name = inv.get("environmentName") or ""
         candidates = [
             inv.get("cloudName"),
-            inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
-            inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
+            (inv.get("passportCloudName", "") + "_" + env_name).replace("-", "_") if inv.get("passportCloudName") else "",
+            (inv.get("cloudPassport", "") + "_" + env_name).replace("-", "_") if inv.get("cloudPassport") else "",
+            f"{cluster_name}_{env_name}".replace("-", "_") if cluster_name and env_name else "",
             env_name.replace("-", "_"),
         ]
 

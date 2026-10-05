@@ -173,6 +173,10 @@ This section covers scenarios where the target parameter shares the same credent
 
 This group covers scenarios where dependencies are found and `CRED_ROTATION_FORCE=false`. In these cases, the job fails and generates affected parameters artifact.
 
+> [!NOTE]
+> Affected-parameter detection is scoped to the target Environment's cluster. A credential shared across clusters
+> does not have its out-of-cluster affected parameters reported.
+
 ### UC-CR-LCH-1: Reject Affected Credential Update
 
 **Pre-requisites:**
@@ -184,7 +188,7 @@ This group covers scenarios where dependencies are found and `CRED_ROTATION_FORC
 
    - The same Environment Credentials file
    - One or more Shared Credentials files
-   - Other affected Environment Instances
+   - Other affected Environment Instances within the target Environment's cluster
 
 5. `CRED_ROTATION_PAYLOAD` contains a valid rotation request.
 6. `CRED_ROTATION_FORCE` is not provided or is explicitly set to `false`.
