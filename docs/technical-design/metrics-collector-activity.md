@@ -28,12 +28,12 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 
 ## Input parameters
 
-| Parameter                      | Source | Required | Default   | Values / format   | Effect                                     |
-|--------------------------------|--------|----------|-----------|-------------------|--------------------------------------------|
-| `METRICS_COLLECTOR_URL`        | CI/CD  | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
-| `METRICS_COLLECTOR_TRACE_ID`   | CI/CD  | No       | generated | 32 hex characters | Event field `traceid`                      |
-| `METRICS_COLLECTOR_PARENT_ID`  | CI/CD  | No       | `""`      | Parent event `id` | Event field `parentid`                     |
-| `METRICS_COLLECTOR_SSL_VERIFY` | CI/CD  | No       | `true`    | `true` or `false` | `false` skips TLS certificate verification |
+| Parameter                      | Source   | Required | Default   | Values / format   | Effect                                     |
+|--------------------------------|----------|----------|-----------|-------------------|--------------------------------------------|
+| `METRICS_COLLECTOR_URL`        | CI/CD    | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
+| `METRICS_COLLECTOR_TRACE_ID`   | pipeline | No       | generated | 32 hex characters | Event field `traceid`                      |
+| `METRICS_COLLECTOR_PARENT_ID`  | pipeline | No       | `""`      | Parent event `id` | Event field `parentid`                     |
+| `METRICS_COLLECTOR_SSL_VERIFY` | CI/CD    | No       | `true`    | `true` or `false` | `false` skips TLS certificate verification |
 
 ## Request body mapping
 
@@ -505,4 +505,4 @@ Sequence:
 - [Metrics Collector events](/docs/features/metrics-collector-events.md)
 - [Instance pipeline flow](/docs/technical-design/instance-pipeline/flow.md)
 - [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url)
-- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_url)
+- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_trace_id)

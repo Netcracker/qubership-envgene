@@ -47,7 +47,7 @@ continues the Instance pipeline run. EnvGene does not retry the request.
 
 ### Correlation across pipelines
 
-A parent pipeline can connect EnvGene to the wider deployment by passing two variables:
+A parent pipeline can connect EnvGene to the wider deployment by passing two pipeline parameters:
 
 - `METRICS_COLLECTOR_TRACE_ID` links this run to the parent deployment session.
 - `METRICS_COLLECTOR_PARENT_ID` references the parent activity event.
@@ -75,7 +75,7 @@ TLS certificate checks stay on unless `METRICS_COLLECTOR_SSL_VERIFY` is `false`.
    `data` structure, and request examples
 - [Instance pipeline flow](/docs/technical-design/instance-pipeline/flow.md) - Instance pipeline
    steps reported with the finished job
-- [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url) - CI/CD
-   settings for this integration
-- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_url) - the
-   same settings as pipeline inputs
+- [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url) -
+   `METRICS_COLLECTOR_URL` and `METRICS_COLLECTOR_SSL_VERIFY`, set on the repository
+- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_trace_id) -
+   `METRICS_COLLECTOR_TRACE_ID` and `METRICS_COLLECTOR_PARENT_ID`, passed when the pipeline starts
