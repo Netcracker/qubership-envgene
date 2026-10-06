@@ -46,6 +46,7 @@
     - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
+  - [Archived Parameters](#archived-parameters)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
@@ -1086,100 +1087,21 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 **Example**: `true`
 
+## Archived Parameters
+
+The following parameters have been removed. Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
+
 ### `ENV_SPECIFIC_PARAMS`
 
-**Description**: Specifies Environment Inventory and env-specific parameters. Use `ENV_INVENTORY_CONTENT` instead. This
-is can used together with
-`ENV_INVENTORY_INIT`. See details in [Environment Inventory
-Generation](/docs/features/env-inventory-generation.md)
-
-Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**:
-
-```yaml
-clusterParams:
-  clusterEndpoint: <value>
-  clusterToken: <value>
-additionalTemplateVariables:
-  <key>: <value>
-cloudName: <value>
-envSpecificParamsets:
-  <namespace-folder-name>:
-  - paramsetA
-  cloud:
-  - paramsetB
-paramsets:
-  paramsetA:
-    version: <paramset-version>
-    name: <paramset-name>
-    parameters:
-      <key>: <value>
-    applications:
-    - appName: <app-name>
-      parameters:
-        <key>: <value>
-  paramsetB:
-    version: <paramset-version>
-    name: <paramset-name>
-    parameters:
-      <key>: <value>
-    applications: []
-credentials:
-  credX:
-    type: <credential-type>
-    data:
-      username: <value>
-      password: <value>
-  credY:
-    type: <credential-type>
-    data:
-      secret: <value>
-```
+**Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
 
 ### `ENV_TEMPLATE_NAME`
 
-**Description**: Specifies the template artifact value within the generated Environment Inventory. Use
-`ENV_INVENTORY_CONTENT` instead. This is used together
-with `ENV_INVENTORY_INIT`.
-
-Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
-
-System overrides `envTemplate.name` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`:
-
-```yaml
-envTemplate:
-    name: <ENV_TEMPLATE_NAME>
-    ...
-...
-```
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `env-template:v1.2.3`
+**Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
 
 ### `ENV_INVENTORY_INIT`
 
-**Description**: Use `ENV_INVENTORY_CONTENT` instead.
-
-If `true`:
-  In the pipeline, a job for generating the environment inventory is executed. The new Environment Inventory will be
-generated in the path `/environments/<ENV_NAME>/Inventory/env_definition.yml`. See details in [Environment Inventory
-Generation](/docs/features/env-inventory-generation.md)
-
-Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
-
-**Default Value**: `false`
-
-**Mandatory**: No
-
-**Example**: `true`
+**Removed.** Use [`ENV_INVENTORY_CONTENT`](#env_inventory_content) instead.
 
 ## Parameter value formats
 
