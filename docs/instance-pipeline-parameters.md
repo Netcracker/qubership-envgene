@@ -1042,9 +1042,9 @@ Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
 ### `METRICS_COLLECTOR_TRACE_ID`
 
-**Description**: Correlation id for Metrics Collector activity events (`traceid`). A parent pipeline can
+**Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
 pass this value so EnvGene events join the parent deployment session. When it is empty and
-`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal id for the run. All events
+`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
 in that run share it.
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
@@ -1055,7 +1055,7 @@ Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
 ### `METRICS_COLLECTOR_PARENT_ID`
 
-**Description**: Parent activity event id (`parentid`). A parent pipeline passes the `id` of its own
+**Description**: Parent activity event ID (`parentid`). A parent pipeline passes the `id` of its own
 activity event. When the variable is empty, EnvGene sends an empty string.
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.

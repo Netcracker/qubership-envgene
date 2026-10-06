@@ -39,7 +39,7 @@ A run sends three event types:
    the EnvGene version, the pipeline inputs, and the step results for that job. It does not repeat
    step results from an earlier job in the same pipeline.
 
-Each event has its own id. Events in one run share one trace id, and each event carries the time it
+Each event has its own ID. Events in one run share one trace ID, and each event carries the time it
 was sent, so a collector can measure the interval from `start` to `stop`.
 
 If Metrics Collector Service is unavailable or rejects the event, EnvGene logs the failure and
@@ -52,14 +52,14 @@ A parent pipeline can connect EnvGene to the wider deployment by passing two var
 - `METRICS_COLLECTOR_TRACE_ID` links this run to the parent deployment session.
 - `METRICS_COLLECTOR_PARENT_ID` references the parent activity event.
 
-When the parent does not pass a trace id, EnvGene creates one for the run. Every event in that run
+When the parent does not pass a trace ID, EnvGene creates one for the run. Every event in that run
 uses it.
 
 ### Multiple environments
 
 When `ENV_NAMES` lists more than one environment, each environment reports its own `running` activity.
 The run still has one `start` event and one `stop` event. The `stop` event combines the environment
-results, and every event in the run shares one trace id.
+results, and every event in the run shares one trace ID.
 
 ### Optional integration
 
