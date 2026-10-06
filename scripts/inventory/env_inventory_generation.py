@@ -50,10 +50,10 @@ def generate_env():
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
     helper.writeYamlToFile(env.creds_path, env.creds)
-    helper.encrypt_file(env.creds_path)
+    encrypt_file(env.creds_path)
     if env.inv_gen_creds:
         helper.writeYamlToFile(env.inv_gen_creds_path, env.inv_gen_creds)
-        helper.encrypt_file(env.inv_gen_creds_path)
+        encrypt_file(env.inv_gen_creds_path)
 
 
 @deprecated(DEPRECATED_MESSAGE)
