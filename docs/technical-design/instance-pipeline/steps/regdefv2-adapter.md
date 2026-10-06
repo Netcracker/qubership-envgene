@@ -9,6 +9,7 @@
   - [Parameter file](#parameter-file)
   - [Result](#result)
   - [Error handling](#error-handling)
+  - [Limitations](#limitations)
   - [Related documentation](#related-documentation)
 
 ## Description
@@ -238,6 +239,15 @@ The complete parameter list:
 4. The step logs a warning, and does not fail, when a rendered RegDef already carries a `version` or an
    `authConfig` (a v2 RegDef). The warning names the registry and states that it is already v2, so its auth is
    used as is and the registry auth parameters are not applied to it.
+
+## Limitations
+
+1. **Legacy runs without `ENV_BUILDER` do not get synthesized auth.** In a `LEGACY` pipeline the step runs only
+   when `ENV_BUILDER: true`, but `process_sd` and `get_sboms` run on their own gates (`OPERATION_TYPE: DEPLOY`
+   with a Solution Descriptor, or `GENERATE_EFFECTIVE_SET: true`), which do not require `ENV_BUILDER`. A legacy
+   run with `ENV_BUILDER: false` that downloads from a public cloud registry therefore has no synthesized
+   RegDef v2 auth, and the download fails. Run the legacy flow with `ENV_BUILDER: true`, or author a committed
+   RegDef v2, when the registry is public cloud.
 
 ## Related documentation
 
