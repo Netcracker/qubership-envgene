@@ -1,11 +1,17 @@
 # EnvGene Linter changelog
 
+- [Unreleased](#unreleased)
 - [0.0.6](#006)
 - [0.0.5](#005)
 - [0.0.4](#004)
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
+
+## Unreleased
+
+- Stop reporting `.j2` files based on their directory in TPL-1. Ignore YAML comments while retaining checks
+  for Jinja in active values, including quoted strings and block scalars.
 
 ## 0.0.6
 

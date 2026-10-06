@@ -9,7 +9,8 @@ See the [changelog](/modules/envgene-linter/CHANGELOG.md) for release changes an
 
 Most instance rules check files selected by supported local references or known generator usage.
 INT-4 also examines recognized unconnected authored entities for review.
-TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`, regardless of bindings.
+TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`, regardless of bindings.
+It ignores YAML comments and allows `.j2` files regardless of their directory.
 TPL-4 reviews missing presence protection. TPL-6 checks template logic and allows recognizable Helm raw blocks.
 The linter does not generate environments, render Jinja templates, or automatically fix configuration files.
 Checks run locally without network calls.
@@ -255,7 +256,7 @@ The table lists the 22 rules enabled by default. Each link opens the processing 
 | [NAME-2](/modules/envgene-linter/docs/algorithms/name2.md)     | A selected entity's filename stem differs from its `name` field                                                     | Warning / Fix                           |
 | [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md)     | A used default Cloud Passport or its selected companion has a noncanonical filename                                 | Warning / Fix                           |
 | [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md)       | Connected ParameterSet values contain JSON collections or YAML block collections encoded as strings                 | Warning / Review                        |
-| [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md)       | Jinja outside template files or supported descriptor fields, misplaced `.j2` files, or ambiguous template syntax    | Warning / Fix or Information / Review   |
+| [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md)       | Jinja in active YAML outside supported descriptor fields, or ambiguous template syntax                              | Warning / Fix or Information / Review   |
 | [TPL-4](/modules/envgene-linter/docs/algorithms/tpl4.md)       | Potentially optional Jinja references without recognized presence protection                                        | Information / Review                    |
 | [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md)       | Prohibited or complex template logic, with an exception for recognizable Helm raw blocks                            | Warning / Fix or Information / Review   |
 
@@ -335,7 +336,8 @@ Except for INT-4, TPL-1, TPL-4, and TPL-6, checks apply only to entities with su
 - Security sources used by SEC-5 and applicable INT-2 references: generated environment Credentials; selected passport and deployer companions; bound system integration, root-credentials, active legacy registry and selected artifact-registry Credential references.
 
 Except for INT-4, TPL-1, TPL-4, and TPL-6, unreferenced names do not produce findings.
-TPL-1 independently checks all YAML and `.j2` files under `templates/`, `environments/`, and `configuration/`.
+TPL-1 independently checks YAML under `templates/`, `environments/`, and `configuration/`.
+It ignores YAML comments and allows `.j2` files regardless of their directory.
 It allows generator-rendered descriptor fields and marks ambiguous Helm or application placeholders for Review.
 See [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) for the field exceptions and file scope.
 TPL-4 and TPL-6 inspect `.j2` files under `templates/` and generator-rendered descriptor fields without bindings.

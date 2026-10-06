@@ -82,7 +82,8 @@ Both commands also create HTML and JSON reports.
   TPL-1, TPL-4, and TPL-6 still run unless disabled.
 
 This is an alpha release. Most checks cover supported references and generator inputs.
-TPL-1 checks YAML and template placement under `templates/`, `environments/`, and `configuration/`.
+TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`.
+It ignores YAML comments and allows `.j2` files regardless of their directory.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.
 
 TPL-4 reviews references without recognized presence protection. It does not prove that generation fails.

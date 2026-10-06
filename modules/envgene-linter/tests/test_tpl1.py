@@ -34,8 +34,6 @@ def findings(repo):
     ('parameters:\n  VALUE: >\n    {{ current_env.name }}\n', 3, 5),
     ('parameters:\n  VALUE: "{{\n    current_env.name\n  }}"\n', 2, 11),
     ('parameters:\n  "{{ current_env.key }}": value\n', 2, 4),
-    ('# {{ current_env.name }}\nparameters: {}\n', 1, 3),
-    ('parameters: {} # {% if enabled %}\n', 1, 18),
     ('name: "{{ current_env.name }}"\nparameters: {}\n', 1, 8),
     ('parameters:\n  VALUE: "{{- current_env.name -}}"\n', 2, 11),
 ])
@@ -118,11 +116,11 @@ def test_unused_and_shadowed_yaml_is_checked_but_readme_is_excluded(repo):
 
 
 @pytest.mark.parametrize('suffix', ['.yml.j2', '.yaml.j2'])
-def test_templates_are_allowed_only_in_template_tree(repo, suffix):
+def test_template_location_does_not_produce_a_finding(repo, suffix):
     path = parameter(repo, '{% if enabled %}\nVALUE: "{{ value }}"\n{% endif %}\n')
-    instance_template = path.rename(path.with_suffix(suffix))
+    path.rename(path.with_suffix(suffix))
     write(repo.root / f'templates/parameters{suffix}', '{{ value }}')
-    assert [item.path for item in findings(repo)] == [instance_template]
+    assert findings(repo) == []
 
 
 def test_invalid_utf8_records_generic_skip(repo):
@@ -218,12 +216,12 @@ def test_unsafe_companion_does_not_hide_other_yaml(repo, target):
     assert [item.path for item in findings(repo)] == [companion]
 
 
-def test_instance_template_passport_and_yaml_companion_are_both_reported(repo):
+def test_instance_template_passport_is_allowed_and_yaml_companion_is_checked(repo):
     repo.env('c', 'e', cloud_passport='passport')
-    template = write(repo.root / 'environments/c/cloud-passport/passport.yml.j2', '{{ value }}\n')
-    assert [item.path for item in findings(repo)] == [template]
+    write(repo.root / 'environments/c/cloud-passport/passport.yml.j2', '{{ value }}\n')
+    assert findings(repo) == []
     companion = write(repo.root / 'environments/c/cloud-passport/passport-creds.yml', 'VALUE: "{{ value }}"\n')
-    assert {item.path for item in findings(repo)} == {template, companion}
+    assert [item.path for item in findings(repo)] == [companion]
 
 
 def test_disabled_rule_does_not_add_read_notes(repo, monkeypatch):

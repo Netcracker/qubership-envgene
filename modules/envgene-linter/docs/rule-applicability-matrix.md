@@ -112,10 +112,11 @@ A dynamic reference is also not evidence that its target is missing.
 | [TPL-4](/modules/envgene-linter/docs/algorithms/tpl4.md) | No       | Context  | Template references and presence guards                           | Reviews unprotected candidates locally without proving input availability.                                                                                                          |
 | [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md) | No       | Local    | Template statements, filters, and raw blocks                      | Checks local template sources and allows recognizable Helm passthrough.                                                                                                             |
 
-TPL-1 accepts `.j2` only under `templates/`. Its descriptor-field exceptions are an approved compatibility decision
+TPL-1 accepts `.j2` regardless of directory and excludes YAML comments.
+Its descriptor-field exceptions are an approved compatibility decision
 for generator-supported syntax, including the documented namespace selector syntax.
 They do not permit arbitrary Jinja in every descriptor field.
-This exception and the directory restriction refine the standard's shorter wording and need to remain explicit.
+The descriptor exceptions refine the standard's shorter wording and need to remain explicit.
 
 ## Rules without an implementation
 
@@ -172,7 +173,7 @@ the implementations.
 | INT-3               | The standard describes first-match behavior for all listed entities. The linter documents ParameterSet merging.                                | Reconcile the explanation with generator behavior while retaining the agreed duplicate-name check.         |
 | PLACE-10 and NAME-7 | PLACE-10 names `shared-template-variables/`, while NAME-7 describes legacy `configuration/variables/` locations.                               | Clarify canonical locations and supported legacy lookup by scope.                                          |
 | NAME-8              | The standard permits `.yaml`, but companion lookup selects `.yml` only.                                                                        | Keep lookup compatibility explicit. Do not infer that an adjacent `.yaml` companion is selected.           |
-| TPL-1               | Generator-supported descriptor expressions are accepted, and `.j2` placement is restricted to `templates/`.                                    | Preserve these approved refinements in the specification and standard alignment work.                      |
+| TPL-1               | Generator-supported descriptor expressions are accepted. YAML comments and `.j2` file placement are outside the rule's scope.                  | Preserve these approved refinements in the specification and standard alignment work.                      |
 | TPL-6 and TPL-8     | TPL-6 forbids `raw`, while TPL-8 requires it for Helm passthrough.                                                                             | Approved: allow recognizable Helm passthrough and review other raw blocks. Preserve this refinement.       |
 | TPL-14              | The target late-resolving macro is not yet available.                                                                                          | Check supported interim lookup behavior. Do not require the illustrative future macro syntax.              |
 | Inline exceptions   | The standard defines `[EXCEPTION RULE-ID]` comments. The linter has no shared exception-handling mechanism.                                    | Specify how declared exceptions affect findings and coverage.                                              |

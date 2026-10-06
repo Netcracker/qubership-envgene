@@ -52,19 +52,15 @@ def test_mixed_repository_checks_both_trees(tmp_path):
     assert {item.path for item in tpl1(tmp_path)} == set(paths)
 
 
-@pytest.mark.parametrize('relative,expected', [
-    ('templates/env_templates/cloud.yml.j2', 0), ('templates/parameters/service.yaml.j2', 0),
-    ('templates/macros/helpers.j2', 0), ('environments/parameters/service.yml.j2', 1),
-    ('environments/c/e/Inventory/template.j2', 1), ('configuration/template.yml.j2', 1),
+@pytest.mark.parametrize('relative', [
+    'templates/env_templates/cloud.yml.j2', 'templates/parameters/service.yaml.j2',
+    'templates/macros/helpers.j2', 'environments/parameters/service.yml.j2',
+    'environments/c/e/Inventory/template.j2', 'configuration/template.yml.j2',
 ])
-def test_template_file_placement(tmp_path, relative, expected):
+def test_template_file_location_is_outside_tpl1_scope(tmp_path, relative):
     (tmp_path / 'templates').mkdir()
-    path = write(tmp_path / relative, 'VALUE: safe\n')
-    items = tpl1(tmp_path)
-    assert len(items) == expected
-    if items:
-        assert (items[0].path, items[0].line, items[0].action) == (path, 1, Action.FIX)
-        assert 'templates/' in items[0].hint
+    write(tmp_path / relative, 'VALUE: safe\n')
+    assert tpl1(tmp_path) == []
 
 
 def descriptor(extra=''):
@@ -94,7 +90,6 @@ def test_descriptor_scalar_cloud_and_inline_override_are_exempt(tmp_path):
 
 @pytest.mark.parametrize('extra', [
     'description: "{{ current_env.name }}"\n',
-    '# {{ current_env.name }}\n',
     'unexpected: "{{ current_env.name }}"\n',
 ])
 def test_descriptor_exemption_is_limited_to_rendered_fields(tmp_path, extra):
@@ -103,10 +98,10 @@ def test_descriptor_exemption_is_limited_to_rendered_fields(tmp_path, extra):
     assert [(item.path, item.line) for item in items] == [(path, 13)]
 
 
-def test_comment_on_allowed_field_is_not_exempt(tmp_path):
+def test_comment_on_allowed_field_is_ignored(tmp_path):
     text = descriptor().replace('tenant.yml.j2"', 'tenant.yml.j2" # {{ current_env.name }}')
     write(tmp_path / 'templates/env_templates/dev.yml', text)
-    assert [(item.line, item.action) for item in tpl1(tmp_path)] == [(1, Action.FIX)]
+    assert tpl1(tmp_path) == []
 
 
 def test_descriptor_alias_does_not_exempt_unrelated_anchor(tmp_path):
