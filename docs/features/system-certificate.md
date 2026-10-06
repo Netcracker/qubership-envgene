@@ -1,166 +1,101 @@
 # System certificate configuration
 
 - [System certificate configuration](#system-certificate-configuration)
-  - [Description](#description)
   - [Problem statement](#problem-statement)
   - [Approach](#approach)
     - [Certificate sources](#certificate-sources)
-    - [Certificate validation](#certificate-validation)
     - [Certificate management process](#certificate-management-process)
     - [Supported certificate types](#supported-certificate-types)
-  - [Usage examples](#usage-examples)
-    - [CI/CD variable (`SSL_CERTIFICATES_BUNDLE`)](#cicd-variable-ssl_certificates_bundle)
   - [Technical implementation](#technical-implementation)
-  - [Related documentation](#related-documentation)
 
-## Description
-
-EnvGene loads system certificates at the start of the `env-prepare` and `cmdb_import` instance pipeline jobs.
-EnvGene applies every non-empty configured source and merges the result into the runner trust store. An empty or
-unset source contributes nothing.
-
-When `SSL_CERTIFICATES_BUNDLE`, `ca_bundle`, and `configuration/certs` are all empty or absent, EnvGene applies the
-built-in default certificate from `/default_cert.pem`, when the runner image ships one. Otherwise the certificate
-loading step is a no-op and no certificate is installed. The pipeline does not fail in either case.
+For step-by-step instructions on setting `SSL_CERTIFICATES_BUNDLE`, obtaining certificates, and verifying them, see
+[Configure system certificates](/docs/how-to/configure-system-certificates.md).
 
 ## Problem statement
 
-When deploying environments in enterprise settings, teams face several certificate-related challenges:
+When deploying environments in enterprise settings, teams face certificate-related challenges.
+Internal services and artifact repositories are often exposed over TLS with self-signed certificates
+or private certificate authorities that the runner does not trust by default. Installing these
+certificates on build agents by hand is error-prone, updates require manual intervention, and
+different environments can require different certificates.
 
-1. Secure communication barriers:
-   1. Internal services use self-signed certificates not trusted by default
-   2. Artifact repositories are exposed over TLS with private certificate authorities
+The system certificate mechanism has these goals:
 
-2. Manual certificate management:
-   1. Installing certificates on build agents by hand is error-prone
-   2. Certificate updates need manual intervention
-   3. Different environments need different certificates
-
-Goals:
-
-1. Provide a consistent way to manage certificates across all environments
-2. Automate certificate installation during pipeline execution
-3. Support PEM CA certificate formats (`.crt`, `.pem`, and other filenames in folder sources)
-4. Remove the need for manual certificate management on build agents
+1. Provide a consistent way to manage certificates across all environments.
+2. Install certificates automatically during pipeline execution.
+3. Remove the need to manage certificates on build agents by hand.
 
 ## Approach
 
-EnvGene provides a built-in mechanism for managing system certificates during pipeline execution. EnvGene evaluates
-each configured source independently. Every non-empty source contributes its valid certificates to the merged trust
-store.
+EnvGene provides a built-in mechanism for managing system certificates during pipeline execution.
+EnvGene reads certificates once, at the start of the `env-prepare` job, from a CI/CD variable and from
+two directories in the environment instance repository, then adds them to the trust store before the
+other pipeline steps run.
 
 ### Certificate sources
 
-| Source                    | Kind              | Value format                                | How provided                                    |
-|---------------------------|-------------------|---------------------------------------------|-------------------------------------------------|
-| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | base64-encoded PEM CA certificate or bundle | GitLab CI/CD variable or GitHub variable/secret |
-| `ca_bundle`               | Repository folder | PEM certificate files, any filename         | `/ca_bundle` at the repository root             |
-| `configuration/certs`     | Repository folder | PEM certificate files, any filename         | `/configuration/certs`, current behaviour       |
-| Default certificate       | Runner image file | PEM at `/default_cert.pem`                  | Built into the runner image, when present       |
+EnvGene reads certificates from the sources below, in this order.
 
-For the GitHub-specific variable mapping, see
-[Provide certificates through
-`SSL_CERTIFICATES_BUNDLE`](/docs/how-to/configure-system-certificates.md#provide-certificates-through-ssl_certificates_bundle).
+| Source                    | Kind              | Value format                                | Location                                               |
+|---------------------------|-------------------|---------------------------------------------|--------------------------------------------------------|
+| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | base64-encoded PEM certificate or bundle    | Pipeline CI/CD variable                                |
+| `ca_bundle`               | Repository folder | One or more PEM certificate files           | `/ca_bundle` at the instance repository root           |
+| `configuration/certs/`    | Repository folder | One or more PEM certificate files           | `configuration/certs/` at the instance repository root |
+| Default certificate       | Runner image file | PEM certificate                             | `/default_cert.pem`, built into the runner image       |
 
-> [!IMPORTANT]
-> EnvGene merges valid certificates from every non-empty configured source (`SSL_CERTIFICATES_BUNDLE`, `ca_bundle`, and
-> `configuration/certs`). For default-certificate behaviour when all configured sources are empty, see
-> [Description](#description).
-
-### Certificate validation
-
-EnvGene validates certificate content from each non-empty source before installation. The flow below applies to all
-sources. For `SSL_CERTIFICATES_BUNDLE`, EnvGene base64-decodes the variable value first.
-
-1. **Obtain PEM content** - For `ca_bundle` and `configuration/certs`, EnvGene reads every file in the folder (any
-   filename or extension). For `SSL_CERTIFICATES_BUNDLE`, EnvGene uses the decoded variable value.
-2. **Detect a PEM certificate block** - Content must contain `-----BEGIN CERTIFICATE-----`.
-   - Folder file without the block: EnvGene skips the file and emits a warning in the job log.
-   - `SSL_CERTIFICATES_BUNDLE` without the block after decode: EnvGene records a validation error.
-3. **Validate PEM** - EnvGene confirms the content parses as a valid PEM certificate. Content that fails validation is
-   recorded as a validation error with the variable name or file path.
-4. **Read folder files** - A file in `ca_bundle` or `configuration/certs` that cannot be read is recorded as a
-   validation error with its file path.
-
-A `SSL_CERTIFICATES_BUNDLE` value that cannot be base64-decoded is also recorded as a validation error.
-
-EnvGene checks every source to the end before failing. When at least one validation error was recorded, the job fails
-once with a single error that lists every problem across all sources: the variable name for
-`SSL_CERTIFICATES_BUNDLE` and the file path for folder files. No certificate is installed in this case.
+EnvGene applies `SSL_CERTIFICATES_BUNDLE`, `/ca_bundle`, and `configuration/certs/` independently and
+adds every certificate they hold to the trust store. It reads only files directly in each directory.
+If `SSL_CERTIFICATES_BUNDLE` is not set and neither directory contains an entry, EnvGene falls back to
+the default certificate built into the runner image, when one is present. An empty directory does not
+block the default certificate. When no source provides a certificate, EnvGene installs nothing and
+the pipeline continues.
 
 ### Certificate management process
 
-During pipeline execution:
-
-1. EnvGene evaluates `SSL_CERTIFICATES_BUNDLE`, `ca_bundle`, and `configuration/certs` as described in
-   [Certificate validation](#certificate-validation)
-2. Valid certificates from all non-empty configured sources are merged into the runner trust store as described in
-   [Technical implementation](#technical-implementation)
-3. If no configured source contributed certificates, EnvGene applies the default certificate (see
-   [Description](#description))
-4. EnvGene uses these certificates for outbound TLS from jobs that connect to external systems
+During pipeline execution, EnvGene reads the configured sources, installs the certificates it finds,
+and rebuilds the trust store so that the other pipeline steps use it.
 
 ```mermaid
 flowchart TD
-    A[Job starts] --> B{SSL_CERTIFICATES_BUNDLE set and non-empty?}
-    B -->|Yes| C[Decode and validate bundle certificates]
-    B -->|No| D[Skip bundle source]
-    C --> E{Any folder source non-empty?}
+    A[Job starts] --> B{SSL_CERTIFICATES_BUNDLE set?}
+    B -->|Yes| C[Decode base64 and install the bundle]
+    B -->|No| D[Skip the CI/CD variable]
+    C -->|Installed| E{ca_bundle has an entry?}
+    C -->|Failed| X[Job fails. Later sources are not checked]
     D --> E
-    E -->|Yes| F[Validate all files from ca_bundle and configuration/certs]
-    E -->|No| G{Any validation errors recorded?}
-    F --> G
-    G -->|Yes| H[Fail once with a single error listing every problem]
-    G -->|No| I{Any certificates staged?}
-    I -->|Yes| J[Install staged certificates and update trust store once]
-    I -->|No| K[Apply default certificate from /default_cert.pem]
-    J --> M[Job continues]
-    K --> M
+    E -->|Yes| F[Install each file in ca_bundle]
+    E -->|No| G{configuration/certs/ has an entry?}
+    F -->|Installed| G
+    F -->|Failed| X
+    G -->|Yes| H[Install each file in configuration/certs]
+    G -->|No| I{Any source found?}
+    H -->|Installed| I
+    H -->|Failed| X
+    I -->|No| J[Install the default certificate, if present]
+    I -->|Yes| K[The other pipeline steps use the trust store]
+    J -->|Installed or not present| K
+    J -->|Failed| X
 ```
+
+> [!IMPORTANT]
+> `SSL_CERTIFICATES_BUNDLE` must hold base64-encoded PEM content. If the value is not valid base64,
+> or if it contains raw PEM text, the job fails with an explicit error.
+
+A decoded bundle or a folder file must contain at least one `-----BEGIN CERTIFICATE-----` block. Each
+block must parse as an X.509 certificate and must not be expired at the time of the run. A failed check
+stops the job. EnvGene does not check the remaining sources after that failure.
 
 ### Supported certificate types
 
-- **CA certificates**: Root or intermediate certificates used to validate server certificates. PEM content is identified
-  by `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` boundaries.
-
-Filenames such as `ca-*.pem` or `ca-*.crt` are conventions only. For how folder sources are evaluated, see
-[Certificate validation](#certificate-validation).
-
-A single file may contain a full chain of concatenated PEM certificates. For how to assemble a chain file, see
-[Build a certificate chain file](/docs/how-to/configure-system-certificates.md#build-a-certificate-chain-file).
-
-## Usage examples
-
-For step-by-step configuration of each certificate source, see
-[Configure system certificates](/docs/how-to/configure-system-certificates.md).
-
-### CI/CD variable (`SSL_CERTIFICATES_BUNDLE`)
-
-Store the corporate CA bundle in a CI/CD variable instead of committing certificate files to the instance repository.
-EnvGene base64-decodes the value and merges the certificates with the other configured sources.
-
-> [!WARNING]
-> GitLab limits a CI/CD variable value to 10,000 characters. A GitHub secret is limited to 48 KB. For larger bundles,
-> store certificate files in `ca_bundle` or `configuration/certs` instead.
+EnvGene processes CA certificates in PEM format: root or intermediate certificates (`.crt`, `.pem`)
+used to validate server certificates. The file name does not select certificates. A single file may
+contain a full chain of concatenated PEM certificates.
 
 ## Technical implementation
 
-EnvGene uses a certificate handling script that:
+EnvGene runs a certificate handling script. For each file the script:
 
-1. Detects the operating system of the runner
-2. Validates certificate content from each non-empty source as described in [Certificate
-   validation](#certificate-validation)
-3. Copies each valid certificate to the OS trust directory under a normalised `<basename>.crt` filename:
-   - Debian/Ubuntu: `/usr/local/share/ca-certificates/`
-   - CentOS/Red Hat: `/etc/pki/ca-trust/source/anchors/`
-   - Alpine: `/usr/local/share/ca-certificates/`
-4. Updates the CA trust store once per job using the appropriate command for the OS:
-   - Debian/Ubuntu: `update-ca-certificates --fresh`
-   - CentOS/Red Hat: `update-ca-trust`
-   - Alpine: `update-ca-certificates`
-
-## Related documentation
-
-- [Configure system certificates](/docs/how-to/configure-system-certificates.md) - step-by-step setup for each
-  certificate source
-- [System certificate use cases](/docs/use-cases/system-certificate.md) - behaviour and test scenarios
+1. Copies the whole file to `/usr/local/share/ca-certificates/` as `<name>.crt`, where `<name>` is the
+   file name without its extension. PEM blocks in that file stay together. A different name does not
+   overwrite an existing file. The same name replaces the file installed by an earlier source.
+2. Rebuilds the trust store with `update-ca-certificates`.

@@ -21,11 +21,7 @@
 This document covers use cases for [system certificate configuration](/docs/features/system-certificate.md).
 For merge rules, validation, and default-certificate behaviour, see the feature specification.
 
-The use cases below use a certificate-loading job as the trigger unless noted otherwise. One of the following instance
-pipeline jobs runs:
-
-1. `env-prepare`
-2. `cmdb_import`
+The use cases below run in the `env-prepare` job unless a use case states another trigger.
 
 ## Certificate source resolution
 
@@ -52,9 +48,8 @@ A certificate-loading job runs. See [Overview](#overview).
 
 1. A certificate-loading job runs.
 2. EnvGene loads valid certificates from every non-empty configured source as described in
-   [Certificate validation](/docs/features/system-certificate.md#certificate-validation).
-3. All loaded certificates are added to the system trusted root certificate store after one trust-store update.
-4. `REQUESTS_CA_BUNDLE` is set.
+   [Certificate management process](/docs/features/system-certificate.md#certificate-management-process).
+3. CA certificates from every non-empty configured source are added to the runner trust store.
 
 **Results:**
 
@@ -66,7 +61,8 @@ A certificate-loading job runs. See [Overview](#overview).
 
 **Pre-requisites:**
 
-1. `SSL_CERTIFICATES_BUNDLE`, `/ca_bundle`, and `/configuration/certs` are all unset, absent, or empty.
+1. `SSL_CERTIFICATES_BUNDLE`, `/ca_bundle`, and `/configuration/certs` are all unset, absent, or empty. An empty
+   `/ca_bundle` or `/configuration/certs` directory counts as empty. A directory that contains a subdirectory does not.
 2. The runner image ships `/default_cert.pem`. Images without the file skip this step and install no certificate.
 
 **Trigger:**
@@ -110,15 +106,13 @@ A certificate-loading job runs. See [Overview](#overview).
 **Steps:**
 
 1. A certificate-loading job runs.
-2. EnvGene validates every non-empty configured source.
-3. PEM validation fails in one source.
-4. After all sources are checked, the job fails with a certificate loading error.
+2. PEM validation fails in one source.
+3. The job fails with a certificate loading error.
 
 **Results:**
 
 1. The job fails with a non-zero exit status.
 2. Pipeline log contains an explicit certificate loading error that identifies the invalid source.
-3. No certificate is installed.
 
 ### UC-SC-MRG-2: Duplicate certificates from different sources
 
@@ -137,8 +131,9 @@ A certificate-loading job runs. See [Overview](#overview).
 
 **Results:**
 
-1. The duplicate certificate is applied from both sources without errors.
-2. The job completes successfully.
+1. The job completes successfully.
+2. When the file names without an extension differ, both certificates are in the runner trust store.
+3. When the file names without an extension match, the trust store keeps the certificate from the later source.
 
 ## Validation failures
 
@@ -152,6 +147,7 @@ A certificate-loading job runs. See [Overview](#overview).
 1. `SSL_CERTIFICATES_BUNDLE` is set to a non-empty value that is not valid base64.
 2. `SSL_CERTIFICATES_BUNDLE` decodes successfully but does not contain a `-----BEGIN CERTIFICATE-----` block.
 3. `SSL_CERTIFICATES_BUNDLE` decodes to a PEM block that fails PEM validation.
+4. `SSL_CERTIFICATES_BUNDLE` decodes to a PEM block that is expired at the time of the run.
 
 **Trigger:**
 
@@ -161,15 +157,13 @@ A certificate-loading job runs. See [Overview](#overview).
 
 1. A certificate-loading job runs.
 2. EnvGene loads `SSL_CERTIFICATES_BUNDLE`.
-3. base64 decoding, PEM block detection, or PEM validation fails.
-4. After all sources are checked, the job fails with a certificate loading error.
+3. base64 decoding, PEM block detection, PEM validation, or the expiry check fails.
+4. The job fails with a certificate loading error.
 
 **Results:**
 
 1. The job fails with a non-zero exit status.
-2. Pipeline log contains one error message that names `SSL_CERTIFICATES_BUNDLE` and lists every other validation
-   problem found across the sources.
-3. No certificate is installed.
+2. The pipeline log names `SSL_CERTIFICATES_BUNDLE`.
 
 ### UC-SC-VAL-2: Unreadable certificate file in folder fails pipeline
 
@@ -187,7 +181,7 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene loads certificate files from the folder source.
 3. Reading a file fails.
-4. After all sources are checked, the job fails with a certificate loading error.
+4. The job fails with a certificate loading error.
 
 **Results:**
 
@@ -198,8 +192,9 @@ A certificate-loading job runs. See [Overview](#overview).
 
 **Pre-requisites:**
 
-1. A folder source (`/ca_bundle` or `/configuration/certs`) contains at least one file with a `-----BEGIN CERTIFICATE-----`
-   block that fails PEM validation.
+1. A folder source (`/ca_bundle` or `/configuration/certs`) contains at least one file that fails validation. The file
+   has no `-----BEGIN CERTIFICATE-----` block, a PEM block that fails PEM validation, or a PEM block that is expired
+   at the time of the run.
 
 **Trigger:**
 
@@ -209,14 +204,13 @@ A certificate-loading job runs. See [Overview](#overview).
 
 1. A certificate-loading job runs.
 2. EnvGene validates certificate files in the folder source.
-3. One or more files fail PEM validation.
-4. After all sources are checked, the job fails with a single certificate loading error that lists every invalid
-   file path.
+3. A file fails validation.
+4. The job fails with a certificate loading error.
 
 **Results:**
 
 1. The job fails with a non-zero exit status.
-2. Pipeline log lists every invalid file path in one error message.
+2. The pipeline log names the file that failed.
 
 ### UC-SC-VAL-4: File with valid and invalid PEM blocks
 
@@ -234,7 +228,7 @@ A certificate-loading job runs. See [Overview](#overview).
 1. A certificate-loading job runs.
 2. EnvGene validates the file in the folder source.
 3. PEM validation fails.
-4. After all sources are checked, the job fails with a certificate loading error.
+4. The job fails with a certificate loading error.
 
 **Results:**
 
