@@ -8,13 +8,14 @@ from pathlib import Path
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ES_DIR_NAME, ES_MAPPING_FILE, ESGenerationContext, GenerationMode, \
-    PartialMergeMode
+    PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
 from envgenehelper.file_helper import delete_dir, delete_dir_if_exists, deleteFileIfExists
-from envgenehelper.logger import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
-from envgenehelper.yaml_helper import writeYamlToFile, openYaml
+from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
 
 from effective_set.handle_effective_set_config import handle_effective_set_config
+from envgenehelper.models import ExternalCredentialProvisioning
 
 
 def run_gitlab_deploy_effective_set(ctx):
@@ -29,6 +30,8 @@ def run_gitlab_deploy_effective_set(ctx):
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
 
+    _run_external_credential_provision_cli(effective_set_dir)
+
 
 def run_legacy_sd_effective_set(ctx):
     full_env_name = getenv("FULL_ENV_NAME")
@@ -42,6 +45,8 @@ def run_legacy_sd_effective_set(ctx):
         _run_reverse_merge(effective_set_dir, ctx.deploy_plan, ctx.deploy_plan_delta)
 
     deleteFileIfExists(get_sd_dir().joinpath(DELTA_SD_FILE_NAME))
+
+    _run_external_credential_provision_cli(effective_set_dir)
 
 
 def _run_deploy_plan_full(effective_set_dir, full_env_name, deploy_plan: EnvgeneDeployPlan):
@@ -204,3 +209,26 @@ def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):
     if custom_params:
         cmd.append(f"--custom-params={shlex.quote(custom_params)}")
     return " ".join(cmd)
+
+def _run_external_credential_provision_cli(effective_set_dir) -> None:
+    context_file = effective_set_dir / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+    ext_cred_provisioning_gate = ExternalCredentialProvisioning(getenv("EXTERNAL_CREDENTIAL_PROVISIONING", "apply"))
+    if (ext_cred_provisioning_gate is ExternalCredentialProvisioning.SKIP or not context_file.is_file()):
+        logger.info("Skipping credential creation in external store: "
+                "either EXTERNAL_CREDENTIAL_PROVISIONING is set to skip or context file is missing.")
+        return
+
+    log_level = getenv("ENVGENE_LOG_LEVEL", "INFO").upper()
+
+    logger.info(f"External credential context file found: {context_file}. Invoking external-cred-provision CLI")
+    cmd = [
+        "external-cred-provision",
+        "--log-level",
+        log_level,
+        str(context_file),
+    ]
+
+    try:
+        subprocess.run(cmd, check=True, timeout=300)
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError("External credential provisioning timed out after 5 minutes.") from e

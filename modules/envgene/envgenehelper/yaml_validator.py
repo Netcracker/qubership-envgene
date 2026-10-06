@@ -1,4 +1,4 @@
-from .logger import logger
+from envgene_shared.utils.logger import logger
 from .collections_helper import dump_as_yaml_format
 import re
 import copy

@@ -1,6 +1,12 @@
 import envgenehelper as helper
-import envgenehelper.logger as logger
-from envgenehelper import *
+from envgene_shared.utils.logger import logger
+from enum import Enum
+from pathlib import Path
+import json
+import jsonschema
+
+from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgene_shared import encrypt_file
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
@@ -87,20 +93,23 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
     creds = params.get("credentials")
     tenantName = params.get("tenantName")
     deployer = params.get("deployer")
+    cloudName = params.get("cloudName")
     logger.info(f"ENV_SPECIFIC_PARAMS TenantName is {tenantName}")
     logger.info(f"ENV_SPECIFIC_PARAMS deployer is {deployer}")
+    logger.info(f"ENV_SPECIFIC_PARAMS cloudname is {cloudName}")
 
     handle_cluster_params(env, clusterParams)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.cloudName', cloudName)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     logger.info("ENV_SPECIFIC_PARAMS env details ", vars(env))
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets, schemas_dir)
 
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
+    
+   
 
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 

@@ -1,5 +1,4 @@
-import yaml
-from envgenehelper import *
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, beautifyYaml, check_dir_exist_and_create, check_dir_exists, copy, copy_path, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinition, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_namespaces, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, re, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, writeYamlToFile, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -58,13 +57,15 @@ def create_paramset_map(dir: str, role: NamespaceRole,
     return result
 
 
-def collect_paramset_sources(env_dir: str, templates_dirs: dict, render_parameters_dir: str) -> None:
+def copy_template_paramsets(templates_dirs: dict, render_parameters_dir: str) -> None:
     for template_type, template_path in templates_dirs.items():
         if not (template_path and check_dir_exists(f'{template_path}/parameters')):
             continue
         param_dir_name = 'from_template' if template_type == NamespaceRole.COMMON else f'from_{template_type}_template'
         copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
 
+
+def copy_instance_paramsets(env_dir: str, render_parameters_dir: str) -> None:
     cluster_path = getDirName(str(env_dir))
     instances_dir = getDirName(cluster_path)
     check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')

@@ -14,7 +14,7 @@ import aiohttp
 import requests
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
 from artifact_searcher.utils.models import RegistryV2, Application, FileExtension, Credentials, ArtifactSource, ArtifactDownload, Repo, RepoType, Provider, MavenConfig
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 
 TIMESTAMPED_VERSION_PATTERN = re.compile(r"-\d{8}\.\d{6}-\d+$")
 
@@ -305,6 +305,7 @@ def get_repos(registry) -> list[Repo]:
         Repo(value=maven.target_staging, type=RepoType.TARGET_STAGING),
         Repo(value=maven.target_release, type=RepoType.TARGET_RELEASE),
         Repo(value=maven.snapshot_group, type=RepoType.SNAPSHOT_GROUP),
+        Repo(value=maven.release_group, type=RepoType.RELEASE_GROUP),
     ]
     if _is_cloud_provider(registry):
         return [repo for repo in repos if repo.value] or [Repo(value="", type=RepoType.REPOSITORY_NAME)]
