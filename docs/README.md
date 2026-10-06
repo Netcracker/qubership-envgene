@@ -84,6 +84,7 @@
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
+- [**SBOM Generation**](/docs/features/sbom-generation.md) - How Application and Environment Template SBOMs are generated from the Solution and Deployment Descriptors
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 - [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
 - [**Metrics Collector events**](/docs/features/metrics-collector-events.md) - Instance pipeline activity
