@@ -40,6 +40,10 @@
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`SAVE_ARTIFACTS_STRATEGY`](#save_artifacts_strategy)
+    - [`METRICS_COLLECTOR_URL`](#metrics_collector_url)
+    - [`METRICS_COLLECTOR_SSL_VERIFY`](#metrics_collector_ssl_verify)
+    - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
+    - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -1007,6 +1011,58 @@ See details in [Troubleshooting artifacts](/docs/features/troubleshooting-artifa
 **Mandatory**: No
 
 **Example**: `ALWAYS`
+
+### `METRICS_COLLECTOR_URL`
+
+**Description**: Base URL of Metrics Collector Service. When this variable is set, the Instance pipeline
+sends CloudEvents activity to `{METRICS_COLLECTOR_URL}/api/v1/activity`. When it is empty or absent,
+EnvGene skips those requests and the pipeline run continues. See
+[Metrics Collector activity](/docs/technical-design/metrics-collector-activity.md).
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `https://metrics-collector.example.com`
+
+### `METRICS_COLLECTOR_SSL_VERIFY`
+
+**Description**: Controls TLS certificate verification for Metrics Collector requests. Set the value to
+`false` to skip verification. Any other value, including an empty value, keeps verification on.
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: `true`
+
+**Mandatory**: No
+
+**Example**: `false`
+
+### `METRICS_COLLECTOR_TRACE_ID`
+
+**Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
+pass this value so EnvGene events join the parent deployment session. When it is empty and
+`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
+in that run share it.
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+### `METRICS_COLLECTOR_PARENT_ID`
+
+**Description**: Parent activity event ID (`parentid`). A parent pipeline passes the `id` of its own
+activity event. When the variable is empty, EnvGene sends an empty string.
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: None
+
+**Mandatory**: No
 
 ## Deprecated Parameters
 

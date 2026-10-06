@@ -23,6 +23,10 @@
     - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
     - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
     - [`SSL_CERTIFICATES_BUNDLE`](#ssl_certificates_bundle)
+    - [`METRICS_COLLECTOR_URL`](#metrics_collector_url)
+    - [`METRICS_COLLECTOR_SSL_VERIFY`](#metrics_collector_ssl_verify)
+    - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
+    - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
     - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
@@ -302,6 +306,50 @@ identifier is not `default_store`, set the prefixed variant `<id>_AWS_SECRET_ACC
 the Instance EnvGene pipeline, so later steps trust internal services and artifact repositories that use private or
 self-signed certificate authorities. See
 [System certificate configuration](/docs/features/system-certificate.md).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+### `METRICS_COLLECTOR_URL`
+
+**Description**: Base URL of Metrics Collector Service. When this variable is set, the Instance pipeline
+sends CloudEvents activity to `{METRICS_COLLECTOR_URL}/api/v1/activity`. When it is empty or absent,
+EnvGene skips those requests and the pipeline run continues. See
+[Metrics Collector activity](/docs/technical-design/metrics-collector-activity.md).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `https://metrics-collector.example.com`
+
+### `METRICS_COLLECTOR_SSL_VERIFY`
+
+**Description**: Controls TLS certificate verification for Metrics Collector requests. Set the value to
+`false` to skip verification. Any other value, including an empty value, keeps verification on.
+
+**Default Value**: `true`
+
+**Mandatory**: No
+
+**Example**: `false`
+
+### `METRICS_COLLECTOR_TRACE_ID`
+
+**Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
+pass this value so EnvGene events join the parent deployment session. When it is empty and
+`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
+in that run share it.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+### `METRICS_COLLECTOR_PARENT_ID`
+
+**Description**: Parent activity event ID (`parentid`). A parent pipeline passes the `id` of its own
+activity event. When the variable is empty, EnvGene sends an empty string.
 
 **Default Value**: None
 
