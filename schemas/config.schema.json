@@ -58,28 +58,6 @@
         "local"
       ]
     },
-    "save_artifacts": {
-      "type": "object",
-      "title": "Save Artifacts Configuration",
-      "description": "Configures whether and how the pipeline run's work directory is saved and published as a troubleshooting job artifact",
-      "additionalProperties": false,
-      "properties": {
-        "strategy": {
-          "title": "Save Artifacts Strategy",
-          "enum": ["ALWAYS", "NEVER"],
-          "default": "ALWAYS",
-          "examples": ["ALWAYS", "NEVER"]
-        },
-        "size_limit_mb": {
-          "type": "integer",
-          "title": "Artifact Size Limit (MB)",
-          "description": "Compressed size limit (MB) for the troubleshooting job artifact archive",
-          "minimum": 1,
-          "default": 100,
-          "examples": [100, 200]
-        }
-      }
-    },
     "use_committed_sd": {
       "type": "boolean",
       "title": "Use Committed Full SD",
@@ -93,7 +71,7 @@
     "sbom_retention": {
       "type": "object",
       "title": "SBOM Retention Configuration",
-      "description": "Configuration for automatic SBOM file cleanup. When enabled, per-application SBOM retention is applied to subdirectories of /sboms/ if keep_versions_per_app is set. A total size limit step then keeps only the most recently modified file in each per-application subdirectory if the total size of /sboms/ still exceeds size_limit_mb.",
+      "description": "Configuration for automatic SBOM file cleanup. When enabled, per-application SBOM retention is applied to subdirectories of /sboms/ if keep_versions_per_app is set. A total size limit step then keeps only the most recently modified file in each per-application subdirectory if the total size of /sboms/ still exceeds 50 MB.",
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -116,14 +94,37 @@
             10,
             15
           ]
+        }
+      }
+    },
+    "save_artifacts": {
+      "type": "object",
+      "title": "Troubleshooting Artifact Configuration",
+      "description": "Controls saving of the troubleshooting job artifact. Per-environment logs are always saved. strategy and size_limit_mb decide only whether the run work directory is saved with them.",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "title": "Save Strategy",
+          "description": "Whether the work directory is saved. ALWAYS saves it on every run, NEVER saves only the logs. Overridable per run by the SAVE_ARTIFACTS_STRATEGY CI/CD variable.",
+          "enum": [
+            "ALWAYS",
+            "NEVER"
+          ],
+          "default": "ALWAYS",
+          "examples": [
+            "ALWAYS",
+            "NEVER"
+          ]
         },
         "size_limit_mb": {
           "type": "integer",
-          "title": "SBOM Directory Size Limit (MB)",
-          "description": "Uncompressed size limit (MB) for /sboms/ - a separate, smaller budget from save_artifacts.size_limit_mb, since this checks raw on-disk bytes, not the compressed artifact",
+          "title": "Work Directory Size Limit (MB)",
+          "description": "Maximum uncompressed size, in MB, of the work directory. Above it the work directory is dropped and only the per-environment logs are kept.",
           "minimum": 1,
-          "default": 200,
-          "examples": [200, 600]
+          "default": 800,
+          "examples": [
+            800
+          ]
         }
       }
     }

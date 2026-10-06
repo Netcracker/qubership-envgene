@@ -13,9 +13,11 @@ from ruyaml.scalarstring import DoubleQuotedScalarString
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .logger import logger
+from envgene_shared.utils.logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
     validate_yaml_by_scheme_or_fail, find_yaml_file
+
+from envgene_shared.utils.business_utils import getenv_with_error, get_schema_dir
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -27,6 +29,7 @@ CMDB_IMPORT_TAG = "CMDB_IMPORT"
 DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
 INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
+PUBREG_PARAMS_FILENAME = "pubreg_params.yaml"
 
 TEMPLATE_DIR_PATTERN = re.compile(r'/from_(\w+_)?template/')
 
@@ -62,15 +65,6 @@ def getenv_and_log(name, *args, **kwargs):
     return var
 
 
-def getenv_with_error(var_name, *, no_log=False):
-    var = getenv(var_name)
-    if not var:
-        raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
-    if not no_log:
-        logger.debug(f"{var_name}: {var}")
-    return var
-
-
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
     return f"{instances_dir}/{cluster_name}/{environment_name}"
 
@@ -95,7 +89,7 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
     env_definition_path = f"{env_dir}/Inventory/env_definition.yml"
     if skip_env_definition_check:
         logger.info("Validation of env_definition is skipped")
-        logger.info(f"Environment {cluster_name}/{environment_name} validation is succesful")
+        logger.info(f"Environment {cluster_name}/{environment_name} validation is successful")
         return
     if not check_file_exists(env_definition_path):
         logger.error(
@@ -103,7 +97,7 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
         raise ReferenceError(f"Validation of environment folder '{env_dir}' failed. See logs above.")
     if validate_env_definition_by_schema:
         check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir)
-    logger.info(f"Environment {cluster_name}/{environment_name} validation is succesful")
+    logger.info(f"Environment {cluster_name}/{environment_name} validation is successful")
 
 
 def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
@@ -130,7 +124,12 @@ def getEnvDefinition(env_dir=None):
     env_definition_path = getEnvDefinitionPath(env_dir)
     if not check_file_exists(env_definition_path):
         raise ReferenceError(f"Environment definition for env {env_dir} is not found in {env_definition_path}")
-    return openYaml(env_definition_path)
+    env_definition_yaml = openYaml(env_definition_path)
+    if 'inventory' not in env_definition_yaml:
+        logger.warning(f"'inventory' section is not found in env_definition.yml for env {env_dir}. Adding empty 'inventory' section to avoid errors in plugins.")
+        env_definition_yaml['inventory'] = {}
+    return env_definition_yaml
+
 
 
 def getEnvDefinitionPath(env_dir) -> str:
@@ -437,6 +436,14 @@ def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
 
 
+def pubreg_transient_dir(work_dir) -> Path:
+    return Path(work_dir) / "tmp" / "envgene-regdefv2-adapter"
+
+
+def render_workspace_dir(work_dir) -> Path:
+    return Path(work_dir) / "tmp" / "render-workspace"
+
+
 def get_app_artifacts_dir() -> Path:
     project_dir = getenv_with_error('CI_PROJECT_DIR')
     return Path(project_dir) / "tmp" / "app-artifacts"
@@ -446,10 +453,6 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
     instances_dir = getenv_with_error('CI_PROJECT_DIR')
     env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")
     return env_dir_path
-
-
-def get_schema_dir() -> Path:
-    return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
 
 
 def is_inventory_generation_needed(inventory_params):

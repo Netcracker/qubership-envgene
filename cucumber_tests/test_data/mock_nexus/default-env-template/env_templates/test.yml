@@ -3,5 +3,9 @@ cloud: '{{ templates_dirs.common }}/env_templates/test/Cloud.yml.j2'
 namespaces:
   - template_path: '{{ templates_dirs.common }}/env_templates/test/Namespace.yml.j2'
     deploy_postfix: core
+    template_override:
+      name: "{{current_env.environmentName}}-core"
   - template_path: '{{ templates_dirs.common }}/env_templates/test/Namespace.yml.j2'
     deploy_postfix: bss
+    template_override:
+      name: "{{current_env.environmentName}}-bss"

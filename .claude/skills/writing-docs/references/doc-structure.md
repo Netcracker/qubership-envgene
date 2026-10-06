@@ -7,6 +7,7 @@ structure rules that keep each section carrying only what it uniquely contribute
   - [Documentation structure (Diataxis framework)](#documentation-structure-diataxis-framework)
     - [Documentation types](#documentation-types)
     - [When creating documentation](#when-creating-documentation)
+    - [Multi-approach how-to guides](#multi-approach-how-to-guides)
   - [Section voice and structure](#section-voice-and-structure)
     - [Section adds only what it uniquely contributes](#section-adds-only-what-it-uniquely-contributes)
     - [Section value audit](#section-value-audit)
@@ -30,6 +31,8 @@ This repository follows the [Diataxis documentation framework](https://github.co
    - Goal-oriented, practical steps
    - Solve specific problems
    - Minimal theory, maximum action
+   - Terse recipes for a reader who knows the domain; omit filler steps such as "open the file"
+   - If a tutorial covers the topic, do not re-teach it end to end
    - Target: ~200-400 lines
 
 2. **Explanation** (`/docs/features/`)
@@ -65,6 +68,45 @@ This repository follows the [Diataxis documentation framework](https://github.co
 - Create long (>500 lines) how-to guides
 - Include detailed theory in practical guides
 - Use fantasy/made-up examples
+
+### Multi-approach how-to guides
+
+A how-to that presents several valid approaches to the same task must help the reader choose, not just list
+recipes. Apply this pattern only when a how-to genuinely covers multiple approaches; it is not a universal
+requirement for every how-to.
+
+When a how-to covers more than one approach:
+
+1. Name each approach by the reader's goal so the table of contents itself becomes the decision index.
+   Well-named approaches plus the one-line "When to use" below usually let a reader jump straight to the
+   right one. Add a separate decision table only when the names alone cannot disambiguate the approaches.
+2. Give each approach a one-line "When to use" that states the condition under which it is the right
+   choice, not an explanation of how it works.
+3. Mark the recommended approach and add a short NOTE flagging the common wrong path (the anti-pattern)
+   so readers do not take it by default.
+4. Keep deep rationale and trade-offs out of the how-to. Put the "why" in the feature (explanation) doc
+   and cross-link it. The how-to stays action-oriented.
+5. Put full, copyable example files under `docs/samples/` and reference them rather than inlining every
+   approach's complete files, so the how-to stays within the target length.
+
+❌ **INCORRECT:**
+
+- A how-to that lists several approaches with steps but provides no guidance on which to pick.
+- A how-to that embeds paragraphs of trade-off rationale inline next to each approach.
+
+✅ **CORRECT:**
+
+- Approaches named by goal so the table of contents is the decision index, with a separate table added
+  only when names cannot disambiguate.
+- Each approach has a one-line "When to use" and a marked recommended path.
+- Rationale and trade-offs are cross-linked to the feature (explanation) doc, not inlined.
+
+**Scope:** Applies to new and modified content only.
+
+**Why:** When a task has several valid approaches, the reader's hardest step is choosing. A bare list of
+recipes without guidance on which to pick fails them at that step. Keeping the trigger to one line and
+moving rationale to the feature doc preserves the Diataxis separation of how-to from explanation and
+keeps the guide within its target length.
 
 ---
 

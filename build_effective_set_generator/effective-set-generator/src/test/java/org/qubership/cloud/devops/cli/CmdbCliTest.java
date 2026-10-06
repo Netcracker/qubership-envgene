@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -196,6 +197,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-02/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        Path consumerSchemaPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/consumer/consumer-v1.0.schema.json");
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -210,7 +213,8 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
-                "--app_chart_validation", "false"
+                "--app_chart_validation", "false",
+                "--pipeline-consumer-specific-schema-path", consumerSchemaPath.toString()
         );
 
         assertEquals(0, exitCode);
@@ -248,6 +252,39 @@ public class CmdbCliTest {
             assertTrue(FileUtils.listFiles(postgresAppDir.toFile(), null, true).isEmpty(),
                     "Cleaned namespace must not emit deployment files for postgres");
         }
+    }
+
+    @Test
+    void testGenerateCleanupContextForEveryNamespaceIncludingNamespaceWithoutApplication(@TempDir Path tempDir)
+            throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        Path emptyNamespace = envsPath.resolve("cluster-01/pl-01/Namespaces/empty/namespace.yml");
+        Files.createDirectories(emptyNamespace.getParent());
+        Files.writeString(emptyNamespace, Files.readString(
+                envsPath.resolve("cluster-01/pl-01/Namespaces/pg/namespace.yml"))
+                .replace("pl-01-pg", "pl-01-empty"));
+
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", envsPath.resolve("cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--generate-cleanup-context",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false");
+
+        assertEquals(0, exitCode);
+        assertTrue(Files.exists(outputPath.resolve("cleanup/pg/parameters.yaml")));
+        assertTrue(Files.exists(outputPath.resolve("cleanup/monitoring-origin/parameters.yaml")));
+        assertTrue(Files.exists(outputPath.resolve("cleanup/empty/parameters.yaml")));
+        assertTrue(Files.readString(outputPath.resolve("cleanup/mapping.yaml")).contains("pl-01-empty"));
+        assertFalse(Files.exists(outputPath.resolve("deployment/empty/.cleaned")));
+        assertFalse(Files.exists(outputPath.resolve("runtime/empty/.cleaned")));
     }
 
     @Test
@@ -358,6 +395,7 @@ public class CmdbCliTest {
             sharedData.setNamespaceCustomRuntimeParamMap(Collections.emptyMap());
             sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
             sharedData.setDeployPlanPath(Optional.empty());
+            sharedData.setGenerateCleanupContext(false);
         }
     }
 }
