@@ -407,7 +407,7 @@ Functions:
       - app defs
       - `namespace-map.yml`
       - `BG_NS_TARGET`
-      - (`pubreg_params.yaml`
+      - `pubreg_params.yaml`
       - filters:
         - `DEPLOY_POSTFIXES_FILTER`
         - `NAMESPACE_NAMES_FILTER`
