@@ -1,6 +1,6 @@
 # EnvGene
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/Apache-2.0)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/Netcracker/qubership-envgene/actions)
 
 ![Environment generator logo](/docs/images/envgene-logo.png "Environment generator")
@@ -183,6 +183,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
+- [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
 
 ### Examples & Samples
 

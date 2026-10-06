@@ -15,6 +15,7 @@
     - [PLACE-8 - One concern per entity (SHOULD)](#place-8---one-concern-per-entity-should)
     - [PLACE-9 - One Cloud Passport per cluster (SHOULD)](#place-9---one-cloud-passport-per-cluster-should)
     - [PLACE-10 - Each entity in its type's directory (MUST)](#place-10---each-entity-in-its-types-directory-must)
+    - [PLACE-11 - Set a resource profile on the namespace (SHOULD)](#place-11---set-a-resource-profile-on-the-namespace-should)
   - [Secrets](#secrets)
     - [SEC-1 - No plaintext secrets (MUST)](#sec-1---no-plaintext-secrets-must)
     - [SEC-2 - No mixed plaintext and encrypted secrets (MUST)](#sec-2---no-mixed-plaintext-and-encrypted-secrets-must)
@@ -32,7 +33,6 @@
     - [NAME-2 - Filename equals `name` (MUST)](#name-2---filename-equals-name-must)
     - [NAME-3 - Kebab-case files, directories, and namespaces (SHOULD)](#name-3---kebab-case-files-directories-and-namespaces-should)
     - [NAME-4 - Name a ParameterSet by subject and category (SHOULD)](#name-4---name-a-parameterset-by-subject-and-category-should)
-    - [NAME-5 - Name a Resource Profile Override by baseline and subsystem (SHOULD)](#name-5---name-a-resource-profile-override-by-baseline-and-subsystem-should)
     - [NAME-6 - Name a credential ID by purpose (SHOULD)](#name-6---name-a-credential-id-by-purpose-should)
     - [NAME-7 - Name a Shared Template Variable by purpose (SHOULD)](#name-7---name-a-shared-template-variable-by-purpose-should)
     - [NAME-8 - Name the Cloud Passport `passport` (SHOULD)](#name-8---name-the-cloud-passport-passport-should)
@@ -43,6 +43,10 @@
     - [VAL-3 - URLs have no trailing slash (SHOULD)](#val-3---urls-have-no-trailing-slash-should)
     - [VAL-4 - Complex values are native YAML (SHOULD)](#val-4---complex-values-are-native-yaml-should)
     - [VAL-5 - Resource quantities use unit form (SHOULD)](#val-5---resource-quantities-use-unit-form-should)
+    - [VAL-6 - No empty string for a Resource Profile field (SHOULD)](#val-6---no-empty-string-for-a-resource-profile-field-should)
+    - [VAL-7 - A Resource Profile Override with custom values declares a baseline (SHOULD)](#val-7---a-resource-profile-override-with-custom-values-declares-a-baseline-should)
+    - [VAL-8 - Change a baseline with replace mode (SHOULD)](#val-8---change-a-baseline-with-replace-mode-should)
+    - [VAL-9 - One Resource Profile Override per key, as a string (SHOULD)](#val-9---one-resource-profile-override-per-key-as-a-string-should)
   - [Templating](#templating)
     - [TPL-1 - Jinja lives only in `.j2` templates (MUST)](#tpl-1---jinja-lives-only-in-j2-templates-must)
     - [TPL-2 - Override at a layer, not through Jinja plumbing (MUST)](#tpl-2---override-at-a-layer-not-through-jinja-plumbing-must)
@@ -324,6 +328,26 @@ not authored, see TPL-16.
 # environments/cluster-01/env-1/Inventory/env-1-bss.yml
 ```
 
+### PLACE-11 - Set a resource profile on the namespace (SHOULD)
+
+Set a resource profile, a baseline or an override, on the namespace rather than on the cloud. EnvGene
+selects the namespace side whenever the namespace carries any profile signal, meaning its object baseline
+is set or an override is present for it, and falls back to the cloud side only when the namespace carries
+neither. A cloud profile is therefore a rarely-needed fallback for the case where no namespace is
+appropriate.
+
+```yaml
+# OK - profile on the namespace
+# templates/env_templates/<template>/<namespace>.yml.j2
+profile:
+  baseline: prod
+
+# Not OK - profile on the cloud while a namespace is available, used only if the namespace has no signal
+# templates/env_templates/<template>/cloud.yml.j2
+profile:
+  baseline: prod
+```
+
 ## Secrets
 
 How secrets are handled so none reaches plaintext, Git, or a context that would expose it. Add a rule
@@ -578,17 +602,19 @@ project-51477                  # ticket id, opaque
 bss                          # category missing
 ```
 
+<!-- NAME-5 retired as a bad rule. Kept in source, hidden from rendered output.
+
 ### NAME-5 - Name a Resource Profile Override by baseline and subsystem (SHOULD)
 
 Name a Resource Profile Override `<baseline>-<subsystem>-override`, with an optional `-<flavor>` suffix,
 matching the `name:` field.
 
-| Part        | Required | Values                                                                               | Rule                                                                                                   |
-| ----------- | -------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `baseline`  | yes      | `dev`, `prod`, `prod-nonha`, `dev-ha`                                                | the base profile being overridden, and it must equal the `baseline:` field value                       |
-| `subsystem` | yes      | the domain whose applications the file carries: `bss`, `core`, `oss`, `dm`, `portal` | one subsystem per file                                                                                 |
-| `override`  | yes      | the literal `override`                                                               | entity-type marker, singular for a new name (an existing `overrides` is not renamed)                   |
-| `flavor`    | no       | a workload variant: `hawk`, `single`, `new-perf`                                     | an alternate profile for the same baseline and subsystem, not a second baseline and not an environment |
+| Part        | Required | Values                                                                               | Rule                                                                                                                    |
+| ----------- | -------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `baseline`  | yes      | a baseline name defined in the application, for example `dev`, `prod`, `prod-nonha`  | free-form string. Use the same value as the `baseline:` field in the file. EnvGene does not restrict the allowed values |
+| `subsystem` | yes      | the domain whose applications the file carries: `bss`, `core`, `oss`, `dm`, `portal` | one subsystem per file                                                                                                  |
+| `override`  | yes      | the literal `override`                                                               | entity-type marker, singular for a new name (an existing `overrides` is not renamed)                                    |
+| `flavor`    | no       | a workload variant: `hawk`, `single`, `new-perf`                                     | an alternate profile for the same baseline and subsystem, not a second baseline and not an environment                  |
 
 The `baseline:` field holds a base-profile name, never an environment name. Generation adds the
 environment prefix through `updateRPOverrideNameWithEnvName`, so do not bake it into the name. Scope comes
@@ -603,6 +629,8 @@ dev-core-override-hawk
 sit-dm-override                # baseline is dev, so the leading token contradicts the field
 project-dv2-multi-sql-override   # environment name baked in
 ```
+
+-->
 
 ### NAME-6 - Name a credential ID by purpose (SHOULD)
 
@@ -771,6 +799,91 @@ GATEWAY_CPU_REQUEST: 500m
 GATEWAY_MEMORY_LIMIT: 536870912
 ```
 
+### VAL-6 - No empty string for a Resource Profile field (SHOULD)
+
+Do not set `baseline` or `name` in a Resource Profile Override or a namespace/cloud profile to an empty
+string. EnvGene treats an empty string as absent, so the field is silently ignored and the intended
+profile is not applied. Omit the field entirely if no value is intended. An empty `profile` block is often
+left behind by generated `cloud.yml` scaffolding. Remove it or set `profile: null` rather than leaving empty
+strings. The schema allows a null profile.
+
+```yaml
+# Not OK - empty string is treated as absent, the profile is silently skipped
+profile:
+  name: ""
+  baseline: ""
+
+# OK - omit the field when no value is intended
+profile:
+  name: dev-core-override
+```
+
+### VAL-7 - A Resource Profile Override with custom values declares a baseline (SHOULD)
+
+Custom values in a Resource Profile Override sit on top of a baseline. An override that sets custom values
+but declares no baseline applies those values with no baseline underneath them, and generation emits a
+warning. Set the `baseline` field whenever the override carries custom values.
+
+```yaml
+# OK - custom values on top of a declared baseline
+name: prod-core-override
+baseline: prod
+applications:
+  - name: Core
+    services:
+      - name: core-service
+        parameters:
+          - name: CPU_LIMIT
+            value: "2000m"
+
+# Not OK - custom values with no baseline, applied with no baseline underneath and generation warns
+name: prod-core-override
+applications:
+  - name: Core
+    services:
+      - name: core-service
+        parameters:
+          - name: CPU_LIMIT
+            value: "2000m"
+```
+
+### VAL-8 - Change a baseline with replace mode (SHOULD)
+
+Merge mode, the default, is for adding custom values on the same baseline. To change the baseline for an
+environment, set `mergeEnvSpecificResourceProfiles: false` so the environment-specific override replaces
+the template override in full. Merging when the template override carries custom values and its baseline
+differs from the environment-specific override's baseline is the warned wrong path.
+
+```yaml
+# OK - replace mode to switch one environment to a different baseline
+# environments/cluster-01/env-1/Inventory/env_definition.yml
+inventory:
+  config:
+    mergeEnvSpecificResourceProfiles: false
+
+# Not OK - merge mode with an override whose baseline differs from the template override's baseline
+inventory:
+  config:
+    mergeEnvSpecificResourceProfiles: true
+```
+
+### VAL-9 - One Resource Profile Override per key, as a string (SHOULD)
+
+Each `envSpecificResourceProfiles` entry maps a namespace key (or `cloud`) to the name of one Resource
+Profile Override, written as a string. The sibling fields `envSpecificParamsets`, `envSpecificE2EParamsets`,
+and `envSpecificTechnicalParamsets` take a list, but this field does not. EnvGene resolves the value as a
+single filename, so a list matches no file and generation fails, and the schema rejects a non-string value.
+
+```yaml
+# OK - one override name, as a string
+envSpecificResourceProfiles:
+  core: "core-prod-override"
+
+# Not OK - a list is not supported here, generation fails to resolve it
+envSpecificResourceProfiles:
+  core: ["core-prod-override"]
+```
+
 ## Templating
 
 How templates and macros derive values, and how to write Jinja that renders safely. Add a rule here
@@ -799,6 +912,10 @@ to push a value down. Interpolation composes a string, it does not pass a key th
 # parameters.yml.j2:  LOG_LEVEL: "{{ LOG_LEVEL }}"   with additionalTemplateVariables LOG_LEVEL: info
 # OK - set the value at the layer, no template logic
 # environments/<cluster>/<env>/parameters.yml:  LOG_LEVEL: info
+# Not OK - a resource profile baseline pushed down through a template variable
+# <namespace>.yml.j2:  profile.baseline: "{{ current_env.additionalTemplateVariables.profile_baseline | default('dev') }}"
+# OK - set the baseline on the profile, or vary it per environment with an override (see VAL-8)
+# <namespace>.yml.j2:  profile.baseline: dev
 ```
 
 ### TPL-3 - Default at a layer, not a Jinja default (MUST)

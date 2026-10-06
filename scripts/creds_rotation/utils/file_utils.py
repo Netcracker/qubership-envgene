@@ -6,7 +6,7 @@ import yaml, json
 from typing import Any, Dict, List, Tuple, Set
 from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.search_utils import trim_path_from_environments
-import envgenehelper.logger as logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.errors import  ValidationError
 try:
     logger.info("Loading CLoader")

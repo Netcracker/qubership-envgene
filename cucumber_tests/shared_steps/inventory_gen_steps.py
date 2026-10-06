@@ -177,7 +177,7 @@ def repo_state_identical(workspace):
     compare_directories(
         workspace.pre_run_snapshot_dir,
         workspace.base_dir,
-        ignore_patterns=["build.env", "envgene-vars.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*", "artifacts"],
+        ignore_patterns=["build.env", "envgene-vars.env", "configuration/config.yml", "*.bat", "sops", "run_effective_set_cli.*", "artifacts", "external-cred-provision"],
     )
 
 
@@ -271,7 +271,3 @@ def pipeline_logs_contain_text(workspace, text):
 @then(parsers.parse('the pipeline log does not contain "{text}"'))
 def pipeline_logs_not_contain_text(workspace, text):
     workspace.assert_logs_not_contain(text)
-
-
-
-

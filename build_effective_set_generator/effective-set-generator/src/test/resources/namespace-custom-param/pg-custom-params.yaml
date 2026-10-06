@@ -1,1 +1,12 @@
 customparam1: deployment-custom-value-1
+global: &id001
+  customparam1: deployment-custom-value-1
+patroni-core: *id001
+pg_patroni: *id001
+pg_upgrade: *id001
+pgbackrest_sidecar: *id001
+postgres_operator_init: *id001
+postgres_operator_tests: *id001
+vault_env: *id001
+
+

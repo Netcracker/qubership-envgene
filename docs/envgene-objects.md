@@ -140,6 +140,14 @@ bg_domain: <path-to-the-bg-domain-template-file>
 # Path to the external Credential Template file (Jinja, single file).
 external_credential_template: string
 # Optional
+# Map of labels of any type. Set by template preprocessing during Template Composition.
+# See details in /docs/features/template-composition.md
+labels:
+  # Set by template preprocessing.
+  # `self` for a descriptor created in the current template application.
+  # `parent` for a descriptor copied from a parent template.
+  origin: string
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
@@ -161,6 +169,13 @@ namespaces:
     # Parent template name
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     parent: string
+    # Optional
+    # Selects the parent namespace when the parent template has several namespaces
+    # with the same `name`, or when the resulting namespace needs a different name.
+    # Must exactly match one namespace `name` in the parent template. Resolved during
+    # preprocessing and not included in the generated Template Descriptor.
+    # See details in /docs/features/template-composition.md
+    parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md

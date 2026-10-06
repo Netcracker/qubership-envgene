@@ -1,7 +1,7 @@
 # The contents of this file is generated from template artifact: deployment-configuration-env-templates.
 # Contents will be overwritten by next generation.
 # Please modify this contents only for development purposes or as workaround.
-name: "cluster_01"
+name: "cluster_01_env_04"
 apiUrl: "api.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
 apiPort: "6443" # cloud passport: cluster-01 version: 1.5
 privateUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
