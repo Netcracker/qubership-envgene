@@ -36,12 +36,12 @@ the default certificate built into the EnvGene image. For the concept, see
 
 ## Processing flow
 
-1. **Check job environment**
+1. **Check job environment.**
 
    1. When the CI system does not provide the repository root directory, the logic fails. Otherwise the logic
       continues.
 
-2. **Trust the GitLab server in Git**
+2. **Trust the GitLab server in Git.**
 
    1. When `CI_SERVER_TLS_CA_FILE` is set, the logic configures Git in the job to trust the certificate it holds. The
       variable can hold a file path or, in GitLab versions earlier than 16.6, PEM text. Otherwise the logic skips this
@@ -82,7 +82,7 @@ the default certificate built into the EnvGene image. For the concept, see
       [Certificate validation and installation](#certificate-validation-and-installation). Subdirectories are not
       read.
 
-6. **Fall back to the default certificate**
+6. **Fall back to the default certificate.**
 
    1. When the **source found** flag is set, the logic skips this block.
 
