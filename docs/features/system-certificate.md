@@ -88,7 +88,7 @@ stops the job. EnvGene does not check the remaining sources after that failure.
 ### Supported certificate types
 
 EnvGene processes CA certificates in PEM format: root or intermediate certificates (`.crt`, `.pem`)
-used to validate server certificates. The file name does not select certificates. A single file may
+used to validate server certificates. The filename does not select certificates. A single file may
 contain a full chain of concatenated PEM certificates.
 
 ## Technical implementation
@@ -96,6 +96,6 @@ contain a full chain of concatenated PEM certificates.
 EnvGene runs a certificate handling script. For each file the script:
 
 1. Copies the whole file to `/usr/local/share/ca-certificates/` as `<name>.crt`, where `<name>` is the
-   file name without its extension. PEM blocks in that file stay together. A different name does not
+   filename without its extension. PEM blocks in that file stay together. A different name does not
    overwrite an existing file. The same name replaces the file installed by an earlier source.
 2. Rebuilds the trust store with `update-ca-certificates`.

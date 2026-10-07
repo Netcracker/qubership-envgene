@@ -132,8 +132,8 @@ A certificate-loading job runs. See [Overview](#overview).
 **Results:**
 
 1. The job completes successfully.
-2. When the file names without an extension differ, both certificates are in the runner trust store.
-3. When the file names without an extension match, the trust store keeps the certificate from the later source.
+2. When the filenames without an extension differ, both certificates are in the runner trust store.
+3. When the filenames without an extension match, the trust store keeps the certificate from the later source.
 
 ## Validation failures
 

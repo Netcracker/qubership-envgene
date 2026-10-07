@@ -90,8 +90,8 @@ the default certificate built into the EnvGene image. For the concept, see
       it as described in [Certificate validation and installation](#certificate-validation-and-installation).
       Otherwise the logic installs nothing.
 
-   The logic adds every source whose condition is met. One source does not turn the others off. The default
-   certificate is the exception: the logic adds it only when no earlier source was found.
+The logic adds every source whose condition is met. One source does not turn the others off. The default
+certificate is the exception: the logic adds it only when no earlier source was found.
 
 | Source                    | Condition                                                     | Added to the trust store                                             |
 | ------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------- |
@@ -117,7 +117,7 @@ Blocks 3 to 6 handle every source with the same procedure.
 
 5. The logic adds all certificates of the source to the trust store of the job.
 
-6. The trust store keeps one entry per file name without extension. When two sources have the same file name without
+6. The trust store keeps one entry per filename without extension. When two sources have the same filename without
    extension, for example `ca_bundle/root.pem` and `configuration/certs/root.crt`, the source installed later replaces
    the earlier one.
 
