@@ -21,18 +21,18 @@ the default certificate built into the EnvGene image. For the concept, see
 
 ## Input parameters
 
-| Parameter                                                                                   | Source                     | Required | Default | Values / format                                 | Effect                                                                                 |
-| ------------------------------------------------------------------------------------------- | -------------------------- | -------- | ------- | ----------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`SSL_CERTIFICATES_BUNDLE`](/docs/envgene-repository-variables.md#ssl_certificates_bundle) | CI/CD variable             | No       | None    | base64-encoded PEM, one certificate or a bundle | The logic installs the bundle. The default certificate is then not installed           |
-| `CI_SERVER_TLS_CA_FILE`                                                                     | GitLab predefined variable | No       | None    | Path to a PEM file, or PEM text                 | Git in the job trusts the GitLab server. The job trust store does not change           |
+| Parameter                                                                                  | Source                     | Required | Default | Values / format                                 | Effect                                                                       |
+| ------------------------------------------------------------------------------------------ | -------------------------- | -------- | ------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`SSL_CERTIFICATES_BUNDLE`](/docs/envgene-repository-variables.md#ssl_certificates_bundle) | CI/CD variable             | No       | None    | base64-encoded PEM, one certificate or a bundle | The logic installs the bundle. The default certificate is then not installed |
+| `CI_SERVER_TLS_CA_FILE`                                                                    | GitLab predefined variable | No       | None    | Path to a PEM file, or PEM text                 | Git in the job trusts the GitLab server. The job trust store does not change |
 
 ## Repository inputs
 
-| File                                                    | Object               | What the logic uses                                              |
-| ------------------------------------------------------- | -------------------- | ---------------------------------------------------------------- |
-| `ca_bundle/`                                            | CA certificate files | Every file directly in the directory, with any extension         |
-| `configuration/certs/`                                  | CA certificate files | Every file directly in the directory, with any extension         |
-| Default certificate built into the EnvGene image        | CA certificate file  | Only when no other source is found. Absent in some images        |
+| File                                             | Object               | What the logic uses                                       |
+| ------------------------------------------------ | -------------------- | --------------------------------------------------------- |
+| `ca_bundle/`                                     | CA certificate files | Every file directly in the directory, with any extension  |
+| `configuration/certs/`                           | CA certificate files | Every file directly in the directory, with any extension  |
+| Default certificate built into the EnvGene image | CA certificate file  | Only when no other source is found. Absent in some images |
 
 ## Processing flow
 
@@ -93,12 +93,12 @@ the default certificate built into the EnvGene image. For the concept, see
    The logic adds every source whose condition is met. One source does not turn the others off. The default
    certificate is the exception: the logic adds it only when no earlier source was found.
 
-   | Source                    | Condition                                                     | Added to the trust store                                               |
-   | ------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------- |
-   | `SSL_CERTIFICATES_BUNDLE` | The variable is set                                           | The decoded bundle                                                     |
-   | `ca_bundle/`              | The directory contains at least one entry                     | Each file directly in the directory. An empty directory adds no file   |
-   | `configuration/certs/`    | The directory contains at least one entry                     | Each file directly in the directory. An empty directory adds no file   |
-   | Default certificate       | The variable is unset and neither directory contains an entry | The certificate from the image, when the image has one                 |
+| Source                    | Condition                                                     | Added to the trust store                                             |
+| ------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `SSL_CERTIFICATES_BUNDLE` | The variable is set                                           | The decoded bundle                                                   |
+| `ca_bundle/`              | The directory contains at least one entry                     | Each file directly in the directory. An empty directory adds no file |
+| `configuration/certs/`    | The directory contains at least one entry                     | Each file directly in the directory. An empty directory adds no file |
+| Default certificate       | The variable is unset and neither directory contains an entry | The certificate from the image, when the image has one               |
 
 ## Certificate validation and installation
 
