@@ -1,0 +1,4 @@
+{
+  "applications": [{"version": "__APP_NAME__:__VERSION__", "deployPostfix": "__DEPLOY_POSTFIX__"}],
+  "deployGraph": [{"chunkName": "wave1", "apps": ["__APP_NAME__:__DEPLOY_POSTFIX__"]}]
+}

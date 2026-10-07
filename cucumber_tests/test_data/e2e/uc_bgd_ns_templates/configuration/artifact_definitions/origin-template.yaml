@@ -1,0 +1,11 @@
+name: "origin-template"
+groupId: "org.test"
+artifactId: "origin-template"
+registry:
+  name: "test-registry"
+  credentialsId: "test-registry"
+  mavenConfig:
+    repositoryDomainName: "http://localhost:8000/"
+    targetRelease: "release"
+    targetSnapshot: "release"
+    targetStaging: "release"

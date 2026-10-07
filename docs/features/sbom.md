@@ -45,7 +45,7 @@ A JSON file compliant with the CycloneDX specification, describing the following
 2. Coordinates of the microservice's artifacts such as Docker image
 3. Application's components attributes
 
-[Example](/examples/application.sbom.json)
+[Example](/docs/examples/application.sbom.json)
 
 #### Environment Template SBOM
 
@@ -53,13 +53,14 @@ A JSON file compliant with the CycloneDX specification, describing the following
 
 1. Coordinates of the environment template artifact
 
-[Example](/examples/env-template.sbom.json)
+[Example](/docs/examples/env-template.sbom.json)
 
 ## SBOM Storage and Retention
 
 Generated SBOM files are cached in the `/sboms/` directory of the Instance Repository to avoid expensive regeneration. Each application's SBOMs are stored in a subdirectory named after the application.
 
-To manage repository size and prevent reaching the 1500 MB limit, EnvGene provides automatic SBOM retention. See [SBOM Retention](/docs/features/sbom-retention.md) for configuration details.
+To manage repository size, EnvGene provides automatic SBOM retention. See
+[SBOM Retention](/docs/features/sbom-retention.md) for configuration details.
 
 ### SBOM directory layout
 

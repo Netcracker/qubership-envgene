@@ -60,10 +60,10 @@ During Environment generation, as part of the [`env_build`](/docs/envgene-pipeli
     ```yaml
     envTemplate:
       envSpecificResourceProfiles:
-        # Key: cloud' or the namespace template name as defined in the environment template
+        # Key: `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance
         # Value: The name of the Environment Specific Resource Profile Override file (exclude file extension)
         cloud: <env-specific-override-name>
-        <namespace-template-name>: <env-specific-override-name>
+        <namespace-folder-name>: <env-specific-override-name>
     ```
 
     When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
@@ -84,10 +84,10 @@ These overrides are referenced via `envTemplate.envSpecificResourceProfiles` in 
 ```yaml
 envTemplate:
   envSpecificResourceProfiles:
-    # Key: cloud' or the namespace template name as defined in the environment template
+    # Key: `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance
     # Value: The name of the Environment Specific Resource Profile Override file (exclude file extension)
     cloud: <env-specific-override-name>
-    <namespace-template-name>: <env-specific-override-name>
+    <namespace-folder-name>: <env-specific-override-name>
 ```
 
 There are two ways to combine overrides: **merge** and **replace**.
@@ -148,7 +148,7 @@ For example: `acme-prod-eu-west-myprofile`.
 
 ## Resource Profile Processing During Effective Set Calculation
 
-During the calculation of the Effective Set, as performed by the `generate_effective_set` job, parameters from the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are merged into the Resource Profile Baseline found in the Application SBOM:
+During the calculation of the Effective Set, as performed by the `generate_effective_set` step, parameters from the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are merged into the Resource Profile Baseline found in the Application SBOM:
 
 1. Resource Profile Baseline
 

@@ -98,7 +98,7 @@ inventory:
     # <tenant-name>-<cloud-name>-<env-name>-<RPO-name>
     updateRPOverrideNameWithEnvName: boolean
     # Optional. Default value - `true`
-    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificParamsets
+    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificResourceProfiles
     # are merged with Resource Profile Overrides from the Environment Template
     # If `false`, they completely replace the Environment Template's Resource Profile Overrides
     mergeEnvSpecificResourceProfiles: boolean
@@ -135,26 +135,34 @@ envTemplate:
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Keys are `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+  # Any other key fails Environment Instance generation.
+  # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
+  # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
@@ -382,7 +390,7 @@ app_reg_defs_placement: enum [`dual`, `root`]
 # Runs during Effective Set generation when enabled
 # Applies per-application SBOM retention to subdirectories of `/sboms/` when `keep_versions_per_app` is set
 # A total size limit step keeps only the single most recent file per application subdirectory
-# if the total size of `/sboms/` still exceeds 600 MB after per-application SBOM retention
+# if the total size of `/sboms/` still exceeds 50 MB after per-application SBOM retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
@@ -392,8 +400,22 @@ sbom_retention:
   # Per-application SBOM retention runs only when this is set to a positive integer.
   # If the field is omitted or set to `0`, this step is skipped and only the total size
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
-  # exceeds 600 MB)
+  # exceeds 50 MB)
   keep_versions_per_app: integer
+# Optional
+# Troubleshooting artifact configuration
+# See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
+save_artifacts:
+  # Optional. Default value - `ALWAYS`
+  # Controls whether the work directory is saved. Per-environment logs are always saved
+  # `ALWAYS` - save the work directory on every run
+  # `NEVER` - save only the logs, unless overridden per-run by the `SAVE_ARTIFACTS_STRATEGY` CI/CD variable
+  strategy: enum [`ALWAYS`, `NEVER`]
+  # Optional. Default value - 800
+  # Maximum uncompressed size, in MB, of the work directory. Above it the work directory is dropped,
+  # only the per-environment logs are kept, and a `NOT-PUBLISHED.txt` is published. The job does not fail
+  # on size. Per-environment logs are always saved
+  size_limit_mb: integer
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
 # `partial` - Partial Generation is enabled. Selected automatically when applicable, otherwise Full Generation is used
@@ -402,6 +424,15 @@ sbom_retention:
 # and [Full Generation](/docs/features/effective-set-generation.md#full-generation)
 # for generation mode behavior
 effective_set_generation_strategy: enum [`full`, `partial`]
+# Optional. Default value - `true`
+# Controls whether the committed Full SD is used when a pipeline run provides no incoming SD
+# `true` - the committed Full SD is used, so Full Generation or Partial Generation runs
+# `false` - the committed Full SD is ignored when no SD is passed, so No-SD Mode runs and only
+# `topology` and `pipeline` contexts are produced
+# Set to `false` to avoid failures when the committed Full SD references application versions that can no
+# longer be downloaded from the registry
+# See [No-SD Mode](/docs/features/effective-set-generation.md#no-sd-mode)
+use_committed_sd: boolean
 ```
 
 ## `integration.yml`

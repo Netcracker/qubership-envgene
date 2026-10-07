@@ -1,0 +1,9 @@
+name: core
+deployParameters:
+  api_url: "https://api.example.com"
+deployParameterSets: []
+e2eParameters:
+  test_endpoint: ${api_url}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

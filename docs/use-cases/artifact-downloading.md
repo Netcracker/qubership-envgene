@@ -149,7 +149,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Extracts `registryName` from AppDef
@@ -182,7 +182,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Extracts `registryName` from AppDef
@@ -213,7 +213,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Extracts `registryName` from AppDef
@@ -246,7 +246,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Extracts `registryName` from AppDef
@@ -279,7 +279,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Resolves registry to Registry Definition v2.0
@@ -312,7 +312,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Resolves registry to Registry Definition v2.0
@@ -342,7 +342,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Resolves registry to Registry Definition v2.0
@@ -375,7 +375,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Resolves registry to Registry Definition v2.0
@@ -407,7 +407,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Resolves registry to Registry Definition v2.0
@@ -441,7 +441,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses `SD_VERSION` parameter (format: `application:version`)
    2. Resolves application name to Application Definition v1.0
    3. Resolves registry to Registry Definition v2.0
@@ -472,7 +472,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Parses specific version from `SD_VERSION` parameter
    2. Downloads exact version from configured registry
 
@@ -514,7 +514,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory from `/environments/<cluster>/<env>/Inventory/env_definition.yml`
    2. Parses GAV coordinates from `templateArtifact` section
    3. Resolves registry from `registry.yml`
@@ -554,7 +554,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses GAV coordinates from `templateArtifact` section
    3. Resolves registry from `registry.yml`
@@ -582,7 +582,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses GAV coordinates from `templateArtifact` section
    3. Resolves registry from `registry.yml`
@@ -613,7 +613,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory.
    2. Parses GAV coordinates from `templateArtifact` section.
    3. Resolves registry from `registry.yml`.
@@ -645,7 +645,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses GAV coordinates from `templateArtifact` section
    3. Resolves registry from `registry.yml`
@@ -680,7 +680,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v1.0
@@ -717,7 +717,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v1.0
@@ -756,7 +756,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v1.0
@@ -787,7 +787,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v1.0
@@ -820,7 +820,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v2.0
@@ -851,7 +851,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v2.0
@@ -881,7 +881,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v2.0
@@ -912,7 +912,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v2.0
@@ -941,7 +941,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v2.0
@@ -971,7 +971,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses `application:version` from `envTemplate.artifact`
    3. Resolves to Artifact Definition v2.0
@@ -1000,7 +1000,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Detects SNAPSHOT version in template specification
    3. Resolves SNAPSHOT to latest available version in registry
@@ -1026,7 +1026,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Parses exact version from template specification
    3. Downloads specified version from registry

@@ -1,0 +1,15 @@
+name: core
+deployParameters:
+  server_port: 8080
+  app_version: "3.0"
+  ssl_enabled: true
+  debug_mode: "true"
+  api_port: ${server_port}
+  service_version: ${app_version}
+  use_ssl: ${ssl_enabled}
+  log_level: ${debug_mode}
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

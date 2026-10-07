@@ -81,6 +81,9 @@ It has the following structure:
 
 ```yaml
 # Optional
+# Free-form text describing the purpose of this Template Descriptor
+description: string
+# Optional
 # Template Composition configuration
 # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
 parent-templates:
@@ -137,6 +140,14 @@ bg_domain: <path-to-the-bg-domain-template-file>
 # Path to the external Credential Template file (Jinja, single file).
 external_credential_template: string
 # Optional
+# Map of labels of any type. Set by template preprocessing during Template Composition.
+# See details in /docs/features/template-composition.md
+labels:
+  # Set by template preprocessing.
+  # `self` for a descriptor created in the current template application.
+  # `parent` for a descriptor copied from a parent template.
+  origin: string
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
@@ -158,6 +169,13 @@ namespaces:
     # Parent template name
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     parent: string
+    # Optional
+    # Selects the parent namespace when the parent template has several namespaces
+    # with the same `name`, or when the resulting namespace needs a different name.
+    # Must exactly match one namespace `name` in the parent template. Resolved during
+    # preprocessing and not included in the generated Template Descriptor.
+    # See details in /docs/features/template-composition.md
+    parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
@@ -1273,7 +1291,6 @@ A BG Domain that is part of a composite structure is embedded inline as a member
 `baseline` or in a `satellites` member. In this case the composite structure carries the domain and no standalone
 [BG Domain](#bg-domain) object is used. A BG Domain that is not part of a composite structure is represented by a
 standalone [BG Domain](#bg-domain) object.
-
 The Composite Structure object is generated during Environment Instance generation from the [Composite Structure
 Template](#composite-structure-template) specified in the Environment Template descriptor.
 
@@ -1342,7 +1359,12 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. EnvGene uses it for BGD lifecycle management and for resolving origin, peer, and controller namespace names.
+
+The standalone BG Domain object represents a BG Domain that is not part of a
+[Composite Structure](#composite-structure).
+When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
+member and no standalone BG Domain object is generated.
 
 The standalone BG Domain object represents a BG Domain that is not part of a
 [Composite Structure](#composite-structure).
@@ -1434,19 +1456,13 @@ bg_domain:
     url: https://controller-env-1-controller.qubership.org
 ```
 
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
-
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
-
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#bg-state-files).
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
 
 **Filename patterns:**
 
@@ -2280,7 +2296,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2292,7 +2308,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
@@ -2320,6 +2336,9 @@ The filename must match the value of the `name` attribute.
 **Location:** `/regdefs/<registry-name>.yml`
 
 Registry Definitions can also be supplied as definition overrides at `/configuration/regdefs/<registry-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 The `credentialsId` field may reference an external Credential. See
 [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
@@ -2724,7 +2743,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2737,7 +2756,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
@@ -2881,7 +2900,7 @@ rawConfig:
   rawTargetProxy: https://proxy.raw.local/
 ```
 
-**[Registry Definition v2.0](/python/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `python/envgene/envgenehelper/schemas/regdef-v2.schema.json`
+**[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `modules/envgene/envgenehelper/schemas/regdef-v2.schema.json`
 
 ### Application Definition
 

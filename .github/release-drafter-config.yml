@@ -36,7 +36,6 @@ template: |
 
   ### 🐳 Docker Images
 
-  - **[qubership-pipegene](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-pipegene)** - `ghcr.io/netcracker/qubership-pipegene:$RESOLVED_VERSION`
   - **[qubership-envgene](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-envgene)** - `ghcr.io/netcracker/qubership-envgene:$RESOLVED_VERSION`
   - **[qubership-effective-set-generator](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-effective-set-generator)** - `ghcr.io/netcracker/qubership-effective-set-generator:$RESOLVED_VERSION`
   - **[qubership-envgene-instance-pipeline-github](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-instance-repo-pipeline)** - `ghcr.io/netcracker/qubership-instance-repo-pipeline:$RESOLVED_VERSION`
@@ -45,7 +44,7 @@ template: |
 
   ### 📦 PyPI Packages
 
-  - **[qubership-external-cred-provision:1.0.2](https://pypi.org/project/qubership-external-cred-provision/1.0.2/)**
+  - **[qubership-external-cred-provision:1.0.3](https://pypi.org/project/qubership-external-cred-provision/1.0.3/)**
 
   ---
 

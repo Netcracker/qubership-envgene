@@ -1,6 +1,6 @@
 # EnvGene
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/Apache-2.0)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/Netcracker/qubership-envgene/actions)
 
 ![Environment generator logo](/docs/images/envgene-logo.png "Environment generator")
@@ -124,7 +124,6 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**EnvGene Objects**](/docs/envgene-objects.md) - What are EnvGene objects and how they work
 - [**Configuration Files**](/docs/envgene-configs.md) - File formats and config options
-- [**Deployment Architecture**](/docs/deployment-architecture.md) - CMDB and No-CMDB (v1, v2) toolset architectures and how to determine them
 - [**Pipeline Configuration**](/docs/envgene-pipelines.md) - How EnvGene pipelines work
 - [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
@@ -156,13 +155,13 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 - [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
 - [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
 ### Migrations
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
-- [**Migrate to Blue-Green Deployment**](/docs/how-to/blue-green-deployment-migration.md) - Convert a non-BG template and environment to BGD
 
 ### Advanced Features
 
@@ -175,16 +174,18 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
-- [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
-- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
+- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
+- [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
+- [**Metrics Collector events**](/docs/features/metrics-collector-events.md) - Instance pipeline activity
+   events sent to Metrics Collector Service
 
 ### Examples & Samples
 

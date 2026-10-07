@@ -63,6 +63,9 @@ public class ApplicationServiceCliImpl implements ApplicationService {
     }
 
     private static ApplicationLinkDTO getApplicationLinkDTO(String applicationName, List<ApplicationLinkDTO> applications) {
+        if (applications == null) {
+            return null;
+        }
         return applications
                 .stream()
                 .filter(app -> app.getName().equals(applicationName))

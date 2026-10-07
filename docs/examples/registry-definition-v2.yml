@@ -1,0 +1,62 @@
+version: "2.0"
+name: sandbox
+authConfig:
+  aws-auth:
+    authType: longLived
+    provider: aws
+    authMethod: secret
+    credentialsId: aws-cred
+    awsRegion: eu-west-1
+    awsDomain: codeartifact-domain
+  nexus-auth:
+    provider: nexus
+    authMethod: user_pass
+    credentialsId: nexus-cred
+mavenConfig:
+  repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
+  authConfig: aws-auth
+  targetSnapshot: snapshots
+  targetStaging: staging
+  targetRelease: releases
+  snapshotGroup: org.qubership.app
+  releaseGroup: org.qubership.app
+dockerConfig:
+  authConfig: aws-auth
+  snapshotUri: docker/snapshots
+  stagingUri: docker/staging
+  releaseUri: docker/releases
+  groupUri: docker
+  snapshotRepoName: docker-snapshots
+  stagingRepoName: docker-staging
+  releaseRepoName: docker-releases
+  groupName: docker
+helmConfig:
+  authConfig: nexus-auth
+  repositoryDomainName: https://nexus.example.local/repository/helm-charts
+  helmTargetStaging: helm-staging
+  helmTargetRelease: helm-releases
+helmAppConfig:
+  repositoryDomainName: https://nexus.example.local/repository/helm-charts
+  helmStagingRepoName: helm-staging
+  helmReleaseRepoName: helm-releases
+  helmGroupRepoName: helm-group
+  helmDevRepoName: helm-dev
+  authConfig: nexus-auth
+goConfig:
+  authConfig: nexus-auth
+  repositoryDomainName: https://nexus.example.local/repository/go
+  goTargetSnapshot: go-snapshots
+  goTargetRelease: go-releases
+  goProxyRepository: https://goproxy.example.local/go/
+rawConfig:
+  authConfig: nexus-auth
+  repositoryDomainName: https://nexus.example.local/repository/raw
+  rawTargetSnapshot: raw/snapshots
+  rawTargetRelease: raw/releases
+  rawTargetStaging: raw/staging
+  rawTargetProxy: https://proxy.raw.example.local/
+npmConfig:
+  authConfig: nexus-auth
+  repositoryDomainName: https://nexus.example.local/repository/npm
+  npmTargetSnapshot: npm-snapshots
+  npmTargetRelease: npm-releases

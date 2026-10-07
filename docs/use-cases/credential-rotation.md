@@ -8,7 +8,7 @@
   - [Affected Credential Handling](#affected-credential-handling)
     - [UC-CR-LCH-1: Reject Affected Credential Update](#uc-cr-lch-1-reject-affected-credential-update)
     - [UC-CR-LCH-2: Update Affected Credentials in Force Mode](#uc-cr-lch-2-update-affected-credentials-in-force-mode)
-    - [UC-CR-VAL-1: Fail When No Affected Parameters Found](#uc-cr-val-1-fail-when-no-affected-parameters-found)
+    - [UC-CR-VAL-1: Rotate Target When No Affected Parameters Exist](#uc-cr-val-1-rotate-target-when-no-affected-parameters-exist)
   - [Encryption Processing](#encryption-processing)
     - [Successful Update with Encryption Enabled](#successful-update-with-encryption-enabled)
       - [UC-CR-ENC-1: Update Credentials with Plaintext Payload when Encryption Is Enabled](#uc-cr-enc-1-update-credentials-with-plaintext-payload-when-encryption-is-enabled)
@@ -29,7 +29,7 @@ This group covers successful rotation when the target credential is not linked t
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. Environment Instance contains a Namespace with `name` matching `<namespace-name>`.
 3. The Namespace contains a sensitive parameter in `e2eParameters` linked via the `cred` macro.
 4. The referenced Credential exists in the Environment Credentials file or in a Shared Credentials file.
@@ -59,7 +59,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Finds the target Namespace from the payload.
    2. Uses the `pipeline` context to look for the parameter in `e2eParameters`.
    3. Determines which credential field is linked to the target parameter.
@@ -70,13 +70,13 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. The credential value is updated successfully.
-2. The job completes with success status.
+2. The step completes with success status.
 
 ### UC-CR-TPR-2: Update Credential from Deployment Parameter
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. Environment Instance contains a Namespace with `name` matching `<namespace-name>`.
 3. That Namespace contains an Application with `name` matching `<application-name>`.
 4. The Application contains a sensitive parameter in `deployParameters`.
@@ -108,7 +108,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Finds the target Namespace and the Application specified in the payload.
    2. Uses the `deployment` context to look for the parameter in `deployParameters`.
    3. Determines which credential field is linked to the target parameter.
@@ -119,13 +119,13 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. The credential value is updated successfully.
-2. The job completes with success status.
+2. The step completes with success status.
 
 ### UC-CR-TPR-3: Update Credentials from Multiple rotation_items
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. Environment Instance contains all target Namespace and Application objects referenced by the payload.
 3. The payload contains multiple `rotation_items`.
 4. The payload includes items from different supported contexts:
@@ -148,7 +148,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Reads all `rotation_items` from `CRED_ROTATION_PAYLOAD`.
    2. Processes payload items one by one in the order they are provided.
    3. For each item, chooses the parameter section according to the requested context:
@@ -158,12 +158,12 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    4. For each payload item, searches for affected credentials linked to the same `cred-id` and credential field.
    5. Finds no affected credentials for the successful path and continues processing.
    6. Updates credential values for all valid payload items.
-   7. Stops the whole job if any payload item is invalid or cannot be processed.
+   7. Stops the whole step if any payload item is invalid or cannot be processed.
 
 **Results:**
 
 1. All target credential values are updated successfully.
-2. The job completes with success status.
+2. The step completes with success status.
 
 ## Affected Credential Handling
 
@@ -171,20 +171,24 @@ This section covers scenarios where the target parameter shares the same credent
 
 ### Affected Credentials with Non-Force Mode
 
-This group covers scenarios where dependencies are found and `CRED_ROTATION_FORCE=false`. In these cases, the job fails and generates affected parameters artifact.
+This group covers scenarios where dependencies are found and `CRED_ROTATION_FORCE=false`. In these cases, the step fails and generates affected parameters artifact.
+
+> [!NOTE]
+> Affected-parameter detection is scoped to the target Environment's cluster. A credential shared across clusters
+> does not have its out-of-cluster affected parameters reported.
 
 ### UC-CR-LCH-1: Reject Affected Credential Update
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. The target sensitive parameter exists and is linked via the `cred` macro.
 3. One or more additional sensitive parameters reference the same `cred-id` and the same credential field (`username`, `password`, or `secret`).
 4. The linked parameters may be located in:
 
    - The same Environment Credentials file
    - One or more Shared Credentials files
-   - Other affected Environment Instances
+   - Other affected Environment Instances within the target Environment's cluster
 
 5. `CRED_ROTATION_PAYLOAD` contains a valid rotation request.
 6. `CRED_ROTATION_FORCE` is not provided or is explicitly set to `false`.
@@ -199,16 +203,16 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Resolves the target parameter and the credential field linked to it.
    2. Finds all other parameters affected by the same credential change.
    3. Builds the full affected parameters report for the request.
    4. Checks `CRED_ROTATION_FORCE` and sees that force mode is disabled.
-   5. Generates `affected-sensitive-parameters.yaml` artifact and finishes the job with error status without writing credential changes.
+   5. Generates `affected-sensitive-parameters.yaml` artifact and finishes the step with error status without writing credential changes.
 
 **Results:**
 
-1. The `credential_rotation` job fails with a readable error message explaining that affected parameters exist.
+1. The `credential_rotation` step fails with a readable error message explaining that affected parameters exist.
 2. No credential values are changed.
 3. Repository state remains unchanged for all credential files involved in the request.
 4. The `affected-sensitive-parameters.yaml` artifact is generated and lists all detected affected parameters.
@@ -217,7 +221,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. The target sensitive parameter exists and is linked via the `cred` macro.
 3. One or more additional sensitive parameters reference the same `cred-id` and the same credential field.
 4. The linked parameters span at least one of the following storage locations:
@@ -239,7 +243,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Resolves the target parameter and the credential field linked to it.
    2. Finds all other parameters affected by the same credential change.
    3. Builds the full affected parameters report for the request.
@@ -250,14 +254,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The target credential field is updated to the new value.
 2. All linked sensitive parameters now reference the rotated value through the shared credential linkage.
-3. The `credential_rotation` job completes successfully.
+3. The `credential_rotation` step completes successfully.
 4. The `affected-sensitive-parameters.yaml` artifact is generated.
 
-### UC-CR-VAL-1: Fail When No Affected Parameters Found
+### UC-CR-VAL-1: Rotate Target When No Affected Parameters Exist
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. `CRED_ROTATION_PAYLOAD` contains one or more valid `rotation_items`.
 3. Each payload item points to an existing sensitive parameter linked via the `cred` macro.
 4. None of the payload items has other affected parameters in the current implementation search scope.
@@ -273,16 +277,15 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Processes all payload items from `CRED_ROTATION_PAYLOAD`.
-   2. Tries to collect affected parameters for each payload item.
-   3. Finishes payload processing without collecting any affected parameters.
-   4. The job finishes with error status.
+   2. Finds no affected parameters for any payload item.
+   3. Updates the target credential values.
 
 **Results:**
 
-1. The `credential_rotation` job fails.
-2. No credential files are updated.
+1. The target credential values are updated to the new values.
+2. The `credential_rotation` step completes with success status.
 3. `affected-sensitive-parameters.yaml` is not created.
 
 ## Encryption Processing
@@ -297,7 +300,7 @@ This group covers successful scenarios when encryption is enabled in `config.yml
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. The configuration file `/configuration/config.yml` contains `crypt: true`.
 3. The target sensitive parameter exists and is linked via the `cred` macro.
 4. `CRED_ROTATION_PAYLOAD` contains plaintext JSON in string form.
@@ -314,26 +317,26 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Reads the payload in plaintext form.
    2. Loads credential files for the Environment and decrypts them.
    3. Searches for affected credentials linked to the same `cred-id` and credential field.
    4. Finds no affected credentials for the successful path and continues processing.
    5. Applies the requested credential changes to the matched files.
-   6. Re-encrypts updated credential files before finishing the job.
+   6. Re-encrypts updated credential files before finishing the step.
 
 **Results:**
 
 1. The plaintext payload is processed successfully.
 2. Credential values are updated according to payload input.
 3. Updated credential files remain encrypted in the repository.
-4. The `credential_rotation` job completes with success status.
+4. The `credential_rotation` step completes with success status.
 
 ### UC-CR-ENC-2: Update Credentials with Encrypted Payload when Encryption Is Enabled
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. The configuration file `/configuration/config.yml` contains `crypt: true`, so encryption mode is enabled.
 3. The target sensitive parameter exists and is linked via the `cred` macro.
 4. `CRED_ROTATION_PAYLOAD` is passed in encrypted form and can be decrypted by EnvGene.
@@ -350,20 +353,20 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Decrypts the payload for processing.
    2. Loads credential files for the Environment and decrypts them.
    3. Searches for affected credentials linked to the same `cred-id` and credential field.
    4. Finds no affected credentials for the successful path and continues processing.
    5. Applies the requested credential changes to the matched files.
-   6. Re-encrypts updated credential files before finishing the job.
+   6. Re-encrypts updated credential files before finishing the step.
 
 **Results:**
 
 1. The encrypted payload is processed successfully.
 2. Credential values are updated according to payload input.
 3. Updated credential files remain encrypted in the repository.
-4. The `credential_rotation` job completes with success status.
+4. The `credential_rotation` step completes with success status.
 
 ### Successful Update with Encryption Disabled
 
@@ -373,7 +376,7 @@ This group covers successful scenarios when encryption is disabled in `config.ym
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. The configuration file `/configuration/config.yml` contains `crypt: false`.
 3. The target sensitive parameter exists and is linked via the `cred` macro.
 4. `CRED_ROTATION_PAYLOAD` contains plaintext JSON in string form.
@@ -390,7 +393,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Reads the payload in plaintext form.
    2. Loads credential files for the Environment without repository decryption.
    3. Searches for affected credentials linked to the same `cred-id` and credential field.
@@ -402,13 +405,13 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The plaintext payload is processed successfully.
 2. Credential values are updated according to payload input.
-3. The `credential_rotation` job completes with success status.
+3. The `credential_rotation` step completes with success status.
 
 ### UC-CR-ENC-4: Update Credentials with Encrypted Payload when Encryption Is Disabled
 
 **Pre-requisites:**
 
-1. `env_inventory_generation_job` must be launched in the pipeline run.
+1. `env_inventory_generation` step must be launched in the pipeline run.
 2. The EnvGene configuration file `/configuration/config.yml` contains `crypt: false`, so encryption mode is disabled.
 3. The target sensitive parameter exists and is linked via the `cred` macro.
 4. `CRED_ROTATION_PAYLOAD` is passed in encrypted form and can be decrypted by EnvGene.
@@ -426,7 +429,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `credential_rotation` job runs in the pipeline:
+1. The `credential_rotation` step runs in the pipeline:
    1. Reads the payload and decrypts it for further processing.
    2. Loads credential files for the Environment without repository decryption.
    3. Searches for affected credentials linked to the same `cred-id` and credential field.
@@ -438,4 +441,4 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The encrypted payload is processed successfully.
 2. Credential values are updated according to payload input.
-3. The `credential_rotation` job completes with success status.
+3. The `credential_rotation` step completes with success status.

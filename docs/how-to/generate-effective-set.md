@@ -92,10 +92,10 @@ The pipeline executes the following job sequence:
 appregdef_render → process_sd → env_build → generate_effective_set → git_commit
 ```
 
-If only the Effective Set needs to be regenerated without rebuilding the Environment Instance, set `ENV_BUILDER: false`. The `generate_effective_set` job will use the existing Instance files from the previous run.
+If only the Effective Set needs to be regenerated without rebuilding the Environment Instance, set `ENV_BUILDER: false`. The `generate_effective_set` step uses the existing Instance files from the previous run.
 
 > [!IMPORTANT]
-> The `generate_effective_set` job always depends on `env_build`. If `ENV_BUILDER: false` is set but the Environment Instance files are already present from a previous run, generation proceeds normally.
+> The `generate_effective_set` step always depends on `env_build`. If `ENV_BUILDER: false` is set but the Environment Instance files are already present from a previous run, generation proceeds normally.
 
 ---
 
@@ -157,7 +157,7 @@ effective-set/
         └── credentials.yaml
 ```
 
-The `git_commit` job commits these files to the Instance Repository automatically. The pipeline run is complete when `git_commit` succeeds and the files appear under `environments/prod-cluster/prod-01/effective-set/`.
+The `git_commit` step commits these files to the Instance Repository automatically. The pipeline run is complete when `git_commit` succeeds and the files appear under `environments/prod-cluster/prod-01/effective-set/`.
 
 ---
 
@@ -165,7 +165,7 @@ The `git_commit` job commits these files to the Instance Repository automaticall
 
 ### Generate Without a Solution Descriptor
 
-When no Solution Descriptor is provided - for example when setting up infrastructure-only namespaces or preparing an environment before any applications are defined - the Effective Set is generated in a partial mode.
+When no Solution Descriptor is provided - for example when setting up infrastructure-only namespaces or preparing an environment before any applications are defined - the Effective Set is generated in No-SD Mode.
 
 Without an SD, EnvGene does not know which applications belong to which namespaces, so the application-specific contexts cannot be produced. The following contexts are generated normally:
 
@@ -178,7 +178,13 @@ The following contexts are **not generated**:
 - `runtime` - requires application definitions from the SD
 - `cleanup` - requires application definitions from the SD
 
-To use this mode, simply omit `SD_VERSION` and `SD_SOURCE_TYPE` from the pipeline variables. If no SD artifact is passed and no `sd.yaml` exists in the repository, EnvGene skips all application-level processing automatically.
+To use this mode, omit `SD_VERSION` and `SD_SOURCE_TYPE` from the pipeline variables. If no SD artifact is
+passed and no `sd.yaml` exists in the repository, EnvGene enters No-SD Mode automatically.
+
+If a `sd.yaml` is committed but you still want No-SD Mode - for example when the committed SD references
+application versions that can no longer be downloaded from the registry - set `use_committed_sd: false` in
+[`config.yml`](/docs/envgene-configs.md#configyml). With `use_committed_sd` set to `false`, a run with no
+incoming SD stays in No-SD Mode instead of using the committed SD.
 
 ---
 
@@ -206,7 +212,7 @@ Set this as a pipeline variable:
 CUSTOM_PARAMS: '{"deployment":{"FEATURE_FLAG_NEW_BILLING":"true","MAX_RETRIES":"5"}}'
 ```
 
-The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files.
+The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files. A `deployment` override is decomposed the same way as a deployment parameter (root, `global`, and per-service), so it applies inside each service. It cannot change image or artifact metadata such as `docker_tag`, `docker_registry`, or `image`, which come from the Application's SBOM.
 
 To target only specific namespaces instead of all, use the `namespaces` key. Namespaces not listed receive an empty `custom-params.yaml`. This mode is mutually exclusive with top-level `deployment`/`runtime` keys:
 
