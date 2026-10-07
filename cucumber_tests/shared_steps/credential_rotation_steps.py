@@ -102,3 +102,61 @@ def credential_field_equals(workspace: EnvGeneWorkspace, cred_id: str, field: st
         f"Expected {cred_id}.{field}='{expected}', got '{actual}'.\n"
         f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
     )
+
+
+@then(parsers.parse(
+    'the shared credential "{cred_id}" field "{field}" equals "{expected}" '
+    'in shared credential file "{filename}"'
+))
+def shared_credential_field_equals(workspace: EnvGeneWorkspace, cred_id: str, field: str, expected: str, filename: str):
+    creds_file = (
+        workspace.base_dir
+        / "environments"
+        / workspace.cluster_name
+        / "credentials"
+        / f"{filename}.yml"
+    )
+    assert creds_file.exists(), (
+        f"Shared credentials file not found at {creds_file}.\n"
+        f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
+    )
+    content = yaml.safe_load(creds_file.read_text(encoding="utf-8"))
+    assert cred_id in content, f"Credential '{cred_id}' not found in {creds_file}"
+    actual = content[cred_id].get("data", {}).get(field)
+    assert actual == expected, (
+        f"Expected {cred_id}.{field}='{expected}', got '{actual}'.\n"
+        f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
+    )
+
+
+@then(parsers.parse(
+    'the affected-sensitive-parameters.yaml report names "{param_key}" in context "{context}" '
+    'and environment "{environment}" as affected for target "{target_key}"'
+))
+def report_names_affected_parameter(
+    workspace: EnvGeneWorkspace, param_key: str, context: str, environment: str, target_key: str
+):
+    report_file = workspace.base_dir / "affected-sensitive-parameters.yaml"
+    assert report_file.exists(), (
+        f"Report file not found at {report_file}.\n"
+        f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
+    )
+    results = yaml.safe_load(report_file.read_text(encoding="utf-8")) or []
+    matching_result = next(
+        (r for r in results if r.get("target_parameter", {}).get("parameter_key") == target_key),
+        None,
+    )
+    assert matching_result is not None, (
+        f"No rotation result found for target '{target_key}' in report. Report contents: {results}"
+    )
+    affected = matching_result.get("affected_parameters", [])
+    found = any(
+        a.get("parameter_key") == param_key
+        and a.get("context") == context
+        and a.get("environment") == environment
+        for a in affected
+    )
+    assert found, (
+        f"Expected affected parameter '{param_key}' (context='{context}', environment='{environment}') "
+        f"for target '{target_key}', but affected_parameters were: {affected}"
+    )

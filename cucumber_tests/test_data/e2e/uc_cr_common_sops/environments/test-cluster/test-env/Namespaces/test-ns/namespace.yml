@@ -4,7 +4,10 @@ deployParameters: {}
 deployParameterSets: []
 e2eParameters:
   SOME_PARAM: "${creds.get('db-cred').password}"
-  SOME_PARAM_COPY: "${creds.get('db-cred').password}"
+  OTHER_PARAM: "${creds.get('db-cred').password}"
+  ISOLATED_PARAM: "${creds.get('isolated-cred').password}"
+  TOKEN_PARAM: "${creds.get('token-cred').secret}"
+  TOKEN_OTHER_PARAM: "${creds.get('token-cred').secret}"
 e2eParameterSets: []
 technicalConfigurationParameters: {}
 technicalConfigurationParameterSets: []

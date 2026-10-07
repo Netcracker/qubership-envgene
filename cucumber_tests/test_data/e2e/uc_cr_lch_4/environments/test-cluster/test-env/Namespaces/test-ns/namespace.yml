@@ -4,7 +4,6 @@ deployParameters: {}
 deployParameterSets: []
 e2eParameters:
   SOME_PARAM: "${creds.get('db-cred').password}"
-  OTHER_PARAM: "${creds.get('db-cred').password}"
 e2eParameterSets: []
 technicalConfigurationParameters: {}
 technicalConfigurationParameterSets: []

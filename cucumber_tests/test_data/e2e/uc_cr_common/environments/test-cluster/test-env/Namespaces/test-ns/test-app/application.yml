@@ -5,5 +5,7 @@ deployParameters:
 deployParameterSets: []
 e2eParameters: {}
 e2eParameterSets: []
-technicalConfigurationParameters: {}
+technicalConfigurationParameters:
+  config.secret: "${creds.get('db-cred').password}"
+  config.backup: "${creds.get('db-cred').password}"
 technicalConfigurationParameterSets: []
