@@ -136,6 +136,32 @@ Feature: Calculator CLI
     Then the effective set is generated successfully
     And the effective set deployment parameters for "test-app" exist under version "1.2.3"
 
+  # ── Empty Deploy Plan (UC-CC-EP-*) ───────────────────────────────────────────
+
+  Scenario: UC-CC-EP-1: Empty Solution Descriptor Generates Topology and Pipeline Contexts Only
+    Given the workspace is initialized with test data from "e2e/uc_deploy_legacy_sd"
+    And the pipeline parameter "ENV_BUILDER" is set to "true"
+    And the pipeline parameter "SD_DATA" is set to "{\"version\":2.2,\"type\":\"solutionDeploy\",\"applications\":[]}"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the pipeline step "process_sd" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the deploy plan is empty
+    And the effective set folder "topology" contains file "parameters.yaml"
+    And the effective set folder "pipeline" contains file "parameters.yaml"
+    And the effective set has no "deployment" folder
+    And the effective set has no "runtime" folder
+
+  Scenario: UC-CC-EP-2: Committed Empty Deploy Plan Generates Topology and Pipeline Contexts Only
+    Given the workspace is initialized with test data from "e2e/uc_cc_ep_2"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the deploy plan is empty
+    And the effective set folder "topology" contains file "parameters.yaml"
+    And the effective set folder "pipeline" contains file "parameters.yaml"
+    And the effective set has no "deployment" folder
+    And the effective set has no "runtime" folder
+
   # ── Cross-Level Parameter References (UC-CC-HR-*) ────────────────────────────
 
   Scenario: UC-CC-HR-1: Namespace to Cloud Reference
