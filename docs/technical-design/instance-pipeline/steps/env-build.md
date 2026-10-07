@@ -53,7 +53,10 @@ Domain, Profiles, and credential files.
    3. The step copies ParameterSet trees from `tmp/templates/parameters/`,
       `tmp/origin/templates/parameters/`, `tmp/peer/templates/parameters/`, cluster-level
       `environments/<cluster-name>/parameters/`, global `environments/parameters/`, and Environment
-      Inventory `Inventory/parameters/` into `tmp/parameters_templates/`.
+      Inventory `Inventory/parameters/` into `tmp/render-workspace/parameters/`. If the
+      `regdefv2_adapter` step already prepared this directory in the current run, the step reuses it:
+      Jinja templates of Cloud `e2eParameterSets` are already rendered there, and the step adds only
+      `tmp/origin/templates/parameters/` and `tmp/peer/templates/parameters/`.
 
    4. The step copies Template Repository `resource_profiles/` into `tmp/resource_profiles/`.
 
@@ -110,7 +113,7 @@ Domain, Profiles, and credential files.
    11. When Template Descriptor `external_credential_template` is present, the step renders
        external credentials into the Environment credential files.
 
-   12. The step renders ParameterSet Jinja templates from `tmp/parameters_templates/` into
+   12. The step renders ParameterSet Jinja templates from `tmp/render-workspace/parameters/` into
        `tmp/render/<env-name>/`.
 
    13. The step validates that every Namespace name referenced in `bg_domain.yml` exists among
@@ -118,7 +121,7 @@ Domain, Profiles, and credential files.
 
 6. **Process Tenant, Cloud, Namespaces, and Applications**
 
-   1. The step builds role-specific ParameterSet maps from `tmp/parameters_templates/`. Origin-side
+   1. The step builds role-specific ParameterSet maps from `tmp/render-workspace/parameters/`. Origin-side
        Namespaces use origin-side ParameterSets when `tmp/origin/templates/` exists. Peer-side
        Namespaces use peer-side ParameterSets when `tmp/peer/templates/` exists. Other Namespaces use
        common ParameterSets.
@@ -165,7 +168,7 @@ Domain, Profiles, and credential files.
 3. Namespace directories not selected from the deploy plan keep their pre-run content. When no
    deploy plan is present, all Namespaces are rendered.
 
-4. Directories `tmp/render/`, `tmp/parameters_templates/`, and `tmp/resource_profiles/` exist
+4. Directories `tmp/render/`, `tmp/render-workspace/parameters/`, and `tmp/resource_profiles/` exist
    only during the pipeline run.
 
 5. The step does not rewrite `Inventory/namespace-map.yml`. That file remains as written by step

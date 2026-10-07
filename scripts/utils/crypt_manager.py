@@ -1,5 +1,6 @@
 import click
-from envgenehelper import encrypt_all_cred_files_for_env, decrypt_all_cred_files_for_env, validate_creds, validate_parameters
+from envgene_shared.crypto.crypt import encrypt_all_cred_files_for_env, decrypt_all_cred_files_for_env
+from envgenehelper import validate_creds, validate_parameters
 
 
 @click.group(chain=True)

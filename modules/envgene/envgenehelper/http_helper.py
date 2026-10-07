@@ -4,6 +4,17 @@ from pathlib import Path
 from envgenehelper.errors import IntegrationError
 
 
+def with_headers(headers: dict[str, str], **overrides: str) -> dict[str, str]:
+    """Return a copy with overrides replacing header names case-insensitively."""
+    normalized = dict(headers)
+    for name, value in overrides.items():
+        for existing in list(normalized):
+            if existing.lower() == name.lower():
+                del normalized[existing]
+        normalized[name] = value
+    return normalized
+
+
 class ApiClient:
 
     def __init__(self, verify_ssl=False):
