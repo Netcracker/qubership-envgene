@@ -33,7 +33,7 @@
 
 This document describes use cases for **Environment Inventory Generation** — creating or replacing `env_definition.yml`, `paramsets`, `resource_profiles`, and `credentials` using `ENV_INVENTORY_CONTENT`.
 
-> **Note:**  
+> [!NOTE]
 > Applying `ENV_TEMPLATE_VERSION` is a separate pipeline step that runs after Inventory generation and
 > therefore overrides the version from `envDefinition.content.envTemplate.*`. See
 > [Template Version Update](/docs/use-cases/template-version-update.md).

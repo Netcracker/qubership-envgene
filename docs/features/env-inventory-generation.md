@@ -64,7 +64,7 @@ The generated Environment Inventory must be reused by other jobs in the same pip
 
 `ENV_INVENTORY_CONTENT` is the primary way to manage Inventory via pipeline. It allows external systems to create, fully replace and delete `env_definition.yml` and related Inventory objects. The parameter also supports creating files on different levels (`site`, `cluster`, `env`) via the `place` field.
 
-> **Note**
+> [!NOTE]
 > Applying `ENV_TEMPLATE_VERSION` is a separate pipeline step that runs after Inventory generation. See
 > [Template Version Update](/docs/use-cases/template-version-update.md)
 
