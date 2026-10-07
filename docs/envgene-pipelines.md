@@ -1,108 +1,145 @@
 # EnvGene Pipelines
 
-This document describes the CI/CD pipelines and jobs in these pipelines used in EnvGene. For each pipeline, the set and sequence of jobs is described. For each job, the conditions under which the job is executed and the Docker image used to run the job are specified.
+- [Instance pipeline](#instance-pipeline)
+  - [env-prepare job](#env-prepare-job)
+  - [sync job](#sync-job)
 
-Jobs are executed sequentially in the **listed order**. Depending on the condition, a job may or may not be executed. If any job in the sequence fails, the subsequent jobs in the flow are not executed.
+This document describes the EnvGene Instance pipeline: its jobs, the container image each job runs in, and
+the steps that run inside each job. For each step it gives the condition under which the step runs.
 
-The conditions for job execution, the sequence, and the Docker images are intended to match across GitLab and GitHub CI/CD platforms.
+The jobs and their step sequence are intended to match across the GitLab and GitHub CI/CD platforms.
 
 > [!NOTE]
-> This is the sequence of the core EnvGene. EnvGene is extensible: in extensions, the sequence may be changed and new jobs may be added.
+> This describes core EnvGene. EnvGene is extensible: an extension can change the step sequence or add steps.
 
 ## Instance pipeline
 
-The main pipeline of the EnvGene Instance repository, in which the main functions of EnvGene are performed, such as Environment Instance generation, Effective Set generation, and others.
+The main EnvGene pipeline. It generates the Environment Instance and the Effective Set, and - for deploy
+operations - hands the result to the deployer. It is triggered manually from the GitLab or GitHub UI, or by
+an external system through the GitLab or GitHub API.
 
-This pipeline is triggered manually by the user via the GitLab/GitHub UI or by an external system via the GitLab/GitHub API.
+The Instance pipeline has two jobs:
 
-If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are specified:
+- `env-prepare` runs the EnvGene steps in the `qubership-envgene` image.
+- `sync` deploys the generated Effective Set in the deployer image. It runs only for `GITLAB_DEPLOY` deploy
+  operations.
 
-- For each distinct cluster name in `ENV_NAMES`, at most one Cloud Passport flow runs: `trigger_passport_job`, `get_passport_job` (deduplicated by cluster).
-- For each environment from `ENV_NAMES`, parallel flows of the remaining jobs are started.
-
-### [Instance pipeline] Job sequence
+If [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) lists several environments, EnvGene runs one
+`env-prepare` flow per environment in parallel. The Cloud Passport step runs at most once per cluster.
 
 ```mermaid
 flowchart TB
-    subgraph passport["Per-cluster jobs"]
-        A[trigger_passport] --> B[get_passport]
+    subgraph env_prepare["env-prepare job"]
+        direction TB
+        A[get_passport] --> B[credential_rotation]
+        B --> C[bg_manage]
+        C --> D[env_inventory_generation]
+        D --> E[app_reg_def_process]
+        E --> F[process_sd]
+        F --> G[env_build]
+        G --> H[generate_effective_set]
+        H --> I[git_commit]
+        I --> J[cmdb_import]
     end
-    subgraph per_env["Per-environment jobs"]
-        C[credential_rotation] --> D[bg_manage]
-        D --> E[env_inventory_generation]
-        E --> F[app_reg_def_process]
-        F --> G[process_sd]
-        G --> H[env_build]
-        H --> I[generate_effective_set]
-        I --> J[git_commit]
-        J --> K[cmdb_import]
-    end
-    B --> C
+    env_prepare --> sync["sync job"]
 ```
 
-1. **trigger_passport**:
-   - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
-   - **Docker image**: None. The Discovery repository is triggered from the pipeline
+### env-prepare job
 
-2. **get_passport**:
-   - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+- **Image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+- **Condition**: every Instance pipeline run.
 
-3. **credential_rotation**:
-   - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+`env-prepare` runs the steps below in a single process, in the listed order. A step runs only when its
+condition holds, otherwise it is skipped. If a step fails, the job fails and the remaining steps do not run.
+The authoritative step sequence and names are defined in the pipeline orchestrator
+(`scripts/pipeline/orchestrator.py`).
 
-4. **bg_manage**
-   - **Condition**: Runs if `BG_MANAGE: true`.
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+Before the steps run, `env-prepare` checks out the repository, installs certificates, and resolves the
+pipeline parameters.
 
-5. **env_inventory_generation**:
-   - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test) AND any of the following holds:
-     - [`ENV_INVENTORY_CONTENT`](/docs/instance-pipeline-parameters.md#env_inventory_content) is set, or
-     - [`ENV_INVENTORY_INIT`](/docs/instance-pipeline-parameters.md#env_inventory_init) is `true`, or
-     - [`ENV_SPECIFIC_PARAMS`](/docs/instance-pipeline-parameters.md#env_specific_params) is set (non-empty), or
-     - [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name) is set (non-empty)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+1. **get_passport** - obtains the Cloud Passport for the target cluster, triggering the
+   [Discovery pipeline](/docs/discovery-pipeline-parameters.md) when the passport is not already present.
+   - **Condition**: [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport).
 
-6. **app_reg_def_process**:
-   - **What happens in this job**:
-       1. Handles certificate updates from the configuration directory.
-       2. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
-          1. Templates, as described in [Templates](/docs/features/app-reg-defs.md#templates)
-          2. External Job, as described in [External Job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated)
-       3. Runs [Template transformation](/docs/features/app-reg-defs.md#template-transformation)
-   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+2. **credential_rotation** - rotates credentials from the rotation payload.
+   - **Condition**: [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is
+     set. It cannot be combined with `GET_PASSPORT`.
 
-7. **process_sd**:
-   - **Condition**: Runs if ( `SD_SOURCE_TYPE: json` AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( `SD_SOURCE_TYPE: artifact` AND [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+3. **bg_manage** - changes Blue-Green Deployment state and warms up the candidate namespace.
+   - **Condition**: [`OPERATION_TYPE: BGD`](/docs/instance-pipeline-parameters.md#operation_type) in a
+     [`GITLAB_DEPLOY`](/docs/instance-pipeline-parameters.md#pipeline_type) pipeline. The warmup runs only
+     when [`BGD_OPERATION: warmup`](/docs/instance-pipeline-parameters.md#bgd_operation).
 
-8. **env_build**:
-   - **What happens in this job**:
-       1. Handles certificate updates from the configuration directory.
-       2. Updates the Environment Template version if [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
-       3. Renders the environment using Jinja2 templates (renders Namespaces, Clouds, and other environment components, but not Application and Registry Definitions).
-       4. Handles template overrides
-       5. Handles template Parameter Set and Resource profiles.
-       6. Handles environment-specific Parameter Set and Resource profiles.
-       7. Creates Credentials including shared Credentials
-   - **Condition**: Runs if [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder).
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+4. **env_inventory_generation** - generates the Environment Instance inventory.
+   - **Condition**: any of the following is set:
+     - [`ENV_INVENTORY_CONTENT`](/docs/instance-pipeline-parameters.md#env_inventory_content), or
+     - [`ENV_INVENTORY_INIT: true`](/docs/instance-pipeline-parameters.md#env_inventory_init), or
+     - [`ENV_SPECIFIC_PARAMS`](/docs/instance-pipeline-parameters.md#env_specific_params), or
+     - [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name).
 
-9. **generate_effective_set**:
-   - **What happens in this job**:
-       1. Generates the Effective Set
-       2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. Skipped when the Environment Instance contains no external Credentials. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
-   - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
-   - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
+     The last three are deprecated.
 
-10. **git_commit**:
-    - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test)
-    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+5. **app_reg_def_process** - renders [Application Definitions](/docs/envgene-objects.md#application-definition)
+   and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
+   - **Condition**: [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder).
 
-11. **cmdb_import**:
-    - **Condition**: Runs if [`CMDB_IMPORT: true`](/docs/instance-pipeline-parameters.md#cmdb_import)
+   This step:
+
+   1. Renders the definitions from [templates](/docs/features/app-reg-defs.md#templates) or an
+      [external job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated).
+   2. Runs [template transformation](/docs/features/app-reg-defs.md#template-transformation).
+
+6. **process_sd** - builds the deployment plan from the Solution Descriptor.
+   - **Condition**: a standalone (non-`GITLAB_DEPLOY`) pipeline runs an
+     [`OPERATION_TYPE: DEPLOY`](/docs/instance-pipeline-parameters.md#operation_type) operation and a Solution
+     Descriptor is provided through [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) or
+     [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version). A `GITLAB_DEPLOY` pipeline builds the
+     deployment plan directly.
+
+7. **env_build** - renders the Environment Instance from Jinja2 templates.
+   - **Condition**: [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder), or a
+     `GITLAB_DEPLOY` deploy or clean operation.
+
+   This step:
+
+   1. Updates the Environment Template version when
+      [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
+   2. Renders Namespaces, Clouds, and other environment components, but not Application and Registry
+      Definitions.
+   3. Applies template overrides.
+   4. Applies template and environment-specific ParameterSets and Resource Profiles.
+   5. Creates Credentials, including shared Credentials.
+
+8. **generate_effective_set** - generates the Effective Set with the
+   [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
+   CLI, invoked inside the `env-prepare` job.
+   - **Condition**: [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set),
+     or a `GITLAB_DEPLOY` deploy, clean, or BGD warmup operation.
+
+   This step:
+
+   1. Generates the Effective Set.
+   2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to
+      materialize each external Credential in its target Secret Store. It is skipped when the Environment
+      Instance contains no external Credentials. See
+      [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD
+      variable contract and failure semantics.
+
+9. **git_commit** - commits the generated files to the Instance repository.
+   - **Condition**: always runs. It commits only when a step produced changes to the repository.
+
+10. **cmdb_import** - imports data into a CMDB.
+    - **Condition**: [`CMDB_IMPORT: true`](/docs/instance-pipeline-parameters.md#cmdb_import). It does not run
+      in a `GITLAB_DEPLOY` pipeline.
 
     > [!NOTE]
-    > The `cmdb_import` job is **not** part of core EnvGene. It is an **extension point**
+    > The `cmdb_import` step is not part of core EnvGene. It is an extension point.
+
+### sync job
+
+- **Image**: the deployer image.
+- **Condition**: [`PIPELINE_TYPE: GITLAB_DEPLOY`](/docs/instance-pipeline-parameters.md#pipeline_type) with a
+  deploy operation. It does not run for [`OPERATION_TYPE: CLEAN`](/docs/instance-pipeline-parameters.md#operation_type).
+
+`sync` reads the Effective Set produced by `env-prepare` and runs the deployer to apply it to the target
+namespaces.

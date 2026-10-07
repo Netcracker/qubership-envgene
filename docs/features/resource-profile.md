@@ -148,7 +148,7 @@ For example: `acme-prod-eu-west-myprofile`.
 
 ## Resource Profile Processing During Effective Set Calculation
 
-During the calculation of the Effective Set, as performed by the `generate_effective_set` job, parameters from the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are merged into the Resource Profile Baseline found in the Application SBOM:
+During the calculation of the Effective Set, as performed by the `generate_effective_set` step, parameters from the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are merged into the Resource Profile Baseline found in the Application SBOM:
 
 1. Resource Profile Baseline
 
