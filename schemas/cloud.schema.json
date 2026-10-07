@@ -118,6 +118,43 @@
         false
       ]
     },
+    "profile": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "title": "Resource profile override",
+      "description": "Resource profile override for namespace. Can be not set",
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "Name of Resource Profile Override",
+          "description": "<<filename>> of Resource profile override",
+          "examples": [
+            "dev_override_"
+          ]
+        },
+        "baseline": {
+          "title": "Baseline of RPO",
+          "description": "Baseline name of Resource profile override",
+          "enum": [
+            "dev",
+            "dev-ha",
+            "prod",
+            "prod-nonha"
+          ],
+          "examples": [
+            "dev",
+            "dev-ha",
+            "prod",
+            "prod-nonha"
+          ]
+        }
+      }
+    },
     "maasConfig": {
       "type": "object",
       "title": "MaaS Configuration",
@@ -326,6 +363,8 @@
     "name",
     "apiUrl",
     "apiPort",
+    "privateUrl",
+    "publicUrl",
     "dashboardUrl",
     "labels",
     "defaultCredentialsId",

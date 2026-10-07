@@ -19,8 +19,8 @@
       "description": "A collection of key-value pairs specifying deployment (to manifest rendering) parameters",
       "examples": [
         {
-          "param1": true,
-          "param2": "value2"
+          "MONITORING_ENABLED": true,
+          "ZOOKEEPER_URL": "zookeeper.zookeeper:2182"
         }
       ]
     },
