@@ -2,3 +2,7 @@
   version: test-app:1.0.0
   deployPostfix: core
   namespace: core
+- wave: 0
+  version: test-app:1.0.0
+  deployPostfix: other
+  namespace: other

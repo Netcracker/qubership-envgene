@@ -148,13 +148,10 @@ _XFAIL_REASONS = {
     "xfail_cli_npe": (
         "Calculator CLI throws NullPointerException when the requested namespace is absent from "
         "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
-        "Affects BG-domain scenarios (dp_2, dp_4, dp_5) and non-BG no-match scenarios (dp_3)."
-    ),
-    "xfail_cli_no_aggregate_unmatched_listing": (
-        "The deployPostfix no-match error lists only the first unmatched postfix, not all of "
-        "them: the deployment-plan guard rejects on the first unmatched entry and never reaches "
-        "the rest, so an aggregate listing of every unmatched postfix is never produced. dp_6 "
-        "supplies two unmatched postfixes and only the first appears in the error."
+        "Affects BG-domain scenarios (dp_2, dp_4, dp_5) and non-BG no-match scenarios (dp_3, dp_6). "
+        "dp_6 supplies two unmatched postfixes but hits the same generic NPE as the single-postfix "
+        "cases - the parallel stream aborts on whichever one it reaches first, so neither postfix "
+        "name ever appears in the error (verified against the real CLI 2026-10-07)."
     ),
     "xfail_cli_no_hierarchy_rule": (
         "Calculator CLI does not enforce the documented rule that Tenant-level parameters "

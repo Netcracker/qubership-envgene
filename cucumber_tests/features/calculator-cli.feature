@@ -42,9 +42,15 @@ Feature: Calculator CLI
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "NAMESPACE: bss-peer"
 
-  # why: the no-match error must list ALL unmatched postfixes; DP-4 supplies only one
-  @xfail_cli_no_aggregate_unmatched_listing
-  Scenario: UC-CC-DP-6: Multiple Unmatched deployPostfix Values Listed Together
+  # why: verified against the real CLI (2026-10-07) - with two unmatched postfixes (foo, bar) the
+  # failure is the same CliParameterParser NPE as dp_2/dp_3/dp_4/dp_5 (generic
+  # "NamespaceDTO.isCleaned()" null-map-get crash), not a distinct aggregate-listing gap: the
+  # parallel stream aborts on whichever unmatched app it hits first, so the error names neither
+  # postfix, let alone both. The two "log shows" assertions below express the desired behavior
+  # (both unmatched names surfaced) and correctly stay red under xfail until the NPE is fixed -
+  # same shape as dp_3's "log shows nonexistent", just previously mistagged as a separate gap
+  @xfail_cli_npe
+  Scenario: UC-CC-DP-6: Multiple Unmatched deployPostfix Values Fail The Same Way As A Single One
     Given the workspace is initialized with test data from "e2e/uc_cc_dp_6"
     When the unified pipeline orchestrator runs
     Then the pipeline fails
@@ -177,12 +183,16 @@ Feature: Calculator CLI
     And the effective set runtime credentials contain "runtime_key:"
 
   # why: CP-2/CP-3 cover only the namespace-scoped failure paths; the success path is uncovered
+  # why: a single-namespace fixture cannot tell namespace-scoped injection apart from global
+  # injection (both would land in the same place), so a second namespace ("other") with its own
+  # deployed app proves the key lands ONLY in the targeted namespace
   Scenario: UC-CC-CP-8: Namespace-Scoped CUSTOM_PARAMS Injected into Target Namespace
     Given the workspace is initialized with test data from "e2e/uc_cc_cp_8"
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"namespaces\":{\"core\":{\"deployment\":{\"scoped_key\":\"from-custom\"}}}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the effective set deployment parameters contain "scoped_key: from-custom"
+    And the effective set deployment parameters for namespace "core" contain "scoped_key: from-custom"
+    And the effective set deployment parameters for namespace "other" do not contain "scoped_key"
 
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
 
@@ -353,11 +363,15 @@ Feature: Calculator CLI
   # ── Collision Handling (UC-CC-CO-*) ───────────────────────────────────────────
 
   # why: a deployParameter whose key equals a service name must move to the collision file
+  # why: with no non-colliding sibling parameter, the test could not tell "collision handling
+  # moved the key" from "collision handling disturbed everything" - ordinary_key proves ordinary
+  # parameters are left in place while only the colliding one moves
   Scenario: UC-CC-CO-1: Service-Named deployParameter Moved to Collision File
     Given the workspace is initialized with test data from "e2e/uc_cc_co_1"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And "test-app" is present in "collision-deployment-parameters.yaml" and absent from the root of "deployment-parameters.yaml"
+    And the effective set deployment parameters contain "ordinary_key: ordinary-value"
 
   # ── Image Parameters (UC-CC-IM-*) ─────────────────────────────────────────────
 
@@ -391,7 +405,9 @@ Feature: Calculator CLI
   # an `if (StringUtils.isNotBlank(cloud.getCloudApiUrl()))` block, so cloud.yml must set apiUrl
   # or the entire block is skipped and every one of these parameters is silently absent.
 
-  # why: #1691 Case 1 - composite baseline-only topology, per-namespace injection
+  # why: baseline-only composite (no satellites) injects ORIGIN_NAMESPACE for the baseline
+  # itself and nothing else - no PEER/CONTROLLER/BASELINE_* is expected since there is no BG
+  # domain and no satellite to carry a BASELINE_ORIGIN reference
   Scenario: UC-CC-TP-1: Composite Baseline-Only Topology Injects Baseline Namespace Parameters
     Given the workspace is initialized with test data from "e2e/uc_cc_tp_1"
     When the unified pipeline orchestrator runs
@@ -401,7 +417,9 @@ Feature: Calculator CLI
     And the effective set deployment parameters for namespace "dev-1-core" do not contain "CONTROLLER_NAMESPACE"
     And the effective set deployment parameters for namespace "dev-1-core" do not contain "BASELINE_ORIGIN"
 
-  # why: #1691 Case 2 - composite baseline plus plain satellites, baseline references injected
+  # why: a composite with plain (non-BG) satellites gives each satellite BASELINE_ORIGIN
+  # pointing at the baseline namespace, while the baseline itself gets none - distinguishes
+  # "is a baseline" from "references a baseline"
   Scenario: UC-CC-TP-2: Composite With Satellites Injects Baseline References
     Given the workspace is initialized with test data from "e2e/uc_cc_tp_2"
     When the unified pipeline orchestrator runs
@@ -412,7 +430,9 @@ Feature: Calculator CLI
     And the effective set deployment parameters for namespace "dev-1-oss" do not contain "BASELINE_PEER"
     And the effective set deployment parameters for namespace "dev-1-bss" contain "BASELINE_ORIGIN: dev-1-core"
 
-  # why: #1691 Case 3 - Blue-Green domain in a satellite, full per-namespace parameter table
+  # why: a Blue-Green domain nested in a satellite exercises the full per-namespace topology
+  # table at once - origin/peer/controller namespaces, BASELINE_ORIGIN on the BG members, and
+  # BG_CONTROLLER_LOGIN sourced from the controller's credential - all five roles present
   Scenario: UC-CC-TP-3: Blue-Green Domain In A Satellite Injects Per-Namespace Parameters
     Given the workspace is initialized with test data from "e2e/uc_cc_tp_3"
     When the unified pipeline orchestrator runs
