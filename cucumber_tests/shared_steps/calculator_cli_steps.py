@@ -78,19 +78,6 @@ def effective_set_params_exist_under_version(workspace: EnvGeneWorkspace, app_na
     assert found, f"No version directory '{version}/values' found for app '{app_name}' under {es_dir}"
 
 
-@then(parsers.parse('the effective set has no "{folder}" folder'))
-def effective_set_has_no_folder(workspace: EnvGeneWorkspace, folder: str) -> None:
-    folder_path = (
-        workspace.base_dir
-        / "environments" / workspace.cluster_name / workspace.env_name
-        / "effective-set" / folder
-    )
-    assert not folder_path.exists(), (
-        f"Expected no '{folder}' folder in the effective set, found: "
-        f"{[str(p) for p in folder_path.rglob('*')]}"
-    )
-
-
 def _find_deployment_file(workspace: EnvGeneWorkspace, app_name: str, filename: str = "custom-params.yaml") -> Path:
     es_dir = _get_effective_set_dir(workspace)
     candidates = [
