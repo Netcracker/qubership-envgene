@@ -45,7 +45,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads `ENV_TEMPLATE_VERSION_UPDATE_MODE` (default: `PERSISTENT`).
    2. Applies `ENV_TEMPLATE_VERSION`:
       - **PERSISTENT**:
@@ -55,7 +55,7 @@ Instance pipeline (GitLab or GitHub) is started with:
         - Does not change `envTemplate.*` in `env_definition.yml`.
         - Writes the applied version into:
           - `generatedVersions.generateEnvironmentLatestVersion: "<ENV_TEMPLATE_VERSION>"`
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits updated `env_definition.yml` into the Instance repository.
 
 **Results:**
