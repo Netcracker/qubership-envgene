@@ -28,8 +28,8 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 
 ## Input parameters
 
-| Parameter                      | Source | Required | Default   | Values / format   | Effect                                     |
-|--------------------------------|--------|----------|-----------|-------------------|--------------------------------------------|
+| Parameter                      | Source   | Required | Default   | Values / format   | Effect                                     |
+|--------------------------------|----------|----------|-----------|-------------------|--------------------------------------------|
 | `METRICS_COLLECTOR_URL`        | CI/CD    | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
 | `METRICS_COLLECTOR_TRACE_ID`   | Pipeline | No       | generated | 32 hex characters | Event field `traceid`                      |
 | `METRICS_COLLECTOR_PARENT_ID`  | Pipeline | No       | omitted   | Parent event `id` | Sets `parentid`, or omits the field        |
@@ -39,27 +39,27 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 
 ### Event fields
 
-| Field           | Required | Source                                               | Example                                                   |
-|-----------------|----------|------------------------------------------------------|-----------------------------------------------------------|
-| `specversion`   | Yes      | `"1.0"`                                              | `"1.0"`                                                   |
-| `id`            | Yes      | EnvGene (UUID v4)                                    | `"123e4567-e89b-12d3-a456-426614174000"`                  |
-| `source`        | Yes      | `CI_PROJECT_URL`                                     | `"https://gitlab.example.com/platform/env-instance-repo"` |
-| `type`          | Yes      | `"start"`, `"running"`, or `"stop"`                  | `"start"`                                                 |
-| `subject`       | Yes      | `CI_JOB_ID` of the job that sends the event          | `"5550001"`                                               |
-| `kind`          | Yes      | `"pipeline"`                                         | `"pipeline"`                                              |
-| `kindversion`   | Yes      | `"1.0"`                                              | `"1.0"`                                                   |
-| `traceid`       | Yes      | `METRICS_COLLECTOR_TRACE_ID`, or generated           | `"4bf92f3577b34da6a3ce929d0e0e4736"`                      |
-| `parentid`      | No       | `METRICS_COLLECTOR_PARENT_ID` when set. Omit when empty | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"`               |
-| `technicalname`    | Yes      | `<DD name>:<CI_JOB_NAME>`: instance repository Deployment Descriptor name without the version, `:`, and the name of the job that sends the event | `"envgene-instance-pipeline:env_prepare"`                 |
-| `technicalversion` | Yes      | Instance repository Deployment Descriptor version                   | `"v3.9.1-cloud_dd-20261007.065010-1-RELEASE"`            |
-| `displayname`      | No       | Constant `EnvGene Instance Pipeline`                 | `"EnvGene Instance Pipeline"`                             |
-| `datacontenttype`  | Yes      | `"application/json"`                                 | `"application/json"`                                      |
-| `jobid`         | Yes      | `CI_JOB_ID`                                          | `"5550001"`                                               |
-| `pipelineid`    | Yes      | `CI_PIPELINE_ID`                                     | `"987654"`                                                |
-| `projectid`     | Yes      | `CI_PROJECT_ID`                                      | `"12345"`                                                 |
-| `status`        | No       | `IN_PROGRESS`, `SUCCESS`, `FAILED`, or other         | `"SUCCESS"`                                               |
-| `time`          | Yes      | Current UTC time                                     | `"2026-06-12T14:00:00Z"`                                  |
-| `data`          | Yes      | See [`data` fields](#data-fields)                    | *(object)*                                                |
+| Field              | Required | Source                                                  | Example                                                   |
+|--------------------|----------|---------------------------------------------------------|-----------------------------------------------------------|
+| `specversion`      | Yes      | `"1.0"`                                                 | `"1.0"`                                                   |
+| `id`               | Yes      | EnvGene (UUID v4)                                       | `"123e4567-e89b-12d3-a456-426614174000"`                  |
+| `source`           | Yes      | `CI_PROJECT_URL`                                        | `"https://gitlab.example.com/platform/env-instance-repo"` |
+| `type`             | Yes      | `"start"`, `"running"`, or `"stop"`                     | `"start"`                                                 |
+| `subject`          | Yes      | `CI_JOB_ID` of the job that sends the event             | `"5550001"`                                               |
+| `kind`             | Yes      | `"pipeline"`                                            | `"pipeline"`                                              |
+| `kindversion`      | Yes      | `"1.0"`                                                 | `"1.0"`                                                   |
+| `traceid`          | Yes      | `METRICS_COLLECTOR_TRACE_ID`, or generated              | `"4bf92f3577b34da6a3ce929d0e0e4736"`                      |
+| `parentid`         | No       | `METRICS_COLLECTOR_PARENT_ID` when set. Omit when empty | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"`                  |
+| `technicalname`    | Yes      | `<DD name>:<CI_JOB_NAME>`                               | `"envgene-instance-pipeline:env_prepare"`                 |
+| `technicalversion` | Yes      | Instance repository Deployment Descriptor version       | `"v3.9.1-cloud_dd-20261007.065010-1-RELEASE"`             |
+| `displayname`      | No       | Constant `EnvGene Instance Pipeline`                    | `"EnvGene Instance Pipeline"`                             |
+| `datacontenttype`  | Yes      | `"application/json"`                                    | `"application/json"`                                      |
+| `jobid`            | Yes      | `CI_JOB_ID`                                             | `"5550001"`                                               |
+| `pipelineid`       | Yes      | `CI_PIPELINE_ID`                                        | `"987654"`                                                |
+| `projectid`        | Yes      | `CI_PROJECT_ID`                                         | `"12345"`                                                 |
+| `status`           | No       | `IN_PROGRESS`, `SUCCESS`, `FAILED`, or other            | `"SUCCESS"`                                               |
+| `time`             | Yes      | Current UTC time                                        | `"2026-06-12T14:00:00Z"`                                  |
+| `data`             | Yes      | See [`data` fields](#data-fields)                       | *(object)*                                                |
 
 Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`.
 
