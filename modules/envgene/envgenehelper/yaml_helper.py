@@ -201,9 +201,9 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
     else:
         make_quotes_for_strings(yamlData)
 
+    normalize_comments(yamlData)
     writeYamlToFile(file_path, yamlData)
     addHeaderToYaml(file_path, header_text)
-    align_spaces_before_comments(file_path)
     if allign_comments:
         alignYamlFileComments(file_path)
 
@@ -276,19 +276,24 @@ def make_quotes_for_strings(yaml_data):
                 make_quotes_for_strings(v)
 
 
-def align_spaces_before_comments(filePath):
-    result = ""
-    f = open(filePath, 'r')
-    fileLines = f.readlines()
-    for line in fileLines:
-        if re.match(r'^(.*):( +)#(.*)$', line):
-            pattern = r'^(.*):( +)#(.*)$'
-            alignedLine = re.sub(pattern, r'\1: #\3', line)
-        else:
-            alignedLine = line
-        result += alignedLine
-
-    writeToFile(filePath, result)
+def normalize_comments(data):
+    if isinstance(data, (CommentedMap, CommentedSeq)):
+        for key in [k for k, v in data.ca.items.items() if v is None]:
+            del data.ca.items[key]
+        eol_index = 2 if isinstance(data, CommentedMap) else 0
+        tokens = [t[eol_index] if len(t) > eol_index else None for t in data.ca.items.values()]
+        if data.ca.comment:
+            tokens.append(data.ca.comment[0])
+        for token in tokens:
+            if token is not None and not isinstance(token, list) and token.value.lstrip(" ").startswith("#"):
+                token.value = token.value.lstrip(" ")
+                token.column = 0
+    if isinstance(data, dict):
+        for child in data.values():
+            normalize_comments(child)
+    elif isinstance(data, list):
+        for child in data:
+            normalize_comments(child)
 
 
 def copy_yaml_and_remove_empty_dicts(source_yaml):

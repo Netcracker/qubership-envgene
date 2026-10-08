@@ -43,6 +43,7 @@ class PipelineParametersHandler(BaseModel):
     )
     # for reg defs v2 calculated from cloud e2e params
     transient_regdefs_dir: Optional[Path] = None
+    rendered_regdef_names: list[str] = Field(default_factory=list)
 
     @staticmethod
     def exclude_sensitive_parameters(params: dict[str, Any], sensitive_params: list[str]) -> dict[str, Any]:

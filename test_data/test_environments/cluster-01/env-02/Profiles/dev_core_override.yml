@@ -20,13 +20,13 @@ applications:
             value: "3"
           - name: "CPU_REQUEST"
             value: "150m"
-  - name: "core"  # from global-core-profile
+  - name: "core" # from global-core-profile
     version: "release-20241103.225817" # from global-core-profile
     sd: "" # from global-core-profile
     services:
       - name: "operator"
         parameters:
           - name: "GATEWAY_MEMORY_LIMIT"
-            value: "96Mi"  # from global-core-profile
+            value: "96Mi" # from global-core-profile
           - name: "GATEWAY_CPU_REQUEST"
-            value: "50m"  # from global-core-profile
+            value: "50m" # from global-core-profile

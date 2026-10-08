@@ -13,7 +13,7 @@ from envgene_shared.crypto.crypt import decrypted_cred_files
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
-from envgenehelper import delete_dir_if_exists
+from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, open_current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -24,7 +24,7 @@ from build_env.appregdef_render import run_appregdef_render
 from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
-from build_env.main import run_build_environment
+from build_env.main import cleanup_resulting_dir, run_build_environment
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
@@ -228,7 +228,7 @@ class AppregdefRenderStep(PipelineStep):
         return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION') or ctx.params.get('SD_DATA'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_appregdef_render()
+        ctx.rendered_regdef_names = run_appregdef_render()
 
 
 class RegdefV2AdapterStep(PipelineStep):
@@ -283,7 +283,16 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_build_environment(reuse_render_workspace=True)
+        env_dir = get_current_env_dir_from_env_vars()
+        with decrypted_cred_files(), open_current_env_instance_store(env_dir) as env_instance_store:
+            try:
+                run_build_environment()
+                cleanup_resulting_dir(env_dir)
+                env_instance_store.flush()
+            except Exception:
+                env_instance_store.flush(
+                    raw=True, raw_dir=artifacts_output_root(ctx.work_dir) / ctx.cluster_name / ctx.env_name / "render")
+                raise
 
 
 class GenerateEffectiveSetStep(PipelineStep):
