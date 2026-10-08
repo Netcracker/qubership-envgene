@@ -1,0 +1,9 @@
+name: cloud-env-over
+baseline: prod
+applications:
+  - name: app1
+    services:
+      - name: svc1
+        parameters:
+          - name: REPLICAS
+            value: 5
