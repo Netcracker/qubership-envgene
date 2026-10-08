@@ -15,7 +15,7 @@ databases: []
 mergeDeployParametersAndE2EParameters: false
 maasConfig:
   credentialsId: "maas-cred" # cloud passport: cluster-01 version: 1.5
-  enable: true  # cloud passport: cluster-01 version: 1.5
+  enable: true # cloud passport: cluster-01 version: 1.5
   maasUrl: "http://maas.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
   maasInternalAddress: "http://maas.maas:8080" # cloud passport: cluster-01 version: 1.5
 vaultConfig:

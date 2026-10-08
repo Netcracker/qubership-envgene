@@ -1,6 +1,6 @@
 import os
 
-from envgenehelper import beautifyYaml, copy_creds_to_env_creds_file, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, getEnvDefinitionPath, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, writeYamlToFile, yaml, extract_external_cred
+from envgenehelper import beautifyYaml, copy_creds_to_env_creds_file, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, writeYamlToFile, yaml, extract_external_cred
 from utils.schema_validation import checkCloudPassportBySchema
 
 # const
@@ -32,7 +32,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
     cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
     # cloud
     cloudYamlPath = f"{env_dir}/cloud.yml"
-    cloudYaml = openYaml(cloudYamlPath)
+    cloudYaml = current_env_instance_store().get(cloudYamlPath)
     for cloudKey, passportKey in CLOUD_SUBSTITUTIONS.items() :
         process_and_update_key(cloudKey, cloudYaml, passportKey, cloudPassportYaml["cloud"], comment)
         if (passportKey == "CLOUD_DASHBOARD_URL"):
@@ -94,8 +94,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
     logger.debug(f"Rest of params from cloud passport are: \n{dump_as_yaml_format(cloudPassportYaml)}")
     mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, is_external_cred_env)
     # storing cloud yaml
-    writeYamlToFile(cloudYamlPath, cloudYaml)
-    beautifyYaml(cloudYamlPath, cloud_schema)
+    current_env_instance_store().beautify(cloudYamlPath, cloud_schema)
 
 def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_dir, comment, is_external_cred_env):
     logger.info(f"Searching credentials for cloud passport {cloud_passport_file_path}")
@@ -128,27 +127,26 @@ def extract_cred_id(param, is_external=False):
     return get_cred_id_from_cred_macros(param)
 
 
-def update_env_definition_with_cloud_name(render_env_dir, source_env_dir, all_instances_dir):
-    inventoryYaml = getEnvDefinition(render_env_dir)
-    cloudName = find_cloud_name_from_passport(source_env_dir, all_instances_dir)
+def update_env_definition_with_cloud_name(inventoryYaml, source_env_dir, all_instances_dir):
+    cloudName = find_cloud_name_from_passport(source_env_dir, all_instances_dir, inventoryYaml)
     if cloudName:
-        logger.info(f"Env definition for {render_env_dir} updated with cloud name: {cloudName}")
+        logger.info(f"Env definition for {source_env_dir} updated with cloud name: {cloudName}")
         inventoryYaml["inventory"]["passportCloudName"] = cloudName
-        writeYamlToFile(getEnvDefinitionPath(render_env_dir), inventoryYaml)
     else:
-        logger.info(f"No cloud name found for env {render_env_dir} from passport")
+        logger.info(f"No cloud name found for env {source_env_dir} from passport")
 
-def process_cloud_passport(render_env_dir, env_instances_dir, instances_dir, is_external_cred_env=False) :
+def process_cloud_passport(env_instances_dir, instances_dir, inventoryYaml, is_external_cred_env=False) :
     logger.info(f"Trying to find cloud passport definition file")
-    cloudPassportFilePath = find_cloud_passport_definition(env_instances_dir, instances_dir)
+    cloudPassportFilePath = find_cloud_passport_definition(env_instances_dir, instances_dir, inventoryYaml)
     cloudPassportFileName = extractNameFromFile(cloudPassportFilePath)
     # checking passport by schema
-    checkCloudPassportBySchema(render_env_dir, cloudPassportFilePath)
+    checkCloudPassportBySchema(env_instances_dir, cloudPassportFilePath)
     if cloudPassportFilePath:
         logger.info(f"Processing cloud passport: {cloudPassportFilePath}")
         cloudPassportYaml = openYaml(cloudPassportFilePath)
         comment = f"cloud passport: {cloudPassportFileName} version: {cloudPassportYaml['version']}"
-        process_cloud_definition(cloudPassportYaml, render_env_dir, comment, is_external_cred_env)
-        add_cloud_passport_creds(cloudPassportFileName, cloudPassportFilePath, render_env_dir, comment, is_external_cred_env)
+        process_cloud_definition(cloudPassportYaml, env_instances_dir, comment, is_external_cred_env)
+        add_cloud_passport_creds(cloudPassportFileName, cloudPassportFilePath, env_instances_dir, comment,
+                                 is_external_cred_env)
     else:
         logger.info("No cloud passport definition found. Cloud passport processing skipped...")

@@ -259,9 +259,9 @@ def get_environment_name_from_full_name(env):
     return env.split('/')[1].strip()
 
 
-def find_cloud_passport_definition(env_instances_dir, instances_dir):
+def find_cloud_passport_definition(env_instances_dir, instances_dir, env_definition=None):
     # trying to get explicit passport name from env_definition
-    inventoryYaml = getEnvDefinition(env_instances_dir)
+    inventoryYaml = env_definition if env_definition is not None else getEnvDefinition(env_instances_dir)
     cloud_passport_file_name = ""
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
@@ -319,15 +319,15 @@ def findPassportInDefaultDirByName(env_instances_dir, passport_name):
         return ""
 
 
-def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
+def find_cloud_name_from_passport(source_env_dir, all_instances_dir, env_definition=None):
     # checking if inventory is related to cloud passport
-    inventoryYaml = getEnvDefinition(source_env_dir)
+    inventoryYaml = env_definition if env_definition is not None else getEnvDefinition(source_env_dir)
     cloudPassportFileName = ""
     # if passport name is defined in env_definition than using it
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloudPassportFileName = inventoryYaml["inventory"]["cloudPassport"]
         logger.info(f"Got cloud name from env_definition passport {cloudPassportFileName}")
-    cloudPassportFile = find_cloud_passport_definition(source_env_dir, all_instances_dir)
+    cloudPassportFile = find_cloud_passport_definition(source_env_dir, all_instances_dir, inventoryYaml)
     if cloudPassportFile:
         if f"{DEFAULT_PASSPORT_DIR_NAME}/{DEFAULT_PASSPORT_NAME}.y" in cloudPassportFile:
             cloudName = extractNameFromDir(getParentDirName(cloudPassportFile))
@@ -370,7 +370,7 @@ def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> Namespac
 @dataclass
 class NamespaceFile:
     path: Path
-    name: str = field(init=False)
+    name: str
     postfix: str = field(init=False)
     definition_path: Path = field(init=False)
     role: NamespaceRole = field(init=False)
@@ -378,7 +378,6 @@ class NamespaceFile:
 
     def __post_init__(self, bgd: dict | None):
         self.definition_path = self.path.joinpath('namespace.yml')
-        self.name = openYaml(self.definition_path)['name']
         self.postfix = self.path.name
         self.role = get_namespace_role(self.name, bgd)
 
@@ -410,7 +409,7 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
         return []
     namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
     bgd = get_bgd_object(env_dir)
-    namespaces = [NamespaceFile(path=p, bgd=bgd) for p in namespace_paths]
+    namespaces = [NamespaceFile(path=p, name=openYaml(p / 'namespace.yml')['name'], bgd=bgd) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
 

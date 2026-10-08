@@ -1,7 +1,6 @@
+import copy
 from pathlib import Path
-import os
-from envgenehelper import ValidationError, beautifyYaml, check_is_cred, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, findAllYamlsInDir, findYamls, find_yaml_file, getEnvDefinition, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, writeYamlToFile, yaml, extract_external_cred
-from envgene_shared.utils.file_utils import check_file_exists
+from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 from typing import Optional, Set
 
 #const
@@ -127,9 +126,8 @@ def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName, is
     processParametersAndAppend("technicalConfigurationParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment)
     return creds
 
-def getApplicationCreds(appPath, tenantName, cloudName, namespaceName="", external_cred_ids=None):
+def getApplicationCreds(appContent, tenantName, cloudName, namespaceName="", external_cred_ids=None):
     creds = []
-    appContent = openYaml(appPath)
     appName = appContent["name"]
     if namespaceName :
         comment = f"namespace {namespaceName} application {appName}"
@@ -148,13 +146,6 @@ def mergeCreds(newCreds, allCreds) :
             count = count + 1
             allCreds.append(cred)
     return { "countAdded": count, "mergedCreds" : allCreds }
-
-def getCredDefinitionYaml(yamlPath):
-    result = yaml.load("{}")
-    os.makedirs(os.path.dirname(yamlPath), exist_ok=True)
-    if os.path.exists(yamlPath):
-        result = openYaml(yamlPath)
-    return result
 
 def writeCredToYaml(credItem, credsYaml) :
     cred = credItem["cred"]
@@ -184,13 +175,14 @@ def writeCredToYaml(credItem, credsYaml) :
 def mergeAndSaveYaml(yamlPath, newCreds) :
     logger.info(f'"Saving credentials to file: {yamlPath}')
     count = 0
-    credsYaml = getCredDefinitionYaml(yamlPath)
+    env_instance_store = current_env_instance_store()
+    credsYaml = env_instance_store.get(yamlPath) if env_instance_store.exists(yamlPath) else yaml.load("{}")
     for cred in newCreds :
         if not cred["cred"]["credentialsId"] in credsYaml:
             count = count + 1
             credsYaml = writeCredToYaml(cred, credsYaml)
     logger.info("%s credentials created" % count)
-    writeYamlToFile(yamlPath, credsYaml)
+    env_instance_store.put(yamlPath, credsYaml)
 
 
 def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
@@ -213,50 +205,53 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
     raise FileNotFoundError(f"Shared credentials with key '{cred_name}' not found.")
 
 
-def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
-    inventoryYaml = getEnvDefinition(envDir)
-    credsYaml = openYaml(credYamlPath)
+def mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryYaml) :
+    env_instance_store = current_env_instance_store()
+    credsYaml = env_instance_store.get(credYamlPath)
     if ("sharedMasterCredentialFiles" in inventoryYaml["envTemplate"]) :
         sharedDictFileNames = inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"]
         logger.info(f"Inventory shared master creds list: \n{dump_as_yaml_format(sharedDictFileNames)}")
         for credFileName in inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"] :
             credFilePath = findSharedCredentials(credFileName, envDir, instancesDir)
             credYaml = openYaml(credFilePath)
+            validate_yaml_by_scheme_or_fail(input_yaml_content=credYaml, schema_file_path=credsSchema)
             count = 0
             for key in credYaml :
                 store_value_to_yaml(credsYaml, key, credYaml[key])
                 count += 1
             logger.info(f"Added {count} shared master credentials from {credFilePath}")
-    writeYamlToFile(credYamlPath, credsYaml)
+    env_instance_store.put(credYamlPath, credsYaml)
     return credsYaml
 
-def create_credentials(envDir, envInstancesDir, instancesDir, is_external_cred_env) :
-    logger.info(f"Start to create credentials: envDir={envDir}, envInstancesDir={envInstancesDir}, instancesDir={instancesDir}")
+def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml) :
+    env_instance_store = current_env_instance_store()
+    logger.info(f"Start to create credentials: envDir={envDir}, instancesDir={instancesDir}")
     logger.info(f"Creating credentials for environment directory: {envDir}")
     credsSchema = f"{get_schema_dir()}/credential.schema.json"
     resultingCreds = []
     #tenant
-    tenantFileName = envDir+"/tenant.yml"
+    envDir = Path(envDir)
+    tenantFileName = envDir / "tenant.yml"
     external_cred_ids = set()
     logger.info(f"Processing tenant")
-    tenantYaml = openYaml(tenantFileName)
+    tenantYaml = copy.deepcopy(env_instance_store.get(tenantFileName))
     tenantName = tenantYaml["name"]
     mergeResult = mergeCreds(getTenantCreds(tenantYaml, tenantName, is_external_cred_env, external_cred_ids), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from tenant {tenantFileName}')
     resultingCreds = mergeResult["mergedCreds"]
     #cloud
-    cloudFileName = envDir+"/cloud.yml"
+    cloudFileName = envDir / "cloud.yml"
     logger.info(f"Processing cloud")
-    cloudYaml = openYaml(cloudFileName)
+    cloudYaml = copy.deepcopy(env_instance_store.get(cloudFileName))
     cloudName = cloudYaml["name"]
     mergeResult = mergeCreds(getCloudCreds(cloudYaml, tenantName, cloudName, is_external_cred_env, external_cred_ids), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from cloud {cloudFileName}')
     resultingCreds = mergeResult["mergedCreds"]
     #bgd object
-    bgdFileName = envDir+"/bg_domain.yml"
+    bgdFileName = envDir / "bg_domain.yml"
     logger.info(f"Processing bg domain")
-    if check_file_exists(bgdFileName):
-        bgd_yaml = openYaml(bgdFileName)
+    if env_instance_store.exists(bgdFileName):
+        bgd_yaml = copy.deepcopy(env_instance_store.get(bgdFileName))
         bgd_name = bgd_yaml["name"]
         mergeResult = mergeCreds(get_bg_domain_creds(bgd_yaml, bgd_name, is_external_cred_env, external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added from bg domain {bgdFileName}')
@@ -264,17 +259,18 @@ def create_credentials(envDir, envInstancesDir, instancesDir, is_external_cred_e
     else:
         logger.info("Bg domain doesn't exist")
     # iterate through cloud applications and create cred definitions
-    applications = findAllYamlsInDir(f"{envDir}/Applications")
+    applications = env_instance_store.list(envDir / "Applications" / "*.yml")
     for appPath in applications :
-        mergeResult = mergeCreds(getApplicationCreds(appPath, tenantName, cloudName, external_cred_ids=external_cred_ids), resultingCreds)
+        appContent = copy.deepcopy(env_instance_store.get(appPath))
+        mergeResult = mergeCreds(getApplicationCreds(appContent, tenantName, cloudName,
+                                                     external_cred_ids=external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for cloud application {appPath}')
         resultingCreds = mergeResult["mergedCreds"]
     # iterate through namespaces and create cred definitions
     namespaceNameMap = {}
-    namespaces = findYamls(envDir, "/Namespaces", additionalRegexpNotPattern=r".+/Namespaces/.+/Applications/.+")
-    namespaces.sort()
+    namespaces = sorted(env_instance_store.list(envDir / "Namespaces" / "*" / "namespace.yml"), key=str)
     for namespacePath in namespaces :
-        namespaceYaml = openYaml(namespacePath)
+        namespaceYaml = copy.deepcopy(env_instance_store.get(namespacePath))
         namespaceKey = extract_namespace_from_namespace_path(namespacePath)
         namespaceName = namespaceYaml["name"]
         namespaceNameMap[namespaceKey] = namespaceName
@@ -282,20 +278,21 @@ def create_credentials(envDir, envInstancesDir, instancesDir, is_external_cred_e
         logger.info(f'{mergeResult["countAdded"]} creds added for namespace {namespacePath}')
         resultingCreds = mergeResult["mergedCreds"]
     # iterate through namespace applications and create cred definitions
-    applications = findYamls(envDir, "/Applications", additionalRegexpPattern=r".+/Namespaces/.+/Applications/.+")
-    applications.sort()
+    applications = sorted(env_instance_store.list(envDir / "Namespaces" / "*" / "Applications" / "*.yml"), key=str)
     for appPath in applications :
         namespaceKey = extract_namespace_from_application_path(appPath)
         namespaceName = namespaceNameMap[namespaceKey]
-        mergeResult = mergeCreds(getApplicationCreds(appPath, tenantName, cloudName, namespaceName, external_cred_ids), resultingCreds)
+        appContent = copy.deepcopy(env_instance_store.get(appPath))
+        mergeResult = mergeCreds(getApplicationCreds(appContent, tenantName, cloudName, namespaceName,
+                                                     external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for namespace application {appPath}')
         resultingCreds = mergeResult["mergedCreds"]
 
     #store credentials
-    credYamlPath = envDir + "/Credentials/credentials.yml"
+    credYamlPath = envDir / "Credentials" / "credentials.yml"
     mergeAndSaveYaml(credYamlPath, resultingCreds)
     # process shared credentials
-    env_creds_map = mergeSharedCreds(credYamlPath, envInstancesDir, instancesDir)
+    env_creds_map = mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryYaml)
     #validate external credentials
     if is_external_cred_env:
         if resultingCreds:
@@ -312,4 +309,4 @@ def create_credentials(envDir, envInstancesDir, instancesDir, is_external_cred_e
         if external_cred_ids:
             raise ReferenceError(f"Found external credential references in parameters in local cred only environment. Credential IDs are {external_cred_ids}")
     validate_cred_types(env_creds_map, is_external_cred_env, credYamlPath)
-    beautifyYaml(credYamlPath, credsSchema)
+    env_instance_store.beautify(credYamlPath, credsSchema)

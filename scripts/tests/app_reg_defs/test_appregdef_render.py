@@ -7,7 +7,9 @@ import pytest
 
 from scripts.tests.base_test import BaseTest
 
+from build_env.appregdef_render import write_app_reg_defs
 from build_env.render_config_env import EnvGenerator
+from envgenehelper import getEnvDefinition
 from envgenehelper.test_helpers import TestHelpers
 
 
@@ -46,8 +48,6 @@ class TestAppRegDefRendering(BaseTest):
         return render_dir
 
     def _get_render_context(self, test_number: str) -> dict:
-        render_dir = self.output_dir / "render" / self.env_name
-
         test_case_dir = self._get_test_case_dir(test_number)
 
         env_dir = test_case_dir / "environments" / self.cluster_name / self.env_name
@@ -59,11 +59,11 @@ class TestAppRegDefRendering(BaseTest):
         return {
             "cluster_name": self.cluster_name,
             "output_dir": str(test_case_dir / "environments"),
-            "current_env_dir": str(render_dir),
+            "current_env_dir": str(env_dir),
             "templates_dir": str(templates_dir),
             "templates_dirs": templates_dirs,
             "cloud_passport_file_path": "",
-            "env_instances_dir": str(env_dir),
+            "env_definition": getEnvDefinition(env_dir),
         }
 
     def _verify_rendered_files(self, test_number: str, render_dir: Path):
@@ -87,13 +87,13 @@ class TestAppRegDefRendering(BaseTest):
 
     @pytest.mark.parametrize("test_number", POSITIVE_CASES)
     def test_positive_basic_appdef_rendering(self, test_number):
-        self._setup_render_dir()
+        render_dir = self._setup_render_dir()
 
         render_context = EnvGenerator()
         context_vars = self._get_render_context(test_number)
-        render_context.render_app_reg_defs(self.env_name, context_vars)
+        rendered_defs = render_context.render_app_reg_defs(self.env_name, context_vars)
 
-        render_dir = Path(context_vars["current_env_dir"])
+        write_app_reg_defs(self.output_dir / "base", rendered_defs, render_dir, "dual")
         self._verify_rendered_files(test_number, render_dir)
 
     NEGATIVE_CASES = {
@@ -116,7 +116,8 @@ class TestAppRegDefRendering(BaseTest):
 
         render_context = EnvGenerator()
         context_vars = self._get_render_context("TC-001-013")
-        render_context.render_namespaces_for_map(self.env_name, context_vars)
+        namespace_by_deploy_postfix = render_context.render_namespaces_for_map(self.env_name, context_vars)
 
         namespace_file = Path(context_vars["current_env_dir"]) / "Namespaces" / "billing" / "namespace.yml"
-        assert namespace_file.is_file()
+        assert "billing" in namespace_by_deploy_postfix
+        assert not namespace_file.exists()

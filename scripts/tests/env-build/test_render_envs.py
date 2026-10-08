@@ -2,8 +2,8 @@ from os import environ
 
 import pytest
 
-from build_env.main import render_environment
-from envgenehelper import dump_as_yaml_format, get_all_files_in_dir, logger, os, shutil
+from build_env.main import cleanup_resulting_dir, render_environment
+from envgenehelper import delete_dir_if_exists, dump_as_yaml_format, get_all_files_in_dir, logger, open_current_env_instance_store, os, render_workspace_dir, shutil
 from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.test_helpers import TestHelpers
 
@@ -45,8 +45,7 @@ class TestEnvBuild(BaseTest):
         }
         g_templates_dirs.update(extra_templates)
 
-        g_inventory_dir = str((self.test_data_dir / "test_environments").resolve())
-        g_output_dir = str((self.base_dir / "/tmp/test_environments").resolve())
+        g_inventory_dir = str((self.test_data_dir / "environments").resolve())
 
         os.environ['CI_COMMIT_REF_NAME'] = "branch_name"
         environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
@@ -59,9 +58,13 @@ class TestEnvBuild(BaseTest):
         else:
             os.environ.pop("BG_NS_TARGET", None)
 
-        render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, g_output_dir, self.test_data_dir)
-        source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
-        generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
+        source_dir = str((self.test_data_dir / "test_environments" / cluster_name / env_name).resolve())
+        generated_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
+        delete_dir_if_exists(render_workspace_dir(self.test_data_dir))
+        with open_current_env_instance_store(generated_dir) as env_instance_store:
+            render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, self.test_data_dir)
+            cleanup_resulting_dir(generated_dir)
+            env_instance_store.flush()
         files_to_compare = get_all_files_in_dir(source_dir)
         logger.info(dump_as_yaml_format(files_to_compare))
         TestHelpers.assert_dirs_content(source_dir, generated_dir, True, False)

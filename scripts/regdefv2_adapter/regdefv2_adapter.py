@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import jsonschema
 from artifact_searcher.auth_resolver import (
@@ -179,11 +178,9 @@ def run_regdefv2_adapter(ctx) -> None:
     source_regdefs_path = ctx.committed_regdefs_dir
     if not source_regdefs_path.is_dir():
         raise ValueError(f"{source_regdefs_path} does not exist; cannot synthesize RegDef v2")
-    template_regdefs_dir = Path(render_context_vars["render_dir"]) / REGDEFS_DIRNAME
-
     regdef_v2_tmp_dir.mkdir(parents=True, exist_ok=True)
-    for template_regdef_file_path in helper.findAllYamlsInDir(template_regdefs_dir, recursively=False):
-        regdef_file = source_regdefs_path / Path(template_regdef_file_path).name
+    for regdef_name in ctx.rendered_regdef_names:
+        regdef_file = source_regdefs_path / f"{regdef_name}.yml"
         v1_data = helper.openYaml(regdef_file)
 
         if v1_data.get("version") == "2.0" or "authConfig" in v1_data:

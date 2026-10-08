@@ -1,5 +1,4 @@
-from envgenehelper import NamespaceRole, Path, check_dir_exist_and_create, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, copy_path, deleteFile, delete_dir, ensure_environment_name, extractNameFromFile, findAllYamlsInDir, find_all_sub_dir, find_cloud_passport_definition, getAbsPath, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, os, path, render_workspace_dir, validate_yaml_by_scheme_or_fail
-from envgene_shared import decrypted_cred_files
+from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, ensure_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir, validate_yaml_by_scheme_or_fail
 from envgenehelper.deployer import *
 
 from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
@@ -10,22 +9,12 @@ from build_env.render_config_env import EnvGenerator
 from build_env.env_specific_overrides import validate_env_specific_override_keys
 from build_env.resource_profiles import get_env_specific_resource_profiles
 
-
-INVENTORY_DIR_NAME = "Inventory"
-ENV_DEFINITION_FILE_NAME = "env_definition.yml"
+CREDENTIALS_FILE = Path("Credentials") / "credentials.yml"
 
 
-def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
-                                  render_parameters_dir, render_profiles_dir, output_dir, reuse_render_workspace=False):
-    # clearing folders
-    delete_dir(render_dir)
-    delete_dir(render_profiles_dir)
-    render_env_dir = f"{render_dir}/{env_name}"
-    copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
-    # clearing instances dir
-    cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
+def copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir):
     # copying parameters from templates and instances
-    if reuse_render_workspace and check_dir_exists(render_parameters_dir):
+    if check_dir_exists(render_parameters_dir):
         logger.info(f"Using common and instance paramsets copied by regdefv2_adapter to {render_parameters_dir}, "
                     f"adding origin/peer template paramsets")
         bg_templates_dirs = {role: path for role, path in templates_dirs.items() if role != NamespaceRole.COMMON}
@@ -34,15 +23,6 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
         delete_dir(render_parameters_dir)
         copy_template_paramsets(templates_dirs, render_parameters_dir)
         copy_instance_paramsets(source_env_dir, render_parameters_dir)
-    # copying all template resource profiles
-    copy_path(f'{templates_dirs[NamespaceRole.COMMON]}/resource_profiles', render_profiles_dir)
-    return render_env_dir
-
-
-def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir):
-    process_additional_template_parameters(render_env_dir, source_env_dir, all_instances_dir)
-    update_env_definition_with_cloud_name(render_env_dir, source_env_dir, all_instances_dir)
-    copy_path(f"{source_env_dir}/Credentials", f"{render_env_dir}/Credentials")
 
 
 def cleanup_resulting_dir(resulting_dir: Path):
@@ -58,49 +38,33 @@ def cleanup_resulting_dir(resulting_dir: Path):
             deleteFile(path)
 
 
-def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir):
-    check_dir_exist_and_create(output_dir)
-    # copying results to output_dir
-    env_instances_relative_dir = str(Path(source_env_dir).relative_to(Path(all_instances_dir)))
-    logger.info(f"Relative path of {env_name} in instances dir is: {env_instances_relative_dir}")
-    resulting_dir = f'{output_dir}/{env_instances_relative_dir}'
-    check_dir_exist_and_create(resulting_dir)
-    # overwrite env definition from instances, as it can mutate during generation
-    copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}',
-              f"{render_env_dir}/{INVENTORY_DIR_NAME}")
-    # pushing all to output dir
-    cleanup_resulting_dir(Path(resulting_dir))
-    copy_path(f'{render_env_dir}/*', resulting_dir)
-    return resulting_dir
+def load_env_inputs(env_name, source_env_dir, all_instances_dir) -> dict:
+    env_instance_store = current_env_instance_store()
+    env_definition = getEnvDefinition(source_env_dir)
+    process_additional_template_parameters(env_definition, source_env_dir, all_instances_dir)
+    update_env_definition_with_cloud_name(env_definition, source_env_dir, all_instances_dir)
+    ensure_environment_name(env_definition, env_name)
+    source_creds_path = Path(source_env_dir) / CREDENTIALS_FILE
+    if source_creds_path.is_file():
+        creds = openYaml(source_creds_path)
+        validate_yaml_by_scheme_or_fail(input_yaml_content=creds,
+                                        schema_file_path=get_schema_dir() / "credential.schema.json")
+        env_instance_store.put(source_creds_path, creds)
+    return env_definition
 
 
-def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir,
-                      reuse_render_workspace=False):
+def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, work_dir):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    render_dir = f"{base_dir}/tmp/render"
     render_parameters_dir = str(render_workspace_dir(base_dir) / "parameters")
-    render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
-
+    template_profiles_dir = str(Path(templates_dirs[NamespaceRole.COMMON]) / "resource_profiles")
 
     # preparing folders for generation
-    render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
-                                                   render_parameters_dir, render_profiles_dir, output_dir,
-                                                   reuse_render_workspace)
-    pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
+    copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
+    env_definition = load_env_inputs(env_name, source_env_dir, all_instances_dir)
     # get deployer parameters
     cmdb_url, _, _ = get_deployer_config()
     # perform rendering with Jinja2
-    # Load environment definition and ensure auto-derived environmentName is available
-    env_def_path = os.path.join(render_env_dir, "Inventory", "env_definition.yml")
-    try:
-        env_definition = openYaml(env_def_path) if os.path.exists(env_def_path) else {}
-    except Exception as e:
-        logger.warning(f"Failed to load environment definition from {env_def_path}: {str(e)}. Using empty definition.")
-        env_definition = {}
-
-    env_definition = ensure_environment_name(env_definition, env_name, persist_path=env_def_path)
-
     current_env = {
         "name": env_name,  # Always use folder name for consistency
         "environmentName": env_definition["inventory"]["environmentName"]
@@ -115,140 +79,48 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["cluster_name"] = cluster_name
     envvars["templates_dirs"] = templates_dirs
     envvars["templates_dir"] = templates_dirs.get(NamespaceRole.COMMON, '')
-    envvars["env_instances_dir"] = getAbsPath(render_env_dir)
-    envvars["render_dir"] = getAbsPath(render_dir)
+    envvars["current_env_dir"] = getAbsPath(source_env_dir)
     envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
-    envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
+    envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir,
+                                                                         env_definition)
     envvars["cmdb_url"] = cmdb_url
-    envvars["output_dir"] = output_dir
-    envvars["render_profiles_dir"] = render_profiles_dir
+    envvars["output_dir"] = all_instances_dir
+    envvars["template_profiles_dir"] = template_profiles_dir
     envvars["work_dir"] = str(work_dir)
+    envvars["env_definition"] = env_definition
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
-    validate_env_specific_override_keys(Path(render_env_dir))
-    env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
-                                                                           get_schema_dir() / "resource-profile.schema.json")
-    build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
+    validate_env_specific_override_keys(source_env_dir, env_definition)
+    env_specific_resource_profile_map = get_env_specific_resource_profiles(
+        source_env_dir, all_instances_dir, get_schema_dir() / "resource-profile.schema.json", env_definition)
+    build_env(source_env_dir, env_definition, render_parameters_dir, template_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.is_external_cred_env)
-    resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
-                                                     output_dir)
+    create_credentials(source_env_dir, all_instances_dir, render_context.is_external_cred_env, env_definition)
     logger.info(f"External cred env is set as {render_context.is_external_cred_env}")
-    return resulting_dir, render_context.is_external_cred_env
+    return source_env_dir, render_context.is_external_cred_env
 
 
-def get_duplicate_names(param_files):
-    file_names = list(map(extractNameFromFile, param_files))
-    return set([x for x in file_names if file_names.count(x) > 1])
-
-
-def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env_name=None):
-    errors = []
-    logger.info(f'Validate {templates_dir}/parameters dir')
-    param_files = findAllYamlsInDir(f'{templates_dir}/parameters')
-
-    names = get_duplicate_names(param_files)
-
-    if len(names) > 0:
-        errors.append(f'duplicate Paramset names {names}')
-
-    errors = errors + validate_parameter_files(param_files)
-
-    logger.info(f'Validate {all_instances_dir}/parameters dir')
-    param_files = findAllYamlsInDir(f'{all_instances_dir}/parameters')
-    # all_param_files = param_files
-    errors = errors + validate_parameter_files(param_files)
-
-    # Only validate the specific cluster if provided
-    if cluster_name:
-        if os.path.exists(f'{all_instances_dir}/{cluster_name}/parameters'):
-            logger.info(f'Validate {all_instances_dir}/{cluster_name}/parameters')
-            param_files = findAllYamlsInDir(f'{all_instances_dir}/{cluster_name}/parameters')
-            errors = errors + validate_parameter_files(param_files)
-
-            # Only validate the specific environment if provided
-            if env_name:
-                env_base_path = f'{all_instances_dir}/{cluster_name}/{env_name}'
-                if os.path.exists(env_base_path):
-                    # Now traverse through all subdirectories to find other parameter directories
-                    for root, dirs, files in os.walk(env_base_path):
-                        for dir_name in dirs:
-                            if dir_name == "parameters":
-                                param_path = os.path.join(root, dir_name)
-                                logger.info(f'Validate {param_path}')
-                                param_files = findAllYamlsInDir(param_path)
-                                errors = errors + validate_parameter_files(param_files)
-    else:
-        # If no specific cluster/env provided, validate all (original behavior)
-        sub_dirs = find_all_sub_dir(all_instances_dir)
-
-        for sub_dir in next(sub_dirs)[1]:
-            if sub_dir != "parameters":
-                logger.info(f'Validate {all_instances_dir}/{sub_dir}/parameters')
-                param_files = findAllYamlsInDir(f'{all_instances_dir}/{sub_dir}/parameters')
-                errors = errors + validate_parameter_files(param_files)
-
-                env_dirs = find_all_sub_dir(f'{all_instances_dir}/{sub_dir}')
-                for env_dir in next(env_dirs)[1]:
-                    if env_dir not in ["parameters", "cloud-passport"]:
-                        logger.info(f'Validate {all_instances_dir}/{sub_dir}/{env_dir}/Inventory/parameters')
-                        param_files = findAllYamlsInDir(f'{all_instances_dir}/{sub_dir}/{env_dir}/Inventory/parameters')
-                        errors = errors + validate_parameter_files(param_files)
-
-    # all_param_names = get_duplicate_names(all_param_files)
-    # if len(all_param_names) > 0:
-    #     errors.append(f'duplicate Env-specific Paramset names {all_param_names}')
-    if len(errors) > 0:
-        raise ReferenceError("\n" + "\n".join(errors))
-
-
-def validate_parameter_files(param_files):
-    errors = []
-    for param_file_path in param_files:
-        rel_param_file_path = os.path.relpath(param_file_path, os.getenv('CI_PROJECT_DIR'))
-        try:
-            validate_yaml_by_scheme_or_fail(param_file_path, get_schema_dir() / "paramset.schema.json")
-        except ValueError:
-            errors.append(f'Parameter file at {rel_param_file_path} is invalid, look for details above')
-        file_name = extractNameFromFile(param_file_path)
-        param_file = openYaml(param_file_path)
-
-        name = param_file["name"]
-        if file_name != name:
-            errors.append(f'Parameter "name" must be equal to filename without extension in file {rel_param_file_path}')
-    return errors
-
-
-def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir, output_dir, work_dir,
-                       reuse_render_workspace=False):
+def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir, work_dir):
     logger.info(f'env: {env_name}')
     logger.info(f'cluster_name: {cluster_name}')
     logger.info(f'templates_dirs: {templates_dirs}')
     logger.info(f'instances_dir: {all_instances_dir}')
-    logger.info(f'output_dir: {output_dir}')
     logger.info(f'work_dir: {work_dir}')
 
     check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir,
                                        validate_env_definition_by_schema=True)
-    for _, template_dir in templates_dirs.items():
-        if template_dir:
-            validate_parameters(template_dir, all_instances_dir, cluster_name, env_name)
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
-    resulting_env_dir, is_external_cred_env = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
-                                          output_dir, work_dir, reuse_render_workspace)
-    create_credentials(resulting_env_dir, env_dir, all_instances_dir, is_external_cred_env)
+    build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir, work_dir)
 
 
-def run_build_environment(reuse_render_workspace=False):
+def run_build_environment():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
     g_template_dirs = get_template_dirs()
     g_all_instances_dir = f"{base_dir}/environments"
-    g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
-    with decrypted_cred_files():
-        render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir,
-                           reuse_render_workspace)
+    render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_work_dir)

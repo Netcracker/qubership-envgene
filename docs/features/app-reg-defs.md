@@ -100,8 +100,9 @@ Each definition override is copied over the output of template rendering:
 Because template-rendered definitions are named by their `name` field, a definition override that replaces one must
 match that name, not the template filename.
 
-Definition overrides apply repository-wide: the same files are applied on every environment build. They are not
-schema-validated, because validation runs on the render output before definition overrides are applied.
+Definition overrides apply repository-wide: the same files are applied on every environment build. Each definition
+override is schema-validated before it's copied: an AppDef against the AppDef schema, a RegDef against the RegDef v1
+or v2 schema chosen by its content. An invalid definition override fails the build.
 
 The [`appdefs.overrides` and `regdefs.overrides`](#template-transformation) macros apply during template rendering. A
 definition override applies later and replaces the whole definition, including any values the macros produced.

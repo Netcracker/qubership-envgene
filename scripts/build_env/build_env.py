@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, beautifyYaml, check_dir_exist_and_create, check_dir_exists, copy, copy_path, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinition, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_namespaces, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, re, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, writeYamlToFile, yaml
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -105,105 +105,6 @@ def findParamsetsInDir(dirPath):
     return fileList
 
 
-def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
-    # Walk up the directory tree until we find the Inventory/env_definition.yml file
-    current_dir = os.path.dirname(templatePath)
-    derived_env_name = None
-    derived_cluster_name = None
-    valid_structure_found = False
-
-    while current_dir and os.path.split(current_dir)[1]:
-        env_def_path = os.path.join(current_dir, "Inventory", "env_definition.yml")
-
-        # Check if this path follows the expected structure /environments/<clusterName>/<environmentName>/
-        path_parts = os.path.normpath(current_dir).replace("\\", "/").split("/")
-        if len(path_parts) >= 3 and "environments" in path_parts:
-            env_index = path_parts.index("environments")
-            # Strict validation: Must have exactly cluster and environment after "environments"
-            if env_index + 2 < len(path_parts):
-                # Extract cluster and environment names from path
-                derived_cluster_name = path_parts[env_index + 1]
-                derived_env_name = path_parts[env_index + 2]
-
-                # Validate derived names
-                if not derived_cluster_name or not derived_env_name:
-                    logger.error(f"Invalid folder structure: empty cluster or environment name in path {current_dir}")
-                    raise ReferenceError(
-                        f"Invalid folder structure for environment derivation. Expected: environments/<cluster>/<environment>/, found: {current_dir}. Please check the folder structure.")
-                elif not re.match(r'^[a-zA-Z0-9_-]+$', derived_env_name):
-                    # Keep invalid name as warning only, don't fail
-                    logger.warning(
-                        f"Invalid environment name '{derived_env_name}' derived from path {current_dir}. Only alphanumeric characters, hyphens, and underscores are allowed.")
-                    # Continue with the invalid name, downstream validation will handle it
-                    valid_structure_found = True
-                else:
-                    valid_structure_found = True
-            else:
-                # Missing cluster or environment level in hierarchy
-                logger.error(f"Invalid folder structure: missing required hierarchy levels in path {current_dir}")
-                raise ReferenceError(
-                    f"Invalid folder structure. Expected: environments/<cluster>/<environment>/, found incomplete hierarchy in: {current_dir}. Please check the folder structure.")
-
-        if os.path.exists(env_def_path):
-            env_definition = openYaml(env_def_path)
-
-            # If environmentName is not defined, use the derived name
-            if "inventory" in env_definition and not env_definition["inventory"].get(
-                    "environmentName") and derived_env_name:
-                logger.info("Deriving environment name '" + derived_env_name + "' from folder structure")
-                env_definition["inventory"]["environmentName"] = derived_env_name
-
-                # Store the derived cluster name for reference if needed
-                if derived_cluster_name:
-                    env_definition["_derived_cluster_name"] = derived_cluster_name
-
-            return env_definition
-
-        # If we're in the output directory, try to find the corresponding path in the source directory
-        if env_instances_dir and "/tmp/" in current_dir:
-            # Extract the relative path from the tmp directory
-            tmp_index = current_dir.find("/tmp/")
-            if tmp_index >= 0:
-                relative_path = current_dir[tmp_index + 5:]  # Skip "/tmp/"
-                source_path = os.path.join(env_instances_dir, relative_path, "Inventory", "env_definition.yml")
-                if os.path.exists(source_path):
-                    env_definition = openYaml(source_path)
-
-                    # If environmentName is not defined, use the derived name
-                    if "inventory" in env_definition and not env_definition["inventory"].get(
-                            "environmentName") and derived_env_name:
-                        logger.info("Deriving environment name '" + derived_env_name + "' from folder structure")
-                        env_definition["inventory"]["environmentName"] = derived_env_name
-
-                        # Store the derived cluster name for reference if needed
-                        if derived_cluster_name:
-                            env_definition["_derived_cluster_name"] = derived_cluster_name
-
-                    return env_definition
-
-        current_dir = os.path.dirname(current_dir)
-
-    # Strict validation: If we reach here, no valid folder structure was found
-    if not valid_structure_found:
-        logger.error(
-            f"Invalid folder structure: Could not determine environment name from path for template {templatePath}")
-        raise ReferenceError(
-            f"Invalid folder structure. Expected: environments/<cluster>/<environment>/Inventory/env_definition.yml, but could not find valid hierarchy in path for template {templatePath}. Please check the folder structure.")
-
-    # If we have valid structure but no env_definition.yml file found
-    if derived_env_name and valid_structure_found:
-        logger.warning(
-            f"Valid folder structure found but env_definition.yml missing. Creating minimal environment definition with derived name '{derived_env_name}'")
-        return {
-            "inventory": {
-                "environmentName": derived_env_name
-            },
-            "_derived_cluster_name": derived_cluster_name if derived_cluster_name else ""
-        }
-
-    raise ReferenceError(f"Environment definition not found for template {templatePath}")
-
-
 def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
     # Strict order processing paramsets template -> cluster -> instance
     # Lower sort keys are processed first, later values override earlier ones
@@ -218,9 +119,10 @@ def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
     return sorted(entries, key=sort_key)
 
 
-def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map,
-                                     env_specific_params_map, header_text="", env_instances_dir=None):
+def mergeParameterSetsIntoParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map,
+                                     env_specific_params_map, env_definition):
     params = copy.deepcopy(paramsTemplate[parametersTag])
+    application_paramsets = []
     for pset in paramsTemplate[paramsetsTag]:
         # Check if paramset exists in paramset_map before accessing it
         if pset not in paramset_map:
@@ -235,7 +137,6 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
             isEnvSpecificParamset = entry["envSpecific"]
             # Get template context from environment definition
             try:
-                env_definition = findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir)
                 # Get environment name from inventory, with fallback to derived name from path
                 env_name = env_definition["inventory"].get("environmentName")
 
@@ -300,10 +201,20 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
                 if isEnvSpecificParamset:
                     storeToEnvSpecificParametersMap(env_specific_params_map, "", parametersTag, k, val, pset)
             # prepare application parameters
-            convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, paramSetAppParams, pset,
-                                              parametersTag, isEnvSpecificParamset, env_specific_params_map,
-                                              header_text)
+            application_paramsets.append((paramsetDefinitionComment, paramSetAppParams, pset, isEnvSpecificParamset))
     params = sortParameters(params)
+    return params, application_paramsets
+
+
+def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map,
+                                     env_specific_params_map, env_definition, header_text=""):
+    params, application_paramsets = mergeParameterSetsIntoParameters(
+        templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map,
+        env_definition)
+    for paramsetDefinitionComment, paramSetAppParams, pset, isEnvSpecificParamset in application_paramsets:
+        convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, paramSetAppParams, pset,
+                                          parametersTag, isEnvSpecificParamset, env_specific_params_map,
+                                          header_text)
     return params
 
 
@@ -320,8 +231,7 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
             if isEnvSpecificParamset:
                 storeToEnvSpecificParametersMap(env_specific_params_map, appName, parametersTag, j, val, paramsetName)
-        writeYamlToFile(applicationParametersFile, appDefinition)
-        beautifyYaml(applicationParametersFile, application_schema, header_text, wrap_all_strings=False)
+        current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
 
 
@@ -349,14 +259,15 @@ def storeToEnvSpecificParametersMap(env_specific_params_map, applicationName, pa
 
 def getApplicationParametersYaml(appName, applicationParametersFile):
     result = yaml.load("name: \"" + appName + "\"\ndeployParameters: {}\ntechnicalConfigurationParameters: {}\n")
-    os.makedirs(os.path.dirname(applicationParametersFile), exist_ok=True)
-    if os.path.exists(applicationParametersFile):
-        result = openYaml(applicationParametersFile)
+    env_instance_store = current_env_instance_store()
+    if env_instance_store.exists(applicationParametersFile):
+        result = env_instance_store.get(applicationParametersFile)
+    else:
+        env_instance_store.put(applicationParametersFile, result)
     return result
 
 
-def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent, paramset_map):
-    envDefinitionYaml = getEnvDefinition(env_instances_dir)
+def updateEnvSpecificParamsets(envDefinitionYaml, templateName, templateContent, paramset_map):
     result = {}
     if "envSpecificParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificParamsets"]:
@@ -404,23 +315,24 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
     return result
 
 
-def processTemplate(templatePath, templateName, env_instances_dir, schema_path, paramset_map, env_specific_params_map,
+def processTemplate(templatePath, templateName, env_definition, schema_path, paramset_map, env_specific_params_map,
                     resource_profiles_map=None, header_text="", process_env_specific=True):
     logger.info(f"Processing template: {templateName} in {templatePath}")
-    templateContent = openYaml(templatePath)
+    env_instance_store = current_env_instance_store()
+    templateContent = env_instance_store.get(templatePath)
     if process_env_specific:
-        updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent, paramset_map)
+        updateEnvSpecificParamsets(env_definition, templateName, templateContent, paramset_map)
     # process deployParameters
     templateContent["deployParameters"] = convertParameterSetsToParameters(templatePath, templateContent,
                                                                            "deployParameterSets", "deployParameters",
                                                                            paramset_map, env_specific_params_map,
-                                                                           header_text, env_instances_dir)
+                                                                           env_definition, header_text)
     templateContent["deployParameterSets"] = []
     # process e2eParameters
     templateContent["e2eParameters"] = convertParameterSetsToParameters(templatePath, templateContent,
                                                                         "e2eParameterSets", "e2eParameters",
                                                                         paramset_map, env_specific_params_map,
-                                                                        header_text, env_instances_dir)
+                                                                        env_definition, header_text)
     templateContent["e2eParameterSets"] = []
     # process technicalConfigurationParameters
     templateContent["technicalConfigurationParameters"] = convertParameterSetsToParameters(templatePath,
@@ -429,21 +341,19 @@ def processTemplate(templatePath, templateName, env_instances_dir, schema_path, 
                                                                                            "technicalConfigurationParameters",
                                                                                            paramset_map,
                                                                                            env_specific_params_map,
-                                                                                           header_text,
-                                                                                           env_instances_dir)
+                                                                                           env_definition,
+                                                                                           header_text)
     templateContent["technicalConfigurationParameterSets"] = []
     # preparing map for needed resource profiles
     if has_valid_profile_name(templateContent):
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
-    writeYamlToFile(templatePath, templateContent)
-    beautifyYaml(templatePath, schema_path, header_text)
+    env_instance_store.beautify(templatePath, schema_path, header_text)
     return
 
 
-def process_additional_template_parameters(render_env_dir, source_env_dir, all_instances_dir):
-    inventoryYaml = getEnvDefinition(render_env_dir)
-    envDefinitionPath = getEnvDefinitionPath(render_env_dir)
+def process_additional_template_parameters(inventoryYaml, source_env_dir, all_instances_dir):
+    envDefinitionPath = getEnvDefinitionPath(source_env_dir)
     shared_template_vars_values = inventoryYaml["envTemplate"].get("sharedTemplateVariables", [])
 
     if not shared_template_vars_values:
@@ -480,10 +390,9 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
     # storing to yaml
     logger.info(f"Resulting additional template variables are: \n{dump_as_yaml_format(result)}")
     inventoryYaml["envTemplate"]["additionalTemplateVariables"] = result
-    writeYamlToFile(envDefinitionPath, inventoryYaml)
 
 
-def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
+def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, is_external_cred_env=False):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
@@ -500,8 +409,8 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     common_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.COMMON,
                                               origin_template_exists, peer_template_exists)
 
-    env_dir = env_template_dir + "/" + env_name
-    logger.info(f"Env name: {env_name}")
+    env_instance_store = current_env_instance_store()
+    env_dir = Path(env_instances_dir)
     logger.info(f"Env dir: {env_dir}")
     logger.info(f"Parameters dir: {parameters_dir}")
     # const
@@ -510,21 +419,20 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     namespace_schema = f"{get_schema_dir()}/namespace.schema.json"
     profiles_schema = f"{get_schema_dir()}/resource-profile.schema.json"
 
-    envDefinitionYaml = getEnvDefinition(env_dir)
-    logger.info(getEnvDefinitionPath(env_dir))
+    logger.info(getEnvDefinitionPath(env_instances_dir))
     templateArtifactName = getTemplateArtifactName(envDefinitionYaml)
     generated_header_text = GENERATED_HEADER % templateArtifactName
 
-    tenantTemplatePath = env_dir + "/tenant.yml"
-    cloudTemlatePath = env_dir + "/cloud.yml"
-    namespaces = get_namespaces(Path(env_dir))
+    tenantTemplatePath = env_dir / "tenant.yml"
+    cloudTemlatePath = env_dir / "cloud.yml"
+    namespaces = env_instance_store.namespaces()
     # env specific parameters map - will be filled with env specific parameters during template processing
     env_specific_parameters_map = {}
     env_specific_parameters_map["namespaces"] = {}
 
     # process tenant
     logger.info(f"Processing tenant: {tenantTemplatePath}")
-    beautifyYaml(tenantTemplatePath, tenant_schema, generated_header_text)
+    env_instance_store.beautify(tenantTemplatePath, tenant_schema, generated_header_text)
 
     # process cloud
     needed_resource_profiles_map = {}
@@ -534,7 +442,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     processTemplate(
         cloudTemlatePath,
         "cloud",
-        env_instances_dir,
+        envDefinitionYaml,
         cloud_schema,
         common_paramset_map,
         env_specific_parameters_map["cloud"],
@@ -542,12 +450,12 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
-    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir, is_external_cred_env)
+    process_cloud_passport(env_instances_dir, all_instances_dir, envDefinitionYaml, is_external_cred_env)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
         cloudTemlatePath,
         "cloud",
-        env_instances_dir,
+        envDefinitionYaml,
         cloud_schema,
         common_paramset_map,
         env_specific_parameters_map["cloud"],
@@ -571,7 +479,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         processTemplate(
             ns.definition_path,
             ns.postfix,
-            env_instances_dir,
+            envDefinitionYaml,
             namespace_schema,
             ns_paramset_map,
             env_specific_parameters_map['namespaces'][ns.postfix],
@@ -586,7 +494,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process resource profiles
     result_profiles_dir = Path(f"{env_dir}/Profiles")
-    all_profiles = collect_resource_profiles(result_profiles_dir, resource_profiles_dir, profiles_schema,
+    all_profiles = collect_resource_profiles(resource_profiles_dir, profiles_schema,
                                              needed_resource_profiles_map, render_context)
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
                                                              render_context)
@@ -594,7 +502,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     if override_profile_map:
         for profile_key, profile_file_path in override_profile_map.items():
             all_profiles[profile_key] = profile_file_path
-            profile_name = openYaml(profile_file_path, {}).get("name")
+            profile_name = env_instance_store.get(profile_file_path).get("name")
 
             if profile_key == 'cloud':
                 update_profile_name(cloudTemlatePath, profile_name)
@@ -605,9 +513,9 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     for profile_key, profile_file_path in all_profiles.items():
         logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")
-        copy_path(profile_file_path, f"{result_profiles_dir}/")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
-        beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
+        env_instance_store.put(resulting_profile_path, env_instance_store.get(profile_file_path))
+        env_instance_store.beautify(resulting_profile_path, profiles_schema, generated_header_text)
 
 
 def set_cleaned_mark(namespaces: list[NamespaceFile]):
@@ -626,6 +534,5 @@ def set_cleaned_mark(namespaces: list[NamespaceFile]):
             filtered_ns.append(ns_obj)
     for ns in filtered_ns:
         logger.info(f"Operation type CLEAN: setting cleaned=true for namespace '{ns.name}'")
-        ns_yaml = openYaml(ns.definition_path)
+        ns_yaml = current_env_instance_store().get(ns.definition_path)
         set_nested_yaml_attribute(ns_yaml, "cleaned", True)
-        writeYamlToFile(ns.definition_path, ns_yaml)

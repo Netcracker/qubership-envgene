@@ -2,6 +2,38 @@ import pytest
 
 from build_env.appregdef_render import override_app_reg_defs
 
+APPDEF_CONTENT = """name: application-1
+registryName: registry-1
+artifactId: application-1
+groupId: org.qubership
+supportParallelDeploy: true
+deployParameters: {}
+technicalConfigurationParameters: {}
+"""
+
+REGDEF_CONTENT = """name: registry-1
+credentialsId: registry-cred
+mavenConfig:
+  repositoryDomainName: maven.qubership.org
+  fullRepositoryUrl: https://maven.qubership.org/repository
+  targetSnapshot: snapshot
+  targetStaging: staging
+  targetRelease: release
+  releaseGroup: ""
+  snapshotGroup: ""
+dockerConfig:
+  snapshotUri: docker.qubership.org/snapshot
+  stagingUri: docker.qubership.org/staging
+  releaseUri: docker.qubership.org/release
+  groupUri: docker.qubership.org/group
+  snapshotRepoName: docker-snapshot
+  stagingRepoName: docker-staging
+  releaseRepoName: docker-release
+  groupName: docker-group
+"""
+
+CONTENT_BY_DIR = {"AppDefs": APPDEF_CONTENT, "RegDefs": REGDEF_CONTENT}
+
 
 class TestOverrideAppRegDefs:
 
@@ -20,7 +52,7 @@ class TestOverrideAppRegDefs:
             p = self.base_dir / "configuration" / dir_name.lower()
             p.mkdir(parents=True)
             for filename in filenames:
-                (p / filename).write_text("override data")
+                (p / filename).write_text(CONTENT_BY_DIR[dir_name])
 
     def test_root_mode_copies_to_base_only(self):
         self._create_user_configs()
@@ -46,7 +78,7 @@ class TestOverrideAppRegDefs:
 
         override_app_reg_defs(self.base_dir, self.env_dir, "root")
 
-        assert (self.base_dir / "appdefs" / "app.yaml").read_text() == "override data"
+        assert (self.base_dir / "appdefs" / "app.yaml").read_text() == APPDEF_CONTENT
 
     def test_no_user_configs_changes_nothing(self):
         override_app_reg_defs(self.base_dir, self.env_dir, "dual")
@@ -62,3 +94,14 @@ class TestOverrideAppRegDefs:
 
         assert (self.base_dir / "appdefs" / "app1.yaml").exists()
         assert (self.base_dir / "appdefs" / "app2.yaml").exists()
+
+    @pytest.mark.parametrize("dir_name", ["AppDefs", "RegDefs"])
+    def test_invalid_override_fails(self, dir_name):
+        p = self.base_dir / "configuration" / dir_name.lower()
+        p.mkdir(parents=True)
+        (p / "broken.yaml").write_text("name: broken\n")
+
+        with pytest.raises(ValueError):
+            override_app_reg_defs(self.base_dir, self.env_dir, "dual")
+
+        assert not (self.base_dir / dir_name.lower() / "broken.yaml").exists()

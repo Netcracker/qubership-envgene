@@ -11,7 +11,8 @@ from envgene_shared.crypto.crypt import decrypt_file
 from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
 from .collections_helper import dict_merge
-from envgenehelper.yaml_helper import store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
+from .current_env_instance_store import current_env_instance_store
+from envgenehelper.yaml_helper import store_value_to_yaml, yaml
 from envgenehelper.external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, is_external_credential_reference
 
 from .logger import logger
@@ -329,16 +330,17 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
 
 
 def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
+    env_instance_store = current_env_instance_store()
     env_credentials_path = f"{env_dir}/Credentials/credentials.yml"
-    if os.path.exists(env_credentials_path) :
-        env_creds_yaml = openYaml(env_credentials_path)
+    if env_instance_store.exists(env_credentials_path) :
+        env_creds_yaml = env_instance_store.get(env_credentials_path)
     else:
         env_creds_yaml = yaml.load("{}")
     for key, value in creds_yaml_content.items() :
         store_value_to_yaml(env_creds_yaml, key, value)
     # storing credentials yaml
-    writeYamlToFile(env_credentials_path, env_creds_yaml)
-    beautifyYaml(env_credentials_path, creds_schema)
+    env_instance_store.put(env_credentials_path, env_creds_yaml)
+    env_instance_store.beautify(env_credentials_path, creds_schema)
     
 
 def get_cred_data(cred_id: str, env_creds: dict) -> dict:

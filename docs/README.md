@@ -86,6 +86,8 @@
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 - [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
+- [**Metrics Collector events**](/docs/features/metrics-collector-events.md) - Instance pipeline activity
+   events sent to Metrics Collector Service
 
 ## Examples & Samples
 
