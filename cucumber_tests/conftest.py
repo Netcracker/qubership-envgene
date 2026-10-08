@@ -155,6 +155,13 @@ _XFAIL_REASONS = {
                                   "reference each other) is not enforced by the Calculator CLI.",
     "xfail_cli_macro_ns_timeout": "Known bug: a macro reference resolved across hierarchy levels "
                                    "is dropped from the effective set deployment parameters.",
+    "xfail_cp_no_explicit_duplicate_check": "Known gap: find_passport_by_env_definition (via "
+                                             "find_yaml_file) returns the first os.walk match for "
+                                             "an explicitly named cloud passport with no duplicate "
+                                             "check, unlike the auto-association path "
+                                             "(findPassportInDefaultDirByName), which does raise on "
+                                             "multiple matches. docs/use-cases/cloud-passport.md "
+                                             "documents a duplicate-passport error for both paths.",
 }
 
 
