@@ -1,0 +1,100 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:00000000-0000-0000-0000-00000000rp01",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00.000000+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "app1-bom-ref",
+      "name": "app1",
+      "version": "1.0",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "app1-dd-bom-ref",
+          "group": "org.test",
+          "name": "test-app",
+          "version": "1.0",
+          "purl": "pkg:maven/org.test/test-app@1.0?registry_id=mock-reg&repository_id=release"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "container",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "app1-chart-bom-ref",
+      "name": "app1",
+      "version": "1.0",
+      "purl": "pkg:oci/app1@1.0"
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "svc1-bom-ref",
+      "name": "svc1",
+      "version": "",
+      "properties": [
+        {
+          "name": "docker_registry",
+          "value": "registry.test:17001"
+        },
+        {
+          "name": "full_image_name",
+          "value": "registry.test:17001/test/svc1:1.0"
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "svc1-image-bom-ref",
+          "group": "test",
+          "name": "svc1",
+          "version": "1.0",
+          "purl": "pkg:docker/test/svc1@1.0"
+        },
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "bom-ref": "svc1-baselines-bom-ref",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "QkFTRUxJTkVfTUVNT1JZOiBkZXYtbWVtClJFUExJQ0FTOiAxCg=="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "QkFTRUxJTkVfTUVNT1JZOiBwcm9kLW1lbQpSRVBMSUNBUzogMgo="
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": []
+}

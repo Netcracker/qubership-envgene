@@ -43,7 +43,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_build` job runs in the pipeline.
+1. The `env_build` step runs in the pipeline.
 2. EnvGene reads environment path from `ENV_NAMES`.
 3. EnvGene loads `env_definition.yml` and determines environment name.
 
@@ -80,7 +80,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_build` job runs in the pipeline.
+1. The `env_build` step runs in the pipeline.
 2. EnvGene reads environment path from `ENV_NAMES`.
 3. EnvGene loads `env_definition.yml` and uses explicit `environmentName`.
 
@@ -117,7 +117,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_build` job runs in the pipeline.
+1. The `env_build` step runs in the pipeline.
 2. EnvGene reads environment path from `ENV_NAMES`.
 3. EnvGene loads `env_definition.yml` and uses explicit `environmentName`.
 
@@ -154,7 +154,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_build` job runs in the pipeline.
+1. The `env_build` step runs in the pipeline.
 2. EnvGene attempts to determine environment name from path.
 3. EnvGene detects invalid folder structure.
 
@@ -187,7 +187,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_build` job runs in the pipeline.
+1. The `env_build` step runs in the pipeline.
 2. EnvGene derives environment name from folder path.
 3. EnvGene renders template with `current_env.name`.
 

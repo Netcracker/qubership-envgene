@@ -73,25 +73,28 @@ public class ProfileServiceCliImpl implements ProfileService {
         return profileMapper.convertToEntity(profileFullDto, tenant);
     }
 
-    public void setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues) {
+    public boolean setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues) {
         expandDottedKeys(profileValues);
-        if (overrideProfile != null) {
-            ApplicationProfile override = overrideProfile.getApplications().stream()
-                    .filter(app -> appName.equals(app.getName()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (override != null) {
-                ServiceProfile serviceOverride = override.getServices().stream()
-                        .filter(serviceProfileEntity -> serviceName.equals(serviceProfileEntity.getName()))
-                        .findFirst().orElse(null);
-                if (serviceOverride != null) {
-                    for (ParameterProfile param : serviceOverride.getParameters()) {
-                        putNestedValue(profileValues, param.getName(), param.getValue());
-                    }
-                }
-            }
+        if (overrideProfile == null || overrideProfile.getApplications() == null) {
+            return false;
         }
+        ApplicationProfile override = overrideProfile.getApplications().stream()
+                .filter(app -> appName.equals(app.getName()))
+                .findFirst()
+                .orElse(null);
+        if (override == null) {
+            return false;
+        }
+        ServiceProfile serviceOverride = override.getServices().stream()
+                .filter(serviceProfileEntity -> serviceName.equals(serviceProfileEntity.getName()))
+                .findFirst().orElse(null);
+        if (serviceOverride == null || serviceOverride.getParameters().isEmpty()) {
+            return false;
+        }
+        for (ParameterProfile param : serviceOverride.getParameters()) {
+            putNestedValue(profileValues, param.getName(), param.getValue());
+        }
+        return true;
     }
 
     @SuppressWarnings("unchecked")

@@ -82,10 +82,10 @@ Verifies the instance pipeline flow with App Reg Def rendering, environment buil
      CMDB_IMPORT: True
      ```
 
-2. The instance pipeline runs the following jobs sequentially:
+2. The instance pipeline runs the following steps sequentially:
 
    - `app_reg_def_render`
-   - `env_builder`
+   - `env_build`
    - `git_commit`
    - `cmdb_import`
 
@@ -95,7 +95,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, environment buil
 **Expected Results:**
 
 - The orchestration pipeline completes with status SUCCESS.
-- Instance pipeline jobs complete with status SUCCESS: `app_reg_def_render`, `env_builder`, `git_commit`, `cmdb_import`.
+- Instance pipeline steps complete with status SUCCESS: `app_reg_def_render`, `env_build`, `git_commit`, `cmdb_import`.
 
 ---
 
@@ -130,11 +130,11 @@ Verifies the instance pipeline flow with App Reg Def rendering, SD processing, e
      ENV_TEMPLATE_VERSION_UPDATE_MODE: PERSISTENT
      ```
 
-2. The instance pipeline runs the following jobs sequentially:
+2. The instance pipeline runs the following steps sequentially:
 
    - `app_reg_def_render`
    - `process_sd`
-   - `env_builder`
+   - `env_build`
    - `generate_effective_set`
    - `git_commit`
 
@@ -144,6 +144,6 @@ Verifies the instance pipeline flow with App Reg Def rendering, SD processing, e
 **Expected Results:**
 
 - The orchestration pipeline completes with status SUCCESS.
-- Instance pipeline jobs complete with status SUCCESS: `app_reg_def_render`, `process_sd`, `env_builder`,
+- Instance pipeline steps complete with status SUCCESS: `app_reg_def_render`, `process_sd`, `env_build`,
   `generate_effective_set`, `git_commit`.
 - Effective Set is generated.

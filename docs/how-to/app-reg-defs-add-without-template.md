@@ -38,7 +38,7 @@ For background on the definition override mechanism, see
 
 2. **Commit and push** the new file to the instance repository.
 
-3. **Trigger the instance pipeline.** The `app_reg_def_process` job picks up the definition override and adds it as a
+3. **Trigger the instance pipeline.** The `app_reg_def_process` step picks up the definition override and adds it as a
    new effective definition.
 
 4. **Verify** the new effective definition appears at:
