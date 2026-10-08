@@ -30,7 +30,6 @@ User Guide
     - [JSON values](#json-values)
     - [When to use pipeline_vars.env instead](#when-to-use-pipeline_varsenv-instead)
   - [Adding new parameters](#adding-new-parameters)
-  - [Extending the workflow](#extending-the-workflow)
   - [Parameter priority](#parameter-priority)
   - [Repository variables](#repository-variables)
     - [Variables used by the workflow](#variables-used-by-the-workflow)
@@ -327,13 +326,6 @@ inputs.
 EnvGene processes only the parameters listed in [Instance pipeline parameters](/docs/instance-pipeline-parameters.md).
 Unknown names are written to `GITHUB_ENV` and then ignored by the orchestrator.
 
-## Extending the workflow
-
-YAML jobs in the base workflow are `env-prepare` and `sync`. Extra GitHub Actions jobs or steps are not added by
-setting a parameter. They are added by patching `Envgene.yml` with the instance-repo-pipeline image.
-
-See [Extend the GitHub instance pipeline](/docs/how-to/extend-github-instance-pipeline.md).
-
 ## Parameter priority
 
 For a name written to `GITHUB_ENV` (orchestrator parameters), later writes win:
@@ -497,8 +489,6 @@ Replace `<YOUR_GITHUB_TOKEN>`, `<OWNER>`, `<REPO>`, and `main` as needed.
 
 ```text
 github_workflows/instance-repo-pipeline/
-├── Dockerfile                   # qubership-instance-repo-pipeline image (patch/extend tooling)
-├── extend_logic/scripts/        # apply_envgene_patch.py, git_commit.py (used inside that image)
 └── .github/
     ├── README.md                # This guide
     ├── actions/
@@ -615,6 +605,5 @@ matrix. `PIPELINE_TYPE=GITLAB_DEPLOY` rejects multiple `ENV_NAMES` values.
 | [Instance pipeline parameters](/docs/instance-pipeline-parameters.md)                  | Full parameter reference       |
 | [EnvGene pipelines](/docs/envgene-pipelines.md)                                        | Pipeline flow and descriptions |
 | [Using different Docker registries](/docs/how-to/docker-registry-configuration.md)     | GHCR and GAR configuration     |
-| [Extend the GitHub instance pipeline](/docs/how-to/extend-github-instance-pipeline.md) | Patch `Envgene.yml`            |
 | [Blue-Green deployment](/docs/features/blue-green-deployment.md)                       | BG-related parameters          |
 | [SD processing](/docs/use-cases/sd-processing.md)                                      | Solution Descriptor use cases  |

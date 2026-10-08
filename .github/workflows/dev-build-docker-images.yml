@@ -1,6 +1,6 @@
 name: "Dev: Build or Test Qubership EnvGene docker images"
 
-run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') && format('Test EnvGene for commit {0}', github.sha) || ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true') && github.event.inputs.tests-only == 'false')) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
+run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') && format('Test EnvGene for commit {0}', github.sha) || ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true' && github.event.inputs.tests-only == 'false')) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
 
 on:
   workflow_dispatch:
@@ -12,11 +12,6 @@ on:
         type: boolean
       build-envgene:
         description: 'Build Qubership Envgene image'
-        required: false
-        default: true
-        type: boolean
-      build-pipeline:
-        description: 'Build Instance Repo Pipeline image'
         required: false
         default: true
         type: boolean
@@ -129,39 +124,6 @@ jobs:
         uses: ./.github/actions/run-e2e-bdd
         with:
           envgene-image: ${{ env.REGISTRY }}/netcracker/qubership-envgene:${{ needs.build-qubership-envgene.outputs.custom_tag }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  build-instance-repo-pipeline:
-    name: Build Instance Pipeline
-    needs: [conventional-commits]
-    if: |
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
-      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-      attestations: write
-      id-token: write
-    steps:
-      - name: "Prepare app token"
-        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
-          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
-
-      - name: Build Instance Repo Pipeline Docker Image
-        uses: ./.github/actions/build-pipeline
-        with:
-          registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-gsf-instance:
