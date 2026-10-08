@@ -9,7 +9,7 @@
     - [Instance Repository Pipeline Parameters](#instance-repository-pipeline-parameters)
       - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
         - [`CRED_ROTATION_PAYLOAD` example](#cred_rotation_payload-example)
-    - [`credential_rotation` Job Workflow Principle](#credential_rotation-job-workflow-principle)
+    - [`credential_rotation` step workflow principle](#credential_rotation-step-workflow-principle)
     - [Dot-Notation Keys Processing](#dot-notation-keys-processing)
     - [Encryption](#encryption)
       - [Processing Flow](#processing-flow)
@@ -56,20 +56,21 @@ Supports working with SOPS encryption.
 7. Credential rotation in a single operation for multiple Environments is not supported. `ENV_NAMES` can only contain a single Environment ID.
 8. `CRED_ROTATION_PAYLOAD` and `GET_PASSPORT: true` cannot be combined in one pipeline run.
    The pipeline fails at validation before any per-environment job starts.
+9. Affected-parameter detection is scoped to the target Environment's cluster. When a rotated credential is shared across clusters, parameters that reference it in other clusters are not reported.
 
 ### Requirements
 
-1. Credential rotation operation is performed in a separate `credential_rotation` job
-   1. The job runs first among per-environment jobs
+1. Credential rotation operation is performed in the `credential_rotation` step
+   1. The step runs first among the per-environment steps
 2. Credential rotation operation must complete within 1 second (excluding GitLab/GitHub runner span time) for `CRED_ROTATION_PAYLOAD` with 10 elements
 3. Job logs must clearly show how long the job took to execute
 4. The operation must fail if there are [affected parameters](#affected-parameters) and `CRED_ROTATION_FORCE` is `false` or not specified
 5. Job artifacts must include a file containing [affected parameters](#affected-parameters)
-   1. The file must contain all affected parameters for each parameter from `CRED_ROTATION_PAYLOAD`
+   1. The file must contain all affected parameters within the target Environment's cluster for each parameter from `CRED_ROTATION_PAYLOAD`
 6. The operation must support the following [Credential](/docs/envgene-objects.md#credential) types:
    1. `usernamePassword`
    2. `secret`
-7. Encryption principles described in [Encryptio](#encryption) section must be followed
+7. Encryption principles described in [Encryption](#encryption) section must be followed
 8. If any error occurs during the processing of a single key in `CRED_ROTATION_PAYLOAD`, the system shall:
    - Preserve the system state prior to the failed operation
    - Terminate the entire credential rotation job with a failure status
@@ -143,7 +144,7 @@ A sensitive parameter can be defined within a complex parameter structure. In su
 }
 ```
 
-### `credential_rotation` Job Workflow Principle
+### `credential_rotation` step workflow principle
 
 Per-Item Processing (for each item in `CRED_ROTATION_PAYLOAD`):
 
@@ -247,13 +248,13 @@ The diagram below illustrates three scenarios:
 
 ### Force mode
 
-EnvGene only permits rotation of credentials with affected parameters in **force mode**, determined by the Instance pipeline parameter `CRED_ROTATION_FORCE`. In non-force mode, the `credential_rotation` job fails and no value changes occur.
+EnvGene only permits rotation of credentials with affected parameters in **force mode**, determined by the Instance pipeline parameter `CRED_ROTATION_FORCE`. In non-force mode, the `credential_rotation` step fails and no value changes occur.
 
 ### Affected Parameters Reporting
 
-For user and external system awareness, an `affected-sensitive-parameters.yaml` file is generated whenever affected parameters exist, regardless of force mode. This file is saved in the `credential_rotation` job artifacts.
+For user and external system awareness, an `affected-sensitive-parameters.yaml` file is generated whenever affected parameters exist, regardless of force mode. This file is saved in the pipeline artifacts.
 
-The `affected-sensitive-parameters.yaml` is created using the reverse logic described in the [`credential_rotation` Job Workflow Principle](#credential_rotation-job-workflow-principle).
+The `affected-sensitive-parameters.yaml` is created using the reverse logic described in the [`credential_rotation` step workflow principle](#credential_rotation-step-workflow-principle).
 
 > **Note:** If the credential is shared, this file will list all parameters and environments that will be updated by the rotation operation.
 

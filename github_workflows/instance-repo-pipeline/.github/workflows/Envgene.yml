@@ -131,7 +131,7 @@ jobs:
     outputs:
       PACKAGE_NAME: ${{ steps.set-outputs.outputs.PACKAGE_NAME }}
     container:
-      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.4.1' }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.6.7' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
@@ -226,7 +226,7 @@ jobs:
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
     container:
-      image: ${{ vars.SYNCER_IMAGE }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.SYNCER_IMAGE || 'qubership-envgene' }}:${{ vars.SYNCER_VERSION || '2.6.6' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}

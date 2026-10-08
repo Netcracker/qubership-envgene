@@ -10,8 +10,7 @@ from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import *
-from envgene_shared import *
+from envgenehelper import Optional, OrderedDict, Path, beautifyYaml, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, dumpYamlToStr, dump_as_yaml_format, ensure_directory, ensure_environment_name, findAllYamlsInDir, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_regdef_or_fail, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
     get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole, parse_bg_ns_target,
@@ -418,11 +417,13 @@ class EnvGenerator:
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
+        cluster_name = self.ctx.cluster_name
         env_name = inv.get("environmentName") or ""
         candidates = [
             inv.get("cloudName"),
-            inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
-            inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
+            (inv.get("passportCloudName", "") + "_" + env_name).replace("-", "_") if inv.get("passportCloudName") else "",
+            (inv.get("cloudPassport", "") + "_" + env_name).replace("-", "_") if inv.get("cloudPassport") else "",
+            f"{cluster_name}_{env_name}".replace("-", "_") if cluster_name and env_name else "",
             env_name.replace("-", "_"),
         ]
 

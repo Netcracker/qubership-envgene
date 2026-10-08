@@ -2311,7 +2311,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2323,7 +2323,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
@@ -2758,7 +2758,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2771,7 +2771,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**

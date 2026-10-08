@@ -92,10 +92,10 @@ The pipeline executes the following job sequence:
 appregdef_render → process_sd → env_build → generate_effective_set → git_commit
 ```
 
-If only the Effective Set needs to be regenerated without rebuilding the Environment Instance, set `ENV_BUILDER: false`. The `generate_effective_set` job will use the existing Instance files from the previous run.
+If only the Effective Set needs to be regenerated without rebuilding the Environment Instance, set `ENV_BUILDER: false`. The `generate_effective_set` step uses the existing Instance files from the previous run.
 
 > [!IMPORTANT]
-> The `generate_effective_set` job always depends on `env_build`. If `ENV_BUILDER: false` is set but the Environment Instance files are already present from a previous run, generation proceeds normally.
+> The `generate_effective_set` step always depends on `env_build`. If `ENV_BUILDER: false` is set but the Environment Instance files are already present from a previous run, generation proceeds normally.
 
 ---
 
@@ -157,7 +157,7 @@ effective-set/
         └── credentials.yaml
 ```
 
-The `git_commit` job commits these files to the Instance Repository automatically. The pipeline run is complete when `git_commit` succeeds and the files appear under `environments/prod-cluster/prod-01/effective-set/`.
+The `git_commit` step commits these files to the Instance Repository automatically. The pipeline run is complete when `git_commit` succeeds and the files appear under `environments/prod-cluster/prod-01/effective-set/`.
 
 ---
 
@@ -212,7 +212,7 @@ Set this as a pipeline variable:
 CUSTOM_PARAMS: '{"deployment":{"FEATURE_FLAG_NEW_BILLING":"true","MAX_RETRIES":"5"}}'
 ```
 
-The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files.
+The injected parameters are written to `custom-params.yaml` inside each application's `values/` folder, applied at the highest priority level after all other values files. A `deployment` override is decomposed the same way as a deployment parameter (root, `global`, and per-service), so it applies inside each service. It cannot change image or artifact metadata such as `docker_tag`, `docker_registry`, or `image`, which come from the Application's SBOM.
 
 To target only specific namespaces instead of all, use the `namespaces` key. Namespaces not listed receive an empty `custom-params.yaml`. This mode is mutually exclusive with top-level `deployment`/`runtime` keys:
 

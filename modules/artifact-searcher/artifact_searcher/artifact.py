@@ -305,6 +305,7 @@ def get_repos(registry) -> list[Repo]:
         Repo(value=maven.target_staging, type=RepoType.TARGET_STAGING),
         Repo(value=maven.target_release, type=RepoType.TARGET_RELEASE),
         Repo(value=maven.snapshot_group, type=RepoType.SNAPSHOT_GROUP),
+        Repo(value=maven.release_group, type=RepoType.RELEASE_GROUP),
     ]
     if _is_cloud_provider(registry):
         return [repo for repo in repos if repo.value] or [Repo(value="", type=RepoType.REPOSITORY_NAME)]
