@@ -53,6 +53,29 @@ Feature: Cloud Passport association - cloud-passport.md
     Then the pipeline fails
     And the pipeline log contains "does-not-exist"
 
+  # why: closes the other half of the doc's "multiple matches" alternate flow for auto-association.
+  # findPassportInDefaultDirByName counts matches via findYamls and raises ReferenceError when more
+  # than one file matches "cloud-passport/passport.y*" - deterministic regardless of os.walk order,
+  # since the error fires on count, not on which file is picked.
+  Scenario: UC-02 alternate flow: auto-association fails when the cluster has duplicate default passports
+    Given the workspace is initialized with test data from "e2e/uc_cp_02_duplicate_default"
+    When the unified pipeline orchestrator runs
+    Then the pipeline fails
+    And the pipeline log contains "More than one passport files found"
+
+  # why: the doc promises the same duplicate error for an explicitly named passport, but
+  # find_passport_by_env_definition (via find_yaml_file) returns the first os.walk match with no
+  # duplicate check at all - a doc/code divergence resolved as a code fix (see the comment on UC-02
+  # alternate flow above). Tagged xfail(strict): red today because the build succeeds using
+  # whichever duplicate os.walk visits first; once a duplicate check is added to the explicit path,
+  # this flips to green and strict will catch any future regression back to silent first-match.
+  @xfail_cp_no_explicit_duplicate_check
+  Scenario: UC-02 alternate flow: explicitly named passport fails when multiple matches exist
+    Given the workspace is initialized with test data from "e2e/uc_cp_02_explicit_duplicate"
+    When the unified pipeline orchestrator runs
+    Then the pipeline fails
+    And the pipeline log contains "duplicate"
+
   # ── UC-03: no passport anywhere, no explicit name - build proceeds unaffected ──
 
   Scenario: UC-03: Environment builds without Cloud Passport
@@ -75,7 +98,7 @@ Feature: Cloud Passport association - cloud-passport.md
     And the cloud.yml contains "STORAGE_ADDRESS: storage-custom.example.com:9000"
     And the cloud.yml parameter "apiUrl" has traceability comment "cloud passport: custom-passport version: 2.5"
 
-  # ── UC-06/UC-07/UC-08/UC-09: mixed cluster (business + infra) passport isolation ──
+  # ── UC-06/UC-07/UC-08: mixed cluster (business + infra) passport isolation ──
   # Shared fixture "uc_cp_06_mixed_cluster": one cluster, two environments, two passports -
   # cloud-passport/passport.yml (business default) and cloud-passport/passport-infra.yml.
 
@@ -114,18 +137,4 @@ Feature: Cloud Passport association - cloud-passport.md
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the cloud.yml contains "BSS_WORKLOAD_KEY: business-only-value"
-    And the cloud.yml parameter "BSS_WORKLOAD_KEY" has traceability comment "cloud passport: passport version: 3.0"
-
-  # why: reuses UC-06's exact fixture and scenario - that cluster already has the infra passport
-  # and infra environment introduced (the doc's "after" state). Getting the identical
-  # business-only outcome proves that adding an infra passport, and pointing the infra
-  # environment at it, does not change business environment behaviour.
-  Scenario: UC-09: Backward compatibility for existing business environments
-    Given the workspace is initialized with test data from "e2e/uc_cp_06_mixed_cluster"
-    And environment is "mixed-cluster/business-env"
-    When the unified pipeline orchestrator runs
-    Then the orchestrator completes successfully
-    And the cloud.yml contains "apiUrl: https://business-api.example.com"
-    And the cloud.yml contains "BSS_WORKLOAD_KEY: business-only-value"
-    And the cloud.yml does not contain "INFRA_WORKLOAD_KEY"
     And the cloud.yml parameter "BSS_WORKLOAD_KEY" has traceability comment "cloud passport: passport version: 3.0"
