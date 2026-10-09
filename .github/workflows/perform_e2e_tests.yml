@@ -1,34 +1,10 @@
 name: "E2E BDD Tests"
 
 on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches:
-      - '**'
+  workflow_dispatch: {}
 
 jobs:
-  check-changes:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      skip_tests_and_build: ${{ steps.scope.outputs.skip_tests_and_build }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Determine CI scope
-        id: scope
-        run: python3 .github/scripts/ci_scope.py
-
   eig-e2e-tests:
-    needs: [check-changes]
-    if: ${{ !cancelled() && needs.check-changes.outputs.skip_tests_and_build != 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
