@@ -17,7 +17,7 @@ dependencies = [
     "responses==0.25.7",
     "jsonschema==4.24.1",
     "jschon-sort==0.2.0",
-    "aiohttp==3.13.3",
+    "aiohttp==3.14.1",
     "asyncio==3.4.3",
     "aioresponses==0.7.8",
     "deepmerge==2.0",

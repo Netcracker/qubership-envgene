@@ -47,9 +47,8 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     /modules/artifact-searcher \
     /modules/external-cred-provision \
     /modules/dpg \
-    /modules/sbom_generator
-    /modules/envgene-shared \
-    /modules/dpg
+    /modules/sbom_generator \
+    /modules/envgene-shared
 
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \

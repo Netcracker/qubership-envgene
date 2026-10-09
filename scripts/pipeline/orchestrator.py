@@ -8,8 +8,6 @@ from enum import StrEnum
 from os import getenv
 from pathlib import Path
 
-from envgenehelper import logger, log_section, colorize, colorize_segment, banner, CustomFormatter, decrypted_cred_files, validate_creds, validate_parameters, get_artifact_size_limit_mb
-from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
 from envgene_shared.utils.logger import logger, CustomFormatter
 from envgene_shared.crypto.crypt import decrypted_cred_files
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
