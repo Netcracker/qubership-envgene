@@ -126,6 +126,11 @@ def mock_nexus(tmp_path_factory):
     app1_dir = base_dir / "release" / "org" / "test" / "test-app" / "1.0"
     _write_app_manifest(app1_dir, "test-app-1.0.json", "app1", "1.0", "bss")
 
+    # "external-secrets-artifact:v1" - env template artifact for external credentials scenarios.
+    ext_creds_dir = base_dir / "release" / "org" / "test" / "external-secrets-artifact" / "v1"
+    _write_maven_manifest(ext_creds_dir, "external-secrets-artifact-v1.json", "external-secrets-artifact", "v1")
+    _build_env_template_zip(ext_creds_dir / "external-secrets-artifact-v1.zip", "ext-creds-template")
+        
     proc = subprocess.Popen([sys.executable, "cucumber_tests/mock_server.py", "8000", str(base_dir)])
     
     # Wait for the mock server to start

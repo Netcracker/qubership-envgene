@@ -74,8 +74,8 @@ class DeploymentPlanCalculator:
             try:
                 generation_type = GenerationType(generation_type)
             except ValueError:
-                logging.error(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
-                raise ValueError(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Avaiable types of generation: `{GenerationType.__members__.values()}`")
+                logging.error(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Available types of generation: `{GenerationType.__members__.values()}`")
+                raise ValueError(f"Invalid type of generation provided in metadata AppDef for `{entity.version}`. Provided: {generation_type}. Available types of generation: `{GenerationType.__members__.values()}`")
 
             entity.generation_type = generation_type
             # we should provide generation id only for UniqForRun

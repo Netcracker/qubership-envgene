@@ -13,6 +13,7 @@
       - [Reverse merge](#reverse-merge)
       - [Limitation](#limitation)
     - [No-SD Mode](#no-sd-mode)
+  - [Cleanup context](#cleanup-context)
   - [Configuration](#configuration)
   - [See also](#see-also)
 
@@ -41,7 +42,7 @@ The detailed file-level layout and contents are documented in [Calculator CLI](/
 
 ## Inputs
 
-- **Full Solution Descriptor** — the definitive list of applications and their target namespaces. Required for `deployment`, `runtime`, and `cleanup` contexts; absent in [No-SD Mode](#no-sd-mode). See [SD processing](/docs/features/sd-processing.md).
+- **Full Solution Descriptor** — the definitive list of applications and their target namespaces. Required for `deployment` and `runtime` contexts, and absent in [No-SD Mode](#no-sd-mode). See [SD processing](/docs/features/sd-processing.md).
 - **Environment instance data** — `namespace.yml`, `cloud.yml`, credentials, and other environment objects under the environment's directory.
 - **Application SBOMs** — produced externally, cached in the Instance Repository. See [SBOM](/docs/features/sbom.md).
 - **Registry configuration** — `/configuration/registry.yml`.
@@ -55,7 +56,7 @@ Parameters at the namespace, application, and service levels are computed only f
 
 Behavior in mismatched cases:
 
-- **Namespace in Environment Instance but not referenced by any SD application** — the namespace is not included in the Effective Set. Generation continues for the remaining applications.
+- **Namespace in Environment Instance but not referenced by any SD application** — the namespace is not included in the `deployment` or `runtime` contexts. Generation continues for the remaining applications. In No-CMDB v1 the namespace can still receive a `cleanup` context. See [Cleanup context](#cleanup-context).
 - **Application in Environment Instance but absent from the SD** — the application is not included. Generation continues for the remaining applications.
 - **SD application's `deployPostfix` refers to a namespace that does not exist in the Environment Instance** — generation terminates with an error.
 - **SD application is not present in the Environment Instance** — generation succeeds, but no user-defined parameters are produced for that application.
@@ -72,7 +73,7 @@ The generation path is chosen automatically based on the outcome of SD processin
 
 ### Full Generation
 
-The entire ES is rebuilt from the current Full SD and environment instance data. All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) are produced. Applied when:
+The entire ES is rebuilt from the current Full SD and environment instance data. The `topology`, `pipeline`, `deployment`, and `runtime` contexts are produced. The `cleanup` context follows [Cleanup context](#cleanup-context). Applied when:
 
 - `SD_REPO_MERGE_MODE=replace`, or
 - The pipeline runs without an incoming SD, a Full SD already exists in the repository, and
@@ -83,7 +84,7 @@ Application and Registry Definitions for every application in the Full SD must b
 
 ### Partial Generation
 
-All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) remain present in the persistent ES, exactly as in full generation. The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
+The `topology`, `pipeline`, `deployment`, and `runtime` contexts remain present in the persistent ES, exactly as in full generation. The `cleanup` context follows [Cleanup context](#cleanup-context). The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
 
 Applied when SD processing produces a Delta SD — that is, `SD_REPO_MERGE_MODE` is `basic-merge`, `extended-merge`, or `basic-exclusion-merge`, and a Full SD already exists.
 
@@ -96,7 +97,7 @@ This mode is available only when `effective_set_generation_strategy=partial` or 
 Applies to `SD_REPO_MERGE_MODE` values `basic-merge` and `extended-merge`. The Delta SD lists the applications being added or updated.
 
 - The calculator is invoked with the Delta SD as input. It produces output across all five contexts, scoped to the Delta SD.
-- The output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are replaced for the applications in the Delta SD; `topology/`, `pipeline/`, and per-namespace `cleanup/` are replaced in full; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
+- The output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are replaced for the applications in the Delta SD; `topology/` and `pipeline/` are replaced in full, and `cleanup/` is replaced in full for all namespaces regardless of the Delta SD scope; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
 - Applications not in the Delta SD keep their existing slices; their SBOMs are not requested.
 
 #### Reverse merge
@@ -105,11 +106,11 @@ Applies to `SD_REPO_MERGE_MODE` value `basic-exclusion-merge`. The Delta SD list
 
 - The calculator is not invoked. SBOMs for the removed applications are not requested.
 - Per-application slices of the removed applications are deleted from `deployment/` and `runtime/`.
-- If removing an application leaves a namespace with no applications in the Full SD, that namespace is also removed from `deployment/`, `runtime/`, and `cleanup/`, and its entry is dropped from all three `mapping.yml` files.
+- If removing an application leaves a namespace with no applications in the Full SD, that namespace is removed from `deployment/` and `runtime/`, and its entry is dropped from those two `mapping.yml` files. The namespace keeps its `cleanup/` context and `cleanup/mapping.yml` entry, because the namespace object still exists.
 
 #### Limitation
 
-Under partial generation, the `generate_effective_set` stage follows the Delta SD scope: `topology/`, `pipeline/`, and `cleanup/` are refreshed from the merged calculator output, but **`deployment/` and `runtime/` are recomputed only for applications in the Delta SD**. For every other application, the stage **does not rewrite** that application's slices under `effective-set/deployment/` and `effective-set/runtime/`. Environment-instance changes for those applications are **not** folded into the Effective Set on this run. To recalculate **all** applications, trigger [full generation](#full-generation).
+Under partial forward merge, the `generate_effective_set` stage follows the Delta SD scope: `topology/`, `pipeline/`, and `cleanup/` are refreshed from the merged calculator output, but **`deployment/` and `runtime/` are recomputed only for applications in the Delta SD**. For every other application, the stage **does not rewrite** that application's slices under `effective-set/deployment/` and `effective-set/runtime/`. Environment-instance changes for those applications are **not** folded into the Effective Set on this run. To recalculate **all** applications, trigger [full generation](#full-generation).
 
 ### No-SD Mode
 
@@ -119,15 +120,37 @@ Applied when the pipeline runs without an incoming SD and one of the following h
 - A Full SD exists but `use_committed_sd` is `false` in
   [`config.yml`](/docs/envgene-configs.md#configyml).
 
-Only `topology` and `pipeline` contexts are produced. `deployment`, `runtime`, and `cleanup` require
-application data from a Solution Descriptor and cannot be generated without one. SBOMs are not required
-so are not generated.
+Only `topology`, `pipeline`, and `cleanup` contexts are produced. `deployment` and `runtime` require application
+data from a Solution Descriptor, so they are not produced. The `cleanup` context does not depend on the Solution
+Descriptor and is produced for every namespace of the environment. SBOMs are not required so are not generated.
 
 By default (`use_committed_sd: true`) a run with no incoming SD uses the committed Full SD and Full
 Generation runs.
 
 See [Generate Without a Solution Descriptor](/docs/how-to/generate-effective-set.md#generate-without-a-solution-descriptor)
 in the how-to guide.
+
+## Cleanup context
+
+The `cleanup/` context holds, per namespace, the parameters and credentials that downstream tooling reads to undeploy a namespace. EnvGene produces the context. The cluster-side removal is performed by the consuming tooling. The per-namespace file layout is documented in [Calculator CLI](/docs/features/calculator-cli.md#version-20-cleanup-context).
+
+Two kinds of tooling consume the cleanup output, and they need different parts of it. Pipeline-driven cleanup reads the per-namespace cleanup context to undeploy each namespace. A cluster-resident cleaner reads only the environment topology and resolves the rest itself. The cleanup context is produced only for the flows whose consumer reads it.
+
+Which namespaces receive it depends on the [deployment architecture](/docs/deployment-architecture.md) and the operation:
+
+| Architecture | Operation | Cleanup context produced for       |
+| ------------ | --------- | ---------------------------------- |
+| No-CMDB v1   | `DEPLOY`  | every namespace of the environment |
+| No-CMDB v2   | `DEPLOY`  | no namespace                       |
+| No-CMDB v2   | `CLEAN`   | no namespace                       |
+
+In No-CMDB v1 deploy, a namespace with no application versions deployed to it still receives a cleanup context and a `cleanup/mapping.yaml` entry, so a later teardown of the whole environment covers every namespace. No `.cleaned` marker is written for these namespaces. The cleanup context is produced the same way in [No-SD Mode](#no-sd-mode), where the environment has namespaces but no current solution.
+
+In No-CMDB v2 clean, no cleanup context is produced. The `CLEAN` operation marks the target namespaces' deployment and runtime for removal, writing a `.cleaned` marker into `deployment/<ns>/` and `runtime/<ns>/` and dropping them from `deployment/mapping.yaml` and `runtime/mapping.yaml`. See [CLEAN sub-flows](/docs/technical-design/instance-pipeline/sub-flows/clean.md).
+
+The cleanup context of a namespace merges the `deployParameters` of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. Non-sensitive values go to `parameters.yaml` and sensitive values go to `credentials.yaml`. Application-level parameters are not included. Custom parameters from the `deployment` section override these values.
+
+Whether the cleanup context is generated for every namespace is controlled by the calculator input [`--generate-cleanup-context`](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes), which the pipeline derives from `PIPELINE_TYPE`. No dedicated pipeline parameter controls it.
 
 ## Configuration
 

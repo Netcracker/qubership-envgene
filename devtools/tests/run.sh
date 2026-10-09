@@ -27,5 +27,6 @@ run_pytest_suite build_env scripts/build_env
 run_pytest_suite cred_rotation creds_rotation/scripts
 run_pytest_suite sbom_retention build_effective_set_generator/scripts
 run_pytest_suite external_cred_provision modules/external-cred-provision
+run_pytest_suite envgene_shared modules/envgene-shared/envgene_shared
 
 junitparser merge junit_*.xml junit.xml

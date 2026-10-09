@@ -1,248 +1,338 @@
-# Resource Profiles
+# Resource profiles
 
-- [Resource Profiles](#resource-profiles)
+- [Resource profiles](#resource-profiles)
   - [Overview](#overview)
-  - [Resource Profile Processing During Environment Generation](#resource-profile-processing-during-environment-generation)
-    - [Combination Logic](#combination-logic)
-    - [Naming Rules for Resource Profile Override](#naming-rules-for-resource-profile-override)
-  - [Resource Profile Processing During Effective Set Calculation](#resource-profile-processing-during-effective-set-calculation)
-    - [Merging Logic](#merging-logic)
-    - [Resolving Dot Notation](#resolving-dot-notation)
+  - [Three-level hierarchy](#three-level-hierarchy)
+  - [Environment generation: combining overrides](#environment-generation-combining-overrides)
+    - [Template Resource Profile Override](#template-resource-profile-override)
+    - [Environment-specific Resource Profile Override](#environment-specific-resource-profile-override)
+    - [Merge and replace](#merge-and-replace)
+      - [Replace mode](#replace-mode)
+      - [Merge mode](#merge-mode)
+    - [Naming rules for Resource Profile Override](#naming-rules-for-resource-profile-override)
+  - [Effective Set calculation: resolving the profile](#effective-set-calculation-resolving-the-profile)
+    - [Side selection](#side-selection)
+    - [Baseline resolution within the active side](#baseline-resolution-within-the-active-side)
+    - [Applying the override and baseline to each service](#applying-the-override-and-baseline-to-each-service)
+    - [Outcome table](#outcome-table)
+    - [Result in the Effective Set](#result-in-the-effective-set)
+  - [Resolving dot notation](#resolving-dot-notation)
+    - [Baseline example](#baseline-example)
+    - [Override example](#override-example)
+  - [Related documentation](#related-documentation)
 
 ## Overview
 
-Performance deployment parameters like `CPU_LIMIT` and `MEMORY_REQUEST` are grouped separately into Resource Profiles. This makes it manage separately these parameters apart from all other deployment parameters.
+Performance parameters such as CPU, memory, and replicas are grouped into Resource Profiles, keeping them
+separate from other deployment parameters so they can be managed independently.
 
-The Resource Profiles system has a 3-level hierarchy:
+For the implementation details, see the
+[`env_build` step](/docs/technical-design/instance-pipeline/steps/env-build.md) for how overrides are
+combined and the [Calculator CLI](/docs/features/calculator-cli.md) for how the baseline and override are
+resolved.
+For worked scenarios, see [Resource profiles use cases](/docs/use-cases/resource-profiles.md).
 
-1. Resource Profile Baselines
+## Three-level hierarchy
 
-    These are sets of pre-configured performance parameters for services, intended to provide a standardized performance configuration for a service.
-    Service developers create these baselines and distribute them together with the application artifact. Later, they are included in the Application SBOM.
+Resource Profiles are organized into three levels.
 
-    Typical baseline profiles are:
+A **baseline** is a named set of performance parameters that the application provides for its services.
+Application developers create baselines and ship them with the application. An application can define
+multiple baselines, each identified by a unique name.
 
-    - `dev`: The minimum amount of resources required for the service to run under low load.
-    - `prod`: The recommended amount for production workloads, so that you only need to scale the number of replicas.
+Typical baseline names are:
 
-    You can have any number of profiles and call them whatever you want, e.g. `small`, `medium`, `large`.
+- `dev` - the minimum resources required for the service to run under low load.
+- `prod` - the recommended resources for production workloads.
 
-2. [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override)
+As an application developer, you can give a baseline any name, for example `small`, `medium`, or
+`large`. As a configurator, you can only select a baseline that the application already defines.
 
-    These are customizations for performance parameters, over a Baseline Resource Profile.
-    Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile Override for all environments of the same type.
+A **[template override](/docs/envgene-objects.md#template-resource-profile-override)** (Template Resource
+Profile Override) sets custom values on top of a baseline. The configurator creates these in the Template
+repository to apply a consistent adjustment across all environments of the same type.
 
-3. [Environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
+An **[environment-specific override][env-specific-rpo]** (Environment Specific Resource Profile Override)
+sets a further set of custom values on top of the template override. The configurator creates these in the
+Instance repository for a specific environment.
 
-    These are customizations for performance parameters, over a Baseline Resource Profile and Template Resource Profile Override.
-    Such overrides are created by the configurator in the Instance repository, to further adjust performance parameters on top of the Baseline Resource Profile and Template Resource Profile Override.
+When generating an [Environment Instance](/docs/envgene-objects.md#environment-instance-objects), the
+template and environment-specific overrides are combined (merged or replaced) into a single
+[Resource Profile Override](/docs/envgene-objects.md#resource-profile-override). The environment-specific
+override wins on conflicts.
 
-When generating an [Environment Instance](/docs/envgene-objects.md#environment-instance-objects), the Template and Environment-specific Resource Profile Overrides are either merged or replaced, resulting in the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override). The Environment-specific Resource Profile Override has higher priority.
+When calculating the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20), the Resource
+Profile Override and the applicable baseline are combined to produce
+[per-service deployment context parameters][per-service-params].
+The override always takes precedence over the baseline.
 
-When calculating the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20), parameters from the Resource Profile Baselines and the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are also merged and used as [per-service deployment context parameters](/docs/features/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters). The Resource Profile Override has higher priority.
+## Environment generation: combining overrides
 
-## Resource Profile Processing During Environment Generation
+During environment generation, the template override and the environment-specific override are combined into
+one [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) per Cloud or Namespace.
 
-During Environment generation, as part of the [`env_build`](/docs/envgene-pipelines.md#instance-pipeline) job, two types of Resource Profile Overrides are processed and combined:
+### Template Resource Profile Override
 
-1. [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override)
+A template override applies to a Namespace or Cloud only when that object references it by name through
+its `profile.name` attribute. An override file that no object references is ignored, wherever it sits. Each
+override is a YAML file under `/templates/resource_profiles` in the Environment Template repository. The
+filename (without the `.yaml` or `.yml` extension) must exactly match the value of `profile.name`.
 
-    The Template Resource Profile Override is configured individually for each Namespace or Cloud, identified by the `profile.name` property.
-    Each override is represented as a YAML file located at `/templates/resource_profiles` within the Environment Template repository.
-    The filename (without the `.yaml` or `.yml` extension) must exactly correspond to the value set in `profile.name` for that specific Cloud or Namespace.
+For example, a Namespace with:
 
-    For example, if a namespace specifies `profile.name: dev-over`, it will use `/templates/resource_profiles/dev-over.yaml` as its template resource profile override.
+```yaml
+profile:
+  name: dev-over
+```
 
-2. [Environment-Specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
+references `/templates/resource_profiles/dev-over.yaml`.
 
-    The Environment-Specific Resource Profile Override is specified individually for each Namespace or Cloud via `envTemplate.envSpecificResourceProfiles` parameter of the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+### Environment-specific Resource Profile Override
 
-    ```yaml
-    envTemplate:
-      envSpecificResourceProfiles:
-        # Key: `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance
-        # Value: The name of the Environment Specific Resource Profile Override file (exclude file extension)
-        cloud: <env-specific-override-name>
-        <namespace-folder-name>: <env-specific-override-name>
-    ```
-
-    When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
-
-    1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
-    2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
-    3. `/environments/resource_profiles` — Global, common for the entire repository
-
-    The first match found is used as the environment-specific override for the given Cloud or Namespace.
-
-The final result of processing is a [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override)
-
-### Combination Logic
-
-Resource Profile combination happens when you define Environment-Specific Resource Profile Overrides for a particular Cloud or Namespace.
-These overrides are referenced via `envTemplate.envSpecificResourceProfiles` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
+An environment-specific override applies to a Namespace or Cloud only when it is referenced by name in
+`envTemplate.envSpecificResourceProfiles` in the
+[Environment Inventory](/docs/envgene-configs.md#env_definitionyml). An override file that no entry
+references is ignored, wherever it sits:
 
 ```yaml
 envTemplate:
   envSpecificResourceProfiles:
-    # Key: `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance
-    # Value: The name of the Environment Specific Resource Profile Override file (exclude file extension)
+    # Key: `cloud` or the namespace folder name under `Namespaces/` in the Environment Instance.
+    # Value: the name of the environment-specific Resource Profile Override file (without extension).
     cloud: <env-specific-override-name>
     <namespace-folder-name>: <env-specific-override-name>
 ```
 
-There are two ways to combine overrides: **merge** and **replace**.
-Which mode is used is controlled by the `inventory.config.mergeEnvSpecificResourceProfiles` setting in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
+Once a name is referenced, EnvGene resolves it to a file by searching the Instance repository in the
+following order, from the most specific scope to the least specific. The first match wins, so the same
+name resolves to the most specific file available:
+
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` - the environment scope.
+2. `/environments/<cluster-name>/resource_profiles` - the cluster scope, one file reusable by every
+   environment in the cluster.
+3. `/environments/resource_profiles` - the global scope, one file reusable across the repository.
+
+The scope is only where a referenced name is looked up and how widely one file can be reused. A file placed
+in a broad scope still applies only where it is referenced by name.
+
+A standalone environment-specific override is allowed. When no `profile.name` is set on the Cloud or
+Namespace in the template, EnvGene attaches the override to the object directly.
+
+### Merge and replace
+
+When an environment-specific override is present, it is merged with or replaces the template override.
+The mode is controlled by `inventory.config.mergeEnvSpecificResourceProfiles` in the
+[Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
 
 ```yaml
 inventory:
   config:
-    # Optional. Default value - `true`
-    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificResourceProfiles
-    # are merged with Resource Profile Overrides from the Environment Template
-    # If `false`, they completely replace the Environment Template's Resource Profile Overrides
+    # Optional. Default: true.
+    # true  - merge the environment-specific override with the template override.
+    # false - replace the template override entirely with the environment-specific override.
     mergeEnvSpecificResourceProfiles: boolean
 ```
 
-**Replace mode:**
+#### Replace mode
 
-The Environment-Specific Resource Profile Override completely replaces the corresponding Template Resource Profile Override.
+When `mergeEnvSpecificResourceProfiles` is `false`, the environment-specific override completely
+replaces the template override. The resulting
+[Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of the
+environment-specific override.
 
-In this mode, the resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) will have the same name as the [Environment-Specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override).
+Replace mode is how you change the baseline for an environment. Because replace drops the template override,
+the custom values bound to the old baseline are not carried onto the new one.
 
-**Merge mode:**
+#### Merge mode
 
-The Environment-Specific Resource Profile Override is merged **into** the Template Override according to this algorithm:
+When `mergeEnvSpecificResourceProfiles` is `true` (the default), the environment-specific override is
+merged into the template override. It adds entries the template does not have and wins on any conflicting
+leaf value. When both overrides carry a `baseline` field, the environment-specific value is used. The
+resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of
+the template override.
 
-1. For each `application` in the template override (`source`), search for an application with the same `name` in the environment-specific override (`target`).
-2. If the target does not have this application, copy the entire application object from the template override.
-3. If the application exists in both:
-    - For each `service` in the template's application, look for a service with the same `name` in the target.
-    - If the target does not have the service, copy the service from the template.
-    - If the service exists in both:
-        - For each `parameter` in the template's service, check for a parameter with the same `name` in the target.
-        - If the parameter is missing in the target, add the entire parameter from the template.
-        - If the parameter exists in both, keep the parameter value from the environment-specific override (env-specific has higher priority).
+Merge mode is for adding custom values on the same baseline. Merging when the template override carries
+custom values and its baseline differs from the environment-specific override's baseline is the wrong path
+for changing a baseline. It is tolerated and emits a warning, and you should use replace mode instead. A
+baseline-only template override merged with a different environment-specific baseline is not warned.
 
-In this mode, the resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) will have the same name as the [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override).
+### Naming rules for Resource Profile Override
 
-### Naming Rules for Resource Profile Override
-
-To avoid name collisions and ensure that every [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) has a unique name across Instance repository, you can enable a setting in your [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) file called `updateRPOverrideNameWithEnvName`:
+To ensure every [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) has a
+unique name across the Instance repository, enable `updateRPOverrideNameWithEnvName` in the
+[Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
 
 ```yaml
 inventory:
   config:
-    # Optional
-    # Default: false
-    # If true, resource profile override names are automatically updated during CMDB import using the following pattern:
-    # <tenant-name>-<cloud-name>-<env-name>-<RPO-name>
+    # Optional. Default: false.
+    # If true, resource profile override names are prefixed with <tenant>-<cloud>-<env>- during
+    # CMDB import.
     updateRPOverrideNameWithEnvName: boolean
 ```
 
-If you set `updateRPOverrideNameWithEnvName: true`, the system will:
-
-1. Add a prefix to the name of each [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override). The prefix will be constructed from the [`<tenant-name>`](/docs/template-macros.md#current_envtenant), [`<cloud-name>`](/docs/template-macros.md#current_envcloud), and [`<environment-name>`](/docs/template-macros.md#current_envname), joined by hyphens, followed by the original Resource Profile Override name.
-2. Add the same prefix to the `profile.name` attribute of the Cloud or Namespace
+When set to `true`, EnvGene prefixes the name of each
+[Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) with
+`<tenant-name>-<cloud-name>-<env-name>-` (using the values from
+[`current_env.tenant`](/docs/template-macros.md#current_envtenant),
+[`current_env.cloud`](/docs/template-macros.md#current_envcloud), and
+[`current_env.name`](/docs/template-macros.md#current_envname)) and applies the same prefix to the
+`profile.name` attribute of the Cloud or Namespace.
 
 For example: `acme-prod-eu-west-myprofile`.
 
-## Resource Profile Processing During Effective Set Calculation
+## Effective Set calculation: resolving the profile
 
-During the calculation of the Effective Set, as performed by the `generate_effective_set` job, parameters from the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are merged into the Resource Profile Baseline found in the Application SBOM:
+During Effective Set calculation, the Effective Set generator resolves which Resource Profile Override
+and baseline to apply for each service the application provides.
 
-1. Resource Profile Baseline
+### Side selection
 
-    Optionally contained in the Application SBOM for a service (with mime-type: `application/vnd.qubership.resource-profile-baseline`). Each SBOM may define multiple baselines, each identified by a unique baseline name. These baselines are included in the SBOM from the application's artifact.
+The generator resolves the profile from either the Namespace or the Cloud, never both at once. A signal
+gate chooses the side. The Namespace is the active side when it carries any profile signal, meaning its
+object `profile.baseline` is set or an override is present for it. Otherwise the Cloud is the active side.
+The Namespace is the recommended layer for setting a resource profile, and the Cloud is a rarely-needed
+fallback.
 
-2. [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override)
+### Baseline resolution within the active side
 
-    This object is result of [Resource Profile Processing During Environment Generation](#resource-profile-processing-during-environment-generation) phase, representing a combination of the Template Resource Profile Override and the Environment-Specific Resource Profile Override
+Within the active side, the effective baseline name is resolved from three sources, in order of precedence
+from highest to lowest:
 
-### Merging Logic
+1. the `baseline` field of the environment-specific override, when set.
+2. the `baseline` field of the template override, when set.
+3. the `profile.baseline` value on the Cloud or Namespace object.
 
-1. Reading Resource Profile Baseline
-   1. For each service in the Application SBOM, its Resource Profile Baseline (if present) is retrieved
-   2. The required baseline is selected by its name, as defined at either the Cloud or Namespace level for the application (if there’s a conflict, the Namespace value takes precedence)
-   3. The baseline parameters are [resolved](#resolving-dot-notation) from dot notation into a YAML structure.
+In replace mode the template override is dropped, so its baseline drops out of the order and the precedence
+collapses to the environment-specific override's baseline, then the object baseline.
 
-2. Applying the Resource Profile Override
-   1. For the corresponding application/service, parameters from the Resource Profile Override are retrieved.
-   2. The Resource Profile Override parameters are [resolved](#resolving-dot-notation) from dot notation into a YAML structure.
-   3. The values from the Override are applied on top of the Baseline: matching keys are overwritten.
+An empty string in any of these fields is treated as absent. Setting an empty string instead of omitting
+the field is valid YAML but is bad practice.
 
-    > [!NOTE]
-    > Values from the Resource Profile Override take precedence over matching keys in the Resource Profile Baseline.
+The `baseline` is optional in every source: in each override and on the Cloud or Namespace object. The
+profile name on the object is optional too. Setting a baseline is nonetheless the best-practice choice,
+because an override's custom values are meant to sit on top of a named baseline. An override that sets
+custom values but declares no baseline is tolerated and emits a warning.
 
-3. Writing Result to the Effective Set
-   1. The result (Resource Profile Baseline + Resource Profile Override) is included as [per-service parameters](/docs/features/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters) in the deployment context of [Effective Set v2.0](/docs/features/calculator-cli.md#effective-set-v20).
+The override's parameter list is optional as well. A baseline-only override sets only a name and a baseline,
+with no custom values, which changes the baseline for an environment without adjusting any parameter.
 
-- If a service does not have a Baseline, only the parameters from the Override are used.
-- If the Override is empty, only the Baseline is used.
-- If both are missing, the service does not receive any performance-specific parameters.
+The baseline value is a free-form string. Any name the application defines is accepted, not only the
+well-known values like `dev` or `prod`. When the resolved name does not match a baseline that a service
+ships (and that service does ship baselines), the override still applies and a warning is emitted.
+
+### Applying the override and baseline to each service
+
+The override is always applied. Baseline parameters are layered under the override only when the resolved
+baseline name is found among the baselines the application defines.
+
+The override's custom values are always included. When a baseline name is resolved and matched, the baseline
+parameters serve as the base layer and the override's custom values take precedence on any matching key. If
+the resolved name is not found among a service's baselines but the service does ship baselines, the override
+still applies and a warning is emitted. A service that ships no baselines at all receives the override only,
+with no warning.
+
+Generation continues in every case. There are no hard failures in resource profile resolution. The
+abnormal-but-tolerated cases surface as warnings only.
 
 > [!NOTE]
-> Effective Set v1.0 is generated without considering the Resource Profile Baseline.
+> A service with no baselines at all is never warned, even when a baseline name is specified in the profile.
+> A warning is emitted only when a resolved name does not match the baselines that a service does ship.
 
-### Resolving Dot Notation
+### Outcome table
 
-When generating the Effective Set, the Calculator CLI resolves parameters written in dot notation into YAML structures for two sources:
+The result for a service depends on two independent inputs plus the service's own baselines:
 
-1. Resource Profile Baseline
+- **Resolved baseline** - the name from [Baseline resolution](#baseline-resolution-within-the-active-side).
+  `Set` means a non-empty name was resolved.
+- **Override present** - whether the override carries custom values for the service.
+- **Application's baselines** - the baselines the service itself defines.
 
-    When reading Resource Profile Baseline parameters, if a parameter key contains a dot (for example, `resources.requests.cpu`), it is interpreted as a nested YAML property:
+A baseline and an override are independent. A service can receive a baseline only, an override only, both,
+or neither. Generation continues in every row.
 
-    - The part before the first dot becomes the top-level key.
-    - Parts between the dots are keys for deeper nested levels.
-    - The parameter value goes into the innermost key.
+| Resolved baseline | Override present | Application's baselines           | Result                                  |
+| ----------------- | ---------------- | --------------------------------- | --------------------------------------- |
+| Set               | Yes              | Found (name matches)              | Baseline parameters + override          |
+| Set               | Yes              | Service has baselines, none match | Override only, with a warning           |
+| Set               | Yes              | Service has no baselines          | Override only                           |
+| Not set           | Yes              | Any                               | Override only                           |
+| Set               | No               | Found (name matches)              | Baseline only                           |
+| Set               | No               | Service has baselines, none match | No parameters, with a warning           |
+| Set               | No               | Service has no baselines          | No parameters                           |
+| Not set           | No               | Any                               | No parameters                           |
 
-    **Example:**
+### Result in the Effective Set
 
-    Original parameters:
+The resolved parameters are included as
+[per-service parameters](/docs/features/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters)
+in the deployment context of [Effective Set v2.0](/docs/features/calculator-cli.md#effective-set-v20).
 
-    ```yaml
-    resources.requests.cpu: 100m
-    resources.requests.memory: 128Mi
-    replicas: 1
-    ```
+- When a service has no baseline and no override, it receives no performance parameters.
+- When only a baseline is resolved, the service receives the baseline parameters.
+- When only an override is present, the service receives the override's custom values.
+- When both are resolved, the override's custom values take precedence on any matching key.
 
-    Are transformed into:
+## Resolving dot notation
 
-    ```yaml
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "128Mi"
-    replicas: 1
-    ```
+When the Effective Set generator applies Resource Profile parameters, it expands parameter keys that
+contain dots into nested YAML structures.
 
-2. [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override)
+The part before the first dot becomes the top-level key. Each subsequent segment becomes a key at the
+next nesting level. The parameter value goes into the innermost key.
 
-    When reading parameters from [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override), if the parameter name contains a dot (for example, `resources.requests.cpu`), it is also expanded into a nested YAML property:
+### Baseline example
 
-    - The part before the first dot becomes the top-level key.
-    - Parts between dots become nested keys.
-    - The parameter value (`value`) goes into the deepest key.
+Input:
 
-    **Example:**
+```yaml
+resources.requests.cpu: 100m
+resources.requests.memory: 128Mi
+replicas: 1
+```
 
-    Original parameters:
+Expanded:
 
-    ```yaml
-    ...
-    - name: "resources.requests.cpu"
-      value: "100m"
-    - name: "resources.requests.memory"
-      value: "128Mi"
-    - name: "replicas"
-      value: 1
-    ```
+```yaml
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+replicas: 1
+```
 
-    Are transformed into:
+### Override example
 
-    ```yaml
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "128Mi"
-    replicas: 1
-    ```
+Input (using the Resource Profile Override `name`/`value` format):
+
+```yaml
+- name: "resources.requests.cpu"
+  value: "100m"
+- name: "resources.requests.memory"
+  value: "128Mi"
+- name: "replicas"
+  value: 1
+```
+
+Expanded:
+
+```yaml
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+replicas: 1
+```
+
+## Related documentation
+
+- [Configure resource profiles](/docs/how-to/configure-resource-profiles.md) - task scenarios for setting profiles
+- [Resource profiles tutorial](/docs/tutorials/resource-profiles.md) - a guided end-to-end lesson
+- [Resource profiles use cases](/docs/use-cases/resource-profiles.md) - observable behavior scenarios
+- [ADR-0006](/docs/adr/0006-resource-profile-baseline-override-resolution.md) - the resolution design decision
+- [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md) - how overrides are combined
+- [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md) - launches the calculator
+- [Calculator CLI](/docs/features/calculator-cli.md) - baseline and override resolution
+
+[env-specific-rpo]: /docs/envgene-objects.md#environment-specific-resource-profile-override
+[per-service-params]: /docs/features/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters

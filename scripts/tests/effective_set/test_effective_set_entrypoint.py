@@ -3,11 +3,11 @@ from pathlib import Path
 import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
-    PartialMergeMode
-from envgenehelper.yaml_helper import openYaml, writeYamlToFile
+    PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
-from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, \
+from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, _run_external_credential_provision_cli, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
     _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, \
     run_legacy_sd_effective_set as run_entrypoint
@@ -89,6 +89,27 @@ class TestRunDeployPlanPartial:
         _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)], dp_path=delta_dp))
 
         assert captured["deploy_plan_path"] == delta_dp
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("run", [_run_deploy_plan_partial, _run_deploy_plan_full])
+    def test_invokes_cli_without_deploy_plan_when_plan_is_empty(self, tmp_path, monkeypatch, run):
+        es = tmp_path / ES_DIR_NAME
+        es.mkdir()
+        dp = tmp_path / "Inventory" / "deploy-plan.yml"
+        dp.parent.mkdir(parents=True)
+        dp.write_text("[]\n")
+        captured = {}
+
+        def capture_build_cli(es_dir, env_name, deploy_plan_path=None):
+            captured["deploy_plan_path"] = deploy_plan_path
+            return "fake_cmd"
+
+        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+
+        run(es, FULL_ENV_NAME, fake_plan([], dp_path=dp))
+
+        assert captured["deploy_plan_path"] is None
 
     @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
@@ -447,3 +468,52 @@ class TestRunGitlabDeployEffectiveSet:
         run_gitlab_deploy_effective_set(Ctx())
 
         assert called["deploy_plan"] is delta_plan
+
+
+class TestExternalCredentialProvisioning:
+    @pytest.mark.unit
+    def test_cli_skips_when_file_missing(self, tmp_path, monkeypatch):
+        es = tmp_path
+        called = {"run": False}
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+
+        _run_external_credential_provision_cli(es)
+
+        assert called["run"] is False
+        
+
+    @pytest.mark.unit
+    def test_cli_skips_when_gate_is_set_to_skip(self, tmp_path, monkeypatch):
+        es = tmp_path
+        called = {"run": False}
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: called.__setitem__("run", True))
+        monkeypatch.setenv("EXTERNAL_CREDENTIAL_PROVISIONING", "skip")
+
+        _run_external_credential_provision_cli(es)
+
+        assert called["run"] is False
+
+
+    @pytest.mark.unit
+    def test_cli_runs_with_expected_command(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        context_file = es / EXTERNAL_CREDENTIAL_DIR / EXTERNAL_CREDENTIAL_FILE
+        context_file.parent.mkdir(parents=True, exist_ok=True)
+        context_file.write_text("{}")
+
+        captured = {}
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            captured.update(kwargs)
+
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+
+        _run_external_credential_provision_cli(es)
+
+        assert captured["check"] is True
+        assert captured["cmd"] == [
+            "external-cred-provision",
+            "--log-level",
+            "INFO",
+            str(context_file),
+        ]

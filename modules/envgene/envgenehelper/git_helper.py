@@ -6,9 +6,9 @@ from urllib.parse import quote
 
 import requests
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.business_utils import getenv_with_error
 from envgenehelper.errors import IntegrationError
-from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
 from envgenehelper.retry import GIT_RETRY_POLICY, retry_call, RetryPolicy
@@ -189,9 +189,13 @@ class GitRepoManager:
         if sparse_paths is None:
             sparse_paths = get_sparse_checkout_paths(os.environ["FULL_ENV_NAME"])
 
-        existing_paths = [path for path in sparse_paths if Path(path).exists()]
+        stageable_paths = [
+            path
+            for path in sparse_paths
+            if Path(path).exists() or self.repo.git.ls_files("--cached", "--", path).strip()
+        ]
         exclude_args = [f":(exclude){path}" for path in self._get_excluded_paths()]
-        self.repo.git.add("--all", "--", *existing_paths, *exclude_args)
+        self.repo.git.add("--all", "--", *stageable_paths, *exclude_args)
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():
@@ -274,9 +278,12 @@ class GitRepoManager:
 
         logger.info(f"git sparse-checkout set ({len(sparse_paths)} paths)")
         self.repo.git.sparse_checkout("set", *sparse_paths)
-
+        
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
+
+        logger.info("git clean -ffd")
+        self.repo.git.clean("-ffd")
 
         logger.info("sparse checkout complete")
 

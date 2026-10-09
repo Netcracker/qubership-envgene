@@ -4,11 +4,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from git import GitCommandError, Repo
 
-from envgenehelper import decrypt_file, encrypt_file
-from envgenehelper.collections_helper import compare_dicts
-from envgenehelper.file_helper import writeToFile
-from envgenehelper.logger import logger as envgene_logger
-from envgenehelper.yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
+from envgene_shared.crypto.crypt import decrypt_file, encrypt_file
+from envgene_shared.utils.collections_utils import compare_dicts
+from envgene_shared.utils.file_utils import writeToFile
+from envgene_shared.utils.logger import logger as envgene_logger
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
+from envgenehelper.yaml_helper import set_nested_yaml_attribute
 
 import git_commit.minimize_cred_diffs as mcd
 

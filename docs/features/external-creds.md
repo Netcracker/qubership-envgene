@@ -28,6 +28,7 @@
       - [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)
       - [Normalization to `normalizedSecretName`](#normalization-to-normalizedsecretname)
         - [Vault](#vault)
+        - [OpenBao](#openbao)
         - [Azure Key Vault](#azure-key-vault)
         - [AWS Secrets Manager](#aws-secrets-manager)
         - [GCP Secret Manager](#gcp-secret-manager)
@@ -321,8 +322,8 @@ It may contain several secret store objects:
 
 ```yaml
 <secret-store-name>:
-  type: enum [ vault, azure, aws, gcp ]
-  # Required when type is vault
+  type: enum [ vault, openbao, azure, aws, gcp ]
+  # Required when type is vault or openbao
   mountPath: string
   # Required when type is azure
   vaultName: string
@@ -332,8 +333,9 @@ It may contain several secret store objects:
   projectId: string
 ```
 
-For OpenBao, use `type: vault`. OpenBao is Vault-compatible, so EnvGene addresses it through the Vault
-reference scheme, and no separate store type exists.
+`openbao` and `vault` share the same configuration shape and normalization rules. They differ only in
+the emitted VALS reference scheme (`ref+openbao://` and `ref+vault://` respectively). Pick the type
+that matches the actual backend, so emitted references and logs identify the store honestly.
 
 The map key `<secret-store-name>` is the **store identifier**. It must match the regular expression
 `[A-Za-z_][A-Za-z0-9_]*`, so it is usable as a CI/CD variable prefix at provisioning time (see
@@ -736,12 +738,12 @@ Authentication parameters for that store come from two sources:
 - the [Secret Store](#secret-store) object in `/configuration/secret-stores.yml` for non-sensitive values.
 - CI/CD variables for sensitive values.
 
-Vault auth:
+Vault and OpenBao auth:
 
 | Parameter        | Source              | Description                                 |
 |------------------|---------------------|---------------------------------------------|
-| `type`           | Secret Store object | `vault`                                     |
-| `VAULT_ADDR`     | CI/CD variable      | Vault server URL                            |
+| `type`           | Secret Store object | `vault` or `openbao`                        |
+| `VAULT_ADDR`     | CI/CD variable      | Server URL                                  |
 | `VAULT_TOKEN`    | CI/CD variable      | Token-based authentication                  |
 
 GCP auth:
@@ -751,7 +753,27 @@ GCP auth:
 | `type`                           | Secret Store object | `gcp`                                |
 | `GOOGLE_APPLICATION_CREDENTIALS` | CI/CD variable      | Path to the service account key file |
 
-AWS Secrets Manager and Azure Key Vault are not supported as Secret Stores for system credentials.
+AWS auth:
+
+| Parameter               | Source              | Description                          |
+|-------------------------|---------------------|--------------------------------------|
+| `type`                  | Secret Store object | `aws`                                |
+| `AWS_ACCESS_KEY_ID`     | CI/CD variable      | IAM access key ID                    |
+| `AWS_SECRET_ACCESS_KEY` | CI/CD variable      | IAM secret access key                |
+| `AWS_DEFAULT_REGION`    | CI/CD variable      | AWS region (for example `us-east-1`) |
+
+Azure auth:
+
+| Parameter             | Source              | Description                     |
+|-----------------------|---------------------|---------------------------------|
+| `type`                | Secret Store object | `azure`                         |
+| `AZURE_TENANT_ID`     | CI/CD variable      | Azure AD tenant ID              |
+| `AZURE_CLIENT_ID`     | CI/CD variable      | Service principal client ID     |
+| `AZURE_CLIENT_SECRET` | CI/CD variable      | Service principal client secret |
+
+For multi-store setups, each variable can be prefixed with `<store-id>_` so multiple stores of the same type
+can coexist. See
+[Store identifier and CI/CD variables](#store-identifier-and-cicd-variables).
 
 #### `eso_support` attribute
 
@@ -874,6 +896,11 @@ The algorithm is vendor-specific. Effective Set calculator applies the rules for
 1. Validate characters
 2. `<normalizedSecretName> = <remoteRefPath>/<credId>` (no segment truncation)
 
+##### OpenBao
+
+OpenBao is API-compatible with Vault and uses the same normalization rules. Constraints, allowed
+characters, and the algorithm above apply verbatim.
+
 ##### Azure Key Vault
 
 **Constraints:**
@@ -969,7 +996,7 @@ Effective Set output is determined by the invoking context.
    - **The reference has no `property`** (single-value credentials):
      - Validate that referenced Credential has **no** `properties`. If it has, fail the Effective Set generation.
      - Choose the fragment from the [Secret Store](#secret-store) `type` (the reference does not supply `property`):
-       - **`vault`**: use `#/value` as the logical key for the single JSON field vals should read.
+       - **`vault`, `openbao`**: use `#/value` as the logical key for the single JSON field vals should read.
        - **`azure`, `aws`, `gcp`**: the secret is treated as plain text. **Omit** the `#/...` fragment entirely.
 
 3. Build the **vals URI** by concatenating, in order, a **base URI** (scheme, host path, and store-specific
@@ -977,7 +1004,8 @@ Effective Set output is determined by the invoking context.
    suffix** from step 2:
 
    - **Base URI** depends on the [Secret Store](#secret-store) `type` (use `normalizedSecretName` from step 1 and fields from the Secret Store):
-     - **`vault`:** `ref+vault://<mountPath>/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`).
+     - **`vault`:** `ref+vault://<mountPath>/data/<normalizedSecretName>` (`mountPath` = KV mount, for example `secret`). The `/data/` infix is the KV v2 read path segment.
+     - **`openbao`:** `ref+openbao://<mountPath>/data/<normalizedSecretName>`. Same composition as `vault`, with the `ref+openbao://` scheme.
      - **`azure`:** `ref+azurekeyvault://<vaultName>/<normalizedSecretName>` (`vaultName` from the Secret Store).
      - **`aws`:** `ref+awssecrets://<normalizedSecretName>?region=<region>` (`region` from the Secret Store as a query parameter).
      - **`gcp`:** `ref+gcpsecrets://<projectId>/<normalizedSecretName>` (`projectId` from the Secret Store).
@@ -1087,9 +1115,9 @@ schema shown under [External Credential Context](#external-credential-context).
      `name`, each value set to `_generateValue`.
    - **Single-value Credential** in a store that addresses the secret directly (`gcp`, `aws`, `azure`): emit the
      scalar marker `_generateValue`.
-   - **Single-value Credential** in `vault` (the Vault path must carry a field segment): emit a map with a single
-     `value` field set to `_generateValue`. The `value` field name matches the convention used by
-     [VALS reference generation](#vals-reference-generation) for single-value vault secrets.
+   - **Single-value Credential** in `vault` or `openbao` (the KV path must carry a field segment): emit a map
+     with a single `value` field set to `_generateValue`. The `value` field name matches the convention used
+     by [VALS reference generation](#vals-reference-generation) for single-value secrets in these stores.
 
 3. Write the `credentials` map from step 2 to `external-credentials.yaml` at the path defined in
    [External Credential Context](#external-credential-context).
@@ -1133,9 +1161,20 @@ This section describes how EnvGene generates the context and invokes the CLI.
 
 EnvGene invokes the CLI in apply mode inside the
 [`generate_effective_set`](/docs/envgene-pipelines.md) job, once per Environment Instance, after the calculator
-writes the External Credential Context. The invocation is skipped when the Environment Instance contains no
-external Credentials. External consumers can produce the same context format (hand-authored or generated by
-a non-EnvGene system) and run the CLI directly.
+writes the External Credential Context. External consumers can produce the same context format (hand-authored or
+generated by a non-EnvGene system) and run the CLI directly.
+
+EnvGene skips the invocation in two cases:
+
+- The Environment Instance contains no external Credentials.
+- [`EXTERNAL_CREDENTIAL_PROVISIONING`](/docs/instance-pipeline-parameters.md#external_credential_provisioning) is
+  `skip`.
+
+The calculator still writes the External Credential Context in both cases. Only the CLI call is skipped, so no
+Credential is created, no created Credential is validated, and no Secret Store is read. Set
+`EXTERNAL_CREDENTIAL_PROVISIONING` to `skip` to obtain the context without touching the store. This is the mode used
+during migration to external Credentials, when the target Secret Store is not yet populated and a later step
+provisions the Credentials once their values are available.
 
 #### Strategy derivation
 
@@ -1323,10 +1362,6 @@ Git operations, and others).
    are pre-created by the user in the external Secret Store, so they are not included in the
    [External Credential Context](#external-credential-context) creation entries.
 
-2. **System Credential Secret Store type.** Every system Credential with `type: external` references a
-   [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure` are not supported as Secret
-   Stores for system credentials.
-
 #### During CMDB import
 
 1. **No external credentials.** The Environment Instance being imported contains no [Credentials](#credential)
@@ -1342,8 +1377,6 @@ Git operations, and others).
 
 1. Support Blue-Green deployment cases
 2. Support template composition
-3. Support AWS Secrets Manager as a Secret Store for system credentials
-4. Support Azure Key Vault as a Secret Store for system credentials
 
 ## Open questions
 

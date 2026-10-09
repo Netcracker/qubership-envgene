@@ -36,6 +36,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-api</artifactId>
             <version>1.60.1</version>
@@ -114,6 +120,11 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.qubership.cloud.devops</groupId>
+            <artifactId>vals-reference-core</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

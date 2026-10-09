@@ -140,6 +140,14 @@ bg_domain: <path-to-the-bg-domain-template-file>
 # Path to the external Credential Template file (Jinja, single file).
 external_credential_template: string
 # Optional
+# Map of labels of any type. Set by template preprocessing during Template Composition.
+# See details in /docs/features/template-composition.md
+labels:
+  # Set by template preprocessing.
+  # `self` for a descriptor created in the current template application.
+  # `parent` for a descriptor copied from a parent template.
+  origin: string
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
@@ -161,6 +169,13 @@ namespaces:
     # Parent template name
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     parent: string
+    # Optional
+    # Selects the parent namespace when the parent template has several namespaces
+    # with the same `name`, or when the resulting namespace needs a different name.
+    # Must exactly match one namespace `name` in the parent template. Resolved during
+    # preprocessing and not included in the generated Template Descriptor.
+    # See details in /docs/features/template-composition.md
+    parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
@@ -380,7 +395,7 @@ The Parameter Set schema in the template repository is identical to the [Environ
 
 #### Template Resource Profile Override
 
-These are customizations for performance parameters, over a Baseline Resource Profile. Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile Override for all environments of the same type.
+These are customizations for performance parameters, over a Baseline Resource Profile. Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile for all environments of the same type.
 
 Template Resource Profile Override are referenced in the `profile.name` attribute in the [Cloud](#cloud-template) or [Namespace](#namespace-template) templates.
 
@@ -419,13 +434,14 @@ name: string
 # Not processed by EnvGene
 version: string
 # Optional
-# Name of the resource profile baseline that this override modifies
-# Not processed by EnvGene
+# Name of the baseline set to select from the application during effective set calculation
+# When set, overrides the baseline specified on the Cloud or Namespace object for this profile
 baseline: string
 # Optional
 # Override description
 description: string
-# Mandatory
+# Optional
+# Omit to set only a baseline (a baseline-only override)
 applications:
 - # Mandatory
   # Application name to which the override applies
@@ -439,7 +455,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -953,6 +969,17 @@ e2eParameterSets: list
 # Used to include predefined sets of parameters that can be applied to the application at runtime
 # without redeployment for this cloud
 technicalConfigurationParameterSets: list
+# Optional
+# Resource profile configuration for the cloud
+# Used as the fallback when the namespace sets no baseline or override
+profile:
+  # Optional
+  # The name of the resource profile override to apply to applications in this cloud
+  name: string
+  # Optional
+  # The baseline set to select from the application when the resource profile override does not set one
+  # A free-form string, not restricted to a fixed set of values
+  baseline: string
 ```
 
 **Example:**
@@ -1052,13 +1079,12 @@ mergeDeployParametersAndE2EParameters: boolean
 # Resource profile configuration for the namespace
 # Used to manage performance parameters of applications in this namespace
 profile:
-  # Mandatory
-  # The name of the resource profile override to use
-  # Used to determine which resource profile override to apply to applications in this namespace
+  # Optional
+  # The name of the resource profile override to apply to applications in this namespace
   name: string
-  # Mandatory
-  # The baseline profile to use
-  # Used as the base resource profile before applying overrides
+  # Optional
+  # The baseline set to select from the application when the resource profile override does not set one
+  # A free-form string, not restricted to a fixed set of values
   baseline: string
 # Optional
 # Key-value pairs of deployment parameters at the namespace level
@@ -1191,13 +1217,14 @@ name: string
 # Not processed by EnvGene
 version: string
 # Optional
-# Name of the resource profile baseline that this override modifies
-# Not processed by EnvGene
+# Name of the baseline set to select from the application during effective set calculation
+# When set, overrides the baseline specified on the Cloud or Namespace object for this profile
 baseline: string
 # Optional
 # Override description
 description: string
-# Mandatory
+# Optional
+# Omit to set only a baseline (a baseline-only override)
 applications:
 - # Mandatory
   # Application name to which the override applies
@@ -1211,7 +1238,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -1579,8 +1606,8 @@ A **Secret Store** is a named entry in the instance repository configuration tha
 ```yaml
 <secret-store-name>:
   # Mandatory
-  type: enum [ vault, azure, aws, gcp ]
-  # Required when type is vault
+  type: enum [ vault, openbao, azure, aws, gcp ]
+  # Required when type is vault or openbao
   mountPath: string
   # Required when type is azure
   vaultName: string
@@ -1808,6 +1835,8 @@ Such overrides are created by the configurator in the Instance repository, to fu
 
 The Environment-Specific Resource Profile Override is specified individually for each Namespace or Cloud via `envTemplate.envSpecificResourceProfiles` parameter of the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
 
+An environment-specific override may be used standalone - without a matching `profile.name` reference on the Cloud or Namespace object. In that case, EnvGene attaches the override directly to the object.
+
 During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
 
 Environment Specific Resource Profile Override can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<resource-profile-override-name>.yaml.j2` or `<resource-profile-override-name>.yml.j2`.
@@ -1835,9 +1864,9 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 
 When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
-2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
-3. `/environments/resource_profiles` — Global, common for the entire repository
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles`. Environment-specific, highest priority.
+2. `/environments/<cluster-name>/resource_profiles`. Cluster-wide, applies to all environments in the cluster.
+3. `/environments/resource_profiles`. Global, common for the entire repository.
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1854,13 +1883,14 @@ name: string
 # Not processed by EnvGene
 version: string
 # Optional
-# Name of the resource profile baseline that this override modifies
-# Not processed by EnvGene
+# Name of the baseline set to select from the application during effective set calculation
+# When set, overrides the baseline specified on the Cloud or Namespace object for this profile
 baseline: string
 # Optional
 # Override description
 description: string
-# Mandatory
+# Optional
+# Omit to set only a baseline (a baseline-only override)
 applications:
 - # Mandatory
   # Application name to which the override applies
@@ -1874,7 +1904,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -2281,7 +2311,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2293,7 +2323,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
@@ -2728,7 +2758,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2741,7 +2771,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**

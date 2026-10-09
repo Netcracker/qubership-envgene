@@ -124,14 +124,13 @@ env:
 
 
 jobs:
-  ### env-prepare - START ###
   env-prepare:
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
     outputs:
       PACKAGE_NAME: ${{ steps.set-outputs.outputs.PACKAGE_NAME }}
     container:
-      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.0.6' }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.7.0' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
@@ -217,16 +216,14 @@ jobs:
             tmp/
             ARGO_DPG_CONTEXT.env
           include-hidden-files: true
-  ### env-prepare - END ###
 
-  ### sync - START ###
   sync:
     needs: env-prepare
     if: inputs.PIPELINE_TYPE == 'GITLAB_DEPLOY' && inputs.OPERATION_TYPE != 'CLEAN'
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
     container:
-      image: ${{ vars.SYNCER_IMAGE }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.SYNCER_IMAGE || 'qubership-envgene' }}:${{ vars.SYNCER_VERSION || '2.6.6' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
@@ -271,4 +268,3 @@ jobs:
             deploy-report.json
           if-no-files-found: ignore
           retention-days: 1
-  ### sync - END ###
