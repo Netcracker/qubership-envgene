@@ -69,12 +69,12 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
 `data` carries an `EnvGenePipelineReport`. Each event carries the report as it is known at the time of
 the event.
 
-| Field        | Required | `start` | `running` (in progress) | `running` (finished) | `stop`      | Source                                 |
-|--------------|----------|---------|-------------------------|----------------------|-------------|----------------------------------------|
-| `kind`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `EnvGenePipelineReport`       |
-| `apiVersion` | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `v1`                          |
-| `user`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_LOGIN`                    |
-| `email`      | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_EMAIL`                    |
+| Field        | Required | `start` | `running` (in progress) | `running` (finished) | `stop`      | Source                                       |
+|--------------|----------|---------|-------------------------|----------------------|-------------|----------------------------------------------|
+| `kind`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `EnvGenePipelineReport`             |
+| `apiVersion` | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `v1`                                |
+| `user`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_LOGIN`                          |
+| `email`      | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_EMAIL`                          |
 | `config`     | Yes      | Yes     | Yes                     | Yes                  | Yes         | See [`data.config`](#dataconfig-item-fields) |
 | `steps`      | No       | No      | When recorded           | Yes                  | Current job | See [`data.steps`](#datasteps-item-fields)   |
 
@@ -90,12 +90,12 @@ the event.
 
 ### `data.steps` item fields
 
-| Field         | Required | Source                                                              |
-|---------------|----------|---------------------------------------------------------------------|
-| `name`        | Yes      | Step name                                                           |
+| Field         | Required | Source                                                                            |
+|---------------|----------|-----------------------------------------------------------------------------------|
+| `name`        | Yes      | Step name                                                                         |
 | `time`        | No       | Step duration in `H:MM:SS`, rounded to seconds. Omitted when the step was skipped |
-| `status`      | Yes      | `success`, `failed`, or `skipped`                                   |
-| `environment` | No       | Recorded `ENV_NAMES`, when environments are combined                |
+| `status`      | Yes      | `SUCCESS`, `FAILED`, or `SKIPPED`                                                 |
+| `environment` | No       | Recorded `ENV_NAMES`, when environments are combined                              |
 
 ## Processing flow
 
@@ -339,9 +339,9 @@ Sequence:
       { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
     ],
     "steps": [
-      { "name": "get_passport", "status": "skipped" },
-      { "name": "env_build", "time": "0:02:00", "status": "success" },
-      { "name": "git_commit", "time": "0:00:15", "status": "success" }
+      { "name": "get_passport", "status": "SKIPPED" },
+      { "name": "env_build", "time": "0:02:00", "status": "SUCCESS" },
+      { "name": "git_commit", "time": "0:00:15", "status": "SUCCESS" }
     ]
   }
 }
@@ -377,9 +377,9 @@ Sequence:
       { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
     ],
     "steps": [
-      { "name": "get_passport", "status": "skipped" },
-      { "name": "env_build", "time": "0:02:00", "status": "success" },
-      { "name": "git_commit", "time": "0:00:15", "status": "success" }
+      { "name": "get_passport", "status": "SKIPPED" },
+      { "name": "env_build", "time": "0:02:00", "status": "SUCCESS" },
+      { "name": "git_commit", "time": "0:00:15", "status": "SUCCESS" }
     ]
   }
 }
@@ -491,9 +491,9 @@ Sequence:
       { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
     ],
     "steps": [
-      { "name": "get_passport", "status": "skipped" },
-      { "name": "env_build", "time": "0:02:00", "status": "success" },
-      { "name": "git_commit", "time": "0:00:15", "status": "success" }
+      { "name": "get_passport", "status": "SKIPPED" },
+      { "name": "env_build", "time": "0:02:00", "status": "SUCCESS" },
+      { "name": "git_commit", "time": "0:00:15", "status": "SUCCESS" }
     ]
   }
 }
