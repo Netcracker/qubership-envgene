@@ -1,6 +1,6 @@
 name: "Dev: Build or Test Qubership EnvGene docker images"
 
-run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') && format('Test EnvGene for commit {0}', github.sha) || ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true' && github.event.inputs.tests-only == 'false')) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
+run-name: "Build or test EnvGene for commit ${{ github.sha }}"
 
 on:
   workflow_dispatch:
@@ -70,7 +70,7 @@ jobs:
   tests:
     name: Unit Tests
     needs: [conventional-commits]
-    if: github.event_name != 'push' || !(startsWith(github.event.head_commit.message, 'docs:') || startsWith(github.event.head_commit.message, 'docs('))
+    if: needs.conventional-commits.outputs.run_tests == 'true'
     runs-on: ubuntu-latest
     container:
       image: python:3.12-slim-bookworm
@@ -84,7 +84,7 @@ jobs:
   build-qubership-envgene:
     name: Build EnvGene
     needs: [conventional-commits]
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    if: needs.conventional-commits.outputs.build_envgene == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -129,9 +129,7 @@ jobs:
   build-gsf-instance:
     name: Build GSF Instance
     needs: [conventional-commits]
-    if: |
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-instance == 'true') ||
-      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    if: needs.conventional-commits.outputs.build_gsf_instance == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -162,9 +160,7 @@ jobs:
   build-gsf-discovery:
     name: Build GSF Discovery
     needs: [conventional-commits]
-    if: |
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-discovery == 'true') ||
-      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    if: needs.conventional-commits.outputs.build_gsf_discovery == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
