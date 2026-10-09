@@ -46,7 +46,7 @@ All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credential
 
 ## Dev design
 
-Before you write code for a new feature, bug fix, or refactoring in this repository, load the
+Before you write code for a new feature, bugfix, or refactoring in this repository, load the
 `dev-design` skill (`.claude/skills/dev-design/SKILL.md`) and write the dev design as a brainstorm with
 the developer. The dev design goes to `docs/dev/designs/<slug>.md`. When the `brainstorming` skill is
 also active, `dev-design` wins: no spec under `docs/superpowers/specs/` and no commit without a request.

@@ -12,7 +12,7 @@
 This document shows which Claude Code skill runs at which point of a code change in this repository, and
 who does the work at that point: you or an agent.
 
-A dev design is the document that says how a change is built in code. You write it with Claude before any
+A dev design is the document that describes how a change is implemented in code. You write it with Claude before any
 code, and it lives in `docs/dev/designs/`.
 
 The diagrams use six colors:
