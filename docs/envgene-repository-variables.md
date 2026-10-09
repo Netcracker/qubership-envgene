@@ -21,8 +21,6 @@
     - [`SSL_CERTIFICATES_BUNDLE`](#ssl_certificates_bundle)
     - [`METRICS_COLLECTOR_URL`](#metrics_collector_url)
     - [`METRICS_COLLECTOR_SSL_VERIFY`](#metrics_collector_ssl_verify)
-    - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
-    - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
   - [Discovery EnvGene Repository](#discovery-envgene-repository)
@@ -273,26 +271,6 @@ EnvGene skips those requests and the pipeline run continues. See
 **Mandatory**: No
 
 **Example**: `false`
-
-### `METRICS_COLLECTOR_TRACE_ID`
-
-**Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
-pass this value so EnvGene events join the parent deployment session. When it is empty and
-`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
-in that run share it.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-### `METRICS_COLLECTOR_PARENT_ID`
-
-**Description**: Parent activity event ID (`parentid`). A parent pipeline passes the `id` of its own
-activity event. When the variable is empty, EnvGene sends an empty string.
-
-**Default Value**: None
-
-**Mandatory**: No
 
 ## Template EnvGene Repository
 
