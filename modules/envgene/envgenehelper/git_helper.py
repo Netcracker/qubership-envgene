@@ -283,7 +283,7 @@ class GitRepoManager:
         self.repo.git.checkout("-f", self.ctx.commit_sha)
 
         logger.info("git clean -ffd")
-        self.repo.git.clean("-ffd")
+        self.repo.git.clean("-ffd", "-e", "/tmp/.metrics-collector-trace-id", "-e", "/tmp/.metrics-collector-client/")
 
         logger.info("sparse checkout complete")
 
