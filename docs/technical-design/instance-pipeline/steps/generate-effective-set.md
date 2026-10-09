@@ -148,3 +148,5 @@ Effective Set is not generated.
 - [Effective Set Generation](/docs/features/effective-set-generation.md)
 - [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
 - [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md)
+- [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md)
+- [Calculator CLI](/docs/features/calculator-cli.md)

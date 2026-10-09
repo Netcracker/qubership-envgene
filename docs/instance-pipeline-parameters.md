@@ -24,6 +24,7 @@
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`EXTERNAL_CREDENTIAL_PROVISIONING`](#external_credential_provisioning)
     - [`CUSTOM_PARAMS`](#custom_params)
     - [`APPLICATION_VERSIONS`](#application_versions)
@@ -40,6 +41,11 @@
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`SAVE_ARTIFACTS_STRATEGY`](#save_artifacts_strategy)
+    - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
+    - [`METRICS_COLLECTOR_URL`](#metrics_collector_url)
+    - [`METRICS_COLLECTOR_SSL_VERIFY`](#metrics_collector_ssl_verify)
+    - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
+    - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -524,9 +530,24 @@ version: v2.0
 app_chart_validation: 'false'
 ```
 
+### `CALCULATOR_CLI_JAVA_OPTIONS`
+
+**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and
+ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```text
+CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
+```
+
 ### `EXTERNAL_CREDENTIAL_PROVISIONING`
 
-**Description**: Selects the provisioning mode for external Credentials in the `generate_effective_set` job. The
+**Description**: Selects the provisioning mode for external Credentials in the `generate_effective_set` step. The
 Effective Set calculator always writes the [External Credential Context](/docs/features/external-creds.md#external-credential-context),
 regardless of this value. This parameter controls only whether EnvGene then invokes the
 [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md).
@@ -904,7 +925,7 @@ rotation_items:
 
 When rotating sensitive parameters, EnvGene checks if the Credential is
 [shared](/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared
-Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass
+Credentials are detected and force mode is not enabled, the credential_rotation step will fail to prevent accidental mass
 updates.
 
 - In this case, the job will generate an
@@ -1007,6 +1028,76 @@ See details in [Troubleshooting artifacts](/docs/features/troubleshooting-artifa
 **Mandatory**: No
 
 **Example**: `ALWAYS`
+
+### `ENVGENE_LOG_LEVEL`
+
+**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
+This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
+
+**Logging Level Mapping (Java vs Python):**
+
+| ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
+|-------------------|----------------------|--------------------|
+| DEBUG             | DEBUG                | DEBUG              |
+| INFO              | INFO                 | INFO               |
+| WARNING           | WARNING              | WARN               |
+| ERROR             | ERROR                | ERROR              |
+
+**Default Value**: INFO
+
+**Mandatory**: No
+
+### `METRICS_COLLECTOR_URL`
+
+**Description**: Base URL of Metrics Collector Service. When this variable is set, the Instance pipeline
+sends CloudEvents activity to `{METRICS_COLLECTOR_URL}/api/v1/activity`. When it is empty or absent,
+EnvGene skips those requests and the pipeline run continues. See
+[Metrics Collector activity](/docs/technical-design/metrics-collector-activity.md).
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `https://metrics-collector.example.com`
+
+### `METRICS_COLLECTOR_SSL_VERIFY`
+
+**Description**: Controls TLS certificate verification for Metrics Collector requests. Set the value to
+`false` to skip verification. Any other value, including an empty value, keeps verification on.
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: `true`
+
+**Mandatory**: No
+
+**Example**: `false`
+
+### `METRICS_COLLECTOR_TRACE_ID`
+
+**Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
+pass this value so EnvGene events join the parent deployment session. When it is empty and
+`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
+in that run share it.
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+### `METRICS_COLLECTOR_PARENT_ID`
+
+**Description**: Parent activity event ID (`parentid`). A parent pipeline passes the `id` of its own
+activity event. When the variable is empty, EnvGene sends an empty string.
+
+Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
+
+**Default Value**: None
+
+**Mandatory**: No
 
 ## Deprecated Parameters
 

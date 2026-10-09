@@ -3,17 +3,13 @@
 
 - [EnvGene Repository Variables](#envgene-repository-variables)
   - [Instance EnvGene Repository](#instance-envgene-repository)
-    - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
     - [`SECRET_KEY`](#secret_key)
     - [`GITLAB_TOKEN`](#gitlab_token)
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
-    - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
-    - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
-    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
     - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
     - [`GCP_SA_KEY`](#gcp_sa_key)
@@ -23,9 +19,11 @@
     - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
     - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
     - [`SSL_CERTIFICATES_BUNDLE`](#ssl_certificates_bundle)
+    - [`METRICS_COLLECTOR_URL`](#metrics_collector_url)
+    - [`METRICS_COLLECTOR_SSL_VERIFY`](#metrics_collector_ssl_verify)
+    - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
+    - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Template EnvGene Repository](#template-envgene-repository)
-    - [`ENV_TEMPLATE_TEST`](#env_template_test)
-    - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
   - [Discovery EnvGene Repository](#discovery-envgene-repository)
     - [`DOCKER_REGISTRY` (in discovery repository)](#docker_registry-in-discovery-repository)
@@ -39,24 +37,6 @@ The following are parameters that are set in GitLab CI/CD variables or GitHub en
 All parameters are of string data type.
 
 ## Instance EnvGene Repository
-
-### `ENVGENE_LOG_LEVEL`
-
-**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
-This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
-
-**Logging Level Mapping (Java vs Python):**
-
-| ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
-|-------------------|----------------------|--------------------|
-| DEBUG             | DEBUG                | DEBUG              |
-| INFO              | INFO                 | INFO               |
-| WARNING           | WARNING              | WARN               |
-| ERROR             | ERROR                | ERROR              |
-
-**Default Value**: INFO
-
-**Mandatory**: No
 
 ### `SECRET_KEY`
 
@@ -99,8 +79,9 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `ENVGENE_AGE_PUBLIC_KEY`
 
-**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in
-operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
+**Description**: Public key from EnvGene's AGE key pair. Used in the deploy and sync flow to SOPS-encrypt the
+`ARGO_DPG_CONTEXT.env` file before it is passed to the deploy job. For credential encryption, `PUBLIC_AGE_KEYS`
+is used instead.
 
 **Example**: `key-placeholder-123`
 
@@ -120,17 +101,6 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Example**: `key-placeholder-123,key-placeholder-124`
 
-### `GITLAB_RUNNER_TAG_NAME`
-
-**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which
-runner will pick up and execute the job in the CI pipeline.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `ubuntu-latest`
-
 ### `GH_RUNNER_TAG_NAME`
 
 **Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which
@@ -141,18 +111,6 @@ runner will pick up and execute the job in the CI pipeline.
 **Mandatory**: No
 
 **Example**: `ubuntu-latest`
-
-### `RUNNER_SCRIPT_TIMEOUT`
-
-**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner.
-This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running
-processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
-
-**Default Value**: 10m
-
-**Mandatory**: No
-
-**Example**: `15m`
 
 ### `GH_RUNNER_SCRIPT_TIMEOUT`
 
@@ -170,21 +128,6 @@ documentation](https://docs.github.com/en/actions/using-workflows/workflow-synta
 **Mandatory**: No
 
 **Example**: `15`
-
-### `CALCULATOR_CLI_JAVA_OPTIONS`
-
-**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and
-ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**:
-
-```text
-CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
-```
 
 ### `DOCKER_REGISTRY` (in instance repository)
 
@@ -307,21 +250,51 @@ self-signed certificate authorities. See
 
 **Mandatory**: No
 
-## Template EnvGene Repository
+### `METRICS_COLLECTOR_URL`
 
-### `ENV_TEMPLATE_TEST`
+**Description**: Base URL of Metrics Collector Service. When this variable is set, the Instance pipeline
+sends CloudEvents activity to `{METRICS_COLLECTOR_URL}/api/v1/activity`. When it is empty or absent,
+EnvGene skips those requests and the pipeline run continues. See
+[Metrics Collector activity](/docs/technical-design/metrics-collector-activity.md).
 
-**Description**: Determines whether the generation of the Environment Instance is running in Template Testing mode.
-
-**Default Value**: `false`
+**Default Value**: None
 
 **Mandatory**: No
 
-**Example**: `true`
+**Example**: `https://metrics-collector.example.com`
 
-### `ENVGENE_LOG_LEVEL` (in template repository)
+### `METRICS_COLLECTOR_SSL_VERIFY`
 
-The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
+**Description**: Controls TLS certificate verification for Metrics Collector requests. Set the value to
+`false` to skip verification. Any other value, including an empty value, keeps verification on.
+
+**Default Value**: `true`
+
+**Mandatory**: No
+
+**Example**: `false`
+
+### `METRICS_COLLECTOR_TRACE_ID`
+
+**Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
+pass this value so EnvGene events join the parent deployment session. When it is empty and
+`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
+in that run share it.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+### `METRICS_COLLECTOR_PARENT_ID`
+
+**Description**: Parent activity event ID (`parentid`). A parent pipeline passes the `id` of its own
+activity event. When the variable is empty, EnvGene sends an empty string.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+## Template EnvGene Repository
 
 ### `DOCKER_REGISTRY` (in template repository)
 
