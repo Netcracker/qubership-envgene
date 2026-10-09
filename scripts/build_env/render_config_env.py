@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, ensure_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
@@ -121,7 +121,7 @@ class EnvGenerator:
                      self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
 
     def set_inventory(self):
-        ensure_environment_name(self.ctx.env_definition, self.ctx.env)
+        fill_missing_environment_name(self.ctx.env_definition, self.ctx.env)
         logger.info(f"env_definition = {self.ctx.env_definition}")
 
     def set_cloud_passport(self):
