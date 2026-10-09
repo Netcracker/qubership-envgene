@@ -6,6 +6,7 @@
   - [Request body mapping](#request-body-mapping)
     - [Event fields](#event-fields)
     - [`data` fields](#data-fields)
+    - [`data.config` item fields](#dataconfig-item-fields)
     - [`data.steps` item fields](#datasteps-item-fields)
   - [Processing flow](#processing-flow)
   - [Result](#result)
@@ -65,19 +66,36 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
 
 ### `data` fields
 
-| Field             | Required | `start` | `running` (in progress) | `running` (finished) | `stop`      | Source          |
-|-------------------|----------|---------|-------------------------|----------------------|-------------|-----------------|
-| `inputParameters` | Yes      | Yes     | Yes                     | Yes                  | Yes         | Pipeline inputs |
-| `steps`           | No       | No      | When recorded           | Yes                  | Current job | Step results    |
+`data` carries an `EnvGenePipelineReport`. Each event carries the report as it is known at the time of
+the event.
+
+| Field        | Required | `start` | `running` (in progress) | `running` (finished) | `stop`      | Source                                 |
+|--------------|----------|---------|-------------------------|----------------------|-------------|----------------------------------------|
+| `kind`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `EnvGenePipelineReport`       |
+| `apiVersion` | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `v1`                          |
+| `user`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_LOGIN`                    |
+| `email`      | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_EMAIL`                    |
+| `config`     | Yes      | Yes     | Yes                     | Yes                  | Yes         | See [`data.config`](#dataconfig-item-fields) |
+| `steps`      | No       | No      | When recorded           | Yes                  | Current job | See [`data.steps`](#datasteps-item-fields)   |
+
+### `data.config` item fields
+
+| Field   | Required | Source                                     |
+|---------|----------|--------------------------------------------|
+| `name`  | Yes      | Pipeline parameter name                    |
+| `value` | Yes      | Pipeline parameter value, as a string      |
+
+`config` lists every non-empty pipeline parameter except `CRED_ROTATION_PAYLOAD` and
+`ENV_INVENTORY_CONTENT`.
 
 ### `data.steps` item fields
 
-| Field         | Required | Source                                               |
-|---------------|----------|------------------------------------------------------|
-| `name`        | Yes      | Step name                                            |
-| `status`      | Yes      | `SUCCESS`, `FAILED`, or `SKIPPED`                    |
-| `durationMs`  | No       | Milliseconds. Omitted when the step was skipped      |
-| `environment` | No       | Recorded `ENV_NAMES`, when environments are combined |
+| Field         | Required | Source                                                              |
+|---------------|----------|---------------------------------------------------------------------|
+| `name`        | Yes      | Step name                                                           |
+| `time`        | No       | Step duration in `H:MM:SS`, rounded to seconds. Omitted when the step was skipped |
+| `status`      | Yes      | `success`, `failed`, or `skipped`                                   |
+| `environment` | No       | Recorded `ENV_NAMES`, when environments are combined                |
 
 ## Processing flow
 
@@ -101,19 +119,22 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
    4. When `ENV_NAMES` lists multiple environments, each child process inherits
       `METRICS_COLLECTOR_TRACE_ID` and sends its own `running` events. Child processes do not send
       `start` or `stop`. The run sends one `start` event and one `stop` event, and those events use
-      the same `traceid`. The `stop` event reads the child completion files. It uses `inputParameters`
+      the same `traceid`. The `stop` event reads the child completion files. It uses `config`
       from the first file in name order, then sets `ENV_NAMES` to the recorded environment names
       joined by commas. When more than one completion belongs to the current `CI_JOB_ID`, each
       `steps` item includes `environment`.
 
 3. **Build event payload**
 
-   1. EnvGene sets `data.inputParameters` from non-empty pipeline parameters. It omits
-      `CRED_ROTATION_PAYLOAD` and `ENV_INVENTORY_CONTENT`. The `start`, `running`, and `stop` hook
-      commands, before they apply a recorded completion, include only `PIPELINE_TYPE` and `ENV_NAMES`
-      when those variables are set.
+   1. EnvGene sets `data.kind` to `EnvGenePipelineReport` and `data.apiVersion` to `v1`.
 
-   2. EnvGene sets the remaining event fields from [Event fields](#event-fields).
+   2. EnvGene sets `data.user` from `GITLAB_USER_LOGIN` and `data.email` from `GITLAB_USER_EMAIL`.
+
+   3. EnvGene sets `data.config` from non-empty pipeline parameters. It omits
+      `CRED_ROTATION_PAYLOAD` and `ENV_INVENTORY_CONTENT`. Every event of the run, including `start`,
+      carries the full `config`.
+
+   4. EnvGene sets the remaining event fields from [Event fields](#event-fields).
 
 4. **Send `start` event**
 
@@ -160,7 +181,7 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
       `deploy_postfix_namespace_map`, `process_sd`, `migrate_sd_to_deploy_plan`,
       `process_deployment_plan`, `env_build`, `generate_effective_set`, `git_commit`, `CMDB_import`.
       It then records `copy_env_artifact`. For each step, the Instance pipeline records `name`,
-      `status` (`SUCCESS`, `FAILED`, or `SKIPPED`), and `durationMs` when the step ran.
+      `status` (`SUCCESS`, `FAILED`, or `SKIPPED`), and `time` when the step ran.
 
    5. EnvGene sets event field `time` to the current UTC timestamp and reuses the same `traceid` and
       `parentid` as the matching `start` event.
@@ -209,10 +230,9 @@ body exceeds 1 MiB.
 
 ## Examples
 
-JSON examples shorten `data.steps` and `inputParameters`. A real event lists every registered step, then
-`copy_env_artifact`. An orchestrator event, and any later event that reads a recorded completion, puts
-every non-empty pipeline parameter into `inputParameters` except `CRED_ROTATION_PAYLOAD` and
-`ENV_INVENTORY_CONTENT`. The examples below keep only `PIPELINE_TYPE`.
+JSON examples shorten `data.steps` and `data.config`. A real event lists every registered step, then
+`copy_env_artifact`. Every event puts every non-empty pipeline parameter into `config` except
+`CRED_ROTATION_PAYLOAD` and `ENV_INVENTORY_CONTENT`. The examples below keep only `PIPELINE_TYPE`.
 
 ### Pipeline with one job `env_prepare`
 
@@ -245,9 +265,13 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -274,9 +298,13 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:05Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -303,13 +331,17 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:25:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    },
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ],
     "steps": [
-      { "name": "get_passport", "status": "SKIPPED" },
-      { "name": "env_build", "status": "SUCCESS", "durationMs": 120000 },
-      { "name": "git_commit", "status": "SUCCESS", "durationMs": 15000 }
+      { "name": "get_passport", "status": "skipped" },
+      { "name": "env_build", "time": "0:02:00", "status": "success" },
+      { "name": "git_commit", "time": "0:00:15", "status": "success" }
     ]
   }
 }
@@ -337,13 +369,17 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:30:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    },
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ],
     "steps": [
-      { "name": "get_passport", "status": "SKIPPED" },
-      { "name": "env_build", "status": "SUCCESS", "durationMs": 120000 },
-      { "name": "git_commit", "status": "SUCCESS", "durationMs": 15000 }
+      { "name": "get_passport", "status": "skipped" },
+      { "name": "env_build", "time": "0:02:00", "status": "success" },
+      { "name": "git_commit", "time": "0:00:15", "status": "success" }
     ]
   }
 }
@@ -381,9 +417,13 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -410,9 +450,13 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:05Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -439,13 +483,17 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:25:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    },
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ],
     "steps": [
-      { "name": "get_passport", "status": "SKIPPED" },
-      { "name": "env_build", "status": "SUCCESS", "durationMs": 120000 },
-      { "name": "git_commit", "status": "SUCCESS", "durationMs": 15000 }
+      { "name": "get_passport", "status": "skipped" },
+      { "name": "env_build", "time": "0:02:00", "status": "success" },
+      { "name": "git_commit", "time": "0:00:15", "status": "success" }
     ]
   }
 }
@@ -473,9 +521,13 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:30:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -502,9 +554,13 @@ Sequence:
   "datacontenttype": "application/json",
   "time": "2026-06-12T14:35:00Z",
   "data": {
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
