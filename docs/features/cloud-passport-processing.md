@@ -155,9 +155,14 @@ The system looks for a default passport in the env's parent (cluster) directory,
 
 1. `cloud-passport/<cluster-name>.{yml|yaml}` (a file named after the cluster directory)
 2. `cloud-passport/passport.{yml|yaml}` (the recommended default name)
+3. The single passport file in `cloud-passport/`. When the directory holds exactly one passport file
+   (any `<name>.{yml|yaml}` that is not a `-creds` file), that file is used regardless of its name.
 
 Name the default passport `passport.yml` so it auto-associates regardless of the cluster directory name.
-If neither file exists, no passport is applied and generation continues without one.
+If `cloud-passport/` holds more than one passport file and none matched by name in steps 1 and 2,
+generation fails with an ambiguous-passport error that lists the candidates. Set
+`inventory.cloudPassport` to select one. If `cloud-passport/` holds no passport file, no passport is
+applied and generation continues without one.
 
 ### Resolution summary
 
@@ -166,8 +171,12 @@ Decision flow:
 1. `cloudPassport` set → bottom-up search for `<name>.{yml|yaml}`. Resolved on exactly one match.
    Generation fails on zero matches (not-found) or multiple matches (duplicate).
 2. `cloudPassport` absent → try `cloud-passport/<cluster-name>.{yml|yaml}`, then
-   `cloud-passport/passport.{yml|yaml}`. Generation fails on multiple matches (duplicate).
-3. Nothing matched → no passport applied, generation continues.
+   `cloud-passport/passport.{yml|yaml}`, then the single passport file in `cloud-passport/` when
+   exactly one exists.
+3. `cloudPassport` absent and `cloud-passport/` holds more than one unmatched passport file →
+   generation fails with an ambiguous-passport error listing the candidates.
+4. `cloudPassport` absent and `cloud-passport/` holds no passport file → no passport applied,
+   generation continues.
 
 ## Merge into Cloud
 
