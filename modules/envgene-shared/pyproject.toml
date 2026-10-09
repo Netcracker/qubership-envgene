@@ -11,7 +11,7 @@ classifiers = [
     "Programming Language :: Python :: 3"
 ]
 dependencies = [
-    "cryptography==48.0.1",
+    "cryptography==50.0.0",
     "jsonschema==4.24.1",
     "ruyaml==0.91.0",
 ]
