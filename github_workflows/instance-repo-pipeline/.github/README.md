@@ -543,8 +543,11 @@ github_workflows/instance-repo-pipeline/
 
 ## Use case scenarios
 
-The legacy scenarios below leave `PIPELINE_TYPE` empty and set `OPERATION_TYPE=DEPLOY` explicitly. Additional
-configured inputs or plugins can enable more steps than the ones listed.
+The legacy scenarios below leave `PIPELINE_TYPE` empty and set `OPERATION_TYPE=DEPLOY` explicitly.
+
+Additional configured inputs, plugins, and existing repository files can enable more steps than those listed.
+On the legacy path, `migrate_sd_to_deploy_plan` runs without new SD input if `use_committed_sd` is enabled,
+`sd.yaml` exists, and `deploy-plan.yml` does not. `use_committed_sd` defaults to `true`.
 
 ### Scenario 1: Environment build and Effective Set
 
