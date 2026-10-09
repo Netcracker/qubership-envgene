@@ -109,7 +109,7 @@ class Service(BaseSchema):
         return self
 
 
-# Configuration, Smartplug and Jobs enitities have the same structure, no info about mandatory
+# Configuration, Smartplug and Jobs entities have the same structure, no info about mandatory
 class Configuration(BaseSchema):
     name: str
     version: str
