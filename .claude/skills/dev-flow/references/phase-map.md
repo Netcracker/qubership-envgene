@@ -34,17 +34,30 @@ returning only a short status.
   > extract a helper rather than adding a parallel path. Do not write any "docs are ahead of code" meta
   > line. When filed, return the issue number and the draft path only.
 
+## dev-design (interactive, not dispatched)
+
+- **Entry:** the CR issue number, the design permalink, and the code the change touches.
+- **Child skill:** `dev-design`.
+- **Exit:** an approved dev design at `docs/dev/designs/<slug>.md`, committed on the work branch when
+  the developer asks, its path recorded in the ledger.
+- **Model:** interactive in the main loop. The dev design is a brainstorm with a human-approval gate,
+  so it is not handed to a subagent that cannot hold the dialogue.
+- **Note:** the dev design says how the change is built in code. It does not reopen the solution
+  design from the ADR.
+
 ## plan
 
-- **Entry:** the CR issue number and the design permalink.
+- **Entry:** the CR issue number, the design permalink, and the dev design path.
 - **Child skill:** `writing-plans`.
 - **Exit:** a plan at `docs/superpowers/plans/YYYY-MM-DD-<slug>.md` with per-task briefs and Global
   Constraints.
 - **Model:** Sonnet. Structured authoring from a settled design. Escalate to a strong model only if the
   design carries a load-bearing unknown that the plan must resolve with a spike.
 - **Dispatch prompt:**
-  > Read CR issue [#NNNN] and the design at [permalink]. Invoke the writing-plans skill to produce an
-  > implementation plan. Annotate each task brief with a recommended model tier: transcription of
+  > Read CR issue [#NNNN], the design at [permalink], and the dev design at [dev design path]. The dev
+  > design is approved - do not redesign. Invoke the writing-plans skill to produce an implementation
+  > plan. Copy the "Constraints" section of the dev design into the Global Constraints of the plan
+  > verbatim, and add one line: reviewers read `.claude/skills/envgene-code-review/SKILL.md`. Annotate each task brief with a recommended model tier: transcription of
   > complete code is a cheap tier, integration across files is a standard tier. If a load-bearing
   > unknown exists, make Task 0 a spike that confirms it. Write the plan to the standard path and return
   > only that path.
@@ -75,15 +88,18 @@ returning only a short status.
 ## review
 
 - **Entry:** the diff `BASE..HEAD` for the code PR and the CR acceptance conditions.
-- **Child skill:** `code-review`, and `writing-gherkin` when a BDD slice is warranted.
+- **Child skill:** `envgene-code-review` for the repo standards, `code-review`, and `writing-gherkin`
+  when a BDD slice is warranted.
 - **Exit:** a review report file and, when authored, a BDD slice added to the suite.
 - **Model:** Sonnet. The two axes split by nature:
-  - Standards axis is rule matching against repo standards and the smell baseline - Sonnet,
+  - Standards axis is rule matching against the repo standards in the `envgene-code-review` skill and
+    the smell baseline - Sonnet,
   - Spec axis is judgement against the CR acceptance - Sonnet, escalate to the most capable model when
     the diff is subtle or high risk.
 - **Dispatch prompt:**
-  > Read the diff for PR [#NNNN] against [BASE] and the acceptance conditions in CR [#NNNN]. Invoke the
-  > code-review skill against that fixed point. Run the Standards axis on a standard tier and the Spec
+  > Read the diff for PR [#NNNN] against [BASE] and the acceptance conditions in CR [#NNNN]. Load the
+  > envgene-code-review skill - its rules are the repo standards. Invoke the code-review skill against
+  > that fixed point. Run the Standards axis on a standard tier and the Spec
   > axis on a standard tier, escalating the Spec axis to the most capable model if the diff is subtle.
   > If a coverage gap warrants a BDD slice, invoke writing-gherkin to enumerate the missing cases. Write
   > the report to [report path] and return the path plus the count of findings per axis.
