@@ -1,6 +1,9 @@
 name: "Dev: Build or Test Qubership EnvGene docker images"
 
-run-name: "Build or test EnvGene for commit ${{ github.sha }}"
+run-name: >-
+  ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'docs:') &&
+      format('EnvGene Docs checking for commit {0}', github.sha) ||
+      format('Build or test EnvGene for commit {0}', github.sha) }}
 
 on:
   workflow_dispatch:
