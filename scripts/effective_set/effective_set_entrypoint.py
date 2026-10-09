@@ -56,7 +56,7 @@ def _run_deploy_plan_full(effective_set_dir, full_env_name, deploy_plan: Envgene
     _restore_saved_dirs(tmp_root, saved)
     _clear_uniq_for_version_dirs(effective_set_dir, entries)
 
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan.dp_path)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan.dp_path if entries else None)
     subprocess.run(cmd, shell=True, check=True)
 
 
@@ -78,7 +78,7 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, deploy_plan_delta
     runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
-    cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan_delta.dp_path)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan_delta.dp_path if entries else None)
     subprocess.run(cmd, shell=True, check=True)
 
     cleanup_mapping.update(openYaml(cleanup_mapping_path, allow_default=True))

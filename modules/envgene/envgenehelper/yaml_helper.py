@@ -19,7 +19,7 @@ from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, 
 from .json_helper import openJson
 from envgene_shared.utils.logger import logger
 
-from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, \
+from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, load_schema, get_schema_validator, \
     validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
     remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
     ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
@@ -75,11 +75,13 @@ def alignYamlComments(yamlContent, extra_indent=0):
     return None
 
 
-def sortYaml(yaml_data, schema_path, remove_additional_props):
-    with open(schema_path, 'r') as f:
-        schema_data = json.load(f)
-    logger.debug(f'Checking yaml with schema: {schema_path}')
-    jsonschema.validate(yaml_data, schema_data)
+def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
+    schema_data = load_schema(str(schema_path))
+    if validate:
+        logger.debug(f'Checking yaml with schema: {schema_path}')
+        error = jsonschema.exceptions.best_match(get_schema_validator(str(schema_path)).iter_errors(yaml_data))
+        if error is not None:
+            raise error
     sort_data = jschon_tools.process_json_doc(
         schema_data=schema_data,
         doc_data=yaml_data,
@@ -189,11 +191,11 @@ def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, co
 
 
 def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=False, wrap_all_strings=False,
-                 remove_additional_props=False):
+                 remove_additional_props=False, validate=True):
     logger.info(f'Beautifying yaml: {file_path} with schema: {schema_path}')
     yamlData = openYaml(file_path)
     if schema_path:
-        yamlData = sortYaml(yamlData, schema_path, remove_additional_props)
+        yamlData = sortYaml(yamlData, schema_path, remove_additional_props, validate)
     if wrap_all_strings:
         make_quotes_for_all_strings(yamlData)
     else:

@@ -8,7 +8,7 @@
     - [Supported certificate types](#supported-certificate-types)
   - [Technical implementation](#technical-implementation)
 
-For step-by-step instructions on placing, obtaining, and verifying certificates, see
+For step-by-step instructions on setting `SSL_CERTIFICATES_BUNDLE`, obtaining certificates, and verifying them, see
 [Configure system certificates](/docs/how-to/configure-system-certificates.md).
 
 ## Problem statement
@@ -28,24 +28,27 @@ The system certificate mechanism has these goals:
 ## Approach
 
 EnvGene provides a built-in mechanism for managing system certificates during pipeline execution.
-EnvGene reads certificates from a CI/CD variable and from a directory in the environment instance
-repository, then adds them to the trust store before the other pipeline steps run.
+EnvGene reads certificates once, at the start of the `env-prepare` job, from a CI/CD variable and from
+two directories in the environment instance repository, then adds them to the trust store before the
+other pipeline steps run.
 
 ### Certificate sources
 
-EnvGene reads certificates from the sources below.
+EnvGene reads certificates from the sources below, in this order.
 
 | Source                    | Kind              | Value format                                | Location                                               |
 |---------------------------|-------------------|---------------------------------------------|--------------------------------------------------------|
-| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | base64-encoded PEM CA certificate or bundle | Pipeline CI/CD variable                                |
+| `SSL_CERTIFICATES_BUNDLE` | CI/CD variable    | base64-encoded PEM certificate or bundle    | Pipeline CI/CD variable                                |
+| `ca_bundle`               | Repository folder | One or more PEM certificate files           | `/ca_bundle` at the instance repository root           |
 | `configuration/certs/`    | Repository folder | One or more PEM certificate files           | `configuration/certs/` at the instance repository root |
 | Default certificate       | Runner image file | PEM certificate                             | `/default_cert.pem`, built into the runner image       |
 
-EnvGene applies `SSL_CERTIFICATES_BUNDLE` and `configuration/certs/` independently and adds every
-certificate they hold to the trust store. If `SSL_CERTIFICATES_BUNDLE` is not set and
-`configuration/certs/` contains no files, EnvGene falls back to the default certificate built into
-the runner image, when one is present. When no source provides a certificate, EnvGene installs
-nothing and the pipeline continues.
+EnvGene applies `SSL_CERTIFICATES_BUNDLE`, `/ca_bundle`, and `configuration/certs/` independently and
+adds every certificate they hold to the trust store. It reads only files directly in each directory.
+If `SSL_CERTIFICATES_BUNDLE` is not set and neither directory contains an entry, EnvGene falls back to
+the default certificate built into the runner image, when one is present. An empty directory does not
+block the default certificate. When no source provides a certificate, EnvGene installs nothing and
+the pipeline continues.
 
 ### Certificate management process
 
@@ -57,31 +60,42 @@ flowchart TD
     A[Job starts] --> B{SSL_CERTIFICATES_BUNDLE set?}
     B -->|Yes| C[Decode base64 and install the bundle]
     B -->|No| D[Skip the CI/CD variable]
-    C --> E{configuration/certs/ has files?}
+    C -->|Installed| E{ca_bundle has an entry?}
+    C -->|Failed| X[Job fails. Later sources are not checked]
     D --> E
-    E -->|Yes| F[Install each certificate file]
-    E -->|No| G{Bundle set or certs found?}
-    F --> G
-    G -->|No| H[Install the default certificate, if present]
-    G -->|Yes| J[The other pipeline steps use the trust store]
-    H --> J
+    E -->|Yes| F[Install each file in ca_bundle]
+    E -->|No| G{configuration/certs/ has an entry?}
+    F -->|Installed| G
+    F -->|Failed| X
+    G -->|Yes| H[Install each file in configuration/certs]
+    G -->|No| I{Any source found?}
+    H -->|Installed| I
+    H -->|Failed| X
+    I -->|No| J[Install the default certificate, if present]
+    I -->|Yes| K[The other pipeline steps use the trust store]
+    J -->|Installed or not present| K
+    J -->|Failed| X
 ```
 
 > [!IMPORTANT]
 > `SSL_CERTIFICATES_BUNDLE` must hold base64-encoded PEM content. If the value is not valid base64,
-> the job fails with an explicit error.
+> or if it contains raw PEM text, the job fails with an explicit error.
+
+A decoded bundle or a folder file must contain at least one `-----BEGIN CERTIFICATE-----` block. Each
+block must parse as an X.509 certificate and must not be expired at the time of the run. A failed check
+stops the job. EnvGene does not check the remaining sources after that failure.
 
 ### Supported certificate types
 
 EnvGene processes CA certificates in PEM format: root or intermediate certificates (`.crt`, `.pem`)
-used to validate server certificates. A single file may contain a full chain of concatenated PEM
-certificates. For how to assemble a chain file, see
-[Build a certificate chain file](/docs/how-to/configure-system-certificates.md#build-a-certificate-chain-file).
+used to validate server certificates. The filename does not select certificates. A single file may
+contain a full chain of concatenated PEM certificates.
 
 ## Technical implementation
 
-EnvGene runs a certificate handling script. For each certificate the script:
+EnvGene runs a certificate handling script. For each file the script:
 
-1. Copies the certificate to `/usr/local/share/ca-certificates/` under a `<basename>.crt` filename,
-   so multiple certificate files do not overwrite each other.
+1. Copies the whole file to `/usr/local/share/ca-certificates/` as `<name>.crt`, where `<name>` is the
+   filename without its extension. PEM blocks in that file stay together. A different name does not
+   overwrite an existing file. The same name replaces the file installed by an earlier source.
 2. Rebuilds the trust store with `update-ca-certificates`.

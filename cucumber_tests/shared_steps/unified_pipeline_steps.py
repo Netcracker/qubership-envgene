@@ -17,6 +17,16 @@ def set_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
     workspace.extra_env[param] = processed_value
 
 
+@when(parsers.parse('the pipeline parameter "{param}" is changed to "{value}"'))
+def change_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
+    workspace.extra_env[param] = value
+
+
+@when(parsers.parse('the pipeline parameter "{param}" is removed'))
+def remove_pipeline_parameter(workspace: EnvGeneWorkspace, param: str):
+    workspace.extra_env.pop(param)
+
+
 @given(parsers.parse('the config parameter "{param}" is set to {value}'))
 def set_config_parameter_raw(workspace: EnvGeneWorkspace, param: str, value: str):
     if value.lower() == 'true':
