@@ -14,6 +14,9 @@ external operating modes, and how it resolves overlaps between sources.
   - [Merging behavior](#merging-behavior)
   - [Local-macro rewrite in external mode](#local-macro-rewrite-in-external-mode)
   - [External-mode credential restrictions](#external-mode-credential-restrictions)
+    - [`vaultAppRole` cannot be externalized](#vaultapprole-cannot-be-externalized)
+    - [Whole-value credential reference only](#whole-value-credential-reference-only)
+    - [Deprecated key-form macros](#deprecated-key-form-macros)
   - [Related documentation](#related-documentation)
 
 ## Description
@@ -84,9 +87,9 @@ same `credId` overrides the placeholder entry in the merged result.
 ### External mode
 
 EnvGene auto-generates an **external Credential** for every `credId` referenced by a
-[Credential Reference](/docs/features/external-creds.md#credential-reference) or
-[Built-in credential reference](/docs/features/external-creds.md#built-in-credential-references) that no
-source provides (no Credential Template, Cloud Passport, or Shared Credentials File). The generated entry has:
+[Credential Reference](/docs/features/external-creds.md#credential-reference) or a
+`${creds.get('<credId>').<field>}` macro that no source provides (no Credential Template, Cloud Passport, or
+Shared Credentials File). The generated entry has:
 
 ```yaml
 <cred-id>:
@@ -94,6 +97,13 @@ source provides (no Credential Template, Cloud Passport, or Shared Credentials F
   secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
 ```
+
+EnvGene does not auto-generate a `credId` reachable through a
+[Built-in credential reference](/docs/features/external-creds.md#built-in-credential-references), a system
+credential, or a Registry Definition or Artifact Definition credential. If a `credId` is reached by both a
+Built-in credential reference and a macro or Credential Reference, the built-in wins and it is not
+auto-generated. Such a `credId` must be declared by a source. When it is not, Environment Instance generation
+fails with an error that names the object, the field, the `credId`, where to declare it, and an example entry.
 
 Auto-generation has the lowest effective priority in the [precedence ladder](#precedence-ladder): any source
 (a Credential Template, the Cloud Passport, or a Shared Credentials File) that supplies the same `credId`
@@ -143,8 +153,8 @@ generation. The rewritten shape is:
   property: <field>
 ```
 
-The `property` field is omitted when the referenced Credential is single-value. The rewrite applies to
-parameter values only.
+The `property` field takes the macro field (`username` or `password`) and is omitted for a `.secret` macro. The
+rewrite reads only the macro. It applies to the values of `deployParameters` and `e2eParameters`.
 [Built-in credential references](/docs/features/external-creds.md#built-in-credential-references)
 such as `Cloud.defaultCredentialsId` already carry a bare `credId` and need no rewrite.
 

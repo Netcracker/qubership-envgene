@@ -83,6 +83,7 @@ runs:
         run_suite test_bgd_sub_flows.py bgd_sub_flows.xml
         run_suite test_deploy_sub_flows.py deploy_sub_flows.xml
         run_suite test_calculator_cli.py calculator_cli.xml
+        run_suite test_external_creds.py external_creds.xml
 
         exit "${failed}"
 

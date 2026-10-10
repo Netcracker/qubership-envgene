@@ -2,8 +2,9 @@ import copy
 
 import pytest
 
-from build_env.create_credentials import create_credentials, getNamespaceCreds, getTenantCreds
-from envgenehelper import open_current_env_instance_store
+from build_env.create_credentials import CredentialCollector, create_credentials, getNamespaceCreds, getTenantCreds
+from build_env.render_config_env import EnvGenerator
+from envgenehelper import CredentialMode, open_current_env_instance_store
 from envgenehelper.yaml_helper import readYaml
 
 TENANT = """name: tenant
@@ -67,8 +68,7 @@ def test_create_credentials_does_not_change_store_objects(tmp_path):
             objects.put(path, readYaml(text))
         snapshot = {path: copy.deepcopy(objects.get(path)) for path in paths}
 
-        create_credentials(env_dir, tmp_path / "environments", False,
-                           readYaml("inventory: {}\nenvTemplate: {}\n"))
+        create_credentials(env_dir, tmp_path / "environments", readYaml("inventory: {}\nenvTemplate: {}\n"), [], EnvGenerator())
 
         for path, expected in snapshot.items():
             assert objects.get(path) == expected
@@ -82,9 +82,10 @@ def test_tenant_without_field_for_credentials_fails(missing_field):
     del tenant[missing_field]
 
     with pytest.raises(ValueError):
-        getTenantCreds(tenant, "tenant")
+        getTenantCreds(tenant, "tenant", CredentialCollector(CredentialMode.LOCAL))
 
 
 def test_namespace_without_credentials_id_fails():
     with pytest.raises(ValueError):
-        getNamespaceCreds(readYaml("name: env-core\n"), "tenant", "cloud", "env-core")
+        getNamespaceCreds(readYaml("name: env-core\n"), "tenant", "cloud", "env-core",
+                          CredentialCollector(CredentialMode.LOCAL))

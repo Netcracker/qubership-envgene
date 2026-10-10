@@ -5,7 +5,7 @@ Given a JSON payload (`CRED_ROTATION_PAYLOAD`) describing which parameters to ro
 ## Files
 
 | File | Responsibility |
-|------|---------------|
+| ------ | --------------- |
 | `creds_rotation_handler.py` | Entry point `run_cred_rotation()`: validates env vars, reads all files, iterates payload entries via `process_entry_in_payload`, optionally writes updates |
 | `core_rotation.py` | `process_entry_in_payload`: resolves namespace/app file, extracts the `${creds.get(...)}` macro, finds all credential files that contain the cred ID, searches for all parameters referencing that cred |
 | `models.py` | Dataclasses: `PayloadEntry`, `RotationResult`, `AffectedParameter`, `ParameterReference`, `FileUpdateEntry`, `CredMap`, `EnvConfig` |
@@ -18,7 +18,7 @@ Given a JSON payload (`CRED_ROTATION_PAYLOAD`) describing which parameters to ro
 ## Required Environment Variables
 
 | Variable | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `ENV_NAME` | Target environment name |
 | `CLUSTER_NAME` | Target cluster name |
 | `CI_PROJECT_DIR` | Instance repository root |
@@ -45,7 +45,7 @@ Payload may be raw JSON or base64-encoded JSON. If `crypt_backend == SOPS` and t
 
 ## Limitation
 
-External credentials (`type: external`) are not supported — rotation must be performed at the Secret Store directly. Attempting to rotate an external credential fails validation.
+Credential rotation is supported only in local mode, for usernamePassword and secret Credentials. In external mode (/configuration/secret-stores.yml present), the step fails at entry with instructions to rotate credentials directly in the Secret Store.
 
 ## Tests
 
