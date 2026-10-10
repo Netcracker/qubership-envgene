@@ -1,0 +1,17 @@
+name: test-ns
+labels: []
+deployParameters: {}
+deployParameterSets: []
+e2eParameters:
+  SOME_PARAM: "${creds.get('db-cred').password}"
+  OTHER_PARAM: "${creds.get('db-cred').password}"
+  ISOLATED_PARAM: "${creds.get('isolated-cred').password}"
+  TOKEN_PARAM: "${creds.get('token-cred').secret}"
+  TOKEN_OTHER_PARAM: "${creds.get('token-cred').secret}"
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+credentialsId: dummy
