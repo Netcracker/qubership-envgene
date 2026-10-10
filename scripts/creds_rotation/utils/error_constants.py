@@ -24,6 +24,7 @@ class ErrorMessages:
     INVALID_DATA_TYPE = "Error: Invalid Data Type.\n Expected {expected} at {value}, got {type}. Incorrect value for the parameter found while lookig for affected parameters."
     OUT_OF_RANGE = "Error: Out Of Range.\n Index {index} out of bounds for key: {key}. Incorrect value for the parameter found while lookig for affected parameters."
     INVALID_PATH = "Error: Invalid path hierarchy.\n {stop_dir} is not a parent of {source_path}. Something wrong with the folder structure in environment instance. Expected structure: project_dir/environments/cluster/env."
+    EXTERNAL_MODE_NOT_SUPPORTED = "Error: Termination condition encountered.\n Credential rotation is not supported in external credential mode. Rotate the credentials using the rotation mechanism of the secret store."
 
 class ErrorCodes:
     """Error code constants"""

@@ -45,7 +45,7 @@ Payload may be raw JSON or base64-encoded JSON. If `crypt_backend == SOPS` and t
 
 ## Limitation
 
-External credentials (`type: external`) are not supported — rotation must be performed at the Secret Store directly. Attempting to rotate an external credential fails validation.
+Credential rotation is supported only in local mode, for usernamePassword and secret Credentials. In external mode (/configuration/secret-stores.yml present), the step fails at entry with instructions to rotate credentials directly in the Secret Store.
 
 ## Tests
 
