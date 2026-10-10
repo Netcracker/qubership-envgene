@@ -79,6 +79,7 @@ class SecretStore(BaseModel):
 class PropertyMapping(BaseModel):
     name: str
 
+
 class ExternalCredential(BaseModel):
     type: Literal["external"]
     secretStore: Optional[str] = None
@@ -94,3 +95,8 @@ class ExternalCredential(BaseModel):
 
         cleaned = v.strip()
         return cleaned if cleaned else "default_store"
+
+
+class CredentialMode(CaseInsensitiveEnum):
+    LOCAL = "LOCAL"
+    EXTERNAL = "EXTERNAL"

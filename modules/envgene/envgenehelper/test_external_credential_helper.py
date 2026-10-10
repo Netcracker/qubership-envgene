@@ -2,10 +2,11 @@ import subprocess
 import json
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+from modules.envgene.envgenehelper.models import CredentialMode
 import pytest
 import yaml
 
-from .external_credential_helper import _parse_secret_payload, _get_property_value, find_external_credential_by_id, extract_external_cred, find_secret_store_by_id, resolve_external_credential_reference, load_all_secret_stores, resolve_external_credential_data, _get_secret_store_payload_cached
+from .external_credential_helper import _parse_secret_payload, _get_property_value, detect_credential_mode, find_external_credential_by_id, extract_external_cred, find_secret_store_by_id, resolve_external_credential_reference, load_all_secret_stores, resolve_external_credential_data, _get_secret_store_payload_cached
 from envgenehelper.errors import ValidationError
 
 
@@ -138,3 +139,15 @@ def test_resolve_external_credential_data_all_properties(mock_configs, monkeypat
          
     result = resolve_external_credential_data("my-cred-id", cred_conf)
     assert result == {"username": "app_user", "password": "password123"}
+
+
+@pytest.mark.unit
+def test_detect_credential_mode_external_when_secret_stores_file_exists(tmp_path):
+    (tmp_path / "configuration").mkdir()
+    (tmp_path / "configuration" / "secret-stores.yml").write_text("{}")
+    assert detect_credential_mode(tmp_path) == CredentialMode.EXTERNAL
+
+
+@pytest.mark.unit
+def test_detect_credential_mode_local_when_secret_stores_file_missing(tmp_path):
+    assert detect_credential_mode(tmp_path) == CredentialMode.LOCAL
