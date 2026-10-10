@@ -701,8 +701,8 @@ class EnvGenerator:
             copy_instance_paramsets(env_dir, str(render_parameters_dir))
             self.ctx.render_parameters_dir = str(render_parameters_dir)
             e2e_paramset_names = self._cloud_e2e_paramset_names(cloud)
-            self.generate_paramset_templates(e2e_paramset_names)
             self.validate_used_paramsets(e2e_paramset_names)
+            self.generate_paramset_templates(e2e_paramset_names)
 
         paramset_map = create_paramset_map(str(render_parameters_dir), NamespaceRole.COMMON, False, False)
         cloud_e2e = {"e2eParameterSets": e2e_paramset_names, "e2eParameters": cloud["e2eParameters"]}
@@ -841,8 +841,8 @@ class EnvGenerator:
             if env_specific_schema:
                 copy_path(source_path=env_specific_schema, target_dir=current_env_dir)
             self.used_paramset_names = self.collect_used_paramset_names()
-            self.generate_paramset_templates(self.used_paramset_names)
             self.validate_used_paramsets(self.used_paramset_names)
+            self.generate_paramset_templates(self.used_paramset_names)
 
             ensure_required_keys(self.ctx.as_dict(),
                                  required=["templates_dir", "cluster_name", "current_env_dir"])

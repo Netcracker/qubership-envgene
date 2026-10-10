@@ -45,8 +45,8 @@ def _paramset(path, name, parameters="{}"):
 def _generate(params_dir, used_names):
     generator = EnvGenerator()
     generator.ctx.render_parameters_dir = str(params_dir)
-    generator.generate_paramset_templates(used_names)
     generator.validate_used_paramsets(used_names)
+    generator.generate_paramset_templates(used_names)
 
 
 class TestGenerateParamsetTemplates:
@@ -83,20 +83,23 @@ class TestGenerateParamsetTemplates:
         assert (params / "from_template" / "used.yml").read_text() == "name: used\nparameters: {}\napplications: []\n"
         assert not (params / "from_template" / "used.yml.j2").exists()
 
-    def test_used_template_rendered_invalid_fails(self, tmp_path):
-        params = tmp_path / "parameters"
-        _paramset(params / "from_template" / "used.yml.j2", "{{ 'other' }}")
+    def test_duplicate_in_one_template_fails(self, tmp_path):
+        params = tmp_path / "parameters" / "from_template"
+        _paramset(params / "a" / "used.yml", "used")
+        _paramset(params / "b" / "used.yaml", "used")
 
         with pytest.raises(ReferenceError):
-            _generate(params, {"used"})
+            _generate(params.parent, {"used"})
 
-    def test_duplicate_in_one_template_fails(self, tmp_path):
+    def test_same_name_as_template_to_render_is_not_a_duplicate(self, tmp_path):
         params = tmp_path / "parameters" / "from_template"
         _paramset(params / "a" / "used.yml", "used")
         _paramset(params / "b" / "used.yaml.j2", "used")
 
-        with pytest.raises(ReferenceError):
-            _generate(params.parent, {"used"})
+        _generate(params.parent, {"used"})
+
+        assert (params / "a" / "used.yml").exists()
+        assert (params / "b" / "used.yml").exists()
 
     def test_same_name_on_different_levels_is_override(self, tmp_path):
         params = tmp_path / "parameters"
