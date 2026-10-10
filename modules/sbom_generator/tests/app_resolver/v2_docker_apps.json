@@ -1,0 +1,79 @@
+[
+  {
+    "name": "sample-om",
+    "artifactId": "sample-om",
+    "groupId": "com.company.product.bss.om",
+    "solutionDescriptor": false,
+    "supportParallelDeploy": false,
+    "deployParameters": {},
+    "technicalConfigurationParameters": {},
+    "registry": {
+      "version": "2.0",
+      "name": "Shared Platform Registry V2",
+      "authConfig": {
+        "aws-ecr-auth": {
+          "provider": "aws",
+          "authMethod": "secret",
+          "credentialsId": "aws-ecr-creds",
+          "awsRegion": "us-east-1",
+          "awsDomain": "my-company"
+        }
+      },
+      "mavenConfig": {
+        "authConfig": "aws-ecr-auth",
+        "repositoryDomainName": "https://registry.example.com/",
+        "targetSnapshot": "example.maven.mvn.dev",
+        "targetStaging": "example.maven.mvn.staging",
+        "targetRelease": "example.maven.mvn",
+        "snapshotGroup": "example.maven.mvn.group",
+        "releaseGroup": "example.maven-release.mvn.group"
+      },
+      "dockerConfig": {
+        "authConfig": "aws-ecr-auth",
+        "snapshotUri": "registry.example.com:25081",
+        "stagingUri": "registry.example.com:25082",
+        "releaseUri": "registry.example.com:25083",
+        "groupUri": "registry.example.com:25081",
+        "snapshotRepoName": "example.maven.docker.dev",
+        "stagingRepoName": "example.maven.docker.staging",
+        "releaseRepoName": "example.maven.docker",
+        "groupName": "example.maven.docker.group"
+      },
+      "goConfig": {
+        "authConfig": "aws-ecr-auth",
+        "repositoryDomainName": "registry.example.com",
+        "goTargetSnapshot": "example.maven.go.dev",
+        "goTargetRelease": "example.maven.go",
+        "goProxyRepository": "example.maven.go.proxy"
+      },
+      "rawConfig": {
+        "authConfig": "aws-ecr-auth",
+        "repositoryDomainName": "registry.example.com",
+        "rawTargetSnapshot": "example.maven.raw.dev",
+        "rawTargetRelease": "example.maven.raw",
+        "rawTargetStaging": "example.maven.raw.staging",
+        "rawTargetProxy": "example.maven.raw.proxy"
+      },
+      "npmConfig": {
+        "authConfig": "aws-ecr-auth",
+        "repositoryDomainName": "registry.example.com",
+        "npmTargetSnapshot": "example.maven.npm.dev",
+        "npmTargetRelease": "example.maven.npm"
+      },
+      "helmConfig": {
+        "authConfig": "aws-ecr-auth",
+        "repositoryDomainName": "registry.example.com",
+        "helmTargetStaging": "example.maven.helm.staging",
+        "helmTargetRelease": "example.maven.helm"
+      },
+      "helmAppConfig": {
+        "authConfig": "aws-ecr-auth",
+        "repositoryDomainName": "registry.example.com",
+        "helmStagingRepoName": "example.maven.helm.staging",
+        "helmReleaseRepoName": "example.maven.helm",
+        "helmGroupRepoName": "example.maven.helm.group",
+        "helmDevRepoName": "example.maven.helm.dev"
+      }
+    }
+  }
+]

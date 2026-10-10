@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "component": "sample-monitoring",
+    "descriptorFormat": "1.21",
+    "builderVersion": "dd-plugin/1.0.0"
+  },
+  "include": [],
+  "infrastructures": [],
+  "services": [
+    {
+      "service_name": "metrics-operator",
+      "git_branch": "release-0231328",
+      "image_type": "service",
+      "image_name": "metrics-operator",
+      "docker_repository_name": "observability",
+      "docker_registry": "registry.example.com:25084",
+      "docker_tag": "1.2.3",
+      "full_image_name": "registry.example.com:25084/observability/metrics-operator:1.2.3",
+      "git_url": "https://git.example.com/example/metrics-operator",
+      "version": "1.2.3",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "blackbox-exporter",
+      "image_type": "image",
+      "image_name": "blackbox-exporter",
+      "docker_repository_name": "prom",
+      "docker_registry": "registry.example.com:25085",
+      "docker_tag": "v0.26.0",
+      "full_image_name": "registry.example.com:25085/prom/blackbox-exporter:v0.26.0"
+    }
+  ],
+  "configurations": [],
+  "frontends": [],
+  "smartplug": [],
+  "jobs": [],
+  "libraries": [],
+  "complexes": [],
+  "charts": [],
+  "additionalArtifacts": {},
+  "descriptors": []
+}

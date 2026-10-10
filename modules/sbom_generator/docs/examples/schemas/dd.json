@@ -1,0 +1,308 @@
+{
+  "$defs": {
+    "Artifact": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArtifactType"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Type"
+        },
+        "classifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Classifier"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "title": "Artifact",
+      "type": "object"
+    },
+    "ArtifactType": {
+      "enum": [
+        "zip",
+        "spar",
+        "jar",
+        "pom"
+      ],
+      "title": "ArtifactType",
+      "type": "string"
+    },
+    "Configuration": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "gitBranch": {
+          "title": "Gitbranch",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Type"
+        },
+        "artifacts": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Artifact"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifacts"
+        },
+        "gitRevision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Gitrevision"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "gitBranch"
+      ],
+      "title": "Configuration",
+      "type": "object"
+    },
+    "ImageType": {
+      "enum": [
+        "image",
+        "service"
+      ],
+      "title": "ImageType",
+      "type": "string"
+    },
+    "Service": {
+      "properties": {
+        "serviceName": {
+          "title": "Servicename",
+          "type": "string"
+        },
+        "imageType": {
+          "$ref": "#/$defs/ImageType"
+        },
+        "dockerTag": {
+          "title": "Dockertag",
+          "type": "string"
+        },
+        "dockerRepositoryName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Dockerrepositoryname"
+        },
+        "dockerRegistry": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Dockerregistry"
+        },
+        "imageName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Imagename"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Version"
+        },
+        "gitBranch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Gitbranch"
+        },
+        "promoteArtifacts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "title": "Promoteartifacts"
+        },
+        "deployParam": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Deployparam"
+        },
+        "qualifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Qualifier"
+        },
+        "dockerDigest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Dockerdigest"
+        },
+        "gitRevision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "title": "Gitrevision"
+        }
+      },
+      "required": [
+        "serviceName",
+        "imageType",
+        "dockerTag"
+      ],
+      "title": "Service",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "services": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Service"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Services"
+    },
+    "configurations": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Configuration"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Configurations"
+    },
+    "smartplug": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Configuration"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Smartplug"
+    }
+  },
+  "title": "DeploymentDescriptor",
+  "type": "object"
+}

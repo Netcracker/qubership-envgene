@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "component": "BUSYBOX-APP",
+    "descriptorFormat": "1.21",
+    "builderVersion": "dd-plugin/1.0.0"
+  },
+  "include": [],
+  "infrastructures": [],
+  "services": [
+    {
+      "service_name": "busybox",
+      "image_type": "image",
+      "image_name": "busybox",
+      "docker_repository_name": "",
+      "docker_registry": "",
+      "docker_tag": "1.38.0"
+    }
+  ],
+  "configurations": [],
+  "frontends": [],
+  "smartplug": [],
+  "jobs": [],
+  "libraries": [],
+  "complexes": [],
+  "charts": [],
+  "additionalArtifacts": {},
+  "descriptors": []
+}
