@@ -6,7 +6,8 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments, \
+    validate_yaml_by_scheme_or_fail
 
 from .business_helper import NamespaceFile
 from .config_helper import get_save_artifacts_strategy
@@ -102,9 +103,17 @@ class CurrentEnvInstanceStore:
         if raw:
             self._flush_raw(raw_dir)
             return
+        invalid_object_paths = []
         for key, _ in self._write_targets():
             data = self._objects[key]
             schema_path, header_text = self._beautify.get(key, (None, ""))
+            if schema_path:
+                try:
+                    validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_file_path=schema_path)
+                except ValueError:
+                    logger.error(f"{key} is invalid by schema {schema_path} and is not written")
+                    invalid_object_paths.append(str(key))
+                    continue
             if key in self._beautify:
                 if schema_path:
                     data = sortYaml(data, schema_path, False)
@@ -119,6 +128,8 @@ class CurrentEnvInstanceStore:
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
             writeToFile(key, text)
+        if invalid_object_paths:
+            raise ValueError(f"Objects invalid by schema are not written: {invalid_object_paths}")
 
     def _flush_raw(self, raw_dir):
         if raw_dir is None or get_save_artifacts_strategy() == SaveArtifactsStrategy.NEVER:

@@ -46,6 +46,7 @@ def _generate(params_dir, used_names):
     generator = EnvGenerator()
     generator.ctx.render_parameters_dir = str(params_dir)
     generator.generate_paramset_templates(used_names)
+    generator.validate_used_paramsets(used_names)
 
 
 class TestGenerateParamsetTemplates:

@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
+from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, yaml, extract_external_cred
 from typing import Optional, Set
 
 #const
@@ -214,7 +214,6 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryY
         for credFileName in inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"] :
             credFilePath = findSharedCredentials(credFileName, envDir, instancesDir)
             credYaml = openYaml(credFilePath)
-            validate_yaml_by_scheme_or_fail(input_yaml_content=credYaml, schema_file_path=credsSchema)
             count = 0
             for key in credYaml :
                 store_value_to_yaml(credsYaml, key, credYaml[key])

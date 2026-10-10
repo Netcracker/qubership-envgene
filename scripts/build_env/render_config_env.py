@@ -328,9 +328,7 @@ class EnvGenerator:
         logger.info(f"Generate Tenant yaml for {self.ctx.tenant}")
         tenant_file = f'{self.ctx.current_env_dir}/tenant.yml'
         tenant_tmpl_path = self.ctx.current_env_template["tenant"]
-        tenant = self.render_from_file_to_store(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
-        validate_yaml_by_scheme_or_fail(input_yaml_content=tenant,
-                                        schema_file_path=get_schema_dir() / "tenant.schema.json")
+        self.render_from_file_to_store(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
 
     def apply_template_override(self, template_override, rendered_object: dict, object_file_name: str, name):
         if not template_override:
@@ -341,7 +339,6 @@ class EnvGenerator:
     def render_cloud(self) -> dict:
         cloud = self.calculate_cloud_name()
         cloud_template = self.ctx.current_env_template["cloud"]
-        cloud_schema = get_schema_dir() / "cloud.schema.json"
         context = self.ctx.as_dict()
         is_template_override = isinstance(cloud_template, dict)
         if is_template_override:
@@ -354,7 +351,6 @@ class EnvGenerator:
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             rendered_cloud = self.render_from_file_to_obj(Template(cloud_template).render(context))
-        validate_yaml_by_scheme_or_fail(input_yaml_content=rendered_cloud, schema_file_path=cloud_schema)
         return rendered_cloud
 
     def generate_cloud_file(self):
@@ -384,7 +380,6 @@ class EnvGenerator:
 
     def render_namespaces(self, bgd: dict | None) -> Iterator[tuple[str, dict]]:
         context = self.ctx.as_dict()
-        namespace_schema = get_schema_dir() / "namespace.schema.json"
         namespace_by_deploy_postfix = {}
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
@@ -414,7 +409,6 @@ class EnvGenerator:
             namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
             self.apply_template_override(effective_ns.get("template_override"), rendered_ns, "namespace.yml",
                                          folder_postfix)
-            validate_yaml_by_scheme_or_fail(input_yaml_content=rendered_ns, schema_file_path=namespace_schema)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
                 sides = namespace_by_deploy_postfix.setdefault(map_key, {})
@@ -494,21 +488,8 @@ class EnvGenerator:
         path_str = path_str.replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml")
         return Path(path_str)
 
-    def _paramset_errors(self, paramset: dict, paramset_path: Path) -> list[str]:
-        errors = []
-        try:
-            validate_yaml_by_scheme_or_fail(input_yaml_content=paramset,
-                                            schema_file_path=get_schema_dir() / "paramset.schema.json")
-        except ValueError:
-            errors.append(f'Parameter file at {paramset_path} is invalid, look for details above')
-        if paramset.get("name") != paramset_path.stem:
-            errors.append(f'Parameter "name" must be equal to filename without extension in file {paramset_path}')
-        return errors
-
     def generate_paramset_templates(self, paramset_names: Iterable[str]):
         render_dir = Path(self.ctx.render_parameters_dir).resolve()
-        errors = []
-        used_files = []
         paramset_templates = self.find_templates(render_dir, ["*.yml.j2", "*.yaml.j2"])
         for template_path in paramset_templates:
             template_name = self.get_template_name(template_path)
@@ -517,25 +498,30 @@ class EnvGenerator:
             target_path = self.get_rendered_target_path(template_path)
             try:
                 logger.info(f"Try to render paramset {template_name}")
-                paramset = self.render_from_file_to_obj(Template(str(template_path)).render(self.ctx.as_dict()))
+                self.render_from_file_to_file(Template(str(template_path)).render(self.ctx.as_dict()), target_path)
+                logger.info(f"Successfully generated paramset: {template_name}")
+                if template_path.exists():
+                    template_path.unlink()
             except TemplateError as e:
                 logger.warning(f"Skipped paramset {template_name}. Error details: {e}")
                 if target_path.exists():
                     target_path.unlink()
-                continue
-            errors += self._paramset_errors(paramset, target_path)
-            writeYamlToFile(target_path, paramset)
-            logger.info(f"Successfully generated paramset: {template_name}")
-            if template_path.exists():
-                template_path.unlink()
-            used_files.append(target_path)
-        for paramset_path in self.find_templates(render_dir, ["*.yml", "*.yaml"]):
-            if paramset_path.stem not in paramset_names or paramset_path in used_files:
-                continue
-            errors += self._paramset_errors(openYaml(paramset_path), paramset_path)
-            used_files.append(paramset_path)
+
+    def validate_used_paramsets(self, paramset_names: Iterable[str]):
+        render_dir = Path(self.ctx.render_parameters_dir).resolve()
+        errors = []
         files_by_template_dir = {}
-        for paramset_path in used_files:
+        for paramset_path in self.find_templates(render_dir, ["*.yml", "*.yaml"]):
+            if paramset_path.stem not in paramset_names:
+                continue
+            paramset = openYaml(paramset_path)
+            try:
+                validate_yaml_by_scheme_or_fail(input_yaml_content=paramset,
+                                                schema_file_path=get_schema_dir() / "paramset.schema.json")
+            except ValueError:
+                errors.append(f'Parameter file at {paramset_path} is invalid, look for details above')
+            if paramset.get("name") != paramset_path.stem:
+                errors.append(f'Parameter "name" must be equal to filename without extension in file {paramset_path}')
             template_dir = next((p for p in paramset_path.parts if p.startswith("from_") and p.endswith("template")),
                                 None)
             if template_dir:
@@ -716,6 +702,7 @@ class EnvGenerator:
             self.ctx.render_parameters_dir = str(render_parameters_dir)
             e2e_paramset_names = self._cloud_e2e_paramset_names(cloud)
             self.generate_paramset_templates(e2e_paramset_names)
+            self.validate_used_paramsets(e2e_paramset_names)
 
         paramset_map = create_paramset_map(str(render_parameters_dir), NamespaceRole.COMMON, False, False)
         cloud_e2e = {"e2eParameterSets": e2e_paramset_names, "e2eParameters": cloud["e2eParameters"]}
@@ -855,6 +842,7 @@ class EnvGenerator:
                 copy_path(source_path=env_specific_schema, target_dir=current_env_dir)
             self.used_paramset_names = self.collect_used_paramset_names()
             self.generate_paramset_templates(self.used_paramset_names)
+            self.validate_used_paramsets(self.used_paramset_names)
 
             ensure_required_keys(self.ctx.as_dict(),
                                  required=["templates_dir", "cluster_name", "current_env_dir"])

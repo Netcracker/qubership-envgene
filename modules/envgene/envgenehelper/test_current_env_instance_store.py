@@ -118,6 +118,22 @@ def test_flush_sorts_quotes_and_adds_header(env_dir, schema_path):
     assert target.read_text() == '# first\n# second\nname: "a"\nprofile:\n  baseline: "b"\n  name: "n"\n'
 
 
+def test_flush_writes_valid_objects_and_fails_on_invalid_one(env_dir, schema_path):
+    objects = CurrentEnvInstanceStore(env_dir)
+    valid_namespace = env_dir / "Namespaces" / "a" / "namespace.yml"
+    invalid_namespace = env_dir / "Namespaces" / "b" / "namespace.yml"
+    objects.put(valid_namespace, readYaml("name: a\n"))
+    objects.put(invalid_namespace, readYaml("name: [not, a, string]\n"))
+    objects.beautify(valid_namespace, schema_path)
+    objects.beautify(invalid_namespace, schema_path)
+
+    with pytest.raises(ValueError):
+        objects.flush()
+
+    assert valid_namespace.read_text() == 'name: "a"\n'
+    assert not invalid_namespace.exists()
+
+
 def test_flush_normalizes_comment_spacing(env_dir):
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "cloud.yml"
