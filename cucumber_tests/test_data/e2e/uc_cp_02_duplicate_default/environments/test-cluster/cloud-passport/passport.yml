@@ -1,0 +1,12 @@
+version: "1.5"
+cloud:
+  CLOUD_API_HOST: "https://uc01-api.example.com"
+  CLOUD_API_PORT: "6443"
+  CLOUD_PRIVATE_HOST: "uc01-internal.example.com"
+  CLOUD_PUBLIC_HOST: "uc01-public.example.com"
+  CLOUD_DASHBOARD_URL: "https://uc01-dashboard.example.com"
+  CLOUD_DEPLOY_TOKEN: "uc01-deploy-token"
+  CLOUD_PROTOCOL: "https"
+  PRODUCTION_MODE: "false"
+zookeeper:
+  ZOOKEEPER_ADDRESS: "zookeeper.zookeeper:2181"
