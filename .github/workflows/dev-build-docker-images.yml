@@ -1,7 +1,8 @@
 name: "Dev: Build or Test Qubership EnvGene docker images"
 
 run-name: >-
-  ${{ (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'docs:')) &&
+  ${{ ((github.event_name == 'push' && startsWith(github.event.head_commit.message, 'docs:')) ||
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.docs-check-only == 'true')) &&
       format('EnvGene Docs checking for commit {0}', github.sha) ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') &&
       format('Test EnvGene for commit {0}', github.sha) ||
@@ -17,6 +18,11 @@ run-name: >-
 on:
   workflow_dispatch:
     inputs:
+      docs-check-only:
+        description: 'Docs check only'
+        required: false
+        default: false
+        type: boolean
       tests-only:
         description: 'Run tests only'
         required: false

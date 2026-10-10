@@ -44,6 +44,7 @@ def dev_build_jobs(event_name, event, skip):
         keyword in message for keyword in ("feat:", "fix:", "breaking change")
     )
     manual = event_name == "workflow_dispatch"
+    skip = skip or (manual and inputs.get("docs-check-only") == "true")
     return {
         "skip_tests_and_build": skip,
         "run_tests": not skip,

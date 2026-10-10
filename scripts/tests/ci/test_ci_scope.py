@@ -202,6 +202,44 @@ class CiScopeTests(unittest.TestCase):
             "build_gsf_discovery": False,
         })
 
+    def test_manual_docs_check_overrides_tests_and_build_flags(self):
+        head = self.commit({"src/code.py": "updated"})
+        for tests_only in ("false", "true"):
+            with self.subTest(tests_only=tests_only):
+                self.assertEqual(self.scope(head, event_name="workflow_dispatch", inputs={
+                    "docs-check-only": "true", "tests-only": tests_only,
+                    "build-envgene": "true", "build-gsf-instance": "true",
+                    "build-gsf-discovery": "true",
+                }), {
+                    "skip_tests_and_build": True, "run_tests": False,
+                    "build_envgene": False, "build_gsf_instance": False,
+                    "build_gsf_discovery": False,
+                })
+
+    def test_disabled_manual_docs_check_preserves_tests_and_builds(self):
+        head = self.commit({"src/code.py": "updated"})
+        self.assertEqual(self.scope(head, event_name="workflow_dispatch", inputs={
+            "docs-check-only": "false", "tests-only": "false",
+            "build-envgene": "true", "build-gsf-instance": "true",
+            "build-gsf-discovery": "true",
+        }), {
+            "skip_tests_and_build": False, "run_tests": True,
+            "build_envgene": True, "build_gsf_instance": True,
+            "build_gsf_discovery": True,
+        })
+
+    def test_docs_check_flag_is_ignored_outside_manual_runs(self):
+        head = self.commit({"src/code.py": "updated"})
+        for event_name, build in (("push", True), ("pull_request", False)):
+            with self.subTest(event_name=event_name):
+                self.assertEqual(self.scope(head, event_name=event_name, inputs={
+                    "docs-check-only": "true",
+                }), {
+                    "skip_tests_and_build": False, "run_tests": True,
+                    "build_envgene": build, "build_gsf_instance": build,
+                    "build_gsf_discovery": build,
+                })
+
     def test_unavailable_diff_preserves_push_build_selection(self):
         self.assertEqual(self.scope(self.base, "fix: Correct code", base="f" * 40), {
             "skip_tests_and_build": False, "run_tests": True,
