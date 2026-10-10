@@ -20,6 +20,8 @@ from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, Operat
     DeltaDeployType, ExternalCredentialProvisioning
 from envgenehelper.plugin_engine import PluginEngine
 
+JOB_ENV_EXPORTS = ("REQUESTS_CA_BUNDLE", "LOCAL_APPDEFS_PATH", "LOCAL_REGDEFS_PATH", "LOCAL_PUBREG_FILE")
+
 
 class PipelineParametersHandler(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -122,6 +124,7 @@ class PipelineParametersHandler(BaseModel):
             'CLUSTER_NAME': cluster_name,
             'ENVIRONMENT_NAME': env_name,
         }
+        internal_params.update({name: value for name in JOB_ENV_EXPORTS if (value := getenv(name))})
         for k, v in internal_params.items():
             os.environ[k] = v
         return cls(
