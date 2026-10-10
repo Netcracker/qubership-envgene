@@ -1,4 +1,6 @@
+import os
 import shutil
+from unittest import mock
 
 import pytest
 
@@ -41,6 +43,8 @@ class TestBuildRawFlush(BaseTest):
         self.instances_dir = instances_dir
         self.artifacts_dir = tmp_path / "artifacts"
         self.raw_dir = self.artifacts_dir / CLUSTER / ENV / "render"
+        with mock.patch.dict(os.environ):
+            yield
 
     def _build(self):
         before = _snapshot(self.instances_dir)
