@@ -5,14 +5,13 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from envgene_shared.utils.business_utils import getenv_with_error
-from envgene_shared.utils.yaml_utils import openYaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.yaml_utils import openYaml
 from envgene_shared.utils.logger import logger
 from envgene_shared.crypto.crypt import decrypt_file
 from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
+from .models import CredentialMode
 from .collections_helper import dict_merge
-from .current_env_instance_store import current_env_instance_store
-from envgenehelper.yaml_helper import store_value_to_yaml, yaml
 from envgenehelper.external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, is_external_credential_reference
 
 from .logger import logger
@@ -30,26 +29,34 @@ CONCEALED_SECRET_MASK = "*****"
 CRED_FIELD_DATA = "data"
 EXTERNAL_CREDENTIAL_TYPE = "external"
 
+CRED_MACRO_PATTERN = re.compile(
+    r"""\$\{[^{}]*?creds\.get\(\s*\\?["']\s*([^"'\\]+?)\s*\\?["']\s*\)\.(\w+)\s*\}""")
+CRED_MACRO_PROPERTY_TYPES = {
+    "username": CRED_TYPE_USERPASS,
+    "password": CRED_TYPE_USERPASS,
+    "secret": CRED_TYPE_SECRET,
+    "roleId": CRED_TYPE_VAULT,
+    "secretId": CRED_TYPE_VAULT,
+    "path": CRED_TYPE_VAULT,
+    "namespace": CRED_TYPE_VAULT,
+}
+
+CRED_KEY_RE = re.compile(r'#(?:creds|credscl|credsns)\{(.+)\s*,\s*(.+)\}')
+CRED_VALUE_RE = re.compile(
+    r'\${.*creds\.get.*\.(?:username|password|secret|roleId|secretId|path|namespace)}'
+)
+
 
 def check_is_cred(param_key, param_value):
-    if isinstance(param_value, str):
-        # if we are iterationg through array, than cred macros can't be in key (it is integer)
-        credKey = param_key.replace(" ", "") if isinstance(param_key, str) else ""
-        credValue = param_value.replace("'", "\"")
-        if re.match(r'#creds{(.+)\s*,\s*(.+)}', credKey) or re.match(r'#credscl{(.+)\s*,\s*(.+)}', credKey) or re.match(
-                r'#credsns{(.+)\s*,\s*(.+)}', credKey):
+    if not isinstance(param_value, str):
+        return False
+    if isinstance(param_key, str):
+        credKey = param_key.replace(" ", "")
+        if CRED_KEY_RE.match(credKey):  
             return True
-        elif re.search(r'\${.*creds\.get.*\.username}', credValue) or re.search(r'\${.*creds\.get.*\.password}',
-                                                                                credValue):
-            return True
-        elif re.search(r'\${.*creds\.get.*\.secret}', credValue):
-            return True
-        elif re.search(r'\${.*creds\.get.*\.roleId}', credValue) or re.search(r'\${.*creds\.get.*\.secretId}',
-                                                                              credValue) \
-                or re.search(r'\${.*creds\.get.*\.path}', credValue) or re.search(r'\${.*creds\.get.*\.namespace}',
-                                                                                  credValue):
-            return True
-    return False
+    if "creds.get" not in param_value:
+        return False
+    return bool(CRED_VALUE_RE.search(param_value))
 
 
 def create_cred_definition(cred_id, cred_type):
@@ -313,7 +320,7 @@ def is_envgenenullvalue(value: object) -> bool:
     return False
 
 
-def validate_cred_types(creds_map, is_external_cred_env, cred_file):
+def validate_cred_types(creds_map, credential_mode, cred_file):
     types = {
         v.get("type")
         for v in creds_map.values()
@@ -321,28 +328,13 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
     }
     if not types:
         return
-    if is_external_cred_env:
+    if credential_mode == CredentialMode.EXTERNAL:
         if types != {EXTERNAL_CREDENTIAL_TYPE}:
             raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
     else:
         if EXTERNAL_CREDENTIAL_TYPE in types:
             raise ValueError(f"External credentials not allowed in local only environment. Found: {types} in {cred_file}")
 
-
-def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
-    env_instance_store = current_env_instance_store()
-    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"
-    if env_instance_store.exists(env_credentials_path) :
-        env_creds_yaml = env_instance_store.get(env_credentials_path)
-    else:
-        env_creds_yaml = yaml.load("{}")
-    for key, value in creds_yaml_content.items() :
-        store_value_to_yaml(env_creds_yaml, key, value)
-    # storing credentials yaml
-    env_instance_store.put(env_credentials_path, env_creds_yaml)
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_yaml, schema_file_path=creds_schema)
-    env_instance_store.beautify(env_credentials_path, creds_schema)
-    
 
 def get_cred_data(cred_id: str, env_creds: dict) -> dict:
     if not env_creds or cred_id not in env_creds:       

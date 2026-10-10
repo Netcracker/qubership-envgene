@@ -44,17 +44,20 @@ Feature: External Credentials Management
     And the pipeline step "env_build" has status "SUCCESS"
     And the environment credentials file contains no credentials of type "external" 
 
-# why: EC-V-3 unresolved reference — fails naming the missing external credential
-  Scenario: UC-EC-V-3: Unresolved external credential reference fails env build
-    Given the workspace is initialized with test data from "e2e/uc_ec_v_3_missing_source"
-    And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
-    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
-    And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
-    When the unified pipeline orchestrator runs
-    Then the orchestrator fails
-    And the pipeline step "env_build" has status "FAILED"
-    And the pipeline log shows "are not found in any external credential source"
+# why: External mode auto-generates missing credentials and rewrites local cred macros
+Scenario: UC-EC-V-3: External credentials are auto-generated and macros are rewritten
+  Given the workspace is initialized with test data from "e2e/uc_ec_v_3_autogeneration"
+  And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
+  And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
+  And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
+  And the environment AppDefs and RegDefs paths are resolved for the deploy
+  When the unified pipeline orchestrator runs
+  Then the orchestrator completes successfully
+  And the pipeline step "env_build" has status "SUCCESS"
+  And the pipeline log shows "Detected credential mode: CredentialMode.EXTERNAL"
+  And the environment credentials file contains an auto-generated external entry for "dbCredentials"
+  And parameter "DB_USERNAME" in "cloud.yml" file is rewritten to a credRef with property "username"
+  And parameter "API_KEY" in "cloud.yml" file is rewritten to a single-value credRef
 
 # why: EC-V-4 external macro in a local env — mixed-category, env_build rejects it
   Scenario: UC-EC-V-4: External credential reference in a local-only environment fails env build
@@ -68,29 +71,28 @@ Feature: External Credentials Management
     And the pipeline step "env_build" has status "FAILED"
     And the pipeline log shows "Found external credential references in parameters in local cred only environment"
 
-# why: EC-V-5 local macro in an external env — mixed-category, env_build rejects it
-  Scenario: UC-EC-V-5: Local credential macro in an external-only environment fails env build
-    Given the workspace is initialized with test data from "e2e/uc_ec_v_5_localmacro_in_external"
+# why: EC-V-5 orphan external Credential — warning only, build still succeeds
+  Scenario: UC-EC-V-5: Unreferenced external credential warns but does not fail env build
+    Given the workspace is initialized with test data from "e2e/uc_ec_v_5_orphan_external"
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
     And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
-    Then the orchestrator fails
-    And the pipeline step "env_build" has status "FAILED"
-    And the pipeline log shows "Found local credential macros in external cred only environment"
+    Then the orchestrator completes successfully
+    And the pipeline log shows "exist in external credential source but are not referred"
 
-# why: EC-V-6 mixed types in the merged credentials file — validate_cred_types rejects it
-  Scenario: UC-EC-V-6: Mixed credential types in the merged credentials file fail env build
-    Given the workspace is initialized with test data from "e2e/uc_ec_v_6_mixed_types"
+# why: External mode replaces the existing environment credentials file on every run
+  Scenario: UC-EC-V-6: Existing environment credentials are overwritten on each run
+    Given the workspace is initialized with test data from "e2e/uc_ec_v_6_cred_file_regen"
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
     And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
-    And the pipeline step "env_build" has status "FAILED"
-    And the pipeline log shows "Only external credentials allowed. Found:"
+    And the pipeline step "env_build" has status "SUCCESS"
+    And the environment credentials file does not contain "local-cred"
 
 # why: EC-V-7 credRef in technicalConfigurationParameters — runtime context forbids external creds
   Scenario: UC-EC-V-7: External credRef in technicalConfigurationParameters fails env build
@@ -104,16 +106,6 @@ Feature: External Credentials Management
     And the pipeline step "env_build" has status "FAILED"
     And the pipeline log shows "technicalConfigurationParameters"
 
-# why: EC-V-8 orphan external Credential — warning only, build still succeeds
-  Scenario: UC-EC-V-8: Unreferenced external credential warns but does not fail env build
-    Given the workspace is initialized with test data from "e2e/uc_ec_v_8_orphan_external"
-    And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
-    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
-    And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
-    When the unified pipeline orchestrator runs
-    Then the orchestrator completes successfully
-    And the pipeline log shows "exist in external credential source but are not referred"
 
 #===================================================================================
 #Group D — deployment effective-set reference shape (stage: generate_effective_set)
