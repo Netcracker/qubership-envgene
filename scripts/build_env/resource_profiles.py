@@ -1,4 +1,4 @@
-from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
+from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
 from build_env.render_config_env import EnvGenerator
 
 
@@ -130,9 +130,12 @@ def find_resource_profile(profile_name: str, template_profiles_dir) -> Path | No
     profile_path = env_instance_store.find_yaml(template_profiles_dir, profile_name)
     if profile_path:
         return profile_path
-    profile_path = find_yaml_file(Path(template_profiles_dir), profile_name, recursively=True)
-    if profile_path:
-        env_instance_store.put(profile_path, openYaml(profile_path))
+    same_name_paths = [path for path in findAllYamlsInDir(template_profiles_dir)
+                       if extractNameFromFile(path) == profile_name]
+    if not same_name_paths:
+        return None
+    profile_path = Path(same_name_paths[-1])
+    env_instance_store.put(profile_path, openYaml(profile_path))
     return profile_path
 
 

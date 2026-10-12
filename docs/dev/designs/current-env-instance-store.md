@@ -1,47 +1,33 @@
 # Current env instance store
 
 - [Problem](#problem)
-- [Example](#example)
+- [Design](#design)
 - [Rules](#rules)
-- [What passes between steps](#what-passes-between-steps)
-- [Changes by file](#changes-by-file)
 - [What changes for the user](#what-changes-for-the-user)
-- [What stays the same](#what-stays-the-same)
-- [Tests](#tests)
 - [Out of scope](#out-of-scope)
 - [Open questions](#open-questions)
-- [Constraints](#constraints)
 
 ## Problem
 
 Env build is slow. It works with files in `tmp/render/<env>`. Each part of the build opens a file, changes
 it, and saves it again. So one object is read and written many times.
 
-On a real environment with 5 Namespaces and 190 AppDefs, `env_build` takes 11.5 s.
+## Design
 
-## Example
+The build keeps every object of the env instance in memory, in one store. The store writes the files once,
+at the end of the step.
 
-One Namespace, before:
+```mermaid
+flowchart LR
+    input["Templates<br/>Inventory<br/>Credentials"]
+    build[["EnvBuildStep"]]
+    store[("Store<br/>path to object")]
+    env["Env directory"]
 
-```text
-render the template          -> write file
-open file, apply override    -> write file
-open file, add ParameterSets -> write file
-open file, sort by schema    -> write file
-open file, add header        -> write file
-open file, fix comments      -> write file
-copy tmp/render/<env> to the env directory
+    input -->|read| build
+    build <-->|put, get| store
+    store -->|flush, once| env
 ```
-
-After:
-
-```text
-render the template          -> put the object into the store
-apply override, add ParameterSets (in memory)
-end of the step: sort by schema, add header, fix comments, write file once
-```
-
-On the same environment `env_build` takes 5.0 s.
 
 ## Rules
 
@@ -68,32 +54,7 @@ On the same environment `env_build` takes 5.0 s.
   input and the build does not write it.
 - **The build has one directory.** It reads input from the env directory and writes the result there.
   `tmp/render` and `tmp/resource_profiles` are gone.
-- **Schema checks stay where they were.** Each check is a separate call in the build code. `flush()` does
-  not check.
-
-## What passes between steps
-
-| Value                           | From                  | To                    | How                               |
-|---------------------------------|-----------------------|-----------------------|-----------------------------------|
-| Names of the rendered RegDefs   | `AppregdefRenderStep` | `RegdefV2AdapterStep` | `ctx.rendered_regdef_names`       |
-| Deploy postfix to Namespace map | Namespace map step    | Deployment plan steps | `ctx.namespace_by_deploy_postfix` |
-| RegDefs of version 2            | `RegdefV2AdapterStep` | `ProcessSdStep`       | `ctx.transient_regdefs_dir`       |
-| Rendered ParameterSets          | `RegdefV2AdapterStep` | `EnvBuildStep`        | `tmp/render-workspace/parameters` |
-
-AppDefs and RegDefs are not in the store. They go to their directories at once.
-
-## Changes by file
-
-| File                                            | Change                                                           |
-|-------------------------------------------------|------------------------------------------------------------------|
-| `envgenehelper/current_env_instance_store.py`   | New. The store                                                   |
-| `envgenehelper/yaml_helper.py`                  | `sortYaml` does not check by schema. Comments are fixed in the object, not in the file |
-| `envgenehelper/business_helper.py`              | Cloud Passport lookup takes `env_definition` as a parameter      |
-| `envgene_shared/utils/yaml_utils.py`            | A schema file is read once, not on each check                    |
-| `scripts/pipeline/orchestrator.py`              | `EnvBuildStep` opens the store, runs the build, calls `flush()`  |
-| `scripts/build_env/main.py`                     | No `tmp/render`. The build cleans the env directory and fills the store |
-| `scripts/build_env/render_config_env.py`        | Render methods return objects. `EnvBuildStep` puts them into the store |
-| `build_env.py`, `create_credentials.py`, `resource_profiles.py`, `env_specific_overrides.py`, `cloud_passport.py`, `creds_helper.py` | Read and change objects in the store, not files |
+- **`flush()` does not check by schema.** It only sorts. Each check is a separate call in the build code.
 
 ## What changes for the user
 
@@ -112,28 +73,6 @@ Changes in behavior:
   directory and always passed.
 - Definition overrides in `configuration/appdefs` and `configuration/regdefs` are checked by schema.
 - A schema error is a `ValueError`. The log lists what is wrong.
-- When two Resource Profiles of the template have the same name, the first one found is used. Before, it
-  was the last one.
-
-## What stays the same
-
-- The objects in the store: Tenant, Cloud, Namespace, Application, BG Domain, Composite Structure, Resource
-  Profiles, and Credentials.
-- The list of steps and their order.
-- The files in the Instance Repository, except the one-time changes above.
-- The job artifact.
-
-## Tests
-
-- The old test suites pass.
-- `scripts/tests/env-build/test_render_envs.py` compares the build result with the expected files.
-- New tests check that:
-  - `current_env_instance_store()` fails outside the step
-  - a second store for the same step fails
-  - the store does not read the disk
-  - `get_namespaces(env_dir)` does not see an object that is only in the store
-  - the Namespace map step leaves only `Inventory/namespace-map.yml` in the env directory
-  - a build over the result of a previous build passes
 
 ## Out of scope
 
@@ -148,17 +87,3 @@ Changes in behavior:
 
 - Memory is measured only on test data. There it did not grow. It is not measured on a large environment
   or on a run with several `ENV_NAMES` values.
-- `validate_bgd` is not tried on a real BG environment yet.
-- The log prints `env_definition` two times.
-
-## Constraints
-
-- Minimum code that solves the problem. No features, abstractions, or options that nobody asked for.
-- Touch only what the change needs. Do not improve adjacent code. Remove only the code that this change
-  makes unused.
-- Do not mock the component that a test verifies.
-- Name things by what they are.
-- No comments, no docstrings, and no `# noqa` or other pragmas in new code. Tests included.
-- No function that only calls an existing function.
-- No extra enum members.
-- A test checks that a warning fired. It never checks the message text.

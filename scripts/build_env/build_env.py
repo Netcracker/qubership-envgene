@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -7,17 +7,6 @@ from utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
-
-
-def find_namespaces(dir):
-    result = []
-    fileList = findAllYamlsInDir(dir)
-    for filePath in fileList:
-        path = Path(filePath)
-        if "Namespaces" in path.parts:
-            result.append(filePath)
-    logger.info(f'List of {dir} namespaces: \n {dump_as_yaml_format(result)}')
-    return result
 
 
 def _get_excluded_dirs_for_role(role: NamespaceRole, origin_template_exists: bool, peer_template_exists: bool) -> list:
@@ -95,14 +84,6 @@ def openParamset(path, template_context=None):
         return yaml.safe_load(rendered)
     paramsetYaml = openYaml(path, safe_load=True)
     return paramsetYaml
-
-
-def findParamsetsInDir(dirPath):
-    fileList = findAllYamlsInDir(dirPath)
-    fileListJson = findAllJsonsInDir(dirPath)
-    if len(fileListJson) > 0:
-        return fileList + fileListJson
-    return fileList
 
 
 def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:

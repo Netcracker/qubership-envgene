@@ -154,19 +154,19 @@ def writeCredToYaml(credItem, credsYaml) :
     newCred.insert(1, "type", cred["type"])
     if (cred["type"] == CRED_TYPE_USERPASS) :
         data = yaml.load("{}")
-        data.insert(1, "username", "envgeneNullValue", "FillMe")
-        data.insert(1, "password", "envgeneNullValue", "FillMe")
+        data.insert(1, "username", "envgeneNullValue")
+        data.insert(1, "password", "envgeneNullValue")
         newCred["data"] = data
     elif (cred["type"] == CRED_TYPE_SECRET):
         data = yaml.load("{}")
-        data.insert(1, "secret", "envgeneNullValue", "FillMe")
+        data.insert(1, "secret", "envgeneNullValue")
         newCred["data"] = data
     elif (cred["type"] == CRED_TYPE_VAULT):
         data = yaml.load("{}")
-        data.insert(1, "roleId", "envgeneNullValue", "FillMe")
-        data.insert(1, "secretId", "envgeneNullValue", "FillMe")
-        data.insert(1, "path", "envgeneNullValue", "FillMe")
-        data.insert(1, "namespace", "envgeneNullValue", "FillMe")
+        data.insert(1, "roleId", "envgeneNullValue")
+        data.insert(1, "secretId", "envgeneNullValue")
+        data.insert(1, "path", "envgeneNullValue")
+        data.insert(1, "namespace", "envgeneNullValue")
         newCred["data"] = data
     store_value_to_yaml(credsYaml, cred["credentialsId"], newCred)
     return credsYaml

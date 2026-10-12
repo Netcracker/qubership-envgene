@@ -169,10 +169,6 @@ def getAppDefinitionPath(base_path, template_name):
         return yaml_path
 
 
-def getTemplateVersionFromEnvDefinition(env_definition_yaml):
-    return env_definition_yaml["generatedVersions"]["generateEnvironmentLatestVersion"]
-
-
 def getTemplateLatestSnapshotVersion(env_definition_yaml):
     return env_definition_yaml["env_template_latest_snapshot_version"]
 

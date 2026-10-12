@@ -122,7 +122,6 @@ class EnvGenerator:
 
     def set_inventory(self):
         fill_missing_environment_name(self.ctx.env_definition, self.ctx.env)
-        logger.info(f"env_definition = {self.ctx.env_definition}")
 
     def set_cloud_passport(self):
         cloud_passport_file_path = self.ctx.cloud_passport_file_path.strip()
