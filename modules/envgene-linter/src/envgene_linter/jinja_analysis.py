@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from jinja2 import ChainableUndefined, Environment, TemplateSyntaxError, nodes
@@ -20,6 +20,7 @@ class TemplateSource:
     tree: nodes.Template
     raw_blocks: list[tuple[int, str]]
     descriptor: bool = False
+    text: str = field(default='', repr=False)
 
     def source_line(self, line: int) -> int:
         # YAML quoting and folding can change line counts. Identify the scalar itself.
@@ -85,5 +86,5 @@ def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
             except RecursionError:
                 skipped(path, 'Jinja source exceeds the parser recursion limit', offset + 1)
                 continue
-            sources.append(TemplateSource(path, offset, tree, raw_blocks, path.suffix != '.j2'))
+            sources.append(TemplateSource(path, offset, tree, raw_blocks, path.suffix != '.j2', fragment))
     return sources

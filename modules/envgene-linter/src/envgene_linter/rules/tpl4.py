@@ -2,15 +2,60 @@
 
 from __future__ import annotations
 
-from jinja2 import nodes
+import re
+
+from jinja2 import TemplateSyntaxError, nodes
 
 from ..jinja_analysis import ENVIRONMENT, TemplateSource, skip_check
 from ..model import Action, Finding, IssueType, RepoIndex, Severity
 
 _REFERENCES = (nodes.Name, nodes.Getattr, nodes.Getitem)
 _GUARANTEED = {('current_env',), ('current_env', 'name'), ('current_env', 'environmentName')}
+_DESCRIPTOR_GUARANTEED = {('templates_dir',)} | {
+    ('current_env', name) for name in (
+        'cloud', 'cloudNameWithCluster', 'description', 'owners', 'env_template', 'envSpecificParamsets',
+        'additionalTemplateVariables', 'cluster', 'cloud_passport', 'solution_structure',
+    )
+} | {
+    ('current_env', 'cluster', name) for name in (
+        'cloud_api_protocol', 'cloud_api_url', 'cloud_api_port', 'cloud_public_url',
+    )
+}
 _LOOP_PROPERTIES = {'index', 'index0', 'revindex', 'revindex0', 'first', 'last', 'length',
                     'depth', 'depth0', 'cycle', 'changed'}
+_ENV_LOOKUP = re.compile(r"lookup\(\s*'ansible\.builtin\.env'\s*,\s*'([^']+)'\s*\)")
+
+
+def _runtime_tree(source):
+    # Ordinary descriptor scalars and bare ParameterSet templates do not use this preprocessor.
+    if source.descriptor or not source.path.name.endswith(('.yml.j2', '.yaml.j2')) or not source.text:
+        return source.tree
+    replacements = []
+    cursor, previous = 0, None
+    try:
+        for _, kind, value in ENVIRONMENT.lex(source.text):
+            start = source.text.find(value, cursor)
+            if start < 0:
+                return source.tree
+            cursor = start + len(value)
+            # Match only an expression name, never a string, comment, raw block, or method call.
+            if kind == 'name' and value == 'lookup' and previous not in ('.', '|', 'is'):
+                match = _ENV_LOOKUP.match(source.text, start)
+                if match:
+                    replacement = 'env_vars.' + match.group(1)
+                    replacement += '\n' * (match.group().count('\n') - replacement.count('\n'))
+                    replacements.append((start, match.end(), replacement))
+            if kind != 'whitespace':
+                previous = value
+        if not replacements:
+            return source.tree
+        text = source.text
+        for start, end, replacement in reversed(replacements):
+            text = text[:start] + replacement + text[end:]
+        return ENVIRONMENT.parse(text)
+    except (TemplateSyntaxError, RecursionError):
+        # Unusual literal keys can produce invalid Jinja after replacement; keep them reviewable.
+        return source.tree
 
 
 def _path(node):
@@ -67,7 +112,7 @@ def _bind(bound, names):
 class _References:
     def __init__(self, descriptor):
         self.lines = set()
-        self.guaranteed = _GUARANTEED | ({('templates_dir',)} if descriptor else set())
+        self.guaranteed = _GUARANTEED | (_DESCRIPTOR_GUARANTEED if descriptor else set())
 
     def sequence(self, body, bound, guards):
         bound, guards = set(bound), set(guards)
@@ -173,7 +218,7 @@ def check(index: RepoIndex, sources: list[TemplateSource]) -> list[Finding]:
     for source in sources:
         visitor = _References(source.descriptor)
         try:
-            visitor.visit(source.tree, set(), set())
+            visitor.visit(_runtime_tree(source), set(), set())
         except RecursionError:
             skip_check(index, 'TPL-4', source.path, 'cannot analyze deeply nested Jinja', source.source_line(1))
             continue

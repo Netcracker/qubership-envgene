@@ -17,6 +17,12 @@ Exclude `namespaces[].name` selectors. Analyze scalars independently so one fiel
 Decode YAML scalars before parsing. Deduplicate physical source spans and parse with Jinja2 without compiling or rendering.
 TPL-6 consumes the same parsed sources. If both rules are disabled, do not parse sources.
 
+For `.yml.j2` and `.yaml.j2` sources, TPL-4 uses a separate analysis tree for the generator's supported
+`lookup('ansible.builtin.env', 'NAME')` replacement. Match standalone expression names and the generator's
+single-quote pattern. Ignore strings, comments, raw blocks, and method calls. Preserve original newline counts.
+An invalid replacement retains the original tree for review. Ordinary descriptor scalars and bare `.j2` templates
+retain their original tree. TPL-6 always receives the original tree.
+
 ## Presence analysis
 
 1. Walk statements in source order and maintain local names and exact paths known to be defined.
@@ -30,7 +36,8 @@ TPL-6 consumes the same parsed sources. If both rules are disabled, do not parse
    Preserve macro, `call`, `filter`, and `with` scopes. Remove stale guard facts when a name is possibly rebound.
    Loop filters use outer loop metadata, while loop bodies receive their own metadata.
 6. Recognize Jinja globals, standard loop properties, and the limited generator guarantees in
-   [the specification](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl4-design.md#presence-protection).
+   [the specification](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl4-design.md#generator-context).
+   Additional descriptor guarantees apply only to decoded ordinary YAML descriptor scalars.
 7. Record other reads as review candidates. A defined parent or a bound local name does not guarantee its attributes.
 
 ## Output and limits
@@ -38,11 +45,12 @@ TPL-6 consumes the same parsed sources. If both rules are disabled, do not parse
 Emit one Information / Review finding per physical file and line, at column 1.
 For descriptors, identify the selected scalar opening line because YAML quoting and folding can change line counts.
 Messages do not include source names or values. The finding states that presence protection was not recognized,
-not that generation necessarily fails. Read and syntax failures produce generic skip notes.
+not that generation necessarily fails. Read, syntax, and analysis recursion failures produce located skip diagnostics
+in the [reports](/modules/envgene-linter/docs/algorithms/reports.md).
 
 The rule does not inspect remote inputs, infer types, or prove arbitrary data flow.
 It does not render templates, recommend a business default, or change the checked source.
-It is enabled by default and supports the shared CLI and HTML reports.
+It is enabled by default and supports the shared CLI, HTML, and JSON reports.
 
 ## Examples
 
@@ -68,4 +76,5 @@ envgene-linter check testdata/rules/tpl4/not-ok --console
 ```
 
 See [the implementation](/modules/envgene-linter/src/envgene_linter/rules/tpl4.py) and
-[the tests](/modules/envgene-linter/tests/test_tpl4.py).
+[the tests](/modules/envgene-linter/tests/test_tpl4.py), including
+[generator context regressions](/modules/envgene-linter/tests/test_tpl4_runtime.py).
