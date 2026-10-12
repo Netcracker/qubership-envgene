@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from envgenehelper.business_helper import get_bgd_object, get_namespaces
+from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
 )
@@ -231,6 +231,17 @@ def test_store_bg_domain_is_empty_when_not_rendered(env_dir):
     (env_dir / "bg_domain.yml").write_text("name: old-domain\n")
 
     assert CurrentEnvInstanceStore(env_dir).bg_domain() == {}
+
+
+def test_store_namespaces_ignore_bg_domain_of_previous_run(monkeypatch, tmp_path, env_dir):
+    env_dir.mkdir(parents=True)
+    (env_dir / "bg_domain.yml").write_text("originNamespace:\n  name: env-origin\n")
+    monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
+    monkeypatch.setenv("FULL_ENV_NAME", "cluster/env")
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(env_dir / "Namespaces" / "origin" / "namespace.yml", {"name": "env-origin"})
+
+    assert [ns.role for ns in objects.namespaces()] == [NamespaceRole.COMMON]
 
 
 def test_disk_readers_do_not_see_objects_only_in_store(env_dir):
