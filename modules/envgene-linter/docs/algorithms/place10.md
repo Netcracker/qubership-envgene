@@ -11,7 +11,10 @@
 
 ## Description
 
-PLACE-10 (MUST) directly compares each connected entity's directory with the directory required for its type. Correct placement is silent; incorrect placement produces Warning / Fix. The check runs independently of other rules, including PLACE-9.
+PLACE-10 compares each connected entity's directory with the standard directory for its type.
+Correct placement is silent. Misplaced Shared Template Variables produce **Warning / Review** because the generator
+supports other lookup locations. Other entity types produce **Warning / Fix**.
+The check runs independently of other rules, including PLACE-9.
 
 | Type | Required directory |
 | --- | --- |
@@ -56,14 +59,17 @@ Type comes from the established connection, not an inference from YAML content. 
 
 4. **Create findings for mismatches**
 
-   1. Correct directory: produce no finding. Incorrect directory: identify the type, file and expected directory in a Warning / Fix finding.
+   1. Correct directory: produce no finding. For a mismatch, identify the type, file, and standard directory.
+      Use Warning / Review for Shared Template Variables and Warning / Fix for other types.
    2. Point to the relevant selected file at `1:1`; do not read content, rename files or move them.
    3. Do not suppress a finding because another rule also reports this file. Deduplicate only the same physical file/type pair.
    4. Sort findings by path, key and line.
 
 ## Result
 
-The returned findings use `PLACE-10`, severity `warning`, issue type `Warning`, action `Fix`, the filename stem as key and the actual scope as scope. Each has one file location at `1:1` and a hint naming the expected directory.
+Findings use `PLACE-10`, Warning severity and issue type, the filename stem as key, and the actual scope.
+Each has one file location at `1:1`. Shared Template Variables use Review with guidance to check generator lookup
+before changing placement. Other types use Fix with a hint naming the expected directory.
 
 Catalog description: `Entities belong in their type directories`. The console always prints eighteen rule headers; PLACE-10 follows PLACE-9 and precedes SEC-1, while SEC-5 follows SEC-4 later in the catalog. A silent block shows `No findings`. HTML retains only sections with findings. Findings preserve CLI exit code `0`; no new flags or automatic edits are introduced.
 
@@ -71,7 +77,10 @@ Catalog description: `Entities belong in their type directories`. The console al
 
 **1a.** Unused files, unresolved references and unselected ambiguous passports give no finding. Existing Jinja selection restrictions remain in force.
 
-**2a.** The local generator resolves Shared Template Variables through legacy configuration directories, whereas PLACE-10 requires `shared-template-variables/`. The rule reports the used legacy placement; it does not change generator lookup or guess new supported search paths.
+**2a.** The standard names `shared-template-variables/`, while the generator recommends `configuration/` at Inventory,
+cluster, and repository scopes. It also supports deprecated `configurations/` and recursive Inventory fallback paths.
+Report a standard-location mismatch as Review. Do not prescribe moving the file into a directory that lookup might
+not support. Generator resolution is unchanged.
 
 **2b / 3a.** External and `.git` inputs are excluded. An unsafe matching winner must not cause a lower-priority file to be treated as used.
 
@@ -92,7 +101,9 @@ If the selected file is `Inventory/rp_override/service-profile.yml`, PLACE-10 pr
 
 Shared credentials selected from `shared-credentials/` fail the directory check even though the generator can resolve them. A selected passport in `cloud-passports/` fails PLACE-10 independently of PLACE-9.
 
-A Shared Template Variable selected as `common` from `Inventory/configuration/common.yml` requires `Inventory/shared-template-variables/`. A selected nested `Inventory/resource_profiles/team/service-profile.yml` is valid; `Inventory/parameters/resource_profiles/service-profile.yml` is not.
+A Shared Template Variable selected as `common` from `Inventory/configuration/common.yml` receives Review with lookup
+guidance. A selected nested `Inventory/resource_profiles/team/service-profile.yml` is valid.
+`Inventory/parameters/resource_profiles/service-profile.yml` is not valid for that profile.
 
 ## Related documentation
 

@@ -50,6 +50,22 @@ def test_selected_legacy_profile_directory(repo):
     assert "resource_profiles" in findings[0].hint
 
 
+@pytest.mark.parametrize('relative', [
+    'environments/configuration/variables/vars.yml',
+    'environments/c/configurations/vars.yml',
+    'environments/c/e/Inventory/configuration/vars.yml',
+    'environments/c/e/Inventory/vars.yml',
+])
+def test_supported_template_variable_location_requires_review(repo, relative):
+    repo.env('c', 'e')
+    _append_template(repo, 'c', 'e', '  sharedTemplateVariables: [vars]\n')
+    path = _write(repo, relative, 'VALUE: synthetic\n')
+    result = _place10(repo)
+    assert len(result) == 1 and result[0].path == path
+    assert result[0].action is Action.REVIEW
+    assert 'Move it' not in result[0].hint
+
+
 def test_canonical_directories_for_all_five_selected_types(repo):
     repo.env("c", "e", deploy={"cloud": ["params"]}, cloud_passport="passport")
     _append_template(
@@ -109,7 +125,9 @@ def test_selected_misplaced_files_for_all_five_types(repo):
     }
     assert all(finding.severity is Severity.WARNING for finding in findings)
     assert all(finding.issue_type is IssueType.WARNING for finding in findings)
-    assert all(finding.action is Action.FIX for finding in findings)
+    assert {finding.key: finding.action for finding in findings} == {
+        'profile': Action.FIX, 'creds': Action.FIX, 'passport': Action.FIX, 'variables': Action.REVIEW,
+    }
     assert all(finding.locations[0].line == 1 for finding in findings)
     assert all(finding.locations[0].column == 1 for finding in findings)
 

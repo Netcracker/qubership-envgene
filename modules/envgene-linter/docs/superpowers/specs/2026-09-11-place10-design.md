@@ -57,15 +57,23 @@ Resolve usage without parsing file contents. Add default-empty `EnvModel.shared_
 
 ### Standard versus generator lookup
 
-The standard requires `shared-template-variables/`, while this local generator searches the legacy `configuration/` and `configurations/` paths listed above. A used file such as `environments/configuration/variables/ci-global-vars.yml` therefore triggers PLACE-10 even though the generator can load it.
+The standard names `shared-template-variables/`, while the generator recommends `configuration/` at Inventory,
+cluster, and repository scopes. It supports deprecated `configurations/` and recursive Inventory fallback paths.
+A used file such as `environments/configuration/variables/common.yml` therefore receives **Warning / Review**.
 
-This is a directory-standard diagnostic, not a claim that generation failed. Do not silently exempt legacy paths or change generator lookup. An environment's `Inventory/shared-template-variables/` can be reached by the final recursive search; do not assume support for other unresolved canonical paths.
+The hint asks the reader to review supported lookup paths before changing placement. It does not require a move to
+`shared-template-variables/` or claim that generation failed. Keep generator lookup unchanged.
+An environment's `Inventory/shared-template-variables/` can be reached by the final recursive search.
+Do not assume support for other unresolved canonical paths.
 
 ## Findings and reporting
 
-PLACE-10 is a MUST requirement. Findings use the existing **Warning / Fix** conventions and preserve CLI exit code `0`.
+PLACE-10 is a MUST requirement in the standard. Shared Template Variable location mismatches use **Warning / Review**.
+Other entity types retain **Warning / Fix**. Findings preserve CLI exit code `0`.
 
-Each finding contains the entity type, selected filename and expected directory. The hint gives the expected path in the actual scope. Use one location at line 1, column 1; `scope` identifies the repository, cluster or environment, and `key` is the filename stem.
+Each finding contains the entity type, selected filename, and standard directory. Shared Template Variable hints
+describe supported lookup locations. Other hints give the expected path in the actual scope.
+Use one location at line 1, column 1. `scope` identifies the repository, cluster, or environment, and `key` is the stem.
 
 Catalog description: `Entities belong in their type directories`. PLACE-10 adds the thirteenth console header, after PLACE-9 and before NAME-1. The console shows headers even without findings; HTML contains only sections with findings. No new flags, automatic file changes, network calls or real-repository writes are introduced.
 

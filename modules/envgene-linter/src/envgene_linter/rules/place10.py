@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ..connections import Connections, compute_connections
 from ..discovery import paramset_stem
-from ..model import Finding, Location, RepoIndex, Severity
+from ..model import Action, Finding, Location, RepoIndex, Severity
 from ..rulemeta import RULES
 
 
@@ -68,11 +68,12 @@ def _finding(
         return None
     expected_path = (base or index.root / "environments") / expected
     meta = RULES["PLACE-10"]
+    review = kind == "Shared Template Variables"
     return Finding(
         rule=meta.id,
         severity=Severity.WARNING,
         issue_type=meta.default_issue_type,
-        action=meta.default_action,
+        action=Action.REVIEW if review else meta.default_action,
         path=selected_path,
         line=1,
         column=1,
@@ -81,9 +82,13 @@ def _finding(
         scope=scope,
         related=(),
         message=(
-            f"{kind} {selected_path.name!r} must be under the {expected!r} directory."
+            f"{kind} {selected_path.name!r} is outside the standard {expected!r} directory."
+            if review else f"{kind} {selected_path.name!r} must be under the {expected!r} directory."
         ),
-        hint=f"Move it under {expected_path} within its {scope} scope.",
+        hint=("Review the generator's lookup paths before changing this location. "
+              "The generator supports configuration/ at Inventory, cluster, and repository scopes, "
+              "with deprecated configurations/ and Inventory fallback paths."
+              if review else f"Move it under {expected_path} within its {scope} scope."),
     )
 
 
