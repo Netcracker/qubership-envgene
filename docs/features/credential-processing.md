@@ -13,6 +13,7 @@ external operating modes, and how it resolves overlaps between sources.
   - [Precedence ladder](#precedence-ladder)
   - [Merging behavior](#merging-behavior)
   - [Local-macro rewrite in external mode](#local-macro-rewrite-in-external-mode)
+  - [External-mode credential restrictions](#external-mode-credential-restrictions)
   - [Related documentation](#related-documentation)
 
 ## Description
@@ -67,8 +68,10 @@ The Environment Credentials File is populated from five sources during Environme
 
 ## Credential auto-generation
 
-EnvGene auto-generates Credential entries for `credId` values that the Instance references but no Credential
-Template declares. The shape of the generated entry depends on mode.
+EnvGene auto-generates Credential entries for `credId` values that the Instance references but **no source
+provides** — neither a Credential Template, the Cloud Passport credentials, nor a Shared Credentials File.
+Auto-generation is the last-resort gap filler: its entry is the final one only where no source supplies the
+`credId`. The shape of the generated entry depends on mode.
 
 ### Local mode
 
@@ -83,7 +86,7 @@ same `credId` overrides the placeholder entry in the merged result.
 EnvGene auto-generates an **external Credential** for every `credId` referenced by a
 [Credential Reference](/docs/features/external-creds.md#credential-reference) or
 [Built-in credential reference](/docs/features/external-creds.md#built-in-credential-references) that no
-Credential Template declares. The generated entry has:
+source provides (no Credential Template, Cloud Passport, or Shared Credentials File). The generated entry has:
 
 ```yaml
 <cred-id>:
@@ -92,8 +95,10 @@ Credential Template declares. The generated entry has:
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
 ```
 
-A source higher in the precedence ladder (Cloud Passport or Shared Credentials File) overrides the generated
-entry.
+Auto-generation occupies the lowest level above the Credential Templates in the
+[precedence ladder](#precedence-ladder): where a Credential Template, the Cloud Passport, or a Shared
+Credentials File supplies the same `credId`, that source's entry is used instead. The generated entry
+therefore survives only where no source provides the `credId`.
 
 ## Precedence ladder
 
@@ -142,6 +147,60 @@ The `property` field is omitted when the referenced Credential is single-value. 
 parameter values only.
 [Built-in credential references](/docs/features/external-creds.md#built-in-credential-references)
 such as `Cloud.defaultCredentialsId` already carry a bare `credId` and need no rewrite.
+
+## External-mode credential restrictions
+
+Three restrictions apply in external mode. Each one fails Environment Instance generation with an explicit
+error. In local mode the same inputs are permitted (they resolve inline to plain text, or, for deprecated
+macros, keep working).
+
+### `vaultAppRole` cannot be externalized
+
+A `vaultAppRole` Credential is the AppRole authentication identity (`roleId`, `secretId`, `path`,
+`namespace`) that an application uses to log in to HashiCorp Vault and fetch its other secrets. It is the
+bootstrap access to the Secret Store itself, so it cannot be stored as an external reference: resolving that
+reference would already require the Vault access the Credential provides (a circular dependency). The
+external Credential shape (`secretStore`, `remoteRefPath`, `properties` limited to `username`/`password`) has
+no place for its fields.
+
+When a `vaultAppRole` Credential is referenced (through a `${creds.get('<id>').roleId}` / `.secretId` macro
+or a Credential declaration), generation fails with an error naming the `credId`. EnvGene does not silently
+drop it or coerce it to another type. Provide Secret Store access (the AppRole login) to the pipeline through
+environment or CI configuration, not as a Credential in the Environment Credentials File.
+
+### Whole-value credential reference only
+
+A sensitive parameter value that references an external Credential must consist of exactly one reference
+occupying the entire value. A credential reference cannot be combined with literal text or with a second
+reference. This applies to string values in `deployParameters` and `e2eParameters` that contain a
+`${creds.get('<credId>').<field>}` macro. A structured
+[Credential Reference](/docs/features/external-creds.md#credential-reference) (`$type: credRef`) is an object
+that already occupies the whole value, so it is never affected.
+
+Formally, for a string value `V` containing one or more credential macros, let `refs(V)` be those macros.
+`V` is valid only when both hold:
+
+1. `len(refs(V)) == 1` (exactly one reference), and
+2. `V` trimmed equals that reference (no literal characters before or after).
+
+Two violation cases fail generation:
+
+- **multiple:** two or more references, for example `oracle://${creds.get('db').username}:${creds.get('db').password}@host:1521/SID`.
+- **embedded:** one reference plus literal text, for example `https://${creds.get('svc').username}@host`.
+
+Neither the VALS nor the ESO delivery flow can represent such a value, so there is no external rendering for
+it. The error names the parameter key, the `credId` or credIds, and the case. Move the reference into a
+dedicated parameter so the application or Helm chart composes the final string.
+
+### Deprecated key-form macros
+
+The deprecated key-form credential macros `#creds{<credId>, <field>}`, `#credscl{...}`, and `#credsns{...}`
+(the macro is the parameter key; the value is the `credId`) are not supported in external mode. A referenced
+one fails generation with an error naming the parameter key and the `credId`, advising replacement with
+`${creds.get('<credId>').username}` / `.password` / `.secret` or a
+[Credential Reference](/docs/features/external-creds.md#credential-reference). These macros are deprecated;
+see [Deprecated Credential Macros](/docs/template-macros.md#deprecated-credential-macros). Migration to
+external converts them to `credRef` on apply, so this check is a backstop for an incomplete conversion.
 
 ## Related documentation
 

@@ -17,31 +17,29 @@ mode by a local signal. The template remains mode-agnostic. In external mode, th
 File is a derived output assembled on every run from a fixed set of sources, with no mandatory template-side
 authoring. The design is wired through the following mechanisms:
 
-- **Mode signal.** The instance repository is in external mode when `/configuration/secret-stores.yml` is
-  present, local mode otherwise. Mode is repository-wide. Every Environment Instance in the repository
-  shares the mode.
-- **Mode-agnostic Credential Template.** The Credential Template is optional. In external mode, EnvGene
-  auto-generates an external Credential (`type: external`, `secretStore: default_store`, default
-  `remoteRefPath`) for every `credId` not declared by any Credential Template in the chain. In local mode
-  the Credential Template is ignored, even when declared, and an INFO log names the ignored file.
-- **Fixed precedence ladder.** Credential sources merge in a fixed order, lowest to highest: parent
-  Credential Template, nested Credential Template, auto-generated Credential, Cloud Passport credentials
-  file, Shared Credentials File. A higher source wins on `credId` overlap. The Shared Credentials File
-  silently overrides every lower source.
-- **Derived credentials file in external mode.** In external mode, the Environment Credentials File is
-  regenerated on every Environment Instance generation. The step assembles the ladder sources in memory
-  and writes the file once, replacing any existing content. In local mode the file persists across runs
-  with merge-preserve.
-- **Unified parameter notation.** In external mode, EnvGene rewrites every `${creds.get('<id>').<field>}`
-  macro in parameter values to a Credential Reference (`$type: credRef`) during Environment Instance
-  generation. Template authors use the local macro notation only. Built-in credential references, which
-  already carry a bare `credId`, are not rewritten.
-- **Jinja opt-in for the Shared Credentials File.** A Shared Credentials File with the `.yml.j2` or
-  `.yaml.j2` suffix is rendered as a Jinja template with the environment context before merging. A file
-  without the suffix is read verbatim.
-- **Credential rotation scoped to local mode.** Credential rotation runs only in local mode. In external
-  mode, the rotation step fails at entry with one error directing the operator to the Secret Store's
-  rotation mechanism. No per-credential processing happens.
+- **Mode signal.** The Instance repository is in external mode when `/configuration/secret-stores.yml` is
+  present, local mode otherwise; the mode is repository-wide. Chosen over a boolean flag (the file is
+  already required for external operation) and over Credential Template presence (which would couple mode to
+  template authoring).
+- **Credential Template optional, with auto-generation.** The Credential Template is optional, and EnvGene
+  auto-generates an external Credential for any referenced `credId` that no source provides, so a template
+  needs to declare only the credentials it wants to shape. In local mode the Credential Template is ignored.
+- **Fixed precedence ladder.** Credential sources merge in a fixed order with the Shared Credentials File
+  highest, so a synthesized default never shadows discovered data and an explicit operator choice always
+  wins.
+- **Derived credentials file in external mode.** The Environment Credentials File is regenerated on every
+  run in external mode (it holds only references, not user values); local keeps merge-preserve.
+- **Unified parameter notation.** Template authors write only `${creds.get(...)}`; external mode rewrites it
+  to a Credential Reference, so one notation serves both modes.
+- **Jinja rendering of the Shared Credentials File.** The file is rendered regardless of extension, by the
+  same mechanism as the Credential Template; the `.j2` suffix is linter hygiene only.
+- **Credential rotation scoped to local mode.** Credential rotation runs only in local mode; in external
+  mode the rotation step fails at entry and directs the operator to the Secret Store's own rotation
+  mechanism.
+- **External-mode credential restrictions.** In external mode `vaultAppRole` Credentials are not
+  externalizable, sensitive parameter values must be whole-value references (no literal text, no second
+  reference), and the deprecated `#creds` / `#credscl` / `#credsns` macros are unsupported. Each fails
+  Environment Instance generation; local mode permits all three.
 
 Rejected:
 
@@ -52,6 +50,10 @@ Rejected:
 - Keep mode as a template-chain property set by `external_credential_template` declaration (previous
   behavior), because it couples mode to template authoring and prevents one template from serving
   different modes.
+- Gate Shared Credentials File rendering on a `.yml.j2` suffix (opt-in), because external shared
+  Credentials almost always need Jinja in `remoteRefPath`, so a forgotten suffix silently yields an
+  unrendered, invalid reference — and the suffix carries no benefit here (the rendered output is written
+  to a separate file, so there is no source self-overwrite; instance repositories are not linted).
 
 ## Consequences
 
