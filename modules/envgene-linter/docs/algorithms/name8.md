@@ -12,6 +12,11 @@ The rule is enabled by default after NAME-4 and reports Warning / Fix.
 
 Check passports selected in `Connections.environment_passports`, including explicit references and automatic
 cluster-name association. Unselected files and unresolved ambiguous lookups do not produce NAME-8 findings.
+Before checking names, count ordinary YAML passports available in the consuming cluster context.
+Include repository-level passports, that cluster's passports, and passports in its environment Inventories,
+even when they are unselected. Deduplicate physical files and exclude Credential companions, Jinja, unsafe files,
+and the exact `passport-infra` role. If the count exceeds one, suppress both passport and companion naming findings
+for that cluster. Passports belonging to other clusters do not affect the count.
 The exact stem `passport-infra` and its companion are excluded because their naming belongs to NAME-9.
 Other names ending in `-infra` are not inferred to have the infra role.
 
@@ -52,5 +57,6 @@ The implementation and executable examples are:
 - [Tests](/modules/envgene-linter/tests/test_name8.py)
 - [Examples](/modules/envgene-linter/testdata/rules/name8)
 
-Tests cover canonical extensions, infra exclusion, explicit and automatic selection, unused and ambiguous passports,
+Tests cover single and multiple passports per cluster, cluster isolation, canonical extensions, infra exclusion,
+explicit and automatic selection, unused and ambiguous passports,
 companion priority, absent companions, file aliases, unsafe paths, report integration, and disablement.

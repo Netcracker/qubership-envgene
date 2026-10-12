@@ -10,7 +10,7 @@
 ## Requirement and agreed scope
 
 Status: implemented. This document retrospectively records the bounded design approved in conversation on
-September 25, 2026, and the resulting implementation. It does not introduce additional behavior.
+September 25, 2026, with the later approved clarification for clusters containing multiple passports.
 
 [NAME-8 in the configuration standard](/docs/configuration-standard.md#name-8---name-the-cloud-passport-passport-should)
 requires the default Cloud Passport filename stem `passport` and its companion Credential filename stem `passport-creds`.
@@ -22,6 +22,11 @@ Exclude the exact stem `passport-infra` and its companion because their naming b
 Do not infer an infra role from another filename ending in `-infra`.
 
 Unselected passports and ambiguous unresolved lookups do not produce NAME-8 findings.
+Apply naming only when the consuming cluster context contains one ordinary YAML passport.
+Count repository-level, cluster-level, and environment Inventory passports, including unselected candidates.
+Exclude Credential companions, Jinja files, unsafe paths, and the exact `passport-infra` role.
+Deduplicate physical aliases. Multiple passports suppress both passport and companion findings for that cluster.
+Files belonging to other clusters cannot disable its naming checks.
 Missing companions do not constitute a filename violation. Jinja files are excluded.
 The rule does not read Credential entries, validate passport contents, render templates, or rename files.
 
@@ -54,7 +59,10 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
 ```
 
 Compute Connections only when the caller does not supply it.
+Collect safe ordinary YAML passports from `RepoIndex.passports`, grouped by cluster and deduplicated by physical path.
+For each consuming cluster, combine its own group with repository-level passports before checking cardinality.
 Iterate `Connections.environment_passports` in deterministic environment order.
+Skip naming checks when the cluster context contains multiple ordinary passports.
 Use the selected record's logical path for naming, companion lookup, and navigation.
 
 Resolve paths strictly before accepting them. Require logical and resolved paths inside the repository and outside `.git`.
@@ -86,6 +94,9 @@ Console and HTML reports use the shared catalog and finding model. Findings reta
 - Canonical `.yml` and `.yaml` passport names produce no finding.
 - Explicitly selected noncanonical names and cluster-name auto-association produce Warning / Fix.
 - The exact infra passport name and its companion produce no NAME-8 finding.
+- Multiple ordinary passports in one cluster suppress both passport and companion findings.
+- Unselected ordinary passports contribute to the count, while Credential files and infra passports do not.
+- Passports in another cluster do not suppress findings. Repository-level passports contribute to each cluster context.
 - Unused files and unresolved ambiguous passport references remain silent.
 - Companion lookup honors the legacy-first priority and does not expand to `.yaml` or unrelated files.
 - Invalid first companion slots do not cause fallback selection.

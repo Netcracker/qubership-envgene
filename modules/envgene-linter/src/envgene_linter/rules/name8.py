@@ -1,4 +1,4 @@
-"""NAME-8: name the default Cloud Passport passport and its credentials passport-creds."""
+"""NAME-8: check default passport names in cluster contexts with one ordinary passport."""
 from pathlib import Path
 
 from ..connections import Connections, compute_connections
@@ -21,6 +21,15 @@ def _physical(index: RepoIndex, path: Path) -> Path | None:
 def check(index: RepoIndex, connections: Connections | None = None) -> list[Finding]:
     connections = connections if connections is not None else compute_connections(index)
     issues: dict[Path, tuple[Path, set[str], set[str]]] = {}
+    environment_clusters = {env.full_name: env.cluster for env in index.environments}
+    cluster_passports: dict[str | None, set[Path]] = {}
+    for passport in index.passports:
+        if passport.path.suffix not in ('.yml', '.yaml') or passport.stem == 'passport-infra':
+            continue
+        physical = _physical(index, passport.path)
+        if physical is not None:
+            cluster_passports.setdefault(passport.cluster, set()).add(physical)
+    repository_passports = cluster_passports.get(None, set())
 
     def consider(path: Path, expected: str, environment: str) -> None:
         physical = _physical(index, path)
@@ -31,6 +40,9 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
         requirements.add(expected)
 
     for environment, passport in sorted(connections.environment_passports.items()):
+        cluster = environment_clusters.get(environment)
+        if len(repository_passports | cluster_passports.get(cluster, set())) > 1:
+            continue
         if passport.path.suffix not in ('.yml', '.yaml') or passport.stem == 'passport-infra':
             continue
         if _physical(index, passport.path) is None:

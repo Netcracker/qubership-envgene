@@ -47,6 +47,66 @@ def test_cluster_name_auto_association_is_checked(repo):
     assert len(findings(repo)) == 1
 
 
+@pytest.mark.parametrize('folder', ['cloud-passport', 'cloud-passports'])
+def test_multiple_cluster_passports_suppress_passport_and_companion_naming(repo, folder):
+    repo.env('c', 'e', cloud_passport='custom')
+    repo.passport('custom', cluster='c')
+    repo.passport('second', cluster='c', folder=folder)
+    write(repo.root / 'environments/c/cloud-passport/custom-creds.yml')
+    assert findings(repo) == []
+
+
+def test_another_clusters_passport_does_not_disable_naming(repo):
+    repo.env('c', 'e', cloud_passport='custom')
+    repo.passport('custom', cluster='c')
+    repo.env('other', 'e', cloud_passport='passport')
+    repo.passport('passport', cluster='other')
+    assert [item.path.name for item in findings(repo)] == ['custom.yml']
+
+
+def test_repository_passport_contributes_to_each_cluster_context(repo):
+    repo.env('c', 'e', cloud_passport='custom')
+    repo.passport('custom', cluster='c')
+    repo.passport('repository-default')
+    assert findings(repo) == []
+
+
+def test_jinja_candidate_does_not_disable_yaml_passport_naming(repo):
+    repo.env('c', 'e', cloud_passport='custom')
+    repo.passport('custom', cluster='c')
+    write(repo.root / 'environments/c/cloud-passport/second.yml.j2')
+    assert [item.path.name for item in findings(repo)] == ['custom.yml']
+
+
+def test_unsafe_unselected_candidate_does_not_disable_naming(repo):
+    from envgene_linter.rules.name8 import check
+    repo.env('c', 'e', cloud_passport='custom')
+    repo.passport('custom', cluster='c')
+    repo.passport('second', cluster='c')
+    index = build_index(repo.root)
+    connections = compute_connections(index)
+    path = repo.root / 'environments/c/cloud-passport/second.yml'
+    path.unlink()
+    destination = write(repo.root.parent / (repo.root.name + '-external.yml'))
+    path.symlink_to(destination)
+    assert [item.path.name for item in check(index, connections)] == ['custom.yml']
+
+
+def test_infra_passport_is_not_a_second_default_passport(repo):
+    repo.env('c', 'e', cloud_passport='custom')
+    repo.passport('custom', cluster='c')
+    repo.passport('passport-infra', cluster='c')
+    assert [item.path.name for item in findings(repo)] == ['custom.yml']
+
+
+def test_multiple_environment_passports_in_one_cluster_are_not_renamed(repo):
+    repo.env('c', 'one', cloud_passport='first')
+    repo.env('c', 'two', cloud_passport='second')
+    repo.passport('first', cluster='c', env='one')
+    repo.passport('second', cluster='c', env='two')
+    assert findings(repo) == []
+
+
 def test_unused_and_ambiguous_passports_are_not_checked(repo):
     repo.env('c', 'e', cloud_passport='custom')
     repo.passport('custom', cluster='c')
@@ -67,12 +127,12 @@ def test_selected_companion_has_separate_naming_finding(repo, slot):
     assert all('private-id' not in repr(item) and 'private-value' not in repr(item) for item in result)
 
 
-def test_legacy_credentials_priority_and_unselected_yaml(repo):
+def test_legacy_credentials_priority_and_unselected_companion(repo):
     repo.env('c', 'e')
     repo.passport('passport', cluster='c')
     legacy = write(repo.root / 'environments/c/cloud-passport/credentials/passport.yml')
     write(repo.root / 'environments/c/cloud-passport/passport-creds.yml')
-    write(repo.root / 'environments/c/cloud-passport/unrelated.yaml')
+    write(repo.root / 'environments/c/cloud-passport/unrelated-creds.yaml')
     assert [item.path for item in findings(repo)] == [legacy]
 
 

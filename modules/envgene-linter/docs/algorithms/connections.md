@@ -169,4 +169,6 @@ Explicit `envTemplate.sharedTemplateVariables` bindings now select Shared Templa
 
 [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) checks selected default Cloud Passport filenames and
 their selected companion Credential filenames. It excludes `passport-infra`, preserves companion lookup priority,
-and does not add unused files to Connections.
+and does not add unused files to Connections. Naming checks run only for cluster contexts containing one ordinary
+YAML passport. Cardinality includes safe repository-level and cluster candidates, including unselected files.
+Multiple passports suppress both passport and companion naming findings in that cluster context.
