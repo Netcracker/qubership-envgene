@@ -180,7 +180,9 @@ The header and browser tab title show the repository's root folder name, without
 The page works offline and uses collapsible sections for rules with findings.
 Each finding lists its files, issue, action, and fix suggestion.
 The HTML report does not display the finding type.
-A report with no findings displays `No findings`.
+A report with no findings displays `No findings` when no sources were skipped.
+Skipped checks appear in a visible `Incomplete checks` section. A skip-only report says
+`No findings in the checked sources`.
 
 On each check:
 
@@ -196,7 +198,7 @@ Reports from some rules can contain configuration values in finding messages. SE
 
 ## JSON reports
 
-`envgene-linter-report.json` is a UTF-8 JSON array with one object per finding.
+`envgene-linter-report.json` is a UTF-8 JSON array with one object per finding or skipped Jinja check.
 It contains the same findings as HTML, in the same rule order, with all locations for each finding kept together.
 Messages are plain text, without HTML escaping. The file uses two-space indentation and ends with a newline.
 
@@ -227,8 +229,11 @@ The following example uses synthetic repository paths:
 ]
 ```
 
-No findings produces `[]`, including when all rules are disabled. Disabled and inapplicable rules have no entries.
-The array contains findings only: skip diagnostics remain on stderr, so `[]` does not prove complete coverage.
+Skipped Jinja checks use the same fields, with `action: "Review"` and an issue beginning `Check skipped:`.
+Their locations identify the affected source, and their suggestions ask for a rerun after resolving the source problem.
+No findings or structured Jinja skips produces `[]`, including when all rules are disabled.
+Disabled and inapplicable rules have no entries. Other skip diagnostics remain in HTML and stderr,
+so `[]` does not prove complete coverage.
 JSON serialization uses existing finding messages and recommendations. It does not read or embed source file contents.
 
 ## Implemented rules
@@ -245,11 +250,11 @@ The table lists the 22 rules enabled by default. Each link opens the processing 
 | [PLACE-7](/modules/envgene-linter/docs/algorithms/place7.md)   | A connected ParameterSet reference is shared across deploy, end-to-end, or technical categories in an environment   | Warning / Fix                           |
 | [PLACE-8](/modules/envgene-linter/docs/algorithms/place8.md)   | Connected or used ParameterSets, resource profiles or credentials are empty                                         | Information / Review                    |
 | [PLACE-9](/modules/envgene-linter/docs/algorithms/place9.md)   | Used passport ambiguity, multiple passports per cluster role, and passport/companion placement                      | Warning / Fix                           |
-| [PLACE-10](/modules/envgene-linter/docs/algorithms/place10.md) | Connected entities are outside their type's required directory                                                      | Warning / Fix                           |
+| [PLACE-10](/modules/envgene-linter/docs/algorithms/place10.md) | Connected entities are outside their type's standard directory                                                      | Warning / Fix or Warning / Review       |
 | [SEC-1](/modules/envgene-linter/docs/algorithms/sec1.md)       | Literal values in secret-named parameters of connected ParameterSets and supported Cloud/Namespace objects          | Warning / Fix                           |
 | [SEC-3](/modules/envgene-linter/docs/algorithms/sec3.md)       | Credential references in runtime parameters and ParameterSets selected through technical bindings                   | Warning / Fix                           |
-| [SEC-4](/modules/envgene-linter/docs/algorithms/sec4.md)       | Named user/password pairs reference the same Credential ID                                                          | Information / Review                    |
-| [SEC-5](/modules/envgene-linter/docs/algorithms/sec5.md)       | Protection of connected secret candidates, supported references and selected Credential sources                     | Information / Review                    |
+| [SEC-4](/modules/envgene-linter/docs/algorithms/sec4.md)       | Named user/password pairs reference different Credential IDs                                                        | Information / Review                    |
+| [SEC-5](/modules/envgene-linter/docs/algorithms/sec5.md)       | Protection of connected secret candidates, supported references, and selected Credential sources                    | Warning / Fix or Information / Review   |
 | [INT-2](/modules/envgene-linter/docs/algorithms/int2.md)       | Every supported connected reference resolves to an object in its applicable context                                 | Warning / Fix or Information / Review   |
 | [INT-3](/modules/envgene-linter/docs/algorithms/int3.md)       | A used reference name is defined at multiple environment, cluster, or repository scopes                             | Warning / Fix                           |
 | [INT-4](/modules/envgene-linter/docs/algorithms/int4.md)       | No reference to a recognized authored entity was found in available local sources                                   | Information / Review                    |
@@ -270,7 +275,8 @@ See the [coverage matrix](/modules/envgene-linter/docs/rule-applicability-matrix
 
 PLACE-10 checks connected ParameterSets, Resource Profile Overrides, Shared Template Variables, shared credentials,
 and Cloud Passports against their required directories. A legacy path can work in the generator and still produce
-an advisory placement finding. Check the supported lookup scope before moving a file.
+an advisory placement finding. Shared Template Variable location mismatches receive Warning / Review with supported
+lookup guidance. Other types retain Warning / Fix. Check the supported lookup scope before moving a file.
 See the [PLACE-10 algorithm](/modules/envgene-linter/docs/algorithms/place10.md) for the directory mapping.
 
 ### SEC-1 detection limits
@@ -288,6 +294,7 @@ See the [SEC-3 algorithm](/modules/envgene-linter/docs/algorithms/sec3.md) for s
 ### SEC-4 Credential pair references
 
 SEC-4 reviews recognized sibling user/password parameters that reference different Credential IDs.
+The split can be intentional. Review the consumer contract before replacing either reference.
 Matching IDs do not establish that the Credential exists or has the required shape.
 See the [SEC-4 algorithm](/modules/envgene-linter/docs/algorithms/sec4.md) for recognized parameter pairs.
 
@@ -295,6 +302,8 @@ See the [SEC-4 algorithm](/modules/envgene-linter/docs/algorithms/sec4.md) for r
 
 SEC-5 reviews protection of selected secret candidates and Credential sources. It recognizes supported SOPS structures,
 external Credentials, and the automatic CI token fallback. Unknown protection remains Information / Review.
+A literal `data.username` in a `type: usernamePassword` Credential produces Warning / Fix.
+Other literal candidates retain Review. Exact `envgeneNullValue` data values are ignored.
 The check does not decrypt values, access secret stores, or establish repository-wide protection.
 See the [SEC-5 algorithm](/modules/envgene-linter/docs/algorithms/sec5.md) for source selection and accepted formats.
 
@@ -303,6 +312,8 @@ See the [SEC-5 algorithm](/modules/envgene-linter/docs/algorithms/sec5.md) for s
 INT-2 checks supported Credential, ParameterSet, and Resource Profile references in their selected context.
 Definitely missing or ambiguous targets produce Warning / Fix. Dynamic references and unavailable template context
 produce Information / Review. Credential checks establish object existence, not property or secret validity.
+Rendered profile checks inspect `profile.name` only. `baseline` and `override_name` are ignored.
+Explicit `envSpecificResourceProfiles` bindings remain checked.
 See the [INT-2 algorithm](/modules/envgene-linter/docs/algorithms/int2.md) for source precedence and resolution limits.
 
 ### INT-4 candidates for review
@@ -315,14 +326,20 @@ See the [INT-4 algorithm](/modules/envgene-linter/docs/algorithms/int4.md) for c
 
 ### INT-3 definitions at multiple scopes
 
-INT-3 reports used ParameterSet, shared Credential file, Shared Template Variable, and Resource Profile Override names
+INT-3 reports used shared Credential file, Shared Template Variable, and Resource Profile Override names
 defined at multiple scopes. It includes definitions hidden by a used reference's lookup.
 Unreferenced names, repeated Credential IDs in differently named files, and duplicates confined to one scope are excluded.
 
-ParameterSet fragments can merge during generation. INT-3 checks their naming against the standard
-without claiming that every lower-scope file is ignored. Findings show the participating paths and suggest distinct names
-or a definition at one scope. INT-3 messages omit Credential IDs and document values.
+Same-named ParameterSet fragments across scopes are allowed and produce no INT-3 finding.
+Findings for the other types show participating paths and suggest distinct names or a definition at one scope.
+INT-3 messages omit Credential IDs and document values.
 See the [INT-3 algorithm](/modules/envgene-linter/docs/algorithms/int3.md) for lookup boundaries and examples.
+
+### NAME-8 default passport naming
+
+NAME-8 checks selected passport and companion names only when the consuming cluster context contains one ordinary
+YAML passport. Multiple passports suppress these naming findings. Repository-level and unselected passports contribute
+to the count. Credential files, the exact `passport-infra` role, and other clusters' passports do not.
 
 ## What is checked
 
@@ -443,6 +460,7 @@ findings.
 - [Connected entities and rule eligibility](docs/algorithms/connections.md)
 - [Rule applicability and coverage matrix](/modules/envgene-linter/docs/rule-applicability-matrix.md)
 - [Effective Set and parameter merging](docs/algorithms/effective-set.md)
+- [Reports and incomplete checks](/modules/envgene-linter/docs/algorithms/reports.md)
 - [Development specification index](docs/superpowers/specs/README.md) — includes reading order and historical supersession notes
 
 The linked rule algorithms describe current behavior. Dated specifications preserve design decisions and identify later changes; older report counts or selection requirements should be read with their supersession notes.

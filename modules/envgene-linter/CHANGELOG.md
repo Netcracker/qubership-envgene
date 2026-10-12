@@ -12,6 +12,19 @@
 
 - Stop reporting `.j2` files based on their directory in TPL-1. Ignore YAML comments while retaining checks
   for Jinja in active values, including quoted strings and block scalars.
+- Report literal `data.username` values in `usernamePassword` Credentials as Warning / Fix in SEC-5.
+  Ignore exact `envgeneNullValue` placeholders. Unknown expressions and Fernet values remain Review.
+- Limit rendered profile reference checks in INT-2 to `profile.name`. Ignore `baseline` and `override_name`.
+- Allow same-named ParameterSet fragments across scopes without INT-3 findings.
+- Report Shared Template Variable location mismatches as Review in PLACE-10, with generator lookup guidance.
+- Suppress NAME-8 passport and companion naming findings when a cluster context contains multiple ordinary passports.
+- Clarify SEC-4 Review guidance for intentionally separate user/password Credential IDs.
+- Recognize protected EnvGene environment lookups in TPL-4 for YAML templates and guaranteed context fields
+  in ordinary environment template descriptor scalars.
+- Resolve selected Artifact Definition registry Credentials against the root catalog, including active V2
+  authentication configurations. Keep anonymous and inactive configurations out of reference evidence.
+- Show skipped checks in HTML and export skipped Jinja checks as located Review entries in JSON,
+  so incomplete template checks cannot appear as clean reports.
 
 ## 0.0.6
 

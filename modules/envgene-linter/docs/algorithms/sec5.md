@@ -2,7 +2,10 @@
 
 ## Description
 
-SEC-5 is an **Information / Review** check of secret protection in connected inputs. It accepts a structurally recognizable SOPS value with usable document metadata, a supported external Credential, or EnvGene's documented automatic CI token fallback. It reviews literal secret candidates, unsupported encryption, and sources that static inspection cannot establish.
+SEC-5 checks secret protection in connected inputs. A literal `data.username` in a `type: usernamePassword`
+Credential produces **Warning / Fix**. Other literal secret candidates, unsupported encryption, and sources that
+static inspection cannot establish produce **Information / Review**. Recognizable SOPS values with usable document
+metadata, supported external Credentials, and EnvGene's documented automatic CI token fallback are accepted.
 
 The check is local and deliberately limited. It does not decrypt values, verify cryptography, read process environment variables, query CI/CD or secret stores, or claim that every repository secret is covered. Every SEC-5 finding uses a generic key and message that omit values, Credential IDs, variable names, reference expressions, remote-store paths, and parser excerpts.
 
@@ -16,7 +19,18 @@ The check is local and deliberately limited. It does not decrypt values, verify 
 | Security bags | Connected parameter or configuration mappings, their exact prefix, environment, allowed fields and reference catalog |
 | Security issues | Known consumers whose selected source cannot be resolved or inspected safely |
 
-SEC-5 expands source selection without adding those files to the legacy `Connections` credential sets used by other rules. Whole-file inputs include selected shared Credentials, `Inventory/credentials/inventory_generation_creds.yml`, generated environment `Credentials/credentials.yml`, and the first selected Cloud Passport credentials companion. Entry-level consumers include a bound deployer and its selected companion, system integration/root-credentials references, active legacy registry consumers, selected Artifact Definitions whose registry has `credentialsId`, and ordinary connected ParameterSet and Cloud/Namespace parameter maps.
+SEC-5 expands source selection without adding those files to the legacy `Connections` credential sets used by other rules.
+Whole-file inputs include selected shared Credentials, `Inventory/credentials/inventory_generation_creds.yml`,
+generated environment `Credentials/credentials.yml`, and the first selected Cloud Passport credentials companion.
+Entry-level consumers include a bound deployer and its selected companion, system integration/root-credentials
+references, active legacy registry consumers, selected Artifact Definition registry references, and ordinary connected
+ParameterSet and Cloud/Namespace parameter maps.
+
+Modern Artifact Definitions resolve registry references in the root `configuration/credentials/credentials.yml` catalog.
+V2 selects only the authentication configuration named by `registry.mavenConfig.authConfig`, unless its method is
+literal `anonymous`. See [INT-4 reference evidence](/modules/envgene-linter/docs/algorithms/int4.md#reference-evidence).
+An unavailable catalog or Credential entry still produces no SEC-5 reference finding because no secret content
+can be inspected. INT-2 checks target existence separately.
 
 ## Processing flow
 
@@ -35,11 +49,18 @@ SEC-5 expands source selection without adding those files to the legacy `Connect
    `credentialsId`, is not itself secret material. If its catalog or Credential entry is unavailable, skip the reference
    without a finding; when available, inspect the target content.
 6. Classify nonempty literal secret candidates as unprotected and unknown expressions, incompatible available targets, unsupported structures and unreadable selected inputs as source/protection unknown. Expressions stored inside Credential `data` are unknown rather than recursively evaluated because the generator returns stored data verbatim. A bare `${NAME}` does not prove CI/CD protection. An absent integration `self_token` uses EnvGene's automatic `GITHUB_TOKEN` or `GITLAB_TOKEN` fallback and is silent; an explicit `self_token` is inspected.
-7. Emit at most one finding per physical value and reason, without reporting unavailable reference targets. Sort by path, line, column and message. Every finding remains Information / Review and keeps CLI exit code `0`.
+7. Ignore null, empty, and exact `envgeneNullValue` data values. Emit Warning / Fix only for a literal `data.username`
+   in a `type: usernamePassword` Credential. Unknown expressions and Fernet remain Information / Review.
+   Deduplicate by physical value and reason, skip unavailable reference targets, and sort by path, line, column,
+   and message. Findings keep CLI exit code `0`.
 
 ## Result
 
-SEC-5 reports one of three generic conditions: a literal connected secret candidate without recognized protection, encryption outside the accepted SOPS format, or a source/protection that static inspection could not establish. A protected or empty value produces no secret-material finding.
+SEC-5 reports one of three generic conditions: an unprotected literal candidate, unsupported encryption, or unknown
+source or protection. Only the confirmed literal username case receives Fix, with a hint to protect the stored value.
+Literal passwords and other secret candidates retain Review. Protected, empty, and exact `envgeneNullValue` values
+produce no secret-material finding. The marker is case-sensitive and does not exempt substrings or invalid Credential
+types.
 
 The console contains eighteen rule headings, with SEC-5 after SEC-4 and before INT-2, followed by NAME-1. HTML includes SEC-5 only when findings exist. SEC-5 redacts secret-bearing identifiers and expressions from its output; this guarantee does not change the output contract of other rules.
 

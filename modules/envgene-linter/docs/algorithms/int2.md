@@ -18,9 +18,18 @@ Credential checks establish object existence only. They do not validate the Cred
 
 Credential consumers use the source selection shared with SEC-5: connected ParameterSet and Cloud/Namespace parameter maps, selected system integration and deployer fields, active registry consumers and selected Artifact Definitions with known Credential-reference fields. Unused definitions and arbitrary string keys are not reference consumers. Credential `data` is not recursively scanned for expressions.
 
+Modern Artifact Definition registry references use the root `configuration/credentials/credentials.yml` catalog.
+For V2, only the authentication configuration selected by `registry.mavenConfig.authConfig` is active.
+Literal `authMethod: anonymous` does not select a Credential. Unavailable root catalogs do not fall back to runtime
+Credentials. See [INT-4 reference evidence](/modules/envgene-linter/docs/algorithms/int4.md#reference-evidence).
+
 For INT-2, an explicit ParameterSet or Resource Profile binding target also selects an existing `Namespaces/<target>/namespace.yml`, even when its bound ParameterSet or template is unavailable. Inspect its parameter sections, `credentialsId`, ParameterSet lists and profile fields. This does not widen other rules' scope.
 
-For `profile.name`, `profile.baseline` and `profile.override_name`, first search `<environment>/Profiles`; multiple physical targets are ambiguous. With no generated target, a baseline remains unknown, while name/override use local lookup with possible unavailable template context. An unsafe or unavailable higher-priority directory blocks fallback and yields unknown; logical directory inspection does not follow external symlinks.
+In rendered `profile` mappings, check only `profile.name`. First search `<environment>/Profiles`, where multiple
+physical targets are ambiguous. With no generated target, use local lookup with possible unavailable template context.
+Ignore `profile.baseline` and `profile.override_name`. Explicit `envSpecificResourceProfiles` bindings remain checked.
+An unsafe or unavailable higher-priority directory blocks fallback and yields unknown.
+Logical directory inspection does not follow external symlinks.
 
 ## Processing flow
 
@@ -29,7 +38,11 @@ For `profile.name`, `profile.baseline` and `profile.override_name`, first search
 3. Resolve system/deployer IDs against their selected catalog. For runtime references, use generated `Credentials/credentials.yml` when present; it is authoritative even when empty. An absent ID in a readable authoritative catalog is missing. An unreadable or unsafe selected catalog is unknown, without fallback. A mapping entry establishes existence without inspecting its secret contents.
 4. When the generated runtime catalog is absent, a defined ID in connected shared Credentials or the selected passport companion can establish existence. Apply the passport companion first, then shared inputs in list order; the last definition of an ID determines its final entry; overlapping IDs across ordered inputs are not automatically ambiguous. An absent ID remains unknown because templates/macros can supply it during generation. Multiple physical definitions within one selected lookup bucket are ambiguous; aliases of one physical file do not create ambiguity.
 5. Resolve `envSpecificParamsets`, `envSpecificE2EParamsets` and `envSpecificTechnicalParamsets` bindings for deploy, end-to-end and technical categories and the corresponding `deployParameterSets`, `e2eParameterSets` and `technicalConfigurationParameterSets` lists in selected Cloud/Namespace objects. ParameterSet staging lets a cluster file replace the same site filename, then adds Inventory fragments for deterministic merging; multiple fragments do not constitute ambiguity. If a binding has no local target and `envTemplate.name`, `artifact` or `templateArtifact` supplies template context, report unknown. A closed local binding without a template source is missing. Missing targets in rendered Cloud/Namespace lists remain unknown because they can come from a template.
-6. Resolve `envSpecificResourceProfiles` using the first matching directory: environment `Inventory`, cluster, then `environments`; within each level use `resource_profiles`, `rp_override`, `Profiles`, then `parameters`. Several physical matches within that selected directory are ambiguous. Inspect `profile.name`, `profile.baseline` and `profile.override_name` in selected Cloud/Namespace objects, including applicable generated `Profiles` targets. An unavailable template profile or baseline remains unknown; do not assume that every profile must exist in local override directories.
+6. Resolve `envSpecificResourceProfiles` using environment `Inventory`, cluster, then `environments`.
+   Within each level use `resource_profiles`, `rp_override`, `Profiles`, then `parameters`, stopping at the first
+   matching directory. Several physical matches there are ambiguous. In selected Cloud/Namespace objects, check
+   only `profile.name`, including generated `Profiles` targets. Ignore `baseline` and `override_name`.
+   An unavailable template profile remains unknown rather than definitely missing from local override directories.
 7. Emit findings at the consumer reference. Deduplicate by physical location, environment, reference kind and outcome, then sort by path, line, column, environment, kind and message. Do not resolve a reference using an unrelated environment or unused definition.
 
 ## Result

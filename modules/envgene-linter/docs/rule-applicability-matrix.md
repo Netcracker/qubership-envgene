@@ -69,6 +69,9 @@ For PLACE-1 and PLACE-2, template composition and instance layer overrides are d
 Comparisons need the relevant process and provenance. Treating every parent template as an instance layer would
 produce incorrect conclusions.
 
+PLACE-10 reports Shared Template Variable location mismatches as Warning / Review with generator lookup guidance.
+Other connected entity types retain Warning / Fix.
+
 ### Secrets
 
 | Rule                                                     | Instance | Template | Objects and required context                                                     | Implemented coverage and limits                                                                                                                |
@@ -81,6 +84,9 @@ produce incorrect conclusions.
 SEC-5 is a `MAY` rule. Missing SOPS configuration alone must not become a violation.
 An external-store-only repository, or one without local secret material, does not need repository-wide encryption.
 Unknown secret semantics require review rather than a guessed shape or an automatic conversion.
+The approved SEC-5 exception reports literal `data.username` in `usernamePassword` Credentials as Warning / Fix.
+Exact `envgeneNullValue` data values are ignored. Unknown expressions and Fernet remain Review.
+SEC-4 reviews different user/password reference IDs without requiring replacement when the split is intentional.
 
 ### Integrity
 
@@ -92,6 +98,9 @@ Unknown secret semantics require review rather than a guessed shape or an automa
 
 An unavailable external consumer is not evidence that a template entity is dead.
 A dynamic reference is also not evidence that its target is missing.
+INT-2 checks only `profile.name` in rendered profile mappings. It ignores `baseline` and `override_name`, while explicit
+Resource Profile bindings and Credential object existence checks remain active.
+INT-3 excludes ParameterSets because same-named fragments can merge across scopes.
 
 ### Naming
 
@@ -102,6 +111,10 @@ A dynamic reference is also not evidence that its target is missing.
 | [NAME-3](/modules/envgene-linter/docs/algorithms/name3.md) | Local    | Local    | Authored names, fixed layout names, and externally dictated identities  | Disabled by default. Reviews selected instance names using kebab-case matching. Fixed input filenames and identity exceptions need reconciliation with the standard. |
 | [NAME-4](/modules/envgene-linter/docs/algorithms/name4.md) | Context  | Context  | ParameterSet subject, category, optional topology, and actual consumers | Disabled by default. Checks bound instance stems. Uses `technical` instead of `runtime` and rejects a suffix after the category.                                     |
 | [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) | Local    | No       | Default Cloud Passport and its selected companion                       | Checks selected passport and companion stems. Excludes the exact infra role. Companion selection follows the generator's `.yml` lookup.                              |
+
+NAME-8 applies naming checks only when the consuming cluster context contains one ordinary YAML passport.
+Repository-level and unselected passports contribute to this count. Physical aliases count once.
+Other clusters, Credential companions, Jinja, unsafe files, and the exact infra role do not disable the check.
 
 ### Values and templating
 
@@ -170,8 +183,8 @@ the implementations.
 | SEC-5               | Selected-source protection review differs from optional repository-wide encryption with one backend.                                           | Define policy-aware coverage without making optional SOPS use mandatory.                                   |
 | NAME-3              | The standard exempts externally dictated names and protects exact reference identities. The heuristic still flags some fixed generator inputs. | Identify protected names and preserve reference identity before recommending renames.                      |
 | NAME-4              | The standard permits `runtime` and an optional topology suffix. Code requires `technical` and a final category token.                          | Align the algorithm, specification, tests, and catalog before extending template coverage.                 |
-| INT-3               | The standard describes first-match behavior for all listed entities. The linter documents ParameterSet merging.                                | Reconcile the explanation with generator behavior while retaining the agreed duplicate-name check.         |
-| PLACE-10 and NAME-7 | PLACE-10 names `shared-template-variables/`, while NAME-7 describes legacy `configuration/variables/` locations.                               | Clarify canonical locations and supported legacy lookup by scope.                                          |
+| INT-3               | ParameterSet staging and merging differ from the standard's first-match explanation.                                                           | Approved: exclude ParameterSets. Retain duplicate-name checks for the other three supported types.         |
+| PLACE-10 and NAME-7 | The standard names `shared-template-variables/`, while generator lookup supports configuration paths.                                          | Approved: use Review with lookup guidance for Shared Template Variable placement.                          |
 | NAME-8              | The standard permits `.yaml`, but companion lookup selects `.yml` only.                                                                        | Keep lookup compatibility explicit. Do not infer that an adjacent `.yaml` companion is selected.           |
 | TPL-1               | Generator-supported descriptor expressions are accepted. YAML comments and `.j2` file placement are outside the rule's scope.                  | Preserve these approved refinements in the specification and standard alignment work.                      |
 | TPL-6 and TPL-8     | TPL-6 forbids `raw`, while TPL-8 requires it for Helm passthrough.                                                                             | Approved: allow recognizable Helm passthrough and review other raw blocks. Preserve this refinement.       |
