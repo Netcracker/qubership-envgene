@@ -73,6 +73,10 @@ Changes in behavior:
   directory and always passed.
 - Definition overrides in `configuration/appdefs` and `configuration/regdefs` are checked by schema.
 - A schema error is a `ValueError`. The log lists what is wrong.
+- A Tenant without `credential` or `globalE2EParameters`, a Cloud without `dbaasConfigs`, and a Namespace
+  without `credentialsId` still fail the build. The error now names the field and the object:
+  `Field 'credential' is missing in tenant <name>. It is needed to create Credentials.` Before, it was
+  `KeyError: 'credential'`.
 
 ## Out of scope
 
