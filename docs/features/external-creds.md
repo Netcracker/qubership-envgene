@@ -80,9 +80,9 @@ It is necessary to extend EnvGene to support management of Credentials that resi
 2. Within a given Secret Store, the remote secret is addressed by `normalizedSecretName`, derived from `remoteRefPath`, `credId`, and store type (see [Normalization to normalizedSecretName](#normalization-to-normalizedsecretname))
 3. Credential uniqueness within EnvGene repository is determined by `credId`
 4. The entire Instance repository uses **either** local Credentials (`usernamePassword`, `secret`) **or**
-   external Credentials (`type: external`), determined by the presence of `/configuration/secret-stores.yml`.
-   Mixing local and external Credentials within a single Instance repository is not a supported case. Different
-   Instance repositories built from the same template may differ.
+   external Credentials (`type: external`), not a mix. The mode is determined by the presence of
+   `/configuration/secret-stores.yml`; see
+   [Mode detection](/docs/features/credential-processing.md#mode-detection).
 5. CMDB import is not supported for Environment Instances that contain external Credentials. CMDB integration currently expects resolved credential values or local Credentials only.
 6. System credentials of the EnvGene template repository are local-only. External Credentials are not
    supported for template-repository system credentials.
@@ -1307,6 +1307,12 @@ Example:
 4. **No external credentials in runtime context.** No [Credential Reference](#credential-reference)
    (`$type: credRef`) appears in `technicalConfigurationParameters`. The runtime context does not support
    sensitive parameters via external Credentials.
+
+5. **External-mode credential restrictions.** `vaultAppRole` is not externalizable; a sensitive parameter
+   value referencing an external Credential must be a whole-value reference; and the deprecated key-form
+   macros `#creds` / `#credscl` / `#credsns` are not supported. Each fails Environment Instance generation.
+   For the formal rules and cases see
+   [External-mode credential restrictions](/docs/features/credential-processing.md#external-mode-credential-restrictions).
 
 #### During Effective Set generation
 
