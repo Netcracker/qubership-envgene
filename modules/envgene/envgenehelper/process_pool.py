@@ -1,6 +1,8 @@
 from concurrent.futures import ProcessPoolExecutor
 from os import getenv
 
+from envgene_shared.utils.logger import logger
+
 _process_pool = None
 
 
@@ -13,5 +15,6 @@ def map_in_processes(function, tasks: list[tuple]) -> list:
     if parallel_workers() < 2 or len(tasks) < 2:
         return [function(*task) for task in tasks]
     if _process_pool is None:
+        logger.info(f"Parallel workers: {parallel_workers()}")
         _process_pool = ProcessPoolExecutor(max_workers=parallel_workers())
     return list(_process_pool.map(function, *zip(*tasks)))
