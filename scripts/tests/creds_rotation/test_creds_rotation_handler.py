@@ -1,8 +1,8 @@
-from modules.envgene.envgenehelper.errors import ValidationError
+from envgenehelper.errors import ValidationError
 import pytest
 import os
 
-from scripts.creds_rotation.utils.error_constants import ErrorCodes
+from scripts.creds_rotation.utils.error_constants import ErrorCodes, ErrorMessages
 from scripts.tests.base_test import BaseTest
 from envgenehelper import copy_path, delete_dir, json
 from creds_rotation.creds_rotation_handler import run_cred_rotation
@@ -23,6 +23,7 @@ def setup_env(cluster_name, env_name):
     delete_dir(g_test_dir)
     copy_path(g_inventory_dir, g_test_dir)
     os.rename(f"{g_test_dir}/test_environments", f"{g_test_dir}/environments")
+    os.remove(f"{g_test_dir}/configuration/secret-stores.yml")
     os.environ["CLUSTER_NAME"] = cluster_name
     os.environ["ENVIRONMENT_NAME"] = env_name
     with open(f"{g_cred_dir}/payload.json") as f:
@@ -58,9 +59,11 @@ def test_secret_changed_present(setup_env, cluster_name, env_name):
 
 @pytest.mark.parametrize("cluster_name, env_name", [("cluster-01", "env-extcred")])
 def test_fail_rotation_external_cred(setup_env, cluster_name, env_name):
+    copy_path(f"{g_inventory_dir}/configuration/secret-stores.yml", f"{g_test_dir}/configuration")
     os.environ["CRED_ROTATION_FORCE"] = "true"
     os.environ["CRED_ROTATION_PAYLOAD"] = "not-a-json-payload"
     with pytest.raises(ValidationError) as exc_info:
         run_cred_rotation()
+    assert ErrorMessages.EXTERNAL_MODE_NOT_SUPPORTED in str(exc_info.value)
     assert exc_info.value.error_code == ErrorCodes.INVALID_STATE_CODE
     assert not os.path.exists(f"{g_test_dir}/affected-sensitive-parameters.yaml")
