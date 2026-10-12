@@ -1,42 +1,26 @@
 ---
-name: behavioral-guidelines
-description: Coding principles — think before acting, keep it simple, make surgical changes, verify with clear success criteria. Biases toward caution over speed.
-when_to_use: Use when planning an implementation, reviewing code, refactoring, or writing new features in this repository.
+name: envgene-code-review
+description: Team code review for this repository - review procedure and the code rules a diff is checked against (simplicity, surgical changes, real tests, naming and other team rules).
+when_to_use: Use for any code review in this repository - "review", "ревью", "check my changes", "review this branch or commit" - and when writing or refactoring code, so that the code passes the review.
 disable-model-invocation: false
 ---
 
-# Behavioral Guidelines
+# EnvGene code review
 
-Behavioral guidelines to reduce common LLM coding mistakes.
+Team rules that a code change is checked against, and the procedure for the check.
 
-**Trade-off:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+## 1. Reviewing code
 
-## 0. Scope Restriction — MANDATORY
+**Check the diff against sections 2 to 5. Report first, fix only on request.**
 
-**This branch touches ONLY BDD test infrastructure. Never edit anything outside these two paths:**
-
-- `cucumber_tests/` — all test code, test data, step definitions, features
-- `.github/workflows/perform_e2e_tests.yml` — the CI workflow that runs the tests
-
-Any file outside these paths must NOT be created, modified, or deleted.
-
-If a change you are about to make would require touching a file outside this scope,
-stop and tell the user explicitly which file and why — do not proceed silently.
-
-This rule overrides every other guideline in this document.
-
----
-
-## 1. Think Before Coding
-
-**Don't assume. Don't hide confusion. Surface trade-offs.**
-
-Before implementing:
-
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+- Review the diff of the current branch against its base, including untracked files.
+- For each finding give `file:line`, the rule it breaks, and the fix in one line.
+- After a rename, search the whole repository for the old name. Untracked tests break silently.
+- Report correctness bugs even when no rule in this document covers them.
+- When the reviewer names a new kind of problem, propose a new rule for section 5.
+- When a separate reviewer agent does the review, for example through the `requesting-code-review`
+  skill, add to its prompt: read `.claude/skills/envgene-code-review/SKILL.md` and check the diff
+  against sections 2 to 5. The reviewer agent starts without this skill.
 
 ## 2. Simplicity First
 
@@ -101,26 +85,20 @@ Concretely for this repository:
 Diagnostic question before writing any mock: "If the real component had a bug that made it
 produce wrong output, would this test catch it?" If the answer is no, remove the mock.
 
-## 5. Goal-Driven Execution
+## 5. Code rules
 
-**Define success criteria. Loop until verified.**
+**Team rules for Python code. Each rule comes from a real review comment.**
 
-Transform tasks into verifiable goals:
-
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-
-```text
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+- **Name things by what they are.** A name says what the thing is without a look at its type.
+  `namespace_paths`, not `items`.
+- **No comments in new code.** No comments, no docstrings, and no `# noqa` or other pragmas. Tests
+  included.
+- **No wrapper that only composes.** Do not add a function that only calls an existing function. Put
+  the expression at the call sites.
+- **No extra enum members.** Do not add `_missing_` or a sentinel member when a plain `==` against one
+  value already gives the right default.
+- **No assertions on log text.** A test checks that a warning fired. It never checks the message text.
 
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+**These rules are working if:** fewer unnecessary changes in diffs and fewer rewrites due to overcomplication.

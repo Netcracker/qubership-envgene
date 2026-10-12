@@ -1,17 +1,16 @@
-from envgenehelper import Path, copy, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinition, getEnvDefinitionPath, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import Path, copy, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinition, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from build_env.render_config_env import EnvGenerator
 
 
-# TODO unit tests
 def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
     levels = [
         Path(env_dir) / "Inventory",
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     rp_dir_names = ["resource_profiles", "rp_override", "Profiles", "parameters"]
-    
+
     result = {}
     logger.info(f"Finding env specific resource profiles for '{env_dir}' in '{instances_dir}'")
     envDefinitionPath = getEnvDefinitionPath(env_dir)
@@ -38,7 +37,6 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
                 break
         if templateType not in result:
             raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
-    logger.info(f"Env specific resource profiles are: \n{dump_as_yaml_format(result)}")
     return result
 
 
@@ -47,7 +45,6 @@ def getResourceProfilesFromDir(dir):
     rpYamls = findAllYamlsInDir(dir)
     for profileFile in rpYamls:
         result[extractNameFromFile(profileFile)] = profileFile
-    logger.info(f"Resource profiles in folder {dir}: \n{dump_as_yaml_format(result)}")
     return result
 
 
@@ -72,8 +69,44 @@ def get_param_from_resource_profile_service(paramName, service_yaml):
     return None
 
 
-def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProfileName):
+def get_profile_baseline(profile_yaml):
+    baseline = profile_yaml.get("baseline")
+    return baseline if baseline and baseline.strip() else None
+
+
+def has_profile_parameters(profile_yaml):
+    return any(service["parameters"]
+               for app in profile_yaml.get("applications") or []
+               for service in app["services"])
+
+
+def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProfileName, object_baseline=None):
     commentText = f"from {overrideProfileName}"
+    template_name = sourceProfileYaml.get("name")
+    template_baseline = get_profile_baseline(sourceProfileYaml)
+    source_baseline = template_baseline or object_baseline
+    if template_baseline:
+        source_origin = f"baseline '{template_baseline}' from template profile '{template_name}'"
+    elif object_baseline:
+        source_origin = f"baseline '{object_baseline}' from the object"
+    else:
+        source_origin = "no baseline"
+    override_baseline = get_profile_baseline(overrideProfileYaml)
+    if override_baseline:
+        if override_baseline != source_baseline and has_profile_parameters(sourceProfileYaml):
+            logger.warning(f"Merging environment specific profile '{overrideProfileName}' with baseline "
+                           f"'{override_baseline}' into template profile '{template_name}' that carries parameters "
+                           f"and has {source_origin}. Use replace mode to change the baseline.")
+        logger.info(f"Template profile '{template_name}' takes baseline '{override_baseline}' from environment "
+                    f"specific profile '{overrideProfileName}', previously {source_origin}")
+        merge_dict_key_with_comment("baseline", sourceProfileYaml, "baseline", overrideProfileYaml, commentText)
+    else:
+        logger.info(f"Environment specific profile '{overrideProfileName}' does not change the baseline, "
+                    f"template profile '{template_name}' keeps {source_origin}")
+    if not overrideProfileYaml.get("applications"):
+        return
+    if sourceProfileYaml.get("applications") is None:
+        sourceProfileYaml["applications"] = []
     for app in overrideProfileYaml["applications"]:
         sourceApp = get_app_from_resource_profile(app["name"], sourceProfileYaml)
         # if app not in template profile, adding it and iterating to make comments
@@ -110,15 +143,20 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
 
     if not needed_resource_profiles:
         return profiles_map
+    validity_by_path = {}
     for template_name, needed_profile in needed_resource_profiles.items():
         if needed_profile not in source_profiles:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue
         profile_path = source_profiles[needed_profile]
         logger.info(f"Found resource profile {needed_profile} in path: {profile_path}")
-        try:
-            validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
-        except ValueError:
+        if profile_path not in validity_by_path:
+            try:
+                validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
+                validity_by_path[profile_path] = True
+            except ValueError:
+                validity_by_path[profile_path] = False
+        if not validity_by_path[profile_path]:
             not_valid += rp_data_template.format(needed_profile, template_name)
             continue
         profiles_map[template_name] = profile_path
@@ -145,36 +183,35 @@ def collect_resource_profiles(result_profiles_dir, render_profiles_dir, profiles
     return profiles_map
 
 
-def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator):
+def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator,
+                                      object_baselines):
     override_profile_map = {}
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
+    combination_mode_key = "mergeEnvSpecificResourceProfiles"
+    try:
+        combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
+    except KeyError:
+        logger.info(
+            f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
+        combination_mode = 'true'
+    common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
         if profile_key not in all_profiles:
-            raise ReferenceError(
-                f"Environment specific profile '{env_specific_profile_path}' is mapped to key "
-                f"'{profile_key}' in envTemplate.envSpecificResourceProfiles, but the "
-                f"namespace template has no profile.name. Resource profile overrides require "
-                f"a profile.name on the corresponding cloud or namespace template."
-            )
-        logger.info(f"Found template override profile for profile key '{profile_key}'"
-                    f" with environment specific profile {env_specific_profile_path}")
+            logger.info(f"No template profile for profile key '{profile_key}', attaching standalone "
+                        f"environment specific profile {env_specific_profile_path}")
+            override_profile_map[profile_key] = env_specific_profile_path
+            continue
         template_profile_file_path = all_profiles[profile_key]
+        logger.info(f"Profile key '{profile_key}' has template profile '{template_profile_file_path}' "
+                    f"and environment specific profile '{env_specific_profile_path}'")
         template_profile_yaml = openYaml(template_profile_file_path)
         env_specific_profile_yaml = openYaml(env_specific_profile_path)
-
-        combination_mode_key = "mergeEnvSpecificResourceProfiles"
-        try:
-            combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
-        except KeyError:
-            logger.info(
-                f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
-            combination_mode = 'true'
-        common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
 
         if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")
             merge_resource_profiles(template_profile_yaml, env_specific_profile_yaml,
-                                    extractNameFromFile(env_specific_profile_path))
+                                    extractNameFromFile(env_specific_profile_path),
+                                    object_baselines.get(profile_key))
             writeYamlToFile(template_profile_file_path, template_profile_yaml)
         else:
             logger.info(f"Replacing {common_msg}")
@@ -187,8 +224,11 @@ def has_valid_profile_name(content: dict) -> bool:
     return isinstance(profile, dict) and bool(profile.get("name"))
 
 
-def update_profile_name(file_path, profile_name):
+def set_object_profile_field(file_path, field, value):
     data = openYaml(file_path, {})
-    if has_valid_profile_name(data):
-        set_nested_yaml_attribute(data, "profile.name", profile_name)
-        writeYamlToFile(file_path, data)
+    if data.get("profile") is None:
+        data["profile"] = get_empty_yaml()
+    elif data["profile"].get(field) == value:
+        return
+    set_nested_yaml_attribute(data, f"profile.{field}", value)
+    writeYamlToFile(file_path, data)

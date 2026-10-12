@@ -55,7 +55,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is not part of BG Domain
    3. Finds `deploy_postfix: "core"` in Template Descriptor
@@ -91,7 +91,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is not part of BG Domain
    3. Does not find `deploy_postfix` in Template Descriptor
@@ -129,7 +129,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `controller`
    3. Applies rules for controller namespace (same as non-BG namespaces)
@@ -166,7 +166,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `controller`
    3. Applies rules for controller namespace (same as non-BG namespaces)
@@ -205,7 +205,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `origin`
    3. Finds `deploy_postfix: "bss"` in Template Descriptor
@@ -242,7 +242,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `origin`
    3. Does not find `deploy_postfix` in Template Descriptor
@@ -281,7 +281,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `peer`
    3. Finds `deploy_postfix: "bss"` in Template Descriptor
@@ -318,7 +318,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `peer`
    3. Does not find `deploy_postfix` in Template Descriptor
@@ -361,7 +361,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Uses `envTemplate.artifact` for rendering all Environment Instance objects:
       - All Namespaces (including `origin`, `peer`, `controller` if present in BG Domain)
@@ -399,7 +399,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Reads BG Domain object to determine namespace roles
    3. For `origin` Namespace: Uses `envTemplate.bgNsArtifacts.origin` artifact
@@ -441,7 +441,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `env_builder` job runs in the pipeline:
+1. The `env_build` step runs in the pipeline:
    1. Reads Environment Inventory
    2. Attempts to read BG Domain object but finds it does not exist
    3. Ignores `bgNsArtifacts` since there is no BG Domain to determine namespace roles
@@ -476,14 +476,14 @@ Instance build pipeline with Effective Set enabled is started for one or more en
 
 **Steps:**
 
-1. The `env_builder` job runs and generates Environment Instance objects.
-2. The `process_sd` job is skipped because neither `SD_DATA` nor `SD_VERSION` is provided.
-3. The `generate_effective_set` job runs without SD input parameters.
+1. The `env_build` step runs and generates Environment Instance objects.
+2. The `process_sd` step is skipped because neither `SD_DATA` nor `SD_VERSION` is provided.
+3. The `generate_effective_set` step runs without SD input parameters.
 
 **Results:**
 
-1. `env_builder` job finishes successfully.
-2. `generate_effective_set` job finishes successfully.
+1. `env_build` step finishes successfully.
+2. `generate_effective_set` step finishes successfully.
 3. Generated Effective Set does not include data merged from SD input.
 
 ### UC-EIG-ES-2: Generate Effective Set with `SD_DATA` or `SD_VERSION`
@@ -504,17 +504,17 @@ Instance build pipeline with Effective Set enabled is started for one or more en
 
 **Steps:**
 
-1. The `env_builder` job runs and generates Environment Instance objects.
-2. The `process_sd` job runs when SD input matches `SD_SOURCE_TYPE`:
+1. The `env_build` step runs and generates Environment Instance objects.
+2. The `process_sd` step runs when SD input matches `SD_SOURCE_TYPE`:
    1. `SD_SOURCE_TYPE=json` and `SD_DATA` is provided, or
    2. `SD_SOURCE_TYPE=artifact` and `SD_VERSION` is provided.
-3. The `generate_effective_set` job runs with processed SD input.
+3. The `generate_effective_set` step runs with processed SD input.
 
 **Results:**
 
-1. `env_builder` job finishes successfully.
-2. `process_sd` job runs and finishes successfully.
-3. `generate_effective_set` job finishes successfully.
+1. `env_build` step finishes successfully.
+2. `process_sd` step runs and finishes successfully.
+3. `generate_effective_set` step finishes successfully.
 4. Generated Effective Set includes data resolved from provided SD input.
 
 ### UC-EIG-ES-3: Apply `CUSTOM_PARAMS` when `GENERATE_EFFECTIVE_SET` is true
@@ -533,14 +533,14 @@ Instance build pipeline with Effective Set enabled is started for one or more en
 
 **Steps:**
 
-1. The `env_builder` job runs and generates Environment Instance objects.
-2. The `generate_effective_set` job runs.
-3. The `generate_effective_set` job applies values from `CUSTOM_PARAMS`.
+1. The `env_build` step runs and generates Environment Instance objects.
+2. The `generate_effective_set` step runs.
+3. The `generate_effective_set` step applies values from `CUSTOM_PARAMS`.
 
 **Results:**
 
-1. `env_builder` job finishes successfully.
-2. `generate_effective_set` job finishes successfully.
+1. `env_build` step finishes successfully.
+2. `generate_effective_set` step finishes successfully.
 3. Values from `CUSTOM_PARAMS` are applied in generated Effective Set according to merge rules.
 
 ### UC-EIG-ES-4: Ignore `CUSTOM_PARAMS` when `GENERATE_EFFECTIVE_SET` is false
@@ -561,13 +561,13 @@ Instance build pipeline is started for one or more environments with:
 
 **Steps:**
 
-1. The `env_builder` job runs and generates Environment Instance objects.
-2. The `generate_effective_set` job is skipped because `GENERATE_EFFECTIVE_SET` is false.
+1. The `env_build` step runs and generates Environment Instance objects.
+2. The `generate_effective_set` step is skipped because `GENERATE_EFFECTIVE_SET` is false.
 
 **Results:**
 
-1. `env_builder` job finishes successfully.
-2. `generate_effective_set` job is not created.
+1. `env_build` step finishes successfully.
+2. `generate_effective_set` step is not created.
 3. Environment Instance generation completes without Effective Set output.
 4. `CUSTOM_PARAMS` are ignored.
 
@@ -622,7 +622,7 @@ When multiple environments are specified in `ENV_NAMES`, the pipeline processes 
 **Steps:**
 
 1. For each environment from the list, parallel and independent pipeline flows are started
-2. For each environment, the `env_builder` job runs in parallel:
+2. For each environment, the `env_build` step runs in parallel:
    1. Reads Environment Inventory for the specific environment
    2. Generates Environment Instance objects according to the template configuration
 

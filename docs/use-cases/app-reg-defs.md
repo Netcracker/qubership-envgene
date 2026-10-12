@@ -71,7 +71,7 @@ ENV_BUILDER: true
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Renders templates from:
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
@@ -94,7 +94,7 @@ ENV_BUILDER: true
 - Standard Jinja substitution makes environment variables and the current environment context available inside
   templates.
 - If a template contains invalid Jinja syntax, or a rendered definition is missing required fields, the
-  `app_reg_def_process` job fails with an explanatory error and the build halts.
+  `app_reg_def_process` step fails with an explanatory error and the build halts.
 
 ### UC-ARD-TR-2: Basic AppDef/RegDef template delete
 
@@ -119,7 +119,7 @@ ENV_BUILDER: true
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Renders templates from:
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
@@ -159,7 +159,7 @@ overrides are applied. Templates render with their default (source) registry ref
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs:
+1. The `app_reg_def_process` step runs:
    1. Loads `/environments/configuration/appregdef_config.yaml` if present
    2. Renders AppDef templates: `registryName` resolves to the template default
    3. Renders RegDef templates
@@ -195,7 +195,7 @@ a single on-site registry via `appregdef_config.yaml` overrides.
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs:
+1. The `app_reg_def_process` step runs:
    1. Loads `/environments/configuration/appregdef_config.yaml` and exposes `appdefs.overrides` to the Jinja context
    2. Renders AppDef templates: `registryName` resolves to `on-site-registry` (override beats default)
    3. Renders RegDef templates
@@ -237,7 +237,7 @@ ENV_BUILDER: true
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Renders templates from:
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
@@ -287,7 +287,7 @@ ENV_BUILDER: true
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs in the pipeline:
+1. The `app_reg_def_process` step runs in the pipeline:
    1. Renders templates from:
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
@@ -326,7 +326,7 @@ template-rendered ones.
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs:
+1. The `app_reg_def_process` step runs:
    1. Renders templates from `/templates/appdefs/*`, `/templates/regdefs/*`
    2. Writes template-rendered definitions into `/appdefs/*`, `/regdefs/*`
    3. Discovers definition overrides in `/configuration/appdefs/*`, `/configuration/regdefs/*`
@@ -341,7 +341,7 @@ template-rendered ones.
 
 ## Placement modes
 
-This group covers behavior of the `app_reg_def_process` job in each placement mode (`root` and `dual`). Both UCs use
+This group covers behavior of the `app_reg_def_process` step in each placement mode (`root` and `dual`). Both UCs use
 the upgrade-from-legacy-layout scenario as the canonical illustration. The same Steps apply in steady state when no
 legacy files exist (`root` cleanup finds nothing to remove, and `dual` writes copies without legacy coexistence).
 
@@ -349,7 +349,7 @@ legacy files exist (`root` cleanup finds nothing to remove, and `dual` writes co
 
 **Description:**
 
-On an upgraded instance repository configured for `root` placement mode, the `app_reg_def_process` job removes legacy
+On an upgraded instance repository configured for `root` placement mode, the `app_reg_def_process` step removes legacy
 per-environment AppDef/RegDef files and writes effective definitions only at the root level.
 
 **Pre-requisites:**
@@ -372,7 +372,7 @@ per-environment AppDef/RegDef files and writes effective definitions only at the
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs:
+1. The `app_reg_def_process` step runs:
    1. Renders AppDef and RegDef templates with current environment context
    2. Applies definition overrides from `/configuration/appdefs/*`, `/configuration/regdefs/*` (if present)
    3. Writes final effective definitions into `/appdefs/*`, `/regdefs/*`
@@ -414,7 +414,7 @@ Legacy per-environment files coexist with new dual-mode compatibility copies.
 
 **Steps:**
 
-1. The `app_reg_def_process` job runs:
+1. The `app_reg_def_process` step runs:
    1. Renders AppDef and RegDef templates with current environment context
    2. Applies definition overrides from `/configuration/appdefs/*`, `/configuration/regdefs/*` (if present)
    3. Writes effective definitions to `/appdefs/*`, `/regdefs/*`
@@ -452,7 +452,7 @@ Instance pipeline (GitLab or GitHub) is started.
 
 **Steps:**
 
-1. During pipeline execution, the `app_reg_def_process` job renders
+1. During pipeline execution, the `app_reg_def_process` step renders
 template-rendered AppDefs and RegDefs from templates.
 If matching definition overrides exist in:
    - `/configuration/appdefs/*`
@@ -462,7 +462,7 @@ definitions in:
    - `/appdefs/*`
    - `/regdefs/*`
 
-2. The `cmdb_import` job runs in the pipeline:
+2. The `cmdb_import` step runs in the pipeline:
    2.1. Reads Application Definitions from:
       - `/appdefs/*`
    2.2. Reads Registry Definitions from:
