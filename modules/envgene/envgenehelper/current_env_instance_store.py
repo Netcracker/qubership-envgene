@@ -9,13 +9,12 @@ from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
-from .config_helper import get_save_artifacts_strategy
-from .models import SaveArtifactsStrategy
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 GLOB_CHARS = set("*?[")
+# An env-specific Resource Profile from Inventory is put into the store only to be read later.
+# It is an input file of the user, so flush() must not write it back.
 NEVER_WRITTEN_DIRS = ("Inventory",)
-RAW_SKIPPED_DIRS = ("Credentials",)
 YAML_EXTENSIONS = (".yml", ".yaml")
 
 
@@ -96,13 +95,10 @@ class CurrentEnvInstanceStore:
             rel = self._relative(key)
             if rel is None or not rel.parts or rel.parts[0] in NEVER_WRITTEN_DIRS:
                 continue
-            yield key, rel
+            yield key
 
-    def flush(self, raw=False, raw_dir=None):
-        if raw:
-            self._flush_raw(raw_dir)
-            return
-        for key, _ in self._write_targets():
+    def flush(self):
+        for key in self._write_targets():
             data = self._objects[key]
             schema_path, header_text = self._beautify.get(key, (None, ""))
             if key in self._beautify:
@@ -119,18 +115,6 @@ class CurrentEnvInstanceStore:
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
             writeToFile(key, text)
-
-    def _flush_raw(self, raw_dir):
-        if raw_dir is None or get_save_artifacts_strategy() == SaveArtifactsStrategy.NEVER:
-            return
-        for key, rel in self._write_targets():
-            if rel.parts[0] in RAW_SKIPPED_DIRS or is_cred_file(str(key)):
-                continue
-            data = self._objects[key]
-            normalize_comments(data)
-            target = Path(raw_dir) / rel
-            logger.info(f"Writing raw {target}")
-            writeToFile(target, dumpYamlToStr(data))
 
 
 _open_store = None

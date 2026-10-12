@@ -138,31 +138,6 @@ def test_flush_removes_comments_from_credentials(env_dir):
     assert target.read_text() == "cred:\n  type: secret\n"
 
 
-def test_raw_flush_writes_to_raw_dir_without_credentials(monkeypatch, tmp_path, env_dir):
-    monkeypatch.setenv("SAVE_ARTIFACTS_STRATEGY", "ALWAYS")
-    raw_dir = tmp_path / "artifacts" / "render"
-    objects = CurrentEnvInstanceStore(env_dir)
-    data = readYaml("a: 1  # c\nb: 2\n")
-    data.ca.items["b"] = None
-    objects.put(env_dir / "cloud.yml", data)
-    objects.put(env_dir / "Credentials" / "credentials.yml", {"cred": {"type": "secret"}})
-    objects.flush(raw=True, raw_dir=raw_dir)
-
-    assert (raw_dir / "cloud.yml").read_text() == "a: 1 # c\nb: 2\n"
-    assert not (raw_dir / "Credentials").exists()
-    assert not (env_dir / "cloud.yml").exists()
-
-
-def test_raw_flush_writes_nothing_when_strategy_is_never(monkeypatch, tmp_path, env_dir):
-    monkeypatch.setenv("SAVE_ARTIFACTS_STRATEGY", "NEVER")
-    raw_dir = tmp_path / "artifacts" / "render"
-    objects = CurrentEnvInstanceStore(env_dir)
-    objects.put(env_dir / "cloud.yml", {"a": 1})
-    objects.flush(raw=True, raw_dir=raw_dir)
-
-    assert not raw_dir.exists()
-
-
 def test_current_store_is_available_only_while_open(env_dir):
     with pytest.raises(RuntimeError):
         current_env_instance_store()

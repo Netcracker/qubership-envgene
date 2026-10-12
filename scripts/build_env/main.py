@@ -57,6 +57,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     template_profiles_dir = str(Path(templates_dirs[NamespaceRole.COMMON]) / "resource_profiles")
 
     # preparing folders for generation
+    cleanup_resulting_dir(source_env_dir)
     copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
     env_definition = load_env_inputs(env_name, source_env_dir, all_instances_dir)
     # get deployer parameters

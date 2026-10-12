@@ -256,12 +256,11 @@ def get_environment_name_from_full_name(env):
     return env.split('/')[1].strip()
 
 
-def find_cloud_passport_definition(env_instances_dir, instances_dir, env_definition=None):
+def find_cloud_passport_definition(env_instances_dir, instances_dir, env_definition):
     # trying to get explicit passport name from env_definition
-    inventoryYaml = env_definition if env_definition is not None else getEnvDefinition(env_instances_dir)
     cloud_passport_file_name = ""
-    if ("cloudPassport" in inventoryYaml["inventory"]):
-        cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
+    if ("cloudPassport" in env_definition["inventory"]):
+        cloud_passport_file_name = env_definition["inventory"]["cloudPassport"]
     if (cloud_passport_file_name):
         return str(find_passport_by_env_definition(cloud_passport_file_name, env_instances_dir, instances_dir))
     else:
@@ -316,15 +315,14 @@ def findPassportInDefaultDirByName(env_instances_dir, passport_name):
         return ""
 
 
-def find_cloud_name_from_passport(source_env_dir, all_instances_dir, env_definition=None):
+def find_cloud_name_from_passport(source_env_dir, all_instances_dir, env_definition):
     # checking if inventory is related to cloud passport
-    inventoryYaml = env_definition if env_definition is not None else getEnvDefinition(source_env_dir)
     cloudPassportFileName = ""
     # if passport name is defined in env_definition than using it
-    if ("cloudPassport" in inventoryYaml["inventory"]):
-        cloudPassportFileName = inventoryYaml["inventory"]["cloudPassport"]
+    if ("cloudPassport" in env_definition["inventory"]):
+        cloudPassportFileName = env_definition["inventory"]["cloudPassport"]
         logger.info(f"Got cloud name from env_definition passport {cloudPassportFileName}")
-    cloudPassportFile = find_cloud_passport_definition(source_env_dir, all_instances_dir, inventoryYaml)
+    cloudPassportFile = find_cloud_passport_definition(source_env_dir, all_instances_dir, env_definition)
     if cloudPassportFile:
         if f"{DEFAULT_PASSPORT_DIR_NAME}/{DEFAULT_PASSPORT_NAME}.y" in cloudPassportFile:
             cloudName = extractNameFromDir(getParentDirName(cloudPassportFile))

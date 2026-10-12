@@ -2,7 +2,7 @@ import shutil
 
 import pytest
 
-from build_env.main import cleanup_resulting_dir, render_environment
+from build_env.main import render_environment
 from envgenehelper import delete_dir_if_exists, open_current_env_instance_store, render_workspace_dir
 from envgenehelper.business_helper import NamespaceRole
 
@@ -39,7 +39,6 @@ class TestBuildOverPreviousRun(BaseTest):
             delete_dir_if_exists(render_workspace_dir(self.tmp_path))
             with open_current_env_instance_store(profiles_dir.parent) as env_instance_store:
                 render_environment(ENV, CLUSTER, self.templates_dirs, instances_dir, self.tmp_path)
-                cleanup_resulting_dir(profiles_dir.parent)
                 env_instance_store.flush()
 
         assert (profiles_dir / "dev_billing_override.yml").is_file()

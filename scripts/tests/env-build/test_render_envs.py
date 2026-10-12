@@ -2,7 +2,7 @@ from os import environ
 
 import pytest
 
-from build_env.main import cleanup_resulting_dir, render_environment
+from build_env.main import render_environment
 from envgenehelper import delete_dir_if_exists, dump_as_yaml_format, get_all_files_in_dir, logger, open_current_env_instance_store, os, render_workspace_dir, shutil
 from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.test_helpers import TestHelpers
@@ -63,7 +63,6 @@ class TestEnvBuild(BaseTest):
         delete_dir_if_exists(render_workspace_dir(self.test_data_dir))
         with open_current_env_instance_store(generated_dir) as env_instance_store:
             render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, self.test_data_dir)
-            cleanup_resulting_dir(generated_dir)
             env_instance_store.flush()
         files_to_compare = get_all_files_in_dir(source_dir)
         logger.info(dump_as_yaml_format(files_to_compare))
