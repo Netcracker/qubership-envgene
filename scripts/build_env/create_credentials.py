@@ -41,6 +41,12 @@ def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceNa
         if check_is_cred(key, value):
             appendCredList(get_cred_list_from_param(key, value, True, tenantName, cloudName, namespaceName), credsList, comment)
 
+def field_for_credentials(content, field_name, owner):
+    if field_name not in content:
+        raise ValueError(f"Field '{field_name}' is missing in {owner}. It is needed to create Credentials.")
+    return content[field_name]
+
+
 def checkCredAndAppend(credName, credsList, secretType, comment="", is_external_cred_env=False, external_cred_ids=None):
     if (credName):
         if is_external_cred_env and external_cred_ids is not None:
@@ -61,10 +67,13 @@ def appendCredList(additionalCreds, wholeCredsList, comment=""):
 def getTenantCreds(tenantContent, tenantName, is_external_cred_env=False, external_cred_ids=None):
     creds = []
     tenantComment = f"tenant {tenantName}"
-    checkCredAndAppend(tenantContent["credential"], creds, CRED_TYPE_SECRET, tenantComment, is_external_cred_env, external_cred_ids)
+    checkCredAndAppend(field_for_credentials(tenantContent, "credential", tenantComment), creds, CRED_TYPE_SECRET,
+                       tenantComment, is_external_cred_env, external_cred_ids)
     #process deployParameters
     processParametersAndAppend("deployParameters", tenantContent, creds, tenantName, comment=tenantComment,  external_cred_ids=external_cred_ids)
-    processParametersAndAppend("environmentParameters", tenantContent["globalE2EParameters"], creds, tenantName, comment=tenantComment)
+    processParametersAndAppend("environmentParameters",
+                               field_for_credentials(tenantContent, "globalE2EParameters", tenantComment), creds,
+                               tenantName, comment=tenantComment)
     return creds
 
 def validate_external_creds(env_creds_map, external_cred_ids):    
@@ -95,7 +104,7 @@ def getCloudCreds(cloudContent, tenantName, cloudName, is_external_cred_env=Fals
     checkCredAndAppend(cloudContent["maasConfig"]["credentialsId"], creds, CRED_TYPE_USERPASS, cloudComment, is_external_cred_env, external_cred_ids)
     checkCredAndAppend(cloudContent["vaultConfig"]["credentialsId"], creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
     checkCredAndAppend(cloudContent["consulConfig"]["tokenSecret"], creds, CRED_TYPE_SECRET, cloudComment, is_external_cred_env, external_cred_ids)
-    for i in cloudContent["dbaasConfigs"]:
+    for i in field_for_credentials(cloudContent, "dbaasConfigs", cloudComment):
         checkCredAndAppend(i["credentialsId"], creds, CRED_TYPE_USERPASS, cloudComment, is_external_cred_env, external_cred_ids)
 
     #process deployParameters
@@ -116,7 +125,8 @@ def get_bg_domain_creds(content, name, is_external_cred_env=False, external_cred
 def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName, is_external_cred_env=False, external_cred_ids=None):
     creds = []
     namespaceComment = f"namespace {namespaceName}"
-    checkCredAndAppend(namespaceContent["credentialsId"], creds, CRED_TYPE_SECRET, namespaceComment, is_external_cred_env, external_cred_ids)
+    checkCredAndAppend(field_for_credentials(namespaceContent, "credentialsId", namespaceComment), creds,
+                       CRED_TYPE_SECRET, namespaceComment, is_external_cred_env, external_cred_ids)
     #process deployParameters
     processParametersAndAppend("deployParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment, external_cred_ids=external_cred_ids)
     #process e2eParameters

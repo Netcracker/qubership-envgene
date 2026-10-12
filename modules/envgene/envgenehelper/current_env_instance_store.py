@@ -11,7 +11,6 @@ from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_em
 from .business_helper import NamespaceFile
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
-GLOB_CHARS = set("*?[")
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
 # It is an input file of the user, so flush() must not write it back.
 NEVER_WRITTEN_DIRS = ("Inventory",)
@@ -23,11 +22,7 @@ def _key(path) -> Path:
 
 
 def _match(parts: tuple, pattern: tuple) -> bool:
-    if not pattern:
-        return not parts
-    if pattern[0] == "**":
-        return any(_match(parts[i:], pattern[1:]) for i in range(len(parts) + 1))
-    return bool(parts) and fnmatchcase(parts[0], pattern[0]) and _match(parts[1:], pattern[1:])
+    return len(parts) == len(pattern) and all(fnmatchcase(part, name) for part, name in zip(parts, pattern))
 
 
 class CurrentEnvInstanceStore:
@@ -76,7 +71,7 @@ class CurrentEnvInstanceStore:
 
     def list(self, pattern) -> list[Path]:
         parts = Path(pattern).parts
-        prefix_len = next((i for i, part in enumerate(parts) if GLOB_CHARS & set(part)), len(parts))
+        prefix_len = next((i for i, part in enumerate(parts) if "*" in part), len(parts))
         root_parts = _key(Path(*parts[:prefix_len])).parts
         rest = parts[prefix_len:]
         return sorted(k for k in self._objects

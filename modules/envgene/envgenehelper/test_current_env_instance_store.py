@@ -84,7 +84,6 @@ def test_list_matches_glob_rules(env_dir):
     assert [p.parent.name for p in objects.list(env_dir / "Namespaces" / "*" / "namespace.yml")] == ["a", "b"]
     assert [p.name for p in objects.list(env_dir / "Namespaces" / "*" / "Applications" / "*.yml")] == ["x.yml"]
     assert [p.name for p in objects.list(env_dir / "Applications" / "*.yml")] == ["c.yml"]
-    assert len(objects.list(env_dir / "**" / "*.yml")) == 5
     assert objects.list(env_dir / "namespaces" / "*" / "namespace.yml") == []
 
 

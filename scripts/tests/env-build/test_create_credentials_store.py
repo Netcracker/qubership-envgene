@@ -1,6 +1,8 @@
 import copy
 
-from build_env.create_credentials import create_credentials
+import pytest
+
+from build_env.create_credentials import create_credentials, getNamespaceCreds, getTenantCreds
 from envgenehelper import open_current_env_instance_store
 from envgenehelper.yaml_helper import readYaml
 
@@ -72,3 +74,17 @@ def test_create_credentials_does_not_change_store_objects(tmp_path):
             assert objects.get(path) == expected
         creds = objects.get(env_dir / "Credentials" / "credentials.yml")
     assert {"tenant-list-cred", "cloud-nested-cred", "ns-list-cred", "app-list-cred"} <= set(creds)
+
+
+@pytest.mark.parametrize("missing_field", ["credential", "globalE2EParameters"])
+def test_tenant_without_field_for_credentials_fails(missing_field):
+    tenant = readYaml(TENANT)
+    del tenant[missing_field]
+
+    with pytest.raises(ValueError):
+        getTenantCreds(tenant, "tenant")
+
+
+def test_namespace_without_credentials_id_fails():
+    with pytest.raises(ValueError):
+        getNamespaceCreds(readYaml("name: env-core\n"), "tenant", "cloud", "env-core")
