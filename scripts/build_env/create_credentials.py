@@ -213,7 +213,6 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryY
         for credFileName in inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"] :
             credFilePath = findSharedCredentials(credFileName, envDir, instancesDir)
             credYaml = openYaml(credFilePath)
-            validate_yaml_by_scheme_or_fail(input_yaml_content=credYaml, schema_file_path=credsSchema)
             count = 0
             for key in credYaml :
                 store_value_to_yaml(credsYaml, key, credYaml[key])
@@ -308,4 +307,6 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
         if external_cred_ids:
             raise ReferenceError(f"Found external credential references in parameters in local cred only environment. Credential IDs are {external_cred_ids}")
     validate_cred_types(env_creds_map, is_external_cred_env, credYamlPath)
+    validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(credYamlPath),
+                                    schema_file_path=credsSchema)
     env_instance_store.beautify(credYamlPath, credsSchema)

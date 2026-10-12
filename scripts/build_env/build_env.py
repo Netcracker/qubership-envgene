@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, yaml
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -231,6 +231,7 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
             if isEnvSpecificParamset:
                 storeToEnvSpecificParametersMap(env_specific_params_map, appName, parametersTag, j, val, paramsetName)
+        validate_yaml_by_scheme_or_fail(input_yaml_content=appDefinition, schema_file_path=application_schema)
         current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
 
@@ -348,6 +349,7 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
     if has_valid_profile_name(templateContent):
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
+    validate_yaml_by_scheme_or_fail(input_yaml_content=templateContent, schema_file_path=schema_path)
     env_instance_store.beautify(templatePath, schema_path, header_text)
     return
 
@@ -432,6 +434,8 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
 
     # process tenant
     logger.info(f"Processing tenant: {tenantTemplatePath}")
+    validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(tenantTemplatePath),
+                                    schema_file_path=tenant_schema)
     env_instance_store.beautify(tenantTemplatePath, tenant_schema, generated_header_text)
 
     # process cloud
@@ -514,7 +518,8 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
     for profile_key, profile_file_path in all_profiles.items():
         logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
-        env_instance_store.put(resulting_profile_path, env_instance_store.get(profile_file_path))
+        resulting_profile = env_instance_store.put(resulting_profile_path, env_instance_store.get(profile_file_path))
+        validate_yaml_by_scheme_or_fail(input_yaml_content=resulting_profile, schema_file_path=profiles_schema)
         env_instance_store.beautify(resulting_profile_path, profiles_schema, generated_header_text)
 
 

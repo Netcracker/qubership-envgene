@@ -191,7 +191,6 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
     logger.info(f'Beautifying yaml: {file_path} with schema: {schema_path}')
     yamlData = openYaml(file_path)
     if schema_path:
-        validate_yaml_by_scheme_or_fail(input_yaml_content=yamlData, schema_file_path=schema_path)
         yamlData = sortYaml(yamlData, schema_path, remove_additional_props)
     if wrap_all_strings:
         make_quotes_for_all_strings(yamlData)
