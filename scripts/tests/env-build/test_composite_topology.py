@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from envgenehelper import openYaml, open_current_env_instance_store
+from envgenehelper import openYaml
 from scripts.build_env.render_config_env import EnvGenerator
 
 
@@ -18,10 +18,11 @@ class TestCompositeTopology:
         generator = EnvGenerator()
         generator.ctx.current_env_dir = str(test_dir)
         generator.ctx.current_env = {}
-        with open_current_env_instance_store(test_dir) as env_instance_store:
-            for object_path in test_dir.glob("*.yml"):
-                env_instance_store.put(object_path, openYaml(object_path))
-            generator.compute_composite_topology()
+        composite_path = test_dir / "composite_structure.yml"
+        bg_domain_path = test_dir / "bg_domain.yml"
+        generator.compute_composite_topology(
+            openYaml(composite_path) if composite_path.is_file() else None,
+            openYaml(bg_domain_path) if bg_domain_path.is_file() else None)
         return generator.ctx.current_env["composite_topology"]
 
     def test_no_composite_structure(self, tmp_path):

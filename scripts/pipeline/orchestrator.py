@@ -22,6 +22,7 @@ from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 from bg_manage.bg_manage import run_change_bg_state, run_warmup
 from build_env.appregdef_render import run_appregdef_render
 from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
+from build_env.render_config_env import open_env_generator_of_run
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
 from build_env.main import cleanup_resulting_dir, run_build_environment
@@ -388,29 +389,30 @@ def run_single_env_pipeline() -> None:
     terminal_status = PipelineStatus.UNKNOWN
     try:
         metrics.send_running()
-        for step in steps:
-            if not step.should_run(ctx):
-                logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
-                results.append(StepResult(step.name, StepStatus.SKIPPED))
-                continue
+        with open_env_generator_of_run():
+            for step in steps:
+                if not step.should_run(ctx):
+                    logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
+                    results.append(StepResult(step.name, StepStatus.SKIPPED))
+                    continue
 
-            start_banner = colorize_segment(
-                banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
-            with log_section(f"step_{step.name}", header=start_banner):
-                start = time.time_ns()
-                status = StepStatus.SUCCESS
-                try:
-                    step.execute(ctx)
-                except Exception:
-                    status = StepStatus.FAILED
-                    raise
-                finally:
-                    duration_ms = (time.time_ns() - start) // 1_000_000
-                    results.append(StepResult(step.name, status, duration_ms))
-                    end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
-                    end_banner = colorize_segment(
-                        banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
-                    logger.info(end_banner)
+                start_banner = colorize_segment(
+                    banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
+                with log_section(f"step_{step.name}", header=start_banner):
+                    start = time.time_ns()
+                    status = StepStatus.SUCCESS
+                    try:
+                        step.execute(ctx)
+                    except Exception:
+                        status = StepStatus.FAILED
+                        raise
+                    finally:
+                        duration_ms = (time.time_ns() - start) // 1_000_000
+                        results.append(StepResult(step.name, status, duration_ms))
+                        end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
+                        end_banner = colorize_segment(
+                            banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
+                        logger.info(end_banner)
         terminal_status = PipelineStatus.SKIPPED if all(r.status == StepStatus.SKIPPED for r in results) \
             else PipelineStatus.SUCCESS
     except KeyboardInterrupt:

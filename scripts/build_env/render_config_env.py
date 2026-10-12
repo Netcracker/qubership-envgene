@@ -1,3 +1,4 @@
+import copy
 import shutil
 from os import getenv
 from collections.abc import Iterable, Iterator
@@ -10,8 +11,10 @@ from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getAbsPath, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, render_workspace_dir, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
+from envgenehelper.deployer import get_deployer_config
+from envgenehelper.process_pool import map_in_processes, parallel_workers
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
     get_namespace_role, NamespaceRole, parse_bg_ns_target,
@@ -23,6 +26,17 @@ PARAMSET_TAGS = ("deployParameterSets", "e2eParameterSets", "technicalConfigurat
 ENV_SPECIFIC_PARAMSET_FIELDS = ("envSpecificParamsets", "envSpecificE2EParamsets", "envSpecificTechnicalParamsets")
 
 yml = create_yaml_processor()
+
+
+class SolutionStructureNotReady(Exception):
+    pass
+
+
+class PendingSolutionStructure:
+    def _fail(self, *args, **kwargs):
+        raise SolutionStructureNotReady()
+
+    __getitem__ = __getattr__ = __iter__ = __len__ = __bool__ = __str__ = __contains__ = _fail
 
 
 class Context(BaseModel):
@@ -86,28 +100,58 @@ class Context(BaseModel):
         return self.model_dump(exclude_none=not include_none)
 
 
+def render_template_file(src_template_path, context: dict, stop_at_solution_structure: bool) -> tuple[dict, bool]:
+    template = openFileAsString(src_template_path)
+    template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
+    if stop_at_solution_structure:
+        context["current_env"]["solution_structure"] = PendingSolutionStructure()
+    rendered_parts = []
+    try:
+        for rendered_part in create_jinja_env().from_string(template).generate(context):
+            rendered_parts.append(rendered_part)
+    except SolutionStructureNotReady:
+        complete_lines, _, cut_line = "".join(rendered_parts).rpartition("\n")
+        rendered_fields = readYaml(escaping_quotation(complete_lines)) or {}
+        if rendered_fields and (not cut_line or cut_line[0].isspace()):
+            rendered_fields.popitem()
+        logger.info(f"Template {src_template_path} uses solution_structure, postponed until the deployment plan")
+        return rendered_fields, True
+    rendered = "".join(rendered_parts)
+    logger.debug(f"Rendered entity: \n{rendered}")
+    return readYaml(escaping_quotation(rendered)), False
+
+
 def render_obj_by_context(template: dict, context: Context) -> dict:
     template_str = replace_ansible_stuff(template_str=dumpYamlToStr(template))
     rendered_str = create_jinja_env().from_string(template_str).render(context.as_dict())
     return yml.load(rendered_str)
 
 
-def build_minimal_render_context(env_name: str, cluster_name: str, env_dir: str, base_dir: str) -> dict:
+def build_render_context_vars(env_name: str, cluster_name: str, env_dir: str, base_dir: str,
+                              templates_dirs: dict | None = None) -> dict:
     from build_env.build_env import process_additional_template_parameters  # TODO: circular import, fix properly
+    from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
     output_dir = f"{base_dir}/environments"
-    templates_dirs = get_template_dirs()
+    templates_dirs = templates_dirs or get_template_dirs()
     env_definition = getEnvDefinition(env_dir)
     process_additional_template_parameters(env_definition, env_dir, output_dir)
-    cloud_passport_file_path = find_cloud_passport_definition(env_dir, output_dir, env_definition)
+    update_env_definition_with_cloud_name(env_definition, env_dir, output_dir)
+    fill_missing_environment_name(env_definition, env_name)
+    cmdb_url, _, _ = get_deployer_config()
 
     return {
-        "cluster_name": cluster_name,
-        "output_dir": output_dir,
-        "current_env_dir": str(env_dir),
         "env": env_name,
+        "current_env": {"name": env_name, "environmentName": env_definition["inventory"]["environmentName"]},
+        "cluster_name": cluster_name,
         "templates_dirs": templates_dirs,
         "templates_dir": templates_dirs.get(NamespaceRole.COMMON, ""),
-        "cloud_passport_file_path": cloud_passport_file_path,
+        "current_env_dir": getAbsPath(env_dir),
+        "render_parameters_dir": getAbsPath(str(render_workspace_dir(base_dir) / "parameters")),
+        "cloud_passport_file_path": find_cloud_passport_definition(env_dir, output_dir, env_definition),
+        "cmdb_url": cmdb_url,
+        "output_dir": output_dir,
+        "template_profiles_dir": str(Path(templates_dirs[NamespaceRole.COMMON]) / "resource_profiles"),
+        "work_dir": str(base_dir),
         "env_definition": env_definition,
     }
 
@@ -117,6 +161,17 @@ class EnvGenerator:
         self.ctx = Context()
         self.used_paramset_names = set()
         self.is_external_cred_env = False
+        self.render_context_vars = None
+        self.env_templates_ready = False
+        self.shared_chain_ready = False
+        self.solution_structure_ready = False
+        self.bg_domain = None
+        self.composite_structure = None
+        self.cloud_object = None
+        self.namespace_templates = {}
+        self.postponed_templates = {}
+        self.given_namespace_templates = set()
+        self.namespaces = {}
         logger.debug("EnvGenerator initialized with context: %s",
                      self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
 
@@ -190,6 +245,9 @@ class EnvGenerator:
                 self.ctx.origin_env_template = origin_template
 
     def setup_base_context(self, extra_env: dict):
+        if self.render_context_vars is not None:
+            return
+        self.render_context_vars = extra_env
         all_vars = dict(os.environ)
         self.ctx.update(extra_env)
         self.ctx.env_vars.update(all_vars)
@@ -200,6 +258,31 @@ class EnvGenerator:
 
         current_env = self.ctx.config["environment"]
         self.ctx.current_env = current_env
+        self.ctx.cloud = self.calculate_cloud_name()
+        self.ctx.tenant = current_env.get("tenant", '')
+        self.ctx.deployer = current_env.get('deployer', '')
+        self.ctx.bgd = current_env.get('bg_domain', '')
+        self.ctx.update({
+            "ND_CMDB_CONFIG_REF": all_vars.get("CI_COMMIT_SHORT_SHA", "No SHA"),
+            "ND_CMDB_CONFIG_REF_NAME": all_vars.get("CI_COMMIT_REF_NAME", "No Ref Name"),
+            "ND_CMDB_CONFIG_TAG": all_vars.get("CI_COMMIT_TAG", "No Ref tag"),
+            "ND_CDMB_REPOSITORY_URL": all_vars.get("CI_REPOSITORY_URL", "No Ref URL"),
+        })
+        self.ctx.update({"ND_CMDB_ENV_TEMPLATE": self.ctx.env_template or self.ctx.current_env["env_template"]})
+
+    def ensure_env_templates(self):
+        if not self.env_templates_ready:
+            self.set_env_templates()
+            self.env_templates_ready = True
+
+    def ensure_shared_chain(self):
+        if self.shared_chain_ready:
+            return
+        self.ensure_env_templates()
+        self.bg_domain = self.render_bgd()
+        self.composite_structure = self.render_composite_structure()
+        self.compute_composite_topology(self.composite_structure, self.bg_domain)
+        self.shared_chain_ready = True
 
     def validate_bgd(self):
         logger.info('Validating that all namespaces mentioned in BG domain object are available in namespaces')
@@ -228,7 +311,7 @@ class EnvGenerator:
         if override_name:
             return override_name
         if ns_template_path:
-            return self.render_from_file_to_obj(ns_template_path).get("name")
+            return self.namespace_template_name(ns_template_path)
         return None
 
     def _get_template_dir_for_role(self, role: NamespaceRole) -> Path:
@@ -257,10 +340,8 @@ class EnvGenerator:
             if override_name == ns_name:
                 return ns
             ns_template_path = self._resolve_template_path(ns["template_path"], templates_dir)
-            if ns_template_path:
-                rendered = self.render_from_file_to_obj(ns_template_path)
-                if rendered.get("name") == ns_name:
-                    return ns
+            if ns_template_path and self.namespace_template_name(ns_template_path) == ns_name:
+                return ns
         return None
 
     def get_ns_base_postfix(self, ns: dict, ns_template_path: str) -> str:
@@ -272,6 +353,7 @@ class EnvGenerator:
         return base_name + self._get_bgd_suffix(ns_name, bgd)
 
     def generate_solution_structure(self):
+        self.solution_structure_ready = True
         deploy_plan_path = Path(self.ctx.current_env_dir) / "Inventory" / DEPLOY_PLAN_FILE_NAME
         application_entries = EnvgeneDeployPlan.read(deploy_plan_path).entities if deploy_plan_path.is_file() else None
         solution_structure = {}
@@ -318,6 +400,67 @@ class EnvGenerator:
         logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
+    def render_before_deploy_plan(self, src_template_path) -> tuple[dict, bool]:
+        return render_template_file(src_template_path, self.ctx.as_dict(), True)
+
+    def render_files_in_processes(self, template_paths: list) -> list[dict] | None:
+        if parallel_workers() < 2 or len(template_paths) < 2:
+            return None
+        context = self.ctx.as_dict()
+        return [rendered for rendered, _ in map_in_processes(
+            render_template_file, [(str(template_path), context, False) for template_path in template_paths])]
+
+    def prefetch_namespace_templates(self, template_paths: list[str]):
+        if parallel_workers() < 2:
+            return
+        wanted_paths = [template_path for template_path in dict.fromkeys(template_paths)
+                        if template_path not in self.namespace_templates
+                        and (self.solution_structure_ready or template_path not in self.postponed_templates)]
+        if len(wanted_paths) < 2:
+            return
+        context = self.ctx.as_dict()
+        results = map_in_processes(render_template_file, [
+            (template_path, context, not self.solution_structure_ready) for template_path in wanted_paths])
+        for template_path, (rendered, is_postponed) in zip(wanted_paths, results):
+            self.postponed_templates.pop(template_path, None)
+            if is_postponed:
+                self.postponed_templates[template_path] = rendered
+            else:
+                self.namespace_templates[template_path] = rendered
+
+    def load_namespace_template(self, template_path: str):
+        if template_path in self.namespace_templates:
+            return
+        if self.solution_structure_ready:
+            self.postponed_templates.pop(template_path, None)
+            self.namespace_templates[template_path] = self.render_from_file_to_obj(template_path)
+            return
+        if template_path in self.postponed_templates:
+            return
+        rendered, is_postponed = self.render_before_deploy_plan(template_path)
+        if is_postponed:
+            self.postponed_templates[template_path] = rendered
+        else:
+            self.namespace_templates[template_path] = rendered
+
+    def namespace_template_name(self, template_path) -> str | None:
+        template_path = str(template_path)
+        self.load_namespace_template(template_path)
+        if template_path not in self.postponed_templates:
+            return self.namespace_templates[template_path].get("name")
+        rendered_fields = self.postponed_templates[template_path]
+        if "name" not in rendered_fields:
+            logger.warning(f"Template {template_path} uses solution_structure before 'name', rendered twice")
+            rendered_fields["name"] = self.render_from_file_to_obj(template_path).get("name")
+        return rendered_fields["name"]
+
+    def namespace_object(self, template_path: str, has_template_override: bool) -> dict:
+        rendered = self.namespace_templates[template_path]
+        if has_template_override or template_path in self.given_namespace_templates:
+            return copy.deepcopy(rendered)
+        self.given_namespace_templates.add(template_path)
+        return rendered
+
     def render_from_obj_to_obj(self, template) -> dict:
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
@@ -338,26 +481,37 @@ class EnvGenerator:
         merge_yaml_into_target(rendered_object, '', self.render_from_obj_to_obj(template_override))
         validate_yaml_by_scheme_or_fail(input_yaml_content=rendered_object, schema_file_path=schema_path)
 
-    def render_cloud(self) -> dict:
+    def render_cloud(self) -> tuple[dict, bool]:
+        if self.cloud_object is not None:
+            return self.cloud_object, False
         cloud = self.calculate_cloud_name()
         cloud_template = self.ctx.current_env_template["cloud"]
-        cloud_schema = get_schema_dir() / "cloud.schema.json"
-        context = self.ctx.as_dict()
         is_template_override = isinstance(cloud_template, dict)
-        if is_template_override:
-            logger.info(f"Generate Cloud yaml for cloud {cloud} using cloud.template_path value")
-            cloud_tmpl_path = cloud_template["template_path"]
-            rendered_cloud = self.render_from_file_to_obj(Template(cloud_tmpl_path).render(context))
-
-            template_override = cloud_template.get("template_override")
-            self.apply_template_override(template_override, rendered_cloud, "cloud.yml", cloud_schema, cloud)
+        cloud_tmpl_path = cloud_template["template_path"] if is_template_override else cloud_template
+        cloud_tmpl_path = Template(cloud_tmpl_path).render(self.ctx.as_dict())
+        logger.info(f"Generate Cloud yaml for cloud {cloud}")
+        if self.solution_structure_ready:
+            rendered_cloud = self.render_from_file_to_obj(cloud_tmpl_path)
         else:
-            logger.info(f"Generate Cloud yaml for cloud {cloud}")
-            rendered_cloud = self.render_from_file_to_obj(Template(cloud_template).render(context))
-        return rendered_cloud
+            rendered_cloud, is_postponed = self.render_before_deploy_plan(cloud_tmpl_path)
+            if is_postponed:
+                if is_template_override or not {"e2eParameterSets", "e2eParameters"} <= rendered_cloud.keys():
+                    logger.warning(f"Template {cloud_tmpl_path} uses solution_structure before the e2e parameters, "
+                                   "rendered twice")
+                    rendered_cloud = self.render_from_file_to_obj(cloud_tmpl_path)
+                    if is_template_override:
+                        self.apply_template_override(cloud_template.get("template_override"), rendered_cloud,
+                                                     "cloud.yml", get_schema_dir() / "cloud.schema.json", cloud)
+                return rendered_cloud, True
+        if is_template_override:
+            self.apply_template_override(cloud_template.get("template_override"), rendered_cloud, "cloud.yml",
+                                         get_schema_dir() / "cloud.schema.json", cloud)
+        self.cloud_object = rendered_cloud
+        return rendered_cloud, False
 
     def generate_cloud_file(self):
-        current_env_instance_store().put(Path(self.ctx.current_env_dir) / "cloud.yml", self.render_cloud())
+        cloud, _ = self.render_cloud()
+        current_env_instance_store().put(Path(self.ctx.current_env_dir) / "cloud.yml", cloud)
 
     def render_bgd(self) -> dict | None:
         logger.info(f"Generate bg domain yaml for {self.ctx.bgd}")
@@ -366,11 +520,6 @@ class EnvGenerator:
             logger.info("'bg_domain' key not found in template descriptor, skipping bg domain rendering")
             return None
         return self.render_from_file_to_obj(Template(template).render(self.ctx.as_dict()))
-
-    def generate_bgd_file(self):
-        rendered_bgd = self.render_bgd()
-        if rendered_bgd is not None:
-            current_env_instance_store().put(Path(self.ctx.current_env_dir) / "bg_domain.yml", rendered_bgd)
 
     def _fetch_template_override_name(self, ns: dict) -> str:
         template_override = ns.get("template_override")
@@ -385,6 +534,8 @@ class EnvGenerator:
         context = self.ctx.as_dict()
         namespace_schema = get_schema_dir() / "namespace.schema.json"
         namespace_by_deploy_postfix = {}
+        self.prefetch_namespace_templates([
+            Template(ns["template_path"]).render(context) for ns in self.ctx.current_env_template["namespaces"]])
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
             map_key = self.get_ns_base_postfix(ns, ns_template_path)
@@ -407,12 +558,25 @@ class EnvGenerator:
                                                                           role_templates_dir)
                     logger.info(f"Using {role.name} template for namespace {ns_name}")
 
-            logger.info(f"Generate Namespace yaml for {folder_postfix}")
-            rendered_ns = self.render_from_file_to_obj(effective_template_path)
-            yield folder_postfix, rendered_ns
-            namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
-            self.apply_template_override(effective_ns.get("template_override"), rendered_ns, "namespace.yml",
-                                         namespace_schema, folder_postfix)
+            effective_template_path = str(effective_template_path)
+            override_name = self._fetch_template_override_name(effective_ns)
+            rendered_ns = self.namespaces.get(folder_postfix)
+            if rendered_ns is not None:
+                yield folder_postfix, rendered_ns
+                namespace_name = override_name or rendered_ns.get("name")
+            else:
+                self.load_namespace_template(effective_template_path)
+                if effective_template_path in self.postponed_templates:
+                    namespace_name = override_name or self.namespace_template_name(effective_template_path)
+                else:
+                    logger.info(f"Generate Namespace yaml for {folder_postfix}")
+                    template_override = effective_ns.get("template_override")
+                    rendered_ns = self.namespace_object(effective_template_path, bool(template_override))
+                    yield folder_postfix, rendered_ns
+                    namespace_name = override_name or rendered_ns.get("name")
+                    self.apply_template_override(template_override, rendered_ns, "namespace.yml",
+                                                 namespace_schema, folder_postfix)
+                    self.namespaces[folder_postfix] = rendered_ns
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
                 sides = namespace_by_deploy_postfix.setdefault(map_key, {})
@@ -451,16 +615,15 @@ class EnvGenerator:
             .replace(".yaml.j2", "")
         )
 
-    def generate_composite_structure(self):
+    def render_composite_structure(self) -> dict | None:
         composite_structure = self.ctx.current_env_template.get("composite_structure")
-        if composite_structure:
-            logger.info(f"Generate Composite Structure yaml for {composite_structure}")
-            current_env_dir = self.ctx.current_env_dir
-            cs_file = Path(current_env_dir) / "composite_structure.yml"
-            composite = self.render_from_file_to_store(Template(composite_structure).render(self.ctx.as_dict()),
-                                                       cs_file)
-            validate_yaml_by_scheme_or_fail(input_yaml_content=composite,
-                                            schema_file_path=get_schema_dir() / "composite-structure.schema.json")
+        if not composite_structure:
+            return None
+        logger.info(f"Generate Composite Structure yaml for {composite_structure}")
+        composite = self.render_from_file_to_obj(Template(composite_structure).render(self.ctx.as_dict()))
+        validate_yaml_by_scheme_or_fail(input_yaml_content=composite,
+                                        schema_file_path=get_schema_dir() / "composite-structure.schema.json")
+        return composite
 
     def generate_external_cred(self):
         # render external creds
@@ -552,8 +715,10 @@ class EnvGenerator:
 
     def render_app_defs(self) -> dict:
         app_defs = {}
-        for def_tmpl_path in self.ctx.appdef_templates:
-            app_def = self.render_from_file_to_obj(def_tmpl_path)
+        rendered_in_processes = self.render_files_in_processes(self.ctx.appdef_templates)
+        for index, def_tmpl_path in enumerate(self.ctx.appdef_templates):
+            app_def = rendered_in_processes[index] if rendered_in_processes else self.render_from_file_to_obj(
+                def_tmpl_path)
             ensure_valid_fields(app_def, ["artifactId", "groupId", "name"])
 
             app_name = app_def.get("name")
@@ -575,8 +740,10 @@ class EnvGenerator:
 
     def render_reg_defs(self) -> dict:
         reg_defs = {}
-        for def_tmpl_path in self.ctx.regdef_templates:
-            reg_def = self.render_from_file_to_obj(def_tmpl_path)
+        rendered_in_processes = self.render_files_in_processes(self.ctx.regdef_templates)
+        for index, def_tmpl_path in enumerate(self.ctx.regdef_templates):
+            reg_def = rendered_in_processes[index] if rendered_in_processes else self.render_from_file_to_obj(
+                def_tmpl_path)
             ensure_valid_fields(reg_def, ["name"])
             logger.info(f"Validating RegDef {reg_def.get('name')} rendered from {def_tmpl_path}")
             validate_yaml_by_scheme_or_fail(input_yaml_content=reg_def,
@@ -666,13 +833,8 @@ class EnvGenerator:
             f"Starting rendering namespaces for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-            current_env = self.ctx.current_env
-            self.ctx.cloud = self.calculate_cloud_name()
-            self.ctx.tenant = current_env.get("tenant", '')
-            self.ctx.deployer = current_env.get('deployer', '')
-            self.ctx.bgd = current_env.get('bg_domain', '')
-            self.set_env_templates()
-            list(self.render_namespaces(self.render_bgd()))
+            self.ensure_shared_chain()
+            list(self.render_namespaces(self.bg_domain))
             return self.ctx.namespace_by_deploy_postfix
 
     def _cloud_e2e_paramset_names(self, cloud: dict) -> list[str]:
@@ -688,13 +850,8 @@ class EnvGenerator:
             f"Starting rendering cloud e2e parameters for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-            current_env = self.ctx.current_env
-            self.ctx.cloud = self.calculate_cloud_name()
-            self.ctx.tenant = current_env.get("tenant", '')
-            self.ctx.deployer = current_env.get('deployer', '')
-            self.ctx.bgd = current_env.get('bg_domain', '')
-            self.set_env_templates()
-            cloud = self.render_cloud()
+            self.ensure_shared_chain()
+            cloud, _ = self.render_cloud()
 
             cloud_file = Path(self.ctx.current_env_dir) / "cloud.yml"
 
@@ -747,16 +904,11 @@ class EnvGenerator:
 
         raise ValueError(f"Unknown composite member type: {member_type}")
 
-    def compute_composite_topology(self):
-        cs_file = Path(self.ctx.current_env_dir) / "composite_structure.yml"
-
-        env_instance_store = current_env_instance_store()
-        if not env_instance_store.exists(cs_file):
+    def compute_composite_topology(self, composite: dict | None, bg_domain: dict | None):
+        if composite is None:
             logger.info("Composite Structure not found. composite_topology={}")
             self.ctx.current_env["composite_topology"] = {}
             return
-
-        composite = env_instance_store.get(cs_file)
 
         baseline = composite.get("baseline")
         if not baseline:
@@ -765,9 +917,7 @@ class EnvGenerator:
         members = [baseline] + composite.get("satellites", [])
         has_bgd = any(member.get("type") == "bgdomain" for member in members)
 
-        bgd = None
-        if has_bgd:
-            bgd = env_instance_store.bg_domain()
+        bgd = bg_domain if has_bgd else None
 
         topology = {
             "baseline": self._resolve_composite_member(baseline, bgd)
@@ -805,36 +955,15 @@ class EnvGenerator:
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-            all_vars = self.ctx.env_vars
-            current_env = self.ctx.current_env
-
-            self.ctx.cloud = self.calculate_cloud_name()
-            self.ctx.tenant = current_env.get("tenant", '')
-            self.ctx.deployer = current_env.get('deployer', '')
-            self.ctx.bgd = current_env.get('bg_domain', '')
-            logger.info(f"current_env = {current_env}")
-
-            self.ctx.update({
-                "ND_CMDB_CONFIG_REF": all_vars.get("CI_COMMIT_SHORT_SHA", "No SHA"),
-                "ND_CMDB_CONFIG_REF_NAME": all_vars.get("CI_COMMIT_REF_NAME", "No Ref Name"),
-                "ND_CMDB_CONFIG_TAG": all_vars.get("CI_COMMIT_TAG", "No Ref tag"),
-                "ND_CDMB_REPOSITORY_URL": all_vars.get("CI_REPOSITORY_URL", "No Ref URL"),
-            })
-            env_template = self.ctx.env_template
-            if env_template:
-                self.ctx.update({
-                    "ND_CMDB_ENV_TEMPLATE": env_template
-                })
-            else:
-                self.ctx.update({
-                    "ND_CMDB_ENV_TEMPLATE": self.ctx.current_env["env_template"]
-                })
+            logger.info(f"current_env = {self.ctx.current_env}")
 
             current_env_dir = self.ctx.current_env_dir
-            self.set_env_templates()
-            self.generate_bgd_file()
-            self.generate_composite_structure()
-            self.compute_composite_topology()
+            self.ensure_shared_chain()
+            env_instance_store = current_env_instance_store()
+            if self.bg_domain is not None:
+                env_instance_store.put(Path(current_env_dir) / "bg_domain.yml", self.bg_domain)
+            if self.composite_structure is not None:
+                env_instance_store.put(Path(current_env_dir) / "composite_structure.yml", self.composite_structure)
             self.generate_solution_structure()
             self.generate_namespace_files_and_map()
             self.generate_tenant_file()
@@ -853,3 +982,20 @@ class EnvGenerator:
             logger.info(f"Rendering of templates for environment {env_name} generation was successful")
 
             self.validate_bgd()
+
+
+_env_generator_of_run = None
+
+
+@contextmanager
+def open_env_generator_of_run():
+    global _env_generator_of_run
+    _env_generator_of_run = EnvGenerator()
+    try:
+        yield _env_generator_of_run
+    finally:
+        _env_generator_of_run = None
+
+
+def env_generator() -> EnvGenerator:
+    return _env_generator_of_run or EnvGenerator()

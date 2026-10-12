@@ -11,6 +11,7 @@ from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_em
 from .business_helper import NamespaceFile
 from .config_helper import get_save_artifacts_strategy
 from .models import SaveArtifactsStrategy
+from .process_pool import map_in_processes
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 GLOB_CHARS = set("*?[")
@@ -29,6 +30,22 @@ def _match(parts: tuple, pattern: tuple) -> bool:
     if pattern[0] == "**":
         return any(_match(parts[i:], pattern[1:]) for i in range(len(parts) + 1))
     return bool(parts) and fnmatchcase(parts[0], pattern[0]) and _match(parts[1:], pattern[1:])
+
+
+def object_text(object_path: str, data, is_beautified: bool, schema_path, header_text: str) -> str:
+    if is_beautified:
+        if schema_path:
+            data = sortYaml(data, schema_path, False)
+        make_quotes_for_strings(data)
+    normalize_comments(data)
+    if is_cred_file(object_path):
+        remove_cred_yaml_comments(data)
+    else:
+        remove_empty_list_comments(data)
+    text = dumpYamlToStr(data)
+    if header_text and not text.startswith("#"):
+        text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
+    return text
 
 
 class CurrentEnvInstanceStore:
@@ -102,22 +119,12 @@ class CurrentEnvInstanceStore:
         if raw:
             self._flush_raw(raw_dir)
             return
-        for key, _ in self._write_targets():
-            data = self._objects[key]
-            schema_path, header_text = self._beautify.get(key, (None, ""))
-            if key in self._beautify:
-                if schema_path:
-                    data = sortYaml(data, schema_path, False)
-                make_quotes_for_strings(data)
-            normalize_comments(data)
-            if is_cred_file(str(key)):
-                remove_cred_yaml_comments(data)
-            else:
-                remove_empty_list_comments(data)
-            text = dumpYamlToStr(data)
-            if header_text and not text.startswith("#"):
-                text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
-            logger.info(f"Writing {key} (schema: {schema_path})")
+        object_paths = [key for key, _ in self._write_targets()]
+        texts = map_in_processes(object_text, [
+            (str(key), self._objects[key], key in self._beautify, *self._beautify.get(key, (None, "")))
+            for key in object_paths])
+        for key, text in zip(object_paths, texts):
+            logger.info(f"Writing {key} (schema: {self._beautify.get(key, (None, ''))[0]})")
             writeToFile(key, text)
 
     def _flush_raw(self, raw_dir):

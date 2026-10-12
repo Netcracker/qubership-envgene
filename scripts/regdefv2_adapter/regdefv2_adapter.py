@@ -11,7 +11,7 @@ from envgenehelper.config_helper import get_regdef_v2_schema
 from envgenehelper.creds_helper import CRED_FIELD_DATA
 from envgenehelper.logger import logger
 
-from build_env.render_config_env import EnvGenerator, build_minimal_render_context
+from build_env.render_config_env import build_render_context_vars, env_generator
 
 MAVEN_PROVIDER = "MAVEN_PROVIDER"
 PUBLIC_CLOUD_PROVIDERS = ("aws", "gcp")
@@ -143,8 +143,10 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
 
 def run_regdefv2_adapter(ctx) -> None:
     env_dir = str(get_current_env_dir_from_env_vars())
-    render_context_vars = build_minimal_render_context(ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
-    e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
+    generator = env_generator()
+    render_context_vars = generator.render_context_vars or build_render_context_vars(
+        ctx.env_name, ctx.cluster_name, env_dir, str(ctx.work_dir))
+    e2e_parameters = generator.render_cloud_e2e_parameters(
         ctx.env_name, render_context_vars, env_dir, helper.render_workspace_dir(ctx.work_dir) / "parameters"
     )
     params = _resolve_pubreg_params(e2e_parameters, env_dir)

@@ -1,5 +1,5 @@
 from build_env.env_template.process_env_template import process_env_template
-from build_env.render_config_env import EnvGenerator, build_minimal_render_context
+from build_env.render_config_env import build_render_context_vars, env_generator
 from envgenehelper import BUILD_ENV_TAG, NamespaceRole, Path, findAllYamlsInDir, get_current_env_dir_from_env_vars, get_envgene_config_yaml, get_schema_dir, getenv_with_error, logger, openYaml, shutil, update_generated_versions, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
 
@@ -66,8 +66,10 @@ def run_appregdef_render() -> list[str]:
     base_dir = getenv_with_error("CI_PROJECT_DIR")
     env_dir = str(get_current_env_dir_from_env_vars())
 
-    render_context_vars = build_minimal_render_context(env_name, cluster_name, env_dir, base_dir)
-    rendered_defs = EnvGenerator().render_app_reg_defs(env_name, render_context_vars)
+    generator = env_generator()
+    render_context_vars = generator.render_context_vars or build_render_context_vars(
+        env_name, cluster_name, env_dir, base_dir)
+    rendered_defs = generator.render_app_reg_defs(env_name, render_context_vars)
 
     placement_mode = get_envgene_config_yaml().get("app_reg_defs_placement", "dual").lower()
     write_app_reg_defs(base_dir, rendered_defs, env_dir, placement_mode)

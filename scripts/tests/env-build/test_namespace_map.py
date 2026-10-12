@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from build_env.namespace_render import compute_namespace_map
-from build_env.render_config_env import EnvGenerator, build_minimal_render_context
+from build_env.render_config_env import EnvGenerator, build_render_context_vars
 from scripts.tests.base_test import BaseTest
 
 
@@ -41,7 +41,7 @@ class TestNamespaceMap(BaseTest):
     def _render_map(self, cluster_name: str, env_name: str, bg_ns_target: str | None = None) -> dict:
         self._set_env(cluster_name, env_name, bg_ns_target)
         env_dir = f"{self.test_data_dir}/environments/{cluster_name}/{env_name}"
-        context_vars = build_minimal_render_context(env_name, cluster_name, env_dir, str(self.test_data_dir))
+        context_vars = build_render_context_vars(env_name, cluster_name, env_dir, str(self.test_data_dir))
         return EnvGenerator().render_namespaces_for_map(env_name, context_vars)
 
     @pytest.mark.unit

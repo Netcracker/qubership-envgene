@@ -1,11 +1,9 @@
-from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
+from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
 from envgenehelper.deployer import *
 
-from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
-    process_additional_template_parameters
-from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
+from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets
 from build_env.create_credentials import create_credentials
-from build_env.render_config_env import EnvGenerator
+from build_env.render_config_env import build_render_context_vars, env_generator
 from build_env.env_specific_overrides import validate_env_specific_override_keys
 from build_env.resource_profiles import get_env_specific_resource_profiles
 
@@ -38,16 +36,10 @@ def cleanup_resulting_dir(resulting_dir: Path):
             deleteFile(path)
 
 
-def load_env_inputs(env_name, source_env_dir, all_instances_dir) -> dict:
-    env_instance_store = current_env_instance_store()
-    env_definition = getEnvDefinition(source_env_dir)
-    process_additional_template_parameters(env_definition, source_env_dir, all_instances_dir)
-    update_env_definition_with_cloud_name(env_definition, source_env_dir, all_instances_dir)
-    fill_missing_environment_name(env_definition, env_name)
+def load_env_credentials(source_env_dir):
     source_creds_path = Path(source_env_dir) / CREDENTIALS_FILE
     if source_creds_path.is_file():
-        env_instance_store.put(source_creds_path, openYaml(source_creds_path))
-    return env_definition
+        current_env_instance_store().put(source_creds_path, openYaml(source_creds_path))
 
 
 def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, work_dir):
@@ -58,34 +50,11 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
 
     # preparing folders for generation
     copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
-    env_definition = load_env_inputs(env_name, source_env_dir, all_instances_dir)
-    # get deployer parameters
-    cmdb_url, _, _ = get_deployer_config()
-    # perform rendering with Jinja2
-    current_env = {
-        "name": env_name,  # Always use folder name for consistency
-        "environmentName": env_definition["inventory"]["environmentName"]
-    }
-
-    logger.debug(
-        f"Created environment context: name='{current_env['name']}', environmentName='{current_env['environmentName']}'")
-
-    envvars = {}
-    envvars["env"] = env_name  # Keep as string for file paths
-    envvars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
-    envvars["cluster_name"] = cluster_name
-    envvars["templates_dirs"] = templates_dirs
-    envvars["templates_dir"] = templates_dirs.get(NamespaceRole.COMMON, '')
-    envvars["current_env_dir"] = getAbsPath(source_env_dir)
-    envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
-    envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir,
-                                                                         env_definition)
-    envvars["cmdb_url"] = cmdb_url
-    envvars["output_dir"] = all_instances_dir
-    envvars["template_profiles_dir"] = template_profiles_dir
-    envvars["work_dir"] = str(work_dir)
-    envvars["env_definition"] = env_definition
-    render_context = EnvGenerator()
+    load_env_credentials(source_env_dir)
+    render_context = env_generator()
+    envvars = render_context.render_context_vars or build_render_context_vars(
+        env_name, cluster_name, source_env_dir, base_dir, templates_dirs)
+    env_definition = envvars["env_definition"]
     render_context.render_config_env(env_name, envvars)
     validate_env_specific_override_keys(source_env_dir, env_definition)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(
