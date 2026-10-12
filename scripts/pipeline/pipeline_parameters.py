@@ -72,7 +72,7 @@ class PipelineParametersHandler(BaseModel):
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
             'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
             'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
-            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
+            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID") or str(uuid.uuid4()),
             'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
             'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
             "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
