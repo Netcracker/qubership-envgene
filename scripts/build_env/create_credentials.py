@@ -1,4 +1,3 @@
-import copy
 from pathlib import Path
 from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 from typing import Optional, Set
@@ -37,7 +36,7 @@ def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceNa
         processDictAndAppend(value, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, param_type_key)
     elif isinstance(value, list): # if is array, than iterate
         for idx, item in enumerate(value):
-            value[idx] = processSingleParam(idx, item, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, param_type_key)
+            processSingleParam(idx, item, credsList, tenantName, cloudName, namespaceName, comment, external_cred_ids, param_type_key)
     elif isinstance(value, str):
         if check_is_cred(key, value):
             appendCredList(get_cred_list_from_param(key, value, True, tenantName, cloudName, namespaceName), credsList, comment)
@@ -234,7 +233,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     tenantFileName = envDir / "tenant.yml"
     external_cred_ids = set()
     logger.info(f"Processing tenant")
-    tenantYaml = copy.deepcopy(env_instance_store.get(tenantFileName))
+    tenantYaml = env_instance_store.get(tenantFileName)
     tenantName = tenantYaml["name"]
     mergeResult = mergeCreds(getTenantCreds(tenantYaml, tenantName, is_external_cred_env, external_cred_ids), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from tenant {tenantFileName}')
@@ -242,7 +241,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     #cloud
     cloudFileName = envDir / "cloud.yml"
     logger.info(f"Processing cloud")
-    cloudYaml = copy.deepcopy(env_instance_store.get(cloudFileName))
+    cloudYaml = env_instance_store.get(cloudFileName)
     cloudName = cloudYaml["name"]
     mergeResult = mergeCreds(getCloudCreds(cloudYaml, tenantName, cloudName, is_external_cred_env, external_cred_ids), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from cloud {cloudFileName}')
@@ -251,7 +250,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     bgdFileName = envDir / "bg_domain.yml"
     logger.info(f"Processing bg domain")
     if env_instance_store.exists(bgdFileName):
-        bgd_yaml = copy.deepcopy(env_instance_store.get(bgdFileName))
+        bgd_yaml = env_instance_store.get(bgdFileName)
         bgd_name = bgd_yaml["name"]
         mergeResult = mergeCreds(get_bg_domain_creds(bgd_yaml, bgd_name, is_external_cred_env, external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added from bg domain {bgdFileName}')
@@ -261,7 +260,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     # iterate through cloud applications and create cred definitions
     applications = env_instance_store.list(envDir / "Applications" / "*.yml")
     for appPath in applications :
-        appContent = copy.deepcopy(env_instance_store.get(appPath))
+        appContent = env_instance_store.get(appPath)
         mergeResult = mergeCreds(getApplicationCreds(appContent, tenantName, cloudName,
                                                      external_cred_ids=external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for cloud application {appPath}')
@@ -270,7 +269,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     namespaceNameMap = {}
     namespaces = sorted(env_instance_store.list(envDir / "Namespaces" / "*" / "namespace.yml"), key=str)
     for namespacePath in namespaces :
-        namespaceYaml = copy.deepcopy(env_instance_store.get(namespacePath))
+        namespaceYaml = env_instance_store.get(namespacePath)
         namespaceKey = extract_namespace_from_namespace_path(namespacePath)
         namespaceName = namespaceYaml["name"]
         namespaceNameMap[namespaceKey] = namespaceName
@@ -282,7 +281,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     for appPath in applications :
         namespaceKey = extract_namespace_from_application_path(appPath)
         namespaceName = namespaceNameMap[namespaceKey]
-        appContent = copy.deepcopy(env_instance_store.get(appPath))
+        appContent = env_instance_store.get(appPath)
         mergeResult = mergeCreds(getApplicationCreds(appContent, tenantName, cloudName, namespaceName,
                                                      external_cred_ids), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for namespace application {appPath}')
