@@ -245,7 +245,7 @@ class _Checker:
                 self.emit(document, ('envTemplate', 'envSpecificResourceProfiles', target), env.full_name,
                           'Resource Profile', self.named(env, reference, 'Resource Profile'))
 
-    def generated_profile(self, env, reference: Any, baseline: bool) -> str | None:
+    def generated_profile(self, env, reference: Any) -> str | None:
         if not _literal(reference):
             return 'unknown'
         directory = env.path / 'Profiles'
@@ -269,7 +269,7 @@ class _Checker:
             return 'ambiguous'
         if paths:
             return None if self.read(next(iter(paths.values()))) else 'unknown'
-        return 'unknown' if baseline else self.named(env, reference, 'Resource Profile', True)
+        return self.named(env, reference, 'Resource Profile', True)
 
     def object_paths(self):
         paths = set(parameter_object_paths(self.index, self.connections))
@@ -304,12 +304,9 @@ class _Checker:
                     for i, reference in enumerate(references):
                         self.emit(document, (field, i), environment, 'ParameterSet', self.named(env, reference, 'ParameterSet', True))
             profile = document.doc.get('profile')
-            if isinstance(profile, dict):
-                for field in ('name', 'baseline', 'override_name'):
-                    if profile.get(field):
-                        # Baselines belong to the unavailable template, not instance override files.
-                        state = self.generated_profile(env, profile[field], field == 'baseline')
-                        self.emit(document, ('profile', field), environment, 'Resource Profile', state)
+            if isinstance(profile, dict) and profile.get('name'):
+                state = self.generated_profile(env, profile['name'])
+                self.emit(document, ('profile', 'name'), environment, 'Resource Profile', state)
 
     def run(self):
         for env in self.index.environments:

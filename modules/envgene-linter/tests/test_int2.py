@@ -227,6 +227,22 @@ def test_rendered_profiles_use_generated_profile_files(repo):
     assert findings(repo) == []
 
 
+@pytest.mark.parametrize('field', ['baseline', 'override_name'])
+@pytest.mark.parametrize('reference', ['missing', '${UNAVAILABLE}'])
+def test_rendered_profile_checks_name_without_other_profile_fields(repo, field, reference):
+    repo.env('c', 'e')
+    write(repo.root / 'environments/c/e/cloud.yml', {'profile': {'name': 'selected', field: reference}})
+    write(repo.root / 'environments/c/e/Profiles/selected.yml', {'name': 'selected'})
+    assert findings(repo) == []
+
+
+def test_profile_name_remains_checked_when_baseline_is_ignored(repo):
+    repo.env('c', 'e')
+    write(repo.root / 'environments/c/e/cloud.yml', {'profile': {'name': '${UNAVAILABLE}', 'baseline': 'unused'}})
+    result = findings(repo)
+    assert len(result) == 1 and result[0].action.value == 'Review'
+
+
 def test_unreadable_higher_priority_profile_does_not_fall_back(repo):
     test_resource_profile_missing_and_existing(repo)
     path = write(repo.root / 'environments/c/e/Inventory/resource_profiles/selected.yml', {})
