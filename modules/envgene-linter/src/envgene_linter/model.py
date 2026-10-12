@@ -158,6 +158,7 @@ class RepoIndex:
     skipped: list[str] = field(default_factory=list)
     resource_profiles: list[NamedEntityFile] = field(default_factory=list)
     credential_files: list[NamedEntityFile] = field(default_factory=list)
+    skipped_checks: list[SkippedCheck] = field(default_factory=list)
 
     @property
     def environments(self) -> list[EnvModel]:
@@ -191,3 +192,20 @@ class Finding:
         if self.locations:
             return self.locations
         return (Location(self.path, self.line, self.column),)
+
+
+@dataclass(frozen=True)
+class SkippedCheck:
+    rule: str
+    path: Path
+    line: int
+    column: int
+    reason: str
+
+    def as_finding(self) -> Finding:
+        return Finding(
+            rule=self.rule, severity=Severity.INFORMATION, issue_type=IssueType.INFORMATION,
+            action=Action.REVIEW, path=self.path, line=self.line, column=self.column,
+            key='skipped', scope='templates', message=f'Check skipped: {self.reason}.',
+            hint='Resolve the reported source problem and rerun the linter; this check did not complete.',
+        )

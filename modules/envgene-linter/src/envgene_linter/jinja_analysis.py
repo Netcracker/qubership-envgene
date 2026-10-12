@@ -7,7 +7,7 @@ from pathlib import Path
 
 from jinja2 import ChainableUndefined, Environment, TemplateSyntaxError, nodes
 
-from .model import RepoIndex
+from .model import RepoIndex, SkippedCheck
 from .template_sources import configuration_paths, descriptor_scalars
 
 ENVIRONMENT = Environment(undefined=ChainableUndefined)
@@ -26,17 +26,24 @@ class TemplateSource:
         return self.offset + (1 if self.descriptor else line)
 
 
+def skip_check(index: RepoIndex, rule: str, path: Path, reason: str, line: int = 1) -> None:
+    note = f'{rule}: {reason}: {path.relative_to(index.root)}:{line}:1'
+    if note not in index.skipped:
+        index.skipped.append(note)
+    check = SkippedCheck(rule, path, line, 1, reason)
+    if check not in index.skipped_checks:
+        index.skipped_checks.append(check)
+
+
 def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
     if not rules:
         return []
     sources = []
     seen: set[tuple[Path, int, int]] = set()
 
-    def skipped(path: Path, reason: str) -> None:
+    def skipped(path: Path, reason: str, line: int = 1) -> None:
         for rule in rules:
-            note = f'{rule}: {reason}: {path.relative_to(index.root)}'
-            if note not in index.skipped:
-                index.skipped.append(note)
+            skip_check(index, rule, path, reason, line)
 
     for path in configuration_paths(index, '/'.join(rules)):
         relative = path.relative_to(index.root)
@@ -71,8 +78,12 @@ def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
                         raw_line = None
                     elif raw_line is not None:
                         raw_parts.append(value)
-            except (TemplateSyntaxError, RecursionError):
-                skipped(path, 'cannot parse Jinja source')
+            except TemplateSyntaxError as exc:
+                line = offset + (1 if path.suffix != '.j2' else max(1, exc.lineno or 1))
+                skipped(path, 'cannot parse Jinja source', line)
+                continue
+            except RecursionError:
+                skipped(path, 'Jinja source exceeds the parser recursion limit', offset + 1)
                 continue
             sources.append(TemplateSource(path, offset, tree, raw_blocks, path.suffix != '.j2'))
     return sources

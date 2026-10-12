@@ -53,7 +53,9 @@ Use JSON for automated processing or AI tools. It contains an array of findings 
 The linter does not fix configuration files automatically.
 
 Every successful check replaces both reports. Their filenames are added to the repository's `.gitignore`.
-Errors and messages about skipped files appear in the terminal. Review those messages if a file could not be checked.
+Skipped checks appear in HTML under `Incomplete checks` and in the terminal.
+Skipped Jinja checks also appear in JSON as `Review` entries with an issue beginning `Check skipped:`.
+Review these entries before treating a report as complete.
 
 ## Optional commands
 

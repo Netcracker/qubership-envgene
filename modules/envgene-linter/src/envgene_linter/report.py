@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .model import Finding
+from .model import Finding, SkippedCheck
 from .rulemeta import RULES
 
 JSON_REPORT_FILENAME = "envgene-linter-report.json"
@@ -34,10 +34,12 @@ def rule_sort_key(rule: str) -> tuple[int, int | str]:
 def render_json(
     findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = (),
     not_applicable_rules: tuple[str, ...] = (),
+    skipped_checks: list[SkippedCheck] | None = None,
 ) -> str:
     excluded = set(disabled_rules) | set(not_applicable_rules)
     items = []
-    for finding in sorted(findings, key=lambda item: rule_sort_key(item.rule)):
+    entries = [*findings, *(check.as_finding() for check in skipped_checks or ())]
+    for finding in sorted(entries, key=lambda item: rule_sort_key(item.rule)):
         if finding.rule in excluded:
             continue
         meta = RULES.get(finding.rule)

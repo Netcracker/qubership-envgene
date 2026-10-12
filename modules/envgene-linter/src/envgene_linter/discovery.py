@@ -189,9 +189,10 @@ def _load_named_entities(root: Path, skipped: list[str]) -> list[NamedEntityFile
                 continue
             try:
                 loaded = load(path)
-            except YamlReadError as exc:
-                skipped.append(str(exc))
-                files.append(NamedEntityFile(path=path, stem=stem, kind=kind, error=str(exc)))
+            except YamlReadError:
+                note = f"{path}: cannot parse YAML; {kind} skipped"
+                skipped.append(note)
+                files.append(NamedEntityFile(path=path, stem=stem, kind=kind, error=note))
                 continue
             files.append(NamedEntityFile(path=path, stem=stem, kind=kind, loaded=loaded))
     return files
@@ -264,9 +265,10 @@ def _load_passport(
         return PassportFile(path=path, stem=stem, cluster=cluster, env=env, is_jinja=True)
     try:
         loaded = load(path)
-    except YamlReadError as exc:
-        skipped.append(str(exc))
-        return PassportFile(path=path, stem=stem, cluster=cluster, env=env, error=str(exc))
+    except YamlReadError:
+        note = f"{path}: cannot parse YAML; Cloud Passport skipped"
+        skipped.append(note)
+        return PassportFile(path=path, stem=stem, cluster=cluster, env=env, error=note)
     return PassportFile(path=path, stem=stem, cluster=cluster, env=env, loaded=loaded)
 
 
@@ -381,8 +383,8 @@ def build_index(root: Path) -> RepoIndex:
                 shared_credential_bindings = _shared_credential_bindings(doc)
                 shared_template_variable_bindings = _shared_template_variable_bindings(doc)
                 artifact_selectors = _artifact_selectors(doc)
-            except YamlReadError as exc:
-                skipped.append(str(exc))
+            except YamlReadError:
+                skipped.append(f"{definition}: cannot parse YAML; environment definition skipped")
                 bindings = {}
                 cloud_passport = None
                 resource_profile_bindings = {}

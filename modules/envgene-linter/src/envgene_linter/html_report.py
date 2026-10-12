@@ -76,6 +76,8 @@ summary.rule-id {
 }
 .chip-fix { background: #e8f0fe; border-color: #9db7e8; }
 .chip-review { background: #eee; border-color: #bbb; }
+.skipped-checks { border: 2px solid #b97800; background: #fff8e8; padding: 0.8rem; margin-bottom: 1rem; }
+.skipped-checks h2 { margin-top: 0; font-size: 1.15rem; }
 """
 
 
@@ -128,7 +130,7 @@ def _card(item: Finding, root: Path) -> list[str]:
 
 def render_html(
     findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = (),
-    not_applicable_rules: tuple[str, ...] = ()
+    not_applicable_rules: tuple[str, ...] = (), skipped: list[str] | None = None,
 ) -> str:
     repository_root = root.resolve()
     repository_name = html.escape(repository_root.name or repository_root.anchor)
@@ -148,6 +150,18 @@ def render_html(
         "<h1>Envgene Linter Report</h1>",
         f'<p class="repository">Repository: <strong>{repository_name}</strong></p>',
     ]
+    skipped = [note for note in skipped or ()
+               if not any(note.startswith(f'{rule}:') or note.endswith(f'; {rule} skipped')
+                          for rule in disabled_rules)]
+    if skipped:
+        parts.extend([
+            '<section class="skipped-checks">',
+            '<h2>Incomplete checks</h2>',
+            '<p>Some sources could not be checked. Review these skips before treating this report as complete.</p>',
+            '<ul>',
+            *(f'<li>{html.escape(note)}</li>' for note in skipped),
+            '</ul></section>',
+        ])
     visible_not_applicable = set(not_applicable_rules) - set(disabled_rules)
     if visible_not_applicable:
         labels = ", ".join(html.escape(rule) for rule in sorted(visible_not_applicable, key=rule_sort_key))
@@ -156,7 +170,7 @@ def render_html(
         if set(RULE_ORDER).issubset(set(disabled_rules) | set(not_applicable_rules)):
             parts.append("<p>No applicable rules enabled</p>" if visible_not_applicable else "<p>No rules enabled</p>")
         else:
-            parts.append("<p>No findings</p>")
+            parts.append("<p>No findings in the checked sources.</p>" if skipped else "<p>No findings</p>")
     else:
         for rule in sorted(by_rule, key=rule_sort_key):
             meta = RULES.get(rule)

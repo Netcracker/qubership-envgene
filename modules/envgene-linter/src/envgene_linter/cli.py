@@ -37,14 +37,14 @@ def check_cmd(repo: Path, console: bool) -> None:
     for note in result.skipped:
         click.echo(note, err=True)
     reports = (
-        ("HTML", report_path(repo), render_html),
-        ("JSON", repo / JSON_REPORT_FILENAME, render_json),
+        ("HTML", report_path(repo), render_html, {"skipped": result.skipped}),
+        ("JSON", repo / JSON_REPORT_FILENAME, render_json, {"skipped_checks": result.skipped_checks}),
     )
-    for label, path, renderer in reports:
+    for label, path, renderer, extra in reports:
         try:
             path.write_text(
                 renderer(result.findings, repo, disabled_rules=result.disabled_rules,
-                         not_applicable_rules=result.not_applicable_rules),
+                         not_applicable_rules=result.not_applicable_rules, **extra),
                 encoding="utf-8",
             )
         except OSError as exc:
@@ -54,5 +54,5 @@ def check_cmd(repo: Path, console: bool) -> None:
         ensure_report_ignored(repo, JSON_REPORT_FILENAME)
     except (OSError, UnicodeDecodeError) as exc:
         click.echo(f"cannot update .gitignore {repo / '.gitignore'}: {exc}", err=True)
-    for label, path, _ in reports:
+    for label, path, _, _ in reports:
         click.echo(f"{label} report saved here: {path}", err=True)

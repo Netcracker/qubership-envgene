@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import rule_config
@@ -8,7 +8,7 @@ from .connections import compute_connections
 from .discovery import build_index
 from .jinja_analysis import analyze
 from .effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
-from .model import Finding
+from .model import Finding, SkippedCheck
 from .passport import build_catalogs
 from .rules.place1 import check as check_place1
 from .rules.place2 import check as check_place2
@@ -43,6 +43,7 @@ class CheckResult:
     skipped: list[str]
     disabled_rules: tuple[str, ...] = ()
     not_applicable_rules: tuple[str, ...] = ()
+    skipped_checks: list[SkippedCheck] = field(default_factory=list)
 
 
 def run_check(root: Path) -> CheckResult:
@@ -61,7 +62,7 @@ def run_check(root: Path) -> CheckResult:
         inactive = tuple(rule for rule in rule_config.RULES
                          if rule not in ('TPL-1', 'TPL-4', 'TPL-6') and rule not in disabled)
         return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
-                           not_applicable_rules=inactive)
+                           not_applicable_rules=inactive, skipped_checks=index.skipped_checks)
     connections = compute_connections(index)
     catalogs = build_catalogs(index, connections)
     full = {env.full_name: compute(index, env, ALL_LAYERS) for env in index.environments}
@@ -96,4 +97,5 @@ def run_check(root: Path) -> CheckResult:
     for rule, check, args in checks:
         if rule not in disabled:
             findings.extend(check(*args))
-    return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled)
+    return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
+                       skipped_checks=index.skipped_checks)

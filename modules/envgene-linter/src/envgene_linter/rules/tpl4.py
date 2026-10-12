@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from jinja2 import nodes
 
-from ..jinja_analysis import ENVIRONMENT, TemplateSource
+from ..jinja_analysis import ENVIRONMENT, TemplateSource, skip_check
 from ..model import Action, Finding, IssueType, RepoIndex, Severity
 
 _REFERENCES = (nodes.Name, nodes.Getattr, nodes.Getitem)
@@ -175,7 +175,7 @@ def check(index: RepoIndex, sources: list[TemplateSource]) -> list[Finding]:
         try:
             visitor.visit(source.tree, set(), set())
         except RecursionError:
-            index.skipped.append(f'TPL-4: cannot analyze deeply nested Jinja: {source.path.relative_to(index.root)}')
+            skip_check(index, 'TPL-4', source.path, 'cannot analyze deeply nested Jinja', source.source_line(1))
             continue
         for line in visitor.lines:
             line = source.source_line(line)
