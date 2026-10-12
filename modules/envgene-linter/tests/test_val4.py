@@ -50,6 +50,16 @@ def test_encoded_collection_is_reviewed_at_source(repo, value, kind):
     assert 'consumer' in item.hint
 
 
+def test_serialized_consumer_input_stays_review_and_is_not_converted(repo):
+    path = paramset(repo, '["demo-east", "demo-west"]')
+    original = path.read_bytes()
+    result = findings(repo)
+    assert len(result) == 1
+    assert result[0].action is Action.REVIEW
+    assert 'consumer' in result[0].hint
+    assert path.read_bytes() == original
+
+
 @pytest.mark.parametrize('value', [
     None, 3, True, '', 'plain text', 'Note: restart required', 'https://example.com/',
     '3', 'true', 'null', '"text"', '{bad json}', '{"key": 3} suffix', '[NaN]',
