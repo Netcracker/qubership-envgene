@@ -328,7 +328,9 @@ class EnvGenerator:
         logger.info(f"Generate Tenant yaml for {self.ctx.tenant}")
         tenant_file = f'{self.ctx.current_env_dir}/tenant.yml'
         tenant_tmpl_path = self.ctx.current_env_template["tenant"]
-        self.render_from_file_to_store(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
+        tenant = self.render_from_file_to_store(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
+        validate_yaml_by_scheme_or_fail(input_yaml_content=tenant,
+                                        schema_file_path=get_schema_dir() / "tenant.schema.json")
 
     def apply_template_override(self, template_override, rendered_object: dict, object_file_name: str, name):
         if not template_override:
@@ -339,6 +341,7 @@ class EnvGenerator:
     def render_cloud(self) -> dict:
         cloud = self.calculate_cloud_name()
         cloud_template = self.ctx.current_env_template["cloud"]
+        cloud_schema = get_schema_dir() / "cloud.schema.json"
         context = self.ctx.as_dict()
         is_template_override = isinstance(cloud_template, dict)
         if is_template_override:
@@ -351,6 +354,7 @@ class EnvGenerator:
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             rendered_cloud = self.render_from_file_to_obj(Template(cloud_template).render(context))
+        validate_yaml_by_scheme_or_fail(input_yaml_content=rendered_cloud, schema_file_path=cloud_schema)
         return rendered_cloud
 
     def generate_cloud_file(self):
@@ -380,6 +384,7 @@ class EnvGenerator:
 
     def render_namespaces(self, bgd: dict | None) -> Iterator[tuple[str, dict]]:
         context = self.ctx.as_dict()
+        namespace_schema = get_schema_dir() / "namespace.schema.json"
         namespace_by_deploy_postfix = {}
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
@@ -409,6 +414,7 @@ class EnvGenerator:
             namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
             self.apply_template_override(effective_ns.get("template_override"), rendered_ns, "namespace.yml",
                                          folder_postfix)
+            validate_yaml_by_scheme_or_fail(input_yaml_content=rendered_ns, schema_file_path=namespace_schema)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
                 sides = namespace_by_deploy_postfix.setdefault(map_key, {})
