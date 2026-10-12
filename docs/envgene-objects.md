@@ -1675,13 +1675,15 @@ EnvGene checks these locations in order (environment → cluster → site) and u
 *For the file search-path priority, see
 [File resolution → Shared credentials](/docs/envgene-configs.md#shared-credentials).*
 
-Any YAML file located in these folders is treated as a Shared Credentials File.
+Any YAML or Jinja (`.yml.j2`/`.yaml.j2`) file located in these folders is treated as a Shared Credentials File.
 
-**Jinja rendering.** A Shared Credentials File with the `.yml.j2` or `.yaml.j2` suffix is rendered as a Jinja
-template during Environment Instance generation. Rendered output replaces the file content in memory before
-merging. Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`) are available. Files
-without the `.j2` suffix are read verbatim as plain YAML. The `.j2` form lets external Credential entries
-parameterize `remoteRefPath` per environment or cluster from a single shared file.
+**Jinja rendering.** A Shared Credentials File is rendered as a Jinja template during Environment Instance
+generation regardless of extension; rendered output replaces the file content in memory before merging.
+Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`) are available. This lets external
+Credential entries parameterize `remoteRefPath` per environment or cluster from a single shared file. The
+`.yml.j2`/`.yaml.j2` suffix is optional and changes nothing in EnvGene — use it only to keep the file out of
+`yamllint` in an instance repository that runs it. A literal Credential value must not contain raw `{{`/`{%`;
+wrap it with `{% raw %}` if needed.
 
 **Example:**
 

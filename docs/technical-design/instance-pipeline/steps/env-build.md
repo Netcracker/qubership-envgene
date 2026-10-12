@@ -187,36 +187,35 @@ Domain, Profiles, and credential files.
       [Built-in credential references](/docs/features/external-creds.md#built-in-credential-references),
       collecting the referenced `credId` values.
 
-   2. In **local mode**, the step merges rendered Credential Template entries, Cloud Passport
-      credentials, and [Shared Credentials Files](/docs/envgene-objects.md#shared-credentials-file)
-      into the existing `Credentials/credentials.yml`, preserving user-authored values for entries
-      not covered by a source.
-      [Credential auto-generation](/docs/features/credential-processing.md#credential-auto-generation)
-      emits local Credential entries with `envgeneNullValue` placeholders for referenced `credId`
-      values that remain unresolved.
+   2. In **local mode**, the step merges the credential sources into the existing
+      `Credentials/credentials.yml`, preserving user-authored values, per
+      [credential sources](/docs/features/credential-processing.md#credential-sources) and
+      [merging behavior](/docs/features/credential-processing.md#merging-behavior).
 
-   3. In **external mode**, the step assembles the five
-      [precedence ladder](/docs/features/credential-processing.md#precedence-ladder) sources (parent
-      Credential Template, nested Credential Template, auto-generated Credential, Cloud Passport,
-      Shared Credentials File) in memory in precedence order (lowest to highest), then writes the
-      result to `Credentials/credentials.yml` in a single atomic write, replacing any existing
-      content.
-      [Credential auto-generation](/docs/features/credential-processing.md#credential-auto-generation)
-      emits `type: external` entries with `secretStore: default_store` and the default
-      `remoteRefPath` for referenced `credId` values that no Credential Template declares. The step
-      reads Shared Credentials Files, honoring the `.yml.j2` Jinja suffix.
+   3. In **external mode**, the step assembles the sources by the
+      [precedence ladder](/docs/features/credential-processing.md#precedence-ladder) and regenerates
+      `Credentials/credentials.yml` in a single write (see
+      [merging behavior](/docs/features/credential-processing.md#merging-behavior)). Shared Credentials
+      Files are rendered per [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file),
+      and gaps are filled per
+      [credential auto-generation](/docs/features/credential-processing.md#credential-auto-generation).
 
-   4. In **external mode**, the step rewrites every `${creds.get('<credId>').<field>}` macro in
+   4. In **external mode**, the step enforces the
+      [external-mode credential restrictions](/docs/features/credential-processing.md#external-mode-credential-restrictions):
+      no `vaultAppRole` Credential, whole-value references only, and no deprecated `#creds` / `#credscl` /
+      `#credsns` macros. A violation fails with an error naming the parameter key and the `credId`.
+
+   5. In **external mode**, the step rewrites every `${creds.get('<credId>').<field>}` macro in
       rendered parameter values to a
       [Credential Reference](/docs/features/external-creds.md#credential-reference) (`$type: credRef`).
       The rewrite applies to parameter values only. Built-in credential references already carry a
       bare `credId`.
 
-   5. The step copies rendered content from `tmp/render/<env-name>/` to
+   6. The step copies rendered content from `tmp/render/<env-name>/` to
       `environments/<cluster-name>/<env-name>/`, restoring committed `env_definition.yml` from the
       pre-copy Inventory source before overwrite.
 
-   6. The step encrypts credential files under
+   7. The step encrypts credential files under
       `environments/<cluster-name>/<env-name>/Credentials/`.
 
 ## Result
@@ -258,6 +257,12 @@ and pipeline parameter `BG_NS_TARGET` is absent or empty. The error names `BG_NS
 
 **5d.** The step fails when rendered BG Domain references a Namespace name that was not rendered.
 The Environment Instance is not rebuilt.
+
+**7a.** In external mode, the step fails when an
+[external-mode credential restriction](/docs/features/credential-processing.md#external-mode-credential-restrictions)
+is violated: a referenced `vaultAppRole` Credential, a non-whole-value reference, or a deprecated
+`#creds` / `#credscl` / `#credsns` macro. The error names the parameter key and the `credId`. The
+Environment Instance is not rebuilt.
 
 ## Example
 
