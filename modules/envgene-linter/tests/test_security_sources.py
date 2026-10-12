@@ -299,7 +299,7 @@ def test_registry_bag_is_selected_only_for_active_legacy_artifact_consumer(repo)
     assert not any(bag.prefix == ("unused",) for bag in inputs.bags)
 
 
-def test_selected_modern_artifact_registry_uses_environment_catalog(repo):
+def test_selected_modern_artifact_registry_uses_root_catalog(repo):
     repo.env("c", "e", artifact="template:1")
     artifact = write(
         repo.root / "configuration/artifact_definitions/template.yml",
@@ -308,7 +308,8 @@ def test_selected_modern_artifact_registry_uses_environment_catalog(repo):
             "registry": {"credentialsId": "synthetic-reference"},
         },
     )
-    generated = write(repo.root / "environments/c/e/Credentials/credentials.yml", {})
+    write(repo.root / "environments/c/e/Credentials/credentials.yml", {})
+    root_catalog = write(repo.root / "configuration/credentials/credentials.yml", {})
 
     inputs, _ = collect(repo)
 
@@ -316,7 +317,7 @@ def test_selected_modern_artifact_registry_uses_environment_catalog(repo):
         artifact.resolve(),
         ("registry",),
         "c/e",
-        generated.resolve(),
+        root_catalog.resolve(),
         ("credentialsId",),
     ) in inputs.bags
 

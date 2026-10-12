@@ -112,7 +112,7 @@ def test_system_credential_reference_uses_root_catalog(repo):
 def test_bare_credential_id_in_connected_artifact_is_checked(repo):
     repo.env('c', 'e', artifact='template:1')
     write(repo.root / 'configuration/artifact_definitions/template.yml', {'name': 'template', 'registry': {'credentialsId': ID}})
-    catalog(repo, {})
+    write(repo.root / 'configuration/credentials/credentials.yml', {})
     assert_kind(findings(repo), 'missing')
 
 

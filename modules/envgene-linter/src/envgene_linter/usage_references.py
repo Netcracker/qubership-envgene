@@ -163,6 +163,8 @@ class _Analysis:
                     generated = env.path / 'Credentials/credentials.yml'
                     if generated.exists() or generated.is_symlink():
                         catalog = generated
+            if catalog is not None and self.read(catalog, bag.environment, ('Credential',)) is None:
+                continue
             doc = self.read(bag.path, bag.environment, ('Credential',))
             value = doc
             for key in bag.prefix:

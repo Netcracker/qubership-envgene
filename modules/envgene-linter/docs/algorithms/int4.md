@@ -50,6 +50,13 @@ Literal `creds.get` calls, structured `credRef` objects, and supported bare ID f
 System consumers use the existing source-selection rules for deployer, registry, integration, artifact registry,
 and Cloud Passport inputs. Secret payloads are never recursively interpreted as reference expressions.
 
+Selected modern Artifact Definitions use `configuration/credentials/credentials.yml` for registry references.
+V1 reads `registry.credentialsId`. V2 selects the entry in `registry.authConfig` named by
+`registry.mavenConfig.authConfig`, then reads that entry's `credentialsId` unless `authMethod` is literal `anonymous`.
+V2 selection applies when `version` is `'2.0'` or `authConfig` is present. Inactive configurations do not establish use.
+Dynamic, missing, or malformed selection contributes uncertainty. An unavailable or unsafe root catalog remains
+authoritative and cannot fall back to generated environment Credentials.
+
 The analysis also reads supported parameter bags in unconnected authored ParameterSets.
 This is direct reference analysis, not transitive dead-code elimination.
 Local Cloud/Namespace objects supply references even when no explicit ParameterSet binding selects a namespace.
@@ -93,6 +100,7 @@ Findings retain the CLI's exit code 0 behavior.
 - [Analysis records](/modules/envgene-linter/src/envgene_linter/usage_model.py)
 - [Finding construction](/modules/envgene-linter/src/envgene_linter/rules/int4.py)
 - [Rule tests](/modules/envgene-linter/tests/test_int4.py)
+- [Artifact registry regressions](/modules/envgene-linter/tests/test_registry_usage.py)
 - [Candidate tests](/modules/envgene-linter/tests/test_usage_candidates.py)
 - [Reference tests](/modules/envgene-linter/tests/test_usage_references.py)
 - [Runnable examples](/modules/envgene-linter/testdata/rules/int4)

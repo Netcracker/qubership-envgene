@@ -9,6 +9,7 @@ from typing import Any
 from .connections import Connections
 from .model import EnvModel, RepoIndex
 from .parameter_objects import parameter_object_paths
+from .security_values import literal_name
 from .yamlio import YamlReadError, load
 
 
@@ -391,7 +392,6 @@ def _integration_bags(index: RepoIndex, inputs: SecurityInputs) -> None:
 def _artifact_definition_bags(
     index: RepoIndex,
     connections: Connections,
-    catalogs: dict[str, Path | None],
     inputs: SecurityInputs,
 ) -> None:
     for env in index.environments:
@@ -407,16 +407,45 @@ def _artifact_definition_bags(
                 _issue(inputs, selected)
                 continue
             registry = doc.get("registry")
-            if not isinstance(registry, dict) or "credentialsId" not in registry:
+            prefix = ("registry",)
+            if not isinstance(registry, dict):
                 _issue(inputs, selected, ("registry",))
                 continue
+            is_v2 = registry.get("version") == "2.0" or "authConfig" in registry
+            if is_v2:
+                # Template downloads select Maven auth only, even when other configs exist.
+                maven = registry.get("mavenConfig")
+                selector = maven.get("authConfig") if isinstance(maven, dict) else None
+                configs = registry.get("authConfig")
+                if not literal_name(selector) or not isinstance(configs, dict):
+                    _issue(inputs, selected, ("registry", "mavenConfig", "authConfig"))
+                    continue
+                active = configs.get(selector)
+                if not isinstance(active, dict) or not literal_name(active.get("authMethod")):
+                    _issue(inputs, selected, ("registry", "mavenConfig", "authConfig"))
+                    continue
+                if active["authMethod"] == "anonymous":
+                    continue
+                prefix = ("registry", "authConfig", selector)
+                registry = active
+            if "credentialsId" not in registry:
+                _issue(inputs, selected, prefix)
+                continue
+            if registry["credentialsId"] in (None, ""):
+                if is_v2:
+                    _issue(inputs, selected, prefix)
+                continue
+            catalog = _root_catalog(index, inputs)
+            if catalog is None:
+                # Keep the authoritative path so consumers cannot use an environment fallback.
+                catalog = index.root / "configuration/credentials/credentials.yml"
             _append_unique(
                 inputs.bags,
                 SecurityBag(
                     selected,
-                    ("registry",),
+                    prefix,
                     env.full_name,
-                    catalogs.get(env.full_name),
+                    catalog,
                     ("credentialsId",),
                 ),
             )
@@ -596,7 +625,7 @@ def collect_security_sources(index: RepoIndex, connections: Connections) -> Secu
 
     _parameter_object_bags(index, connections, catalogs, inputs)
     _passport_bags(index, connections, inputs)
-    _artifact_definition_bags(index, connections, catalogs, inputs)
+    _artifact_definition_bags(index, connections, inputs)
     _integration_bags(index, inputs)
     _environment_system_bags(index, inputs)
     return inputs

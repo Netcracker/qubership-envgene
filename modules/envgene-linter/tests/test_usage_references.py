@@ -161,7 +161,7 @@ def test_system_consumers_protect_exact_catalog_entries(repo, consumer):
     else:
         repo.env('c', 'e', artifact='template:1')
         bind(repo, sharedMasterCredentialFiles=['shared'])
-        catalog = shared(repo, ids=(identifier, 'orphan'))
+        shared(repo, ids=(identifier, 'orphan'))
         write(repo.root / 'configuration/artifact_definitions/template.yml',
               {'name': 'template', 'registry': {'credentialsId': identifier}})
     write(catalog, {identifier: {'type': 'secret'}, 'orphan': {'type': 'secret'}})
