@@ -8,7 +8,8 @@ META = {'sops': {'mac': TOKEN, 'age': [{'recipient': 'age1synthetic', 'enc': 'sy
 
 @pytest.mark.parametrize('value,state', [
     ('synthetic-secret', 'literal'), (True, 'literal'), (123, 'literal'),
-    ('', 'empty'), (None, 'empty'),
+    ('', 'empty'), (None, 'empty'), ('envgeneNullValue', 'empty'),
+    ('prefix-envgeneNullValue', 'literal'), ('envgenenullvalue', 'literal'),
     ('${UNVERIFIED_VARIABLE}', 'unknown'), ('{{ secret }}', 'unknown'),
     ('prefix ${creds.get("id").password}', 'unknown'),
     ('[encrypted:AES256_Fernet]synthetic', 'unsupported'),

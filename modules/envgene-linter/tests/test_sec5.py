@@ -5,6 +5,7 @@ from envgene_linter.discovery import build_index
 from envgene_linter.rules.sec5 import check
 from envgene_linter.report import render
 from envgene_linter.html_report import render_html
+from envgene_linter.model import Action, IssueType, Severity
 
 TOKEN = 'ENC[AES256_GCM,data:YWJj,iv:YWJj,tag:YWJj,type:str]'
 META = {'mac': TOKEN, 'age': [{'recipient': 'age1synthetic', 'enc': 'synthetic-envelope'}], 'version': '3.8.1'}
@@ -61,6 +62,46 @@ def test_partial_sops_document_and_encrypted_type(repo):
     result = findings(repo)
     assert len(result) == 1 and 'literal' in result[0].message
     assert result[0].line == 5
+
+
+@pytest.mark.parametrize('source', ['generated', 'shared', 'system-reference'])
+def test_plaintext_credential_username_requires_fix(repo, source):
+    repo.env('c', 'e')
+    if source == 'generated':
+        path = repo.root / 'environments/c/e/Credentials/credentials.yml'
+    elif source == 'shared':
+        definition = repo.root / 'environments/c/e/Inventory/env_definition.yml'
+        doc = YAML().load(definition)
+        doc['envTemplate']['sharedMasterCredentialFiles'] = ['shared']
+        write(definition, doc)
+        path = repo.root / 'environments/credentials/shared.yml'
+    else:
+        write(repo.root / 'configuration/integration.yml',
+              {'self_token': 'envgen.creds.get("' + ID + '").username'})
+        path = repo.root / 'configuration/credentials/credentials.yml'
+    write(path, {ID: {'type': 'usernamePassword', 'data': {'username': SECRET, 'password': TOKEN}}, 'sops': META})
+    result = findings(repo)
+    assert len(result) == 1 and result[0].path == path
+    assert (result[0].severity, result[0].issue_type, result[0].action) == (
+        Severity.WARNING, IssueType.WARNING, Action.FIX)
+    for output in (repr(result), render(result), render_html(result, repo.root)):
+        assert ID not in output and SECRET not in output
+
+
+@pytest.mark.parametrize('value', ['envgeneNullValue', '${UNVERIFIED_USERNAME}', '[encrypted:AES256_Fernet]synthetic'])
+def test_username_placeholder_and_uncertain_protection_are_not_fix(repo, value):
+    path = setup(repo)
+    write(path, {ID: {'type': 'usernamePassword', 'data': {'username': value, 'password': TOKEN}}, 'sops': META})
+    result = findings(repo)
+    if value == 'envgeneNullValue':
+        assert result == []
+    else:
+        assert len(result) == 1 and result[0].action is Action.REVIEW
+
+
+def test_reserved_null_credential_value_is_not_secret_material(repo):
+    setup(repo, 'envgeneNullValue')
+    assert findings(repo) == []
 
 
 @pytest.mark.parametrize('external,expected', [

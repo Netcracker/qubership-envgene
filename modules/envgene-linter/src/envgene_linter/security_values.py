@@ -82,7 +82,7 @@ def sops_metadata(document: Any) -> bool:
 
 
 def classify(value: Any, document: Any) -> str:
-    if value is None or value == '':
+    if value is None or value == '' or value == 'envgeneNullValue':
         return 'empty'
     if not isinstance(value, (str, int, float, bool)):
         return 'unknown'

@@ -43,15 +43,18 @@ class _Scanner:
         self.findings: dict[tuple, Finding] = {}
         self.active_refs: set[tuple] = set()
 
-    def emit(self, path: Path, prefix: tuple, reason: str, document: LoadedYaml | None = None):
+    def emit(self, path: Path, prefix: tuple, reason: str, document: LoadedYaml | None = None,
+             action: Action = Action.REVIEW):
         line, column = document.position(prefix) if document else (1, 1)
         identity = (path.resolve(), line, column, reason)
         self.findings.setdefault(identity, Finding(
-            rule='SEC-5', severity=Severity.INFORMATION,
-            issue_type=IssueType.INFORMATION, action=Action.REVIEW,
+            rule='SEC-5', severity=Severity.WARNING if action is Action.FIX else Severity.INFORMATION,
+            issue_type=IssueType.WARNING if action is Action.FIX else IssueType.INFORMATION, action=action,
             path=path, line=line, column=column, key='secret', scope='repository',
             locations=(Location(path, line, column),),
-            message=_MESSAGES[reason], hint=_HINTS[reason],
+            message=_MESSAGES[reason],
+            hint=('Protect the stored username with SOPS or use a supported external-store source.'
+                  if action is Action.FIX else _HINTS[reason]),
         ))
 
     def read(self, path: Path | None) -> LoadedYaml | None:
@@ -139,7 +142,11 @@ class _Scanner:
             return
         state = classify(value, doc.doc)
         if state not in ('empty', 'protected'):
-            self.emit(doc.path, prefix, state, doc)
+            entry = doc.doc.get(prefix[0]) if isinstance(doc.doc, dict) and prefix else None
+            plaintext_username = (context == 'stored' and state == 'literal'
+                                  and len(prefix) == 3 and prefix[1:] == ('data', 'username')
+                                  and isinstance(entry, dict) and entry.get('type') == 'usernamePassword')
+            self.emit(doc.path, prefix, state, doc, Action.FIX if plaintext_username else Action.REVIEW)
 
     def entry(self, doc: LoadedYaml, identifier: str, entry: Any):
         if not isinstance(entry, dict):
