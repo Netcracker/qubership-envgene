@@ -104,8 +104,6 @@ class _Candidates:
 
 def _finding(environment: str, kind: str, paths: list[Path]) -> Finding:
     hint = "Use distinct reference names and update the bindings, or keep the definition at one scope."
-    if kind == "ParameterSet":
-        hint += " ParameterSet fragments can merge during generation; this finding checks the naming standard."
     meta = RULES["INT-3"]
     return Finding(
         rule="INT-3", severity=Severity.WARNING, path=paths[0], line=1,
@@ -138,20 +136,6 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
 
     for env in sorted(index.environments, key=lambda env: env.full_name):
         bases = (env.path / "Inventory", index.clusters[env.cluster].path, index.root / "environments")
-        references = {
-            use.reference for uses in connections.parameter_uses.values()
-            for use in uses if use.environment == env.full_name and _literal(use.reference)
-        }
-        for reference in sorted(references):
-            candidates = []
-            for scope, files in enumerate((
-                env.paramsets, index.clusters[env.cluster].paramsets, index.site_paramsets,
-            )):
-                for file in files:
-                    if file.stem == reference and not file.is_jinja:
-                        candidates.append((scope, file.path))
-            report(env, "ParameterSet", candidates, candidates,
-                   connections.environment_parameter_sets.get(env.full_name, frozenset()))
         used = connections.environment_paths.get(env.full_name, frozenset())
         for kind, bindings, records, folders, connected in (
             ("Resource Profile Override", env.resource_profile_bindings.values(), index.resource_profiles,

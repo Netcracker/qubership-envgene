@@ -47,17 +47,12 @@ def _check(repo):
     return check(build_index(repo.root))
 
 
-def test_environment_and_cluster_reference_conflict(repo):
+def test_parameter_set_fragments_can_share_a_reference_across_scopes(repo):
     repo.env("c01", "e01", deploy={"cloud": ["service-deploy"]})
     repo.cluster_paramset("c01", "service-deploy", {"CLUSTER_VALUE": 1})
     repo.env_paramset("c01", "e01", "service-deploy", {"ENV_VALUE": 2})
     findings = [item for item in run_check(repo.root).findings if item.rule == "INT-3"]
-    assert len(findings) == 1
-    assert {item.path for item in findings[0].file_locations()} == {
-        repo.root / "environments/c01/parameters/service-deploy.yml",
-        repo.root / "environments/c01/e01/Inventory/parameters/service-deploy.yml",
-    }
-    assert "ignored" not in findings[0].message
+    assert findings == []
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -66,6 +61,9 @@ def test_used_cross_scope_definitions(repo, kind, scopes):
     _bind(repo, kind)
     paths = [_file(repo, kind, scope) for scope in scopes]
     findings = _check(repo)
+    if kind == "ParameterSet":
+        assert findings == []
+        return
     assert len(findings) == 1
     finding = findings[0]
     assert [location.path for location in finding.file_locations()] == paths
@@ -81,6 +79,9 @@ def test_used_cross_scope_definitions(repo, kind, scopes):
 def test_extensions_share_a_stem_across_scopes(repo, kind):
     _bind(repo, kind)
     paths = [_file(repo, kind, 0, suffix=".yaml"), _file(repo, kind, 2)]
+    if kind == "ParameterSet":
+        assert _check(repo) == []
+        return
     assert [item.path for item in _check(repo)[0].file_locations()] == paths
 
 
@@ -118,15 +119,16 @@ def test_each_consuming_environment_retains_its_context(repo, kind):
     _bind(repo, kind, env="e02")
     _file(repo, kind, 1)
     _file(repo, kind, 2)
-    assert [f.scope for f in _check(repo)] == ["c01/e01", "c01/e02"]
+    expected = [] if kind == "ParameterSet" else ["c01/e01", "c01/e02"]
+    assert [f.scope for f in _check(repo)] == expected
 
 
-def test_repeated_categories_and_targets_share_one_finding(repo):
+def test_parameter_set_fragments_stay_allowed_across_categories_and_targets(repo):
     repo.env("c01", "e01", deploy={"cloud": ["shared", "shared"], "ns": ["shared"]},
              e2e={"cloud": ["shared"]}, technical={"cloud": ["shared"]})
     _file(repo, "ParameterSet", 0)
     _file(repo, "ParameterSet", 1)
-    assert len(_check(repo)) == 1
+    assert _check(repo) == []
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -135,7 +137,7 @@ def test_content_does_not_erase_a_filename_conflict(repo, kind, content):
     _bind(repo, kind)
     _file(repo, kind, 0, text=content)
     _file(repo, kind, 1)
-    assert len(_check(repo)) == 1
+    assert len(_check(repo)) == (0 if kind == "ParameterSet" else 1)
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -316,6 +318,9 @@ def test_disabling_int3_preserves_other_findings(repo, monkeypatch):
     repo.site_paramset("shared", {"COUNT": 1})
     repo.cluster_paramset("c01", "shared", {"COUNT": 2})
     repo.env_paramset("c01", "e01", "shared", {"COUNT": 2})
+    _bind(repo, "Shared credentials")
+    _file(repo, "Shared credentials", 0)
+    _file(repo, "Shared credentials", 1)
     enabled = run_check(repo.root)
     assert any(f.rule == "INT-3" for f in enabled.findings)
     monkeypatch.setitem(rule_config.RULE_ENABLED, "INT-3", False)

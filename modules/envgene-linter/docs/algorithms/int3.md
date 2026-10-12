@@ -15,20 +15,18 @@ It implements the naming requirement in
 [the configuration standard](/docs/configuration-standard.md#int-3---no-shadowed-same-name-overrides-should).
 Scopes are environment Inventory, the environment's cluster, and repository `environments`.
 
-ParameterSets can merge across scopes during generation. INT-3 still reports their duplicate reference names
-without claiming that all lower-scope files are ignored. See
+ParameterSets are excluded because their same-named fragments can merge across scopes during generation. See
 [Effective Set computation](/modules/envgene-linter/docs/algorithms/effective-set.md) for merging and staging.
 
 ## Inputs
 
 Each discovered environment supplies these bindings from `envTemplate`:
 
-| Entity                    | Binding                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------- |
-| ParameterSet              | `envSpecificParamsets`, `envSpecificE2EParamsets`, and `envSpecificTechnicalParamsets`   |
-| Shared Credential file    | `sharedMasterCredentialFiles`                                                            |
-| Resource Profile Override | `envSpecificResourceProfiles`                                                            |
-| Shared Template Variables | `sharedTemplateVariables`                                                                |
+| Entity                    | Binding                       |
+|---------------------------|-------------------------------|
+| Shared Credential file    | `sharedMasterCredentialFiles` |
+| Resource Profile Override | `envSpecificResourceProfiles` |
+| Shared Template Variables | `sharedTemplateVariables`     |
 
 A reference must be a nonempty literal filename stem with a connected local target in that environment.
 INT-3 excludes expressions, path references, and Jinja files. It supports `.yml` and `.yaml`.
@@ -37,20 +35,18 @@ An internal `name` field or a Credential ID does not define a filename reference
 ## Processing flow
 
 1. Collect used names separately for each environment and entity type. Repeated bindings share one check.
-2. Collect matching ParameterSets from the index before staging removes repository files hidden by cluster files.
-   ParameterSet discovery remains nonrecursive.
-3. Collect profile and shared Credential candidates from indexed records and their logical aliases.
+2. Collect profile and shared Credential candidates from indexed records and their logical aliases.
    Search environment, cluster, and repository scopes. Retain the first matching directory at each scope.
    Profile directories are `resource_profiles`, `rp_override`, `Profiles`, and `parameters` in that order.
    Credential directories are `credentials`, `Credentials`, and `shared-credentials` in that order.
-4. Enumerate Shared Template Variables recursively under `configuration` and `configurations` at each scope,
+3. Enumerate Shared Template Variables recursively under `configuration` and `configurations` at each scope,
    followed by the environment Inventory fallback. Reuse the existing resolver to identify the selected alias.
    Its lookup order remains authoritative even when sorted enumeration produces a different order of candidates.
-5. Reject paths outside the repository, paths within `.git`, directory symlinks, and unavailable file targets.
+4. Reject paths outside the repository, paths within `.git`, directory symlinks, and unavailable file targets.
    Deduplicate physical paths, preferring the selected logical alias when aliases cross scopes.
-6. Report when the remaining physical definitions occupy at least two scopes.
+5. Report when the remaining physical definitions occupy at least two scopes.
    Include the participating files in environment, cluster, and repository order, then by path within each scope.
-7. Sort findings by environment, entity type, and participating paths.
+6. Sort findings by environment, entity type, and participating paths.
 
 INT-3 inspects additional definitions hidden by a used reference's lookup.
 Those candidates remain outside other rules' connected input sets.
@@ -63,7 +59,6 @@ Messages identify the environment and entity type. They omit reference expressio
 File paths remain visible.
 
 The suggested action is to use distinct names and update bindings, or retain the definition at one scope.
-ParameterSet findings also explain that generation can merge fragments despite the naming violation.
 
 The rule runs after INT-2 and before NAME-1. Disable it through `RULE_ENABLED["INT-3"]` before building.
 The CLI retains exit code `0` for findings and does not modify configuration files to fix them.
@@ -91,13 +86,14 @@ environments/demo-cluster/parameters/service-deploy.yml
 environments/demo-cluster/demo-env/Inventory/parameters/service-deploy.yml
 ```
 
-INT-3 reports both files even if their parameters are disjoint and generation merges them.
-Removing the unused duplicate or giving the files distinct reference names removes that naming conflict.
-Review the bindings and intended values before changing the configuration.
+INT-3 produces no finding for these ParameterSet fragments, whether their keys are disjoint or overlap.
+The equivalent cross-scope duplicate of a used Resource Profile Override in `resource_profiles/` remains Warning / Fix.
+Review its bindings and intended values before choosing distinct names or retaining one definition.
 
 The runnable [positive example](/modules/envgene-linter/testdata/rules/int3/ok) defines each reference at one scope.
-The [negative example](/modules/envgene-linter/testdata/rules/int3/not-ok) duplicates all four entity types
-across environment and cluster scopes. Expectations apply to INT-3. Other rules can report independent findings.
+The [negative example](/modules/envgene-linter/testdata/rules/int3/not-ok) duplicates the three checked entity types
+and includes allowed ParameterSet fragments across environment and cluster scopes.
+Expectations apply to INT-3. Other rules can report independent findings.
 
 ## Related documentation
 
