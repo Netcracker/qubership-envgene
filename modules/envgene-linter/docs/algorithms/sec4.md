@@ -26,7 +26,11 @@ Credential catalogs are not inspected by SEC-4. The shared security-source colle
 
 ## Result
 
-The finding states: `The user/password pair must reference the same Credential ID.` Messages omit IDs, reference text and secret values. The rule catalog description is `Credential pairs reference the same ID`. Findings retain CLI exit code `0`.
+The finding states: `The user/password pair references different Credential IDs.` The hint asks the reader to review
+the consumer contract and retain separate IDs when the split is intentional. It recommends one ID only when the
+consumer requires a shared Credential. Different IDs alone do not establish a defect.
+Messages omit IDs, reference text, and secret values. The rule catalog description is `Credential pairs reference
+the same ID`. Findings retain CLI exit code `0`.
 
 ## Error handling
 

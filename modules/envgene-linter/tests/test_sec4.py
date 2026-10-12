@@ -76,7 +76,7 @@ def test_obvious_pairs_compare_ids_without_catalog(repo, keys, same_id):
     else:
         assert len(result) == 1 and result[0].path == source
         assert len(result[0].locations) == 2
-        assert 'same Credential ID' in result[0].message
+        assert 'different Credential IDs' in result[0].message
         assert (result[0].issue_type.value, result[0].action.value) == ('Information', 'Review')
         for output in (repr(result), render(result), render_html(result, repo.root)):
             assert ID not in output and OTHER not in output and VALUE not in output
@@ -86,6 +86,14 @@ def test_obvious_pairs_compare_ids_without_catalog(repo, keys, same_id):
 def test_definition_existence_and_shape_are_outside_sec4(repo, definitions):
     setup(repo, definitions=definitions)
     assert findings(repo) == []
+
+
+def test_split_credential_pair_is_reviewed_without_mandatory_replacement(repo):
+    setup(repo, {'DB_USERNAME': ref('username'), 'DB_PASSWORD': ref('password', OTHER)})
+    result = findings(repo)
+    assert len(result) == 1 and result[0].action.value == 'Review'
+    assert 'must' not in result[0].message
+    assert 'consumer' in result[0].hint
 
 
 @pytest.mark.parametrize('params', [

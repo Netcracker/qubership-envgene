@@ -1,4 +1,4 @@
-"""SEC-4: named user/password pairs reference the same Credential ID."""
+"""SEC-4: review named user/password pairs that reference different Credential IDs."""
 
 from __future__ import annotations
 
@@ -66,8 +66,9 @@ class _Checker:
             action=meta.default_action, path=document.path, line=line, column=column,
             key='credential-pair', scope=bag.environment,
             locations=tuple(Location(document.path, row, col) for row, col in positions),
-            message='The user/password pair must reference the same Credential ID.',
-            hint='Use the same Credential ID in both pair references. Secret values are not displayed.',
+            message='The user/password pair references different Credential IDs.',
+            hint=('Review the consumer contract. Keep separate Credential IDs if the split is intentional. '
+                  'Otherwise use one Credential ID. Secret values are not displayed.'),
         ))
 
     def check_group(self, document: LoadedYaml, bag: SecurityBag, members: list[tuple[tuple, Any]]):
