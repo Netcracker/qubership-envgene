@@ -36,10 +36,12 @@ from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import run_multi_env_pipeline
 from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from pipeline.resolve_env_names import build_resolved_variables, resolve_env_names
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
-from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
+from utils.handle_certs import install_certificates
+from utils.sparse_checkout import run_sparse_checkout
 
 
 class StepStatus(StrEnum):
@@ -434,13 +436,34 @@ def run_single_env_pipeline() -> None:
         log_pipeline_summary(results)
 
 
+def prepare_job() -> list[str]:
+    with log_section("prepare_job", header=banner("START: prepare_job")):
+        start = time.time_ns()
+        status = StepStatus.FAILED
+        try:
+            env_names = resolve_env_names()
+            os.environ.update(build_resolved_variables(env_names))
+            if getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+                logger.info("Local test mode: skipping sparse checkout")
+            else:
+                run_sparse_checkout(env_names)
+            # Certificates live in configuration/certs, which exists only after the sparse checkout.
+            install_certificates()
+            status = StepStatus.SUCCESS
+        finally:
+            duration_ms = (time.time_ns() - start) // 1_000_000
+            end_text = f"END: prepare_job ({_format_duration(duration_ms)}) - {status}"
+            logger.info(colorize(banner(end_text), _STATUS_COLOR[status]))
+    return env_names
+
+
 def dispatch() -> int:
     if os.getenv("ENVGENE_FAN_OUT_CHILD"):
         run_single_env_pipeline()
         return 0
 
     # main process
-    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
+    env_names = prepare_job()
     try:
         if len(env_names) == 1:
             run_single_env_pipeline()

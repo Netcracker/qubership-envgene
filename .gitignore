@@ -17,3 +17,4 @@ junit*
 
 # dev-flow and subagent-driven-development scratch (ledgers, briefs, review packages)
 .superpowers/
+*.egg-info/
