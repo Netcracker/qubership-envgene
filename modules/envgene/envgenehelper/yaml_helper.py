@@ -17,6 +17,7 @@ import yaml as pyyaml
 
 from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, writeToFile
 from .json_helper import openJson
+from .schema_sort import sort_by_schema
 from envgene_shared.utils.logger import logger
 
 from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, load_schema, get_schema_validator, \
@@ -76,19 +77,12 @@ def alignYamlComments(yamlContent, extra_indent=0):
 
 
 def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
-    schema_data = load_schema(str(schema_path))
     if validate:
         logger.debug(f'Checking yaml with schema: {schema_path}')
         error = jsonschema.exceptions.best_match(get_schema_validator(str(schema_path)).iter_errors(yaml_data))
         if error is not None:
             raise error
-    sort_data = jschon_tools.process_json_doc(
-        schema_data=schema_data,
-        doc_data=yaml_data,
-        sort=True,
-        remove_additional_props=remove_additional_props
-    )
-    return sort_data
+    return sort_by_schema(yaml_data, schema_path, remove_additional_props)
 
 
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
