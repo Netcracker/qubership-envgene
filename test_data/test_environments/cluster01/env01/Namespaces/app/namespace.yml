@@ -22,6 +22,7 @@ e2eParameters: {}
 technicalConfigurationParameters:
   APP_CORE_NAMESPACE: "test-solution-structure-case-01-app-core"
   APP_NAMESPACE: "test-solution-structure-case-01-app"
+  TECHNICAL_PARAM_1: "VALUE_TP_1" # paramset: env-specific-tech version: 1 source: instance
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []

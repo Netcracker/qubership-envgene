@@ -24,8 +24,7 @@ public class HelmNameNormalizer {
 
     private static final String ENCODE_SYMBOLS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    public static String normalize(String name, String originalNamespace) {
-        int limit = 63-originalNamespace.length()-1;
+    public static String normalize(String name, int limit) {
         return normalizeNameForHelm(name, limit);
     }
 

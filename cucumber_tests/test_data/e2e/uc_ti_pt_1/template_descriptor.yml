@@ -1,0 +1,9 @@
+parent-templates:
+  basic-cloud: basic-product-template:10.1.3
+tenant:
+  parent: basic-cloud
+cloud:
+  parent: basic-cloud
+namespaces:
+  - name: "{env}-billing"
+    parent: basic-cloud

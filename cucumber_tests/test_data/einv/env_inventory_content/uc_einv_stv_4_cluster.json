@@ -1,0 +1,12 @@
+{
+  "sharedTemplateVariables": [
+    {
+      "action": "create_or_replace",
+      "place": "cluster",
+      "name": "prod_vars",
+      "content": {
+        "var1": "val1"
+      }
+    }
+  ]
+}

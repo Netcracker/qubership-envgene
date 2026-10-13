@@ -43,12 +43,13 @@ A Cloud Passport lives inside a dedicated folder at the cluster level of your in
 └── environments/
     └── <cluster-name>/
         └── cloud-passport/
-            ├── <passport-name>.yml        ← main passport file
-            └── <passport-name>-creds.yml  ← credential entries used by the passport
+            ├── passport.yml        ← main passport file (recommended name)
+            └── passport-creds.yml  ← credential entries used by the passport
 ```
 
-EnvGene accepts both `.yml` and `.yaml` extensions. How `<passport-name>` is chosen and resolved
-is described in [Resolution](#resolution).
+EnvGene accepts both `.yml` and `.yaml` extensions. `passport.yml` is the recommended name because it
+auto-associates with every environment in the cluster. How the passport name is chosen and resolved is
+described in [Resolution](#resolution).
 
 The passport file is a YAML document with a `version` field and a set of named sections. Each
 section is a flat map of parameter keys to values:
@@ -110,10 +111,11 @@ auto-association:
 environments/
 └── <cluster-name>/
     ├── cloud-passport/
-    │   └── <cluster-name>.yml     ← passport at cluster scope
+    │   ├── passport.yml           ← default passport at cluster scope (recommended name)
+    │   └── passport-infra.yml     ← additional infra passport (explicit reference)
     ├── env-01/
     │   └── Inventory/
-    │       └── env_definition.yml ← cloudPassport: <cluster-name>  (explicit)
+    │       └── env_definition.yml ← cloudPassport: passport-infra  (explicit)
     └── env-02/
         └── Inventory/
             └── env_definition.yml ← no cloudPassport field  (auto-association)
@@ -128,7 +130,7 @@ contains a `cloudPassport` field under `inventory`, the system uses that named p
 # <cluster>/<env>/Inventory/env_definition.yml
 inventory:
   environmentName: env-01
-  cloudPassport: cluster-01    # the system resolves this exact passport
+  cloudPassport: passport-infra    # the system resolves this exact passport
 ```
 
 The system searches for a file matching that name, starting from the environment's own directory
@@ -152,8 +154,9 @@ inventory:
 The system looks for a default passport in the env's parent (cluster) directory, in this order:
 
 1. `cloud-passport/<cluster-name>.{yml|yaml}` (a file named after the cluster directory)
-2. `cloud-passport/passport.{yml|yaml}` (a generic fallback name)
+2. `cloud-passport/passport.{yml|yaml}` (the recommended default name)
 
+Name the default passport `passport.yml` so it auto-associates regardless of the cluster directory name.
 If neither file exists, no passport is applied and generation continues without one.
 
 ### Resolution summary

@@ -4,7 +4,7 @@ originNamespace:
   name: "pl-01-monitoring"
   type: namespace
 peerNamespace:
-  name: "pl-01-pg-test"
+  name: "pl-01-pg"
   type: namespace
 controllerNamespace:
   name: "env-1-bg-controller"

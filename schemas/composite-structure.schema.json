@@ -47,80 +47,11 @@
               "enum": [
                 "bgdomain"
               ]
-            },
-            "originNamespace": {
-              "type": "object",
-              "description": "The currently active namespace in the BG Domain",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the origin namespace"
-                },
-                "type": {
-                  "type": "string",
-                  "description": "Type of the namespace reference",
-                  "enum": [
-                    "namespace"
-                  ]
-                }
-              },
-              "required": [
-                "name",
-                "type"
-              ],
-              "additionalProperties": false
-            },
-            "peerNamespace": {
-              "type": "object",
-              "description": "The standby namespace in the BG Domain",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the peer namespace"
-                },
-                "type": {
-                  "type": "string",
-                  "description": "Type of the namespace reference",
-                  "enum": [
-                    "namespace"
-                  ]
-                }
-              },
-              "required": [
-                "name",
-                "type"
-              ],
-              "additionalProperties": false
-            },
-            "controllerNamespace": {
-              "type": "object",
-              "description": "The namespace that manages BG Domain lifecycle operations",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the controller namespace"
-                },
-                "type": {
-                  "type": "string",
-                  "description": "Type of the namespace reference",
-                  "enum": [
-                    "namespace"
-                  ]
-                }
-              },
-              "required": [
-                "name",
-                "type"
-              ],
-              "additionalProperties": false
             }
           },
           "required": [
             "name",
-            "type",
-            "originNamespace",
-            "peerNamespace",
-            "controllerNamespace"
+            "type"
           ],
           "additionalProperties": false
         }
@@ -129,34 +60,61 @@
     "satellites": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Name of the satellite component"
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "Namespace Satellite",
+            "description": "Satellite defined as a simple namespace",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the satellite component"
+              },
+              "type": {
+                "type": "string",
+                "description": "Type of the satellite component",
+                "enum": [
+                  "namespace"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
           },
-          "type": {
-            "type": "string",
-            "description": "Type of the satellite component",
-            "enum": [
-              "namespace"
-            ]
+          {
+            "type": "object",
+            "title": "BG Domain Satellite",
+            "description": "Satellite defined as a Blue-Green Domain",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the BG Domain"
+              },
+              "type": {
+                "type": "string",
+                "description": "Type of the satellite component",
+                "enum": [
+                  "bgdomain"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "name",
-          "type"
-        ],
-        "additionalProperties": false
+        ]
       },
-      "minItems": 1,
       "description": "List of satellite components"
     }
   },
   "required": [
     "name",
-    "baseline",
-    "satellites"
+    "baseline"
   ],
   "additionalProperties": false
 }

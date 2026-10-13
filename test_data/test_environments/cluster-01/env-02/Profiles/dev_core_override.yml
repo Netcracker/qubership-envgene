@@ -3,7 +3,7 @@
 # Please modify this contents only for development purposes or as workaround.
 name: "dev_core_override"
 version: 0
-baseline: "dev"
+baseline: "dev"  # from global-core-profile
 description: "Override for dev-profile"
 applications:
   - name: "core-app"

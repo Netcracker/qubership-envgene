@@ -1,0 +1,10 @@
+inventory:
+  environmentName: "test-env"
+  cloudName: "test-cluster"
+  config:
+    mergeEnvSpecificResourceProfiles: "false"
+envTemplate:
+  name: "rp-test"
+  artifact: "test-artifact:v1"
+  envSpecificResourceProfiles:
+    core: core-env-over

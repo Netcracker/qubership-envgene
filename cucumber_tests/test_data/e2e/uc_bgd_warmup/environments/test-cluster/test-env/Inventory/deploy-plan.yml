@@ -1,0 +1,6 @@
+- version: "crm:1.0"
+  deployPostfix: "bss"
+  namespace: "test-env-bss-origin"
+  wave: 0
+  generationType: "UniqForApp"
+  generationId: ""

@@ -31,6 +31,7 @@ import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 import java.util.Collections;
 import java.util.Map;
@@ -41,6 +42,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class InputData {
 
+    private boolean isExternalOnly;
     private TenantDTO tenantDTO;
     private CloudDTO cloudDTO;
     private CompositeStructureDTO compositeStructureDTO;
@@ -58,4 +60,6 @@ public class InputData {
     private Optional<SolutionBomDTO> solutionBomDTO = Optional.empty();
     @Builder.Default
     private Map<String, Object> clusterMap = Collections.emptyMap();
+    @Builder.Default
+    private Map<String, SecretStoreDTO> secretStoreDTOMap = Collections.emptyMap();
 }

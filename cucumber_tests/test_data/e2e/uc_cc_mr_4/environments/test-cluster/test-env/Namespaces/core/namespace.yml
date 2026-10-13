@@ -1,0 +1,8 @@
+name: core
+deployParameters:
+  ns_timeout: "${cloud_timeout}"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

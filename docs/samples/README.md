@@ -1,14 +1,19 @@
-# EnvGene Sample Layouts
+# EnvGene samples
 
-This document provides an overview of the recommended structures for Template and Instance repositories when using EnvGene.
+- [EnvGene samples](#envgene-samples)
+  - [Template repository layout](#template-repository-layout)
+  - [Instance repository layout](#instance-repository-layout)
+  - [Feature samples](#feature-samples)
+    - [Blue-Green Deployment](#blue-green-deployment)
+    - [Cloud artifact registries](#cloud-artifact-registries)
+    - [External credentials](#external-credentials)
 
-A minimal **external credentials** sample (Template Descriptor, Credential Template, instance, Effective Set) lives under [docs/samples/external-credentials](/docs/samples/external-credentials/).
+EnvGene samples are copyable file sets of two kinds: the generic repository layouts below and
+feature-scoped sample sets under `docs/samples/<feature>/`.
 
----
+## Template repository layout
 
-## Template Repository Layout
-
-For an example, refer to [this template repository](/docs/samples/template-repository/).
+For an example, see the [template repository sample](/docs/samples/template-repository/).
 
 ```yaml
 templates/
@@ -24,11 +29,9 @@ templates/
       └── <resource-profile>.yml
 ```
 
----
+## Instance repository layout
 
-## Instance Repository Layout
-
-For an example, refer to [this instance repository](/docs/samples/instance-repository/).
+For an example, see the [instance repository sample](/docs/samples/instance-repository/).
 
 ```yaml
 configuration/
@@ -55,5 +58,29 @@ environments/
   └── <shared-template-variables>.yml
 ```
 
-> **Note:**  
+> [!NOTE]
 > The `env_definition.yml` should follow the [documented structure](/docs/envgene-configs.md#env_definitionyml).
+
+## Feature samples
+
+### Blue-Green Deployment
+
+Setting up a BGD template and environment, or converting a non-BG one: the `bgd` Environment Template and
+the `env-01` sample environment. See [BGD samples](/docs/samples/blue-green-deployment/), the
+[configure how-to](/docs/how-to/blue-green-deployment-configure.md), and the
+[deploy operations how-to](/docs/how-to/blue-green-deployment-deploy-operations.md).
+
+### Cloud artifact registries
+
+Registry Definition v2.0 and Artifact Definition v2.0 sample files for AWS CodeArtifact and GCP
+Artifact Registry, plus a credentials file with placeholder values for both providers. See the
+[cloud artifact registries samples](/docs/samples/cloud-artifact-registries/) and
+[Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
+
+### External credentials
+
+A minimal external credentials setup: the Template Descriptor, Credential Template, Application and
+Registry Definition templates, the instance, the Effective Set, and the system credentials EnvGene
+consumes (integration, deployer, registry, and definition credentials). See the
+[external credentials samples](/docs/samples/external-credentials/) and
+[External Credentials Management](/docs/features/external-creds.md).

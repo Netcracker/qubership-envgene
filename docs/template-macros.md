@@ -1,6 +1,7 @@
 # Template Macros
 
 - [Template Macros](#template-macros)
+  - [Macro resolution scope](#macro-resolution-scope)
   - [Jinja Macros](#jinja-macros)
     - [`templates_dir`](#templates_dir)
     - [`current_env.name`](#current_envname)
@@ -15,6 +16,7 @@
     - [`current_env.additionalTemplateVariables`](#current_envadditionaltemplatevariables)
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
+    - [`current_env.composite_topology`](#current_envcomposite_topology)
     - [`current_env.cluster.cloud_api_protocol`](#current_envclustercloud_api_protocol)
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
@@ -77,7 +79,30 @@
     - [Deprecated Calculator CLI macros](#deprecated-calculator-cli-macros)
       - [`BASELINE_PROJ`](#baseline_proj)
 
-This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
+This documentation lists the macros that can be used in environment templates and environment-specific
+parameter sets. There are two kinds:
+
+- Jinja macros (`{{ ... }}`), resolved when the Environment Instance is generated
+- calculator macros (`${...}`), resolved later when the Effective Set is calculated.
+
+The two resolve under different rules, described in [Macro resolution scope](#macro-resolution-scope).
+
+## Macro resolution scope
+
+A calculator `${...}` macro resolves at Effective Set time against a binding set by the parameter's level
+(the object it sits on: tenant, cloud, namespace, or application) and its context (deploy, pipeline, or
+runtime). A parameter can reference a macro from its own level or a level above it, never from a level
+below, and only from its own context.
+
+A Jinja `{{ ... }}` macro is different: it resolves once at generation with the full `current_env`, so it has
+no level or context split.
+
+The same rules cover the variables you define. Set a parameter, then reference it from another with `${...}`,
+as long as both share a level and a context.
+
+Each predefined calculator macro below notes its level. All of them are provided in the deploy context, so
+they resolve in a deploy (`deployParameters`) parameter but not in a pipeline (`e2eParameters`) or runtime
+(`technicalConfigurationParameters`) parameter.
 
 ## Jinja Macros
 
@@ -334,9 +359,9 @@ deployParameters:
     namespace: <namespace-C>
 ```
 
-The variable is obtained by transforming the file defined in the path `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/solution-descriptor/sd.yml`.
+The variable is obtained by transforming the file defined in the path `/environments/<CLUSTER-NAME>/<ENV-NAME>/Inventory/solution-descriptor/sd.yaml`.
 
-The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
+The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/environments/<CLUSTER-NAME>/<ENV-NAME>/Inventory/solution-descriptor/sd.yaml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
 
 The value of the `<application-name>`, `<deploy-postfix>` and `version` in this variable is obtained from the SD.
 
@@ -363,6 +388,69 @@ The value of the `<application-name>`, `<deploy-postfix>` and `version` in this 
 **Usage in sample:**
 
 - [Sample template](/docs/samples/template-repository/templates/env_templates/composite/bss.yml.j2)
+
+### `current_env.composite_topology`
+
+---
+**Description:** A hashable describing the resolved composite topology of the environment - its baseline plus
+satellites, with each member carrying its rendered namespace names. The variable has the following
+structure:
+
+```yaml
+# Mandatory
+baseline:
+  # Mandatory
+  originNamespace: <baseline-origin-ns>
+  # Optional
+  # Present only when the baseline member is a Blue-Green domain
+  peerNamespace: <baseline-peer-ns>
+  # Optional
+  # Present only when the baseline member is a Blue-Green domain
+  controllerNamespace: <baseline-controller-ns>
+# Optional
+satellites:
+  - # Mandatory
+    originNamespace: <satellite-origin-ns>
+    # Optional
+    # Present only when the satellite member is a Blue-Green domain
+    peerNamespace: <satellite-peer-ns>
+    # Optional
+    # Present only when the satellite member is a Blue-Green domain
+    controllerNamespace: <satellite-controller-ns>
+```
+
+A member has one of two kinds. A namespace member carries `originNamespace`. A Blue-Green member carries
+`originNamespace`, `peerNamespace` and `controllerNamespace`. The member kind is implied by the presence of
+`peerNamespace` and `controllerNamespace`. `satellites` may be absent or empty when the composite has only a baseline.
+
+The variable is derived from the [Composite Structure](/docs/envgene-objects.md#composite-structure) object alone, which
+embeds any inline Blue-Green domain as a `bgdomain` member. Each member resolves its namespace template to the rendered
+namespace name. The value is `{}` for environments without a Composite Structure, including a non-composite Blue-Green
+environment that uses a standalone [BG Domain](/docs/envgene-objects.md#bg-domain) object.
+
+For a composite with a Blue-Green satellite the value resolves as follows.
+
+```yaml
+baseline:
+  originNamespace: env-1-core
+satellites:
+  - originNamespace: env-1-bss-orgn
+    peerNamespace: env-1-bss-peer
+    controllerNamespace: env-1-bss-ctrl
+```
+
+**Type:** HashMap
+
+**Default Value:** `{}`
+
+**Basic usage:**
+
+```yaml
+  deployParameters:
+    baseline_ns: "{{ current_env.composite_topology.baseline.originNamespace }}"
+```
+
+**Usage in sample:** TBD
 
 ### `current_env.cluster.cloud_api_protocol`
 
@@ -1101,11 +1189,11 @@ Otherwise, the value is undefined.
 ### `BASELINE_ORIGIN`
 
 ---
-**Description:** For satellite namespaces, determines the name of the BG origin namespace.
+**Description:** Determines the name of the BG origin namespace of the baseline. It is intended for use by satellite namespaces.
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the origin namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure), and the baseline of this Composite Structure is of type BG domain, then the value is the origin namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+If the current namespace is a satellite of a [Composite Structure](/docs/envgene-objects.md#composite-structure) whose baseline is of type namespace, then the value is the baseline namespace of that Composite Structure.
 
 Otherwise, the value is undefined.
 
@@ -1122,11 +1210,9 @@ Otherwise, the value is undefined.
 ### `BASELINE_PEER`
 
 ---
-**Description:** For satellite namespaces, determines the name of the BG peer namespace.
+**Description:** Determines the name of the BG peer namespace of the baseline. It is intended for use by satellite namespaces.
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the peer namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
-
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure), and the baseline of this Composite Structure is of type BG domain, then the value is the peer namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
 Otherwise, the value is undefined.
 
@@ -1143,11 +1229,9 @@ Otherwise, the value is undefined.
 ### `BASELINE_CONTROLLER`
 
 ---
-**Description:** For satellite namespaces, determines the name of the BG controller namespace.
+**Description:** Determines the name of the BG controller namespace of the baseline. It is intended for use by satellite namespaces.
 
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the controller namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
-
-If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure), and the baseline of this Composite Structure is of type BG domain, then the value is the controller namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
 Otherwise, the value is undefined.
 

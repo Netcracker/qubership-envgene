@@ -1,0 +1,7 @@
+tenant: '{{ templates_dirs.common }}/env_templates/bgd-test/Tenant.yml.j2'
+cloud: '{{ templates_dirs.common }}/env_templates/bgd-test/Cloud.yml.j2'
+bg_domain: '{{ templates_dirs.common }}/env_templates/bgd-test/BgDomain.yml.j2'
+namespaces:
+  - template_path: '{{ templates_dirs.common }}/env_templates/bgd-test/Namespace.yml.j2'
+    deploy_postfix: bss
+    template_override: {name: "{{current_env.environmentName}}-bss-__ROLE__", deployParameters: {ROLE_SPECIFIC_PARAM: "__ROLE__-value"}}

@@ -1,299 +1,269 @@
 # Blue-Green Deployment
 
 - [Blue-Green Deployment](#blue-green-deployment)
-  - [Problem Statement](#problem-statement)
-  - [Proposed Approach](#proposed-approach)
-    - [BG Related EnvGene objects](#bg-related-envgene-objects)
-    - [Namespace Render Filter](#namespace-render-filter)
-    - [`bg_manage` Job](#bg_manage-job)
-    - [BG Related Instance Pipeline Parameters](#bg-related-instance-pipeline-parameters)
-    - [BG State Files](#bg-state-files)
-      - [Validation Algorithm](#validation-algorithm)
-    - [Warmup operation](#warmup-operation)
-    - [CMDB Import](#cmdb-import)
-    - [BG Related Parameters in Effective Set](#bg-related-parameters-in-effective-set)
-    - [BG Related Macros](#bg-related-macros)
-    - [Use Cases](#use-cases)
+  - [Description](#description)
+  - [Why EnvGene supports Blue-Green](#why-envgene-supports-blue-green)
+  - [What a BG environment looks like](#what-a-bg-environment-looks-like)
+  - [Two kinds of work on a BG environment](#two-kinds-of-work-on-a-bg-environment)
+  - [Deploy to one side](#deploy-to-one-side)
+  - [Lifecycle in plain terms](#lifecycle-in-plain-terms)
+  - [What state files tell you](#what-state-files-tell-you)
+  - [Warmup and why it matters](#warmup-and-why-it-matters)
+  - [Who triggers what](#who-triggers-what)
+  - [Where to read next](#where-to-read-next)
 
-## Problem Statement
+## Description
 
-EnvGene currently lacks support for Blue-Green Deployment (BGD), which is a deployment strategy that reduces downtime by running two identical production environments called Blue and Green.
+Blue-Green Deployment (BGD) is a release pattern that keeps two copies of the same application
+stack side by side. One copy serves live traffic. The other copy is prepared, tested, and switched
+over when the release is ready. Downtime stays low because the switch is a promotion between two
+already-running sides, not a rebuild of the only copy.
 
-## Proposed Approach
+In EnvGene, BGD is modeled around a **BG Domain**: a named group of three namespaces - **origin**,
+**peer**, and **controller**. The origin and peer namespaces hold the two application sides. The
+controller namespace hosts the coordination service that drives promotion and rollback with the
+deploy platform.
 
-The sequence shows the Blue-Green (BG) operation flow where the BG Operator initiates operations through the BG Plugin, which triggers the EnvGene Instance pipeline. The pipeline's `bg_manage` job validates state transitions, manages BG state files in the Instance repository, and copies the namespace and child objects during the warmup operation.
+EnvGene does not run the live cluster or route traffic. It maintains the **Environment Instance**
+in Git: namespace definitions, inventory, version pins, lifecycle state markers, and the
+**Effective Set** that deployers consume. External systems (a BG controller, a deploy orchestrator)
+call the EnvGene Instance pipeline when they need configuration updated for the next step of a
+release.
+
+BGD in EnvGene requires the **No-CMDB v2** deployment architecture
+([`noCmdbVersion: v2`](/docs/deployment-architecture.md#no-cmdb-v2) in the Environment Inventory,
+[`PIPELINE_TYPE: GITLAB_DEPLOY`](/docs/instance-pipeline-parameters.md#pipeline_type) on pipeline
+runs).
+
+To set up a BG environment, start with
+[Configure Blue-Green Deployment](/docs/how-to/blue-green-deployment-configure.md). To run a
+deploy into one side, see
+[Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md).
+
+## Why EnvGene supports Blue-Green
+
+A BG release is not a single action. It is a sequence of preparatory steps where configuration
+must stay consistent across two sides that share one logical application but may diverge in
+template version, parameters, and deployed application versions.
+
+EnvGene addresses that by keeping both sides in one Environment Instance and recording which side
+is active, which is idle, and which is a candidate for promotion. That record lives in small
+**state marker files** in the environment folder (for example, `.origin-active`, `.peer-idle`).
+Deploy and lifecycle tools read the same Git state EnvGene writes.
+
+Without this model, operators would manually duplicate namespace trees, track versions by
+convention, and risk promoting a side whose inventory no longer matches its folder content.
+EnvGene ties together template rendering per side (`bgNsArtifacts`), namespace content, inventory,
+state, and Effective Set generation so the two sides stay comparable through the release cycle.
+
+## What a BG environment looks like
+
+At a conceptual level, a BG-enabled environment adds structure on top of a normal EnvGene
+environment:
+
+```text
+Environment
+├── BG Domain object          (names origin, peer, controller)
+├── Composite Structure       (groups baseline and satellite namespaces)
+├── Namespaces/
+│   ├── …-origin/             (one application side)
+│   ├── …-peer/               (the other application side)
+│   ├── …-bg-controller/      (coordination service)
+│   └── …/                    (other namespaces, unchanged by BGD)
+├── State marker files        (.origin-*, .peer-* in the environment root)
+└── Inventory                 (template pins, including per-side artifacts)
+```
+
+The [BG Domain](/docs/envgene-objects.md#bg-domain) object is the anchor. It declares which
+namespace is origin, which is peer, and which is controller, plus the controller URL and
+credentials reference. EnvGene validates during generation that every namespace named in the BG
+Domain exists in the environment.
+
+Origin and peer often share one **deploy postfix** in the Solution Descriptor (for example,
+`bss` maps to both `bss-origin` and `bss-peer` folders). EnvGene resolves the physical side
+through [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) on deploy runs.
+
+Each side can render from its own template artifact version via
+[`envTemplate.bgNsArtifacts`](/docs/envgene-configs.md) in the Environment Inventory. That allows
+the candidate side to run a newer template while the active side stays on the previous pin until
+promotion.
+
+A full working example lives under
+[`/docs/samples/blue-green-deployment/`](/docs/samples/blue-green-deployment/).
+
+## Two kinds of work on a BG environment
+
+Operators and automation interact with a BG environment through two distinct pipeline modes. The
+distinction matters because they change different things.
+
+| Kind | Pipeline mode | What changes |
+| --- | --- | --- |
+| **Deploy** | [`OPERATION_TYPE: DEPLOY`](/docs/instance-pipeline-parameters.md#operation_type) | Application versions on a chosen side (origin or peer), or on non-BG namespaces |
+| **Lifecycle** | [`OPERATION_TYPE: BGD`](/docs/instance-pipeline-parameters.md#operation_type) + [`BGD_OPERATION`](/docs/instance-pipeline-parameters.md#bgd_operation) | BG state markers, and during warmup also namespace content copied from active to candidate |
+
+**Deploy** answers: "Put this Solution Descriptor into the origin side, the peer side, the
+controller, or a standalone namespace." It renders fresh configuration from template artifacts and
+updates the Effective Set for the targeted namespaces.
+
+**Lifecycle** answers: "Advance the release stage - initialize the domain, warm up the candidate,
+promote, commit, or roll back." It updates state markers and, for warmup, prepares the candidate
+side as a copy of the active side before a new version is deployed there.
+
+Neither mode replaces the other. A typical forward release uses lifecycle steps to prepare and
+promote, and deploy steps to place application versions on the candidate side before promotion.
+
+## Deploy to one side
+
+On deploy, EnvGene updates only the namespaces from your Solution Descriptor. Other namespace
+folders in the environment stay as they are.
+
+When origin and peer share one deploy postfix, set
+[`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) to `origin` or `peer` for
+the side you deploy to.
+
+## Lifecycle in plain terms
+
+BG lifecycle moves the origin and peer namespaces through a small set of **roles** relative to
+traffic: **active** (serving), **idle** (standby), **candidate** (prepared for switch), and
+**legacy** (demoted after a successful promote).
+
+The forward path, in everyday language:
+
+1. **Init domain** - `OPERATION_TYPE=BGD`, `BGD_OPERATION=init-domain`. Register the BG Domain in
+   Git. Active side is origin; peer starts idle.
+2. **Warmup** - `OPERATION_TYPE=BGD`, `BGD_OPERATION=warmup`. Copy active-side configuration into
+   the idle side so it becomes a **candidate** starting point.
+3. **Deploy to candidate** - This is not a BGD lifecycle operation. It uses
+   `OPERATION_TYPE=DEPLOY` and targets the candidate side.
+4. **Promote** - `OPERATION_TYPE=BGD`, `BGD_OPERATION=promote`. Flip roles: candidate becomes
+   **active**, former active becomes **legacy**.
+5. **Commit** - `OPERATION_TYPE=BGD`, `BGD_OPERATION=commit`. Retire the legacy side back to
+   **idle**, leaving the new active side in place.
+6. **Rollback** - `OPERATION_TYPE=BGD`, `BGD_OPERATION=rollback`. Return the lifecycle to the same
+   observable repository state as commit: the legacy side becomes **idle**, and the active side
+   stays active.
+
+In other words, for BG lifecycle operations EnvGene always uses `OPERATION_TYPE=BGD`. The specific
+operation is selected through `BGD_OPERATION`, whose supported values are `warmup`, `commit`,
+`promote`, `rollback`, and `init-domain`.
+
+EnvGene also supports a **reverse** path (promotion in the opposite direction). The same
+lifecycle operation names apply; which side is active is determined from the current state
+markers, not from fixed origin/peer labels.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Origin: active\nPeer: none" as s0
+    state "Origin: active\nPeer: idle" as s1
+    state "Origin: active\nPeer: candidate" as s2
+    state "Origin: legacy\nPeer: active" as s3
+    state "Origin: idle\nPeer: active" as s4
+
+    s0 --> s1: init-domain
+    s1 --> s2: warmup
+    s2 --> s3: promote
+    s3 --> s4: commit or rollback
+```
+
+The same lifecycle can be read as a small state-change table:
+
+| `BGD_OPERATION` | State pair before | State pair after | Meaning |
+| --- | --- | --- | --- |
+| `init-domain` | `(ACTIVE, NONE)` | `(ACTIVE, IDLE)` | Initialize the BG pair |
+| `warmup` | `(ACTIVE, IDLE)` | `(ACTIVE, CANDIDATE)` | Prepare the idle side for the next deploy |
+| `promote` | `(ACTIVE, CANDIDATE)` | `(LEGACY, ACTIVE)` | Switch the active side |
+| `commit` | `(LEGACY, ACTIVE)` | `(IDLE, ACTIVE)` | Finish the cycle and retire the legacy side |
+| `rollback` | `(LEGACY, ACTIVE)` | `(IDLE, ACTIVE)` | Return to the same repository state as commit |
+
+State files are the Git markers for these pairs. In the reverse cycle, EnvGene uses the same
+operation names and resolves the active and idle sides from the current marker files.
+
+Parameter names and allowed values are in
+[Instance pipeline parameters](/docs/instance-pipeline-parameters.md).
+
+## What state files tell you
+
+State marker files are empty files in the environment root named `.<role>-<state>` (for example,
+`.peer-candidate`). They are the ground truth in Git for which lifecycle role each side currently
+holds.
+
+| Example file | Meaning |
+| --- | --- |
+| `.origin-active` | Origin namespace is serving traffic |
+| `.peer-idle` | Peer namespace is standby, not in the release path |
+| `.peer-candidate` | Peer namespace is prepared for promotion |
+| `.origin-legacy` | Origin was demoted after peer promotion |
+
+When a BGD lifecycle run completes, EnvGene updates the marker files from the
+[`BG_STATE`](/docs/instance-pipeline-parameters.md#bg_state) pipeline parameter. The caller
+passes the target state for origin and peer; EnvGene writes the matching `.origin-<state>` and
+`.peer-<state>` files and removes the previous markers. Only those two state values are used -
+other fields in `BG_STATE` do not affect the markers.
+
+You can inspect the marker files directly in the Instance repository to see where a release
+stands without opening cluster consoles.
+
+Schema and naming rules:
+[BG State Files](/docs/envgene-objects.md#bg-state-files).
+
+## Warmup and why it matters
+
+Warmup is the lifecycle step that makes the candidate side a **replica of the active side** in
+Git: namespace folder content (including applications), and the candidate's template artifact pin
+in inventory. Only the namespace **name** stays that of the candidate side.
+
+That matters because a candidate should start from what production actually runs, not from an
+empty or stale template render. After warmup, deploy puts the **delta** (new application
+versions) on top of a known baseline. Warmup retry from a failed state updates markers only; it
+does not repeat the copy until the state allows it again.
+
+Warmup also feeds deploy planning: EnvGene builds a deploy-plan delta for the candidate from the
+active side's plan so Effective Set generation covers the warmed namespace consistently.
+
+## Who triggers what
+
+EnvGene sits in a chain of tools. None of the orchestration products below are part of EnvGene
+Core, but they explain why the Instance pipeline receives BG-related parameters.
 
 ```mermaid
 sequenceDiagram
-    participant BGO as BG Operator
-    participant BGP as BG Plugin
-    participant EGP as EnvGene Pipeline
-    participant EGR as EnvGene Repo
+    participant Ops as Release operator
+    participant BG as BG controller / plugin
+    participant Deploy as Deploy orchestrator
+    participant EG as EnvGene Instance pipeline
+    participant Repo as Instance repository
 
-    BGO->>BGP: POST /api/bluegreen/v1/operation/<operation>
-    Note over BGO,BGP: BGState with namespace states and versions
+    Ops->>BG: Request lifecycle step
+    BG->>EG: OPERATION_TYPE BGD, BGD_OPERATION, BG_STATE
+    EG->>Repo: Update state, warmup copy, Effective Set
+    EG-->>BG: Result
 
-    BGP->>BGP: Validate BG operation request
-    BGP->>EGP: Trigger Instance Pipeline
-    Note over BGP,EGP: Parameters: BG_MANAGE=true, BG_STATE=<...>, ENV_NAMES=<...>
-    EGP-->>BGP: Operation result (200 OK or error)
-    BGP-->>BGO: Operation result (200 OK or error)
-
-    EGP->>EGP: Execute bg_manage job
-
-    EGP->>EGP: Validate state transition
-
-    EGP->>EGR: Create/update BG state files
-
-    alt If the operation is `warmup`
-        EGP->>EGR: Copy namespace and child objects
-    end
+    Ops->>Deploy: Request version deploy
+    Deploy->>EG: OPERATION_TYPE DEPLOY, BG_NS_TARGET, APPLICATION_VERSIONS
+    EG->>Repo: Render target side, update Effective Set
+    EG-->>Deploy: Result
 ```
 
-Following sequence describes the deploy operation in the BG case. The deploy orchestrator triggers EnvGene, specifying `NS_BUILD_FILTER` for selective namespace processing.
-
-```mermaid
-sequenceDiagram
-    participant DP as Deploy Orchestrator
-    participant EGP as EnvGene Pipeline
-    participant CMDB as CMDB
-
-    DP->>EGP: Trigger Instance Pipeline
-    Note over DP,EGP: with NS_BUILD_FILTER
-    EGP->>EGP: Generate Environment Instance
-    Note over EGP,EGP: Only those namespaces that passed NS_BUILD_FILTER
-
-    alt
-        EGP->>CMDB: Import Environment Instance to CMDB
-    else
-        EGP->>EGP: Generate effective Set
-    end
-```
-
-> [!NOTE]
->
-> BG Operator, BG Plugin, and CMDB are not components of EnvGene.
-> They are conceptual external systems that interact with EnvGene as part of the blue-green deployment operations.
-
-The following functionality is used in these scenarios:
-
-- EnvGene stores BG domain configuration as a [BG Domain](/docs/envgene-objects.md#bg-domain) object
-- EnvGene generates a [BG Domain](/docs/envgene-objects.md#bg-domain) from a [BG Domain Template](/docs/envgene-objects.md#bg-domain-template) as part of Environment Instance generation
-- EnvGene validates that namespaces referenced in the BG Domain object exist in the Environment during Environment Instance generation
-- EnvGene is able to generate particular [Namespaces](/docs/envgene-objects.md#namespace) only of Environment using [Namespace Render Filter](#namespace-render-filter) feature
-- EnvGene provides parameters describing BG domain in [Effective Set](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example)
-- EnvGene creates, updates and validates [BG state files](#bg-state-files) for peer and origin namespaces, based on BG Plugin call
-- EnvGene supports the [warmup operation](#warmup-operation) by copying [Namespace](/docs/envgene-objects.md#namespace) and [Application](/docs/envgene-objects.md#application) for origin/peer
-- EnvGene [imports](#cmdb-import) the BG domain object into CMDB
-
-### BG Related EnvGene objects
-
-- [BG Domain](/docs/envgene-objects.md#bg-domain): Configuration object that defines domain structure
-- [BG Domain Template](/docs/envgene-objects.md#bg-domain-template): Template used to generate BG Domain object during Environment Instance generation. During Environment Instance generation, EnvGene validates that all namespaces referenced in the generated BG Domain object (origin, peer, and controller namespaces) actually exist in the Environment. If any referenced namespace is missing, the generation fails with a validation error.
-- [BG State Files](/docs/envgene-objects.md#bg-state-files): Files that track origin and peer namespace states
-
-### Namespace Render Filter
-
-The Namespace Render Filter allows EnvGene to generate only selected [Namespaces](/docs/envgene-objects.md#namespace) when generation an Environment Instance. This enables targeted processing of specific namespaces based on their names or Blue-Green Namespace aliases, rather than generating the full Environment.
-
-For details, see: [Namespace Render Filter](/docs/features/namespace-render-filtering.md)
-
-### `bg_manage` Job
-
-This job is part of the Instance pipeline and does the following:
-
-- Validates namespace names in `BG_STATE` against the [BG Domain](/docs/envgene-objects.md#bg-domain) object in the Environment Instance
-- Validates BG states received in `BG_STATE` against BG state files in the repository
-- Creates/updates [BG state files](/docs/envgene-objects.md#bg-state-files)
-- During warmup, copies [Namespace](/docs/envgene-objects.md#namespace) and [Applications](/docs/envgene-objects.md#application) under it
-
-The criteria for running this job and its order relative to other jobs are described in [envgene-pipelines](/docs/envgene-pipelines.md).
-
-### BG Related Instance Pipeline Parameters
-
-- [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)
-- [`BG_MANAGE`](/docs/instance-pipeline-parameters.md#bg_manage)
-- [`BG_STATE`](/docs/instance-pipeline-parameters.md#bg_state)
-- [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)
-
-The set of parameters differs between GitLab and GitHub EnvGene pipelines.
-
-**GitLab CI Example:**
-
-```yaml
-variables:
-  ENV_NAMES: "sdp-dev/env-1"
-  BG_MANAGE: "true"
-  BG_STATE: "{\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}"
-```
-
-**GitHub Actions Example:**
-
-```yaml
-ENV_NAMES: "sdp-dev/env-1"
-GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}"
-```
-
-`INSTANCE_PIPELINE_PARAMETERS` deployment parameter should be passed along with BG_STATE and BG_MANAGE parameters while triggering Envgene pipeline.
-
-For example,
-
-If `INSTANCE_PIPELINE_PARAMETERS` is set with ENV_NAMES: sdp-dev/env-1,  CMDB_IMPORT: "true", DEPLOYMENT_TICKET_ID: "FAKE-000", the plugin should trigger Envgene pipeline with below parameters
-
-```yaml
-variables:
-  ENV_NAMES: "sdp-dev/env-1"
-  BG_MANAGE: "true"
-  BG_STATE: "{\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}"
-  CMDB_IMPORT: "true"
-  DEPLOYMENT_TICKET_ID: "FAKE-000"
-```
-
-### BG State Files
-
-BG state files track the current state of origin and peer namespaces in a Blue-Green Domain. BG state files indicate which namespace is currently active, idle, candidate, or in a legacy state during BG operations. BG state files are empty marker files created and updated by the `bg_manage` job to track BG lifecycle transitions. When a state changes, the old state file is removed and a new one is created with the updated state.
-
-**Storage Locations**:
-
-- Environment root: `<cluster-name>/<environment-name>/`
-
-**Naming Pattern**: `.<role>-<state>`
-
-- **Roles**: `origin`, `peer`
-- **States**: `active`, `idle`, `candidate`, `legacy`, `failedw`, `failedc`
-
-**Examples**:
-
-- `.origin-active` - Origin namespace is currently serving traffic
-- `.peer-candidate` - Peer namespace is prepared for promotion
-- `.origin-legacy` - Origin namespace was demoted after promotion
-- `.peer-idle` - Peer namespace is not in use
-- `.peer-failedw` - Peer namespace warmup operation failed
-- `.origin-failedc` - Origin namespace commit/promote operation failed
-
-#### Validation Algorithm
-
-The `bg_manage` job checks that Blue-Green Domain state transitions are correct, using a state machine with a fixed set of allowed transitions.
-
-**How Validation Works:**
-
-1. **Validate Namespace Names:**
-   The job validates that namespace names specified in `BG_STATE` match the corresponding namespaces defined in the [BG Domain](/docs/envgene-objects.md#bg-domain) object:
-   - `BG_STATE.originNamespace.name` must match `bg_domain.originNamespace.name`
-   - `BG_STATE.peerNamespace.name` must match `bg_domain.peerNamespace.name`
-   - `BG_STATE.controllerNamespace` must match `bg_domain.controllerNamespace.name`
-   - If any namespace name does not match, the job fails with an error message.
-
-2. **Detect Current State:**
-   The job looks for files like `.origin-<state>` and `.peer-<state>` in the environment root folder to determine the current states of the origin and peer namespaces.
-
-3. **Read Target State:**
-   It reads the desired new states from the `BG_STATE` parameter, which is provided as a JSON string.
-
-4. **Check Allowed Transitions:**
-   Using a table of allowed transitions (see below), it checks if moving from the current state to the target state is permitted.
-
-5. **Validate:**
-   If the transition is allowed, the job continues. If not, it stops and shows an error message explaining why the transition is invalid.
-
-**Allowed State Transitions:**
-
-| Current State         | Allowed Next States                        | Operation                                |
-|---------------------- |------------------------------------------- |------------------------------------------|
-| `(ACTIVE, NONE)`      | `(ACTIVE, IDLE)`                           | Init domain                              |
-| `(ACTIVE, IDLE)`      | `(ACTIVE, CANDIDATE)`, `(ACTIVE, FAILEDW)` | Warmup, Warmup failure                   |
-| `(ACTIVE, IDLE)`      | `(ACTIVE, IDLE)`                           | TBD                                      |
-| `(ACTIVE, CANDIDATE)` | `(LEGACY, ACTIVE)`, `(ACTIVE, FAILEDC)`    | Promote, Promote failure                 |
-| `(LEGACY, ACTIVE)`    | `(IDLE, ACTIVE)`, `(FAILEDC, ACTIVE)`      | Commit, Rollback failure                 |
-| `(IDLE, ACTIVE)`      | `(CANDIDATE,ACTIVE)`, `(FAILEDW,ACTIVE)`   | Reverse warmup, Reverse Warmup failure   |
-| `(CANDIDATE, ACTIVE)` | `(ACTIVE, LEGACY)`, `(FAILEDC, ACTIVE)`    | Reverse Promote, Reverse Promote failure |
-| `(ACTIVE, LEGACY)`    | `(ACTIVE, IDLE)`, `(ACTIVE, FAILEDC)`      | Reverse Commit, Rollback failure         |
-
-**Explanation of Terms:**
-
-- `ACTIVE`, `IDLE`, `CANDIDATE`, `LEGACY`, `FAILEDW`, `FAILEDC` are possible states for origin and peer namespaces.
-- `NONE` means no state file exists for that namespace. For example, `(ACTIVE, NONE)` means origin is active and peer namespace has no state file yet (initial state before domain init).
-- For example, `(ACTIVE, IDLE)` means origin is active and peer is idle.
-- The table shows which new state pairs are allowed from each current state pair, and what operation causes the transition.
-
-If you try to make a transition that is not in the table, the job will fail.
-
-### Warmup operation
-
-Unlike other BG operations, during `warmup` (forward flow) or `reverse warmup` (reverse flow) the contents of namespaces are copied.
-
-The `bg_manage` job syncs the namespace folders in the repository: it replaces the content of the candidate namespace folder with the content from the active namespace folder (including all nested `Application` objects and their files), **but keeps the `name` attribute from the candidate namespace.**
-
-As a result, the active and candidate namespace folders become identical (except for the `name` attribute).
-
-Additionally, during the warmup operation, the `bg_manage` job updates the Environment Inventory (`env_definition.yml`):
-
-- **Forward flow (warmup)**: Copies `envTemplate.bgNsArtifacts.origin` → `envTemplate.bgNsArtifacts.peer`
-- **Reverse flow (reverse warmup)**: Copies `envTemplate.bgNsArtifacts.peer` → `envTemplate.bgNsArtifacts.origin`
-
-This ensures that the candidate namespace will use the same template artifact version as the active namespace when it becomes active.
-
-### CMDB Import
-
-The CMDB Import feature creates, among other entities such as Cloud or Namespace the [Blue Green Domain](/docs/envgene-objects.md#bg-domain) in the CMDB.
-
-To do this, run the instance pipeline with the `CMDB_IMPORT: true` pipeline parameter.
-
-> [!NOTE]
->
-> Integration with a CMDB system is not part of EnvGene Core
-
-### BG Related Parameters in Effective Set
-
-When a BG Domain object is part of Environment Instance, EnvGene automatically adds BG-specific parameters to the Effective Set.
-
-In this process, it replaces the credentials reference with the actual credentials value and removes the `credentials` attribute. The credentials must be of type `usernamePassword`.
-
-**Topology Context (`parameters.yaml`):**
-
-```yaml
-bg_domain:
-  name: sdp-dev-env-1-bg-domain
-  type: bgdomain
-  originNamespace:
-    name: env-1-origin
-    type: namespace
-  peerNamespace:
-    name: env-1-peer
-    type: namespace
-  controllerNamespace:
-    name: env-1-controller
-    type: namespace
-    url: https://controller-env-1-controller.qubership.org
-```
-
-**Topology Context (`credentials.yaml`):**
-
-```yaml
-bg_domain:
-  controllerNamespace:
-    username: user-placeholder-123
-    password: pass-placeholder-123
-```
-
-Please refer to the [Effective Set](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example) documentation for more details.
-
-### BG Related Macros
-
-Some Template calculator CLI macros are calculated based on the BG domain object:
-
-- [`ORIGIN_NAMESPACE`](/docs/template-macros.md#origin_namespace)
-- [`PEER_NAMESPACE`](/docs/template-macros.md#peer_namespace)
-- [`CONTROLLER_NAMESPACE`](/docs/template-macros.md#controller_namespace)
-- [`BG_CONTROLLER_URL`](/docs/template-macros.md#bg_controller_url)
-- [`BG_CONTROLLER_LOGIN`](/docs/template-macros.md#bg_controller_login)
-- [`BG_CONTROLLER_PASSWORD`](/docs/template-macros.md#bg_controller_password)
-- [`BASELINE_ORIGIN`](/docs/template-macros.md#baseline_origin)
-- [`BASELINE_PEER`](/docs/template-macros.md#baseline_peer)
-- [`BASELINE_CONTROLLER`](/docs/template-macros.md#baseline_controller)
-- [`PUBLIC_IDENTITY_PROVIDER_URL`](/docs/template-macros.md#public_identity_provider_url)
-- [`PRIVATE_IDENTITY_PROVIDER_URL`](/docs/template-macros.md#private_identity_provider_url)
-
-### Use Cases
-
-Use cases for the `bg_manage` job are detailed in the [BG Operation in EnvGene Job](/docs/use-cases/blue-green-deployment.md).
+The BG controller (often exposed through a BG plugin API) drives lifecycle operations. The deploy
+orchestrator drives application version deploys and selects origin or peer through
+`BG_NS_TARGET` when both share one deploy postfix.
+
+EnvGene's role is to apply those requests faithfully to Git and regenerate deploy artifacts. Traffic
+switching and health checks happen outside EnvGene.
+
+## Where to read next
+
+Use this page for **understanding**. Follow the links below for **doing**, **lookup**, or
+**deeper design**.
+
+| If you want to… | Read |
+| --- | --- |
+| Set up templates, inventory, and a first BG environment | [Configure Blue-Green Deployment](/docs/how-to/blue-green-deployment-configure.md) |
+| Deploy application versions to origin, peer, controller, or other namespaces | [Blue-Green Deployment deploy operations](/docs/how-to/blue-green-deployment-deploy-operations.md) |
+| Look up BG Domain, state files, and object fields | [EnvGene objects - BG Domain](/docs/envgene-objects.md#bg-domain) |
+| Look up pipeline parameters (`BGD_OPERATION`, `BG_STATE`, `BG_NS_TARGET`) | [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) |
+| See folder naming and per-side template artifacts | [Environment Instance generation](/docs/features/environment-instance-generation.md) |
+| See BG parameters in the Effective Set | [Effective Set calculator - `bg_domain` example](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example) |
+| Copy a complete template and instance layout | [BGD samples](/docs/samples/blue-green-deployment/) |
+| Study pipeline step behavior (implementers) | [BGD sub-flows](/docs/technical-design/instance-pipeline/sub-flows/bgd.md), [`change_bg_state`](/docs/technical-design/instance-pipeline/steps/change-bg-state.md), [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md) |

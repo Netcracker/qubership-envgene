@@ -340,19 +340,21 @@ For information on use cases, refer to the [documentation](/docs/use-cases/sd-pr
 
 ## Invalid Input Combinations
 
-| ID  | Error Condition                                                                           |
-|:---:|:------------------------------------------------------------------------------------------|
-|  1  | `SD_SOURCE_TYPE` undefined with `SD_VERSION`/`SD_DATA`                                    |
-|  2  | `SD_VERSION` missing for `artifact` source                                                |
-|  3  | `SD_DATA` missing for `json` source                                                       |
-|  4  | Both `SD_REPO_MERGE_MODE` and `SD_DELTA` specified                                        |
-|  5  | Malformed JSON in `SD_DATA`                                                               |
-|  6  | Invalid `SD_REPO_MERGE_MODE` value                                                        |
-|  7  | `SD_DELTA=true` with no existing Delta SD (only for `extended-merge`)                     |
-|  8  | New Application without **corresponding** `deployGraph` entry (only for `extended-merge`) |
-|  9  | `version`/`type`/`deployMode` mismatch between SDs (only for `extended-merge`)            |
-| 10  | Delta SD contains Chunk not in Full SD (only for `extended-merge`)                        |
-| 11  | `deployGraph` presence mismatch between SDs (only for `extended-merge`)                   |
+| ID  | Error Condition                                                                               |
+|:---:|:----------------------------------------------------------------------------------------------|
+|  1  | `SD_SOURCE_TYPE` undefined with `SD_VERSION`/`SD_DATA`                                        |
+|  2  | `SD_VERSION` missing for `artifact` source                                                    |
+|  3  | `SD_DATA` missing for `json` source                                                           |
+|  4  | Both `SD_REPO_MERGE_MODE` and `SD_DELTA` specified                                            |
+|  5  | Malformed JSON in `SD_DATA`                                                                   |
+|  6  | Invalid `SD_REPO_MERGE_MODE` value                                                            |
+|  7  | `SD_DELTA=true` with no existing Delta SD (only for `extended-merge`)                         |
+|  8  | New Application without **corresponding** `deployGraph` entry (only for `extended-merge`)     |
+|  9  | `version`/`type`/`deployMode` mismatch between SDs (only for `extended-merge`)                |
+| 10  | Delta SD contains Chunk not in Full SD (only for `extended-merge`)                            |
+| 11  | `deployGraph` presence mismatch between SDs (only for `extended-merge`)                       |
+| 12  | Input SD contains duplicate `(Application Name, Application Version, deployPostfix)` entries  |
+| 13  | Existing `sd.yaml` in repository contains duplicate entries (checked before repository merge) |
 
 ## Test Cases
 

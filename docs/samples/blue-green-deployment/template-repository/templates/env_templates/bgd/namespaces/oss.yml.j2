@@ -1,0 +1,16 @@
+---
+# Plain composite satellite namespace, not part of the BG Domain.
+name: "{{ current_env.name }}-oss"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{ current_env.name }}"
+  - "solution-Application"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

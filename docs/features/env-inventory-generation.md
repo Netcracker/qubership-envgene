@@ -64,8 +64,9 @@ The generated Environment Inventory must be reused by other jobs in the same pip
 
 `ENV_INVENTORY_CONTENT` is the primary way to manage Inventory via pipeline. It allows external systems to create, fully replace and delete `env_definition.yml` and related Inventory objects. The parameter also supports creating files on different levels (`site`, `cluster`, `env`) via the `place` field.
 
-> **Note**
-> If `ENV_TEMPLATE_VERSION` is provided in the instance pipeline, it has higher priority than the template version specified in `env_definition.yml`
+> [!NOTE]
+> Applying `ENV_TEMPLATE_VERSION` is a separate pipeline step that runs after Inventory generation. See
+> [Template Version Update](/docs/use-cases/template-version-update.md)
 
 `ENV_SPECIFIC_PARAMS` and `ENV_INVENTORY_INIT` are legacy parameters and are deprecated. They do not cover the full set of Inventory management scenarios, therefore new integrations should use `ENV_INVENTORY_CONTENT`.
 
@@ -123,11 +124,13 @@ The exact target folder depends on the object type and the `place` value.
 | Parameter Set file | `/environments/<cluster-name>/<env-name>/Inventory/parameters/<paramset-name>.yml` | `/environments/<cluster-name>/parameters/<paramset-name>.yml` | `/environments/parameters/<paramset-name>.yml` |
 | Shared Credentials file | `/environments/<cluster-name>/<env-name>/Inventory/credentials/<credentials-file-name>.yml` | `/environments/<cluster-name>/credentials/<credentials-file-name>.yml` | `/environments/credentials/<credentials-file-name>.yml` |
 | Resource Profile Override file | `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<override-name>.yml` | `/environments/<cluster-name>/resource_profiles/<override-name>.yml` | `/environments/resource_profiles/<override-name>.yml` |
-| Shared Template Variable File | `/environments/<cluster-name>/<env-name>/shared-template-variables/<file-name>.yml` | `/environments/<cluster-name>/shared-template-variables/<file-name>.yml` | `/environments/shared-template-variables/<file-name>.yml` |
+| Shared Template Variable File | `/environments/<cluster-name>/<env-name>/Inventory/configurations/<file-name>.yml` | `/environments/<cluster-name>/configurations/<file-name>.yml` | `/environments/configurations/<file-name>.yml` |
 
 ##### Processing Model
 
-All operations specified in `ENV_INVENTORY_CONTENT` are processed atomically: either all requested changes are applied successfully, or none of them are applied. If any validation fails or any operation encounters an error, the entire transaction is rolled back and no files are modified.
+All operations specified in `ENV_INVENTORY_CONTENT` are validated before any file is modified. If validation
+fails, the job fails and no files are changed. If an operation fails during processing, the job fails and the
+pipeline stops before the `git_commit` step, so no changes are committed to the Instance repository.
 
 The order in which different object types are processed is not guaranteed and may vary. Objects within the same type (e.g., multiple items in `paramSets` array) are also processed in an arbitrary order.
 
@@ -137,7 +140,8 @@ Before processing any files, the system performs the following validations:
 
 **Parameter exclusivity validation:**
 
-If both `ENV_INVENTORY_CONTENT` and any of `ENV_INVENTORY_INIT` or `ENV_SPECIFIC_PARAMS` are provided, validation fails
+If both `ENV_INVENTORY_CONTENT` and any of `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` or `ENV_TEMPLATE_NAME`
+are provided, validation fails
 
 **JSON schema validation:**
 
@@ -201,9 +205,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
                     "prod-integration-creds"
                 ],
                 "envSpecificResourceProfiles": {
-                    "cloud": [
-                        "cloud-specific-profile"
-                    ]
+                    "cloud": "cloud-specific-profile"
                 }
             }
         }
@@ -302,7 +304,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
 ##### ENV_INVENTORY_CONTENT in JSON-in-string format
 
 ```json
-"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":[\"cloud-specific-profile\"]}}}},\"paramSets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-integration-creds\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}],\"sharedTemplateVariables\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-template-variables\",\"content\":{\"TEMPLATE_VAR_1\":\"prod-value-1\",\"TEMPLATE_VAR_2\":\"prod-value-2\",\"nested\":{\"key1\":\"nested-prod-value-1\",\"key2\":\"nested-prod-value-2\"}}},{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"name\":\"sample-cloud-template-variables\",\"content\":{\"CLOUD_VAR_1\":\"cloud-value-1\",\"CLOUD_VAR_2\":\"cloud-value-2\"}}]}"
+"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":\"cloud-specific-profile\"}}}},\"paramSets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-integration-creds\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}],\"sharedTemplateVariables\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"name\":\"prod-template-variables\",\"content\":{\"TEMPLATE_VAR_1\":\"prod-value-1\",\"TEMPLATE_VAR_2\":\"prod-value-2\",\"nested\":{\"key1\":\"nested-prod-value-1\",\"key2\":\"nested-prod-value-2\"}}},{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"name\":\"sample-cloud-template-variables\",\"content\":{\"CLOUD_VAR_1\":\"cloud-value-1\",\"CLOUD_VAR_2\":\"cloud-value-2\"}}]}"
 ```
 
 #### `ENV_SPECIFIC_PARAMS`
@@ -335,7 +337,7 @@ This example shows how to generate a new Environment Inventory (`env_definition.
     "tenantName": "<value>",
     "deployer": "<value>",
     "envSpecificParamsets": {
-      "<ns-template-name>": [
+      "<namespace-folder-name>": [
         "paramsetA"
       ],
       "cloud": [
@@ -438,8 +440,7 @@ envTemplate:
     - "prod-integration-creds"
 
   envSpecificResourceProfiles:
-    cloud:
-      - "cloud-specific-profile"
+    cloud: "cloud-specific-profile"
 ```
 
 ##### Parameter Sets
@@ -476,7 +477,7 @@ prod-integration-creds:
 **Result**: a Resource Profile Override file is generated from resourceProfiles[].content and stored based on resourceProfiles[].place.
 
 ```yaml
-# /environments/<cluster-name>/Inventory/resource_profiles/cloud-specific-profile.yml
+# /environments/<cluster-name>/resource_profiles/cloud-specific-profile.yml
 
 name: "cloud-specific-profile"
 baseline: "dev"
@@ -499,7 +500,7 @@ applications:
 **Result**: a Shared Template Variable File is generated from sharedTemplateVariables[].content and stored based on sharedTemplateVariables[].place.
 
 ```yaml
-# /environments/shared-template-variables/prod-template-variables.yml
+# /environments/configurations/prod-template-variables.yml
 
 TEMPLATE_VAR_1: "prod-value-1"
 TEMPLATE_VAR_2: "prod-value-2"
@@ -509,7 +510,7 @@ nested:
 ```
 
 ```yaml
-# /environments/<cluster-name>/shared-template-variables/sample-cloud-template-variables.yml
+# /environments/<cluster-name>/configurations/sample-cloud-template-variables.yml
 
 CLOUD_VAR_1: "cloud-value-1"
 CLOUD_VAR_2: "cloud-value-2"
@@ -660,7 +661,7 @@ envTemplate:
     <key>: <value>
   envSpecificParamsets:
     cloud: [ "paramsetA" ]
-    <ns-template-name>: [ "paramsetB" ]
+    <namespace-folder-name>: [ "paramsetB" ]
   sharedMasterCredentialFiles: [ "inventory_generation_creds" ]
   name: <env-template-name>
   artifact: <app:ver>

@@ -58,4 +58,6 @@ public class NamespaceDTO {
     private final String tenantName;
     private final String cloudName;
     private final List<ApplicationLinkDTO> applications;
+    @Builder.Default
+    private final boolean cleaned=false;
 }

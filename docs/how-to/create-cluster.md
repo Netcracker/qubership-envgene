@@ -86,8 +86,8 @@ In this approach, the [Cloud](/docs/envgene-objects.md) is generated from the [C
 
    - Collect all required parameters necessary to define the [Cloud](/docs/envgene-objects.md).
    - Assemble the [Cloud Passport](/docs/envgene-objects.md#cloud-passport) using the expected format. Refer to the sample:
-     - [cluster-01.yml](/docs/samples/instance-repository/environments/cluster-01/cloud-passport/cluster-01.yml)
-     - [cluster-01-creds.yml](/docs/samples/instance-repository/environments/cluster-01/cloud-passport/cluster-01-creds.yml)
+     - [passport.yml](/docs/samples/instance-repository/environments/cluster-01/cloud-passport/passport.yml)
+     - [passport-creds.yml](/docs/samples/instance-repository/environments/cluster-01/cloud-passport/passport-creds.yml)
    - Place it under the right location: `/environments/<cluster-name>/cloud-passport/`
 
    Example:
@@ -96,21 +96,24 @@ In this approach, the [Cloud](/docs/envgene-objects.md) is generated from the [C
    └── environments
        └── cluster-01
            └── cloud-passport
-               ├── cluster-01.yml
-               └── cluster-01-creds.yml
+               ├── passport.yml
+               └── passport-creds.yml
    ```
 
 4. **Commit and push your changes**
 
 ### [Manual Cloud Passport] Notes
 
-In this approach, you must manually set the `inventory.cloudPassport` attribute in the [`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml).
+When the passport is named `passport.yml`, it auto-associates with the environment and no
+`inventory.cloudPassport` attribute is needed. If you use a different passport name, set the
+`inventory.cloudPassport` attribute in the [`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml)
+to that name.
 
-Example of `env_definition.yml`:
+Example of `env_definition.yml` referencing a differently named passport:
 
 ```yaml
   inventory:
-    cloudPassport: cluster-01
+    cloudPassport: passport-infra
 ```
 
 ## 3. Creating a Cluster Using Cloud Passport Discovery
@@ -195,13 +198,17 @@ In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated using
 
 ### [Cloud Passport Discovery] Notes
 
-In this approach, you must manually set the `inventory.cloudPassport` attribute in the [`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml).
+Discovery writes the passport named after the cluster directory (`<cluster-name>.yml`), which
+auto-associates with every environment in the cluster, so no `inventory.cloudPassport` attribute is
+needed. Set the `inventory.cloudPassport` attribute in the
+[`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml) only when you reference a differently
+named passport.
 
-Example of `env_definition.yml`:
+Example of `env_definition.yml` referencing a differently named passport:
 
    ```yaml
    inventory:
-     cloudPassport: cluster-01
+     cloudPassport: passport-infra
    ```
 
 ## Results

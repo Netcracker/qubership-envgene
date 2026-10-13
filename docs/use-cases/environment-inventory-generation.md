@@ -25,18 +25,18 @@
     - [UC-EINV-STV-1: Create Shared Template Variable file (`create_or_replace`, file does not exist)](#uc-einv-stv-1-create-shared-template-variable-file-create_or_replace-file-does-not-exist)
     - [UC-EINV-STV-2: Replace Shared Template Variable file (create\_or\_replace, file exists)](#uc-einv-stv-2-replace-shared-template-variable-file-create_or_replace-file-exists)
     - [UC-EINV-STV-3: Delete Shared Template Variable file](#uc-einv-stv-3-delete-shared-template-variable-file)
-    - [UC-EINV-AT-ALL-1: Rollback all Inventory changes if any operation fails (negative, atomic processing)](#uc-einv-at-all-1-rollback-all-inventory-changes-if-any-operation-fails-negative-atomic-processing)
-  - [Template Version Update](#template-version-update)
-    - [UC-EINV-TV-1: Apply `ENV_TEMPLATE_VERSION` (`PERSISTENT` vs `TEMPORARY`)](#uc-einv-tv-1-apply-env_template_version-persistent-vs-temporary)
+    - [UC-EINV-AT-ALL-1: Fail without committing changes if any operation fails (negative)](#uc-einv-at-all-1-fail-without-committing-changes-if-any-operation-fails-negative)
 
 ---
 
 ## Overview
 
-This document describes use cases for **Environment Inventory Generation** — creating or replacing `env_definition.yml`, `paramsets`, `resource_profiles`, and `credentials` using `ENV_INVENTORY_CONTENT`, as well as template version update in `PERSISTENT` and `TEMPORARY` modes.
+This document describes use cases for **Environment Inventory Generation** — creating or replacing `env_definition.yml`, `paramsets`, `resource_profiles`, and `credentials` using `ENV_INVENTORY_CONTENT`.
 
-> **Note (template version priority):**  
-> If `ENV_TEMPLATE_VERSION` is passed to the Instance pipeline, it has **higher priority** than the template version specified in `env_definition.yml` (`envDefinition.content.envTemplate.*`).
+> [!NOTE]
+> Applying `ENV_TEMPLATE_VERSION` is a separate pipeline step that runs after Inventory generation and
+> therefore overrides the version from `envDefinition.content.envTemplate.*`. See
+> [Template Version Update](/docs/use-cases/template-version-update.md).
 
 ---
 
@@ -56,11 +56,10 @@ Instance pipeline (GitLab or GitHub) is started with:
 - `ENV_NAMES: <cluster-name>/<env-name>`
 - `ENV_INVENTORY_CONTENT: <payload>`
   - Examples: [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
-- `ENV_TEMPLATE_VERSION: <template-artifact>` (optional; if provided, it has higher priority than the version from `envDefinition.content.envTemplate.*`)
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates `envDefinition` against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -72,16 +71,14 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
    5. Creates `Inventory/` directory if missing.
    6. Creates `env_definition.yml` using `envDefinition.content`.
-   7. If `ENV_TEMPLATE_VERSION` is provided, applies it as the template version (higher priority).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits created files into the Instance repository.
 
 **Results:**
 
 1. The file is created:
    - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-2. If `ENV_TEMPLATE_VERSION` is provided, it overrides the version from `envDefinition.content.envTemplate.*`.
-3. Changes are committed.
+2. Changes are committed.
 
 ---
 
@@ -99,11 +96,10 @@ Instance pipeline (GitLab or GitHub) is started with:
 - `ENV_NAMES: <cluster-name>/<env-name>`
 - `ENV_INVENTORY_CONTENT: <payload>`
   - Examples: [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
-- `ENV_TEMPLATE_VERSION: <template-artifact>` (optional; if provided, it has higher priority than the version from `envDefinition.content.envTemplate.*`)
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates `envDefinition` against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -114,16 +110,14 @@ Instance pipeline (GitLab or GitHub) is started with:
    4. Resolves target path:
       - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
    5. Replaces `env_definition.yml` using `envDefinition.content` (fully overwrites the file).
-   6. If `ENV_TEMPLATE_VERSION` is provided, applies it as the template version (higher priority).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits updated files into the Instance repository.
 
 **Results:**
 
 1. The file is replaced (fully overwritten):
    - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-2. If `ENV_TEMPLATE_VERSION` is provided, it overrides the version from `envDefinition.content.envTemplate.*`.
-3. Changes are committed.
+2. Changes are committed.
 
 ---
 
@@ -144,7 +138,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates `envDefinition` against the request schema:
       - `envDefinition.action == delete`
@@ -154,7 +148,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    4. Deletes the entire environment directory:
       - `/environments/<cluster-name>/<env-name>/`
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits repository changes into the Instance repository.
 
 **Results:**
@@ -169,7 +163,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    - `/environments/<cluster-name>/<env-name>/Inventory/parameters/*`
    - `/environments/<cluster-name>/<env-name>/Inventory/credentials/*`
    - `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/*`
-   - `/environments/<cluster-name>/<env-name>/shared-template-variables/*`
+   - `/environments/<cluster-name>/<env-name>/Inventory/configurations/*`
 4. Changes are committed.
 
 ---
@@ -199,7 +193,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `paramsets[]` item against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -209,11 +203,11 @@ Instance pipeline (GitLab or GitHub) is started with:
    3. Extracts `<paramset-name>` from `content.name`.
    4. Resolves target path by `place`:
       - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/parameters/<paramset-name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/Inventory/parameters/<paramset-name>.yml`
-      - `place=site` → `/environments/Inventory/parameters/<paramset-name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/parameters/<paramset-name>.yml`
+      - `place=site` → `/environments/parameters/<paramset-name>.yml`
    5. Creates `parameters/` directory if missing.
    6. Creates the paramset file using `content` (create-or-replace semantics; in this UC the file is expected to be missing).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits created files into the Instance repository.
 
 **Results:**
@@ -247,7 +241,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `paramsets[]` item against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -257,7 +251,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    3. Extracts `<paramset-name>` from `content.name`.
    4. Resolves target path by `place`.
    5. Replaces the paramset file using `content` (fully overwrites the file).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits updated files into the Instance repository.
 
 **Results:**
@@ -291,7 +285,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `paramSets[]` item against the request schema:
       - `action == delete`
@@ -300,12 +294,12 @@ Instance pipeline (GitLab or GitHub) is started with:
    3. Extracts `<paramset-name>` from `content.name`.
    4. Resolves target path by `place`:
       - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/parameters/<paramset-name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/Inventory/parameters/<paramset-name>.yml`
-      - `place=site` → `/environments/Inventory/parameters/<paramset-name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/parameters/<paramset-name>.yml`
+      - `place=site` → `/environments/parameters/<paramset-name>.yml`
    5. Deletes the target paramset file if it exists.
       - Directories are not removed.
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits repository changes into the Instance repository.
 
 **Results:**
@@ -341,7 +335,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `credentials[]` item against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -350,12 +344,12 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `name` is present
       - `content` is present
    3. Resolves target path by `place`:
-      - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/credentials/inventory_generation_creds.yml`
-      - `place=cluster` → `/environments/<cluster-name>/Inventory/credentials/inventory_generation_creds.yml`
-      - `place=site` → `/environments/credentials/inventory_generation_creds.yml`
+      - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/credentials/<credentials-file-name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/credentials/<credentials-file-name>.yml`
+      - `place=site` → `/environments/credentials/<credentials-file-name>.yml`
    4. Creates `credentials/` directory if missing (for `env`/`cluster` levels).
    5. Creates the credentials file using `content` (create-or-replace semantics; in this UC the file is expected to be missing).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits created files into the Instance repository.
 
 **Results:**
@@ -389,7 +383,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `credentials[]` item against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -399,7 +393,7 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `content` is present
    3. Resolves target path by `place`.
    4. Replaces the credentials file using `content` (fully overwrites the file).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits updated files into the Instance repository.
 
 **Results:**
@@ -433,7 +427,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `credentials[]` item against the request schema:
       - `action == delete`
@@ -444,7 +438,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    4. Deletes the target credentials file if it exists.
       - Directories are not removed.
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits repository changes into the Instance repository.
 
 **Results:**
@@ -480,7 +474,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `resourceProfiles[]` item against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -490,11 +484,11 @@ Instance pipeline (GitLab or GitHub) is started with:
    3. Extracts `<override-name>` from `content.name`.
    4. Resolves target path by `place`:
       - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<override-name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/Inventory/resource_profiles/<override-name>.yml`
-      - `place=site` → `/environments/Inventory/resource_profiles/<override-name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/resource_profiles/<override-name>.yml`
+      - `place=site` → `/environments/resource_profiles/<override-name>.yml`
    5. Creates `resource_profiles/` directory if missing.
    6. Creates the override file using `content` (create-or-replace semantics; in this UC the file is expected to be missing).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits created files into the Instance repository.
 
 **Results:**
@@ -528,7 +522,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `resourceProfiles[]` item against the request schema:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
@@ -538,7 +532,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    3. Extracts `<override-name>` from `content.name`.
    4. Resolves target path by `place`.
    5. Replaces the override file using `content` (fully overwrites the file).
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits updated files into the Instance repository.
 
 **Results:**
@@ -572,7 +566,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `resourceProfiles[]` item against the request schema:
       - `action == delete`
@@ -586,7 +580,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    5. Deletes the target override file if it exists.
       - Directories are not removed.
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits repository changes into the Instance repository.
 
 **Results:**
@@ -604,9 +598,9 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Pre-requisites:**
 
 1. The target Shared Template Variable file does not exist (for the resolved `place` and `name`):
-   - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-   - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-   - `place=site` → `/environments/shared-template-variables/<name>.yml`
+   - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+   - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+   - `place=site` → `/environments/configurations/<name>.yml`
 
 **Trigger:**
 
@@ -625,7 +619,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `sharedTemplateVariables[]` item against the request schema:
       - `/docs/features/env-inventory-generation.md`
@@ -634,13 +628,13 @@ Instance pipeline (GitLab or GitHub) is started with:
       - `name` is present
       - `content` is present
    3. Resolves target path by `place`:
-      - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-      - `place=site` → `/environments/shared-template-variables/<name>.yml`
-   4. Creates `shared-template-variables/` directory if missing.
+      - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+      - `place=site` → `/environments/configurations/<name>.yml`
+   4. Creates the `configurations/` directory if missing.
    5. Creates the Shared Template Variable file using `content` (create-or-replace semantics; in this UC the file is expected to be missing).
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits created files into the Instance repository.
 
 **Results:**
@@ -657,9 +651,9 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Pre-requisites:**
 
 1. The target Shared Template Variable file exists (for the resolved `place` and `name`):
-   - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-   - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-   - `place=site` → `/environments/shared-template-variables/<name>.yml`
+   - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+   - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+   - `place=site` → `/environments/configurations/<name>.yml`
 
 **Trigger:**
 
@@ -678,7 +672,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `sharedTemplateVariables[]` item against the request schema:
       - `/docs/features/env-inventory-generation.md`
@@ -689,7 +683,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    3. Resolves target path by `place`.
    4. Replaces the Shared Template Variable file using `content` (fully overwrites the file).
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits updated files into the Instance repository.
 
 **Results:**
@@ -705,9 +699,9 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Pre-requisites:**
 
 1. The target Shared Template Variable file exists (for the resolved `place` and `name`):
-   - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-   - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-   - `place=site` → `/environments/shared-template-variables/<name>.yml`
+   - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+   - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+   - `place=site` → `/environments/configurations/<name>.yml`
 
 **Trigger:**
 
@@ -725,20 +719,20 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Validates the `sharedTemplateVariables[]` item against the request schema:
       - `action == delete`
       - `place ∈ { env, cluster, site }`
       - `name` is present
    3. Resolves target path by `place`:
-      - `place=env` → `/environments/<cluster-name>/<env-name>/shared-template-variables/<name>.yml`
-      - `place=cluster` → `/environments/<cluster-name>/shared-template-variables/<name>.yml`
-      - `place=site` → `/environments/shared-template-variables/<name>.yml`
+      - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/configurations/<name>.yml`
+      - `place=cluster` → `/environments/<cluster-name>/configurations/<name>.yml`
+      - `place=site` → `/environments/configurations/<name>.yml`
    4. Deletes the target Shared Template Variable file if it exists.
       - Directories are not removed.
 
-2. The `git_commit` job runs:
+2. The `git_commit` step runs:
    1. Commits repository changes into the Instance repository.
 
 **Results:**
@@ -749,7 +743,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 ---
 
-### UC-EINV-AT-ALL-1: Rollback all Inventory changes if any operation fails (negative, atomic processing)
+### UC-EINV-AT-ALL-1: Fail without committing changes if any operation fails (negative)
 
 **Pre-requisites:**
 
@@ -774,72 +768,24 @@ During processing of `ENV_INVENTORY_CONTENT`, at least one operation fails .
 
 **Steps:**
 
-1. The `env_inventory_generation` job runs:
+1. The `env_inventory_generation` step runs:
    1. Reads and parses `ENV_INVENTORY_CONTENT`.
    2. Runs validations:
       - Parameter exclusivity validation:
-        - If `ENV_INVENTORY_CONTENT` is provided together with `ENV_INVENTORY_INIT` or `ENV_SPECIFIC_PARAMS`, validation fails.
+        - If `ENV_INVENTORY_CONTENT` is provided together with `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS`
+          or `ENV_TEMPLATE_NAME`, validation fails.
       - JSON schema validation:
         - `ENV_INVENTORY_CONTENT` is validated against `/schemas/env-inventory-content.schema.json`.
-   3. Starts atomic processing of all requested operations (order between object types is not guaranteed).
-   4. Applies some operations (examples of partial progress):
-      - Creates required directories (e.g., `Inventory`, `parameters`, `credentials`, `resource_profiles`, `shared-template-variables`).
-      - Creates or replaces files (e.g., `env_definition.yml`, paramset files, credential files, resource profile overrides, shared template variables).
-   5. While processing one of operations, an error occurs:
-      - Schema validation fails for one object content, **or**
-      - Any file write/delete operation fails.
-   6. Performs rollback:
-      - Reverts all files created/changed during this job run.
-      - Restores overwritten files to their previous state.
-      - Removes directories/files created only during this run.
-   7. Fails the job with a readable error message in logs.
+   3. If validation fails, the step fails with a readable error message before any file is modified.
+   4. Otherwise starts processing of all requested operations (order between object types is not guaranteed).
+   5. If an operation fails during processing, the step fails with a readable error message. Files already
+      written in the runner workspace are not reverted.
 
-2. The `git_commit` job does **not** commit any changes (because there must be no net changes after rollback).
+2. The pipeline stops on the failed step. The `git_commit` step does not run, so no changes are committed to the
+   Instance repository.
 
 **Results:**
 
-1. No files are modified in the Instance repository after the pipeline run ).
-2. Any files created during this run are removed.
-3. Any overwritten files are restored to the original state.
-4. Any directories created only during this run are removed.
-5. Pipeline logs contain a readable error message explaining the failure reason.
-6. No changes are committed.
+1. No changes are committed to the Instance repository.
+2. Pipeline logs contain a readable error message explaining the failure reason.
 
----
-
-## Template Version Update
-
-### UC-EINV-TV-1: Apply `ENV_TEMPLATE_VERSION` (`PERSISTENT` vs `TEMPORARY`)
-
-**Pre-requisites:**
-
-1. Environment Inventory exists:
-   - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with:
-
-- `ENV_NAMES: <cluster-name>/<env-name>`
-- `ENV_TEMPLATE_VERSION: <template-artifact>`
-- `ENV_TEMPLATE_VERSION_UPDATE_MODE: PERSISTENT | TEMPORARY` (optional; default: `PERSISTENT`)
-
-**Steps:**
-
-1. The `env_inventory_generation` job runs:
-   1. Reads `ENV_TEMPLATE_VERSION_UPDATE_MODE` (default: `PERSISTENT`).
-   2. Applies `ENV_TEMPLATE_VERSION`:
-      - **PERSISTENT**:
-        - Updates template version in `env_definition.yml`
-          (`envTemplate.artifact` or `envTemplate.templateArtifact.artifact.version`).
-      - **TEMPORARY**:
-        - Does not change `envTemplate.*` in `env_definition.yml`.
-        - Writes the applied version into:
-          - `generatedVersions.generateEnvironmentLatestVersion: "<ENV_TEMPLATE_VERSION>"`
-2. The `git_commit` job runs:
-   1. Commits updated `env_definition.yml` into the Instance repository.
-
-**Results:**
-
-1. **PERSISTENT**: template version in `env_definition.yml` is updated and committed.
-2. **TEMPORARY**: `generatedVersions.generateEnvironmentLatestVersion` is updated and committed; `envTemplate.*` remains unchanged.

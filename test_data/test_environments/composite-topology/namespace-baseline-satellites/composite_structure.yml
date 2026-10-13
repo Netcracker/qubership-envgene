@@ -1,0 +1,9 @@
+baseline:
+  type: namespace
+  name: env-1-core
+
+satellites:
+  - type: namespace
+    name: env-1-oss
+  - type: namespace
+    name: env-1-bss

@@ -1,0 +1,9 @@
+name: core
+deployParameters: {}
+deployParameterSets: []
+e2eParameters:
+  test_config: ${config_endpoint}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  config_endpoint: "https://config.example.com"
+technicalConfigurationParameterSets: []

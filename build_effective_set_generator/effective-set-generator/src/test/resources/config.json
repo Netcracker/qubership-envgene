@@ -1,6 +1,7 @@
 {
   "deployment": {
-    "username": "${creds.get(\"minio-cred\").username}"
+    "username": "${creds.get(\"minio-cred\").username}",
+    "json-exporter": "${creds.get(\"minio-cred\").password}"
   },
   "runtime": {
     "password": "${STORAGE_PASSWORD}"

@@ -1,0 +1,22 @@
+---
+# One namespace template renders both the origin and peer sides via template_override.name.
+name: "{{ current_env.name }}-bss"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{ current_env.name }}"
+  - "solution-Application"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+# The resource profile and parametersets bound here apply to both origin and peer,
+# since both sides render from this template.
+profile:
+  name: "bss-dev-override"
+  baseline: "dev"
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets:
+  - "bss"
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

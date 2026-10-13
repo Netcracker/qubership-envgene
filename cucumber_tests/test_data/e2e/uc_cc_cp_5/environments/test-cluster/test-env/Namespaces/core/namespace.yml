@@ -1,0 +1,9 @@
+name: core
+deployParameters:
+  override_key: "original-value"
+  web: "service-name"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

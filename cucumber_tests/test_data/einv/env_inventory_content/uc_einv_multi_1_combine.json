@@ -1,0 +1,40 @@
+{
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "app_params",
+        "parameters": {
+          "multi": true
+        }
+      }
+    }
+  ],
+  "credentials": [
+    {
+      "action": "create_or_replace",
+      "place": "cluster",
+      "name": "db_creds",
+      "content": {
+        "db_creds": {
+          "type": "usernamePassword",
+          "data": {
+            "username": "multi_user",
+            "password": "multi_password"
+          }
+        }
+      }
+    }
+  ],
+  "resourceProfiles": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "db_profile",
+        "applications": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "sharedTemplateVariables": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "name": "prod_vars",
+      "content": {
+        "key": "value"
+      }
+    }
+  ]
+}

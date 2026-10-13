@@ -105,8 +105,7 @@ envTemplate:
   # in the Template Descriptor, or by the Namespace template filename without extension)
   # Example:
   #   envSpecificResourceProfiles:
-  #     bss:
-  #       - bss-override
+  #     bss: bss-override
   envSpecificResourceProfiles: {}
   # Optional
   # Array of filenames containing credentials that will be merged with `additionalTemplateVariables`

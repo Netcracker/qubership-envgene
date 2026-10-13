@@ -340,7 +340,7 @@ composite_structure: {}
 bg_domain: {}
 ```
 
-The topology context is consumed by orchestration tools that need to understand which namespaces belong to an environment, how they relate to each other, and cluster connection details. `composite_structure` and `bg_domain` are empty when not configured for this environment.
+The topology context is consumed by orchestration tools that need to understand which namespaces belong to an environment, how they relate to each other, and cluster connection details. `composite_structure` is empty for a non-composite environment. `bg_domain` is empty for a non-Blue-Green environment and for an environment whose BG Domain is embedded inline in `composite_structure`.
 
 The `topology/credentials.yaml` file contains per-namespace Kubernetes service account tokens (SOPS-encrypted):
 

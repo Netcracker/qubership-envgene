@@ -1,0 +1,7 @@
+baseline:
+  type: bgdomain
+  name: bss
+
+satellites:
+  - type: bgdomain
+    name: bss

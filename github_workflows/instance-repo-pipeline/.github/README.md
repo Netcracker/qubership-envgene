@@ -1,4 +1,4 @@
-# EnvGene GitHub Workflow
+# EnvGene GitHub workflow
 
 <div align="center">
 
@@ -9,83 +9,60 @@ User Guide
 
 </div>
 
-![EnvGene Workflow](docs/assets/envgene-workflow-header.png)
-
-- [EnvGene GitHub Workflow](#envgene-github-workflow)
+- [EnvGene GitHub workflow](#envgene-github-workflow)
   - [Overview](#overview)
   - [Installation](#installation)
     - [Prerequisites](#prerequisites)
-    - [Step 1: Copy the Pipeline](#step-1-copy-the-pipeline)
-    - [Step 2: Configure Required Secrets](#step-2-configure-required-secrets)
-    - [Step 3: Optional — Repository Variables](#step-3-optional--repository-variables)
-    - [Step 4: Optional — Customize Configuration](#step-4-optional--customize-configuration)
-    - [Verifying the Setup](#verifying-the-setup)
-  - [Quick Start](#quick-start)
-  - [Workflow Structure](#workflow-structure)
-    - [Pipeline Steps](#pipeline-steps)
-      - [Job: `process_environment_variables`](#job-process_environment_variables)
-      - [Job: `envgene_execution` (runs per environment in matrix)](#job-envgene_execution-runs-per-environment-in-matrix)
-  - [Workflow Dispatch Inputs](#workflow-dispatch-inputs)
-    - [Understanding the 10-Input Limit](#understanding-the-10-input-limit)
-    - [Input Reference](#input-reference)
-  - [GH\_ADDITIONAL\_PARAMS — Passing Extra Parameters](#gh_additional_params--passing-extra-parameters)
-    - [What Is GH\_ADDITIONAL\_PARAMS?](#what-is-gh_additional_params)
-    - [Format and Syntax](#format-and-syntax)
+    - [Step 1: Copy the pipeline](#step-1-copy-the-pipeline)
+    - [Step 2: Configure required secrets](#step-2-configure-required-secrets)
+    - [Step 3: Optional - Repository variables](#step-3-optional---repository-variables)
+    - [Step 4: Optional - Customize configuration](#step-4-optional---customize-configuration)
+    - [Verifying the setup](#verifying-the-setup)
+  - [Quick start](#quick-start)
+  - [Workflow structure](#workflow-structure)
+    - [Job: `env-prepare`](#job-env-prepare)
+    - [Job: `sync`](#job-sync)
+    - [Orchestrator steps](#orchestrator-steps)
+  - [Workflow dispatch inputs](#workflow-dispatch-inputs)
+  - [GH_ADDITIONAL_PARAMS](#gh_additional_params)
+    - [Format](#format)
     - [Examples](#examples)
-    - [JSON Values and Escaping](#json-values-and-escaping)
-    - [When to Use pipeline\_vars.env Instead](#when-to-use-pipeline_varsenv-instead)
-  - [Adding New Parameters](#adding-new-parameters)
-    - [Option A: Add as Workflow Input (If Under the Limit)](#option-a-add-as-workflow-input-if-under-the-limit)
-    - [Option B: Use GH\_ADDITIONAL\_PARAMS](#option-b-use-gh_additional_params)
-    - [Option C: Use pipeline\_vars.env](#option-c-use-pipeline_varsenv)
-  - [Adding New Jobs and Conditional Execution](#adding-new-jobs-and-conditional-execution)
-    - [Step 1: Ensure the Variable Is Available](#step-1-ensure-the-variable-is-available)
-    - [Step 2: Expose the Variable as a Job Output](#step-2-expose-the-variable-as-a-job-output)
-    - [Step 3: Add the Job Step with an if Condition](#step-3-add-the-job-step-with-an-if-condition)
-    - [Complete Example: Adding a Custom Job](#complete-example-adding-a-custom-job)
-  - [Parameter Priority](#parameter-priority)
-  - [Repository Variables (vars)](#repository-variables-vars)
-    - [Variables Used by the Workflow](#variables-used-by-the-workflow)
-    - [How to Add Repository Variables](#how-to-add-repository-variables)
-    - [When Variables Are Empty or Missing](#when-variables-are-empty-or-missing)
-    - [Adding Custom Variables](#adding-custom-variables)
-  - [Using Different Docker Registries](#using-different-docker-registries)
+    - [JSON values](#json-values)
+    - [When to use pipeline_vars.env instead](#when-to-use-pipeline_varsenv-instead)
+  - [Adding new parameters](#adding-new-parameters)
+  - [Parameter priority](#parameter-priority)
+  - [Repository variables](#repository-variables)
+    - [Variables used by the workflow](#variables-used-by-the-workflow)
+    - [CMDB import requirements](#cmdb-import-requirements)
+    - [How to add repository variables](#how-to-add-repository-variables)
+    - [When variables are empty or missing](#when-variables-are-empty-or-missing)
+  - [Using different Docker registries](#using-different-docker-registries)
     - [GitHub Container Registry (GHCR)](#github-container-registry-ghcr)
     - [Google Artifact Registry (GAR)](#google-artifact-registry-gar)
-  - [How to Trigger the Workflow](#how-to-trigger-the-workflow)
+  - [How to trigger the workflow](#how-to-trigger-the-workflow)
     - [Via GitHub Actions UI](#via-github-actions-ui)
     - [Via GitHub API](#via-github-api)
-  - [Directory Structure](#directory-structure)
-  - [Use Case Scenarios](#use-case-scenarios)
-    - [Scenario 1: Full Deployment (Environment Build + Effective Set)](#scenario-1-full-deployment-environment-build--effective-set)
-    - [Scenario 2: Environment Build Only (No Effective Set)](#scenario-2-environment-build-only-no-effective-set)
-    - [Scenario 3: Update Template Version and Rebuild](#scenario-3-update-template-version-and-rebuild)
-    - [Scenario 4: Blue-Green Operation](#scenario-4-blue-green-operation)
-    - [Scenario 5: Credential Rotation](#scenario-5-credential-rotation)
-    - [Scenario 6: Process Solution Descriptor from Artifact](#scenario-6-process-solution-descriptor-from-artifact)
-    - [Scenario 7: Generate New Environment Inventory](#scenario-7-generate-new-environment-inventory)
-    - [Scenario 8: Multiple Environments in One Run](#scenario-8-multiple-environments-in-one-run)
-  - [Further Reading](#further-reading)
+  - [Directory structure](#directory-structure)
+  - [Use case scenarios](#use-case-scenarios)
+  - [Further reading](#further-reading)
 
 ## Overview
 
-The **EnvGene** workflow (`Envgene.yml`) is a GitHub Actions pipeline that automates environment generation, configuration, and deployment for the EnvGene platform. It provides the same functionality as the GitLab-based instance pipeline, adapted for GitHub Actions.
+The EnvGene workflow (`Envgene.yml`) is the GitHub Actions instance pipeline. It is triggered only by
+`workflow_dispatch` (UI or API). There is no automatic trigger on push or pull request.
 
-> [!NOTE]
-> The workflow is **manually triggered only** (`workflow_dispatch`). There is no automatic trigger on push or pull request.
+The workflow runs EnvGene inside the `qubership-envgene` image. One job (`env-prepare`) loads inputs, runs
+`scripts/pipeline/orchestrator.py`, and uploads the generated package. A second job (`sync`) runs only when
+the dispatch inputs specify `PIPELINE_TYPE=GITLAB_DEPLOY` and an `OPERATION_TYPE` other than `CLEAN`, after
+`env-prepare` succeeds.
 
-The workflow supports:
+Orchestrator capabilities include environment inventory generation, application and registry definition rendering,
+Solution Descriptor (SD) processing, environment build, Effective Set generation, Blue-Green operations, credential
+rotation, and Git commit of generated artifacts.
 
-- Environment inventory generation
-- Application and registry definition processing
-- Solution Descriptor (SD) processing
-- Environment build
-- Effective Set generation
-- Blue-Green management
-- Credential rotation
-- Git commit of generated artifacts
-
----
+The files in this directory are copied into the instance repository. The EnvGene release workflow updates the
+`ENVGENE_VERSION` fallback in `Envgene.yml`. `SYNCER_VERSION` is managed separately. Copy updated workflow files into
+your instance repository when upgrading. An explicit repository variable overrides the corresponding fallback.
 
 ## Installation
 
@@ -95,9 +72,9 @@ This section describes what you need to set up the EnvGene workflow in your inst
 
 - A GitHub repository (instance repository) with the [EnvGene instance structure](/docs/samples/instance-repository/)
 - GitHub Actions enabled for the repository
-- GitHub-hosted runners (or self-hosted runners with Docker available)
+- GitHub-hosted runners, or self-hosted runners that can run container jobs
 
-### Step 1: Copy the Pipeline
+### Step 1: Copy the pipeline
 
 Copy the `.github` directory from this folder to the root of your instance repository:
 
@@ -105,404 +82,394 @@ Copy the `.github` directory from this folder to the root of your instance repos
 cp -r github_workflows/instance-repo-pipeline/.github /path/to/your/instance-repo/
 ```
 
-The copied structure includes the workflow, scripts, configuration files, and the `load-env-files` action.
+The copied tree includes the workflow, `process_variables.sh`, the `load-env-files` action, and an empty
+`pipeline_vars.env` file.
 
-### Step 2: Configure Required Secrets
+### Step 2: Configure required secrets
 
 Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**, and add:
 
-| Secret                    | Required          | Description                                                         |
-|---------------------------|-------------------|---------------------------------------------------------------------|
-| `SECRET_KEY`              | When using Fernet | Fernet key for credential encryption                                |
-| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS   | Public key from EnvGene AGE key pair (SOPS encryption)              |
-| `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS   | Private key from EnvGene AGE key pair (SOPS decryption)             |
-| `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository |
-| `GCP_SA_KEY`              | When using GAR    | Full JSON key of GCP service account for Artifact Registry access   |
+| Secret                    | Required                              | Description                                                          |
+|---------------------------|---------------------------------------|----------------------------------------------------------------------|
+| `SECRET_KEY`              | When using Fernet                     | Fernet key for credential encryption                                 |
+| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS or deploy/warmup sync | Public key from the EnvGene AGE key pair (SOPS encryption)           |
+| `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS or deploy/warmup sync | Private key from the EnvGene AGE key pair (SOPS decryption)          |
+| `GH_ACCESS_TOKEN`         | Yes                                   | Token with `contents: write` so EnvGene can commit to the repository |
+| `GCP_SA_KEY`              | When using GAR                        | Full JSON key of a GCP service account for Artifact Registry access  |
 
 > [!NOTE]
-> At least one encryption method (Fernet or SOPS) must be configured if your repository uses encrypted credentials. See [Credential Encryption](/docs/how-to/credential-encryption.md) for details.
+> Configure at least one encryption method (Fernet or SOPS) if the repository uses encrypted credentials. See
+> [Credential encryption](/docs/how-to/credential-encryption.md).
+>
+> For `GITLAB_DEPLOY` with `DEPLOY` or BGD `warmup`, configure both AGE secrets. The workflow attempts to encrypt
+> `ARGO_DPG_CONTEXT.env` even if the public-key secret is empty.
 
-### Step 3: Optional — Repository Variables
+CMDB import needs an integration-specific image and credential mapping. See
+[CMDB import requirements](#cmdb-import-requirements).
+
+### Step 3: Optional - Repository variables
 
 Configure variables in **Settings** → **Secrets and variables** → **Actions** → **Variables** to override defaults:
 
-| Variable                   | Default              | Purpose                            |
-|----------------------------|----------------------|------------------------------------|
-| `DOCKER_REGISTRY`          | `ghcr.io/netcracker` | Docker registry for EnvGene images |
-| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs     |
-| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes             |
+| Variable                   | Default                      | Purpose                             |
+|----------------------------|------------------------------|-------------------------------------|
+| `DOCKER_REGISTRY`          | `ghcr.io`                    | Registry host for the EnvGene image |
+| `DOCKER_NAMESPACE`         | `netcracker`                 | Image namespace (owner)             |
+| `ENVGENE_IMAGE`            | `qubership-envgene`          | Image name                          |
+| `ENVGENE_VERSION`          | Release tag in `Envgene.yml` | Image tag                           |
+| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`               | Runner label for workflow jobs      |
+| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                         | Job timeout in minutes              |
 
-See [Repository Variables (vars)](#repository-variables-vars) for details. For a step-by-step guide on GHCR and GAR, see [Using Different Docker Registries in Envgene.yml](/docs/how-to/docker-registry-configuration.md).
+See [Repository variables](#repository-variables) for the full list used by `Envgene.yml`.
 
-### Step 4: Optional — Customize Configuration
+### Step 4: Optional - Customize configuration
 
-- **`.github/pipeline_vars.env`** — Optional overrides loaded by the workflow (for example debugging or recurring runs). Leave empty or add variables as needed. Default pipeline settings live in the `env:` block of `.github/workflows/Envgene.yml`.
+The shipped `.github/pipeline_vars.env` is empty. Add nonsecret runtime parameters there when you need recurring
+values, such as `ENVGENE_LOG_LEVEL=DEBUG`. The workflow loads the file if it exists and warns if it is missing.
+Dedicated inputs, including empty strings and default booleans, take precedence over this file. See
+[Parameter priority](#parameter-priority).
 
-### Verifying the Setup
+### Verifying the setup
 
 1. Ensure the workflow file is at `.github/workflows/Envgene.yml`.
 1. Ensure required secrets are set.
-1. Trigger the workflow manually (see [Quick Start](#quick-start)) with a valid `ENV_NAMES` value.
+1. Trigger the workflow manually (see [Quick start](#quick-start)) with valid `ENV_NAMES` and `OPERATION_TYPE` values.
 
-For initializing a new instance repository from scratch, see [Environment Instance Repository Installation Guide](/docs/how-to/envgene-maitanance.md).
+For initializing a new instance repository from scratch, see the
+[Environment Instance Repository installation guide](/docs/how-to/envgene-maitanance.md).
 
-## Quick Start
+## Quick start
 
 > [!TIP]
 > New to EnvGene? Start with [Installation](#installation), then come back here.
 
 1. Ensure the pipeline is installed (see [Installation](#installation)).
 1. Go to **Actions** → **EnvGene Execution** → **Run workflow**.
-1. Fill in **ENV_NAMES** (e.g. `cluster-01/env-01`) and any other parameters.
+1. Fill in **ENV_NAMES** (for example `cluster-01/env-01`) and set **OPERATION_TYPE** to `DEPLOY` for a normal build.
+1. Keep **ENV_BUILDER** enabled. Enable **GENERATE_EFFECTIVE_SET** if you also need the Effective Set.
 1. Click **Run workflow**.
 
-## Workflow Structure
+## Workflow structure
 
-The workflow consists of two main jobs:
+| Job           | When it runs                                                   | Purpose                                                                   |
+|---------------|----------------------------------------------------------------|---------------------------------------------------------------------------|
+| `env-prepare` | Always                                                         | Load inputs, run the EnvGene orchestrator, upload the environment package |
+| `sync`        | `PIPELINE_TYPE == GITLAB_DEPLOY` and `OPERATION_TYPE != CLEAN` | Apply the generated Argo CD / DPG context with the syncer image           |
 
-| Job                             | Purpose                                                       |
-|---------------------------------|---------------------------------------------------------------|
-| `process_environment_variables` | Parses inputs, loads config, builds matrix, exports variables |
-| `envgene_execution`             | Runs EnvGene steps per environment (matrix job)               |
+`env-prepare` is a single container job. Multiple environments in `ENV_NAMES` are processed inside that job (the
+orchestrator fans out child processes). GitHub Actions does not start one matrix job per environment.
 
-The first job prepares all parameters and passes them to the second job via a shared `.env` artifact and job outputs. The second job runs once per environment in the matrix.
+`PIPELINE_TYPE=GITLAB_DEPLOY` supports only one resolved environment.
 
-### Pipeline Steps
+Concurrency groups use the branch ref and the original `ENV_NAMES` input. A new run does not cancel an active run in
+the same group (`cancel-in-progress: false`). Different input strings can select overlapping environments without
+sharing a group.
 
-The following sections describe each step in the pipeline as defined in `Envgene.yml`. Steps marked as *conditional* run only when their condition is met.
+### Job: `env-prepare`
 
-#### Job: `process_environment_variables`
+Runs on `${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}` in the EnvGene image:
 
-| Step                            | Description                                                |
-|---------------------------------|------------------------------------------------------------|
-| Repository Checkout             | Checks out the repository (without persisting credentials) |
-| Load environment variables      | Loads `pipeline_vars.env` into `GITHUB_ENV`                |
-| Process Input Parameters        | Exports workflow inputs to environment                     |
-| Process additional variables    | Parses `GH_ADDITIONAL_PARAMS` and adds to environment      |
-| Create env_generation_params    | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV variables  |
-| Multiple Environment Processing | Generates environment matrix from `ENV_NAMES`              |
-| Create .env file                | Dumps all environment variables to `.env`                  |
-| Upload .env as artifact         | Uploads `.env` for use by `envgene_execution` job          |
+```text
+${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${ENVGENE_IMAGE}:${ENVGENE_VERSION}
+```
 
-#### Job: `envgene_execution` (runs per environment in matrix)
+| Step                                                | Description                                                                                             |
+|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Repository Checkout                                 | Checks out the instance repository (`fetch-depth: 1`, credentials not persisted)                        |
+| Load environment variables from configuration files | Loads `.github/pipeline_vars.env` into `GITHUB_ENV` when the file exists                                |
+| Process Input Parameters                            | `.github/scripts/process_variables.sh` exports dispatch inputs and `GH_ADDITIONAL_PARAMS`               |
+| Set job outputs                                     | Publishes `PACKAGE_NAME` for the artifact and for `sync`                                                |
+| EnvGene Execution                                   | Certs, env-name resolution, sparse checkout, orchestrator, then optional GITLAB_DEPLOY / CMDB steps     |
+| Upload generated environment package                | Artifact with `environments/`, `configuration/`, `sboms/`, `templates/`, `tmp/`, `ARGO_DPG_CONTEXT.env` |
 
-| Step                           | Condition                                                                       | Description                                                  |
-|--------------------------------|---------------------------------------------------------------------------------|--------------------------------------------------------------|
-| Repository Checkout            | Always                                                                          | Checks out repository with full history                      |
-| Download environment-file      | Always                                                                          | Downloads `.env` artifact from previous job                  |
-| Prepare environment            | Always                                                                          | Restores env vars, sets `PACKAGE_NAME`, extracts cluster/env |
-| Create name for dynamic secret | Always                                                                          | Sets `SECRET_NAME` for cluster-specific secrets              |
-| Create env file for container  | Always                                                                          | Exports env to `.env.container` for Docker steps             |
-| **BG_MANAGE**                  | `BG_MANAGE == 'true'`                                                           | Blue-Green operations: state management, validation          |
-| **ENV_INVENTORY_GENERATION**   | One of: `ENV_INVENTORY_CONTENT`, `ENV_SPECIFIC_PARAMS`, `ENV_TEMPLATE_NAME` set | Generates Environment Inventory                              |
-| **CREDENTIAL_ROTATION**        | `CRED_ROTATION_PAYLOAD` not empty                                               | Rotates credentials per payload                              |
-| **APP_REG_DEF_PROCESS**        | `ENV_BUILDER == 'true'`                                                         | Sets template version, renders App/Reg definitions           |
-| **PROCESS_SD**                 | `SD_SOURCE_TYPE` + `SD_DATA` or `SD_VERSION`                                    | Processes Solution Descriptor                                |
-| **ENV_BUILD**                  | `ENV_BUILDER == 'true'`                                                         | Generates Environment Instance from templates                |
-| **GENERATE_EFFECTIVE_SET**     | `GENERATE_EFFECTIVE_SET == 'true'`                                              | Generates Effective Set (SBOMs, validation, artifacts)       |
-| **GIT_COMMIT**                 | Always                                                                          | Commits changes to repository                                |
+The **EnvGene Execution** step always runs:
 
-Each conditional step (in **bold**) also uploads its output as an artifact. The `GIT_COMMIT` step always runs at the end of the pipeline.
+1. `/module/scripts/utils/handle_certs.sh`
+1. `python3 /module/scripts/pipeline/resolve_env_names.py` (writes `envgene-resolved.env`)
+1. `python3 /module/scripts/utils/sparse_checkout.py`
+1. `python3 /module/scripts/pipeline/orchestrator.py`
 
-## Workflow Dispatch Inputs
+When `PIPELINE_TYPE` is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY`, or `OPERATION_TYPE` is `BGD` with
+`BGD_OPERATION=warmup`, the same step then generates Argo DPG structure and encrypts `ARGO_DPG_CONTEXT.env` with SOPS.
+Both AGE secrets must be configured for this path. For every `GITLAB_DEPLOY` run it then pushes the Effective Set with
+`es-pusher`, using overwrite mode only for `CLEAN`.
 
-### Understanding the 10-Input Limit
+The selected image must provide the EnvGene scripts under `/module/scripts`, Argo DPG under `/python/argocd-dpg`, and
+`es-pusher` under `/python/es-pusher` for the operations that use them.
 
-> [!IMPORTANT]
-> GitHub Actions limits `workflow_dispatch` to **10 input parameters**. The EnvGene pipeline uses 9 of them for the most common parameters. The 10th slot is reserved for `GH_ADDITIONAL_PARAMS`, which acts as a container for all other parameters.
+When `PIPELINE_TYPE` is not `GITLAB_DEPLOY` and `CMDB_IMPORT` is `true`, it runs
+`/module/scripts/cmdb_import/cmdb_import.sh`. See [CMDB import requirements](#cmdb-import-requirements).
 
-This design lets you pass any number of additional parameters without hitting the limit.
+### Job: `sync`
 
-### Input Reference
+Needs a successful `env-prepare`. Its image is assembled from repository variables and their fallbacks:
 
-| Input                    | Required | Default   | Type   | Description                                            |
-|--------------------------|----------|-----------|--------|--------------------------------------------------------|
-| `ENV_NAMES`              | Yes      | —         | string | Environment(s) to process. Format: `cluster/env`       |
-| `DEPLOYMENT_TICKET_ID`   | No       | `""`      | string | Ticket ID used as commit message prefix                |
-| `ENV_TEMPLATE_VERSION`   | No       | `""`      | string | Template version to apply (e.g. `env-template:v1.2.3`) |
-| `ENV_BUILDER`            | No       | `"true"`  | choice | Enable environment build                               |
-| `GENERATE_EFFECTIVE_SET` | No       | `"false"` | choice | Enable Effective Set generation                        |
-| `GET_PASSPORT`           | No       | `"false"` | choice | Enable Cloud Passport discovery                        |
-| `CMDB_IMPORT`            | No       | `"false"` | choice | Enable CMDB export                                     |
-| `GH_ADDITIONAL_PARAMS`   | No       | `""`      | string | Comma-separated key-value pairs for other parameters   |
+```text
+${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${SYNCER_IMAGE}:${SYNCER_VERSION}
+```
 
-For full parameter semantics, see [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md).
+`SYNCER_IMAGE` is an image name, such as `qubership-envgene`, rather than a full registry reference. It defaults to
+`qubership-envgene`, and `SYNCER_VERSION` defaults to `2.6.6`. The image must provide `update-certificate`, SOPS,
+`/usr/local/bin/uv`, and `argo-app-life`.
 
-## GH_ADDITIONAL_PARAMS — Passing Extra Parameters
+| Step                         | Description                                                                                    |
+|------------------------------|------------------------------------------------------------------------------------------------|
+| Download environment package | Downloads the `PACKAGE_NAME` artifact from `env-prepare`                                       |
+| Sync                         | Decrypts `ARGO_DPG_CONTEXT.env` when the AGE public key is nonempty, then runs `argo-app-life` |
+| Upload sync artifacts        | Syncer logs and deploy report (1-day retention, missing files ignored)                         |
 
-### What Is GH_ADDITIONAL_PARAMS?
+The job condition reads the original `PIPELINE_TYPE` and `OPERATION_TYPE` dispatch inputs. Set these directly in the
+form or API request. Runtime overrides do not change whether this job starts.
 
-`GH_ADDITIONAL_PARAMS` is a single string input that carries all pipeline parameters that are not exposed as separate workflow inputs. It is parsed by `.github/scripts/process_additional_variables.sh`, which adds each `KEY=VALUE` pair to the workflow environment.
+The workflow creates `ARGO_DPG_CONTEXT.env` only for `DEPLOY` and BGD `warmup`. Other non-`CLEAN` operations still match
+the `sync` condition, so they need a compatible context from another source to complete synchronization.
 
-Use it for parameters such as:
+### Orchestrator steps
 
-- `BG_MANAGE`, `BG_STATE` — Blue-Green operations
-- `SD_SOURCE_TYPE`, `SD_VERSION`, `SD_DATA` — Solution Descriptor
-- `ENV_SPECIFIC_PARAMS`, `ENV_TEMPLATE_NAME` — Environment configuration
-- `EFFECTIVE_SET_CONFIG` — Effective Set options
-- `CRED_ROTATION_PAYLOAD` — Credential rotation
-- Any other parameter from [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md)
+These steps run inside the EnvGene image, in this order. A step is skipped when its condition is false. If earlier
+steps succeed, `git_commit` runs and does nothing when there are no changes to stage.
 
-### Format and Syntax
+| Step                           | Runs when                                                                              |
+|--------------------------------|----------------------------------------------------------------------------------------|
+| `get_passport`                 | `GET_PASSPORT` is true                                                                 |
+| `credential_rotation`          | `CRED_ROTATION_PAYLOAD` is set (cannot be combined with `GET_PASSPORT`)                |
+| `change_bg_state`              | `PIPELINE_TYPE=GITLAB_DEPLOY` and `OPERATION_TYPE=BGD`                                 |
+| `warmup`                       | `GITLAB_DEPLOY`, `OPERATION_TYPE=BGD`, and `BGD_OPERATION=warmup`                      |
+| `env_inventory_generation`     | `ENV_INVENTORY_CONTENT` is set, or a deprecated inventory init parameter is set        |
+| `set_template_version`         | `ENV_TEMPLATE_VERSION` is set                                                          |
+| `appregdef_render`             | `GITLAB_DEPLOY`, or `ENV_BUILDER`, or `SD_VERSION` / `SD_DATA`                         |
+| `regdefv2_adapter`             | `GITLAB_DEPLOY` deploy, clean, or BGD warmup. Legacy: see below                        |
+| `deploy_postfix_namespace_map` | `GITLAB_DEPLOY` and `OPERATION_TYPE=DEPLOY`                                            |
+| `process_sd`                   | Legacy deploy with `SD_VERSION` or `SD_DATA` (not `GITLAB_DEPLOY`)                     |
+| `migrate_sd_to_deploy_plan`    | Legacy: incoming SD, or committed SD requiring migration (see below)                   |
+| `process_deployment_plan`      | `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN`                            |
+| `env_build`                    | `ENV_BUILDER`, or `GITLAB_DEPLOY` with `DEPLOY` / `CLEAN`                              |
+| `generate_effective_set`       | `GENERATE_EFFECTIVE_SET`, or `GITLAB_DEPLOY` with `DEPLOY` / `CLEAN` / BGD warmup      |
+| `git_commit`                   | Always                                                                                 |
+| `CMDB_import`                  | Legacy: a parameter plugin enables `CMDB_IMPORT`. Requires the `nc_cmdb_import` plugin |
 
-**Format:** `KEY1=VALUE1,KEY2=VALUE2,KEY3=VALUE3`
+On the legacy path, `regdefv2_adapter` requires `ENV_BUILDER` and either incoming SD or `GENERATE_EFFECTIVE_SET`.
+Migration of committed SD requires `use_committed_sd` to be enabled, an existing `sd.yaml`, and no `deploy-plan.yml`.
 
-**Rules:**
+The standard parameter loader does not load `CMDB_IMPORT` into the orchestrator context. The shell invocation after
+the orchestrator is separate. See [CMDB import requirements](#cmdb-import-requirements).
 
-- Pairs are separated by commas.
-- Each pair is `KEY=VALUE` (no spaces around `=`).
-- Keys and values are trimmed of leading/trailing whitespace.
-- Empty pairs are ignored.
+For full parameter semantics, see [Instance pipeline parameters](/docs/instance-pipeline-parameters.md). For the
+shared pipeline story, see [EnvGene pipelines](/docs/envgene-pipelines.md).
+
+## Workflow dispatch inputs
+
+These are the inputs declared in `Envgene.yml`. Their descriptions in the workflow file are empty. Meanings live in
+[Instance pipeline parameters](/docs/instance-pipeline-parameters.md).
+
+| Input                    | Required | Default | Type    | Description                                                         |
+|--------------------------|----------|---------|---------|---------------------------------------------------------------------|
+| `ENV_NAMES`              | Yes      | -       | string  | Environment(s) as `cluster/env`. Comma-separated list OK            |
+| `CLUSTER_NAME`           | No       | `""`    | string  | Cluster part of a single environment (with `ENVIRONMENT_NAME`)      |
+| `ENVIRONMENT_NAME`       | No       | `""`    | string  | Environment part of a single environment                            |
+| `PIPELINE_TYPE`          | No       | `""`    | string  | Leave empty for the legacy path. Set `GITLAB_DEPLOY` for deployment |
+| `OPERATION_TYPE`         | No       | `""`    | string  | `DEPLOY`, `CLEAN`, or `BGD`                                         |
+| `BGD_OPERATION`          | No       | `""`    | string  | Blue-Green operation when `OPERATION_TYPE=BGD`                      |
+| `BG_NS_TARGET`           | No       | `""`    | string  | Blue-Green namespace target                                         |
+| `NAMESPACE_NAMES`        | No       | `""`    | string  | Namespaces for CLEAN / filters                                      |
+| `DEPLOYMENT_TICKET_ID`   | No       | `""`    | string  | Ticket ID used as a commit message prefix                           |
+| `ENV_TEMPLATE_VERSION`   | No       | `""`    | string  | Template version to apply                                           |
+| `ENV_INVENTORY_CONTENT`  | No       | `""`    | string  | Inventory generation payload                                        |
+| `CUSTOM_PARAMS`          | No       | `""`    | string  | Extra parameters for Effective Set generation                       |
+| `DEPLOYMENT_SESSION_ID`  | No       | `""`    | string  | Session ID appended to the commit message                           |
+| `APPLICATION_VERSIONS`   | No       | `""`    | string  | Application versions for the deploy plan                            |
+| `ENV_BUILDER`            | No       | `true`  | boolean | Enable environment build                                            |
+| `GENERATE_EFFECTIVE_SET` | No       | `false` | boolean | Enable Effective Set generation on the legacy path                  |
+| `GET_PASSPORT`           | No       | `false` | boolean | Enable Cloud Passport discovery                                     |
+| `CMDB_IMPORT`            | No       | `false` | boolean | Enable CMDB export (non-`GITLAB_DEPLOY` only)                       |
+| `GH_ADDITIONAL_PARAMS`   | No       | `""`    | string  | Comma-separated `KEY=VALUE` pairs for other parameters              |
+
+If both `CLUSTER_NAME` and `ENVIRONMENT_NAME` are set, they take precedence over `ENV_NAMES` and select a single
+environment. Provide both or neither. `ENV_NAMES` must still be nonempty because `process_variables.sh` validates it
+before resolving the pair.
+
+Leave `PIPELINE_TYPE` empty for the legacy path. Do not enter `LEGACY`, which the environment-name resolver rejects.
+
+The orchestrator interprets an empty `OPERATION_TYPE` as `DEPLOY`. For `GITLAB_DEPLOY`, set `OPERATION_TYPE` explicitly:
+the workflow shell checks the raw value and only generates deployment context for the literal `DEPLOY` or BGD
+`warmup` combination. Use the uppercase operation values shown in the table.
+
+Use single-line input values. For multiple environments, use a comma-separated list without spaces, such as
+`cluster-01/env-01,cluster-01/env-02`. JSON inputs such as `ENV_INVENTORY_CONTENT`, `CUSTOM_PARAMS`, and
+`APPLICATION_VERSIONS` must also be on one line. The exporter does not encode multiline values for `GITHUB_ENV`.
+
+## GH_ADDITIONAL_PARAMS
+
+`GH_ADDITIONAL_PARAMS` carries instance-pipeline parameters that are not dedicated workflow inputs. `process_variables.sh`
+parses it and writes each pair to `GITHUB_ENV`.
+
+Use it for simple values such as `SD_VERSION`, `SD_REPO_MERGE_MODE`, `CRED_ROTATION_FORCE`, or `ENVGENE_LOG_LEVEL`.
+Supported runtime parameters are listed in [Instance pipeline parameters](/docs/instance-pipeline-parameters.md).
+See [Parameter priority](#parameter-priority) before overriding a dedicated input. Set `PIPELINE_TYPE` and
+`OPERATION_TYPE` directly because the `sync` condition uses the original inputs.
+
+### Format
+
+`KEY1=VALUE1,KEY2=VALUE2,KEY3=VALUE3`
+
+- Every comma separates pairs, including commas inside quoted values or JSON.
+- Each pair is `KEY=VALUE`. Use no spaces around `=`.
+- The parser uses `xargs` to trim each pair. This also consumes quotes and backslashes and collapses whitespace.
+- Empty pairs, empty keys, and empty values are not exported as overrides.
+- The script logs the additional-parameter string and parsed values. Keep secrets out of this field.
 
 ### Examples
 
 **Simple values:**
 
 ```text
-BG_MANAGE=true,SD_SOURCE_TYPE=artifact,SD_VERSION=my-app:v1.0
+SD_VERSION=my-app:v1.0,SD_REPO_MERGE_MODE=replace
 ```
 
-**With JSON (escape double quotes):**
+**Debug logging:**
 
 ```text
-EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}
+ENVGENE_LOG_LEVEL=DEBUG
 ```
 
-**Multiple parameters:**
+### JSON values
 
-```text
-SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],ENV_SPECIFIC_PARAMS={\"tenantName\":\"my-tenant\"}
-```
+Use a dedicated workflow input for JSON when one exists. For other nonsecret JSON parameters, use
+`.github/pipeline_vars.env`. For secret payloads, add an explicit secret-backed environment mapping to your copy of
+`Envgene.yml` and store the value as single-line JSON in an Actions secret.
 
-**Blue-Green state:**
+`GH_ADDITIONAL_PARAMS` does not provide a general JSON escaping format. Escaping quotes in an API request does not
+protect commas from this parser.
 
-```text
-BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\"}}
-```
-
-### JSON Values and Escaping
-
-For JSON values:
-
-1. Escape internal double quotes: `\"` instead of `"`.
-1. Be aware that commas inside JSON are used as pair separators. If your JSON contains commas, the parser may split it incorrectly.
-
-> [!CAUTION]
-> **Workaround for complex JSON:** Use `pipeline_vars.env` (see below) or pass the parameter via the GitHub API with proper escaping. Commas inside JSON values may cause incorrect parsing.
-
-### When to Use pipeline_vars.env Instead
+### When to use pipeline_vars.env instead
 
 Use `.github/pipeline_vars.env` when:
 
-- You have complex JSON with many commas.
-- You want to keep sensitive or long values out of the UI.
-- You need the same values across many runs (e.g. for debugging).
+- A nonsecret JSON value contains commas or quotes.
+- You want the same values on many runs (for example debugging).
+- The parameter has no dedicated input that would overwrite it.
 
-Variables in `pipeline_vars.env` must be in standard `KEY=VALUE` format. Do **not** wrap them in `GH_ADDITIONAL_PARAMS`.
+Use one `KEY=VALUE` assignment per line. The action copies the file verbatim into `GITHUB_ENV`. It does not interpret
+shell syntax, remove surrounding quotes, or process `export` statements. Keep JSON on one line with its internal
+quotes intact, and do not add shell quotes around the entire value. Do not commit secrets to this file.
 
-## Adding New Parameters
+## Adding new parameters
 
-### Option A: Add as Workflow Input (If Under the Limit)
+`process_variables.sh` exports every `workflow_dispatch` input automatically. You do not add `echo` lines for new
+inputs.
 
-If you have fewer than 10 inputs and want a dedicated UI field:
+**Dedicated input.** Add the field under `on.workflow_dispatch.inputs` in `Envgene.yml`. The next run exports it.
 
-1. Add the input under `on.workflow_dispatch.inputs` in `Envgene.yml`:
+**`GH_ADDITIONAL_PARAMS`.** Pass `MY_NEW_PARAM=value` when the parameter already exists in
+[Instance pipeline parameters](/docs/instance-pipeline-parameters.md) but has no dedicated input.
 
-```yaml
-on:
-  workflow_dispatch:
-    inputs:
-      # ... existing inputs ...
-      MY_NEW_PARAM:
-        required: false
-        default: ""
-        type: string
-        description: "Description of the parameter"
-```
+**`pipeline_vars.env`.** Add `MY_NEW_PARAM=my_value` in `.github/pipeline_vars.env`.
 
-1. Add a line in the "Process Input Parameters" step to export it:
+Exporting a name does not implement new behavior. The EnvGene scripts or plugins in the selected image must support
+the parameter. Check [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) before adding one.
 
-```yaml
-echo "MY_NEW_PARAM=${{ github.event.inputs.MY_NEW_PARAM }}" >> $GITHUB_ENV
-```
+## Parameter priority
 
-1. If the parameter controls job execution, add it to `process_environment_variables.outputs` (see [Adding New Jobs](#adding-new-jobs-and-conditional-execution)).
+For a name written to `GITHUB_ENV` (orchestrator parameters), later writes win:
 
-### Option B: Use GH_ADDITIONAL_PARAMS
+1. `GH_ADDITIONAL_PARAMS`
+1. Dedicated workflow inputs
+1. `.github/pipeline_vars.env`
 
-1. Pass the parameter in `GH_ADDITIONAL_PARAMS`, e.g. `MY_NEW_PARAM=value`.
-1. It will be parsed and added to `GITHUB_ENV` automatically.
-1. If you need it for conditional steps, add it to the job outputs (see below).
+For values interpolated in `Envgene.yml` itself (image, runner label, timeout), GitHub `vars` apply, then the
+fallback in the workflow file. `pipeline_vars.env` and `GH_ADDITIONAL_PARAMS` cannot configure these expressions.
 
-### Option C: Use pipeline_vars.env
+Dedicated inputs overwrite file values even when the input is an empty string or a default boolean. For example,
+`ENV_TEMPLATE_VERSION` in the file is overwritten by the empty workflow input. A nonempty value in
+`GH_ADDITIONAL_PARAMS` overrides the runtime value afterward, but `sync` still uses the original dispatch inputs.
 
-1. Add the variable to `.github/pipeline_vars.env`:
+## Repository variables
 
-```text
-MY_NEW_PARAM=my_value
-```
+Repository variables are configured in **Settings → Secrets and variables → Actions → Variables**. The workflow reads
+them as `vars.VARIABLE_NAME`.
 
-1. It will be loaded by the `load-env-files` action.
-1. If you need it for conditional steps, add it to the job outputs.
+### Variables used by the workflow
 
-## Adding New Jobs and Conditional Execution
+| Variable                         | Purpose                                            | Fallback when empty                |
+|----------------------------------|----------------------------------------------------|------------------------------------|
+| `DOCKER_REGISTRY`                | Registry host for both job images                  | `ghcr.io`                          |
+| `DOCKER_NAMESPACE`               | Image namespace                                    | `netcracker`                       |
+| `ENVGENE_IMAGE`                  | Image name                                         | `qubership-envgene`                |
+| `ENVGENE_VERSION`                | EnvGene image tag                                  | Release tag in `Envgene.yml`       |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | `GCP` selects GAR credentials on the container job | (empty, GHCR auth)                 |
+| `GH_RUNNER_TAG_NAME`             | Runner label                                       | `ubuntu-22.04`                     |
+| `GH_RUNNER_SCRIPT_TIMEOUT`       | Job timeout in minutes                             | `10`                               |
+| `GH_USER_EMAIL`                  | Git commit author email                            | `<actor>@users.noreply.github.com` |
+| `GH_USER_NAME`                   | Git commit author name                             | `github.actor`                     |
+| `SECRET_POSTFIX`                 | Exported for integration-specific scripts          | `secret_postfix`                   |
+| `SYNCER_IMAGE`                   | Image name for the `sync` job                      | `qubership-envgene`                |
+| `SYNCER_VERSION`                 | Image tag for the `sync` job                       | `2.6.6`                            |
 
-To add a new step that runs only when a parameter is set, follow these steps.
+For secrets and variables used by EnvGene at runtime (encryption keys, log level, and so on), see
+[EnvGene repository variables](/docs/envgene-repository-variables.md).
 
-### Step 1: Ensure the Variable Is Available
+### CMDB import requirements
 
-The variable must be present in `GITHUB_ENV` after the `process_environment_variables` job. It can come from:
+`CMDB_IMPORT=true` on a non-`GITLAB_DEPLOY` run calls `/module/scripts/cmdb_import/cmdb_import.sh` after the
+orchestrator. The current source tree does not provide that script. To use this integration, select an image that
+supplies it and explicitly map the credentials required by that implementation into the job.
 
-- A workflow input (and the "Process Input Parameters" step)
-- `GH_ADDITIONAL_PARAMS` (parsed by `process_additional_variables.sh`)
-- `pipeline_vars.env` (loaded by `load-env-files`)
+The orchestrator also has a separate `CMDB_import` plugin step. It requires a parameter plugin to populate
+`CMDB_IMPORT` and an implementation under `/module/scripts/plugins/nc_cmdb_import`.
 
-### Step 2: Expose the Variable as a Job Output
+`SECRET_POSTFIX` is exported from repository variables, but `Envgene.yml` does not look up or pass a per-cluster CMDB
+secret. Creating a secret named `{CLUSTER_NAME}_{SECRET_POSTFIX}` alone does not make it available to the container.
 
-Add the variable to the `outputs` of `process_environment_variables` in `Envgene.yml`:
+### How to add repository variables
 
-```yaml
-jobs:
-  process_environment_variables:
-    outputs:
-      env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
-      # ... existing outputs ...
-      MY_NEW_FEATURE: ${{ env.MY_NEW_FEATURE }}
-```
-
-Without this, the next job cannot use it in `if` conditions.
-
-### Step 3: Add the Job Step with an if Condition
-
-Add your step inside the `envgene_execution` job with an `if`:
-
-```yaml
-- name: MY_NEW_JOB
-  if: needs.process_environment_variables.outputs.MY_NEW_FEATURE == 'true'
-  run: |
-    # Your commands here
-```
-
-**Common condition patterns:**
-
-| Condition type      | Example                                                        |
-|---------------------|----------------------------------------------------------------|
-| Equals string       | `needs.process_environment_variables.outputs.MY_VAR == 'true'` |
-| Not empty           | `needs.process_environment_variables.outputs.MY_VAR != ''`     |
-| Logical OR          | `(condition1) \|\| (condition2)`                               |
-| Logical AND         | `(condition1) && (condition2)`                                 |
-| Multiple conditions | `outputs.ENV_BUILDER == 'true' && outputs.SD_VERSION != ''`    |
-
-### Complete Example: Adding a Custom Job
-
-Assume you want a step that runs only when `RUN_CUSTOM_VALIDATION=true`.
-
-**1. Pass the parameter** via `GH_ADDITIONAL_PARAMS`:
-
-```text
-RUN_CUSTOM_VALIDATION=true
-```
-
-**2. Add the output** in `Envgene.yml`:
-
-```yaml
-process_environment_variables:
-  outputs:
-    # ... existing ...
-    RUN_CUSTOM_VALIDATION: ${{ env.RUN_CUSTOM_VALIDATION }}
-```
-
-**3. Add the step** in `envgene_execution`:
-
-```yaml
-- name: CUSTOM_VALIDATION
-  if: needs.process_environment_variables.outputs.RUN_CUSTOM_VALIDATION == 'true'
-  run: |
-    echo "Running custom validation..."
-    # Your validation logic
-```
-
-## Parameter Priority
-
-When the same parameter is set in multiple places, the effective value is chosen by this order (highest first):
-
-1. Workflow input parameters (UI or API)
-1. `pipeline_vars.env`
-1. Repository variables (`vars`)
-1. Organization variables
-
-## Repository Variables (vars)
-
-Repository variables are configured in **Settings → Secrets and variables → Actions → Variables** (repository-level) or at the organization level. They are referenced in the workflow as `vars.VARIABLE_NAME` and are available to all workflow runs.
-
-### Variables Used by the Workflow
-
-| Variable                         | Purpose                                        | Default when empty   |
-|----------------------------------|------------------------------------------------|----------------------|
-| `DOCKER_REGISTRY`                | Docker registry base for EnvGene images        | `ghcr.io/netcracker` |
-| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Cloud provider for registry auth (GCP for GAR) | (empty)              |
-| `GH_RUNNER_TAG_NAME`             | Runner label for jobs (e.g. ubuntu-22.04)      | `ubuntu-22.04`       |
-| `GH_RUNNER_SCRIPT_TIMEOUT`       | Job timeout in minutes                         | `10`                 |
-
-### How to Add Repository Variables
-
-1. Go to your repository on GitHub.
+1. Open the repository on GitHub.
 1. Open **Settings** → **Secrets and variables** → **Actions**.
 1. Open the **Variables** tab.
 1. Click **New repository variable**.
-1. Enter the name (e.g. `DOCKER_REGISTRY`) and value.
+1. Enter the name (for example `ENVGENE_VERSION`) and value.
 1. Click **Add variable**.
 
-### When Variables Are Empty or Missing
-
-The workflow uses fallback values when a variable is not set or is empty. For example:
+### When variables are empty or missing
 
 ```yaml
 runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
-DOCKER_IMAGE_NAME_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene"
 timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
 ```
 
-- If `vars.GH_RUNNER_TAG_NAME` is empty or missing → `ubuntu-22.04` is used.
-- If `vars.DOCKER_REGISTRY` is empty or missing → `ghcr.io/netcracker` is used.
-- If `vars.GH_RUNNER_SCRIPT_TIMEOUT` is empty or missing → `10` is used.
+You do not need to define variables that have fallbacks. Check `Envgene.yml` for the release-specific EnvGene tag.
+`ENVGENE_VERSION` and `SYNCER_VERSION` are independent.
 
-> [!TIP]
-> You do not need to define these variables for the workflow to run; defaults are applied automatically.
+## Using different Docker registries
 
-### Adding Custom Variables
+Both jobs use `DOCKER_REGISTRY` and `DOCKER_NAMESPACE`. The `env-prepare` image path is:
 
-To use your own variables in the workflow:
+```text
+${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${ENVGENE_IMAGE}:${ENVGENE_VERSION}
+```
 
-1. Add the variable in **Settings → Secrets and variables → Actions → Variables**.
-1. Reference it in `Envgene.yml` as `${{ vars.MY_CUSTOM_VAR }}`.
-1. For optional variables with a default, use: `${{ vars.MY_CUSTOM_VAR || 'default_value' }}`.
+Container registry credentials:
 
-For a full list of supported repository variables, see [EnvGene Repository Variables](/docs/envgene-repository-variables.md).
+- Default (GHCR): `github.actor` / `github.token`
+- `DOCKER_CLOUD_REGISTRY_PROVIDER=GCP`: `_json_key` / `secrets.GCP_SA_KEY`
 
-## Using Different Docker Registries
-
-The workflow pulls EnvGene Docker images (envgene, pipegene, effective-set-generator) from a registry. By default, images are pulled from GitHub Container Registry (GHCR). You can switch to another registry such as Google Artifact Registry (GAR) by configuring the appropriate variables and secrets.
+There is no separate `docker login` step. Authentication is the `container.credentials` block on the job.
 
 ### GitHub Container Registry (GHCR)
 
-GHCR is the default registry. No additional configuration is required.
+GHCR is the default. No extra variables are required for `ghcr.io/netcracker/qubership-envgene`.
 
-| Where to configure       | Parameter         | Value                          |
-|--------------------------|-------------------|--------------------------------|
-| **Settings → Variables** | `DOCKER_REGISTRY` | `ghcr.io/netcracker` (default) |
+| Where to configure       | Parameter         | Value     |
+|--------------------------|-------------------|-----------|
+| **Settings → Variables** | `DOCKER_REGISTRY` | `ghcr.io` |
 
-**Authentication:** GitHub Actions automatically authenticates to `ghcr.io` using `GITHUB_TOKEN` when pulling images. No extra secrets are needed.
-
-**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.18` (see `DOCKER_IMAGE_TAG_*` in `.github/workflows/Envgene.yml`).
+Set `DOCKER_NAMESPACE` if the image is not under `netcracker`. Set `ENVGENE_VERSION` to the tag you want to run.
 
 ### Google Artifact Registry (GAR)
-
-To use Google Artifact Registry, configure the registry URL and GCP authentication.
 
 | Where to configure       | Parameter                        | Value                                        |
 |--------------------------|----------------------------------|----------------------------------------------|
 | **Settings → Variables** | `DOCKER_REGISTRY`                | `REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME` |
+| **Settings → Variables** | `DOCKER_NAMESPACE`               | Image namespace in that repository           |
 | **Settings → Variables** | `DOCKER_CLOUD_REGISTRY_PROVIDER` | `GCP`                                        |
 | **Settings → Secrets**   | `GCP_SA_KEY`                     | Full JSON key of the GCP service account     |
 
@@ -512,28 +479,13 @@ To use Google Artifact Registry, configure the registry URL and GCP authenticati
 europe-west1-docker.pkg.dev/my-gcp-project/envgene-images
 ```
 
-**Authentication:** When `DOCKER_CLOUD_REGISTRY_PROVIDER` is set to `GCP`, the workflow runs a step that authenticates to GAR using `docker login` with the `_json_key` method. The `GCP_SA_KEY` secret must contain the full JSON key of a GCP service account that has `Artifact Registry Reader` (or equivalent) permissions.
+The service account needs at least `Artifact Registry Reader` on the repository.
 
-**How to set up GCP_SA_KEY:**
+For a longer GAR key walkthrough, see
+[Using different Docker registries](/docs/how-to/docker-registry-configuration.md). That how-to still describes an older
+image-name layout (`DOCKER_IMAGE_NAME_*`). Trust the formula in `Envgene.yml` for the current path.
 
-1. Create a GCP service account with access to your Artifact Registry repository.
-1. Create a JSON key for the service account (IAM → Service Accounts → Keys → Add Key).
-1. Copy the entire JSON content.
-1. In GitHub: **Settings → Secrets and variables → Actions → Secrets** → **New repository secret**.
-1. Name: `GCP_SA_KEY`, Value: paste the full JSON.
-
-> [!IMPORTANT]
-> The service account must have at least `Artifact Registry Reader` role on the repository. For private images, ensure the key is not expired and has the correct permissions.
-
-**Summary:**
-
-| Parameter                        | Location  | Required for GAR       |
-|----------------------------------|-----------|------------------------|
-| `DOCKER_REGISTRY`                | Variables | Yes - full GAR path    |
-| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables | Yes - set to `GCP`     |
-| `GCP_SA_KEY`                     | Secrets   | Yes - JSON key content |
-
-## How to Trigger the Workflow
+## How to trigger the workflow
 
 ### Via GitHub Actions UI
 
@@ -552,15 +504,16 @@ europe-west1-docker.pkg.dev/my-gcp-project/envgene-images
 curl -X POST \
   -H "Authorization: token <YOUR_GITHUB_TOKEN>" \
   -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/<OWNER>/<REPO>/actions/workflows/Envgene.yml/dispatches \
+  "https://api.github.com/repos/<OWNER>/<REPO>/actions/workflows/Envgene.yml/dispatches" \
   -d '{
     "ref": "main",
     "inputs": {
       "ENV_NAMES": "cluster-01/env-01",
+      "OPERATION_TYPE": "DEPLOY",
       "ENV_BUILDER": "true",
       "GENERATE_EFFECTIVE_SET": "true",
       "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
-      "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+      "GH_ADDITIONAL_PARAMS": "ENVGENE_LOG_LEVEL=DEBUG"
     }
   }'
 ```
@@ -569,182 +522,154 @@ Replace `<YOUR_GITHUB_TOKEN>`, `<OWNER>`, `<REPO>`, and `main` as needed.
 
 </details>
 
-## Directory Structure
+## Directory structure
 
 ```text
-instance-repo-pipeline/
+github_workflows/instance-repo-pipeline/
 └── .github/
-    ├── README.md                # This guide (EnvGene GitHub workflow)
+    ├── README.md                # This guide
+    ├── actions/
+    │   └── load-env-files/
+    │       └── action.yml       # Copies environment files into GITHUB_ENV
     ├── docs/
     │   └── assets/
     │       └── envgene-workflow-header.png
-    ├── actions/
-    │   └── load-env-files/      # Loads .env files into GITHUB_ENV
+    ├── pipeline_vars.env        # Empty runtime configuration file
     ├── scripts/
-    │   ├── generate_env_matrix.sh           # Builds environment matrix from ENV_NAMES
-    │   ├── process_additional_variables.sh  # Parses GH_ADDITIONAL_PARAMS
-    │   ├── process_matrix_iteration.sh      # Extracts cluster/env from matrix
-    │   └── create_env_generation_params.sh # Builds ENV_GENERATION_PARAMS JSON
-    ├── workflows/
-    │   └── Envgene.yml          # Main workflow definition
-    └── pipeline_vars.env       # Optional overrides (template, often empty)
+    │   └── process_variables.sh # Exports workflow inputs and GH_ADDITIONAL_PARAMS
+    └── workflows/
+        └── Envgene.yml          # Instance pipeline workflow
 ```
 
----
+## Use case scenarios
 
-## Use Case Scenarios
+The legacy scenarios below leave `PIPELINE_TYPE` empty and set `OPERATION_TYPE=DEPLOY` explicitly.
 
-This section shows typical scenarios with example parameters and what happens when you run the workflow.
+Additional configured inputs, plugins, and existing repository files can enable more steps than those listed.
+On the legacy path, `migrate_sd_to_deploy_plan` runs without new SD input if `use_committed_sd` is enabled,
+`sd.yaml` exists, and `deploy-plan.yml` does not. `use_committed_sd` defaults to `true`.
 
-### Scenario 1: Full Deployment (Environment Build + Effective Set)
+### Scenario 1: Environment build and Effective Set
 
-**Goal:** Build the environment and generate the Effective Set for deployment.
+**Goal:** Build the environment and generate the Effective Set.
 
 | Parameter                | Value                  |
 |--------------------------|------------------------|
 | `ENV_NAMES`              | `prod-cluster/prod-01` |
+| `OPERATION_TYPE`         | `DEPLOY`               |
 | `ENV_BUILDER`            | `true`                 |
 | `GENERATE_EFFECTIVE_SET` | `true`                 |
 | `DEPLOYMENT_TICKET_ID`   | `QBSHP-1234`           |
 
-**Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GENERATE_EFFECTIVE_SET → GIT_COMMIT
+**Orchestrator steps that run:** `appregdef_render` → `regdefv2_adapter` → `env_build` → `generate_effective_set` →
+`git_commit`.
 
-**Result:** Environment Instance is generated, Effective Set is created in `environments/prod-cluster/prod-01/effective-set/`, changes are committed to the repository.
+**Result:** Environment Instance is generated, Effective Set is written under the environment tree, changes are
+committed.
 
----
+### Scenario 2: Environment build only
 
-### Scenario 2: Environment Build Only (No Effective Set)
+**Goal:** Regenerate the Environment Instance without Effective Set on the legacy path.
 
-**Goal:** Regenerate the Environment Instance without generating the Effective Set (e.g. for validation or template updates).
+| Parameter        | Value                |
+|------------------|----------------------|
+| `ENV_NAMES`      | `dev-cluster/dev-01` |
+| `OPERATION_TYPE` | `DEPLOY`             |
+| `ENV_BUILDER`    | `true`               |
 
-| Parameter     | Value                |
-|---------------|----------------------|
-| `ENV_NAMES`   | `dev-cluster/dev-01` |
-| `ENV_BUILDER` | `true`               |
+**Result:** `generate_effective_set` is skipped unless `PIPELINE_TYPE=GITLAB_DEPLOY` forces it.
 
-**Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT
-
-**Result:** Environment Instance is regenerated and committed. GENERATE_EFFECTIVE_SET is skipped.
-
----
-
-### Scenario 3: Update Template Version and Rebuild
-
-**Goal:** Switch to a new template version and rebuild the environment.
+### Scenario 3: Update template version and rebuild
 
 | Parameter              | Value                  |
 |------------------------|------------------------|
 | `ENV_NAMES`            | `prod-cluster/prod-01` |
+| `OPERATION_TYPE`       | `DEPLOY`               |
 | `ENV_BUILDER`          | `true`                 |
 | `ENV_TEMPLATE_VERSION` | `env-template:v2.1.0`  |
 
-**Steps that run:** APP_REG_DEF_PROCESS (updates template version) → ENV_BUILD → GIT_COMMIT
+**Orchestrator steps that run:** `set_template_version` → `appregdef_render` → `env_build` → `git_commit`.
 
-**Result:** `env_definition.yml` is updated with the new template version, environment is rebuilt with the new template, changes are committed.
+### Scenario 4: Blue-Green operation (`GITLAB_DEPLOY`)
 
----
+| Parameter              | Value                  |
+|------------------------|------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01` |
+| `PIPELINE_TYPE`        | `GITLAB_DEPLOY`        |
+| `OPERATION_TYPE`       | `BGD`                  |
+| `BGD_OPERATION`        | `warmup`               |
 
-### Scenario 4: Blue-Green Operation
+Configure both AGE secrets and an image with the sync tools via `SYNCER_IMAGE` and `SYNCER_VERSION`, or verify that
+their fallbacks meet your requirements. After `env-prepare` succeeds, `sync` runs.
 
-**Goal:** Perform a Blue-Green operation (e.g. warmup, state change).
+Set `BG_STATE` in `.github/pipeline_vars.env` as single-line JSON using the
+[`BG_STATE` structure](/docs/instance-pipeline-parameters.md#bg_state). The `change_bg_state` step reads it before
+`warmup`, so it is required for this scenario too. Keep the JSON quotes intact and do not wrap the value in shell
+quotes.
 
-| Parameter              | Value                           |
-|------------------------|---------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`          |
-| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}` |
+See [Blue-Green deployment](/docs/features/blue-green-deployment.md) and
+[Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for `BGD_OPERATION` and `BG_STATE`.
 
-**Example `GH_ADDITIONAL_PARAMS` value:**
+### Scenario 5: Credential rotation
 
-```text
-BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-ctrl\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"ACTIVE\",\"version\":\"v1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"CANDIDATE\",\"version\":\"v1.1\"},\"updateTime\":\"2024-01-15T10:00:00Z\"}
-```
+| Parameter        | Value                  |
+|------------------|------------------------|
+| `ENV_NAMES`      | `prod-cluster/prod-01` |
+| `OPERATION_TYPE` | `DEPLOY`               |
+| `ENV_BUILDER`    | `false`                |
 
-**Steps that run:** BG_MANAGE → GIT_COMMIT
+Add a secret-backed `CRED_ROTATION_PAYLOAD` environment mapping under `jobs.env-prepare.env` in your instance copy
+of `Envgene.yml`. Store the payload as single-line JSON in that Actions secret. Use the `rotation_items` structure
+described in [Credential rotation](/docs/features/cred-rotation.md). Do not pass the payload through
+`GH_ADDITIONAL_PARAMS`, which logs its values and consumes JSON syntax.
 
-**Result:** BG state is validated, state files are updated in the repository, namespace objects are copied if warmup. No ENV_BUILD or Effective Set.
+**Orchestrator steps that run:** `credential_rotation` → `git_commit`.
 
----
+Do not set `GET_PASSPORT` in the same run. See [Credential rotation](/docs/features/cred-rotation.md).
 
-### Scenario 5: Credential Rotation
+### Scenario 6: Process Solution Descriptor from artifact (legacy)
 
-**Goal:** Rotate credentials for an environment without rebuilding.
+| Parameter              | Value                                                      |
+|------------------------|------------------------------------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`                                     |
+| `OPERATION_TYPE`       | `DEPLOY`                                                   |
+| `GH_ADDITIONAL_PARAMS` | `SD_VERSION=my-solution:v1.2.3,SD_REPO_MERGE_MODE=replace` |
 
-| Parameter              | Value                         |
-|------------------------|-------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`        |
-| `GH_ADDITIONAL_PARAMS` | `CRED_ROTATION_PAYLOAD={...}` |
+`process_sd` runs only when `PIPELINE_TYPE` is not `GITLAB_DEPLOY`. See
+[SD processing](/docs/use-cases/sd-processing.md).
 
-**Example `GH_ADDITIONAL_PARAMS` value:**
+### Scenario 7: Generate new environment inventory
 
-```text
-CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\"<new-secret>\"}]}
-```
+| Parameter               | Value                          |
+|-------------------------|--------------------------------|
+| `ENV_NAMES`             | `new-cluster/new-env`          |
+| `OPERATION_TYPE`        | `DEPLOY`                       |
+| `ENV_BUILDER`           | `false`                        |
+| `ENV_INVENTORY_CONTENT` | Valid single-line JSON payload |
 
-**Steps that run:** CREDENTIAL_ROTATION → GIT_COMMIT
+**Orchestrator steps that run:** `env_inventory_generation` → `git_commit`.
 
-**Result:** Credentials are updated per payload, changes are committed. See [Credential Rotation](/docs/features/cred-rotation.md) for full payload format.
+Use the payload structure and examples in
+[Environment inventory generation](/docs/features/env-inventory-generation.md#full-env_inventory_content-example).
+Do not include real credentials in dispatch inputs.
 
----
+### Scenario 8: Multiple environments in one run
 
-### Scenario 6: Process Solution Descriptor from Artifact
+| Parameter        | Value                                 |
+|------------------|---------------------------------------|
+| `ENV_NAMES`      | `cluster-01/env-01,cluster-01/env-02` |
+| `OPERATION_TYPE` | `DEPLOY`                              |
+| `ENV_BUILDER`    | `true`                                |
 
-**Goal:** Fetch SD from an artifact and merge it into the repository.
+**Result:** One `env-prepare` job. The orchestrator fans out one child process per environment. This is not a GitHub
+matrix. `PIPELINE_TYPE=GITLAB_DEPLOY` rejects multiple resolved environments.
 
-| Parameter              | Value                                                       |
-|------------------------|-------------------------------------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`                                      |
-| `GH_ADDITIONAL_PARAMS` | `SD_SOURCE_TYPE=artifact,SD_VERSION=my-solution:v1.2.3,...` |
+## Further reading
 
-**Steps that run:** PROCESS_SD → GIT_COMMIT
-
-**Result:** SD is downloaded from the artifact registry, merged (or replaced) into `environments/prod-cluster/prod-01/Inventory/solution-descriptor/sd.yaml`, committed.
-
----
-
-### Scenario 7: Generate New Environment Inventory
-
-**Goal:** Create a new Environment Inventory (`env_definition.yml`) for a new environment.
-
-| Parameter              | Value                                                       |
-|------------------------|-------------------------------------------------------------|
-| `ENV_NAMES`            | `new-cluster/new-env`                                       |
-| `GH_ADDITIONAL_PARAMS` | `ENV_INVENTORY_INIT=true,ENV_TEMPLATE_NAME=my-env-template` |
-
-**Steps that run:** ENV_INVENTORY_GENERATION → GIT_COMMIT
-
-**Result:** New `env_definition.yml` is created at `environments/new-cluster/new-env/Inventory/`, committed. See [Environment Inventory Generation](/docs/features/env-inventory-generation.md).
-
----
-
-### Scenario 8: Multiple Environments in One Run
-
-**Goal:** Process several environments with the same parameters.
-
-| Parameter     | Value                                     |
-|---------------|-------------------------------------------|
-| `ENV_NAMES`   | `cluster-01/env-01,cluster-01/env-02,...` |
-| `ENV_BUILDER` | `true`                                    |
-
-**Steps that run:** For each environment in the matrix: APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT (parallel jobs)
-
-**Result:** Three separate `envgene_execution` jobs run in parallel, each processes one environment. All changes are committed in a single workflow run.
-
----
-
-## Further Reading
-
-| Document                                                                           | Description                    |
-|------------------------------------------------------------------------------------|--------------------------------|
-| [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md)              | Full parameter reference       |
-| [EnvGene Pipelines](/docs/envgene-pipelines.md)                                    | Pipeline flow and descriptions |
-| [Using Different Docker Registries](/docs/how-to/docker-registry-configuration.md) | GHCR and GAR configuration     |
-| [Blue-Green Deployment](/docs/features/blue-green-deployment.md)                   | BG-related parameters          |
-| [SD Processing](/docs/use-cases/sd-processing.md)                                  | Solution Descriptor use cases  |
-
----
-
-<div align="center">
-
-EnvGene GitHub Workflow — Part of the Qubership EnvGene platform
-
-</div>
+| Document                                                                               | Description                    |
+|----------------------------------------------------------------------------------------|--------------------------------|
+| [Instance pipeline parameters](/docs/instance-pipeline-parameters.md)                  | Full parameter reference       |
+| [EnvGene pipelines](/docs/envgene-pipelines.md)                                        | Pipeline flow and descriptions |
+| [Using different Docker registries](/docs/how-to/docker-registry-configuration.md)     | GHCR and GAR configuration     |
+| [Blue-Green deployment](/docs/features/blue-green-deployment.md)                       | BG-related parameters          |
+| [SD processing](/docs/use-cases/sd-processing.md)                                      | Solution Descriptor use cases  |

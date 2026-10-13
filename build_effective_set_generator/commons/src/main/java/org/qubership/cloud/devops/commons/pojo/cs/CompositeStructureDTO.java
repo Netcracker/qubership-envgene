@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -35,5 +36,6 @@ public class CompositeStructureDTO {
     private final float version;
     private final String id;
     private final CompositeEntityDTO baseline;
-    private final List<CompositeEntityDTO> satellites;
+    @Builder.Default
+    private final List<CompositeEntityDTO> satellites = new ArrayList<>();
 }

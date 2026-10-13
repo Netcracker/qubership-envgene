@@ -1,0 +1,12 @@
+{
+  "resourceProfiles": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "db_profile",
+        "applications": []
+      }
+    }
+  ]
+}

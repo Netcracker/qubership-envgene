@@ -1,0 +1,15 @@
+# EnvGene creates the bg-controller-cred Credential during generation. Do not provision it manually.
+# The BG Domain is a standalone object, authored here. The Composite Structure references it by name.
+name: "{{ current_env.name }}-bss-domain"
+type: bgdomain
+originNamespace:
+  name: "{{ current_env.name }}-bss-origin"
+  type: namespace
+peerNamespace:
+  name: "{{ current_env.name }}-bss-peer"
+  type: namespace
+controllerNamespace:
+  name: "{{ current_env.name }}-bg-controller"
+  type: namespace
+  credentials: bg-controller-cred
+  url: ${CLOUD_PROTOCOL}://bluegreen-controller-{{ current_env.name }}-bg-controller.${CLOUD_PUBLIC_HOST}

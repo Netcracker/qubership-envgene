@@ -1,0 +1,10 @@
+name: core
+deployParameters:
+  service_url: ${cloud_api_url}
+deployParameterSets: []
+e2eParameters:
+  test_endpoint: ${cloud_test_url}
+e2eParameterSets: []
+technicalConfigurationParameters:
+  config_endpoint: ${cloud_config_url}
+technicalConfigurationParameterSets: []

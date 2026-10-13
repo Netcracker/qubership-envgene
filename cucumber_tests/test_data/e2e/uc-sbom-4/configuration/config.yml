@@ -1,0 +1,3 @@
+sbom_retention:
+  enabled: true
+  keep_versions_per_app: 3

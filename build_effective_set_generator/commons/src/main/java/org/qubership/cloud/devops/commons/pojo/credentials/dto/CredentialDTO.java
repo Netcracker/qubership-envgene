@@ -20,27 +20,34 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
+import org.qubership.cloud.devops.commons.utils.deserializer.CredentialDTODeserializer;
 
-@Jacksonized
+import java.util.List;
+
+
 @Data
 @Builder
 @JsonPropertyOrder
+@JsonDeserialize(using = CredentialDTODeserializer.class)
 public class CredentialDTO {
     private final String credentialsId;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private final CredentialsTypeEnum type;
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXTERNAL_PROPERTY)
-    @JsonSubTypes(value = {
-            @JsonSubTypes.Type(value = SecretCredentialsDTO.class, name = CredentialsTypeEnum.Constants.SECRET_VALUE),
-            @JsonSubTypes.Type(value = SecretFileCredentialsDTO.class, name = CredentialsTypeEnum.Constants.SECRET_FILE_VALUE),
-            @JsonSubTypes.Type(value = UsernamePasswordCredentialsDTO.class, name = CredentialsTypeEnum.Constants.USERNAME_PASSWORD_VALUE),
-            @JsonSubTypes.Type(value = VaultAppRoleCredentialsDTO.class, name = CredentialsTypeEnum.Constants.VAULT_APP_ROLE_VALUE)
-    })
     private final Credential data;
     private final String description;
+    private final Boolean create;
+    private final String secretStore;
+    private final List<Property> properties;
+    private final String remoteRefPath;
+
+    @Data
+    public static class Property {
+        private String name;
+    }
 }

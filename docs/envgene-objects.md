@@ -81,6 +81,9 @@ It has the following structure:
 
 ```yaml
 # Optional
+# Free-form text describing the purpose of this Template Descriptor
+description: string
+# Optional
 # Template Composition configuration
 # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
 parent-templates:
@@ -137,6 +140,14 @@ bg_domain: <path-to-the-bg-domain-template-file>
 # Path to the external Credential Template file (Jinja, single file).
 external_credential_template: string
 # Optional
+# Map of labels of any type. Set by template preprocessing during Template Composition.
+# See details in /docs/features/template-composition.md
+labels:
+  # Set by template preprocessing.
+  # `self` for a descriptor created in the current template application.
+  # `parent` for a descriptor copied from a parent template.
+  origin: string
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
@@ -158,6 +169,13 @@ namespaces:
     # Parent template name
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     parent: string
+    # Optional
+    # Selects the parent namespace when the parent template has several namespaces
+    # with the same `name`, or when the resulting namespace needs a different name.
+    # Must exactly match one namespace `name` in the parent template. Resolved during
+    # preprocessing and not included in the generated Template Descriptor.
+    # See details in /docs/features/template-composition.md
+    parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
@@ -377,7 +395,7 @@ The Parameter Set schema in the template repository is identical to the [Environ
 
 #### Template Resource Profile Override
 
-These are customizations for performance parameters, over a Baseline Resource Profile. Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile Override for all environments of the same type.
+These are customizations for performance parameters, over a Baseline Resource Profile. Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile for all environments of the same type.
 
 Template Resource Profile Override are referenced in the `profile.name` attribute in the [Cloud](#cloud-template) or [Namespace](#namespace-template) templates.
 
@@ -416,13 +434,14 @@ name: string
 # Not processed by EnvGene
 version: string
 # Optional
-# Name of the resource profile baseline that this override modifies
-# Not processed by EnvGene
+# Name of the baseline set to select from the application during effective set calculation
+# When set, overrides the baseline specified on the Cloud or Namespace object for this profile
 baseline: string
 # Optional
 # Override description
 description: string
-# Mandatory
+# Optional
+# Omit to set only a baseline (a baseline-only override)
 applications:
 - # Mandatory
   # Application name to which the override applies
@@ -436,7 +455,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -496,9 +515,44 @@ satellites:
     type: "namespace"
 ```
 
+The `baseline` and each `satellites` member render either a namespace or an inline BG Domain. The following template
+renders a namespace baseline with a BG Domain satellite.
+
+```yaml
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-core"
+  type: "namespace"
+satellites:
+  - type: bgdomain
+    name: "{{ current_env.name }}-bss-bg-domain"
+    originNamespace:
+      type: namespace
+      name: "{{ current_env.name }}-bss-origin"
+    peerNamespace:
+      type: namespace
+      name: "{{ current_env.name }}-bss-peer"
+    controllerNamespace:
+      type: namespace
+      name: "{{ current_env.name }}-bss-controller"
+```
+
+For a baseline-only composite, render an empty `satellites` list.
+
+```yaml
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-core"
+  type: "namespace"
+satellites: []
+```
+
 #### BG Domain Template
 
-This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
+This is a Jinja template file used to render the standalone [BG Domain](#bg-domain) object for environments that use
+Blue-Green Domain (BGD) support and are not part of a [Composite Structure](#composite-structure). For a BG Domain
+that is part of a composite structure, the [Composite Structure Template](#composite-structure-template) renders the
+inline `bgdomain` member instead.
 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
@@ -539,6 +593,8 @@ mavenConfig:
   targetSnapshot: "snapshot"
   targetStaging: "staging"
   targetRelease: "release"
+  snapshotGroup: "maven-snapshot-group"
+  releaseGroup: "maven-release-group"
 dockerConfig:
   snapshotUri: "{{ regdefs.overrides.docker.snapshotUri | default('docker.qubership.org/snapshot') }}"
   stagingUri: "{{ regdefs.overrides.docker.stagingUri | default('docker.qubership.org/staging') }}"
@@ -565,6 +621,10 @@ name: "application-1"
 registryName: "{{ appdefs.overrides.registryName | default('registry-1') }}"
 artifactId: "application-1"
 groupId: "org.qubership"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 #### Credential Template
@@ -577,7 +637,7 @@ During Environment Instance generation, the result is merged into the instance [
 
 Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
 
-For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 Sensitive parameters via external Credentials](/docs/features/calculator-cli.md#version-20-sensitive-parameters-via-external-credentials).
 
 Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
 
@@ -589,14 +649,14 @@ Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `c
 streaming-cred:
   type: external
   create: true
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
   properties:
     - name: username
     - name: password
 consul-creds:
   type: external
-  secretStore: default-store
+  secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}"
 ```
 
@@ -909,6 +969,17 @@ e2eParameterSets: list
 # Used to include predefined sets of parameters that can be applied to the application at runtime
 # without redeployment for this cloud
 technicalConfigurationParameterSets: list
+# Optional
+# Resource profile configuration for the cloud
+# Used as the fallback when the namespace sets no baseline or override
+profile:
+  # Optional
+  # The name of the resource profile override to apply to applications in this cloud
+  name: string
+  # Optional
+  # The baseline set to select from the application when the resource profile override does not set one
+  # A free-form string, not restricted to a fixed set of values
+  baseline: string
 ```
 
 **Example:**
@@ -1008,13 +1079,12 @@ mergeDeployParametersAndE2EParameters: boolean
 # Resource profile configuration for the namespace
 # Used to manage performance parameters of applications in this namespace
 profile:
-  # Mandatory
-  # The name of the resource profile override to use
-  # Used to determine which resource profile override to apply to applications in this namespace
+  # Optional
+  # The name of the resource profile override to apply to applications in this namespace
   name: string
-  # Mandatory
-  # The baseline profile to use
-  # Used as the base resource profile before applying overrides
+  # Optional
+  # The baseline set to select from the application when the resource profile override does not set one
+  # A free-form string, not restricted to a fixed set of values
   baseline: string
 # Optional
 # Key-value pairs of deployment parameters at the namespace level
@@ -1147,13 +1217,14 @@ name: string
 # Not processed by EnvGene
 version: string
 # Optional
-# Name of the resource profile baseline that this override modifies
-# Not processed by EnvGene
+# Name of the baseline set to select from the application during effective set calculation
+# When set, overrides the baseline specified on the Cloud or Namespace object for this profile
 baseline: string
 # Optional
 # Override description
 description: string
-# Mandatory
+# Optional
+# Omit to set only a baseline (a baseline-only override)
 applications:
 - # Mandatory
   # Application name to which the override applies
@@ -1167,7 +1238,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -1218,9 +1289,22 @@ The `baseline` can be either:
 - A namespace (`type: namespace`) that serves as the core infrastructure
 - A BG Domain (`type: bgdomain`) that includes `originNamespace`, `peerNamespace`, and `controllerNamespace` for Blue-Green deployment scenarios
 
-The `satellites` array defines one or more namespaces that depend on the baseline. The Composite Structure is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTROLLER`) to automatically resolve baseline references for satellite namespaces.
+Each `satellites` member depends on the baseline and is either:
 
-The Composite Structure object is generated during Environment Instance generation from the [Composite Structure Template](#composite-structure-template) specified in the Environment Template descriptor.
+- A namespace (`type: namespace`)
+- A BG Domain (`type: bgdomain`) that includes `originNamespace`, `peerNamespace`, and `controllerNamespace` for
+  Blue-Green deployment scenarios
+
+The `satellites` array holds zero or more members. It is empty for a baseline-only composite. The Composite Structure
+is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTROLLER`) to resolve baseline references
+for satellite namespaces.
+
+A BG Domain that is part of a composite structure is embedded inline as a member with `type: bgdomain`, in the
+`baseline` or in a `satellites` member. In this case the composite structure carries the domain and no standalone
+[BG Domain](#bg-domain) object is used. A BG Domain that is not part of a composite structure is represented by a
+standalone [BG Domain](#bg-domain) object.
+The Composite Structure object is generated during Environment Instance generation from the [Composite Structure
+Template](#composite-structure-template) specified in the Environment Template descriptor.
 
 It has the following structure:
 
@@ -1254,13 +1338,25 @@ satellites:
     type: "namespace"
 ```
 
-**BD Deployment Example:**
+**Baseline-only Example:**
 
 ```yaml
-composite_structure:
-  name: "clusterA-env-1-composite-structure"
-  baseline:
-    type: bgdomain
+name: "clusterA-env-1-composite-structure"
+baseline:
+  name: "env-1-core"
+  type: "namespace"
+satellites: []
+```
+
+**Namespace baseline with BG Domain satellite Example:**
+
+```yaml
+name: "clusterA-env-1-composite-structure"
+baseline:
+  name: "env-1-core"
+  type: "namespace"
+satellites:
+  - type: bgdomain
     name: env-1-bg-domain
     originNamespace:
       type: namespace
@@ -1271,14 +1367,21 @@ composite_structure:
     controllerNamespace:
       type: namespace
       name: env-1-bss-controller
-  satellites:
-    - type: "namespace"
-      name: "env-1-data-management"
 ```
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. EnvGene uses it for BGD lifecycle management and for resolving origin, peer, and controller namespace names.
+
+The standalone BG Domain object represents a BG Domain that is not part of a
+[Composite Structure](#composite-structure).
+When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
+member and no standalone BG Domain object is generated.
+
+The standalone BG Domain object represents a BG Domain that is not part of a
+[Composite Structure](#composite-structure).
+When a BG Domain is part of a composite structure, it is embedded inline in the composite structure as a `bgdomain`
+member and no standalone BG Domain object is generated.
 
 The BG Domain object is generated during Environment Instance generation based on:
 
@@ -1365,19 +1468,13 @@ bg_domain:
     url: https://controller-env-1-controller.qubership.org
 ```
 
-**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
-
-- `@controller` → controller namespace
-- `@origin` → origin namespaces
-- `@peer` → peer namespaces
-
 ### BG State Files
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
 The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
-See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
 
 **Filename patterns:**
 
@@ -1509,10 +1606,8 @@ A **Secret Store** is a named entry in the instance repository configuration tha
 ```yaml
 <secret-store-name>:
   # Mandatory
-  type: enum [ vault, azure, aws, gcp ]
-  # Mandatory
-  url: URL
-  # Required when type is vault
+  type: enum [ vault, openbao, azure, aws, gcp ]
+  # Required when type is vault or openbao
   mountPath: string
   # Required when type is azure
   vaultName: string
@@ -1740,6 +1835,8 @@ Such overrides are created by the configurator in the Instance repository, to fu
 
 The Environment-Specific Resource Profile Override is specified individually for each Namespace or Cloud via `envTemplate.envSpecificResourceProfiles` parameter of the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
 
+An environment-specific override may be used standalone - without a matching `profile.name` reference on the Cloud or Namespace object. In that case, EnvGene attaches the override directly to the object.
+
 During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
 
 Environment Specific Resource Profile Override can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<resource-profile-override-name>.yaml.j2` or `<resource-profile-override-name>.yml.j2`.
@@ -1767,9 +1864,9 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 
 When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
-2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
-3. `/environments/resource_profiles` — Global, common for the entire repository
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles`. Environment-specific, highest priority.
+2. `/environments/<cluster-name>/resource_profiles`. Cluster-wide, applies to all environments in the cluster.
+3. `/environments/resource_profiles`. Global, common for the entire repository.
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1786,13 +1883,14 @@ name: string
 # Not processed by EnvGene
 version: string
 # Optional
-# Name of the resource profile baseline that this override modifies
-# Not processed by EnvGene
+# Name of the baseline set to select from the application during effective set calculation
+# When set, overrides the baseline specified on the Cloud or Namespace object for this profile
 baseline: string
 # Optional
 # Override description
 description: string
-# Mandatory
+# Optional
+# Omit to set only a baseline (a baseline-only override)
 applications:
 - # Mandatory
   # Application name to which the override applies
@@ -1806,7 +1904,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -1862,11 +1960,17 @@ Contains non-sensitive Cloud Passport parameters
 
 **Location:** `/environments/<cluster-name>/cloud-passport/<any-string>.yml|yaml`
 
+The recommended name is `passport.yml`, which auto-associates with every environment in the cluster. An
+additional infra passport (business/infra split) is named `passport-infra.yml`.
+
 #### Credential File
 
 Contains sensitive Cloud Passport parameters
 
 **Location:** `/environments/<cluster-name>/cloud-passport/<any-string>-creds.yml|yaml`
+
+The recommended name is `passport-creds.yml` (and `passport-infra-creds.yml` for the infra passport),
+pairing with the Main File.
 
 ### Artifact Definition
 
@@ -1875,6 +1979,9 @@ This object describes where the **environment template artifact** is stored in t
 **Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
 
 The filename must match the value of the `name` attribute.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 Two versions of this object are supported
 
@@ -1906,8 +2013,7 @@ registry:
     repositoryDomainName: string
     # Mandatory
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Mandatory
     # Staging repository name
@@ -2066,21 +2172,20 @@ registry:
     # Domain name of the registry
     repositoryDomainName: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot repository name
-    # EnvGene checks repositories in this order: release -> staging -> snapshot
-    # It stops when it finds the artifact
+    # EnvGene searches these repositories concurrently and uses the first that returns the artifact
     targetSnapshot: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Staging repository name
     targetStaging: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Release repository name
     targetRelease: string
     # Optional
-    # Used in case of provider nexus or artifactory only
+    # Used in case of provider nexus, artifactory, or azure only
     # Snapshot Maven repository group name
     snapshotGroup: string
     # Optional
@@ -2135,11 +2240,6 @@ registry:
   mavenConfig:
     authConfig: aws-maven
     repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
-    targetSnapshot: "snapshots"
-    targetStaging: "staging"
-    targetRelease: "releases"
-    snapshotGroup: "snapshot-group"
-    releaseGroup: "release-group"
 ```
 
 **Example with GCP Artifact Registry:**
@@ -2165,15 +2265,10 @@ registry:
       gcpRegProject: "123456789012"
       gcpRegPoolId: "idp-pool-id"
       gcpRegProviderId: "idp-provider"
-      gcpRegSAEmail: "test@test.iam.gserviceaccount.com"
+      gcpRegSAEmail: "example@example.com"
   mavenConfig:
     authConfig: gcp-maven
-    repositoryDomainName: "https://artifactregistry.googleapis.com"
-    targetSnapshot: "maven-snapshots"
-    targetStaging: "maven-staging"
-    targetRelease: "maven-releases"
-    snapshotGroup: "maven-snapshots-group"
-    releaseGroup: "maven-releases-group"
+    repositoryDomainName: "https://europe-west1-maven.pkg.dev/123456789012/maven-repo"
 ```
 
 **Example with Azure Artifacts:**
@@ -2216,7 +2311,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2228,7 +2323,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
@@ -2255,7 +2350,13 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/regdefs/<registry-name>.yml`
 
-Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Registry Definitions can also be supplied as definition overrides at `/configuration/regdefs/<registry-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 Two versions of this object are supported
 
@@ -2512,19 +2613,19 @@ mavenConfig:
   # Domain name of the registry
   repositoryDomainName: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   targetSnapshot: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Staging Maven repository name
   targetStaging: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Release Maven repository name
   targetRelease: string
   # Optional
-  # Used in case of authMethod nexus or artifactory only
+  # Used in case of provider nexus, artifactory, or azure only
   # Snapshot Maven repository name
   snapshotGroup: string
   # Optional
@@ -2657,7 +2758,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
 | `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
 | `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsDomain`              | `provider == "aws"` (needed for CodeArtifact)       | OPTIONAL     |
 | `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
 | `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
 | `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
@@ -2670,7 +2771,7 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
 | `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
 | `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureACRName`           | `provider == "azure"` (needed for ACR)              | OPTIONAL     |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
@@ -2718,7 +2819,7 @@ authConfig:
     gcpRegProject: 123456789012
     gcpRegPoolId: idp-pool-id
     gcpRegProviderId: idp-provider
-    gcpRegSAEmail: test@test.iam.gserviceaccount.com
+    gcpRegSAEmail: example@example.com
 
   maven-gcp-sa:
     authType: shortLived
@@ -2772,11 +2873,6 @@ authConfig:
 mavenConfig:
   authConfig: aws
   repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
-  targetSnapshot: snapshots
-  targetStaging: staging
-  targetRelease: releases
-  snapshotGroup: snapshot-group
-  releaseGroup: staging-group
 dockerConfig:
   authConfig: aws
   snapshotUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18080
@@ -2819,7 +2915,7 @@ rawConfig:
   rawTargetProxy: https://proxy.raw.local/
 ```
 
-**[Registry Definition v2.0](/python/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `python/envgene/envgenehelper/schemas/regdef-v2.schema.json`
+**[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `modules/envgene/envgenehelper/schemas/regdef-v2.schema.json`
 
 ### Application Definition
 
@@ -2833,19 +2929,12 @@ The filename must match the value of the `name` attribute.
 
 **Location:** `/appdefs/<application-name>.yml`
 
-Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+Application Definitions can also be supplied as definition overrides at `/configuration/appdefs/<application-name>.yml`. A definition override replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides) for the file-based mechanism.
 
 ```yaml
 # Optional
-metadata:
-  # Optional
-  # Describes the strategy for generating the Helm release name.
-  # Deployment automation relies on this attribute to form a unique Helm release name.
-  # Available options:
-  #   `perApplication` - Unique per application
-  #   `perVersion` - Unique per application version
-  #   `perDeployment` - Unique per deployment of this application
-  helmReleaseNameStrategy: enum[ perApplication, perVersion, perDeployment ]
+# Free-form metadata map. Structure is not specified.
+metadata: hashmap
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
 name: string
@@ -2858,6 +2947,18 @@ artifactId: string
 # Mandatory
 # Application group ID
 groupId: string
+# Optional
+# Whether the application supports parallel deployment
+supportParallelDeploy: boolean
+# Optional
+# Application-level deploy parameters (may be an empty map)
+deployParameters: hashmap
+# Optional
+# Application-level technical configuration parameters (may be an empty map)
+technicalConfigurationParameters: hashmap
+# Optional
+# Whether this application carries a Solution Descriptor
+solutionDescriptor: boolean
 ```
 
 **Example:**
@@ -2867,6 +2968,10 @@ name: qip
 registryName: sandbox
 artifactId: qip
 groupId: org.qubership
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)

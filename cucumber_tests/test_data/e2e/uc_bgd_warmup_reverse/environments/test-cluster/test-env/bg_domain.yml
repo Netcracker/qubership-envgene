@@ -1,0 +1,12 @@
+name: "test-env-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "test-env-bss-origin"
+  type: namespace
+peerNamespace:
+  name: "test-env-bss-peer"
+  type: namespace
+controllerNamespace:
+  name: "test-env-bg-controller"
+  type: namespace
+  credentials: bgdomaincred

@@ -1,0 +1,7 @@
+---
+# Rendered Application Definition. No credential of its own. It points to the sample-registry
+# Registry Definition, which holds the credential.
+name: sample-app
+registryName: sample-registry
+artifactId: sample-app
+groupId: org.qubership

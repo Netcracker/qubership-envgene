@@ -18,9 +18,14 @@ package org.qubership.cloud.devops.commons.utils;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.MapUtils;
+import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
+import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
 import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
+import org.qubership.cloud.devops.commons.utils.extcreds.ExternalCredUtils;
 
 import java.util.*;
+
+import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.INVALID_CRED_TYPE;
 
 @UtilityClass
 public class ParameterUtils {
@@ -29,19 +34,25 @@ public class ParameterUtils {
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
 
+    private static final Set<String> SUPPORTED_PARAMETER_TYPES = Set.of("DEPLOY", "E2E");
+
     public static void splitBySecure(
             Map<String, Parameter> input,
             Map<String, Parameter> secureOut,
-            Map<String, Parameter> insecureOut
+            Map<String, Parameter> insecureOut,
+            ExtCredEntities extCredEntities
     ) {
         input.entrySet().forEach(entry -> {
             String key = entry.getKey();
+
             Parameter param = entry.getValue();
             Object value = param.getValue();
             if (value instanceof Map<?, ?>) {
+                Map<String, Parameter> valueMap = (Map<String, Parameter>) value;
+                if (shouldAddExtParams(secureOut, extCredEntities, key, param, valueMap)) return;
                 Map<String, Parameter> secureChild = new LinkedHashMap<>();
                 Map<String, Parameter> insecureChild = new LinkedHashMap<>();
-                splitBySecure((Map<String, Parameter>) value, secureChild, insecureChild);
+                splitBySecure((Map<String, Parameter>) value, secureChild, insecureChild, extCredEntities);
                 if (!secureChild.isEmpty()) {
                     secureOut.put(key, copyOldValues(param, secureChild));
                 }
@@ -58,7 +69,9 @@ public class ParameterUtils {
                         if (itemVal instanceof Map<?, ?>) {
                             Map<String, Parameter> secureNested = new LinkedHashMap<>();
                             Map<String, Parameter> insecureNested = new LinkedHashMap<>();
-                            splitBySecure((Map<String, Parameter>) itemVal, secureNested, insecureNested);
+                            Map<String, Parameter> valueMap = (Map<String, Parameter>) itemVal;
+                            if (shouldAddExtParams(secureOut, extCredEntities, key, param, valueMap)) return;
+                            splitBySecure(valueMap, secureNested, insecureNested, extCredEntities);
                             if (!secureNested.isEmpty()) {
                                 secureList.add(copyOldValues(itemParam, secureNested));
                             }
@@ -82,7 +95,6 @@ public class ParameterUtils {
                 if (!insecureList.isEmpty()) {
                     insecureOut.put(key, copyOldValues(param, insecureList));
                 }
-
             } else {
                 if (param.isSecured()) {
                     secureOut.put(key, param);
@@ -93,6 +105,22 @@ public class ParameterUtils {
         });
     }
 
+    private static boolean shouldAddExtParams(Map<String, Parameter> secureOut, ExtCredEntities extCredEntities, String key, Parameter param, Map<String, Parameter> valueMap) {
+        if (ExternalCredUtils.isExternalCred(valueMap)) {
+            if (extCredEntities == null || !extCredEntities.isExternalOnly) {
+                throw new ExternalCredProcessingException(String.format(INVALID_CRED_TYPE, valueMap));
+            }
+            if (!SUPPORTED_PARAMETER_TYPES.contains(extCredEntities.getParameterType())) {
+                return true;
+            }
+            Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape());
+            if (finalVal != null) {
+                secureOut.put(key, copyOldValues(param, finalVal));
+                return true;
+            }
+        }
+        return false;
+    }
     private static Parameter copyOldValues(Parameter original, Object newValue) {
         return Parameter.builder()
                 .value(newValue)
@@ -125,16 +153,60 @@ public class ParameterUtils {
         updateParameter(customParameterDTO.getAllParams(), technicalParams);
     }
 
-    private static void updateParameter(Map<String, Parameter> customParams, Map<String, Parameter> params) {
+    private static void updateParameter(
+            Map<String, Parameter> customParams,
+            Map<String, Parameter> processedParams) {
+        if (customParams == null || processedParams == null) {
+            return;
+        }
         for (Map.Entry<String, Parameter> entry : customParams.entrySet()) {
             String key = entry.getKey();
             Parameter customParam = entry.getValue();
-
-            if (params.containsKey(key)) {
-                Parameter deployParam = params.get(key);
-                customParam.setValue(deployParam.getValue());
+            if (customParam == null) {
+                continue;
             }
-            params.remove(key);
+            Object customValue = customParam.getValue();
+            Parameter processedParam = processedParams.get(key);
+            if (customValue instanceof Map<?, ?> customMap) {
+                if (processedParam != null
+                        && processedParam.getValue() instanceof Map<?, ?> processedMap) {
+
+                    updateParameter(
+                            (Map<String, Parameter>) customMap,
+                            (Map<String, Parameter>) processedMap
+                    );
+                }
+            } else {
+                if (containsReference(customValue) && processedParam != null) {
+                    customParam.setValue(processedParam.getValue());
+                }
+                processedParams.remove(key);
+            }
         }
+    }
+
+    private static boolean containsReference(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof String) {
+            return ((String) value).contains("${");
+        }
+        if (value instanceof Map<?, ?> map) {
+            for (Object nested : map.values()) {
+                if (containsReference(nested)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (value instanceof List<?> list) {
+            for (Object item : list) {
+                if (containsReference(item)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
