@@ -10,8 +10,8 @@ from pipeline.pipeline_parameters import PipelineParametersHandler
 
 
 
-def generate_sboms(ctx:PipelineParametersHandler) -> None:
-    deploy_plan = ctx.resolve_source_dp(),
+def generate_sboms(ctx: PipelineParametersHandler) -> None:
+    deploy_plan = ctx.resolve_source_dp()
     work_dir = getenv_with_error('CI_PROJECT_DIR')
     app_sboms_path = get_sboms_dir(work_dir)
 
