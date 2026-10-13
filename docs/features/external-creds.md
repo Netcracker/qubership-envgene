@@ -748,10 +748,11 @@ Vault and OpenBao auth:
 
 GCP auth:
 
-| Parameter                        | Source              | Description                          |
-|----------------------------------|---------------------|--------------------------------------|
-| `type`                           | Secret Store object | `gcp`                                |
-| `GOOGLE_APPLICATION_CREDENTIALS` | CI/CD variable      | Path to the service account key file |
+| Parameter                                | Source              | Description                                 |
+|------------------------------------------|---------------------|---------------------------------------------|
+| `type`                                   | Secret Store object | `gcp`                                       |
+| `GOOGLE_APPLICATION_CREDENTIALS`         | CI/CD variable      | Path to the service account key file        |
+| `GOOGLE_APPLICATION_CREDENTIALS_CONTENT` | CI/CD variable      | Service account key JSON (takes precedence) |
 
 AWS auth:
 
@@ -1188,7 +1189,8 @@ and executed by the
 The operator sets per-store authentication variables on the EnvGene Instance repository before running the
 pipeline:
 [`VAULT_TOKEN`](/docs/envgene-repository-variables.md#vault_token),
-[`GOOGLE_APPLICATION_CREDENTIALS`](/docs/envgene-repository-variables.md#google_application_credentials),
+[`GOOGLE_APPLICATION_CREDENTIALS`](/docs/envgene-repository-variables.md#google_application_credentials) or
+[`GOOGLE_APPLICATION_CREDENTIALS_CONTENT`](/docs/envgene-repository-variables.md#google_application_credentials_content),
 [`AWS_ACCESS_KEY_ID`](/docs/envgene-repository-variables.md#aws_access_key_id),
 [`AWS_SECRET_ACCESS_KEY`](/docs/envgene-repository-variables.md#aws_secret_access_key). For Credentials
 referencing a non-default store, the CLI reads the prefixed variants (`<id>_VAULT_TOKEN`, and so on) - see
