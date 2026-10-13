@@ -6,7 +6,9 @@ import jsonschema
 import pytest
 import yaml
 
-from envgenehelper import openYaml, get_cred_config, extra_creds_scope
+from envgenehelper import (
+    openYaml, get_cred_config, extra_creds_scope, current_env_instance_store, open_current_env_instance_store,
+)
 from envgenehelper.business_helper import render_workspace_dir
 from envgenehelper.config_helper import get_regdef_v2_schema
 from pipeline.pipeline_parameters import PipelineParametersHandler
@@ -115,10 +117,6 @@ def pipeline_env(monkeypatch, tmp_path):
         "envTemplate": {"name": "simple"},
     }))
 
-    regdefs_dir = tmp_path / "regdefs"
-    regdefs_dir.mkdir()
-    (regdefs_dir / "registry-1.yml").write_text(yaml.safe_dump(V1_REGDEF))
-
     templates_dir = tmp_path / "tmp" / "templates"
     env_templates_dir = templates_dir / "env_templates"
     env_templates_dir.mkdir(parents=True)
@@ -131,7 +129,8 @@ def pipeline_env(monkeypatch, tmp_path):
     parameters_dir.mkdir()
     (parameters_dir / "pubreg.yaml").write_text(PUBREG_PARAMSET)
 
-    with extra_creds_scope():
+    with extra_creds_scope(), open_current_env_instance_store(env_dir, base_dir=tmp_path) as env_instance_store:
+        env_instance_store.put(tmp_path / "regdefs" / "registry-1.yml", dict(V1_REGDEF))
         yield
 
 
@@ -314,7 +313,7 @@ class TestRegdefV2Adapter:
                 "targetSnapshot": "snapshot", "targetStaging": "staging", "targetRelease": "release",
             },
         }
-        (tmp_path / "regdefs" / "registry-1.yml").write_text(yaml.safe_dump(old_v2))
+        current_env_instance_store().put(tmp_path / "regdefs" / "registry-1.yml", old_v2)
         ctx = _ctx()
 
         run_regdefv2_adapter(ctx)
@@ -324,7 +323,8 @@ class TestRegdefV2Adapter:
 
     @pytest.mark.unit
     def test_not_rendered_regdef_is_not_synthesized(self, tmp_path):
-        (tmp_path / "regdefs" / "old-registry.yml").write_text(yaml.safe_dump({**V1_REGDEF, "name": "old-registry"}))
+        current_env_instance_store().put(
+            tmp_path / "regdefs" / "old-registry.yml", {**V1_REGDEF, "name": "old-registry"})
         ctx = _ctx()
 
         run_regdefv2_adapter(ctx)

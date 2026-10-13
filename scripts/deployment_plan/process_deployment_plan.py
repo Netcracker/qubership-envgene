@@ -10,6 +10,7 @@ from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, resolve_namespace_entry
 
 from build_env.namespace_render import NAMESPACE_MAP_FILE
+from deployment_plan.store_data_provider import StoreDataProvider
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 _INTERMEDIATE_CALCULATED_FILE = "deploy-plan-calculated.yml"
@@ -69,6 +70,7 @@ def merge_deployment_plan(ctx: PipelineParametersHandler) -> None:
         applications=application_versions,
         output_file=calculated_plan_path,
         rootdir=ctx.work_dir,
+        data_provider=StoreDataProvider(root_dir=ctx.work_dir),
     )
     namespace_map = openYaml(namespace_map_path, allow_default=True, default_yaml=dict) or {}
     deploy_plan = bind_namespaces(

@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
+from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, current_env_instance_store, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
 from envgenehelper.deployer import *
 
 from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
@@ -25,19 +25,6 @@ def copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_pa
         copy_instance_paramsets(source_env_dir, render_parameters_dir)
 
 
-def cleanup_resulting_dir(resulting_dir: Path):
-    logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
-    resulting_dir = Path(resulting_dir)
-    for target in cleanup_targets:
-        path = resulting_dir.joinpath(target)
-        if path.is_dir():
-            logger.info(f"Removing directory: {path}")
-            delete_dir(path)
-        elif path.is_file():
-            logger.info(f"Removing file: {path}")
-            deleteFile(path)
-
-
 def load_env_inputs(env_name, source_env_dir, all_instances_dir) -> dict:
     env_instance_store = current_env_instance_store()
     env_definition = getEnvDefinition(source_env_dir)
@@ -57,7 +44,6 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     template_profiles_dir = str(Path(templates_dirs[NamespaceRole.COMMON]) / "resource_profiles")
 
     # preparing folders for generation
-    cleanup_resulting_dir(source_env_dir)
     copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
     env_definition = load_env_inputs(env_name, source_env_dir, all_instances_dir)
     # get deployer parameters

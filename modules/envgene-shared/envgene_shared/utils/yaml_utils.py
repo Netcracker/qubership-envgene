@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from functools import lru_cache
 import os
 import ruyaml
@@ -11,6 +12,7 @@ from typing import Callable
 from ruyaml import CommentedMap, CommentedSeq
 from pathlib import Path
 
+from envgene_shared.utils.content_hash import canonical_hash, schema_file_hash
 from envgene_shared.utils.file_utils import *
 from envgene_shared.utils.logger import logger
 
@@ -57,10 +59,47 @@ def get_schema_validator(schema_path: str):
     return cls(schema)
 
 
+class ValidatedHashes:
+    def __init__(self, known):
+        self.known = set(known)
+        self.seen = set()
+
+    @staticmethod
+    def key(yaml_content, schema_file_path) -> str:
+        return canonical_hash(yaml_content, salt=schema_file_hash(str(schema_file_path)))
+
+    def passed_before(self, key) -> bool:
+        if key not in self.known:
+            return False
+        self.seen.add(key)
+        return True
+
+    def passed(self, key):
+        self.seen.add(key)
+
+
+_validated_hashes = None
+
+
+@contextmanager
+def skip_validated(known):
+    global _validated_hashes
+    _validated_hashes = ValidatedHashes(known)
+    try:
+        yield _validated_hashes
+    finally:
+        _validated_hashes = None
+
+
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    validated = _validated_hashes if schema_file_path and not schemas_dir else None
+    key = validated.key(yaml_content, schema_file_path) if validated else None
+    if validated and validated.passed_before(key):
+        logger.debug(f"Skipping validation by {schema_file_path}: same content passed it before")
+        return
     schema_content = load_schema(str(schema_file_path)) if schema_file_path else input_schema_content
 
     if schemas_dir:
@@ -78,6 +117,8 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
         for err in errors:
             log_jsonschema_validation_error(err)
         raise ValueError("Validation failed") from None
+    if validated:
+        validated.passed(key)
 
 
 def validate_yaml_data_by_schema(data, schema, cls=None, *args, **kwargs):

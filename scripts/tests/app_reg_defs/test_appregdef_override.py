@@ -1,6 +1,7 @@
 import pytest
 
 from build_env.appregdef_render import override_app_reg_defs
+from envgenehelper import open_current_env_instance_store
 
 APPDEF_CONTENT = """name: application-1
 registryName: registry-1
@@ -45,6 +46,13 @@ class TestOverrideAppRegDefs:
         for dir_name in ["AppDefs", "RegDefs"]:
             (self.base_dir / dir_name.lower()).mkdir(parents=True)
             (self.env_dir  / dir_name).mkdir(parents=True)
+        with open_current_env_instance_store(self.env_dir, base_dir=self.base_dir) as env_instance_store:
+            self.env_instance_store = env_instance_store
+            yield
+
+    def _override(self, placement_mode):
+        override_app_reg_defs(self.base_dir, self.env_dir, placement_mode)
+        self.env_instance_store.flush()
 
     def _create_user_configs(self, filenames: list[str] = None):
         filenames = filenames or ["override.yaml"]
@@ -56,7 +64,7 @@ class TestOverrideAppRegDefs:
 
     def test_root_mode_copies_to_base_only(self):
         self._create_user_configs()
-        override_app_reg_defs(self.base_dir, self.env_dir, "root")
+        self._override("root")
 
         assert (self.base_dir / "appdefs" / "override.yaml").exists()
         assert (self.base_dir / "regdefs" / "override.yaml").exists()
@@ -65,7 +73,7 @@ class TestOverrideAppRegDefs:
 
     def test_dual_mode_copies_to_base_and_env(self):
         self._create_user_configs()
-        override_app_reg_defs(self.base_dir, self.env_dir, "dual")
+        self._override("dual")
 
         assert (self.base_dir / "appdefs" / "override.yaml").exists()
         assert (self.base_dir / "regdefs" / "override.yaml").exists()
@@ -76,12 +84,12 @@ class TestOverrideAppRegDefs:
         self._create_user_configs(["app.yaml"])
         (self.base_dir / "appdefs" / "app.yaml").write_text("old data")
 
-        override_app_reg_defs(self.base_dir, self.env_dir, "root")
+        self._override("root")
 
         assert (self.base_dir / "appdefs" / "app.yaml").read_text() == APPDEF_CONTENT
 
     def test_no_user_configs_changes_nothing(self):
-        override_app_reg_defs(self.base_dir, self.env_dir, "dual")
+        self._override("dual")
 
         assert list((self.base_dir / "appdefs").iterdir()) == []
         assert list((self.base_dir / "regdefs").iterdir()) == []
@@ -90,7 +98,7 @@ class TestOverrideAppRegDefs:
 
     def test_multiple_files_all_copied(self):
         self._create_user_configs(["app1.yaml", "app2.yaml"])
-        override_app_reg_defs(self.base_dir, self.env_dir, "root")
+        self._override("root")
 
         assert (self.base_dir / "appdefs" / "app1.yaml").exists()
         assert (self.base_dir / "appdefs" / "app2.yaml").exists()
@@ -102,6 +110,6 @@ class TestOverrideAppRegDefs:
         (p / "broken.yaml").write_text("name: broken\n")
 
         with pytest.raises(ValueError):
-            override_app_reg_defs(self.base_dir, self.env_dir, "dual")
+            self._override("dual")
 
         assert not (self.base_dir / dir_name.lower() / "broken.yaml").exists()

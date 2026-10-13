@@ -10,6 +10,7 @@ from typing import Optional, Union, List, Optional
 
 from dpg.v1.internal.deployment_plan import DeploymentPlanCalculator, DeployPlan
 import dpg.v1.utils as utils
+from dpg.v1.utils.data_provider import DataProviderInterface
 
 
 class DeploymentPlanGeneratorCommand:
@@ -20,7 +21,8 @@ class DeploymentPlanGeneratorCommand:
     """
 
     @staticmethod
-    def calculate(applications: Union[str, list], output_file: Path = "deploy-plan.yaml", rootdir: Path = None) -> DeployPlan:
+    def calculate(applications: Union[str, list], output_file: Path = "deploy-plan.yaml", rootdir: Path = None,
+                  data_provider: DataProviderInterface = None) -> DeployPlan:
         if isinstance(applications, str):
             applications_content = utils.load_json_or_yaml(applications)
             if applications_content:
@@ -35,7 +37,7 @@ class DeploymentPlanGeneratorCommand:
 
         deploy_plan = DeploymentPlanCalculator(
             applications=applications,
-            data_provider=utils.get_data_provider(root_dir=rootdir),
+            data_provider=data_provider or utils.get_data_provider(root_dir=rootdir),
         ).calculate()
 
         wave_count = len({e.wave for e in deploy_plan.entities})

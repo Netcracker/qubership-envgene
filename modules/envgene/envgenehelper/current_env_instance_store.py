@@ -6,15 +6,25 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments, skip_validated
 
 from .business_helper import NamespaceFile
+from .constants import cleanup_targets
+from .object_hash_manifest import (
+    ROOT_OBJECT_DIRS, canonical_hash, load_manifest, manifest_bytes, save_manifest, schema_file_hash,
+)
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
 # It is an input file of the user, so flush() must not write it back.
 NEVER_WRITTEN_DIRS = ("Inventory",)
 YAML_EXTENSIONS = (".yml", ".yaml")
+
+# App/Reg definition directories. When the store holds objects under them, flush prunes each
+# dir (root copies under base_dir, env copies under env_dir) to exactly the set written this
+# run, so an app/reg def removed from the templates is deleted from disk. Root copies live in
+# lowercase (appdefs/regdefs), env copies in the dual-placement case are AppDefs/RegDefs.
+_APP_REGDEF_DIRS_ENV = ("AppDefs", "RegDefs")
 
 
 def _key(path) -> Path:
@@ -26,16 +36,35 @@ def _match(parts: tuple, pattern: tuple) -> bool:
 
 
 class CurrentEnvInstanceStore:
-    def __init__(self, env_dir):
+    def __init__(self, env_dir, base_dir=None, validated=None):
         self.env_dir = _key(env_dir)
+        # When set, objects that live under base_dir but outside env_dir (e.g. the
+        # root AppDefs/RegDefs copies) are also tracked and written, keyed by their
+        # base_dir-relative path. None keeps the store env-scoped (legacy behavior).
+        self.base_dir = _key(base_dir) if base_dir is not None else None
         self._objects = {}
         self._to_write = set()
         self._beautify = {}
+        self.validated = validated
 
-    def _relative(self, key: Path) -> Path | None:
+    def _env_relative(self, key: Path) -> Path | None:
+        """Key relative to env_dir, or None if not under it. Used for the never-written
+        guard and the stale sweep, which are both env-scoped."""
         if not key.is_relative_to(self.env_dir):
             return None
         return key.relative_to(self.env_dir)
+
+    def _relative(self, key: Path) -> Path | None:
+        """Key relative to the narrowest known root (env_dir first, then base_dir),
+        or None if the object belongs to neither. Used as the manifest key."""
+        env_rel = self._env_relative(key)
+        if env_rel is not None:
+            return env_rel
+        if self.base_dir is not None and key.is_relative_to(self.base_dir):
+            base_rel = key.relative_to(self.base_dir)
+            if base_rel.parts and base_rel.parts[0] in ROOT_OBJECT_DIRS:
+                return base_rel
+        return None
 
     def put(self, path, obj):
         key = _key(path)
@@ -59,6 +88,12 @@ class CurrentEnvInstanceStore:
             if key.parts[:len(dir_parts)] == dir_parts and key.stem == name and key.suffix in YAML_EXTENSIONS:
                 return key
         return None
+
+    def get_yaml(self, dir_path, name):
+        key = self.find_yaml(dir_path, name)
+        if key is None:
+            raise FileNotFoundError(f"{name} is not in the object store under {_key(dir_path)}")
+        return self._objects[key]
 
     def bg_domain(self) -> CommentedMap:
         bg_domain_path = self.env_dir / "bg_domain.yml"
@@ -92,10 +127,30 @@ class CurrentEnvInstanceStore:
                 continue
             yield key
 
+    def _object_meta(self, key):
+        if key not in self._beautify:
+            return None, "", ""
+        schema_path, header_text = self._beautify[key]
+        schema_hash = schema_file_hash(str(schema_path)) if schema_path and Path(schema_path).exists() else ""
+        return schema_path, schema_hash, header_text
+
     def flush(self):
+        manifest = load_manifest(self.env_dir)
+        stored = manifest["objects"]
+        new_manifest = {"objects": {}}
+        written, skipped = 0, 0
         for key in self._write_targets():
             data = self._objects[key]
-            schema_path, header_text = self._beautify.get(key, (None, ""))
+            rel = self._relative(key)
+            schema_path, schema_hash, header_text = self._object_meta(key)
+            content_hash = canonical_hash(data, salt=schema_hash)
+            entry = {"hash": content_hash, "schema": schema_hash}
+            new_manifest["objects"][rel.as_posix()] = entry
+            if stored.get(rel.as_posix()) == entry and key.is_file():
+                skipped += 1
+                logger.info(f"Skipping {key} (unchanged)")
+                continue
+            written += 1
             if key in self._beautify:
                 if schema_path:
                     data = sortYaml(data, schema_path, False, validate=False)
@@ -110,21 +165,106 @@ class CurrentEnvInstanceStore:
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
             writeToFile(key, text)
+        if not self._delete_stale_objects():
+            cleanup_toplevel = {Path(target).name for target in cleanup_targets}
+            for rel, entry in stored.items():
+                if Path(rel).parts[0] in cleanup_toplevel:
+                    new_manifest["objects"].setdefault(rel, entry)
+            new_manifest["validated"] = sorted(set(manifest.get("validated", [])) | self._validated_this_run())
+        else:
+            new_manifest["validated"] = sorted(self._validated_this_run())
+        self._prune_app_regdefs()
+        save_manifest(self.env_dir, new_manifest)
+        logger.info(f"Object store flush: {written} written, {skipped} skipped")
+
+    def _validated_this_run(self) -> set:
+        return self.validated.seen if self.validated else set()
+
+    def _delete_stale_objects(self) -> bool:
+        # The sweep prunes env-generated cleanup targets (what env_build renders). It is
+        # only safe when the store actually holds objects in those scopes. If the store
+        # was populated with only non-cleanup objects (e.g. BGD-warmup renders app/reg
+        # defs but env_build does not run), sweeping would wipe the environment's existing
+        # generated objects. AppDefs/RegDefs are not cleanup targets, so env copies of
+        # them do not activate the sweep.
+        cleanup_toplevel = {Path(target).name for target in cleanup_targets}
+        covered = set()
+        sweep_active = False
+        for key in self._write_targets():
+            rel = self._env_relative(key)
+            if rel is None:
+                continue
+            covered.add(rel)
+            if rel.parts[0] in cleanup_toplevel:
+                sweep_active = True
+        if not sweep_active:
+            logger.debug("Object store flush: no env-generated objects, skipping stale sweep")
+            return False
+        for target in cleanup_targets:
+            path = self.env_dir / target
+            if path.is_file():
+                if Path(target) not in covered:
+                    path.unlink()
+            elif path.is_dir():
+                for file in sorted(path.rglob("*")):
+                    if file.is_file() and file.relative_to(self.env_dir) not in covered:
+                        file.unlink()
+                for d in sorted((x for x in path.rglob("*") if x.is_dir()), key=lambda x: len(x.parts), reverse=True):
+                    if not any(d.iterdir()):
+                        d.rmdir()
+                if path.exists() and not any(path.iterdir()):
+                    path.rmdir()
+        return True
+
+    def _prune_app_regdefs(self):
+        # App/Reg definitions are the only generated artifacts written directly under a
+        # top-level dir that is not in cleanup_targets, so they get their own sweep: prune
+        # each dir (root appdefs/regdefs under base_dir, env AppDefs/RegDefs) to exactly the
+        # set the store writes this run. A definition removed from the templates is thus
+        # deleted from disk. Only a dir the store actually writes to this run is pruned, so a
+        # run that renders no app/reg defs (appregdef skipped) leaves the dirs untouched.
+        written = sorted(self._write_targets())
+        for root_name, env_name in zip(ROOT_OBJECT_DIRS, _APP_REGDEF_DIRS_ENV):
+            root_kept = set()
+            if self.base_dir is not None:
+                root_kept = self._names_written_to(written, self.base_dir / root_name)
+                if root_kept:
+                    self._prune_dir(self.base_dir / root_name, root_kept)
+            env_kept = self._names_written_to(written, self.env_dir / env_name)
+            if root_kept or env_kept:
+                self._prune_dir(self.env_dir / env_name, env_kept)
+
+    @staticmethod
+    def _names_written_to(written, dir_path) -> set:
+        dir_key = _key(dir_path)
+        return {key.name for key in written if key.parent == dir_key}
+
+    @staticmethod
+    def _prune_dir(dir_path, kept):
+        if not dir_path.is_dir():
+            return
+        for file in sorted(dir_path.iterdir()):
+            if file.is_file() and file.name not in kept:
+                file.unlink()
+                logger.info(f"Pruning stale app/reg def: {file}")
+        if not any(dir_path.iterdir()):
+            dir_path.rmdir()
 
 
 _open_store = None
 
 
 @contextmanager
-def open_current_env_instance_store(env_dir):
+def open_current_env_instance_store(env_dir, base_dir=None):
     global _open_store
     if _open_store is not None:
         raise RuntimeError(f"Current env instance store is already open for {_open_store.env_dir}")
-    _open_store = CurrentEnvInstanceStore(env_dir)
-    try:
-        yield _open_store
-    finally:
-        _open_store = None
+    with skip_validated(load_manifest(env_dir).get("validated", [])) as validated:
+        _open_store = CurrentEnvInstanceStore(env_dir, base_dir=base_dir, validated=validated)
+        try:
+            yield _open_store
+        finally:
+            _open_store = None
 
 
 def current_env_instance_store() -> CurrentEnvInstanceStore:

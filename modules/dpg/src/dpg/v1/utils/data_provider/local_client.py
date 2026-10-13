@@ -19,8 +19,7 @@ class LocalClient(DataProviderInterface):
         if self.root_dir is None:
             self.root_dir = Path(os.getcwd())
 
-    @functools.cache
-    def get_app_def(self, application: str) -> UnifiedAppDef:
+    def _load_app_def(self, application: str) -> dict:
         apppath = self.root_dir / Path(self.DEFAULT_PATH_TO_APPDEFS) / f"{application}.yml"
         if not apppath.exists():
             raise Exception(f"File with appdef & fallback client doesn't exists for `{application}` application")
@@ -28,7 +27,21 @@ class LocalClient(DataProviderInterface):
         appdef_d = yaml.safe_load(apppath.read_text())
         if appdef_d is None:
             raise Exception(f"Can't dump yaml file: {apppath}")
+        return appdef_d
 
+    def _load_reg_def(self, registry: str) -> dict:
+        regpath = self.root_dir / Path(self.DEFAULT_PATH_TO_REGDEFS) / f"{registry}.yml"
+        if not regpath.exists():
+            raise Exception(f"File with regdef & fallback client doesn't exists for `{registry}` registry")
+
+        regdef_d = yaml.safe_load(regpath.read_text())
+        if regdef_d is None:
+            raise Exception(f"Can't dump yaml file: {regpath}")
+        return regdef_d
+
+    @functools.cache
+    def get_app_def(self, application: str) -> UnifiedAppDef:
+        appdef_d = self._load_app_def(application)
         appdef = UnifiedAppDef(
             name=appdef_d.get("name"),
             group_id=appdef_d.get("groupId"),
@@ -41,14 +54,7 @@ class LocalClient(DataProviderInterface):
 
     @functools.cache
     def get_reg_def(self, registry: str) -> UnifiedAppDef:
-        regpath = self.root_dir / Path(self.DEFAULT_PATH_TO_REGDEFS) / f"{registry}.yml"
-        if not regpath.exists():
-            raise Exception(f"File with regdef & fallback client doesn't exists for `{registry}` registry")
-
-        regdef_d = yaml.safe_load(regpath.read_text())
-        if regdef_d is None:
-            raise Exception(f"Can't dump yaml file: {regpath}")
-
+        regdef_d = self._load_reg_def(registry)
         return UnifiedRegDef(
             name=regdef_d.get("name", ""),
             credential_id=regdef_d.get("credentialsId", ""),
