@@ -308,7 +308,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             if not ctx.is_gitlab_deploy():
                 apply_no_sd_mode(ctx)
             sboms_retention_policy()
-            generate_sboms(ctx.resolve_source_dp(), ctx=ctx)
+            generate_sboms(ctx=ctx)
             if ctx.is_gitlab_deploy():
                 run_gitlab_deploy_effective_set(ctx)
             else:

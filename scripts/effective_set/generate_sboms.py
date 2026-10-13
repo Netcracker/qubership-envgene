@@ -6,10 +6,12 @@ from envgenehelper import getenv_with_error, openYaml, get_sboms_dir, logger
 from envgenehelper.json_helper import writeJsonToFile
 from envgenehelper.yaml_helper import writeYamlToFile
 from sbom_generator.generate_bom import Generator, SBOMOutput, exclude_resolved_apps
+from pipeline.pipeline_parameters import PipelineParametersHandler
 
 
 
-def generate_sboms(deploy_plan, ctx=None) -> None:
+def generate_sboms(ctx:PipelineParametersHandler) -> None:
+    deploy_plan = ctx.resolve_source_dp(),
     work_dir = getenv_with_error('CI_PROJECT_DIR')
     app_sboms_path = get_sboms_dir(work_dir)
 
