@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "artifactId": {
+      "title": "Artifactid",
+      "type": "string"
+    },
+    "groupId": {
+      "title": "Groupid",
+      "type": "string"
+    },
+    "registryName": {
+      "title": "Registryname",
+      "type": "string"
+    },
+    "solutionDescriptor": {
+      "default": false,
+      "title": "Solutiondescriptor",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "artifactId",
+    "groupId",
+    "registryName"
+  ],
+  "title": "ApplicationDTO",
+  "type": "object"
+}
