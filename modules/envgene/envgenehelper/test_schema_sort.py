@@ -13,8 +13,8 @@ TEST_DATA_DIR = REPO_ROOT / 'test_data'
 
 SCHEMA_AND_DOC = [
     ('resource-profile', 'test_environments/cluster-01/env-01/Profiles/prod_billing_override.yml'),
-    ('namespace', 'build_env/tmp/initial_namespaces_content/Namespaces/bg-controller/namespace.yml'),
-    ('application', 'build_env/tmp/initial_namespaces_content/Namespaces/origin-app/Applications/crm.yml'),
+    ('namespace', 'test_bg_manage/environments_sample/bgd-cluster/bgd-env/Namespaces/origin-app/namespace.yml'),
+    ('application', 'test_bg_manage/environments_sample/bgd-cluster/bgd-env/Namespaces/origin-app/Applications/crm.yml'),
 ]
 
 

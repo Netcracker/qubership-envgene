@@ -14,6 +14,8 @@ def get_jschon_schema(schema_path):
     try:
         return jschon.JSONSchema(schema_data)
     except jschon.CatalogError:
+        # jschon only supports newer jsonschema drafts; if the schema's $schema draft is not in its catalog,
+        # recompile it against draft 2020-12. Copy the dict so the cached schema data is not mutated.
         return jschon.JSONSchema({**schema_data, '$schema': 'https://json-schema.org/draft/2020-12/schema'})
 
 
