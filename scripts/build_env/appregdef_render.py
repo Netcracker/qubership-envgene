@@ -1,6 +1,6 @@
 from build_env.env_template.process_env_template import process_env_template
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
-from envgenehelper import BUILD_ENV_TAG, NamespaceRole, Path, findAllYamlsInDir, get_current_env_dir_from_env_vars, get_envgene_config_yaml, get_schema_dir, getenv_with_error, logger, openYaml, shutil, update_generated_versions, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import BUILD_ENV_TAG, NamespaceRole, Path, current_env_instance_store, findAllYamlsInDir, get_current_env_dir_from_env_vars, get_envgene_config_yaml, get_schema_dir, getenv_with_error, logger, openYaml, update_generated_versions, validate_yaml_by_scheme_or_fail
 from envgenehelper.config_helper import get_regdef_schema_for_content
 
 
@@ -9,21 +9,15 @@ def write_app_reg_defs(base_dir: str, rendered_defs: dict, env_dir: str, placeme
         raise ValueError(f"Unknown 'app_reg_defs_placement' value: {placement_mode}. Expected 'root' or 'dual'")
 
     logger.info(f"Writing app/reg defs with placement_mode='{placement_mode}'")
+    env_instance_store = current_env_instance_store()
     for dir_name in ["AppDefs", "RegDefs"]:
-        env_dst = Path(env_dir) / dir_name
-        root_dst = Path(base_dir) / dir_name.lower()
-
-        root_dst.mkdir(parents=True, exist_ok=True)
-        if env_dst.exists():
-            shutil.rmtree(env_dst)
         for name, definition in rendered_defs.get(dir_name, {}).items():
-            writeYamlToFile(root_dst / f"{name}.yml", definition)
+            env_instance_store.put(Path(base_dir) / dir_name.lower() / f"{name}.yml", definition)
             if placement_mode == "dual":
-                writeYamlToFile(env_dst / f"{name}.yml", definition)
+                env_instance_store.put(Path(env_dir) / dir_name / f"{name}.yml", definition)
 
 
-def validate_definition_override(dir_name: str, yaml_file: str) -> None:
-    content = openYaml(yaml_file)
+def validate_definition_override(dir_name: str, content: dict) -> None:
     if dir_name == "AppDefs":
         validate_yaml_by_scheme_or_fail(input_yaml_content=content,
                                         schema_file_path=get_schema_dir() / "appdef.schema.json")
@@ -36,13 +30,10 @@ def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> N
     config_dir = Path(base_dir) / "configuration"
     logger.info(f"Applying user overrides from {config_dir} with placement_mode='{placement_mode}'")
 
+    env_instance_store = current_env_instance_store()
     for dir_name in ("AppDefs", "RegDefs"):
         root_dst = Path(base_dir) / dir_name.lower()
-        root_dst.mkdir(parents=True, exist_ok=True)
-
-        if placement_mode == "dual":
-            env_dst = Path(env_dir) / dir_name
-            env_dst.mkdir(parents=True, exist_ok=True)
+        env_dst = Path(env_dir) / dir_name
 
         yaml_files = findAllYamlsInDir(config_dir / dir_name.lower(), recursively=False)
         if not yaml_files:
@@ -51,11 +42,13 @@ def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> N
 
         for yaml_file in yaml_files:
             logger.info(f"Validating override {yaml_file}")
-            validate_definition_override(dir_name, yaml_file)
-            shutil.copy(yaml_file, root_dst)
+            content = openYaml(yaml_file)
+            validate_definition_override(dir_name, content)
+            file_name = Path(yaml_file).name
+            env_instance_store.put(root_dst / file_name, content)
             logger.debug(f"Override applied: {yaml_file} -> {root_dst}")
             if placement_mode == "dual":
-                shutil.copy(yaml_file, env_dst)
+                env_instance_store.put(env_dst / file_name, content)
                 logger.debug(f"Override applied: {yaml_file} -> {env_dst}")
 
 

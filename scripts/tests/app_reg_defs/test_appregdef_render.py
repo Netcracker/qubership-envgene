@@ -9,7 +9,7 @@ from scripts.tests.base_test import BaseTest
 
 from build_env.appregdef_render import write_app_reg_defs
 from build_env.render_config_env import EnvGenerator
-from envgenehelper import getEnvDefinition
+from envgenehelper import getEnvDefinition, open_current_env_instance_store
 from envgenehelper.test_helpers import TestHelpers
 
 
@@ -93,7 +93,10 @@ class TestAppRegDefRendering(BaseTest):
         context_vars = self._get_render_context(test_number)
         rendered_defs = render_context.render_app_reg_defs(self.env_name, context_vars)
 
-        write_app_reg_defs(self.output_dir / "base", rendered_defs, render_dir, "dual")
+        base_dir = self.output_dir / "base"
+        with open_current_env_instance_store(render_dir, base_dir=base_dir) as env_instance_store:
+            write_app_reg_defs(base_dir, rendered_defs, render_dir, "dual")
+            env_instance_store.flush()
         self._verify_rendered_files(test_number, render_dir)
 
     NEGATIVE_CASES = {

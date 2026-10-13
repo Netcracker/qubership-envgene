@@ -175,13 +175,11 @@ def run_regdefv2_adapter(ctx) -> None:
     secret_key = params.get("PUB_REG_SECRET")
     _validate_required_pubreg_params(params, maven_provider, auth_method)
 
-    source_regdefs_path = ctx.committed_regdefs_dir
-    if not source_regdefs_path.is_dir():
-        raise ValueError(f"{source_regdefs_path} does not exist; cannot synthesize RegDef v2")
+    env_instance_store = helper.current_env_instance_store()
     regdef_v2_tmp_dir.mkdir(parents=True, exist_ok=True)
     for regdef_name in ctx.rendered_regdef_names:
-        regdef_file = source_regdefs_path / f"{regdef_name}.yml"
-        v1_data = helper.openYaml(regdef_file)
+        regdef_file = ctx.committed_regdefs_dir / f"{regdef_name}.yml"
+        v1_data = env_instance_store.get(regdef_file)
 
         if v1_data.get("version") == "2.0" or "authConfig" in v1_data:
             helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v1_data)

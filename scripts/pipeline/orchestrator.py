@@ -13,7 +13,8 @@ from envgene_shared.crypto.crypt import decrypted_cred_files
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
-from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, open_current_env_instance_store
+from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, \
+    open_current_env_instance_store, current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -230,6 +231,8 @@ class AppregdefRenderStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         ctx.rendered_regdef_names = run_appregdef_render()
+        if not EnvBuildStep().should_run(ctx):
+            current_env_instance_store().flush()
 
 
 class RegdefV2AdapterStep(PipelineStep):
@@ -284,10 +287,12 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        env_dir = get_current_env_dir_from_env_vars()
-        with decrypted_cred_files(), open_current_env_instance_store(env_dir) as env_instance_store:
+        # The instance store is opened for the whole pipeline (see run_single_env_pipeline).
+        # The flush stays inside decrypted_cred_files() because env_build reads plaintext
+        # creds and writes them back in-memory; the span re-encrypts them on exit.
+        with decrypted_cred_files():
             run_build_environment()
-            env_instance_store.flush()
+            current_env_instance_store().flush()
 
 
 class GenerateEffectiveSetStep(PipelineStep):
@@ -379,31 +384,37 @@ def run_single_env_pipeline() -> None:
     results: list[StepResult] = []
     metrics = MetricsCollectorActivity(ctx)
     terminal_status = PipelineStatus.UNKNOWN
+    # One instance store for the whole pipeline: every step before Effective Set
+    # (appregdef_render, env_build, ...) writes generated objects into it, so flush is a
+    # single writer + pruner. base_dir (the repo root) is a second write scope for the
+    # root AppDefs/RegDefs copies, which live outside the env dir.
+    env_dir = get_current_env_dir_from_env_vars()
     try:
         metrics.send_running()
-        for step in steps:
-            if not step.should_run(ctx):
-                logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
-                results.append(StepResult(step.name, StepStatus.SKIPPED))
-                continue
+        with open_current_env_instance_store(env_dir, base_dir=ctx.work_dir):
+            for step in steps:
+                if not step.should_run(ctx):
+                    logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
+                    results.append(StepResult(step.name, StepStatus.SKIPPED))
+                    continue
 
-            start_banner = colorize_segment(
-                banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
-            with log_section(f"step_{step.name}", header=start_banner):
-                start = time.time_ns()
-                status = StepStatus.SUCCESS
-                try:
-                    step.execute(ctx)
-                except Exception:
-                    status = StepStatus.FAILED
-                    raise
-                finally:
-                    duration_ms = (time.time_ns() - start) // 1_000_000
-                    results.append(StepResult(step.name, status, duration_ms))
-                    end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
-                    end_banner = colorize_segment(
-                        banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
-                    logger.info(end_banner)
+                start_banner = colorize_segment(
+                    banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
+                with log_section(f"step_{step.name}", header=start_banner):
+                    start = time.time_ns()
+                    status = StepStatus.SUCCESS
+                    try:
+                        step.execute(ctx)
+                    except Exception:
+                        status = StepStatus.FAILED
+                        raise
+                    finally:
+                        duration_ms = (time.time_ns() - start) // 1_000_000
+                        results.append(StepResult(step.name, status, duration_ms))
+                        end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
+                        end_banner = colorize_segment(
+                            banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
+                        logger.info(end_banner)
         terminal_status = PipelineStatus.SKIPPED if all(r.status == StepStatus.SKIPPED for r in results) \
             else PipelineStatus.SUCCESS
     except KeyboardInterrupt:

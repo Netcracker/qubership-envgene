@@ -231,3 +231,78 @@ def test_normalize_comments(source, expected):
     normalize_comments(data)
 
     assert dumpYamlToStr(data) == expected
+
+
+def test_flush_writes_base_dir_object(tmp_path, env_dir):
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    root_appdef = tmp_path / "appdefs" / "demo.yml"
+    objects.put(root_appdef, {"name": "demo"})
+    objects.flush()
+
+    assert root_appdef.read_text() == "name: demo\n"
+
+
+def test_flush_prunes_stale_root_appdef(tmp_path, env_dir):
+    (tmp_path / "appdefs").mkdir(parents=True)
+    (tmp_path / "appdefs" / "stale.yml").write_text("name: stale\n")
+    (tmp_path / "appdefs" / "keep.yml").write_text("name: keep\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "keep.yml", {"name": "keep"})
+    objects.flush()
+
+    assert (tmp_path / "appdefs" / "keep.yml").exists()
+    assert not (tmp_path / "appdefs" / "stale.yml").exists()
+
+
+def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.put(env_dir / "AppDefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert (env_dir / "AppDefs" / "demo.yml").exists()
+    assert not (env_dir / "AppDefs" / "stale.yml").exists()
+
+
+def test_flush_does_not_prune_appdef_dir_when_not_rendered(env_dir, tmp_path):
+    (tmp_path / "appdefs").mkdir(parents=True)
+    (tmp_path / "appdefs" / "user.yml").write_text("name: user\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(env_dir / "tenant.yml", {"name": "t"})
+    objects.flush()
+
+    assert (tmp_path / "appdefs" / "user.yml").exists()
+
+
+def test_root_only_app_defs_remove_env_copies(env_dir, tmp_path):
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert not (env_dir / "AppDefs").exists()
+
+
+def test_flush_does_not_write_base_dir_object_outside_app_reg_defs(env_dir, tmp_path):
+    template_profile = tmp_path / "tmp" / "templates" / "resource_profiles" / "dev.yml"
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(template_profile, {"name": "dev"})
+    objects.flush()
+
+    assert not template_profile.exists()
+
+
+def test_get_yaml_finds_any_yaml_extension(env_dir, tmp_path):
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yaml", {"name": "demo"})
+
+    assert objects.get_yaml(tmp_path / "appdefs", "demo") == {"name": "demo"}
+    with pytest.raises(FileNotFoundError):
+        objects.get_yaml(tmp_path / "appdefs", "absent")

@@ -16,6 +16,13 @@ from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comme
 # It is an input file of the user, so flush() must not write it back.
 NEVER_WRITTEN_DIRS = ("Inventory",)
 YAML_EXTENSIONS = (".yml", ".yaml")
+ROOT_OBJECT_DIRS = ("appdefs", "regdefs")
+
+# App/Reg definition directories. When the store holds objects under them, flush prunes each
+# dir (root copies under base_dir, env copies under env_dir) to exactly the set written this
+# run, so an app/reg def removed from the templates is deleted from disk. Root copies live in
+# lowercase (appdefs/regdefs), env copies in the dual-placement case are AppDefs/RegDefs.
+_APP_REGDEF_DIRS_ENV = ("AppDefs", "RegDefs")
 
 
 def _key(path) -> Path:
@@ -27,16 +34,30 @@ def _match(parts: tuple, pattern: tuple) -> bool:
 
 
 class CurrentEnvInstanceStore:
-    def __init__(self, env_dir):
+    def __init__(self, env_dir, base_dir=None):
         self.env_dir = _key(env_dir)
+        # When set, objects that live under base_dir but outside env_dir (e.g. the
+        # root AppDefs/RegDefs copies) are also tracked and written, keyed by their
+        # base_dir-relative path. None keeps the store env-scoped (legacy behavior).
+        self.base_dir = _key(base_dir) if base_dir is not None else None
         self._objects = {}
         self._to_write = set()
         self._beautify = {}
 
-    def _relative(self, key: Path) -> Path | None:
+    def _env_relative(self, key: Path) -> Path | None:
         if not key.is_relative_to(self.env_dir):
             return None
         return key.relative_to(self.env_dir)
+
+    def _relative(self, key: Path) -> Path | None:
+        env_rel = self._env_relative(key)
+        if env_rel is not None:
+            return env_rel
+        if self.base_dir is not None and key.is_relative_to(self.base_dir):
+            base_rel = key.relative_to(self.base_dir)
+            if base_rel.parts and base_rel.parts[0] in ROOT_OBJECT_DIRS:
+                return base_rel
+        return None
 
     def put(self, path, obj):
         key = _key(path)
@@ -60,6 +81,12 @@ class CurrentEnvInstanceStore:
             if key.parts[:len(dir_parts)] == dir_parts and key.stem == name and key.suffix in YAML_EXTENSIONS:
                 return key
         return None
+
+    def get_yaml(self, dir_path, name):
+        key = self.find_yaml(dir_path, name)
+        if key is None:
+            raise FileNotFoundError(f"{name} is not in the object store under {_key(dir_path)}")
+        return self._objects[key]
 
     def bg_domain(self) -> CommentedMap:
         bg_domain_path = self.env_dir / "bg_domain.yml"
@@ -120,19 +147,54 @@ class CurrentEnvInstanceStore:
             writeToFile(key, text)
             _t_beautify += _w0 - _b0
             _t_write += _diag_now() - _w0
+        self._prune_app_regdefs()
         logger.info(f"[diag] flush: {written} objects, beautify={_t_beautify*1000:.1f}ms, "
                     f"write={_t_write*1000:.1f}ms, total={(_diag_now()-_t0)*1000:.1f}ms")
+
+    def _prune_app_regdefs(self):
+        # App/Reg definitions are the only generated artifacts written directly under a
+        # top-level dir that is not in cleanup_targets, so they get their own sweep: prune
+        # each dir (root appdefs/regdefs under base_dir, env AppDefs/RegDefs) to exactly the
+        # set the store writes this run. A definition removed from the templates is thus
+        # deleted from disk. Only a dir the store actually writes to this run is pruned, so a
+        # run that renders no app/reg defs (appregdef skipped) leaves the dirs untouched.
+        written = sorted(self._write_targets())
+        for root_name, env_name in zip(ROOT_OBJECT_DIRS, _APP_REGDEF_DIRS_ENV):
+            root_kept = set()
+            if self.base_dir is not None:
+                root_kept = self._names_written_to(written, self.base_dir / root_name)
+                if root_kept:
+                    self._prune_dir(self.base_dir / root_name, root_kept)
+            env_kept = self._names_written_to(written, self.env_dir / env_name)
+            if root_kept or env_kept:
+                self._prune_dir(self.env_dir / env_name, env_kept)
+
+    @staticmethod
+    def _names_written_to(written, dir_path) -> set:
+        dir_key = _key(dir_path)
+        return {key.name for key in written if key.parent == dir_key}
+
+    @staticmethod
+    def _prune_dir(dir_path, kept):
+        if not dir_path.is_dir():
+            return
+        for file in sorted(dir_path.iterdir()):
+            if file.is_file() and file.name not in kept:
+                file.unlink()
+                logger.info(f"Pruning stale app/reg def: {file}")
+        if not any(dir_path.iterdir()):
+            dir_path.rmdir()
 
 
 _open_store = None
 
 
 @contextmanager
-def open_current_env_instance_store(env_dir):
+def open_current_env_instance_store(env_dir, base_dir=None):
     global _open_store
     if _open_store is not None:
         raise RuntimeError(f"Current env instance store is already open for {_open_store.env_dir}")
-    _open_store = CurrentEnvInstanceStore(env_dir)
+    _open_store = CurrentEnvInstanceStore(env_dir, base_dir=base_dir)
     try:
         yield _open_store
     finally:

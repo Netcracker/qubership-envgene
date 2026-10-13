@@ -221,11 +221,13 @@ def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx) -> artifact_mode
     for result in results:
         if result is not None:
             return result
-    app_defs_path = str(ctx.committed_regdefs_dir.parent / APPDEFS_DIRNAME.lower())
-    reg_defs_path = str(ctx.transient_regdefs_dir or ctx.committed_regdefs_dir)
-    app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
-    app_dict = helper.openYaml(app_def_path)
-    reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")
-    app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
+    env_instance_store = helper.current_env_instance_store()
+    app_defs_dir = ctx.committed_regdefs_dir.parent / APPDEFS_DIRNAME.lower()
+    app_dict = dict(env_instance_store.get_yaml(app_defs_dir, app_name))
+    if ctx.transient_regdefs_dir:
+        reg_def = helper.openYaml(identify_yaml_extension(f"{ctx.transient_regdefs_dir}/{app_dict['registryName']}"))
+    else:
+        reg_def = env_instance_store.get_yaml(ctx.committed_regdefs_dir, app_dict['registryName'])
+    app_dict['registry'] = artifact_models.parse_registry(reg_def)
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
