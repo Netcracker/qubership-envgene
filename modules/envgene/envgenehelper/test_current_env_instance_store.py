@@ -510,3 +510,37 @@ def test_root_only_flush_keeps_validations_of_env_objects(env_dir, tmp_path, sch
         root_only.flush()
 
     assert set(json.loads(manifest_path(env_dir).read_text())["validated"]) == env_validations
+
+
+def test_under_lists_objects_at_any_depth_below_dir(tmp_path, env_dir):
+    objects = CurrentEnvInstanceStore(env_dir)
+    params = tmp_path / "tmp" / "parameters"
+    objects.put(params / "a.yml", "a")
+    objects.put(params / "from_template" / "app" / "b.yml.j2", "b")
+    objects.put(tmp_path / "tmp" / "other.yml", "c")
+
+    assert objects.under(params) == sorted([(params / "a.yml").resolve(),
+                                            (params / "from_template" / "app" / "b.yml.j2").resolve()])
+
+
+def test_remove_drops_object_and_skips_its_write(env_dir):
+    objects = CurrentEnvInstanceStore(env_dir)
+    tenant = env_dir / "tenant.yml"
+    objects.put(tenant, {"name": "t"})
+
+    objects.remove(tenant)
+    objects.remove(env_dir / "absent.yml")
+    objects.flush()
+
+    assert not objects.exists(tenant)
+    assert not tenant.exists()
+
+
+def test_flush_does_not_write_render_workspace_objects(tmp_path, env_dir):
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    paramset = tmp_path / "tmp" / "render-workspace" / "parameters" / "from_template" / "p.yml"
+    objects.put(paramset, {"name": "p"})
+
+    objects.flush()
+
+    assert not paramset.exists()

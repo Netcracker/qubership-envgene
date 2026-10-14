@@ -209,8 +209,9 @@ class TestRegdefV2Adapter:
         synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         assert synthesized["authConfig"]["pub-reg-auth"]["gcpRegProject"] == "env-01-project"
         workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
-        assert (workspace_dir / "pubreg.yml").exists()
-        assert not (workspace_dir / "pubreg.yaml.j2").exists()
+        assert current_env_instance_store().exists(workspace_dir / "pubreg.yml")
+        assert not current_env_instance_store().exists(workspace_dir / "pubreg.yaml.j2")
+        assert not workspace_dir.exists()
         assert (parameters_dir / "pubreg.yaml.j2").exists()
 
     @pytest.mark.unit
@@ -237,7 +238,7 @@ class TestRegdefV2Adapter:
         synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         assert synthesized["authConfig"]["pub-reg-auth"]["awsRegion"] == "eu-west-1"
         workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_template"
-        assert (workspace_dir / "cloud-deploy.yml.j2").exists()
+        assert current_env_instance_store().exists(workspace_dir / "cloud-deploy.yml.j2")
 
     @pytest.mark.unit
     def test_does_not_touch_bg_template_paramsets(self, tmp_path):
@@ -247,7 +248,8 @@ class TestRegdefV2Adapter:
 
         run_regdefv2_adapter(_ctx())
 
-        assert not (render_workspace_dir(tmp_path) / "parameters" / "from_origin_template").exists()
+        origin_workspace_dir = render_workspace_dir(tmp_path) / "parameters" / "from_origin_template"
+        assert not current_env_instance_store().under(origin_workspace_dir)
 
     @pytest.mark.unit
     @pytest.mark.parametrize("missing",["PUB_REG_KEY", "PUB_REG_SECRET", "PUB_REG_REGION", "PUB_REG_DOMAIN", "PUB_REG_REPOSITORY"])

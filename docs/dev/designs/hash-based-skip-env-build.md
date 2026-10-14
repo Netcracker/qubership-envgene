@@ -62,7 +62,11 @@ RegDefs на диск сам. Стор становится пайплайн-о�
 - **Шаги, пишущие через стор.** `appregdef_render` (AppDefs, RegDefs) и всё, что `env_build` уже
   делает через стор (Applications, Namespaces, Tenant, Cloud, Profiles, Credentials). Оба флоу
   (legacy `ENV_BUILDER` и GitLab deploy) покрываются, потому что оба проходят через эти шаги.
-- **Шаги вне стора.** `regdefv2_adapter` и шаги deploy-plan пишут в `tmp/render-workspace` и держат
+- **ParameterSet в сторе.** ParameterSet шаблона, кластера и инстанса читаются в стор под путями
+  `tmp/render-workspace/parameters/...`, на диск не копируются. Отрендеренный `.j2` разбирается один раз
+  и кладётся в стор под путём `.yml`. `regdefv2_adapter` и `env_build` обмениваются ими через стор.
+  Flush их не пишет: они не коммитятся, их значения уходят в Namespace, Application, Cloud и Tenant.
+- **Шаги вне стора.** Transient RegDef `regdefv2_adapter` и шаги deploy-plan пишут в `tmp/` и держат
   значения в контексте рана; эти файлы не коммитятся, поэтому они не в сторе и не хэшируются.
   Генератор Effective Set читает слитый env-каталог с диска и тоже не в сторе.
 - **Корневая копия при dual placement.** При dual placement каждый AppDef/RegDef пишется и в env

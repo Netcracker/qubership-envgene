@@ -112,6 +112,17 @@ class CurrentEnvInstanceStore:
         return sorted(k for k in self._objects
                       if k.parts[:len(root_parts)] == root_parts and _match(k.parts[len(root_parts):], rest))
 
+    def under(self, dir_path):
+        dir_parts = _key(dir_path).parts
+        return sorted(k for k in self._objects
+                      if len(k.parts) > len(dir_parts) and k.parts[:len(dir_parts)] == dir_parts)
+
+    def remove(self, path):
+        key = _key(path)
+        self._objects.pop(key, None)
+        self._to_write.discard(key)
+        self._beautify.pop(key, None)
+
     def beautify(self, path, schema_path, header_text=""):
         key = _key(path)
         self.get(key)
