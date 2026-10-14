@@ -1,5 +1,7 @@
+import os
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
+from functools import lru_cache
 from pathlib import Path
 
 from ruyaml import CommentedMap
@@ -28,6 +30,11 @@ _APP_REGDEF_DIRS_ENV = ("AppDefs", "RegDefs")
 
 
 def _key(path) -> Path:
+    return _resolve(str(path))
+
+
+@lru_cache(maxsize=None)
+def _resolve(path: str) -> Path:
     return Path(path).resolve()
 
 
@@ -43,6 +50,7 @@ class CurrentEnvInstanceStore:
         # base_dir-relative path. None keeps the store env-scoped (legacy behavior).
         self.base_dir = _key(base_dir) if base_dir is not None else None
         self._objects = {}
+        self._keys_by_dir = {}
         self._to_write = set()
         self._beautify = {}
         self.validated = validated
@@ -70,6 +78,7 @@ class CurrentEnvInstanceStore:
         key = _key(path)
         logger.debug(f"Object store put: {key}")
         self._objects[key] = obj
+        self._keys_by_dir.setdefault(key.parent, set()).add(key)
         self._to_write.add(key)
         return obj
 
@@ -82,12 +91,13 @@ class CurrentEnvInstanceStore:
     def exists(self, path) -> bool:
         return _key(path) in self._objects
 
-    def find_yaml(self, dir_path, name) -> Path | None:
+    def _dirs_under(self, dir_path):
         dir_parts = _key(dir_path).parts
-        for key in sorted(self._objects):
-            if key.parts[:len(dir_parts)] == dir_parts and key.stem == name and key.suffix in YAML_EXTENSIONS:
-                return key
-        return None
+        return [d for d in self._keys_by_dir if d.parts[:len(dir_parts)] == dir_parts]
+
+    def find_yaml(self, dir_path, name) -> Path | None:
+        return min((key for d in self._dirs_under(dir_path) for key in self._keys_by_dir[d]
+                    if key.stem == name and key.suffix in YAML_EXTENSIONS), default=None)
 
     def get_yaml(self, dir_path, name):
         key = self.find_yaml(dir_path, name)
@@ -107,19 +117,21 @@ class CurrentEnvInstanceStore:
     def list(self, pattern) -> list[Path]:
         parts = Path(pattern).parts
         prefix_len = next((i for i, part in enumerate(parts) if "*" in part), len(parts))
-        root_parts = _key(Path(*parts[:prefix_len])).parts
+        root = _key(Path(*parts[:prefix_len]))
         rest = parts[prefix_len:]
-        return sorted(k for k in self._objects
-                      if k.parts[:len(root_parts)] == root_parts and _match(k.parts[len(root_parts):], rest))
+        if not rest:
+            return [root] if root in self._objects else []
+        root_len = len(root.parts)
+        return sorted(key for d in self._dirs_under(root) if _match(d.parts[root_len:], rest[:-1])
+                      for key in self._keys_by_dir[d] if fnmatchcase(key.name, rest[-1]))
 
     def under(self, dir_path):
-        dir_parts = _key(dir_path).parts
-        return sorted(k for k in self._objects
-                      if len(k.parts) > len(dir_parts) and k.parts[:len(dir_parts)] == dir_parts)
+        return sorted((key for d in self._dirs_under(dir_path) for key in self._keys_by_dir[d]), key=str)
 
     def remove(self, path):
         key = _key(path)
         self._objects.pop(key, None)
+        self._keys_by_dir.get(key.parent, set()).discard(key)
         self._to_write.discard(key)
         self._beautify.pop(key, None)
 
@@ -131,12 +143,14 @@ class CurrentEnvInstanceStore:
         self._to_write.add(key)
         logger.debug(f"Object store beautify: {key} with schema {schema_path}")
 
-    def _write_targets(self):
+    def _write_targets(self) -> dict:
+        targets = {}
         for key in sorted(self._to_write):
             rel = self._relative(key)
             if rel is None or not rel.parts or rel.parts[0] in NEVER_WRITTEN_DIRS:
                 continue
-            yield key
+            targets[key] = rel
+        return targets
 
     def _object_meta(self, key):
         if key not in self._beautify:
@@ -150,9 +164,9 @@ class CurrentEnvInstanceStore:
         stored = manifest["objects"]
         new_manifest = {"objects": {}}
         written, skipped = 0, 0
-        for key in self._write_targets():
+        targets = self._write_targets()
+        for key, rel in targets.items():
             data = self._objects[key]
-            rel = self._relative(key)
             schema_path, schema_hash, header_text = self._object_meta(key)
             content_hash = canonical_hash(data, salt=schema_hash)
             entry = {"hash": content_hash, "schema": schema_hash}
@@ -176,7 +190,7 @@ class CurrentEnvInstanceStore:
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
             writeToFile(key, text)
-        if not self._delete_stale_objects():
+        if not self._delete_stale_objects(targets):
             cleanup_toplevel = {Path(target).name for target in cleanup_targets}
             for rel, entry in stored.items():
                 if Path(rel).parts[0] in cleanup_toplevel:
@@ -184,14 +198,14 @@ class CurrentEnvInstanceStore:
             new_manifest["validated"] = sorted(set(manifest.get("validated", [])) | self._validated_this_run())
         else:
             new_manifest["validated"] = sorted(self._validated_this_run())
-        self._prune_app_regdefs()
+        self._prune_app_regdefs(targets)
         save_manifest(self.env_dir, new_manifest)
         logger.info(f"Object store flush: {written} written, {skipped} skipped")
 
     def _validated_this_run(self) -> set:
         return self.validated.seen if self.validated else set()
 
-    def _delete_stale_objects(self) -> bool:
+    def _delete_stale_objects(self, targets: dict) -> bool:
         # The sweep prunes env-generated cleanup targets (what env_build renders). It is
         # only safe when the store actually holds objects in those scopes. If the store
         # was populated with only non-cleanup objects (e.g. BGD-warmup renders app/reg
@@ -199,42 +213,34 @@ class CurrentEnvInstanceStore:
         # generated objects. AppDefs/RegDefs are not cleanup targets, so env copies of
         # them do not activate the sweep.
         cleanup_toplevel = {Path(target).name for target in cleanup_targets}
-        covered = set()
-        sweep_active = False
-        for key in self._write_targets():
-            rel = self._env_relative(key)
-            if rel is None:
-                continue
-            covered.add(rel)
-            if rel.parts[0] in cleanup_toplevel:
-                sweep_active = True
-        if not sweep_active:
+        env_keys = [key for key in targets if key.is_relative_to(self.env_dir)]
+        if not any(targets[key].parts[0] in cleanup_toplevel for key in env_keys):
             logger.debug("Object store flush: no env-generated objects, skipping stale sweep")
             return False
+        covered = {os.path.normcase(key) for key in env_keys}
         for target in cleanup_targets:
             path = self.env_dir / target
             if path.is_file():
-                if Path(target) not in covered:
+                if os.path.normcase(path) not in covered:
                     path.unlink()
             elif path.is_dir():
-                for file in sorted(path.rglob("*")):
-                    if file.is_file() and file.relative_to(self.env_dir) not in covered:
-                        file.unlink()
-                for d in sorted((x for x in path.rglob("*") if x.is_dir()), key=lambda x: len(x.parts), reverse=True):
-                    if not any(d.iterdir()):
-                        d.rmdir()
-                if path.exists() and not any(path.iterdir()):
-                    path.rmdir()
+                for root, _, files in os.walk(path, topdown=False):
+                    for name in files:
+                        file = os.path.join(root, name)
+                        if os.path.normcase(file) not in covered:
+                            os.remove(file)
+                    if not os.listdir(root):
+                        os.rmdir(root)
         return True
 
-    def _prune_app_regdefs(self):
+    def _prune_app_regdefs(self, targets: dict):
         # App/Reg definitions are the only generated artifacts written directly under a
         # top-level dir that is not in cleanup_targets, so they get their own sweep: prune
         # each dir (root appdefs/regdefs under base_dir, env AppDefs/RegDefs) to exactly the
         # set the store writes this run. A definition removed from the templates is thus
         # deleted from disk. Only a dir the store actually writes to this run is pruned, so a
         # run that renders no app/reg defs (appregdef skipped) leaves the dirs untouched.
-        written = sorted(self._write_targets())
+        written = list(targets)
         for root_name, env_name in zip(ROOT_OBJECT_DIRS, _APP_REGDEF_DIRS_ENV):
             root_kept = set()
             if self.base_dir is not None:

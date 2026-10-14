@@ -125,16 +125,14 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
                     merge_dict_key_with_comment("value", sourceParam, "value", param, commentText)
 
 
-def find_resource_profile(profile_name: str, template_profiles_dir) -> Path | None:
+def find_resource_profile(profile_name: str, template_profiles_dir, disk_profile_paths: dict) -> Path | None:
     env_instance_store = current_env_instance_store()
     profile_path = env_instance_store.find_yaml(template_profiles_dir, profile_name)
     if profile_path:
         return profile_path
-    same_name_paths = [path for path in findAllYamlsInDir(template_profiles_dir)
-                       if extractNameFromFile(path) == profile_name]
-    if not same_name_paths:
+    profile_path = disk_profile_paths.get(profile_name)
+    if profile_path is None:
         return None
-    profile_path = Path(same_name_paths[-1])
     env_instance_store.put(profile_path, openYaml(profile_path))
     return profile_path
 
@@ -150,8 +148,9 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], templat
     if not needed_resource_profiles:
         return profiles_map
     validity_by_path = {}
+    disk_profile_paths = {extractNameFromFile(path): Path(path) for path in findAllYamlsInDir(template_profiles_dir)}
     for template_name, needed_profile in needed_resource_profiles.items():
-        profile_path = find_resource_profile(needed_profile, template_profiles_dir)
+        profile_path = find_resource_profile(needed_profile, template_profiles_dir, disk_profile_paths)
         if not profile_path:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue

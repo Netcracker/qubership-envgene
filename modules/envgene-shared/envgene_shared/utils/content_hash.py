@@ -12,8 +12,15 @@ def canonical_form(data):
     return data
 
 
+def canonical_json(data) -> str:
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
+
+
 def canonical_hash(data, salt: str = "") -> str:
-    payload = json.dumps(canonical_form(data), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    try:
+        payload = canonical_json(data)
+    except TypeError:
+        payload = canonical_json(canonical_form(data))
     return hashlib.sha256((payload + salt).encode("utf-8")).hexdigest()
 
 
