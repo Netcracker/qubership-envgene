@@ -1,4 +1,3 @@
-import shutil
 from os import getenv
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
@@ -492,32 +491,37 @@ class EnvGenerator:
         return Path(path_str)
 
     def generate_paramset_templates(self, paramset_names: Iterable[str]):
-        render_dir = Path(self.ctx.render_parameters_dir).resolve()
-        paramset_templates = self.find_templates(render_dir, ["*.yml.j2", "*.yaml.j2"])
-        for template_path in paramset_templates:
+        from build_env.build_env import paramset_paths
+        env_instance_store = current_env_instance_store()
+        for template_path in paramset_paths(self.ctx.render_parameters_dir, ["*.yml.j2", "*.yaml.j2"]):
             template_name = self.get_template_name(template_path)
             if template_name not in paramset_names:
                 continue
             target_path = self.get_rendered_target_path(template_path)
             try:
                 logger.info(f"Try to render paramset {template_name}")
-                self.render_from_file_to_file(Template(str(template_path)).render(self.ctx.as_dict()), target_path)
+                env_instance_store.put(target_path, self.render_paramset(template_path))
                 logger.info(f"Successfully generated paramset: {template_name}")
-                if template_path.exists():
-                    template_path.unlink()
+                env_instance_store.remove(template_path)
             except TemplateError as e:
                 logger.warning(f"Skipped paramset {template_name}. Error details: {e}")
-                if target_path.exists():
-                    target_path.unlink()
+                env_instance_store.remove(target_path)
+
+    def render_paramset(self, template_path) -> dict:
+        template = current_env_instance_store().get(template_path)
+        template = replace_ansible_stuff(template_str=template, template_path=str(template_path))
+        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        logger.debug(f"Rendered entity: \n{rendered}")
+        return readYaml(escaping_quotation(rendered))
 
     def validate_used_paramsets(self, paramset_names: Iterable[str]):
-        render_dir = Path(self.ctx.render_parameters_dir).resolve()
+        from build_env.build_env import paramset_content, paramset_paths
         errors = []
         files_by_template_dir = {}
-        for paramset_path in self.find_templates(render_dir, ["*.yml", "*.yaml"]):
+        for paramset_path in paramset_paths(self.ctx.render_parameters_dir, ["*.yml", "*.yaml"]):
             if paramset_path.stem not in paramset_names:
                 continue
-            paramset = openYaml(paramset_path)
+            paramset = paramset_content(paramset_path)
             try:
                 validate_yaml_by_scheme_or_fail(input_yaml_content=paramset,
                                                 schema_file_path=get_schema_dir() / "paramset.schema.json")
@@ -680,8 +684,8 @@ class EnvGenerator:
 
     def render_cloud_e2e_parameters(self, env_name: str, extra_env: dict, env_dir: str,
                                     render_parameters_dir: Path) -> dict:
-        from build_env.build_env import mergeParameterSetsIntoParameters, copy_instance_paramsets, \
-            copy_template_paramsets, create_paramset_map
+        from build_env.build_env import mergeParameterSetsIntoParameters, load_instance_paramsets, \
+            load_template_paramsets, create_paramset_map, remove_paramsets
 
         logger.info(
             f"Starting rendering cloud e2e parameters for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
@@ -697,11 +701,9 @@ class EnvGenerator:
 
             cloud_file = Path(self.ctx.current_env_dir) / "cloud.yml"
 
-            if render_parameters_dir.exists():
-                shutil.rmtree(render_parameters_dir)
-
-            copy_template_paramsets({NamespaceRole.COMMON: self.ctx.templates_dir}, str(render_parameters_dir))
-            copy_instance_paramsets(env_dir, str(render_parameters_dir))
+            remove_paramsets(render_parameters_dir)
+            load_template_paramsets({NamespaceRole.COMMON: self.ctx.templates_dir}, str(render_parameters_dir))
+            load_instance_paramsets(env_dir, str(render_parameters_dir))
             self.ctx.render_parameters_dir = str(render_parameters_dir)
             e2e_paramset_names = self._cloud_e2e_paramset_names(cloud)
             self.validate_used_paramsets(e2e_paramset_names)

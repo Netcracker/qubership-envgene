@@ -1,6 +1,8 @@
 from time import time as _diag_now
+import json
+from fnmatch import fnmatchcase
 
-from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openFileAsString, openYaml, readYaml, os, path, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -8,6 +10,7 @@ from build_env.resource_profiles import collect_resource_profiles, override_by_e
 from utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
+PARAMSET_PATTERNS = ("*.json", "*.yml", "*.yaml", "*.j2")
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
 
 
@@ -38,20 +41,16 @@ def create_paramset_map(dir: str, role: NamespaceRole,
                         origin_template_exists: bool, peer_template_exists: bool) -> dict:
     excluded_dirs = _get_excluded_dirs_for_role(role, origin_template_exists, peer_template_exists)
     result = {}
-    dir_pointer = pathlib.Path(dir)
-    masks = ["*.json", "*.yml", "*.yaml", "*.j2"]
-
-    for mask in masks:
-        for f in dir_pointer.rglob(mask):
-            file_path = str(f)
-            if any(excluded_dir in file_path for excluded_dir in excluded_dirs):
-                continue
-            key = extractNameFromFile(file_path)
-            entry = {"filePath": file_path, "envSpecific": False}
-            if key in result:
-                result[key].append(entry)
-            else:
-                result[key] = [entry]
+    for paramset_path in paramset_paths(dir, PARAMSET_PATTERNS):
+        file_path = str(paramset_path)
+        if any(excluded_dir in file_path for excluded_dir in excluded_dirs):
+            continue
+        key = extractNameFromFile(file_path)
+        entry = {"filePath": file_path, "envSpecific": False}
+        if key in result:
+            result[key].append(entry)
+        else:
+            result[key] = [entry]
 
     logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}, "
                 f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
@@ -59,21 +58,41 @@ def create_paramset_map(dir: str, role: NamespaceRole,
     return result
 
 
-def copy_template_paramsets(templates_dirs: dict, render_parameters_dir: str) -> None:
+def paramset_paths(render_parameters_dir, patterns) -> list[Path]:
+    return [key for key in current_env_instance_store().under(render_parameters_dir)
+            if any(fnmatchcase(key.name, pattern) for pattern in patterns)]
+
+
+def load_paramsets(source_dir, target_dir) -> None:
+    source_dir = Path(source_dir)
+    if not source_dir.is_dir():
+        return
+    env_instance_store = current_env_instance_store()
+    for file in sorted(source_dir.rglob("*")):
+        if file.is_file() and any(fnmatchcase(file.name, pattern) for pattern in PARAMSET_PATTERNS):
+            env_instance_store.put(Path(target_dir) / file.relative_to(source_dir), openFileAsString(file))
+
+
+def load_template_paramsets(templates_dirs: dict, render_parameters_dir: str) -> None:
     for template_type, template_path in templates_dirs.items():
-        if not (template_path and check_dir_exists(f'{template_path}/parameters')):
+        if not template_path:
             continue
         param_dir_name = 'from_template' if template_type == NamespaceRole.COMMON else f'from_{template_type}_template'
-        copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
+        load_paramsets(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
 
 
-def copy_instance_paramsets(env_dir: str, render_parameters_dir: str) -> None:
+def load_instance_paramsets(env_dir: str, render_parameters_dir: str) -> None:
     cluster_path = getDirName(str(env_dir))
     instances_dir = getDirName(cluster_path)
-    check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
-    copy_path(f'{instances_dir}/parameters', str(render_parameters_dir))
-    copy_path(f'{cluster_path}/parameters', str(render_parameters_dir))
-    copy_path(f'{env_dir}/Inventory/parameters', f'{render_parameters_dir}/from_instance')
+    load_paramsets(f'{instances_dir}/parameters', render_parameters_dir)
+    load_paramsets(f'{cluster_path}/parameters', render_parameters_dir)
+    load_paramsets(f'{env_dir}/Inventory/parameters', f'{render_parameters_dir}/from_instance')
+
+
+def remove_paramsets(render_parameters_dir) -> None:
+    env_instance_store = current_env_instance_store()
+    for key in env_instance_store.under(render_parameters_dir):
+        env_instance_store.remove(key)
 
 
 def sortParameters(params):
@@ -84,19 +103,22 @@ def sortParameters(params):
     return result
 
 
+def paramset_content(path):
+    env_instance_store = current_env_instance_store()
+    content = env_instance_store.get(path)
+    if not isinstance(content, str):
+        return content
+    parsed = json.loads(content) if str(path).endswith(".json") else readYaml(content, safe_load=True)
+    return env_instance_store.put(path, parsed)
+
+
 def openParamset(path, template_context=None):
-    if path.endswith(".json"):
-        return openJson(path)
-    # using safe load to load without comments
     if path.endswith(".j2"):
-        # First render the template
-        from jinja2 import Environment, FileSystemLoader
-        env = Environment(loader=FileSystemLoader(os.path.dirname(path)))
-        template = env.get_template(os.path.basename(path))
+        from jinja2 import Environment
+        template = Environment().from_string(current_env_instance_store().get(path))
         rendered = template.render(**(template_context or {}))
         return yaml.safe_load(rendered)
-    paramsetYaml = openYaml(path, safe_load=True)
-    return paramsetYaml
+    return paramset_content(path)
 
 
 def findParamsetsInDir(dirPath):

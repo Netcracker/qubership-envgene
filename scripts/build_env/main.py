@@ -1,11 +1,11 @@
 from time import time as _diag_now
 
-from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
+from envgenehelper import NamespaceRole, Path, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
 from envgenehelper.deployer import *
 from envgene_shared.utils.yaml_utils import val_diag
 
-from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
-    process_additional_template_parameters
+from build_env.build_env import PARAMSET_PATTERNS, build_env, load_instance_paramsets, load_template_paramsets, \
+    paramset_paths, process_additional_template_parameters
 from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
@@ -15,17 +15,15 @@ from build_env.resource_profiles import get_env_specific_resource_profiles
 CREDENTIALS_FILE = Path("Credentials") / "credentials.yml"
 
 
-def copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir):
-    # copying parameters from templates and instances
-    if check_dir_exists(render_parameters_dir):
-        logger.info(f"Using common and instance paramsets copied by regdefv2_adapter to {render_parameters_dir}, "
+def load_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir):
+    if paramset_paths(render_parameters_dir, PARAMSET_PATTERNS):
+        logger.info(f"Using common and instance paramsets loaded by regdefv2_adapter to {render_parameters_dir}, "
                     f"adding origin/peer template paramsets")
         bg_templates_dirs = {role: path for role, path in templates_dirs.items() if role != NamespaceRole.COMMON}
-        copy_template_paramsets(bg_templates_dirs, render_parameters_dir)
+        load_template_paramsets(bg_templates_dirs, render_parameters_dir)
     else:
-        delete_dir(render_parameters_dir)
-        copy_template_paramsets(templates_dirs, render_parameters_dir)
-        copy_instance_paramsets(source_env_dir, render_parameters_dir)
+        load_template_paramsets(templates_dirs, render_parameters_dir)
+        load_instance_paramsets(source_env_dir, render_parameters_dir)
 
 
 def cleanup_resulting_dir(resulting_dir: Path):
@@ -63,8 +61,8 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     # preparing folders for generation
     _t = _diag_now()
     cleanup_resulting_dir(source_env_dir)
-    copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
-    logger.info(f"[diag] setup: cleanup+copy_paramsets_to_render_workspace in {(_diag_now() - _t) * 1000:.1f}ms")
+    load_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
+    logger.info(f"[diag] setup: cleanup+load_paramsets_to_render_workspace in {(_diag_now() - _t) * 1000:.1f}ms")
     _t = _diag_now()
     env_definition = load_env_inputs(env_name, source_env_dir, all_instances_dir)
     logger.info(f"[diag] setup: load_env_inputs in {(_diag_now() - _t) * 1000:.1f}ms")

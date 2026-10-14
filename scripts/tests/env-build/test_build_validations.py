@@ -37,9 +37,14 @@ class TestValidateBgd:
             _validate_bgd(env_dir, ["env-origin", "env-peer"])
 
 
-def _paramset(path, name, parameters="{}"):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"name: {name}\nparameters: {parameters}\napplications: []\n")
+@pytest.fixture
+def store(tmp_path):
+    with open_current_env_instance_store(tmp_path / "env") as env_instance_store:
+        yield env_instance_store
+
+
+def _paramset(store, path, name, parameters="{}"):
+    store.put(path, f"name: {name}\nparameters: {parameters}\napplications: []\n")
 
 
 def _generate(params_dir, used_names):
@@ -50,62 +55,64 @@ def _generate(params_dir, used_names):
 
 
 class TestGenerateParamsetTemplates:
-    def test_unused_invalid_paramset_is_ignored(self, tmp_path):
+    def test_unused_invalid_paramset_is_ignored(self, tmp_path, store):
         params = tmp_path / "parameters"
-        _paramset(params / "from_template" / "used.yml", "used")
-        _paramset(params / "from_template" / "unused.yml", "other")
-        _paramset(params / "from_template" / "unused_j2.yml.j2", "other", "[]")
+        _paramset(store, params / "from_template" / "used.yml", "used")
+        _paramset(store, params / "from_template" / "unused.yml", "other")
+        _paramset(store, params / "from_template" / "unused_j2.yml.j2", "other", "[]")
 
         _generate(params, {"used"})
 
-        assert (params / "from_template" / "unused_j2.yml.j2").exists()
+        assert store.exists(params / "from_template" / "unused_j2.yml.j2")
 
-    def test_used_paramset_with_wrong_name_fails(self, tmp_path):
+    def test_used_paramset_with_wrong_name_fails(self, tmp_path, store):
         params = tmp_path / "parameters"
-        _paramset(params / "from_instance" / "used.yml", "other")
+        _paramset(store, params / "from_instance" / "used.yml", "other")
 
         with pytest.raises(ReferenceError):
             _generate(params, {"used"})
 
-    def test_used_paramset_invalid_by_schema_fails(self, tmp_path):
+    def test_used_paramset_invalid_by_schema_fails(self, tmp_path, store):
         params = tmp_path / "parameters"
-        _paramset(params / "from_template" / "used.yml", "used", "[]")
+        _paramset(store, params / "from_template" / "used.yml", "used", "[]")
 
         with pytest.raises(ReferenceError):
             _generate(params, {"used"})
 
-    def test_used_template_is_rendered(self, tmp_path):
+    def test_used_template_is_rendered(self, tmp_path, store):
         params = tmp_path / "parameters"
-        _paramset(params / "from_template" / "used.yml.j2", "{{ 'us' ~ 'ed' }}")
+        _paramset(store, params / "from_template" / "used.yml.j2", "{{ 'us' ~ 'ed' }}")
 
         _generate(params, {"used"})
 
-        assert (params / "from_template" / "used.yml").read_text() == "name: used\nparameters: {}\napplications: []\n"
-        assert not (params / "from_template" / "used.yml.j2").exists()
+        rendered = store.get(params / "from_template" / "used.yml")
+        assert rendered == {"name": "used", "parameters": {}, "applications": []}
+        assert not store.exists(params / "from_template" / "used.yml.j2")
+        assert not params.exists()
 
-    def test_duplicate_in_one_template_fails(self, tmp_path):
+    def test_duplicate_in_one_template_fails(self, tmp_path, store):
         params = tmp_path / "parameters" / "from_template"
-        _paramset(params / "a" / "used.yml", "used")
-        _paramset(params / "b" / "used.yaml", "used")
+        _paramset(store, params / "a" / "used.yml", "used")
+        _paramset(store, params / "b" / "used.yaml", "used")
 
         with pytest.raises(ReferenceError):
             _generate(params.parent, {"used"})
 
-    def test_same_name_as_template_to_render_is_not_a_duplicate(self, tmp_path):
+    def test_same_name_as_template_to_render_is_not_a_duplicate(self, tmp_path, store):
         params = tmp_path / "parameters" / "from_template"
-        _paramset(params / "a" / "used.yml", "used")
-        _paramset(params / "b" / "used.yaml.j2", "used")
+        _paramset(store, params / "a" / "used.yml", "used")
+        _paramset(store, params / "b" / "used.yaml.j2", "used")
 
         _generate(params.parent, {"used"})
 
-        assert (params / "a" / "used.yml").exists()
-        assert (params / "b" / "used.yml").exists()
+        assert store.exists(params / "a" / "used.yml")
+        assert store.exists(params / "b" / "used.yml")
 
-    def test_same_name_on_different_levels_is_override(self, tmp_path):
+    def test_same_name_on_different_levels_is_override(self, tmp_path, store):
         params = tmp_path / "parameters"
-        _paramset(params / "from_template" / "used.yml", "used")
-        _paramset(params / "from_origin_template" / "used.yml", "used")
-        _paramset(params / "used.yml", "used")
-        _paramset(params / "from_instance" / "used.yml", "used")
+        _paramset(store, params / "from_template" / "used.yml", "used")
+        _paramset(store, params / "from_origin_template" / "used.yml", "used")
+        _paramset(store, params / "used.yml", "used")
+        _paramset(store, params / "from_instance" / "used.yml", "used")
 
         _generate(params, {"used"})
