@@ -72,7 +72,7 @@ def find_secret_store_by_id(secret_store_id: str, cred_id: str) -> SecretStore:
 
 
 def load_all_secret_stores(base_dir: Path | None = None) -> dict:
-    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))    
+    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))
     secret_store_config = base_dir / CONFIGURATION_DIR / SECRET_STORE_FILE
     if not secret_store_config.is_file():
         return {}
@@ -161,6 +161,6 @@ def has_external_creds(creds_map):
 
 
 def detect_credential_mode(base_dir: str | Path | None = None) -> CredentialMode:
-    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))    
+    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))
     secret_stores_file = Path(base_dir) / CONFIGURATION_DIR / SECRET_STORE_FILE
     return CredentialMode.EXTERNAL if secret_stores_file.is_file() else CredentialMode.LOCAL

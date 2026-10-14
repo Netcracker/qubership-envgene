@@ -395,7 +395,7 @@ def process_additional_template_parameters(inventoryYaml, source_env_dir, all_in
 
 
 def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, is_external_cred_env=False):
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
@@ -454,7 +454,7 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
-    process_cloud_passport(env_instances_dir, all_instances_dir, envDefinitionYaml, is_external_cred_env)
+    passport_creds = process_cloud_passport(env_instances_dir, all_instances_dir, envDefinitionYaml)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
         cloudTemlatePath,
@@ -534,6 +534,7 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
         env_instance_store.put(resulting_profile_path, env_instance_store.get(profile_file_path))
         env_instance_store.beautify(resulting_profile_path, profiles_schema, generated_header_text)
+    return passport_creds
 
 
 def set_cleaned_mark(namespaces: list[NamespaceFile]):

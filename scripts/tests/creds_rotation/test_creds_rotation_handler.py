@@ -2,7 +2,7 @@ from envgenehelper.errors import ValidationError
 import pytest
 import os
 
-from scripts.creds_rotation.utils.error_constants import ErrorCodes, ErrorMessages
+from creds_rotation.utils.error_constants import ErrorCodes, ErrorMessages
 from scripts.tests.base_test import BaseTest
 from envgenehelper import copy_path, delete_dir, json
 from creds_rotation.creds_rotation_handler import run_cred_rotation

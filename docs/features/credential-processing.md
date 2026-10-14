@@ -14,6 +14,9 @@ external operating modes, and how it resolves overlaps between sources.
   - [Merging behavior](#merging-behavior)
   - [Local-macro rewrite in external mode](#local-macro-rewrite-in-external-mode)
   - [External-mode credential restrictions](#external-mode-credential-restrictions)
+    - [`vaultAppRole` cannot be externalized](#vaultapprole-cannot-be-externalized)
+    - [Whole-value credential reference only](#whole-value-credential-reference-only)
+    - [Deprecated key-form macros](#deprecated-key-form-macros)
   - [Related documentation](#related-documentation)
 
 ## Description
@@ -95,6 +98,11 @@ source provides (no Credential Template, Cloud Passport, or Shared Credentials F
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
 ```
 
+The first reference to a `credId` sets the shape of the generated entry, as in local mode. A `.username` or
+`.password` macro, a `credRef` with `property`, or a built-in reference to a username and password field adds
+`properties` for `username` and `password`. A `.secret` macro or a built-in reference to a single value adds none.
+The entry has no `create` key, so `create` is `false`.
+
 Auto-generation occupies the lowest level above the Credential Templates in the
 [precedence ladder](#precedence-ladder): where a Credential Template, the Cloud Passport, or a Shared
 Credentials File supplies the same `credId`, that source's entry is used instead. The generated entry
@@ -143,8 +151,8 @@ generation. The rewritten shape is:
   property: <field>
 ```
 
-The `property` field is omitted when the referenced Credential is single-value. The rewrite applies to
-parameter values only.
+The `property` field takes the macro field (`username` or `password`) and is omitted for a `.secret` macro. The
+rewrite reads only the macro. It applies to the values of `deployParameters` and `e2eParameters`.
 [Built-in credential references](/docs/features/external-creds.md#built-in-credential-references)
 such as `Cloud.defaultCredentialsId` already carry a bare `credId` and need no rewrite.
 
