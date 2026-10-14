@@ -95,19 +95,19 @@ source provides (no Credential Template, Cloud Passport, or Shared Credentials F
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
 ```
 
-Auto-generation occupies the lowest level above the Credential Templates in the
-[precedence ladder](#precedence-ladder): where a Credential Template, the Cloud Passport, or a Shared
-Credentials File supplies the same `credId`, that source's entry is used instead. The generated entry
-therefore survives only where no source provides the `credId`.
+Auto-generation has the lowest effective priority in the [precedence ladder](#precedence-ladder): any source
+(a Credential Template, the Cloud Passport, or a Shared Credentials File) that supplies the same `credId`
+wins, so a generated entry survives only where no source provides the `credId`. Whether EnvGene generates
+the entry before or after the other sources is an implementation detail; the result is the same.
 
 ## Precedence ladder
 
 When the same `credId` is declared in more than one source, the entry from the higher-precedence source wins.
 Precedence, lowest to highest:
 
-1. Parent Credential Template
-2. Nested Credential Template
-3. Auto-generated Credential
+1. Auto-generated Credential
+2. Parent Credential Template
+3. Nested Credential Template
 4. Cloud Passport credentials file
 5. Shared Credentials File
 
