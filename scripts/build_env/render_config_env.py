@@ -8,7 +8,7 @@ from deepmerge import always_merger
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
-from build_env.jinja.jinja import create_jinja_env
+from build_env.jinja.jinja import create_jinja_env, jinja_template
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
@@ -88,7 +88,7 @@ class Context(BaseModel):
 
 def render_obj_by_context(template: dict, context: Context) -> dict:
     template_str = replace_ansible_stuff(template_str=dumpYamlToStr(template))
-    rendered_str = create_jinja_env().from_string(template_str).render(context.as_dict())
+    rendered_str = jinja_template(template_str).render(context.as_dict())
     return yml.load(rendered_str)
 
 
@@ -301,7 +301,7 @@ class EnvGenerator:
     def render_from_file_to_file(self, src_template_path: str, target_file_path: str) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
-        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        rendered = jinja_template(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
         rendered_obj = readYaml(escaping_quotation(rendered))
         writeYamlToFile(target_file_path, rendered_obj)
@@ -313,13 +313,13 @@ class EnvGenerator:
     def render_from_file_to_obj(self, src_template_path) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
-        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        rendered = jinja_template(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_obj(self, template) -> dict:
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
-        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        rendered = jinja_template(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
@@ -375,7 +375,7 @@ class EnvGenerator:
         template_override = ns.get("template_override")
         if not template_override:
             return ""
-        rendered = create_jinja_env().from_string(str(template_override)).render(self.ctx.as_dict())
+        rendered = jinja_template(str(template_override)).render(self.ctx.as_dict())
         if not rendered:
             return ""
         return readYaml(rendered).get("name", "")
