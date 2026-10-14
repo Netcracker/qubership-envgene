@@ -30,7 +30,7 @@ def get_project_root() -> Path:
 def get_envgene_config_yaml():
     envgene_config_path = get_project_root()/"configuration"/"config.yml"
     try:
-        config = openYaml(envgene_config_path)
+        config = openYaml(envgene_config_path, safe_load=True)
     except FileNotFoundError:
         logger.warning(f'Failed to find config file in {envgene_config_path}')
         return get_empty_yaml()
