@@ -650,14 +650,14 @@ streaming-cred:
   type: external
   create: true
   secretStore: default_store
-  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
+  remoteRefPath: "{{ current_env.cluster.name }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
   properties:
     - name: username
     - name: password
 consul-creds:
   type: external
   secretStore: default_store
-  remoteRefPath: "{{ current_env.cloud }}"
+  remoteRefPath: "{{ current_env.cluster.name }}"
 ```
 
 ### System Credentials File (in Template repository)
