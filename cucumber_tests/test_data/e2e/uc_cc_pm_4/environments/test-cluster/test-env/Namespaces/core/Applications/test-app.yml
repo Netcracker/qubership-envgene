@@ -1,0 +1,4 @@
+name: "test-app"
+deployParameters:
+  shared_key: "from-application"
+technicalConfigurationParameters: {}
