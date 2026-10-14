@@ -19,6 +19,17 @@ from envgene_shared.utils.logger import logger
 TIMESTAMPED_VERSION_PATTERN = re.compile(r"-\d{8}\.\d{6}-\d+$")
 
 
+def _version_from_artifact_url(url: str, app: Application, extension: FileExtension,
+                               classifier: str = "") -> str:
+    filename = urlparse(url).path.rsplit("/", 1)[-1]
+    suffix = f".{extension.value}"
+    if classifier:
+        suffix = f"-{classifier}{suffix}"
+    if filename.startswith(f"{app.artifact_id}-") and filename.endswith(suffix):
+        return filename[len(app.artifact_id) + 1:-len(suffix)]
+    return ""
+
+
 def convert_nexus_repo_url_to_index_view(url: str) -> str:
     parsed = urlparse(url)
 
@@ -88,7 +99,8 @@ async def resolve_snapshot_version_async(
                 stop_snapshot_event_for_others.set()
                 logger.info(
                     f"[Task {task_id}] [Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
-            return resolved_version, task_id
+                return resolved_version, task_id
+            return None
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
@@ -273,7 +285,13 @@ async def check_artifact_by_full_url_async(
             logger.info(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}"
             )
-            return ArtifactSource(source_url=full_url, repository=repo, application=app, auth_headers=auth_headers)
+            return ArtifactSource(
+                source_url=full_url,
+                repository=repo,
+                application=app,
+                auth_headers=auth_headers,
+                resolved_version=resolved_version,
+            )
 
     for full_url, status, error in candidate_results:
         if error:
@@ -409,7 +427,14 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
         url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
                              artifact_extension, auth_headers=auth_headers, classifier=classifier)
         if url:
-            return ArtifactSource(source_url=url, repository=repo, application=app, auth_headers=auth_headers)
+            resolved_version = _version_from_artifact_url(url, app, artifact_extension, classifier) or version
+            return ArtifactSource(
+                source_url=url,
+                repository=repo,
+                application=app,
+                auth_headers=auth_headers,
+                resolved_version=resolved_version,
+            )
         if _should_retry_nexus_url(app.registry):
             return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier)
         return None

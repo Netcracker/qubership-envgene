@@ -22,6 +22,8 @@ class DeploymentPlanCalculator:
     def __init__(self, applications: List[str] | List[dict], data_provider: DataProviderInterface):
         self.applications = applications
         self.data_provider = data_provider
+        self.__dd_finder = DDFinder(data_provider=data_provider)
+        self.__resolved_versions = {}
 
     @classmethod
     def merge(cls, source: DeployPlan, dest: DeployPlan) -> DeployPlan:
@@ -113,6 +115,25 @@ class DeploymentPlanCalculator:
             return None, False
         return content, content.get("type") == "solutionDeploy"
 
+    def __resolve_app_version(self, app):
+        if not isinstance(app, str) or utils.is_file_path(app):
+            return app
+
+        parsed = self._parse_app(app)
+        resolved_version = self.__resolve_descriptor_version(parsed["version"])
+        if parsed["namespace"]:
+            return f'{parsed["namespace"]}:{resolved_version}'
+        return resolved_version
+
+    def __resolve_sd_entities(self, entities):
+        for entity in entities:
+            entity.version = self.__resolve_descriptor_version(entity.version)
+
+    def __resolve_descriptor_version(self, app_ver):
+        if app_ver not in self.__resolved_versions:
+            self.__resolved_versions[app_ver] = self.__dd_finder.resolve_version(app_ver)
+        return self.__resolved_versions[app_ver]
+
     @classmethod
     def _parse_app(cls, app: str) -> dict:
         if m := cls._RE_NS_APP_VER.match(app):
@@ -136,17 +157,24 @@ class DeploymentPlanCalculator:
 
         for app in self.applications:
             logging.info(f"Resolving for {app}")
-            content, is_sd = self.__resolve_content(app)
+            resolved_app = self.__resolve_app_version(app)
+            content, is_sd = self.__resolve_content(resolved_app)
 
             if not is_sd:
-                logging.debug(f"Adding standalone application: {app}")
-                entities.append(DeployPlanEntity(wave=wave_index, deployPostfix="", **self._parse_app(app)))
+                logging.debug(f"Adding standalone application: {resolved_app}")
+                entities.append(DeployPlanEntity(
+                    wave=wave_index,
+                    deployPostfix="",
+                    **self._parse_app(resolved_app),
+                ))
                 continue
 
-            sd = SolutionDescriptorParser.parse(filepath=app, content=content)
+            sd = SolutionDescriptorParser.parse(filepath=resolved_app, content=content)
             collected_waves = sd.collect_waves()
+            for waveapps in collected_waves.values():
+                self.__resolve_sd_entities(waveapps)
             sd_app_count = sum(len(v) for v in collected_waves.values())
-            logging.debug(f"Solution descriptor {app} resolved: {len(collected_waves)} wave(s),"
+            logging.debug(f"Solution descriptor {resolved_app} resolved: {len(collected_waves)} wave(s),"
                       f" {sd_app_count} application(s), offset: {wave_index}")
 
             for wave, waveapps in collected_waves.items():
