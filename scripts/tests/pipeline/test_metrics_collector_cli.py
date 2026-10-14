@@ -26,6 +26,7 @@ def test_hook_events(monkeypatch, args, job_status, event_type, status):
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("METRICS_COLLECTOR_PARENT_ID", "parent")
     monkeypatch.setenv("CI_JOB_NAME", "sync")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("CI_JOB_STATUS", job_status)
     monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
     monkeypatch.delenv("ENV_NAMES", raising=False)
@@ -40,8 +41,14 @@ def test_hook_events(monkeypatch, args, job_status, event_type, status):
     assert event["status"] == status
     assert event["traceid"] == "shared-trace"
     assert event["parentid"] == "parent"
-    assert event["technicalname"] == "sync"
-    assert event["data"]["inputParameters"] == {"PIPELINE_TYPE": "GITLAB_DEPLOY"}
+    assert event["technicalname"] == "envgene-instance-pipeline:sync"
+    assert event["datacontenttype"] == "application/json"
+    assert event["subject"] == event["jobid"]
+    assert event["data"]["kind"] == "EnvGenePipelineReport"
+    assert event["data"]["apiVersion"] == "v1"
+    assert {item["name"]: item["value"] for item in event["data"]["config"]} == {
+        "PIPELINE_TYPE": "GITLAB_DEPLOY",
+    }
     assert "steps" not in event["data"]
 
 
@@ -75,8 +82,10 @@ def test_trace_id_can_be_exported_and_reused(monkeypatch, capsys):
 )
 def test_stop_uses_recorded_pipeline_results(monkeypatch, pipeline_status, job_status, expected):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", job_status)
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     ctx = SimpleNamespace(params={"ENV_NAMES": "cluster/env", "SECRET": "redacted"},
                           sensitive_params=["SECRET"])
     calls = []
@@ -92,14 +101,17 @@ def test_stop_uses_recorded_pipeline_results(monkeypatch, pipeline_status, job_s
     assert len(calls) == 1
     assert calls[0]["type"] == "stop"
     assert calls[0]["status"] == expected
-    assert calls[0]["data"]["steps"] == [
-        {"name": "env_build", "status": pipeline_status, "durationMs": 123},
-    ]
-    assert "SECRET" not in calls[0]["data"]["inputParameters"]
+    expected_step = {"name": "env_build", "status": pipeline_status}
+    if pipeline_status != "SKIPPED":
+        expected_step["time"] = "0:00:00"
+    assert calls[0]["data"]["steps"] == [expected_step]
+    config = {item["name"]: item["value"] for item in calls[0]["data"]["config"]}
+    assert "SECRET" not in config
 
 
 def test_stop_aggregates_child_results_from_shared_directory(monkeypatch, tmp_path):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", "success")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
@@ -142,9 +154,11 @@ def test_stop_ignores_results_from_another_job(monkeypatch):
 @pytest.mark.parametrize("failure", [None, "execute", "copy"])
 def test_orchestrator_completion_is_sent_only_by_stop_hook(monkeypatch, failure):
     from unittest.mock import Mock
+    pytest.importorskip("ruyaml")
     from pipeline import orchestrator
 
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", "success")
     ctx = Mock(params={"ENV_NAMES": "cluster/env"}, sensitive_params=[], work_dir=".")
@@ -189,6 +203,7 @@ def test_orchestrator_completion_is_sent_only_by_stop_hook(monkeypatch, failure)
 
 def test_explicit_stop_status_keeps_steps_and_cleans_reports(monkeypatch, tmp_path):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     ctx = SimpleNamespace(params={"ENV_NAMES": "cluster/env"}, sensitive_params=[])
     activity = MetricsCollectorActivity(ctx)
     activity.record_completion("SUCCESS", [SimpleNamespace(name="env_build", status="SUCCESS", duration_ms=10)])
@@ -267,11 +282,12 @@ def test_two_job_pipeline_flow_with_artifact_handoff(monkeypatch, tmp_path, job2
     assert {event["traceid"] for event in calls} == {trace_id}
     assert all(event["status"] == "IN_PROGRESS" for event in calls if event["type"] != "stop")
     assert calls[-1]["status"] == {"success": "SUCCESS", "failed": "FAILED", "canceled": "CANCELLED"}[job2_status]
-    assert calls[3]["data"]["steps"] == [{"name": "env_build", "status": "SUCCESS", "durationMs": 10}]
+    progress = next(event for event in calls if event["type"] == "running" and "steps" in event["data"])
+    assert progress["data"]["steps"] == [{"name": "env_build", "status": "SUCCESS", "time": "0:00:00"}]
     for event in calls[-2:]:
         assert "steps" not in event["data"]
-        assert event["data"]["inputParameters"] == {
-            "ENV_NAMES": "cluster/env", "SD_VERSION": "release-1", "ENV_BUILDER": False,
+        assert {item["name"]: item["value"] for item in event["data"]["config"]} == {
+            "ENV_NAMES": "cluster/env", "SD_VERSION": "release-1", "ENV_BUILDER": "False",
         }
     assert MetricsCollectorActivity(ctx)._completion_directory().exists()
 
@@ -326,11 +342,12 @@ def test_reports_from_different_jobs_are_not_overwritten(monkeypatch):
 
     assert main(["stop"]) == 0
 
-    assert calls[0]["data"]["steps"] == [{"name": "env_build", "status": "SUCCESS", "durationMs": 10}]
+    assert calls[0]["data"]["steps"] == [{"name": "env_build", "status": "SUCCESS", "time": "0:00:00"}]
 
 
 def test_pipeline_results_are_isolated_from_other_pipelines(monkeypatch):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("CI_PIPELINE_ID", "previous-pipeline")
     ctx = SimpleNamespace(params={}, sensitive_params=[])
     previous = MetricsCollectorActivity(ctx)
