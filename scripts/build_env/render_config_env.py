@@ -303,7 +303,7 @@ class EnvGenerator:
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = jinja_template(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
-        rendered_obj = readYaml(escaping_quotation(rendered))
+        rendered_obj = readYaml(escaping_quotation(rendered), safe_load=True)
         writeYamlToFile(target_file_path, rendered_obj)
         return rendered_obj
 
@@ -517,7 +517,7 @@ class EnvGenerator:
         for paramset_path in self.find_templates(render_dir, ["*.yml", "*.yaml"]):
             if paramset_path.stem not in paramset_names:
                 continue
-            paramset = openYaml(paramset_path)
+            paramset = openYaml(paramset_path, safe_load=True)
             try:
                 validate_yaml_by_scheme_or_fail(input_yaml_content=paramset,
                                                 schema_file_path=get_schema_dir() / "paramset.schema.json")
@@ -613,7 +613,7 @@ class EnvGenerator:
         if len(global_config_paths) > 0:
             global_path = global_config_paths[0]
             try:
-                cfg = openYaml(global_path)
+                cfg = openYaml(global_path, safe_load=True)
                 global_appdefs = cfg.get("appdefs", {}).get("overrides", {})
                 global_regdefs = cfg.get("regdefs", {}).get("overrides", {})
                 logger.info(f"Loaded global config from {global_path}")
@@ -623,7 +623,7 @@ class EnvGenerator:
         if len(cluster_config_paths) > 0:
             cluster_path = cluster_config_paths[0]
             try:
-                cfg = openYaml(cluster_path)
+                cfg = openYaml(cluster_path, safe_load=True)
                 cluster_appdefs = cfg.get("appdefs", {}).get("overrides", {})
                 cluster_regdefs = cfg.get("regdefs", {}).get("overrides", {})
                 logger.info(f"Loaded cluster config from {cluster_path}")

@@ -72,7 +72,7 @@ def merge_deployment_plan(ctx: PipelineParametersHandler) -> None:
         rootdir=ctx.work_dir,
         data_provider=StoreDataProvider(root_dir=ctx.work_dir),
     )
-    namespace_map = openYaml(namespace_map_path, allow_default=True, default_yaml=dict) or {}
+    namespace_map = openYaml(namespace_map_path, safe_load=True, allow_default=True, default_yaml=dict) or {}
     deploy_plan = bind_namespaces(
         calculated_plan,
         namespace_map,

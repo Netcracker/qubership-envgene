@@ -31,7 +31,7 @@ class EnvgeneDeployPlan(DeployPlan):
     @classmethod
     def read(cls, deploy_plan_path: Path = None) -> "EnvgeneDeployPlan":
         deploy_plan_path = deploy_plan_path or cls.path()
-        raw = openYaml(deploy_plan_path, allow_default=True, default_yaml=list) or []
+        raw = openYaml(deploy_plan_path, safe_load=True, allow_default=True, default_yaml=list) or []
         plan = cls.from_dict(raw)
         plan.dp_path = deploy_plan_path
         return plan
@@ -56,7 +56,7 @@ def resolve_namespace_entry(namespace_entry, bg_ns_target, deploy_postfix: str):
 def adapt_sd_to_deploy_plan(namespace_by_deploy_postfix: dict, file_name: str = SD_FILE_NAME,
                             output_path: Path = None) -> EnvgeneDeployPlan:
     sd_path = get_sd_dir().joinpath(file_name)
-    sd_data = openYaml(sd_path, allow_default=True, default_yaml=dict) or {}
+    sd_data = openYaml(sd_path, safe_load=True, allow_default=True, default_yaml=dict) or {}
     apps = sd_data.get("applications", [])
     bg_ns_target = parse_bg_ns_target(getenv("BG_NS_TARGET"))
 
