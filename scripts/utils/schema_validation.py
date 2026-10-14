@@ -80,7 +80,7 @@ def checkSchemaValidationFailed(checkResult):
 def checkEnvSpecificParametersBySchema(env_dir, env_specific_params_map, namespace_names):
     envSpecificSchemaPath = f"{env_dir}/env-specific-schema.yml"
     if check_file_exists(envSpecificSchemaPath):
-        envSpecificSchemaYaml = openYaml(envSpecificSchemaPath)
+        envSpecificSchemaYaml = openYaml(envSpecificSchemaPath, safe_load=True)
         if "envSpecific" in envSpecificSchemaYaml:
             logger.info(f"Env specific parameters will be checked by schema {envSpecificSchemaPath} ...")
             envSpecificParamsWhiteList = envSpecificSchemaYaml["envSpecific"]["whiteList"] if "whiteList" in envSpecificSchemaYaml["envSpecific"] else None
@@ -119,7 +119,7 @@ def checkCloudPassportBySchema(env_dir, cloudPassportFilePath):
     passportSchema = None
     passportMandatoryList = None
     if check_file_exists(envSpecificSchemaPath):
-        envSpecificSchemaYaml = openYaml(envSpecificSchemaPath)
+        envSpecificSchemaYaml = openYaml(envSpecificSchemaPath, safe_load=True)
         if "cloudPassport" in envSpecificSchemaYaml:
             if "whiteList" in envSpecificSchemaYaml["cloudPassport"]:
                 logger.info(f"Cloud passport will be checked by schema {envSpecificSchemaPath} ...")
@@ -136,7 +136,7 @@ def checkCloudPassportBySchema(env_dir, cloudPassportFilePath):
 
     if passportSchema:
         if cloudPassportFilePath:
-            cloudPassportYaml = openYaml(cloudPassportFilePath)
+            cloudPassportYaml = openYaml(cloudPassportFilePath, safe_load=True)
             checkResult = checkByWhiteList(cloudPassportYaml, passportSchema)
             if checkSchemaValidationFailed(checkResult):
                 logger.error(f"Cloud passport '{cloudPassportFilePath}' validation failed:" + getSchemaValidationErrorMessage("CloudPassport", checkResult))
@@ -149,7 +149,7 @@ def checkCloudPassportBySchema(env_dir, cloudPassportFilePath):
 
     if passportMandatoryList:
         if cloudPassportFilePath:
-            cloudPassportYaml = openYaml(cloudPassportFilePath)
+            cloudPassportYaml = openYaml(cloudPassportFilePath, safe_load=True)
             checkResult, message = checkByMandatoryList(cloudPassportYaml, passportMandatoryList)
             if not checkResult:
                 logger.error(f"Cloud passport '{cloudPassportFilePath}' validation by mandatory list failed:\n{message}")

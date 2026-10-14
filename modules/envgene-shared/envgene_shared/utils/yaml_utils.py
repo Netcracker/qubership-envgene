@@ -1,5 +1,6 @@
 from functools import lru_cache
 import os
+import ruamel.yaml
 import ruyaml
 import threading
 from typing import OrderedDict
@@ -196,9 +197,8 @@ def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     if is_safe:
-        yaml = ruyaml.main.YAML(typ='safe')
-    else:
-        yaml = ruyaml.main.YAML()
+        return ruamel.yaml.YAML(typ='safe', pure=False)
+    yaml = ruyaml.main.YAML()
     yaml.preserve_quotes = True
     yaml.width = 200
     yaml.indent(mapping=2, sequence=4, offset=2)
