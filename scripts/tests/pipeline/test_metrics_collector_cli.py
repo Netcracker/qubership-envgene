@@ -161,6 +161,7 @@ def test_orchestrator_completion_is_sent_only_by_stop_hook(monkeypatch, failure)
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", "success")
+    monkeypatch.setenv("ENVGENE_FAN_OUT_CHILD", "1")
     ctx = Mock(params={"ENV_NAMES": "cluster/env"}, sensitive_params=[], work_dir=".")
     monkeypatch.setattr(orchestrator.PipelineParametersHandler, "from_env", lambda: ctx)
     for cls in orchestrator.PipelineStep.__subclasses__():
