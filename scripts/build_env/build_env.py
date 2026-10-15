@@ -1,5 +1,6 @@
 import json
 from fnmatch import fnmatchcase
+from time import time as _diag_now
 
 from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openFileAsString, openYaml, readYaml, os, path, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
 
@@ -435,12 +436,18 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
                 f"origin_exists={origin_template_exists}, peer_exists={peer_template_exists}")
 
     # Create role-specific paramset maps
+    _t = _diag_now()
     origin_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.ORIGIN,
                                               origin_template_exists, peer_template_exists)
+    logger.info(f"[diag] paramset_map ORIGIN in {(_diag_now() - _t) * 1000:.1f}ms")
+    _t = _diag_now()
     peer_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.PEER,
                                             origin_template_exists, peer_template_exists)
+    logger.info(f"[diag] paramset_map PEER in {(_diag_now() - _t) * 1000:.1f}ms")
+    _t = _diag_now()
     common_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.COMMON,
                                               origin_template_exists, peer_template_exists)
+    logger.info(f"[diag] paramset_map COMMON in {(_diag_now() - _t) * 1000:.1f}ms")
 
     env_instance_store = current_env_instance_store()
     env_dir = Path(env_instances_dir)

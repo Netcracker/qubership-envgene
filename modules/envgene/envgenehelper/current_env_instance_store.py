@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from functools import lru_cache
 from pathlib import Path
+from time import time as _diag_now
 
 from ruyaml import CommentedMap
 
@@ -160,15 +161,22 @@ class CurrentEnvInstanceStore:
         return schema_path, schema_hash, header_text
 
     def flush(self):
+        _t0 = _diag_now()
         manifest = load_manifest(self.env_dir)
+        _t_manifest = _diag_now()
         stored = manifest["objects"]
         new_manifest = {"objects": {}}
         written, skipped = 0, 0
         targets = self._write_targets()
+        _t_hash = 0.0
+        _t_beautify = 0.0
+        _t_write = 0.0
         for key, rel in targets.items():
             data = self._objects[key]
             schema_path, schema_hash, header_text = self._object_meta(key)
+            _h0 = _diag_now()
             content_hash = canonical_hash(data, salt=schema_hash)
+            _t_hash += _diag_now() - _h0
             entry = {"hash": content_hash, "schema": schema_hash}
             new_manifest["objects"][rel.as_posix()] = entry
             if stored.get(rel.as_posix()) == entry and key.is_file():
@@ -176,6 +184,7 @@ class CurrentEnvInstanceStore:
                 logger.info(f"Skipping {key} (unchanged)")
                 continue
             written += 1
+            _b0 = _diag_now()
             if key in self._beautify:
                 if schema_path:
                     data = sortYaml(data, schema_path, False, validate=False)
@@ -189,7 +198,11 @@ class CurrentEnvInstanceStore:
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
+            _w0 = _diag_now()
             writeToFile(key, text)
+            _t_beautify += _w0 - _b0
+            _t_write += _diag_now() - _w0
+        _t_loop = _diag_now()
         if not self._delete_stale_objects(targets):
             cleanup_toplevel = {Path(target).name for target in cleanup_targets}
             for rel, entry in stored.items():
@@ -199,7 +212,13 @@ class CurrentEnvInstanceStore:
         else:
             new_manifest["validated"] = sorted(self._validated_this_run())
         self._prune_app_regdefs(targets)
+        _s0 = _diag_now()
         save_manifest(self.env_dir, new_manifest)
+        _t_save = _diag_now() - _s0
+        logger.info(f"[diag] flush: load_manifest={(_t_manifest-_t0)*1000:.1f}ms, "
+                    f"hash(480x)={_t_hash*1000:.1f}ms, beautify={_t_beautify*1000:.1f}ms, "
+                    f"write={_t_write*1000:.1f}ms, post-loop={(_t_loop-_t_manifest-_t_hash-_t_beautify-_t_write)*1000:.1f}ms, "
+                    f"save_manifest={_t_save*1000:.1f}ms")
         logger.info(f"Object store flush: {written} written, {skipped} skipped")
 
     def _validated_this_run(self) -> set:
