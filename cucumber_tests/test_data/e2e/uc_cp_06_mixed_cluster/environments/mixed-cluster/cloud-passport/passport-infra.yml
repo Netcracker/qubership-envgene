@@ -1,0 +1,12 @@
+version: "4.0"
+cloud:
+  CLOUD_API_HOST: "https://infra-api.example.com"
+  CLOUD_API_PORT: "6443"
+  CLOUD_PRIVATE_HOST: "infra-internal.example.com"
+  CLOUD_PUBLIC_HOST: "infra-public.example.com"
+  CLOUD_DASHBOARD_URL: "https://infra-dashboard.example.com"
+  CLOUD_DEPLOY_TOKEN: "infra-deploy-token"
+  CLOUD_PROTOCOL: "https"
+  PRODUCTION_MODE: "false"
+core:
+  INFRA_WORKLOAD_KEY: "infra-only-value"
