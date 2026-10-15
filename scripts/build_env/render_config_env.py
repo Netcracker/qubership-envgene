@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
@@ -710,7 +710,7 @@ class EnvGenerator:
         paramset_map = create_paramset_map(str(render_parameters_dir), NamespaceRole.COMMON, False, False)
         cloud_e2e = {"e2eParameterSets": e2e_paramset_names, "e2eParameters": cloud["e2eParameters"]}
         e2e_parameters, _ = mergeParameterSetsIntoParameters(
-            str(cloud_file), cloud_e2e, "e2eParameterSets", "e2eParameters", paramset_map, {},
+            str(cloud_file), cloud_e2e, "e2eParameterSets", "e2eParameters", paramset_map,
             extra_env["env_definition"])
         return e2e_parameters
 
@@ -829,7 +829,6 @@ class EnvGenerator:
                     "ND_CMDB_ENV_TEMPLATE": self.ctx.current_env["env_template"]
                 })
 
-            current_env_dir = self.ctx.current_env_dir
             self.set_env_templates()
             self.generate_bgd_file()
             self.generate_composite_structure()
@@ -840,9 +839,6 @@ class EnvGenerator:
             self.generate_cloud_file()
             self.generate_external_cred()
 
-            env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
-            if env_specific_schema:
-                copy_path(source_path=env_specific_schema, target_dir=current_env_dir)
             self.used_paramset_names = self.collect_used_paramset_names()
             self.validate_used_paramsets(self.used_paramset_names)
             self.generate_paramset_templates(self.used_paramset_names)

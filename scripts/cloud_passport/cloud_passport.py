@@ -1,7 +1,6 @@
 import os
 
 from envgenehelper import beautifyYaml, copy_creds_to_env_creds_file, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, validate_yaml_by_scheme_or_fail, writeYamlToFile, yaml, extract_external_cred
-from utils.schema_validation import checkCloudPassportBySchema
 
 # const
 CLOUD_SUBSTITUTIONS = {
@@ -140,8 +139,6 @@ def process_cloud_passport(env_instances_dir, instances_dir, inventoryYaml, is_e
     logger.info(f"Trying to find cloud passport definition file")
     cloudPassportFilePath = find_cloud_passport_definition(env_instances_dir, instances_dir, inventoryYaml)
     cloudPassportFileName = extractNameFromFile(cloudPassportFilePath)
-    # checking passport by schema
-    checkCloudPassportBySchema(env_instances_dir, cloudPassportFilePath)
     if cloudPassportFilePath:
         logger.info(f"Processing cloud passport: {cloudPassportFilePath}")
         cloudPassportYaml = openYaml(cloudPassportFilePath)
