@@ -293,6 +293,11 @@ git-system-follower install <path_to_template_package_image> \
 
 ## Instance Repository Maintenance via GSF
 
+> **Note:** GSF supports passing additional variables during installation and upgrade.
+> Depending on the variable, GSF can use it as a template package parameter or configure it as a GitLab CI/CD variable.
+> For details on passing additional variables and automatic CI/CD variable configuration,
+> see the [GSF cicd variable provisioning usecase](/docs/use-cases/gsf-cicd-variable-provisioning.md)
+
 ### UC-GSF-INST-1: Initialize Instance Repository via GSF
 
 **Pre-requisites:**
