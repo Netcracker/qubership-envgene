@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
+from time import time as _diag_now
 
 from ruyaml import CommentedMap
 
@@ -93,9 +94,15 @@ class CurrentEnvInstanceStore:
             yield key
 
     def flush(self):
+        _t0 = _diag_now()
+        _t_beautify = 0.0
+        _t_write = 0.0
+        written = 0
         for key in self._write_targets():
             data = self._objects[key]
             schema_path, header_text = self._beautify.get(key, (None, ""))
+            written += 1
+            _b0 = _diag_now()
             if key in self._beautify:
                 if schema_path:
                     data = sortYaml(data, schema_path, False, validate=False)
@@ -109,7 +116,12 @@ class CurrentEnvInstanceStore:
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
+            _w0 = _diag_now()
             writeToFile(key, text)
+            _t_beautify += _w0 - _b0
+            _t_write += _diag_now() - _w0
+        logger.info(f"[diag] flush: {written} objects, beautify={_t_beautify*1000:.1f}ms, "
+                    f"write={_t_write*1000:.1f}ms, total={(_diag_now()-_t0)*1000:.1f}ms")
 
 
 _open_store = None

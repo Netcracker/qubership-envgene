@@ -10,9 +10,13 @@ from jsonschema import RefResolver
 from typing import Callable
 from ruyaml import CommentedMap, CommentedSeq
 from pathlib import Path
+from time import perf_counter as _diag_now
 
 from envgene_shared.utils.file_utils import *
 from envgene_shared.utils.logger import logger
+
+
+val_diag = {"calls": 0, "ms": 0.0}
 
 
 def get_empty_yaml():
@@ -60,6 +64,7 @@ def get_schema_validator(schema_path: str):
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
+    _v0 = _diag_now()
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
     schema_content = load_schema(str(schema_file_path)) if schema_file_path else input_schema_content
 
@@ -71,6 +76,8 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
         errors = sorted(get_schema_validator(str(schema_file_path)).iter_errors(yaml_content), key=lambda e: e.path)
     else:
         errors = validate_yaml_data_by_schema(yaml_content, schema_content)
+    val_diag["calls"] += 1
+    val_diag["ms"] += (_diag_now() - _v0) * 1000
     if len(errors) > 0:
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
