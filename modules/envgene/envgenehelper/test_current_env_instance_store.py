@@ -242,7 +242,7 @@ def test_flush_writes_base_dir_object(tmp_path, env_dir):
     assert root_appdef.read_text() == "name: demo\n"
 
 
-def test_flush_prunes_stale_root_appdef(tmp_path, env_dir):
+def test_flush_does_not_prune_root_appdef(tmp_path, env_dir):
     (tmp_path / "appdefs").mkdir(parents=True)
     (tmp_path / "appdefs" / "stale.yml").write_text("name: stale\n")
     (tmp_path / "appdefs" / "keep.yml").write_text("name: keep\n")
@@ -252,7 +252,7 @@ def test_flush_prunes_stale_root_appdef(tmp_path, env_dir):
     objects.flush()
 
     assert (tmp_path / "appdefs" / "keep.yml").exists()
-    assert not (tmp_path / "appdefs" / "stale.yml").exists()
+    assert (tmp_path / "appdefs" / "stale.yml").exists()
 
 
 def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):
