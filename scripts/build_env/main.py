@@ -1,5 +1,8 @@
+from time import time as _diag_now
+
 from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
 from envgenehelper.deployer import *
+from envgene_shared.utils.yaml_utils import val_diag
 
 from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
     process_additional_template_parameters
@@ -51,17 +54,24 @@ def load_env_inputs(env_name, source_env_dir, all_instances_dir) -> dict:
 
 
 def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, work_dir):
+    _be_t0 = _diag_now()
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_parameters_dir = str(render_workspace_dir(base_dir) / "parameters")
     template_profiles_dir = str(Path(templates_dirs[NamespaceRole.COMMON]) / "resource_profiles")
 
     # preparing folders for generation
+    _t = _diag_now()
     cleanup_resulting_dir(source_env_dir)
     copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir)
+    logger.debug(f"[diag] setup: cleanup+copy_paramsets_to_render_workspace in {(_diag_now() - _t) * 1000:.1f}ms")
+    _t = _diag_now()
     env_definition = load_env_inputs(env_name, source_env_dir, all_instances_dir)
+    logger.debug(f"[diag] setup: load_env_inputs in {(_diag_now() - _t) * 1000:.1f}ms")
     # get deployer parameters
+    _t = _diag_now()
     cmdb_url, _, _ = get_deployer_config()
+    logger.debug(f"[diag] setup: get_deployer_config in {(_diag_now() - _t) * 1000:.1f}ms")
     # perform rendering with Jinja2
     current_env = {
         "name": env_name,  # Always use folder name for consistency
@@ -87,14 +97,24 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["work_dir"] = str(work_dir)
     envvars["env_definition"] = env_definition
     render_context = EnvGenerator()
+    _t = _diag_now()
     render_context.render_config_env(env_name, envvars)
+    logger.debug(f"[diag] setup: render_config_env (paramset/namespaces/appregdef pre-render) in {(_diag_now() - _t) * 1000:.1f}ms")
+    _t = _diag_now()
     validate_env_specific_override_keys(source_env_dir, env_definition)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(
         source_env_dir, all_instances_dir, get_schema_dir() / "resource-profile.schema.json", env_definition)
+    logger.debug(f"[diag] setup: env_specific_overrides+resource_profiles in {(_diag_now() - _t) * 1000:.1f}ms")
+    _t = _diag_now()
     build_env(source_env_dir, env_definition, render_parameters_dir, template_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.is_external_cred_env)
+    logger.debug(f"[diag] setup: build_env in {(_diag_now() - _t) * 1000:.1f}ms")
+    _t = _diag_now()
     create_credentials(source_env_dir, all_instances_dir, render_context.is_external_cred_env, env_definition)
+    logger.debug(f"[diag] setup: create_credentials in {(_diag_now() - _t) * 1000:.1f}ms")
     logger.info(f"External cred env is set as {render_context.is_external_cred_env}")
+    logger.debug(f"[diag] setup: build_environment total in {(_diag_now() - _be_t0) * 1000:.1f}ms")
+    logger.debug(f"[diag] validation: {val_diag['calls']} calls {val_diag['ms']:.1f}ms")
     return source_env_dir, render_context.is_external_cred_env
 
 
