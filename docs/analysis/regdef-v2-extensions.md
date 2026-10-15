@@ -160,8 +160,8 @@ data:
 
 ### EXT3 — Extend `authConfig` to match what QCL already supports
 
-- `awsService` (`codeartifact` | `ecr`): the AWS registry service, with different token flows (CodeArtifact for maven, ECR for docker).
-- `azureService` (`acr` | `artifacts`): the Azure service (ACR for docker, Azure Artifacts for packages).
+- `awsService` (`codeartifact` | `ecr`): the AWS registry service, with different token flows (CodeArtifact for maven, ECR for Docker).
+- `azureService` (`acr` | `artifacts`): the Azure service (ACR for Docker, Azure Artifacts for packages).
 - `gcpScopes`: optional OAuth scopes (QCL `with_service_account_key` / `with_oidc_creds`), default `cloud-platform`.
 - `azureOauth2Params`: optional token-request params, grant and scope (QCL `with_oauth2_custom_data`).
 - `awsSourceCredentialsId`: optional base key for the STS call (AWS `source_profile`; QCL requires it).
@@ -171,7 +171,7 @@ data:
 | type         | roles (repositories)                                    |
 |--------------|---------------------------------------------------------|
 | maven        | snapshot, staging, release, snapshotGroup, releaseGroup |
-| docker       | snapshot, staging, release, group                       |
+| `docker`     | snapshot, staging, release, group                       |
 | go           | snapshot, release, proxy                                |
 | npm          | snapshot, release                                       |
 | raw          | snapshot, release, staging, proxy                       |
@@ -189,11 +189,11 @@ OCI helm goes in separate sections, one per helm form: `helmOciConfig` + `helmAp
 ### EXT6 — Repository: `url` + `repoName`
 
 - `url`: the full pull/push URL.
-- `repoName`: the repo key, used by the control plane only. It is not part of pull or push, since `url` is self-sufficient. Set it explicitly, because you cannot derive it from a proxied or opaque `url` (for example, `url=cdn.company.com/charts` with repo key `helm-prod-virtual`).
+- `repoName`: the repository key, used by the control plane only. It is not part of pull or push, since `url` is self-sufficient. Set it explicitly, because you cannot derive it from a proxied or opaque `url` (for example, `url=cdn.company.com/charts` with repository key `helm-prod-virtual`).
 
-Set `repoName` only on concrete repos that use authentication. For `anonymous`, group, and proxy, leave it out.
+Set `repoName` only on concrete repositories that use authentication. For `anonymous`, group, and proxy, leave it out.
 
-An OCI docker registry uses one of two notations:
+An OCI Docker registry uses one of two notations:
 
 - path, `host/repoName/image`:
   - `123456789.dkr.ecr.eu-west-1.amazonaws.com/docker-releases/myapp:1.0` (ECR)
@@ -205,7 +205,7 @@ An OCI docker registry uses one of two notations:
 
 In both, `url` is the full pull base, and `repoName` stays separate (control plane).
 
-`authConfig.baseUrl` is the registry server's control-plane (REST) URL. It is not a pull base: pull uses the per-repo `url`, and you never append the repo to `baseUrl`. It applies to artifactory and nexus only. `anonymous` does not need it, because the control plane requires authentication.
+`authConfig.baseUrl` is the registry server's control-plane (REST) URL. It is not a pull base: pull uses the per-repo `url`, and you never append the repository to `baseUrl`. It applies to artifactory and nexus only. `anonymous` does not need it, because the control plane requires authentication.
 
 **Option A (chosen) — `repositories`:**
 
