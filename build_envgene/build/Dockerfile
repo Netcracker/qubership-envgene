@@ -35,10 +35,17 @@ RUN apk add --no-cache \
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
+COPY build_envgene/build/metrics-collector-requirements.txt /build/metrics-collector-requirements.txt
 
 COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
+
+RUN mkdir -p /module/metrics-collector-deps/wheels && \
+    cp /build/metrics-collector-requirements.txt /module/metrics-collector-deps/requirements.txt && \
+    pip download --no-cache-dir --retries 10 --timeout 60 --only-binary=:all: --platform manylinux_2_28_x86_64 --python-version 3.12 --implementation cp --abi cp312 \
+        --dest /module/metrics-collector-deps/wheels \
+        -r /module/metrics-collector-deps/requirements.txt
 
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
