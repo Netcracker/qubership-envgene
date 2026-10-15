@@ -130,7 +130,7 @@ jobs:
     outputs:
       PACKAGE_NAME: ${{ steps.set-outputs.outputs.PACKAGE_NAME }}
     container:
-      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.9.0' }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.9.1' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
