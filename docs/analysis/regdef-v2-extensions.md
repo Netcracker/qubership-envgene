@@ -1,5 +1,25 @@
 # RegDef v2 extensions
 
+- [RegDef v2 extensions](#regdef-v2-extensions)
+  - [Open questions](#open-questions)
+  - [Extensions](#extensions)
+    - [EXT1 — `scopes`](#ext1--scopes)
+      - [Key: a subset of the r/w/d primitives](#key-a-subset-of-the-rwd-primitives)
+    - [EXT2 — The `REGISTRY_CREDENTIALS` variable](#ext2--the-registry_credentials-variable)
+    - [EXT3 — Extend `authConfig` to match what QCL already supports](#ext3--extend-authconfig-to-match-what-qcl-already-supports)
+    - [EXT4 — Repositories by artifact type](#ext4--repositories-by-artifact-type)
+    - [EXT5 — OCI helm in separate sections](#ext5--oci-helm-in-separate-sections)
+    - [EXT6 — Repository: `url` + `repoName`](#ext6--repository-url--reponame)
+  - [Model](#model)
+  - [authConfig method catalog](#authconfig-method-catalog)
+  - [Artifact sections](#artifact-sections)
+  - [Examples](#examples)
+    - [1. Offsite — artifactory + anonymous (no scopes) + multi-repo (snapshot, staging, release)](#1-offsite--artifactory--anonymous-no-scopes--multi-repo-snapshot-staging-release)
+    - [2. Offsite — artifactory + secret store + scopes + multi-repo](#2-offsite--artifactory--secret-store--scopes--multi-repo)
+    - [3. Onsite — nexus + secret store + scopes `rw` + single-repo](#3-onsite--nexus--secret-store--scopes-rw--single-repo)
+    - [4. Onsite — gcp + creds in CI/CD + scopes + single-repo](#4-onsite--gcp--creds-in-cicd--scopes--single-repo)
+    - [5. Onsite — aws + creds in CI/CD + scopes + single-repo](#5-onsite--aws--creds-in-cicd--scopes--single-repo)
+
 ## Open questions
 
 1. RegDef storage: per site (cn, mb, sit, uat, prod, …)?
