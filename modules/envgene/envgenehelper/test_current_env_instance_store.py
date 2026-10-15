@@ -251,7 +251,9 @@ def test_flush_does_not_rewrite_unchanged_base_dir_object(env_dir, tmp_path, mon
     assert root_appdef not in calls
 
 
-def test_flush_prunes_stale_root_appdef(tmp_path, env_dir):
+def test_flush_does_not_prune_root_appdef(tmp_path, env_dir):
+    # Root appdefs are merged into and never cleaned (docs/features/app-reg-defs.md): a root file
+    # not written this run belongs to another environment/template set and must survive flush.
     (tmp_path / "appdefs").mkdir(parents=True)
     (tmp_path / "appdefs" / "stale.yml").write_text("name: stale\n")
     (tmp_path / "appdefs" / "keep.yml").write_text("name: keep\n")
@@ -261,7 +263,7 @@ def test_flush_prunes_stale_root_appdef(tmp_path, env_dir):
     objects.flush()
 
     assert (tmp_path / "appdefs" / "keep.yml").exists()
-    assert not (tmp_path / "appdefs" / "stale.yml").exists()
+    assert (tmp_path / "appdefs" / "stale.yml").exists()
 
 
 def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):

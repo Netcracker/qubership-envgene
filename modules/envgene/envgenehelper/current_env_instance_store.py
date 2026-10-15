@@ -32,10 +32,10 @@ YAML_EXTENSIONS = (".yml", ".yaml")
 
 PROFILE_CACHE_DIR = Path(".envgene") / "profile-cache"
 
-# App/Reg definition directories. When the store holds objects under them, flush prunes each
-# dir (root copies under base_dir, env copies under env_dir) to exactly the set written this
-# run, so an app/reg def removed from the templates is deleted from disk. Root copies live in
-# lowercase (appdefs/regdefs), env copies in the dual-placement case are AppDefs/RegDefs.
+# Per-environment App/Reg definition directories (dual placement). When the store holds objects
+# under them, flush prunes each env dir to exactly the set written this run, so an app/reg def
+# removed from the templates is deleted from the env copy. The root-level appdefs/regdefs dirs are
+# merged into and never cleaned, so they are not pruned.
 _APP_REGDEF_DIRS_ENV = ("AppDefs", "RegDefs")
 
 
@@ -286,21 +286,21 @@ class CurrentEnvInstanceStore:
         return True
 
     def _prune_app_regdefs(self, targets: dict):
-        # App/Reg definitions are the only generated artifacts written directly under a
-        # top-level dir that is not in cleanup_targets, so they get their own sweep: prune
-        # each dir (root appdefs/regdefs under base_dir, env AppDefs/RegDefs) to exactly the
-        # set the store writes this run. A definition removed from the templates is thus
-        # deleted from disk. Only a dir the store actually writes to this run is pruned, so a
-        # run that renders no app/reg defs (appregdef skipped) leaves the dirs untouched.
+        # App/Reg definitions are written directly under a top-level dir that is not in
+        # cleanup_targets, so their env-level copies get their own sweep: each env AppDefs/RegDefs
+        # dir is pruned to exactly the set the store writes this run (docs: the per-environment
+        # folders are deleted and, in dual mode, recreated as an exact copy of the render output).
+        # The root-level appdefs/regdefs dirs are NOT pruned: they are merged into and never
+        # cleaned (docs/features/app-reg-defs.md), so a run must not delete other environments'
+        # or other template sets' definitions.
         written = list(targets)
         for root_name, env_name in zip(ROOT_OBJECT_DIRS, _APP_REGDEF_DIRS_ENV):
-            root_kept = set()
-            if self.base_dir is not None:
-                root_kept = self._names_written_to(written, self.base_dir / root_name)
-                if root_kept:
-                    self._prune_dir(self.base_dir / root_name, root_kept)
+            # Render happened for this pair if any copy (root or env) was written this run; only
+            # then may the env dir be reset to exactly the rendered env copies (possibly empty,
+            # which removes the dir). The root dir is never pruned.
+            root_written = self._names_written_to(written, self.base_dir / root_name) if self.base_dir is not None else set()
             env_kept = self._names_written_to(written, self.env_dir / env_name)
-            if root_kept or env_kept:
+            if root_written or env_kept:
                 self._prune_dir(self.env_dir / env_name, env_kept)
 
     @staticmethod

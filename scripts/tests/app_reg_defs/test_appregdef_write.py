@@ -43,14 +43,17 @@ class TestWriteAppRegDefs:
         assert (self.env_dir / "AppDefs" / "file.yml").exists()
         assert (self.env_dir / "RegDefs" / "file.yml").exists()
 
-    def test_not_preserves_existing_files_on_root(self):
+    def test_preserves_existing_files_on_root(self):
+        # Root appdefs/regdefs are merged into and never cleaned
+        # (docs/features/app-reg-defs.md): a root file not written this run belongs to another
+        # environment/template set and must survive the write.
         stale = self.base_dir / "appdefs"
         stale.mkdir(parents=True)
         (stale / "old.yaml").write_text("stale")
 
         self._write("root")
 
-        assert not (stale / "old.yaml").exists()
+        assert (stale / "old.yaml").exists()
         assert (stale / "file.yml").exists()
 
     def test_nothing_on_disk_before_flush(self):
