@@ -11,6 +11,7 @@ def write_app_reg_defs(base_dir: str, rendered_defs: dict, env_dir: str, placeme
     logger.info(f"Writing app/reg defs with placement_mode='{placement_mode}'")
     env_instance_store = current_env_instance_store()
     for dir_name in ["AppDefs", "RegDefs"]:
+        env_instance_store.replace_dir(Path(env_dir) / dir_name)
         for name, definition in rendered_defs.get(dir_name, {}).items():
             env_instance_store.put(Path(base_dir) / dir_name.lower() / f"{name}.yml", definition)
             if placement_mode == "dual":

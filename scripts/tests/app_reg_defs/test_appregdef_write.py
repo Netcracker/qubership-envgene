@@ -81,3 +81,14 @@ class TestWriteAppRegDefs:
         self._write("root")
 
         assert not stale.exists()
+
+    def test_dual_mode_removes_env_copies_of_kind_with_nothing_rendered(self):
+        stale = self.env_dir / "RegDefs"
+        stale.mkdir(parents=True)
+        (stale / "old.yml").write_text("stale")
+
+        write_app_reg_defs(self.base_dir, {"AppDefs": RENDERED_DEFS["AppDefs"], "RegDefs": {}}, self.env_dir, "dual")
+        self.env_instance_store.flush()
+
+        assert not stale.exists()
+        assert (self.env_dir / "AppDefs" / "file.yml").exists()

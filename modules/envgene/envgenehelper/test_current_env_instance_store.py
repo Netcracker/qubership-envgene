@@ -251,6 +251,16 @@ def test_flush_does_not_rewrite_unchanged_base_dir_object(env_dir, tmp_path, mon
     assert root_appdef not in calls
 
 
+def test_flush_rewrites_base_dir_object_changed_by_another_env(tmp_path):
+    root_appdef = tmp_path / "appdefs" / "app.yml"
+    for env_name, owner in (("a", "A"), ("b", "B"), ("a", "A")):
+        objects = CurrentEnvInstanceStore(tmp_path / "environments" / "c" / env_name, base_dir=tmp_path)
+        objects.put(root_appdef, {"name": "app", "owner": owner})
+        objects.flush()
+
+    assert root_appdef.read_text() == "name: app\nowner: A\n"
+
+
 def test_flush_does_not_prune_root_appdef(tmp_path, env_dir):
     # Root appdefs are merged into and never cleaned (docs/features/app-reg-defs.md): a root file
     # not written this run belongs to another environment/template set and must survive flush.
@@ -272,6 +282,7 @@ def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):
     (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
 
     objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.replace_dir(env_dir / "AppDefs")
     objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
     objects.put(env_dir / "AppDefs" / "demo.yml", {"name": "demo"})
     objects.flush()
@@ -334,10 +345,22 @@ def test_root_only_app_defs_remove_env_copies(env_dir, tmp_path):
     (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
 
     objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.replace_dir(env_dir / "AppDefs")
     objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
     objects.flush()
 
     assert not (env_dir / "AppDefs").exists()
+
+
+def test_flush_keeps_env_appdefs_when_not_replaced(env_dir, tmp_path):
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "old.yml").write_text("name: old\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert (env_dir / "AppDefs" / "old.yml").exists()
 
 
 def test_flush_rewrites_unchanged_object_missing_on_disk(env_dir, tmp_path):

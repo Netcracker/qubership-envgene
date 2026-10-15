@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pickle
+import shutil
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from functools import lru_cache
@@ -32,12 +33,6 @@ YAML_EXTENSIONS = (".yml", ".yaml")
 
 PROFILE_CACHE_DIR = Path(".envgene") / "profile-cache"
 
-# Per-environment App/Reg definition directories (dual placement). When the store holds objects
-# under them, flush prunes each env dir to exactly the set written this run, so an app/reg def
-# removed from the templates is deleted from the env copy. The root-level appdefs/regdefs dirs are
-# merged into and never cleaned, so they are not pruned.
-_APP_REGDEF_DIRS_ENV = ("AppDefs", "RegDefs")
-
 
 def _key(path) -> Path:
     return _resolve(str(path))
@@ -64,6 +59,7 @@ class CurrentEnvInstanceStore:
         self._to_write = set()
         self._beautify = {}
         self._profile_cache_used = set()
+        self._replaced_dirs = set()
         self.validated = validated
 
     def _env_relative(self, key: Path) -> Path | None:
@@ -92,6 +88,9 @@ class CurrentEnvInstanceStore:
         self._keys_by_dir.setdefault(key.parent, set()).add(key)
         self._to_write.add(key)
         return obj
+
+    def replace_dir(self, path):
+        self._replaced_dirs.add(_key(path))
 
     def get(self, path):
         key = _key(path)
@@ -211,11 +210,11 @@ class CurrentEnvInstanceStore:
             _t_hash += _diag_now() - _h0
             entry = {"hash": content_hash, "schema": schema_hash}
             new_manifest["objects"][rel.as_posix()] = entry
-            if stored.get(rel.as_posix()) == entry and key.is_file():
+            in_env_dir = key.is_relative_to(self.env_dir)
+            if in_env_dir and stored.get(rel.as_posix()) == entry and key.is_file():
                 skipped += 1
                 logger.info(f"Skipping {key} (unchanged)")
                 continue
-            written += 1
             _b0 = _diag_now()
             if key in self._beautify:
                 if schema_path:
@@ -229,6 +228,11 @@ class CurrentEnvInstanceStore:
             text = dumpYamlToStr(data)
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
+            if not in_env_dir and key.is_file() and key.read_text() == text:
+                skipped += 1
+                logger.info(f"Skipping {key} (unchanged on disk)")
+                continue
+            written += 1
             logger.info(f"Writing {key} (schema: {schema_path})")
             _w0 = _diag_now()
             writeToFile(key, text)
@@ -243,7 +247,8 @@ class CurrentEnvInstanceStore:
             new_manifest["validated"] = sorted(set(manifest.get("validated", [])) | self._validated_this_run())
         else:
             new_manifest["validated"] = sorted(self._validated_this_run())
-        self._prune_app_regdefs(targets)
+        for dir_key in sorted(self._replaced_dirs):
+            self._prune_dir(dir_key, self._names_written_to(targets, dir_key))
         self._prune_profile_cache()
         _s0 = _diag_now()
         save_manifest(self.env_dir, new_manifest)
@@ -285,24 +290,6 @@ class CurrentEnvInstanceStore:
                         os.rmdir(root)
         return True
 
-    def _prune_app_regdefs(self, targets: dict):
-        # App/Reg definitions are written directly under a top-level dir that is not in
-        # cleanup_targets, so their env-level copies get their own sweep: each env AppDefs/RegDefs
-        # dir is pruned to exactly the set the store writes this run (docs: the per-environment
-        # folders are deleted and, in dual mode, recreated as an exact copy of the render output).
-        # The root-level appdefs/regdefs dirs are NOT pruned: they are merged into and never
-        # cleaned (docs/features/app-reg-defs.md), so a run must not delete other environments'
-        # or other template sets' definitions.
-        written = list(targets)
-        for root_name, env_name in zip(ROOT_OBJECT_DIRS, _APP_REGDEF_DIRS_ENV):
-            # Render happened for this pair if any copy (root or env) was written this run; only
-            # then may the env dir be reset to exactly the rendered env copies (possibly empty,
-            # which removes the dir). The root dir is never pruned.
-            root_written = self._names_written_to(written, self.base_dir / root_name) if self.base_dir is not None else set()
-            env_kept = self._names_written_to(written, self.env_dir / env_name)
-            if root_written or env_kept:
-                self._prune_dir(self.env_dir / env_name, env_kept)
-
     @staticmethod
     def _names_written_to(written, dir_path) -> set:
         dir_key = _key(dir_path)
@@ -321,10 +308,13 @@ class CurrentEnvInstanceStore:
     def _prune_dir(dir_path, kept):
         if not dir_path.is_dir():
             return
-        for file in sorted(dir_path.iterdir()):
-            if file.is_file() and file.name not in kept:
-                file.unlink()
-                logger.info(f"Pruning stale app/reg def: {file}")
+        for entry in sorted(dir_path.iterdir()):
+            if entry.is_dir():
+                shutil.rmtree(entry)
+                logger.info(f"Pruning stale app/reg def: {entry}")
+            elif entry.name not in kept:
+                entry.unlink()
+                logger.info(f"Pruning stale app/reg def: {entry}")
         if not any(dir_path.iterdir()):
             dir_path.rmdir()
 
