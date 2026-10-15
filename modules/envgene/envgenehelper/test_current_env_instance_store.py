@@ -260,6 +260,7 @@ def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):
     (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
 
     objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.replace_dir(env_dir / "AppDefs")
     objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
     objects.put(env_dir / "AppDefs" / "demo.yml", {"name": "demo"})
     objects.flush()
@@ -284,10 +285,22 @@ def test_root_only_app_defs_remove_env_copies(env_dir, tmp_path):
     (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
 
     objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.replace_dir(env_dir / "AppDefs")
     objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
     objects.flush()
 
     assert not (env_dir / "AppDefs").exists()
+
+
+def test_flush_keeps_env_appdefs_when_not_replaced(env_dir, tmp_path):
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "old.yml").write_text("name: old\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert (env_dir / "AppDefs" / "old.yml").exists()
 
 
 def test_flush_does_not_write_base_dir_object_outside_app_reg_defs(env_dir, tmp_path):
@@ -306,3 +319,13 @@ def test_get_yaml_finds_any_yaml_extension(env_dir, tmp_path):
     assert objects.get_yaml(tmp_path / "appdefs", "demo") == {"name": "demo"}
     with pytest.raises(FileNotFoundError):
         objects.get_yaml(tmp_path / "appdefs", "absent")
+
+
+def test_flush_rewrites_base_dir_object_changed_by_another_env(tmp_path):
+    root_appdef = tmp_path / "appdefs" / "app.yml"
+    for env_name, owner in (("a", "A"), ("b", "B"), ("a", "A")):
+        objects = CurrentEnvInstanceStore(tmp_path / "environments" / "c" / env_name, base_dir=tmp_path)
+        objects.put(root_appdef, {"name": "app", "owner": owner})
+        objects.flush()
+
+    assert root_appdef.read_text() == "name: app\nowner: A\n"

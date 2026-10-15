@@ -1,3 +1,4 @@
+import shutil
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
@@ -18,11 +19,6 @@ NEVER_WRITTEN_DIRS = ("Inventory",)
 YAML_EXTENSIONS = (".yml", ".yaml")
 ROOT_OBJECT_DIRS = ("appdefs", "regdefs")
 
-# Per-environment App/Reg definition directories (dual placement). When the store holds objects
-# under them, flush prunes each env dir to exactly the set written this run, so an app/reg def
-# removed from the templates is deleted from the env copy. The root-level appdefs/regdefs dirs are
-# merged into and never cleaned, so they are not pruned.
-_APP_REGDEF_DIRS_ENV = ("AppDefs", "RegDefs")
 
 
 def _key(path) -> Path:
@@ -43,6 +39,7 @@ class CurrentEnvInstanceStore:
         self._objects = {}
         self._to_write = set()
         self._beautify = {}
+        self._replaced_dirs = set()
 
     def _env_relative(self, key: Path) -> Path | None:
         if not key.is_relative_to(self.env_dir):
@@ -65,6 +62,9 @@ class CurrentEnvInstanceStore:
         self._objects[key] = obj
         self._to_write.add(key)
         return obj
+
+    def replace_dir(self, path):
+        self._replaced_dirs.add(_key(path))
 
     def get(self, path):
         key = _key(path)
@@ -125,7 +125,8 @@ class CurrentEnvInstanceStore:
         _t_beautify = 0.0
         _t_write = 0.0
         written = 0
-        for key in self._write_targets():
+        targets = list(self._write_targets())
+        for key in targets:
             data = self._objects[key]
             schema_path, header_text = self._beautify.get(key, (None, ""))
             written += 1
@@ -147,27 +148,10 @@ class CurrentEnvInstanceStore:
             writeToFile(key, text)
             _t_beautify += _w0 - _b0
             _t_write += _diag_now() - _w0
-        self._prune_app_regdefs()
+        for dir_key in sorted(self._replaced_dirs):
+            self._prune_dir(dir_key, self._names_written_to(targets, dir_key))
         logger.info(f"[diag] flush: {written} objects, beautify={_t_beautify*1000:.1f}ms, "
                     f"write={_t_write*1000:.1f}ms, total={(_diag_now()-_t0)*1000:.1f}ms")
-
-    def _prune_app_regdefs(self):
-        # App/Reg definitions are written directly under a top-level dir that is not in
-        # cleanup_targets, so their env-level copies get their own sweep: each env AppDefs/RegDefs
-        # dir is pruned to exactly the set the store writes this run (docs: the per-environment
-        # folders are deleted and, in dual mode, recreated as an exact copy of the render output).
-        # The root-level appdefs/regdefs dirs are NOT pruned: they are merged into and never
-        # cleaned (docs/features/app-reg-defs.md), so a run must not delete other environments'
-        # or other template sets' definitions.
-        written = sorted(self._write_targets())
-        for root_name, env_name in zip(ROOT_OBJECT_DIRS, _APP_REGDEF_DIRS_ENV):
-            # Render happened for this pair if any copy (root or env) was written this run; only
-            # then may the env dir be reset to exactly the rendered env copies (possibly empty,
-            # which removes the dir). The root dir is never pruned.
-            root_written = self._names_written_to(written, self.base_dir / root_name) if self.base_dir is not None else set()
-            env_kept = self._names_written_to(written, self.env_dir / env_name)
-            if root_written or env_kept:
-                self._prune_dir(self.env_dir / env_name, env_kept)
 
     @staticmethod
     def _names_written_to(written, dir_path) -> set:
@@ -178,10 +162,13 @@ class CurrentEnvInstanceStore:
     def _prune_dir(dir_path, kept):
         if not dir_path.is_dir():
             return
-        for file in sorted(dir_path.iterdir()):
-            if file.is_file() and file.name not in kept:
-                file.unlink()
-                logger.info(f"Pruning stale app/reg def: {file}")
+        for entry in sorted(dir_path.iterdir()):
+            if entry.is_dir():
+                shutil.rmtree(entry)
+                logger.info(f"Pruning stale app/reg def: {entry}")
+            elif entry.name not in kept:
+                entry.unlink()
+                logger.info(f"Pruning stale app/reg def: {entry}")
         if not any(dir_path.iterdir()):
             dir_path.rmdir()
 
