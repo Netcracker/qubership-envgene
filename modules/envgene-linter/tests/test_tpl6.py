@@ -1,12 +1,16 @@
-import pytest
+import json
 
+import pytest
+from click.testing import CliRunner
+
+from envgene_linter.cli import main
 from envgene_linter.engine import run_check
 from envgene_linter.model import Action, Severity
 
 
-def findings(tmp_path, source):
-    path = tmp_path / 'templates/cloud.yml.j2'
-    path.parent.mkdir(exist_ok=True)
+def findings(tmp_path, source, relative='templates/cloud.yml.j2'):
+    path = tmp_path / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(source, encoding='utf-8')
     return [item for item in run_check(tmp_path).findings if item.rule == 'TPL-6']
 
@@ -18,8 +22,6 @@ def findings(tmp_path, source):
     '{% from "shared.j2" import helper %}',
     '{% extends "base.j2" %}',
     '{% block body %}value{% endblock %}',
-    '{{ value | custom_filter }}',
-    '{{ value | to_nice_yaml }}',
     '{% for item in [1, 2] %}{{ item }}{% endfor %}',
     '{% for item in range(3) %}{{ item }}{% endfor %}',
 ])
@@ -44,10 +46,6 @@ def test_simple_logic_and_helm_passthrough_are_allowed(tmp_path, source):
 
 
 @pytest.mark.parametrize('source', [
-    '{% raw %}literal text{% endraw %}',
-    '{% raw %}{{ unknown }}{% endraw %}',
-    '{% raw %}{{ .Release.Name }} {{ unknown }}{% endraw %}',
-    '{{ value | replace("a", "b") }}',
     '{% set value = "fixed" %}',
     '{% for item in items recursive %}{{ item }}{% endfor %}',
 ])
@@ -58,27 +56,97 @@ def test_uncertain_logic_is_reviewed(tmp_path, source):
 
 
 def test_raw_body_is_not_executable_jinja(tmp_path):
-    result = findings(tmp_path, '{% raw %}{% include "secret-name.j2" %}{% endraw %}')
-    assert len(result) == 1
-    assert result[0].action == Action.REVIEW
-    assert 'secret-name' not in repr(result)
+    assert findings(tmp_path, '{% raw %}{% include "secret-name.j2" %}{% endraw %}') == []
 
 
 @pytest.mark.parametrize('expression', [
     '{{ value | custom_filter | replace("a", "b") }}',
     '{{ value | replace("a", "b") | custom_filter }}',
 ])
-def test_custom_filter_fix_is_not_hidden_by_review_on_same_line(tmp_path, expression):
+def test_unregistered_filter_chains_require_compatibility_review(tmp_path, expression):
     result = findings(tmp_path, expression)
-    assert len(result) == 1
-    assert result[0].action == Action.FIX
+    assert len(result) == 1 and result[0].action == Action.REVIEW
+    assert result[0].key == 'ansible_compatibility'
+
+
+@pytest.mark.parametrize('source', [
+    '{{ value | to_nice_yaml }}',
+    '{{ value | ansible.builtin.to_nice_yaml }}',
+    '{{ value | urlsplit }}',
+    '{{ value | replace("a", "b") }}',
+    '{{ value | length }}',
+    '{{ value | indent(2, true) }}',
+    '{% filter to_nice_yaml %}literal text{% endfilter %}',
+    '{% filter to_nice_yaml | indent(2) %}literal text{% endfilter %}',
+])
+def test_compatible_filters_are_allowed_without_a_style_allowlist(tmp_path, source):
+    assert findings(tmp_path, source) == []
+
+
+def test_allowed_filter_block_does_not_hide_prohibited_statements(tmp_path):
+    source = '{% filter to_nice_yaml %}\n{% include "shared.j2" %}\n{% endfilter %}'
+    assert [(item.line, item.action) for item in findings(tmp_path, source)] == [(2, Action.FIX)]
+
+
+def test_builtin_filter_is_allowed_in_a_rendered_descriptor_scalar(tmp_path):
+    source = 'tenant: tenant.yml.j2\ncloud: "{{ value | default(\'\') | upper }}"\nnamespaces: []\n'
+    assert findings(tmp_path, source, 'templates/env_templates/example.yaml') == []
+
+
+def test_cli_registered_custom_filter_does_not_create_findings_or_skips(tmp_path):
+    findings(tmp_path, "{{ value | default('') | to_nice_yaml }}")
+    result = CliRunner().invoke(main, ['check', str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert json.loads((tmp_path / 'envgene-linter-report.json').read_text()) == []
+    html = (tmp_path / 'envgene-linter-report.html').read_text()
+    assert 'No findings' in html
+    assert 'Incomplete checks' not in html
 
 
 @pytest.mark.parametrize('expression', ['tpl (value)', 'include ("x")'])
-def test_ambiguous_calls_inside_raw_need_review(tmp_path, expression):
-    result = findings(tmp_path, '{% raw %}{{ ' + expression + ' }}{% endraw %}')
-    assert len(result) == 1
-    assert result[0].action == Action.REVIEW
+def test_ambiguous_calls_inside_raw_are_allowed(tmp_path, expression):
+    assert findings(tmp_path, '{% raw %}{{ ' + expression + ' }}{% endraw %}') == []
+
+
+@pytest.mark.parametrize('source', [
+    '{% raw %}literal text{% endraw %}',
+    '{% raw %}{{ id }}{% endraw %}',
+    '{% raw %}{{ .Release.Name }} {{ unknown }}{% endraw %}',
+    '{% raw %}{{ value | custom_filter }}{% endraw %}',
+    '{% raw %}{{ broken + }}{% endraw %}',
+    '{% raw %}{% set value = "fixed" %}{% endraw %}',
+    '{% raw %}{% endraw %}',
+    '{%- raw -%}\n{{ id }}\n{%- endraw -%}',
+    '{% raw %}{{ first }}{% endraw %}\n{% raw %}{{ second }}{% endraw %}',
+])
+def test_raw_passthrough_does_not_require_helm_syntax(tmp_path, source):
+    assert findings(tmp_path, source) == []
+
+
+def test_raw_does_not_hide_executable_logic_outside_the_block(tmp_path):
+    source = '{% raw %}{% include "ignored.j2" %}{% endraw %}\n{% include "active.j2" %}'
+    result = findings(tmp_path, source)
+    assert [(item.line, item.action) for item in result] == [(2, Action.FIX)]
+
+
+def test_raw_passthrough_is_allowed_in_a_rendered_descriptor_scalar(tmp_path):
+    source = 'tenant: tenant.yml.j2\ncloud: "{% raw %}{{ id }}{% endraw %}"\nnamespaces: []\n'
+    assert findings(tmp_path, source, 'templates/env_templates/example.yaml') == []
+
+
+def test_unclosed_raw_block_remains_an_incomplete_check(tmp_path):
+    findings(tmp_path, '{% raw %}{{ id }}')
+    result = run_check(tmp_path)
+    assert any(check.rule == 'TPL-6' and check.reason == 'cannot parse Jinja source'
+               for check in result.skipped_checks)
+
+
+def test_cli_raw_passthrough_does_not_create_review_entries(tmp_path):
+    findings(tmp_path, '{% raw %}{{ id }}{% endraw %}')
+    result = CliRunner().invoke(main, ['check', str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert json.loads((tmp_path / 'envgene-linter-report.json').read_text()) == []
+    assert 'No findings' in (tmp_path / 'envgene-linter-report.html').read_text()
 
 
 def test_deep_expression_does_not_abort_other_template_checks(tmp_path):

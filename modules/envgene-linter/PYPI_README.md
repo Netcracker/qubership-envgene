@@ -89,5 +89,9 @@ It ignores YAML comments and allows `.j2` files regardless of their directory.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.
 
 TPL-4 reviews references without recognized presence protection. It does not prove that generation fails.
-TPL-6 checks template logic and allows recognizable Helm passthrough in raw blocks.
+TPL-6 checks template logic and allows raw blocks for Helm, application placeholders, and other literal text.
+Built-in and custom filters are allowed, including filter blocks. Prohibited Jinja statements remain checked.
+TPL-6 reviews unsupported or unconfirmed compatibility with the applicable EnvGene renderer, including unavailable
+filters, unsupported legacy lookup forms, and compatibility processing that changes literal raw text.
+Additional legacy-expression checks cover configuration YAML. Root GSF/CI description templates are excluded.
 Both rules inspect `.j2` files under `templates/` and supported descriptor fields without rendering templates.

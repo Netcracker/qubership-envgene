@@ -81,9 +81,9 @@ def test_disabled_template_rules_do_not_parse_or_appear_in_reports(tmp_path, mon
 
 
 @pytest.mark.parametrize('scalar', [
-    '"{{ VALUE | default(\\"\\") | custom_filter }}"',
-    "'{{ VALUE | default('''') | custom_filter }}'",
-    '|\n  {{ VALUE | default(\'\') | custom_filter }}',
+    '"{% include \\"shared.j2\\" %}"',
+    "'{% include ''shared.j2'' %}'",
+    '|\n  {% include \'shared.j2\' %}',
 ])
 def test_descriptor_uses_decoded_yaml_scalar_and_reports_scalar_location(tmp_path, scalar):
     write(tmp_path / 'templates/env_templates/example.yaml',

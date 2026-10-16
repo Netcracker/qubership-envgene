@@ -18,7 +18,6 @@ class TemplateSource:
     path: Path
     offset: int
     tree: nodes.Template
-    raw_blocks: list[tuple[int, str]]
     descriptor: bool = False
     text: str = field(default='', repr=False)
 
@@ -68,17 +67,6 @@ def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
             offset = text.count('\n', 0, start)
             try:
                 tree = ENVIRONMENT.parse(fragment)
-                raw_blocks = []
-                raw_line = None
-                raw_parts = []
-                for line, kind, value in ENVIRONMENT.lex(fragment):
-                    if kind == 'raw_begin':
-                        raw_line, raw_parts = line, []
-                    elif kind == 'raw_end' and raw_line is not None:
-                        raw_blocks.append((raw_line, ''.join(raw_parts)))
-                        raw_line = None
-                    elif raw_line is not None:
-                        raw_parts.append(value)
             except TemplateSyntaxError as exc:
                 line = offset + (1 if path.suffix != '.j2' else max(1, exc.lineno or 1))
                 skipped(path, 'cannot parse Jinja source', line)
@@ -86,5 +74,5 @@ def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
             except RecursionError:
                 skipped(path, 'Jinja source exceeds the parser recursion limit', offset + 1)
                 continue
-            sources.append(TemplateSource(path, offset, tree, raw_blocks, path.suffix != '.j2', fragment))
+            sources.append(TemplateSource(path, offset, tree, descriptor=path.suffix != '.j2', text=fragment))
     return sources

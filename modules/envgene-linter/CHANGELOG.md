@@ -25,6 +25,11 @@
   authentication configurations. Keep anonymous and inactive configurations out of reference evidence.
 - Show skipped checks in HTML and export skipped Jinja checks as located Review entries in JSON,
   so incomplete template checks cannot appear as clean reports.
+- Allow all syntactically valid `raw` blocks in TPL-6, regardless of whether they contain Helm syntax.
+- Allow all built-in and custom filters in TPL-6, including filter chains and filter blocks.
+- Review unsupported or unconfirmed Ansible compatibility after modeling the applicable EnvGene renderer.
+  Check legacy lookup forms, filter availability and arguments, and changes to literal raw or string content.
+  Include potential legacy expressions in configuration YAML. Exclude root GSF/CI description templates.
 
 ## 0.0.6
 
