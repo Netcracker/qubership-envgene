@@ -115,9 +115,24 @@ class CurrentEnvInstanceStore:
 
     def get_yaml(self, dir_path, name):
         key = self.find_yaml(dir_path, name)
-        if key is None:
+        if key is None and (key := self._disk_root_obj(dir_path, name)) is None:
             raise FileNotFoundError(f"{name} is not in the object store under {_key(dir_path)}")
         return self._objects[key]
+
+    def _disk_root_obj(self, dir_path, name):
+        if self.base_dir is None or Path(dir_path).name not in ROOT_OBJECT_DIRS:
+            return None
+        for suffix in YAML_EXTENSIONS:
+            path = Path(dir_path) / f"{name}{suffix}"
+            if path.is_file():
+                self._put_readonly(path, openYaml(path))
+                return path
+        return None
+
+    def _put_readonly(self, path, obj):
+        key = _key(path)
+        self._objects[key] = obj
+        self._keys_by_dir.setdefault(key.parent, set()).add(key)
 
     @staticmethod
     def _profile_cache_dir() -> Path | None:
