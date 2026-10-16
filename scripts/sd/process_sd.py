@@ -138,8 +138,7 @@ def validate_applications(sd):
             raise ValueError(f"Application {app} doesn't have deployPostfix.")
 
 
-def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Path, app_data,
-                             effective_merge_mode: MergeType):
+def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Path, app_data, effective_merge_mode: MergeType):
     logger.info(f"Extracted SD content: {app_data}")
     app_data = load_json_or_yaml(app_data)
 
@@ -183,8 +182,7 @@ def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Pa
             merge_sd(sd_path, full_sd_from_pipe, selected_merge_function)
 
 
-def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions,
-                            effective_merge_mode: MergeType, ctx):
+def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions, effective_merge_mode: MergeType, ctx):
     app_versions = app_versions.replace("\\n", "\n")
     app_entries = split_multi_value_param(app_versions)
     if not app_entries:

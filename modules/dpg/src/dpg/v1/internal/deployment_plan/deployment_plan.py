@@ -140,11 +140,7 @@ class DeploymentPlanCalculator:
 
             if not is_sd:
                 logging.debug(f"Adding standalone application: {app}")
-                entities.append(DeployPlanEntity(
-                    wave=wave_index,
-                    deployPostfix="",
-                    **self._parse_app(app),
-                ))
+                entities.append(DeployPlanEntity(wave=wave_index, deployPostfix="", **self._parse_app(app)))
                 continue
 
             sd = SolutionDescriptorParser.parse(filepath=app, content=content)
