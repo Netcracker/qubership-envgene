@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from functools import lru_cache
 import os
 import ruyaml
@@ -12,11 +13,19 @@ from ruyaml import CommentedMap, CommentedSeq
 from pathlib import Path
 from time import perf_counter as _diag_now
 
+
+from envgene_shared.utils.content_hash import canonical_hash, schema_file_hash
 from envgene_shared.utils.file_utils import *
 from envgene_shared.utils.logger import logger
 
 
 val_diag = {"calls": 0, "ms": 0.0}
+
+
+# Per-run validation timing, accumulated in validate_yaml_by_scheme_or_fail and
+# reported once on skip_validated exit. Lets us see the real cost of the hash-skip
+# (key() lookups that skip) vs actual jschon validation (cold / changed objects).
+_val_diag = {"actual_ms": 0.0, "actual": 0, "skipped": 0, "key_ms": 0.0, "other_ms": 0.0}
 
 
 def get_empty_yaml():
@@ -61,12 +70,62 @@ def get_schema_validator(schema_path: str):
     return cls(schema)
 
 
+class ValidatedHashes:
+    def __init__(self, known):
+        self.known = set(known)
+        self.seen = set()
+
+    @staticmethod
+    def key(yaml_content, schema_file_path) -> str:
+        return canonical_hash(yaml_content, salt=schema_file_hash(str(schema_file_path)))
+
+    def passed_before(self, key) -> bool:
+        if key not in self.known:
+            return False
+        self.seen.add(key)
+        return True
+
+    def passed(self, key):
+        self.seen.add(key)
+
+
+_validated_hashes = None
+
+
+@contextmanager
+def skip_validated(known):
+    global _validated_hashes
+    _validated_hashes = ValidatedHashes(known)
+    _val_diag["actual_ms"] = 0.0
+    _val_diag["actual"] = 0
+    _val_diag["skipped"] = 0
+    _val_diag["key_ms"] = 0.0
+    _run0 = _diag_now()
+    try:
+        yield _validated_hashes
+    finally:
+        _validated_hashes = None
+        logger.info(
+            f"[diag] validation: actual={_val_diag['actual']} calls {_val_diag['actual_ms']:.1f}ms, "
+            f"skipped={_val_diag['skipped']} (key lookups {_val_diag['key_ms']:.1f}ms), "
+            f"total_run={(_diag_now() - _run0) * 1000:.1f}ms")
+
+
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
     _v0 = _diag_now()
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    validated = _validated_hashes if schema_file_path and not schemas_dir else None
+    _key0 = _diag_now()
+    key = validated.key(yaml_content, schema_file_path) if validated else None
+    if validated and validated.passed_before(key):
+        logger.debug(f"Skipping validation by {schema_file_path}: same content passed it before")
+        _val_diag["skipped"] += 1
+        _val_diag["key_ms"] += (_diag_now() - _key0) * 1000
+        return
     schema_content = load_schema(str(schema_file_path)) if schema_file_path else input_schema_content
+    _a0 = _diag_now()
 
     if schemas_dir:
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
@@ -78,6 +137,8 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
         errors = validate_yaml_data_by_schema(yaml_content, schema_content)
     val_diag["calls"] += 1
     val_diag["ms"] += (_diag_now() - _v0) * 1000
+    _val_diag["actual"] += 1
+    _val_diag["actual_ms"] += (_diag_now() - _a0) * 1000
     if len(errors) > 0:
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
@@ -85,6 +146,8 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
         for err in errors:
             log_jsonschema_validation_error(err)
         raise ValueError("Validation failed") from None
+    if validated:
+        validated.passed(key)
 
 
 def validate_yaml_data_by_schema(data, schema, cls=None, *args, **kwargs):

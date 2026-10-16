@@ -1,11 +1,18 @@
 import json
+import sys
+from pathlib import Path
 
 import pytest
 
+from envgene_shared.utils import yaml_utils
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
+import envgenehelper.current_env_instance_store  # noqa: F401
+store_module = sys.modules["envgenehelper.current_env_instance_store"]
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
 )
+from envgenehelper.object_hash_manifest import load_manifest, manifest_path
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
 
 SCHEMA = {
@@ -88,6 +95,7 @@ def test_root_appdef_miss_loads_from_disk_readonly(tmp_path, env_dir):
     objects.flush()
 
     assert committed.read_text() == "name: BGOperator-CRDS\nregistryName: old-registry\n"
+    assert "appdefs/BGOperator-CRDS.yml" not in load_manifest(env_dir)["objects"]
 
 
 def test_put_object_wins_over_disk_root_appdef(tmp_path, env_dir):
@@ -178,6 +186,255 @@ def test_flush_removes_comments_from_credentials(env_dir):
     objects.flush()
 
     assert target.read_text() == "cred:\n  type: secret\n"
+
+
+def test_flush_does_not_rewrite_unchanged_object(env_dir, schema_path, monkeypatch):
+    target = env_dir / "Namespaces" / "a" / "namespace.yml"
+
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml("name: a\n"))
+    objects.beautify(target, schema_path)
+    objects.flush()
+
+    calls = []
+    monkeypatch.setattr(store_module, "writeToFile", lambda path, text: calls.append(Path(path)))
+    objects2 = CurrentEnvInstanceStore(env_dir)
+    objects2.put(target, readYaml("name: a\n"))
+    objects2.beautify(target, schema_path)
+    objects2.flush()
+
+    assert Path(target) not in calls
+
+
+def test_flush_rewrites_object_when_data_changes(env_dir, schema_path):
+    objects = CurrentEnvInstanceStore(env_dir)
+    target = env_dir / "Namespaces" / "a" / "namespace.yml"
+    objects.put(target, readYaml("name: a\n"))
+    objects.beautify(target, schema_path)
+    objects.flush()
+
+    objects2 = CurrentEnvInstanceStore(env_dir)
+    objects2.put(target, readYaml("name: changed\n"))
+    objects2.beautify(target, schema_path)
+    objects2.flush()
+
+    assert 'name: "changed"' in target.read_text()
+
+
+def test_flush_stale_manifest_triggers_rewrite(env_dir, schema_path, monkeypatch):
+    target = env_dir / "tenant.yml"
+
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml("name: a\n"))
+    objects.beautify(target, schema_path)
+    objects.flush()
+    manifest_path(env_dir).write_text(json.dumps({"objects": {}}))
+
+    calls = []
+    monkeypatch.setattr(store_module, "writeToFile", lambda path, text: calls.append(Path(path)))
+    objects3 = CurrentEnvInstanceStore(env_dir)
+    objects3.put(target, readYaml("name: a\n"))
+    objects3.beautify(target, schema_path)
+    objects3.flush()
+
+    assert Path(target) in calls
+
+
+def test_flush_deletes_stale_namespace_dir(env_dir):
+    stale = env_dir / "Namespaces" / "gone" / "namespace.yml"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("name: gone\n")
+
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(env_dir / "Namespaces" / "keep" / "namespace.yml", readYaml("name: keep\n"))
+    objects.flush()
+
+    assert not stale.exists()
+    assert (env_dir / "Namespaces" / "keep" / "namespace.yml").read_text() == "name: keep\n"
+
+
+def test_flush_deletes_stale_generated_file(env_dir):
+    env_dir.mkdir(parents=True, exist_ok=True)
+    (env_dir / "bg_domain.yml").write_text("name: old\n")
+
+    objects = CurrentEnvInstanceStore(env_dir)
+    # a live env object keeps the stale sweep active; bg_domain.yml is then pruned
+    objects.put(env_dir / "tenant.yml", {"name": "t"})
+    objects.flush()
+
+    assert not (env_dir / "bg_domain.yml").exists()
+
+
+def test_flush_writes_base_dir_object(tmp_path, env_dir):
+    # base_dir (the repo root) is a separate write scope; a root AppDefs copy lives
+    # outside env_dir and must still be written to disk.
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    root_appdef = tmp_path / "appdefs" / "demo.yml"
+    objects.put(root_appdef, {"name": "demo"})
+    objects.flush()
+
+    assert root_appdef.read_text() == "name: demo\n"
+    manifest = readYaml(manifest_path(env_dir).read_text())
+    assert manifest["objects"]["appdefs/demo.yml"]
+
+
+def test_flush_does_not_rewrite_unchanged_base_dir_object(env_dir, tmp_path, monkeypatch):
+    root_appdef = tmp_path / "appdefs" / "demo.yml"
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(root_appdef, {"name": "demo"})
+    objects.flush()
+
+    calls = []
+    monkeypatch.setattr(store_module, "writeToFile", lambda path, text: calls.append(Path(path)))
+    objects2 = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects2.put(root_appdef, {"name": "demo"})
+    objects2.flush()
+
+    assert root_appdef not in calls
+
+
+def test_flush_rewrites_base_dir_object_changed_by_another_env(tmp_path):
+    root_appdef = tmp_path / "appdefs" / "app.yml"
+    for env_name, owner in (("a", "A"), ("b", "B"), ("a", "A")):
+        objects = CurrentEnvInstanceStore(tmp_path / "environments" / "c" / env_name, base_dir=tmp_path)
+        objects.put(root_appdef, {"name": "app", "owner": owner})
+        objects.flush()
+
+    assert root_appdef.read_text() == "name: app\nowner: A\n"
+
+
+def test_flush_does_not_prune_root_appdef(tmp_path, env_dir):
+    # Root appdefs are merged into and never cleaned (docs/features/app-reg-defs.md): a root file
+    # not written this run belongs to another environment/template set and must survive flush.
+    (tmp_path / "appdefs").mkdir(parents=True)
+    (tmp_path / "appdefs" / "stale.yml").write_text("name: stale\n")
+    (tmp_path / "appdefs" / "keep.yml").write_text("name: keep\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "keep.yml", {"name": "keep"})
+    objects.flush()
+
+    assert (tmp_path / "appdefs" / "keep.yml").exists()
+    assert (tmp_path / "appdefs" / "stale.yml").exists()
+
+
+def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):
+    # dual placement: env AppDefs is reset to exactly the rendered set
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.replace_dir(env_dir / "AppDefs")
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.put(env_dir / "AppDefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert (env_dir / "AppDefs" / "demo.yml").exists()
+    assert not (env_dir / "AppDefs" / "stale.yml").exists()
+
+
+def test_flush_does_not_prune_appdef_dir_when_not_rendered(env_dir, tmp_path):
+    # appregdef skipped: store holds no app/reg defs, the dir must be left untouched
+    (tmp_path / "appdefs").mkdir(parents=True)
+    (tmp_path / "appdefs" / "user.yml").write_text("name: user\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(env_dir / "tenant.yml", {"name": "t"})
+    objects.flush()
+
+    assert (tmp_path / "appdefs" / "user.yml").exists()
+
+
+def test_flush_skips_stale_sweep_when_store_has_only_base_dir_objects(env_dir, tmp_path):
+    # BGD-warmup: app/reg defs are rendered (root objects) but env_build does not run,
+    # so the store holds only base_dir objects. The sweep must not wipe env generated
+    # objects that are not in the store.
+    env_dir.mkdir(parents=True, exist_ok=True)
+    (env_dir / "bg_domain.yml").write_text("name: old\n")
+    (env_dir / "Namespaces" / "old" / "namespace.yml").parent.mkdir(parents=True)
+    (env_dir / "Namespaces" / "old" / "namespace.yml").write_text("name: old\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert (tmp_path / "appdefs" / "demo.yml").read_text() == "name: demo\n"
+    assert (env_dir / "bg_domain.yml").exists()
+    assert (env_dir / "Namespaces" / "old" / "namespace.yml").exists()
+
+
+def test_root_only_flush_keeps_manifest_entries_of_env_objects(env_dir, tmp_path, monkeypatch):
+    tenant = env_dir / "tenant.yml"
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tenant, {"name": "t"})
+    objects.flush()
+
+    root_only = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    root_only.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    root_only.flush()
+
+    calls = []
+    monkeypatch.setattr(store_module, "writeToFile", lambda path, text: calls.append(Path(path)))
+    objects2 = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects2.put(tenant, {"name": "t"})
+    objects2.flush()
+
+    assert tenant not in calls
+
+
+def test_root_only_app_defs_remove_env_copies(env_dir, tmp_path):
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.replace_dir(env_dir / "AppDefs")
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert not (env_dir / "AppDefs").exists()
+
+
+def test_flush_keeps_env_appdefs_when_not_replaced(env_dir, tmp_path):
+    (env_dir / "AppDefs").mkdir(parents=True)
+    (env_dir / "AppDefs" / "old.yml").write_text("name: old\n")
+
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+    objects.flush()
+
+    assert (env_dir / "AppDefs" / "old.yml").exists()
+
+
+def test_flush_rewrites_unchanged_object_missing_on_disk(env_dir, tmp_path):
+    root_appdef = tmp_path / "appdefs" / "demo.yml"
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(root_appdef, {"name": "demo"})
+    objects.flush()
+    root_appdef.unlink()
+
+    objects2 = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects2.put(root_appdef, {"name": "demo"})
+    objects2.flush()
+
+    assert root_appdef.exists()
+
+
+def test_flush_does_not_write_base_dir_object_outside_app_reg_defs(env_dir, tmp_path):
+    template_profile = tmp_path / "tmp" / "templates" / "resource_profiles" / "dev.yml"
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(template_profile, {"name": "dev"})
+    objects.flush()
+
+    assert not template_profile.exists()
+
+
+def test_get_yaml_finds_any_yaml_extension(env_dir, tmp_path):
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(tmp_path / "appdefs" / "demo.yaml", {"name": "demo"})
+
+    assert objects.get_yaml(tmp_path / "appdefs", "demo") == {"name": "demo"}
+    with pytest.raises(FileNotFoundError):
+        objects.get_yaml(tmp_path / "appdefs", "absent")
 
 
 def test_current_store_is_available_only_while_open(env_dir):
@@ -276,99 +533,49 @@ def test_normalize_comments(source, expected):
     assert dumpYamlToStr(data) == expected
 
 
-def test_flush_writes_base_dir_object(tmp_path, env_dir):
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    root_appdef = tmp_path / "appdefs" / "demo.yml"
-    objects.put(root_appdef, {"name": "demo"})
-    objects.flush()
-
-    assert root_appdef.read_text() == "name: demo\n"
-
-
-def test_flush_does_not_prune_root_appdef(tmp_path, env_dir):
-    (tmp_path / "appdefs").mkdir(parents=True)
-    (tmp_path / "appdefs" / "stale.yml").write_text("name: stale\n")
-    (tmp_path / "appdefs" / "keep.yml").write_text("name: keep\n")
-
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.put(tmp_path / "appdefs" / "keep.yml", {"name": "keep"})
-    objects.flush()
-
-    assert (tmp_path / "appdefs" / "keep.yml").exists()
-    assert (tmp_path / "appdefs" / "stale.yml").exists()
-
-
-def test_flush_prunes_stale_env_appdef_copy(env_dir, tmp_path):
-    (env_dir / "AppDefs").mkdir(parents=True)
-    (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
-
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.replace_dir(env_dir / "AppDefs")
-    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
-    objects.put(env_dir / "AppDefs" / "demo.yml", {"name": "demo"})
-    objects.flush()
-
-    assert (env_dir / "AppDefs" / "demo.yml").exists()
-    assert not (env_dir / "AppDefs" / "stale.yml").exists()
-
-
-def test_flush_does_not_prune_appdef_dir_when_not_rendered(env_dir, tmp_path):
-    (tmp_path / "appdefs").mkdir(parents=True)
-    (tmp_path / "appdefs" / "user.yml").write_text("name: user\n")
-
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.put(env_dir / "tenant.yml", {"name": "t"})
-    objects.flush()
-
-    assert (tmp_path / "appdefs" / "user.yml").exists()
-
-
-def test_root_only_app_defs_remove_env_copies(env_dir, tmp_path):
-    (env_dir / "AppDefs").mkdir(parents=True)
-    (env_dir / "AppDefs" / "stale.yml").write_text("name: stale\n")
-
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.replace_dir(env_dir / "AppDefs")
-    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
-    objects.flush()
-
-    assert not (env_dir / "AppDefs").exists()
-
-
-def test_flush_keeps_env_appdefs_when_not_replaced(env_dir, tmp_path):
-    (env_dir / "AppDefs").mkdir(parents=True)
-    (env_dir / "AppDefs" / "old.yml").write_text("name: old\n")
-
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
-    objects.flush()
-
-    assert (env_dir / "AppDefs" / "old.yml").exists()
-
-
-def test_flush_does_not_write_base_dir_object_outside_app_reg_defs(env_dir, tmp_path):
-    template_profile = tmp_path / "tmp" / "templates" / "resource_profiles" / "dev.yml"
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.put(template_profile, {"name": "dev"})
-    objects.flush()
-
-    assert not template_profile.exists()
-
-
-def test_get_yaml_finds_any_yaml_extension(env_dir, tmp_path):
-    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
-    objects.put(tmp_path / "appdefs" / "demo.yaml", {"name": "demo"})
-
-    assert objects.get_yaml(tmp_path / "appdefs", "demo") == {"name": "demo"}
-    with pytest.raises(FileNotFoundError):
-        objects.get_yaml(tmp_path / "appdefs", "absent")
-
-
-def test_flush_rewrites_base_dir_object_changed_by_another_env(tmp_path):
-    root_appdef = tmp_path / "appdefs" / "app.yml"
-    for env_name, owner in (("a", "A"), ("b", "B"), ("a", "A")):
-        objects = CurrentEnvInstanceStore(tmp_path / "environments" / "c" / env_name, base_dir=tmp_path)
-        objects.put(root_appdef, {"name": "app", "owner": owner})
+def test_flush_saves_validations_passed_this_run(env_dir, schema_path):
+    with open_current_env_instance_store(env_dir) as objects:
+        validate_yaml_by_scheme_or_fail(input_yaml_content={"name": "t"}, schema_file_path=schema_path)
+        objects.put(env_dir / "tenant.yml", {"name": "t"})
         objects.flush()
 
-    assert root_appdef.read_text() == "name: app\nowner: A\n"
+    assert json.loads(manifest_path(env_dir).read_text())["validated"] == sorted(objects.validated.seen)
+
+
+def test_next_run_skips_validation_saved_in_manifest(env_dir, schema_path, monkeypatch):
+    with open_current_env_instance_store(env_dir) as objects:
+        validate_yaml_by_scheme_or_fail(input_yaml_content={"name": "t"}, schema_file_path=schema_path)
+        objects.put(env_dir / "tenant.yml", {"name": "t"})
+        objects.flush()
+    monkeypatch.setattr(yaml_utils, "get_schema_validator", lambda _: pytest.fail("validation must be skipped"))
+
+    with open_current_env_instance_store(env_dir):
+        validate_yaml_by_scheme_or_fail(input_yaml_content={"name": "t"}, schema_file_path=schema_path)
+
+
+def test_flush_drops_validations_not_used_this_run(env_dir, schema_path):
+    with open_current_env_instance_store(env_dir) as objects:
+        validate_yaml_by_scheme_or_fail(input_yaml_content={"name": "old"}, schema_file_path=schema_path)
+        objects.put(env_dir / "tenant.yml", {"name": "old"})
+        objects.flush()
+
+    with open_current_env_instance_store(env_dir) as objects:
+        validate_yaml_by_scheme_or_fail(input_yaml_content={"name": "new"}, schema_file_path=schema_path)
+        objects.put(env_dir / "tenant.yml", {"name": "new"})
+        objects.flush()
+
+    assert json.loads(manifest_path(env_dir).read_text())["validated"] == sorted(objects.validated.seen)
+
+
+def test_root_only_flush_keeps_validations_of_env_objects(env_dir, tmp_path, schema_path):
+    with open_current_env_instance_store(env_dir, base_dir=tmp_path) as objects:
+        validate_yaml_by_scheme_or_fail(input_yaml_content={"name": "t"}, schema_file_path=schema_path)
+        objects.put(env_dir / "tenant.yml", {"name": "t"})
+        objects.flush()
+    env_validations = objects.validated.seen
+
+    with open_current_env_instance_store(env_dir, base_dir=tmp_path) as root_only:
+        root_only.put(tmp_path / "appdefs" / "demo.yml", {"name": "demo"})
+        root_only.flush()
+
+    assert set(json.loads(manifest_path(env_dir).read_text())["validated"]) == env_validations
