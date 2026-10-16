@@ -19,17 +19,6 @@ from envgene_shared.utils.logger import logger
 TIMESTAMPED_VERSION_PATTERN = re.compile(r"-\d{8}\.\d{6}-\d+$")
 
 
-def _version_from_artifact_url(url: str, app: Application, extension: FileExtension,
-                               classifier: str = "") -> str:
-    filename = urlparse(url).path.rsplit("/", 1)[-1]
-    suffix = f".{extension.value}"
-    if classifier:
-        suffix = f"-{classifier}{suffix}"
-    if filename.startswith(f"{app.artifact_id}-") and filename.endswith(suffix):
-        return filename[len(app.artifact_id) + 1:-len(suffix)]
-    return ""
-
-
 def convert_nexus_repo_url_to_index_view(url: str) -> str:
     parsed = urlparse(url)
 
@@ -424,10 +413,11 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
         repo = repos[0]
         domain = app.registry.maven_config.repository_domain_name
         repo_url = domain if not repo.value else domain.rstrip('/') + '/' + repo.value
-        url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
-                             artifact_extension, auth_headers=auth_headers, classifier=classifier)
-        if url:
-            resolved_version = _version_from_artifact_url(url, app, artifact_extension, classifier) or version
+        result = _check_artifact_with_resolved_version(
+            repo_url, app.group_id, app.artifact_id, version,
+            artifact_extension, auth_headers=auth_headers, classifier=classifier)
+        if result:
+            url, resolved_version = result
             return ArtifactSource(
                 source_url=url,
                 repository=repo,
@@ -499,6 +489,16 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    auth_headers: dict | None = None,
                    classifier: str = "") -> str | None:
+    result = _check_artifact_with_resolved_version(
+        repo_url, group_id, artifact_id, version, artifact_extension,
+        auth_headers=auth_headers, classifier=classifier)
+    return result[0] if result else None
+
+
+def _check_artifact_with_resolved_version(
+        repo_url: str, group_id: str, artifact_id: str, version: str,
+        artifact_extension: FileExtension, auth_headers: dict | None = None,
+        classifier: str = "") -> tuple[str, str] | None:
     if MavenConfig.is_nexus(repo_url):
         repo_url = convert_nexus_repo_url_to_index_view(repo_url)
 
@@ -530,7 +530,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
             )
-            return full_url
+            return full_url, version
 
     for full_url, status, error in candidate_results:
         if error:
