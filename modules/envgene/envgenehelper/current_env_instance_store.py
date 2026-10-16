@@ -31,7 +31,12 @@ from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comme
 NEVER_WRITTEN_DIRS = ("Inventory",)
 YAML_EXTENSIONS = (".yml", ".yaml")
 
-PROFILE_CACHE_DIR = Path(".envgene") / "profile-cache"
+# The parsed-profile cache is a disk cache keyed by the sha256 of the profile bytes, so it is
+# safe to share across environments and jobs. Its location is ENVGENE_PROFILE_CACHE_DIR
+# (e.g. /pickle on shared runners, paired with a runner-level `cache: paths: - /pickle`).
+# When unset the cache is disabled and profiles are always re-parsed. It is never written into
+# the instance repository, and a cache read/write failure only disables the cache for that file.
+PROFILE_CACHE_ENV_VAR = "ENVGENE_PROFILE_CACHE_DIR"
 
 
 def _key(path) -> Path:
@@ -58,7 +63,6 @@ class CurrentEnvInstanceStore:
         self._keys_by_dir = {}
         self._to_write = set()
         self._beautify = {}
-        self._profile_cache_used = set()
         self._replaced_dirs = set()
         self.validated = validated
 
@@ -115,25 +119,38 @@ class CurrentEnvInstanceStore:
             raise FileNotFoundError(f"{name} is not in the object store under {_key(dir_path)}")
         return self._objects[key]
 
+    @staticmethod
+    def _profile_cache_dir() -> Path | None:
+        """The shared cache location, or None when the cache is disabled (env var unset).
+        The cache never lives in the instance repository."""
+        shared = os.getenv(PROFILE_CACHE_ENV_VAR)
+        return Path(shared) if shared else None
+
     def load_profile_from_cache(self, profile_path):
         t0 = _diag_now()
         raw = Path(profile_path).read_bytes()
         key = hashlib.sha256(raw).hexdigest()
-        cache_file = self.env_dir / PROFILE_CACHE_DIR / f"{key}.pkl"
-        self._profile_cache_used.add(key)
-        try:
-            if cache_file.is_file():
-                with cache_file.open("rb") as f:
-                    logger.info(f"[diag] profile cache hit: {Path(profile_path).name} in {(_diag_now() - t0) * 1000:.1f}ms")
-                    return pickle.load(f)
-        except Exception as ex:
-            logger.warning(f"Profile parse cache is unreadable for {Path(profile_path).name}, re-parsing: {ex}")
+        name = Path(profile_path).name
+        cache_dir = self._profile_cache_dir()
+        cache_file = cache_dir / f"{key}.pkl" if cache_dir is not None else None
+        if cache_file is not None:
+            try:
+                if cache_file.is_file():
+                    with cache_file.open("rb") as f:
+                        logger.info(f"[diag] profile cache hit: {name} in {(_diag_now() - t0) * 1000:.1f}ms")
+                        return pickle.load(f)
+            except Exception as ex:
+                logger.warning(f"Profile parse cache is unreadable for {name}, re-parsing: {ex}")
         t_parse = _diag_now()
         profile = openYaml(profile_path)
-        cache_file.parent.mkdir(parents=True, exist_ok=True)
-        with cache_file.open("wb") as f:
-            pickle.dump(profile, f)
-        logger.info(f"[diag] profile cache miss: {Path(profile_path).name} openYaml "
+        if cache_file is not None:
+            try:
+                cache_file.parent.mkdir(parents=True, exist_ok=True)
+                with cache_file.open("wb") as f:
+                    pickle.dump(profile, f)
+            except Exception as ex:
+                logger.warning(f"Profile parse cache write failed for {name}, continuing without cache: {ex}")
+        logger.info(f"[diag] profile cache miss: {name} openYaml "
                     f"{(_diag_now() - t_parse) * 1000:.1f}ms")
         return profile
 
@@ -249,7 +266,6 @@ class CurrentEnvInstanceStore:
             new_manifest["validated"] = sorted(self._validated_this_run())
         for dir_key in sorted(self._replaced_dirs):
             self._prune_dir(dir_key, self._names_written_to(targets, dir_key))
-        self._prune_profile_cache()
         _s0 = _diag_now()
         save_manifest(self.env_dir, new_manifest)
         _t_save = _diag_now() - _s0
@@ -294,15 +310,6 @@ class CurrentEnvInstanceStore:
     def _names_written_to(written, dir_path) -> set:
         dir_key = _key(dir_path)
         return {key.name for key in written if key.parent == dir_key}
-
-    def _prune_profile_cache(self):
-        cache_dir = self.env_dir / PROFILE_CACHE_DIR
-        if not cache_dir.is_dir():
-            return
-        for file in sorted(cache_dir.iterdir()):
-            if file.is_file() and file.suffix == ".pkl" and file.stem not in self._profile_cache_used:
-                file.unlink()
-                logger.info(f"Pruning stale profile cache entry: {file.name}")
 
     @staticmethod
     def _prune_dir(dir_path, kept):

@@ -11,8 +11,8 @@ import envgenehelper.current_env_instance_store  # noqa: F401
 store_module = sys.modules["envgenehelper.current_env_instance_store"]
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
-    PROFILE_CACHE_DIR, CurrentEnvInstanceStore, current_env_instance_store,
-    open_current_env_instance_store,
+    PROFILE_CACHE_ENV_VAR, CurrentEnvInstanceStore,
+    current_env_instance_store, open_current_env_instance_store,
 )
 from envgenehelper.object_hash_manifest import manifest_path
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
@@ -580,24 +580,43 @@ def _profile_path(tmp_path, content):
     return profile
 
 
-def test_profile_cache_miss_parses_and_hit_reads_pickle(tmp_path, env_dir):
-    profile = _profile_path(tmp_path, b"name: dev_bss_override\nbaseline: dev\n")
-    store = CurrentEnvInstanceStore(env_dir)
-    first = store.load_profile_from_cache(profile)
+def _shared_cache(tmp_path, monkeypatch, name="pickle"):
+    shared = tmp_path / name
+    monkeypatch.setenv(PROFILE_CACHE_ENV_VAR, str(shared))
+    return shared
 
-    cache_file = env_dir / PROFILE_CACHE_DIR / (hashlib.sha256(b"name: dev_bss_override\nbaseline: dev\n").hexdigest() + ".pkl")
+
+def test_profile_cache_disabled_writes_nowhere_and_reparses(tmp_path, env_dir, monkeypatch):
+    monkeypatch.delenv(PROFILE_CACHE_ENV_VAR, raising=False)
+    profile = _profile_path(tmp_path, b"name: dev\n")
+
+    for _ in range(2):
+        assert CurrentEnvInstanceStore(env_dir).load_profile_from_cache(profile)["name"] == "dev"
+
+    # No cache in the repo and none anywhere else.
+    assert not (env_dir / ".envgene").exists()
+    assert not list(tmp_path.glob("**/*.pkl"))
+
+
+def test_profile_cache_miss_parses_and_hit_reads_pickle(tmp_path, env_dir, monkeypatch):
+    shared = _shared_cache(tmp_path, monkeypatch)
+    profile = _profile_path(tmp_path, b"name: dev_bss_override\nbaseline: dev\n")
+    first = CurrentEnvInstanceStore(env_dir).load_profile_from_cache(profile)
+
+    cache_file = shared / (hashlib.sha256(b"name: dev_bss_override\nbaseline: dev\n").hexdigest() + ".pkl")
     assert first["name"] == "dev_bss_override"
     assert cache_file.is_file()
+    assert not (env_dir / ".envgene").exists()
 
     cached_bytes = cache_file.read_bytes()
-    repeated_store = CurrentEnvInstanceStore(env_dir)
-    second = repeated_store.load_profile_from_cache(profile)
+    second = CurrentEnvInstanceStore(env_dir).load_profile_from_cache(profile)
 
     assert second == first
     assert cache_file.read_bytes() == cached_bytes
 
 
-def test_profile_cache_content_change_misses(tmp_path, env_dir):
+def test_profile_cache_content_change_misses(tmp_path, env_dir, monkeypatch):
+    shared = _shared_cache(tmp_path, monkeypatch)
     profile = _profile_path(tmp_path, b"name: dev\nbaseline: old\n")
     store = CurrentEnvInstanceStore(env_dir)
     assert store.load_profile_from_cache(profile)["baseline"] == "old"
@@ -606,45 +625,38 @@ def test_profile_cache_content_change_misses(tmp_path, env_dir):
     changed = store.load_profile_from_cache(profile)
 
     assert changed["baseline"] == "new"
-    cache_files = list((env_dir / PROFILE_CACHE_DIR).glob("*.pkl"))
-    assert len(cache_files) == 2
+    assert len(list(shared.glob("*.pkl"))) == 2
 
 
-def test_profile_cache_corrupt_pickle_falls_back_to_parse(tmp_path, env_dir):
+def test_profile_cache_corrupt_pickle_falls_back_to_parse(tmp_path, env_dir, monkeypatch):
+    shared = _shared_cache(tmp_path, monkeypatch)
     profile = _profile_path(tmp_path, b"name: dev\n")
     store = CurrentEnvInstanceStore(env_dir)
     store.load_profile_from_cache(profile)
-    cache_file = env_dir / PROFILE_CACHE_DIR / (hashlib.sha256(b"name: dev\n").hexdigest() + ".pkl")
+    cache_file = shared / (hashlib.sha256(b"name: dev\n").hexdigest() + ".pkl")
     cache_file.write_bytes(b"not a pickle")
 
     assert store.load_profile_from_cache(profile)["name"] == "dev"
 
 
-def test_flush_prunes_profile_cache_entry_unused_this_run(tmp_path, env_dir):
-    old_key = hashlib.sha256(b"name: dev\nbaseline: old\n").hexdigest() + ".pkl"
-    new_key = hashlib.sha256(b"name: dev\nbaseline: new\n").hexdigest() + ".pkl"
-    profile = _profile_path(tmp_path, b"name: dev\nbaseline: old\n")
-    store = CurrentEnvInstanceStore(env_dir)
-    store.load_profile_from_cache(profile)
-    profile.write_bytes(b"name: dev\nbaseline: new\n")
-    store.load_profile_from_cache(profile)
-
-    store.flush()
-
-    assert sorted(f.name for f in (env_dir / PROFILE_CACHE_DIR).glob("*.pkl")) == sorted([old_key, new_key])
-
-    next_run = CurrentEnvInstanceStore(env_dir)
-    next_run.load_profile_from_cache(profile)
-    next_run.flush()
-
-    assert [f.name for f in (env_dir / PROFILE_CACHE_DIR).glob("*.pkl")] == [new_key]
-
-
-def test_flush_keeps_used_profile_cache_entries(tmp_path, env_dir):
+def test_profile_cache_write_failure_falls_back_to_parse(tmp_path, env_dir, monkeypatch):
+    # Point the cache at a path whose parent is a file, so mkdir on write raises.
+    blocker = tmp_path / "blocker"
+    blocker.write_bytes(b"x")
+    monkeypatch.setenv(PROFILE_CACHE_ENV_VAR, str(blocker / "pickle"))
     profile = _profile_path(tmp_path, b"name: dev\n")
-    store = CurrentEnvInstanceStore(env_dir)
-    store.load_profile_from_cache(profile)
 
-    store.flush()
+    for _ in range(2):
+        assert CurrentEnvInstanceStore(env_dir).load_profile_from_cache(profile)["name"] == "dev"
 
-    assert list((env_dir / PROFILE_CACHE_DIR).glob("*.pkl"))
+
+def test_shared_profile_cache_hit_across_envs(tmp_path, monkeypatch):
+    shared = _shared_cache(tmp_path, monkeypatch)
+    profile = _profile_path(tmp_path, b"name: shared\nbaseline: b\n")
+
+    first = CurrentEnvInstanceStore(tmp_path / "environments" / "a" / "env").load_profile_from_cache(profile)
+    # A different environment, same profile content, must hit the shared cache.
+    second = CurrentEnvInstanceStore(tmp_path / "environments" / "b" / "env").load_profile_from_cache(profile)
+
+    assert second == first
+    assert len(list(shared.glob("*.pkl"))) == 1
