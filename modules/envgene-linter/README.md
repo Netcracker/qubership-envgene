@@ -11,7 +11,8 @@ Most instance rules check files selected by supported local references or known 
 INT-4 also examines recognized unconnected authored entities for review.
 TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`, regardless of bindings.
 It ignores YAML comments and allows `.j2` files regardless of their directory.
-TPL-4 reviews missing presence protection. TPL-6 checks template logic and allows recognizable Helm raw blocks.
+TPL-4 reviews missing presence protection. TPL-6 checks template statements and allows filters and raw blocks.
+TPL-6 also reviews unsupported or unconfirmed legacy-expression compatibility after modeling EnvGene processing.
 The linter does not generate environments, render Jinja templates, or automatically fix configuration files.
 Checks run locally without network calls.
 
@@ -263,7 +264,7 @@ The table lists the 22 rules enabled by default. Each link opens the processing 
 | [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md)       | Connected ParameterSet values contain JSON collections or YAML block collections encoded as strings                 | Warning / Review                        |
 | [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md)       | Jinja in active YAML outside supported descriptor fields, or ambiguous template syntax                              | Warning / Fix or Information / Review   |
 | [TPL-4](/modules/envgene-linter/docs/algorithms/tpl4.md)       | Potentially optional Jinja references without recognized presence protection                                        | Information / Review                    |
-| [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md)       | Prohibited or complex template logic, with an exception for recognizable Helm raw blocks                            | Warning / Fix or Information / Review   |
+| [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md)       | Prohibited Jinja statements and loop sources, with filters and raw blocks allowed                                   | Warning / Fix or Information / Review   |
 
 Three additional rules are implemented but disabled by default:
 [NAME-1](/modules/envgene-linter/docs/algorithms/name1.md),
@@ -359,6 +360,10 @@ It allows generator-rendered descriptor fields and marks ambiguous Helm or appli
 See [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) for the field exceptions and file scope.
 TPL-4 and TPL-6 inspect `.j2` files under `templates/` and generator-rendered descriptor fields without bindings.
 TPL-4 reviews source protection without proving that an input is absent. TPL-6 does not impose a nesting limit.
+TPL-6 compatibility checks also inspect potential legacy expressions in configuration YAML.
+Root GSF/CI `description_template*.yml` or `.yaml` files are excluded.
+Unknown rendering contexts within the checked configuration receive Review rather than assumed compatibility.
+See [Ansible compatibility](/modules/envgene-linter/docs/algorithms/ansible-compatibility.md) for rendering contracts.
 Discovery can still encounter unused files and emit skip notes.
 INT-3 includes definitions hidden by a used reference's lookup, without adding them to other rules' inputs.
 INT-4 catalogs recognized unconnected authored entities separately to review their references.
@@ -458,7 +463,7 @@ GitHub Actions. Expectations apply to the named rule; other rules may also repor
 findings.
 
 - [Connected entities and rule eligibility](docs/algorithms/connections.md)
-- [Rule applicability and coverage matrix](/modules/envgene-linter/docs/rule-applicability-matrix.md)
+- [Rule coverage and repository support](/modules/envgene-linter/docs/rule-applicability-matrix.md)
 - [Effective Set and parameter merging](docs/algorithms/effective-set.md)
 - [Reports and incomplete checks](/modules/envgene-linter/docs/algorithms/reports.md)
 - [Development specification index](docs/superpowers/specs/README.md) — includes reading order and historical supersession notes

@@ -1,235 +1,299 @@
-# Rule applicability and coverage matrix
+# Rule coverage and repository support
 
-- [Scope and notation](#scope-and-notation)
+- [Purpose and snapshot](#purpose-and-snapshot)
+- [Repository support](#repository-support)
 - [Implemented rules](#implemented-rules)
   - [Placement](#placement)
   - [Secrets](#secrets)
   - [Integrity](#integrity)
   - [Naming](#naming)
-  - [Values and templating](#values-and-templating)
+  - [Values](#values)
+  - [Templating](#templating)
+- [Report labels](#report-labels)
+- [Approved policy decisions](#approved-policy-decisions)
+- [Known limitations and open decisions](#known-limitations-and-open-decisions)
 - [Rules without an implementation](#rules-without-an-implementation)
-- [Differences and open questions](#differences-and-open-questions)
 - [Proposed applicability model](#proposed-applicability-model)
-- [Recommended implementation order](#recommended-implementation-order)
+- [Maintenance](#maintenance)
 
-## Scope and notation
+## Purpose and snapshot
 
-Applicability follows the object's role and available context. A repository type alone does not determine which rules
-apply. A template repository without `environments/` is valid.
+Use this matrix to answer three questions about the EnvGene Linter command-line interface (CLI):
+which rules exist, where they run, and which inputs they check.
+Rule IDs refer to the [configuration standard](/docs/configuration-standard.md).
+Each implemented rule links to its detailed algorithm.
 
-This development assessment uses the local [configuration standard](/docs/configuration-standard.md) and working tree
-on September 29, 2026. It includes the TPL-4 and TPL-6 implementations beyond released version 0.0.5.
-The standard has 55 active rules. The linter registers 25 rules, including three disabled by default.
-The remaining 30 rules have no registered implementation. NAME-5 is retired and excluded from both counts.
-Registration does not imply complete coverage of a standard rule.
+The tables describe the source checkout assessed on October 16, 2026, including pending TPL-6 compatibility changes.
+Installed packages can have different coverage. Check the package version against the
+[changelog](/modules/envgene-linter/CHANGELOG.md).
 
-The instance column concerns authored inputs in an
-[Instance Repository](/docs/glossary.md#instance-repository).
-The template column concerns reusable [Environment Template](/docs/glossary.md#environment-template) sources and
-their supporting objects. Object roles follow [EnvGene objects](/docs/envgene-objects.md).
-A mixed repository contains both sets of objects, so both columns apply to their respective inputs.
+The standard contains **55 active rules**. The CLI implements **25**, with **22 enabled by default** and three disabled.
+The remaining **30 have no implementation**. Retired NAME-5 is excluded from these counts.
+An implemented check covers the inputs listed below. Registration alone does not establish full standard coverage.
 
-| Applicability | Meaning                                                                                                                    |
-|---------------|----------------------------------------------------------------------------------------------------------------------------|
-| Local         | Relevant objects can be inspected within that repository. Dynamic values or missing dependencies can still limit coverage. |
-| Context       | A useful conclusion needs consumers, composition, another layer, or an external contract.                                  |
-| No            | The rule targets a role absent from ordinary authored inputs of this repository type.                                      |
+## Repository support
 
-These columns describe intended applicability, not implemented support. For example, a template repository with
-instance fixtures also contains instance roles. Conversely, the absence of an optional object is not a violation.
+Repository terms follow the [Instance Repository](/docs/glossary.md#instance-repository) and
+[Environment Template](/docs/glossary.md#environment-template) definitions.
+The directory names below describe how the CLI selects its execution path.
 
-In the assessed [engine](/modules/envgene-linter/src/envgene_linter/engine.py),
-a template-only root runs **TPL-1, TPL-4, and TPL-6**.
-Other enabled rules are reported as `Not applicable`. This is an implementation limitation, not a conclusion about
-their applicability under the standard. In mixed roots, other rules retain their instance selection boundaries.
-They do not automatically check every file under `templates/`.
+| Root          | Directories                      | Execution                                                                                        |
+|---------------|----------------------------------|--------------------------------------------------------------------------------------------------|
+| Instance-only | `environments/`, no `templates/` | Enabled instance checks, TPL-1, and TPL-6 compatibility checks. TPL-4 has no template sources.   |
+| Template-only | `templates/`, no `environments/` | TPL-1, TPL-4, and TPL-6. Other enabled rules receive the report label `Not applicable`.          |
+| Mixed         | Both directories                 | Enabled instance checks plus the three template checks, each within its documented source scope. |
 
-The coverage column below describes that implementation. Rule links open the detailed algorithms.
-Unless stated otherwise, instance checks use
-[connected entities](/modules/envgene-linter/docs/algorithms/connections.md).
-No findings therefore does not establish that every authored object was checked.
+A template repository without `environments/` is valid. Missing optional directories do not create violations.
+A root containing only `configuration/` does not meet the CLI's repository check.
+
+For example, VAL-4 does not inspect `templates/parameters/example.yml` in a template-only repository.
+The engine reports that rule as `Not applicable`.
+Template ParameterSets are still relevant to the standard's requirement.
+Adding an `environments/` directory does not make instance checks inspect every file under `templates/`.
+
+Most instance rules inspect **connected sources**: files selected by supported references or generator associations.
+The [connection algorithm](/modules/envgene-linter/docs/algorithms/connections.md) defines selection and precedence.
+INT-4 also catalogs recognized unconnected candidates. TPL-1, TPL-4, and TPL-6 select sources without instance bindings.
+The [object reference](/docs/envgene-objects.md) defines the object types named in the tables.
 
 ## Implemented rules
 
+`On` and `Off` describe the build-time defaults in
+[rule_config.py](/modules/envgene-linter/src/envgene_linter/rule_config.py).
+Changing a flag requires rebuilding or reinstalling from the modified source.
+The CLI has no per-run rule-selection flag.
+Placement, secret, integrity, naming, and VAL-4 checks below use instance inputs.
+The templating section describes the additional file scopes.
+
 ### Placement
 
-| Rule                                                           | Instance | Template | Objects and required context                                                        | Implemented coverage and limits                                                                                                                                    |
-|----------------------------------------------------------------|----------|----------|-------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [PLACE-1](/modules/envgene-linter/docs/algorithms/place1.md)   | Context  | Context  | Values, their consumers, and shared authoring layers                                | Compares selected ParameterSet values across instance environments and clusters. No template layer or general Credential placement analysis.                       |
-| [PLACE-2](/modules/envgene-linter/docs/algorithms/place2.md)   | Context  | Context  | Overrides and the values inherited through the applicable merge process             | Compares selected instance ParameterSets across repository, cluster, and environment. No comparison with template inputs.                                          |
-| [PLACE-3](/modules/envgene-linter/docs/algorithms/place3.md)   | Context  | Context  | Parameters and whether they configure an application, platform, or physical cluster | Checks selected passport file placement only. Does not classify parameter consumers by system tier.                                                                |
-| [PLACE-4](/modules/envgene-linter/docs/algorithms/place4.md)   | Local    | Local    | Parameter-bearing objects and the Cloud Passport contract                           | Checks contract keys in selected ParameterSets. Does not cover every other EnvGene object or template source.                                                      |
-| [PLACE-6](/modules/envgene-linter/docs/algorithms/place6.md)   | Local    | Local    | Pipeline category and Cloud/Namespace association                                   | Checks resolved instance pipeline bindings against the `cloud` target. Template category arrays are not inspected.                                                 |
-| [PLACE-7](/modules/envgene-linter/docs/algorithms/place7.md)   | Context  | Context  | ParameterSet references and the categories assigned by consumers                    | Checks selected instance references within each environment. No template composition or template category-array analysis.                                          |
-| [PLACE-8](/modules/envgene-linter/docs/algorithms/place8.md)   | Local    | Local    | ParameterSets, Resource Profile Overrides, and Credential catalogs                  | Reviews connected empty entities only. Does not infer unrelated concerns from file size, names, or application count.                                              |
-| [PLACE-9](/modules/envgene-linter/docs/algorithms/place9.md)   | Context  | No       | Cluster ownership, passport roles, lookup paths, and companions                     | Checks used passports, ambiguity, cardinality by role, and layout. Unused passports are outside selection.                                                         |
-| [PLACE-10](/modules/envgene-linter/docs/algorithms/place10.md) | Local    | Local    | Authored entity type and its supported location                                     | Checks five connected entity types. Files whose misplaced location prevents discovery can remain unchecked. Template locations need their own object-role mapping. |
+| Rule                 | Default | Implemented check                                                                       |
+|----------------------|---------|-----------------------------------------------------------------------------------------|
+| [PLACE-1][place-1]   | On      | Compare selected ParameterSet values across environments and clusters.                  |
+| [PLACE-2][place-2]   | On      | Find selected ParameterSet values that repeat an inherited layer value.                 |
+| [PLACE-3][place-3]   | On      | Check selected Cloud Passport file placement.                                           |
+| [PLACE-4][place-4]   | On      | Find Cloud Passport contract keys in selected ParameterSets.                            |
+| [PLACE-6][place-6]   | On      | Check that resolved pipeline ParameterSet bindings target the Cloud.                    |
+| [PLACE-7][place-7]   | On      | Find a selected ParameterSet reference used in multiple categories in one environment.  |
+| [PLACE-8][place-8]   | On      | Review connected empty ParameterSets, Resource Profile Overrides, and Credential files. |
+| [PLACE-9][place-9]   | On      | Check used passport roles, ambiguity, cluster ownership, layout, and companions.        |
+| [PLACE-10][place-10] | On      | Check directories of five connected entity types.                                       |
 
-For PLACE-1 and PLACE-2, template composition and instance layer overrides are distinct processes.
-Comparisons need the relevant process and provenance. Treating every parent template as an instance layer would
-produce incorrect conclusions.
-
-PLACE-10 reports Shared Template Variable location mismatches as Warning / Review with generator lookup guidance.
-Other connected entity types retain Warning / Fix.
+PLACE-10 covers ParameterSets, Resource Profile Overrides, Shared Template Variables, shared Credentials,
+and Cloud Passports.
 
 ### Secrets
 
-| Rule                                                     | Instance | Template | Objects and required context                                                     | Implemented coverage and limits                                                                                                                |
-|----------------------------------------------------------|----------|----------|----------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| [SEC-1](/modules/envgene-linter/docs/algorithms/sec1.md) | Local    | Local    | Parameter values and evidence that a value is a secret                           | Uses secret-name suffixes in connected ParameterSets and supported Cloud/Namespace objects. It is a heuristic, not general secret detection.   |
-| [SEC-3](/modules/envgene-linter/docs/algorithms/sec3.md) | Local    | Local    | Runtime parameter bags and Credential references                                 | Detects supported Credential references in runtime inputs. Literal secret detection remains with SEC-1. Template runtime bags are not covered. |
-| [SEC-4](/modules/envgene-linter/docs/algorithms/sec4.md) | Context  | Context  | Credential shape and the secret required by its consumer                         | Compares Credential IDs in recognized user/password parameter pairs. Does not validate Credential shape against the secret.                    |
-| [SEC-5](/modules/envgene-linter/docs/algorithms/sec5.md) | Local    | Local    | Local Credential material, external references, and repository encryption policy | Reviews protection of selected secret candidates and supported sources. Does not establish repository-wide encryption or backend consistency.  |
+| Rule           | Default | Implemented check                                                                                    |
+|----------------|---------|------------------------------------------------------------------------------------------------------|
+| [SEC-1][sec-1] | On      | Find literal secret candidates by parameter name in selected ParameterSets and Cloud/Namespace bags. |
+| [SEC-3][sec-3] | On      | Find Credential references in selected runtime parameter bags.                                       |
+| [SEC-4][sec-4] | On      | Review different Credential IDs in recognized username/password parameter pairs.                     |
+| [SEC-5][sec-5] | On      | Inspect protection of selected secret material and supported Credential sources.                     |
 
-SEC-5 is a `MAY` rule. Missing SOPS configuration alone must not become a violation.
-An external-store-only repository, or one without local secret material, does not need repository-wide encryption.
-Unknown secret semantics require review rather than a guessed shape or an automatic conversion.
-The approved SEC-5 exception reports literal `data.username` in `usernamePassword` Credentials as Warning / Fix.
-Exact `envgeneNullValue` data values are ignored. Unknown expressions and Fernet remain Review.
-SEC-4 reviews different user/password reference IDs without requiring replacement when the split is intentional.
+SEC-5 does not make SOPS configuration mandatory.
 
 ### Integrity
 
-| Rule                                                     | Instance | Template | Objects and required context                                           | Implemented coverage and limits                                                                                                                               |
-|----------------------------------------------------------|----------|----------|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [INT-2](/modules/envgene-linter/docs/algorithms/int2.md) | Context  | Context  | Typed references, lookup precedence, and available dependency catalogs | Checks supported connected references. Missing template context and dynamic references produce Review. It does not load a complete template dependency graph. |
-| [INT-3](/modules/envgene-linter/docs/algorithms/int3.md) | Context  | No       | Used names across environment, cluster, and repository lookup scopes   | Reports supported names defined at multiple instance scopes. Template composition is not this override chain.                                                 |
-| [INT-4](/modules/envgene-linter/docs/algorithms/int4.md) | Context  | Context  | Authored candidates and every available local or external consumer     | Reviews candidates with no reference found in available local sources, with uncertainty. Template-only catalogs are not scanned. No automatic deletion.       |
-
-An unavailable external consumer is not evidence that a template entity is dead.
-A dynamic reference is also not evidence that its target is missing.
-INT-2 checks only `profile.name` in rendered profile mappings. It ignores `baseline` and `override_name`, while explicit
-Resource Profile bindings and Credential object existence checks remain active.
-INT-3 excludes ParameterSets because same-named fragments can merge across scopes.
+| Rule           | Default | Implemented check                                                                           |
+|----------------|---------|---------------------------------------------------------------------------------------------|
+| [INT-2][int-2] | On      | Resolve supported connected references using local sources and available catalogs.          |
+| [INT-3][int-3] | On      | Find used shared Credential, profile, or Shared Template Variable names at multiple scopes. |
+| [INT-4][int-4] | On      | Review authored candidates with no references found in available sources.                   |
 
 ### Naming
 
-| Rule                                                       | Instance | Template | Objects and required context                                            | Implemented coverage and limits                                                                                                                                      |
-|------------------------------------------------------------|----------|----------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [NAME-1](/modules/envgene-linter/docs/algorithms/name1.md) | Context  | Context  | Parameter keys and the concepts their consumers assign to them          | Disabled by default. Reviews equal string values under different keys in connected ParameterSets. Equality does not establish an alias.                              |
-| [NAME-2](/modules/envgene-linter/docs/algorithms/name2.md) | Local    | Local    | Filename and declared `name` of a named object                          | Checks selected ParameterSets and Artifact Definitions. Application and Registry Definitions are outside this implementation. Dynamic names need additional context. |
-| [NAME-3](/modules/envgene-linter/docs/algorithms/name3.md) | Local    | Local    | Authored names, fixed layout names, and externally dictated identities  | Disabled by default. Reviews selected instance names using kebab-case matching. Fixed input filenames and identity exceptions need reconciliation with the standard. |
-| [NAME-4](/modules/envgene-linter/docs/algorithms/name4.md) | Context  | Context  | ParameterSet subject, category, optional topology, and actual consumers | Disabled by default. Checks bound instance stems. Uses `technical` instead of `runtime` and rejects a suffix after the category.                                     |
-| [NAME-8](/modules/envgene-linter/docs/algorithms/name8.md) | Local    | No       | Default Cloud Passport and its selected companion                       | Checks selected passport and companion stems. Excludes the exact infra role. Companion selection follows the generator's `.yml` lookup.                              |
+| Rule             | Default | Implemented check                                                                              |
+|------------------|---------|------------------------------------------------------------------------------------------------|
+| [NAME-1][name-1] | Off     | Review equal string values under different keys in connected ParameterSets.                    |
+| [NAME-2][name-2] | On      | Compare filename stems with declared names in selected ParameterSets and Artifact Definitions. |
+| [NAME-3][name-3] | Off     | Review kebab-case naming of selected instance files, directories, and namespaces.              |
+| [NAME-4][name-4] | Off     | Review the subject/category naming pattern of bound instance ParameterSets.                    |
+| [NAME-8][name-8] | On      | Check selected default passport and companion names in single-passport cluster contexts.       |
 
-NAME-8 applies naming checks only when the consuming cluster context contains one ordinary YAML passport.
-Repository-level and unselected passports contribute to this count. Physical aliases count once.
-Other clusters, Credential companions, Jinja, unsafe files, and the exact infra role do not disable the check.
+### Values
 
-### Values and templating
+| Rule           | Default | Implemented check                                                                                 |
+|----------------|---------|---------------------------------------------------------------------------------------------------|
+| [VAL-4][val-4] | On      | Review JSON collections and YAML block collections encoded as strings in connected ParameterSets. |
 
-| Rule                                                     | Instance | Template | Objects and required context                                      | Implemented coverage and limits                                                                                                                                                     |
-|----------------------------------------------------------|----------|----------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [VAL-4](/modules/envgene-linter/docs/algorithms/val4.md) | Local    | Local    | Parameter values and any consumer requirement for encoded strings | Reviews JSON collections and YAML block collections encoded as strings in connected ParameterSets. Skips dynamic content. No template or general inline parameter-bag coverage.     |
-| [TPL-1](/modules/envgene-linter/docs/algorithms/tpl1.md) | Local    | Local    | File role, Jinja delimiters, and supported descriptor fields      | Scans YAML and `.j2` under `templates/`, `environments/`, and `configuration/` without requiring connections. Allows documented descriptor fields and reviews ambiguous delimiters. |
-| [TPL-4](/modules/envgene-linter/docs/algorithms/tpl4.md) | No       | Context  | Template references and presence guards                           | Reviews unprotected candidates locally without proving input availability.                                                                                                          |
-| [TPL-6](/modules/envgene-linter/docs/algorithms/tpl6.md) | No       | Local    | Template statements, filters, and raw blocks                      | Checks local template sources and allows recognizable Helm passthrough.                                                                                                             |
+### Templating
 
-TPL-1 accepts `.j2` regardless of directory and excludes YAML comments.
-Its descriptor-field exceptions are an approved compatibility decision
-for generator-supported syntax, including the documented namespace selector syntax.
-They do not permit arbitrary Jinja in every descriptor field.
-The descriptor exceptions refine the standard's shorter wording and need to remain explicit.
+| Rule           | Default | Implemented check                                                                             |
+|----------------|---------|-----------------------------------------------------------------------------------------------|
+| [TPL-1][tpl-1] | On      | Check Jinja in YAML under templates/, environments/, and configuration/.                      |
+| [TPL-4][tpl-4] | On      | Review potentially optional Jinja references without recognized presence protection.          |
+| [TPL-6][tpl-6] | On      | Check Jinja statements, loop sources, and compatibility with the applicable EnvGene renderer. |
+
+TPL-1 ignores YAML comments and accepts `.j2` files regardless of their directory.
+Ordinary YAML environment template descriptors under `templates/env_templates/` select inputs for generation.
+Their [supported fields](/modules/envgene-linter/docs/algorithms/tpl1.md#descriptor-fields) allow active Jinja.
+TPL-4 and TPL-6 statement checks inspect `.j2` sources under `templates/` and values in those supported fields.
+TPL-4 accounts for supported lookup rewrites and fields that the generator guarantees at the relevant rendering stage.
+
+TPL-6 also checks potential legacy expressions in configuration YAML, including instance inputs.
+Its [compatibility algorithm](/modules/envgene-linter/docs/algorithms/ansible-compatibility.md) distinguishes rendering stages.
+Root `description_template*.yml` and `description_template*.yaml` files are excluded as build metadata.
+The linter does not render templates, execute filters or lookups, or read external repositories.
+
+## Report labels
+
+Execution coverage and recommended action answer different questions.
+`Fix` asks for a configuration change. `Review` asks for human assessment of the reported uncertainty.
+Neither action performs automatic edits or states how much of the repository was inspected.
+
+| Label or condition | Meaning in the CLI                                                                            |
+|--------------------|-----------------------------------------------------------------------------------------------|
+| Disabled           | The build-time flag is off. The rule and its findings are omitted from reports.               |
+| Not applicable     | For a template-only root, the engine uses this label for unsupported enabled instance checks. |
+| No findings        | No findings were produced within the checked scope. Unchecked sources can still exist.        |
+| Incomplete checks  | HTML lists recorded skip notes. The console prints them to stderr.                            |
+
+Structured Jinja skips become located JSON Review entries beginning with `Check skipped:`.
+Console and HTML display `Not applicable`.
+JSON exports findings and structured Jinja skips, without execution-status records.
+Other skip notes have no structured JSON representation.
+An empty JSON array therefore does not establish that every source was checked.
+See the [report contract](/modules/envgene-linter/docs/algorithms/reports.md).
+
+## Approved policy decisions
+
+These decisions define CLI behavior where the standard's shorter wording differs or needs a narrower interpretation.
+
+- INT-3 permits same-named ParameterSet fragments across scopes because generation can merge them.
+   Its duplicate-name checks retain the three entity types listed in the matrix.
+- PLACE-10 reports Shared Template Variable placement mismatches as Review with generator lookup guidance.
+   Supported legacy lookup paths prevent treating every mismatch as a safe move.
+- SEC-4 keeps different user/password Credential IDs as Review, allowing intentional separation.
+- SEC-5 reports literal `data.username` in a `usernamePassword` Credential as Fix.
+   Exact `envgeneNullValue` data values are ignored. Unknown expressions and Fernet values remain Review.
+- NAME-8 suppresses naming findings when the consuming cluster context contains multiple ordinary YAML passports.
+   Physical aliases count once. The exact `passport-infra` role is excluded.
+   Companion lookup uses `.yml` paths, even though the standard also permits `.yaml`.
+- TPL-1 permits generator-supported descriptor expressions and excludes YAML comments and `.j2` placement checks.
+- TPL-6 permits built-in and custom filter syntax and all syntactically valid raw blocks.
+   Unsupported or unconfirmed renderer compatibility receives Review.
+   Compatibility processing that changes literal raw content also receives Review.
+
+## Known limitations and open decisions
+
+The matrix records supported scope. It does not certify every authored file or every standard requirement.
+The following limits affect how you interpret a run:
+
+- ParameterSet discovery reads direct children of the supported `parameters/` directories.
+   INT-2 also resolves nested references. A selected nested YAML file can therefore resolve while its contents receive
+   no ParameterSet content checks and no skip note. This source-selection gap remains unresolved.
+- Template composition, remote consumers, and inherited template inputs are not resolved as a complete dependency graph.
+   An unknown consumer cannot establish that a source is unused. INT-4 retains Review without deletion advice.
+- TPL-4 recognizes confirmed descriptor context guarantees. Full `.j2` sources have different generation stages.
+   The remaining guaranteed-field contract needs clarification before extending exemptions.
+- Existing source parsing has failure cases that abort a run instead of producing incomplete-check diagnostics.
+   Coverage claims require a completed run and inspection of the available diagnostics.
+- Inline `[EXCEPTION RULE-ID]` comments from the standard do not suppress findings.
+   The CLI has no shared exception-handling mechanism.
+
+The following standard requirements also need broader implementation or a policy decision:
+
+| Rule     | Remaining requirement or decision                                                                                  |
+|----------|--------------------------------------------------------------------------------------------------------------------|
+| PLACE-3  | System-tier placement of parameters. The implementation checks passport file placement.                            |
+| PLACE-8  | One concern per entity. The implementation reviews definite structural emptiness.                                  |
+| PLACE-10 | Misplaced files whose location prevents discovery, plus template object locations.                                 |
+| SEC-4    | Credential shape compared with the consumer contract, beyond the current pair-ID heuristic.                        |
+| SEC-5    | Optional repository-wide encryption and backend policy, beyond selected-source protection checks.                  |
+| NAME-2   | Application and Registry Definition coverage after establishing their local usage.                                 |
+| NAME-3   | Exceptions for fixed generator inputs and externally dictated identities.                                          |
+| NAME-4   | The standard permits runtime and an optional topology suffix. The code uses technical and rejects that suffix.     |
+| TPL-1    | Ordinary Registry Definition Jinja policy and the supported versions of legacy resourceProfiles descriptor fields. |
+| TPL-6    | Criteria for set and other uncertain statements. These retain Review.                                              |
 
 ## Rules without an implementation
 
-Every row in this section is unimplemented in both repository modes. Applicability is an assessment for future design,
-not a claim that enabling an existing switch activates these checks.
+Every rule below is absent from the CLI registry in both repository modes.
+No configuration switch enables these checks. The requirement text summarizes the standard, not promised CLI behavior.
+Future support depends on the object's role and available inputs, rather than repository type alone.
 
-| Rule     | Instance | Template | Objects and required context                                                                                        |
-|----------|----------|----------|---------------------------------------------------------------------------------------------------------------------|
-| PLACE-5  | Context  | Context  | Consumer contract and parameter category. A key prefix alone cannot establish the correct category.                 |
-| PLACE-11 | Local    | Local    | Cloud and Namespace profile assignments, including whether a namespace is an appropriate target.                    |
-| SEC-2    | Local    | Local    | All live Credential material and encryption markers. Distinguish secret values from placeholders.                   |
-| INT-1    | Local    | Local    | Object type and schema. Unrendered Jinja needs source-aware validation or explicit render contexts.                 |
-| INT-5    | Context  | Context  | Application and pipeline consumers. Absence from local configuration does not establish a dead parameter.           |
-| NAME-6   | Context  | Context  | Credential purpose, role, and externally dictated IDs.                                                              |
-| NAME-7   | Context  | Context  | Shared Template Variable files, purpose, and supported reference sites.                                             |
-| NAME-9   | Local    | No       | Infra passport role, filename, companion, and explicit environment references.                                      |
-| VAL-1    | Context  | Context  | Consumer type contracts, including application Helm `values.schema.json` where applicable.                          |
-| VAL-2    | Context  | Context  | Reserved markers, mandatory-value contracts, and values supplied by later layers.                                   |
-| VAL-3    | Local    | Local    | Literal URLs or analyzable URL expressions and documented consumer exceptions.                                      |
-| VAL-5    | Local    | Local    | Resource Profile Override fields identified as Kubernetes CPU or memory quantities.                                 |
-| VAL-6    | Local    | Local    | Profile `name` and `baseline` fields, with authored-source provenance for generated objects.                        |
-| VAL-7    | Local    | Local    | Resource Profile Overrides with custom values and a declared baseline.                                              |
-| VAL-8    | Context  | Context  | Instance merge mode, template override values, and both selected baselines. Template inputs alone are insufficient. |
-| VAL-9    | Local    | No       | Instance `envSpecificResourceProfiles` entries and their required string shape.                                     |
-| TPL-2    | Context  | Context  | Jinja pass-through expressions and the layer inputs that supply them.                                               |
-| TPL-3    | Context  | Context  | Template defaults, genuine branching, and the applicable inheritance chain.                                         |
-| TPL-5    | No       | Local    | Jinja presence guards on nested paths.                                                                              |
-| TPL-7    | Context  | Context  | URL construction, passport host facts, and the originating template.                                                |
-| TPL-8    | No       | Local    | Helm passthrough inside generator-rendered template sources.                                                        |
-| TPL-9    | No       | Context  | Jinja branches, target YAML shape, and explicit render scenarios. Sample renders cannot prove all branches valid.   |
-| TPL-10   | No       | Local    | Template literals and comments containing secret candidates.                                                        |
-| TPL-11   | Context  | Context  | Derived values and generation context that already exposes them.                                                    |
-| TPL-12   | Context  | Context  | Namespace identity, consumer context, and available macros.                                                         |
-| TPL-13   | No       | Context  | Template conditions and application presence in resolved solution composition.                                      |
-| TPL-14   | Context  | Context  | Namespace lookup, deploy-postfix, render order, and supported lookup mechanisms.                                    |
-| TPL-15   | Context  | Context  | Expression semantics and equivalent macros available in the consumer context.                                       |
-| TPL-16   | Local    | Local    | Macro scope and the parameter's deploy, pipeline, or runtime category.                                              |
-| TPL-17   | Context  | Context  | Generated-file provenance and evidence of authored edits. Presence of generated files alone is insufficient.        |
-
-## Differences and open questions
-
-The following issues need explicit decisions before broader enforcement. This matrix does not change the standard or
-the implementations.
-
-| Item                | Difference or limitation                                                                                                                       | Required decision                                                                                          |
-|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| Template execution  | The engine labels unsupported template checks `Not applicable`.                                                                                | Separate actual inapplicability from missing implementation.                                               |
-| PLACE-3             | The standard concerns parameter placement by system tier. Code checks passport file placement.                                                 | Specify the semantic check and its evidence, and clarify overlap with PLACE-9.                             |
-| PLACE-8             | Empty entities are only one part of the standard's single-concern requirement.                                                                 | Keep emptiness coverage explicit. Define review evidence for unrelated concerns without file-size guesses. |
-| SEC-4               | Matching user/password reference IDs does not establish the required Credential shape.                                                         | Specify shape checks and consumer evidence. Decide where the existing pair-ID heuristic belongs.           |
-| SEC-5               | Selected-source protection review differs from optional repository-wide encryption with one backend.                                           | Define policy-aware coverage without making optional SOPS use mandatory.                                   |
-| NAME-3              | The standard exempts externally dictated names and protects exact reference identities. The heuristic still flags some fixed generator inputs. | Identify protected names and preserve reference identity before recommending renames.                      |
-| NAME-4              | The standard permits `runtime` and an optional topology suffix. Code requires `technical` and a final category token.                          | Align the algorithm, specification, tests, and catalog before extending template coverage.                 |
-| INT-3               | ParameterSet staging and merging differ from the standard's first-match explanation.                                                           | Approved: exclude ParameterSets. Retain duplicate-name checks for the other three supported types.         |
-| PLACE-10 and NAME-7 | The standard names `shared-template-variables/`, while generator lookup supports configuration paths.                                          | Approved: use Review with lookup guidance for Shared Template Variable placement.                          |
-| NAME-8              | The standard permits `.yaml`, but companion lookup selects `.yml` only.                                                                        | Keep lookup compatibility explicit. Do not infer that an adjacent `.yaml` companion is selected.           |
-| TPL-1               | Generator-supported descriptor expressions are accepted. YAML comments and `.j2` file placement are outside the rule's scope.                  | Preserve these approved refinements in the specification and standard alignment work.                      |
-| TPL-6 and TPL-8     | TPL-6 forbids `raw`, while TPL-8 requires it for Helm passthrough.                                                                             | Approved: allow recognizable Helm passthrough and review other raw blocks. Preserve this refinement.       |
-| TPL-14              | The target late-resolving macro is not yet available.                                                                                          | Check supported interim lookup behavior. Do not require the illustrative future macro syntax.              |
-| Inline exceptions   | The standard defines `[EXCEPTION RULE-ID]` comments. The linter has no shared exception-handling mechanism.                                    | Specify how declared exceptions affect findings and coverage.                                              |
+| Rule     | Check not implemented                                                              |
+|----------|------------------------------------------------------------------------------------|
+| PLACE-5  | Select the right parameter category from its consumer contract.                    |
+| PLACE-11 | Assign resource profiles to namespaces rather than the Cloud.                      |
+| SEC-2    | Detect mixed plaintext and encrypted secret material.                              |
+| INT-1    | Validate typed objects against their schemas, accounting for unrendered templates. |
+| INT-5    | Detect dead parameters using available application and pipeline consumers.         |
+| NAME-6   | Check Credential ID names against their purpose.                                   |
+| NAME-7   | Check Shared Template Variable names against their purpose.                        |
+| NAME-9   | Check infra passport and companion names and explicit references.                  |
+| VAL-1    | Check a value's YAML type against its consumer.                                    |
+| VAL-2    | Validate reserved markers and mandatory-value semantics.                           |
+| VAL-3    | Check trailing slashes in URLs and consumer exceptions.                            |
+| VAL-5    | Check Kubernetes CPU and memory quantity forms.                                    |
+| VAL-6    | Reject empty strings in the documented Resource Profile fields.                    |
+| VAL-7    | Require a baseline when a Resource Profile Override contains custom values.        |
+| VAL-8    | Require replace mode for baseline changes using template and instance inputs.      |
+| VAL-9    | Check one Resource Profile Override string per instance binding key.               |
+| TPL-2    | Detect Jinja plumbing that should use layer overrides.                             |
+| TPL-3    | Distinguish legitimate template branching from defaults that belong on a layer.    |
+| TPL-5    | Detect per-level presence guards on nested paths.                                  |
+| TPL-7    | Check URL construction against Cloud Passport host facts.                          |
+| TPL-8    | Require protection for Helm passthrough.                                           |
+| TPL-9    | Check YAML validity across template branches and explicit render scenarios.        |
+| TPL-10   | Detect secret candidates in template literals and comments.                        |
+| TPL-11   | Detect hardcoded values already derivable from generation context.                 |
+| TPL-12   | Check current-namespace references against supported macros.                       |
+| TPL-13   | Check that application presence controls the relevant branches.                    |
+| TPL-14   | Check namespace resolution by deploy-postfix and supported lookup mechanisms.      |
+| TPL-15   | Detect Jinja expressions with an equivalent supported macro.                       |
+| TPL-16   | Detect deploy-scope macros in pipeline or runtime parameters.                      |
+| TPL-17   | Detect edits to generated output using source provenance.                          |
 
 ## Proposed applicability model
 
-Evaluate every rule against discovered object roles. Repository detection supplies available inputs, while rule
-prerequisites determine whether a check can run. This is a proposal, not an implemented API.
+This section is a design proposal. The CLI does not expose these coverage statuses as a shared per-rule model.
 
-The shared context needs an object's type, authored or generated role, source location, category, references, and
-available dependencies. Preserve source locations through template composition and instance merging separately.
-Unknown dynamic values remain unknown. Do not invent rendering inputs to obtain a definitive result.
+| Proposed status | Meaning                                                                                   |
+|-----------------|-------------------------------------------------------------------------------------------|
+| Checked         | The declared input scope was evaluated. Findings can still exist.                         |
+| Partial         | Some eligible inputs were checked. Identified dependencies or sources remain unavailable. |
+| Not applicable  | No objects with the required role exist in the assessed scope.                            |
+| Not implemented | Relevant objects exist, but the rule or repository mode is unsupported.                   |
+| Disabled        | Configuration explicitly disables the rule.                                               |
 
-Report execution coverage separately from finding severity and action:
+For example, a template-only root containing ordinary ParameterSets would need NAME-2 coverage reported as
+`Not implemented`, rather than the engine's `Not applicable` label.
+A repository with no Cloud Passport objects has no passport naming inputs.
+A single rule could be `Checked` for local objects and `Partial` for objects with unavailable dependencies.
 
-| Proposed status | Meaning                                                                                               |
-|-----------------|-------------------------------------------------------------------------------------------------------|
-| Checked         | The declared scope was evaluated with sufficient inputs. Findings can still exist.                    |
-| Partial         | Some eligible inputs were evaluated, but identified dependencies or dynamic values remain unresolved. |
-| Not applicable  | No objects with the rule's required role exist in the assessed scope.                                 |
-| Not implemented | Eligible objects exist, but this rule or repository mode is unsupported.                              |
-| Disabled        | Configuration explicitly disables the rule.                                                           |
+## Maintenance
 
-Record the reason and affected scope for incomplete coverage. One rule can be checked for local static objects and
-partial for other objects in the same repository. An empty findings list must not hide that distinction.
-Unreadable inputs must remain visible as diagnostics rather than being counted as successfully checked.
+Update this matrix when a rule, default flag, repository execution path, or supported source scope changes.
+Keep approved decisions separate from proposals and unresolved limits.
+Validate rule counts against the [registry](/modules/envgene-linter/src/envgene_linter/rulemeta.py), defaults against
+the build-time flags, and execution against the [engine](/modules/envgene-linter/src/envgene_linter/engine.py).
+Use the linked algorithms for detailed behavior and the
+[specification catalog](/modules/envgene-linter/docs/superpowers/specs/README.md) for requirements and design history.
 
-For example, a template repository containing ordinary YAML ParameterSets has applicable NAME-2 and VAL-4 inputs.
-Those checks are unimplemented for template-only roots in the assessed engine, not inapplicable.
-The same repository without cluster passports has no inputs for NAME-8.
-INT-4 can offer local reference evidence but cannot prove non-use by unavailable instance repositories.
-
-## Recommended implementation order
-
-1. Resolve the listed semantic differences and coverage terminology before reusing existing checks more broadly.
-2. Introduce shared discovery of typed authored objects for instance, template, and mixed repositories.
-   Keep generated objects distinguishable and retain their source provenance where available.
-3. Extend local static checks first, including NAME-2, PLACE-4, PLACE-10, SEC-1, SEC-3, and VAL-4.
-   Document each rule's exact object coverage instead of treating every YAML mapping as a ParameterSet.
-4. Add template reference and composition context for PLACE-6, PLACE-7, INT-2, and INT-4.
-   Preserve Information / Review for uncertain unreferenced candidates, with no automatic deletion.
-5. Add cross-layer comparisons and checks that need consumer contracts or controlled render scenarios.
-
-Each implementation change needs an English specification, design, algorithm, and tests for its supported roles.
-Cover instance-only, template-only, and mixed roots, missing optional directories, unavailable dependencies,
-dynamic inputs, and generated files. Missing `environments/` must remain valid for a template repository.
+[place-1]: /modules/envgene-linter/docs/algorithms/place1.md
+[place-2]: /modules/envgene-linter/docs/algorithms/place2.md
+[place-3]: /modules/envgene-linter/docs/algorithms/place3.md
+[place-4]: /modules/envgene-linter/docs/algorithms/place4.md
+[place-6]: /modules/envgene-linter/docs/algorithms/place6.md
+[place-7]: /modules/envgene-linter/docs/algorithms/place7.md
+[place-8]: /modules/envgene-linter/docs/algorithms/place8.md
+[place-9]: /modules/envgene-linter/docs/algorithms/place9.md
+[place-10]: /modules/envgene-linter/docs/algorithms/place10.md
+[sec-1]: /modules/envgene-linter/docs/algorithms/sec1.md
+[sec-3]: /modules/envgene-linter/docs/algorithms/sec3.md
+[sec-4]: /modules/envgene-linter/docs/algorithms/sec4.md
+[sec-5]: /modules/envgene-linter/docs/algorithms/sec5.md
+[int-2]: /modules/envgene-linter/docs/algorithms/int2.md
+[int-3]: /modules/envgene-linter/docs/algorithms/int3.md
+[int-4]: /modules/envgene-linter/docs/algorithms/int4.md
+[name-1]: /modules/envgene-linter/docs/algorithms/name1.md
+[name-2]: /modules/envgene-linter/docs/algorithms/name2.md
+[name-3]: /modules/envgene-linter/docs/algorithms/name3.md
+[name-4]: /modules/envgene-linter/docs/algorithms/name4.md
+[name-8]: /modules/envgene-linter/docs/algorithms/name8.md
+[val-4]: /modules/envgene-linter/docs/algorithms/val4.md
+[tpl-1]: /modules/envgene-linter/docs/algorithms/tpl1.md
+[tpl-4]: /modules/envgene-linter/docs/algorithms/tpl4.md
+[tpl-6]: /modules/envgene-linter/docs/algorithms/tpl6.md
