@@ -126,9 +126,7 @@ def handle_sd(handler: PipelineParametersHandler):
     if load_json_or_yaml(sd_source):
         extract_sds_from_content(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode)
     else:
-        app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/plugins/handle_sd_plugins')
-        download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode,
-                                app_def_getter_plugins, handler)
+        download_sds_by_version(handler.namespace_by_deploy_postfix, base_sd_path, sd_source, effective_merge_mode, handler)
 
     logger.info("SD successfully extracted from SD_VERSION or SD_DATA and saved")
 
@@ -186,18 +184,19 @@ def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Pa
 
 
 def download_sds_by_version(namespace_by_deploy_postfix: dict, base_sd_path, app_versions,
-                            effective_merge_mode: MergeType, plugins: PluginEngine, ctx):
+                            effective_merge_mode: MergeType, ctx):
     app_versions = app_versions.replace("\\n", "\n")
     app_entries = split_multi_value_param(app_versions)
     if not app_entries:
         raise ValueError(f"No valid application versions found in {app_versions}")
 
+    app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/plugins/handle_sd_plugins')
     app_data_list = []
     for entry in app_entries:  # appvers
         source_name, version = get_version(entry)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        app_data = download_sd_by_appver(source_name, version, plugins, ctx)
+        app_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, ctx)
 
         app_data_list.append(app_data)
 

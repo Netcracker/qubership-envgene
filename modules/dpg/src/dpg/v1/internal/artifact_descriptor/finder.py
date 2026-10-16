@@ -58,7 +58,6 @@ class DDFinder(metaclass=Singleton):
     def __init__(self, data_provider: DataProviderInterface = None):
         self.__cache = DDCache()
         self.__data_provider = data_provider
-        self.__artifact_urls = {}
 
     def get(self, app_ver: str, **kwargs) -> Optional[dict]:
         if self.__data_provider is None:
@@ -82,12 +81,10 @@ class DDFinder(metaclass=Singleton):
             return cached
 
         reginfo = self.__data_provider.get_registry_info(registry=appdef.registry)
-        json_url = self.__artifact_urls.get(app_ver)
-        if json_url is None:
-            json_url, *_ = ArtifactoryUtils.search_artifacts_on_registry(
-                app_name=name, app_version=version, app_info=appdef,
-                artifact_extension='json', registry_info=reginfo,
-            )
+        json_url, *_ = ArtifactoryUtils.search_artifacts_on_registry(
+            app_name=name, app_version=version, app_info=appdef,
+            artifact_extension='json', registry_info=reginfo,
+        )
 
         with tempfile.TemporaryDirectory() as temp_dir:
             json_file_path = ArtifactoryUtils.download_file_from_artifactory(temp_dir, json_url, reginfo)
@@ -96,33 +93,3 @@ class DDFinder(metaclass=Singleton):
 
         self.__cache.set(app_ver, content, file_path=file_path)
         return content
-
-    def resolve_version(self, app_ver: str, **kwargs) -> str:
-        """Return the concrete Maven version for a descriptor reference."""
-        if utils.is_file_path(app_ver):
-            return app_ver
-
-        name, version = app_ver.split(":", 1)
-        if not version.endswith("-SNAPSHOT"):
-            return app_ver
-
-        if self.__data_provider is None:
-            self.__data_provider = get_data_provider(**kwargs)
-
-        appdef = self.__data_provider.get_app_def(application=name)
-        reginfo = self.__data_provider.get_registry_info(registry=appdef.registry)
-        json_url, filename, *_ = ArtifactoryUtils.search_artifacts_on_registry(
-            app_name=name,
-            app_version=version,
-            app_info=appdef,
-            artifact_extension="json",
-            registry_info=reginfo,
-        )
-        prefix = f"{appdef.artifact_id}-"
-        suffix = ".json"
-        if not filename.startswith(prefix) or not filename.endswith(suffix):
-            raise ValueError(f"Cannot determine resolved version from descriptor filename `{filename}`")
-        resolved_app_ver = f"{name}:{filename[len(prefix):-len(suffix)]}"
-        self.__artifact_urls[app_ver] = json_url
-        self.__artifact_urls[resolved_app_ver] = json_url
-        return resolved_app_ver
