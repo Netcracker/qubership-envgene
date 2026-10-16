@@ -8,7 +8,7 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
@@ -84,9 +84,19 @@ class CurrentEnvInstanceStore:
 
     def get_yaml(self, dir_path, name):
         key = self.find_yaml(dir_path, name)
-        if key is None:
+        if key is None and (key := self._disk_root_obj(dir_path, name)) is None:
             raise FileNotFoundError(f"{name} is not in the object store under {_key(dir_path)}")
         return self._objects[key]
+
+    def _disk_root_obj(self, dir_path, name):
+        if self.base_dir is None or Path(dir_path).name not in ROOT_OBJECT_DIRS:
+            return None
+        for suffix in YAML_EXTENSIONS:
+            path = Path(dir_path) / f"{name}{suffix}"
+            if path.is_file():
+                self._objects[_key(path)] = openYaml(path)
+                return path
+        return None
 
     def bg_domain(self) -> CommentedMap:
         bg_domain_path = self.env_dir / "bg_domain.yml"

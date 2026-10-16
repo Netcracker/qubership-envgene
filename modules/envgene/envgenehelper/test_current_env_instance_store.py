@@ -75,6 +75,49 @@ def test_generated_paths_ignore_disk(env_dir):
         objects.get(stale)
 
 
+def test_root_appdef_miss_loads_from_disk_readonly(tmp_path, env_dir):
+    appdefs = tmp_path / "appdefs"
+    appdefs.mkdir()
+    committed = appdefs / "BGOperator-CRDS.yml"
+    committed.write_text("name: BGOperator-CRDS\nregistryName: old-registry\n")
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+
+    assert objects.get_yaml(appdefs, "BGOperator-CRDS") == {"name": "BGOperator-CRDS",
+                                                            "registryName": "old-registry"}
+
+    objects.flush()
+
+    assert committed.read_text() == "name: BGOperator-CRDS\nregistryName: old-registry\n"
+
+
+def test_put_object_wins_over_disk_root_appdef(tmp_path, env_dir):
+    appdefs = tmp_path / "appdefs"
+    appdefs.mkdir()
+    committed = appdefs / "app.yml"
+    committed.write_text("name: from-disk\n")
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+    objects.put(appdefs / "app.yml", {"name": "rendered"})
+
+    assert objects.get_yaml(appdefs, "app") == {"name": "rendered"}
+
+
+def test_missing_root_appdef_still_raises(tmp_path, env_dir):
+    (tmp_path / "appdefs").mkdir()
+    objects = CurrentEnvInstanceStore(env_dir, base_dir=tmp_path)
+
+    with pytest.raises(FileNotFoundError):
+        objects.get_yaml(tmp_path / "appdefs", "absent")
+
+
+def test_env_scoped_store_does_not_read_disk(tmp_path, env_dir):
+    (tmp_path / "appdefs").mkdir()
+    (tmp_path / "appdefs" / "app.yml").write_text("name: a\n")
+    objects = CurrentEnvInstanceStore(env_dir)
+
+    with pytest.raises(FileNotFoundError):
+        objects.get_yaml(tmp_path / "appdefs", "app")
+
+
 def test_list_matches_glob_rules(env_dir):
     objects = CurrentEnvInstanceStore(env_dir)
     for rel in ("Namespaces/a/namespace.yml", "Namespaces/b/namespace.yml", "Namespaces/a/Applications/x.yml",
