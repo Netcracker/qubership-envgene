@@ -88,7 +88,8 @@ async def resolve_snapshot_version_async(
                 stop_snapshot_event_for_others.set()
                 logger.info(
                     f"[Task {task_id}] [Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
-            return resolved_version, task_id
+                return resolved_version, task_id
+            return None
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
@@ -273,7 +274,13 @@ async def check_artifact_by_full_url_async(
             logger.info(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}"
             )
-            return ArtifactSource(source_url=full_url, repository=repo, application=app, auth_headers=auth_headers)
+            return ArtifactSource(
+                source_url=full_url,
+                repository=repo,
+                application=app,
+                auth_headers=auth_headers,
+                resolved_version=resolved_version,
+            )
 
     for full_url, status, error in candidate_results:
         if error:
@@ -406,10 +413,18 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
         repo = repos[0]
         domain = app.registry.maven_config.repository_domain_name
         repo_url = domain if not repo.value else domain.rstrip('/') + '/' + repo.value
-        url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
-                             artifact_extension, auth_headers=auth_headers, classifier=classifier)
-        if url:
-            return ArtifactSource(source_url=url, repository=repo, application=app, auth_headers=auth_headers)
+        result = _check_artifact_with_resolved_version(
+            repo_url, app.group_id, app.artifact_id, version,
+            artifact_extension, auth_headers=auth_headers, classifier=classifier)
+        if result:
+            url, resolved_version = result
+            return ArtifactSource(
+                source_url=url,
+                repository=repo,
+                application=app,
+                auth_headers=auth_headers,
+                resolved_version=resolved_version,
+            )
         if _should_retry_nexus_url(app.registry):
             return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier)
         return None
@@ -474,6 +489,16 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    auth_headers: dict | None = None,
                    classifier: str = "") -> str | None:
+    result = _check_artifact_with_resolved_version(
+        repo_url, group_id, artifact_id, version, artifact_extension,
+        auth_headers=auth_headers, classifier=classifier)
+    return result[0] if result else None
+
+
+def _check_artifact_with_resolved_version(
+        repo_url: str, group_id: str, artifact_id: str, version: str,
+        artifact_extension: FileExtension, auth_headers: dict | None = None,
+        classifier: str = "") -> tuple[str, str] | None:
     if MavenConfig.is_nexus(repo_url):
         repo_url = convert_nexus_repo_url_to_index_view(repo_url)
 
@@ -505,7 +530,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
             )
-            return full_url
+            return full_url, version
 
     for full_url, status, error in candidate_results:
         if error:
