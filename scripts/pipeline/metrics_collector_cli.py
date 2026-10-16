@@ -21,11 +21,7 @@ def main(argv: list[str] | None = None) -> int:
         print(resolve_trace_id())
         return 0
 
-    # Hooks must work before environment preparation, including jobs without ENV_NAMES.
-    ctx = SimpleNamespace(
-        params={key: os.getenv(key, "") for key in ("PIPELINE_TYPE", "ENV_NAMES")},
-        sensitive_params=[],
-    )
+    ctx = _pipeline_context()
     activity = MetricsCollectorActivity(ctx)
     if args.event == "start":
         activity.send_start()
@@ -42,6 +38,35 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("stop requires a terminal status")
         activity.send_stop(status, use_recorded_completion=True, override_status=args.status is not None)
     return 0
+
+
+def _pipeline_context():
+    # In env-prepare, use EnvGene's canonical parameter parser so the report
+    # contains the same complete, secret-filtered config as the orchestrator.
+    if os.getenv("ENV_NAMES", "").strip():
+        try:
+            from envgene_shared.utils.collections_utils import split_multi_value_param
+            from pipeline.pipeline_parameters import PipelineParametersHandler
+
+            original_names = os.environ["ENV_NAMES"]
+            names = split_multi_value_param(original_names)
+            os.environ["ENV_NAMES"] = names[0]
+            handler = PipelineParametersHandler.from_env()
+            handler.params["ENV_NAMES"] = ",".join(names)
+            return SimpleNamespace(params=handler.params, sensitive_params=handler.sensitive_params)
+        except ModuleNotFoundError:
+            pass
+        except Exception:
+            logging.getLogger(__name__).exception("Could not load EnvGene pipeline parameters for metrics.")
+        finally:
+            if "original_names" in locals():
+                os.environ["ENV_NAMES"] = original_names
+
+    # Portable sync hooks do not include the EnvGene package. They consume
+    # the config saved by env-prepare; retain a minimal fallback for early errors.
+    names = ["PIPELINE_TYPE", "ENV_NAMES"]
+    params = {key: os.getenv(key, "") for key in names}
+    return SimpleNamespace(params=params, sensitive_params=[])
 
 
 if __name__ == "__main__":
