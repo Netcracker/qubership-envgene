@@ -1,10 +1,12 @@
+import hashlib
 import json
 
 import pytest
 
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
-    CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
+    PROFILE_CACHE_DIR, CurrentEnvInstanceStore, current_env_instance_store,
+    open_current_env_instance_store,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
 
@@ -231,3 +233,80 @@ def test_normalize_comments(source, expected):
     normalize_comments(data)
 
     assert dumpYamlToStr(data) == expected
+
+
+def _profile_path(tmp_path, content):
+    profile = tmp_path / "resource_profiles" / "dev_bss_override.yml"
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    profile.write_bytes(content)
+    return profile
+
+
+def test_profile_cache_miss_parses_and_hit_reads_pickle(tmp_path, env_dir):
+    profile = _profile_path(tmp_path, b"name: dev_bss_override\nbaseline: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    first = store.load_profile_from_cache(profile)
+
+    cache_file = env_dir / PROFILE_CACHE_DIR / (hashlib.sha256(b"name: dev_bss_override\nbaseline: dev\n").hexdigest() + ".pkl")
+    assert first["name"] == "dev_bss_override"
+    assert cache_file.is_file()
+
+    cached_bytes = cache_file.read_bytes()
+    repeated_store = CurrentEnvInstanceStore(env_dir)
+    second = repeated_store.load_profile_from_cache(profile)
+
+    assert second == first
+    assert cache_file.read_bytes() == cached_bytes
+
+
+def test_profile_cache_content_change_misses(tmp_path, env_dir):
+    profile = _profile_path(tmp_path, b"name: dev\nbaseline: old\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    assert store.load_profile_from_cache(profile)["baseline"] == "old"
+    profile.write_bytes(b"name: dev\nbaseline: new\n")
+
+    changed = store.load_profile_from_cache(profile)
+
+    assert changed["baseline"] == "new"
+    cache_files = list((env_dir / PROFILE_CACHE_DIR).glob("*.pkl"))
+    assert len(cache_files) == 2
+
+
+def test_profile_cache_corrupt_pickle_falls_back_to_parse(tmp_path, env_dir):
+    profile = _profile_path(tmp_path, b"name: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    store.load_profile_from_cache(profile)
+    cache_file = env_dir / PROFILE_CACHE_DIR / (hashlib.sha256(b"name: dev\n").hexdigest() + ".pkl")
+    cache_file.write_bytes(b"not a pickle")
+
+    assert store.load_profile_from_cache(profile)["name"] == "dev"
+
+
+def test_flush_prunes_profile_cache_entry_unused_this_run(tmp_path, env_dir):
+    old_key = hashlib.sha256(b"name: dev\nbaseline: old\n").hexdigest() + ".pkl"
+    new_key = hashlib.sha256(b"name: dev\nbaseline: new\n").hexdigest() + ".pkl"
+    profile = _profile_path(tmp_path, b"name: dev\nbaseline: old\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    store.load_profile_from_cache(profile)
+    profile.write_bytes(b"name: dev\nbaseline: new\n")
+    store.load_profile_from_cache(profile)
+
+    store.flush()
+
+    assert sorted(f.name for f in (env_dir / PROFILE_CACHE_DIR).glob("*.pkl")) == sorted([old_key, new_key])
+
+    next_run = CurrentEnvInstanceStore(env_dir)
+    next_run.load_profile_from_cache(profile)
+    next_run.flush()
+
+    assert [f.name for f in (env_dir / PROFILE_CACHE_DIR).glob("*.pkl")] == [new_key]
+
+
+def test_flush_keeps_used_profile_cache_entries(tmp_path, env_dir):
+    profile = _profile_path(tmp_path, b"name: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    store.load_profile_from_cache(profile)
+
+    store.flush()
+
+    assert list((env_dir / PROFILE_CACHE_DIR).glob("*.pkl"))

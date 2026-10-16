@@ -1,3 +1,5 @@
+import hashlib
+import pickle
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
@@ -7,7 +9,7 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
@@ -16,6 +18,8 @@ from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comme
 # It is an input file of the user, so flush() must not write it back.
 NEVER_WRITTEN_DIRS = ("Inventory",)
 YAML_EXTENSIONS = (".yml", ".yaml")
+
+PROFILE_CACHE_DIR = Path(".envgene") / "profile-cache"
 
 
 def _key(path) -> Path:
@@ -32,6 +36,7 @@ class CurrentEnvInstanceStore:
         self._objects = {}
         self._to_write = set()
         self._beautify = {}
+        self._profile_cache_used = set()
 
     def _relative(self, key: Path) -> Path | None:
         if not key.is_relative_to(self.env_dir):
@@ -60,6 +65,28 @@ class CurrentEnvInstanceStore:
             if key.parts[:len(dir_parts)] == dir_parts and key.stem == name and key.suffix in YAML_EXTENSIONS:
                 return key
         return None
+
+    def load_profile_from_cache(self, profile_path):
+        t0 = _diag_now()
+        raw = Path(profile_path).read_bytes()
+        key = hashlib.sha256(raw).hexdigest()
+        cache_file = self.env_dir / PROFILE_CACHE_DIR / f"{key}.pkl"
+        self._profile_cache_used.add(key)
+        try:
+            if cache_file.is_file():
+                with cache_file.open("rb") as f:
+                    logger.info(f"[diag] profile cache hit: {Path(profile_path).name} in {(_diag_now() - t0) * 1000:.1f}ms")
+                    return pickle.load(f)
+        except Exception as ex:
+            logger.warning(f"Profile parse cache is unreadable for {Path(profile_path).name}, re-parsing: {ex}")
+        t_parse = _diag_now()
+        profile = openYaml(profile_path)
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        with cache_file.open("wb") as f:
+            pickle.dump(profile, f)
+        logger.info(f"[diag] profile cache miss: {Path(profile_path).name} openYaml "
+                    f"{(_diag_now() - t_parse) * 1000:.1f}ms")
+        return profile
 
     def bg_domain(self) -> CommentedMap:
         bg_domain_path = self.env_dir / "bg_domain.yml"
@@ -120,8 +147,18 @@ class CurrentEnvInstanceStore:
             writeToFile(key, text)
             _t_beautify += _w0 - _b0
             _t_write += _diag_now() - _w0
+        self._prune_profile_cache()
         logger.info(f"[diag] flush: {written} objects, beautify={_t_beautify*1000:.1f}ms, "
                     f"write={_t_write*1000:.1f}ms, total={(_diag_now()-_t0)*1000:.1f}ms")
+
+    def _prune_profile_cache(self):
+        cache_dir = self.env_dir / PROFILE_CACHE_DIR
+        if not cache_dir.is_dir():
+            return
+        for file in sorted(cache_dir.iterdir()):
+            if file.is_file() and file.suffix == ".pkl" and file.stem not in self._profile_cache_used:
+                file.unlink()
+                logger.info(f"Pruning stale profile cache entry: {file.name}")
 
 
 _open_store = None
