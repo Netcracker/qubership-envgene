@@ -253,7 +253,7 @@ class CurrentEnvInstanceStore:
                 if _schema:
                     sortYaml(_data, _schema, False, validate=False)
                 _s1 = _diag_now()
-                _dumpYamlToStr(_data)
+                dumpYamlToStr(_data)
                 _s2 = _diag_now()
                 _sort_ms += _s1 - _s0
                 _dump_ms += _s2 - _s1
