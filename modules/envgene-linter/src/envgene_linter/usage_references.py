@@ -6,7 +6,7 @@ from .connections import Connections
 from .model import Category, RepoIndex
 from .security_sources import collect_security_sources
 from .security_values import literal_name
-from .usage_candidates import authored_scopes, child_directories, read_mapping, safe_file, yaml_files
+from .usage_candidates import authored_scopes, child_directories, parameter_paths, read_mapping, safe_file
 from .usage_model import Candidate, Gap, Reference, Usage
 
 _KINDS = ('ParameterSet', 'Shared Template Variable', 'Resource Profile Override', 'Credential')
@@ -191,15 +191,12 @@ class _Analysis:
 
     def parameters(self):
         for base, environments in authored_scopes(self.index):
-            directory = base / 'parameters'
-            try:
-                templates = [p for p in directory.iterdir() if p.name.endswith(('.yml.j2', '.yaml.j2'))]
-            except OSError:
-                templates = []
+            paths = parameter_paths(self.index, base / 'parameters')
             for environment in environments or (None,):
-                for path in templates:
-                    self.gap(path, environment, 'Credential', 'dynamic')
-                for path in yaml_files(directory, recursive=False):
+                for path in paths:
+                    if path.suffix == '.j2':
+                        self.gap(path, environment, 'Credential', 'dynamic')
+                        continue
                     doc = self.read(path, environment, ('Credential',))
                     if doc is None:
                         continue

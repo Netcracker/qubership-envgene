@@ -131,7 +131,11 @@ envTemplate:
       - service-deploy
 ```
 
-Here `service-deploy` refers to a supported file such as `service-deploy.yml`. The resolver applies the supported repository, cluster and environment lookup and merge rules; it does not select a file solely because its internal `name` field matches.
+Here `service-deploy` refers to a filename stem such as `service-deploy.yml`, `service-deploy.yaml`,
+or `service-deploy.json`. ParameterSet discovery searches nested directories under each supported `parameters/`
+directory. The resolver preserves those relative paths when applying repository, cluster, and environment
+replacement and merge rules. The internal `name` field does not select a file.
+Reference checks, content rules, and Effective Set merging use the same selected inputs.
 
 ## Command reference
 
@@ -346,7 +350,8 @@ to the count. Credential files, the exact `passport-infra` role, and other clust
 
 Except for INT-4, TPL-1, TPL-4, and TPL-6, checks apply only to entities with supported evidence of use:
 
-- ParameterSets referenced through local deploy, end-to-end, or technical bindings.
+- YAML and JSON ParameterSets referenced through local deploy, end-to-end, or technical bindings,
+  including files in nested `parameters/` directories.
 - Cloud Passports selected explicitly or by supported automatic lookup.
 - Resource profiles, shared credentials and Shared Template Variables selected through supported bindings.
 - Known fixed-path inventory-generation credentials and used passport credential companions, for the applicable rules.
@@ -372,6 +377,10 @@ PLACE-9 also diagnoses an ambiguous **used passport lookup** even when it cannot
 Current limitations:
 
 - Jinja is not rendered. Dynamic or unavailable external/template references are not inferred as connections.
+- An incomplete ParameterSet directory scan or file/directory staging collision suppresses connected selection
+  for affected environments. INT-2 reports Review because the staged inputs cannot be established.
+  Reserved `from_template`, `from_origin_template`, and `from_peer_template` paths also require template context
+  and make the affected reference uncertain.
 - INT-2 reports definitely missing or ambiguous supported references; dynamic or unavailable template context receives Review. Other unresolved references do not gain a general missing-file check.
 - Most content checks skip unreadable or unsupported documents. TPL-1 also scans malformed YAML as text. Applicable path or naming checks can still report on a selected file without parsing its contents.
 - Outside template source checks, Application and Registry Definitions are not checked merely because their directories exist. SEC-5 and INT-2 follow only their established active legacy registry and selected artifact-registry consumers.

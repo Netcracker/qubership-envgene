@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .discovery import paramset_stem
-from .effective import resolve_reference
+from .paramset_sources import resolve_reference
 from .model import Category, NamedEntityFile, ParamsetFile, PassportFile, RepoIndex
 from .passport import resolve_passport
 

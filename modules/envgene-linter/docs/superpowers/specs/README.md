@@ -4,7 +4,7 @@
 - [Catalog](#catalog)
 - [Language versions](#language-versions)
 
-This directory contains 31 development specifications in English: 25 rule specifications and six shared designs.
+This directory contains 32 development specifications in English: 25 rule specifications and seven shared designs.
 Each rule's `*-design.md` combines its requirements specification and implementation design.
 The catalog links each rule to a separate algorithm reference. Coverage includes rules disabled by default.
 
@@ -52,6 +52,7 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [TPL-6](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl6-design.md) | 2026-09-29 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl6.md) |
 | [Skipped checks](/modules/envgene-linter/docs/superpowers/specs/2026-10-12-skipped-checks-design.md) | 2026-10-12 | [Report algorithm](/modules/envgene-linter/docs/algorithms/reports.md) |
 | [Ansible compatibility](/modules/envgene-linter/docs/superpowers/specs/2026-10-15-ansible-compatibility-design.md) | 2026-10-15 | [Algorithm](/modules/envgene-linter/docs/algorithms/ansible-compatibility.md) |
+| [Shared ParameterSet sources](/modules/envgene-linter/docs/superpowers/specs/2026-10-16-paramset-sources-design.md) | 2026-10-16 | [Selection and merging](/modules/envgene-linter/docs/algorithms/effective-set.md#3-staging) |
 
 ## Language versions
 

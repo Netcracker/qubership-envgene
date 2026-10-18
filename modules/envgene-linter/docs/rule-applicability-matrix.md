@@ -56,6 +56,10 @@ The [connection algorithm](/modules/envgene-linter/docs/algorithms/connections.m
 INT-4 also catalogs recognized unconnected candidates. TPL-1, TPL-4, and TPL-6 select sources without instance bindings.
 The [object reference](/docs/envgene-objects.md) defines the object types named in the tables.
 
+Connected ParameterSet selection includes `.yml`, `.yaml`, and `.json` files recursively under the supported
+repository, cluster, and Inventory `parameters/` directories. INT-2, content rules, and Effective Set merging
+share that selection. INT-4 uses the same enumeration for its separate authored analysis.
+
 ## Implemented rules
 
 `On` and `Off` describe the build-time defaults in
@@ -82,7 +86,7 @@ The templating section describes the additional file scopes.
 PLACE-10 covers ParameterSets, Resource Profile Overrides, Shared Template Variables, shared Credentials,
 and Cloud Passports.
 
-PLACE-1 and PLACE-2 compare decoded YAML values with their scalar types intact.
+PLACE-1 and PLACE-2 compare decoded YAML and JSON values with their scalar types intact.
 PLACE-2 reports Fix only after confirming one independent source-entry removal.
 Necessary overrides are silent. Missing, unrendered, or unsupported merge context receives Review.
 The proof covers known local selected bindings, including shared and application-specific uses.
@@ -186,9 +190,11 @@ These decisions define CLI behavior where the standard's shorter wording differs
 The matrix records supported scope. It does not certify every authored file or every standard requirement.
 The following limits affect how you interpret a run:
 
-- ParameterSet discovery reads direct children of the supported `parameters/` directories.
-   INT-2 also resolves nested references. A selected nested YAML file can therefore resolve while its contents receive
-   no ParameterSet content checks and no skip note. This source-selection gap remains unresolved.
+- An incomplete ParameterSet directory scan or file/directory collision prevents connected source selection
+   for the affected environments.
+   INT-2 reports Review. Unavailable files retain their staged slots and cannot restore shadowed lower inputs.
+   Reserved `from_template`, `from_origin_template`, and `from_peer_template` paths require template context
+   and make the affected reference uncertain.
 - Template composition, remote consumers, and inherited template inputs are not resolved as a complete dependency graph.
    An unknown consumer cannot establish that a source is unused. INT-4 retains Review without deletion advice.
 - TPL-4 recognizes confirmed descriptor context guarantees. Full `.j2` sources have different generation stages.

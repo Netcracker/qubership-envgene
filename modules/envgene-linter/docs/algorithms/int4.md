@@ -19,7 +19,7 @@ Credentials are checked as individual entries, excluding `sops` metadata.
 
 At repository, cluster, and environment Inventory scopes, the rule scans these typed locations:
 
-- `parameters`: nonrecursive ParameterSet discovery before staging removes shadowed files.
+- `parameters`: recursive YAML and JSON ParameterSet discovery, retaining shadowed candidates.
 - `resource_profiles` and `rp_override`: recursive Resource Profile Override discovery.
 - `shared-template-variables` and `shared_template_variables`: recursive Shared Template Variable discovery.
 - `credentials`, `Credentials`, and `shared-credentials`: recursive Credential catalog discovery.
@@ -32,6 +32,7 @@ Generated environment Credential catalogs, generated Profiles, and Cloud/Namespa
 Inventory-generation credentials have an implicit consumer and are excluded.
 Empty, unreadable, and structurally invalid file candidates produce generic skip notes.
 An empty Credential mapping contributes no entries. Jinja candidate contents are not evaluated.
+Authored Inventory folders without `env_definition.yml` retain candidates with no known consuming environment.
 
 File aliases retain their applicable environments but share one physical candidate.
 Directory enumeration does not follow symlinks. Candidate reads reject paths outside the repository or inside `.git`.
@@ -57,7 +58,8 @@ V2 selection applies when `version` is `'2.0'` or `authConfig` is present. Inact
 Dynamic, missing, or malformed selection contributes uncertainty. An unavailable or unsafe root catalog remains
 authoritative and cannot fall back to generated environment Credentials.
 
-The analysis also reads supported parameter bags in unconnected authored ParameterSets.
+The analysis also reads supported parameter bags in unconnected authored ParameterSets, including nested YAML
+and JSON sources. Candidate and reference scans reuse the common ParameterSet enumeration.
 This is direct reference analysis, not transitive dead-code elimination.
 Local Cloud/Namespace objects supply references even when no explicit ParameterSet binding selects a namespace.
 Their top-level ParameterSet lists and profile selectors are examined separately from parameter bags.

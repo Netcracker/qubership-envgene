@@ -62,43 +62,40 @@ For one reference name and one environment, the generator physically copies file
 a working tree before merging; this document models that copy step logically, without
 writing anything to disk:
 
-1. Every repository-layer file `environments/parameters/<name>` whose stem is the
-   reference goes into one flat staging directory.
-2. Every cluster-layer file `environments/<cluster>/parameters/<name>` whose stem is
-   the reference also goes into that **same** flat directory. If its filename is
-   identical to a file already placed there by step 1, it **replaces that file
-   outright** (`copy2` semantics) — the site file's content is gone, not merged with
-   the cluster file. Two names differ if their extensions differ: `shared.yml` and
-   `shared.yaml` are different names, and both may end up in the flat directory side
-   by side.
-3. Every environment-layer file
-   `environments/<cluster>/<env>/Inventory/parameters/<name>` whose stem is the
-   reference goes into a `from_instance/` subdirectory, never into the flat directory.
-   Because it never collides with a same-named file there, an environment-layer file
-   always survives even when the site and/or cluster already have a file with the same
-   name.
+1. Recursively enumerate `.yml`, `.yaml`, `.json`, and unrendered `.j2` sources under each supported
+   `parameters/` directory. Retain paths relative to that directory.
+2. Copy repository sources into the staged tree at their relative paths.
+3. Copy cluster sources into the same tree. An identical relative path replaces the repository file completely
+   (`copy2` semantics). Different directories or extensions remain distinct fragments.
+4. Copy Inventory sources under `from_instance/`, preserving their relative paths. Use the same staged tree:
+   Inventory `shared.yml` replaces repository or cluster `from_instance/shared.yml`.
+5. Select surviving records by filename stem and sort them as described in section 4.
+   Apply projection layer filters only after selecting the actual winners.
 
-Jinja ParameterSets (`*.yml.j2`, `*.yaml.j2`) are skipped this cycle (§9) and never
-reach staging, so in practice the staged filename is just the real filename. An
-unreadable YAML ParameterSet is not Jinja: it still occupies its staged filename
-(§9).
+Unavailable files retain replacement slots but contribute no values. An incomplete directory scan suppresses
+connected selection for the environment rather than choosing uncertain lower-layer files.
+File/directory collisions also prevent complete staging, including collisions with unsupported ancestor files.
+Paths containing `from_template`, `from_origin_template`, or `from_peer_template` make the affected reference uncertain.
+INT-2 reports Review for these cases.
+Jinja contents are not evaluated. YAML Jinja names retain the conservative alias described in section 2.
 
 ## 4. Apply order
 
 Once staged, sort every file that will apply for the reference by `(tier, staged
-path)`, ascending, and apply them in that order — later entries overwrite earlier ones
+path)`, ascending, and apply them in that order. Later entries overwrite earlier ones
 per §5. Tiers:
 
-| Tier | Location |
-| --- | --- |
-| 0 | a template directory (`from_template`, `from_peer_template`, `from_origin_template`) — unused this cycle, no template layer exists |
-| 1 | the flat staging directory (site and cluster files, after the same-name replacement in §3.2) |
-| 2 | `from_instance/` (environment files) |
+| Tier | Staged path test                                             |
+|------|--------------------------------------------------------------|
+| 0    | Recognized by the generator's template-directory pattern.    |
+| 1    | Neither template-directory nor `from_instance` test matches. |
+| 2    | Contains `from_instance` anywhere in the path.               |
 
-Within a tier, ties break alphabetically by staged path (so `shared.yaml` sorts before
-`shared.yml`... concretely: plain lexicographic string order of the staged filename).
-Consequence: tier 1 always applies before tier 2, so an environment-layer file always
-has the last word for any key it sets, regardless of alphabetical order.
+The `from_instance` test takes precedence over the template-directory test.
+Within a tier, use lexicographic staged-path order. The full relative path participates in that order:
+`a/shared.yml` sorts before `z/shared.yml`, even when the latter belongs to a lower source layer.
+A repository or cluster path containing `from_instance` also sorts in tier 2.
+Template dependency discovery and role-specific template selection remain outside this model.
 
 ## 5. `dict_merge(a, b)`
 
@@ -189,7 +186,7 @@ PLACE-2 can pass one source occurrence to `compute_values()` for an analysis rep
 An occurrence is the resolved physical file path plus its complete YAML path, including the global or
 application parameter container. Replay omits only that entry from an analysis copy at every selection
 of the physical file. The file remains selected, its parent mappings remain present, and shadowed inputs
-remain absent. Original files and indexed YAML documents are unchanged.
+remain absent. Original files and indexed YAML or JSON documents are unchanged.
 
 The [PLACE-2 algorithm](/modules/envgene-linter/docs/algorithms/place2.md) defines source completeness,
 consumer coverage, and typed comparison of the bags before and after removal.
@@ -209,24 +206,25 @@ wins.
 
 ## 9. Limitations this cycle
 
-- **No template layer.** There is no `from_template` staging, no tier-0 files, and
-  target filtering against a generated `Namespaces/` tree does not happen — every key
-  named by an `envSpecific*` array is treated as a scope.
+- **No template dependency graph.** Only local instance ParameterSets are selected.
+  Reserved template paths require role context and remain uncertain. External template files are not discovered.
+  Target filtering against a generated `Namespaces/` tree does not
+  happen. Every key named by an `envSpecific*` array is treated as a scope.
 - **Cloud Passports are not merged.** Passport values are not part of the Effective
   Set, but the static contract keys plus keys from selected passports form catalogs
   that suppress those keys in PLACE-1. This avoids false hoist findings without
   treating passport values as ParameterSet contributions.
-- **Jinja ParameterSets are skipped, not evaluated.** A `*.yml.j2` / `*.yaml.j2` file is
-  recorded as skipped (a note on the skipped-note list, printed on stderr) and never
-  contributes a leaf, even if its rendered-and-evaluated content would. It also never
-  occupies a staged filename, so it cannot replace a readable site or cluster file.
-- **Unreadable YAML ParameterSets are skipped from merge and provenance.** A ParameterSet
-  that fails to parse is recorded on the same skipped-note list as Jinja and never
-  contributes a leaf or provenance. Staging still keys the file by staged filename
-  (`resolve_reference`): an unreadable cluster file with the same name as a site file
-  replaces that site file in the flat directory (§3.2) and then contributes zero
-  leaves. The site values for that stem are gone. There is no extra diagnostic beyond
-  the skip note.
+- **Jinja ParameterSets are skipped, not evaluated.** A `.j2` file is indexed with a skip note and contributes
+  no leaf. Its unavailable content cannot establish reference validity or a removal proof.
+  YAML Jinja filename aliases remain conservative rather than modeling rendered output names.
+- **Unreadable YAML and JSON ParameterSets contribute no values.** They retain their staged replacement slots
+  and produce generic skip notes. An unavailable replacement does not restore lower-layer values.
+  INT-2 reports Review at supported references whose selected source is unreadable.
+- **Incomplete staging does not establish source completeness.** Unscanned directories and file/directory
+  collisions suppress connected selection. Shared-source removal proofs still account for affected known bindings.
+- **JSON decoding follows the generator.** The JSON decoder determines values and scalar types.
+  A duplicate object key uses its last value and source location. Position lookup handles nested maps,
+  list entries, and application parameters without YAML string normalization.
 
 ## 10. Worked example (the golden)
 

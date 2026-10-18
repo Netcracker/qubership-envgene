@@ -5,6 +5,7 @@ from pathlib import Path
 from .connections import Connections
 from .discovery import NON_CLUSTER_DIRS, NON_ENV_DIRS
 from .model import RepoIndex
+from .paramset_sources import scan_directory
 from .security_sources import collect_security_sources
 from .usage_model import Candidate
 from .yamlio import YamlReadError, load
@@ -67,6 +68,11 @@ def authored_scopes(index):
                 yield env / 'Inventory', tuple(e.full_name for e in index.environments if e.path == env)
 
 
+def parameter_paths(index, directory):
+    """Reuse ParameterSet enumeration, including authored folders without an environment."""
+    return scan_directory(directory, index.root).paths
+
+
 def collect_candidates(index: RepoIndex, connections: Connections) -> list[Candidate]:
     found = {}
     implicit = set()
@@ -107,8 +113,10 @@ def collect_candidates(index: RepoIndex, connections: Connections) -> list[Candi
             found[key] = candidate
 
     for base, contexts in authored_scopes(index):
-        directories = [('parameters', 'ParameterSet', False),
-                       ('resource_profiles', 'Resource Profile Override', True),
+        for path in parameter_paths(index, base / 'parameters'):
+            if path.suffix != '.j2':
+                add(path, 'ParameterSet', contexts)
+        directories = [('resource_profiles', 'Resource Profile Override', True),
                        ('rp_override', 'Resource Profile Override', True),
                        ('shared-template-variables', 'Shared Template Variable', True),
                        ('shared_template_variables', 'Shared Template Variable', True),

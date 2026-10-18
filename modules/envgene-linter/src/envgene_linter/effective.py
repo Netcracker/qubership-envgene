@@ -12,9 +12,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .model import Category, EnvModel, Layer, ParamsetFile, RepoIndex, Scope
+from .paramset_sources import ALL_LAYERS, resolve_reference
 from .yamlio import dotted, leaves, plain
 
-ALL_LAYERS = frozenset(Layer)
 LOWER_LAYERS = frozenset({Layer.REPOSITORY, Layer.CLUSTER})
 SITE_LAYERS = frozenset({Layer.REPOSITORY})
 PARAMETERS_CONTAINER = ("parameters",)
@@ -56,14 +56,6 @@ class EffectiveLeaf:
         return dotted(self.path)
 
 
-@dataclass(frozen=True)
-class ResolvedEntry:
-    file: ParamsetFile
-    reference: str
-    tier: int
-    staged_path: str
-
-
 @dataclass
 class EnvEffective:
     env: EnvModel
@@ -78,44 +70,6 @@ def dict_merge(a: Any, b: Any) -> Any:
         return a if b is None else b
     keys = set(a) | set(b)
     return {key: dict_merge(a.get(key), b.get(key)) for key in keys}
-
-
-def staged_filename(file: ParamsetFile) -> str:
-    name = file.path.name
-    if name.endswith(".yml.j2"):
-        return name[: -len(".yml.j2")] + ".yml"
-    if name.endswith(".yaml.j2"):
-        return name[: -len(".yaml.j2")] + ".yml"
-    return name
-
-
-def resolve_reference(
-    index: RepoIndex, env: EnvModel, reference: str, layers: frozenset[Layer] = ALL_LAYERS
-) -> list[ResolvedEntry]:
-    cluster = index.clusters[env.cluster]
-    flattened: dict[str, ParamsetFile] = {}
-    for file in index.site_paramsets:
-        if file.stem == reference and not file.is_jinja and file.layer in layers:
-            flattened[staged_filename(file)] = file
-    for file in cluster.paramsets:
-        if file.stem == reference and not file.is_jinja and file.layer in layers:
-            flattened[staged_filename(file)] = file
-    entries = [
-        ResolvedEntry(file=file, reference=reference, tier=1, staged_path=name)
-        for name, file in flattened.items()
-    ]
-    for file in env.paramsets:
-        if file.stem == reference and not file.is_jinja and file.layer in layers:
-            entries.append(
-                ResolvedEntry(
-                    file=file,
-                    reference=reference,
-                    tier=2,
-                    staged_path=f"from_instance/{staged_filename(file)}",
-                )
-            )
-    entries.sort(key=lambda entry: (entry.tier, entry.staged_path))
-    return entries
 
 
 class _Accumulator:

@@ -10,6 +10,10 @@
 
 ## Unreleased
 
+- Check connected nested YAML and JSON ParameterSets consistently across reference resolution, content rules,
+  and Effective Set merging. Preserve relative-path replacement and generator application order.
+  Keep unavailable replacements and incomplete scans from restoring shadowed inputs.
+- Include nested YAML and JSON ParameterSets in INT-4's authored candidate and reference analysis.
 - Preserve YAML value types in PLACE-1 and PLACE-2 comparisons, including nested collections.
   Treat booleans, integers, floating-point numbers, and numeric strings as distinct values.
 - Confirm PLACE-2 removals against every known local selected consumer before reporting Fix.

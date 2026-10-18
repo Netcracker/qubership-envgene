@@ -37,7 +37,15 @@ Logical directory inspection does not follow external symlinks.
 2. Recognize runtime `${creds.get('id')}` calls with or without a property, including calls embedded in a larger string. System/deployer fields use `envgen.creds.get('id')`. Also recognize structured `$type: credRef` with `credId`, and bare IDs in known fields such as `credentialsId`, `defaultCredentialsId` and `tokenSecret`. Unsupported/dynamic call syntax receives Review; ordinary unrelated strings do not become references.
 3. Resolve system/deployer IDs against their selected catalog. For runtime references, use generated `Credentials/credentials.yml` when present; it is authoritative even when empty. An absent ID in a readable authoritative catalog is missing. An unreadable or unsafe selected catalog is unknown, without fallback. A mapping entry establishes existence without inspecting its secret contents.
 4. When the generated runtime catalog is absent, a defined ID in connected shared Credentials or the selected passport companion can establish existence. Apply the passport companion first, then shared inputs in list order; the last definition of an ID determines its final entry; overlapping IDs across ordered inputs are not automatically ambiguous. An absent ID remains unknown because templates/macros can supply it during generation. Multiple physical definitions within one selected lookup bucket are ambiguous; aliases of one physical file do not create ambiguity.
-5. Resolve `envSpecificParamsets`, `envSpecificE2EParamsets` and `envSpecificTechnicalParamsets` bindings for deploy, end-to-end and technical categories and the corresponding `deployParameterSets`, `e2eParameterSets` and `technicalConfigurationParameterSets` lists in selected Cloud/Namespace objects. ParameterSet staging lets a cluster file replace the same site filename, then adds Inventory fragments for deterministic merging; multiple fragments do not constitute ambiguity. If a binding has no local target and `envTemplate.name`, `artifact` or `templateArtifact` supplies template context, report unknown. A closed local binding without a template source is missing. Missing targets in rendered Cloud/Namespace lists remain unknown because they can come from a template.
+5. Resolve `envSpecificParamsets`, `envSpecificE2EParamsets`, and `envSpecificTechnicalParamsets` bindings and the
+   corresponding `deployParameterSets`, `e2eParameterSets`, and `technicalConfigurationParameterSets` lists in
+   selected Cloud/Namespace objects. Use the shared indexed ParameterSet selection, including nested YAML and JSON.
+   [Staging](/modules/envgene-linter/docs/algorithms/effective-set.md#3-staging) applies replacement by relative path
+   across all three copy phases. Multiple surviving fragments do not constitute ambiguity.
+   An incomplete scan, unreadable selected source, or unavailable role-specific template context is unknown.
+   If a binding has no local target and `envTemplate.name`, `artifact`, or `templateArtifact` supplies template
+   context, report unknown. A closed local binding without a template source is missing.
+   Missing targets in rendered Cloud/Namespace lists remain unknown because templates can supply them.
 6. Resolve `envSpecificResourceProfiles` using environment `Inventory`, cluster, then `environments`.
    Within each level use `resource_profiles`, `rp_override`, `Profiles`, then `parameters`, stopping at the first
    matching directory. Several physical matches there are ambiguous. In selected Cloud/Namespace objects, check
@@ -60,7 +68,9 @@ HTML contains INT-2 only when findings exist. Findings preserve CLI exit code `0
 ## Error handling
 
 - Paths must stay inside the repository and outside `.git`, including symlink targets. Rejected selected targets are unknown rather than a reason to use a lower-priority source.
-- Jinja, malformed YAML and unsupported target shapes cannot establish existence. Parser exception text is not copied into findings. An unreadable consumer cannot expose individual references and may instead have a shared discovery skip note.
+- Jinja, malformed YAML or JSON, and unsupported target shapes cannot establish existence.
+  Parser exception text is not copied into findings. An unreadable consumer cannot expose individual references
+  and may instead have a shared discovery skip note.
 - Missing remote/template context is not proof that a reference is broken. The rule fetches no external templates, renders no Jinja, runs no macros, reads no secret stores and decrypts no values.
 - This is reference resolution, not complete schema validation, Credential property validation or a full generation run. Unsupported consumer shapes remain outside the reference walker.
 - File paths and source positions remain available for navigation. Redaction of INT-2 messages and keys does not change other rules' output contracts.

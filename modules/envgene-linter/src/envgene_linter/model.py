@@ -57,6 +57,12 @@ class Scope:
         return f"{base}/{self.application}" if self.application else base
 
 
+@dataclass(frozen=True)
+class ParamsetLayout:
+    files: frozenset[Path] = frozenset()
+    directories: frozenset[Path] = frozenset()
+
+
 @dataclass
 class ParamsetFile:
     path: Path
@@ -67,6 +73,8 @@ class ParamsetFile:
     is_jinja: bool = False
     loaded: LoadedYaml | None = None
     error: str | None = None
+    relative_path: Path | None = None
+    unavailable: bool = False
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -159,6 +167,8 @@ class RepoIndex:
     resource_profiles: list[NamedEntityFile] = field(default_factory=list)
     credential_files: list[NamedEntityFile] = field(default_factory=list)
     skipped_checks: list[SkippedCheck] = field(default_factory=list)
+    incomplete_paramset_dirs: set[Path] = field(default_factory=set)
+    paramset_layouts: dict[Path, ParamsetLayout] = field(default_factory=dict)
 
     @property
     def environments(self) -> list[EnvModel]:

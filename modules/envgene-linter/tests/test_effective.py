@@ -81,9 +81,7 @@ def test_projections_do_not_resurrect_shadowed_site_file(repo):
     index = build_index(repo.root)
     env = index.environments[0]
     scope = Scope("cloud", Category.DEPLOY)
-    assert [entry.file.layer for entry in resolve_reference(index, env, "cloud", SITE_LAYERS)] == [
-        Layer.REPOSITORY
-    ]
+    assert resolve_reference(index, env, "cloud", SITE_LAYERS) == []
     site = compute(index, env, SITE_LAYERS)
     assert site.get(scope, ("COMMON_FROM_SITE",)) is None
     assert site.get(scope, ("CLUSTER_ONLY",)) is None

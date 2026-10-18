@@ -32,6 +32,8 @@ A matching lower-layer value alone does not establish that removal preserves the
 1. **Read projections and collect consumers.** Resolve actual inputs before filtering them into projections.
    A shadowed repository file remains absent. Record every environment, target, and category selecting each
    physical file, including uses where its value is neither a restatement nor the final winner.
+   Retain potential uses of shared files when an incomplete scan, staging collision, or template role prevents
+   resolving a known binding. Such an environment cannot disappear from the removal proof.
    Skip candidate collection for an environment with a missing projection.
 
 2. **Collect possible restatements.** Compare environment-authored `full` leaves with the same scope/path
@@ -44,7 +46,7 @@ A matching lower-layer value alone does not establish that removal preserves the
    Multiple observations of the same physical entry share one result and one finding.
 
 4. **Check the available merge context.** Every binding group selecting the candidate's physical file must
-   have readable ordinary YAML sources for all its references. The supported shape is a mapping with mapping
+   have readable ordinary YAML or JSON sources for all its references. The supported shape is a mapping with mapping
    parameter bags and an optional application list. Application identities must be nonempty literal strings.
    Unresolved or dynamic references, selected parse errors, and relevant Jinja sources make the result uncertain.
    Anchors, aliases, YAML merge keys, custom tags, and unsupported values also prevent confirmation.

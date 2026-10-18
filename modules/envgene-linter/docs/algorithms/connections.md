@@ -31,10 +31,24 @@ Jinja and external/template/runtime-only references are not rendered or inferred
 
 ## ParameterSet projections and naming
 
-Resolve full-layer inputs first. Cluster replacement by the same staged filename
-removes a repository file from that environment's selected inputs. For `full`,
+The [shared ParameterSet source design](/modules/envgene-linter/docs/superpowers/specs/2026-10-16-paramset-sources-design.md)
+defines recursive `.yml`, `.yaml`, and `.json` discovery at the three instance layers.
+Sources retain paths relative to their `parameters/` directory. A single staged tree models repository copies,
+cluster replacements, and Inventory copies under `from_instance/`. Matching relative paths replace entire files.
+Distinct subdirectories and extensions remain separate fragments, sorted in generator application order.
+See [Effective Set staging](/modules/envgene-linter/docs/algorithms/effective-set.md#3-staging) for the algorithm.
+
+Resolve full-layer inputs first. Replacement by the same staged path
+removes a lower-layer file from that environment's selected inputs. For `full`,
 `lower`, and `site`, filter those actual inputs to the requested layers before
 merging. A projection never brings back a shadowed file.
+
+Unavailable files retain logical replacement slots. An incomplete directory scan suppresses connected
+ParameterSet selection for the affected environment because the staged winners are unknown.
+File/directory staging collisions, including unsupported ancestor blockers, also prevent complete selection.
+INT-2 reports Review for this uncertainty. Role-specific template paths also require unavailable rendering context.
+Neither incomplete selection nor unrendered sources can establish a PLACE-2 removal proof.
+Known bindings with incomplete selection remain potential consumers of shared files for that proof.
 
 NAME-1 and NAME-2 inspect selected files only. NAME-4 groups categories by physical
 file and uses cluster/environment identifiers only from that file's actual users.

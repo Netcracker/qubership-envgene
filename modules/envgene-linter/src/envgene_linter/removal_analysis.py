@@ -5,8 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .effective import Provenance, compute_values, resolve_reference
+from .effective import Provenance, compute_values
 from .model import Category, EnvModel, RepoIndex, Scope
+from .paramset_sources import reference_complete, resolve_reference, source_files
 from .yaml_values import equal
 
 
@@ -46,6 +47,7 @@ class RemovalAnalysis:
         self.index = index
         self.environments = {env.full_name: env for env in index.environments}
         self.consumers: dict[Path, dict[str, set[tuple[Category, str]]]] = {}
+        self.uncertain_consumers: set[Path] = set()
         self.before: dict[str, dict[Scope, dict]] = {}
         self.results: dict[tuple[Path, tuple], bool | None] = {}
         self.documents: dict[Path, bool] = {}
@@ -54,6 +56,11 @@ class RemovalAnalysis:
             for category in Category:
                 for target, references in env.bound_targets(category).items():
                     for reference in references:
+                        if not reference_complete(index, env, reference):
+                            self.uncertain_consumers.update(
+                                file.path.resolve() for file in source_files(index, env)
+                                if file.stem == reference and not file.unavailable
+                            )
                         for entry in resolve_reference(index, env, reference):
                             uses = self.consumers.setdefault(entry.file.path.resolve(), {})
                             uses.setdefault(env.full_name, set()).add((category, target))
@@ -62,13 +69,12 @@ class RemovalAnalysis:
         identity = (env.full_name, category, target)
         if identity in self.complete:
             return self.complete[identity]
-        candidates = [*self.index.site_paramsets, *self.index.clusters[env.cluster].paramsets, *env.paramsets]
         complete = True
         for reference in env.bound_targets(category)[target]:
-            entries = resolve_reference(self.index, env, reference)
+            entries = resolve_reference(self.index, env, reference, include_unavailable=True)
             if (
-                not entries or not _literal_name(reference)
-                or any(file.is_jinja and file.stem == reference for file in candidates)
+                not entries or not _literal_name(reference) or not reference_complete(self.index, env, reference)
+                or any(entry.file.is_jinja or entry.file.unavailable for entry in entries)
             ):
                 complete = False
                 break
@@ -106,7 +112,7 @@ class RemovalAnalysis:
         return self.results[identity]
 
     def _preserves(self, source: Provenance, consumers: dict[str, set[tuple[Category, str]]]) -> bool | None:
-        uncertain = not consumers
+        uncertain = not consumers or source.file.path.resolve() in self.uncertain_consumers
         for name, targets in consumers.items():
             env = self.environments[name]
             if not all(self._complete(env, category, target) for category, target in targets):

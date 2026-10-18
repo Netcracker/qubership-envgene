@@ -11,6 +11,7 @@ from ..connections import CREDENTIAL_DIRS, PROFILE_DIRS, Connections, compute_co
 from ..discovery import paramset_stem
 from ..model import Action, Category, Finding, IssueType, Location, RepoIndex, Severity
 from ..parameter_objects import parameter_object_paths, safe_parameter_path
+from ..paramset_sources import reference_complete, resolve_reference
 from ..security_sources import SecurityBag, collect_security_sources
 from ..security_values import literal_name
 from ..yamlio import LoadedYaml, YamlReadError, load
@@ -133,22 +134,13 @@ class _Checker:
         if not _literal(reference):
             return 'unknown'
         if kind == 'ParameterSet':
-            # All matching layers are fragments of one merged ParameterSet.
-            staged, paths = {}, []
-            bases = (self.index.root / 'environments', self.index.clusters[env.cluster].path, env.path / 'Inventory')
-            for tier, base in enumerate(bases):
-                files, uncertain = self.directory_files(base / 'parameters')
-                if uncertain:
-                    return 'unknown'
-                for path in sorted(files):
-                    if paramset_stem(path) != reference:
-                        continue
-                    if tier == 2:
-                        paths.append(path)
-                    else:
-                        name = paramset_stem(path) + '.yml' if path.name.endswith('.j2') else path.name
-                        staged[name] = path
-            paths.extend(staged.values())
+            if not reference_complete(self.index, env, reference):
+                return 'unknown'
+            entries = resolve_reference(self.index, env, reference, include_unavailable=True)
+            if not entries:
+                return 'unknown' if template_possible else 'missing'
+            return None if all(entry.file.loaded is not None and isinstance(entry.file.loaded.doc, dict)
+                               and safe_parameter_path(self.index, entry.file.path) for entry in entries) else 'unknown'
         else:
             paths = self.named_paths(env, reference, PROFILE_DIRS)
         if not paths:

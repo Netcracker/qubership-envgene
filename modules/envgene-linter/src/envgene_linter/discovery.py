@@ -11,10 +11,12 @@ from .model import (
     Layer,
     NamedEntityFile,
     ParamsetFile,
+    ParamsetLayout,
     PassportFile,
     RepoIndex,
 )
 from .yamlio import YamlReadError, load
+from .paramset_sources import scan_directory, staging_complete
 
 PARAMETERS_DIR = "parameters"
 INVENTORY_DIR = "Inventory"
@@ -202,16 +204,41 @@ def _load_paramset(
     path: Path, layer: Layer, cluster: str | None, env: str | None, skipped: list[str]
 ) -> ParamsetFile:
     stem = paramset_stem(path)
-    if _is_jinja(path):
+    if path.suffix == '.j2':
         skipped.append(f"{path}: jinja ParameterSet skipped")
         return ParamsetFile(path=path, layer=layer, stem=stem, cluster=cluster, env=env, is_jinja=True)
     try:
         loaded = load(path)
     except YamlReadError:
-        note = f"{path}: cannot parse YAML; ParameterSet skipped"
+        format_name = 'JSON' if path.suffix == '.json' else 'YAML'
+        note = f"{path}: cannot parse {format_name}; ParameterSet skipped"
         skipped.append(note)
         return ParamsetFile(path=path, layer=layer, stem=stem, cluster=cluster, env=env, error=note)
     return ParamsetFile(path=path, layer=layer, stem=stem, cluster=cluster, env=env, loaded=loaded)
+
+
+def _parameter_files(
+    directory: Path, root: Path, layer: Layer, cluster: str | None, env: str | None,
+    skipped: list[str], incomplete: set[Path],
+    layouts: dict[Path, ParamsetLayout],
+) -> list[ParamsetFile]:
+    scan = scan_directory(directory, root)
+    if scan.layout is not None:
+        layouts[directory] = scan.layout
+    if scan.incomplete:
+        incomplete.add(directory)
+        skipped.append(f'{directory}: cannot enumerate all ParameterSet sources; connected selection skipped')
+    records = []
+    for path in scan.paths:
+        if path in scan.unavailable:
+            note = f'{path}: unavailable ParameterSet source; content skipped'
+            skipped.append(note)
+            record = ParamsetFile(path, layer, paramset_stem(path), cluster, env, error=note, unavailable=True)
+        else:
+            record = _load_paramset(path, layer, cluster, env, skipped)
+        record.relative_path = path.relative_to(directory)
+        records.append(record)
+    return records
 
 
 def _cloud_passport_name(doc: object) -> str | None:
@@ -345,24 +372,22 @@ def build_index(root: Path) -> RepoIndex:
         raise DiscoveryError(f"{root} is not an EnvGene repository: no environments/ or templates/ directory")
 
     skipped: list[str] = []
+    incomplete: set[Path] = set()
+    layouts: dict[Path, ParamsetLayout] = {}
     passports: list[PassportFile] = []
     for folder in PASSPORT_DIRS:
         passports.extend(
             _load_passport(path, None, None, skipped) for path in _passport_files(environments_dir / folder)
         )
-    site = [
-        _load_paramset(path, Layer.REPOSITORY, None, None, skipped)
-        for path in _yaml_files(environments_dir / PARAMETERS_DIR, root)
-    ]
+    site = _parameter_files(environments_dir / PARAMETERS_DIR, root, Layer.REPOSITORY,
+                            None, None, skipped, incomplete, layouts)
     clusters: dict[str, ClusterModel] = {}
     for cluster_dir in sorted(p for p in environments_dir.iterdir() if p.is_dir()):
         if cluster_dir.name in NON_CLUSTER_DIRS:
             continue
         cluster = ClusterModel(name=cluster_dir.name, path=cluster_dir)
-        cluster.paramsets = [
-            _load_paramset(path, Layer.CLUSTER, cluster.name, None, skipped)
-            for path in _yaml_files(cluster_dir / PARAMETERS_DIR, root)
-        ]
+        cluster.paramsets = _parameter_files(cluster_dir / PARAMETERS_DIR, root, Layer.CLUSTER,
+                                            cluster.name, None, skipped, incomplete, layouts)
         for folder in PASSPORT_DIRS:
             passports.extend(
                 _load_passport(path, cluster.name, None, skipped)
@@ -402,10 +427,8 @@ def build_index(root: Path) -> RepoIndex:
                 shared_template_variable_bindings=shared_template_variable_bindings,
                 artifact_selectors=artifact_selectors,
             )
-            env.paramsets = [
-                _load_paramset(path, Layer.ENVIRONMENT, cluster.name, env.name, skipped)
-                for path in _yaml_files(env_dir / INVENTORY_DIR / PARAMETERS_DIR, root)
-            ]
+            env.paramsets = _parameter_files(env_dir / INVENTORY_DIR / PARAMETERS_DIR, root, Layer.ENVIRONMENT,
+                                            cluster.name, env.name, skipped, incomplete, layouts)
             for folder in PASSPORT_DIRS:
                 passports.extend(
                     _load_passport(path, cluster.name, env.name, skipped)
@@ -422,7 +445,7 @@ def build_index(root: Path) -> RepoIndex:
         for env in cluster.environments:
             all_paramsets.extend(env.paramsets)
             bases.append(env.path / INVENTORY_DIR)
-    reused = {item.path.resolve(): item for item in all_paramsets}
+    reused = {item.path.resolve(): item for item in all_paramsets if not item.unavailable}
     resource_profiles = _load_place8_entities(
         root,
         bases,
@@ -439,7 +462,7 @@ def build_index(root: Path) -> RepoIndex:
         skipped,
         reused,
     )
-    return RepoIndex(
+    index = RepoIndex(
         root=root,
         site_paramsets=site,
         clusters=clusters,
@@ -448,4 +471,10 @@ def build_index(root: Path) -> RepoIndex:
         named_entities=named_entities,
         resource_profiles=resource_profiles,
         credential_files=credential_files,
+        incomplete_paramset_dirs=incomplete,
+        paramset_layouts=layouts,
     )
+    for env in index.environments:
+        if not staging_complete(index, env):
+            index.skipped.append(f'{env.path}: ParameterSet staging is uncertain; connected selection skipped')
+    return index
