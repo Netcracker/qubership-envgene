@@ -222,7 +222,7 @@ class CurrentEnvInstanceStore:
         _t_loop = _diag_now()
         # [diag] flush weight: total bytes flushed and the heaviest objects by beautify
         # time and by size, to show what hash-skip actually saves per environment.
-        _flush_bytes = sum(b for _, b in _flush_stats)
+        _flush_bytes = sum(b for _, b, _ in _flush_stats)
         _top_ms = sorted(_flush_stats, key=lambda x: x[0], reverse=True)[:5]
         _top_bytes = sorted(_flush_stats, key=lambda x: x[1], reverse=True)[:5]
         logger.info(f"[diag] flush weight: {len(_flush_stats)} objects, {_flush_bytes} bytes; "
