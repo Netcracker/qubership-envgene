@@ -183,7 +183,7 @@ class CurrentEnvInstanceStore:
         _flush_stats = []  # [diag] (beautify_ms, emitted_bytes, name) per flushed object
         _gate_skipped = 0
         _gate_skipped_bytes = 0
-        _gate_stats = []  # [diag] (size_bytes, name) of env objects skipped at the hash gate
+        _gate_stats = []  # [diag] (size_bytes, name, key, schema_path) of env objects skipped at the hash gate
         for key, rel in targets.items():
             data = self._objects[key]
             schema_path, schema_hash, header_text = self._object_meta(key)
@@ -198,7 +198,7 @@ class CurrentEnvInstanceStore:
                 _gate_skipped += 1
                 _size = key.stat().st_size
                 _gate_skipped_bytes += _size
-                _gate_stats.append((_size, key.name))
+                _gate_stats.append((_size, key.name, key, schema_path))
                 logger.info(f"Skipping {key} (unchanged)")
                 continue
             _b0 = _diag_now()
@@ -239,7 +239,29 @@ class CurrentEnvInstanceStore:
         # have re-written (size on disk = the cost hash-skip avoids on this env).
         _gate_top = sorted(_gate_stats, key=lambda x: x[0], reverse=True)[:5]
         logger.info(f"[diag] flush env-gate: {_gate_skipped} objects, {_gate_skipped_bytes} bytes skipped at hash gate; "
-                    f"top by bytes: {[(b, name) for b, name in _gate_top]}")
+                    f"top by bytes: {[(b, name) for b, name, _, _ in _gate_top]}")
+        # [diag] per-object sort cost on a copy of the heaviest env objects: shows whether
+        # beautify time is linear or super-linear in single-document size (the driver of the
+        # different hash-skip gains across environments at equal total object count/weight).
+        try:
+            import copy as _copy
+            _sort_ms, _dump_ms = 0.0, 0.0
+            _cost_per = []
+            for _size, _name, _key, _schema in _gate_top:
+                _data = _copy.deepcopy(self._objects[_key])
+                _s0 = _diag_now()
+                if _schema:
+                    sortYaml(_data, _schema, False, validate=False)
+                _s1 = _diag_now()
+                _dumpYamlToStr(_data)
+                _s2 = _diag_now()
+                _sort_ms += _s1 - _s0
+                _dump_ms += _s2 - _s1
+                _cost_per.append((round((_s1 - _s0 + _s2 - _s1) * 1000, 1), _size, _name))
+            logger.info(f"[diag] flush sort-cost top5: sortYaml={_sort_ms * 1000:.1f}ms, "
+                        f"dump={_dump_ms * 1000:.1f}ms; per object (ms, bytes, name): {_cost_per}")
+        except Exception as _ex:
+            logger.warning(f"[diag] flush sort-cost measurement failed, skipping: {_ex}")
         if not self._delete_stale_objects(targets):
             cleanup_toplevel = {Path(target).name for target in cleanup_targets}
             for rel, entry in stored.items():
