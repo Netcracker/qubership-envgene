@@ -180,6 +180,7 @@ class CurrentEnvInstanceStore:
         _t_hash = 0.0
         _t_beautify = 0.0
         _t_write = 0.0
+        _flush_stats = []  # [diag] (beautify_ms, emitted_bytes, name) per flushed object
         for key, rel in targets.items():
             data = self._objects[key]
             schema_path, schema_hash, header_text = self._object_meta(key)
@@ -208,15 +209,25 @@ class CurrentEnvInstanceStore:
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             if not in_env_dir and key.is_file() and key.read_text() == text:
                 skipped += 1
+                _flush_stats.append((_diag_now() - _b0, len(text), key.name))
                 logger.info(f"Skipping {key} (unchanged on disk)")
                 continue
             written += 1
             logger.info(f"Writing {key} (schema: {schema_path})")
             _w0 = _diag_now()
             writeToFile(key, text)
+            _flush_stats.append((_w0 - _b0, len(text), key.name))
             _t_beautify += _w0 - _b0
             _t_write += _diag_now() - _w0
         _t_loop = _diag_now()
+        # [diag] flush weight: total bytes flushed and the heaviest objects by beautify
+        # time and by size, to show what hash-skip actually saves per environment.
+        _flush_bytes = sum(b for _, b in _flush_stats)
+        _top_ms = sorted(_flush_stats, key=lambda x: x[0], reverse=True)[:5]
+        _top_bytes = sorted(_flush_stats, key=lambda x: x[1], reverse=True)[:5]
+        logger.info(f"[diag] flush weight: {len(_flush_stats)} objects, {_flush_bytes} bytes; "
+                    f"top by ms: {[(round(ms, 1), name) for ms, _, name in _top_ms]}; "
+                    f"top by bytes: {[(b, name) for _, b, name in _top_bytes]}")
         if not self._delete_stale_objects(targets):
             cleanup_toplevel = {Path(target).name for target in cleanup_targets}
             for rel, entry in stored.items():
