@@ -1,3 +1,5 @@
+import pytest
+
 from envgene_linter.discovery import build_index
 from envgene_linter.effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
 from envgene_linter.model import Category, Layer, Scope
@@ -149,3 +151,34 @@ def test_catalog_key_is_not_hoisted_to_repository(repo):
     site = {env.full_name: compute(index, env, SITE_LAYERS) for env in index.environments}
     findings = check(index, full, lower, site, build_catalogs(index))
     assert findings == []
+
+
+@pytest.mark.parametrize(('first', 'second'), [
+    ('true', '1'), ('false', '0'), ('1', '1.0'), ('[true]', '[1]'), ('[false]', '[0]'),
+])
+@pytest.mark.parametrize('shared_layer', ['cluster', 'repository'])
+def test_equal_python_values_with_different_yaml_types_are_not_hoisted(repo, first, second, shared_layer):
+    for number, value in enumerate((first, second), 1):
+        cluster = 'c' if shared_layer == 'cluster' else f'c{number}'
+        env = f'e{number}'
+        repo.env(cluster, env, deploy={'cloud': ['selected']})
+        if shared_layer == 'cluster':
+            repo.env_paramset(cluster, env, 'selected', {'KEY': value})
+        else:
+            repo.cluster_paramset(cluster, 'selected', {'KEY': value})
+    assert _place1(repo) == []
+
+
+def test_a_typed_difference_from_lower_layer_is_still_a_place1_contribution(repo):
+    repo.cluster_paramset('c', 'base', {'KEY': '1'})
+    for env in ('a', 'b'):
+        repo.env('c', env, deploy={'cloud': ['base', 'local']})
+        repo.env_paramset('c', env, 'local', {'KEY': 'true'})
+    assert [finding.key for finding in _place1(repo)] == ['KEY']
+
+
+def test_string_quote_style_does_not_block_hoisting(repo):
+    for env, value in [('a', 'info'), ('b', '"info"')]:
+        repo.env('c', env, deploy={'cloud': ['selected']})
+        repo.env_paramset('c', env, 'selected', {'KEY': value})
+    assert [finding.key for finding in _place1(repo)] == ['KEY']

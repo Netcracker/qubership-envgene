@@ -1,8 +1,77 @@
 # envgene-linter: PLACE-2
 
+- [Current removal contract](#current-removal-contract)
+  - [Requirements](#requirements)
+  - [Design](#design)
+  - [Acceptance tests](#acceptance-tests)
+- [Original approved iteration](#original-approved-iteration)
+- [Goal](#goal)
+- [In plain terms](#in-plain-terms)
+- [Out of scope (this cycle)](#out-of-scope-this-cycle)
+- [Code changes](#code-changes)
+- [Rule](#rule)
+  - [Examples](#examples)
+- [Report](#report)
+- [Tests](#tests)
+- [Algorithm document](#algorithm-document)
+
 File eligibility is governed by the later shared [connected-only contract](2026-09-11-connected-only-design.md).
 
-The original iteration and report order are preserved below. Current [PLACE-2](../../algorithms/place2.md) compares only selected physical inputs; a projection must not restore a repository file shadowed by a cluster file.
+The current requirements below govern removal advice. The original approved iteration follows for historical
+context. Its unconditional restatement warning and instruction to avoid Effective Set changes are superseded by
+this contract. The complete processing flow is in the
+[PLACE-2 algorithm](/modules/envgene-linter/docs/algorithms/place2.md).
+
+## Current removal contract
+
+### Requirements
+
+A repeated value qualifies for Fix only when its decoded YAML type matches the inherited value and removing
+the exact source entry preserves the complete merged parameter bags of every known local selected consumer.
+The proof covers all selecting environments, targets, categories, and application scopes, including uses where
+that entry is not a restatement or the final winner. A definite change makes the override necessary and is silent.
+Unconfirmed equality or preservation produces Information / Review without deletion advice or source values.
+
+The source identity is the resolved physical file plus the full YAML source path.
+Global and application parameter containers, nested paths, and literal keys containing dots remain distinct.
+Repeated selections and physical aliases of the same source entry receive one result.
+Each finding concerns an independent removal. Removing several findings together is not proven safe.
+No source file or indexed YAML document is modified.
+
+### Design
+
+- [yaml_values.py](/modules/envgene-linter/src/envgene_linter/yaml_values.py) supplies typed, recursive,
+   three-valued comparison shared with PLACE-1. Quote style does not affect string equality.
+- [effective.py](/modules/envgene-linter/src/envgene_linter/effective.py) shares its accumulation path between
+   leaf projections and complete parameter bags. Analysis can omit one source entry from a copy at every
+   selection of its physical file, preserving parent mappings, file order, and filename shadowing.
+- [removal_analysis.py](/modules/envgene-linter/src/envgene_linter/removal_analysis.py) records known consumers,
+   checks their selected merge sources, and compares bags before and after each independent removal.
+   It caches baseline bags per environment and results per source entry within a run.
+- [rules/place2.py](/modules/envgene-linter/src/envgene_linter/rules/place2.py) retains projection-based
+   candidate collection and deduplicates by the complete source identity before choosing Fix, Review, or silence.
+
+Source completeness requires readable ordinary YAML with supported parameter/application shapes and literal
+references and application identities. Missing, dynamic, invalid, or relevant unrendered sources prevent a proof.
+Anchors, aliases, YAML merge keys, custom tags, unsupported values, and bounded-analysis failures also require Review.
+The proof is limited to the known local binding graph. Remote consumers and complete template composition are excluded.
+
+### Acceptance tests
+
+- Distinct scalar types and nested type differences do not receive redundant-override advice.
+- A sequence of values `2`, `5`, and `2` retains the last override, including nested and application parameters.
+- Shared sources must preserve every selecting environment, target, and parameter category.
+- Physical aliases are omitted together, and shadowed repository sources remain absent.
+- Global/application entries and literal dotted/nested keys receive separate findings.
+- Missing, Jinja, malformed, anchored, tagged, or otherwise unsupported source contexts receive Review.
+- Unknown application identities and unknown scalar equality receive Review without parameter values.
+- Repeated analysis leaves source bytes and indexed documents unchanged.
+
+Tests live in [test_place2.py](/modules/envgene-linter/tests/test_place2.py),
+[test_yaml_values.py](/modules/envgene-linter/tests/test_yaml_values.py), and
+[test_effective.py](/modules/envgene-linter/tests/test_effective.py).
+
+## Original approved iteration
 
 Date: 2026-09-02  
 Status at design time: approved\

@@ -23,7 +23,7 @@ which rules exist, where they run, and which inputs they check.
 Rule IDs refer to the [configuration standard](/docs/configuration-standard.md).
 Each implemented rule links to its detailed algorithm.
 
-The tables describe the source checkout assessed on October 16, 2026, including pending TPL-6 compatibility changes.
+The tables describe the source checkout assessed on October 16, 2026.
 Installed packages can have different coverage. Check the package version against the
 [changelog](/modules/envgene-linter/CHANGELOG.md).
 
@@ -67,20 +67,26 @@ The templating section describes the additional file scopes.
 
 ### Placement
 
-| Rule                 | Default | Implemented check                                                                       |
-|----------------------|---------|-----------------------------------------------------------------------------------------|
-| [PLACE-1][place-1]   | On      | Compare selected ParameterSet values across environments and clusters.                  |
-| [PLACE-2][place-2]   | On      | Find selected ParameterSet values that repeat an inherited layer value.                 |
-| [PLACE-3][place-3]   | On      | Check selected Cloud Passport file placement.                                           |
-| [PLACE-4][place-4]   | On      | Find Cloud Passport contract keys in selected ParameterSets.                            |
-| [PLACE-6][place-6]   | On      | Check that resolved pipeline ParameterSet bindings target the Cloud.                    |
-| [PLACE-7][place-7]   | On      | Find a selected ParameterSet reference used in multiple categories in one environment.  |
-| [PLACE-8][place-8]   | On      | Review connected empty ParameterSets, Resource Profile Overrides, and Credential files. |
-| [PLACE-9][place-9]   | On      | Check used passport roles, ambiguity, cluster ownership, layout, and companions.        |
-| [PLACE-10][place-10] | On      | Check directories of five connected entity types.                                       |
+| Rule                   | Default   | Implemented check                                                                         |
+|------------------------|-----------|-------------------------------------------------------------------------------------------|
+| [PLACE-1][place-1]     | On        | Compare selected ParameterSet values across environments and clusters.                    |
+| [PLACE-2][place-2]     | On        | Confirm that removing a repeated value preserves all known local selected consumers.      |
+| [PLACE-3][place-3]     | On        | Check selected Cloud Passport file placement.                                             |
+| [PLACE-4][place-4]     | On        | Find Cloud Passport contract keys in selected ParameterSets.                              |
+| [PLACE-6][place-6]     | On        | Check that resolved pipeline ParameterSet bindings target the Cloud.                      |
+| [PLACE-7][place-7]     | On        | Find a selected ParameterSet reference used in multiple categories in one environment.    |
+| [PLACE-8][place-8]     | On        | Review connected empty ParameterSets, Resource Profile Overrides, and Credential files.   |
+| [PLACE-9][place-9]     | On        | Check used passport roles, ambiguity, cluster ownership, layout, and companions.          |
+| [PLACE-10][place-10]   | On        | Check directories of five connected entity types.                                         |
 
 PLACE-10 covers ParameterSets, Resource Profile Overrides, Shared Template Variables, shared Credentials,
 and Cloud Passports.
+
+PLACE-1 and PLACE-2 compare decoded YAML values with their scalar types intact.
+PLACE-2 reports Fix only after confirming one independent source-entry removal.
+Necessary overrides are silent. Missing, unrendered, or unsupported merge context receives Review.
+The proof covers known local selected bindings, including shared and application-specific uses.
+PLACE-1 does not simulate its proposed promotion or prove preservation for all consumers.
 
 ### Secrets
 

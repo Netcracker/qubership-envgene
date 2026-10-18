@@ -123,10 +123,20 @@ class _Accumulator:
         self.values: dict[str, Any] = {}
         self.provenance: dict[tuple, Provenance] = {}
 
-    def apply(self, params: dict[str, Any], file: ParamsetFile, reference: str, container: tuple) -> None:
+    def apply(
+        self, params: dict[str, Any], file: ParamsetFile, reference: str, container: tuple,
+        omission: Provenance | None = None,
+    ) -> None:
         incoming = plain(params)
         if not isinstance(incoming, dict):
             return
+        if (omission is not None and file.path.resolve() == omission.file.path.resolve()
+                and container == omission.container):
+            # plain() creates the analysis copy. Keep source records and files intact.
+            parent = incoming
+            for key in omission.leaf[:-1]:
+                parent = parent[key]
+            del parent[omission.leaf[-1]]
         for key, value in incoming.items():
             current = self.values.get(key)
             self.values[key] = dict_merge(current, value)
@@ -149,8 +159,9 @@ class _Accumulator:
         return out
 
 
-def compute(index: RepoIndex, env: EnvModel, layers: frozenset[Layer] = ALL_LAYERS) -> EnvEffective:
-    result = EnvEffective(env=env)
+def _accumulate(
+    index: RepoIndex, env: EnvModel, layers: frozenset[Layer], omission: Provenance | None = None,
+) -> dict[Scope, _Accumulator]:
     accumulators: dict[Scope, _Accumulator] = {}
     for category in Category:
         for target, references in sorted(env.bound_targets(category).items()):
@@ -162,14 +173,26 @@ def compute(index: RepoIndex, env: EnvModel, layers: frozenset[Layer] = ALL_LAYE
                         continue
                     plain_scope = Scope(target=target, category=category)
                     accumulators.setdefault(plain_scope, _Accumulator()).apply(
-                        entry.file.parameters, entry.file, reference, PARAMETERS_CONTAINER
+                        entry.file.parameters, entry.file, reference, PARAMETERS_CONTAINER, omission
                     )
                     for app_index, app_name, app_params in entry.file.applications:
                         app_scope = Scope(target=target, category=category, application=app_name)
                         container = ("applications", app_index, "parameters")
                         accumulators.setdefault(app_scope, _Accumulator()).apply(
-                            app_params, entry.file, reference, container
+                            app_params, entry.file, reference, container, omission
                         )
+    return accumulators
+
+
+def compute_values(index: RepoIndex, env: EnvModel, omission: Provenance | None = None) -> dict[Scope, dict]:
+    """Compute complete parameter bags, optionally excluding one physical source occurrence."""
+    return {scope: accumulator.values
+            for scope, accumulator in _accumulate(index, env, ALL_LAYERS, omission).items()}
+
+
+def compute(index: RepoIndex, env: EnvModel, layers: frozenset[Layer] = ALL_LAYERS) -> EnvEffective:
+    result = EnvEffective(env=env)
+    accumulators = _accumulate(index, env, layers)
     for scope, accumulator in accumulators.items():
         mapping = accumulator.result()
         if mapping:

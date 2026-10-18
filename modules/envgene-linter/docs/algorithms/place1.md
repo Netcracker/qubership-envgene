@@ -2,6 +2,7 @@
 
 - [PLACE-1](#place-1)
   - [Description](#description)
+  - [Value comparison](#value-comparison)
   - [Input parameters](#input-parameters)
   - [Processing flow](#processing-flow)
   - [Result](#result)
@@ -12,6 +13,18 @@
 ## Description
 
 PLACE-1 identifies equal parameter values authored independently by at least two participating environments or clusters and recommends moving them to the shared layer. Equal restatements of an existing lower-layer value are handled by PLACE-2 instead. The rule considers only resolved, connected ParameterSets; there is no template layer.
+
+## Value comparison
+
+Comparison preserves decoded YAML scalar types: `true`, `1`, `1.0`, and `"1"` are different values.
+Quote style does not change string equality, so `info`, `'info'`, and `"info"` agree.
+Lists compare recursively in order. Mappings inside lists compare recursively without depending on key order.
+Unconfirmed equality cannot establish agreement between participants.
+
+Only confirmed equality excludes a lower-layer restatement. Unconfirmed equality within a cluster excludes
+that path from cluster agreement. Participant selection and promotion recommendations follow the flow below.
+The rule does not simulate the proposed move or prove that it preserves every consumer.
+Custom YAML tag semantics and typed mapping-key identity in flattened leaf paths are outside this comparison contract.
 
 ## Input parameters
 
@@ -48,7 +61,8 @@ PLACE-1 identifies equal parameter values authored independently by at least two
 
    1. Skip clusters without environments. For each remaining cluster, process environments in name order.
    2. Apply step 2 to `lower` versus `site`, keeping cluster-authored leaves and excluding cluster passport catalog keys.
-   3. Keep the first contribution for each scope/path. If another environment in that cluster supplies a different cluster-authored value for the same scope/path, mark it conflicting.
+   3. Keep the first contribution for each scope/path. If another environment supplies a cluster-authored value
+      that is not confirmed equal at that scope/path, mark the path conflicting.
    4. Remove every conflicting path after processing the cluster. Drop empty scope contributions.
 
 5. **Find values shared by participating clusters**
@@ -95,3 +109,4 @@ If both environments also bind a cluster file that already supplies `LOG_LEVEL: 
 - [Effective Set](effective-set.md)
 - [Implementation](../../src/envgene_linter/rules/place1.py)
 - [Tests](../../tests/test_place1.py)
+- [YAML value comparison](/modules/envgene-linter/src/envgene_linter/yaml_values.py)

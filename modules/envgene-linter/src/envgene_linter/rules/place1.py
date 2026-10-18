@@ -8,6 +8,7 @@ from ..effective import EffectiveLeaf, EnvEffective
 from ..model import ClusterModel, Finding, Layer, Location, RepoIndex, Scope, Severity
 from ..passport import Catalogs
 from ..rulemeta import RULES
+from ..yaml_values import equal
 
 MIN_AGREEMENT = 2
 Contribution = dict[Scope, dict[tuple, EffectiveLeaf]]
@@ -136,7 +137,7 @@ def _authored_at(
             if skip_keys and (str(leaf.path[0]) if leaf.path else leaf.key) in skip_keys:
                 continue
             below = below_map.get(scope, path)
-            if below is not None and below.value == leaf.value:
+            if below is not None and equal(below.value, leaf.value) is True:
                 continue
             contribution[scope][path] = leaf
     return dict(contribution)
@@ -159,7 +160,7 @@ def _cluster_contribution(
         for scope, mapping in _authored_at(below, repo_only, Layer.CLUSTER, skip_keys).items():
             for path, leaf in mapping.items():
                 existing = merged[scope].get(path)
-                if existing is not None and existing.value != leaf.value:
+                if existing is not None and equal(existing.value, leaf.value) is not True:
                     conflicting.add((scope, path))
                 merged[scope].setdefault(path, leaf)
     for scope, path in conflicting:
@@ -185,7 +186,7 @@ def _shared_across(
         for path in sorted(common):
             owners = [(name, mapping[path]) for name, mapping in participants]
             first = owners[0][1].value
-            if any(owned.value != first for _, owned in owners[1:]):
+            if any(equal(owned.value, first) is not True for _, owned in owners[1:]):
                 continue
             shared.append((scope, owners[0][1], owners))
     return shared

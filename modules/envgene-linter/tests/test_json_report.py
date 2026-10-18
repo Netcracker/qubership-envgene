@@ -111,6 +111,34 @@ def test_cli_creates_both_reports_with_grouped_findings(repo, console):
     assert ("PLACE-1" in result.stdout) == console
 
 
+@pytest.mark.parametrize(('references', 'action'), [
+    (['base', 'local'], 'Fix'),
+    (['base', 'local', 'missing'], 'Review'),
+])
+def test_cli_preserves_place2_removal_outcome_in_all_reports(repo, references, action):
+    repo.env('c', 'e', deploy={'cloud': references})
+    repo.cluster_paramset('c', 'base', {'KEY': 'same'})
+    repo.env_paramset('c', 'e', 'local', {'KEY': 'same'})
+
+    result = CliRunner().invoke(main, ['check', str(repo.root), '--console'])
+
+    assert result.exit_code == 0, result.output
+    data = json.loads((repo.root / report.JSON_REPORT_FILENAME).read_text(encoding='utf-8'))
+    entries = [item for item in data if item['rule_id'] == 'PLACE-2']
+    assert len(entries) == 1
+    assert entries[0]['action'] == action
+    assert entries[0]['files'] == ['environments/c/e/Inventory/parameters/local.yml:3:3']
+    assert 'type' not in entries[0]
+    html = (repo.root / 'envgene-linter-report.html').read_text(encoding='utf-8')
+    assert entries[0]['issue'] in html
+    assert f'chip-{action.lower()}' in html
+    console_section = result.output.split('PLACE-2\n', 1)[1].split('\n\nPLACE-3', 1)[0]
+    assert entries[0]['issue'] in console_section
+    if action == 'Review':
+        assert 'Remove' not in entries[0]['fix_suggestion']
+        assert '\ninformation\n' in console_section
+
+
 @pytest.mark.parametrize("existing", ["*.pyc", "/envgene-linter-report.html\n", "/envgene-linter-report.json\n"])
 def test_cli_adds_both_ignore_entries_once_and_preserves_existing(repo, existing):
     (repo.root / "templates").mkdir()

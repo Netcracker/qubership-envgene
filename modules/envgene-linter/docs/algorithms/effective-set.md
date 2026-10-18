@@ -1,5 +1,17 @@
 # Effective Set
 
+- [1. Purpose](#1-purpose)
+- [2. Scope](#2-scope)
+- [3. Staging](#3-staging)
+- [4. Apply order](#4-apply-order)
+- [5. `dict_merge(a, b)`](#5-dict_mergea-b)
+- [6. Provenance](#6-provenance)
+- [7. Three projections per environment](#7-three-projections-per-environment)
+  - [Complete bags for removal analysis](#complete-bags-for-removal-analysis)
+- [8. Citations (source of truth)](#8-citations-source-of-truth)
+- [9. Limitations this cycle](#9-limitations-this-cycle)
+- [10. Worked example (the golden)](#10-worked-example-the-golden)
+
 Prerequisite for: [`docs/algorithms/place1.md`](./place1.md).
 
 ## 1. Purpose
@@ -166,6 +178,21 @@ A shadowed repository file is not restored in a projection; see
 
 "Authored at layer L" means: in the relevant projection, the leaf's provenance
 (§6) has that layer.
+
+### Complete bags for removal analysis
+
+`compute()` returns leaves and provenance for the three projections.
+`compute_values()` returns the complete merged parameter bag per scope, including empty mappings,
+using the same selected inputs and merge implementation.
+
+PLACE-2 can pass one source occurrence to `compute_values()` for an analysis replay.
+An occurrence is the resolved physical file path plus its complete YAML path, including the global or
+application parameter container. Replay omits only that entry from an analysis copy at every selection
+of the physical file. The file remains selected, its parent mappings remain present, and shadowed inputs
+remain absent. Original files and indexed YAML documents are unchanged.
+
+The [PLACE-2 algorithm](/modules/envgene-linter/docs/algorithms/place2.md) defines source completeness,
+consumer coverage, and typed comparison of the bags before and after removal.
 
 ## 8. Citations (source of truth)
 

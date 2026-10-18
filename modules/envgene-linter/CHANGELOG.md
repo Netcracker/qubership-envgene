@@ -10,6 +10,11 @@
 
 ## Unreleased
 
+- Preserve YAML value types in PLACE-1 and PLACE-2 comparisons, including nested collections.
+  Treat booleans, integers, floating-point numbers, and numeric strings as distinct values.
+- Confirm PLACE-2 removals against every known local selected consumer before reporting Fix.
+  Keep necessary overrides silent and report incomplete or unsupported merge contexts as Review.
+  Distinguish global, application, nested, and literal dotted source entries.
 - Stop reporting `.j2` files based on their directory in TPL-1. Ignore YAML comments while retaining checks
   for Jinja in active values, including quoted strings and block scalars.
 - Report literal `data.username` values in `usernamePassword` Credentials as Warning / Fix in SEC-5.

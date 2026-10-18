@@ -1,8 +1,71 @@
 # envgene-linter: PLACE-1 first implementation
 
+- [Current value comparison contract](#current-value-comparison-contract)
+  - [Requirements](#requirements)
+  - [Design](#design)
+  - [Acceptance tests](#acceptance-tests)
+- [Original approved iteration](#original-approved-iteration)
+- [Goal](#goal)
+- [Why this shape](#why-this-shape)
+- [Out of scope (this cycle)](#out-of-scope-this-cycle)
+- [Architecture](#architecture)
+- [Discovery](#discovery)
+- [Effective Set](#effective-set)
+  - [Staging (no template)](#staging-no-template)
+  - [Apply order](#apply-order)
+  - [`dict_merge(a, b)`](#dict_mergea-b)
+  - [Three projections per environment](#three-projections-per-environment)
+- [PLACE-1](#place-1)
+  - [Environment → cluster](#environment--cluster)
+  - [Cluster → repository](#cluster--repository)
+  - [Finding](#finding)
+- [Console report](#console-report)
+- [Errors and exit codes](#errors-and-exit-codes)
+- [Testing](#testing)
+- [Algorithm documents](#algorithm-documents)
+- [Process constraints](#process-constraints)
+
 File eligibility is governed by the later shared [connected-only contract](2026-09-11-connected-only-design.md).
 
-The original iteration is preserved below, including its report format and exclusions. For current behavior, see [PLACE-1](../../algorithms/place1.md) and [Effective Set](../../algorithms/effective-set.md). In particular, projections now filter inputs selected with all layers present; removing a layer must not restore a shadowed file.
+The current requirements below govern value comparison. The original iteration follows for historical context,
+including its report format and exclusions. For the complete current behavior, see
+[PLACE-1](/modules/envgene-linter/docs/algorithms/place1.md) and
+[Effective Set](/modules/envgene-linter/docs/algorithms/effective-set.md).
+
+## Current value comparison contract
+
+### Requirements
+
+PLACE-1 compares decoded YAML values with their scalar types intact.
+Boolean, integer, floating-point, and string values are distinct, including inside lists and nested collections.
+String quote style and mapping order do not change equality. List order does.
+Only confirmed equality establishes shared agreement or excludes a lower-layer restatement.
+An unconfirmed comparison inside a cluster excludes the conflicting path from that cluster's contribution.
+
+Participant selection, passport-key exclusions, scopes, and promotion destinations retain their existing contract.
+The rule does not simulate promotion. Custom tag semantics and typed mapping-key identity in flattened paths
+remain outside the value comparison contract.
+
+### Design
+
+[yaml_values.py](/modules/envgene-linter/src/envgene_linter/yaml_values.py) provides a shared comparison returning
+`True`, `False`, or `None` for uncertain equality. The helper normalizes YAML scalar wrappers to their decoded
+types and recursively compares collections. NaN, unsupported retained values, repeated graphs, and the traversal
+limit return uncertainty unless another difference already disproves equality.
+PLACE-1 uses the helper for restatements, agreement between participants, and conflicting cluster contributions.
+
+### Acceptance tests
+
+- `true` and `1`, `false` and `0`, `1` and `1.0`, and quoted numbers do not establish agreement.
+- Type differences inside lists and nested mappings inside lists do not establish agreement.
+- Equal text with different quoting still establishes agreement.
+- A type difference from the inherited value remains a contribution rather than a PLACE-2 restatement.
+- Both environment-to-cluster and cluster-to-repository comparisons preserve these distinctions.
+
+The test coverage lives in [test_place1.py](/modules/envgene-linter/tests/test_place1.py) and
+[test_yaml_values.py](/modules/envgene-linter/tests/test_yaml_values.py).
+
+## Original approved iteration
 
 Date: 2026-09-01  
 Status at design time: approved\
