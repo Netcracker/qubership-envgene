@@ -181,6 +181,9 @@ class CurrentEnvInstanceStore:
         _t_beautify = 0.0
         _t_write = 0.0
         _flush_stats = []  # [diag] (beautify_ms, emitted_bytes, name) per flushed object
+        _gate_skipped = 0
+        _gate_skipped_bytes = 0
+        _gate_stats = []  # [diag] (size_bytes, name) of env objects skipped at the hash gate
         for key, rel in targets.items():
             data = self._objects[key]
             schema_path, schema_hash, header_text = self._object_meta(key)
@@ -192,6 +195,10 @@ class CurrentEnvInstanceStore:
             in_env_dir = key.is_relative_to(self.env_dir)
             if in_env_dir and stored.get(rel.as_posix()) == entry and key.is_file():
                 skipped += 1
+                _gate_skipped += 1
+                _size = key.stat().st_size
+                _gate_skipped_bytes += _size
+                _gate_stats.append((_size, key.name))
                 logger.info(f"Skipping {key} (unchanged)")
                 continue
             _b0 = _diag_now()
@@ -228,6 +235,11 @@ class CurrentEnvInstanceStore:
         logger.info(f"[diag] flush weight: {len(_flush_stats)} objects, {_flush_bytes} bytes; "
                     f"top by ms: {[(round(ms, 1), name) for ms, _, name in _top_ms]}; "
                     f"top by bytes: {[(b, name) for _, b, name in _top_bytes]}")
+        # [diag] env objects skipped at the hash gate: what a base-code flush would
+        # have re-written (size on disk = the cost hash-skip avoids on this env).
+        _gate_top = sorted(_gate_stats, key=lambda x: x[0], reverse=True)[:5]
+        logger.info(f"[diag] flush env-gate: {_gate_skipped} objects, {_gate_skipped_bytes} bytes skipped at hash gate; "
+                    f"top by bytes: {[(b, name) for b, name in _gate_top]}")
         if not self._delete_stale_objects(targets):
             cleanup_toplevel = {Path(target).name for target in cleanup_targets}
             for rel, entry in stored.items():
