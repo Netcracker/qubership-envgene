@@ -22,7 +22,7 @@ Instance pipeline is run with parameters that trigger effective set generation (
 **Steps:**
 
 1. The pipeline runs with the new EnvGene version.
-2. The `generate_effective_set` job (or equivalent) detects the old flat SBOM layout.
+2. The `generate_effective_set` step (or equivalent) detects the old flat SBOM layout.
 3. EnvGene removes all SBOM files from `/sboms/` (flat location).
 4. For each application version required by the Solution Descriptor, EnvGene generates the SBOM and writes it to `/sboms/<application-name>/<application-name>-<application-version>.sbom.json`.
 5. Effective set generation completes using the new SBOM paths.

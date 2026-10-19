@@ -58,7 +58,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads SD and extracts `deployPostfix` values from application elements
    2. For each `deployPostfix` value from SD:
       1. Attempts exact match: searches for a Namespace folder in Environment Instance whose name exactly matches the `deployPostfix` value
@@ -92,7 +92,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads SD and extracts `deployPostfix` values from application elements
    2. For each `deployPostfix` value from SD:
       1. Attempts exact match: searches for a Namespace folder in Environment Instance whose name exactly matches the `deployPostfix` value
@@ -126,7 +126,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads SD and extracts `deployPostfix` values from application elements
    2. For each `deployPostfix` value from SD:
       1. Attempts exact match: searches for a Namespace folder whose name exactly matches the `deployPostfix` value
@@ -162,7 +162,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads SD and extracts `deployPostfix` values from application elements
    2. For each `deployPostfix` value from SD:
       1. Attempts exact match: searches for a Namespace folder whose name exactly matches the `deployPostfix` value
@@ -210,7 +210,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Resolves parameter references using `${...}` macro syntax
    3. For each parameter reference:
@@ -279,7 +279,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Resolves parameter references using `${...}` macro syntax
    3. For complex structure references:
@@ -344,7 +344,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Resolves parameter references:
       1. Resolves `${cloud_api_url}` reference from Cloud `deployParameters`
@@ -383,7 +383,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Resolves parameter references:
       1. Resolves `${tenant_id}` reference from Tenant `deployParameters`
@@ -422,7 +422,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Resolves parameter references:
       1. Resolves `${tenant_name}` reference from Tenant `deployParameters`
@@ -461,7 +461,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${namespace_db_url}` reference
@@ -499,7 +499,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${cloud_region}` reference
@@ -537,7 +537,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${namespace_name}` reference
@@ -574,7 +574,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${test_url}` reference from `deployParameters`
@@ -605,7 +605,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${config_url}` reference from `deployParameters`
@@ -636,7 +636,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${api_url}` reference from `e2eParameters`
@@ -667,7 +667,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${config_endpoint}` reference from `e2eParameters`
@@ -698,7 +698,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${deploy_url}` reference from `technicalConfigurationParameters`
@@ -729,7 +729,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
+1. The `generate_effective_set` step runs in the pipeline:
    1. Reads Environment Instance
    2. Attempts to resolve parameter references:
       1. Attempts to resolve `${e2e_endpoint}` reference from `technicalConfigurationParameters`
@@ -742,7 +742,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ## Cleanup context generation
 
-This section covers use cases for [Cleanup context](/docs/features/effective-set-generation.md#cleanup-context) generation by the `generate_effective_set` job. The cleanup context is the part of the Effective Set that downstream tooling reads to undeploy a namespace. Which namespaces receive it depends on the deployment architecture and the operation.
+This section covers use cases for [Cleanup context](/docs/features/effective-set-generation.md#cleanup-context) generation by the `generate_effective_set` step. The cleanup context is the part of the Effective Set that downstream tooling reads to undeploy a namespace. Which namespaces receive it depends on the deployment architecture and the operation.
 
 ### UC-CC-CG-1: Cleanup context for every namespace in No-CMDB v1 deploy
 
@@ -761,8 +761,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
-2. The job produces the cleanup context for every namespace of the environment.
+1. The `generate_effective_set` step runs.
+2. The step produces the cleanup context for every namespace of the environment.
 
 **Results:**
 
@@ -785,8 +785,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
-2. The job produces the topology, pipeline, deployment, and runtime contexts.
+1. The `generate_effective_set` step runs.
+2. The step produces the topology, pipeline, deployment, and runtime contexts.
 
 **Results:**
 
@@ -809,8 +809,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
-2. The job marks the target namespaces' deployment and runtime for removal and produces no cleanup context.
+1. The `generate_effective_set` step runs.
+2. The step marks the target namespaces' deployment and runtime for removal and produces no cleanup context.
 
 **Results:**
 

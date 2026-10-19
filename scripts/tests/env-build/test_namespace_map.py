@@ -74,3 +74,17 @@ class TestNamespaceMap(BaseTest):
         assert result["app"]["peer"] == "bgd-env-peer-app"
         map_file = self.test_data_dir / "environments" / "bgd-cluster" / "bgd-env" / "Inventory" / "namespace-map.yml"
         assert map_file.is_file()
+
+    @pytest.mark.unit
+    def test_compute_namespace_map_writes_only_the_map_file(self):
+        self._set_env("bgd-cluster", "bgd-env")
+        env_dir = self.test_data_dir / "environments" / "bgd-cluster" / "bgd-env"
+        map_file = env_dir / "Inventory" / "namespace-map.yml"
+        map_file.unlink(missing_ok=True)
+        files_before = {p: p.read_bytes() for p in env_dir.rglob("*") if p.is_file()}
+
+        compute_namespace_map()
+
+        files_after = {p: p.read_bytes() for p in env_dir.rglob("*") if p.is_file()}
+        assert set(files_after) - set(files_before) == {map_file}
+        assert all(files_after[p] == content for p, content in files_before.items())

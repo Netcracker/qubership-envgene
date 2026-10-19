@@ -1,0 +1,11 @@
+name: core-tmpl
+baseline: dev
+applications:
+  - name: app1
+    services:
+      - name: svc1
+        parameters:
+          - name: TEMPLATE_PARAM
+            value: from-template
+          - name: REPLICAS
+            value: 3

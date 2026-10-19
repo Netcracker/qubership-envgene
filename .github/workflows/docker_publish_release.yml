@@ -180,27 +180,6 @@ jobs:
           check-name: E2E BDD Test Results (Release)
           artifact-name: e2e-test-results-release
 
-  build-instance-repo-pipeline:
-    name: Build Instance pipeline
-    needs: [bump-versions]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build Instance Repo Pipeline Docker Image
-        uses: ./.github/actions/build-pipeline
-        with:
-          registry: ${{ env.REGISTRY }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ inputs.version }}
-          ref: ${{ needs.bump-versions.outputs.promotable == 'true' && needs.bump-versions.outputs.wip_ref || needs.bump-versions.outputs.sha }}
-
   build-gsf-envgene-instance:
     name: Build GSF instance
     needs: [bump-versions]
@@ -249,7 +228,6 @@ jobs:
       - bump-versions
       - build-qubership-envgene
       - e2e-bdd-tests
-      - build-instance-repo-pipeline
       - build-gsf-envgene-instance
       - build-gsf-envgene-discovery
     runs-on: ubuntu-latest

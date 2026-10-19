@@ -1,0 +1,59 @@
+[
+  {
+    "name": "BUSYBOX-APP",
+    "registry": {
+      "credentials_id": "",
+      "name": "Shared Platform Registry",
+      "maven_config": {
+        "full_repository_url": "",
+        "repository_domain_name": "https://registry.example.com",
+        "target_snapshot": "example.maven.mvn.snapshots",
+        "target_staging": "example.maven.mvn.staging",
+        "target_release": "example.maven.mvn",
+        "snapshot_group": "example.maven.mvn.group",
+        "release_group": "example.maven-release.mvn.group"
+      },
+      "docker_config": {
+        "snapshot_uri": "registry.example.com:25081",
+        "staging_uri": "registry.example.com:25084",
+        "release_uri": "registry.example.com:25083",
+        "group_uri": "registry.example.com:25081",
+        "snapshot_repo_name": "example.maven.docker.dev",
+        "staging_repo_name": "example.maven.docker.staging",
+        "release_repo_name": "example.maven.docker",
+        "group_name": "example.maven.docker.group"
+      },
+      "go_config": {
+        "go_target_snapshot": "example.maven.golang.dev",
+        "go_target_release": "example.maven.golang",
+        "go_proxy_repository": "example.maven-release.golang.group"
+      },
+      "raw_config": {
+        "raw_target_snapshot": "",
+        "raw_target_release": "",
+        "raw_target_staging": "",
+        "raw_target_proxy": ""
+      },
+      "npm_config": {
+        "npm_target_snapshot": "example.maven.npm.dev",
+        "npm_target_release": "example.maven.npm"
+      },
+      "helm_config": {
+        "helm_target_staging": "example.helm.libs.staging",
+        "helm_target_release": "example.helm.libs"
+      },
+      "helm_app_config": {
+        "helm_staging_repo_name": "example.helm.charts.staging",
+        "helm_release_repo_name": "example.helm.charts.release",
+        "helm_group_repo_name": "example.helm.charts",
+        "helm_dev_repo_name": "example.helm.charts.dev"
+      }
+    },
+    "artifact_id": "busybox-app",
+    "group_id": "com.test.busybox",
+    "support_parallel_deploy": false,
+    "deploy_parameters": {},
+    "technical_configuration_parameters": {},
+    "solution_descriptor": false
+  }
+]

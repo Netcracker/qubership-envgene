@@ -23,6 +23,7 @@ Mode: gate | auto
 
 - [ ] design      - <ADR + doc PR, or "settled elsewhere">
 - [ ] cr          - <issue #, when filed>
+- [ ] dev-design  - <dev design path, when approved>
 - [ ] plan        - <plan path, when written>
 - [ ] implement   - <PR #, when opened>
 - [ ] review      - <report path, when done>

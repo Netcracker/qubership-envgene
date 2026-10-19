@@ -115,7 +115,7 @@ for the procedure.
 
 After committing the templates and the instance config:
 
-1. Trigger the `app_reg_def_process` job in the instance pipeline.
+1. Trigger the `app_reg_def_process` step in the instance pipeline.
 2. Inspect `/appdefs/` and `/regdefs/` in the instance repository.
 3. Confirm AppDef `registryName` resolves as expected per instance overrides.
 4. Confirm RegDef fields use override values where configured.

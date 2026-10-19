@@ -3,23 +3,20 @@
 
 - [EnvGene Repository Variables](#envgene-repository-variables)
   - [Instance EnvGene Repository](#instance-envgene-repository)
-    - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
     - [`SECRET_KEY`](#secret_key)
     - [`GITLAB_TOKEN`](#gitlab_token)
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
-    - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
-    - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
-    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
     - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
     - [`GCP_SA_KEY`](#gcp_sa_key)
     - [`VAULT_ADDR`](#vault_addr)
     - [`VAULT_TOKEN`](#vault_token)
     - [`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials)
+    - [`GOOGLE_APPLICATION_CREDENTIALS_CONTENT`](#google_application_credentials_content)
     - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
     - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
     - [`SSL_CERTIFICATES_BUNDLE`](#ssl_certificates_bundle)
@@ -28,8 +25,6 @@
     - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
     - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
   - [Template EnvGene Repository](#template-envgene-repository)
-    - [`ENV_TEMPLATE_TEST`](#env_template_test)
-    - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
   - [Discovery EnvGene Repository](#discovery-envgene-repository)
     - [`DOCKER_REGISTRY` (in discovery repository)](#docker_registry-in-discovery-repository)
@@ -43,24 +38,6 @@ The following are parameters that are set in GitLab CI/CD variables or GitHub en
 All parameters are of string data type.
 
 ## Instance EnvGene Repository
-
-### `ENVGENE_LOG_LEVEL`
-
-**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
-This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
-
-**Logging Level Mapping (Java vs Python):**
-
-| ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
-|-------------------|----------------------|--------------------|
-| DEBUG             | DEBUG                | DEBUG              |
-| INFO              | INFO                 | INFO               |
-| WARNING           | WARNING              | WARN               |
-| ERROR             | ERROR                | ERROR              |
-
-**Default Value**: INFO
-
-**Mandatory**: No
 
 ### `SECRET_KEY`
 
@@ -103,8 +80,9 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 ### `ENVGENE_AGE_PUBLIC_KEY`
 
-**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in
-operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
+**Description**: Public key from EnvGene's AGE key pair. Used in the deploy and sync flow to SOPS-encrypt the
+`ARGO_DPG_CONTEXT.env` file before it is passed to the deploy job. For credential encryption, `PUBLIC_AGE_KEYS`
+is used instead.
 
 **Example**: `key-placeholder-123`
 
@@ -124,17 +102,6 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Example**: `key-placeholder-123,key-placeholder-124`
 
-### `GITLAB_RUNNER_TAG_NAME`
-
-**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which
-runner will pick up and execute the job in the CI pipeline.
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `ubuntu-latest`
-
 ### `GH_RUNNER_TAG_NAME`
 
 **Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which
@@ -145,18 +112,6 @@ runner will pick up and execute the job in the CI pipeline.
 **Mandatory**: No
 
 **Example**: `ubuntu-latest`
-
-### `RUNNER_SCRIPT_TIMEOUT`
-
-**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner.
-This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running
-processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
-
-**Default Value**: 10m
-
-**Mandatory**: No
-
-**Example**: `15m`
 
 ### `GH_RUNNER_SCRIPT_TIMEOUT`
 
@@ -174,21 +129,6 @@ documentation](https://docs.github.com/en/actions/using-workflows/workflow-synta
 **Mandatory**: No
 
 **Example**: `15`
-
-### `CALCULATOR_CLI_JAVA_OPTIONS`
-
-**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and
-ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**:
-
-```text
-CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
-```
 
 ### `DOCKER_REGISTRY` (in instance repository)
 
@@ -260,19 +200,35 @@ identifier is not `default_store`, set the prefixed variant `<id>_VAULT_TOKEN` i
 
 ### `GOOGLE_APPLICATION_CREDENTIALS`
 
-**Description**: GCP service account credentials used by the
+**Description**: Path to the GCP service account key file used by the
 [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
-credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). When the
-Secret Store identifier is not `default_store`, set the prefixed variant `<id>_GOOGLE_APPLICATION_CREDENTIALS`
-instead. See
+credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). The CLI reads
+the service account JSON from the file at this path. To pass the JSON content directly instead of a file, set
+[`GOOGLE_APPLICATION_CREDENTIALS_CONTENT`](#google_application_credentials_content), which takes precedence over
+this variable. When the Secret Store identifier is not `default_store`, set the prefixed variant
+`<id>_GOOGLE_APPLICATION_CREDENTIALS` instead. See
 [Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
-
-The variable holds the full JSON content of the service account key, not a file path - the CLI consumes the
-JSON directly.
 
 **Default Value**: None
 
-**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store
+**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store and
+`GOOGLE_APPLICATION_CREDENTIALS_CONTENT` is not set
+
+### `GOOGLE_APPLICATION_CREDENTIALS_CONTENT`
+
+**Description**: Full JSON content of the GCP service account key used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
+credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). The CLI
+consumes the JSON directly, so no key file on disk is needed. This variable takes precedence over
+[`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials): when it is set, the CLI uses the JSON content
+and ignores the file path. When the Secret Store identifier is not `default_store`, set the prefixed variant
+`<id>_GOOGLE_APPLICATION_CREDENTIALS_CONTENT` instead. See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store and
+`GOOGLE_APPLICATION_CREDENTIALS` is not set
 
 ### `AWS_ACCESS_KEY_ID`
 
@@ -356,20 +312,6 @@ activity event. When the variable is empty, EnvGene sends an empty string.
 **Mandatory**: No
 
 ## Template EnvGene Repository
-
-### `ENV_TEMPLATE_TEST`
-
-**Description**: Determines whether the generation of the Environment Instance is running in Template Testing mode.
-
-**Default Value**: `false`
-
-**Mandatory**: No
-
-**Example**: `true`
-
-### `ENVGENE_LOG_LEVEL` (in template repository)
-
-The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
 
 ### `DOCKER_REGISTRY` (in template repository)
 

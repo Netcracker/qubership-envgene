@@ -1,0 +1,8 @@
+inventory:
+  environmentName: "test-env"
+  cloudName: "test-cluster"
+envTemplate:
+  name: "rp-test"
+  artifact: "test-artifact:v1"
+  envSpecificResourceProfiles:
+    core: core-env-over

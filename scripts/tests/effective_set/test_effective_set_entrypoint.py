@@ -91,6 +91,27 @@ class TestRunDeployPlanPartial:
         assert captured["deploy_plan_path"] == delta_dp
 
     @pytest.mark.unit
+    @pytest.mark.parametrize("run", [_run_deploy_plan_partial, _run_deploy_plan_full])
+    def test_invokes_cli_without_deploy_plan_when_plan_is_empty(self, tmp_path, monkeypatch, run):
+        es = tmp_path / ES_DIR_NAME
+        es.mkdir()
+        dp = tmp_path / "Inventory" / "deploy-plan.yml"
+        dp.parent.mkdir(parents=True)
+        dp.write_text("[]\n")
+        captured = {}
+
+        def capture_build_cli(es_dir, env_name, deploy_plan_path=None):
+            captured["deploy_plan_path"] = deploy_plan_path
+            return "fake_cmd"
+
+        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+
+        run(es, FULL_ENV_NAME, fake_plan([], dp_path=dp))
+
+        assert captured["deploy_plan_path"] is None
+
+    @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
         (es / ESGenerationContext.TOPOLOGY.value).mkdir(parents=True)
