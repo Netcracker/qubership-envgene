@@ -1,3 +1,6 @@
+import hashlib
+import os
+import pickle
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
@@ -7,7 +10,7 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
@@ -16,6 +19,10 @@ from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comme
 # It is an input file of the user, so flush() must not write it back.
 NEVER_WRITTEN_DIRS = ("Inventory",)
 YAML_EXTENSIONS = (".yml", ".yaml")
+
+def profile_cache_dir() -> Path | None:
+    root = os.environ.get("CI_PROJECT_DIR")
+    return Path(root) / ".shared" / "profile-cache" if root else None
 
 
 def _key(path) -> Path:
@@ -60,6 +67,33 @@ class CurrentEnvInstanceStore:
             if key.parts[:len(dir_parts)] == dir_parts and key.stem == name and key.suffix in YAML_EXTENSIONS:
                 return key
         return None
+
+    def load_profile_from_cache(self, profile_path):
+        t0 = _diag_now()
+        raw = Path(profile_path).read_bytes()
+        key = hashlib.sha256(raw).hexdigest()
+        cache_dir = profile_cache_dir()
+        cache_file = cache_dir / f"{key}.pkl" if cache_dir else None
+        if cache_file is not None:
+            try:
+                if cache_file.is_file():
+                    with cache_file.open("rb") as f:
+                        logger.debug(f"[diag] profile cache hit: {Path(profile_path).name} in {(_diag_now() - t0) * 1000:.1f}ms")
+                        return pickle.load(f)
+            except Exception as ex:
+                logger.warning(f"Profile parse cache is unreadable for {Path(profile_path).name}, re-parsing: {ex}")
+        t_parse = _diag_now()
+        profile = openYaml(profile_path)
+        if cache_file is not None:
+            try:
+                cache_file.parent.mkdir(parents=True, exist_ok=True)
+                with cache_file.open("wb") as f:
+                    pickle.dump(profile, f)
+            except Exception as ex:
+                logger.warning(f"Profile parse cache is unwritable for {Path(profile_path).name}: {ex}")
+        logger.debug(f"[diag] profile cache miss: {Path(profile_path).name} openYaml "
+                    f"{(_diag_now() - t_parse) * 1000:.1f}ms")
+        return profile
 
     def bg_domain(self) -> CommentedMap:
         bg_domain_path = self.env_dir / "bg_domain.yml"

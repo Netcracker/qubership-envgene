@@ -1,6 +1,6 @@
 from time import time as _diag_now
 
-from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
+from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
 from build_env.render_config_env import EnvGenerator
 
 
@@ -33,7 +33,8 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, invent
             found_path = find_yaml_file(p, profile_file_name, recursively=True)
             if found_path:
                 logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
-                env_specific_profile = current_env_instance_store().put(found_path, openYaml(found_path))
+                env_instance_store = current_env_instance_store()
+                env_specific_profile = env_instance_store.put(found_path, env_instance_store.load_profile_from_cache(found_path))
                 validate_yaml_by_scheme_or_fail(input_yaml_content=env_specific_profile, schema_file_path=rp_schema)
                 result[templateType] = str(found_path)
                 break
@@ -127,7 +128,7 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
                     merge_dict_key_with_comment("value", sourceParam, "value", param, commentText)
 
 
-def find_resource_profile(profile_name: str, template_profiles_dir) -> Path | None:
+def find_resource_profile(profile_name: str, template_profiles_dir, disk_profile_paths: dict) -> Path | None:
     env_instance_store = current_env_instance_store()
     _t0 = _diag_now()
     profile_path = env_instance_store.find_yaml(template_profiles_dir, profile_name)
@@ -135,15 +136,13 @@ def find_resource_profile(profile_name: str, template_profiles_dir) -> Path | No
     if profile_path:
         logger.debug(f"[diag] profile '{profile_name}' found in store in {( _t_store - _t0) * 1000:.1f}ms")
         return profile_path
-    same_name_paths = [path for path in findAllYamlsInDir(template_profiles_dir)
-                       if extractNameFromFile(path) == profile_name]
-    if not same_name_paths:
+    profile_path = disk_profile_paths.get(profile_name)
+    if profile_path is None:
         return None
-    profile_path = Path(same_name_paths[-1])
     _t_parse = _diag_now()
-    env_instance_store.put(profile_path, openYaml(profile_path))
+    env_instance_store.put(profile_path, env_instance_store.load_profile_from_cache(profile_path))
     _t_put = _diag_now()
-    logger.debug(f"[diag] profile '{profile_name}' store-miss; openYaml+put in {(_t_put - _t_parse) * 1000:.1f}ms")
+    logger.debug(f"[diag] profile '{profile_name}' store-miss; parse+put in {(_t_put - _t_parse) * 1000:.1f}ms")
     return profile_path
 
 
@@ -158,8 +157,12 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], templat
     if not needed_resource_profiles:
         return profiles_map
     validity_by_path = {}
+    _t_dir0 = _diag_now()
+    disk_profile_paths = {extractNameFromFile(path): Path(path) for path in findAllYamlsInDir(template_profiles_dir)}
+    logger.debug(f"[diag] findAllYamlsInDir over profile dir: {( _diag_now() - _t_dir0) * 1000:.1f}ms, "
+                f"{len(disk_profile_paths)} files indexed")
     for template_name, needed_profile in needed_resource_profiles.items():
-        profile_path = find_resource_profile(needed_profile, template_profiles_dir)
+        profile_path = find_resource_profile(needed_profile, template_profiles_dir, disk_profile_paths)
         if not profile_path:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue
