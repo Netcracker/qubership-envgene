@@ -576,11 +576,11 @@ Functions:
       - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
-      - DD and ZIP at `${APP_ARTIFACTS_DIR}`, sboms
+      - DD and app chart at `${APP_ARTIFACTS_DIR}`, sboms
     - actions:
       - resolve DD per app with appreg defs
-      - download DD+ZIP, unzip
-      - generate SBOM from local DD + ZIP
+      - download DD and app chart, unpack
+      - generate SBOM from local DD and app chart
     - AI[techDebt-PERF]: Optimize DD and ZIP downloads and SBOM generation.
       <https://docs.gitlab.com/ci/caching/>
       - (??) Do not download ZIP for `generate_argocd_repo`.

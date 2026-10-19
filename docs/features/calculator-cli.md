@@ -20,7 +20,6 @@
       - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
       - [\[Version 2.0\] deployPostfix Matching Logic](#version-20-deploypostfix-matching-logic)
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
-      - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
       - [\[Version 2.0\] Sensitive parameter processing](#version-20-sensitive-parameter-processing)
         - [\[Version 2.0\] Local Sensitive parameters](#version-20-local-sensitive-parameters)
         - [\[Version 2.0\] Sensitive parameters via external Credentials](#version-20-sensitive-parameters-via-external-credentials)
@@ -115,7 +114,6 @@ Below is a **complete** list of attributes
 | `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                                                                                                     | `v2.0`  | `v1.0`                                                                    |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                                                                                                               | N/A     |                                                                           |
 | `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
-| `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
 | `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
 | `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to the deployment and runtime contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params)       | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
 | `--generate-cleanup-context`/`-gcc`                 | boolean | no        | Determines whether the cleanup context is generated for every namespace of the environment. If `true`, it is produced for all namespaces. If `false`, no cleanup context is produced                                                                                                                          | `false` | `true`                                                                    |
@@ -394,23 +392,6 @@ This allows matching `deployPostfix` values from SD with Namespace folder names 
 > Optional Attributes:
 > If a default exists: The default value is applied
 > If no default exists: The attribute remains unset
-
-#### [Version 2.0] App chart validation
-
-The Calculator command-line tool performs validation to check for the presence of an `application/vnd.qubership.app.chart` component. The validation follows these rules:
-
-1. If any of the Application SBOMs passed to the calculator does not contain a component with `application/vnd.qubership.app.chart` mime-type:
-
-   - The calculation fails
-   - An error message is logged
-
-2. This validation is only performed for Effective Set version `v2.0`
-
-3. Validation execution depends on the attribute:
-     [`EFFECTIVE_SET_CONFIG.app_chart_validation`](/docs/instance-pipeline-parameters.md#effective_set_config)
-   - Behavior:
-     - If `true`: Validation is performed
-     - If `false`: Validation is skipped
 
 #### [Version 2.0] Sensitive parameter processing
 
