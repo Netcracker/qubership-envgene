@@ -180,6 +180,12 @@ class CurrentEnvInstanceStore:
         _t_hash = 0.0
         _t_beautify = 0.0
         _t_write = 0.0
+        _t_gate_check = 0.0
+        _t_gate_stat = 0.0
+        _t_dump = 0.0
+        _t_root_read = 0.0
+        _t_log = 0.0
+        _log_count = 0
         _flush_stats = []  # [diag] (beautify_ms, emitted_bytes, name) per flushed object
         _gate_skipped = 0
         _gate_skipped_bytes = 0
@@ -193,14 +199,23 @@ class CurrentEnvInstanceStore:
             entry = {"hash": content_hash, "schema": schema_hash}
             new_manifest["objects"][rel.as_posix()] = entry
             in_env_dir = key.is_relative_to(self.env_dir)
-            if in_env_dir and stored.get(rel.as_posix()) == entry and key.is_file():
-                skipped += 1
-                _gate_skipped += 1
-                _size = key.stat().st_size
-                _gate_skipped_bytes += _size
-                _gate_stats.append((_size, key.name, key, schema_path))
-                logger.info(f"Skipping {key} (unchanged)")
-                continue
+            if in_env_dir:
+                _g0 = _diag_now()
+                _gate_match = stored.get(rel.as_posix()) == entry and key.is_file()
+                _t_gate_check += _diag_now() - _g0
+                if _gate_match:
+                    skipped += 1
+                    _gate_skipped += 1
+                    _s0 = _diag_now()
+                    _size = key.stat().st_size
+                    _t_gate_stat += _diag_now() - _s0
+                    _gate_skipped_bytes += _size
+                    _gate_stats.append((_size, key.name, key, schema_path))
+                    _s0 = _diag_now()
+                    logger.info(f"Skipping {key} (unchanged)")
+                    _t_log += _diag_now() - _s0
+                    _log_count += 1
+                    continue
             _b0 = _diag_now()
             if key in self._beautify:
                 if schema_path:
@@ -211,16 +226,28 @@ class CurrentEnvInstanceStore:
                 remove_cred_yaml_comments(data)
             else:
                 remove_empty_list_comments(data)
+            _d0 = _diag_now()
             text = dumpYamlToStr(data)
+            _t_dump += _diag_now() - _d0
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
-            if not in_env_dir and key.is_file() and key.read_text() == text:
-                skipped += 1
-                _flush_stats.append((_diag_now() - _b0, len(text), key.name))
-                logger.info(f"Skipping {key} (unchanged on disk)")
-                continue
+            if not in_env_dir:
+                _r0 = _diag_now()
+                _root_match = key.is_file() and key.read_text() == text
+                _t_root_read += _diag_now() - _r0
+                if _root_match:
+                    skipped += 1
+                    _flush_stats.append((_diag_now() - _b0, len(text), key.name))
+                    _s0 = _diag_now()
+                    logger.info(f"Skipping {key} (unchanged on disk)")
+                    _t_log += _diag_now() - _s0
+                    _log_count += 1
+                    continue
             written += 1
+            _s0 = _diag_now()
             logger.info(f"Writing {key} (schema: {schema_path})")
+            _t_log += _diag_now() - _s0
+            _log_count += 1
             _w0 = _diag_now()
             writeToFile(key, text)
             _flush_stats.append((_w0 - _b0, len(text), key.name))
@@ -276,9 +303,12 @@ class CurrentEnvInstanceStore:
         save_manifest(self.env_dir, new_manifest)
         _t_save = _diag_now() - _s0
         logger.info(f"[diag] flush: load_manifest={(_t_manifest-_t0)*1000:.1f}ms, "
-                    f"hash(480x)={_t_hash*1000:.1f}ms, beautify={_t_beautify*1000:.1f}ms, "
+                    f"hash={_t_hash*1000:.1f}ms, beautify={_t_beautify*1000:.1f}ms, "
                     f"write={_t_write*1000:.1f}ms, post-loop={(_t_loop-_t_manifest-_t_hash-_t_beautify-_t_write)*1000:.1f}ms, "
                     f"save_manifest={_t_save*1000:.1f}ms")
+        logger.info(f"[diag] flush breakdown: gate_check={_t_gate_check*1000:.1f}ms, "
+                    f"gate_stat={_t_gate_stat*1000:.1f}ms, dump={_t_dump*1000:.1f}ms, "
+                    f"root_read={_t_root_read*1000:.1f}ms, logs({_log_count})={_t_log*1000:.1f}ms")
         logger.info(f"Object store flush: {written} written, {skipped} skipped")
 
     def _validated_this_run(self) -> set:
