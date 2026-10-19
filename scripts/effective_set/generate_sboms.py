@@ -9,15 +9,18 @@ from sbom_generator.generate_bom import Generator, SBOMOutput, exclude_resolved_
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 
-def _propagate_resolved_versions(deploy_plan, dd_artifacts) -> None:
-    resolved_versions = {
-        artifact.source.application.name: artifact.source.resolved_version
-        for artifact in dd_artifacts
-        if artifact.source.resolved_version
-    }
+def _propagate_resolved_versions(deploy_plan, dd_artifacts, source_entities) -> None:
+    resolved_versions = {}
+    for source_entity, artifact in zip(source_entities, dd_artifacts):
+        resolved_version = artifact.source.resolved_version
+        if resolved_version:
+            resolved_versions[id(source_entity)] = resolved_version
+
     for entity in deploy_plan.entities:
+        resolved_version = resolved_versions.get(id(entity))
+        if not resolved_version:
+            continue
         app_name, version = entity.version.split(':', 1)
-        resolved_version = resolved_versions.get(app_name)
         if resolved_version and resolved_version != version:
             entity.version = f'{app_name}:{resolved_version}'
 
@@ -39,10 +42,12 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
 
     sbom_plan = deploy_plan.model_copy(deep=True)
     sbom_plan.entities = apps_needing_sbom
-    dd_artifacts, _ = download_dd_and_zip_artifacts([app.version for app in apps_needing_sbom], ctx=ctx)
-    _propagate_resolved_versions(deploy_plan, dd_artifacts)
+    source_entities = apps_needing_sbom
+    dd_artifacts, _ = download_dd_and_zip_artifacts(
+        [app.version for app in source_entities], ctx=ctx)
+    _propagate_resolved_versions(deploy_plan, dd_artifacts, source_entities)
     deploy_plan.write()
-    _propagate_resolved_versions(sbom_plan, dd_artifacts)
+    _propagate_resolved_versions(sbom_plan, dd_artifacts, source_entities)
     sbom_and_regs: SBOMOutput = Generator.generate_bom_by_content(
         sd_content=sbom_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path)
 

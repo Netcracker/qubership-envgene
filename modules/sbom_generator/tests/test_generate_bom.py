@@ -1,13 +1,13 @@
 import base64
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aioresponses import aioresponses
 from artifact_searcher.artifact import version_to_folder_name
 from artifact_searcher.utils.models import (
     AuthConfig, Application, Credentials, DockerConfig, FileExtension, MavenConfig, MavenConfigV2,
-    Provider, Registry, RegistryV2,
+    Provider, Registry, RegistryV2, Repo, RepoType, ArtifactSource,
 )
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, DeployPlanEntity
 from sbom_generator.generate_bom import Generator, exclude_resolved_apps, _stable_bom_ref
@@ -15,7 +15,7 @@ from effective_set.generate_sboms import _propagate_resolved_versions
 from sbom_generator.utils.models import ImageType, Service
 from tests.utils import load_json, load_zip, make_app
 
-from effective_set.dd_downloading import download_dd_and_zip_artifacts
+from effective_set.dd_downloading import download_dd_and_zip_artifacts, resolve_dd_and_zip_info
 
 APP_RESOLVER_PATH = Path("app_resolver")
 ARTIFACTS_PATH = Path("artifacts")
@@ -41,9 +41,60 @@ class TestSBOMGenerator:
         source.resolved_version = "1.0.0-20261019.123456-1"
         artifact = MagicMock(source=source)
 
-        _propagate_resolved_versions(deploy_plan, [artifact])
+        _propagate_resolved_versions(deploy_plan, [artifact], deploy_plan.entities)
 
         assert deploy_plan.entities[0].version == "sample-om:1.0.0-20261019.123456-1"
+
+    def test_propagate_resolved_versions_matches_requested_versions(self):
+        deploy_plan = EnvgeneDeployPlan(entities=[
+            DeployPlanEntity(version="same-app:1.0.0-SNAPSHOT"),
+            DeployPlanEntity(version="same-app:2.0.0-SNAPSHOT"),
+        ])
+        first = MagicMock(source=MagicMock(resolved_version="1.0.0-20261019.1"))
+        second = MagicMock(source=MagicMock(resolved_version="2.0.0-20261019.2"))
+
+        _propagate_resolved_versions(
+            deploy_plan,
+            [first, second],
+            deploy_plan.entities,
+        )
+
+        assert [entity.version for entity in deploy_plan.entities] == [
+            "same-app:1.0.0-20261019.1",
+            "same-app:2.0.0-20261019.2",
+        ]
+
+    @pytest.mark.asyncio
+    async def test_zip_resolution_uses_independent_timestamp(self, tmp_path):
+        app = Application.model_validate(load_json(APP_RESOLVER_PATH.joinpath("sd_content_apps"))[0])
+        app_def = MagicMock(registry=MagicMock())
+        app_def.registry.resolve_auth.return_value = {}
+        repository = Repo(value="", type=RepoType.TARGET_RELEASE)
+        dd_source = ArtifactSource(
+            source_url="https://registry/dd-1.0.0-20261019.1.json",
+            repository=repository,
+            application=app,
+            resolved_version="1.0.0-20261019.1",
+        )
+        zip_source = ArtifactSource(
+            source_url="https://registry/dd-1.0.0-20261019.2.zip",
+            repository=repository,
+            application=app,
+            resolved_version="1.0.0-20261019.2",
+        )
+        check_artifact = AsyncMock(side_effect=[dd_source, zip_source])
+
+        with patch("effective_set.dd_downloading.get_appdef_for_app", return_value=app_def), \
+                patch("effective_set.dd_downloading.artifact.check_artifact_async", check_artifact):
+            dd_artifact, zip_artifact = await resolve_dd_and_zip_info(
+                f"{app.name}:1.0.0-SNAPSHOT", str(tmp_path), {}, MagicMock())
+
+        assert dd_artifact.local_target_path.endswith("/1.0.0-20261019.1/dd.json")
+        assert zip_artifact.local_target_path.endswith("/1.0.0-20261019.2/dd.zip")
+        assert [call.args[:3] for call in check_artifact.await_args_list] == [
+            (app_def, FileExtension.JSON, "1.0.0-SNAPSHOT"),
+            (app_def, FileExtension.ZIP, "1.0.0-SNAPSHOT"),
+        ]
 
     @pytest.fixture(autouse=True)
     def mock_cred_config(self):
