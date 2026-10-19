@@ -6,6 +6,7 @@
   - [Proposed Approach](#proposed-approach)
     - [Link to the "red" EnvGene](#link-to-the-red-envgene)
     - [Assumptions](#assumptions)
+    - [Limitations](#limitations)
     - [Requirements](#requirements)
       - [SBOM Generation Library](#sbom-generation-library)
       - [EnvGene](#envgene)
@@ -22,6 +23,7 @@
       - [Handling DD After Delivery](#handling-dd-after-delivery)
         - [`full_image_name`](#full_image_name)
         - [`docker_registry`](#docker_registry)
+        - [`full_chart_name`](#full_chart_name)
       - [SBOM Components](#sbom-components)
         - [Application SBOM Metadata](#application-sbom-metadata)
         - [`application/vnd.qubership.service` Component](#applicationvndqubershipservice-component)
@@ -67,6 +69,11 @@ This feature uses [SBOM](/docs/features/sbom.md) functionality
 6. An artifact with specific GAV coordinates cannot be simultaneously located in multiple repositories (staging, snapshot, release) of a registry
 7. The library does not support communication with registries requiring authentication
 
+### Limitations
+
+1. The library resolves the app chart by its constructed URL only. It does not read the Helm
+   repository index, so the chart must be published at `<base>/<helm_chart_name>-<helm_chart_version>.tgz`
+
 ### Requirements
 
 #### SBOM Generation Library
@@ -90,21 +97,10 @@ This feature uses [SBOM](/docs/features/sbom.md) functionality
 9. The library should be developed using Python
 10. A detailed specification of the library, outlining its functions, methods of invocation, and expected results, must be provided by the library developer. Specification must be stored in Git
 11. Nexus and Artifactory must be supported as registries
-12. SBOM generation for one environment by the library should take no more than 20 seconds:
-    1. 250 application in SD
-    2. Application ZIP size ~1MB.
-    3. Application JSON size: ~50kB
-13. The library must validate Deployment Descriptor and throw a human-readable error if either contains a `SNAPSHOT` version
-14. The library should search for the artifact in the repositories, and the search should stop after the artifact is found. The search order is as follows:
-    1. Snapshot
-    2. Staging
-    3. Release
-    4. Snapshot group
-15. The library must not check for the presence of an artifact in a registry repository if that repository is not configured (if the attribute is not set or the value is equal to `""`)
-16. The library must error with a clear message (e.g., "Authenticated registries are not supported") when attempting to download from authenticated registries
-17. The library must generate Application SBOM component according to the principles described in [Application SBOM Components Inclusion Criteria and Naming Convention](#application-sbom-components-inclusion-criteria-and-naming-convention)
-18. The Application SBOMs must be sorted and validated according to the JSON schema
-19. The Application SBOM JSON schema must be located in the path `/module/schemas/application.sbom.schema.json`
+12. The library must not check for the presence of an artifact in a registry repository if that repository is not configured (if the attribute is not set or the value is equal to `""`)
+13. The library must generate Application SBOM component according to the principles described in [Application SBOM Components Inclusion Criteria and Naming Convention](#application-sbom-components-inclusion-criteria-and-naming-convention)
+14. The Application SBOMs must be sorted and validated according to the JSON schema
+15. The Application SBOM JSON schema must be located in the path `/module/schemas/application.sbom.schema.json`
 
 #### EnvGene
 
@@ -127,6 +123,7 @@ This feature uses [SBOM](/docs/features/sbom.md) functionality
        2. Maintaining the file as a valid YAML document containing registry objects
        3. Completely replacing any existing configuration for matching `registry_id` values
 11. EnvGene must display SBOM generation library error messages in logs
+12. EnvGene must source the `helm-map-repositories` input attribute from the `HELM_MAP_REPOSITORIES` Cloud `e2eParameters` value
 
 ### Use Cases
 
@@ -225,6 +222,16 @@ classDiagram
 | `cmdb-token`                   | string | yes       | Token of the CMDB from which the appDef and regDef will be retrieved. Mutually exclusive with `local-app-defs-path`  and `local-reg-defs-path`    | `<cmdb-token>`                                              |
 | `local-app-defs-path`          | string | yes       | Path to the directory containing Application Definition files. Mutually exclusive with `cmdb-url`  and `cmdb-username` and `cmdb-token`           | `/environments/applicationDefinitions`                      |
 | `local-reg-defs-path`          | string | yes       | Path to the directory containing Registry Definition files. Mutually exclusive with `cmdb-url`  and `cmdb-username` and `cmdb-token`              | `/environments/registryDefinitions`                         |
+| `helm-map-repositories`        | object | no        | Overrides the reconstructed Helm chart base URL, keyed by group repository name. See [Handling DD After Delivery](#handling-dd-after-delivery).   | see below                                                   |
+
+The `helm-map-repositories` object maps a RegDef Helm group-repository name to a custom registry URL. The key is the
+value of `regDef.helmAppConfig.helmGroupRepoName`:
+
+```yaml
+# key: value of regDef.helmAppConfig.helmGroupRepoName
+nc.helm.charts:
+  url: https://mirror.example.com/helm
+```
 
 ### SBOM Generation Rules
 
@@ -271,7 +278,7 @@ The following parameter sources are used during generation:
 `regDef` - the registryDefinition object of the corresponding application (in NC terms). It is retrieved from cloud-cmdb using the app:ver Resolving library  
 `SD` - the Solution Descriptor object, obtained from the input attribute `solution-descriptor-content` or downloaded from the registry using the attribute `solution-descriptor-app-ver`  
 `DD` - Application JSON part downloaded from the registry using the attribute `solution-descriptor-app-ver`. It is a JSON file.
-`ZIP` - Application ZIP part downloaded (and unzipped) from the registry using the attribute `solution-descriptor-app-ver`. It represents a file structure.
+`app-chart` - the application Helm chart `.tgz`, downloaded and unpacked from the Helm registry. The generator reads the resource-profile baselines from it. The chart URL comes from `DD.charts[0]`, or is reconstructed after delivery (see [Handling DD After Delivery](#handling-dd-after-delivery)).
 
 #### Handling Missing Attributes in DD
 
@@ -289,24 +296,34 @@ The following parameter sources are used during generation:
 
 #### Handling DD After Delivery
 
-After the delivery, the DD (Deployment Descriptor) is modified. Specifically, the following `service` attributes are removed:
+After delivery, the DD (Deployment Descriptor) is modified:
 
-- The attributes `git_url`, `git_branch`, `git_revision`, and `full_image_name` are removed.
-- The value of the `docker_registry` attribute is changed to `artifactory`.
+1. `service` attributes change:
 
-The parameters `git_url`, `git_branch`, and `git_revision` are not needed for deployment. If they are missing, the SBOM generator just sets them to an empty string (`""`) by default.
+   - `git_url`, `git_branch`, `git_revision`, and `full_image_name` are removed.
+   - `docker_registry` is changed to `artifactory`.
 
-However, for deployment, the parameters `full_image_name` and `docker_registry` must have real values. If they are missing in the DD, the SBOM generator calculates them automatically:
+2. `charts` attributes change:
+
+   - `full_chart_name` and `helm_registry` are removed.
+
+The `git_url`, `git_branch`, and `git_revision` attributes are not needed for deployment. When they are missing, the
+SBOM generator sets them to an empty string (`""`).
+
+The `full_image_name`, `docker_registry`, and the chart URL must have real values. When they are missing, the SBOM
+generator reconstructs them:
 
 ##### `full_image_name`
 
-If `full_image_name` is not present in the DD, the SBOM generator constructs it using this pattern:
+If `full_image_name` is not present in a `service`, the SBOM generator constructs it using this pattern:
 
 ```text
 `<regDef.DockerConfig.X>/<DD.services[].docker_repository_name>/<DD.services[].image_name>:<DD.services[].docker_tag>`
 ```
 
-Here, `regDef.DockerConfig.X` is determined from the Registry Definition, which is found using the Application Definition. The assumption is that the DD and all Docker images described in it are located in the same target repository (snapshot, staging, or release).
+Here, `regDef.DockerConfig.X` is determined from the Registry Definition, which is found using the Application Definition.
+The assumption is that the DD and all Docker images described in it are located in the same target repository (snapshot, staging,
+or release).
 
 For example, if the DD is in the release Maven repository, the generator uses the release Docker repository group.
 
@@ -322,13 +339,40 @@ mavenConfig.releaseGroup   -> dockerConfig.groupUri
 
 ##### `docker_registry`
 
-If `DD.services[].full_image_name` is not set in the DD, then the `docker_registry` value in the SBOM is generated by the SBOM generator as:
+If `full_image_name` is not set in a `service`, then the `docker_registry` value in the SBOM is generated by the SBOM generator as:
 
 ```text
 `regDef.DockerConfig.X`
 ```
 
 The value of `regDef.DockerConfig.X` is determined in the same way as described above for [`full_image_name`](#full_image_name).
+
+##### `full_chart_name`
+
+The SBOM generator downloads the app chart to read the resource-profile baselines.
+
+When `helm_registry` is present (before delivery), the generator downloads `DD.charts[0].full_chart_name` directly.
+
+When `helm_registry` is absent (after delivery), the generator builds the chart URL using this pattern:
+
+```text
+<base>/<DD.charts[0].helm_chart_name>-<DD.charts[0].helm_chart_version>.tgz
+```
+
+`regDef.helmAppConfig` defines four Helm repository names: `helmStagingRepoName`, `helmReleaseRepoName`,
+`helmGroupRepoName`, and `helmDevRepoName`. The app chart always uses the group repository `helmGroupRepoName`,
+regardless of the Maven channel the DD came from. Docker images, by contrast, are selected by the Maven channel.
+
+The generator resolves `<base>` in this order:
+
+1. The `helm-map-repositories` input attribute, looked up by the `regDef.helmAppConfig.helmGroupRepoName` value. When
+   a matching entry exists, its `url` is `<base>`.
+2. Otherwise `<base>` is `<regDef.mavenConfig.repositoryDomainName>/<regDef.helmAppConfig.helmGroupRepoName>`. The
+   v1.0 Registry Definition has no separate Helm host, so the Maven host is used.
+
+The app chart is required. When `DD.charts[]` has no entry, SBOM generation fails with a readable error naming the
+application. When the chart cannot be fetched from the resolved URL, SBOM generation fails with an error naming the
+chart.
 
 #### SBOM Components
 
@@ -399,7 +443,7 @@ Will be added for each element in `DD.services` where `image_type` is `service`.
 | `components[1].mime-type`                              | always `application/vnd.qubership.resource-profile-baseline`                                                                                                                                                                                                                                                                                                                                                                                                                                             | yes       | `application/vnd.qubership.resource-profile-baseline`                 |
 | `components[1].name`                                   | always `resource-profile-baselines`                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | yes       | `resource-profile-baselines`                                          |
 | `components[1].data[].type`                            | always `configuration`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | yes       | `configuration`                                                       |
-| `components[1].data[].name`                            | filename of the resource profile baseline in the folder `<unzipped application ZIP>/deployment-artifacts/<service-name>/charts/<service-name>/resource-profiles/` or `<unzipped application ZIP>/deployment-artifacts/<service-name>/helm-templates/<service-name>/resource-profiles/`                                                                                                                                                                                                                   | yes       | None                                                                  |
+| `components[1].data[].name`                            | filename of the resource profile baseline in the folder `<unpacked app-chart>/<helm_chart_name>/charts/<service-name>/resource-profiles/`                                                                                                                                                                                                                                                                                                                                                                | yes       | None                                                                  |
 | `components[1].data[].contents.attachment.contentType` | always `application/yaml`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | yes       | `application/yaml`                                                    |
 | `components[1].data[].contents.attachment.encoding`    | always `base64`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | yes       | `base64`                                                              |
 | `components[1].data[].contents.attachment.content`     | base64 encoded contents of the resource profile baseline file                                                                                                                                                                                                                                                                                                                                                                                                                                            | yes       | None                                                                  |
@@ -563,13 +607,16 @@ Will be added for the element of `DD.charts`.
 |----------------|----------------------------------------------------------------------------------------------------------------------------|-----------|---------------------------------------|
 | `bom-ref`      | Must be unique within the BOM. Value SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links | yes       | None                                  |
 | `type`         | always `application`                                                                                                       | yes       | `application`                         |
-| `mime-type`    | always `application/vnd.qubership.configuration`                                                                           | yes       | `application/vnd.qubership.app.chart` |
+| `mime-type`    | always `application/vnd.qubership.app.chart`                                                                               | yes       | `application/vnd.qubership.app.chart` |
 | `name`         | `DD.metadata.component`                                                                                                    | yes       | None                                  |
 | `version`      | `DD.charts[0].helm_chart_version`                                                                                          | yes       | None                                  |
 
 > [!NOTE] The `name` attribute is taken from `DD.metadata.component` instead of `DD.charts[0].helm_chart_name`
 > (which was used before and is more correct), because not all NC applications have their app chart name matching their application name.
 > In the future, if all applications follow this rule, we can switch to using the chart name (this will also require a change in ACH).
+
+The app chart is required. The Effective Set generator fails with a readable error naming the application when an
+Application SBOM has no `application/vnd.qubership.app.chart` component.
 
 ##### Environment Template SBOM Metadata
 
