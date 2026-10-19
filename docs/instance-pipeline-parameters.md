@@ -495,7 +495,6 @@ Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 ```yaml
 version: <v1.0|v2.0>
 effective_set_expiry: <effective-set-expiry-time>
-app_chart_validation: <boolean>
 enable_traceability: <boolean>
 contexts:
   pipeline:
@@ -508,7 +507,6 @@ contexts:
 | Attribute                                 | Mandatory | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                | Example                                                 |
 |-------------------------------------------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|---------------------------------------------------------|
 | **version**                               | Optional  | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`. EnvGene uses `--effective-set-version` to pass this attribute to the Calculator CLI.                                                                                                                                                                                                                                                                                                                                                                                      | `v2.0`                                 | `v2.0`                                                  |
-| **app_chart_validation**                  | Optional  | [App chart validation](/docs/features/calculator-cli.md#version-20-app-chart-validation) feature flag. This validation checks whether all applications in the solution for which the effective set is being calculated are built using the app chart model. If at least one is not, the calculation fails. If `true`: validation is performed, if `false`: validation is skipped                                                                                                                                                                                     | `true`                                 | `false`                                                 |
 | **effective_set_expiry**                  | Optional  | The duration for which the effective set (stored as a job artifact) will remain available for download. Envgene passes this value unchanged to: 1) The `retention-days` job attribute in case of GitHub pipeline. 2) The `expire_in` job attribute in case of GitLab pipeline. The exact syntax and constraints differ between platforms. Refer to the GitHub and GitLab documentation for details.                                                                                                                                                                  | GitLab: `1 hours`, GitHub: `1` (day)   | GitLab: `2 hours`, GitHub: `2`                          |
 | **enable_traceability**                   | Optional  | Feature flag that enables traceability functionality in the effective set generation. When set to `true`, the Calculator CLI will include additional traceability information in the generated effective set, allowing tracking of parameter sources and transformations. When set to `false`, traceability information is not included.                                                                                                                                                                                                                             | `false`                                | `true`                                                  |
 | **contexts.pipeline.consumers**           | Optional  | Each entry in this list adds a [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context) to the Effective Set. EnvGene passes the path to the corresponding JSON schema file to the Calculator command-line tool using the `--pipeline-consumer-specific-schema-path` argument. Each list element is passed as a separate argument.                                                                                                                                                                     | None                                   | None                                                    |
@@ -527,7 +525,6 @@ Consumer-specific pipeline context components registered in EnvGene:
 
 ```yaml
 version: v2.0
-app_chart_validation: 'false'
 ```
 
 ### `CALCULATOR_CLI_JAVA_OPTIONS`
@@ -1014,8 +1011,7 @@ curl -X POST \
             "GENERATE_EFFECTIVE_SET": "true",
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
             "GH_ADDITIONAL_PARAMS":
-"SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\",
-\"app_chart_validation\": \"false\"}"
+"SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}"
         }
       }'
 ```
