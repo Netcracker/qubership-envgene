@@ -370,6 +370,10 @@ The generator resolves `<base>` in this order:
 2. Otherwise `<base>` is `<regDef.mavenConfig.repositoryDomainName>/<regDef.helmAppConfig.helmGroupRepoName>`. The
    v1.0 Registry Definition has no separate Helm host, so the Maven host is used.
 
+The app chart is required. When `DD.charts[]` has no entry, SBOM generation fails with a readable error naming the
+application. When the chart cannot be fetched from the resolved URL, SBOM generation fails with an error naming the
+chart.
+
 #### SBOM Components
 
 ##### Application SBOM Metadata
@@ -610,6 +614,9 @@ Will be added for the element of `DD.charts`.
 > [!NOTE] The `name` attribute is taken from `DD.metadata.component` instead of `DD.charts[0].helm_chart_name`
 > (which was used before and is more correct), because not all NC applications have their app chart name matching their application name.
 > In the future, if all applications follow this rule, we can switch to using the chart name (this will also require a change in ACH).
+
+The app chart is required. The Effective Set generator fails with a readable error naming the application when an
+Application SBOM has no `application/vnd.qubership.app.chart` component.
 
 ##### Environment Template SBOM Metadata
 

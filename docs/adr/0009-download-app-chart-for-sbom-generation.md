@@ -19,8 +19,8 @@ resolve the chart the same way the deploy side resolves it:
   repository. The app chart always uses the group repository, regardless of the Maven channel the DD came from.
 - The `HELM_MAP_REPOSITORIES` parameter overrides that base per group repository, so an environment can redirect
   chart downloads without editing the Registry Definition.
-- When the DD names a chart that cannot be fetched, generation fails. When the DD names no chart, generation skips the
-  download.
+- The app chart is required. Generation fails when the DD names no chart, or names a chart that cannot be fetched.
+- The Effective Set generator also fails when an application's SBOM has no app-chart component.
 
 Rejected:
 
@@ -34,10 +34,9 @@ Rejected:
 
 - Resource profiles come from the artifact that is actually deployed, and the download is smaller and cheaper for the
   registry.
-- The Effective Set generator no longer validates the presence of an app-chart component, so an application without a
-  chart no longer fails generation.
+- A missing or unreachable app chart fails generation, at SBOM generation and at the Effective Set generator, rather
+  than emitting an incomplete SBOM or Effective Set. We accept a hard stop over a silent partial result.
 - A chart published outside the constructed base-and-name layout is not found, because the index is not read.
-- We accept that an unreachable chart stops SBOM generation, instead of emitting an incomplete SBOM.
 
 See [SBOM generation](/docs/features/sbom-generation.md), [ADR-0001](/docs/adr/0001-adapt-registry-auth-from-e2e-parameters.md)
 for the registry auth parameters, and [ADR-0003](/docs/adr/0003-derive-sbom-component-identity-from-dd-only.md) for the
