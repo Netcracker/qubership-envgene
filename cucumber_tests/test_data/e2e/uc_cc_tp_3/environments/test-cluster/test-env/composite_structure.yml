@@ -1,0 +1,9 @@
+name: dev-1-composite-structure
+baseline:
+  name: dev-1-core
+  type: namespace
+satellites:
+  - name: dev-1-bss-domain
+    type: bgdomain
+  - name: dev-1-oss
+    type: namespace
