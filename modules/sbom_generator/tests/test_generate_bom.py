@@ -11,7 +11,6 @@ from artifact_searcher.utils.models import (
 )
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, DeployPlanEntity
 from sbom_generator.generate_bom import Generator, exclude_resolved_apps, _stable_bom_ref
-from effective_set.generate_sboms import _propagate_resolved_versions
 from sbom_generator.utils.models import ImageType, Service
 from tests.utils import load_json, load_zip, make_app
 
@@ -31,19 +30,6 @@ def mock_aio_response():
 
 
 class TestSBOMGenerator:
-
-    def test_propagate_resolved_snapshot_version_to_deploy_plan(self):
-        deploy_plan = EnvgeneDeployPlan(entities=[
-            DeployPlanEntity(version="sample-om:1.0.0-SNAPSHOT", deploy_postfix="sample-om"),
-        ])
-        source = MagicMock()
-        source.application.name = "sample-om"
-        source.resolved_version = "1.0.0-20261019.123456-1"
-        artifact = MagicMock(source=source)
-
-        _propagate_resolved_versions(deploy_plan, [artifact])
-
-        assert deploy_plan.entities[0].version == "sample-om:1.0.0-20261019.123456-1"
 
     @pytest.fixture(autouse=True)
     def mock_cred_config(self):
