@@ -10,6 +10,8 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
+
+_profile_cache_listed = False
 from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
@@ -69,16 +71,26 @@ class CurrentEnvInstanceStore:
         return None
 
     def load_profile_from_cache(self, profile_path):
+        global _profile_cache_listed
         t0 = _diag_now()
         raw = Path(profile_path).read_bytes()
         key = hashlib.sha256(raw).hexdigest()
         cache_dir = profile_cache_dir()
+        if cache_dir is not None and not _profile_cache_listed:
+            _profile_cache_listed = True
+            try:
+                pkl_files = sorted(p.name for p in cache_dir.glob("*.pkl")) if cache_dir.is_dir() else []
+            except OSError:
+                pkl_files = []
+            logger.debug(f"[diag] profile cache dir: {cache_dir} exists={cache_dir.is_dir()} "
+                         f"pkls={len(pkl_files)} {[p[:20] for p in pkl_files[:8]]}")
         cache_file = cache_dir / f"{key}.pkl" if cache_dir else None
         if cache_file is not None:
             try:
                 if cache_file.is_file():
                     with cache_file.open("rb") as f:
-                        logger.debug(f"[diag] profile cache hit: {Path(profile_path).name} in {(_diag_now() - t0) * 1000:.1f}ms")
+                        logger.debug(f"[diag] profile cache hit: {Path(profile_path).name} key={key[:16]} "
+                                     f"in {(_diag_now() - t0) * 1000:.1f}ms")
                         return pickle.load(f)
             except Exception as ex:
                 logger.warning(f"Profile parse cache is unreadable for {Path(profile_path).name}, re-parsing: {ex}")
@@ -91,7 +103,7 @@ class CurrentEnvInstanceStore:
                     pickle.dump(profile, f)
             except Exception as ex:
                 logger.warning(f"Profile parse cache is unwritable for {Path(profile_path).name}: {ex}")
-        logger.debug(f"[diag] profile cache miss: {Path(profile_path).name} openYaml "
+        logger.debug(f"[diag] profile cache miss: {Path(profile_path).name} key={key[:16]} openYaml "
                     f"{(_diag_now() - t_parse) * 1000:.1f}ms")
         return profile
 
