@@ -16,10 +16,13 @@ def write_app_reg_defs(base_dir: str, rendered_defs: dict, env_dir: str, placeme
         root_dst.mkdir(parents=True, exist_ok=True)
         if env_dst.exists():
             shutil.rmtree(env_dst)
+        if placement_mode == "dual":
+            env_dst.mkdir(parents=True, exist_ok=True)
         for name, definition in rendered_defs.get(dir_name, {}).items():
-            writeYamlToFile(root_dst / f"{name}.yml", definition)
+            root_path = root_dst / f"{name}.yml"
+            writeYamlToFile(root_path, definition)
             if placement_mode == "dual":
-                writeYamlToFile(env_dst / f"{name}.yml", definition)
+                shutil.copy2(root_path, env_dst / f"{name}.yml")
 
 
 def validate_definition_override(dir_name: str, yaml_file: str) -> None:
