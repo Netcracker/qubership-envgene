@@ -162,17 +162,17 @@ data:
 
 ### EXT4 — Repositories by artifact type
 
-| type         | roles (repositories)                                    |
-|--------------|---------------------------------------------------------|
-| maven        | snapshot, staging, release, snapshotGroup, releaseGroup |
-| docker       | snapshot, staging, release, group                       |
-| go           | snapshot, release, proxy                                |
-| npm          | snapshot, release                                       |
-| raw          | snapshot, release, staging, proxy                       |
-| helmLib      | staging, release                                        |
-| helmApp      | staging, release, group, dev                            |
-| helmLibOci ¹ | staging, release                                        |
-| helmAppOci ¹ | staging, release, group, dev                            |
+| type           | roles (repositories)                                    |
+|----------------|---------------------------------------------------------|
+| `maven`        | snapshot, staging, release, snapshotGroup, releaseGroup |
+| `docker`       | snapshot, staging, release, group                       |
+| `go`           | snapshot, release, proxy                                |
+| `npm`          | snapshot, release                                       |
+| `raw`          | snapshot, release, staging, proxy                       |
+| `helmLib`      | staging, release                                        |
+| `helmApp`      | staging, release, group, dev                            |
+| `helmLibOci` ¹ | staging, release                                        |
+| `helmAppOci` ¹ | staging, release, group, dev                            |
 
 ¹ roles mirror helmLib/helmApp.
 
