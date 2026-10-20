@@ -272,6 +272,17 @@ class GitRepoManager:
 
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
+    def _ensure_shared_cache_excluded(self) -> None:
+        exclude = Path(self.repo.git_dir) / "info" / "exclude"
+        pattern = ".shared/"
+        existing = exclude.read_text() if exclude.is_file() else ""
+        lines = existing.splitlines()
+        if pattern not in lines:
+            lines.append(pattern)
+            exclude.parent.mkdir(parents=True, exist_ok=True)
+            exclude.write_text("\n".join(lines) + "\n")
+            logger.info(f"Added {pattern} to {exclude}")
+
     def sparse_checkout(self, sparse_paths: list[str]) -> None:
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
@@ -282,6 +293,7 @@ class GitRepoManager:
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
 
+        self._ensure_shared_cache_excluded()
         logger.info("git clean -ffd")
         self.repo.git.clean("-ffd")
 
