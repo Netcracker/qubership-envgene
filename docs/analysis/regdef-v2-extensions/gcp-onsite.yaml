@@ -1,0 +1,93 @@
+# Example 4 — Onsite: gcp AR (maven, docker) + nexus (helmLib, helmApp), GCP secret store
+
+kind: RegistryDefinition
+version: v2
+name: gcp-onsite
+authConfig:
+  gcp-sa:
+    provider: gcp
+    authMethod: service_account
+    gcpRegProject: customer-proj
+    gcpRegion: europe-west1
+    scopes:
+      r: gcp-sa-read
+      rw: gcp-sa-publish
+      rwd: gcp-sa-admin
+  nexus:
+    provider: nexus
+    authMethod: user_pass
+    baseUrl: https://nexus.customer.internal
+    scopes:
+      r: nexus-read
+      rw: nexus-publish
+      rwd: nexus-admin
+mavenConfig:
+  authConfig: gcp-sa
+  repositories:
+    snapshot:
+      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-snapshots
+      repoName: maven-snapshots
+    staging:
+      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-staging
+      repoName: maven-staging
+    release:
+      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-releases
+      repoName: maven-releases
+dockerConfig:
+  authConfig: gcp-sa
+  repositories:
+    snapshot:
+      url: europe-west1-docker.pkg.dev/customer-proj/docker-snapshots
+      repoName: docker-snapshots
+    staging:
+      url: europe-west1-docker.pkg.dev/customer-proj/docker-staging
+      repoName: docker-staging
+    release:
+      url: europe-west1-docker.pkg.dev/customer-proj/docker-releases
+      repoName: docker-releases
+helmLibConfig:
+  authConfig: nexus
+  repositories:
+    staging:
+      url: https://nexus.customer.internal/repository/helm-lib-staging
+      repoName: helm-lib-staging
+    release:
+      url: https://nexus.customer.internal/repository/helm-lib-releases
+      repoName: helm-lib-releases
+helmAppConfig:
+  authConfig: nexus
+  repositories:
+    staging:
+      url: https://nexus.customer.internal/repository/helm-app-staging
+      repoName: helm-app-staging
+    release:
+      url: https://nexus.customer.internal/repository/helm-app-releases
+      repoName: helm-app-releases
+    group:
+      url: https://nexus.customer.internal/repository/helm-app
+    dev:
+      url: https://nexus.customer.internal/repository/helm-app-dev
+      repoName: helm-app-dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS (literal values, no secret store)
+# ---------------------------------------------------------------------------
+# kind: RegistryCredentials
+# version: v1
+# data:
+#   gcp-onsite:
+#     gcp-sa-read:
+#       secret: ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsIC4uLiB9Cg==
+#     gcp-sa-publish:
+#       secret: ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsIC4uLiB9Cg==
+#     gcp-sa-admin:
+#       secret: ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsIC4uLiB9Cg==
+#     nexus-read:
+#       username: reader
+#       password: s3cr3t-read
+#     nexus-publish:
+#       username: publisher
+#       password: s3cr3t-publish
+#     nexus-admin:
+#       username: admin
+#       password: s3cr3t-admin

@@ -2,6 +2,7 @@
 
 - [RegDef v2 extensions](#regdef-v2-extensions)
   - [Open questions](#open-questions)
+  - [Limitations](#limitations)
   - [Extensions](#extensions)
     - [EXT1 — `scopes`](#ext1--scopes)
       - [Key: a subset of the r/w/d primitives](#key-a-subset-of-the-rwd-primitives)
@@ -11,30 +12,31 @@
     - [EXT5 — OCI helm in separate sections](#ext5--oci-helm-in-separate-sections)
     - [EXT6 — Repository: `url` + `repoName`](#ext6--repository-url--reponame)
   - [Model](#model)
-  - [authConfig method catalog](#authconfig-method-catalog)
+  - [`authConfig` method catalog](#authconfig-method-catalog)
   - [Artifact sections](#artifact-sections)
   - [Examples](#examples)
-    - [1. Offsite — artifactory + anonymous (no scopes) + multi-repo (snapshot, staging, release)](#1-offsite--artifactory--anonymous-no-scopes--multi-repo-snapshot-staging-release)
-    - [2. Offsite — artifactory + secret store + scopes + multi-repo](#2-offsite--artifactory--secret-store--scopes--multi-repo)
-    - [3. Onsite — nexus + secret store + scopes `rw` + single-repo](#3-onsite--nexus--secret-store--scopes-rw--single-repo)
-    - [4. Onsite — gcp + creds in CI/CD + scopes + single-repo](#4-onsite--gcp--creds-in-cicd--scopes--single-repo)
-    - [5. Onsite — aws + creds in CI/CD + scopes + single-repo](#5-onsite--aws--creds-in-cicd--scopes--single-repo)
 
 ## Open questions
 
-1. RegDef storage: per site (cn, mb, sit, uat, prod, …)?
+1. Which set of repository roles (snapshot, staging, release, snapshotGroup, releaseGroup, ...) is needed?
+   One unified set across all artifact types?
+   Which roles are mandatory and which optional?
+2. Should `helmLibConfig` and `helmAppConfig` be unified?
+3. Should `mavenConfig` be split into two types — one for the DD, one for maven libraries?
+
+## Limitations
+
+1. `authConfig` binds at the artifact-section level, not per repository. All repositories in a section share one `authConfig`.
+   No way to point `snapshot` and `release` within the same section at registries with different authentication.
 
 ## Extensions
 
 ### EXT1 — `scopes`
 
-`scopes` picks the identity for an operation. It is required, except for `anonymous` (no credential, so `scopes` is not needed).
+`scopes` maps an operation to a `credId` — the identity that performs it. It is required, except for `anonymous` (no credential, so `scopes`
+is not needed).
 
-Each key holds an object with exactly one field. The processor dispatches on the field name:
-
-- `credId`: a secret; a local key into `REGISTRY_CREDENTIALS.data.<regName>`.
-- `roleArn`: an inline AWS role ARN (assume_role; not a secret, no var).
-- `serviceAccount`: an inline GCP service-account email (federation; not a secret, no var).
+Each key maps to a `credId` - a key into `REGISTRY_CREDENTIALS.data.<regName>` (EXT2).
 
 #### Key: a subset of the r/w/d primitives
 
@@ -42,42 +44,19 @@ Each key holds an object with exactly one field. The processor dispatches on the
 
 ```yaml
 scopes:
-  r:
-    credId: reg-read         # secret -> var (pull only)
-  w:
-    credId: reg-push         # secret -> var (push only)
-  rwd:
-    credId: reg-admin        # secret -> var (read + write + delete)
-```
-
-```yaml
-scopes:                      # assume_role
-  r:
-    roleArn: arn:aws:iam::123456789012:role/eg-reg-read
-  w:
-    roleArn: arn:aws:iam::123456789012:role/eg-reg-publish
-  rwd:
-    roleArn: arn:aws:iam::123456789012:role/eg-reg-admin
-```
-
-```yaml
-scopes:                      # federation
-  r:
-    serviceAccount: eg-reg-read@my-project.iam.gserviceaccount.com
-  w:
-    serviceAccount: eg-reg-publish@my-project.iam.gserviceaccount.com
-  rwd:
-    serviceAccount: eg-reg-admin@my-project.iam.gserviceaccount.com
+  r: reg-read          # pull only
+  rw: reg-push         # read + write
+  rwd: reg-admin       # read + write + delete
 ```
 
 ### EXT2 — The `REGISTRY_CREDENTIALS` variable
 
-`credId` points to a secret in the consumer CI/CD variable `REGISTRY_CREDENTIALS`.
+`credId` points to a payload in the consumer CI/CD variable `REGISTRY_CREDENTIALS`.
 
-The RegDef stores only `credId`, never a value and never a vals reference.
+The variable is required whenever `scopes` is used: for every `authMethod` except `anonymous`.
 
-The variable is required only when a `credId` is used. Without a secret (federation, anonymous, assume_role on IRSA) there is no var;
-assume_role with `awsSourceCredentialsId` needs a var to hold the bootstrap secret.
+The payload is a secret (user/password, keys, SA JSON, client secret), or a non-secret identifier (`roleArn` for assume_role, `serviceAccount`
+for federation). `assume_role` with `awsSourceCredentialsId` adds a separate `credId` for the bootstrap secret.
 
 `data` is namespaced by `regName`: `data.<regName>.<credId>`. Inside a payload, each field is either a literal or a vals reference.
 
@@ -112,7 +91,14 @@ azure-sp-read:
   clientId: string
   clientSecret: string
 
-# assume_role (roleArn) / federation (serviceAccount): inline under scope, NOT in REGISTRY_CREDENTIALS
+# aws × assume_role
+aws-role-read:
+  roleArn: string           # non-secret identifier; literal (vals allowed but pointless)
+
+# gcp × federation
+gcp-fed-read:
+  serviceAccount: string    # non-secret identifier; literal (vals allowed but pointless)
+
 # anonymous: no credential
 ```
 
@@ -136,6 +122,10 @@ data:
     azure-cred:               # azure oauth2
       clientId:     ref+vault://secret/data/registry/azure#clientId
       clientSecret: ref+vault://secret/data/registry/azure#clientSecret
+    aws-role-cred:            # aws assume_role (non-secret roleArn)
+      roleArn: ref+vault://secret/data/registry/aws#roleArn
+    gcp-fed-cred:             # gcp federation (non-secret serviceAccount)
+      serviceAccount: ref+vault://secret/data/registry/gcp#serviceAccount
 ```
 
 ```yaml
@@ -156,40 +146,46 @@ data:
     azure-cred:               # azure oauth2
       clientId:     11111111-2222-3333-4444-555555555555
       clientSecret: aBcD3fG~hIjKlMnOpQrStUvWxYz0123456789
+    aws-role-cred:            # aws assume_role (non-secret roleArn)
+      roleArn: arn:aws:iam::123456789012:role/eg-reg-admin
+    gcp-fed-cred:             # gcp federation (non-secret serviceAccount)
+      serviceAccount: eg-reg@my-project.iam.gserviceaccount.com
 ```
 
 ### EXT3 — Extend `authConfig` to match what QCL already supports
 
-- `awsService` (`codeartifact` | `ecr`): the AWS registry service, with different token flows (CodeArtifact for maven, ECR for Docker).
-- `azureService` (`acr` | `artifacts`): the Azure service (ACR for Docker, Azure Artifacts for packages).
+- `awsService` (`codeartifact` | `ecr`): the AWS registry service, with different token flows (CodeArtifact for maven/npm; ECR for Docker and OCI artifacts, e.g. helm OCI).
+- `azureService` (`acr` | `artifacts`): the Azure service (ACR for Docker and OCI artifacts; Azure Artifacts for packages).
 - `gcpScopes`: optional OAuth scopes (QCL `with_service_account_key` / `with_oidc_creds`), default `cloud-platform`.
 - `azureOauth2Params`: optional token-request params, grant and scope (QCL `with_oauth2_custom_data`).
-- `awsSourceCredentialsId`: optional base key for the STS call (AWS `source_profile`; QCL requires it).
+- `awsSourceCredentialsId`: optional STS bootstrap key (AWS `source_profile`); empty = IRSA / workload identity.
 
 ### EXT4 — Repositories by artifact type
 
 | type         | roles (repositories)                                    |
 |--------------|---------------------------------------------------------|
 | maven        | snapshot, staging, release, snapshotGroup, releaseGroup |
-| `docker`     | snapshot, staging, release, group                       |
+| docker       | snapshot, staging, release, group                       |
 | go           | snapshot, release, proxy                                |
 | npm          | snapshot, release                                       |
 | raw          | snapshot, release, staging, proxy                       |
-| helm         | staging, release                                        |
+| helmLib      | staging, release                                        |
 | helmApp      | staging, release, group, dev                            |
-| helmOci ¹    | staging, release                                        |
+| helmLibOci ¹ | staging, release                                        |
 | helmAppOci ¹ | staging, release, group, dev                            |
 
-¹ roles mirror helm/helmApp.
+¹ roles mirror helmLib/helmApp.
 
 ### EXT5 — OCI helm in separate sections
 
-OCI helm goes in separate sections, one per helm form: `helmOciConfig` + `helmAppOciConfig`. HTTP helm stays in `helmConfig` / `helmAppConfig`.
+OCI helm goes in separate sections, one per helm form: `helmLibOciConfig` + `helmAppOciConfig`. HTTP helm stays in `helmLibConfig` / `helmAppConfig`.
 
 ### EXT6 — Repository: `url` + `repoName`
 
 - `url`: the full pull/push URL.
-- `repoName`: the repository key, used by the control plane only. It is not part of pull or push, since `url` is self-sufficient. Set it explicitly, because you cannot derive it from a proxied or opaque `url` (for example, `url=cdn.company.com/charts` with repository key `helm-prod-virtual`).
+- `repoName`: the repository key, used by the control plane only. It is not part of pull or push, since `url` is self-sufficient.
+  Set it explicitly, because you cannot derive it from a proxied or opaque `url` (for example, `url=cdn.company.com/charts` with repository key
+  `helm-prod-virtual`).
 
 Set `repoName` only on concrete repositories that use authentication. For `anonymous`, group, and proxy, leave it out.
 
@@ -205,9 +201,9 @@ An OCI Docker registry uses one of two notations:
 
 In both, `url` is the full pull base, and `repoName` stays separate (control plane).
 
-`authConfig.baseUrl` is the registry server's control-plane (REST) URL. It is not a pull base: pull uses the per-repo `url`, and you never append the repository to `baseUrl`. It applies to artifactory and nexus only. `anonymous` does not need it, because the control plane requires authentication.
-
-**Option A (chosen) — `repositories`:**
+`authConfig.baseUrl` is the registry server's control-plane (REST) URL. It is not a pull base: pull uses the per-repo `url`, and you never
+append the repository to `baseUrl`. It applies to artifactory and nexus only. `anonymous` does not need it, because the control plane requires
+authentication.
 
 ```yaml
 <type>Config:
@@ -218,26 +214,20 @@ In both, `url` is the full pull base, and `repoName` stays separate (control pla
       repoName: maven-releases
 ```
 
-**Option B (alternative) — flat `*Uri` + `*RepoName`:**
-
-```yaml
-<type>Config:
-  authConfig: <name>
-  <repo>Uri: https://nexus.company.internal/repository/maven-releases
-  <repo>RepoName: maven-releases
-```
-
 ## Model
 
 ```yaml
 # Mandatory
-# Registry Definition object version (unchanged; these are v2 extensions)
-version: "2.0"
+# Object kind
+kind: RegistryDefinition
 # Mandatory
-# Name of the registry — MUST be unique (REGISTRY_CREDENTIALS.data is namespaced by it, see EXT2)
+# Registry Definition object version
+version: v2
+# Mandatory
+# Name of the registry — site unique
 name: string
-# Optional
-# Named authentication profiles; referenced by artifact sections via `authConfig: <name>`
+# Mandatory
+# Named registry profiles. Referenced by artifact sections via `authConfig: <name>`.
 authConfig:
   <auth-config-name>:
     # Mandatory
@@ -248,19 +238,17 @@ authConfig:
     authMethod: enum [ anonymous, user_pass, secret, service_account, oauth2, federation, assume_role ]
     # Optional
     # Registry server root (control-plane/REST: AQL / promote / manage) — `provider: artifactory` | `nexus` with auth
-    # (NOT `authMethod: anonymous`; cloud uses the provider endpoint fields below). NOT a pull base — pull uses per-repo `url` (see EXT6).
+    # (NOT `authMethod: anonymous`; cloud uses the provider endpoint fields below). NOT a pull base — pull uses per-repo `url`.
     baseUrl: string
 
-    # --- Identity binding (scopes; EXT1) ---
-    # scopes.<key> selects the IDENTITY for the operation. Mandatory, EXCEPT `authMethod: anonymous`.
+    # --- Identity binding ---
+    # scopes.<key> maps the operation to a credId. Mandatory for all `authMethod` except `authMethod: anonymous`.
     # Key = subset of primitives r/w/d (r=read, w=write/create, d=delete): r|w|d|rw|rd|wd|rwd.
-    # Value = object with EXACTLY ONE field (oneOf); the processor dispatches on the field name:
-    #   credId         -> local key into `REGISTRY_CREDENTIALS.data.<this def's name>` (secret; namespaced by regName, see EXT2)
-    #   roleArn        -> inline AWS role ARN (assume_role; non-secret; no var)
-    #   serviceAccount -> inline GCP SA email (federation; non-secret; no var)
+    # Value = credId: a local key into `REGISTRY_CREDENTIALS.data.<this def's name>`.
+    #   The payload under the credId follows authMethod: a secret (user_pass/secret/service_account/oauth2),
+    #   or a non-secret identifier (roleArn/serviceAccount).
     scopes:
-      <r|w|d|rw|rd|wd|rwd>:
-        credId: string            # OR: roleArn: string | serviceAccount: string
+      <r|w|d|rw|rd|wd|rwd>: string     # credId
 
     # --- Provider-specific fields ---
     # Optional
@@ -330,7 +318,7 @@ authConfig:
       <key>: <value>
 
 # Each artifact section is Optional, present only for types the app uses.
-# `repositories` — map `role -> { url, repoName }` (EXT6, Option A). Roles per type — EXT4.
+# `repositories` — map `role -> { url, repoName }`.
 # Repository shape:
 #   <repo>:
 #     url: string        # full pull/push base (http URL | oci host/host:port/repo.host) — carries addressing style
@@ -353,7 +341,7 @@ dockerConfig:
     release: <repo>
     group: <repo>             # read aggregate — url only
 
-helmConfig:
+helmLibConfig:
   authConfig: string
   repositories:
     staging: <repo>
@@ -367,7 +355,7 @@ helmAppConfig:
     group: <repo>             # read aggregate — url only
     dev: <repo>
 
-helmOciConfig:
+helmLibOciConfig:
   authConfig: string
   repositories:
     staging: <repo>
@@ -413,21 +401,21 @@ rawConfig:
 | `aws`         | `anonymous`, `secret`, `assume_role`         |
 | `azure`       | `anonymous`, `oauth2`                        |
 
-**Identity per `authMethod`** (the `scopes.<key>` value; EXT1):
+**Identity per `authMethod`**. The `scopes.<key>` value is a `credId`; the payload it points to in the variable depends on `authMethod`:
 
-| `authMethod`      | `scopes.<key>` field | Where the value lives / payload                                  |
-|-------------------|----------------------|------------------------------------------------------------------|
-| `anonymous`       | — (no `scopes`)      | —                                                                |
-| `user_pass`       | `credId`             | var `data`: `username` + `password`                              |
-| `secret`          | `credId`             | var `data`: `accessKeyId` + `secretAccessKey` (+ `sessionToken`) |
-| `service_account` | `credId`             | var `data`: `secret` (SA JSON)                                   |
-| `oauth2`          | `credId`             | var `data`: `clientId` + `clientSecret`                          |
-| `federation`      | `serviceAccount`     | inline (not a secret; no var)                                    |
-| `assume_role`     | `roleArn`            | inline (not a secret; no var) ¹                                  |
+| `authMethod`      | `credId` payload (in `REGISTRY_CREDENTIALS.data`)        |
+|-------------------|----------------------------------------------------------|
+| `anonymous`       | —                                                        |
+| `user_pass`       | `username` + `password`                                  |
+| `secret`          | `accessKeyId` + `secretAccessKey` (+ `sessionToken`)     |
+| `service_account` | `secret` (SA JSON)                                       |
+| `oauth2`          | `clientId` + `clientSecret`                              |
+| `federation`      | `serviceAccount` (non-secret)                            |
+| `assume_role`     | `roleArn` (non-secret) ¹                                 |
 
-¹ `assume_role` + `awsSourceCredentialsId`: the STS bootstrap secret is a separate `credId` → var; `roleArn` stays inline.
+¹ `assume_role` + `awsSourceCredentialsId`: the STS bootstrap secret is a separate `credId` (payload `accessKeyId` + `secretAccessKey`).
 
-**`scopes` keys — subset of r/w/d primitives (EXT1):**
+**`scopes` keys — subset of r/w/d primitives:**
 
 | Key   | Rights                 |
 |-------|------------------------|
@@ -441,7 +429,7 @@ rawConfig:
 
 Empty = no access. For `anonymous`, `scopes` is not needed (no credential).
 
-## authConfig method catalog
+## `authConfig` method catalog
 
 All valid provider × authMethod pairs.
 
@@ -459,10 +447,8 @@ authConfig:
     authMethod: user_pass
     baseUrl: https://artifactory.company.com/artifactory
     scopes:
-      r:
-        credId: artifactory-read
-      w:
-        credId: artifactory-publish
+      r: artifactory-read
+      rw: artifactory-publish
     # REGISTRY_CREDENTIALS.data.<regName>:
     #   artifactory-read:
     #     username: ref+vault://secret/data/registry/artifactory#read-user       # reader
@@ -477,10 +463,8 @@ authConfig:
     authMethod: user_pass
     baseUrl: https://nexus.company.internal
     scopes:
-      r:
-        credId: nexus-read
-      w:
-        credId: nexus-publish
+      r: nexus-read
+      rw: nexus-publish
     # REGISTRY_CREDENTIALS.data.<regName>:
     #   nexus-read:
     #     username: ref+vault://secret/data/registry/nexus#read-user             # reader
@@ -498,10 +482,8 @@ authConfig:
     gcpScopes:                              # EXT3: optional, default https://www.googleapis.com/auth/cloud-platform
       - https://www.googleapis.com/auth/cloud-platform
     scopes:
-      r:
-        credId: gcp-sa-read
-      w:
-        credId: gcp-sa-publish
+      r: gcp-sa-read
+      rw: gcp-sa-publish
     # REGISTRY_CREDENTIALS.data.<regName>:
     #   gcp-sa-read:
     #     secret: ref+vault://secret/data/registry/gcp-sa-read#json        # ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsIC4uLiB9Cg== (base64 SA-JSON)
@@ -525,11 +507,14 @@ authConfig:
         - subjectTokenType: "urn:ietf:params:oauth:token-type:jwt"
         - tokenFormatType: "urn:ietf:params:oauth:token-type:access_token"
         - scope: "https://www.googleapis.com/auth/cloud-platform"
-    scopes:                                   # serviceAccount inline (not a secret -> no var)
-      r:
-        serviceAccount: eg-reg-read@my-project.iam.gserviceaccount.com
-      w:
-        serviceAccount: eg-reg-publish@my-project.iam.gserviceaccount.com
+    scopes:                                   # credId payload is a serviceAccount (non-secret; EXT2)
+      r: gcp-fed-read
+      rw: gcp-fed-publish
+    # REGISTRY_CREDENTIALS.data.<regName>:
+    #   gcp-fed-read:
+    #     serviceAccount: eg-reg-read@my-project.iam.gserviceaccount.com      # literal (non-secret)
+    #   gcp-fed-publish:
+    #     serviceAccount: eg-reg-publish@my-project.iam.gserviceaccount.com
 
   # AWS × secret — EnvGene ✅ + QCL ✅
   aws-secret:
@@ -539,10 +524,8 @@ authConfig:
     awsRegion: eu-west-1
     awsDomain: codeartifact.eu-west-1.amazonaws.com
     scopes:
-      r:
-        credId: aws-key-read
-      w:
-        credId: aws-key-publish
+      r: aws-key-read
+      rw: aws-key-publish
     # REGISTRY_CREDENTIALS.data.<regName>:
     #   aws-key-read:
     #     accessKeyId: ref+vault://secret/data/registry/aws-read#accessKeyId            # AKIAIOSFODNN7EXAMPLE
@@ -559,13 +542,15 @@ authConfig:
     awsRegion: eu-west-1
     awsRoleSessionPrefix: eg
     awsSourceCredentialsId: aws-bootstrap     # EXT3: set -> bootstrap key (source_profile); empty -> IRSA
-    scopes:                                   # roleArn inline (not a secret -> no var)
-      r:
-        roleArn: arn:aws:iam::123456789012:role/eg-reg-read
-      w:
-        roleArn: arn:aws:iam::123456789012:role/eg-reg-publish
-    # REGISTRY_CREDENTIALS.data.<regName>:          # only when awsSourceCredentialsId is set
-    #   aws-bootstrap:
+    scopes:                                   # credId payload is a roleArn (non-secret; EXT2)
+      r: aws-role-read
+      rw: aws-role-publish
+    # REGISTRY_CREDENTIALS.data.<regName>:
+    #   aws-role-read:
+    #     roleArn: arn:aws:iam::123456789012:role/eg-reg-read          # literal (non-secret)
+    #   aws-role-publish:
+    #     roleArn: arn:aws:iam::123456789012:role/eg-reg-publish
+    #   aws-bootstrap:                                                 # only when awsSourceCredentialsId is set
     #     accessKeyId: ref+vault://secret/data/registry/aws-bootstrap#accessKeyId           # AKIAIOSFODNN7EXAMPLE
     #     secretAccessKey: ref+vault://secret/data/registry/aws-bootstrap#secretAccessKey   # wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
@@ -581,10 +566,8 @@ authConfig:
       grant_type: client_credentials
       scope: https://myregistry.azurecr.io/.default
     scopes:
-      r:
-        credId: azure-sp-read
-      w:
-        credId: azure-sp-publish
+      r: azure-sp-read
+      rw: azure-sp-publish
     # REGISTRY_CREDENTIALS.data.<regName>:
     #   azure-sp-read:
     #     clientId: ref+vault://secret/data/registry/azure-sp-read#clientId            # 11111111-2222-3333-4444-555555555555
@@ -597,7 +580,7 @@ authConfig:
 ## Artifact sections
 
 ```yaml
-mavenConfig:                        # http
+mavenConfig:                          # https
   authConfig: aws-secret
   repositories:
     snapshot:
@@ -610,11 +593,11 @@ mavenConfig:                        # http
       url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-releases
       repoName: maven-releases
     snapshotGroup:
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshot-group   # read aggregate
+      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshot-group
     releaseGroup:
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-release-group    # read aggregate
+      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-release-group
 
-dockerConfig:                       # oci (Artifactory: port per docker repo, group is native)
+dockerConfig:                         # oci
   authConfig: artifactory-up
   repositories:
     snapshot:
@@ -627,9 +610,9 @@ dockerConfig:                       # oci (Artifactory: port per docker repo, gr
       url: artifactory.company.com:18082
       repoName: docker-releases
     group:
-      url: artifactory.company.com:18083                                             # read aggregate
+      url: artifactory.company.com:18083
 
-helmConfig:                         # http
+helmLibConfig:                         # https
   authConfig: nexus-up
   repositories:
     staging:
@@ -639,7 +622,7 @@ helmConfig:                         # http
       url: https://nexus.company.internal/repository/helm-releases
       repoName: helm-releases
 
-helmAppConfig:                      # http
+helmAppConfig:                         # https
   authConfig: nexus-up
   repositories:
     staging:
@@ -649,37 +632,39 @@ helmAppConfig:                      # http
       url: https://nexus.company.internal/repository/helm-releases
       repoName: helm-releases
     group:
-      url: https://nexus.company.internal/repository/helm-group                    # read aggregate
+      url: https://nexus.company.internal/repository/helm-group
     dev:
       url: https://nexus.company.internal/repository/helm-dev
       repoName: helm-dev
 
 # EXT5: OCI helm in separate sections
-helmOciConfig:                      # oci path-style (repo in the url path)
-  authConfig: aws-assume
+helmLibOciConfig:                      # oci
+  authConfig: artifactory-up
   repositories:
     staging:
-      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-staging
-      repoName: helm-staging
+      url: artifactory.company.com:18090
+      repoName: helm-oci-staging
     release:
-      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-releases
-      repoName: helm-releases
+      url: artifactory.company.com:18091
+      repoName: helm-oci-releases
 
 # EXT5: OCI helm in separate sections
-helmAppOciConfig:                   # oci path-style (ECR: no group — cloud has no virtual repos)
-  authConfig: aws-assume
+helmAppOciConfig:                      # oci
+  authConfig: artifactory-up
   repositories:
     staging:
-      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-staging
-      repoName: helm-staging
+      url: artifactory.company.com:18092
+      repoName: helm-app-oci-staging
     release:
-      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-releases
-      repoName: helm-releases
+      url: artifactory.company.com:18093
+      repoName: helm-app-oci-releases
+    group:
+      url: artifactory.company.com:18094
     dev:
-      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-dev
-      repoName: helm-dev
+      url: artifactory.company.com:18095
+      repoName: helm-app-oci-dev
 
-goConfig:                           # http
+goConfig:                           # https
   authConfig: nexus-up
   repositories:
     snapshot:
@@ -689,9 +674,9 @@ goConfig:                           # http
       url: https://nexus.company.internal/repository/go-releases
       repoName: go-releases
     proxy:
-      url: https://goproxy.internal/go/                                              # read-through
+      url: https://goproxy.internal/go/
 
-npmConfig:                          # http
+npmConfig:                          # https
   authConfig: nexus-up
   repositories:
     snapshot:
@@ -701,7 +686,7 @@ npmConfig:                          # http
       url: https://nexus.company.internal/repository/npm-releases
       repoName: npm-releases
 
-rawConfig:                          # http
+rawConfig:                          # https
   authConfig: nexus-up
   repositories:
     snapshot:
@@ -714,237 +699,15 @@ rawConfig:                          # http
       url: https://nexus.company.internal/repository/raw-staging
       repoName: raw-staging
     proxy:
-      url: https://proxy.raw.local/raw                                               # read-through
+      url: https://proxy.raw.local/raw
 ```
 
 ## Examples
 
-### 1. Offsite — artifactory + anonymous (no scopes) + multi-repo (snapshot, staging, release)
+Each example is a standalone RegDef file (its `REGISTRY_CREDENTIALS` variable is a trailing comment):
 
-```yaml
-name: reg-public
-authConfig:
-  anon:
-    provider: artifactory
-    authMethod: anonymous
-mavenConfig:
-  authConfig: anon
-  repositories:
-    snapshot:
-      url: https://artifactory.offsite.example.com/nc.dmp.mvn.snapshots
-    staging:
-      url: https://artifactory.offsite.example.com/nc.dmp.mvn.staging
-    release:
-      url: https://artifactory.offsite.example.com/nc.dmp.mvn
-dockerConfig:
-  authConfig: anon
-  repositories:
-    snapshot:
-      url: artifactory.offsite.example.com:17107
-    staging:
-      url: artifactory.offsite.example.com:17099
-    release:
-      url: artifactory.offsite.example.com:17097
-helmAppConfig:
-  authConfig: anon
-  repositories:
-    staging:
-      url: https://artifactory.offsite.example.com/nc.helm.charts.staging
-    release:
-      url: https://artifactory.offsite.example.com/nc.helm.charts.release
-```
-
-Consumer CI/CD vars: none
-
-### 2. Offsite — artifactory + secret store + scopes + multi-repo
-
-```yaml
-name: reg-offsite
-authConfig:
-  offsite-store:
-    provider: artifactory
-    authMethod: user_pass
-    baseUrl: https://artifactory.offsite.example.com
-    scopes:
-      r:
-        credId: offsite-read
-      w:
-        credId: offsite-publish
-mavenConfig:
-  authConfig: offsite-store
-  repositories:
-    snapshot:
-      url: https://artifactory.offsite.example.com/nc.dmp.mvn.snapshots
-      repoName: nc.dmp.mvn.snapshots
-    staging:
-      url: https://artifactory.offsite.example.com/nc.dmp.mvn.staging
-      repoName: nc.dmp.mvn.staging
-    release:
-      url: https://artifactory.offsite.example.com/nc.dmp.mvn
-      repoName: nc.dmp.mvn
-dockerConfig:
-  authConfig: offsite-store
-  repositories:
-    snapshot:
-      url: artifactory.offsite.example.com:17107
-      repoName: docker-snapshots
-    release:
-      url: artifactory.offsite.example.com:17097
-      repoName: docker-releases
-```
-
-Consumer CI/CD vars: `REGISTRY_CREDENTIALS` (+ `VAULT_ADDR` + `VAULT_TOKEN` to resolve vals):
-
-```yaml
-kind: RegistryCredentials
-version: v1
-data:
-  reg-offsite:                # = RegDef.name
-    offsite-read:
-      username: ref+vault://secret/data/offsite/artifactory#read-user
-      password: ref+vault://secret/data/offsite/artifactory#read-pass
-    offsite-publish:
-      username: ref+vault://secret/data/offsite/artifactory#publish-user
-      password: ref+vault://secret/data/offsite/artifactory#publish-pass
-```
-
-### 3. Onsite — nexus + secret store + scopes `rw` + single-repo
-
-```yaml
-name: reg-onsite
-authConfig:
-  onsite:
-    provider: nexus
-    authMethod: user_pass
-    baseUrl: https://nexus.customer.internal
-    scopes:
-      rw:
-        credId: onsite-rw
-mavenConfig:
-  authConfig: onsite
-  repositories:
-    release:
-      url: https://nexus.customer.internal/repository/maven-releases
-      repoName: maven-releases
-dockerConfig:
-  authConfig: onsite
-  repositories:
-    release:
-      url: docker.customer.internal
-      repoName: releases
-helmAppConfig:
-  authConfig: onsite
-  repositories:
-    release:
-      url: https://nexus.customer.internal/repository/helm-releases
-      repoName: helm-releases
-```
-
-Consumer CI/CD vars: `REGISTRY_CREDENTIALS` (+ `VAULT_ADDR` + `VAULT_TOKEN`):
-
-```yaml
-kind: RegistryCredentials
-version: v1
-data:
-  reg-onsite:                 # = RegDef.name
-    onsite-rw:
-      username: ref+vault://secret/data/registry/onsite#username
-      password: ref+vault://secret/data/registry/onsite#password
-```
-
-### 4. Onsite — gcp + creds in CI/CD + scopes + single-repo
-
-```yaml
-name: reg-gcp
-authConfig:
-  onsite-gcp:
-    provider: gcp
-    authMethod: service_account
-    gcpRegProject: customer-proj
-    gcpRegion: europe-west1
-    scopes:
-      r:
-        credId: gcp-sa-read
-      w:
-        credId: gcp-sa-publish
-mavenConfig:
-  authConfig: onsite-gcp
-  repositories:
-    release:
-      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-release
-      repoName: maven-release
-dockerConfig:
-  authConfig: onsite-gcp
-  repositories:
-    release:
-      url: europe-west1-docker.pkg.dev/customer-proj/docker-release
-      repoName: docker-release
-```
-
-Consumer CI/CD vars: `REGISTRY_CREDENTIALS`:
-
-```yaml
-kind: RegistryCredentials
-version: v1
-data:
-  reg-gcp:                    # = RegDef.name
-    gcp-sa-read:
-      secret: "<SA-JSON read>"
-    gcp-sa-publish:
-      secret: "<SA-JSON publish>"
-```
-
-### 5. Onsite — aws + creds in CI/CD + scopes + single-repo
-
-```yaml
-name: reg-aws
-authConfig:
-  onsite-aws-ca:
-    provider: aws
-    authMethod: secret
-    awsService: codeartifact
-    awsRegion: eu-west-1
-    awsDomain: 123456789.d.codeartifact.eu-west-1.amazonaws.com
-    scopes:
-      r:
-        credId: aws-read
-      w:
-        credId: aws-publish
-  onsite-aws-ecr:
-    provider: aws
-    authMethod: secret
-    awsService: ecr
-    awsRegion: eu-west-1
-    scopes:
-      r:
-        credId: aws-read
-      w:
-        credId: aws-publish
-mavenConfig:
-  authConfig: onsite-aws-ca
-  repositories:
-    release:
-      url: https://123456789.d.codeartifact.eu-west-1.amazonaws.com/maven/app-release
-      repoName: app-release
-dockerConfig:
-  authConfig: onsite-aws-ecr
-  repositories:
-    release:
-      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/app
-      repoName: app
-```
-
-Consumer CI/CD vars: `REGISTRY_CREDENTIALS`:
-
-```yaml
-kind: RegistryCredentials
-version: v1
-data:
-  reg-aws:                    # = RegDef.name
-    aws-read:
-      accessKeyId: AKIAIOSFODNN7EXAMPLE
-      secretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    aws-publish:
-      accessKeyId: AKIAI44QH8DHBEXAMPLE
-      secretAccessKey: je7MtGbClwBF/2Zp9Utk/h3yCo8nvbEXAMPLEKEY
-```
+1. [Shared Platform Registry — artifactory + anonymous](regdef-v2-extensions/shared-platform-registry.yaml)
+2. [Shared Platform Registry — artifactory + user_pass + Vault cred store](regdef-v2-extensions/shared-platform-registry-vault.yaml)
+3. [Onsite — nexus + user_pass](regdef-v2-extensions/nexus-onsite.yaml)
+4. [Onsite — gcp + nexus](regdef-v2-extensions/gcp-onsite.yaml)
+5. [Onsite — aws ECR + CodeArtifact + secret](regdef-v2-extensions/aws-onsite.yaml)

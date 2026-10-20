@@ -1,0 +1,71 @@
+# Example 1 — Shared Platform Registry: artifactory + anonymous + all artifact types
+
+kind: RegistryDefinition
+version: v2
+name: shared-platform-registry
+authConfig:
+  anon:
+    provider: artifactory
+    authMethod: anonymous
+mavenConfig:
+  authConfig: anon
+  repositories:
+    snapshot:
+      url: https://artifactory.qubership.com/pd.xaas.mvn.snapshots
+    staging:
+      url: https://artifactory.qubership.com/pd.xaas.mvn.staging
+    release:
+      url: https://artifactory.qubership.com/pd.xaas.mvn
+    snapshotGroup:
+      url: https://artifactory.qubership.com/pd.xaas.mvn.group
+    releaseGroup:
+      url: https://artifactory.qubership.com/pd.xaas-release.mvn.group
+dockerConfig:
+  authConfig: anon
+  repositories:
+    snapshot:
+      url: artifactory.qubership.com:17204
+    staging:
+      url: artifactory.qubership.com:17202
+    release:
+      url: artifactory.qubership.com:17203
+    group:
+      url: artifactory.qubership.com:17204
+goConfig:
+  authConfig: anon
+  repositories:
+    snapshot:
+      url: https://artifactory.qubership.com/pd.xaas.golang.dev
+    release:
+      url: https://artifactory.qubership.com/pd.xaas.golang
+    proxy:
+      url: https://artifactory.qubership.com/pd.xaas-release.golang.group
+npmConfig:
+  authConfig: anon
+  repositories:
+    snapshot:
+      url: https://artifactory.qubership.com/pd.xaas.npm.dev
+    release:
+      url: https://artifactory.qubership.com/pd.xaas.npm
+helmLibConfig:
+  authConfig: anon
+  repositories:
+    staging:
+      url: https://artifactory.qubership.com/qs.libraries.helm.staging
+    release:
+      url: https://artifactory.qubership.com/qs.libraries.helm
+helmAppConfig:
+  authConfig: anon
+  repositories:
+    staging:
+      url: https://artifactory.qubership.com/qs.helm.charts.staging
+    release:
+      url: https://artifactory.qubership.com/qs.helm.charts.release
+    group:
+      url: https://artifactory.qubership.com/qs.helm.charts
+    dev:
+      url: https://artifactory.qubership.com/qs.helm.charts.dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS — none (anonymous)
+# ---------------------------------------------------------------------------

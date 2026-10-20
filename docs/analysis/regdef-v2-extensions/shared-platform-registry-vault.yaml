@@ -1,0 +1,104 @@
+# Example 2 — Shared Platform Registry (Vault): artifactory + user_pass + external cred store + all artifact types
+
+kind: RegistryDefinition
+version: v2
+name: shared-platform-registry-vault
+authConfig:
+  shared:
+    provider: artifactory
+    authMethod: user_pass
+    baseUrl: https://artifactory.qubership.com
+    scopes:
+      r: shared-read
+      rw: shared-publish
+      rwd: shared-admin
+mavenConfig:
+  authConfig: shared
+  repositories:
+    snapshot:
+      url: https://artifactory.qubership.com/pd.xaas.mvn.snapshots
+      repoName: pd.xaas.mvn.snapshots
+    staging:
+      url: https://artifactory.qubership.com/pd.xaas.mvn.staging
+      repoName: pd.xaas.mvn.staging
+    release:
+      url: https://artifactory.qubership.com/pd.xaas.mvn
+      repoName: pd.xaas.mvn
+    snapshotGroup:
+      url: https://artifactory.qubership.com/pd.xaas.mvn.group
+    releaseGroup:
+      url: https://artifactory.qubership.com/pd.xaas-release.mvn.group
+dockerConfig:
+  authConfig: shared
+  repositories:
+    snapshot:
+      url: artifactory.qubership.com:17204
+      repoName: pd.xaas.docker.dev
+    staging:
+      url: artifactory.qubership.com:17202
+      repoName: pd.xaas.docker.staging
+    release:
+      url: artifactory.qubership.com:17203
+      repoName: pd.xaas.docker
+    group:
+      url: artifactory.qubership.com:17204
+goConfig:
+  authConfig: shared
+  repositories:
+    snapshot:
+      url: https://artifactory.qubership.com/pd.xaas.golang.dev
+      repoName: pd.xaas.golang.dev
+    release:
+      url: https://artifactory.qubership.com/pd.xaas.golang
+      repoName: pd.xaas.golang
+    proxy:
+      url: https://artifactory.qubership.com/pd.xaas-release.golang.group
+npmConfig:
+  authConfig: shared
+  repositories:
+    snapshot:
+      url: https://artifactory.qubership.com/pd.xaas.npm.dev
+      repoName: pd.xaas.npm.dev
+    release:
+      url: https://artifactory.qubership.com/pd.xaas.npm
+      repoName: pd.xaas.npm
+helmLibConfig:
+  authConfig: shared
+  repositories:
+    staging:
+      url: https://artifactory.qubership.com/qs.libraries.helm.staging
+      repoName: qs.libraries.helm.staging
+    release:
+      url: https://artifactory.qubership.com/qs.libraries.helm
+      repoName: qs.libraries.helm
+helmAppConfig:
+  authConfig: shared
+  repositories:
+    staging:
+      url: https://artifactory.qubership.com/qs.helm.charts.staging
+      repoName: qs.helm.charts.staging
+    release:
+      url: https://artifactory.qubership.com/qs.helm.charts.release
+      repoName: qs.helm.charts.release
+    group:
+      url: https://artifactory.qubership.com/qs.helm.charts
+    dev:
+      url: https://artifactory.qubership.com/qs.helm.charts.dev
+      repoName: qs.helm.charts.dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS
+# ---------------------------------------------------------------------------
+# kind: RegistryCredentials
+# version: v1
+# data:
+#   shared-platform-registry-vault:
+#     shared-read:
+#       username: ref+vault://secret/data/registry/shared-read#username
+#       password: ref+vault://secret/data/registry/shared-read#password
+#     shared-publish:
+#       username: ref+vault://secret/data/registry/shared-publish#username
+#       password: ref+vault://secret/data/registry/shared-publish#password
+#     shared-admin:
+#       username: ref+vault://secret/data/registry/shared-admin#username
+#       password: ref+vault://secret/data/registry/shared-admin#password

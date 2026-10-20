@@ -1,0 +1,82 @@
+# Example 3 — Onsite: nexus + user_pass (maven, docker, helmLib, helmApp)
+
+kind: RegistryDefinition
+version: v2
+name: nexus-onsite
+authConfig:
+  onsite:
+    provider: nexus
+    authMethod: user_pass
+    baseUrl: https://nexus.customer.internal
+    scopes:
+      r: onsite-read
+      rw: onsite-publish
+      rwd: onsite-admin
+mavenConfig:
+  authConfig: onsite
+  repositories:
+    snapshot:
+      url: https://nexus.customer.internal/repository/maven-snapshots
+      repoName: maven-snapshots
+    staging:
+      url: https://nexus.customer.internal/repository/maven-staging
+      repoName: maven-staging
+    release:
+      url: https://nexus.customer.internal/repository/maven-releases
+      repoName: maven-releases
+    releaseGroup:
+      url: https://nexus.customer.internal/repository/maven-public
+dockerConfig:
+  authConfig: onsite
+  repositories:
+    snapshot:
+      url: nexus.customer.internal:8082
+      repoName: docker-snapshots
+    staging:
+      url: nexus.customer.internal:8083
+      repoName: docker-staging
+    release:
+      url: nexus.customer.internal:8084
+      repoName: docker-releases
+    group:
+      url: nexus.customer.internal:8085
+helmLibConfig:
+  authConfig: onsite
+  repositories:
+    staging:
+      url: https://nexus.customer.internal/repository/helm-lib-staging
+      repoName: helm-lib-staging
+    release:
+      url: https://nexus.customer.internal/repository/helm-lib-releases
+      repoName: helm-lib-releases
+helmAppConfig:
+  authConfig: onsite
+  repositories:
+    staging:
+      url: https://nexus.customer.internal/repository/helm-app-staging
+      repoName: helm-app-staging
+    release:
+      url: https://nexus.customer.internal/repository/helm-app-releases
+      repoName: helm-app-releases
+    group:
+      url: https://nexus.customer.internal/repository/helm-app
+    dev:
+      url: https://nexus.customer.internal/repository/helm-app-dev
+      repoName: helm-app-dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS (literal values, no secret store)
+# ---------------------------------------------------------------------------
+# kind: RegistryCredentials
+# version: v1
+# data:
+#   nexus-onsite:
+#     onsite-read:
+#       username: reader
+#       password: s3cr3t-read
+#     onsite-publish:
+#       username: publisher
+#       password: s3cr3t-publish
+#     onsite-admin:
+#       username: admin
+#       password: s3cr3t-admin

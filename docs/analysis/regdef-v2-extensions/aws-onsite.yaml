@@ -1,0 +1,87 @@
+# Example 5 — Onsite: aws ECR (docker, helm OCI) + CodeArtifact (maven), secret
+
+kind: RegistryDefinition
+version: v2
+name: aws-onsite
+authConfig:
+  aws-ecr:
+    provider: aws
+    authMethod: secret
+    awsService: ecr
+    awsRegion: eu-west-1
+    scopes:
+      r: aws-read
+      rw: aws-publish
+      rwd: aws-admin
+  aws-ca:
+    provider: aws
+    authMethod: secret
+    awsService: codeartifact
+    awsRegion: eu-west-1
+    awsDomain: 123456789.d.codeartifact.eu-west-1.amazonaws.com
+    scopes:
+      r: aws-read
+      rw: aws-publish
+      rwd: aws-admin
+mavenConfig:
+  authConfig: aws-ca
+  repositories:
+    snapshot:
+      url: https://123456789.d.codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshots
+      repoName: maven-snapshots
+    staging:
+      url: https://123456789.d.codeartifact.eu-west-1.amazonaws.com/maven/maven-staging
+      repoName: maven-staging
+    release:
+      url: https://123456789.d.codeartifact.eu-west-1.amazonaws.com/maven/maven-releases
+      repoName: maven-releases
+dockerConfig:
+  authConfig: aws-ecr
+  repositories:
+    snapshot:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/docker-snapshots
+      repoName: docker-snapshots
+    staging:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/docker-staging
+      repoName: docker-staging
+    release:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/docker-releases
+      repoName: docker-releases
+helmLibOciConfig:
+  authConfig: aws-ecr
+  repositories:
+    staging:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-lib-staging
+      repoName: helm-lib-staging
+    release:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-lib-releases
+      repoName: helm-lib-releases
+helmAppOciConfig:
+  authConfig: aws-ecr
+  repositories:
+    staging:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-app-staging
+      repoName: helm-app-staging
+    release:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-app-releases
+      repoName: helm-app-releases
+    dev:
+      url: 123456789.dkr.ecr.eu-west-1.amazonaws.com/helm-app-dev
+      repoName: helm-app-dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS (literal values, no secret store)
+# ---------------------------------------------------------------------------
+# kind: RegistryCredentials
+# version: v1
+# data:
+#   aws-onsite:
+#     aws-read:
+#       accessKeyId: AKIAIOSFODNN7EXAMPLE
+#       secretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+#     aws-publish:
+#       accessKeyId: AKIAI44QH8DHBEXAMPLE
+#       secretAccessKey: je7MtGbClwBF/2Zp9Utk/h3yCo8nvbEXAMPLEKEY
+#     aws-admin:
+#       accessKeyId: AKIAI44ADMINXEXAMPLE
+#       secretAccessKey: ZyXw9VuTsRqPoNmLkJiHgFeDcBaADMINEXAMPLE1
