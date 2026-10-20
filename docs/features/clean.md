@@ -15,34 +15,25 @@ EnvGene writes cleanup output into the [Effective Set](/docs/features/calculator
 so that a deployed namespace, or a whole environment, can be removed from a cluster. EnvGene does not remove
 anything itself. Teardown tooling outside EnvGene consumes the output.
 
-Cleanup is one subject with two forms of output.
-
-1. [No-CMDB v1](/docs/deployment-architecture.md#no-cmdb-v1) has no `CLEAN` operation. It produces a per-namespace
-   cleanup context on every deploy that has a Solution Descriptor, ahead of need, so the data is ready whenever
-   that namespace is later cleaned.
-2. [No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) has a `CLEAN` operation that marks namespaces for
-   removal and produces no cleanup context.
-
-Cleanup output exists only in Effective Set v2.0. Effective Set v1.0 has none. The Effective Set version is a
-separate axis from the No-CMDB architecture version.
+Cleanup is one subject, approached differently by the two deployment architectures.
+[No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) cleans a namespace on demand, through its `CLEAN`
+operation. [No-CMDB v1](/docs/deployment-architecture.md#no-cmdb-v1) has no `CLEAN` operation, so EnvGene prepares
+each namespace's cleanup context on every deploy, ahead of need. A dedicated cleanup application reads that
+context and performs the cleanup.
 
 ## Cleanup output by deployment architecture
 
 EnvGene emits one of two forms, selected by the deployment architecture and the operation.
 
-| Architecture | Operation | What EnvGene emits                                            |
-|--------------|-----------|---------------------------------------------------------------|
-| No-CMDB v1   | `DEPLOY`  | A cleanup context for every namespace of the environment      |
-| No-CMDB v2   | `DEPLOY`  | No cleanup output                                             |
-| No-CMDB v2   | `CLEAN`   | A `.cleaned` marker per cleaned namespace, no cleanup context |
+| Architecture | Operation | What EnvGene emits                                       |
+|--------------|-----------|----------------------------------------------------------|
+| No-CMDB v1   | `DEPLOY`  | A cleanup context for every namespace of the environment |
+| No-CMDB v2   | `DEPLOY`  | No cleanup output                                        |
+| No-CMDB v2   | `CLEAN`   | Namespace content replaced by a `.cleaned` marker        |
 
 In No-CMDB v1, when the environment has a Solution Descriptor, the cleanup context is written for every
 namespace, including one with no deployed application versions. A run with no Solution Descriptor produces no
 cleanup context.
-
-No-CMDB v2 produces no cleanup context, on deploy or on clean. Its `CLEAN` operation marks the target namespaces
-instead. The absence of a cleanup context in No-CMDB v2 is unconditional: a missing `cleanup/` folder does not
-mean the environment has nothing to clean.
 
 ## Emitted output
 
@@ -69,8 +60,8 @@ Solution Descriptor. No dedicated pipeline parameter controls it.
 
 ### `.cleaned` marker (No-CMDB v2)
 
-For each namespace cleaned by a `CLEAN` operation, EnvGene writes an empty `.cleaned` file into
-`deployment/<namespace>/` and `runtime/<namespace>/`, with no application content.
+For each namespace cleaned by a `CLEAN` operation, EnvGene removes the namespace's application content from
+`deployment/<namespace>/` and `runtime/<namespace>/` and replaces it with an empty `.cleaned` marker file.
 
 The cleaned namespace stays listed in `deployment/mapping.yaml` and `runtime/mapping.yaml`. The marker, not a change
 to the mapping, is the cleaned-state signal.
@@ -92,8 +83,7 @@ In No-CMDB v2, a cleanup is a `CLEAN` operation launched with:
 
 The step-by-step behavior is in [CLEAN sub-flows](/docs/technical-design/instance-pipeline/sub-flows/clean.md).
 
-In No-CMDB v1, there is no cleanup operation to trigger. EnvGene produces the cleanup context during each deploy
-that has a Solution Descriptor, ahead of need.
+In No-CMDB v1, there is no cleanup operation to trigger. The cleanup context is a by-product of deploy.
 
 ## Where to read next
 
@@ -102,7 +92,4 @@ that has a Solution Descriptor, ahead of need.
 | Look up the cleanup context file layout                           | [Calculator CLI - Cleanup Context](/docs/features/calculator-cli.md#version-20-cleanup-context)                       |
 | See how the `CLEAN` operation runs step by step                   | [CLEAN sub-flows](/docs/technical-design/instance-pipeline/sub-flows/clean.md)                                        |
 | See cleanup inside the full Effective Set generation flow         | [Effective Set generation](/docs/features/effective-set-generation.md#cleanup-context)                                |
-| Walk through cleanup-context use cases                            | [Calculator CLI use cases - cleanup context generation](/docs/use-cases/calculator-cli.md#cleanup-context-generation) |
 | Look up pipeline parameters (`OPERATION_TYPE`, `NAMESPACE_NAMES`) | [Instance pipeline parameters](/docs/instance-pipeline-parameters.md)                                                 |
-| Understand the deployment architectures                           | [Deployment architecture](/docs/deployment-architecture.md)                                                           |
-| See the decision and why                                          | [ADR-0011](/docs/adr/0011-generate-cleanup-context-only-in-no-cmdb-v1.md)                                             |
