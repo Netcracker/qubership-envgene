@@ -18,7 +18,7 @@ PLACE-3 checks the placement of selected Cloud Passport files. A passport belong
 | Parameter | Source | Required | Default | Values / format | Effect |
 | --- | --- | --- | --- | --- | --- |
 | `index` | Repository discovery | Yes | None | `RepoIndex` with passport records | Supplies physical paths and owning layer |
-| `connections` | Shared connection resolver | No | Computed when omitted | `Connections.passports` | Selects explicitly referenced or automatically chosen passports |
+| `connections` | Shared connection resolver | No | Computed when omitted | `Connections.environment_passports` | Supplies each environment's selected logical passport record |
 | `full`, `lower`, `site`, `catalogs` | Engine | Yes in current call signature | None | Effective Set maps / passport catalogs | Compatibility inputs; not inspected by this rule |
 
 ## Processing flow
@@ -27,11 +27,13 @@ PLACE-3 checks the placement of selected Cloud Passport files. A passport belong
 
    Use the shared connection index supplied by the engine, or compute it for a direct call. Selection uses `inventory.cloudPassport` or the existing automatic cluster-passport resolution.
 
-2. **Check each indexed passport's layer**
+2. **Check each selected passport path's layer**
 
-   1. Compare its resolved physical path with the selected passport set; skip unselected files.
+   1. Collect records from `Connections.environment_passports` and deduplicate repeated uses by logical path.
+      Do not select another indexed alias solely because it shares a selected file's physical target.
    2. A passport with a cluster owner and no environment owner is at the cluster layer: skip it.
    3. For each remaining selected passport, create a finding at file position `1:1`. Placement does not require readable YAML content.
+      Keep distinct selected logical paths even when they resolve to the same physical file.
 
 3. **Choose the suggested destination**
 
@@ -41,7 +43,7 @@ PLACE-3 checks the placement of selected Cloud Passport files. A passport belong
 
 4. **Return placement findings**
 
-   Use the passport stem as key and its cluster, or `repository`, as scope. Return findings in indexed passport order.
+   Use the passport stem as key and its cluster, or `repository`, as scope. Return findings in logical path order.
 
 ## Result
 
@@ -52,6 +54,7 @@ Each selected passport outside the cluster layer produces Warning / Fix with mes
 **1a.** A missing or ambiguous passport reference may leave no selected passport; resolver notes are separate. PLACE-3 does not invent a missing-file finding.
 
 **2a.** Unselected passports are ignored even when misplaced.
+This also excludes unused aliases of a correctly selected cluster passport.
 
 **2b.** Unreadable or Jinja passport content does not suppress a placement finding if that file was selected: its location is still known. This does not imply rendering or content validation.
 

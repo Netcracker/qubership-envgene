@@ -10,6 +10,10 @@
 
 ## Unreleased
 
+- Check explicit `inventory.cloudPassport` references in INT-2. Report definitely missing local targets as Fix
+  and dynamic, unreadable, unsafe, or uncertain lookups as Review. Allow optional passport absence.
+- Check only selected Cloud Passport paths in PLACE-3. Ignore unused aliases while retaining findings for
+  selected misplaced paths that share a physical file.
 - Continue independent checks after recoverable YAML, JSON, and Jinja read or parser failures and write fresh reports.
   Export affected checks as located Review entries in JSON. Keep incomplete merge inputs from confirming
   PLACE-1 promotion or PLACE-2 removal.

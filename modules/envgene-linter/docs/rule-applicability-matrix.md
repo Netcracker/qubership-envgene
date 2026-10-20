@@ -111,6 +111,10 @@ SEC-5 does not make SOPS configuration mandatory.
 | [INT-3][int-3] | On      | Find used shared Credential, profile, or Shared Template Variable names at multiple scopes. |
 | [INT-4][int-4] | On      | Review authored candidates with no references found in available sources.                   |
 
+INT-2 also checks explicit `inventory.cloudPassport` references in environment definitions.
+Optional passport absence is allowed. Missing targets in complete local searches receive Fix,
+while incomplete or uncertain passport lookups receive Review.
+
 ### Naming
 
 | Rule             | Default | Implemented check                                                                              |

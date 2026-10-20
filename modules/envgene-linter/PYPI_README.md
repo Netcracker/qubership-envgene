@@ -88,6 +88,8 @@ This is an alpha release. Most checks cover supported references and generator i
 Connected ParameterSet checks support `.yml`, `.yaml`, and `.json` files, including nested files under
 repository, cluster, and Inventory `parameters/` directories. Reference checks and merging use the same selection.
 An incomplete directory scan or unavailable role-specific template context receives Review in INT-2.
+INT-2 also checks explicit Cloud Passport references. A definitely missing target receives Fix.
+Optional passport absence is allowed, and incomplete or uncertain lookups receive Review.
 TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`.
 It ignores YAML comments and allows `.j2` files regardless of their directory.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.

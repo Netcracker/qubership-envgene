@@ -316,11 +316,15 @@ See the [SEC-5 algorithm](/modules/envgene-linter/docs/algorithms/sec5.md) for s
 
 ### INT-2 reference resolution
 
-INT-2 checks supported Credential, ParameterSet, and Resource Profile references in their selected context.
+INT-2 checks supported Credential, ParameterSet, Resource Profile, and explicit Cloud Passport references
+in their selected context.
 Definitely missing or ambiguous targets produce Warning / Fix. Dynamic references and unavailable template context
 produce Information / Review. Credential checks establish object existence, not property or secret validity.
 Rendered profile checks inspect `profile.name` only. `baseline` and `override_name` are ignored.
 Explicit `envSpecificResourceProfiles` bindings remain checked.
+An unresolved literal `inventory.cloudPassport` receives Fix only after a complete local lookup.
+Incomplete lookup and several passport candidates in one directory receive Review.
+An absent or empty passport reference does not require an automatically associated passport.
 See the [INT-2 algorithm](/modules/envgene-linter/docs/algorithms/int2.md) for source precedence and resolution limits.
 
 ### INT-4 candidates for review

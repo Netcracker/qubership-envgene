@@ -1,8 +1,43 @@
 # envgene-linter: PLACE-3
 
+- [Current selected path contract](#current-selected-path-contract)
+- [Goal](#goal)
+- [In plain terms](#in-plain-terms)
+- [Out of scope (this cycle)](#out-of-scope-this-cycle)
+- [Code changes](#code-changes)
+- [Catalog (original design)](#catalog-original-design)
+  - [EnvGene table (always on)](#envgene-table-always-on)
+  - [Keys from a resolved passport](#keys-from-a-resolved-passport)
+  - [Which catalog applies where](#which-catalog-applies-where)
+- [Passport resolution](#passport-resolution)
+- [On the cluster (file placement)](#on-the-cluster-file-placement)
+- [The three checks (original design)](#the-three-checks-original-design)
+  - [1. Misplaced passport file](#1-misplaced-passport-file)
+  - [2. Contract key at the repository layer](#2-contract-key-at-the-repository-layer)
+  - [3. Contract key copied across environments](#3-contract-key-copied-across-environments)
+- [PLACE-1 skip](#place-1-skip)
+- [Report](#report)
+- [Tests](#tests)
+- [Algorithm document](#algorithm-document)
+
 File eligibility is governed by the later shared [connected-only contract](2026-09-11-connected-only-design.md).
 
 This is the original three-check design. [PLACE-4](2026-09-07-place4-design.md) later replaced the ParameterSet-key checks; current PLACE-3 checks passport file placement only. The connected-only contract also excludes unselected passports from placement findings and from passport-derived catalogs. The original catalog and three-check sections below are historical; see the [current algorithm](../../algorithms/place3.md).
+
+## Current selected path contract
+
+PLACE-3 checks the logical Cloud Passport paths selected for individual environments.
+Two indexed paths to the same physical file do not imply that both paths are used.
+An unused repository or Inventory alias must not produce a placement finding when the selected path is at cluster scope.
+
+Use `Connections.environment_passports` as the source of selected records.
+Deduplicate repeated uses of one logical path. Preserve separate selected logical paths even when they resolve
+to one physical file, because their placement can differ. Retain the existing placement messages, hints, and locations.
+Content read failures remain separate diagnostics and do not erase known path placement.
+
+Synthetic acceptance cases cover unused aliases, repeated selected uses, selected misplaced aliases, and several
+selected paths sharing one physical target. The original physical-set membership loop is replaced by this contract.
+See the [current algorithm](/modules/envgene-linter/docs/algorithms/place3.md).
 
 Date: 2026-09-04  
 Status at design time: approved in conversation; awaiting file review\

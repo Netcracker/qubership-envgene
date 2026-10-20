@@ -12,6 +12,7 @@ from ..discovery import paramset_stem
 from ..model import Action, Category, Finding, IssueType, Location, RepoIndex, Severity
 from ..parameter_objects import parameter_object_paths, safe_parameter_path
 from ..paramset_sources import reference_complete, resolve_reference
+from ..passport import PASSPORT_FOLDERS
 from ..security_sources import SecurityBag, collect_security_sources
 from ..security_values import literal_name
 from ..yamlio import LoadedYaml, YamlReadError, load
@@ -149,6 +150,18 @@ class _Checker:
             return 'ambiguous'
         return None if all(self.read(path) is not None for path in paths) else 'unknown'
 
+    def passport(self, env, reference: Any) -> str | None:
+        if not _literal(reference):
+            return 'unknown'
+        paths = self.named_paths(env, reference, PASSPORT_FOLDERS)
+        if not paths:
+            return 'missing'
+        # Keep directory sentinels and .j2 targets unknown, even when they contain readable YAML.
+        # The generator returns the first file, so duplicates cannot prove a broken reference.
+        if len(paths) != 1 or paths[0].suffix not in ('.yml', '.yaml'):
+            return 'unknown'
+        return None if self.read(paths[0]) is not None else 'unknown'
+
     def credential(self, bag: SecurityBag, identifier: str) -> str | None:
         if not _literal(identifier):
             return 'unknown'
@@ -216,6 +229,10 @@ class _Checker:
         document = self.read(env.path / 'Inventory/env_definition.yml')
         if document is None:
             return
+        inventory = document.doc.get('inventory')
+        if isinstance(inventory, dict) and inventory.get('cloudPassport'):
+            self.emit(document, ('inventory', 'cloudPassport'), env.full_name, 'Cloud Passport',
+                      self.passport(env, inventory['cloudPassport']))
         template = document.doc.get('envTemplate')
         if not isinstance(template, dict):
             return

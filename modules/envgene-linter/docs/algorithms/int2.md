@@ -1,5 +1,13 @@
 # INT-2
 
+- [Description](#description)
+- [Input parameters](#input-parameters)
+- [Processing flow](#processing-flow)
+- [Result](#result)
+- [Error handling](#error-handling)
+- [Example](#example)
+- [Related documentation](#related-documentation)
+
 ## Description
 
 INT-2 checks whether supported references from connected consumers resolve to an object in the applicable environment and source context. A definitely missing or ambiguous target produces **Warning / Fix**. A dynamic reference, unreadable target or unavailable template context produces **Information / Review**.
@@ -13,7 +21,7 @@ Credential checks establish object existence only. They do not validate the Cred
 | `index` | Repository root, discovered environments, local objects and safe-path boundary |
 | `connections` | Existing connected entities and environment bindings; computed when omitted |
 | Security bags | Connected parameter maps and selected system/deployer fields, including their Credential catalogs |
-| Environment definition | ParameterSet and Resource Profile bindings under `envTemplate` |
+| Environment definition | ParameterSet and Resource Profile bindings under `envTemplate`, plus explicit `inventory.cloudPassport` |
 | Selected Cloud/Namespace objects | ParameterSet lists and profile references in generated/local objects |
 
 Credential consumers use the source selection shared with SEC-5: connected ParameterSet and Cloud/Namespace parameter maps, selected system integration and deployer fields, active registry consumers and selected Artifact Definitions with known Credential-reference fields. Unused definitions and arbitrary string keys are not reference consumers. Credential `data` is not recursively scanned for expressions.
@@ -51,7 +59,17 @@ Logical directory inspection does not follow external symlinks.
    matching directory. Several physical matches there are ambiguous. In selected Cloud/Namespace objects, check
    only `profile.name`, including generated `Profiles` targets. Ignore `baseline` and `override_name`.
    An unavailable template profile remains unknown rather than definitely missing from local override directories.
-7. Emit findings at the consumer reference. Deduplicate by physical location, environment, reference kind and outcome, then sort by path, line, column, environment, kind and message. Do not resolve a reference using an unrelated environment or unused definition.
+7. Inspect truthy `inventory.cloudPassport` references even when `envTemplate` is absent.
+   Search environment `Inventory`, then cluster, then `environments`, using `cloud-passport` before `cloud-passports`
+   at each level. Stop at the first matching directory. A complete missing lookup produces Fix at that field.
+   Another cluster and external templates cannot supply the target. Dynamic references, incomplete higher-priority
+   scans, unavailable lookup directories, unsafe or unreadable targets, unrendered `.j2` targets, and several
+   distinct matches in one directory produce Review.
+   The generator returns the first explicit match, so duplicate targets do not prove a generation failure.
+   Absent, empty, or null explicit fields remain optional even when no automatic passport exists.
+8. Emit findings at the consumer reference. Deduplicate by physical location, environment, reference kind and outcome,
+   then sort by path, line, column, environment, kind, and message.
+   Do not resolve a reference using an unrelated environment or unused definition.
 
 ## Result
 
@@ -64,6 +82,8 @@ Logical directory inspection does not follow external symlinks.
 
 The catalog description is `Every reference resolves`. INT-2 follows SEC-5 and precedes INT-3 in reports.
 HTML contains INT-2 only when findings exist. Findings preserve CLI exit code `0`. Fix is a manual recommendation.
+Cloud Passport findings use the generic key `Cloud Passport` and omit the explicit reference value.
+Several physical candidates in one passport directory receive Review instead of the ambiguity Fix used by other reference kinds.
 
 ## Error handling
 
@@ -95,3 +115,4 @@ If the environment's generated `Credentials/credentials.yml` contains `service-a
 - [Usage](../../README.md)
 - [Implementation](../../src/envgene_linter/rules/int2.py)
 - [Tests](../../tests/test_int2.py)
+- [Explicit passport tests](/modules/envgene-linter/tests/test_int2_passports.py)

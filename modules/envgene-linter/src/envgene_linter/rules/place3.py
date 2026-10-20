@@ -32,8 +32,10 @@ def _file_hint(index: RepoIndex, item: PassportFile) -> str:
 
 def _misplaced_files(index: RepoIndex, connections: Connections) -> list[Finding]:
     findings: list[Finding] = []
-    for item in index.passports:
-        if item.path.resolve() not in connections.passports or item.on_cluster:
+    selected = {item.path: item for item in connections.environment_passports.values()}
+    for path in sorted(selected):
+        item = selected[path]
+        if item.on_cluster:
             continue
         meta = RULES["PLACE-3"]
         findings.append(
