@@ -151,7 +151,6 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], templat
         return profiles_map
     validity_by_path = {}
     disk_profile_paths = {extractNameFromFile(path): Path(path) for path in findAllYamlsInDir(template_profiles_dir)}
-                f"{len(disk_profile_paths)} files indexed")
     for template_name, needed_profile in needed_resource_profiles.items():
         profile_path = find_resource_profile(needed_profile, template_profiles_dir, disk_profile_paths)
         if not profile_path:
