@@ -185,7 +185,7 @@ def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_val
 
 
 
-def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
+def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML | ruamel.yaml.YAML:
     def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
