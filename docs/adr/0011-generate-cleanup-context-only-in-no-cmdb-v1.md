@@ -1,6 +1,6 @@
-# ADR-0008: Generate the cleanup context only in No-CMDB v1
+# ADR-0011: Generate the cleanup context only in No-CMDB v1
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 
@@ -13,11 +13,12 @@ topology and never reads it.
 
 ## Decision
 
-The cleanup context is generated for every namespace of the environment in No-CMDB v1, and is not
-generated in No-CMDB v2.
+The cleanup context is generated for every namespace of the environment in No-CMDB v1 when a solution
+descriptor is present, and is not generated in No-CMDB v2.
 
 - No-CMDB v1 generates the cleanup context for every namespace of the environment, including a namespace
-  with no deployed applications and a run with no solution descriptor.
+  with no deployed applications, when a solution descriptor is present. A run with no solution descriptor
+  generates no cleanup context.
 - No-CMDB v2 generates no cleanup context, at deploy or at clean. Its clean operation marks the target
   namespaces' deployment and runtime for removal without a cleanup context.
 - Removing an application from the solution does not drop a namespace's cleanup context, because the
