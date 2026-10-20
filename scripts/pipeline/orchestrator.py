@@ -40,7 +40,7 @@ from pipeline.resolve_env_names import build_resolved_variables, resolve_env_nam
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
-from utils.handle_certs import install_certificates
+from utils.handle_certs import configure_git_server_trust, install_certificates
 from utils.sparse_checkout import run_sparse_checkout
 
 
@@ -443,11 +443,11 @@ def prepare_job() -> list[str]:
         try:
             env_names = resolve_env_names()
             os.environ.update(build_resolved_variables(env_names))
+            configure_git_server_trust()
             if getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
                 logger.info("Local test mode: skipping sparse checkout")
             else:
                 run_sparse_checkout(env_names)
-            # Certificates live in configuration/certs, which exists only after the sparse checkout.
             install_certificates()
             status = StepStatus.SUCCESS
         finally:

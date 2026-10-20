@@ -20,7 +20,8 @@ from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, Operat
     DeltaDeployType, ExternalCredentialProvisioning
 from envgenehelper.plugin_engine import PluginEngine
 
-JOB_ENV_EXPORTS = ("REQUESTS_CA_BUNDLE", "LOCAL_APPDEFS_PATH", "LOCAL_REGDEFS_PATH", "LOCAL_PUBREG_FILE")
+JOB_ENV_EXPORTS = (
+    "REQUESTS_CA_BUNDLE", "GIT_SSL_CAINFO", "LOCAL_APPDEFS_PATH", "LOCAL_REGDEFS_PATH", "LOCAL_PUBREG_FILE")
 
 
 class PipelineParametersHandler(BaseModel):
