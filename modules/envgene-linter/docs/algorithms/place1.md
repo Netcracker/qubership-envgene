@@ -81,7 +81,13 @@ Each qualifying shared value yields Warning / Fix. The scope is `<cluster> <scop
 
 ## Error handling
 
-**1a.** Unresolved references and unrendered Jinja do not supply Effective Set leaves; unreadable YAML is reported separately as a skipped input.
+Before this rule runs, the engine checks whether selected ParameterSet, Cloud Passport, or environment-definition
+content is unavailable. If so, it withholds all PLACE-1 promotion findings and records located skipped checks.
+Partial merge inputs cannot confirm a shared destination. Other independent rules continue.
+See the [input error algorithm](/modules/envgene-linter/docs/algorithms/input-errors.md).
+
+**1a.** Unresolved references and unrendered Jinja do not supply Effective Set leaves.
+YAML and JSON read or parser failures remain unknown inputs and receive separate diagnostics.
 
 **2a / 4a.** Missing projection entries skip that environment for the corresponding comparison. Passport keys and restatements are normal exclusions, not errors.
 

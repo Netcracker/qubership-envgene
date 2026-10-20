@@ -31,7 +31,9 @@ inherit another consumer's compatibility result. TPL-4 and ordinary TPL-6 statem
    Keep original line counts and source contents on disk unchanged.
 2. Review transformations that alter literal data, raw contents, or a quoted Jinja string.
    Ignore changes confined to Jinja comments. YAML comments in full-file templates remain Jinja source.
-3. Parse the processed copy without compiling or rendering. A parse failure creates generic compatibility Review.
+3. Parse the processed copy without compiling or rendering. For TPL-6, a parse failure creates a located
+   `Check skipped:` Review entry. Keep independent rewrite findings established before the failure.
+   Standalone analyzer calls without a diagnostic callback retain a generic compatibility Review.
 4. Traverse the AST iteratively. Review unresolved legacy calls and filters unavailable in the applicable renderer.
    Standard Jinja filters are available. The EnvGene renderer additionally registers `to_nice_yaml` and `urlsplit`.
 5. Check these custom filter signatures without executing them. `to_nice_yaml` accepts no extra arguments.

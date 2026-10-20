@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .yamlio import LoadedYaml
+from .read_errors import ReadProblem
 
 
 class Layer(Enum):
@@ -169,6 +170,7 @@ class RepoIndex:
     skipped_checks: list[SkippedCheck] = field(default_factory=list)
     incomplete_paramset_dirs: set[Path] = field(default_factory=set)
     paramset_layouts: dict[Path, ParamsetLayout] = field(default_factory=dict)
+    read_problems: list[ReadProblem] = field(default_factory=list)
 
     @property
     def environments(self) -> list[EnvModel]:
@@ -216,6 +218,6 @@ class SkippedCheck:
         return Finding(
             rule=self.rule, severity=Severity.INFORMATION, issue_type=IssueType.INFORMATION,
             action=Action.REVIEW, path=self.path, line=self.line, column=self.column,
-            key='skipped', scope='templates', message=f'Check skipped: {self.reason}.',
+            key='skipped', scope='sources', message=f'Check skipped: {self.reason}.',
             hint='Resolve the reported source problem and rerun the linter; this check did not complete.',
         )

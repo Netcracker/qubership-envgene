@@ -9,23 +9,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ruamel.yaml import YAML
-from ruamel.yaml.error import YAMLError
+from .parsing import ParseFailure, parse_json, parse_yaml
+from .read_errors import ReadProblem, record_read_error
 
 _JSON_TOKEN = re.compile(r'"(?:[^"\\]|\\.)*"|[{}\[\],:]|[^\s{}\[\],:]+', re.DOTALL)
 
 
 class YamlReadError(Exception):
-    def __init__(self, path: Path, cause: str) -> None:
+    def __init__(self, path: Path, cause: str, line: int = 1, column: int = 1) -> None:
         super().__init__(f"{path}: {cause}")
         self.path = path
         self.cause = cause
-
-
-def _processor() -> YAML:
-    yaml = YAML()
-    yaml.preserve_quotes = True
-    return yaml
+        self.line = line
+        self.column = column
 
 
 @dataclass
@@ -120,12 +116,18 @@ def _json_positions(text: str) -> dict[tuple, tuple[int, int]]:
 def load(path: Path) -> LoadedYaml:
     try:
         text = path.read_text(encoding="utf-8")
-        if path.suffix == '.json':
-            return LoadedYaml(path, json.loads(text), _json_positions(text))
-        doc = _processor().load(text)
-    except (OSError, UnicodeDecodeError, YAMLError, json.JSONDecodeError) as exc:
-        raise YamlReadError(path, str(exc)) from exc
-    return LoadedYaml(path=path, doc=doc)
+    except (OSError, UnicodeError) as exc:
+        problem = ReadProblem(path, 'cannot read source as UTF-8')
+        record_read_error(problem)
+        raise YamlReadError(path, problem.reason) from exc
+    try:
+        doc = parse_json(text) if path.suffix == '.json' else parse_yaml(text)
+    except ParseFailure as exc:
+        record_read_error(ReadProblem(path, exc.reason, exc.line, exc.column))
+        raise YamlReadError(path, exc.reason, exc.line, exc.column) from exc
+    # Our position builder is not a third-party parser: implementation defects must propagate.
+    positions = _json_positions(text) if path.suffix == '.json' else None
+    return LoadedYaml(path=path, doc=doc, positions=positions)
 
 
 def plain(value: Any) -> Any:

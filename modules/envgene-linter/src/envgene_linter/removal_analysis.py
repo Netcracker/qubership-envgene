@@ -52,7 +52,12 @@ class RemovalAnalysis:
         self.results: dict[tuple[Path, tuple], bool | None] = {}
         self.documents: dict[Path, bool] = {}
         self.complete: dict[tuple[str, Category, str], bool] = {}
+        unreadable = {problem.path.resolve() for problem in index.read_problems}
         for env in index.environments:
+            if (env.path / 'Inventory/env_definition.yml').resolve() in unreadable:
+                # Unknown bindings can use any source in this environment's applicable layers.
+                self.uncertain_consumers.update(file.path.resolve() for file in source_files(index, env)
+                                                if not file.unavailable)
             for category in Category:
                 for target, references in env.bound_targets(category).items():
                     for reference in references:

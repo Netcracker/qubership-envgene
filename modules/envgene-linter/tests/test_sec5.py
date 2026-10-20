@@ -149,12 +149,15 @@ def test_parameter_unknown_expression_and_composite_are_reviewed(repo):
 
 
 def test_apps_lists_and_cycles_are_bounded(repo):
+    from envgene_linter.engine import run_check
+
     path = params(repo, SECRET)
     bag = {'DB_PASSWORD': [SECRET, '${UNVERIFIED}']}
     bag['recursive'] = bag
     write(path, {'name': 'service', 'applications': [{'name': 'app', 'parameters': bag}]})
-    result = findings(repo)
-    assert len(result) == 2  # ruamel resolves this recursive alias to None; both scalar leaves remain
+    result = run_check(repo.root)
+    assert not any(item.rule == 'SEC-5' and item.action is Action.FIX for item in result.findings)
+    assert any(item.rule == 'SEC-5' and item.path == path for item in result.skipped_checks)
 
 
 def test_selected_bad_yaml_reports_without_parser_text(repo):

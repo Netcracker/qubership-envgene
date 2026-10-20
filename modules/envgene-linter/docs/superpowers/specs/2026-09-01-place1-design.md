@@ -32,6 +32,9 @@ including its report format and exclusions. For the complete current behavior, s
 [PLACE-1](/modules/envgene-linter/docs/algorithms/place1.md) and
 [Effective Set](/modules/envgene-linter/docs/algorithms/effective-set.md).
 
+The later [input error contract](/modules/envgene-linter/docs/superpowers/specs/2026-10-20-input-error-handling-design.md)
+also applies. Unavailable selected merge inputs withhold PLACE-1 promotion findings and create located skipped checks.
+
 ## Current value comparison contract
 
 ### Requirements

@@ -170,10 +170,14 @@ def test_system_pair_compares_ids_without_root_catalog(repo):
 
 
 def test_recursive_alias_is_bounded(repo):
+    from envgene_linter.engine import run_check
+
     values = {'DB_USER': ref('username'), 'DB_PASS': ref('password', OTHER)}
     values['recursive'] = values
-    setup(repo, values, definitions={})
-    assert len(findings(repo)) == 1
+    source, _ = setup(repo, values, definitions={})
+    result = run_check(repo.root)
+    assert not any(item.rule == 'SEC-4' for item in result.findings)
+    assert any(item.rule == 'SEC-4' and item.path == source for item in result.skipped_checks)
 
 
 def test_direct_engine_and_html_integration(repo):

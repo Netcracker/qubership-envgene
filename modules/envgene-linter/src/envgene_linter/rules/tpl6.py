@@ -6,6 +6,7 @@ from jinja2 import nodes
 
 from ..ansible_compat import analyze_compatibility
 from ..ansible_sources import compatibility_sources
+from ..diagnostics import skip_check
 from ..jinja_analysis import TemplateSource
 from ..model import Action, Finding, IssueType, RepoIndex, Severity
 
@@ -58,7 +59,10 @@ def check(index: RepoIndex, sources: list[TemplateSource]) -> list[Finding]:
                 elif node.recursive:
                     add(source, node.lineno, 'for', 'Recursive template iteration needs review.', review=True)
     for source in compatibility_sources(index, sources):
-        for line, reason in analyze_compatibility(source).items():
+        def on_error(reason, line):
+            skip_check(index, 'TPL-6', source.path, reason, line)
+
+        for line, reason in analyze_compatibility(source, on_error=on_error).items():
             identity = (source.path.resolve(), line, 'ansible_compatibility')
             findings[identity] = Finding(
                 rule='TPL-6', severity=Severity.INFORMATION, issue_type=IssueType.INFORMATION,

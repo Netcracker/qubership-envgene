@@ -53,7 +53,7 @@ def _runtime_tree(source):
         for start, end, replacement in reversed(replacements):
             text = text[:start] + replacement + text[end:]
         return ENVIRONMENT.parse(text)
-    except (TemplateSyntaxError, RecursionError):
+    except (TemplateSyntaxError, ValueError, RecursionError):
         # Unusual literal keys can produce invalid Jinja after replacement; keep them reviewable.
         return source.tree
 

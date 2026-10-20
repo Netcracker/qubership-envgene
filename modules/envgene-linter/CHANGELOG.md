@@ -10,6 +10,9 @@
 
 ## Unreleased
 
+- Continue independent checks after recoverable YAML, JSON, and Jinja read or parser failures and write fresh reports.
+  Export affected checks as located Review entries in JSON. Keep incomplete merge inputs from confirming
+  PLACE-1 promotion or PLACE-2 removal.
 - Check connected nested YAML and JSON ParameterSets consistently across reference resolution, content rules,
   and Effective Set merging. Preserve relative-path replacement and generator application order.
   Keep unavailable replacements and incomplete scans from restoring shadowed inputs.

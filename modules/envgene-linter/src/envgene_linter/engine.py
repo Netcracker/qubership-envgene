@@ -6,10 +6,12 @@ from pathlib import Path
 from . import rule_config
 from .connections import compute_connections
 from .discovery import build_index
+from .diagnostics import attach_discovery_problems, skip_read
 from .jinja_analysis import analyze
 from .effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
 from .model import Finding, SkippedCheck
 from .passport import build_catalogs
+from .read_errors import ReadProblem, collect_read_errors
 from .rules.place1 import check as check_place1
 from .rules.place2 import check as check_place2
 from .rules.place3 import check as check_place3
@@ -47,10 +49,23 @@ class CheckResult:
 
 
 def run_check(root: Path) -> CheckResult:
+    with collect_read_errors() as problems:
+        return _run_check(root, problems)
+
+
+def _run_check(root: Path, problems: list[ReadProblem]) -> CheckResult:
     disabled = rule_config.disabled_rules()
     if len(disabled) == len(rule_config.RULES):
         return CheckResult(findings=[], skipped=[], disabled_rules=disabled)
     index = build_index(root)
+
+    def run(rule, check, args):
+        start = len(problems)
+        findings = check(*args)
+        for problem in problems[start:]:
+            skip_read(index, rule, problem)
+        return findings
+
     template_rules = tuple(rule for rule in ('TPL-4', 'TPL-6') if rule not in disabled)
     sources = analyze(index, template_rules)
     template_checks = [('TPL-1', check_tpl1, (index,)),
@@ -58,12 +73,13 @@ def run_check(root: Path) -> CheckResult:
                        ('TPL-6', check_tpl6, (index, sources))]
     if not (index.root / "environments").is_dir():
         findings = [finding for rule, check, args in template_checks if rule not in disabled
-                    for finding in check(*args)]
+                    for finding in run(rule, check, args)]
         inactive = tuple(rule for rule in rule_config.RULES
                          if rule not in ('TPL-1', 'TPL-4', 'TPL-6') and rule not in disabled)
         return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
                            not_applicable_rules=inactive, skipped_checks=index.skipped_checks)
     connections = compute_connections(index)
+    incomplete_merge = attach_discovery_problems(index, connections, set(rule_config.RULES) - set(disabled))
     catalogs = build_catalogs(index, connections)
     full = {env.full_name: compute(index, env, ALL_LAYERS) for env in index.environments}
     lower = {env.full_name: compute(index, env, LOWER_LAYERS) for env in index.environments}
@@ -96,6 +112,8 @@ def run_check(root: Path) -> CheckResult:
     findings = []
     for rule, check, args in checks:
         if rule not in disabled:
-            findings.extend(check(*args))
+            if rule == 'PLACE-1' and incomplete_merge:
+                continue
+            findings.extend(run(rule, check, args))
     return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
                        skipped_checks=index.skipped_checks)

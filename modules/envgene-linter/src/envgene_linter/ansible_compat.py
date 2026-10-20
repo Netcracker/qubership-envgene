@@ -8,6 +8,7 @@ from pathlib import Path
 
 from jinja2 import Environment, TemplateSyntaxError, nodes
 
+from .parsing import ParseFailure, parse_jinja
 
 ENVIRONMENT = Environment()
 CUSTOM_FILTERS = {'to_nice_yaml', 'urlsplit'}
@@ -46,7 +47,7 @@ def _lexical_spans(text: str) -> list[tuple[int, int, str]]:
             end = start + len(value)
             spans.append((start, end, kind))
             cursor = end
-    except (TemplateSyntaxError, RecursionError):
+    except (TemplateSyntaxError, ValueError, RecursionError):
         # Parsing below reports the failure without exposing the exception.
         pass
     return spans
@@ -123,7 +124,7 @@ def _custom_arguments_supported(node: nodes.Filter) -> bool:
     return True
 
 
-def analyze_compatibility(source: CompatibilitySource) -> dict[int, str]:
+def analyze_compatibility(source: CompatibilitySource, *, on_error=None) -> dict[int, str]:
     """Return generic Review reasons without compiling or executing the source."""
     findings: dict[int, str] = {}
 
@@ -135,12 +136,13 @@ def analyze_compatibility(source: CompatibilitySource) -> dict[int, str]:
     if source.rendering == 'envgene':
         text = _rewrite(text, review)
     try:
-        tree = ENVIRONMENT.parse(text)
-    except TemplateSyntaxError as exc:
-        review(exc.lineno or 1, 'Cannot confirm compatibility because Jinja syntax cannot be parsed.')
-        return findings
-    except RecursionError:
-        review(1, 'Cannot confirm compatibility because Jinja syntax exceeds analysis limits.')
+        tree = parse_jinja(ENVIRONMENT, text)
+    except ParseFailure as exc:
+        if on_error is not None:
+            original = source.offset + (1 if source.descriptor else exc.line)
+            on_error(exc.reason, original)
+            return findings
+        review(exc.line, 'Cannot confirm compatibility because Jinja syntax cannot be parsed.')
         return findings
 
     known_custom = source.rendering in {'envgene', 'custom_jinja'}

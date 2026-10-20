@@ -5,9 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from jinja2 import ChainableUndefined, Environment, TemplateSyntaxError, nodes
+from jinja2 import ChainableUndefined, Environment, nodes
 
-from .model import RepoIndex, SkippedCheck
+from .diagnostics import skip_check
+from .model import RepoIndex
+from .parsing import ParseFailure, parse_jinja
 from .template_sources import configuration_paths, descriptor_scalars
 
 ENVIRONMENT = Environment(undefined=ChainableUndefined)
@@ -26,24 +28,15 @@ class TemplateSource:
         return self.offset + (1 if self.descriptor else line)
 
 
-def skip_check(index: RepoIndex, rule: str, path: Path, reason: str, line: int = 1) -> None:
-    note = f'{rule}: {reason}: {path.relative_to(index.root)}:{line}:1'
-    if note not in index.skipped:
-        index.skipped.append(note)
-    check = SkippedCheck(rule, path, line, 1, reason)
-    if check not in index.skipped_checks:
-        index.skipped_checks.append(check)
-
-
 def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
     if not rules:
         return []
     sources = []
     seen: set[tuple[Path, int, int]] = set()
 
-    def skipped(path: Path, reason: str, line: int = 1) -> None:
+    def skipped(path: Path, reason: str, line: int = 1, column: int = 1) -> None:
         for rule in rules:
-            skip_check(index, rule, path, reason, line)
+            skip_check(index, rule, path, reason, line, column)
 
     for path in configuration_paths(index, '/'.join(rules)):
         relative = path.relative_to(index.root)
@@ -56,9 +49,13 @@ def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
         except (OSError, UnicodeError):
             skipped(path, 'cannot read template source')
             continue
-        fragments = ([(0, len(text), text)] if path.suffix == '.j2' else
-                     [(node.start_mark.index, node.end_mark.index, node.value)
-                      for node in descriptor_scalars(relative, text, selectors=False)])
+        try:
+            fragments = ([(0, len(text), text)] if path.suffix == '.j2' else
+                         [(node.start_mark.index, node.end_mark.index, node.value)
+                          for node in descriptor_scalars(relative, text, selectors=False, strict=True)])
+        except ParseFailure as exc:
+            skipped(path, exc.reason, exc.line, exc.column)
+            continue
         for start, end, fragment in fragments:
             identity = (path.resolve(), start, end)
             if identity in seen:
@@ -66,13 +63,10 @@ def analyze(index: RepoIndex, rules: tuple[str, ...]) -> list[TemplateSource]:
             seen.add(identity)
             offset = text.count('\n', 0, start)
             try:
-                tree = ENVIRONMENT.parse(fragment)
-            except TemplateSyntaxError as exc:
-                line = offset + (1 if path.suffix != '.j2' else max(1, exc.lineno or 1))
-                skipped(path, 'cannot parse Jinja source', line)
-                continue
-            except RecursionError:
-                skipped(path, 'Jinja source exceeds the parser recursion limit', offset + 1)
+                tree = parse_jinja(ENVIRONMENT, fragment)
+            except ParseFailure as exc:
+                line = offset + (1 if path.suffix != '.j2' else exc.line)
+                skipped(path, exc.reason, line)
                 continue
             sources.append(TemplateSource(path, offset, tree, descriptor=path.suffix != '.j2', text=fragment))
     return sources

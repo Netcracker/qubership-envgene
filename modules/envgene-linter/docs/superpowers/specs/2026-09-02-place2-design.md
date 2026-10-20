@@ -22,6 +22,9 @@ context. Its unconditional restatement warning and instruction to avoid Effectiv
 this contract. The complete processing flow is in the
 [PLACE-2 algorithm](/modules/envgene-linter/docs/algorithms/place2.md).
 
+The later [input error contract](/modules/envgene-linter/docs/superpowers/specs/2026-10-20-input-error-handling-design.md)
+also applies. Unreadable environment definitions remain potential consumers when proving shared-source removals.
+
 ## Current removal contract
 
 ### Requirements

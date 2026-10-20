@@ -12,7 +12,9 @@ from ruamel.yaml.error import YAMLError
 from ruamel.yaml.tokens import CommentToken, ScalarToken
 
 from ..connections import Connections
+from ..diagnostics import skip_check
 from ..model import Action, Finding, IssueType, RepoIndex, Severity
+from ..parsing import ParseFailure
 from ..template_sources import configuration_paths, descriptor_spans
 from ..rulemeta import RULES
 
@@ -219,13 +221,17 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
         if physical not in texts:
             try:
                 texts[physical] = path.read_text(encoding='utf-8')
-            except (OSError, UnicodeDecodeError):
+            except (OSError, UnicodeError):
                 texts[physical] = None
-                index.skipped.append(f'TPL-1: cannot read YAML file: {relative}')
+                skip_check(index, 'TPL-1', path, 'cannot read YAML source')
         text = texts[physical]
         if text is None:
             continue
-        exemptions = descriptor_spans(relative, text)
+        try:
+            exemptions = descriptor_spans(relative, text, strict=True)
+        except ParseFailure as exc:
+            skip_check(index, 'TPL-1', path, exc.reason, exc.line, exc.column)
+            continue
         active_text = _without_yaml_comments(text)
         newlines = [-1, *(match.start() for match in re.finditer('\n', text))]
         for start, end in _spans(active_text):

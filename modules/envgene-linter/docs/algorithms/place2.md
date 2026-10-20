@@ -85,6 +85,11 @@ Unreadable and unrendered inputs remain separate discovery diagnostics. If their
 merge context incomplete, the candidate receives Review. A source that supplies no usable candidate leaf cannot
 produce a PLACE-2 finding by itself. No candidate yields an empty list (`No findings` in the console report).
 
+An unreadable environment definition remains a potential consumer of sources in its applicable layers.
+Its unknown bindings cannot prove that a shared source is unused by that environment.
+The engine exports affected read failures as located `Check skipped:` Review entries.
+See the [input error algorithm](/modules/envgene-linter/docs/algorithms/input-errors.md).
+
 Unsupported application shapes, unknown scalar equality such as YAML `.nan`, repeated container graphs,
 and comparison limits prevent a Fix. Comparison and source validation each stop after 20,000 visited items.
 Recursion, shape, or source-path errors during replay produce uncertainty rather than removal advice.

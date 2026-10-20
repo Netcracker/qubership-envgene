@@ -267,7 +267,7 @@ def test_reference_cycle_and_nested_lists_are_bounded(repo):
     value['cycle'] = value
     params(repo, value)
     catalog(repo, {})
-    assert_kind(findings(repo), 'missing')
+    assert_kind(findings(repo), 'unknown')
 
 
 def test_unsafe_catalog_never_reads_external_target(repo, tmp_path):

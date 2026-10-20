@@ -4,6 +4,12 @@
 - [Representation](#representation)
 - [Verification](#verification)
 
+> [!NOTE]
+> This document preserves the initial Jinja reporting design from October 12, 2026.
+> The later [input error contract](/modules/envgene-linter/docs/superpowers/specs/2026-10-20-input-error-handling-design.md)
+> extends structured JSON skips to affected YAML and JSON checks.
+> Follow the [report algorithm](/modules/envgene-linter/docs/algorithms/reports.md) for current behavior.
+
 ## Requirements
 
 Reports expose incomplete checks when a source cannot be read, parsed, or analyzed.

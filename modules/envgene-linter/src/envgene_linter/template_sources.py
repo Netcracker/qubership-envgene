@@ -6,12 +6,11 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 
-from ruamel.yaml import YAML
-from ruamel.yaml.error import YAMLError
 from ruamel.yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
 from .model import RepoIndex
 from .parameter_objects import safe_parameter_path
+from .parsing import ParseFailure, compose_yaml
 
 _ROOTS = ('environments', 'configuration', 'templates')
 
@@ -37,12 +36,15 @@ def configuration_paths(index: RepoIndex, rule: str) -> Iterator[Path]:
                     yield path
 
 
-def descriptor_scalars(relative: Path, text: str, *, selectors: bool = True) -> list[ScalarNode]:
+def descriptor_scalars(relative: Path, text: str, *, selectors: bool = True,
+                       strict: bool = False) -> list[ScalarNode]:
     if relative.parts[:2] != ('templates', 'env_templates'):
         return []
     try:
-        root = YAML(typ='safe', pure=True).compose(text)
-    except (YAMLError, ValueError, RecursionError):
+        root = compose_yaml(text)
+    except ParseFailure:
+        if strict:
+            raise
         return []
     if not isinstance(root, MappingNode):
         return []
@@ -104,5 +106,6 @@ def descriptor_scalars(relative: Path, text: str, *, selectors: bool = True) -> 
     return spans
 
 
-def descriptor_spans(relative: Path, text: str) -> list[tuple[int, int]]:
-    return [(node.start_mark.index, node.end_mark.index) for node in descriptor_scalars(relative, text)]
+def descriptor_spans(relative: Path, text: str, *, strict: bool = False) -> list[tuple[int, int]]:
+    return [(node.start_mark.index, node.end_mark.index)
+            for node in descriptor_scalars(relative, text, strict=strict)]

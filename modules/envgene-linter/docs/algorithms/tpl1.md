@@ -19,7 +19,7 @@ Skip directory symlinks and `.git`, `.venv`, `node_modules`, and `__pycache__` s
 Use the shared path safety check before reading file links. Other directories and root build metadata are outside scope.
 
 Allow `.j2` files regardless of their directory. TPL-1 does not check template file placement.
-For YAML, cache UTF-8 source text by physical path. Add a generic skip note on a read or decoding failure.
+For YAML, cache UTF-8 source text by physical path. Record a located skipped check on a read or decoding failure.
 Analyze logical aliases separately to preserve their different descriptor roles.
 
 ## Descriptor fields
@@ -40,7 +40,9 @@ Only scalar path fields and mapping override bags qualify.
 
 Exempt only delimiter pairs contained within these spans. Ignore YAML comments and keep unrelated fields eligible,
 even on the same line. Do not exempt an alias anchor declared outside an allowed field.
-Composition failures leave all matches eligible.
+Composition failures leave descriptor exemptions unknown. Record a located TPL-1 skip and withhold findings for
+that descriptor instead of treating supported fields as prohibited Jinja.
+See the [input error contract](/modules/envgene-linter/docs/superpowers/specs/2026-10-20-input-error-handling-design.md).
 
 ## Source recognition
 
@@ -62,7 +64,8 @@ Composition failures leave all matches eligible.
 7. Map the opening offset to a line and column using the newline index.
    Keep one finding per physical file and line, preferring the first Fix over any Review on that line.
 
-The scan includes malformed YAML, keys, metadata, quoted strings, and block scalars. YAML comments are excluded.
+The scan includes malformed ordinary YAML, keys, metadata, quoted strings, and block scalars.
+Descriptors with unknown exemptions remain skipped. YAML comments are excluded.
 It does not validate the full Jinja grammar. Isolated delimiters and `${...}` macros are silent.
 For exact context names and downstream syntax guards, see
 [the specification and design](/modules/envgene-linter/docs/superpowers/specs/2026-09-28-tpl1-design.md).

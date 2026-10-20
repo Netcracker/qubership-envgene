@@ -175,6 +175,8 @@ Each finding contains one or more `path:line:column` locations, followed by its 
 
 Discovery and parsing skip notes always go to **stderr**, even without `--console`.
 With `--console`, findings go to **stdout**. A skipped input may not have been checked fully.
+Recoverable YAML, JSON, and Jinja read or parser failures retain independent checks and replace both reports.
+Unavailable inputs remain unknown. Incomplete merge data cannot confirm PLACE-1 promotion or PLACE-2 removal.
 `No findings` means that the rule found no reportable condition in its eligible inputs.
 It does not mean that every file in the repository was validated.
 
@@ -203,7 +205,7 @@ Reports from some rules can contain configuration values in finding messages. SE
 
 ## JSON reports
 
-`envgene-linter-report.json` is a UTF-8 JSON array with one object per finding or skipped Jinja check.
+`envgene-linter-report.json` is a UTF-8 JSON array with one object per finding or structured skipped check.
 It contains the same findings as HTML, in the same rule order, with all locations for each finding kept together.
 Messages are plain text, without HTML escaping. The file uses two-space indentation and ends with a newline.
 
@@ -234,9 +236,9 @@ The following example uses synthetic repository paths:
 ]
 ```
 
-Skipped Jinja checks use the same fields, with `action: "Review"` and an issue beginning `Check skipped:`.
+Structured skipped checks use the same fields, with `action: "Review"` and an issue beginning `Check skipped:`.
 Their locations identify the affected source, and their suggestions ask for a rerun after resolving the source problem.
-No findings or structured Jinja skips produces `[]`, including when all rules are disabled.
+No findings or structured skips produces `[]`, including when all rules are disabled.
 Disabled and inapplicable rules have no entries. Other skip diagnostics remain in HTML and stderr,
 so `[]` does not prove complete coverage.
 JSON serialization uses existing finding messages and recommendations. It does not read or embed source file contents.
@@ -475,6 +477,7 @@ findings.
 - [Rule coverage and repository support](/modules/envgene-linter/docs/rule-applicability-matrix.md)
 - [Effective Set and parameter merging](docs/algorithms/effective-set.md)
 - [Reports and incomplete checks](/modules/envgene-linter/docs/algorithms/reports.md)
+- [Source read and parser failures](/modules/envgene-linter/docs/algorithms/input-errors.md)
 - [Development specification index](docs/superpowers/specs/README.md) — includes reading order and historical supersession notes
 
 The linked rule algorithms describe current behavior. Dated specifications preserve design decisions and identify later changes; older report counts or selection requirements should be read with their supersession notes.

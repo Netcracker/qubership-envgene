@@ -116,10 +116,12 @@ def test_descriptor_like_data_outside_descriptor_directory_is_checked(tmp_path):
     assert len(tpl1(tmp_path)) == 8
 
 
-def test_incomplete_yaml_descriptor_has_no_exemptions(tmp_path):
+def test_incomplete_yaml_descriptor_has_unknown_exemptions(tmp_path):
     path = write(tmp_path / 'templates/env_templates/dev.yml',
                  'tenant: "{{ templates_dir }}/tenant.yml.j2"\n{% if enabled %}\ncloud: [\n')
-    assert [(item.path, item.line) for item in tpl1(tmp_path)] == [(path, 1), (path, 2)]
+    result = run_check(tmp_path)
+    assert not any(item.rule == 'TPL-1' for item in result.findings)
+    assert any(item.rule == 'TPL-1' and item.path == path for item in result.skipped_checks)
 
 
 @pytest.mark.parametrize('expression', ['{{ .Values.host }}', '{{ this.id === "x" }}', '{{ runtime_value }}'])

@@ -159,10 +159,12 @@ Neither action performs automatic edits or states how much of the repository was
 | No findings        | No findings were produced within the checked scope. Unchecked sources can still exist.        |
 | Incomplete checks  | HTML lists recorded skip notes. The console prints them to stderr.                            |
 
-Structured Jinja skips become located JSON Review entries beginning with `Check skipped:`.
+Structured YAML, JSON, and Jinja read or parser skips become located JSON Review entries beginning with `Check skipped:`.
 Console and HTML display `Not applicable`.
-JSON exports findings and structured Jinja skips, without execution-status records.
-Other skip notes have no structured JSON representation.
+JSON exports findings and structured skips, without execution-status records.
+Some enumeration and unsupported-source notes have no structured JSON representation.
+Recoverable source failures retain independent checks and fresh reports.
+Incomplete merge inputs cannot confirm PLACE-1 promotion or PLACE-2 removal.
 An empty JSON array therefore does not establish that every source was checked.
 See the [report contract](/modules/envgene-linter/docs/algorithms/reports.md).
 

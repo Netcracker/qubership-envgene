@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import re
 
-from ruamel.yaml import YAML
-from ruamel.yaml.error import YAMLError
 from ruamel.yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
 from .ansible_compat import CompatibilitySource
 from .jinja_analysis import TemplateSource, skip_check
 from .model import RepoIndex
 from .parameter_objects import safe_parameter_path
+from .parsing import ParseFailure, compose_yaml
 from .template_sources import configuration_paths, descriptor_scalars
 
 _LEGACY = re.compile(
@@ -21,10 +20,11 @@ _LEGACY = re.compile(
 )
 
 
-def _compose(text):
+def _compose(index, path, text):
     try:
-        return YAML(typ='safe', pure=True).compose(text)
-    except (YAMLError, ValueError, RecursionError):
+        return compose_yaml(text)
+    except ParseFailure as exc:
+        skip_check(index, 'TPL-6', path, exc.reason, exc.line, exc.column)
         return None
 
 
@@ -121,7 +121,10 @@ def compatibility_sources(index: RepoIndex, sources: list[TemplateSource]) -> li
             continue
         if source.descriptor:
             text = read(source.path)
-            contracts = _descriptor_contracts(_compose(text)) if text is not None else {}
+            root = _compose(index, source.path, text) if text is not None else None
+            if root is None:
+                continue
+            contracts = _descriptor_contracts(root)
             renderings = contracts.get((source.offset, source.text), {'unknown'})
         else:
             rendering = _file_contract(index, source.path) or 'unknown'
@@ -146,8 +149,9 @@ def compatibility_sources(index: RepoIndex, sources: list[TemplateSource]) -> li
             continue
         if not _LEGACY.search(text):
             continue
-        root = _compose(text) if path.suffix != '.j2' else None
+        root = _compose(index, path, text) if path.suffix != '.j2' else None
         if root is None:
+            # A source-level Jinja check can still complete with an unknown YAML contract.
             add(path, text, 'unknown')
             continue
         selected = descriptor_scalars(relative, text, selectors=False)

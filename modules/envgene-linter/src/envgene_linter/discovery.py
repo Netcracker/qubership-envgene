@@ -17,6 +17,7 @@ from .model import (
 )
 from .yamlio import YamlReadError, load
 from .paramset_sources import scan_directory, staging_complete
+from .read_errors import collect_read_errors
 
 PARAMETERS_DIR = "parameters"
 INVENTORY_DIR = "Inventory"
@@ -364,6 +365,13 @@ def _artifact_selectors(doc: object) -> tuple[str, ...]:
 
 
 def build_index(root: Path) -> RepoIndex:
+    with collect_read_errors() as problems:
+        index = _build_index(root)
+    index.read_problems = problems
+    return index
+
+
+def _build_index(root: Path) -> RepoIndex:
     root = root.resolve()
     environments_dir = root / "environments"
     if not environments_dir.is_dir():

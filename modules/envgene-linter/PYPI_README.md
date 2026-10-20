@@ -54,7 +54,8 @@ The linter does not fix configuration files automatically.
 
 Every successful check replaces both reports. Their filenames are added to the repository's `.gitignore`.
 Skipped checks appear in HTML under `Incomplete checks` and in the terminal.
-Skipped Jinja checks also appear in JSON as `Review` entries with an issue beginning `Check skipped:`.
+Recoverable YAML, JSON, and Jinja read or parser failures retain independent checks and replace both reports.
+Structured skipped checks also appear in JSON as `Review` entries with an issue beginning `Check skipped:`.
 Review these entries before treating a report as complete.
 
 ## Optional commands
