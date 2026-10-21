@@ -168,6 +168,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
 - [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
+- [**Cleanup**](/docs/features/clean.md) - What cleanup is in EnvGene, the `CLEAN` operation, and the cleanup output each deployment architecture produces
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)

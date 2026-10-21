@@ -120,9 +120,10 @@ Applied when the pipeline runs without an incoming SD and one of the following h
 - A Full SD exists but `use_committed_sd` is `false` in
   [`config.yml`](/docs/envgene-configs.md#configyml).
 
-Only `topology`, `pipeline`, and `cleanup` contexts are produced. `deployment` and `runtime` require application
-data from a Solution Descriptor, so they are not produced. The `cleanup` context does not depend on the Solution
-Descriptor and is produced for every namespace of the environment. SBOMs are not required so are not generated.
+`topology` and `pipeline` are always produced. `deployment` and `runtime` require application data from a
+Solution Descriptor, so they are not produced. The `cleanup` context is produced for every namespace of the
+environment only when a Solution Descriptor is present on disk. A run with no Solution Descriptor produces no
+cleanup context. SBOMs are not required so are not generated.
 
 By default (`use_committed_sd: true`) a run with no incoming SD uses the committed Full SD and Full
 Generation runs.
@@ -132,25 +133,16 @@ in the how-to guide.
 
 ## Cleanup context
 
-The `cleanup/` context holds, per namespace, the parameters and credentials that downstream tooling reads to undeploy a namespace. EnvGene produces the context. The cluster-side removal is performed by the consuming tooling. The per-namespace file layout is documented in [Calculator CLI](/docs/features/calculator-cli.md#version-20-cleanup-context).
+The `cleanup/` context holds, per namespace, the parameters and credentials for a namespace teardown. It is
+one of the Effective Set contexts. For what it holds, which deployment architecture produces it, how it is
+composed, and the `.cleaned` marker that No-CMDB v2 writes instead, see [Cleanup](/docs/features/clean.md). The
+per-namespace file layout is in
+[Calculator CLI](/docs/features/calculator-cli.md#version-20-cleanup-context).
 
-Two kinds of tooling consume the cleanup output, and they need different parts of it. Pipeline-driven cleanup reads the per-namespace cleanup context to undeploy each namespace. A cluster-resident cleaner reads only the environment topology and resolves the rest itself. The cleanup context is produced only for the flows whose consumer reads it.
-
-Which namespaces receive it depends on the [deployment architecture](/docs/deployment-architecture.md) and the operation:
-
-| Architecture | Operation | Cleanup context produced for       |
-| ------------ | --------- | ---------------------------------- |
-| No-CMDB v1   | `DEPLOY`  | every namespace of the environment |
-| No-CMDB v2   | `DEPLOY`  | no namespace                       |
-| No-CMDB v2   | `CLEAN`   | no namespace                       |
-
-In No-CMDB v1 deploy, a namespace with no application versions deployed to it still receives a cleanup context and a `cleanup/mapping.yaml` entry, so a later teardown of the whole environment covers every namespace. No `.cleaned` marker is written for these namespaces. The cleanup context is produced the same way in [No-SD Mode](#no-sd-mode), where the environment has namespaces but no current solution.
-
-In No-CMDB v2 clean, no cleanup context is produced. The `CLEAN` operation marks the target namespaces' deployment and runtime for removal, writing a `.cleaned` marker into `deployment/<ns>/` and `runtime/<ns>/` and dropping them from `deployment/mapping.yaml` and `runtime/mapping.yaml`. See [CLEAN sub-flows](/docs/technical-design/instance-pipeline/sub-flows/clean.md).
-
-The cleanup context of a namespace merges the `deployParameters` of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. Non-sensitive values go to `parameters.yaml` and sensitive values go to `credentials.yaml`. Application-level parameters are not included. Custom parameters from the `deployment` section override these values.
-
-Whether the cleanup context is generated for every namespace is controlled by the calculator input [`--generate-cleanup-context`](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes), which the pipeline derives from `PIPELINE_TYPE`. No dedicated pipeline parameter controls it.
+Within Effective Set generation, the `cleanup/` context follows the merge mode. [Full generation](#full-generation)
+and [forward merge](#forward-merge) refresh it for every namespace. [Reverse merge](#reverse-merge) keeps it for a
+namespace that still exists after its last application is removed. [No-SD Mode](#no-sd-mode) produces it only when
+a Solution Descriptor is present.
 
 ## Configuration
 
