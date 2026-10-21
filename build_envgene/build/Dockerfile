@@ -64,7 +64,8 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
         /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
     /module/venv/bin/pip cache purge
 
-RUN chmod 754 /module/scripts/* && \
+RUN rm -rf /module/scripts/tests && \
+    chmod 754 /module/scripts/* && \
     chmod +x /module/scripts/utils/*.sh && \
     chmod 540 /deployments/run-java.sh && \
     chmod g+rwX /deployments
@@ -88,10 +89,6 @@ COPY --from=build /schemas /schemas
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build --chown=ci:ci /deployments /deployments
 COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
-
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
-    find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
-    /module/venv/bin/pip cache purge
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
