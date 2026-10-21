@@ -94,6 +94,9 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     /module/venv/bin/pip cache purge
 
 RUN rm -rf /module/scripts/tests && \
+    find /module/venv/lib/python3.12/site-packages/botocore/data -mindepth 1 -maxdepth 1 -type d \
+    ! -name codeartifact ! -name ecr ! -name secretsmanager ! -name sts ! -name sso ! -name sso-oidc \
+    -exec rm -rf {} + && \
     /module/venv/bin/python -m compileall -q -j 0 --invalidation-mode unchecked-hash \
     /module/venv/lib/python3.12/site-packages /module/scripts && \
     chmod 754 /module/scripts/* && \
