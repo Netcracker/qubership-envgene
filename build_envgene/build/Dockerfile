@@ -30,7 +30,8 @@ RUN apk add --no-cache \
 
 COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
 
-RUN JDK=/usr/lib/jvm/java-17-openjdk && \
+RUN zip -qd /deployments/app.jar 'licenses/*' && \
+    JDK=/usr/lib/jvm/java-17-openjdk && \
     "$JDK/bin/jlink" \
     --add-modules "$("$JDK/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 17 /deployments/app.jar),jdk.zipfs,jdk.crypto.ec" \
     --strip-debug --no-man-pages --no-header-files --compress=2 \
