@@ -1,13 +1,9 @@
 import os
-import shlex
 from os import getenv
-from pathlib import Path
 
 from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.business_helper import PUBREG_PARAMS_FILENAME, pubreg_transient_dir
 from envgenehelper.models import PipelineType
-
-RESOLVED_ENV_FILE = "envgene-resolved.env"
 
 
 def resolve_env_names() -> list[str]:
@@ -24,9 +20,7 @@ def resolve_env_names() -> list[str]:
         raise ValueError("Set both CLUSTER_NAME and ENVIRONMENT_NAME")
 
     if cluster_name and env_name:
-        env_names = f"{cluster_name}/{env_name}"
-        os.environ["ENV_NAMES"] = env_names
-        names = [env_names]
+        names = [f"{cluster_name}/{env_name}"]
 
     if not names:
         raise ValueError("Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME")
@@ -47,9 +41,7 @@ def resolve_env_names() -> list[str]:
     return names
 
 
-def main() -> None:
-    env_names = resolve_env_names()
-
+def build_resolved_variables(env_names: list[str]) -> dict[str, str]:
     variables: dict[str, str] = {"ENV_NAMES": ",".join(env_names)}
     if len(env_names) == 1:
         ci_project_dir = os.getenv('CI_PROJECT_DIR')
@@ -59,10 +51,4 @@ def main() -> None:
             "LOCAL_REGDEFS_PATH": f"{env_dir}/RegDefs",
             "LOCAL_PUBREG_FILE": str(pubreg_transient_dir(ci_project_dir) / PUBREG_PARAMS_FILENAME),
         })
-
-    lines = [f"{key}={shlex.quote(value)}" for key, value in variables.items()]
-    Path(RESOLVED_ENV_FILE).write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-if __name__ == "__main__":
-    main()
+    return variables

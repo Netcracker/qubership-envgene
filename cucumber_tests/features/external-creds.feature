@@ -14,7 +14,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -26,7 +25,6 @@ Feature: External Credentials Management
     And the pipeline parameter "ENV_BUILDER" is set to "true"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -38,7 +36,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -50,7 +47,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "env_build" has status "FAILED"
@@ -62,7 +58,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "env_build" has status "FAILED"
@@ -74,7 +69,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "env_build" has status "FAILED"
@@ -86,7 +80,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "env_build" has status "FAILED"
@@ -98,7 +91,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "env_build" has status "FAILED"
@@ -110,7 +102,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline log shows "exist in external credential source but are not referred"
@@ -126,7 +117,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "DB_ADMIN_USER: ref+vault://secret/test-cluster/test-env/db/app-db-cred#/username"
@@ -138,7 +128,6 @@ Feature: External Credentials Management
     And the pipeline parameter "ENV_BUILDER" is set to "true"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "DB_ADMIN_USER: ref+vault://secret/test-cluster/test-env/db/app-db-cred#/username"
@@ -149,7 +138,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "CONSUL_ADMIN_TOKEN: ref+vault://secret/test-cluster/consul-admin-cred#/value"
@@ -160,7 +148,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the deployment credentials value for "CONSUL_ADMIN_TOKEN" contains "secret_store_id=gcp_store"
@@ -172,7 +159,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the deployment credentials value for "DB_ADMIN_USER" is an ESO reference to "test-cluster/test-env/db/app-db-cred" with key "username"
@@ -184,7 +170,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the deployment credentials value for "CONSUL_ADMIN_TOKEN" is an ESO reference to "test-cluster/consul-admin-cred" with no secret keys
@@ -196,7 +181,6 @@ Feature: External Credentials Management
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "ns-vals" for "app-vals:1.0" 
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "ns-eso" for "app-eso:1.0" 
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the deployment credentials for application "app-vals" hold VALS references
@@ -208,7 +192,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "generate_effective_set" has status "FAILED"
@@ -219,7 +202,6 @@ Feature: External Credentials Management
     Given the workspace is initialized with test data from "e2e/uc_ec_d_8_mixed_at_es"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "generate_effective_set" has status "FAILED"
@@ -231,7 +213,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "generate_effective_set" has status "FAILED"
@@ -243,7 +224,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator fails
     And the pipeline step "generate_effective_set" has status "FAILED"
@@ -255,7 +235,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the effective set deployment parameters contain "DB_ADMIN_USER: ref+openbao://secret/test-cluster/test-env/db/app-db-cred#/username"
@@ -272,7 +251,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the external credential context entry "consul-admin-cred" has strategy "create_if_absent"
@@ -285,7 +263,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the external credential context entry "app-db-cred" has strategy "create_if_absent"
@@ -298,7 +275,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the external credential context entry "consul-admin-cred" has strategy "fail_if_absent"
@@ -310,7 +286,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the external credential context entry "consul-admin-cred" has strategy "create_if_absent"
@@ -322,7 +297,6 @@ Feature: External Credentials Management
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the external credential context file does not exist
@@ -334,7 +308,6 @@ Feature: External Credentials Management
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "EXTERNAL_CREDENTIAL_PROVISIONING" is set to "skip"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the pipeline log shows "Skipping credential creation in external store"
