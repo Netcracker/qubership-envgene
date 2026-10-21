@@ -21,6 +21,10 @@ merge_java_opts() {
         result=$(echo "$result" | sed -E 's|-Djava.util.concurrent.ForkJoinPool.common.parallelism=[^ ]+||g')
 		allowed_override="$opt${allowed_override:+ $allowed_override}"
         ;;
+      -XX:TieredStopAtLevel=*)
+        result=$(echo "$result" | sed -E 's/-XX:TieredStopAtLevel=[^ ]+//g')
+		allowed_override="$opt${allowed_override:+ $allowed_override}"
+        ;;
     esac
   done
   echo "$result${allowed_override:+ $allowed_override}"
