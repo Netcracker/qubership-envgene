@@ -7,7 +7,6 @@ FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS java-native-bui
 
 WORKDIR /project
 
-COPY build_effective_set_generator /project
 COPY --chown=quarkus:quarkus build_effective_set_generator /project
 
 RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dnative
@@ -16,7 +15,7 @@ RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dn
 FROM maven:3.9-eclipse-temurin-17 AS maven-build
 
 COPY build_effective_set_generator /build_effective_set_generator
-RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
+RUN mvn --batch-mode package -Dgpg.skip=true -pl effective-set-generator -am -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build minimal JRE
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS jre-build
@@ -119,9 +118,6 @@ COPY --from=build /schemas /schemas
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build --chown=ci:ci /deployments /deployments
 COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
 
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write in CI/CD
 # hadolint ignore=DL3002
