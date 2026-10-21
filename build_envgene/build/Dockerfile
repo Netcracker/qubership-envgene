@@ -64,7 +64,10 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
         /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
     /module/venv/bin/pip cache purge
 
-RUN chmod 754 /module/scripts/*
+RUN chmod 754 /module/scripts/* && \
+    chmod +x /module/scripts/utils/*.sh && \
+    chmod 540 /deployments/run-java.sh && \
+    chmod g+rwX /deployments
 
 # Stage 3: Runtime
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
@@ -80,24 +83,15 @@ RUN apk add --no-cache \
     libgcc=15.2.0-r2 \
     ${JAVA_PACKAGE}
 
-COPY --from=build /module /module
+COPY --from=build --chown=ci:ci /module /module
 COPY --from=build /schemas /schemas
-COPY --from=build /modules /modules
 COPY --from=build /etc/pip.conf /etc/pip.conf
-COPY --from=build /deployments /deployments
-COPY --from=java-native-builder /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
+COPY --from=build --chown=ci:ci /deployments /deployments
+COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
-
-RUN chown -R ci:ci /module /deployments && \
-    chmod +x /module/scripts/*.sh && \
-    chmod +x /module/scripts/utils/*.sh && \
-    chmod +x /module/scripts/vals-reference-cli && \
-    chmod 644 /module/scripts/*.py 2>/dev/null || true && \
-    chmod 540 /deployments/run-java.sh && \
-    chmod g+rwX /deployments
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
