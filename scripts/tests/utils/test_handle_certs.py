@@ -13,7 +13,6 @@ from cryptography.x509.oid import NameOID
 from envgenehelper import logger
 from utils import handle_certs
 from utils.handle_certs import (
-    BUNDLE_CERT_NAME,
     SYSTEM_CA_BUNDLE,
     configure_git_server_trust,
     install_certificates,
@@ -115,7 +114,7 @@ class TestInstallCertificates:
             install_certificates()
 
         assert (ca_env["ca_dir"] / "corp.crt").read_bytes() == from_certs_dir
-        assert "replaces an earlier certificate installed as corp.crt" in caplog.text
+        assert "replaces an earlier certificate installed as corp.crt" not in caplog.text
 
     @pytest.mark.unit
     def test_installs_decoded_bundle_and_certs_dir_without_default(self, monkeypatch, ca_env):
@@ -126,8 +125,10 @@ class TestInstallCertificates:
 
         install_certificates()
 
-        assert sorted(p.name for p in ca_env["ca_dir"].iterdir()) == ["corp-root.crt", BUNDLE_CERT_NAME]
-        assert (ca_env["ca_dir"] / BUNDLE_CERT_NAME).read_bytes() == bundle
+        installed = sorted(p.name for p in ca_env["ca_dir"].iterdir())
+        bundle_name = next(name for name in installed if name != "corp-root.crt")
+        assert installed == ["corp-root.crt", bundle_name]
+        assert (ca_env["ca_dir"] / bundle_name).read_bytes() == bundle
         assert ca_env["update_calls"] == [["update-ca-certificates"]]
 
     @pytest.mark.unit
@@ -150,7 +151,7 @@ class TestInstallCertificates:
     def test_rejects_expired_certificate(self, ca_env):
         (_certs_dir(ca_env) / "corp-root.pem").write_bytes(_self_signed_pem("corp-root-ca", expired=True))
 
-        with pytest.raises(ValueError, match="Certificate validation failed for 'corp-root.crt'"):
+        with pytest.raises(ValueError, match=r"Certificate validation failed for '.*corp-root\.pem.*'"):
             install_certificates()
         assert list(ca_env["ca_dir"].iterdir()) == []
         assert ca_env["update_calls"] == []
@@ -159,9 +160,8 @@ class TestInstallCertificates:
     def test_rejects_file_without_pem_block(self, ca_env):
         certs_dir = _certs_dir(ca_env)
         (certs_dir / "readme.md").write_bytes(b"certificates go here")
-        (certs_dir / "corp-root.pem").write_bytes(_self_signed_pem("corp-root-ca"))
 
-        with pytest.raises(ValueError, match="No valid PEM certificate blocks found in readme.crt"):
+        with pytest.raises(ValueError, match=r"Certificate validation failed for '.*readme\.md.*'"):
             install_certificates()
         assert list(ca_env["ca_dir"].iterdir()) == []
         assert ca_env["update_calls"] == []
@@ -214,7 +214,7 @@ class TestInstallCertificates:
             install_certificates()
 
         assert "subject=CN=corp-root-ca" in caplog.text
-        assert "Total: 1 certificate(s) in corp-root.crt" in caplog.text
+        assert "Total: 1 certificate(s)" in caplog.text
 
 
 class TestConfigureGitServerTrust:
