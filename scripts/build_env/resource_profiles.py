@@ -1,8 +1,8 @@
-from envgenehelper import Path, copy, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinition, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
 from build_env.render_config_env import EnvGenerator
 
 
-def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
+def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, inventoryYaml):
     levels = [
         Path(env_dir) / "Inventory",
         Path(env_dir).parent,
@@ -14,7 +14,6 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
     result = {}
     logger.info(f"Finding env specific resource profiles for '{env_dir}' in '{instances_dir}'")
     envDefinitionPath = getEnvDefinitionPath(env_dir)
-    inventoryYaml = getEnvDefinition(env_dir)
 
     if not "envSpecificResourceProfiles" in inventoryYaml["envTemplate"]:
         logger.info(f"No environment specific resource profiles are defined in {envDefinitionPath}")
@@ -32,19 +31,12 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
             found_path = find_yaml_file(p, profile_file_name, recursively=True)
             if found_path:
                 logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
-                validate_yaml_by_scheme_or_fail(str(found_path), rp_schema)
+                env_specific_profile = current_env_instance_store().put(found_path, openYaml(found_path))
+                validate_yaml_by_scheme_or_fail(input_yaml_content=env_specific_profile, schema_file_path=rp_schema)
                 result[templateType] = str(found_path)
                 break
         if templateType not in result:
             raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
-    return result
-
-
-def getResourceProfilesFromDir(dir):
-    result = {}
-    rpYamls = findAllYamlsInDir(dir)
-    for profileFile in rpYamls:
-        result[extractNameFromFile(profileFile)] = profileFile
     return result
 
 
@@ -133,7 +125,21 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
                     merge_dict_key_with_comment("value", sourceParam, "value", param, commentText)
 
 
-def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_profiles: dict[str, str],
+def find_resource_profile(profile_name: str, template_profiles_dir) -> Path | None:
+    env_instance_store = current_env_instance_store()
+    profile_path = env_instance_store.find_yaml(template_profiles_dir, profile_name)
+    if profile_path:
+        return profile_path
+    same_name_paths = [path for path in findAllYamlsInDir(template_profiles_dir)
+                       if extractNameFromFile(path) == profile_name]
+    if not same_name_paths:
+        return None
+    profile_path = Path(same_name_paths[-1])
+    env_instance_store.put(profile_path, openYaml(profile_path))
+    return profile_path
+
+
+def validate_resource_profiles(needed_resource_profiles: dict[str, str], template_profiles_dir,
                                profiles_schema: str) -> dict[str, str]:
     profiles_map = {}
     not_found = ''
@@ -145,21 +151,22 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
         return profiles_map
     validity_by_path = {}
     for template_name, needed_profile in needed_resource_profiles.items():
-        if needed_profile not in source_profiles:
+        profile_path = find_resource_profile(needed_profile, template_profiles_dir)
+        if not profile_path:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue
-        profile_path = source_profiles[needed_profile]
         logger.info(f"Found resource profile {needed_profile} in path: {profile_path}")
         if profile_path not in validity_by_path:
             try:
-                validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
+                validate_yaml_by_scheme_or_fail(input_yaml_content=current_env_instance_store().get(profile_path),
+                                                schema_file_path=profiles_schema)
                 validity_by_path[profile_path] = True
             except ValueError:
                 validity_by_path[profile_path] = False
         if not validity_by_path[profile_path]:
             not_valid += rp_data_template.format(needed_profile, template_name)
             continue
-        profiles_map[template_name] = profile_path
+        profiles_map[template_name] = str(profile_path)
 
     if len(not_valid) > 0:
         err_msg += "These resource profiles are invalid, look for details above:"
@@ -173,13 +180,11 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
     return profiles_map
 
 
-def collect_resource_profiles(result_profiles_dir, render_profiles_dir, profiles_schema,
+def collect_resource_profiles(template_profiles_dir, profiles_schema,
                               required_resource_profiles_map, render_context: EnvGenerator):
     logger.info(f"Required profiles map:\n{dump_as_yaml_format(required_resource_profiles_map)}")
     render_context.generate_profiles(set(required_resource_profiles_map.values()))
-    all_profiles = getResourceProfilesFromDir(render_profiles_dir) | getResourceProfilesFromDir(result_profiles_dir)
-    logger.info(f"All existing resource profiles map is:\n{dump_as_yaml_format(all_profiles)}")
-    profiles_map = validate_resource_profiles(required_resource_profiles_map, all_profiles, profiles_schema)
+    profiles_map = validate_resource_profiles(required_resource_profiles_map, template_profiles_dir, profiles_schema)
     return profiles_map
 
 
@@ -204,15 +209,14 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
         template_profile_file_path = all_profiles[profile_key]
         logger.info(f"Profile key '{profile_key}' has template profile '{template_profile_file_path}' "
                     f"and environment specific profile '{env_specific_profile_path}'")
-        template_profile_yaml = openYaml(template_profile_file_path)
-        env_specific_profile_yaml = openYaml(env_specific_profile_path)
+        template_profile_yaml = current_env_instance_store().get(template_profile_file_path)
+        env_specific_profile_yaml = current_env_instance_store().get(env_specific_profile_path)
 
         if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")
             merge_resource_profiles(template_profile_yaml, env_specific_profile_yaml,
                                     extractNameFromFile(env_specific_profile_path),
                                     object_baselines.get(profile_key))
-            writeYamlToFile(template_profile_file_path, template_profile_yaml)
         else:
             logger.info(f"Replacing {common_msg}")
             override_profile_map[profile_key] = env_specific_profile_path
@@ -225,10 +229,9 @@ def has_valid_profile_name(content: dict) -> bool:
 
 
 def set_object_profile_field(file_path, field, value):
-    data = openYaml(file_path, {})
+    data = current_env_instance_store().get(file_path)
     if data.get("profile") is None:
         data["profile"] = get_empty_yaml()
     elif data["profile"].get(field) == value:
         return
     set_nested_yaml_attribute(data, f"profile.{field}", value)
-    writeYamlToFile(file_path, data)

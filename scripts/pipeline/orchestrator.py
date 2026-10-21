@@ -13,7 +13,7 @@ from envgene_shared.crypto.crypt import decrypted_cred_files
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
-from envgenehelper import delete_dir_if_exists
+from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, open_current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -29,6 +29,7 @@ from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
 from effective_set.sboms_retention_policy import sboms_retention_policy
+from effective_set.generate_sboms import generate_sboms
 from deployment_plan.process_deployment_plan import merge_deployment_plan, reduce_deployment_plan
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
@@ -230,7 +231,7 @@ class AppregdefRenderStep(PipelineStep):
         return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION') or ctx.params.get('SD_DATA'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_appregdef_render()
+        ctx.rendered_regdef_names = run_appregdef_render()
 
 
 class RegdefV2AdapterStep(PipelineStep):
@@ -285,7 +286,10 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_build_environment(reuse_render_workspace=True)
+        env_dir = get_current_env_dir_from_env_vars()
+        with decrypted_cred_files(), open_current_env_instance_store(env_dir) as env_instance_store:
+            run_build_environment()
+            env_instance_store.flush()
 
 
 class GenerateEffectiveSetStep(PipelineStep):
@@ -309,9 +313,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             if not ctx.is_gitlab_deploy():
                 apply_no_sd_mode(ctx)
             sboms_retention_policy()
-            get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
-            if get_sboms.modules:
-                get_sboms.run(ctx=ctx)
+            generate_sboms(ctx=ctx)
             if ctx.is_gitlab_deploy():
                 run_gitlab_deploy_effective_set(ctx)
             else:

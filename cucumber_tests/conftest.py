@@ -114,8 +114,17 @@ def mock_nexus(tmp_path_factory):
     test_app_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.0.0"
     _write_app_manifest(test_app_dir, "test_app_artifact-1.0.0.json", "test_app", "1.0.0", "dp1")
 
+    # "test_app_artifact:1.2.3" - used by UC-CC-GI-2 (UniqForVersion generation directory).
+    test_app_123_dir = base_dir / "release" / "com" / "test" / "test_app_artifact" / "1.2.3"
+    _write_app_manifest(test_app_123_dir, "test_app_artifact-1.2.3.json", "test_app", "1.2.3", "core")
+
     test_app2_dir = base_dir / "release" / "com" / "test" / "test_app_2_artifact" / "2.0.0"
     _write_app_manifest(test_app2_dir, "test_app_2_artifact-2.0.0.json", "test_app_2", "2.0.0", "dp2")
+
+    # "test-app:1.0" - deployment descriptor for app1:1.0 used by all bgd-sub-flows scenarios.
+    # app1 AppDef (appdefs/app1.yml.j2) has groupId=org.test, artifactId=test-app.
+    app1_dir = base_dir / "release" / "org" / "test" / "test-app" / "1.0"
+    _write_app_manifest(app1_dir, "test-app-1.0.json", "app1", "1.0", "bss")
 
     # "external-secrets-artifact:v1" - env template artifact for external credentials scenarios.
     ext_creds_dir = base_dir / "release" / "org" / "test" / "external-secrets-artifact" / "v1"
@@ -155,6 +164,12 @@ _XFAIL_REASONS = {
                                   "reference each other) is not enforced by the Calculator CLI.",
     "xfail_cli_macro_ns_timeout": "Known bug: a macro reference resolved across hierarchy levels "
                                    "is dropped from the effective set deployment parameters.",
+    "xfail_cr_no_affected_rotation": "Known bug: when the rotation target's credential has no other "
+                                      "parameter referencing it, run_cred_rotation() raises "
+                                      "'No affected parameters found' instead of rotating the target "
+                                      "and completing with no report. docs/use-cases/credential-"
+                                      "rotation.md already documents success-with-no-report as the "
+                                      "target behavior (PR #1800), the code fix has not landed yet.",
 }
 
 

@@ -1,0 +1,35 @@
+version: 2.1
+type: solutionDeploy
+deployMode: composite
+
+applications:
+  - sample-api:1.0.0-RELEASE
+  - version: sample-config:1.0.0-RELEASE
+    deployPostfix: default
+
+cmdbConfigs:
+  - sample-paramset:1.0.0-RELEASE
+
+devopsTools:
+  - sample-deployer:1.0.0-RELEASE
+
+artifacts:
+  maven:
+    - repo: example.maven.mvn
+      artifacts:
+        - com.example.libs:sample-processor:1.0.0
+  raw:
+    - repo: https://registry.example.com/example.files
+      artifacts:
+        - product/sample-app/1.0.0/generic/sample-model.zip
+  docker:
+    - registry: registry.example.com:25086
+      images:
+        - sample-product/sample-api:1.0.0
+        - mongo:6.0.0
+
+dvm:
+  url: https://files.example.com/artifacts/sample.tar.gz
+
+userData:
+  myKey: myValue
