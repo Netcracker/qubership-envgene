@@ -18,6 +18,8 @@ from utils.handle_certs import (
     install_certificates,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def _self_signed_pem(common_name: str, *, expired: bool = False) -> bytes:
     key = ec.generate_private_key(ec.SECP256R1())
@@ -52,7 +54,46 @@ def ca_env(monkeypatch, tmp_path):
     monkeypatch.setattr(handle_certs, "CA_CERTS_DIR", ca_dir)
     monkeypatch.setattr(handle_certs, "DEFAULT_CERT", tmp_path / "default_cert.pem")
     update_calls: list[list[str]] = []
-    monkeypatch.setattr(handle_certs.subprocess, "run", lambda cmd, check: update_calls.append(cmd))
+
+    def fake_run(cmd, *args, **kwargs):
+        update_calls.append(list(cmd))
+        input_data = kwargs.get("input", b"")
+
+        if cmd == ["base64", "-d"]:
+            compact = b"".join(input_data.split())
+            try:
+                decoded = base64.b64decode(compact, validate=True)
+            except Exception:
+                return type("Result", (), {"returncode": 1, "stdout": b"", "stderr": b""})()
+            return type("Result", (), {"returncode": 0, "stdout": decoded, "stderr": b""})()
+
+        if cmd[:3] == ["openssl", "x509", "-noout"]:
+            if not input_data:
+                return type("Result", (), {"returncode": 1, "stdout": b"", "stderr": b""})()
+            try:
+                cert = x509.load_pem_x509_certificate(input_data)
+            except ValueError:
+                return type("Result", (), {"returncode": 1, "stdout": b"", "stderr": b""})()
+
+            common_name = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+            now = datetime.datetime.now(datetime.timezone.utc)
+
+            if "-checkend" in cmd:
+                returncode = 0 if cert.not_valid_after_utc >= now else 1
+                return type("Result", (), {"returncode": returncode, "stdout": b"", "stderr": b""})()
+
+            issuer_name = cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+            output = (
+                f"subject=CN={common_name}\n"
+                f"issuer=CN={issuer_name}\n"
+                f"notBefore={cert.not_valid_before_utc.isoformat()}\n"
+                f"notAfter={cert.not_valid_after_utc.isoformat()}\n"
+            )
+            return type("Result", (), {"returncode": 0, "stdout": output.encode(), "stderr": b""})()
+
+        return type("Result", (), {"returncode": 0, "stdout": b"", "stderr": b""})()
+
+    monkeypatch.setattr(handle_certs.subprocess, "run", fake_run)
     return {"project_dir": project_dir, "ca_dir": ca_dir, "tmp_path": tmp_path, "update_calls": update_calls}
 
 
@@ -81,7 +122,7 @@ class TestInstallCertificates:
 
         assert sorted(p.name for p in ca_env["ca_dir"].iterdir()) == ["corp-root.crt", "intermediate.crt"]
         assert (ca_env["ca_dir"] / "corp-root.crt").read_bytes() == root
-        assert ca_env["update_calls"] == [["update-ca-certificates"]]
+        assert ca_env["update_calls"][-1] == ["update-ca-certificates"]
         assert os.environ["REQUESTS_CA_BUNDLE"] == SYSTEM_CA_BUNDLE
 
     @pytest.mark.unit
@@ -92,7 +133,7 @@ class TestInstallCertificates:
         install_certificates()
 
         assert sorted(p.name for p in ca_env["ca_dir"].iterdir()) == ["corp-root.crt", "gitlab-root.crt"]
-        assert ca_env["update_calls"] == [["update-ca-certificates"]]
+        assert ca_env["update_calls"][-1] == ["update-ca-certificates"]
 
     @pytest.mark.unit
     def test_installs_multi_certificate_file(self, ca_env):
@@ -129,7 +170,7 @@ class TestInstallCertificates:
         bundle_name = next(name for name in installed if name != "corp-root.crt")
         assert installed == ["corp-root.crt", bundle_name]
         assert (ca_env["ca_dir"] / bundle_name).read_bytes() == bundle
-        assert ca_env["update_calls"] == [["update-ca-certificates"]]
+        assert ca_env["update_calls"][-1] == ["update-ca-certificates"]
 
     @pytest.mark.unit
     def test_rejects_raw_pem_bundle(self, monkeypatch, ca_env):
@@ -145,7 +186,7 @@ class TestInstallCertificates:
 
         with pytest.raises(ValueError, match="SSL_CERTIFICATES_BUNDLE is not valid base64"):
             install_certificates()
-        assert ca_env["update_calls"] == []
+        assert ca_env["update_calls"] == [["base64", "-d"]]
 
     @pytest.mark.unit
     def test_rejects_expired_certificate(self, ca_env):
@@ -154,7 +195,7 @@ class TestInstallCertificates:
         with pytest.raises(ValueError, match=r"Certificate validation failed for '.*corp-root\.pem.*'"):
             install_certificates()
         assert list(ca_env["ca_dir"].iterdir()) == []
-        assert ca_env["update_calls"] == []
+        assert ca_env["update_calls"] == [["openssl", "x509", "-noout", "-checkend", "0"]]
 
     @pytest.mark.unit
     def test_rejects_file_without_pem_block(self, ca_env):
@@ -175,7 +216,7 @@ class TestInstallCertificates:
 
         assert [p.name for p in ca_env["ca_dir"].iterdir()] == ["default_cert.crt"]
         assert (ca_env["ca_dir"] / "default_cert.crt").read_bytes() == default_cert
-        assert ca_env["update_calls"] == [["update-ca-certificates"]]
+        assert ca_env["update_calls"][-1] == ["update-ca-certificates"]
 
     @pytest.mark.unit
     def test_subdirectory_counts_as_source_and_blocks_default(self, ca_env):

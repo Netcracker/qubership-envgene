@@ -200,7 +200,9 @@ def install_certificates() -> None:
     if bundle:
         logger.info("SSL_CERTIFICATES_BUNDLE is set, installing...")
         bundle_content = _decode_bundle(bundle)
-        fd, bundle_path = tempfile.mkstemp(prefix="ssl_bundle_", dir="/tmp")
+        temp_dir = Path(tempfile.gettempdir())
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        fd, bundle_path = tempfile.mkstemp(prefix="ssl_bundle_", dir=str(temp_dir))
         bundle_file = Path(bundle_path)
         try:
             with os.fdopen(fd, "wb") as stream:
