@@ -48,7 +48,15 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     /modules/external-cred-provision \
     /modules/dpg \
     /modules/sbom_generator \
-    /modules/envgene-shared
+    /modules/envgene-shared && \
+    pip uninstall -y \
+    kubernetes durationpy websocket-client oauthlib requests-oauthlib \
+    minio pycryptodome argon2-cffi argon2-cffi-bindings \
+    python-gitlab requests-toolbelt \
+    ghapi fastcore \
+    python-jenkins pbr multi-key-dict \
+    webexpythonsdk \
+    http-exceptions
 
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
