@@ -8,7 +8,7 @@ from envgenehelper import logger
 DEFAULT_CERT = Path("/default_cert.pem")
 CA_CERTS_DIR = Path("/usr/local/share/ca-certificates")
 SYSTEM_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
-GIT_SERVER_CA_FILE = Path("/tmp/ci_ca.pem")
+GIT_SERVER_CA_FILE = Path(tempfile.gettempdir()) / "ci_ca.pem"
 BASHRC = Path.home() / ".bashrc"
 
 CA_BUNDLE_SUBDIR = Path("ca_bundle")
@@ -30,7 +30,13 @@ def configure_git_server_trust() -> None:
     if not value:
         return
 
-    if Path(value).is_file():
+    is_pem_content = "\n" in value or "BEGIN CERTIFICATE" in value
+    try:
+        is_existing_file = not is_pem_content and Path(value).is_file()
+    except OSError:
+        is_existing_file = False
+
+    if is_existing_file:
         ca_file = value
     else:
         GIT_SERVER_CA_FILE.write_text(f"{value}\n", encoding="utf-8")
