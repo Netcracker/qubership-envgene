@@ -1,4 +1,4 @@
-# Example 3 — Onsite: nexus + user_pass (maven, docker, helmLib, helmApp)
+# Example 3 — Onsite: nexus + user_pass
 
 kind: RegistryDefinition
 version: v2

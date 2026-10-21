@@ -1,4 +1,4 @@
-# Example 1 — Shared Platform Registry: artifactory + anonymous + all artifact types
+# Example 1 — Shared Platform Registry: artifactory + anonymous
 
 kind: RegistryDefinition
 version: v2

@@ -1,4 +1,4 @@
-# Example 2 — Shared Platform Registry (Vault): artifactory + user_pass + external cred store + all artifact types
+# Example 2 — Shared Platform Registry (Vault): artifactory + user_pass + external cred store
 
 kind: RegistryDefinition
 version: v2

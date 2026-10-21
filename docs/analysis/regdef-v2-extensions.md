@@ -21,8 +21,22 @@
 1. Which set of repository roles (snapshot, staging, release, snapshotGroup, releaseGroup, ...) is needed?
    One unified set across all artifact types?
    Which roles are mandatory and which optional?
+   Or use separate Registry Definitions?
+   "Red zone" case
 2. Should `helmLibConfig` and `helmAppConfig` be unified?
 3. Should `mavenConfig` be split into two types — one for the DD, one for maven libraries?
+4. Extend `provider` with `gitlab`
+5. Make artifact type flexible:
+
+    ```yaml
+    <registry-name>:
+      artifactType: enum [ maven, docker, helm_lib_http, helm_app_http, helm_lib_oci, helm_app_oci ]
+      authConfig: string
+      repositories: list
+    ```
+
+6. Rename `scopes` to `securityScopes`, `accessRoles` or something else
+7. Extend artifact types with apm
 
 ## Limitations
 
