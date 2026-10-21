@@ -25,7 +25,8 @@ ARG JDK_VERSION=17.0.20_p8-r0
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
     "openjdk17-jdk=${JDK_VERSION}" \
-    "openjdk17-jmods=${JDK_VERSION}"
+    "openjdk17-jmods=${JDK_VERSION}" \
+    'binutils=2.45.1-r0'
 
 COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
 
