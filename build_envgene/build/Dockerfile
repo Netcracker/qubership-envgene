@@ -73,6 +73,8 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     /module/venv/bin/pip cache purge
 
 RUN rm -rf /module/scripts/tests && \
+    /module/venv/bin/python -m compileall -q -j 0 --invalidation-mode unchecked-hash \
+    /module/venv/lib/python3.12/site-packages /module/scripts && \
     chmod 754 /module/scripts/* && \
     chmod +x /module/scripts/utils/*.sh && \
     chmod 540 /deployments/run-java.sh && \
