@@ -18,7 +18,27 @@ FROM maven:3.9-eclipse-temurin-17 AS maven-build
 COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
 
-# Stage 2: Build Python dependencies
+# Stage 2: Build minimal JRE
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS jre-build
+
+ARG JDK_VERSION=17.0.20_p8-r0
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache \
+    "openjdk17-jdk=${JDK_VERSION}" \
+    "openjdk17-jmods=${JDK_VERSION}"
+
+COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
+
+RUN JDK=/usr/lib/jvm/java-17-openjdk && \
+    "$JDK/bin/jlink" \
+    --add-modules "$("$JDK/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 17 /deployments/app.jar),jdk.zipfs,jdk.crypto.ec" \
+    --strip-debug --no-man-pages --no-header-files --compress=2 \
+    --output /opt/jre && \
+    /opt/jre/bin/java -Xshare:dump && \
+    /opt/jre/bin/java -XX:ArchiveClassesAtExit=/deployments/app.jsa -jar /deployments/app.jar --help
+
+# Stage 3: Build Python dependencies
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
@@ -62,7 +82,7 @@ RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
     -o /deployments/run-java.sh
 
-COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
+COPY --from=jre-build /deployments/app.jar /deployments/app.jsa /deployments/
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
@@ -80,20 +100,20 @@ RUN rm -rf /module/scripts/tests && \
     chmod 540 /deployments/run-java.sh && \
     chmod g+rwX /deployments
 
-# Stage 3: Runtime
+# Stage 4: Runtime
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
-
-ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
-    PYTHONPATH='/module/scripts'
+    PYTHONPATH='/module/scripts' \
+    JAVA_HOME='/opt/jre' \
+    PATH="/opt/jre/bin:${PATH}"
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc=15.2.0-r2 \
-    ${JAVA_PACKAGE}
+    libgcc=15.2.0-r2
 
+COPY --from=jre-build /opt/jre /opt/jre
 COPY --from=build --chown=ci:ci /module /module
 COPY --from=build /schemas /schemas
 COPY --from=build /etc/pip.conf /etc/pip.conf
