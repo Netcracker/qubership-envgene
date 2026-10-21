@@ -434,7 +434,8 @@ def run_single_env_pipeline() -> None:
             metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps]
             metrics_results.append(recorded["copy_env_artifact"])
             metrics.record_completion(str(terminal_status), metrics_results)
-            metrics.send_running(str(terminal_status), results=metrics_results)
+            if os.getenv("ENVGENE_FAN_OUT_CHILD"):
+                metrics.send_running(str(terminal_status), results=metrics_results)
         log_pipeline_summary(results)
 
 

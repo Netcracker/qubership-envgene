@@ -38,7 +38,7 @@ def test_copied_client_runs_both_jobs_without_full_pipeline_package(monkeypatch,
     monkeypatch.setenv("CI_PROJECT_ID", "project-1")
     monkeypatch.setenv("CI_PROJECT_DIR", str(job1))
     monkeypatch.setenv("CI_JOB_ID", "prepare")
-    monkeypatch.setenv("envgen_image", "env-generator:1.2.3")
+    monkeypatch.setenv("ENVGENE_DD_VERSION", "1.2.3")
 
     prefix = """
 import os, sys
@@ -85,7 +85,7 @@ assert list(Path(".metrics-collector-client/state").glob("*/*.json"))
             shutil.copy2(job1 / ".metrics-collector-trace-id", job2 / ".metrics-collector-trace-id")
             monkeypatch.setenv("CI_PROJECT_DIR", str(job2))
             monkeypatch.setenv("CI_JOB_ID", "sync")
-            monkeypatch.delenv("envgen_image")
+            monkeypatch.delenv("envgen_image", raising=False)
             run_client(job2, """
 class RejectPipelineDependencies:
     def find_spec(self, fullname, path=None, target=None):
@@ -109,7 +109,9 @@ assert Path(".metrics-collector-client/state").exists()
     ]
     assert len({event["traceid"] for event in events}) == 1
     assert events[-1]["status"] == "SUCCESS"
-    assert events[-1]["data"]["envgeneVersion"] == "1.2.3"
+    assert events[-1]["technicalversion"] == "1.2.3"
     assert all("steps" not in event["data"] for event in events[-2:])
-    assert events[-1]["data"]["inputParameters"] == {"ENV_NAMES": "cluster/env"}
-    assert "SECRET" not in events[-1]["data"]["inputParameters"]
+    assert {item["name"]: item["value"] for item in events[-1]["data"]["config"]} == {
+        "ENV_NAMES": "cluster/env",
+    }
+    assert "SECRET" not in {item["name"] for item in events[-1]["data"]["config"]}

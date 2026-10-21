@@ -6,13 +6,12 @@ from types import SimpleNamespace
 import requests
 import pytest
 
-from envgenehelper.version_helper import resolve_envgene_version
-
 from pipeline.metrics_collector_activity import (
     MAX_EVENT_BODY_BYTES,
     MetricsCollectorActivity,
     build_structured_event_body,
     resolve_trace_id,
+    serialize_step_results,
 )
 
 
@@ -62,6 +61,7 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
     monkeypatch.setenv("CI_PROJECT_URL", "https://gitlab.example.com/platform/env-instance-repo")
     monkeypatch.setenv("CI_JOB_NAME", "instance_pipeline")
     monkeypatch.setenv("CI_JOB_ID", "5550001")
+    monkeypatch.setenv("ENVGENE_DD_VERSION", "1.2.3")
     monkeypatch.setenv("CI_PIPELINE_ID", "987654")
     monkeypatch.setenv("CI_PROJECT_ID", "12345")
 
@@ -70,7 +70,7 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
         status="IN_PROGRESS",
         trace_id="trace-1",
         parent_id="parent-1",
-        data={"envgeneVersion": "1.2.3", "inputParameters": {"PIPELINE_TYPE": "GITLAB_DEPLOY"}},
+        data={"kind": "EnvGenePipelineReport", "apiVersion": "v1"},
     )
 
     event = json.loads(body)
@@ -83,12 +83,47 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
     assert event["kindversion"] == "1.0"
     assert event["traceid"] == "trace-1"
     assert event["parentid"] == "parent-1"
-    assert event["technicalname"] == "instance_pipeline"
+    assert event["technicalname"] == "envgene-instance-pipeline:instance_pipeline"
+    assert event["technicalversion"] == "1.2.3"
+    assert event["datacontenttype"] == "application/json"
+    assert event["subject"] == "5550001"
     assert event["jobid"] == "5550001"
     assert event["pipelineid"] == "987654"
     assert event["projectid"] == "12345"
     assert event["status"] == "IN_PROGRESS"
-    assert event["data"]["envgeneVersion"] == "1.2.3"
+    assert event["data"] == {"kind": "EnvGenePipelineReport", "apiVersion": "v1"}
+
+
+def test_build_structured_event_body_omits_empty_parent_id(monkeypatch):
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
+    monkeypatch.delenv("CI_JOB_NAME", raising=False)
+    monkeypatch.delenv("ENVGENE_DD_VERSION", raising=False)
+
+    body, _ = build_structured_event_body(
+        event_type="start", status="IN_PROGRESS", trace_id="trace-1", parent_id=" ", data={},
+    )
+
+    event = json.loads(body)
+    assert "parentid" not in event
+    assert event["technicalname"] == "envgene-instance-pipeline:"
+    assert event["subject"] == "job-1"
+    assert event["technicalversion"] == ""
+
+
+def test_serialize_step_results_formats_rounded_durations():
+    results = [
+        SimpleNamespace(name="round_down", status="SUCCESS", duration_ms=499),
+        SimpleNamespace(name="round_up", status="SUCCESS", duration_ms=500),
+        SimpleNamespace(name="hour", status="SUCCESS", duration_ms=3_661_500),
+        SimpleNamespace(name="skipped", status="SKIPPED", duration_ms=1000),
+    ]
+
+    assert serialize_step_results(results) == [
+        {"name": "round_down", "status": "SUCCESS", "time": "0:00:00"},
+        {"name": "round_up", "status": "SUCCESS", "time": "0:00:01"},
+        {"name": "hour", "status": "SUCCESS", "time": "1:01:02"},
+        {"name": "skipped", "status": "SKIPPED"},
+    ]
 
 
 def test_send_skips_when_url_is_absent(monkeypatch):
@@ -112,8 +147,11 @@ def test_send_start_and_stop_events(monkeypatch, ssl_verify, expected_verify):
     else:
         monkeypatch.setenv("METRICS_COLLECTOR_SSL_VERIFY", ssl_verify)
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com/base")
-    monkeypatch.setenv("ENVGENE_VERSION", "1.2.3")
-    monkeypatch.setenv("envgen_image", "registry.example.com:17008/env-generator:2.3.4")
+    monkeypatch.setenv("ENVGENE_DD_VERSION", "2.3.4")
+    monkeypatch.setenv("CI_JOB_NAME", "instance_pipeline")
+    monkeypatch.setenv("CI_JOB_ID", "5550001")
+    monkeypatch.setenv("GITLAB_USER_LOGIN", "test-user")
+    monkeypatch.setenv("GITLAB_USER_EMAIL", "test@example.com")
     monkeypatch.setenv("METRICS_COLLECTOR_PARENT_ID", "parent-1")
     monkeypatch.setattr(
         "pipeline.metrics_collector_activity.requests.post",
@@ -137,10 +175,23 @@ def test_send_start_and_stop_events(monkeypatch, ssl_verify, expected_verify):
     assert start["status"] == "IN_PROGRESS"
     assert start["traceid"] == "trace-1"
     assert start["parentid"] == "parent-1"
-    assert start["data"]["envgeneVersion"] == "2.3.4"
-    assert start["data"]["inputParameters"]["PIPELINE_TYPE"] == "GITLAB_DEPLOY"
-    assert start["data"]["inputParameters"]["CUSTOM_PARAMS"] == "x"
-    assert "CRED_ROTATION_PAYLOAD" not in start["data"]["inputParameters"]
+    assert start["technicalname"] == "envgene-instance-pipeline:instance_pipeline"
+    assert start["technicalversion"] == "2.3.4"
+    assert start["datacontenttype"] == "application/json"
+    assert start["subject"] == "5550001"
+    assert start["data"]["kind"] == "EnvGenePipelineReport"
+    assert start["data"]["apiVersion"] == "v1"
+    assert start["data"]["user"] == "test-user"
+    assert start["data"]["email"] == "test@example.com"
+    config = {item["name"]: item["value"] for item in start["data"]["config"]}
+    assert config["PIPELINE_TYPE"] == "GITLAB_DEPLOY"
+    assert config["CUSTOM_PARAMS"] == "x"
+    assert config["ENV_BUILDER"] == "False"
+    assert "EMPTY" not in config
+    assert "CRED_ROTATION_PAYLOAD" not in config
+    assert "ENV_INVENTORY_CONTENT" not in config
+    assert "envgeneVersion" not in start["data"]
+    assert "inputParameters" not in start["data"]
     assert "steps" not in start["data"]
 
     running = json.loads(calls[1]["data"])
@@ -148,43 +199,23 @@ def test_send_start_and_stop_events(monkeypatch, ssl_verify, expected_verify):
     assert "steps" not in running["data"]
     finished = json.loads(calls[2]["data"])
     assert finished["status"] == "SUCCESS"
-    assert finished["data"]["steps"] == [{"name": "env_build", "status": "SUCCESS", "durationMs": 120}]
+    assert finished["data"]["steps"] == [{"name": "env_build", "status": "SUCCESS", "time": "0:00:00"}]
+    assert "durationMs" not in json.dumps(finished["data"])
     events = [json.loads(call["data"]) for call in calls]
     assert len({event["id"] for event in events}) == 4
     assert {event["traceid"] for event in events} == {"trace-1"}
     assert {event["parentid"] for event in events} == {"parent-1"}
     stop = json.loads(calls[3]["data"])
     assert stop["status"] == "SUCCESS"
-    assert stop["data"]["envgeneVersion"] == "2.3.4"
+    assert stop["technicalversion"] == "2.3.4"
+    assert "envgeneVersion" not in stop["data"]
     assert "steps" not in stop["data"]
-
-
-@pytest.mark.parametrize(
-    ("image", "expected"),
-    [
-        ("registry.example.com:17008/env-generator:feature_pdpldevops-25730_poc_latest_build_envgene",
-         "feature_pdpldevops-25730_poc_latest_build_envgene"),
-        (" env-generator:1.2.3 ", "1.2.3"),
-        ("registry.example.com:17008/env-generator", "latest"),
-        ("env-generator@sha256:abc123", "sha256:abc123"),
-        ("env-generator:1.2.3@sha256:abc123", "1.2.3"),
-        (None, "fallback-version"),
-        (" ", "fallback-version"),
-    ],
-)
-def test_resolve_envgene_version_from_image(monkeypatch, image, expected):
-    monkeypatch.setenv("ENVGENE_VERSION", "fallback-version")
-    if image is None:
-        monkeypatch.delenv("envgen_image", raising=False)
-    else:
-        monkeypatch.setenv("envgen_image", image)
-
-    assert resolve_envgene_version() == expected
 
 
 def test_send_logs_request_body_before_post(monkeypatch, caplog):
     caplog.set_level(logging.DEBUG, logger="pipeline.metrics_collector_activity")
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setattr(
         "pipeline.metrics_collector_activity.requests.post",
         lambda *args, **kwargs: _Response(),
@@ -200,6 +231,7 @@ def test_send_logs_request_body_before_post(monkeypatch, caplog):
 
 def test_send_logs_and_continues_on_transport_error(monkeypatch):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
 
     def raise_error(*args, **kwargs):
         raise requests.ConnectionError("collector unavailable")
@@ -211,6 +243,7 @@ def test_send_logs_and_continues_on_transport_error(monkeypatch):
 
 def test_send_logs_api_error_response(monkeypatch, caplog):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setattr("pipeline.metrics_collector_activity.requests.post", lambda *args, **kwargs: _ErrorResponse())
 
     MetricsCollectorActivity(_ctx(), trace_id="trace-1").send_start()
@@ -222,6 +255,7 @@ def test_send_logs_api_error_response(monkeypatch, caplog):
 @pytest.mark.parametrize("base_path", ["", "/base", "/base/"])
 def test_send_logs_actionable_message_for_missing_endpoint(monkeypatch, caplog, base_path):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com" + base_path)
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     response = SimpleNamespace(
         ok=False,
         status_code=404,
@@ -242,6 +276,7 @@ def test_send_logs_actionable_message_for_missing_endpoint(monkeypatch, caplog, 
 def test_send_skips_event_larger_than_one_mib(monkeypatch):
     calls = []
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setattr("pipeline.metrics_collector_activity.MAX_EVENT_BODY_BYTES", 1)
     monkeypatch.setattr(
         "pipeline.metrics_collector_activity.requests.post",
@@ -257,6 +292,7 @@ def test_send_skips_event_larger_than_one_mib(monkeypatch):
 @pytest.mark.parametrize("other_job", [False, True])
 def test_stop_retains_delivered_reports_for_downstream_jobs(monkeypatch, tmp_path, other_job):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
     activity = MetricsCollectorActivity(_ctx(), trace_id="current")
     activity.record_completion("SUCCESS", [])
@@ -277,6 +313,7 @@ def test_stop_retains_delivered_reports_for_downstream_jobs(monkeypatch, tmp_pat
 @pytest.mark.parametrize("failure", ["transport", "rejected", "oversized", "malformed"])
 def test_stop_keeps_reports_when_not_delivered(monkeypatch, tmp_path, failure):
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
     activity = MetricsCollectorActivity(_ctx(), trace_id="current")
     activity.record_completion("FAILED", [])
@@ -301,6 +338,7 @@ def test_repeated_stop_retains_reports_without_deleting_files(monkeypatch, tmp_p
     from pathlib import Path
 
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
     activity = MetricsCollectorActivity(_ctx(), trace_id="current")
     activity.record_completion("SUCCESS", [])
