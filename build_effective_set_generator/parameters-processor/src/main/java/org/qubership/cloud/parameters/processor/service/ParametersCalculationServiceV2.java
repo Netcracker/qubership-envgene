@@ -93,7 +93,6 @@ public class ParametersCalculationServiceV2 {
                 deployerInputs,
                 originalNamespace);
 
-
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(PER_SERVICE_DEPLOY_PARAMS)) {
             processPerServiceParams(parameters, parameterBundle);
@@ -102,11 +101,10 @@ public class ParametersCalculationServiceV2 {
             processDeploymentDescriptorParams(parameters, parameterBundle);
         }
         Map<String, Object> collisionCustomDeployParams = Collections.emptyMap();
-        if (customParams != null
-                && MapUtils.isNotEmpty(customParams.getAllParams())) {
+        if (customParams != null && MapUtils.isNotEmpty(customParams.getAllParams())) {
             Map<String, Object> customDeployParamsObj = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
             Set<String> serviceNames = getServiceNames(parameters.getDeployParams());
-            //collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
+            collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
             Map<String, Object> targetServiceParams = new LinkedHashMap<>();
             serviceNames.forEach(serviceName -> targetServiceParams.put(serviceName, new LinkedHashMap<>()));
             Map<String, Object> processedCustomDeployParams = buildParameterStructure(customDeployParamsObj,
@@ -116,9 +114,9 @@ public class ParametersCalculationServiceV2 {
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, extCredEntities);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, extCredEntities);
-//        if (!collisionCustomDeployParams.isEmpty()) {
-//            parameterBundle.getCollisionSecureParameters().putAll(collisionCustomDeployParams);
-//        }
+        if (!collisionCustomDeployParams.isEmpty()) {
+           parameterBundle.getCollisionSecureParameters().putAll(collisionCustomDeployParams);
+        }
         return parameterBundle;
     }
 
