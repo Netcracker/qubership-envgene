@@ -86,6 +86,7 @@ public class ParametersCalculationServiceV2 {
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
                                                DeployerInputs deployerInputs, String originalNamespace,
                                                CustomParameterDTO customParams, ExtCredEntities extCredEntities) {
+        System.out.println("starting of method"+ customParams);
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -102,7 +103,9 @@ public class ParametersCalculationServiceV2 {
         }
         Map<String, Object> collisionCustomDeployParams = Collections.emptyMap();
         if (customParams != null && MapUtils.isNotEmpty(customParams.getAllParams())) {
+            System.out.println("Custom deploy before"+ customParams);
             Map<String, Object> customDeployParamsObj = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
+            System.out.println("Custom deploy after:"+ customDeployParamsObj);
             Set<String> serviceNames = getServiceNames(parameters.getDeployParams());
             collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
             Map<String, Object> targetServiceParams = new LinkedHashMap<>();
