@@ -59,7 +59,7 @@ COPY build_envgene/build/constraint.txt /build/constraint.txt
 
 ENV PATH="/module/venv/bin:${PATH}"
 
-RUN python -m venv /module/venv && \
+RUN python3 -m venv /module/venv && \
     pip install --no-cache-dir pip==26.0.1
 
 COPY modules /modules
@@ -96,7 +96,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
     rm -rf /module/venv/lib/python3.12/site-packages/pytest* \
         /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
-    /module/venv/bin/pip uninstall -y pip
+    /module/venv/bin/pip uninstall -y setuptools pip
 
 RUN rm -rf /module/scripts/tests && \
     find /module/venv/lib/python3.12/site-packages/botocore/data -mindepth 1 -maxdepth 1 -type d \
