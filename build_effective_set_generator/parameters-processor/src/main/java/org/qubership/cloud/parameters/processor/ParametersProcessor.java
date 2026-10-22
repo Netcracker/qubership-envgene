@@ -99,7 +99,7 @@ public class ParametersProcessor implements Serializable {
         return value;
     }
 
-    private static List<Object> convertParameterListToObject(List<Parameter> list) {
+    private static List<Object> convertParameterListToObject(List<?> list) {
         return list.stream()
                 .map(ParametersProcessor::convertParameterToObject)
                 .collect(Collectors.toList());
