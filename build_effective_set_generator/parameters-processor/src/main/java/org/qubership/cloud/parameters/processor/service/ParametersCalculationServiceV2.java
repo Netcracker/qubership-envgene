@@ -115,7 +115,7 @@ public class ParametersCalculationServiceV2 {
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, extCredEntities);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, extCredEntities);
         if (!collisionCustomDeployParams.isEmpty()) {
-           parameterBundle.getCollisionSecureParameters().putAll(collisionCustomDeployParams);
+            parameterBundle.getCollisionSecureParameters().putAll(collisionCustomDeployParams);
         }
         return parameterBundle;
     }
