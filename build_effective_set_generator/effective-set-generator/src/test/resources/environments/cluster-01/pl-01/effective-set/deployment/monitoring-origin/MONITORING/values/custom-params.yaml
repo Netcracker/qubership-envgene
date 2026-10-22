@@ -1,7 +1,7 @@
 username: user-placeholder-123
 global: &id001
-  json-exporter: pass-placeholder-123
-  username: user-placeholder-123
+  json-exporter: minio-cred_password
+  username: minio-cred_username
 oauth2-proxy: *id001
 configurations-streamer: *id001
 stackdriver-exporter: *id001

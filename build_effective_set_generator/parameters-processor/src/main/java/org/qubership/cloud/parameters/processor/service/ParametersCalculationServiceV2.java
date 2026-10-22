@@ -91,8 +91,7 @@ public class ParametersCalculationServiceV2 {
                 namespaceName,
                 applicationName,
                 deployerInputs,
-                originalNamespace,
-                customParams.getAllParams());
+                originalNamespace);
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
@@ -103,8 +102,8 @@ public class ParametersCalculationServiceV2 {
             processDeploymentDescriptorParams(parameters, parameterBundle);
         }
         Map<String, Object> collisionCustomDeployParams = Collections.emptyMap();
-        if (MapUtils.isNotEmpty(customParams.getAllParams())) {
-            prepareCustomParams(customParams, parameters.getDeployParams(), parameters.getTechParams());
+        if (customParams != null
+                && MapUtils.isNotEmpty(customParams.getAllParams())) {
             Map<String, Object> customDeployParamsObj = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
             Set<String> serviceNames = getServiceNames(parameters.getDeployParams());
             collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
