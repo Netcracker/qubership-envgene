@@ -106,7 +106,7 @@ public class ParametersCalculationServiceV2 {
                 && MapUtils.isNotEmpty(customParams.getAllParams())) {
             Map<String, Object> customDeployParamsObj = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
             Set<String> serviceNames = getServiceNames(parameters.getDeployParams());
-            collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
+            //collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
             Map<String, Object> targetServiceParams = new LinkedHashMap<>();
             serviceNames.forEach(serviceName -> targetServiceParams.put(serviceName, new LinkedHashMap<>()));
             Map<String, Object> processedCustomDeployParams = buildParameterStructure(customDeployParamsObj,
@@ -116,9 +116,9 @@ public class ParametersCalculationServiceV2 {
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, extCredEntities);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, extCredEntities);
-        if (!collisionCustomDeployParams.isEmpty()) {
-            parameterBundle.getCollisionSecureParameters().putAll(collisionCustomDeployParams);
-        }
+//        if (!collisionCustomDeployParams.isEmpty()) {
+//            parameterBundle.getCollisionSecureParameters().putAll(collisionCustomDeployParams);
+//        }
         return parameterBundle;
     }
 
