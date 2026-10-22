@@ -86,6 +86,7 @@ public class ParametersCalculationServiceV2 {
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
                                                DeployerInputs deployerInputs, String originalNamespace,
                                                CustomParameterDTO customParams, ExtCredEntities extCredEntities) {
+        System.out.println("starting of method"+ customParams);
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
