@@ -3,7 +3,7 @@
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
 # Stage 0: Build static native effective set generator
-FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS java-native-builder
+FROM quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:jdk-17 AS java-native-builder
 
 ARG MUSL_VERSION=1.2.5
 ARG ZLIB_VERSION=1.3.1
