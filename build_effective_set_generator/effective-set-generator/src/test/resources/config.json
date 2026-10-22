@@ -4,6 +4,6 @@
     "json-exporter": "minio-cred_password"
   },
   "runtime": {
-    "password": "${STORAGE_PASSWORD}"
+    "password": "pass-placeholder-123"
   }
 }
