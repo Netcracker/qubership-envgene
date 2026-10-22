@@ -104,7 +104,7 @@ public class ParametersCalculationServiceV2 {
         if (customParams != null && MapUtils.isNotEmpty(customParams.getAllParams())) {
             System.out.println("Custom deploy before"+ customParams);
             Map<String, Object> customDeployParamsObj = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
-            ystem.out.println("Custom deploy after:"+ customDeployParamsObj);
+            System.out.println("Custom deploy after:"+ customDeployParamsObj);
             Set<String> serviceNames = getServiceNames(parameters.getDeployParams());
             collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);
             Map<String, Object> targetServiceParams = new LinkedHashMap<>();
