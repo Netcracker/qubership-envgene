@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import requests
 import pytest
+import uuid
 
 from envgenehelper.version_helper import resolve_envgene_version
 
@@ -49,12 +50,11 @@ def test_resolve_trace_id_uses_parent_value(monkeypatch):
 
 def test_resolve_trace_id_generates_and_exports_value(monkeypatch):
     monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
-
     trace_id = resolve_trace_id()
-
-    assert trace_id
-    assert trace_id == trace_id.lower()
-    assert len(trace_id) == 32
+    parsed = uuid.UUID(trace_id)
+    
+    assert str(parsed) == trace_id
+    assert parsed.version == 4
     assert trace_id == os.environ["METRICS_COLLECTOR_TRACE_ID"]
 
 

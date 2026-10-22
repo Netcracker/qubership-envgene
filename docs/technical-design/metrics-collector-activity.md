@@ -31,7 +31,7 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 | Parameter                      | Source | Required | Default   | Values / format   | Effect                                     |
 |--------------------------------|--------|----------|-----------|-------------------|--------------------------------------------|
 | `METRICS_COLLECTOR_URL`        | CI/CD  | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
-| `METRICS_COLLECTOR_TRACE_ID`   | CI/CD  | No       | generated | 32 hex characters | Event field `traceid`                      |
+| `METRICS_COLLECTOR_TRACE_ID`   | CI/CD  | No       | generated | UUID v4           | Event field `traceid`                      |
 | `METRICS_COLLECTOR_PARENT_ID`  | CI/CD  | No       | `""`      | Parent event `id` | Event field `parentid`                     |
 | `METRICS_COLLECTOR_SSL_VERIFY` | CI/CD  | No       | `true`    | `true` or `false` | `false` skips TLS certificate verification |
 
@@ -47,7 +47,7 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 | `type`          | Yes      | `"start"`, `"running"`, or `"stop"`                  | `"start"`                                                 |
 | `kind`          | Yes      | `"pipeline"`                                         | `"pipeline"`                                              |
 | `kindversion`   | Yes      | `"1.0"`                                              | `"1.0"`                                                   |
-| `traceid`       | Yes      | `METRICS_COLLECTOR_TRACE_ID`, or generated           | `"4bf92f3577b34da6a3ce929d0e0e4736"`                      |
+| `traceid`       | Yes      | `METRICS_COLLECTOR_TRACE_ID`, or generated           | `"df6cec09-ad02-4dbc-92fc-bedb78660047"`                  |
 | `parentid`      | No       | `METRICS_COLLECTOR_PARENT_ID`, or `""`               | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"`                  |
 | `technicalname` | Yes      | `CI_JOB_NAME`, or `instance_pipeline`                | `"env_prepare"`                                           |
 | `displayname`   | No       | Constant `EnvGene Instance Pipeline`                 | `"EnvGene Instance Pipeline"`                             |
@@ -238,7 +238,7 @@ Sequence:
   "projectid": "12345",
   "status": "IN_PROGRESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:00:00Z",
@@ -266,7 +266,7 @@ Sequence:
   "projectid": "12345",
   "status": "IN_PROGRESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:00:05Z",
@@ -294,7 +294,7 @@ Sequence:
   "projectid": "12345",
   "status": "SUCCESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:25:00Z",
@@ -327,7 +327,7 @@ Sequence:
   "projectid": "12345",
   "status": "SUCCESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:30:00Z",
@@ -370,7 +370,7 @@ Sequence:
   "projectid": "12345",
   "status": "IN_PROGRESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:00:00Z",
@@ -398,7 +398,7 @@ Sequence:
   "projectid": "12345",
   "status": "IN_PROGRESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:00:05Z",
@@ -426,7 +426,7 @@ Sequence:
   "projectid": "12345",
   "status": "SUCCESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "env_prepare",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:25:00Z",
@@ -459,7 +459,7 @@ Sequence:
   "projectid": "12345",
   "status": "IN_PROGRESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "sync",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:30:00Z",
@@ -487,7 +487,7 @@ Sequence:
   "projectid": "12345",
   "status": "SUCCESS",
   "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
-  "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "traceid": "4bf92f35-77b3-4da6-a3ce-929d0e0e4736",
   "technicalname": "sync",
   "displayname": "EnvGene Instance Pipeline",
   "time": "2026-06-12T14:35:00Z",

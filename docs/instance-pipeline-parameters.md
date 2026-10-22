@@ -1085,8 +1085,8 @@ Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
 **Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
 pass this value so EnvGene events join the parent deployment session. When it is empty and
-`METRICS_COLLECTOR_URL` is set, EnvGene generates a 32-character hexadecimal ID for the run. All events
-in that run share it.
+`METRICS_COLLECTOR_URL` is set, EnvGene generates a UUID v4 for the run. All events in that run share
+it.
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
