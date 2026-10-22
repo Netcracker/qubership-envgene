@@ -86,13 +86,13 @@ def _build_vals_reference(cred_id: str, external_credential: ExternalCredential,
         "secretStore": secret_store.model_dump(),
     })
 
-    logger.info(f"Calling vals-reference-cli for credId={cred_id}")
-    cmd = ["/module/scripts/vals-reference-cli"]
+    logger.info(f"Calling envgene-es vals-reference for credId={cred_id}")
+    cmd = ["/deployments/envgene-es", "vals-reference"]
 
     try:
         result = subprocess.run(cmd, input=payload, capture_output=True, text=True, check=True)
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error occurred while calling vals-reference-cli: {e.stderr}")
+        logger.error(f"Error occurred while calling envgene-es vals-reference: {e.stderr}")
         raise ValueError("Failed to build vals reference for external credential") from e
     
     output = json.loads(result.stdout) 

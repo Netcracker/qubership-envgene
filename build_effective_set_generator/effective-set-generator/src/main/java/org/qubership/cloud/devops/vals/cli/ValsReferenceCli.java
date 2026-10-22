@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 @Slf4j
-@CommandLine.Command(name = "vals-reference-cli", mixinStandardHelpOptions = true, description = "generate vals reference for the given credentials")
+@CommandLine.Command(name = "vals-reference", mixinStandardHelpOptions = true, description = "generate vals reference for the given credentials")
 public class ValsReferenceCli implements Callable<Integer> {
 
     @Inject

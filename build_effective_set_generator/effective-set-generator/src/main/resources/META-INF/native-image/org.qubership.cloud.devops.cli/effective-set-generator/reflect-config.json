@@ -1,0 +1,3976 @@
+[
+{
+  "name":"[B"
+},
+{
+  "name":"[C"
+},
+{
+  "name":"[I"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.BeanDeserializerModifier;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.Deserializers;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.KeyDeserializers;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.deser.ValueInstantiators;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.ser.BeanSerializerModifier;"
+},
+{
+  "name":"[Lcom.fasterxml.jackson.databind.ser.Serializers;"
+},
+{
+  "name":"[Ljava.io.ObjectStreamField;"
+},
+{
+  "name":"[Ljava.lang.CharSequence;"
+},
+{
+  "name":"[Ljava.lang.Class;"
+},
+{
+  "name":"[Ljava.lang.Object;"
+},
+{
+  "name":"[Ljava.lang.String;"
+},
+{
+  "name":"[Ljava.lang.annotation.Annotation;"
+},
+{
+  "name":"[Ljava.lang.reflect.AnnotatedType;"
+},
+{
+  "name":"[Ljava.lang.reflect.Constructor;"
+},
+{
+  "name":"[Ljava.lang.reflect.Field;"
+},
+{
+  "name":"[Ljava.lang.reflect.Method;"
+},
+{
+  "name":"[Ljava.lang.reflect.RecordComponent;"
+},
+{
+  "name":"[Ljava.lang.reflect.Type;"
+},
+{
+  "name":"[Ljava.lang.reflect.TypeVariable;"
+},
+{
+  "name":"[Lorg.codehaus.groovy.runtime.callsite.CallSite;"
+},
+{
+  "name":"[Lorg.cyclonedx.model.Component;"
+},
+{
+  "name":"[Lorg.cyclonedx.model.Dependency;"
+},
+{
+  "name":"com.fasterxml.jackson.annotation.JsonIgnoreProperties",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"com.fasterxml.jackson.annotation.JsonInclude",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"com.fasterxml.jackson.annotation.JsonPropertyOrder",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"com.fasterxml.jackson.databind.annotation.JsonDeserialize",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BBHeader$ReadAndWriteCounterRef",
+  "fields":[{"name":"writeCounter"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BBHeader$ReadCounterRef",
+  "fields":[{"name":"readCounter"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BLCHeader$DrainStatusRef",
+  "fields":[{"name":"drainStatus"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueColdProducerFields",
+  "fields":[{"name":"producerLimit"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueConsumerFields",
+  "fields":[{"name":"consumerIndex"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BaseMpscLinkedArrayQueueProducerFields",
+  "fields":[{"name":"producerIndex"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.BoundedLocalCache",
+  "fields":[{"name":"refreshes"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.CacheLoader",
+  "methods":[{"name":"loadAll","parameterTypes":["java.util.Set"] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.PS",
+  "fields":[{"name":"key"}, {"name":"value"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.PSA",
+  "fields":[{"name":"accessTime"}]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.PSAMS",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.SSSMSA",
+  "methods":[{"name":"<init>","parameterTypes":["com.github.benmanes.caffeine.cache.Caffeine","com.github.benmanes.caffeine.cache.AsyncCacheLoader","boolean"] }]
+},
+{
+  "name":"com.github.benmanes.caffeine.cache.StripedBuffer",
+  "fields":[{"name":"tableBusy"}]
+},
+{
+  "name":"com.google.common.collect.Lists",
+  "methods":[{"name":"newArrayList","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.el.ExtendedSyntaxBuilder",
+  "methods":[{"name":"<init>","parameterTypes":["jinjava.de.odysseus.el.tree.impl.Builder$Feature[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.el.ext.eager.EagerExtendedSyntaxBuilder",
+  "methods":[{"name":"<init>","parameterTypes":["jinjava.de.odysseus.el.tree.impl.Builder$Feature[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsBooleanExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsContainingAllExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsContainingExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsDefinedExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsDivisibleByExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsEqExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsEqualToExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsEqualsSymbolExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsEvenExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsFalseExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsFloatExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsGeTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsGreaterThanExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsGreaterThanOrEqualToSymbolExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsGreaterThanSymbolExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsGtTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsInExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsIntegerExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsIterableExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsLeTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsLessThanExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsLessThanOrEqualToSymbolExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsLessThanSymbolExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsLowerExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsLtTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsMappingExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsNeExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsNoneExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsNotEqualToSymbolExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsNumberExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsOddExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsSameAsExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsSequenceExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsStringContainingExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsStringExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsStringStartingWithExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsTrueExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsTruthyExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsUndefinedExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsUpperExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.exptest.IsWithinExpTest",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.AbsFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.AddFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.AllowSnakeCaseFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.AttrFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.Base64DecodeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.Base64EncodeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.BatchFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.BetweenTimesFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.BoolFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.CapitalizeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.CenterFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.CountFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.CutFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DAliasedDefaultFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DateTimeFormatFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DatetimeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DefaultFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DictSortFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DifferenceFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DivideFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.DivisibleFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.EAliasedEscapeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.EscapeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.EscapeJinjavaFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.EscapeJsFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.EscapeJsonFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FileSizeFormatFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FirstFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FloatFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ForceEscapeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FormatFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FormatNumberFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FromJsonFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.FromYamlFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.GroupByFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.IndentFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.IntFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.IntersectFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.IpAddrFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.Ipv4Filter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.Ipv6Filter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.JoinFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.LastFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.LengthFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ListFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.LogFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.LowerFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.MapFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.Md5Filter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.MinusTimeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.MultiplyFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.PlusTimeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.PrettyPrintFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RandomFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RegexReplaceFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RejectAttrFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RejectFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RenderFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ReplaceFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ReverseFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RootFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.RoundFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SafeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SelectAttrFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SelectFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ShuffleFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SliceFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SortFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SplitFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.StringFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.StringToDateFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.StringToTimeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.StripTagsFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SumFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.SymmetricDifferenceFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.TitleFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ToJsonFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.ToYamlFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.TrimFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.TruncateFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.TruncateHtmlFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UnescapeHtmlFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UnionFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UniqueFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UnixTimestampFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UpperFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UrlDecodeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UrlEncodeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.UrlizeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.WordCountFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.WordWrapFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.XmlAttrFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.time.FormatDateFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"format","parameterTypes":["java.lang.Object","java.lang.String[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.time.FormatDatetimeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"format","parameterTypes":["java.lang.Object","java.lang.String[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.filter.time.FormatTimeFilter",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"format","parameterTypes":["java.lang.Object","java.lang.String[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.fn.Functions",
+  "methods":[{"name":"convertToMapEntry","parameterTypes":["java.lang.Object","java.lang.Object"] }, {"name":"createNamespace","parameterTypes":["java.lang.Object[]"] }, {"name":"dateTimeFormat","parameterTypes":["java.lang.Object","java.lang.String[]"] }, {"name":"immutableListOf","parameterTypes":["java.lang.Object[]"] }, {"name":"range","parameterTypes":["java.lang.Object","java.lang.Object[]"] }, {"name":"renderSuperBlock","parameterTypes":[] }, {"name":"stringToDate","parameterTypes":["java.lang.String","java.lang.String"] }, {"name":"stringToTime","parameterTypes":["java.lang.String","java.lang.String"] }, {"name":"today","parameterTypes":["java.lang.String[]"] }, {"name":"truncate","parameterTypes":["java.lang.Object","java.lang.Object[]"] }, {"name":"unixtimestamp","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.fn.TypeFunction",
+  "methods":[{"name":"type","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.AutoEscapeTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.BlockTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.BreakTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.CallTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.ContinueTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.CycleTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.DoTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.ElseIfTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.ElseTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.ExtendsTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.ForTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.FromTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.IfTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.IfchangedTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.ImportTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.IncludeTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.MacroTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.PrintTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.RawTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.SetTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.hubspot.jinjava.lib.tag.UnlessTag",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.el.ExpressionFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.ConverterLookup"
+},
+{
+  "name":"com.thoughtworks.xstream.converters.ConverterRegistry"
+},
+{
+  "name":"com.thoughtworks.xstream.converters.basic.StringBuilderConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.basic.UUIDConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.enums.EnumConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.enums.EnumMapConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.enums.EnumSetConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.AtomicBooleanConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.AtomicIntegerConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.AtomicLongConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.AtomicReferenceConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.CharsetConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.CurrencyConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.DurationConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.OptionalConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.OptionalDoubleConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.OptionalIntConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.OptionalLongConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.PathConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.RegexPatternConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.StackTraceElementConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.StackTraceElementFactory15",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.SubjectConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.extended.ThrowableConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.converters.ConverterLookup"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.reflection.FieldUtil15",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.reflection.LambdaConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper","com.thoughtworks.xstream.converters.reflection.ReflectionProvider","com.thoughtworks.xstream.core.ClassLoaderReference"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider"
+},
+{
+  "name":"com.thoughtworks.xstream.converters.reflection.ReflectionProvider"
+},
+{
+  "name":"com.thoughtworks.xstream.converters.reflection.SunUnsafeReflectionProvider",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.ChronologyConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.DurationConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.HijrahDateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.InstantConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.JapaneseDateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.JapaneseEraConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.LocalDateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.LocalDateTimeConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.LocalTimeConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.MinguoDateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.MonthDayConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.OffsetDateTimeConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.OffsetTimeConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.PeriodConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.SystemClockConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.ThaiBuddhistDateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.ValueRangeConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.WeekFieldsConverter",
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.YearConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.YearMonthConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.ZoneIdConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.converters.time.ZonedDateTimeConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.core.ClassLoaderReference"
+},
+{
+  "name":"com.thoughtworks.xstream.core.JVM"
+},
+{
+  "name":"com.thoughtworks.xstream.core.JVM$Test",
+  "allDeclaredFields":true,
+  "unsafeAllocated":true
+},
+{
+  "name":"com.thoughtworks.xstream.core.util.Base64JavaUtilCodec",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.core.util.CustomObjectOutputStream"
+},
+{
+  "name":"com.thoughtworks.xstream.core.util.SerializationMembers$1",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder",
+  "methods":[{"name":"clone","parameterTypes":[] }]
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.AnnotationConfiguration"
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.AnnotationMapper",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper","com.thoughtworks.xstream.converters.ConverterRegistry","com.thoughtworks.xstream.converters.ConverterLookup","com.thoughtworks.xstream.core.ClassLoaderReference","com.thoughtworks.xstream.converters.reflection.ReflectionProvider"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.ArrayMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.AttributeAliasingMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.AttributeMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.ClassAliasingMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.DefaultImplementationsMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.DefaultMapper"
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.DynamicProxyMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.ElementIgnoringMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.EnumMapper",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.FieldAliasingMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.ImmutableTypesMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.ImplicitCollectionMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.LambdaMapper",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.thoughtworks.xstream.mapper.Mapper"] }]
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.LocalConversionMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.Mapper"
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.Mapper$Null"
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.MapperWrapper"
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.OuterClassMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.PackageAliasingMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.SecurityMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.mapper.SystemAttributeAliasingMapper",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.thoughtworks.xstream.security.ArrayTypePermission"
+},
+{
+  "name":"com.thoughtworks.xstream.security.InterfaceTypePermission"
+},
+{
+  "name":"com.thoughtworks.xstream.security.NoTypePermission"
+},
+{
+  "name":"com.thoughtworks.xstream.security.PrimitiveTypePermission"
+},
+{
+  "name":"groovy.grape.GrabAnnotationTransformation",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"groovy.grape.GrapeIvy"
+},
+{
+  "name":"groovy.io.FileType"
+},
+{
+  "name":"groovy.json.JsonTokenType$1",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"doCall","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"groovy.lang.Binding",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.Buildable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.Closure",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getProperty","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"groovy.lang.Closure$1",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.Closure$WritableClosure",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.EmptyRange"
+},
+{
+  "name":"groovy.lang.ExpandoMetaClass",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.GString",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"build","parameterTypes":["groovy.lang.GroovyObject"] }, {"name":"charAt","parameterTypes":["int"] }, {"name":"compareTo","parameterTypes":["java.lang.Object"] }, {"name":"length","parameterTypes":[] }, {"name":"subSequence","parameterTypes":["int","int"] }, {"name":"toString","parameterTypes":[] }, {"name":"writeTo","parameterTypes":["java.io.Writer"] }]
+},
+{
+  "name":"groovy.lang.GString$1",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.GroovyCallable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.GroovyObject",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getProperty","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"groovy.lang.GroovyObjectSupport",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getMetaClass","parameterTypes":[] }, {"name":"setMetaClass","parameterTypes":["groovy.lang.MetaClass"] }]
+},
+{
+  "name":"groovy.lang.GroovySystem"
+},
+{
+  "name":"groovy.lang.IntRange"
+},
+{
+  "name":"groovy.lang.ListWithDefault"
+},
+{
+  "name":"groovy.lang.MetaClass",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"groovy.lang.MetaClassImpl",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"groovy.lang.MetaMethod",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"groovy.lang.MetaObjectProtocol",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"groovy.lang.MetaProperty",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"groovy.lang.MutableMetaClass",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"groovy.lang.ObjectRange"
+},
+{
+  "name":"groovy.lang.Range",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"groovy.lang.Script",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.SpreadMap"
+},
+{
+  "name":"groovy.lang.Writable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"groovy.lang.groovydoc.Groovydoc"
+},
+{
+  "name":"groovy.runtime.metaclass.CustomMetaClassCreationHandle"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.json.JsonTokenType$1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.BindingMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.Closure$1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.Closure$WritableClosureMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.ExpandoMetaClassMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.GString$1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.GroovyObjectMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.GroovyObjectSupportMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.lang.ScriptMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript1$_getTemplate_closure1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript2$_getTemplate_closure1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript2MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript3$_getTemplate_closure1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript3MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript4$_getTemplate_closure1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.groovy.tmp.templates.GStringTemplateScript4MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.java.lang.ObjectMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.apache.groovy.io.StringBuilderWriterMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.apache.groovy.parser.antlr4.util.StringUtils$1MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.apache.groovy.parser.antlr4.util.StringUtils$2MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.apache.groovy.parser.antlr4.util.StringUtils$3MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.apache.groovy.parser.antlr4.util.StringUtils$4MetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.codehaus.groovy.runtime.GStringImplMetaClass"
+},
+{
+  "name":"groovy.runtime.metaclass.org.qubership.cloud.devops.commons.utils.ParameterMetaClass"
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript1",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getTemplate","parameterTypes":[] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript1$_getTemplate_closure1",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"doCall","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript2",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getTemplate","parameterTypes":[] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript2$_getTemplate_closure1",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"doCall","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript3",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getTemplate","parameterTypes":[] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript3$_getTemplate_closure1",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"doCall","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript4",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getTemplate","parameterTypes":[] }]
+},
+{
+  "name":"groovy.tmp.templates.GStringTemplateScript4$_getTemplate_closure1",
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"doCall","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"groovy.transform.Internal",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"groovy.util.BufferedIterator"
+},
+{
+  "name":"io.github.xstream.mxparser.MXParser",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.arc.All",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"io.quarkus.arc.impl.ParameterizedTypeImpl"
+},
+{
+  "name":"io.quarkus.arc.impl.TypeVariableImpl"
+},
+{
+  "name":"io.quarkus.deployment.console.ConsoleProcessor$HelpCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.deployment.console.ConsoleProcessor$QuitCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.deployment.console.QuarkusCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$ExcludePatternCommand",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$ExcludeTagsCommand",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$IncludePatternCommand",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$IncludeTagsCommand",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$PatternCommand",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$TagCompleter",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$TagsCommand",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$TestCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.deployment.dev.testing.TestTracingProcessor$TestSelectionCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.deployment.logging.LoggingResourceProcessor$LevelCompleter",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.logging.LoggingResourceProcessor$LogCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.deployment.logging.LoggingResourceProcessor$LoggerCompleter",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.quarkus.deployment.logging.LoggingResourceProcessor$SetLogLevelCommand",
+  "allDeclaredFields":true
+},
+{
+  "name":"io.quarkus.runtime.StartupEvent"
+},
+{
+  "name":"io.quarkus.runtime.annotations.RegisterForReflection",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.enterprise.context.ApplicationScoped",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.enterprise.context.BeforeDestroyed",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.enterprise.context.Destroyed",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.enterprise.context.Initialized",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.enterprise.inject.Any",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jakarta.enterprise.inject.Default",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jakarta.inject.Inject",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jakarta.validation.Valid",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.validation.constraints.NotBlank",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"groups","parameterTypes":[] }, {"name":"message","parameterTypes":[] }, {"name":"payload","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.validation.constraints.NotEmpty",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"groups","parameterTypes":[] }, {"name":"message","parameterTypes":[] }, {"name":"payload","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.validation.constraints.NotNull",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"groups","parameterTypes":[] }, {"name":"message","parameterTypes":[] }, {"name":"payload","parameterTypes":[] }]
+},
+{
+  "name":"jakarta.validation.constraints.Pattern",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"flags","parameterTypes":[] }, {"name":"groups","parameterTypes":[] }, {"name":"message","parameterTypes":[] }, {"name":"payload","parameterTypes":[] }, {"name":"regexp","parameterTypes":[] }]
+},
+{
+  "name":"java.awt.Color"
+},
+{
+  "name":"java.awt.Font"
+},
+{
+  "name":"java.awt.font.TextAttribute"
+},
+{
+  "name":"java.beans.Introspector"
+},
+{
+  "name":"java.beans.Transient",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"java.io.BufferedInputStream"
+},
+{
+  "name":"java.io.BufferedOutputStream"
+},
+{
+  "name":"java.io.BufferedReader"
+},
+{
+  "name":"java.io.BufferedWriter"
+},
+{
+  "name":"java.io.Closeable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.DataInput",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.DataInputStream"
+},
+{
+  "name":"java.io.DataOutput",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.DataOutputStream"
+},
+{
+  "name":"java.io.File"
+},
+{
+  "name":"java.io.Flushable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.InputStream",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"close","parameterTypes":[] }]
+},
+{
+  "name":"java.io.ObjectInput",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.ObjectInputStream"
+},
+{
+  "name":"java.io.ObjectOutput",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.ObjectOutputStream"
+},
+{
+  "name":"java.io.ObjectStreamConstants",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.io.OutputStream",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"close","parameterTypes":[] }, {"name":"flush","parameterTypes":[] }]
+},
+{
+  "name":"java.io.PrintStream"
+},
+{
+  "name":"java.io.PrintWriter"
+},
+{
+  "name":"java.io.Reader",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"close","parameterTypes":[] }, {"name":"read","parameterTypes":["java.nio.CharBuffer"] }]
+},
+{
+  "name":"java.io.Serializable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.io.Writer",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"append","parameterTypes":["char"] }, {"name":"append","parameterTypes":["java.lang.CharSequence"] }, {"name":"append","parameterTypes":["java.lang.CharSequence","int","int"] }, {"name":"close","parameterTypes":[] }, {"name":"flush","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.AbstractStringBuilder",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"append","parameterTypes":["char"] }, {"name":"append","parameterTypes":["java.lang.CharSequence"] }, {"name":"append","parameterTypes":["java.lang.CharSequence","int","int"] }, {"name":"charAt","parameterTypes":["int"] }, {"name":"length","parameterTypes":[] }, {"name":"subSequence","parameterTypes":["int","int"] }, {"name":"toString","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Appendable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.AutoCloseable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.Boolean"
+},
+{
+  "name":"java.lang.Byte"
+},
+{
+  "name":"java.lang.CharSequence",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.Character"
+},
+{
+  "name":"java.lang.Class",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getModule","parameterTypes":[] }, {"name":"isRecord","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.ClassLoader",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"registerAsParallelCapable","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Cloneable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.Comparable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.Deprecated",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"forRemoval","parameterTypes":[] }, {"name":"since","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Double"
+},
+{
+  "name":"java.lang.Enum",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"compareTo","parameterTypes":["java.lang.Object"] }, {"name":"describeConstable","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Float"
+},
+{
+  "name":"java.lang.FunctionalInterface",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.lang.Integer"
+},
+{
+  "name":"java.lang.Iterable",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.Long"
+},
+{
+  "name":"java.lang.Module",
+  "methods":[{"name":"isNamed","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Number"
+},
+{
+  "name":"java.lang.Object",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"add","parameterTypes":["int","java.lang.Object"] }, {"name":"add","parameterTypes":["java.lang.Object"] }, {"name":"addMetaBeanProperty","parameterTypes":["groovy.lang.MetaBeanProperty"] }, {"name":"addMetaMethod","parameterTypes":["groovy.lang.MetaMethod"] }, {"name":"append","parameterTypes":["java.lang.CharSequence"] }, {"name":"append","parameterTypes":["java.lang.CharSequence","int","int"] }, {"name":"apply","parameterTypes":["double"] }, {"name":"apply","parameterTypes":["int"] }, {"name":"apply","parameterTypes":["long"] }, {"name":"applyAsDouble","parameterTypes":["java.lang.Object"] }, {"name":"applyAsInt","parameterTypes":["java.lang.Object"] }, {"name":"applyAsLong","parameterTypes":["java.lang.Object"] }, {"name":"build","parameterTypes":["groovy.lang.GroovyObject"] }, {"name":"call","parameterTypes":[] }, {"name":"charAt","parameterTypes":["int"] }, {"name":"characteristics","parameterTypes":[] }, {"name":"close","parameterTypes":[] }, {"name":"compareTo","parameterTypes":["java.lang.Object"] }, {"name":"describeConstable","parameterTypes":[] }, {"name":"descriptorString","parameterTypes":[] }, {"name":"drainTo","parameterTypes":["java.util.Collection"] }, {"name":"drainTo","parameterTypes":["java.util.Collection","int"] }, {"name":"entrySet","parameterTypes":[] }, {"name":"equals","parameterTypes":["java.lang.Object"] }, {"name":"first","parameterTypes":[] }, {"name":"flush","parameterTypes":[] }, {"name":"get","parameterTypes":[] }, {"name":"get","parameterTypes":["int"] }, {"name":"get","parameterTypes":["long","java.util.concurrent.TimeUnit"] }, {"name":"get","parameterTypes":["java.lang.Object"] }, {"name":"getAnnotation","parameterTypes":["java.lang.Class"] }, {"name":"getAnnotations","parameterTypes":[] }, {"name":"getAttribute","parameterTypes":["java.lang.String"] }, {"name":"getAttributes","parameterTypes":[] }, {"name":"getDeclaringClass","parameterTypes":[] }, {"name":"getLength","parameterTypes":[] }, {"name":"getMetaClass","parameterTypes":[] }, {"name":"getMethods","parameterTypes":[] }, {"name":"getModifiers","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getProperty","parameterTypes":["java.lang.Class","java.lang.Object","java.lang.String","boolean","boolean"] }, {"name":"getProperty","parameterTypes":["java.lang.Object"] }, {"name":"getProperty","parameterTypes":["java.lang.Object","java.lang.String"] }, {"name":"getTypeParameters","parameterTypes":[] }, {"name":"group","parameterTypes":[] }, {"name":"group","parameterTypes":["int"] }, {"name":"hasMoreElements","parameterTypes":[] }, {"name":"hasNext","parameterTypes":[] }, {"name":"hashCode","parameterTypes":[] }, {"name":"initialize","parameterTypes":[] }, {"name":"isArray","parameterTypes":[] }, {"name":"isModified","parameterTypes":[] }, {"name":"isPrimitive","parameterTypes":[] }, {"name":"item","parameterTypes":["int"] }, {"name":"iterator","parameterTypes":[] }, {"name":"last","parameterTypes":[] }, {"name":"length","parameterTypes":[] }, {"name":"max","parameterTypes":["java.util.Comparator"] }, {"name":"min","parameterTypes":["java.util.Comparator"] }, {"name":"next","parameterTypes":[] }, {"name":"nextElement","parameterTypes":[] }, {"name":"normalize","parameterTypes":[] }, {"name":"read","parameterTypes":["java.nio.CharBuffer"] }, {"name":"read","parameterTypes":["byte[]","int","int"] }, {"name":"readInt","parameterTypes":[] }, {"name":"readLine","parameterTypes":[] }, {"name":"readObject","parameterTypes":[] }, {"name":"remove","parameterTypes":[] }, {"name":"remove","parameterTypes":["java.lang.Object"] }, {"name":"resolveConstantDesc","parameterTypes":["java.lang.invoke.MethodHandles$Lookup"] }, {"name":"run","parameterTypes":[] }, {"name":"setAttribute","parameterTypes":["java.lang.String","java.lang.String"] }, {"name":"setMetaClass","parameterTypes":["groovy.lang.MetaClass"] }, {"name":"setUserData","parameterTypes":["java.lang.String","java.lang.Object","org.w3c.dom.UserDataHandler"] }, {"name":"size","parameterTypes":[] }, {"name":"spliterator","parameterTypes":[] }, {"name":"step","parameterTypes":["int"] }, {"name":"step","parameterTypes":["int","groovy.lang.Closure"] }, {"name":"test","parameterTypes":["double"] }, {"name":"test","parameterTypes":["int"] }, {"name":"test","parameterTypes":["long"] }, {"name":"toString","parameterTypes":[] }, {"name":"tryAdvance","parameterTypes":["java.util.function.Consumer"] }, {"name":"values","parameterTypes":[] }, {"name":"write","parameterTypes":["byte[]"] }, {"name":"write","parameterTypes":["byte[]","int","int"] }, {"name":"writeTo","parameterTypes":["java.io.Writer"] }]
+},
+{
+  "name":"java.lang.Process",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.lang.Readable",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.Runnable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.Short"
+},
+{
+  "name":"java.lang.StackTraceElement"
+},
+{
+  "name":"java.lang.String",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"split","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.StringBuffer"
+},
+{
+  "name":"java.lang.StringBuilder"
+},
+{
+  "name":"java.lang.System",
+  "methods":[{"name":"console","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.System$2",
+  "methods":[{"name":"getConstantPool","parameterTypes":["java.lang.Class"] }]
+},
+{
+  "name":"java.lang.Thread"
+},
+{
+  "name":"java.lang.Throwable"
+},
+{
+  "name":"java.lang.Void"
+},
+{
+  "name":"java.lang.constant.Constable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.constant.ConstantDesc",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.lang.invoke.MethodHandles$Lookup",
+  "fields":[{"name":"IMPL_LOOKUP"}]
+},
+{
+  "name":"java.lang.invoke.SerializedLambda"
+},
+{
+  "name":"java.lang.invoke.TypeDescriptor",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.invoke.TypeDescriptor$OfField",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.reflect.AccessibleObject",
+  "fields":[{"name":"override"}],
+  "methods":[{"name":"getAnnotations","parameterTypes":[] }, {"name":"getDeclaringClass","parameterTypes":[] }, {"name":"getModifiers","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getTypeParameters","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.AnnotatedElement",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.reflect.Constructor"
+},
+{
+  "name":"java.lang.reflect.Executable",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"getAnnotation","parameterTypes":["java.lang.Class"] }, {"name":"getDeclaredAnnotations","parameterTypes":[] }, {"name":"getDeclaringClass","parameterTypes":[] }, {"name":"getModifiers","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getTypeParameters","parameterTypes":[] }, {"name":"isSynthetic","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.reflect.Field"
+},
+{
+  "name":"java.lang.reflect.GenericDeclaration",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.reflect.Member",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.lang.reflect.Method"
+},
+{
+  "name":"java.lang.reflect.Type",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.math.BigDecimal"
+},
+{
+  "name":"java.math.BigInteger"
+},
+{
+  "name":"java.net.ServerSocket"
+},
+{
+  "name":"java.net.Socket"
+},
+{
+  "name":"java.net.URI"
+},
+{
+  "name":"java.net.URL"
+},
+{
+  "name":"java.nio.charset.Charset",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"compareTo","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"java.nio.file.Path"
+},
+{
+  "name":"java.nio.file.Paths",
+  "methods":[{"name":"get","parameterTypes":["java.lang.String","java.lang.String[]"] }]
+},
+{
+  "name":"java.sql.Connection"
+},
+{
+  "name":"java.sql.Date"
+},
+{
+  "name":"java.sql.Driver"
+},
+{
+  "name":"java.sql.DriverManager",
+  "methods":[{"name":"getConnection","parameterTypes":["java.lang.String"] }, {"name":"getDriver","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.sql.Time",
+  "methods":[{"name":"<init>","parameterTypes":["long"] }]
+},
+{
+  "name":"java.sql.Timestamp",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.text.AttributedCharacterIterator$Attribute"
+},
+{
+  "name":"java.text.DecimalFormatSymbols"
+},
+{
+  "name":"java.time.Clock"
+},
+{
+  "name":"java.time.Clock$FixedClock"
+},
+{
+  "name":"java.time.Clock$OffsetClock"
+},
+{
+  "name":"java.time.Clock$SystemClock"
+},
+{
+  "name":"java.time.Clock$TickClock"
+},
+{
+  "name":"java.time.DayOfWeek"
+},
+{
+  "name":"java.time.Duration",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Instant",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.LocalDate",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.LocalDateTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.LocalTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Month"
+},
+{
+  "name":"java.time.MonthDay",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.OffsetDateTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.OffsetTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Period",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Ser"
+},
+{
+  "name":"java.time.Year",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.YearMonth",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.ZoneId",
+  "methods":[{"name":"of","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.time.ZoneOffset",
+  "methods":[{"name":"of","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.time.ZoneRegion"
+},
+{
+  "name":"java.time.ZonedDateTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.chrono.Chronology"
+},
+{
+  "name":"java.time.chrono.HijrahChronology"
+},
+{
+  "name":"java.time.chrono.HijrahDate"
+},
+{
+  "name":"java.time.chrono.HijrahEra"
+},
+{
+  "name":"java.time.chrono.IsoChronology"
+},
+{
+  "name":"java.time.chrono.JapaneseChronology"
+},
+{
+  "name":"java.time.chrono.JapaneseDate"
+},
+{
+  "name":"java.time.chrono.JapaneseEra"
+},
+{
+  "name":"java.time.chrono.MinguoChronology"
+},
+{
+  "name":"java.time.chrono.MinguoDate"
+},
+{
+  "name":"java.time.chrono.MinguoEra"
+},
+{
+  "name":"java.time.chrono.Ser"
+},
+{
+  "name":"java.time.chrono.ThaiBuddhistChronology"
+},
+{
+  "name":"java.time.chrono.ThaiBuddhistDate"
+},
+{
+  "name":"java.time.chrono.ThaiBuddhistEra"
+},
+{
+  "name":"java.time.temporal.ChronoField"
+},
+{
+  "name":"java.time.temporal.ChronoUnit"
+},
+{
+  "name":"java.time.temporal.IsoFields$Field"
+},
+{
+  "name":"java.time.temporal.IsoFields$Unit"
+},
+{
+  "name":"java.time.temporal.JulianFields$Field"
+},
+{
+  "name":"java.time.temporal.ValueRange"
+},
+{
+  "name":"java.time.temporal.WeekFields"
+},
+{
+  "name":"java.util.AbstractCollection",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"add","parameterTypes":["java.lang.Object"] }, {"name":"addAll","parameterTypes":["java.util.Collection"] }, {"name":"clear","parameterTypes":[] }, {"name":"contains","parameterTypes":["java.lang.Object"] }, {"name":"containsAll","parameterTypes":["java.util.Collection"] }, {"name":"get","parameterTypes":["int"] }, {"name":"isEmpty","parameterTypes":[] }, {"name":"iterator","parameterTypes":[] }, {"name":"remove","parameterTypes":["java.lang.Object"] }, {"name":"removeAll","parameterTypes":["java.util.Collection"] }, {"name":"retainAll","parameterTypes":["java.util.Collection"] }, {"name":"size","parameterTypes":[] }, {"name":"toArray","parameterTypes":[] }, {"name":"toArray","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"java.util.AbstractList",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"add","parameterTypes":["int","java.lang.Object"] }, {"name":"add","parameterTypes":["java.lang.Object"] }, {"name":"addAll","parameterTypes":["int","java.util.Collection"] }, {"name":"clear","parameterTypes":[] }, {"name":"equals","parameterTypes":["java.lang.Object"] }, {"name":"get","parameterTypes":["int"] }, {"name":"hashCode","parameterTypes":[] }, {"name":"indexOf","parameterTypes":["java.lang.Object"] }, {"name":"iterator","parameterTypes":[] }, {"name":"lastIndexOf","parameterTypes":["java.lang.Object"] }, {"name":"listIterator","parameterTypes":[] }, {"name":"listIterator","parameterTypes":["int"] }, {"name":"remove","parameterTypes":["int"] }, {"name":"set","parameterTypes":["int","java.lang.Object"] }, {"name":"subList","parameterTypes":["int","int"] }]
+},
+{
+  "name":"java.util.AbstractMap",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"clear","parameterTypes":[] }, {"name":"containsKey","parameterTypes":["java.lang.Object"] }, {"name":"containsValue","parameterTypes":["java.lang.Object"] }, {"name":"entrySet","parameterTypes":[] }, {"name":"equals","parameterTypes":["java.lang.Object"] }, {"name":"get","parameterTypes":["java.lang.Object"] }, {"name":"hashCode","parameterTypes":[] }, {"name":"isEmpty","parameterTypes":[] }, {"name":"keySet","parameterTypes":[] }, {"name":"put","parameterTypes":["java.lang.Object","java.lang.Object"] }, {"name":"putAll","parameterTypes":["java.util.Map"] }, {"name":"remove","parameterTypes":["java.lang.Object"] }, {"name":"size","parameterTypes":[] }, {"name":"values","parameterTypes":[] }]
+},
+{
+  "name":"java.util.ArrayList"
+},
+{
+  "name":"java.util.BitSet"
+},
+{
+  "name":"java.util.Calendar"
+},
+{
+  "name":"java.util.Collection",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.Comparator"
+},
+{
+  "name":"java.util.Currency"
+},
+{
+  "name":"java.util.Date"
+},
+{
+  "name":"java.util.Deque",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.EnumMap"
+},
+{
+  "name":"java.util.EnumSet"
+},
+{
+  "name":"java.util.Enumeration",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.GregorianCalendar"
+},
+{
+  "name":"java.util.HashMap"
+},
+{
+  "name":"java.util.HashSet"
+},
+{
+  "name":"java.util.Hashtable"
+},
+{
+  "name":"java.util.Iterator",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.LinkedHashMap"
+},
+{
+  "name":"java.util.LinkedHashSet"
+},
+{
+  "name":"java.util.LinkedList"
+},
+{
+  "name":"java.util.List",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.Locale"
+},
+{
+  "name":"java.util.Map",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.Map$Entry"
+},
+{
+  "name":"java.util.Optional"
+},
+{
+  "name":"java.util.OptionalDouble"
+},
+{
+  "name":"java.util.OptionalInt"
+},
+{
+  "name":"java.util.OptionalLong"
+},
+{
+  "name":"java.util.Properties"
+},
+{
+  "name":"java.util.Queue",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.Random"
+},
+{
+  "name":"java.util.ResourceBundle",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.Set",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.SortedMap",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.SortedSet",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.Spliterator",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.TimeZone",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.util.Timer"
+},
+{
+  "name":"java.util.TimerTask"
+},
+{
+  "name":"java.util.TreeMap"
+},
+{
+  "name":"java.util.TreeSet"
+},
+{
+  "name":"java.util.UUID"
+},
+{
+  "name":"java.util.Vector"
+},
+{
+  "name":"java.util.concurrent.BlockingQueue",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.concurrent.Callable",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"java.util.concurrent.ConcurrentHashMap"
+},
+{
+  "name":"java.util.concurrent.Future",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicBoolean"
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicInteger"
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicLong"
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicReference"
+},
+{
+  "name":"java.util.function.DoubleFunction",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.DoublePredicate",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.IntFunction",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.IntPredicate",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.LongFunction",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.LongPredicate",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.Supplier",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.ToDoubleFunction",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.ToIntFunction",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.function.ToLongFunction",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.regex.MatchResult",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.regex.Matcher"
+},
+{
+  "name":"java.util.regex.Pattern"
+},
+{
+  "name":"java.util.stream.BaseStream",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"java.util.stream.Stream",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"javafx.beans.value.ObservableValue"
+},
+{
+  "name":"javassist.util.proxy.ProxyFactory",
+  "methods":[{"name":"isProxyClass","parameterTypes":["java.lang.Class"] }]
+},
+{
+  "name":"javax.activation.ActivationDataFlavor"
+},
+{
+  "name":"javax.annotation.Nonnull",
+  "methods":[{"name":"value","parameterTypes":[] }]
+},
+{
+  "name":"javax.security.auth.Subject"
+},
+{
+  "name":"javax.swing.LookAndFeel"
+},
+{
+  "name":"javax.xml.datatype.Duration"
+},
+{
+  "name":"jdk.internal.access.SharedSecrets",
+  "methods":[{"name":"getJavaLangAccess","parameterTypes":[] }]
+},
+{
+  "name":"jdk.internal.reflect.CallerSensitive",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jdk.internal.reflect.ConstantPool",
+  "methods":[{"name":"getMethodAt","parameterTypes":["int"] }, {"name":"getSize","parameterTypes":[] }]
+},
+{
+  "name":"jdk.internal.vm.annotation.ForceInline",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jdk.internal.vm.annotation.IntrinsicCandidate",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jdk.internal.vm.annotation.Stable",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"jinjava.de.odysseus.el.ExpressionFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"jinjava.de.odysseus.el.tree.impl.Scanner",
+  "fields":[{"name":"position"}, {"name":"token"}],
+  "methods":[{"name":"addKeyToken","parameterTypes":["jinjava.de.odysseus.el.tree.impl.Scanner$Token"] }]
+},
+{
+  "name":"org.aesh.command.impl.completer.BooleanOptionCompleter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.aesh.command.impl.parser.AeshOptionParser",
+  "queryAllPublicConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.groovy.io.StringBuilderWriter",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.groovy.parser.antlr4.util.StringUtils$1",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.groovy.parser.antlr4.util.StringUtils$2",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.groovy.parser.antlr4.util.StringUtils$3",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"doCall","parameterTypes":["java.lang.String","java.lang.String","java.lang.String"] }]
+},
+{
+  "name":"org.apache.groovy.parser.antlr4.util.StringUtils$4",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.apache.groovy.xml.extensions.XmlExtensions",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.codehaus.groovy.runtime.DefaultGroovyStaticMethods",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.codehaus.groovy.runtime.GStringImpl",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.codehaus.groovy.runtime.GeneratedClosure",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.codehaus.groovy.runtime.callsite.CallSite",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgm$941",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.codehaus.groovy.reflection.CachedClass","java.lang.Class","java.lang.Class[]"] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.NumberNumberDiv",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.NumberNumberMinus",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.NumberNumberMultiply",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.NumberNumberPlus",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.BooleanArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.BooleanArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.ByteArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.ByteArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.CharacterArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.CharacterArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.DoubleArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.DoubleArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.FloatArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.FloatArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.IntegerArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.IntegerArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.LongArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.LongArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.ObjectArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.ObjectArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.ShortArrayGetAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.runtime.dgmimpl.arrays.ShortArrayPutAtMetaMethod",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.codehaus.groovy.vmplugin.v8.PluginDefaultGroovyMethods",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.codehaus.groovy.vmplugin.v9.Java9",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.model.Annotation",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Annotator",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Attribute",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Bom",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setComponents","parameterTypes":["java.util.List"] }, {"name":"setDependencies","parameterTypes":["java.util.List"] }, {"name":"setMetadata","parameterTypes":["org.cyclonedx.model.Metadata"] }, {"name":"setSerialNumber","parameterTypes":["java.lang.String"] }, {"name":"setVersion","parameterTypes":["int"] }]
+},
+{
+  "name":"org.cyclonedx.model.BomReference",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Commit",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Component",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setBomRef","parameterTypes":["java.lang.String"] }, {"name":"setComponents","parameterTypes":["java.util.List"] }, {"name":"setData","parameterTypes":["java.util.List"] }, {"name":"setGroup","parameterTypes":["java.lang.String"] }, {"name":"setMimeType","parameterTypes":["java.lang.String"] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setProperties","parameterTypes":["java.util.List"] }, {"name":"setPurl","parameterTypes":["java.lang.String"] }, {"name":"setType","parameterTypes":["org.cyclonedx.model.Component$Type"] }, {"name":"setVersion","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.cyclonedx.model.Component$Scope",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Component$Type",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Composition",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Composition$Aggregate",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Copyright",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Dependency",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.model.Diff",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Evidence",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.ExtensibleElement",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"add","parameterTypes":["java.lang.String","org.cyclonedx.model.Extension"] }]
+},
+{
+  "name":"org.cyclonedx.model.ExtensibleType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Extension",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Extension$ExtensionType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.ExternalReference",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.ExternalReference$Type",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Hash",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.IdentifiableActionType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Issue",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Issue$Type",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.OrganizationalContact",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Patch",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Patch$Type",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Pedigree",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.ReleaseNotes",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Service",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.ServiceData",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.ServiceData$Flow",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Signature",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Signature$Algorithm",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Signature$PublicKey",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Signature$PublicKey$Crv",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Signature$PublicKey$Kty",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.Source",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.Swid",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Assessor",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Attestation",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.AttestationMap",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Claim",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Confidence",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Conformance",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Declarations",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.Targets",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.affirmation.Affirmation",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.evidence.Contents",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.evidence.Data",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.attestation.evidence.Evidence",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.ModelCard",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.AlgorithmProperties",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.CertificateProperties",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.CipherSuite",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.CryptoProperties",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.Ikev2TransformTypes",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.ProtocolProperties",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.RelatedCryptoMaterialProperties",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.SecuredBy",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.AssetType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.CertificationLevel",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.CryptoFunction",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.ExecutionEnvironment",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.ImplementationPlatform",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.Mode",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.Padding",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.Primitive",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.ProtocolType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.crypto.enums.State",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.data.ComponentData",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setContents","parameterTypes":["org.cyclonedx.model.component.data.Content"] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setType","parameterTypes":["org.cyclonedx.model.component.data.ComponentData$ComponentDataType"] }]
+},
+{
+  "name":"org.cyclonedx.model.component.data.ComponentData$ComponentDataType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.data.Content",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setAttachment","parameterTypes":["org.cyclonedx.model.AttachmentText"] }]
+},
+{
+  "name":"org.cyclonedx.model.component.data.Governance",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.data.Governance$DataGovernanceResponsibleParty",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.data.Graphics",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.data.Graphics$Graphic",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.evidence.Callstack",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.evidence.Frame",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.evidence.Occurrence",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.Considerations",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.InputOutputParameter",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.ModelParameters",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.ModelParameters$Approach",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.ModelParameters$Approach$ApproachType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.PerformanceMetric",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.PerformanceMetric$ConfidenceInterval",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.QuantitativeAnalysis",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.EnvironmentalConsideration",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.FairnessAssessment",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.Activity",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.EnergyConsumption",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.co2.CO2Measure",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.co2.Unit",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.energy.EnergyMeasure",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.energy.EnergyProvider",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.energy.EnergySource",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.component.modelCard.consideration.consumption.energy.Unit",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.definition.Definition",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.definition.Level",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.definition.Requirement",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.definition.Standard",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.Formula",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.FormulationCommon",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.FormulationCommon$TaskType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.Workflow",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.common.BasicDataAbstract",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.task.Command",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.task.Step",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.task.Task",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.trigger.Condition",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.trigger.Event",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.trigger.Trigger",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.workspace.Volume",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.workspace.Volume$Mode",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.workspace.Workspace",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.cyclonedx.model.formulation.workspace.Workspace$AccessMode",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.cyclonedx.util.ResourceReferenceChoiceDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.AttachmentTextDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.ComponentListDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.ComponentWrapperDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.DatasetsChoiceDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.DependencyDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.ExtensionDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.ExternalReferencesDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.HashesDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.IdentityDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.InputTypeDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.LicenseDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.NotesDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.OrganizationalEntityDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.OutputTypeDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.PropertiesDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.PropertyDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.ResolvesDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.RiskDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.SignatoryDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.StringListDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.TagsDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.cyclonedx.util.deserializer.VulnerabilityDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.fusesource.jansi.Ansi",
+  "methods":[{"name":"isEnabled","parameterTypes":[] }]
+},
+{
+  "name":"org.fusesource.jansi.AnsiConsole",
+  "fields":[{"name":"out"}]
+},
+{
+  "name":"org.hibernate.validator.PredefinedScopeHibernateValidator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.hibernate.validator.internal.constraintvalidators.bv.NotBlankValidator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.hibernate.validator.internal.constraintvalidators.bv.NotNullValidator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.hibernate.validator.internal.constraintvalidators.bv.PatternValidator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.hibernate.validator.internal.constraintvalidators.bv.notempty.NotEmptyValidatorForCharSequence",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.jboss.logmanager.ExtLogRecord",
+  "methods":[{"name":"setMarker","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"org.modelmapper.ModelMapper"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.CmdbCli",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.cli.CmdbCli$EnvCommandSpace",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.qubership.cloud.devops.cli.CmdbCliTest"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.EnvgeneEsCli"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.beans.InjectorProvider"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.otel.OpenTelemetryProviderCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.parser.CliParameterParser"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.pojo.dto.input.InputData"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.pojo.dto.sd.DeployPlanEntityDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setDeployPostfix","parameterTypes":["java.lang.String"] }, {"name":"setGenerationId","parameterTypes":["java.lang.String"] }, {"name":"setGenerationType","parameterTypes":["java.lang.String"] }, {"name":"setNamespace","parameterTypes":["java.lang.String"] }, {"name":"setVersion","parameterTypes":["java.lang.String"] }, {"name":"setWave","parameterTypes":["int"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.repository.implementation.FileDataConverterImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.repository.implementation.FileDataRepositoryImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.ApplicationServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.CloudConfigurationServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.InputDataServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.NamespaceConfigurationServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.ParameterSetServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.ProfileServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.RegistryConfigurationServiceImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.service.implementation.TenantConfigurationServiceCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.BomCommonUtils"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.BomReaderUtilsImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.BomReaderUtilsImplV1"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.BomReaderUtilsImplV2"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.CredentialUtilsCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.FileSystemUtils"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.SecretStoreUtilsCliImpl"
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.deserializer.BomMixin",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.cli.utils.deserializer.CustomMetadataDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.Injector"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO$ApplicationLinkDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"deployParameters","parameterTypes":["java.util.Map"] }, {"name":"name","parameterTypes":["java.lang.String"] }, {"name":"technicalConfigurationParameters","parameterTypes":["java.util.Map"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getControllerNamespace","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getOriginNamespace","parameterTypes":[] }, {"name":"getPeerNamespace","parameterTypes":[] }, {"name":"getType","parameterTypes":[] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO$BgDomainEntityDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"controllerNamespace","parameterTypes":["org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO$NamespaceDTO"] }, {"name":"name","parameterTypes":["java.lang.String"] }, {"name":"originNamespace","parameterTypes":["org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO$NamespaceDTO"] }, {"name":"peerNamespace","parameterTypes":["org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO$NamespaceDTO"] }, {"name":"type","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO$NamespaceDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getCredentials","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getPassword","parameterTypes":[] }, {"name":"getType","parameterTypes":[] }, {"name":"getUrl","parameterTypes":[] }, {"name":"getUserName","parameterTypes":[] }, {"name":"setCredentials","parameterTypes":["java.lang.String"] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setType","parameterTypes":["java.lang.String"] }, {"name":"setUrl","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO$CloudDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"apiPort","parameterTypes":["java.lang.String"] }, {"name":"apiUrl","parameterTypes":["java.lang.String"] }, {"name":"build","parameterTypes":[] }, {"name":"consulConfig","parameterTypes":["org.qubership.cloud.devops.commons.pojo.clouds.dto.ConsulConfigDTO"] }, {"name":"dashboardUrl","parameterTypes":["java.lang.String"] }, {"name":"databases","parameterTypes":["java.util.List"] }, {"name":"dbMode","parameterTypes":["java.lang.String"] }, {"name":"dbaasConfigs","parameterTypes":["java.util.List"] }, {"name":"defaultCredentialsId","parameterTypes":["java.lang.String"] }, {"name":"deployParameterSets","parameterTypes":["java.util.List"] }, {"name":"deployParameters","parameterTypes":["java.util.Map"] }, {"name":"e2eParameterSets","parameterTypes":["java.util.List"] }, {"name":"e2eParameters","parameterTypes":["java.util.Map"] }, {"name":"labels","parameterTypes":["java.util.List"] }, {"name":"maasConfig","parameterTypes":["org.qubership.cloud.devops.commons.pojo.clouds.dto.MaaSConfigDTO"] }, {"name":"mergeDeployParametersAndE2EParameters","parameterTypes":["boolean"] }, {"name":"name","parameterTypes":["java.lang.String"] }, {"name":"privateUrl","parameterTypes":["java.lang.String"] }, {"name":"productionMode","parameterTypes":["boolean"] }, {"name":"profile","parameterTypes":["org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileDto"] }, {"name":"protocol","parameterTypes":["java.lang.String"] }, {"name":"publicUrl","parameterTypes":["java.lang.String"] }, {"name":"technicalConfigurationParameterSets","parameterTypes":["java.util.List"] }, {"name":"technicalConfigurationParameters","parameterTypes":["java.util.Map"] }, {"name":"vaultConfig","parameterTypes":["org.qubership.cloud.devops.commons.pojo.clouds.dto.VaultConfigDTO"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.ConsulConfigDTO$ConsulConfigDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"enabled","parameterTypes":["boolean"] }, {"name":"internalUrl","parameterTypes":["java.lang.String"] }, {"name":"publicUrl","parameterTypes":["java.lang.String"] }, {"name":"tokenSecret","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.DatabaseDTO$DatabaseDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.DbaaSConfigDTO$DbaaSConfigDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"aggregatorUrl","parameterTypes":["java.lang.String"] }, {"name":"apiUrl","parameterTypes":["java.lang.String"] }, {"name":"build","parameterTypes":[] }, {"name":"credentialsId","parameterTypes":["java.lang.String"] }, {"name":"enable","parameterTypes":["boolean"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.MaaSConfigDTO$MaaSConfigDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"credentialsId","parameterTypes":["java.lang.String"] }, {"name":"enable","parameterTypes":["boolean"] }, {"name":"maasInternalAddress","parameterTypes":["java.lang.String"] }, {"name":"maasUrl","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.clouds.dto.VaultConfigDTO$VaultConfigDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"credentialsId","parameterTypes":["java.lang.String"] }, {"name":"enable","parameterTypes":["boolean"] }, {"name":"url","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO$Property",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO$SecretCredentialsDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"secret","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.credentials.dto.UsernamePasswordCredentialsDTO$UsernamePasswordCredentialsDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"password","parameterTypes":["java.lang.String"] }, {"name":"username","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.credentials.dto.VaultAppRoleCredentialsDTO$VaultAppRoleCredentialsDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"namespace","parameterTypes":["java.lang.String"] }, {"name":"path","parameterTypes":["java.lang.String"] }, {"name":"roleId","parameterTypes":["java.lang.String"] }, {"name":"secretId","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO$NamespaceDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"cleanInstallApprovalRequired","parameterTypes":["boolean"] }, {"name":"cleaned","parameterTypes":["boolean"] }, {"name":"credentialsId","parameterTypes":["java.lang.String"] }, {"name":"deployParameterSets","parameterTypes":["java.util.List"] }, {"name":"deployParameters","parameterTypes":["java.util.Map"] }, {"name":"e2eParameterSets","parameterTypes":["java.util.List"] }, {"name":"e2eParameters","parameterTypes":["java.util.Map"] }, {"name":"isServerSideMerge","parameterTypes":["boolean"] }, {"name":"labels","parameterTypes":["java.util.List"] }, {"name":"mergeDeployParametersAndE2EParameters","parameterTypes":["boolean"] }, {"name":"name","parameterTypes":["java.lang.String"] }, {"name":"profile","parameterTypes":["org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileDto"] }, {"name":"technicalConfigurationParameterSets","parameterTypes":["java.util.List"] }, {"name":"technicalConfigurationParameters","parameterTypes":["java.util.Map"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.parameterset.ParameterSet",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.dto.ApplicationProfileDto",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getSd","parameterTypes":[] }, {"name":"getServices","parameterTypes":[] }, {"name":"getVersion","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setSd","parameterTypes":["java.lang.String"] }, {"name":"setServices","parameterTypes":["java.util.List"] }, {"name":"setVersion","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.dto.ParameterProfileDto",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getValue","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setValue","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileDto",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getBaseline","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"setBaseline","parameterTypes":["java.lang.String"] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setVersion","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getApplications","parameterTypes":[] }, {"name":"setApplications","parameterTypes":["java.util.List"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileSummaryDto",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"getDescription","parameterTypes":[] }, {"name":"setDescription","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.dto.ServiceProfileDto",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"getParameters","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setParameters","parameterTypes":["java.util.List"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.model.ApplicationProfile",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setProfile","parameterTypes":["org.qubership.cloud.devops.commons.pojo.profile.model.Profile"] }, {"name":"setSd","parameterTypes":["java.lang.String"] }, {"name":"setServices","parameterTypes":["java.util.List"] }, {"name":"setVersion","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.model.ParameterProfile",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setValue","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.model.Profile",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setApplications","parameterTypes":["java.util.List"] }, {"name":"setBaseline","parameterTypes":["java.lang.String"] }, {"name":"setDescription","parameterTypes":["java.lang.String"] }, {"name":"setName","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.profile.model.ServiceProfile",
+  "queryAllDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"setName","parameterTypes":["java.lang.String"] }, {"name":"setParameters","parameterTypes":["java.util.List"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.DockerDTO$DockerDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"groupName","parameterTypes":["java.lang.String"] }, {"name":"groupUri","parameterTypes":["java.lang.String"] }, {"name":"releaseRepoName","parameterTypes":["java.lang.String"] }, {"name":"releaseUri","parameterTypes":["java.lang.String"] }, {"name":"snapshotRepoName","parameterTypes":["java.lang.String"] }, {"name":"snapshotUri","parameterTypes":["java.lang.String"] }, {"name":"stagingRepoName","parameterTypes":["java.lang.String"] }, {"name":"stagingUri","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.GoDTO$GoDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.HelmAppDTO$HelmAppDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.HelmDTO$HelmDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.MavenDTO$MavenDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"fullRepositoryUrl","parameterTypes":["java.lang.String"] }, {"name":"releaseGroup","parameterTypes":["java.lang.String"] }, {"name":"repositoryDomainName","parameterTypes":["java.lang.String"] }, {"name":"snapshotGroup","parameterTypes":["java.lang.String"] }, {"name":"targetRelease","parameterTypes":["java.lang.String"] }, {"name":"targetSnapshot","parameterTypes":["java.lang.String"] }, {"name":"targetStaging","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.NpmDTO$NpmDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.RawDTO$RawDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO$RegistryDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"dockerConfig","parameterTypes":["org.qubership.cloud.devops.commons.pojo.registries.dto.DockerDTO"] }, {"name":"mavenConfig","parameterTypes":["org.qubership.cloud.devops.commons.pojo.registries.dto.MavenDTO"] }, {"name":"name","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Docker",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Go",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Helm",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.HelmApp",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Maven",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Npm",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Raw",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.registries.model.Registry",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.tenants.dto.GlobalE2EParametersDTO$GlobalE2EParametersDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"environmentParameters","parameterTypes":["java.util.Map"] }, {"name":"mergeTenantsAndE2EParameters","parameterTypes":["boolean"] }, {"name":"pipelineDefaultRecipients","parameterTypes":["java.lang.String"] }, {"name":"recipientsStrategy","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO$TenantDTOBuilder",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"build","parameterTypes":[] }, {"name":"credential","parameterTypes":["java.lang.String"] }, {"name":"defaultBranch","parameterTypes":["java.lang.String"] }, {"name":"deployParameters","parameterTypes":["java.util.Map"] }, {"name":"description","parameterTypes":["java.lang.String"] }, {"name":"gitRepository","parameterTypes":["java.lang.String"] }, {"name":"globalE2EParameters","parameterTypes":["org.qubership.cloud.devops.commons.pojo.tenants.dto.GlobalE2EParametersDTO"] }, {"name":"labels","parameterTypes":["java.util.List"] }, {"name":"name","parameterTypes":["java.lang.String"] }, {"name":"owners","parameterTypes":["java.lang.String"] }, {"name":"registryName","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.tenants.model.GlobalE2EParameters",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.pojo.tenants.model.TenantGlobalParameters",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.repository.interfaces.FileDataRepository"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.ApplicationService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.CloudConfigurationService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.InputDataService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.NamespaceConfigurationService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.ParameterSetService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.ProfileService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.RegistryConfigurationService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.service.interfaces.TenantConfigurationService"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.BomReaderUtils"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.CredentialUtils"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.Parameter",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"get","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.SecretStoresUtils"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.convert.CustomDeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.deserializer.CredentialDTODeserializer",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.mapper.MapperConfig"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.mapper.ProfileMapper"
+},
+{
+  "name":"org.qubership.cloud.devops.commons.utils.otel.OpenTelemetryProvider"
+},
+{
+  "name":"org.qubership.cloud.devops.gstringtojinjavatranslator.jinjava.Functions",
+  "methods":[{"name":"random","parameterTypes":[] }]
+},
+{
+  "name":"org.qubership.cloud.devops.vals.cli.ValsReferenceCli",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.devops.vals.cli.ValsReferenceCliTest"
+},
+{
+  "name":"org.qubership.cloud.devops.vals.cli.dto.CredentialRequest",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getCreate","parameterTypes":[] }, {"name":"getProperties","parameterTypes":[] }, {"name":"getRemoteRefPath","parameterTypes":[] }, {"name":"getSecretStore","parameterTypes":[] }, {"name":"setCreate","parameterTypes":["java.lang.Boolean"] }, {"name":"setProperties","parameterTypes":["java.util.List"] }, {"name":"setRemoteRefPath","parameterTypes":["java.lang.String"] }, {"name":"setSecretStore","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.vals.cli.dto.CredentialRequest$Property",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.vals.cli.dto.ValsUriRequest",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getCredential","parameterTypes":[] }, {"name":"getCredentialId","parameterTypes":[] }, {"name":"getSecretStore","parameterTypes":[] }, {"name":"setCredential","parameterTypes":["org.qubership.cloud.devops.vals.cli.dto.CredentialRequest"] }, {"name":"setCredentialId","parameterTypes":["java.lang.String"] }, {"name":"setSecretStore","parameterTypes":["org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.vals.cli.service.ValsReferenceService",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getMountPath","parameterTypes":[] }, {"name":"getProjectId","parameterTypes":[] }, {"name":"getRegion","parameterTypes":[] }, {"name":"getType","parameterTypes":[] }, {"name":"getVaultName","parameterTypes":[] }, {"name":"setMountPath","parameterTypes":["java.lang.String"] }, {"name":"setProjectId","parameterTypes":["java.lang.String"] }, {"name":"setRegion","parameterTypes":["java.lang.String"] }, {"name":"setType","parameterTypes":["org.qubership.cloud.devops.vals.core.dto.SecretStoreType"] }, {"name":"setVaultName","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.devops.vals.core.dto.SecretStoreType",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"org.qubership.cloud.parameters.processor.ParametersProcessor"
+},
+{
+  "name":"org.qubership.cloud.parameters.processor.expression.ExpressionLanguage",
+  "methods":[{"name":"processBackslashes","parameterTypes":["java.lang.String"] }, {"name":"processMap","parameterTypes":["java.util.Map"] }, {"name":"processMap","parameterTypes":["java.util.Map","java.util.Map","boolean"] }, {"name":"processValue","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"org.qubership.cloud.parameters.processor.expression.binding.Binding",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"entrySet","parameterTypes":[] }, {"name":"get","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"org.qubership.cloud.parameters.processor.parser.EscapeParametersParser",
+  "methods":[{"name":"semicolonSplit","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1"
+},
+{
+  "name":"org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV2"
+},
+{
+  "name":"org.w3c.dom.Element",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.w3c.dom.Node",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.w3c.dom.NodeList",
+  "queryAllPublicMethods":true
+},
+{
+  "name":"picocli.CommandLine$AutoHelpMixin",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"sun.misc.Unsafe",
+  "fields":[{"name":"theUnsafe"}],
+  "methods":[{"name":"allocateInstance","parameterTypes":["java.lang.Class"] }]
+},
+{
+  "name":"sun.reflect.ReflectionFactory",
+  "methods":[{"name":"getReflectionFactory","parameterTypes":[] }, {"name":"newConstructorForSerialization","parameterTypes":["java.lang.Class","java.lang.reflect.Constructor"] }]
+}
+]

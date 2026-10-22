@@ -17,7 +17,6 @@
 package org.qubership.cloud.devops.vals.cli;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.picocli.runtime.annotations.TopCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
@@ -35,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ValsReferenceCliTest {
 
     @Inject
-    @TopCommand
     ValsReferenceCli valsReferenceCli;
 
     @Inject

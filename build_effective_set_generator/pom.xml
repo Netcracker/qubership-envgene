@@ -26,7 +26,6 @@
                 <module>parameter-calculator-bom</module>
                 <module>gstring-to-jinjava-translator</module>
                 <module>effective-set-generator</module>
-                <module>vals-reference-cli</module>
             </modules>
         </profile>
         <profile>
@@ -49,7 +48,6 @@
                 <module>parameter-calculator-bom</module>
                 <module>gstring-to-jinjava-translator</module>
                 <module>effective-set-generator</module>
-                <module>vals-reference-cli</module>
             </modules>
         </profile>
     </profiles>

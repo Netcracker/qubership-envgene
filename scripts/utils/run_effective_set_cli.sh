@@ -1,38 +1,12 @@
 #!/bin/sh
 
-merge_java_opts() {
-  base="$1"
-  override="$2"
+native_opts=""
+for opt in ${JAVA_OPTIONS:-} ${CALCULATOR_CLI_JAVA_OPTIONS:-}; do
+  case "$opt" in
+    -Xms*|-Xmx*|-Djava.util.concurrent.ForkJoinPool.common.parallelism=*)
+      native_opts="${native_opts:+$native_opts }$opt"
+      ;;
+  esac
+done
 
-  result="$base"
-  allowed_override=""
-
-  for opt in $override; do
-    case "$opt" in
-      -Xms*)
-        result=$(echo "$result" | sed -E 's/-Xms[^ ]+//g')
-		allowed_override="$opt${allowed_override:+ $allowed_override}"
-        ;;
-      -Xmx*)
-        result=$(echo "$result" | sed -E 's/-Xmx[^ ]+//g')
-		allowed_override="$opt${allowed_override:+ $allowed_override}"
-        ;;
-      -Djava.util.concurrent.ForkJoinPool.common.parallelism=*)
-        result=$(echo "$result" | sed -E 's|-Djava.util.concurrent.ForkJoinPool.common.parallelism=[^ ]+||g')
-		allowed_override="$opt${allowed_override:+ $allowed_override}"
-        ;;
-      -XX:TieredStopAtLevel=*)
-        result=$(echo "$result" | sed -E 's/-XX:TieredStopAtLevel=[^ ]+//g')
-		allowed_override="$opt${allowed_override:+ $allowed_override}"
-        ;;
-    esac
-  done
-  echo "$result${allowed_override:+ $allowed_override}"
-}
-
-if [ -n "${CALCULATOR_CLI_JAVA_OPTIONS:-}" ]; then
-	JAVA_OPTIONS=$(merge_java_opts "$JAVA_OPTIONS" "$CALCULATOR_CLI_JAVA_OPTIONS" | tr -s '[:space:]')
-fi
-JAVA_OPTIONS="${JAVA_OPTIONS:+$JAVA_OPTIONS }-XX:SharedArchiveFile=/deployments/app.jsa"
-export JAVA_OPTIONS
-exec /deployments/run-java.sh "$@"
+exec /deployments/envgene-es $native_opts generate-effective-set "$@"

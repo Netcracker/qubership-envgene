@@ -2,47 +2,33 @@
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write (shutil.copy2 utime) in CI/CD
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
-# Stage 0: Build Native Java CLI Binary
+# Stage 0: Build static native effective set generator
 FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS java-native-builder
+
+ARG MUSL_VERSION=1.2.5
+ARG ZLIB_VERSION=1.3.1
+
+ENV MUSL_HOME=/home/quarkus/musl
+ENV PATH="${MUSL_HOME}/bin:${PATH}"
+
+RUN curl -sSLf "https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz" | tar xz -C /tmp && \
+    cd "/tmp/musl-${MUSL_VERSION}" && \
+    ./configure --prefix="${MUSL_HOME}" --disable-shared && \
+    make -j"$(nproc)" install && \
+    ln -s "${MUSL_HOME}/bin/musl-gcc" "${MUSL_HOME}/bin/x86_64-linux-musl-gcc" && \
+    curl -sSLf "https://zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz" | tar xz -C /tmp && \
+    cd "/tmp/zlib-${ZLIB_VERSION}" && \
+    CC=musl-gcc ./configure --prefix="${MUSL_HOME}" --static && \
+    make -j"$(nproc)" install
 
 WORKDIR /project
 
 COPY --chown=quarkus:quarkus build_effective_set_generator /project
 
-RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dnative
+RUN chmod +x mvnw && ./mvnw --batch-mode package -pl effective-set-generator -am -Dnative -DskipTests -Dgpg.skip=true
 
-# Stage 1: Build Java JAR
-FROM maven:3.9-eclipse-temurin-17 AS maven-build
-
-COPY build_effective_set_generator /build_effective_set_generator
-RUN mvn --batch-mode package -Dgpg.skip=true -pl effective-set-generator -am -f /build_effective_set_generator/pom.xml
-
-# Stage 2: Build minimal JRE
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS jre-build
-
-ARG JDK_VERSION=17.0.20_p8-r0
-
-# hadolint ignore=DL3018
-RUN apk add --no-cache \
-    "openjdk17-jdk=${JDK_VERSION}" \
-    "openjdk17-jmods=${JDK_VERSION}" \
-    'binutils=2.45.1-r0'
-
-COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
-
-RUN zip -qd /deployments/app.jar 'licenses/*' && \
-    JDK=/usr/lib/jvm/java-17-openjdk && \
-    "$JDK/bin/jlink" \
-    --add-modules "$("$JDK/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 17 /deployments/app.jar),jdk.zipfs,jdk.crypto.ec" \
-    --strip-debug --no-man-pages --no-header-files --compress=2 \
-    --output /opt/jre && \
-    /opt/jre/bin/java -Xshare:dump && \
-    /opt/jre/bin/java -XX:ArchiveClassesAtExit=/deployments/app.jsa -jar /deployments/app.jar --help
-
-# Stage 3: Build Python dependencies
+# Stage 1: Build Python dependencies
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS build
-
-ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
@@ -84,12 +70,6 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     webexpythonsdk \
     http-exceptions
 
-RUN mkdir -p /deployments && \
-    curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
-    -o /deployments/run-java.sh
-
-COPY --from=jre-build /deployments/app.jar /deployments/app.jsa /deployments/
-
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
@@ -105,28 +85,19 @@ RUN rm -rf /module/scripts/tests && \
     /module/venv/bin/python -m compileall -q -j 0 --invalidation-mode unchecked-hash \
     /module/venv/lib/python3.12/site-packages /module/scripts && \
     chmod 754 /module/scripts/* && \
-    chmod +x /module/scripts/utils/*.sh && \
-    chmod 540 /deployments/run-java.sh && \
-    chmod g+rwX /deployments
+    chmod +x /module/scripts/utils/*.sh
 
-# Stage 4: Runtime
+# Stage 2: Runtime
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS runtime
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
     PYTHONPATH='/module/scripts' \
-    JAVA_HOME='/opt/jre' \
-    PATH="/opt/jre/bin:/module/venv/bin:${PATH}"
+    PATH="/module/venv/bin:${PATH}"
 
-# hadolint ignore=DL3018
-RUN apk add --no-cache \
-    libgcc=15.2.0-r2
-
-COPY --from=jre-build /opt/jre /opt/jre
 COPY --from=build --chown=ci:ci /module /module
 COPY --from=build /schemas /schemas
-COPY --from=build --chown=ci:ci /deployments /deployments
-COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
+COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/effective-set-generator/target/*-runner /deployments/envgene-es
 
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write in CI/CD
 # hadolint ignore=DL3002

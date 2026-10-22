@@ -59,6 +59,19 @@
             <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.qubership.cloud.devops</groupId>
+            <artifactId>vals-reference-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli-codegen</artifactId>
         </dependency>

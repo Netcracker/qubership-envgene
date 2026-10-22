@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.quarkus.picocli.runtime.annotations.TopCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
@@ -51,7 +50,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @QuarkusTest
 public class CmdbCliTest {
 
-    @TopCommand
     @Inject
     CmdbCli cli;
 
