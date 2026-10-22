@@ -1,9 +1,16 @@
 import threading
+from pathlib import Path
 
 import pytest
 from ruyaml import CommentedMap
 
-from envgene_shared.utils.yaml_utils import openYaml, readYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import (
+    get_schema,
+    openYaml,
+    readYaml,
+    validate_yaml_by_scheme_or_fail,
+    writeYamlToFile,
+)
 
 
 def cred_path_in(tmp_path, name='credentials.yml'):
@@ -76,3 +83,65 @@ class TestYamlThreadSafety:
 
         assert not errors, f"Concurrent YAML operations raised errors: {errors}"
         assert len(results) == 20
+
+
+class TestGetSchema:
+    @pytest.mark.unit
+    def test_loads_schema_by_exact_filename(self, monkeypatch, tmp_path):
+        schema = {"type": "object", "properties": {"name": {"type": "string"}}}
+        schema_path = tmp_path / "namespace.schema.json"
+        schema_path.write_text('{"type":"object","properties":{"name":{"type":"string"}}}')
+        monkeypatch.setenv("JSON_SCHEMAS_DIR", str(tmp_path))
+
+        assert get_schema("namespace.schema.json") == schema
+
+    @pytest.mark.unit
+    @pytest.mark.unit
+    def test_raises_for_unknown_schema(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("JSON_SCHEMAS_DIR", str(tmp_path))
+
+        with pytest.raises(FileNotFoundError):
+            get_schema("missing.schema.json")
+
+    @pytest.mark.unit
+    def test_rejects_path_like_schema_name(self):
+        with pytest.raises(ValueError):
+            get_schema("../outside.schema.json")
+
+    @pytest.mark.unit
+    def test_loads_repository_schema_from_configured_root(self, monkeypatch):
+        schemas_dir = Path(__file__).resolve().parents[5] / "schemas"
+        monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schemas_dir))
+
+        assert "save_artifacts" in get_schema("config.schema.json")["properties"]
+
+    @pytest.mark.unit
+    def test_validation_by_name_resolves_relative_references(self, monkeypatch, tmp_path):
+        schema_path = tmp_path / "root.schema.json"
+        schema_path.write_text(
+            '{"$schema":"https://json-schema.org/draft/2020-12/schema",'
+            '"type":"object","properties":{"name":{"$ref":"definitions/name.schema.json"}}}'
+        )
+        definition_path = tmp_path / "definitions" / "name.schema.json"
+        definition_path.parent.mkdir()
+        definition_path.write_text('{"type":"string"}')
+        monkeypatch.setenv("JSON_SCHEMAS_DIR", str(tmp_path))
+
+        validate_yaml_by_scheme_or_fail(
+            input_yaml_content={"name": "namespace"},
+            schema_name="root.schema.json",
+        )
+
+
+class TestSchemaValidatedYamlWriter:
+    @pytest.mark.unit
+    def test_rejects_invalid_content_before_creating_file(self, monkeypatch, tmp_path):
+        schema_path = tmp_path / "namespace.schema.json"
+        schema_path.write_text('{"type":"object","properties":{"name":{"type":"string"}}}')
+        monkeypatch.setenv("JSON_SCHEMAS_DIR", str(tmp_path))
+        target = tmp_path / "namespace.yml"
+
+        with pytest.raises(ValueError, match="Validation failed"):
+            writeYamlToFile(target, {"name": 123}, schema_name="namespace.schema.json")
+
+        assert not target.exists()

@@ -17,16 +17,33 @@ def write_app_reg_defs(base_dir: str, rendered_defs: dict, env_dir: str, placeme
         if env_dst.exists():
             shutil.rmtree(env_dst)
         for name, definition in rendered_defs.get(dir_name, {}).items():
-            writeYamlToFile(root_dst / f"{name}.yml", definition)
+            if dir_name == "AppDefs":
+                writeYamlToFile(root_dst / f"{name}.yml", definition, schema_name="appdef.schema.json",
+                                schemas_dir=get_schema_dir())
+            else:
+                writeYamlToFile(
+                    root_dst / f"{name}.yml",
+                    definition,
+                    input_schema_content=get_regdef_schema_for_content(definition),
+                )
             if placement_mode == "dual":
-                writeYamlToFile(env_dst / f"{name}.yml", definition)
+                if dir_name == "AppDefs":
+                    writeYamlToFile(env_dst / f"{name}.yml", definition, schema_name="appdef.schema.json",
+                                    schemas_dir=get_schema_dir())
+                else:
+                    writeYamlToFile(
+                        env_dst / f"{name}.yml",
+                        definition,
+                        input_schema_content=get_regdef_schema_for_content(definition),
+                    )
 
 
 def validate_definition_override(dir_name: str, yaml_file: str) -> None:
     content = openYaml(yaml_file)
     if dir_name == "AppDefs":
         validate_yaml_by_scheme_or_fail(input_yaml_content=content,
-                                        schema_file_path=get_schema_dir() / "appdef.schema.json")
+                                        schema_name="appdef.schema.json",
+                                        schemas_dir=get_schema_dir())
     else:
         validate_yaml_by_scheme_or_fail(input_yaml_content=content,
                                         input_schema_content=get_regdef_schema_for_content(content))

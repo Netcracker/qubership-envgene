@@ -19,7 +19,7 @@ from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, 
 from .json_helper import openJson
 from envgene_shared.utils.logger import logger
 
-from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, load_schema, get_schema_validator, \
+from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, readYaml, load_schema, get_schema_validator, \
     validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
     remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
     ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
@@ -76,10 +76,17 @@ def alignYamlComments(yamlContent, extra_indent=0):
 
 
 def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
-    schema_data = load_schema(str(schema_path))
+    schema_path = str(schema_path)
+    schema_file = Path(schema_path)
+    schema_data = load_schema(schema_path) if schema_file.is_file() else get_schema(schema_path)
     if validate:
         logger.debug(f'Checking yaml with schema: {schema_path}')
-        error = jsonschema.exceptions.best_match(get_schema_validator(str(schema_path)).iter_errors(yaml_data))
+        if schema_file.is_file():
+            validator = get_schema_validator(schema_path)
+        else:
+            validator_class = jsonschema.validators.validator_for(schema_data)
+            validator = validator_class(schema_data)
+        error = jsonschema.exceptions.best_match(validator.iter_errors(yaml_data))
         if error is not None:
             raise error
     sort_data = jschon_tools.process_json_doc(

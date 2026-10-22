@@ -2915,7 +2915,7 @@ rawConfig:
   rawTargetProxy: https://proxy.raw.local/
 ```
 
-**[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `modules/envgene/envgenehelper/schemas/regdef-v2.schema.json`
+**[Registry Definition v2.0](/schemas/regdef-v2.schema.json) JSON schema**
 
 ### Application Definition
 

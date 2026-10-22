@@ -3,8 +3,41 @@ import pytest
 from build_env.appregdef_render import write_app_reg_defs
 
 RENDERED_DEFS = {
-    "AppDefs": {"file": {"name": "file"}},
-    "RegDefs": {"file": {"name": "file"}},
+    "AppDefs": {
+        "file": {
+            "name": "file",
+            "registryName": "registry",
+            "artifactId": "artifact",
+            "groupId": "group",
+            "supportParallelDeploy": False,
+            "deployParameters": {},
+            "technicalConfigurationParameters": {},
+        }
+    },
+    "RegDefs": {
+        "file": {
+            "name": "file",
+            "credentialsId": "credentials",
+            "mavenConfig": {
+                "releaseGroup": "release",
+                "repositoryDomainName": "repository",
+                "snapshotGroup": "snapshot",
+                "targetRelease": "release",
+                "targetSnapshot": "snapshot",
+                "targetStaging": "staging",
+            },
+            "dockerConfig": {
+                "groupName": "group",
+                "groupUri": "group",
+                "releaseRepoName": "release",
+                "releaseUri": "release",
+                "snapshotRepoName": "snapshot",
+                "snapshotUri": "snapshot",
+                "stagingRepoName": "staging",
+                "stagingUri": "staging",
+            },
+        }
+    },
 }
 
 

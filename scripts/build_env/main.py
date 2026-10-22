@@ -90,7 +90,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_context.render_config_env(env_name, envvars)
     validate_env_specific_override_keys(source_env_dir, env_definition)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(
-        source_env_dir, all_instances_dir, get_schema_dir() / "resource-profile.schema.json", env_definition)
+        source_env_dir, all_instances_dir, "resource-profile.schema.json", env_definition)
     build_env(source_env_dir, env_definition, render_parameters_dir, template_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.is_external_cred_env)
     create_credentials(source_env_dir, all_instances_dir, render_context.is_external_cred_env, env_definition)

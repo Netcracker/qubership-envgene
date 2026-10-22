@@ -117,6 +117,30 @@ def test_flush_sorts_quotes_and_adds_header(env_dir, schema_path):
     assert target.read_text() == '# first\n# second\nname: "a"\nprofile:\n  baseline: "b"\n  name: "n"\n'
 
 
+def test_flush_loads_schema_by_filename(monkeypatch, env_dir, schema_path):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schema_path.parent))
+    objects = CurrentEnvInstanceStore(env_dir)
+    target = env_dir / "Namespaces" / "a" / "namespace.yml"
+    objects.put(target, readYaml("profile:\n  name: n\n  baseline: b\nname: a\n"))
+    objects.beautify(target, schema_path.name)
+
+    objects.flush()
+
+    assert target.read_text() == 'name: "a"\nprofile:\n  baseline: "b"\n  name: "n"\n'
+
+
+def test_flush_rejects_invalid_schema_backed_object_before_writing(env_dir, schema_path):
+    objects = CurrentEnvInstanceStore(env_dir)
+    target = env_dir / "Namespaces" / "a" / "namespace.yml"
+    objects.put(target, {"name": 123})
+    objects.beautify(target, schema_path)
+
+    with pytest.raises(ValueError):
+        objects.flush()
+
+    assert not target.exists()
+
+
 def test_flush_normalizes_comment_spacing(env_dir):
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "cloud.yml"

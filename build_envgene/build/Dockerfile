@@ -35,10 +35,13 @@ RUN apk add --no-cache \
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
+COPY build_envgene/build/merge_schemas.sh /build/merge_schemas.sh
 
 COPY modules /modules
-COPY schemas /schemas
+COPY schemas /build/envgene-schemas/
 COPY scripts/ /module/scripts/
+
+RUN /bin/sh /build/merge_schemas.sh /build/envgene-schemas /schemas
 
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
@@ -81,13 +84,15 @@ RUN apk add --no-cache \
     ${JAVA_PACKAGE}
 
 COPY --from=build /module /module
-COPY --from=build /schemas /schemas
+COPY --from=build /schemas /build/envgene-schemas/
+COPY --from=build /build/merge_schemas.sh /build/merge_schemas.sh
 COPY --from=build /modules /modules
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
 COPY --from=java-native-builder /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
+RUN /bin/sh /build/merge_schemas.sh /build/envgene-schemas /schemas && \
+    rm -rf /build/envgene-schemas /build/merge_schemas.sh /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 

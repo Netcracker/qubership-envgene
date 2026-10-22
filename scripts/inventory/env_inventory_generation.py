@@ -26,10 +26,8 @@ def generate_env_new_approach():
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
     schemas_dir = get_schema_dir()
-    env_inv_content_schema_path = f"{schemas_dir}/env-inventory-content.schema.json"
-
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
-                                    schema_file_path=env_inv_content_schema_path,
+                                    schema_name="env-inventory-content.schema.json",
                                     schemas_dir=schemas_dir)
 
     handle_env_inv_content(env_inventory_content)

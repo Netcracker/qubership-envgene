@@ -1,5 +1,5 @@
 from pathlib import Path
-from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
+from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, logger, openYaml, store_value_to_yaml, validate_cred_types, yaml, extract_external_cred
 from typing import Optional, Set
 
 #const
@@ -235,7 +235,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     env_instance_store = current_env_instance_store()
     logger.info(f"Start to create credentials: envDir={envDir}, instancesDir={instancesDir}")
     logger.info(f"Creating credentials for environment directory: {envDir}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = "credential.schema.json"
     resultingCreds = []
     #tenant
     envDir = Path(envDir)
@@ -317,6 +317,4 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
         if external_cred_ids:
             raise ReferenceError(f"Found external credential references in parameters in local cred only environment. Credential IDs are {external_cred_ids}")
     validate_cred_types(env_creds_map, is_external_cred_env, credYamlPath)
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(credYamlPath),
-                                    schema_file_path=credsSchema)
     env_instance_store.beautify(credYamlPath, credsSchema)
