@@ -15,52 +15,52 @@ authConfig:
 mavenConfig:
   authConfig: onsite
   repositories:
-    snapshot:
+    - type: snapshot
       url: https://nexus.customer.internal/repository/maven-snapshots
       repoName: maven-snapshots
-    staging:
+    - type: staging
       url: https://nexus.customer.internal/repository/maven-staging
       repoName: maven-staging
-    release:
+    - type: release
       url: https://nexus.customer.internal/repository/maven-releases
       repoName: maven-releases
-    releaseGroup:
+    - type: releaseGroup
       url: https://nexus.customer.internal/repository/maven-public
 dockerConfig:
   authConfig: onsite
   repositories:
-    snapshot:
+    - type: snapshot
       url: nexus.customer.internal:8082
       repoName: docker-snapshots
-    staging:
+    - type: staging
       url: nexus.customer.internal:8083
       repoName: docker-staging
-    release:
+    - type: release
       url: nexus.customer.internal:8084
       repoName: docker-releases
-    group:
+    - type: group
       url: nexus.customer.internal:8085
 helmLibConfig:
   authConfig: onsite
   repositories:
-    staging:
+    - type: staging
       url: https://nexus.customer.internal/repository/helm-lib-staging
       repoName: helm-lib-staging
-    release:
+    - type: release
       url: https://nexus.customer.internal/repository/helm-lib-releases
       repoName: helm-lib-releases
 helmAppConfig:
   authConfig: onsite
   repositories:
-    staging:
+    - type: staging
       url: https://nexus.customer.internal/repository/helm-app-staging
       repoName: helm-app-staging
-    release:
+    - type: release
       url: https://nexus.customer.internal/repository/helm-app-releases
       repoName: helm-app-releases
-    group:
+    - type: group
       url: https://nexus.customer.internal/repository/helm-app
-    dev:
+    - type: dev
       url: https://nexus.customer.internal/repository/helm-app-dev
       repoName: helm-app-dev
 

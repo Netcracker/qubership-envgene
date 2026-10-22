@@ -10,60 +10,60 @@ authConfig:
 mavenConfig:
   authConfig: anon
   repositories:
-    snapshot:
+    - type: snapshot
       url: https://artifactory.qubership.com/pd.xaas.mvn.snapshots
-    staging:
+    - type: staging
       url: https://artifactory.qubership.com/pd.xaas.mvn.staging
-    release:
+    - type: release
       url: https://artifactory.qubership.com/pd.xaas.mvn
-    snapshotGroup:
+    - type: snapshotGroup
       url: https://artifactory.qubership.com/pd.xaas.mvn.group
-    releaseGroup:
+    - type: releaseGroup
       url: https://artifactory.qubership.com/pd.xaas-release.mvn.group
 dockerConfig:
   authConfig: anon
   repositories:
-    snapshot:
+    - type: snapshot
       url: artifactory.qubership.com:17204
-    staging:
+    - type: staging
       url: artifactory.qubership.com:17202
-    release:
+    - type: release
       url: artifactory.qubership.com:17203
-    group:
+    - type: group
       url: artifactory.qubership.com:17204
 goConfig:
   authConfig: anon
   repositories:
-    snapshot:
+    - type: snapshot
       url: https://artifactory.qubership.com/pd.xaas.golang.dev
-    release:
+    - type: release
       url: https://artifactory.qubership.com/pd.xaas.golang
-    proxy:
+    - type: proxy
       url: https://artifactory.qubership.com/pd.xaas-release.golang.group
 npmConfig:
   authConfig: anon
   repositories:
-    snapshot:
+    - type: snapshot
       url: https://artifactory.qubership.com/pd.xaas.npm.dev
-    release:
+    - type: release
       url: https://artifactory.qubership.com/pd.xaas.npm
 helmLibConfig:
   authConfig: anon
   repositories:
-    staging:
+    - type: staging
       url: https://artifactory.qubership.com/qs.libraries.helm.staging
-    release:
+    - type: release
       url: https://artifactory.qubership.com/qs.libraries.helm
 helmAppConfig:
   authConfig: anon
   repositories:
-    staging:
+    - type: staging
       url: https://artifactory.qubership.com/qs.helm.charts.staging
-    release:
+    - type: release
       url: https://artifactory.qubership.com/qs.helm.charts.release
-    group:
+    - type: group
       url: https://artifactory.qubership.com/qs.helm.charts
-    dev:
+    - type: dev
       url: https://artifactory.qubership.com/qs.helm.charts.dev
 
 # ---------------------------------------------------------------------------
