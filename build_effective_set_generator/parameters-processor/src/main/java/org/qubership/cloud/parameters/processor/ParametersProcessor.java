@@ -57,7 +57,7 @@ public class ParametersProcessor implements Serializable {
 
     public Params processE2EParameters(String tenant, String cloud, String namespace, String application, DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace, new HashMap<>());
+            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
             Language lang;
             lang = new ExpressionLanguage(binding);
             Map<String, Parameter> e2e = lang.processCloudE2E();
@@ -67,7 +67,7 @@ public class ParametersProcessor implements Serializable {
 
     public Params processNamespaceParameters(String tenant, String cloud, String namespace, DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, null, originalNamespace, new HashMap<>());
+            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, null, originalNamespace);
             Language lang;
             lang = new ExpressionLanguage(binding);
             Map<String, Parameter> namespaceParams = lang.processNamespace();
