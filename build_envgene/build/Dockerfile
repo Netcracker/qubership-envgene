@@ -11,13 +11,21 @@ ARG ZLIB_VERSION=1.3.1
 ENV MUSL_HOME=/home/quarkus/musl
 ENV PATH="${MUSL_HOME}/bin:${PATH}"
 
-RUN curl -sSLf "https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz" | tar xz -C /tmp && \
-    cd "/tmp/musl-${MUSL_VERSION}" && \
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+USER root
+# hadolint ignore=DL3041
+RUN microdnf install -y make && microdnf clean all
+USER quarkus
+
+WORKDIR /tmp/musl
+RUN curl -sSLf "https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz" | tar xz --strip-components=1 && \
     ./configure --prefix="${MUSL_HOME}" --disable-shared && \
     make -j"$(nproc)" install && \
-    ln -s "${MUSL_HOME}/bin/musl-gcc" "${MUSL_HOME}/bin/x86_64-linux-musl-gcc" && \
-    curl -sSLf "https://zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz" | tar xz -C /tmp && \
-    cd "/tmp/zlib-${ZLIB_VERSION}" && \
+    ln -s "${MUSL_HOME}/bin/musl-gcc" "${MUSL_HOME}/bin/x86_64-linux-musl-gcc"
+
+WORKDIR /tmp/zlib
+RUN curl -sSLf "https://zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz" | tar xz --strip-components=1 && \
     CC=musl-gcc ./configure --prefix="${MUSL_HOME}" --static && \
     make -j"$(nproc)" install
 
