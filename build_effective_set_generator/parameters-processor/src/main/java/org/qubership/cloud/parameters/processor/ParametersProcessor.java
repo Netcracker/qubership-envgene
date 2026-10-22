@@ -43,9 +43,9 @@ public class ParametersProcessor implements Serializable {
     }
 
     public Params processAllParameters(String tenant, String cloud, String namespace, String application,
-                                       DeployerInputs deployerInputs, String originalNamespace, Map<String, Parameter> customParams) {
+                                       DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace, customParams);
+            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
             Language lang;
             lang = new ExpressionLanguage(binding);
             Map<String, Parameter> deploy = lang.processDeployment();
