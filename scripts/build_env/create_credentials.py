@@ -255,34 +255,34 @@ def add_generated_external_creds(credsYaml, collector, render_context):
     logger.info(f"Generated external credentials: {list(missing_creds)}")
 
 
-def findSharedCredentials(cred_names, env_dir, instances_dir) -> dict:
+def find_shared_credentials(cred_names, env_dir, instances_dir) -> dict:
     pending_names = set(cred_names)
-    found_paths = {}    
+    found_paths = {}
     if not pending_names:
         return found_paths
-    
+
     levels = [
         Path(env_dir) / "Inventory",
         Path(env_dir).parent,
         Path(instances_dir),
-    ]    
+    ]
     cred_dir_names = ["credentials", "Credentials", "shared-credentials"]
-    
+
     for level in levels:
         for dir_name in cred_dir_names:
             directory = level / dir_name
             if not directory.is_dir():
-                continue                
+                continue
             for cred_name in list(pending_names):
                 for ext in SHARED_CRED_EXTENSIONS:
-                    potential_file = directory / f"{cred_name}{ext}"                    
-                    if potential_file.is_file():
-                        found_paths[cred_name] = potential_file
+                    match = next(directory.rglob(f"{cred_name}{ext}"), None)
+                    if match:
+                        found_paths[cred_name] = match
                         pending_names.remove(cred_name)
-                        logger.info(f"Shared credentials '{cred_name}' found in '{potential_file}'")
-                        break                        
+                        logger.info(f"Shared credentials '{cred_name}' found in '{match}'")
+                        break
                 if not pending_names:
-                    return found_paths                    
+                    return found_paths
     if pending_names:
         raise FileNotFoundError(f"Shared credentials with keys {sorted(pending_names)} not found.")
 
@@ -292,13 +292,10 @@ def readSharedCreds(envDir, instancesDir, inventoryYaml, render_context) :
     if ("sharedMasterCredentialFiles" in inventoryYaml["envTemplate"]) :
         sharedDictFileNames = inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"]
         logger.info(f"Inventory shared master creds list: \n{dump_as_yaml_format(sharedDictFileNames)}")
-        credFilePaths = findSharedCredentials(sharedDictFileNames, envDir, instancesDir)
+        credFilePaths = find_shared_credentials(sharedDictFileNames, envDir, instancesDir)
         for credFileName in sharedDictFileNames :
             credFilePath = credFilePaths[credFileName]
-            credText = openFileAsString(credFilePath)
-            credYaml = readYaml(credText, context=f"File: {credFilePath}")
-            if any(marker in credText for marker in JINJA_MARKERS):
-                credYaml = render_context.render_from_obj_to_obj(credYaml)
+            credYaml = render_context.render_from_file_to_obj(credFilePath, log_rendered=False)
             logger.info(f"Read {len(credYaml)} shared master credentials from {credFilePath}")
             shared_sources.append((credYaml, f"shared credentials: {credFilePath.name}"))
     return shared_sources

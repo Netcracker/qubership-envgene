@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from build_env.jinja.jinja import create_jinja_env, jinja_template
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import CredentialMode, Optional, OrderedDict, Path, copy_path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import CredentialMode, Optional, OrderedDict, Path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
@@ -310,11 +310,14 @@ class EnvGenerator:
     def render_from_file_to_store(self, src_template_path, target_file_path) -> dict:
         return current_env_instance_store().put(target_file_path, self.render_from_file_to_obj(src_template_path))
 
-    def render_from_file_to_obj(self, src_template_path) -> dict:
+    def render_from_file_to_obj(self, src_template_path, log_rendered=True) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = jinja_template(template).render(self.ctx.as_dict())
-        logger.debug(f"Rendered entity: \n{rendered}")
+        if log_rendered:
+            logger.debug(f"Rendered entity: \n{rendered}")
+        else:
+            logger.debug(f"Successfully rendered file: {src_template_path.name}")
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_obj(self, template) -> dict:

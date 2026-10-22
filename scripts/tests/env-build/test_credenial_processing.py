@@ -1,9 +1,10 @@
 from collections import OrderedDict
+from pathlib import Path
 import textwrap
 
 import pytest
 
-from build_env.create_credentials import create_credentials
+from build_env.create_credentials import SHARED_CRED_EXTENSIONS, create_credentials
 from build_env.render_config_env import EnvGenerator
 from envgenehelper import CredentialMode, ValidationError, open_current_env_instance_store
 from envgenehelper.yaml_helper import readYaml
@@ -57,10 +58,16 @@ def run_create_credentials(tmp_path, mode, deploy=EMPTY, e2e=EMPTY, technical=EM
     env_dir = tmp_path / "environments" / "cluster" / "env"
     shared_names = []
     for file_name, text in (shared_files or {}).items():
-        shared_dir = env_dir / "Inventory" / "credentials"
+        file_path = Path(file_name)
+        shared_dir = env_dir / "Inventory" / "credentials" / file_path.parent
         shared_dir.mkdir(parents=True, exist_ok=True)
-        (shared_dir / file_name).write_text(text)
-        shared_names.append(file_name.split(".")[0])
+        (shared_dir / file_path.name).write_text(text)
+        shared_name = file_path.name
+        for ext in SHARED_CRED_EXTENSIONS:
+            if shared_name.endswith(ext):
+                shared_name = shared_name[:-len(ext)]
+                break
+        shared_names.append(shared_name)
     inventory = readYaml("inventory: {}\nenvTemplate: {}\n")
     inventory["envTemplate"]["sharedMasterCredentialFiles"] = shared_names
     namespace_path = env_dir / "Namespaces" / "app" / "namespace.yml"
@@ -276,3 +283,14 @@ def test_shared_credentials_file_without_jinja_is_read_verbatim(tmp_path):
     creds, _, _, _ = run_create_credentials(tmp_path, CredentialMode.LOCAL, shared_files=shared_files)
 
     assert creds["db"]["data"]["secret"] == "$value-{x}"
+
+
+@pytest.mark.unit
+def test_shared_credentials_file_in_subdirectory_is_found(tmp_path):
+    shared_files = {"nested/shared.yml": 'db:\n  type: external\n  remoteRefPath: shared/nested/db\n'}
+
+    creds, _, _, _ = run_create_credentials(tmp_path, CredentialMode.EXTERNAL, deploy="  DB: ${creds.get('db').secret}",
+                                            shared_files=shared_files)
+
+    assert creds["db"]["type"] == "external"
+    assert creds["db"]["remoteRefPath"] == "shared/nested/db"
