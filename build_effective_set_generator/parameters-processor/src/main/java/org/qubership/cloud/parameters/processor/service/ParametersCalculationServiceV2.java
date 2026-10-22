@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static org.qubership.cloud.devops.commons.utils.ParameterUtils.prepareCustomParams;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.ESO_SUPPORT;
 import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.VALS;
