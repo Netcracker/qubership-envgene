@@ -1,4 +1,4 @@
-username: user-placeholder-123
+username: minio-cred_username
 global: &id001
   json-exporter: minio-cred_password
   username: minio-cred_username
