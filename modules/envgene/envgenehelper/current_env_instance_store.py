@@ -22,7 +22,7 @@ YAML_EXTENSIONS = (".yml", ".yaml")
 
 def profile_cache_dir() -> Path | None:
     root = os.environ.get("CI_PROJECT_DIR")
-    if not root or not to_bool(get_envgene_config_yaml().get("cache", {}).get("enabled", True)):
+    if not root or not to_bool(get_envgene_config_yaml().get("cache", {}).get("enabled"), default=True):
         return None
     return Path(root) / ".shared" / "profile-cache"
 
