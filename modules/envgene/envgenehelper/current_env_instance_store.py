@@ -9,6 +9,7 @@ from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
+from .models import CredentialMode
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
@@ -26,8 +27,9 @@ def _match(parts: tuple, pattern: tuple) -> bool:
 
 
 class CurrentEnvInstanceStore:
-    def __init__(self, env_dir):
+    def __init__(self, env_dir, credential_mode=CredentialMode.LOCAL):
         self.env_dir = _key(env_dir)
+        self.credential_mode = credential_mode
         self._objects = {}
         self._to_write = set()
         self._beautify = {}
@@ -116,11 +118,11 @@ _open_store = None
 
 
 @contextmanager
-def open_current_env_instance_store(env_dir):
+def open_current_env_instance_store(env_dir, credential_mode=CredentialMode.LOCAL):
     global _open_store
     if _open_store is not None:
         raise RuntimeError(f"Current env instance store is already open for {_open_store.env_dir}")
-    _open_store = CurrentEnvInstanceStore(env_dir)
+    _open_store = CurrentEnvInstanceStore(env_dir, credential_mode)
     try:
         yield _open_store
     finally:

@@ -1,0 +1,6 @@
+- wave: 0
+  version: app1:1.0
+  deployPostfix: core
+  namespace: dummy-namespace
+  generationType: UniqForApp
+  generationId: ''
