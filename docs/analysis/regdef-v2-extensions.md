@@ -24,7 +24,7 @@
    Or use separate Registry Definitions?
 2. Should `helmLibConfig` and `helmAppConfig` be unified?
 3. Should `mavenConfig` be split into two types — one for the DD, one for maven libraries?
-4. Extend `provider` with `gitlab`
+4. Extend `provider` with `gitlab`?
 5. Make artifact type flexible:
 
     ```yaml
@@ -35,7 +35,7 @@
     ```
 
 6. Rename `scopes` to `securityScopes`, `accessRoles` or something else
-7. Extend artifact types with apm
+7. Extend artifact types with `apm`?
 8. "Red zone" case
 9. How to bind consumer configuration to a repository
 
