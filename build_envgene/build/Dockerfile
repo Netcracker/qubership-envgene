@@ -57,6 +57,11 @@ COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
 
+ENV PATH="/module/venv/bin:${PATH}"
+
+RUN python3 -m venv /module/venv && \
+    pip install --no-cache-dir pip==26.0.1
+
 COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
@@ -91,7 +96,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
     rm -rf /module/venv/lib/python3.12/site-packages/pytest* \
         /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
-    /module/venv/bin/pip cache purge
+    /module/venv/bin/pip uninstall -y setuptools pip
 
 RUN rm -rf /module/scripts/tests && \
     find /module/venv/lib/python3.12/site-packages/botocore/data -mindepth 1 -maxdepth 1 -type d \
@@ -111,7 +116,7 @@ ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
     PYTHONPATH='/module/scripts' \
     JAVA_HOME='/opt/jre' \
-    PATH="/opt/jre/bin:${PATH}"
+    PATH="/opt/jre/bin:/module/venv/bin:${PATH}"
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
@@ -120,7 +125,6 @@ RUN apk add --no-cache \
 COPY --from=jre-build /opt/jre /opt/jre
 COPY --from=build --chown=ci:ci /module /module
 COPY --from=build /schemas /schemas
-COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build --chown=ci:ci /deployments /deployments
 COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
