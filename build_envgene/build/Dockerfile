@@ -7,7 +7,6 @@ FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-17 AS java-native-bui
 
 WORKDIR /project
 
-COPY build_effective_set_generator /project
 COPY --chown=quarkus:quarkus build_effective_set_generator /project
 
 RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dnative
@@ -16,10 +15,32 @@ RUN chmod +x mvnw && ./mvnw --batch-mode package -pl :vals-reference-cli -am -Dn
 FROM maven:3.9-eclipse-temurin-17 AS maven-build
 
 COPY build_effective_set_generator /build_effective_set_generator
-RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
+RUN mvn --batch-mode package -Dgpg.skip=true -pl effective-set-generator -am -f /build_effective_set_generator/pom.xml
 
-# Stage 2: Build Python dependencies
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS build
+# Stage 2: Build minimal JRE
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS jre-build
+
+ARG JDK_VERSION=17.0.20_p8-r0
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache \
+    "openjdk17-jdk=${JDK_VERSION}" \
+    "openjdk17-jmods=${JDK_VERSION}" \
+    'binutils=2.45.1-r0'
+
+COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
+
+RUN zip -qd /deployments/app.jar 'licenses/*' && \
+    JDK=/usr/lib/jvm/java-17-openjdk && \
+    "$JDK/bin/jlink" \
+    --add-modules "$("$JDK/bin/jdeps" --ignore-missing-deps --print-module-deps --multi-release 17 /deployments/app.jar),jdk.zipfs,jdk.crypto.ec" \
+    --strip-debug --no-man-pages --no-header-files --compress=2 \
+    --output /opt/jre && \
+    /opt/jre/bin/java -Xshare:dump && \
+    /opt/jre/bin/java -XX:ArchiveClassesAtExit=/deployments/app.jsa -jar /deployments/app.jar --help
+
+# Stage 3: Build Python dependencies
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
@@ -30,11 +51,17 @@ RUN apk add --no-cache \
     'python3-dev=3.12.15-r0' \
     'cargo=1.91.1-r2' \
     'rust=1.91.1-r2' \
-    'build-base=0.5-r3'
+    'build-base=0.5-r3' \
+    curl
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
+
+ENV PATH="/module/venv/bin:${PATH}"
+
+RUN python3 -m venv /module/venv && \
+    pip install --no-cache-dir pip==26.0.1
 
 COPY modules /modules
 COPY schemas /schemas
@@ -48,13 +75,21 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     /modules/external-cred-provision \
     /modules/dpg \
     /modules/sbom_generator \
-    /modules/envgene-shared
+    /modules/envgene-shared && \
+    pip uninstall -y \
+    kubernetes durationpy websocket-client oauthlib requests-oauthlib \
+    minio pycryptodome argon2-cffi argon2-cffi-bindings \
+    python-gitlab requests-toolbelt \
+    ghapi fastcore \
+    python-jenkins pbr multi-key-dict \
+    webexpythonsdk \
+    http-exceptions
 
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
     -o /deployments/run-java.sh
 
-COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
+COPY --from=jre-build /deployments/app.jar /deployments/app.jsa /deployments/
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
@@ -62,45 +97,37 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
     rm -rf /module/venv/lib/python3.12/site-packages/pytest* \
         /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
-    /module/venv/bin/pip cache purge
+    /module/venv/bin/pip uninstall -y setuptools pip
 
-RUN chmod 754 /module/scripts/*
-
-# Stage 3: Runtime
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
-
-ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
-
-ENV LANG='en_US.UTF-8' \
-    LANGUAGE='en_US:en' \
-    PYTHONPATH='/module/scripts'
-
-# hadolint ignore=DL3018
-RUN apk add --no-cache \
-    libgcc=15.2.0-r2 \
-    ${JAVA_PACKAGE}
-
-COPY --from=build /module /module
-COPY --from=build /schemas /schemas
-COPY --from=build /modules /modules
-COPY --from=build /etc/pip.conf /etc/pip.conf
-COPY --from=build /deployments /deployments
-COPY --from=java-native-builder /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
-
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
-    find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
-    /module/venv/bin/pip cache purge
-
-RUN chown -R ci:ci /module /deployments && \
-    chmod +x /module/scripts/*.sh && \
+RUN rm -rf /module/scripts/tests && \
+    find /module/venv/lib/python3.12/site-packages/botocore/data -mindepth 1 -maxdepth 1 -type d \
+    ! -name codeartifact ! -name ecr ! -name secretsmanager ! -name sts ! -name sso ! -name sso-oidc \
+    -exec rm -rf {} + && \
+    /module/venv/bin/python -m compileall -q -j 0 --invalidation-mode unchecked-hash \
+    /module/venv/lib/python3.12/site-packages /module/scripts && \
+    chmod 754 /module/scripts/* && \
     chmod +x /module/scripts/utils/*.sh && \
-    chmod +x /module/scripts/vals-reference-cli && \
-    chmod 644 /module/scripts/*.py 2>/dev/null || true && \
     chmod 540 /deployments/run-java.sh && \
     chmod g+rwX /deployments
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+# Stage 4: Runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS runtime
+
+ENV LANG='en_US.UTF-8' \
+    LANGUAGE='en_US:en' \
+    PYTHONPATH='/module/scripts' \
+    JAVA_HOME='/opt/jre' \
+    PATH="/opt/jre/bin:/module/venv/bin:${PATH}"
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache \
+    libgcc=15.2.0-r2
+
+COPY --from=jre-build /opt/jre /opt/jre
+COPY --from=build --chown=ci:ci /module /module
+COPY --from=build /schemas /schemas
+COPY --from=build --chown=ci:ci /deployments /deployments
+COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write in CI/CD
 # hadolint ignore=DL3002
