@@ -403,8 +403,8 @@ sbom_retention:
   # exceeds 50 MB)
   keep_versions_per_app: integer
 # Optional
-# Parse cache configuration
-# The cache is kept in `/.shared/` and reused between runs only through the GitLab CI cache
+# Resource profile cache configuration
+# See [Resource profile cache](/docs/features/resource-profile-cache.md)
 cache:
   # Optional. Default value - `true`
   # Set to `false` when `/.shared/` is not listed in the instance pipeline `cache:` paths,
