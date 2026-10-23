@@ -51,7 +51,8 @@ RUN apk add --no-cache \
     'python3-dev=3.12.15-r0' \
     'cargo=1.91.1-r2' \
     'rust=1.91.1-r2' \
-    'build-base=0.5-r3'
+    'build-base=0.5-r3' \
+    curl
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
