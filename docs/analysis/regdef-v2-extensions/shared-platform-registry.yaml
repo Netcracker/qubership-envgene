@@ -1,0 +1,71 @@
+# Example 1 — Shared Platform Registry: artifactory + anonymous
+
+kind: RegistryDefinition
+version: v2
+name: shared-platform-registry
+authConfig:
+  anon:
+    provider: artifactory
+    authMethod: anonymous
+mavenConfig:
+  authConfig: anon
+  repositories:
+    - type: snapshot
+      url: https://artifactory.qubership.com/pd.xaas.mvn.snapshots
+    - type: staging
+      url: https://artifactory.qubership.com/pd.xaas.mvn.staging
+    - type: release
+      url: https://artifactory.qubership.com/pd.xaas.mvn
+    - type: snapshotGroup
+      url: https://artifactory.qubership.com/pd.xaas.mvn.group
+    - type: releaseGroup
+      url: https://artifactory.qubership.com/pd.xaas-release.mvn.group
+dockerConfig:
+  authConfig: anon
+  repositories:
+    - type: snapshot
+      url: artifactory.qubership.com:17204
+    - type: staging
+      url: artifactory.qubership.com:17202
+    - type: release
+      url: artifactory.qubership.com:17203
+    - type: group
+      url: artifactory.qubership.com:17204
+goConfig:
+  authConfig: anon
+  repositories:
+    - type: snapshot
+      url: https://artifactory.qubership.com/pd.xaas.golang.dev
+    - type: release
+      url: https://artifactory.qubership.com/pd.xaas.golang
+    - type: proxy
+      url: https://artifactory.qubership.com/pd.xaas-release.golang.group
+npmConfig:
+  authConfig: anon
+  repositories:
+    - type: snapshot
+      url: https://artifactory.qubership.com/pd.xaas.npm.dev
+    - type: release
+      url: https://artifactory.qubership.com/pd.xaas.npm
+helmLibConfig:
+  authConfig: anon
+  repositories:
+    - type: staging
+      url: https://artifactory.qubership.com/qs.libraries.helm.staging
+    - type: release
+      url: https://artifactory.qubership.com/qs.libraries.helm
+helmAppConfig:
+  authConfig: anon
+  repositories:
+    - type: staging
+      url: https://artifactory.qubership.com/qs.helm.charts.staging
+    - type: release
+      url: https://artifactory.qubership.com/qs.helm.charts.release
+    - type: group
+      url: https://artifactory.qubership.com/qs.helm.charts
+    - type: dev
+      url: https://artifactory.qubership.com/qs.helm.charts.dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS — none (anonymous)
+# ---------------------------------------------------------------------------
