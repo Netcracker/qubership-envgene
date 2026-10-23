@@ -10,8 +10,9 @@ RESOLVED = "resolved:1.0"
 MISSING = "missing:1.0"
 
 
-def make_ctx(app_versions: list[str]) -> MagicMock:
+def make_ctx(app_versions: list[str], gitlab_deploy: bool = True) -> MagicMock:
     ctx = MagicMock()
+    ctx.is_gitlab_deploy.return_value = gitlab_deploy
     ctx.resolve_source_dp.return_value = EnvgeneDeployPlan(entities=[
         DeployPlanEntity(version=app_version, deployPostfix=app_version.split(":")[0])
         for app_version in app_versions
@@ -58,4 +59,30 @@ def test_downloads_dds_for_all_apps_and_generates_only_missing_sboms(sboms_dir):
     download.assert_called_once_with([RESOLVED, MISSING], ctx=ctx, unresolved_app_versions=[MISSING])
     sd_content = generate.call_args.kwargs["sd_content"]
     assert [app.version for app in sd_content.entities] == [MISSING]
+    assert generate.call_args.kwargs["dd_artifacts"] == dd_artifacts
+
+
+def test_non_gitlab_deploy_skips_download_when_all_apps_have_sboms(sboms_dir):
+    write_sbom(sboms_dir, RESOLVED)
+    ctx = make_ctx([RESOLVED], gitlab_deploy=False)
+
+    with patch.object(module, "download_dd_and_zip_artifacts") as download, \
+            patch.object(module.Generator, "generate_bom_by_content") as generate:
+        generate_sboms(ctx)
+
+    download.assert_not_called()
+    generate.assert_not_called()
+
+
+def test_non_gitlab_deploy_downloads_only_missing_apps(sboms_dir):
+    write_sbom(sboms_dir, RESOLVED)
+    ctx = make_ctx([RESOLVED, MISSING], gitlab_deploy=False)
+    dd_artifacts = [MagicMock()]
+
+    with patch.object(module, "download_dd_and_zip_artifacts", return_value=(dd_artifacts, [])) as download, \
+            patch.object(module.Generator, "generate_bom_by_content",
+                         return_value=MagicMock(sboms={}, registries={})) as generate:
+        generate_sboms(ctx)
+
+    download.assert_called_once_with([MISSING], ctx=ctx)
     assert generate.call_args.kwargs["dd_artifacts"] == dd_artifacts

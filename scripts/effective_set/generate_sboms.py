@@ -19,10 +19,14 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
         logger.info('No deploy plan found, skipping SBOM generation')
         return
 
-    app_versions = [app.version for app in deploy_plan.entities]
     apps_needing_sbom = exclude_resolved_apps(deploy_plan, app_sboms_path)
-    dd_artifacts, _ = download_dd_and_zip_artifacts(
-        app_versions, ctx=ctx, unresolved_app_versions=[app.version for app in apps_needing_sbom])
+    unresolved_app_versions = [app.version for app in apps_needing_sbom]
+    # DPG needs DDs of the whole deploy plan, zips are needed only to generate missing SBOMs
+    if ctx.is_gitlab_deploy():
+        dd_artifacts, _ = download_dd_and_zip_artifacts(
+            [app.version for app in deploy_plan.entities], ctx=ctx, unresolved_app_versions=unresolved_app_versions)
+    elif apps_needing_sbom:
+        dd_artifacts, _ = download_dd_and_zip_artifacts(unresolved_app_versions, ctx=ctx)
 
     if not apps_needing_sbom:
         logger.info('All applications already have SBOMs, skipping SBOM generation')
