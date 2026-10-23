@@ -27,12 +27,19 @@ async def resolve_dd_and_zip_info(appver: str, app_artifacts_dir: str, env_creds
     dd_source = await artifact.check_artifact_async(app_def, FileExtension.JSON, version, auth_headers=auth_headers)
     if not dd_source:
         raise ValueError(f"Deployment descriptor was not found for {app_name}:{version}")
-    zip_url = _replace_extension(dd_source.source_url, "zip")
 
-    app_version_dir = f'{app_artifacts_dir}/{app_name}/{version}'
+    resolved_version = dd_source.resolved_version or version
+    app_version_dir = f'{app_artifacts_dir}/{app_name}/{resolved_version}'
     dd_artifact = ArtifactDownload(source=dd_source, local_target_path=f'{app_version_dir}/dd.json')
+
+    zip_url = _replace_extension(dd_source.source_url, "zip")
     zip_source = ArtifactSource(
-        source_url=zip_url, repository=dd_source.repository, application=app_def, auth_headers=auth_headers)
+        source_url=zip_url,
+        repository=dd_source.repository,
+        application=app_def,
+        auth_headers=auth_headers,
+        resolved_version=resolved_version,
+    )
     zip_artifact = ArtifactDownload(source=zip_source, local_target_path=f'{app_version_dir}/dd.zip')
     return dd_artifact, zip_artifact
 

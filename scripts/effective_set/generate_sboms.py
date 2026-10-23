@@ -9,7 +9,6 @@ from sbom_generator.generate_bom import Generator, SBOMOutput, exclude_resolved_
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
 
-
 def generate_sboms(ctx: PipelineParametersHandler) -> None:
     deploy_plan = ctx.resolve_source_dp()
     work_dir = getenv_with_error('CI_PROJECT_DIR')
@@ -24,10 +23,21 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
         logger.info('All applications already have SBOMs, skipping SBOM generation')
         return
 
-    deploy_plan.entities = apps_needing_sbom
-    dd_artifacts, _ = download_dd_and_zip_artifacts([app.version for app in apps_needing_sbom], ctx=ctx)
+    sbom_plan = deploy_plan.model_copy(deep=True)
+    sbom_plan.entities = apps_needing_sbom
+    dd_artifacts, _ = download_dd_and_zip_artifacts(
+        [app.version for app in apps_needing_sbom], ctx=ctx)
+    for app, dd_artifact in zip(apps_needing_sbom, dd_artifacts):
+        app_name, version = app.version.split(':', 1)
+        resolved_version = dd_artifact.source.resolved_version or version
+        app.version = f'{app_name}:{resolved_version}'
+    deploy_plan.write()
+    for app, dd_artifact in zip(sbom_plan.entities, dd_artifacts):
+        app_name, version = app.version.split(':', 1)
+        resolved_version = dd_artifact.source.resolved_version or version
+        app.version = f'{app_name}:{resolved_version}'
     sbom_and_regs: SBOMOutput = Generator.generate_bom_by_content(
-        sd_content=deploy_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path)
+        sd_content=sbom_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path)
 
     for id, sbom in sbom_and_regs.sboms.items():
         app_name = id.split(":")[0]
