@@ -97,6 +97,24 @@
         }
       }
     },
+    "cache": {
+      "type": "object",
+      "title": "Cache Configuration",
+      "description": "Controls the parse cache kept under /.shared/ for the GitLab CI cache. Disable it when /.shared/ is not listed in the instance pipeline cache paths, otherwise the cache files end up in the repository.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable Cache",
+          "description": "Enable or disable the parse cache",
+          "default": true,
+          "examples": [
+            true,
+            false
+          ]
+        }
+      }
+    },
     "save_artifacts": {
       "type": "object",
       "title": "Troubleshooting Artifact Configuration",

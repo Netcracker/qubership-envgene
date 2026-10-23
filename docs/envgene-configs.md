@@ -403,6 +403,14 @@ sbom_retention:
   # exceeds 50 MB)
   keep_versions_per_app: integer
 # Optional
+# Parse cache configuration
+# The cache is kept in `/.shared/` and reused between runs only through the GitLab CI cache
+cache:
+  # Optional. Default value - `true`
+  # Set to `false` when `/.shared/` is not listed in the instance pipeline `cache:` paths,
+  # otherwise the cache files end up in the repository
+  enabled: boolean
+# Optional
 # Troubleshooting artifact configuration
 # See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
 save_artifacts:

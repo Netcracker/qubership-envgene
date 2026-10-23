@@ -1,4 +1,5 @@
 import hashlib
+import importlib
 import json
 
 import pytest
@@ -9,6 +10,8 @@ from envgenehelper.current_env_instance_store import (
     open_current_env_instance_store, profile_cache_dir,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
+
+STORE_MODULE = importlib.import_module("envgenehelper.current_env_instance_store")
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -247,7 +250,18 @@ def shared_root(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     root.mkdir()
     monkeypatch.setenv("CI_PROJECT_DIR", str(root))
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {})
     return root
+
+
+def test_profile_cache_disabled_by_config(tmp_path, env_dir, shared_root, monkeypatch):
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {"cache": {"enabled": False}})
+    profile = _profile_path(tmp_path, b"name: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+
+    assert store.load_profile_from_cache(profile)["name"] == "dev"
+    assert profile_cache_dir() is None
+    assert not (shared_root / ".shared").exists()
 
 
 def test_profile_cache_miss_parses_and_hit_reads_pickle(tmp_path, env_dir, shared_root):

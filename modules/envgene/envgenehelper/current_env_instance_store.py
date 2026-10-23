@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ruyaml import CommentedMap
 
+from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
@@ -21,7 +22,9 @@ YAML_EXTENSIONS = (".yml", ".yaml")
 
 def profile_cache_dir() -> Path | None:
     root = os.environ.get("CI_PROJECT_DIR")
-    return Path(root) / ".shared" / "profile-cache" if root else None
+    if not root or not get_envgene_config_yaml().get("cache", {}).get("enabled", True):
+        return None
+    return Path(root) / ".shared" / "profile-cache"
 
 
 def _key(path) -> Path:
