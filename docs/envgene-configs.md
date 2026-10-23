@@ -409,6 +409,7 @@ cache:
   # Optional. Default value - `true`
   # Set to `false` when `/.shared/` is not listed in the instance pipeline `cache:` paths,
   # otherwise the cache files end up in the repository
+  # The string values `"true"`, `"True"`, `"TRUE"`, `"false"`, `"False"`, and `"FALSE"` are also accepted
   enabled: boolean
 # Optional
 # Troubleshooting artifact configuration

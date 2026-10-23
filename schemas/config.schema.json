@@ -104,13 +104,24 @@
       "additionalProperties": false,
       "properties": {
         "enabled": {
-          "type": "boolean",
+          "enum": [
+            true,
+            false,
+            "true",
+            "false",
+            "True",
+            "False",
+            "TRUE",
+            "FALSE"
+          ],
           "title": "Enable Cache",
           "description": "Enable or disable the parse cache",
           "default": true,
           "examples": [
             true,
-            false
+            false,
+            "true",
+            "false"
           ]
         }
       }

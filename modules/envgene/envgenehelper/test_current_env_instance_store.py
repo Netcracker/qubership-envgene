@@ -254,8 +254,19 @@ def shared_root(tmp_path, monkeypatch):
     return root
 
 
-def test_profile_cache_disabled_by_config(tmp_path, env_dir, shared_root, monkeypatch):
-    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {"cache": {"enabled": False}})
+@pytest.mark.parametrize("value, enabled", [
+    (True, True), ("true", True), ("True", True), ("TRUE", True),
+    (False, False), ("false", False), ("False", False), ("FALSE", False),
+])
+def test_profile_cache_flag_values(shared_root, monkeypatch, value, enabled):
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {"cache": {"enabled": value}})
+
+    assert (profile_cache_dir() is not None) == enabled
+
+
+@pytest.mark.parametrize("value", [False, "false", "FALSE"])
+def test_profile_cache_disabled_by_config(tmp_path, env_dir, shared_root, monkeypatch, value):
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {"cache": {"enabled": value}})
     profile = _profile_path(tmp_path, b"name: dev\n")
     store = CurrentEnvInstanceStore(env_dir)
 
