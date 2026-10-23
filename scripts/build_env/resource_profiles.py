@@ -1,5 +1,6 @@
 from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
 from build_env.render_config_env import EnvGenerator
+from envgene_shared.utils.business_utils import to_bool
 
 
 def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, inventoryYaml):
@@ -212,7 +213,7 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
         template_profile_yaml = current_env_instance_store().get(template_profile_file_path)
         env_specific_profile_yaml = current_env_instance_store().get(env_specific_profile_path)
 
-        if str(combination_mode).lower() == 'true':
+        if to_bool(combination_mode):
             logger.info(f"Joining {common_msg}")
             merge_resource_profiles(template_profile_yaml, env_specific_profile_yaml,
                                     extractNameFromFile(env_specific_profile_path),

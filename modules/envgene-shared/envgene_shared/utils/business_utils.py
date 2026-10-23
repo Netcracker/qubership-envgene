@@ -15,6 +15,15 @@ def getenv_with_error(var_name, *, no_log=False):
     return var
 
 
+def to_bool(value, default: bool = False) -> bool:
+    normalized = str(value).strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    return default
+
+
 def get_schema_dir() -> Path:
     return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
 

@@ -7,7 +7,7 @@ from urllib.parse import quote
 import requests
 
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.business_utils import getenv_with_error, to_bool
 from envgenehelper.errors import IntegrationError
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
@@ -62,7 +62,7 @@ class GitContext(BaseModel):
                 "token": getenv_with_error("GITLAB_TOKEN", no_log=True),
                 "commit_sha": getenv_with_error("CI_COMMIT_SHA")
             }
-        elif os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+        elif to_bool(os.getenv("IS_LOCAL_DEV_TEST_ENVGENE")):
             data = {
                 "platform": "local",
                 "server_protocol": "http",
@@ -225,7 +225,7 @@ class GitRepoManager:
         return status == 1
 
     def _cherry_pick_and_push(self, snapshot_sha: str) -> None:
-        if os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+        if to_bool(os.getenv("IS_LOCAL_DEV_TEST_ENVGENE")):
             logger.info("Local test mode: skipping cherry-pick and push")
             return
 

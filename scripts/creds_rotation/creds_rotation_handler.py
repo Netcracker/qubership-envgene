@@ -3,6 +3,7 @@ import os
 import time
 from typing import List
 
+from envgene_shared.utils.business_utils import to_bool
 from envgene_shared.utils.logger import logger
 from creds_rotation.core_rotation import process_entry_in_payload
 from envgene_shared.crypto import crypt
@@ -68,7 +69,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
 
     return EnvConfig(
         env_name=values["ENVIRONMENT_NAME"],
-        creds_rotation_enabled=values["CRED_ROTATION_FORCE"] == "true",
+        creds_rotation_enabled=to_bool(values["CRED_ROTATION_FORCE"]),
         payload_data=payload_data,
         cluster_name=values["CLUSTER_NAME"],
         work_dir=values["CI_PROJECT_DIR"]

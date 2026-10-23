@@ -10,6 +10,7 @@ from typing import Optional, Self, Any
 import yaml
 from pydantic import BaseModel, Field
 
+from envgene_shared.utils.business_utils import to_bool
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.file_utils import writeToFile
 from regdefv2_adapter.regdefv2_adapter import REGDEFS_DIRNAME
@@ -58,16 +59,16 @@ class PipelineParametersHandler(BaseModel):
         params = {
             'ENV_NAMES': full_env_name,
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
-            'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
-            'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
-            'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
+            'ENV_BUILDER': to_bool(getenv("ENV_BUILDER")),
+            'GET_PASSPORT': to_bool(getenv("GET_PASSPORT")),
+            'GENERATE_EFFECTIVE_SET': to_bool(getenv("GENERATE_EFFECTIVE_SET")),
             'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
             'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
             "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE", MergeType.BASIC.value),
-            "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
+            "ENV_INVENTORY_INIT": to_bool(getenv("ENV_INVENTORY_INIT")),
             "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
