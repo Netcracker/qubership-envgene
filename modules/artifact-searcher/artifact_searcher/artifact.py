@@ -189,7 +189,7 @@ async def download_all_async(downloads: list[ArtifactDownload]):
         headers = downloads_group[0].source.auth_headers
         connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers, trust_env=True) as session:
             async with asyncio.TaskGroup() as tg:
                 tasks = [tg.create_task(download_async(session, download)) for download in downloads_group]
             results = []
@@ -333,7 +333,7 @@ async def _attempt_check(
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
-    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers) as session:
+    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers, trust_env=True) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(
