@@ -35,7 +35,7 @@ deploy.
 Flow:
 
 ```text
-1.1 preprocess -> 1.4 change_bg_state -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
+1.1 preprocess -> 1.4 change_bg_state -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -58,8 +58,8 @@ Warmup (`BGD_OPERATION: warmup`) replicates the active namespace into the candid
 Flow:
 
 ```text
-1.1 preprocess -> 1.4 change_bg_state -> 1.5 warmup -> 1.13 generate_deployment_plan -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.17 generate_argocd_repo -> 1.18 es_pusher -> 1.20 postprocess
+1.1 preprocess -> 1.4 change_bg_state -> 1.5 warmup -> 1.14 process_deployment_plan -> 1.16 generate_effective_set
+              -> 1.18 git_commit -> 1.19 generate_argocd_repo -> 1.22 postprocess
               -> [job 2] sync
 ```
 
@@ -72,11 +72,11 @@ BGD_OPERATION: warmup
 ```
 
 Actions: `change_bg_state` applies the state transition on the state files. `warmup` copies the active namespace
-into the candidate (rename). `generate_deployment_plan` synthesizes the delta from the `deploy-plan` (filter the
+into the candidate (rename). `process_deployment_plan` synthesizes the delta from the `deploy-plan` (filter the
 active side, rebind the namespace to the candidate). `generate_effective_set` and `generate_argocd_repo` then run
 over the copied candidate namespace with that delta, and `sync` applies it. The candidate ends up as a replica of
 the active, with versions taken from the full plan rather than a new `APPLICATION_VERSIONS`.
 
-`1.14 env_build` deliberately does not fire. The candidate already carries the built env instance copied by
+`1.15 env_build` deliberately does not fire. The candidate already carries the built env instance copied by
 `warmup`, so there is nothing to render. The effective set is generated over that copy rather than over a fresh
 build.

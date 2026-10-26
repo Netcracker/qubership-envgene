@@ -20,8 +20,8 @@ Domain, Profiles, and credential files.
 | Parameter        | Source   | Required    | Default | Values / format             | Effect                                                                                                                    |
 | ---------------- | -------- | ----------- | ------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `ENV_NAMES`      | Pipeline | Yes         | None    | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                                                         |
-| `PIPELINE_TYPE`  | Pipeline | Yes         | None    | `GITLAB_DEPLOY`             | Step runs when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN`, unless `ENV_BUILDER: true`           |
-| `OPERATION_TYPE` | Pipeline | Yes         | None    | `DEPLOY`, `CLEAN`           | On `CLEAN`, marks cleaned Namespaces in rendered objects                                                                  |
+| `PIPELINE_TYPE`  | Pipeline | Yes         | None    | `GITLAB_DEPLOY`             | Step runs when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY`, unless `ENV_BUILDER: true`                      |
+| `OPERATION_TYPE` | Pipeline | Yes         | None    | `DEPLOY`                    | The step runs only for `DEPLOY`, not for `CLEAN`                                                                          |
 | `ENV_BUILDER`    | Pipeline | No          | `false` | `true`, `false`             | When `true`, step runs regardless of `PIPELINE_TYPE`                                                                      |
 | `BG_NS_TARGET`   | Pipeline | Conditional | None    | `origin`, `peer`            | Selects origin or peer Namespace from per-side `namespace-map.yml` entries when deploy plan contains a BG `deployPostfix` |
 
@@ -31,7 +31,7 @@ Domain, Profiles, and credential files.
 
    The Instance pipeline runs this step when pipeline parameter `ENV_BUILDER` is `true`, or when
    pipeline parameter `PIPELINE_TYPE` is `GITLAB_DEPLOY` and pipeline parameter `OPERATION_TYPE` is
-   `DEPLOY` or `CLEAN`. Otherwise the Instance pipeline skips this step.
+   `DEPLOY`. Otherwise the Instance pipeline skips this step.
 
 2. **Validate environment and decrypt credentials**
 
@@ -135,10 +135,7 @@ Domain, Profiles, and credential files.
        parameter structures and renders Application objects under
        `tmp/render/<env-name>/Namespaces/<folder-name>/Applications/`.
 
-   5. When pipeline parameter `OPERATION_TYPE` is `CLEAN`, the step marks cleaned Namespaces in
-       rendered Namespace objects.
-
-   6. The step combines resource profile overrides for the rendered Cloud and Namespace objects, writing
+   5. The step combines resource profile overrides for the rendered Cloud and Namespace objects, writing
       one result file per object under `tmp/render/<env-name>/Profiles/`.
 
       1. **Resolve the file.** For each `envTemplate.envSpecificResourceProfiles` entry, the step
@@ -160,7 +157,7 @@ Domain, Profiles, and credential files.
       The `generate_effective_set` step reads these files during effective set generation. See
       [resource profiles](/docs/features/resource-profile.md) for the end-to-end model.
 
-   7. The step merges `*_override` files into rendered Cloud and Namespace YAML and deletes the
+   6. The step merges `*_override` files into rendered Cloud and Namespace YAML and deletes the
        override files.
 
 7. **Write credentials and publish Environment Instance**

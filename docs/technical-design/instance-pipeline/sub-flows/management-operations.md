@@ -37,7 +37,7 @@ Fetch the Cloud Passport for the environment's cluster.
 Flow:
 
 ```text
-1.1 preprocess -> 1.2 get_passport -> 1.16 git_commit -> 1.20 postprocess
+1.1 preprocess -> 1.2 get_passport -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -56,7 +56,7 @@ Rotate the environment's credentials from the supplied payload.
 Flow:
 
 ```text
-1.1 preprocess -> 1.3 credential_rotation -> 1.16 git_commit -> 1.20 postprocess
+1.1 preprocess -> 1.3 credential_rotation -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -74,7 +74,7 @@ Generate or update the Environment Inventory.
 Flow:
 
 ```text
-1.1 preprocess -> 1.6 env_inventory_generation -> 1.16 git_commit -> 1.20 postprocess
+1.1 preprocess -> 1.6 env_inventory_generation -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -93,7 +93,7 @@ Set the Environment Template version.
 Flow:
 
 ```text
-1.1 preprocess -> 1.8 set_template_version -> 1.16 git_commit -> 1.20 postprocess
+1.1 preprocess -> 1.8 set_template_version -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:

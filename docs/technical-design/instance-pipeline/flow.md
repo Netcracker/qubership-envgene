@@ -15,14 +15,14 @@
       - [1.11 step `regdefv2_adapter`](#111-step-regdefv2_adapter)
       - [1.12 step `deploy_postfix_namespace_map`](#112-step-deploy_postfix_namespace_map)
       - [1.13 step `process_sd`](#113-step-process_sd)
-      - [1.14 step `generate_deployment_plan`](#114-step-generate_deployment_plan)
+      - [1.14 step `process_deployment_plan`](#114-step-process_deployment_plan)
       - [1.15 step `env_build`](#115-step-env_build)
       - [1.16 step `generate_effective_set`](#116-step-generate_effective_set)
-      - [1.17 step `git_commit`](#117-step-git_commit)
-      - [1.18 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#118-step-generate_argocd_repo-to-be-implemented-not-implemented-yet)
-      - [1.19 step `es_pusher`](#119-step-es_pusher)
-      - [1.20 step `cmdb_import`](#120-step-cmdb_import)
-      - [1.21 step `postprocess`](#121-step-postprocess)
+      - [1.17 step `cleanup`](#117-step-cleanup)
+      - [1.18 step `git_commit`](#118-step-git_commit)
+      - [1.19 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#119-step-generate_argocd_repo-to-be-implemented-not-implemented-yet)
+      - [1.21 step `cmdb_import`](#121-step-cmdb_import)
+      - [1.22 step `postprocess`](#122-step-postprocess)
     - [2 job `sync`](#2-job-sync)
       - [2.1 step `preprocess` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#21-step-preprocess-to-be-implemented-not-implemented-yet)
       - [2.2 step `sync` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#22-step-sync-to-be-implemented-not-implemented-yet)
@@ -300,7 +300,7 @@ Design: [`regdefv2_adapter`](/docs/technical-design/instance-pipeline/steps/regd
 
 Triggers:
 
-- `PIPELINE_TYPE: GITLAB_DEPLOY` and (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or
+- `PIPELINE_TYPE: GITLAB_DEPLOY` and (`OPERATION_TYPE: DEPLOY` or
   (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
 - `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`) and
   `ENV_BUILDER: true`
@@ -387,13 +387,13 @@ Functions:
       - non-BG only
     - [phase1] add the function
 
-#### 1.14 step `generate_deployment_plan`
+#### 1.14 step `process_deployment_plan`
 
 Design: [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)) and
+- (`OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
@@ -451,18 +451,6 @@ Functions:
     - actions:
       - merge the delta onto the repository full plan (add new entries, raise `wave`, never remove)
     - AI[bgd]: Add the functions
-4. `reduce_deployment_plan`
-    - triggers:
-      - `OPERATION_TYPE: CLEAN`
-    - input:
-      - `deploy-plan.yml` from repository
-      - `NAMESPACE_NAMES`
-    - output:
-      - updated `deploy-plan.yml`
-    - actions:
-      - run the plan filter in exclude mode, passing each namespace in `NAMESPACE_NAMES` as a `!<namespace>` token
-      - writes the repository plan minus the cleaned namespaces (no delta, no plan passed to the calculator)
-    - AI[bgd]: Add the functions
 
 #### 1.15 step `env_build`
 
@@ -470,7 +458,7 @@ Design: [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.m
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN`) and
+- `OPERATION_TYPE: DEPLOY` and
 - (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `ENV_BUILDER: true`))
 
 Functions:
@@ -536,17 +524,6 @@ Functions:
     - AI[techDebt-P1]: prepare a UC, add tests
     - AI[bgd]: Replace `apply_ns_build_filter` with SD-scoped generation. Render only namespaces from the SD,
       then apply file-replace-merge to the committed instance. `NS_BUILD_FILTER` can then be deprecated.
-5. `set_cleaned_mark`
-    - triggers:
-      - `OPERATION_TYPE: CLEAN`
-    - input:
-      - env instance namespaces
-      - `NAMESPACE_NAMES`
-    - output:
-      - namespaces with `cleaned: true`
-    - actions:
-      - set `cleaned: true` on `NAMESPACE_NAMES` namespaces (all if empty. error if a namespace is not found)
-    - AI[techDebt-LOGS]: extract from `run_build_environment`
 
 #### 1.16 step `generate_effective_set`
 
@@ -555,7 +532,7 @@ Design: [`generate_effective_set`](/docs/technical-design/instance-pipeline/step
 Triggers:
 
 - (`PIPELINE_TYPE: GITLAB_DEPLOY` or (`PIPELINE_TYPE: LEGACY` and `GENERATE_EFFECTIVE_SET: true`)) and
-- (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`))
+- (`OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`))
 
 Functions:
 
@@ -573,7 +550,7 @@ Functions:
 3. `get_sboms`
     - input:
       - appreg defs v1 or the synthesized RegDef v2 from `regdefv2_adapter`
-      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
+      - `delta-deploy-plan.yml`
       - `APP_ARTIFACTS_DIR`
     - output:
       - DD and ZIP at `${APP_ARTIFACTS_DIR}`, sboms
@@ -588,7 +565,7 @@ Functions:
 4. `effective_set_entrypoint`
     - input:
       - env instance
-      - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
+      - `delta-deploy-plan.yml`
       - sboms
       - `OPERATION_TYPE`
       - `BGD_OPERATION`
@@ -610,7 +587,42 @@ Functions:
       - if the Effective Set includes external credential context, run the credential provisioning CLI, which creates or verifies the credentials in the external credential store
       - if it does not, no-op
 
-#### 1.17 step `git_commit`
+#### 1.17 step `cleanup`
+
+Triggers:
+
+- `OPERATION_TYPE: CLEAN` and
+- `PIPELINE_TYPE: GITLAB_DEPLOY`
+
+Functions:
+
+1. `reduce_deployment_plan`
+    - input:
+      - `deploy-plan.yml` from repository
+      - `namespace-map.yml`
+      - `NAMESPACE_NAMES`
+    - output:
+      - updated `deploy-plan.yml`
+    - actions:
+      - validate each namespace in `NAMESPACE_NAMES`: fail if it is absent from
+        `namespace-map.yml`, warn if it is absent from the repository `deploy-plan.yml`
+      - run the plan filter in exclude mode, passing each namespace in `NAMESPACE_NAMES` as a `!<namespace>`
+      - write the updated `deploy-plan.yml`
+2. `clean_effective_set` (`argo-dpg cleanup structure`)
+    - input:
+      - effective set, fetched from the ES repository
+      - `NAMESPACE_NAMES`
+    - output:
+      - the cleaned namespaces emptied in the effective set and mirrored to the ES repository
+    - actions:
+      - for each namespace in `NAMESPACE_NAMES` (all namespaces in the effective set `mapping.yaml` if empty),
+        remove the `deployment` and `runtime` context content under
+        `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keep `<application-name>`, and write
+        `effective-set/<deployment|runtime>/<namespace>/.cleaned`
+      - push the effective set to the ES repository
+      - warn if a namespace in `NAMESPACE_NAMES` is absent from the effective set, warn if it is already cleaned
+
+#### 1.18 step `git_commit`
 
 Triggers:
 
@@ -626,9 +638,8 @@ Functions:
       - env instance
       - effective set
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/deploy-plan.yaml to artifacts or not
-    - AI[phase2]: unify with `es-pusher`
 
-#### 1.18 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
+#### 1.19 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
 
 Triggers:
 
@@ -637,57 +648,28 @@ Triggers:
 
 Functions:
 
-1. `generate_argocd_repo` argo dpg generate structure
+1. `generate_argocd_repo` (`argo-dpg generate structure`)
     - input:
       - `delta-deploy-plan.yml`
       - effective set
       - local DD (from `dd_downloading`)
       - `APP_ARTIFACTS_DIR`
+      - ES repository connection: `DCL_GIT_URL`, `DCL_CONFIG_GITLAB_USER`, `DCL_CONFIG_GITLAB_TOKEN`
       - params.environment_id -> `build.env.FULL_ENV_NAME`
       - TBD
     - output:
       - appset CR, app CR, TBD
+      - effective set and appsets pushed to the ES repository
       - encrypted by `ENVGENE_AGE_PUBLIC_KEY` dotenv ARGO_DPG_CONTEXT.env
     - actions:
-      - TBD
+      - generate the appset and application resources from the delta deploy plan and the effective set
+      - push the effective set and appsets to the ES repository in merge mode
+      - remove the stale `.cleaned` of the deployed namespaces from the ES repository, which the merge
+        does not delete on its own
     - AI[phase2]: move into the orchestrator as a PipelineStep
     - AI[phase3]: move to GitHub
 
-#### 1.19 step `es_pusher`
-
-Triggers:
-
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
-
-Functions:
-
-1. `es-pusher`
-    - input:
-      - if `OPERATION_TYPE: CLEAN` then set env var: `ESPUSHER_OVERWRITE: true` else `ESPUSHER_OVERWRITE: false`
-      - instance files
-        - effective set
-        - appset
-      - effective set
-        - `DCL_GIT_URL`
-        - `DCL_GIT_BRANCH` defaults on the orchestrator side
-        - `DCL_CONFIG_GITLAB_USER`
-        - `DCL_CONFIG_GITLAB_TOKEN`
-        - `GITLAB_USER_NAME`
-        - `GITLAB_USER_EMAIL`
-        - ...
-      - COMMIT_FILTER
-      - params.environment_id -> `build.env.FULL_ENV_NAME`
-      - params.commit_message -> `DEPLOYMENT_TICKET_ID`
-      - params.rootdir -> x
-      - path filter
-    - output:
-      - instance repository commit
-    - actions:
-      - push effective set and appsets to the deploy target repository
-    - AI[phase3]: move to GitHub
-    - AI[phase3]: unify with `git_commit`
-
-#### 1.20 step `cmdb_import`
+#### 1.21 step `cmdb_import`
 
 Triggers:
 
@@ -705,7 +687,7 @@ Functions:
     - AI[phase1]: remove envgene dot env file
     - AI[phase2]: move into the orchestrator as a PipelineStep
 
-#### 1.21 step `postprocess`
+#### 1.22 step `postprocess`
 
 Triggers:
 
