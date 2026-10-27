@@ -196,7 +196,9 @@ class EnvGeneWorkspace(BaseWorkspace):
         return self.run_module("scripts.pipeline.orchestrator", extra_env=env)
 
     def assert_success(self, message: str = "Pipeline failed"):
-        assert self.returncode == 0, f"{message}. Stderr: {self.stderr}"
+        # Both streams: the pipeline's own logger writes to stderr, but the Calculator CLI (Quarkus)
+        # writes to stdout, so a CLI failure leaves no trace at all when only stderr is reported.
+        assert self.returncode == 0, f"{message}.\nStderr: {self.stderr}\nStdout: {self.stdout}"
 
     def assert_failure(self, message: str = "Pipeline should have failed"):
         if self.returncode == 0:
