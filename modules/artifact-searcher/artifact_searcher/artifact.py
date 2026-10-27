@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import logging
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -189,8 +190,7 @@ async def download_all_async(downloads: list[ArtifactDownload]):
         headers = downloads_group[0].source.auth_headers
         connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-        trace = _create_http_trace()
-        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers, trust_env=True, trace_configs=[trace]) as session:
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers, trust_env=True, trace_configs=_http_trace_configs()) as session:
             async with asyncio.TaskGroup() as tg:
                 tasks = [tg.create_task(download_async(session, download)) for download in downloads_group]
             results = []
@@ -332,10 +332,9 @@ async def _attempt_check(
     session_headers = auth_headers
 
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-    trace = _create_http_trace()
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
-    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers, trust_env=True, trace_configs=[trace]) as session:
+    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers, trust_env=True, trace_configs=_http_trace_configs()) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(
@@ -553,23 +552,70 @@ def resolve_snapshot_version(base_path, extension: FileExtension,
         logger.warning(f"Snapshot resolve error: {e}")
 
 
+_SECRET_HEADERS = {"authorization", "proxy-authorization", "cookie", "set-cookie"}
+_LOGGED_RESPONSE_TYPES = {"application/xml", "application/json"}
+_MAX_LOGGED_BODY_BYTES = 4096
+
+
+def _headers_for_log(headers) -> dict:
+    return {
+        key: "***" if key.lower() in _SECRET_HEADERS else value
+        for key, value in headers.items()
+    }
+
+
+def _should_log_response_body(response) -> bool:
+    if response.status >= 400:
+        return True
+    content_type = response.content_type
+    return content_type.startswith("text/") or content_type in _LOGGED_RESPONSE_TYPES
+
+
+def _http_debug_enabled() -> bool:
+    return logger.isEnabledFor(logging.DEBUG)
+
+
 async def _on_request_start(session, context, params):
-    logger.debug("HTTP %s %s", params.method, params.url)
+    if not _http_debug_enabled():
+        return
+    logger.debug(
+        "HTTP request %s %s\nheaders: %s",
+        params.method, params.url, _headers_for_log(params.headers),
+    )
 
 
 async def _on_request_end(session, context, params):
-    logger.debug("HTTP %s %s -> %s", params.method, params.url, params.response.status)
+    if not _http_debug_enabled():
+        return
+    response = params.response
+    logger.debug(
+        "HTTP response %s %s -> %s\nheaders: %s",
+        params.method, params.url, response.status, _headers_for_log(response.headers),
+    )
+    if _should_log_response_body(response):
+        body = await response.read()
+        logged = body[:_MAX_LOGGED_BODY_BYTES].decode("utf-8", errors="replace")
+        if len(body) > _MAX_LOGGED_BODY_BYTES:
+            logged += f"\n... truncated, {len(body)} bytes total"
+        logger.debug("HTTP response body: %s", logged)
 
-    
+
 async def _on_request_exception(session, context, params):
-    logger.debug("HTTP %s %s failed: %s", params.method, params.url, params.exception)
+    if not _http_debug_enabled():
+        return
+    logger.debug(
+        "HTTP %s %s failed: %s\nheaders: %s",
+        params.method, params.url, params.exception, _headers_for_log(params.headers),
+    )
 
 
-def _create_http_trace() -> aiohttp.TraceConfig:
+def _http_trace_configs() -> list[aiohttp.TraceConfig]:
+    if not _http_debug_enabled():
+        return []
     trace = aiohttp.TraceConfig()
     trace.on_request_start.append(_on_request_start)
     trace.on_request_end.append(_on_request_end)
     trace.on_request_exception.append(_on_request_exception)
-    return trace
+    return [trace]
 
 # --------------------------------------------------------------------------------------
