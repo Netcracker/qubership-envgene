@@ -29,7 +29,7 @@ async def resolve_dd_and_zip_info(appver: str, app_artifacts_dir: str, env_creds
         raise ValueError(f"Deployment descriptor was not found for {app_name}:{version}")
 
     resolved_version = dd_source.resolved_version or version
-    app_version_dir = f'{app_artifacts_dir}/{app_name}/{resolved_version}'
+    app_version_dir = f'{app_artifacts_dir}/{app_name}/{version}'
     dd_artifact = ArtifactDownload(source=dd_source, local_target_path=f'{app_version_dir}/dd.json')
 
     zip_url = _replace_extension(dd_source.source_url, "zip")
@@ -96,8 +96,16 @@ async def _download_dd_required_zips_optional(
     return await _download_zips(zip_artifacts)
 
 
-def download_dd_and_zip_artifacts(app_versions: list[str], ctx=None) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
+def download_dd_and_zip_artifacts(
+        app_versions: list[str], ctx=None, unresolved_app_versions: list[str] | None = None
+) -> tuple[list[ArtifactDownload], list[ArtifactDownload]]:
     dd_artifacts, zip_artifacts = resolve_artifacts(app_versions, ctx=ctx)
+    if unresolved_app_versions is not None:
+        unresolved = set(unresolved_app_versions)
+        zip_artifacts = [
+            zip_artifact for app_version, zip_artifact in zip(app_versions, zip_artifacts)
+            if app_version in unresolved
+        ]
     logger.info(
         f"Start downloading {len(dd_artifacts)} DD artifacts "
         f"(and up to {len(zip_artifacts)} optional zip sidecars)")

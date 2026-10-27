@@ -126,6 +126,9 @@ def mock_nexus(tmp_path_factory):
     app1_dir = base_dir / "release" / "org" / "test" / "test-app" / "1.0"
     _write_app_manifest(app1_dir, "test-app-1.0.json", "app1", "1.0", "bss")
 
+    crm_dir = base_dir / "release" / "org" / "test" / "crm" / "1.0"
+    _write_app_manifest(crm_dir, "crm-1.0.json", "crm", "1.0", "bss")
+
     # "external-secrets-artifact:v1" - env template artifact for external credentials scenarios.
     ext_creds_dir = base_dir / "release" / "org" / "test" / "external-secrets-artifact" / "v1"
     _write_maven_manifest(ext_creds_dir, "external-secrets-artifact-v1.json", "external-secrets-artifact", "v1")
@@ -164,6 +167,12 @@ _XFAIL_REASONS = {
                                   "reference each other) is not enforced by the Calculator CLI.",
     "xfail_cli_macro_ns_timeout": "Known bug: a macro reference resolved across hierarchy levels "
                                    "is dropped from the effective set deployment parameters.",
+    "xfail_cr_no_affected_rotation": "Known bug: when the rotation target's credential has no other "
+                                      "parameter referencing it, run_cred_rotation() raises "
+                                      "'No affected parameters found' instead of rotating the target "
+                                      "and completing with no report. docs/use-cases/credential-"
+                                      "rotation.md already documents success-with-no-report as the "
+                                      "target behavior (PR #1800), the code fix has not landed yet.",
 }
 
 

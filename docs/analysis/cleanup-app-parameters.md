@@ -6,8 +6,13 @@
 
 ## Overview
 
-This document lists the parameters consumed by the cleanup application during a CLEAN run of the
-instance pipeline.
+> [!IMPORTANT]
+> This is not documentation for the cleaner application, and it is not maintained. The parameters below
+> are a point-in-time snapshot, accurate only as of when this file was created, and were captured to
+> analyze the cleanup task. For the current parameters, use the cleaner's own documentation.
+
+This document lists the parameters consumed by the No-CMDB v1 pipeline-driven cleanup application,
+which reads the cleanup context that EnvGene emits.
 
 ## Parameters
 
