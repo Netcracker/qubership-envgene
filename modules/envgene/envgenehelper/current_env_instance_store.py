@@ -9,6 +9,7 @@ from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
+from .models import SCHEMA_TO_MODEL
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
@@ -92,13 +93,23 @@ class CurrentEnvInstanceStore:
                 continue
             yield key
 
+    def get_model(self, path, model_cls=None):
+        data = self.get(path)
+        if model_cls is None:
+            schema_path, _ = self._beautify.get(_key(path), (None, ""))
+            if schema_path:
+                model_cls = SCHEMA_TO_MODEL.get(Path(str(schema_path)).name)
+        if model_cls is None:
+            raise ValueError(f"No model class registered for {path}")
+        return model_cls.model_validate(data)
+
     def flush(self):
         for key in self._write_targets():
             data = self._objects[key]
             schema_path, header_text = self._beautify.get(key, (None, ""))
             if key in self._beautify:
                 if schema_path:
-                    data = sortYaml(data, schema_path, False, validate=False)
+                    data = sortYaml(data, schema_path, False, validate=True)
                 make_quotes_for_strings(data)
             normalize_comments(data)
             if is_cred_file(str(key)):

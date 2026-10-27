@@ -1,9 +1,9 @@
 import envgenehelper as helper
 from envgene_shared.utils.logger import logger
 from enum import Enum
+from os import path
 from pathlib import Path
 import json
-import jsonschema
 
 from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgene_shared import encrypt_file
@@ -116,15 +116,13 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
 def create_paramset_files(env, paramsets, schemas_dir):
     if not paramsets:
         return
-    PARAMSET_SCHEMA_PATH = path.join(schemas_dir, "paramset.schema.json")
     ps_dir_path = path.join(env.env_path, PARAMSETS_DIR_PATH)
     helper.check_dir_exist_and_create(ps_dir_path)
     logger.info(f"Creating paramsets in {ps_dir_path}")
     for k, v in paramsets.items():
-        jsonschema.validate(v, openYaml(PARAMSET_SCHEMA_PATH))
         filename = k + ".yml"
         ps_path = path.join(ps_dir_path, filename)
-        helper.writeYamlToFile(ps_path, v)  # overwrites file
+        helper.writeYamlToFile(ps_path, v, schema_name="paramset.schema.json", schemas_dir=schemas_dir)
         logger.info(f"Created paramset {filename}")
 
 

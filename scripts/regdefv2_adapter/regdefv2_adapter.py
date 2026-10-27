@@ -1,13 +1,11 @@
 import os
 
-import jsonschema
 from artifact_searcher.auth_resolver import (
     AUTH_METHOD_ANONYMOUS, AUTH_METHOD_SECRET, AUTH_METHOD_SERVICE_ACCOUNT, CRED_FIELD_PASSWORD, CRED_FIELD_SECRET, CRED_FIELD_USERNAME,
 )
 
 import envgenehelper as helper
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
-from envgenehelper.config_helper import get_regdef_v2_schema
 from envgenehelper.creds_helper import CRED_FIELD_DATA
 from envgenehelper.logger import logger
 
@@ -192,8 +190,7 @@ def run_regdefv2_adapter(ctx) -> None:
         file_auth_config = _build_auth_config(params, TRANSIENT_CRED_ID, maven_provider)
 
         v2_data = _convert_v2_from_v1(v1_data, file_auth_config, params)
-        jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
-        helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data)
+        helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data, schema_name="regdef-v2.schema.json")
         logger.info(f"Synthesized v2 for {regdef_file.name}")
 
     if auth_method != AUTH_METHOD_ANONYMOUS:

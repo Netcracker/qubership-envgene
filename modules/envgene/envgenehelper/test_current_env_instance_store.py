@@ -2,15 +2,23 @@ import json
 
 import pytest
 
+from pathlib import Path
+
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
+)
+from envgenehelper.models import (
+    AppDefModel, ApplicationModel, CloudModel, CompositeStructureModel, CredentialsMapModel,
+    EnvDefinitionModel, NamespaceModel, ParamsetModel, RegDefV1Model, RegDefV2Model,
+    ResourceProfileModel, TenantModel,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
+    "required": ["name"],
     "properties": {
         "name": {"type": "string"},
         "profile": {"type": "object", "properties": {"baseline": {"type": "string"}, "name": {"type": "string"}}},
@@ -132,10 +140,10 @@ def test_flush_loads_schema_by_filename(monkeypatch, env_dir, schema_path):
 def test_flush_rejects_invalid_schema_backed_object_before_writing(env_dir, schema_path):
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "Namespaces" / "a" / "namespace.yml"
-    objects.put(target, {"name": 123})
+    objects.put(target, {"value": "missing_required_name"})
     objects.beautify(target, schema_path)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Validation failed"):
         objects.flush()
 
     assert not target.exists()
@@ -255,3 +263,95 @@ def test_normalize_comments(source, expected):
     normalize_comments(data)
 
     assert dumpYamlToStr(data) == expected
+
+
+def test_schema_backed_models_and_store_get_model(monkeypatch, env_dir):
+    schemas_dir = Path(__file__).resolve().parents[3] / "schemas"
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schemas_dir))
+
+    app_data = {
+        "name": "app1",
+        "deployParameters": {"p1": "v1"},
+        "technicalConfigurationParameters": {},
+    }
+    ns_data = {
+        "name": "ns1",
+        "isServerSideMerge": False,
+        "cleanInstallApprovalRequired": True,
+        "mergeDeployParametersAndE2EParameters": False,
+        "profile": {"name": "dev_override", "baseline": "dev"},
+    }
+    tenant_data = {"name": "tenant1", "registryName": "default"}
+    rp_data = {
+        "name": "dev_override",
+        "baseline": "dev",
+        "applications": [
+            {"name": "app1", "services": [{"name": "svc1", "parameters": [{"name": "cpu", "value": "100m"}]}]}
+        ],
+    }
+    comp_data = {
+        "name": "comp-1",
+        "baseline": {"name": "base-ns", "type": "namespace"},
+        "satellites": [{"name": "sat-ns", "type": "namespace"}],
+    }
+    creds_data = {
+        "secret-cred": {"type": "secret", "data": {"secret": "val"}},
+        "up-cred": {"type": "usernamePassword", "data": {"username": "u", "password": "p"}},
+    }
+
+    objects = CurrentEnvInstanceStore(env_dir)
+    app_path = env_dir / "Namespaces" / "ns1" / "Applications" / "app1.yml"
+    ns_path = env_dir / "Namespaces" / "ns1" / "namespace.yml"
+    tenant_path = env_dir / "tenant.yml"
+    rp_path = env_dir / " Profiles" / "dev_override.yml"
+    comp_path = env_dir / "composite_structure.yml"
+    creds_path = env_dir / "Credentials" / "credentials.yml"
+
+    objects.put(app_path, app_data)
+    objects.beautify(app_path, "application.schema.json")
+    objects.put(ns_path, ns_data)
+    objects.beautify(ns_path, "namespace.schema.json")
+    objects.put(tenant_path, tenant_data)
+    objects.beautify(tenant_path, "tenant.schema.json")
+    objects.put(rp_path, rp_data)
+    objects.beautify(rp_path, "resource-profile.schema.json")
+    objects.put(comp_path, comp_data)
+    objects.beautify(comp_path, "composite-structure.schema.json")
+    objects.put(creds_path, creds_data)
+    objects.beautify(creds_path, "credential.schema.json")
+
+    assert isinstance(objects.get_model(app_path), ApplicationModel)
+    assert objects.get_model(app_path).name == "app1"
+    assert isinstance(objects.get_model(ns_path), NamespaceModel)
+    assert objects.get_model(ns_path).profile.baseline == "dev"
+    assert isinstance(objects.get_model(tenant_path), TenantModel)
+    assert isinstance(objects.get_model(rp_path), ResourceProfileModel)
+    assert isinstance(objects.get_model(comp_path), CompositeStructureModel)
+    assert isinstance(objects.get_model(creds_path), CredentialsMapModel)
+
+    objects.flush()
+
+    assert app_path.exists()
+    assert ns_path.exists()
+    assert tenant_path.exists()
+
+
+def test_schema_backed_models_reject_invalid_payloads(monkeypatch):
+    schemas_dir = Path(__file__).resolve().parents[3] / "schemas"
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schemas_dir))
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        ApplicationModel.model_validate({"name": "app1"})  # missing deployParameters & technicalConfigurationParameters
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        NamespaceModel.model_validate({"name": "ns1"})  # missing required boolean flags
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        TenantModel.model_validate({"name": "tenant1"})  # missing registryName
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        ParamsetModel.model_validate({"name": "ps1"})  # requires parameters or applications
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        CredentialsMapModel.model_validate({"bad": {"type": "secret", "data": {}}})  # missing secret field
+

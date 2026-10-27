@@ -264,7 +264,7 @@ class TestRegdefV2Adapter:
         paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "HELM_REPO_BASE_URL:" not in line)
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
 
-        with pytest.raises(jsonschema.ValidationError, match="repositoryDomainName"):
+        with pytest.raises(ValueError, match="Validation failed"):
             run_regdefv2_adapter(_ctx())
 
     @pytest.mark.unit
