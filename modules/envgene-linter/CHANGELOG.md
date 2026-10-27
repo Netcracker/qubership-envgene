@@ -1,6 +1,6 @@
 # EnvGene Linter changelog
 
-- [Unreleased](#unreleased)
+- [0.0.7](#007)
 - [0.0.6](#006)
 - [0.0.5](#005)
 - [0.0.4](#004)
@@ -8,7 +8,7 @@
 - [0.0.2](#002)
 - [0.0.1](#001)
 
-## Unreleased
+## 0.0.7
 
 - Check explicit `inventory.cloudPassport` references in INT-2. Report definitely missing local targets as Fix
   and dynamic, unreadable, unsafe, or uncertain lookups as Review. Allow optional passport absence.
