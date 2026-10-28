@@ -18,7 +18,7 @@ COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -pl effective-set-generator -am -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build minimal JRE
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS jre-build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS jre-build
 
 ARG JDK_VERSION=17.0.20_p8-r0
 
@@ -40,7 +40,7 @@ RUN zip -qd /deployments/app.jar 'licenses/*' && \
     /opt/jre/bin/java -XX:ArchiveClassesAtExit=/deployments/app.jsa -jar /deployments/app.jar --help
 
 # Stage 3: Build Python dependencies
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
@@ -111,7 +111,7 @@ RUN rm -rf /module/scripts/tests && \
     chmod g+rwX /deployments
 
 # Stage 4: Runtime
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:fix_slim-base-image AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS runtime
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
