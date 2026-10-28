@@ -56,13 +56,9 @@ def generate_env():
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
-    save_creds(env.creds_path, env.creds)
+    current_cred_store().put(env.creds_path, env.creds)
     if env.inv_gen_creds:
-        save_creds(env.inv_gen_creds_path, env.inv_gen_creds)
-
-
-def save_creds(path, creds):
-    current_cred_store().put(path, creds)
+        current_cred_store().put(env.inv_gen_creds_path, env.inv_gen_creds)
 
 
 @deprecated(DEPRECATED_MESSAGE)

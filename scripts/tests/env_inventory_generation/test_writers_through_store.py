@@ -8,7 +8,7 @@ from envgene_shared.crypto.sops_handler import is_encrypted_SOPS
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.file_utils import writeToFile
-from inventory.env_inventory_generation import Action, INVENTORY, Place, handle_objects, save_creds
+from inventory.env_inventory_generation import Action, INVENTORY, Place, handle_objects
 
 SOPS_DATA = crypt_test_data[0]
 
@@ -39,18 +39,6 @@ def encrypted(path):
     writeToFile(str(path), CONTENT)
     encrypt_file(path, load_result=False)
     return path
-
-
-def test_save_creds_puts_into_store(project):
-    path = encrypted(project / "environments" / "cluster" / "env" / "Credentials" / "credentials.yml")
-    before = path.read_bytes()
-    with open_cred_store():
-        save_creds(path, NEW_CREDS)
-        assert path.read_bytes() == before
-        assert current_cred_store().get(path) == NEW_CREDS
-    assert path.read_bytes() != before
-    assert is_encrypted_SOPS(path)
-    assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-changed-456"
 
 
 def test_handle_objects_credentials_put_into_store(project):
