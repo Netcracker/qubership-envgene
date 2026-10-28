@@ -7,7 +7,7 @@ from pathlib import Path
 from envgene_shared.utils.business_utils import getenv_with_error
 from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.logger import logger
-from envgene_shared.crypto.crypt import decrypt_file
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
 from .collections_helper import dict_merge
@@ -255,7 +255,7 @@ def register_extra_creds(creds: dict) -> None:
 
 def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    cred_config = decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    cred_config = current_cred_store().get(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
     extra_creds = _extra_creds.get()
     return dict_merge(cred_config, extra_creds) if extra_creds else cred_config
 
@@ -272,7 +272,7 @@ def validate_creds(creds_path: str = ""):
     credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
     for credListPath in credsYamls:
-        credListYaml = decrypt_file(credListPath, in_place=False)
+        credListYaml = current_cred_store().get(credListPath)
         for key, value in credListYaml.items() :
             errorCheck = check_cred_value(key, value)
             if errorCheck :

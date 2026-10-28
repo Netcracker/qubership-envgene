@@ -1,6 +1,5 @@
 import os
 
-from envgene_shared.crypto.crypt import decrypt_file
 from envgene_shared.crypto.cred_store import current_cred_store
 from envgenehelper import copy_creds_to_env_creds_file, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, validate_yaml_by_scheme_or_fail, writeYamlToFile, yaml, extract_external_cred
 
@@ -106,10 +105,10 @@ def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"
     passportSameFolderPath = f'{getDirName(cloud_passport_file_path)}/{cloud_passport_name}-creds.yml'
     if os.path.exists(passportSubfolderPath):
-        passportCredsYaml = decrypt_file(passportSubfolderPath, in_place=False)
+        passportCredsYaml = current_cred_store().get(passportSubfolderPath)
         logger.info(f"Adding cloud passport credentials from {passportSubfolderPath}")
     elif os.path.exists(passportSameFolderPath):
-        passportCredsYaml = decrypt_file(passportSameFolderPath, in_place=False)
+        passportCredsYaml = current_cred_store().get(passportSameFolderPath)
         validate_yaml_by_scheme_or_fail(input_yaml_content=passportCredsYaml, schema_file_path=credsSchema)
         current_cred_store().put(passportSameFolderPath, passportCredsYaml)
         logger.info(f"Adding cloud passport credentials from {passportSameFolderPath}")

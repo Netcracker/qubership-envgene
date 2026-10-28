@@ -78,6 +78,18 @@ run_single_env_pipeline
   later does not lose its original bytes: `cleanup_dir` of `cloud-passport/`, and the ES modes that delete
   ES directories. So the rules of what each step deletes are not repeated in the cred store. An ES cred
   file that the CLI does not return keeps its state on disk: untouched or deleted by the ES mode.
+- **A cred file the cred store did not read at open is read from disk on its first `get`.** Creds rotation
+  reads `Credentials/credentials.yml` of every env of the cluster, and `get_all_necessary_cred_files`
+  holds only the env of `ENV_NAMES`.
+- **`get` of a missing file takes `allow_default`, as `decrypt_file` does.** With it the cred store returns
+  an empty YAML and writes nothing until a `put`. `Environment` and `regdefv2_adapter` read env creds that
+  a new env does not have yet. Without it a missing file fails.
+- **Steps read creds with `current_cred_store().get`, not with `decrypt_file`.** `decrypt_file` does not
+  look into the cred store. It stays a plain function for `crypt_cli`, the pre-commit hook, and files that
+  are not repo creds: discovery creds encrypted with the discovery key.
+- **`crypt` decrypts and encrypts bytes.** `decrypt_bytes` and `encrypt_bytes` take the bytes and the path
+  of a cred file. SOPS reads them on stdin, with `--filename-override` for the path. The cred store keeps
+  bytes in memory and needs no temp file, except for `sops edit`: it works on a file only.
 - **An ES cred file keeps the encryption rule of today.**
 - **`sops edit` keeps the encrypted regex of the old file.** Bugfix: sops edit keeps the encrypted regex of the old file. Before, minimize_cred_diffs ran sops edit for every changed cred file, so a new literal key in an ES cred file (for example, a cred that changed from a ref+ reference to a plain value) could land in git unencrypted. Now an ES cred file gets sops edit only when its old file is encrypted and has the same set of literal keys. Otherwise it gets a plain SOPS encrypt with the new regex, or is written plain.
 - **The editor script of `sops edit` compares YAML objects, not bytes.** The editor script of sops edit compares YAML objects, not bytes. The new content now comes from Python, not from a SOPS decrypt, so its bytes differ from the old file even with the same data. The script writes only when the objects differ; otherwise SOPS exits with 200 and keeps the file
@@ -93,9 +105,9 @@ run_single_env_pipeline
   The creds schema does not describe it. The cred store holds it only to encrypt it and keep the diff
   minimal.
 - **Sorting by the creds schema validates the file.** `jschon` fails on a document that does not match the
-  schema, `sortYaml(validate=False)` does not turn this off. So the cred store calls `encrypt_file` with
-  `validate=False`, and a cred file is validated once. `crypt_cli` and the pre-commit hook call
-  `encrypt_file` with the default `validate=True`.
+  schema, `sortYaml(validate=False)` does not turn this off. So the cred store calls `encrypt_bytes` with
+  `validate=False`, and a cred file is validated once. `encrypt_file` of `crypt_cli` and the pre-commit
+  hook validates as before.
 - **Validation stays where it was.** Cloud passport creds validated inside `sortYaml` before. Now they
   call `validate_yaml_by_scheme_or_fail` explicitly.
 - **A header is passed with `put`.** Only discovery creds have a header. The cred store writes it as text
@@ -120,7 +132,7 @@ After that, these steps put cred files into it:
 | `GenerateEffectiveSetStep` | always | `effective_set/effective_set_entrypoint.py::_run_cli` | ES cred files the CLI returns on stdout |
 
 A step that changes an object it got from the cred store changes the cred store too, without a `put`.
-Readers get cred files through `decrypt_file` or `current_cred_store().get`.
+Readers get cred files through `current_cred_store().get`.
 
 ## What changes for the user
 

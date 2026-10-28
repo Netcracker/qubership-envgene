@@ -3,7 +3,7 @@ from os import path
 
 from .business_helper import getEnvDefinitionPath, getEnvCredentialsPath, INV_GEN_CREDS_PATH
 from .creds_helper import mask_sensitive
-from envgene_shared.crypto.crypt import decrypt_file
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import openYaml
 
@@ -35,8 +35,8 @@ class Environment:
         self.inventory = openYaml(self.inventory_path, allow_default=True)
         logger.info(f"inventory: {self.inventory}")
 
-        self.creds = decrypt_file(self.creds_path, in_place=False, allow_default=True)
+        self.creds = current_cred_store().get(self.creds_path, allow_default=True)
         logger.info(f"creds: {mask_sensitive(self.creds)}")
 
-        self.inv_gen_creds = decrypt_file(self.inv_gen_creds_path, in_place=False, allow_default=True)
+        self.inv_gen_creds = current_cred_store().get(self.inv_gen_creds_path, allow_default=True)
         logger.info(f"inv_gen_creds: {mask_sensitive(self.inv_gen_creds)}")

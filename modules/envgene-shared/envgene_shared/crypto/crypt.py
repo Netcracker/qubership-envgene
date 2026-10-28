@@ -41,10 +41,6 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
                  ignore_is_crypt=False,
                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None,
                  load_result=True, _file_info=None, **kwargs):
-    from envgene_shared.crypto import cred_store
-    store = cred_store._open_store
-    if store is not None and secret_key is None and store.knows(file_path):
-        return store.get(file_path)
     res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
@@ -79,7 +75,7 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
 def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False, is_crypt=None,
                  minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False,
-                 load_result=True, validate=True, **kwargs):
+                 load_result=True, **kwargs):
     crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
     if minimize_diff:
         if not old_file_path:
@@ -110,7 +106,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         return openYaml(file_path) if load_result else None
 
     file_content = openYaml(file_path)
-    should_encrypt, encrypted_regex = _encryption_rule(file_content, file_path, validate)
+    should_encrypt, encrypted_regex = _encryption_rule(file_content, file_path, True)
     if not should_encrypt:
         return file_content if load_result else None
 

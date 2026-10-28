@@ -81,7 +81,10 @@ def read_env_cred_files(creds_files, is_encrypted):
 
 def decrypt_and_get_content(is_encrypted, filepath):
     if is_encrypted:
-        return decrypt_file( filepath, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE)
+        try:
+            return current_cred_store().get(filepath)
+        except Exception as e:
+            raise ValidationError(ErrorMessages.FILE_DECRYPT_ERROR.format(file=filepath, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
     try:
         if filepath.endswith(".json"):
             content = openJson(filepath)

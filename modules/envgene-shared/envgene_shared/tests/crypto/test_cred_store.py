@@ -148,15 +148,25 @@ def test_put_equal_object_recreates_deleted_file(env_dir):
     assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-placeholder-123"
 
 
-def test_decrypt_file_serves_from_store_without_writing(env_dir):
-    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
-    before = path.read_bytes()
-    with open_cred_store():
-        obj = decrypt_file(path, in_place=True)
-        assert obj["first_cred"]["data"]["secret"] == "token-placeholder-123"
-        assert path.read_bytes() == before
-        assert decrypt_file(path, in_place=False) is obj
+def test_get_missing_file_with_allow_default_returns_empty_and_writes_nothing(env_dir):
+    path = env_dir / "Credentials" / "credentials.yml"
+    with open_cred_store() as store:
+        assert store.get(path, allow_default=True) == {}
+    assert not path.exists()
+
+
+def test_get_reads_file_unknown_at_open_from_disk(env_dir):
+    with open_cred_store() as store:
+        path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+        before = path.read_bytes()
+        assert store.get(path)["first_cred"]["data"]["secret"] == "token-placeholder-123"
     assert path.read_bytes() == before
+
+
+def test_get_missing_file_without_allow_default_raises(env_dir):
+    with open_cred_store() as store:
+        with pytest.raises(KeyError):
+            store.get(env_dir / "Credentials" / "credentials.yml")
 
 
 def test_editor_exits_200_on_same_content_other_format(env_dir, tmp_path):

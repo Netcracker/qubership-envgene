@@ -11,7 +11,7 @@ from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
 from envgene_shared.utils.constants import SOPS_ID
 from envgene_shared.utils.crypt_utils import analyze_cred_file, get_crypt_backend, is_effective_set_cred_file
-from envgene_shared.utils.yaml_utils import dumpYamlToStr, make_quotes_for_strings, readYaml, \
+from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
     remove_cred_yaml_comments, sortYaml
 
 
@@ -47,21 +47,21 @@ class CredStore:
     def _key(path):
         return str(Path(path).resolve())
 
-    def knows(self, path) -> bool:
-        key = self._key(path)
-        return key in self._original or key in self._decrypted
-
     def _decrypt_original(self, key):
         obj = decrypt_bytes(self._original[key], key)
         with self._lock:
             self._decrypted_original.setdefault(key, copy.deepcopy(obj))
             return self._decrypted.setdefault(key, obj)
 
-    def get(self, path) -> dict:
+    def get(self, path, allow_default=False) -> dict:
         key = self._key(path)
         with self._lock:
             if key in self._decrypted:
                 return self._decrypted[key]
+            if key not in self._original and os.path.isfile(key):
+                self._original[key] = Path(key).read_bytes()
+        if allow_default and key not in self._original:
+            return get_empty_yaml()
         return self._decrypt_original(key)
 
     def put(self, path, obj: dict, header_text: str = "") -> None:
