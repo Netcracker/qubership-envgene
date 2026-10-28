@@ -320,4 +320,3 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     validate_cred_types(env_creds_map, is_external_cred_env, credYamlPath)
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(credYamlPath),
                                     schema_file_path=credsSchema)
-    env_instance_store.beautify(credYamlPath, credsSchema)

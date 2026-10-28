@@ -341,7 +341,6 @@ def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_sch
     # storing credentials yaml
     env_instance_store.put(env_credentials_path, env_creds_yaml)
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_yaml, schema_file_path=creds_schema)
-    env_instance_store.beautify(env_credentials_path, creds_schema)
     
 
 def get_cred_data(cred_id: str, env_creds: dict) -> dict:
