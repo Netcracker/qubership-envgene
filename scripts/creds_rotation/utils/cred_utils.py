@@ -134,17 +134,17 @@ def update_cred_content(
     return updated_files, original_files
 
 
-def write_updated_cred_into_file(updated_files, original_files, is_encrypted):
+def write_updated_cred_into_file(updated_files, original_files):
     try:
         # All files processed without errors, now write and encrypt if needed
-        update_file(updated_files, is_encrypted)
+        update_file(updated_files)
     except Exception as e:
         logger.error(f"Updation of credential file failed {e} \n Hence reverting the change")
-        update_file(original_files, is_encrypted)
+        update_file(original_files)
         logger.info("No creds changes are updated. Files are restored to original state")
 
 
-def update_file(files_to_update, is_encrypted):
+def update_file(files_to_update):
     for cred_file, creds in files_to_update.items():
         current_cred_store().put(cred_file, creds)
 

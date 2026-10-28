@@ -189,9 +189,7 @@ def run_cred_rotation():
         updated_content, original_content = update_cred_content(
             processed_cred_and_files
         )
-        write_updated_cred_into_file(
-            updated_content, original_content, is_encrypted
-        )
+        write_updated_cred_into_file(updated_content, original_content)
         write_cred_file_path(
             list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
         )

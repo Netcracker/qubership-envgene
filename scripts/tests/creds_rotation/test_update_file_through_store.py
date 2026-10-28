@@ -41,7 +41,7 @@ def cred_file(monkeypatch, tmp_path):
 def test_update_file_puts_into_store(cred_file):
     before = cred_file.read_bytes()
     with open_cred_store():
-        update_file({str(cred_file): UPDATED}, True)
+        update_file({str(cred_file): UPDATED})
         assert cred_file.read_bytes() == before
         assert current_cred_store().get(cred_file) == UPDATED
     assert cred_file.read_bytes() != before
