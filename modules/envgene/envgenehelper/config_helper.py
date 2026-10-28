@@ -20,16 +20,20 @@ def get_regdef_v2_schema() -> dict:
 
 def get_regdef_schema_for_content(content: dict) -> dict:
     """Get the appropriate schema (V1 or V2) based on registry definition content"""
+    return get_schema(get_regdef_schema_name_for_content(content))
+
+
+def get_regdef_schema_name_for_content(content: dict) -> str:
     if content.get("version") == REGDEF_V2_VERSION or "authConfig" in content:
-        return get_regdef_v2_schema()
-    return get_regdef_schema()
+        return "regdef-v2.schema.json"
+    return "regdef.schema.json"
 
 
 def validate_regdef_or_fail(yaml_file_path: str):
     """Validate a registry definition YAML file (V1 or V2) by path"""
     content = openYaml(yaml_file_path)
-    schema = get_regdef_schema_for_content(content)
-    validate_yaml_by_scheme_or_fail(yaml_file_path=yaml_file_path, input_schema_content=schema)
+    validate_yaml_by_scheme_or_fail(yaml_file_path=yaml_file_path,
+                                    schema_name=get_regdef_schema_name_for_content(content))
 
 
 def get_artifact_size_limit_mb() -> int:

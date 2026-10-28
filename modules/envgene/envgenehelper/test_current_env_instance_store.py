@@ -1,4 +1,5 @@
 import json
+from cProfile import Profile
 
 import pytest
 
@@ -14,6 +15,8 @@ from envgenehelper.models import (
     ResourceProfileModel, TenantModel,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
+import jschon_tools
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -320,7 +323,13 @@ def test_schema_backed_models_and_store_get_model(monkeypatch, env_dir):
     objects.put(creds_path, creds_data)
     objects.beautify(creds_path, "credential.schema.json")
 
+    with pytest.raises(ValueError, match="No finalized model"):
+        objects.get_model(app_path)
+
+    objects.flush()
+
     assert isinstance(objects.get_model(app_path), ApplicationModel)
+    assert objects.get_model(app_path) is objects.get_model(app_path)
     assert objects.get_model(app_path).name == "app1"
     assert isinstance(objects.get_model(ns_path), NamespaceModel)
     assert objects.get_model(ns_path).profile.baseline == "dev"
@@ -328,8 +337,6 @@ def test_schema_backed_models_and_store_get_model(monkeypatch, env_dir):
     assert isinstance(objects.get_model(rp_path), ResourceProfileModel)
     assert isinstance(objects.get_model(comp_path), CompositeStructureModel)
     assert isinstance(objects.get_model(creds_path), CredentialsMapModel)
-
-    objects.flush()
 
     assert app_path.exists()
     assert ns_path.exists()
@@ -355,3 +362,39 @@ def test_schema_backed_models_reject_invalid_payloads(monkeypatch):
     with pytest.raises(ValueError, match="Validation failed"):
         CredentialsMapModel.model_validate({"bad": {"type": "secret", "data": {}}})  # missing secret field
 
+
+def test_flush_validates_once_and_preserves_mutated_yaml(monkeypatch, tmp_path, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    (tmp_path / "application.schema.json").write_text('{"type":"null"}')
+    monkeypatch.chdir(tmp_path)
+    target = env_dir / "Applications" / "app.yml"
+    data = readYaml('name: app\ndeployParameters:\n  param: before # keep\ntechnicalConfigurationParameters: {}\n')
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, data)
+    objects.beautify(target, "application.schema.json")
+    data["deployParameters"]["param"] = "after"
+
+    profile = Profile()
+    profile.runcall(objects.flush)
+
+    calls = {entry.code: entry.callcount for entry in profile.getstats()}
+    assert calls.get(jschon_tools.process_json_doc.__code__) == 1
+    assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
+    assert objects.get_model(target).deployParameters == {"param": "after"}
+    assert target.read_text() == 'name: "app"\ndeployParameters:\n  param: "after" # keep\ntechnicalConfigurationParameters: {}\n'
+
+
+def test_flush_rejects_invalid_mutation(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Applications" / "app.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    data = objects.put(target, {"name": "app", "deployParameters": {}, "technicalConfigurationParameters": {}})
+    objects.beautify(target, "application.schema.json")
+    data["name"] = 123
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        objects.flush()
+
+    assert not target.exists()
+    with pytest.raises(ValueError, match="No finalized model"):
+        objects.get_model(target)

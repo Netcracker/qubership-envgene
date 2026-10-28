@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, ClassVar, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, ValidationInfo, field_validator, model_validator
 
 from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 
@@ -104,15 +104,15 @@ class SchemaValidatedModel(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _validate_by_json_schema(cls, data: Any) -> Any:
-        if isinstance(data, dict) and hasattr(cls, "SCHEMA_NAME") and cls.SCHEMA_NAME:
+    def _validate_by_json_schema(cls, data: Any, info: ValidationInfo) -> Any:
+        if isinstance(data, dict) and not (info.context and info.context.get("schema_validated")):
             validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=cls.SCHEMA_NAME)
         return data
 
     def validate_schema(self) -> None:
         if hasattr(self, "SCHEMA_NAME") and self.SCHEMA_NAME:
             validate_yaml_by_scheme_or_fail(
-                input_yaml_content=self.model_dump(exclude_none=True, by_alias=True),
+                input_yaml_content=self.model_dump(exclude_unset=True, by_alias=True),
                 schema_name=self.SCHEMA_NAME,
             )
 
@@ -359,8 +359,8 @@ class CredentialsMapModel(RootModel[dict[str, CredentialEntryModel]]):
 
     @model_validator(mode="before")
     @classmethod
-    def _validate_by_json_schema(cls, data: Any) -> Any:
-        if isinstance(data, dict):
+    def _validate_by_json_schema(cls, data: Any, info: ValidationInfo) -> Any:
+        if isinstance(data, dict) and not (info.context and info.context.get("schema_validated")):
             validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=cls.SCHEMA_NAME)
         return data
 
@@ -405,9 +405,10 @@ SCHEMA_TO_MODEL: dict[str, type[BaseModel]] = {
 }
 
 
-def validate_model_by_schema_name(data: dict[str, Any], schema_name: str) -> BaseModel | None:
+def validate_model_by_schema_name(data: dict[str, Any], schema_name: str, *, schema_validated=False) -> BaseModel | None:
     model_cls = SCHEMA_TO_MODEL.get(schema_name)
     if model_cls is not None:
-        return model_cls.model_validate(data)
-    validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=schema_name)
+        return model_cls.model_validate(data, context={"schema_validated": schema_validated})
+    if not schema_validated:
+        validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=schema_name)
     return None

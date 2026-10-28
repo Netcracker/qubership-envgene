@@ -56,16 +56,17 @@ def get_schema(schema_name: str, schemas_dir=None) -> dict:
     schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
     schema_path = Path(schemas_dir) / schema_name
     if schema_path.is_file():
-        return load_schema(str(schema_path))
+        return load_schema(str(schema_path.resolve()))
     raise FileNotFoundError(f"Schema '{schema_name}' was not found in '{schemas_dir}'")
 
 
 @lru_cache(maxsize=None)
-def get_schema_validator(schema_path: str):
+def get_schema_validator(schema_path: str, schemas_dir=None):
     schema = load_schema(schema_path)
     cls = jsonschema.validators.validator_for(schema)
     cls.check_schema(schema)
-    return cls(schema)
+    base_uri = Path(schemas_dir or Path(schema_path).parent).resolve().as_uri() + "/"
+    return cls(schema, resolver=RefResolver(base_uri=base_uri, referrer=schema))
 
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
@@ -80,15 +81,20 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
     elif schema_name:
         schema_content = get_schema(schema_name, schemas_dir)
         schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
+        schema_file_path = Path(schemas_dir) / schema_name
     else:
         schema_content = input_schema_content
 
-    if schemas_dir:
+    if schema_file_path:
+        validator = get_schema_validator(
+            str(Path(schema_file_path).resolve()),
+            str(Path(schemas_dir).resolve()) if schemas_dir else None,
+        )
+        errors = sorted(validator.iter_errors(yaml_content), key=lambda e: e.path)
+    elif schemas_dir:
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
         resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
         errors = validate_yaml_data_by_schema(yaml_content, schema_content, resolver=resolver)
-    elif schema_file_path:
-        errors = sorted(get_schema_validator(str(schema_file_path)).iter_errors(yaml_content), key=lambda e: e.path)
     else:
         errors = validate_yaml_data_by_schema(yaml_content, schema_content)
     if len(errors) > 0:

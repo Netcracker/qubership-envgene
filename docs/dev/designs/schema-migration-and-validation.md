@@ -1,10 +1,21 @@
 # Schema migration and validation
 
+- [Problem](#problem)
+- [Example](#example)
+- [Design](#design)
+- [What changes for the user](#what-changes-for-the-user)
+- [Verification](#verification)
+- [Out of scope](#out-of-scope)
+- [Open questions](#open-questions)
+- [Constraints](#constraints)
+
 ## Problem
 
 EnvGene loads schemas through several paths. Callers pass local file paths, packages carry duplicate copies, and `CurrentEnvInstanceStore.flush()` sorts and writes without validating the final object. Validation is spread across mutation steps, so an object may be validated more than once and later mutations may not be covered.
 
-The approved spreadsheet screenshot lists schemas to migrate or remove and includes per-file notes. The runtime image also supplies schemas that must remain authoritative. Schemas supplied by the GitLab repository may add filenames but must not replace image schemas.
+The approved spreadsheet lists schemas to migrate or remove and includes per-file notes. The runtime image also supplies
+schemas that must remain authoritative. Schemas supplied by the GitLab repository may add filenames but must not replace
+image schemas.
 
 ## Example
 
@@ -27,7 +38,8 @@ The schema getter resolves the filename from the effective schema set. The GitLa
 
 ## Design
 
-`envgene-shared` owns schema lookup and the common validation function. It is already a dependency of `envgenehelper` and is used by shared-only consumers such as the GSF pre-commit hook. Shared callers must not import `envgenehelper`.
+`envgene-shared` owns schema lookup and the common validation function. `envgenehelper` exports `get_schema` for its callers.
+Shared-only consumers such as the GSF pre-commit hook use `envgene-shared` directly.
 
 The getter accepts an exact schema filename and returns parsed schema content from `JSON_SCHEMAS_DIR`, which defaults to `/schemas`. It rejects path components and reports an unknown filename clearly. EnvGene keeps the only schema source in the root `schemas/` directory, and consumers configure that directory explicitly.
 
@@ -37,7 +49,17 @@ All schema files remain in the root `schemas/` directory. Python packages do not
 
 For generated environment objects, `CurrentEnvInstanceStore` records a schema filename for each schema-backed output. `flush()` validates the final in-memory object once, then sorts, formats, and writes it. Store writes without schema metadata are not silently treated as validated. Schema-backed direct writers use the same shared validation function immediately before serialization. Input validation remains where it protects data before the build uses it and is not a duplicate output check.
 
-Typed object models do not change in this work. Objects remain dictionaries or YAML mappings.
+Rendering retains YAML mappings to preserve comments and formatting. At `flush()`, schema-based sorting validates the final
+object. The store then creates and retains its typed model without repeating JSON Schema validation. `get_model(path)`
+returns that finalized model after a successful flush. Models do not replace mutable YAML mappings inside rendering steps.
+
+The SBOM generator uses `generated-application.sbom.schema.json`, moved from its Python package without changing its
+validation rules. This schema permits generated SBOMs without serial numbers or timestamps. The separate
+`application.sbom.schema.json` contract remains unchanged. `solution.sbom.schema.json` also moves to the common directory.
+
+Direct writers validate each final object once before serialization. AppDefs and RegDefs written in `dual` mode share that
+validation across both copies. Cached validators serve repeated input checks and resolve relative references from the
+configured directory. Schema failures during sorting use the common validator to report diagnostic details.
 
 ## What changes for the user
 
@@ -51,14 +73,14 @@ Typed object models do not change in this work. Objects remain dictionaries or Y
 - Test exact-name lookup, unknown names, path-like names, and every schema in the approved inventory.
 - Test `$ref` resolution from the effective schema set.
 - Test that a colliding GitLab filename preserves the base schema and a new filename is added.
-- Test that an invalid final object fails at flush after mutation, before any output is written, and that the validator runs once for that output.
+- Test that an invalid final object fails at flush after mutation, before its file is written, and that the validator runs once for that output.
 - Test schema-backed direct writers and shared-only config and credential validation.
 - Test schema loading outside the repository root with `JSON_SCHEMAS_DIR` configured and the image or pipeline schema assembly.
 - Run the `envgene-shared` and `envgenehelper` tests, then `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/`.
 
 ## Out of scope
 
-- Replacing dictionaries with schema-derived typed object models.
+- Replacing mutable YAML mappings with models throughout the rendering pipeline.
 - Changing validation rules or schema contents beyond reconciling approved migrated schemas and existing duplicate drift.
 - Validating YAML outputs that have no applicable JSON schema.
 - Runtime network access to fetch schemas from Qubership.
@@ -67,7 +89,7 @@ Typed object models do not change in this work. Objects remain dictionaries or Y
 
 - Confirm the GitLab schema source directory and the step that assembles it with the image schema directory.
 - Identify the approved schema for `bg_domain.yml` and any schema-backed direct writer not currently registered with a schema.
-- Confirm the exact filename disposition and replacement mapping for each row in the screenshot during implementation.
+- Confirm the exact filename disposition and replacement mapping for each row in the approved spreadsheet.
 
 ## Constraints
 

@@ -38,4 +38,8 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 
 ## Usage
 
+The SBOM generator uses `generated-application.sbom.schema.json`, which preserves its existing rules for generated output
+without serial numbers or timestamps. `application.sbom.schema.json` keeps its separate contract.
+`solution.sbom.schema.json` also lives in this directory.
+
 Schema files are loaded from this directory through `JSON_SCHEMAS_DIR`. Runtime images use `/schemas`. Validation is performed via `envgene_shared.utils.yaml_utils.validate_yaml_by_scheme_or_fail`.

@@ -17,7 +17,6 @@ import yaml as pyyaml
 
 from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, writeToFile
 from .json_helper import openJson
-from .models import validate_model_by_schema_name
 from envgene_shared.utils.logger import logger
 
 from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, readYaml, load_schema, get_schema_validator, \
@@ -77,25 +76,25 @@ def alignYamlComments(yamlContent, extra_indent=0):
 
 
 def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
-    schema_path = str(schema_path)
-    schema_file = Path(schema_path)
-    if schema_file.is_file():
-        schema_data = load_schema(schema_path)
-        if validate:
-            logger.debug(f'Checking yaml with schema: {schema_path}')
-            validate_yaml_by_scheme_or_fail(input_yaml_content=yaml_data, schema_file_path=schema_path)
-    else:
-        schema_data = get_schema(schema_path)
-        if validate:
-            logger.debug(f'Checking yaml with schema: {schema_path}')
-            validate_model_by_schema_name(yaml_data, schema_path)
-    sort_data = jschon_tools.process_json_doc(
-        schema_data=schema_data,
-        doc_data=yaml_data,
-        sort=True,
-        remove_additional_props=remove_additional_props
-    )
-    return sort_data
+    schema_name = str(schema_path)
+    is_path = isinstance(schema_path, Path) or "/" in schema_name or "\\" in schema_name
+    schema_data = load_schema(schema_name) if is_path else get_schema(schema_name)
+    try:
+        return jschon_tools.process_json_doc(
+            schema_data=schema_data,
+            doc_data=yaml_data,
+            sort=True,
+            remove_additional_props=remove_additional_props,
+        )
+    except ValueError as error:
+        if not validate or str(error) != "Document failed schema validation":
+            raise
+        validate_yaml_by_scheme_or_fail(
+            input_yaml_content=yaml_data,
+            schema_file_path=schema_name if is_path else None,
+            schema_name=None if is_path else schema_name,
+        )
+        raise ValueError("Validation failed") from error
 
 
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):

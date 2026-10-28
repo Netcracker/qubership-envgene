@@ -1,7 +1,7 @@
 from build_env.env_template.process_env_template import process_env_template
 from build_env.render_config_env import EnvGenerator, build_minimal_render_context
 from envgenehelper import BUILD_ENV_TAG, NamespaceRole, Path, findAllYamlsInDir, get_current_env_dir_from_env_vars, get_envgene_config_yaml, get_schema_dir, getenv_with_error, logger, openYaml, shutil, update_generated_versions, validate_yaml_by_scheme_or_fail, writeYamlToFile
-from envgenehelper.config_helper import get_regdef_schema_for_content
+from envgenehelper.config_helper import get_regdef_schema_name_for_content
 
 
 def write_app_reg_defs(base_dir: str, rendered_defs: dict, env_dir: str, placement_mode: str) -> None:
@@ -17,25 +17,11 @@ def write_app_reg_defs(base_dir: str, rendered_defs: dict, env_dir: str, placeme
         if env_dst.exists():
             shutil.rmtree(env_dst)
         for name, definition in rendered_defs.get(dir_name, {}).items():
-            if dir_name == "AppDefs":
-                writeYamlToFile(root_dst / f"{name}.yml", definition, schema_name="appdef.schema.json",
-                                schemas_dir=get_schema_dir())
-            else:
-                writeYamlToFile(
-                    root_dst / f"{name}.yml",
-                    definition,
-                    input_schema_content=get_regdef_schema_for_content(definition),
-                )
+            schema_name = "appdef.schema.json" if dir_name == "AppDefs" else get_regdef_schema_name_for_content(definition)
+            validate_yaml_by_scheme_or_fail(input_yaml_content=definition, schema_name=schema_name)
+            writeYamlToFile(root_dst / f"{name}.yml", definition)
             if placement_mode == "dual":
-                if dir_name == "AppDefs":
-                    writeYamlToFile(env_dst / f"{name}.yml", definition, schema_name="appdef.schema.json",
-                                    schemas_dir=get_schema_dir())
-                else:
-                    writeYamlToFile(
-                        env_dst / f"{name}.yml",
-                        definition,
-                        input_schema_content=get_regdef_schema_for_content(definition),
-                    )
+                writeYamlToFile(env_dst / f"{name}.yml", definition)
 
 
 def validate_definition_override(dir_name: str, yaml_file: str) -> None:
@@ -46,7 +32,7 @@ def validate_definition_override(dir_name: str, yaml_file: str) -> None:
                                         schemas_dir=get_schema_dir())
     else:
         validate_yaml_by_scheme_or_fail(input_yaml_content=content,
-                                        input_schema_content=get_regdef_schema_for_content(content))
+                                        schema_name=get_regdef_schema_name_for_content(content))
 
 
 def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> None:

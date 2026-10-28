@@ -63,7 +63,7 @@ runs:
       shell: bash
       run: |
         mkdir -p "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/schemas"
-        cp schemas/*.json \
+        cp schemas/config.schema.json schemas/credential.schema.json \
           "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/schemas/"
 
     - name: Update history.log

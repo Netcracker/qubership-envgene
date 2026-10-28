@@ -11,8 +11,6 @@ from deepmerge import always_merger
 from sbom_generator.utils.models import Extensions
 
 WORK_DIR = Path(os.getcwd())
-BASE_DIR = Path(__file__).resolve().parent.parent
-SCHEMA_TEMPLATE = str(BASE_DIR / "schemas" / "{name}.sbom.schema.json")
 
 
 def encode_dict_to_base64(raw: dict, suffix: str) -> str:
@@ -67,12 +65,6 @@ def open_and_convert(cls, path: Path, filename: str) -> list | dict:
             return cls.model_validate(data)
     else:
         raise NotFoundException(f"There is no file by name {filename} in dir {path}")
-
-
-def load_schema(schema_name: str):
-    schema_path = Path(SCHEMA_TEMPLATE.format(name=schema_name))
-    with open(schema_path, 'r', encoding='utf-8') as file:
-        return json.load(file)
 
 
 def replace_extension(url: str, ext):

@@ -1,8 +1,12 @@
 .gitignore
 .gitlab-ci.yml
-git_hooks/schemas/config.schema.json
+git_hooks/config.schema.json
 git_hooks/crypt.py
+git_hooks/envgene_shared/schemas/config.schema.json
+git_hooks/envgene_shared/schemas/credential.schema.json
 git_hooks/pre-commit
+git_hooks/schemas/config.schema.json
+git_hooks/schemas/credential.schema.json
 gitlab-ci/pipeline_vars.yaml
 test-test.log
 test_file.log

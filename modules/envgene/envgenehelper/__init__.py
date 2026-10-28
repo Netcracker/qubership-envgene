@@ -12,6 +12,7 @@ from .collections_helper import merge_lists, is_primitive, dump_as_yaml_format, 
 from .creds_helper import check_is_cred, create_cred_definition, get_cred_list_from_param, get_cred_id_from_cred_macros, expand_cred_macro_and_return_value, get_value_from_cred, check_is_envgen_cred, get_cred_id_and_property_from_cred_macros, mask_sensitive, fetch_cred_value, extra_creds_scope, register_extra_creds, get_cred_config, validate_creds, check_cred_value, is_envgenenullvalue, validate_cred_types, copy_creds_to_env_creds_file, get_cred_data, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, CRED_VALUE_TYPE_USERNAME, CRED_VALUE_TYPE_PASSWORD, CRED_VALUE_TYPE_SECRET, CONCEALED_SECRET_MASK, CRED_FIELD_DATA, EXTERNAL_CREDENTIAL_TYPE
 from .sd_helper import get_app_name_sd, get_version, is_matching, is_duplicating, basic_merge_multiple, basic_merge, basic_exclusion_merge, MergeType, calculate_merge_mode, get_sd_dir, get_sd_dir_by_env_cluster_name, SD_FILE_NAME, DELTA_SD_FILE_NAME
 from .constants import cleanup_targets
+from envgene_shared.utils.yaml_utils import get_schema
 from .params_helper import validate_parameters
 from .models import (
     CaseInsensitiveEnum, TemplateVersionUpdateMode, SbomRetentionConfig, OperationType, BgdOperation,

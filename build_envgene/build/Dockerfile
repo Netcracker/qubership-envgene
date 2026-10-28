@@ -84,15 +84,13 @@ RUN apk add --no-cache \
     ${JAVA_PACKAGE}
 
 COPY --from=build /module /module
-COPY --from=build /schemas /build/envgene-schemas/
-COPY --from=build /build/merge_schemas.sh /build/merge_schemas.sh
+COPY --from=build /schemas /schemas
 COPY --from=build /modules /modules
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
 COPY --from=java-native-builder /project/vals-reference-cli/target/*-runner /module/scripts/vals-reference-cli
 
-RUN /bin/sh /build/merge_schemas.sh /build/envgene-schemas /schemas && \
-    rm -rf /build/envgene-schemas /build/merge_schemas.sh /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
+RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 

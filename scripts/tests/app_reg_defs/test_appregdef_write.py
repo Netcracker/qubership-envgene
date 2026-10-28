@@ -1,6 +1,8 @@
 import pytest
+from cProfile import Profile
 
 from build_env.appregdef_render import write_app_reg_defs
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 
 RENDERED_DEFS = {
     "AppDefs": {
@@ -61,12 +63,17 @@ class TestWriteAppRegDefs:
         assert not (self.env_dir / "RegDefs").exists()
 
     def test_dual_mode_moves_to_root_and_copies_to_env(self):
-        write_app_reg_defs(self.base_dir, RENDERED_DEFS, self.env_dir, "dual")
+        profile = Profile()
+        profile.runcall(write_app_reg_defs, self.base_dir, RENDERED_DEFS, self.env_dir, "dual")
 
+        calls = {entry.code: entry.callcount for entry in profile.getstats()}
+        assert calls[validate_yaml_by_scheme_or_fail.__code__] == 2
         assert (self.base_dir / "appdefs" / "file.yml").exists()
         assert (self.base_dir / "regdefs" / "file.yml").exists()
         assert (self.env_dir / "AppDefs" / "file.yml").exists()
         assert (self.env_dir / "RegDefs" / "file.yml").exists()
+        assert (self.base_dir / "appdefs" / "file.yml").read_bytes() == (self.env_dir / "AppDefs" / "file.yml").read_bytes()
+        assert (self.base_dir / "regdefs" / "file.yml").read_bytes() == (self.env_dir / "RegDefs" / "file.yml").read_bytes()
 
     def test_preserves_existing_files(self):
         stale = self.base_dir / "appdefs"

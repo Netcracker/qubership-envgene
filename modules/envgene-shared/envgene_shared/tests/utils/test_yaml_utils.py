@@ -6,6 +6,7 @@ from ruyaml import CommentedMap
 
 from envgene_shared.utils.yaml_utils import (
     get_schema,
+    get_schema_validator,
     openYaml,
     readYaml,
     validate_yaml_by_scheme_or_fail,
@@ -96,7 +97,6 @@ class TestGetSchema:
         assert get_schema("namespace.schema.json") == schema
 
     @pytest.mark.unit
-    @pytest.mark.unit
     def test_raises_for_unknown_schema(self, monkeypatch, tmp_path):
         monkeypatch.setenv("JSON_SCHEMAS_DIR", str(tmp_path))
 
@@ -131,6 +131,30 @@ class TestGetSchema:
             input_yaml_content={"name": "namespace"},
             schema_name="root.schema.json",
         )
+
+        cache_before = get_schema_validator.cache_info()
+        with pytest.raises(ValueError, match="Validation failed"):
+            validate_yaml_by_scheme_or_fail(
+                input_yaml_content={"name": 123},
+                schema_name="root.schema.json",
+            )
+        cache_after = get_schema_validator.cache_info()
+        assert cache_after.misses == cache_before.misses
+        assert cache_after.hits == cache_before.hits + 1
+
+    def test_cached_names_are_isolated_by_schema_directory(self, tmp_path):
+        for directory, schema in [("strings", '{"type":"string"}'), ("numbers", '{"type":"number"}')]:
+            target = tmp_path / directory
+            target.mkdir()
+            (target / "value.schema.json").write_text(schema)
+
+        validate_yaml_by_scheme_or_fail(
+            input_yaml_content="value", schema_name="value.schema.json", schemas_dir=tmp_path / "strings",
+        )
+        with pytest.raises(ValueError, match="Validation failed"):
+            validate_yaml_by_scheme_or_fail(
+                input_yaml_content="value", schema_name="value.schema.json", schemas_dir=tmp_path / "numbers",
+            )
 
 
 class TestSchemaValidatedYamlWriter:
