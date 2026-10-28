@@ -24,12 +24,12 @@ activate_venv() {
 case "$(uname -s)" in
   CYGWIN*|MINGW*|MSYS*)
     PYTHONPATH_ROOT="$(cygpath -m "$REPO_ROOT")"
-	JSON_SCHEMAS_DIR="$(cygpath -m "$REPO_ROOT/git_hooks/envgene_shared/schemas")"
+    JSON_SCHEMAS_DIR="$(cygpath -m "$REPO_ROOT/git_hooks/schemas")"
     activate_venv "Scripts"
     ;;
   *)
     PYTHONPATH_ROOT="$REPO_ROOT"
-	JSON_SCHEMAS_DIR="$REPO_ROOT/git_hooks/envgene_shared/schemas"
+    JSON_SCHEMAS_DIR="$REPO_ROOT/git_hooks/schemas"
     activate_venv "bin"
     ;;
 esac
@@ -46,7 +46,7 @@ if [ -z "$ENVGENE_AGE_PRIVATE_KEY" ] && [ -s "$REPO_ROOT/.git/private-age-key.tx
 fi
 
 
-export JSON_SCHEMAS_DIR="$REPO_ROOT/git_hooks/envgene_shared/schemas"
+export JSON_SCHEMAS_DIR
 export PYTHONPATH="$PYTHONPATH_ROOT/git_hooks"
 
 

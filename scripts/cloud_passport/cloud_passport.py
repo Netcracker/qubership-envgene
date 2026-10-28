@@ -1,6 +1,6 @@
 import os
 
-from envgenehelper import beautifyYaml, copy_creds_to_env_creds_file, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, validate_yaml_by_scheme_or_fail, writeYamlToFile, yaml, extract_external_cred
+from envgenehelper import beautifyYaml, copy_creds_to_env_creds_file, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, writeYamlToFile, yaml, extract_external_cred
 
 # const
 CLOUD_SUBSTITUTIONS = {
@@ -28,7 +28,7 @@ def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, is_
             store_value_to_yaml(cloudYaml["deployParameters"], paramKey, paramValue, comment)
 
 def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cred_env) :
-    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
+    cloud_schema = "cloud.schema.json"
     # cloud
     cloudYamlPath = f"{env_dir}/cloud.yml"
     cloudYaml = current_env_instance_store().get(cloudYamlPath)
@@ -93,12 +93,11 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
     logger.debug(f"Rest of params from cloud passport are: \n{dump_as_yaml_format(cloudPassportYaml)}")
     mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, is_external_cred_env)
     # storing cloud yaml
-    validate_yaml_by_scheme_or_fail(input_yaml_content=cloudYaml, schema_file_path=cloud_schema)
     current_env_instance_store().beautify(cloudYamlPath, cloud_schema)
 
 def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_dir, comment, is_external_cred_env):
     logger.info(f"Searching credentials for cloud passport {cloud_passport_file_path}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = "credential.schema.json"
     # first searching in subfolder
     passportSubfolderPath = f'{getDirName(cloud_passport_file_path)}/credentials/{cloud_passport_name}.yml'
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"

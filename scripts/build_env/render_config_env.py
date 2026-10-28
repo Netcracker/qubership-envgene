@@ -154,7 +154,11 @@ class EnvGenerator:
             env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
             self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
 
-        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, get_schema_dir() / "template-descriptor.schema.json")
+        validate_yaml_by_scheme_or_fail(
+            env_tmpl_final_path,
+            schema_name="template-descriptor.schema.json",
+            schemas_dir=get_schema_dir(),
+        )
         env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"Loaded env_template from {env_tmpl_final_path}")
         return env_template, suitable_files
@@ -329,18 +333,15 @@ class EnvGenerator:
         tenant_tmpl_path = self.ctx.current_env_template["tenant"]
         self.render_from_file_to_store(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
 
-    def apply_template_override(self, template_override, rendered_object: dict, object_file_name: str, schema_path,
-                                name):
+    def apply_template_override(self, template_override, rendered_object: dict, object_file_name: str, name):
         if not template_override:
             return
         logger.info(f"Apply template override to {object_file_name} for {name}")
         merge_yaml_into_target(rendered_object, '', self.render_from_obj_to_obj(template_override))
-        validate_yaml_by_scheme_or_fail(input_yaml_content=rendered_object, schema_file_path=schema_path)
 
     def render_cloud(self) -> dict:
         cloud = self.calculate_cloud_name()
         cloud_template = self.ctx.current_env_template["cloud"]
-        cloud_schema = get_schema_dir() / "cloud.schema.json"
         context = self.ctx.as_dict()
         is_template_override = isinstance(cloud_template, dict)
         if is_template_override:
@@ -349,7 +350,7 @@ class EnvGenerator:
             rendered_cloud = self.render_from_file_to_obj(Template(cloud_tmpl_path).render(context))
 
             template_override = cloud_template.get("template_override")
-            self.apply_template_override(template_override, rendered_cloud, "cloud.yml", cloud_schema, cloud)
+            self.apply_template_override(template_override, rendered_cloud, "cloud.yml", cloud)
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             rendered_cloud = self.render_from_file_to_obj(Template(cloud_template).render(context))
@@ -382,7 +383,6 @@ class EnvGenerator:
 
     def render_namespaces(self, bgd: dict | None) -> Iterator[tuple[str, dict]]:
         context = self.ctx.as_dict()
-        namespace_schema = get_schema_dir() / "namespace.schema.json"
         namespace_by_deploy_postfix = {}
         for ns in self.ctx.current_env_template["namespaces"]:
             ns_template_path = Template(ns["template_path"]).render(context)
@@ -411,7 +411,7 @@ class EnvGenerator:
             yield folder_postfix, rendered_ns
             namespace_name = self._fetch_template_override_name(effective_ns) or rendered_ns.get("name")
             self.apply_template_override(effective_ns.get("template_override"), rendered_ns, "namespace.yml",
-                                         namespace_schema, folder_postfix)
+                                         folder_postfix)
 
             if role in (NamespaceRole.ORIGIN, NamespaceRole.PEER):
                 sides = namespace_by_deploy_postfix.setdefault(map_key, {})
@@ -456,10 +456,8 @@ class EnvGenerator:
             logger.info(f"Generate Composite Structure yaml for {composite_structure}")
             current_env_dir = self.ctx.current_env_dir
             cs_file = Path(current_env_dir) / "composite_structure.yml"
-            composite = self.render_from_file_to_store(Template(composite_structure).render(self.ctx.as_dict()),
-                                                       cs_file)
-            validate_yaml_by_scheme_or_fail(input_yaml_content=composite,
-                                            schema_file_path=get_schema_dir() / "composite-structure.schema.json")
+            self.render_from_file_to_store(Template(composite_structure).render(self.ctx.as_dict()), cs_file)
+            current_env_instance_store().beautify(cs_file, "composite-structure.schema.json")
 
     def generate_external_cred(self):
         # render external creds
@@ -479,11 +477,12 @@ class EnvGenerator:
         # validate secret file
         secret_store_file = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
         validate_yaml_by_scheme_or_fail(yaml_file_path=secret_store_file,
-                                        schema_file_path=get_schema_dir() / "secret-stores.schema.json")
+                                        schema_name="secret-stores.schema.json",
+                                        schemas_dir=get_schema_dir())
 
         # copy rendered creds to env creds file
         copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT,
-                                     get_schema_dir() / "credential.schema.json")
+                                     "credential.schema.json")
         self.is_external_cred_env = True
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
@@ -520,7 +519,8 @@ class EnvGenerator:
             paramset = openYaml(paramset_path)
             try:
                 validate_yaml_by_scheme_or_fail(input_yaml_content=paramset,
-                                                schema_file_path=get_schema_dir() / "paramset.schema.json")
+                                                schema_name="paramset.schema.json",
+                                                schemas_dir=get_schema_dir())
             except ValueError:
                 errors.append(f'Parameter file at {paramset_path} is invalid, look for details above')
             if paramset.get("name") != paramset_path.stem:
@@ -565,8 +565,6 @@ class EnvGenerator:
                 "artifactId": artifact_id,
             })
             logger.info(f"Validating AppDef {app_name} rendered from {def_tmpl_path}")
-            validate_yaml_by_scheme_or_fail(input_yaml_content=app_def,
-                                            schema_file_path=get_schema_dir() / "appdef.schema.json")
             app_defs[app_name] = app_def
         if not app_defs:
             logger.warning("No AppDef templates rendered")
@@ -578,8 +576,6 @@ class EnvGenerator:
             reg_def = self.render_from_file_to_obj(def_tmpl_path)
             ensure_valid_fields(reg_def, ["name"])
             logger.info(f"Validating RegDef {reg_def.get('name')} rendered from {def_tmpl_path}")
-            validate_yaml_by_scheme_or_fail(input_yaml_content=reg_def,
-                                            input_schema_content=get_regdef_schema_for_content(reg_def))
             reg_defs[reg_def.get('name')] = reg_def
         if not reg_defs:
             logger.warning("No RegDef templates rendered")

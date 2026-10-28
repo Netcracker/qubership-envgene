@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
+from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -213,7 +213,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
 
 def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, applicationsParamSets,
                                       parametersTag, header_text=""):
-    application_schema = f"{get_schema_dir()}/application.schema.json"
+    application_schema = "application.schema.json"
     for appParams in applicationsParamSets:
         appName = appParams["appName"] if "appName" in appParams else appParams["name"]
         applicationParametersFile = os.path.dirname(templatePath) + "/Applications/" + appName + ".yml"
@@ -222,7 +222,6 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
             # get value with potential merge of dicts
             val = get_merged_param_value(j, appDefinition[parametersTag], appParams["parameters"])
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
-        validate_yaml_by_scheme_or_fail(input_yaml_content=appDefinition, schema_file_path=application_schema)
         current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
 
@@ -315,7 +314,6 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
     if has_valid_profile_name(templateContent):
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
-    validate_yaml_by_scheme_or_fail(input_yaml_content=templateContent, schema_file_path=schema_path)
     env_instance_store.beautify(templatePath, schema_path, header_text)
     return
 
@@ -382,10 +380,10 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
     logger.info(f"Env dir: {env_dir}")
     logger.info(f"Parameters dir: {parameters_dir}")
     # const
-    tenant_schema = f"{get_schema_dir()}/tenant.schema.json"
-    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
-    namespace_schema = f"{get_schema_dir()}/namespace.schema.json"
-    profiles_schema = f"{get_schema_dir()}/resource-profile.schema.json"
+    tenant_schema = "tenant.schema.json"
+    cloud_schema = "cloud.schema.json"
+    namespace_schema = "namespace.schema.json"
+    profiles_schema = "resource-profile.schema.json"
 
     logger.info(getEnvDefinitionPath(env_instances_dir))
     templateArtifactName = getTemplateArtifactName(envDefinitionYaml)
@@ -397,8 +395,6 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
 
     # process tenant
     logger.info(f"Processing tenant: {tenantTemplatePath}")
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(tenantTemplatePath),
-                                    schema_file_path=tenant_schema)
     env_instance_store.beautify(tenantTemplatePath, tenant_schema, generated_header_text)
 
     # process cloud

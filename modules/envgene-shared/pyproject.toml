@@ -27,7 +27,6 @@ where = ["."]
 
 [tool.setuptools.package-data]
 envgene_shared = [
-    "schemas/*.json",
     "py.typed"
 ]
 

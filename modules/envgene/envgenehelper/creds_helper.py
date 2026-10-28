@@ -5,7 +5,7 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from envgene_shared.utils.business_utils import getenv_with_error
-from envgene_shared.utils.yaml_utils import openYaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.yaml_utils import openYaml
 from envgene_shared.utils.logger import logger
 from envgene_shared.crypto.crypt import decrypt_file
 from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
@@ -340,7 +340,6 @@ def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_sch
         store_value_to_yaml(env_creds_yaml, key, value)
     # storing credentials yaml
     env_instance_store.put(env_credentials_path, env_creds_yaml)
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_yaml, schema_file_path=creds_schema)
     env_instance_store.beautify(env_credentials_path, creds_schema)
     
 

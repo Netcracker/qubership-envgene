@@ -7,7 +7,7 @@ from os import getenv, path
 from typing import Callable
 
 from envgene_shared.utils.yaml_utils import openYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
-from envgene_shared.utils.business_utils import get_schema_dir, get_project_root
+from envgene_shared.utils.business_utils import get_project_root
 from envgene_shared.utils.file_utils import check_file_exists, get_files_with_filter, is_cred_file
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.collections_utils import split_multi_value_param
@@ -117,7 +117,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
             )
         logger.debug(f"encrypted_regex = {encrypted_regex} for file = {file_path}")
     else:
-        validate_yaml_by_scheme_or_fail(input_yaml_content=file_content, schema_file_path=get_schema_dir() / "credential.schema.json")
+        validate_yaml_by_scheme_or_fail(input_yaml_content=file_content, schema_name="credential.schema.json")
         encrypted_regex = r"^data$"
 
     return CRYPT_FUNCTIONS[crypt_backend](

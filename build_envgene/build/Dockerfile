@@ -23,6 +23,7 @@ FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
+# The base image provides Python headers in /usr/local/include/python3.12.
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
     'libffi-dev=3.5.2-r0' \
@@ -34,10 +35,13 @@ RUN apk add --no-cache \
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
+COPY build_envgene/build/merge_schemas.sh /build/merge_schemas.sh
 
 COPY modules /modules
-COPY schemas /schemas
+COPY schemas /build/envgene-schemas/
 COPY scripts/ /module/scripts/
+
+RUN /bin/sh /build/merge_schemas.sh /build/envgene-schemas /schemas
 
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \

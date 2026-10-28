@@ -16,7 +16,7 @@ from cyclonedx.model.tool import ToolRepository
 from cyclonedx.output.json import JsonV1Dot6
 from cyclonedx.schema import SchemaVersion
 from cyclonedx.validation.json import JsonStrictValidator
-from envgenehelper import logger
+from envgenehelper import get_schema, logger
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
 from packageurl import PackageURL
 from pydantic import ValidationError
@@ -24,7 +24,7 @@ from sbom_generator.utils.errors import NotFoundException, IllegalArgumentExcept
 from sbom_generator.utils.models import Configuration, ARTIFACT_TYPE_TO_MIME, AppChart
 from sbom_generator.utils.models import MimeType, SBOMOutput, Service, Data, \
     Content, Attachment, CustomComponent, DeploymentDescriptor
-from sbom_generator.utils.utils import load_schema, encode_dict_to_base64, load_file, list_files, \
+from sbom_generator.utils.utils import encode_dict_to_base64, load_file, list_files, \
     find_file_by_name_in_dir
 
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, DeployPlanEntity
@@ -377,14 +377,17 @@ def validate_sbom(raw_sbom):
 
 def validate_and_sort_by_schema(obj, schema_name: str):
     obj_json = json.loads(obj)
-    schema = load_schema(schema_name)
+    schema = get_schema(schema_name)
     try:
-        jsonschema.validate(obj_json, schema)
-        obj_sorted = jschon_tools.process_json_doc(
-            schema_data=schema,
-            doc_data=obj_json,
-            sort=True
-        )
+        try:
+            obj_sorted = jschon_tools.process_json_doc(
+                schema_data=schema,
+                doc_data=obj_json,
+                sort=True,
+            )
+        except ValueError:
+            jsonschema.validate(obj_json, schema)
+            raise
         return obj_sorted
     except JsonSchemaValidationError as ex:
         joined_errors = "\n".join(str(error) for error in ex.context)
@@ -459,7 +462,7 @@ def generate_boms(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDown
             registry_name_encoded = urllib.parse.quote(registry.name)
             registries_map.setdefault(registry_name_encoded, registry)
 
-            app_sbom_sorted = validate_and_sort_by_schema(app_sbom, schema_name="application")
+            app_sbom_sorted = validate_and_sort_by_schema(app_sbom, schema_name="generated-application.sbom.schema.json")
             sboms_map.setdefault(appver, app_sbom_sorted)
             logger.debug(f'Application {app_name} SBOM was generated successfully {app_sbom_sorted}')
 

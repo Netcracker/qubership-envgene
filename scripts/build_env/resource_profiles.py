@@ -1,4 +1,4 @@
-from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
+from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
 from build_env.render_config_env import EnvGenerator
 
 
@@ -32,7 +32,11 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, invent
             if found_path:
                 logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
                 env_specific_profile = current_env_instance_store().put(found_path, openYaml(found_path))
-                validate_yaml_by_scheme_or_fail(input_yaml_content=env_specific_profile, schema_file_path=rp_schema)
+                validate_yaml_by_scheme_or_fail(
+                    input_yaml_content=env_specific_profile,
+                    schema_name=Path(rp_schema).name,
+                    schemas_dir=get_schema_dir(),
+                )
                 result[templateType] = str(found_path)
                 break
         if templateType not in result:
@@ -159,7 +163,8 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], templat
         if profile_path not in validity_by_path:
             try:
                 validate_yaml_by_scheme_or_fail(input_yaml_content=current_env_instance_store().get(profile_path),
-                                                schema_file_path=profiles_schema)
+                                                schema_name=Path(profiles_schema).name,
+                                                schemas_dir=get_schema_dir())
                 validity_by_path[profile_path] = True
             except ValueError:
                 validity_by_path[profile_path] = False

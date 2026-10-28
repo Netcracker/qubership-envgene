@@ -9,6 +9,7 @@ from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
+from .models import validate_model_by_schema_name
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
@@ -29,6 +30,7 @@ class CurrentEnvInstanceStore:
     def __init__(self, env_dir):
         self.env_dir = _key(env_dir)
         self._objects = {}
+        self._models = {}
         self._to_write = set()
         self._beautify = {}
 
@@ -41,6 +43,7 @@ class CurrentEnvInstanceStore:
         key = _key(path)
         logger.debug(f"Object store put: {key}")
         self._objects[key] = obj
+        self._models.pop(key, None)
         self._to_write.add(key)
         return obj
 
@@ -82,6 +85,7 @@ class CurrentEnvInstanceStore:
         self.get(key)
         previous_header = self._beautify.get(key, (None, ""))[1]
         self._beautify[key] = (schema_path, header_text or previous_header)
+        self._models.pop(key, None)
         self._to_write.add(key)
         logger.debug(f"Object store beautify: {key} with schema {schema_path}")
 
@@ -92,13 +96,25 @@ class CurrentEnvInstanceStore:
                 continue
             yield key
 
+    def get_model(self, path):
+        key = _key(path)
+        self.get(key)
+        if key not in self._models:
+            raise ValueError(f"No finalized model for {path}: flush a schema-backed object first")
+        return self._models[key]
+
     def flush(self):
         for key in self._write_targets():
+            self._models.pop(key, None)
+            model = None
             data = self._objects[key]
             schema_path, header_text = self._beautify.get(key, (None, ""))
             if key in self._beautify:
                 if schema_path:
-                    data = sortYaml(data, schema_path, False, validate=False)
+                    data = sortYaml(data, schema_path, False, validate=True)
+                    model = validate_model_by_schema_name(
+                        data, Path(str(schema_path)).name, schema_validated=True,
+                    )
                 make_quotes_for_strings(data)
             normalize_comments(data)
             if is_cred_file(str(key)):
@@ -110,6 +126,8 @@ class CurrentEnvInstanceStore:
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
             logger.info(f"Writing {key} (schema: {schema_path})")
             writeToFile(key, text)
+            if model is not None:
+                self._models[key] = model
 
 
 _open_store = None

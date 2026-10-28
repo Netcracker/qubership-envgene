@@ -24,13 +24,11 @@ Pip-installable package (`envgene_shared` — version is a setuptools formality,
 | `collections_utils.py` | `compare_dicts` → `(diff_paths, removed_paths)`; `split_multi_value_param` (comma/semicolon/space/newline) |
 | `logger.py` | Color-coded logger named `"envgene"`, level from `ENVGENE_LOG_LEVEL` |
 
-### `schemas/`
-
-Bundled copies of `config.schema.json` and `credential.schema.json` used for internal validation within this package (e.g., `validate_yaml_by_scheme_or_fail` in `crypt.py`). The canonical copies live in the top-level `schemas/` directory.
-
 ### `crypt_cli.py`
 
 Click CLI (`python -m envgene_shared.crypt_cli`) with four commands: `decrypt_cred_file`, `encrypt_cred_file`, `decrypt_all`, `encrypt_all`. Options `--secret-key` / `--age-private-key` / `--age-public-key` / `--json-schemas-dir` fall back to `SECRET_KEY` / `ENVGENE_AGE_PRIVATE_KEY` / `PUBLIC_AGE_KEYS` / `JSON_SCHEMAS_DIR` env vars.
+
+Schema files are read from the root `schemas/` directory through `JSON_SCHEMAS_DIR`. Runtime images set the schema directory to `/schemas`.
 
 ## Important Conventions
 

@@ -34,6 +34,6 @@ def get_envgene_config_yaml():
     except FileNotFoundError:
         logger.warning(f'Failed to find config file in {envgene_config_path}')
         return get_empty_yaml()
-    validate_yaml_by_scheme_or_fail(input_yaml_content=config, schema_file_path=get_schema_dir() / "config.schema.json")
+    validate_yaml_by_scheme_or_fail(input_yaml_content=config, schema_name="config.schema.json")
     logger.debug(f"Config content: {config}")
     return config

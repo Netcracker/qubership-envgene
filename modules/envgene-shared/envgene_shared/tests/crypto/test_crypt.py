@@ -51,7 +51,7 @@ crypt_functions_data = [ decrypt_file, encrypt_file ]
 
 @pytest.fixture(autouse=True)
 def schema_dir(monkeypatch):
-    schema_dir = Path(__file__).resolve().parents[2] / "schemas"
+    schema_dir = Path(__file__).resolve().parents[5] / "schemas"
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schema_dir))
 
 def reset_test_files():

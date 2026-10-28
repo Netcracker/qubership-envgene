@@ -103,9 +103,12 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
 def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
     if not schemas_dir:
         schemas_dir = get_schema_dir()
-    schemaPath = f"{schemas_dir}/env-definition.schema.json"
     try:
-        validate_yaml_by_scheme_or_fail(env_definition_path, schemaPath)
+        validate_yaml_by_scheme_or_fail(
+            env_definition_path,
+            schema_name="env-definition.schema.json",
+            schemas_dir=schemas_dir,
+        )
     except ValueError:
         raise ValueError(f"Validation of env_definition in '{env_definition_path} failed. See logs above'") from None
 
