@@ -56,6 +56,21 @@ run_single_env_pipeline
 - **At the end the cred store writes only changed files.** A file is changed when its object differs from
   the decrypted object of its original bytes. A changed or new file is encrypted by SOPS. An unchanged file
   is not touched, so `git diff` skips it.
+- **The cred store compares a cred file in Python, an ES cred file in `sops edit`.** Steps read cred files
+  with `get`, so their decrypted original is in memory and the compare costs nothing. Nobody reads ES cred
+  files, so the cred store does not decrypt them: an ES cred file the CLI returns goes to `sops edit`
+  directly, and the editor script compares the objects. A separate decrypt would repeat the decrypt that
+  `sops edit` does anyway. SOPS calls per file:
+
+  | File | Not changed | Changed |
+  |---|---|---|
+  | Cred file read with `get` | 0 | 1: `sops edit` |
+  | Cred file only put: discovery creds, inventory | 1: decrypt to compare | 2: decrypt, `sops edit` |
+  | ES cred file | 1: `sops edit`, exit 200, bytes kept | 1: `sops edit` |
+
+  An ES cred file gets no compare when its literal keys changed, or it is written plain: with `crypt: false`
+  or without literal values. The rule for ES cred files is not used for other cred files: with Fernet and
+  `crypt: false` there is no `sops edit`, and an unchanged file would be rewritten on every run.
 - **A changed file is written with one `sops edit` on its original bytes.** Values that did not change keep
   their old ciphertext, so the diff is minimal at once. A new file has no original bytes and gets a plain
   SOPS encrypt.
