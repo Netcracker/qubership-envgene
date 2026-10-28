@@ -102,6 +102,16 @@ def test_cloud_passport_creds(project):
     assert_untouched(creds, before)
 
 
+def test_cloud_passport_creds_only_in_cred_store(project):
+    env_dir = project / "environments" / "cluster" / "env"
+    passport = project / "environments" / "cluster" / "cloud-passport" / "passport.yml"
+    with open_cred_store() as store, open_current_env_instance_store(env_dir) as objects:
+        store.put(passport.parent / "passport-creds.yml", readYaml(CONTENT))
+        add_cloud_passport_creds("passport", str(passport), str(env_dir), "", False)
+        merged = objects.get(f"{env_dir}/Credentials/credentials.yml")
+    assert merged["first_cred"]["data"]["secret"] == "token-placeholder-123"
+
+
 def test_rotation_read_env_cred_files(project):
     paths = [str(encrypted(project / "environments" / f"cred{i}.yml")) for i in range(9)]
     before = {p: Path(p).read_bytes() for p in paths}

@@ -63,6 +63,11 @@ class CredStore:
             return get_empty_yaml()
         return self._lazy_decrypt(key)
 
+    def exists(self, path) -> bool:
+        key = self._key(path)
+        with self._lock:
+            return key in self._decrypted or os.path.isfile(key)
+
     def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
             self._decrypted[self._key(path)] = obj

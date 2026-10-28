@@ -162,6 +162,18 @@ def test_get_reads_file_unknown_at_open_from_disk(env_dir):
     assert path.read_bytes() == before
 
 
+def test_exists_sees_put_and_disk_but_not_deleted_file(env_dir):
+    on_disk = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    deleted = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
+    only_put = env_dir / "Credentials" / "new-credentials.yml"
+    with open_cred_store() as store:
+        deleted.unlink()
+        store.put(only_put, {"cred": {"type": "secret", "data": {"secret": "value"}}})
+        assert store.exists(on_disk)
+        assert store.exists(only_put)
+        assert not store.exists(deleted)
+
+
 def test_get_missing_file_without_allow_default_raises(env_dir):
     with open_cred_store() as store:
         with pytest.raises(KeyError):
