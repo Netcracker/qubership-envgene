@@ -46,7 +46,7 @@ class CredStore:
     def _key(path):
         return str(Path(path).resolve())
 
-    def _decrypt_original(self, key):
+    def _lazy_decrypt(self, key):
         obj = decrypt_bytes(self._original[key], key)
         with self._lock:
             self._decrypted_original.setdefault(key, copy.deepcopy(obj))
@@ -61,7 +61,7 @@ class CredStore:
                 self._original[key] = Path(key).read_bytes()
         if allow_default and key not in self._original:
             return get_empty_yaml()
-        return self._decrypt_original(key)
+        return self._lazy_decrypt(key)
 
     def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
@@ -75,7 +75,7 @@ class CredStore:
         if key not in self._decrypted_original:
             if is_effective_set_cred_file(key):
                 return True
-            self._decrypt_original(key)
+            self._lazy_decrypt(key)
         return obj != self._decrypted_original[key]
 
     def _sops_edit_base(self, key, obj, is_es):
