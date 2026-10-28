@@ -97,10 +97,7 @@ def process_discovery_files(env_name: str,
 
     process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
-    creds_path = cloud_passport_dir / f"{cloud_name}-creds.yml"
     for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
-        if Path(cp_file) == creds_path:
-            continue
         addHeaderToYaml(cp_file, header_text)
 
 
