@@ -3,6 +3,7 @@
 - [Problem](#problem)
 - [Example](#example)
 - [Design](#design)
+- [Cred store sources](#cred-store-sources)
 - [Changes by step and module](#changes-by-step-and-module)
 - [What changes for the user](#what-changes-for-the-user)
 - [Verification](#verification)
@@ -102,6 +103,24 @@ run_single_env_pipeline
 - **`sortYaml` and `make_quotes_for_strings` move to `envgene_shared`.** The cred store lives there and
   cannot import `envgenehelper`. `envgenehelper` reexports them. `envgene-shared` gets `jschon` and
   `jschon-sort` as dependencies.
+
+## Cred store sources
+
+The cred store reads the encrypted bytes of every file of `get_all_necessary_cred_files` when it opens.
+After that, these steps put cred files into it:
+
+| Step | Trigger | Code | Cred files |
+|---|---|---|---|
+| `PassportStep` | `GET_PASSPORT` | `cloud_passport/main.py::process_credentials` | `<cluster>/cloud-passport/<cloud>-creds.yml`, discovery creds, with a header |
+| `CredentialRotationStep` | `CRED_ROTATION_PAYLOAD` | `creds_rotation/utils/cred_utils.py::update_file` | every env, cluster, and shared cred file that holds a rotated cred |
+| `InventoryGenerationStep` | `ENV_INVENTORY_CONTENT.credentials` | `inventory/env_inventory_generation.py::handle_objects` | `<env>/Inventory/credentials/<name>.yml`, `<cluster>/credentials/<name>.yml`, `environments/credentials/<name>.yml` by `place` |
+| `InventoryGenerationStep` | `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` (deprecated) | `inventory/env_inventory_generation.py::generate_env` | `<env>/Credentials/credentials.yml`, `<env>/Inventory/credentials/inventory_generation_creds.yml` |
+| `EnvBuildStep` | always | `cloud_passport/cloud_passport.py::add_cloud_passport_creds` | `<cloud>-creds.yml` next to the Cloud Passport |
+| `EnvBuildStep` | always | `CurrentEnvInstanceStore.flush()` | every cred file in the env instance store, mainly `<env>/Credentials/credentials.yml` |
+| `GenerateEffectiveSetStep` | always | `effective_set/effective_set_entrypoint.py::_run_cli` | ES cred files the CLI returns on stdout |
+
+A step that changes an object it got from the cred store changes the cred store too, without a `put`.
+Readers get cred files through `decrypt_file` or `current_cred_store().get`.
 
 ## What changes for the user
 
