@@ -3,6 +3,8 @@ import os
 import time
 from typing import List
 
+import yaml
+
 from envgene_shared.utils.logger import logger
 from creds_rotation.core_rotation import process_entry_in_payload
 from envgene_shared.crypto import crypt
@@ -10,7 +12,7 @@ from envgenehelper.errors import RuntimeError, ValidationError, ValueError
 from creds_rotation.models import PayloadEntry, RotationResult, EnvConfig
 from creds_rotation.utils.cred_utils import (
     collect_shared_credentials,
-    decrypt_file,
+    decrypt_payload,
     read_env_cred_files,
     read_shared_cred_files,
     update_cred_content,
@@ -18,14 +20,13 @@ from creds_rotation.utils.cred_utils import (
 )
 from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
-from creds_rotation.utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
+from creds_rotation.utils.yaml_utils import write_yaml_to_file
 from creds_rotation.utils.error_constants import ErrorMessages, ErrorCodes
 
 
 def validate_env_vars(is_encrypted: bool, encrypt_type: str):
     missing_params = []
     values = {}
-    creds_path = "/tmp/payload.yml"
 
     def check_env(var_name):
         value = os.getenv(var_name)
@@ -51,13 +52,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
             )
         elif encrypt_type == "SOPS":
             # Decrypt the Payload file if encrypted with SOPS
-            convert_json_to_yaml(creds_path, cred_payload)
-            payload_data = decrypt_file(
-                creds_path,
-                "SOPS",
-                ErrorMessages.PAYLOAD_DECRYPT_ERROR,
-                ErrorCodes.INVALID_CONFIG_CODE,
-            )
+            payload_data = decrypt_payload(yaml.dump(cred_payload, sort_keys=False).encode("utf-8"))
 
     if missing_params:
         raise ValueError(

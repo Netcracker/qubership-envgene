@@ -95,11 +95,11 @@ def decrypt_and_get_content(is_encrypted, filepath):
         raise ValidationError(ErrorMessages.FILE_READ_ERROR.format(file=filepath, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
 
 
-def decrypt_file(file_path, crypt_backend, error_msg, error_code):
+def decrypt_payload(data):
     try:
-        return crypt.decrypt_file(file_path, in_place=False, ignore_is_crypt=True, crypt_backend=crypt_backend)
+        return crypt.decrypt_bytes(data, "payload.yml", ignore_is_crypt=True)
     except Exception as e:
-        raise ValidationError(error_msg.format(file=file_path, e=str(e)), error_code=error_code)
+        raise ValidationError(ErrorMessages.PAYLOAD_DECRYPT_ERROR.format(e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
 
 
 def update_cred_content(

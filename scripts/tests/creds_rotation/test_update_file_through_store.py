@@ -1,11 +1,12 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
-from creds_rotation.utils.cred_utils import update_file
+from creds_rotation.utils.cred_utils import decrypt_payload, update_file
 from envgene_shared.crypto.cred_store import current_cred_store, open_cred_store
 from envgene_shared.crypto.crypt import decrypt_file, encrypt_file
-from envgene_shared.crypto.sops_handler import is_encrypted_SOPS
+from envgene_shared.crypto.sops_handler import encrypt_SOPS_bytes, is_encrypted_SOPS, is_encrypted_SOPS_text
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.file_utils import writeToFile
@@ -47,3 +48,11 @@ def test_update_file_puts_into_store(cred_file):
     assert cred_file.read_bytes() != before
     assert is_encrypted_SOPS(cred_file)
     assert decrypt_file(cred_file, in_place=False)["first_cred"]["data"]["secret"] == "token-changed-456"
+
+
+def test_decrypt_payload_from_memory(cred_file, tmp_path):
+    payload = {"rotation_items": [{"namespace": "ns", "parameter_key": "KEY", "context": "deployParameters",
+                                   "parameter_value": "secret-value"}]}
+    encrypted = encrypt_SOPS_bytes(yaml.dump(payload, sort_keys=False).encode("utf-8"), "payload.yml")
+    assert is_encrypted_SOPS_text(encrypted.decode("utf-8"))
+    assert decrypt_payload(encrypted) == payload
