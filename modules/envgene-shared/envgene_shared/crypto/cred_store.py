@@ -37,7 +37,6 @@ class CredStore:
         self._original = {}
         self._decrypted_original = {}
         self._decrypted = {}
-        self._put = set()
         self._headers = {}
         for file in files:
             if os.path.isfile(file):
@@ -67,12 +66,11 @@ class CredStore:
     def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
             self._decrypted[self._key(path)] = obj
-            self._put.add(self._key(path))
             if header_text:
                 self._headers[self._key(path)] = header_text
 
     def _is_changed(self, key, obj):
-        if key not in self._original or (key in self._put and not os.path.isfile(key)):
+        if key not in self._original:
             return True
         if key not in self._decrypted_original:
             if is_effective_set_cred_file(key):

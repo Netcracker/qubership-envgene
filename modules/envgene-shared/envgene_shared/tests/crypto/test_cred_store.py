@@ -139,13 +139,12 @@ def test_deleted_file_keeps_original_bytes(env_dir):
     assert not path.exists()
 
 
-def test_put_equal_object_recreates_deleted_file(env_dir):
+def test_put_equal_object_does_not_recreate_deleted_file(env_dir):
     path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
     with open_cred_store() as store:
         path.unlink()
         store.put(path, copy.deepcopy(store.get(path)))
-    assert is_encrypted_SOPS(path)
-    assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-placeholder-123"
+    assert not path.exists()
 
 
 def test_get_missing_file_with_allow_default_returns_empty_and_writes_nothing(env_dir):
@@ -224,12 +223,11 @@ def test_unchanged_es_file_is_byte_equal(env_dir):
     assert path.read_bytes() == before
 
 
-def test_put_equal_object_recreates_deleted_es_file(env_dir):
+def test_put_of_unread_es_file_recreates_deleted_file(env_dir):
     path = make_es_file(env_dir, f"a: one\nr: {ES_REF}\n")
     with open_cred_store() as store:
-        obj = store.get(path)
         path.unlink()
-        store.put(path, copy.deepcopy(obj))
+        store.put(path, {"a": "one", "r": ES_REF})
     assert path.exists()
 
 

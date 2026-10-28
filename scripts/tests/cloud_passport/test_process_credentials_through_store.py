@@ -73,8 +73,17 @@ def test_process_credentials_replaces_existing_creds_file(project, tmp_path_fact
     encrypt_file(creds_path, load_result=False)
     discovery_files = make_discovery_files(tmp_path_factory, DISCOVERY_CONTENT.replace("pass-placeholder-123", password))
     with open_cred_store():
-        cleanup_dir(cloud_passport_dir)
+        cleanup_dir(cloud_passport_dir, keep=["cloud-creds.yml"])
         process_credentials(discovery_files, cloud_passport_dir, "cloud", DISCOVERY_KEY)
     assert creds_path.read_text().startswith("# " + header_text.splitlines()[0])
     assert is_encrypted_SOPS(creds_path)
     assert decrypt_file(creds_path, in_place=False)["first_cred"]["data"]["password"] == password
+
+
+def test_cleanup_dir_keeps_listed_files(tmp_path):
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "file.yml").write_text("a: 1\n")
+    (tmp_path / "other.yml").write_text("a: 1\n")
+    (tmp_path / "cloud-creds.yml").write_text("a: 1\n")
+    cleanup_dir(tmp_path, keep=["cloud-creds.yml"])
+    assert [p.name for p in tmp_path.iterdir()] == ["cloud-creds.yml"]

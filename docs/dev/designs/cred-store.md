@@ -78,6 +78,10 @@ run_single_env_pipeline
   later does not lose its original bytes: `cleanup_dir` of `cloud-passport/`, and the ES modes that delete
   ES directories. So the rules of what each step deletes are not repeated in the cred store. An ES cred
   file that the CLI does not return keeps its state on disk: untouched or deleted by the ES mode.
+- **A `put` of a deleted file writes it only when the object changed.** The cred store does not tell a
+  `put` from a `get`, so it never brings back a file that a step deleted after reading it. No step deletes a
+  cred file and then puts the same object: cloud passport cleanup keeps `<cloud>-creds.yml`, and an ES cred
+  file that nobody read is always written.
 - **A cred file the cred store did not read at open is read from disk on its first `get`.** Creds rotation
   reads `Credentials/credentials.yml` of every env of the cluster, and `get_all_necessary_cred_files`
   holds only the env of `ENV_NAMES`.
