@@ -108,7 +108,8 @@ def test_failed_flow_writes_nothing(env_dir):
     assert (first.read_bytes(), second.read_bytes()) == before
     assert is_encrypted_SOPS(first)
     assert is_encrypted_SOPS(second)
-    assert current_cred_store() is None
+    with pytest.raises(RuntimeError):
+        current_cred_store()
 
 
 def test_open_cred_store_twice_raises(env_dir):

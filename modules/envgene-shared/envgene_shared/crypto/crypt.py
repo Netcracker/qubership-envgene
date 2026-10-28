@@ -39,8 +39,8 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
                  ignore_is_crypt=False,
                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None,
                  load_result=True, _file_info=None, **kwargs):
-    from envgene_shared.crypto.cred_store import current_cred_store
-    store = current_cred_store()
+    from envgene_shared.crypto import cred_store
+    store = cred_store._open_store
     if store is not None and secret_key is None and store.knows(file_path):
         return store.get(file_path)
     res = handle_missing_file(file_path, default_yaml, allow_default)
