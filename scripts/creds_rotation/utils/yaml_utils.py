@@ -4,22 +4,13 @@ import re
 from typing import Any
 from envgene_shared.utils.logger import logger
 from creds_rotation.utils.error_constants import *
-from envgenehelper.errors import ValidationError, ValueError
+from envgenehelper.errors import ValueError
 
 def write_yaml_to_file(file_path: str, contents: Any) -> None:
     logger.debug(f"Writing YAML to file: {file_path}")
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w") as f:
         yaml.safe_dump(contents, f, sort_keys=False)
-
-def get_content_form_file(file: str) -> Any:
-        try:
-            with open(file, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except FileNotFoundError as e:
-            raise
-        except Exception as e:
-            raise ValidationError(ErrorMessages.INVALID_YAML_FILE.format(file=file, e=str(e)), ErrorCodes.INVALID_CONFIG_CODE)
 
 def get_nested_target_key(yaml_data: dict, path: str) -> str:
     current = yaml_data

@@ -32,43 +32,6 @@ async def load_yaml_files_parallel(paths: List[str]) -> Dict[str, dict]:
     return {path: content for path, content in results if content is not None}
 
 
-def scandir_recursive_optimized(
-    path: str,
-    ns_files: List[str],
-    definition_files: List[str],
-    env_creds_files: List[str]
-) -> None:
-
-    yaml_extensions = ('.yml', '.yaml')
-    try:
-        with os.scandir(path) as entries:
-            dirs_to_process = []
-
-            for entry in entries:
-                if entry.is_dir(follow_symlinks=False):
-                    dirs_to_process.append(entry.path)
-                elif entry.is_file(follow_symlinks=False):
-                    name = entry.name
-
-                    if name.endswith(yaml_extensions):
-                        entry_path = entry.path
-
-                        path_obj = Path(entry_path)
-                        path_parts = path_obj.parts
-
-                        if "Namespaces" in path_parts:
-                            ns_files.append(entry_path)
-                        elif name == "env-definition.yml" and "Inventory" in path_parts:
-                            definition_files.append(entry_path)
-                        elif name == "credentials.yml" and "Credentials" in path_parts:
-                            env_creds_files.append(entry_path)
-
-            for dir_path in dirs_to_process:
-                scandir_recursive_optimized(dir_path, ns_files, definition_files, env_creds_files)
-
-    except (OSError, PermissionError):
-        pass
-
 def scandir_recursive(
     path: str,
     ns_files: Set[str],
