@@ -55,8 +55,6 @@ public class SharedData {
 
     private boolean generateCleanupContext;
 
-    private boolean credsFromStdin;
-
     @Builder.Default
     private Map<String, Object> customDeployParamMap = Collections.emptyMap();
     @Builder.Default

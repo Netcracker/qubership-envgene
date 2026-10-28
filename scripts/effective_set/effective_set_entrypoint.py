@@ -195,7 +195,6 @@ def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):
         f"--env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output={effective_set_dir}",
-        "--creds-stdin",
     ]
 
     if dp_path is not None and dp_path.is_file():

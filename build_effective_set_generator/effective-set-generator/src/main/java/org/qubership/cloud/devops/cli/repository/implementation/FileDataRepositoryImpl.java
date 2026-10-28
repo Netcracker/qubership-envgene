@@ -335,14 +335,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 namespaceMap.putIfAbsent(namespace, namespaceDTO);
                 break;
             case "credentials":
-                TypeReference<Map<String, CredentialDTO>> typeReference = new TypeReference<>() {
-                };
-                Map<String, CredentialDTO> credentialDTOMap = sharedData.isCredsFromStdin()
-                        ? null
-                        : fileDataConverter.parseInputFile(typeReference, file.toFile());
-                if (!sharedData.isCredsFromStdin() && credentialDTOMap != null) {
-                    applyCredentials(credentialDTOMap);
-                }
                 break;
             case "composite_structure":
                 CompositeStructureDTO compositeStructureDTO = fileDataConverter.parseInputFile(CompositeStructureDTO.class, file.toFile());
@@ -461,21 +453,14 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadCredentialsFromStdin() throws IOException {
-        if (!sharedData.isCredsFromStdin()) {
-            return;
-        }
         Map<String, CredentialDTO> credentialDTOMap = new ObjectMapper(new YAMLFactory())
                 .readValue(System.in, new TypeReference<>() {
                 });
         if (credentialDTOMap != null) {
-            applyCredentials(credentialDTOMap);
+            validateUniformCredentialTypes(credentialDTOMap);
+            loadSecretStores();
+            inputData.setCredentialDTOMap(credentialDTOMap);
         }
-    }
-
-    private void applyCredentials(Map<String, CredentialDTO> credentialDTOMap) {
-        validateUniformCredentialTypes(credentialDTOMap);
-        loadSecretStores();
-        inputData.setCredentialDTOMap(credentialDTOMap);
     }
 
     private void loadSecretStores() {

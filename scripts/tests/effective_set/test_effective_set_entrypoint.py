@@ -572,11 +572,3 @@ class TestRunCli:
             effective_set_entrypoint._run_cli("cmd")
 
         assert len(store.objects) == 1
-
-    @pytest.mark.unit
-    def test_built_command_has_creds_stdin(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path / "missing")
-
-        command = effective_set_entrypoint._build_cli_cmd(tmp_path, FULL_ENV_NAME, None)
-
-        assert "--creds-stdin" in command

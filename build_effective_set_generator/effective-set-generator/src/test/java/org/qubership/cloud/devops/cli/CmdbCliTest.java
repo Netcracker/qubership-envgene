@@ -93,6 +93,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -126,6 +128,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -231,6 +235,8 @@ public class CmdbCliTest {
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
         Path consumerSchemaPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-02/consumer/consumer-v1.0.schema.json");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-02/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -258,6 +264,8 @@ public class CmdbCliTest {
 
     @Test
     void testCredFilesAreReturnedNotWritten(@TempDir Path tempDir) throws Exception {
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                FileTestUtils.resource("environments/cluster-01/pl-01/Credentials/credentials.yml"))));
         Path outputPath = tempDir.resolve("effective-set");
         int exitCode = new CommandLine(cli).execute(
                 "--env-id", "cluster-01/pl-01",
@@ -289,6 +297,8 @@ public class CmdbCliTest {
 
     @Test
     void testExternalCredentialsFileStillWrittenToDisk(@TempDir Path tempDir) throws Exception {
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                FileTestUtils.resource("environments/cluster-01/pl-02/Credentials/credentials.yml"))));
         Path outputPath = tempDir.resolve("effective-set");
         int exitCode = new CommandLine(cli).execute(
                 "--env-id", "cluster-01/pl-02",
@@ -323,6 +333,8 @@ public class CmdbCliTest {
         Files.writeString(pgNamespace, Files.readString(pgNamespace).replaceFirst(
                 "(?m)^name: ", "cleaned: true\nname: "));
 
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
         Path outputPath = tempDir.resolve("effective-set");
         int exitCode = new CommandLine(cli).execute(
                 "--env-id", "cluster-01/pl-01",
@@ -355,6 +367,8 @@ public class CmdbCliTest {
         Files.writeString(emptyNamespace, Files.readString(
                 envsPath.resolve("cluster-01/pl-01/Namespaces/pg/namespace.yml"))
                 .replace("pl-01-pg", "pl-01-empty"));
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
         int exitCode = new CommandLine(cli).execute(
@@ -574,6 +588,8 @@ public class CmdbCliTest {
 
     private int executeGenerate(Path envsPath, Path sbomsPath, Path deployPlanPath, Path registriesPath,
                                  Path outputPath, String deploymentSessionId) throws Exception {
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-02/Credentials/credentials.yml"))));
         CommandLine cmd = new CommandLine(cli);
         return cmd.execute(
                 "--env-id", "cluster-01/pl-02",
@@ -608,8 +624,7 @@ public class CmdbCliTest {
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
                 "--app_chart_validation", "false",
-                "--custom-params", "@config.json",
-                "--creds-stdin");
+                "--custom-params", "@config.json");
 
         assertEquals(0, exitCode);
         FileTestUtils.compareFolders(FileTestUtils.resource("environments/cluster-01/pl-01/effective-set"), outputPath,
@@ -652,7 +667,6 @@ public class CmdbCliTest {
             sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
             sharedData.setDeployPlanPath(Optional.empty());
             sharedData.setGenerateCleanupContext(false);
-            sharedData.setCredsFromStdin(false);
         }
     }
 }
