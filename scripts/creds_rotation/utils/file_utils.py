@@ -2,7 +2,7 @@ import os, time
 import asyncio
 from pathlib import Path
 import aiofiles
-import yaml, json
+import yaml
 from typing import Any, Dict, List, Tuple, Set
 from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.search_utils import trim_path_from_environments
@@ -67,11 +67,6 @@ def scan_and_get_yaml_files(
     env_files_map = asyncio.run(load_yaml_files_parallel(env_def_files))
     return  entity_files_map, env_files_map, env_creds_files
 
-
-def openJson(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
-    return json.loads(content)
 
 def write_cred_file_path(cred_paths:  List[str], env_dir: str):
     with open(f"{env_dir}/credfilestoupdate.yml", "w") as f:

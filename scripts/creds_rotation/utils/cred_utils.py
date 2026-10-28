@@ -5,7 +5,7 @@ import re
 from typing import Any, Dict, List, Tuple, Optional, Set
 from creds_rotation.models import CredMap
 from creds_rotation.utils.yaml_utils import get_nested_target_key
-from creds_rotation.utils.file_utils import openJson
+from envgene_shared.utils.file_utils import openJson
 from pathlib import Path
 from envgene_shared.crypto import crypt
 from envgene_shared.crypto.cred_store import current_cred_store
