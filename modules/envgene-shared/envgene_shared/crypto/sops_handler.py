@@ -27,12 +27,12 @@ def _sops_subprocess_env(secret_key=None, **extra):
     return env
 
 
-def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, **env_extra):
+def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, stdin_text=None, **env_extra):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
     cmd = ['sops'] + cmd_arg
     env = _sops_subprocess_env(secret_key, **env_extra)
     result = subprocess.run(
-        cmd, shell=False, capture_output=True, text=True, timeout=25, env=env
+        cmd, shell=False, capture_output=True, text=True, timeout=25, env=env, input=stdin_text
     )
     if "metadata not found" in result.stderr:
         raise ValueError('File was already decrypted')
@@ -152,6 +152,33 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     return _return_sops_result(file_path, mode, in_place, load_result, stdout)
 
 
+def decrypt_SOPS_bytes(data: bytes, file_path, secret_key=None) -> str:
+    sops_args = ["decrypt", "--input-type", "yaml", "--output-type", "yaml", "--filename-override", str(file_path)]
+    return _run_SOPS(sops_args, secret_key=secret_key, stdin_text=data.decode("utf-8")).stdout
+
+
+def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: bytes = None) -> bytes:
+    global PUBLIC_AGE_KEYS
+    if PUBLIC_AGE_KEYS is None:
+        PUBLIC_AGE_KEYS = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
+    if old_data is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            old_path = os.path.join(tmp, "old.yml")
+            new_path = os.path.join(tmp, "new.yml")
+            with open(old_path, "wb") as f:
+                f.write(old_data)
+            with open(new_path, "wb") as f:
+                f.write(data)
+            _sops_edit(old_path, new_path, PUBLIC_AGE_KEYS)
+            with open(old_path, "rb") as f:
+                return f.read()
+    sops_args = ["encrypt", "--input-type", "yaml", "--output-type", "yaml", "--age", PUBLIC_AGE_KEYS]
+    if encrypted_regex is not None:
+        sops_args.extend(["--encrypted-regex", encrypted_regex])
+    sops_args.extend(["--filename-override", str(file_path)])
+    return _run_SOPS(sops_args, stdin_text=data.decode("utf-8")).stdout.encode("utf-8")
+
+
 def extract_value_SOPS(file_path, attribute_str):
     attribute_list = attribute_str.split('.')
     attribute_param = ''.join(f'["{item}"]' for item in attribute_list)
@@ -170,6 +197,10 @@ def is_encrypted_SOPS(file_path):
             text = f.read()
     except OSError:
         return False
+    return is_encrypted_SOPS_text(text)
+
+
+def is_encrypted_SOPS_text(text: str) -> bool:
     if not text:
         return False
     for line in reversed(text.splitlines()):

@@ -87,6 +87,21 @@ def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_
         return new_data if load_result else None
     return new_data
 
+def decrypt_Fernet_data(data, secret_key=None):
+    if not secret_key:
+        secret_key = getenv_with_error("SECRET_KEY")
+    if not isinstance(data, dict):
+        return {}
+    return _apply_Fernet(data, Fernet(secret_key), _decrypt_Fernet)
+
+
+def encrypt_Fernet_data(data, encrypted_regex=None):
+    if not isinstance(data, dict):
+        return {}
+    compiled_regex = re.compile(encrypted_regex) if encrypted_regex else None
+    return _apply_Fernet(data, Fernet(getenv_with_error("SECRET_KEY")), _encrypt_Fernet, compiled_regex)
+
+
 def is_encrypted_Fernet(file_path):
     content = openYaml(file_path)
     return _is_encrypted_Fernet(content)

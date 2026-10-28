@@ -5,12 +5,12 @@ from pathlib import Path
 import pytest
 
 from envgene_shared.crypto.cred_store import CredStore, current_cred_store, open_cred_store
-from envgene_shared.crypto.crypt import decrypt_file, encrypt_file, is_encrypted
+from envgene_shared.crypto.crypt import decrypt_bytes, decrypt_file, encrypt_bytes, encrypt_file, is_encrypted
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
-from envgene_shared.crypto.sops_handler import _sops_edit, is_encrypted_SOPS
+from envgene_shared.crypto.sops_handler import _sops_edit, is_encrypted_SOPS, is_encrypted_SOPS_text
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.file_utils import writeToFile
-from envgene_shared.utils.yaml_utils import openYaml, yaml
+from envgene_shared.utils.yaml_utils import openYaml, readYaml, yaml
 
 SOPS_DATA, FERNET_DATA, PLAIN_DATA = crypt_test_data
 
@@ -304,3 +304,13 @@ def test_invalid_cred_file_fails_on_write(plain_env_dir):
     with pytest.raises(ValueError):
         with open_cred_store() as store:
             store.put(path, {"cred": "not-an-object"})
+
+
+@pytest.mark.parametrize("data", [SOPS_DATA, FERNET_DATA], ids=["SOPS", "Fernet"])
+def test_bytes_round_trip_without_disk(monkeypatch, tmp_path, data):
+    configure(monkeypatch, tmp_path, data)
+    path = tmp_path / "environments" / "cluster" / "env" / "Credentials" / "credentials.yml"
+    encrypted = encrypt_bytes(CONTENT.encode("utf-8"), path)
+    assert is_encrypted_SOPS_text(encrypted.decode("utf-8")) is (data is SOPS_DATA)
+    assert decrypt_bytes(encrypted, path) == readYaml(CONTENT)
+    assert not path.exists()

@@ -1,22 +1,18 @@
 import copy
 import os
-import shutil
-import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterable
 
-from envgene_shared.crypto.crypt import (
-    CRYPT_FUNCTIONS, decrypt_file, encrypt_file, get_all_necessary_cred_files, is_encrypted_SOPS
-)
+from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, get_all_necessary_cred_files
+from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
 from envgene_shared.utils.constants import SOPS_ID
 from envgene_shared.utils.crypt_utils import analyze_cred_file, get_crypt_backend, is_effective_set_cred_file
-from envgene_shared.utils.file_utils import writeToFile
-from envgene_shared.utils.yaml_utils import make_quotes_for_strings, openYaml, remove_cred_yaml_comments, \
-    sortYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import dumpYamlToStr, make_quotes_for_strings, readYaml, \
+    remove_cred_yaml_comments, sortYaml
 
 
 def _encrypted_literal_keys(value, keys=None):
@@ -56,10 +52,7 @@ class CredStore:
         return key in self._original or key in self._decrypted
 
     def _decrypt_original(self, key):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_file = Path(tmp) / Path(key).name
-            tmp_file.write_bytes(self._original[key])
-            obj = decrypt_file(tmp_file, in_place=False)
+        obj = decrypt_bytes(self._original[key], key)
         with self._lock:
             self._decrypted_original.setdefault(key, copy.deepcopy(obj))
             return self._decrypted.setdefault(key, obj)
@@ -87,33 +80,31 @@ class CredStore:
             self._decrypt_original(key)
         return obj != self._decrypted_original[key]
 
+    def _sops_edit_base(self, key, obj, is_es):
+        old_data = self._original.get(key)
+        if get_crypt_backend() != SOPS_ID or old_data is None:
+            return None
+        old_text = old_data.decode("utf-8")
+        if not is_encrypted_SOPS_text(old_text):
+            return None
+        if is_es and _encrypted_literal_keys(readYaml(old_text)) != analyze_cred_file(obj)[0]:
+            return None
+        return old_data
+
     def _write(self, key, obj):
         path = Path(key)
-        os.makedirs(path.parent, exist_ok=True)
         is_es = is_effective_set_cred_file(key)
         if not is_es:
             obj = sortYaml(obj, get_schema_dir() / "credential.schema.json", False, validate=False)
             make_quotes_for_strings(obj)
             remove_cred_yaml_comments(obj)
-        with tempfile.TemporaryDirectory() as tmp:
-            work_file = Path(tmp) / ("effective-set" if is_es else "Credentials") / path.name
-            writeYamlToFile(work_file, obj)
-            encrypt_kwargs = {}
-            old_bytes = self._original.get(key)
-            if get_crypt_backend() == SOPS_ID and old_bytes is not None:
-                old_file = Path(tmp) / "old" / path.name
-                os.makedirs(old_file.parent)
-                old_file.write_bytes(old_bytes)
-                if is_encrypted_SOPS(old_file) and (
-                        not is_es or _encrypted_literal_keys(openYaml(old_file)) == analyze_cred_file(obj)[0]):
-                    encrypt_kwargs = {"minimize_diff": True, "old_file_path": str(old_file)}
-            encrypt_file(work_file, in_place=True, load_result=False, validate=False, **encrypt_kwargs)
-            shutil.copyfile(work_file, path)
+        data = encrypt_bytes(dumpYamlToStr(obj).encode("utf-8"), key, old_data=self._sops_edit_base(key, obj, is_es),
+                             validate=False)
         header_text = self._headers.get(key)
-        if header_text:
-            content = path.read_text(encoding="utf-8")
-            if not content.startswith("#"):
-                writeToFile(path, "# " + header_text.replace("\n", "\n# ") + "\n" + content)
+        if header_text and not data.startswith(b"#"):
+            data = ("# " + header_text.replace("\n", "\n# ") + "\n").encode("utf-8") + data
+        os.makedirs(path.parent, exist_ok=True)
+        path.write_bytes(data)
 
     def write_changed(self) -> None:
         with self._lock:

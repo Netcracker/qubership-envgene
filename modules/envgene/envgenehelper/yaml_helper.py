@@ -23,19 +23,13 @@ from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, 
     validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
     remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
     ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
-    yaml, safe_yaml, sortYaml, make_quotes_for_strings
+    yaml, safe_yaml, sortYaml, make_quotes_for_strings, dumpYamlToStr
 
 
 def convert_dict_to_yaml(d):
     if isinstance(d, ruyaml.CommentedMap):
         return d
     return ruyaml.CommentedMap(d)
-
-
-def dumpYamlToStr(content):
-    buffer = StringIO()
-    yaml.dump(content, buffer)
-    return buffer.getvalue()
 
 
 def addHeaderToYaml(file_path: str, header_text: str):

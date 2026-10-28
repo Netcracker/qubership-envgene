@@ -56,6 +56,11 @@ def is_empty_cred_file(file_path: str) -> bool:
             text = f.read().strip()
     except OSError:
         return True
+    return is_empty_cred_text(text)
+
+
+def is_empty_cred_text(text: str) -> bool:
+    text = text.strip()
     if not text:
         return True
     return text in ('{}', '---', 'null', '~')

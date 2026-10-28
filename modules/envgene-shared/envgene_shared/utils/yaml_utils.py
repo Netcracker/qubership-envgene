@@ -1,4 +1,5 @@
 from functools import lru_cache
+from io import StringIO
 import os
 import ruyaml
 import threading
@@ -142,6 +143,12 @@ def convert_ordereddict_to_dict(obj):
         return [convert_ordereddict_to_dict(i) for i in obj]
     else:
         return obj
+
+
+def dumpYamlToStr(content):
+    buffer = StringIO()
+    yaml.dump(content, buffer)
+    return buffer.getvalue()
 
 
 def writeYamlToFile(filePath, contents):
