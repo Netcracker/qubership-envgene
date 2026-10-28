@@ -1,6 +1,5 @@
 import os
 import re
-import shutil
 import time
 from pathlib import Path
 from urllib.parse import quote
@@ -44,14 +43,13 @@ def get_integration_config(integration_config_path) -> dict:
 
 def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key):
     creds_path = cloud_passport_dir / f"{cloud_name}-creds.yml"
-
+    sensitive_file = creds_path
     for f in discovery_files:
         if "sensitive" in f.name:
             update_creds_to_cmdb_format(f)
-            shutil.copyfile(f, creds_path)
-    creds = crypt.decrypt_file(creds_path, secret_key=discovery_secret_key, in_place=False, is_crypt=True)
-    logger.info(f"Decrypted credential-cp file by discovery secret key: {creds_path}")
-    os.remove(creds_path)
+            sensitive_file = f
+    creds = crypt.decrypt_file(sensitive_file, secret_key=discovery_secret_key, in_place=False, is_crypt=True)
+    logger.info(f"Decrypted credential-cp file by discovery secret key: {sensitive_file}")
     current_cred_store().put(creds_path, creds, header_text)
 
 
@@ -99,10 +97,7 @@ def process_discovery_files(env_name: str,
 
     process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
-    creds_path = cloud_passport_dir / f"{cloud_name}-creds.yml"
     for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
-        if Path(cp_file) == creds_path:
-            continue
         addHeaderToYaml(cp_file, header_text)
 
 
