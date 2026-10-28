@@ -40,7 +40,7 @@ class CredStore:
         self._lock = threading.Lock()
         self._original = {}
         self._decrypted_original = {}
-        self._objects = {}
+        self._decrypted = {}
         self._put = set()
         self._headers = {}
         for file in files:
@@ -53,7 +53,7 @@ class CredStore:
 
     def knows(self, path) -> bool:
         key = self._key(path)
-        return key in self._original or key in self._objects
+        return key in self._original or key in self._decrypted
 
     def _decrypt_original(self, key):
         with tempfile.TemporaryDirectory() as tmp:
@@ -62,18 +62,18 @@ class CredStore:
             obj = decrypt_file(tmp_file, in_place=False)
         with self._lock:
             self._decrypted_original.setdefault(key, copy.deepcopy(obj))
-            return self._objects.setdefault(key, obj)
+            return self._decrypted.setdefault(key, obj)
 
     def get(self, path) -> dict:
         key = self._key(path)
         with self._lock:
-            if key in self._objects:
-                return self._objects[key]
+            if key in self._decrypted:
+                return self._decrypted[key]
         return self._decrypt_original(key)
 
     def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
-            self._objects[self._key(path)] = obj
+            self._decrypted[self._key(path)] = obj
             self._put.add(self._key(path))
             if header_text:
                 self._headers[self._key(path)] = header_text
@@ -117,8 +117,8 @@ class CredStore:
 
     def write_changed(self) -> None:
         with self._lock:
-            objects = dict(self._objects)
-        changed = {key: obj for key, obj in objects.items() if self._is_changed(key, obj)}
+            decrypted = dict(self._decrypted)
+        changed = {key: obj for key, obj in decrypted.items() if self._is_changed(key, obj)}
         if not changed:
             return
         with ThreadPoolExecutor(max_workers=min(len(changed), os.cpu_count() or 2)) as executor:
