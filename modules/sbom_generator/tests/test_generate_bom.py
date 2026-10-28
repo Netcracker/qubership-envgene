@@ -1,6 +1,6 @@
 import base64
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aioresponses import aioresponses
@@ -119,6 +119,42 @@ class TestSBOMGenerator:
     def test_stable_bom_ref_is_deterministic(self):
         assert _stable_bom_ref('service', 'v1') == _stable_bom_ref('service', 'v1')
         assert len(_stable_bom_ref('service', 'v1')) == 16
+
+    def test_downloads_all_dds_but_only_unresolved_app_zips(self):
+        app_versions = ["resolved:1.0", "missing:1.0"]
+        dd_artifacts = [MagicMock(name="resolved-dd"), MagicMock(name="missing-dd")]
+        zip_artifacts = [MagicMock(name="resolved-zip"), MagicMock(name="missing-zip")]
+        download_all = AsyncMock(side_effect=lambda artifacts: artifacts)
+
+        with patch("effective_set.dd_downloading.resolve_artifacts", return_value=(dd_artifacts, zip_artifacts)), \
+                patch("effective_set.dd_downloading.artifact.download_all_async", download_all), \
+                patch("effective_set.dd_downloading.extract_artifact_contents"):
+            actual_dd, actual_zip = download_dd_and_zip_artifacts(
+                app_versions, unresolved_app_versions=["missing:1.0"])
+
+        assert actual_dd == dd_artifacts
+        assert actual_zip == [zip_artifacts[1]]
+        download_all.assert_any_await(dd_artifacts)
+        download_all.assert_any_await([zip_artifacts[1]])
+        assert download_all.await_count == 2
+
+    def test_missing_zip_does_not_fail_download(self):
+        dd_artifacts = [MagicMock(name="dd")]
+        zip_artifacts = [MagicMock(name="zip")]
+
+        async def _download(artifacts):
+            if artifacts == zip_artifacts:
+                raise ValueError("not found")
+            return artifacts
+
+        with patch("effective_set.dd_downloading.resolve_artifacts", return_value=(dd_artifacts, zip_artifacts)), \
+                patch("effective_set.dd_downloading.artifact.download_all_async", side_effect=_download), \
+                patch("effective_set.dd_downloading.extract_artifact_contents"):
+            actual_dd, actual_zip = download_dd_and_zip_artifacts(
+                ["app:1.0"], unresolved_app_versions=["app:1.0"])
+
+        assert actual_dd == dd_artifacts
+        assert actual_zip == []
 
     def test_v2_docker_config_compatibility(self):
         applications = [Application.model_validate(app) for app in
