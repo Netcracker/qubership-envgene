@@ -83,11 +83,35 @@ run_single_env_pipeline
 - **The literal keys of an old ES cred file are read from its encrypted bytes.** SOPS encrypts values only.
   Keys stay plain, and a literal value is `ENC[...]`.
 - **With `crypt: false` the cred store reads and writes plain files.** Nothing to decrypt or encrypt.
+- **The cred store formats every cred file the same way before it writes it.** Before, each step formatted
+  its own files or did not format them: `flush()` and cloud passport sorted and quoted, inventory only
+  quoted, discovery creds, deprecated inventory and creds rotation did nothing. Now the steps only `put`,
+  and the cred store sorts the file by the creds schema, quotes the strings, and removes the comments.
+  `normalize_comments` is not called: the comments are removed anyway.
+- **An ES cred file is not formatted.** It is a file of deployment parameters, not of Credential objects.
+  The creds schema does not describe it. The cred store holds it only to encrypt it and keep the diff
+  minimal.
+- **Sorting by the creds schema validates the file.** `jschon` fails on a document that does not match the
+  schema, `sortYaml(validate=False)` does not turn this off. So the cred store calls `encrypt_file` with
+  `validate=False`, and a cred file is validated once. `crypt_cli` and the pre-commit hook call
+  `encrypt_file` with the default `validate=True`.
+- **Validation stays where it was.** Cloud passport creds validated inside `sortYaml` before. Now they
+  call `validate_yaml_by_scheme_or_fail` explicitly.
+- **A header is passed with `put`.** Only discovery creds have a header. The cred store writes it as text
+  at the top of the file after encryption, as `addHeaderToYaml` did before.
+- **`sortYaml` and `make_quotes_for_strings` move to `envgene_shared`.** The cred store lives there and
+  cannot import `envgenehelper`. `envgenehelper` reexports them. `envgene-shared` gets `jschon` and
+  `jschon-sort` as dependencies.
 
 ## What changes for the user
 
 - Cred files are never decrypted on disk, also after a failed step. The job artifact has no decrypted
   creds.
+- With `crypt: false`, a cred file from discovery creds, `ENV_INVENTORY_CONTENT.credentials`,
+  `ENV_INVENTORY_INIT` / `ENV_SPECIFIC_PARAMS`, or creds rotation is validated by the creds schema. Before,
+  `crypt: false` skipped validation for them. With `crypt: true` they were validated by `encrypt_file`
+  before, and the error message is now shorter: `Document failed schema validation`.
+- Cred files from these sources are written sorted, quoted, and without comments, as env creds were before.
 - `external-credentials.yaml` is committed unencrypted. Before, `strategy` and the `data` markers were
   encrypted, because `analyze_cred_file` takes every string without `ref+` as a secret.
 
@@ -96,3 +120,7 @@ run_single_env_pipeline
 - `CurrentEnvInstanceStore` lifetime. It stays inside `EnvBuildStep`. Nothing is taken from
   `perf/widen-object-store`.
 - `ThreadPoolExecutor` to `ProcessPoolExecutor`. Decide after the measurement.
+- A detailed validation error in the cred store. The only validation there is the one inside sorting by
+  `jschon`, with its short error message.
+- Validation of ES cred files. `credential-encryption.md` says a file that is not a flat key-value map
+  fails with a schema violation. The code does not check it, before and after this change.

@@ -73,7 +73,7 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
 def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False, is_crypt=None,
                  minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False,
-                 load_result=True, **kwargs):
+                 load_result=True, validate=True, **kwargs):
     crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
     if minimize_diff:
         if not old_file_path:
@@ -120,7 +120,8 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
             )
         logger.debug(f"encrypted_regex = {encrypted_regex} for file = {file_path}")
     else:
-        validate_yaml_by_scheme_or_fail(input_yaml_content=file_content, schema_file_path=get_schema_dir() / "credential.schema.json")
+        if validate:
+            validate_yaml_by_scheme_or_fail(input_yaml_content=file_content, schema_file_path=get_schema_dir() / "credential.schema.json")
         encrypted_regex = r"^data$"
 
     return CRYPT_FUNCTIONS[crypt_backend](

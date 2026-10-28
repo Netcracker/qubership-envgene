@@ -52,8 +52,7 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
     creds = crypt.decrypt_file(creds_path, secret_key=discovery_secret_key, in_place=False, is_crypt=True)
     logger.info(f"Decrypted credential-cp file by discovery secret key: {creds_path}")
     os.remove(creds_path)
-    creds.yaml_set_start_comment(header_text)
-    current_cred_store().put(creds_path, creds)
+    current_cred_store().put(creds_path, creds, header_text)
 
 
 # {{ secrets('name.username') }} -> ${creds.get("name").password}

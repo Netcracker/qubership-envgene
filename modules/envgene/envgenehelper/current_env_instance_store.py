@@ -7,7 +7,7 @@ from ruyaml import CommentedMap
 from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import remove_empty_list_comments
 
 from .business_helper import NamespaceFile
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
@@ -96,18 +96,16 @@ class CurrentEnvInstanceStore:
     def flush(self):
         for key in self._write_targets():
             data = self._objects[key]
+            if is_cred_file(str(key)):
+                current_cred_store().put(key, data)
+                continue
             schema_path, header_text = self._beautify.get(key, (None, ""))
             if key in self._beautify:
                 if schema_path:
                     data = sortYaml(data, schema_path, False, validate=False)
                 make_quotes_for_strings(data)
             normalize_comments(data)
-            if is_cred_file(str(key)):
-                remove_cred_yaml_comments(data)
-                current_cred_store().put(key, data)
-                continue
-            else:
-                remove_empty_list_comments(data)
+            remove_empty_list_comments(data)
             text = dumpYamlToStr(data)
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text

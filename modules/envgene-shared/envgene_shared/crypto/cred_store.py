@@ -11,9 +11,12 @@ from typing import Iterable
 from envgene_shared.crypto.crypt import (
     CRYPT_FUNCTIONS, decrypt_file, encrypt_file, get_all_necessary_cred_files, is_encrypted_SOPS
 )
+from envgene_shared.utils.business_utils import get_schema_dir
 from envgene_shared.utils.constants import SOPS_ID
 from envgene_shared.utils.crypt_utils import analyze_cred_file, get_crypt_backend, is_effective_set_cred_file
-from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
+from envgene_shared.utils.file_utils import writeToFile
+from envgene_shared.utils.yaml_utils import make_quotes_for_strings, openYaml, remove_cred_yaml_comments, \
+    sortYaml, writeYamlToFile
 
 
 def _encrypted_literal_keys(value, keys=None):
@@ -39,6 +42,7 @@ class CredStore:
         self._decrypted_original = {}
         self._objects = {}
         self._put = set()
+        self._headers = {}
         for file in files:
             if os.path.isfile(file):
                 self._original[self._key(file)] = Path(file).read_bytes()
@@ -67,10 +71,12 @@ class CredStore:
                 return self._objects[key]
         return self._decrypt_original(key)
 
-    def put(self, path, obj: dict) -> None:
+    def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
             self._objects[self._key(path)] = obj
             self._put.add(self._key(path))
+            if header_text:
+                self._headers[self._key(path)] = header_text
 
     def _is_changed(self, key, obj):
         if key not in self._original or (key in self._put and not os.path.isfile(key)):
@@ -85,6 +91,10 @@ class CredStore:
         path = Path(key)
         os.makedirs(path.parent, exist_ok=True)
         is_es = is_effective_set_cred_file(key)
+        if not is_es:
+            obj = sortYaml(obj, get_schema_dir() / "credential.schema.json", False, validate=False)
+            make_quotes_for_strings(obj)
+            remove_cred_yaml_comments(obj)
         with tempfile.TemporaryDirectory() as tmp:
             work_file = Path(tmp) / ("effective-set" if is_es else "Credentials") / path.name
             writeYamlToFile(work_file, obj)
@@ -97,8 +107,13 @@ class CredStore:
                 if is_encrypted_SOPS(old_file) and (
                         not is_es or _encrypted_literal_keys(openYaml(old_file)) == analyze_cred_file(obj)[0]):
                     encrypt_kwargs = {"minimize_diff": True, "old_file_path": str(old_file)}
-            encrypt_file(work_file, in_place=True, load_result=False, **encrypt_kwargs)
+            encrypt_file(work_file, in_place=True, load_result=False, validate=False, **encrypt_kwargs)
             shutil.copyfile(work_file, path)
+        header_text = self._headers.get(key)
+        if header_text:
+            content = path.read_text(encoding="utf-8")
+            if not content.startswith("#"):
+                writeToFile(path, "# " + header_text.replace("\n", "\n# ") + "\n" + content)
 
     def write_changed(self) -> None:
         with self._lock:

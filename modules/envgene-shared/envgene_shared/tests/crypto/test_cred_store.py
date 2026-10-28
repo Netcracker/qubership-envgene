@@ -10,7 +10,7 @@ from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.crypto.sops_handler import _sops_edit, is_encrypted_SOPS
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.file_utils import writeToFile
-from envgene_shared.utils.yaml_utils import openYaml
+from envgene_shared.utils.yaml_utils import openYaml, yaml
 
 SOPS_DATA, FERNET_DATA, PLAIN_DATA = crypt_test_data
 
@@ -127,7 +127,6 @@ def test_path_forms_share_one_entry(env_dir, monkeypatch):
         assert store.get(Path(path)) is obj
         assert store.get("credentials.yml") is obj
         assert store.get(path.parent / ".." / "Credentials" / "credentials.yml") is obj
-        store.put(path, openYaml(str(path)))
 
 
 def test_deleted_file_keeps_original_bytes(env_dir):
@@ -267,3 +266,40 @@ def test_put_is_thread_safe(tmp_path):
     for thread in threads:
         thread.join()
     assert [store.get(path) for path in paths] == [{"index": index} for index in range(50)]
+
+
+@pytest.fixture
+def plain_env_dir(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path, PLAIN_DATA)
+    return tmp_path / "environments" / "cluster" / "env"
+
+
+def test_cred_file_written_sorted_quoted_without_comments(plain_env_dir):
+    path = plain_env_dir / "Credentials" / "credentials.yml"
+    with open_cred_store() as store:
+        store.put(path, yaml.load("# top\ncred:\n  data:\n    secret: value  # eol\n  type: secret\n"))
+    text = path.read_text(encoding="utf-8")
+    assert list(openYaml(str(path))["cred"]) == ["type", "data"]
+    assert 'secret: "value"' in text
+    assert "#" not in text
+
+
+def test_es_file_written_unformatted(plain_env_dir):
+    path = plain_env_dir / "effective-set" / "runtime" / "credentials.yaml"
+    with open_cred_store() as store:
+        store.put(path, {"b": "two", "a": "one"})
+    assert path.read_text(encoding="utf-8") == "b: two\na: one\n"
+
+
+def test_header_written_before_content(plain_env_dir):
+    path = plain_env_dir.parent / "cloud-passport" / "cloud-creds.yml"
+    with open_cred_store() as store:
+        store.put(path, {"cred": {"type": "secret", "data": {"secret": "value"}}}, "first\nsecond")
+    assert path.read_text(encoding="utf-8").startswith("# first\n# second\ncred:")
+
+
+def test_invalid_cred_file_fails_on_write(plain_env_dir):
+    path = plain_env_dir / "Credentials" / "credentials.yml"
+    with pytest.raises(ValueError):
+        with open_cred_store() as store:
+            store.put(path, {"cred": "not-an-object"})

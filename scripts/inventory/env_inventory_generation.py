@@ -2,11 +2,10 @@ import envgenehelper as helper
 from envgene_shared.utils.logger import logger
 from enum import Enum
 from pathlib import Path
-import copy
 import json
 import jsonschema
 
-from envgenehelper import beautifyYaml, make_quotes_for_strings, normalize_comments, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgene_shared.crypto.cred_store import current_cred_store
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
@@ -198,10 +197,7 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
         logger.info(f"Processing {subdir}, action={action.value}, place={place.value}. Target path: {obj_path}")
         if action is Action.CREATE_OR_REPLACE:
             if encrypt:
-                cred_content = copy.deepcopy(content)
-                make_quotes_for_strings(cred_content)
-                normalize_comments(cred_content)
-                current_cred_store().put(obj_path, cred_content)
+                current_cred_store().put(obj_path, content)
                 continue
             writeYamlToFile(obj_path, content)
             beautifyYaml(obj_path)
