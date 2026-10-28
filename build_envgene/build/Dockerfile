@@ -48,7 +48,7 @@ ARG RUN_JAVA_VERSION=1.3.8
 RUN apk add --no-cache \
     'libffi-dev=3.5.2-r0' \
     'openssl-dev=3.5.9-r0' \
-    'python3-dev=3.12.15-r0' \
+    'python3-dev=3.12.16-r0' \
     'cargo=1.91.1-r2' \
     'rust=1.91.1-r2' \
     'build-base=0.5-r3' \
