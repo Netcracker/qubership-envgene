@@ -54,7 +54,6 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
             convert_json_to_yaml(creds_path, cred_payload)
             payload_data = decrypt_file(
                 creds_path,
-                True,
                 "SOPS",
                 ErrorMessages.PAYLOAD_DECRYPT_ERROR,
                 ErrorCodes.INVALID_CONFIG_CODE,
