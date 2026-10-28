@@ -10,7 +10,7 @@ from ruyaml import CommentedMap
 
 from envgenehelper.yaml_helper import set_nested_yaml_attribute
 from envgene_shared.utils.collections_utils import compare_dicts
-from envgene_shared.crypto.crypt import decrypt_file, encrypt_file, is_encrypted, _parallel_cred_op, detect_crypt_backend_from_file, decrypted_cred_files
+from envgene_shared.crypto.crypt import decrypt_file, encrypt_file, is_encrypted, _parallel_cred_op, detect_crypt_backend_from_file
 from envgene_shared.utils.file_utils import check_file_exists, writeToFile
 from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
@@ -283,21 +283,3 @@ def test_decrypt_auto_detects_backend_from_file(crypt_kwargs):
     decrypted_yaml = openYaml(TEST_FILE)
     assert decrypted_yaml["first_cred"]["data"]["secret"] == "token-placeholder-123"
 
-
-class TestDecryptedCredFiles:
-    def test_success_encrypts_on_exit(self):
-        with patch('envgenehelper.crypt.decrypt_all_cred_files_for_env', return_value={'a.yml'}) as mock_decrypt, \
-             patch('envgenehelper.crypt.encrypt_all_cred_files_for_env') as mock_encrypt:
-            with decrypted_cred_files():
-                pass
-            mock_decrypt.assert_called_once()
-            mock_encrypt.assert_called_once()
-
-    def test_failure_leaves_files_decrypted(self):
-        with patch('envgenehelper.crypt.decrypt_all_cred_files_for_env', return_value={'a.yml', 'b.yml'}) as mock_decrypt, \
-             patch('envgenehelper.crypt.encrypt_all_cred_files_for_env') as mock_encrypt:
-            with pytest.raises(RuntimeError):
-                with decrypted_cred_files():
-                    raise RuntimeError('boom')
-            mock_decrypt.assert_called_once()
-            mock_encrypt.assert_not_called()

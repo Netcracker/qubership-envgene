@@ -1,5 +1,6 @@
-from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
+from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, render_workspace_dir
 from envgenehelper.deployer import *
+from envgene_shared.crypto.cred_store import current_cred_store
 
 from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
     process_additional_template_parameters
@@ -46,7 +47,7 @@ def load_env_inputs(env_name, source_env_dir, all_instances_dir) -> dict:
     fill_missing_environment_name(env_definition, env_name)
     source_creds_path = Path(source_env_dir) / CREDENTIALS_FILE
     if source_creds_path.is_file():
-        env_instance_store.put(source_creds_path, openYaml(source_creds_path))
+        env_instance_store.put(source_creds_path, current_cred_store().get(source_creds_path))
     return env_definition
 
 

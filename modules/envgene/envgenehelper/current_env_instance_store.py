@@ -4,6 +4,7 @@ from pathlib import Path
 
 from ruyaml import CommentedMap
 
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import remove_cred_yaml_comments, remove_empty_list_comments
@@ -103,6 +104,8 @@ class CurrentEnvInstanceStore:
             normalize_comments(data)
             if is_cred_file(str(key)):
                 remove_cred_yaml_comments(data)
+                current_cred_store().put(key, data)
+                continue
             else:
                 remove_empty_list_comments(data)
             text = dumpYamlToStr(data)

@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 import os
 import re
 import time
@@ -40,6 +39,10 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
                  ignore_is_crypt=False,
                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None,
                  load_result=True, _file_info=None, **kwargs):
+    from envgene_shared.crypto.cred_store import current_cred_store
+    store = current_cred_store()
+    if store is not None and secret_key is None and store.knows(file_path):
+        return store.get(file_path)
     res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
@@ -244,11 +247,3 @@ def encrypt_all_cred_files_for_env(**kwargs):
     _parallel_cred_op(files, encrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
     logger.info(f'Encrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
-
-
-@contextmanager
-def decrypted_cred_files(**kwargs):
-    decrypt_all_cred_files_for_env(**kwargs)
-    yield
-    encrypt_all_cred_files_for_env(**kwargs)
-

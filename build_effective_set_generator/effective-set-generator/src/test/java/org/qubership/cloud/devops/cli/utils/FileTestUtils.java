@@ -1,8 +1,10 @@
 package org.qubership.cloud.devops.cli.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.experimental.UtilityClass;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,10 +21,35 @@ import static org.junit.jupiter.api.Assertions.*;
 public class FileTestUtils {
 
     private final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    public void compareFolders(Path expected, Path generated) throws IOException {
+    public boolean isCredentialFile(Path path) {
+        String name = path.getFileName().toString();
+        return name.endsWith("credentials.yaml") && !name.equals("external-credentials.yaml");
+    }
+
+    public void compareFolders(Path expected, Path generated, JsonNode returnedCredentials) throws IOException {
         Set<Path> expectedFiles = listRelativePaths(expected);
         Set<Path> generatedFiles = listRelativePaths(generated);
+        Set<Path> expectedCredentials = new HashSet<>();
+        for (Path rel : expectedFiles) {
+            if (isCredentialFile(rel)) {
+                expectedCredentials.add(rel);
+            }
+        }
+        expectedFiles.removeAll(expectedCredentials);
+
+        assertEquals(expectedCredentials.size(), returnedCredentials.size());
+        for (Path rel : expectedCredentials) {
+            String key = generated.toString().replace('\\', '/') + "/" + rel.toString().replace('\\', '/');
+            assertTrue(returnedCredentials.has(key), "Missing returned credentials: " + key);
+            Object loaded;
+            try (InputStream in = Files.newInputStream(expected.resolve(rel))) {
+                loaded = new Yaml().load(in);
+            }
+            JsonNode expectedContent = JSON_MAPPER.valueToTree(loaded == null ? Map.of() : loaded);
+            assertEquals(expectedContent, returnedCredentials.get(key), "Credentials mismatch: " + key);
+        }
 
         for (Path rel : expectedFiles) {
             Path expectedPath = expected.resolve(rel);

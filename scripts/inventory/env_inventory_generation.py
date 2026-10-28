@@ -2,11 +2,12 @@ import envgenehelper as helper
 from envgene_shared.utils.logger import logger
 from enum import Enum
 from pathlib import Path
+import copy
 import json
 import jsonschema
 
-from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
-from envgene_shared import encrypt_file
+from envgenehelper import beautifyYaml, make_quotes_for_strings, normalize_comments, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
@@ -55,11 +56,13 @@ def generate_env():
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
-    helper.writeYamlToFile(env.creds_path, env.creds)
-    encrypt_file(env.creds_path)
+    save_creds(env.creds_path, env.creds)
     if env.inv_gen_creds:
-        helper.writeYamlToFile(env.inv_gen_creds_path, env.inv_gen_creds)
-        encrypt_file(env.inv_gen_creds_path)
+        save_creds(env.inv_gen_creds_path, env.inv_gen_creds)
+
+
+def save_creds(path, creds):
+    current_cred_store().put(path, creds)
 
 
 @deprecated(DEPRECATED_MESSAGE)
@@ -198,9 +201,13 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
 
         logger.info(f"Processing {subdir}, action={action.value}, place={place.value}. Target path: {obj_path}")
         if action is Action.CREATE_OR_REPLACE:
-            writeYamlToFile(obj_path, content)
             if encrypt:
-                encrypt_file(obj_path)
+                cred_content = copy.deepcopy(content)
+                make_quotes_for_strings(cred_content)
+                normalize_comments(cred_content)
+                current_cred_store().put(obj_path, cred_content)
+                continue
+            writeYamlToFile(obj_path, content)
             beautifyYaml(obj_path)
 
         elif action is Action.DELETE:

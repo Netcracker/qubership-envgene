@@ -17,6 +17,8 @@
 package org.qubership.cloud.devops.cli.parser;
 
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -104,6 +106,9 @@ public class CliParameterParser {
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
         processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
+        new ObjectMapper().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
+                .writeValue(System.out, fileDataConverter.takeCredentialFiles());
+        System.out.flush();
     }
 
     private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String, NamespaceDTO> namespaceDTOMap) throws IOException {

@@ -5,7 +5,7 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from envgene_shared.utils.business_utils import getenv_with_error
-from envgene_shared.utils.yaml_utils import openYaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.logger import logger
 from envgene_shared.crypto.crypt import decrypt_file
 from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
@@ -272,7 +272,7 @@ def validate_creds(creds_path: str = ""):
     credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
     for credListPath in credsYamls:
-        credListYaml = openYaml(credListPath)
+        credListYaml = decrypt_file(credListPath, in_place=False)
         for key, value in credListYaml.items() :
             errorCheck = check_cred_value(key, value)
             if errorCheck :

@@ -32,7 +32,7 @@ def get_value_and_attributes_from_cred(cred_macros, deployer_dir):
     if (check_is_envgen_cred(cred_macros)):
         credentials_file_path = get_cred_file_path(deployer_dir)
         cred_id, property = get_cred_id_and_property_from_cred_macros(cred_macros)
-        data = openYaml(credentials_file_path)
+        data = decrypt_file(credentials_file_path, in_place=False)
         if cred_id in data:
             cred = data[cred_id]
             attribute_path = f'{cred_id}.data.{property}'

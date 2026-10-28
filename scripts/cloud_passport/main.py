@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import writeYamlToFile, readYaml, openYaml
-from envgene_shared.crypto.crypt import get_configured_encryption_type
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgenehelper import findAllFilesInDir, unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
 from envgenehelper.git_helper import GitLabClient
 from envgenehelper.errors import ValidationError
@@ -49,12 +49,11 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
         if "sensitive" in f.name:
             update_creds_to_cmdb_format(f)
             shutil.copyfile(f, creds_path)
-    crypt.decrypt_file(creds_path, secret_key=discovery_secret_key, in_place=True, is_crypt=True)
+    creds = crypt.decrypt_file(creds_path, secret_key=discovery_secret_key, in_place=False, is_crypt=True)
     logger.info(f"Decrypted credential-cp file by discovery secret key: {creds_path}")
-    crypt.encrypt_file(creds_path, in_place=True)
-    _, is_crypt = get_configured_encryption_type()
-    if is_crypt:
-        logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
+    os.remove(creds_path)
+    creds.yaml_set_start_comment(header_text)
+    current_cred_store().put(creds_path, creds)
 
 
 # {{ secrets('name.username') }} -> ${creds.get("name").password}
@@ -101,7 +100,10 @@ def process_discovery_files(env_name: str,
 
     process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
+    creds_path = cloud_passport_dir / f"{cloud_name}-creds.yml"
     for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
+        if Path(cp_file) == creds_path:
+            continue
         addHeaderToYaml(cp_file, header_text)
 
 

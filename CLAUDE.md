@@ -8,7 +8,7 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 | Directory | Purpose |
 | ----------- | --------- |
-| `scripts/` | Single-job pipeline: `pipeline/` (orchestrator + params), `build_env/`, `cloud_passport/`, `creds_rotation/`, `effective_set/`, `bg_manage/`, `inventory/`, `sd/`, `build_template/`, `utils/`, `tests/`, `git_commit/` (`git_commit.py`, `minimize_cred_diffs.py`); also `report.py` (moved here from `build_envgene/scripts/`) |
+| `scripts/` | Single-job pipeline: `pipeline/` (orchestrator + params), `build_env/`, `cloud_passport/`, `creds_rotation/`, `effective_set/`, `bg_manage/`, `inventory/`, `sd/`, `build_template/`, `utils/`, `tests/`, `git_commit/` (`git_commit.py`); also `report.py` (moved here from `build_envgene/scripts/`) |
 | `modules/envgene/` | `envgenehelper` pip package — core Python library shared by all modules |
 | `modules/artifact-searcher/` | `artifact_searcher` pip package — async Maven artifact URL resolver (multi-cloud auth) |
 | `modules/external-cred-provision/` | `external-cred-provision` pip package — provisions external credentials into secret stores; `src`-layout, console script `external-cred-provision` |
@@ -72,7 +72,7 @@ cd modules/artifact-searcher/artifact_searcher && python -m pytest
 cd modules/external-cred-provision && python -m pytest
 ```
 
-The single-job pipeline scripts under `scripts/` (including `git_commit.py`/`minimize_cred_diffs.py`/`report.py`, formerly under `build_envgene/scripts/`) are tested from the repository root the same way:
+The single-job pipeline scripts under `scripts/` (including `git_commit.py`/`report.py`, formerly under `build_envgene/scripts/`) are tested from the repository root the same way:
 
 ```bash
 PYTHONPATH=".:./scripts" python -m pytest scripts/tests/

@@ -1,9 +1,12 @@
+import json
+import subprocess
 from pathlib import Path
 
 import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
     PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
+from envgenehelper.yaml_helper import yaml_from_string as openYamlFromStr
 from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
@@ -63,11 +66,11 @@ def mock_cli(monkeypatch, on_run=None):
         staticmethod(lambda: Path("/tmp/delta-deploy-plan.yml")),
     )
 
-    def fake_run(cmd, check=False, shell=False):
+    def fake_run(cmd):
         if on_run:
             on_run()
 
-    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+    monkeypatch.setattr(effective_set_entrypoint, "_run_cli", fake_run)
 
 
 class TestRunDeployPlanPartial:
@@ -84,7 +87,7 @@ class TestRunDeployPlanPartial:
             return "fake_cmd"
 
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_cli", lambda *a, **k: None)
 
         _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)], dp_path=delta_dp))
 
@@ -105,7 +108,7 @@ class TestRunDeployPlanPartial:
             return "fake_cmd"
 
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_cli", lambda *a, **k: None)
 
         run(es, FULL_ENV_NAME, fake_plan([], dp_path=dp))
 
@@ -432,7 +435,7 @@ class TestRunGitlabDeployEffectiveSet:
             return "fake_cmd"
 
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_cli", lambda *a, **k: None)
         called = {}
         monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
                              lambda *a, **k: called.setdefault("full", True))
@@ -517,3 +520,63 @@ class TestExternalCredentialProvisioning:
             "INFO",
             str(context_file),
         ]
+
+
+class TestRunCli:
+    @pytest.fixture
+    def env_creds_path(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
+        return tmp_path / "Credentials" / "credentials.yml"
+
+    @pytest.fixture
+    def store(self, env_creds_path, monkeypatch):
+        class Store:
+            def __init__(self):
+                self.objects = {env_creds_path: {"cred": {"type": "usernamePassword", "data": {"username": "u"}}}}
+
+            def get(self, path):
+                return self.objects[Path(path)]
+
+            def put(self, path, obj):
+                self.objects[Path(path)] = obj
+
+        store = Store()
+        monkeypatch.setattr(effective_set_entrypoint, "current_cred_store", lambda: store)
+        return store
+
+    @pytest.mark.unit
+    def test_passes_env_creds_as_stdin_and_stores_returned_files(self, store, env_creds_path, monkeypatch):
+        captured = {}
+
+        def fake_run(cmd, **kwargs):
+            captured.update(kwargs)
+            return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps({"es/cred.yml": {"k": {"v": 1}}}))
+
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+
+        effective_set_entrypoint._run_cli("cmd")
+
+        assert openYamlFromStr(captured["input"]) == store.objects[env_creds_path]
+        assert captured["shell"] is True
+        assert captured["stdout"] == subprocess.PIPE
+        assert store.get("es/cred.yml") == {"k": {"v": 1}}
+
+    @pytest.mark.unit
+    def test_failed_cli_raises_and_puts_nothing(self, store, monkeypatch):
+        def fake_run(cmd, **kwargs):
+            raise subprocess.CalledProcessError(1, cmd)
+
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+
+        with pytest.raises(subprocess.CalledProcessError):
+            effective_set_entrypoint._run_cli("cmd")
+
+        assert len(store.objects) == 1
+
+    @pytest.mark.unit
+    def test_built_command_has_creds_stdin(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path / "missing")
+
+        command = effective_set_entrypoint._build_cli_cmd(tmp_path, FULL_ENV_NAME, None)
+
+        assert "--creds-stdin" in command

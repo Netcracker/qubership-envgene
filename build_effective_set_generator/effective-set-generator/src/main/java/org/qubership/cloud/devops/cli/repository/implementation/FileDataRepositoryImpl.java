@@ -18,6 +18,8 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
@@ -109,6 +111,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             loadApplicationListData(nsWithAppsFromSD, appsToProcess);
             loadRegistryData();
             loadConsumerData();
+            loadCredentialsFromStdin();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess, namespaceToFolder);
             populateEnvironments();
             updateApplicationNamespaces(namespaceToFolder);
@@ -334,11 +337,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             case "credentials":
                 TypeReference<Map<String, CredentialDTO>> typeReference = new TypeReference<>() {
                 };
-                Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
-                if (credentialDTOMap != null) {
-                    validateUniformCredentialTypes(credentialDTOMap);
-                    loadSecretStores();
-                    inputData.setCredentialDTOMap(credentialDTOMap);
+                Map<String, CredentialDTO> credentialDTOMap = sharedData.isCredsFromStdin()
+                        ? null
+                        : fileDataConverter.parseInputFile(typeReference, file.toFile());
+                if (!sharedData.isCredsFromStdin() && credentialDTOMap != null) {
+                    applyCredentials(credentialDTOMap);
                 }
                 break;
             case "composite_structure":
@@ -455,6 +458,24 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             }
             inputData.setRegistryDTOMap(registryMap);
         }
+    }
+
+    private void loadCredentialsFromStdin() throws IOException {
+        if (!sharedData.isCredsFromStdin()) {
+            return;
+        }
+        Map<String, CredentialDTO> credentialDTOMap = new ObjectMapper(new YAMLFactory())
+                .readValue(System.in, new TypeReference<>() {
+                });
+        if (credentialDTOMap != null) {
+            applyCredentials(credentialDTOMap);
+        }
+    }
+
+    private void applyCredentials(Map<String, CredentialDTO> credentialDTOMap) {
+        validateUniformCredentialTypes(credentialDTOMap);
+        loadSecretStores();
+        inputData.setCredentialDTOMap(credentialDTOMap);
     }
 
     private void loadSecretStores() {

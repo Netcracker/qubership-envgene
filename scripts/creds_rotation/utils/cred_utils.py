@@ -2,19 +2,18 @@
 import os
 import copy
 import re
-from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, List, Tuple, Optional, Set
 from creds_rotation.models import CredMap
 from creds_rotation.utils.yaml_utils import get_nested_target_key
 from creds_rotation.utils.file_utils import openJson
 from pathlib import Path
 from envgene_shared.crypto import crypt
-from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
+from envgene_shared.crypto.cred_store import current_cred_store
+from envgene_shared.utils.yaml_utils import openYaml
 from envgenehelper import dump_as_yaml_format, extract_external_cred
 from envgene_shared.utils.logger import logger
 from creds_rotation.utils.error_constants import *
 from envgenehelper.errors import ValidationError, ValueError
-from multiprocessing import Pool, cpu_count
 
 pattern  = re.compile(r"\$\{creds\.get\([\"']([^\"']+)[\"']\)\.(username|password|secret)\}")
 
@@ -74,23 +73,7 @@ def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: Li
                 shared_creds_files_set.add(entry.path)
 
 
-def decrypt_task(args):
-    is_encrypted, filepath = args
-    content = decrypt_and_get_content(is_encrypted, filepath)
-    return filepath, content
-
 def read_env_cred_files(creds_files, is_encrypted):
-    # Use multiprocessing only if heavy workload
-    parallel_threshold = 8
-    use_parallel = len(creds_files) >= parallel_threshold
-
-    if use_parallel:
-        args_list = [(is_encrypted, filepath) for filepath in creds_files]
-        with Pool(min(len(creds_files), cpu_count())) as pool:
-            results = pool.map(decrypt_task, args_list)
-        return dict(results)
-
-    # Fall back to sequential for small workloads
     result = {}
     for filepath in creds_files:
         result[filepath] = decrypt_and_get_content(is_encrypted, filepath)
@@ -111,7 +94,7 @@ def decrypt_and_get_content(is_encrypted, filepath):
 
 def decrypt_file(file_path, in_place, crypt_backend, error_msg, error_code):
     try:
-        return crypt.decrypt_file(file_path, in_place=in_place, ignore_is_crypt=True, crypt_backend=crypt_backend)
+        return crypt.decrypt_file(file_path, in_place=False, ignore_is_crypt=True, crypt_backend=crypt_backend)
     except Exception as e:
         raise ValidationError(error_msg.format(file=file_path, e=str(e)), error_code=error_code)
 
@@ -162,28 +145,9 @@ def write_updated_cred_into_file(updated_files, original_files, is_encrypted):
 
 
 def update_file(files_to_update, is_encrypted):
-    futures = []
-    with ProcessPoolExecutor(max_workers=min(os.cpu_count(), len(files_to_update))) as executor:
-            for cred_file, creds in files_to_update.items():
-                futures.append(
-                    executor.submit(write_and_encrypt_task, cred_file, creds, is_encrypted)
-                )
-    for future in futures:
-        future.result()
+    for cred_file, creds in files_to_update.items():
+        current_cred_store().put(cred_file, creds)
 
-
-def write_and_encrypt_task(cred_file, creds, is_encrypted):
-
-    writeYamlToFile(cred_file, creds)
-    # Encrypt if needed
-    if is_encrypted:
-        try:
-            crypt.encrypt_file(
-                cred_file, in_place=True, ignore_is_crypt=True,
-                crypt_backend='SOPS'
-            )
-        except Exception as e:
-           raise ValidationError(ErrorMessages.FILE_ENCRYPT_ERROR.format(file=cred_file, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
 
 def get_matching_cred_files(files_content: dict[str, Any], cred_id: str) -> list[str]:
     matching_files = []

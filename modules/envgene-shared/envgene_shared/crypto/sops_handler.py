@@ -58,10 +58,16 @@ def _create_replace_content_sh(content_bytes):
 import base64
 import sys
 
+import yaml
+
 if len(sys.argv) < 2:
     raise SystemExit("No target file specified.")
-with open(sys.argv[1], "wb") as out:
-    out.write(base64.b64decode({payload!r}))
+new_bytes = base64.b64decode({payload!r})
+with open(sys.argv[1], "rb") as f:
+    old_content = yaml.safe_load(f)
+if old_content != yaml.safe_load(new_bytes):
+    with open(sys.argv[1], "wb") as out:
+        out.write(new_bytes)
 """
     script = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode='w', encoding='utf-8')
     script.write(script_content)

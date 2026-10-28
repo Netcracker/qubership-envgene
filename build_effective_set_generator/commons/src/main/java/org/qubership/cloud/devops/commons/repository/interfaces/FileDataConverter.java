@@ -37,5 +37,7 @@ public interface FileDataConverter {
 
     void writeToFile(Map<String, Object> params, String... args) throws IOException;
 
+    Map<String, Map<String, Object>> takeCredentialFiles();
+
     <T> Map<String, Object> getObjectMap(T inputObject);
 }

@@ -1,0 +1,269 @@
+import copy
+import threading
+from pathlib import Path
+
+import pytest
+
+from envgene_shared.crypto.cred_store import CredStore, current_cred_store, open_cred_store
+from envgene_shared.crypto.crypt import decrypt_file, encrypt_file, is_encrypted
+from envgene_shared.utils.business_utils import get_envgene_config_yaml
+from envgene_shared.crypto.sops_handler import _sops_edit, is_encrypted_SOPS
+from envgene_shared.tests.crypto.test_crypt import crypt_test_data
+from envgene_shared.utils.file_utils import writeToFile
+from envgene_shared.utils.yaml_utils import openYaml
+
+SOPS_DATA, FERNET_DATA, PLAIN_DATA = crypt_test_data
+
+CONTENT = """\
+first_cred:
+    type: secret
+    data:
+        secret: token-placeholder-123
+second_cred:
+    type: usernamePassword
+    data:
+        username: user-placeholder-123
+        password: pass-placeholder-123
+"""
+
+ES_REF = "ref+vault://secret/path"
+
+
+@pytest.fixture(autouse=True)
+def schema_dir(monkeypatch):
+    schema_dir = Path(__file__).resolve().parents[2] / "schemas"
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schema_dir))
+    get_envgene_config_yaml.cache_clear()
+    yield
+    get_envgene_config_yaml.cache_clear()
+
+
+def configure(monkeypatch, tmp_path, data):
+    get_envgene_config_yaml.cache_clear()
+    monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    monkeypatch.setenv("ENVGENE_AGE_PRIVATE_KEY", SOPS_DATA["secret_key"])
+    monkeypatch.setenv("PUBLIC_AGE_KEYS", SOPS_DATA["public_key"])
+    monkeypatch.setenv("SECRET_KEY", FERNET_DATA["secret_key"])
+    config = "crypt: false\n" if data is PLAIN_DATA else f"crypt_backend: {data['crypt_backend']}\n"
+    writeToFile(str(tmp_path / "configuration" / "config.yml"), config)
+
+
+def make_cred_file(path, content=CONTENT):
+    writeToFile(str(path), content)
+    encrypt_file(path, load_result=False)
+    return path
+
+
+@pytest.fixture
+def env_dir(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path, SOPS_DATA)
+    return tmp_path / "environments" / "cluster" / "env"
+
+
+def test_unchanged_file_is_byte_equal(env_dir):
+    first = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    second = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
+    before = (first.read_bytes(), second.read_bytes())
+    with open_cred_store() as store:
+        obj = store.get(first)
+        store.get(second)
+        store.put(first, copy.deepcopy(obj))
+    assert (first.read_bytes(), second.read_bytes()) == before
+
+
+def test_changed_file_is_encrypted_and_minimal(env_dir):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+    old = openYaml(str(path))
+    with open_cred_store() as store:
+        store.get(path)["second_cred"]["data"]["password"] = "changed-pass"
+    new = openYaml(str(path))
+    assert path.read_bytes() != before
+    assert is_encrypted_SOPS(path)
+    assert new["first_cred"]["data"]["secret"] == old["first_cred"]["data"]["secret"]
+    assert new["second_cred"]["data"]["username"] == old["second_cred"]["data"]["username"]
+    assert new["second_cred"]["data"]["password"] != old["second_cred"]["data"]["password"]
+    assert decrypt_file(path, in_place=False)["second_cred"]["data"]["password"] == "changed-pass"
+
+
+def test_new_file_is_encrypted(env_dir):
+    path = env_dir / "Credentials" / "new-credentials.yml"
+    with open_cred_store() as store:
+        store.put(path, {"cred": {"type": "secret", "data": {"secret": "value"}}})
+    assert is_encrypted_SOPS(path)
+    assert decrypt_file(path, in_place=False)["cred"]["data"]["secret"] == "value"
+
+
+def test_failed_flow_writes_nothing(env_dir):
+    first = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    second = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
+    before = (first.read_bytes(), second.read_bytes())
+    with pytest.raises(RuntimeError):
+        with open_cred_store() as store:
+            obj = store.get(first)
+            obj["first_cred"]["data"]["secret"] = "changed"
+            store.put(first, obj)
+            raise RuntimeError("step failed")
+    assert (first.read_bytes(), second.read_bytes()) == before
+    assert is_encrypted_SOPS(first)
+    assert is_encrypted_SOPS(second)
+    assert current_cred_store() is None
+
+
+def test_open_cred_store_twice_raises(env_dir):
+    with open_cred_store():
+        with pytest.raises(RuntimeError):
+            with open_cred_store():
+                pass
+
+
+def test_path_forms_share_one_entry(env_dir, monkeypatch):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    obj = {"cred": {"type": "secret", "data": {"secret": "value"}}}
+    with open_cred_store() as store:
+        store.put(str(path), obj)
+        monkeypatch.chdir(path.parent)
+        assert store.get(Path(path)) is obj
+        assert store.get("credentials.yml") is obj
+        assert store.get(path.parent / ".." / "Credentials" / "credentials.yml") is obj
+        store.put(path, openYaml(str(path)))
+
+
+def test_deleted_file_keeps_original_bytes(env_dir):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    with open_cred_store() as store:
+        path.unlink()
+        obj = store.get(path)
+        assert obj["first_cred"]["data"]["secret"] == "token-placeholder-123"
+    assert not path.exists()
+
+
+def test_put_equal_object_recreates_deleted_file(env_dir):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    with open_cred_store() as store:
+        path.unlink()
+        store.put(path, copy.deepcopy(store.get(path)))
+    assert is_encrypted_SOPS(path)
+    assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-placeholder-123"
+
+
+def test_decrypt_file_serves_from_store_without_writing(env_dir):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+    with open_cred_store():
+        obj = decrypt_file(path, in_place=True)
+        assert obj["first_cred"]["data"]["secret"] == "token-placeholder-123"
+        assert path.read_bytes() == before
+        assert decrypt_file(path, in_place=False) is obj
+    assert path.read_bytes() == before
+
+
+def test_editor_exits_200_on_same_content_other_format(env_dir, tmp_path):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+    reformatted = tmp_path / "reformatted.yml"
+    reformatted.write_text(
+        "first_cred:\n  type: 'secret'\n  data:\n    secret: 'token-placeholder-123'\n"
+        "second_cred:\n  type: usernamePassword\n  data:\n"
+        "    username: 'user-placeholder-123'\n    password: 'pass-placeholder-123'\n"
+    )
+    _sops_edit(path, reformatted, SOPS_DATA["public_key"])
+    assert path.read_bytes() == before
+
+
+def make_es_file(env_dir, content):
+    return make_cred_file(env_dir / "effective-set" / "runtime" / "credentials.yaml", content)
+
+
+def test_es_file_new_literal_key_uses_new_regex(env_dir):
+    path = make_es_file(env_dir, f"a: one\nr: {ES_REF}\n")
+    with open_cred_store() as store:
+        store.put(path, {"a": "one", "b": "two", "r": ES_REF})
+    raw = openYaml(str(path))
+    assert raw["a"].startswith("ENC[")
+    assert raw["b"].startswith("ENC[")
+    assert raw["r"] == ES_REF
+
+
+def test_es_file_same_literal_keys_uses_edit(env_dir):
+    path = make_es_file(env_dir, f"a: one\nc: three\nr: {ES_REF}\n")
+    old = openYaml(str(path))
+    with open_cred_store() as store:
+        store.put(path, {"a": "changed", "c": "three", "r": ES_REF})
+    raw = openYaml(str(path))
+    assert raw["c"] == old["c"]
+    assert raw["a"] != old["a"]
+    assert raw["a"].startswith("ENC[")
+    assert decrypt_file(path, in_place=False)["a"] == "changed"
+
+
+def test_es_file_without_literal_keys_written_plain(env_dir):
+    path = make_es_file(env_dir, f"a: one\nr: {ES_REF}\n")
+    with open_cred_store() as store:
+        store.put(path, {"r": ES_REF})
+    assert not is_encrypted_SOPS(path)
+    assert openYaml(str(path))["r"] == ES_REF
+
+
+def test_unchanged_es_file_is_byte_equal(env_dir):
+    path = make_es_file(env_dir, f"a: one\nr: {ES_REF}\n")
+    before = path.read_bytes()
+    with open_cred_store() as store:
+        store.put(path, copy.deepcopy(store.get(path)))
+    assert path.read_bytes() == before
+
+
+def test_put_equal_object_recreates_deleted_es_file(env_dir):
+    path = make_es_file(env_dir, f"a: one\nr: {ES_REF}\n")
+    with open_cred_store() as store:
+        obj = store.get(path)
+        path.unlink()
+        store.put(path, copy.deepcopy(obj))
+    assert path.exists()
+
+
+def test_empty_cred_file_is_ignored(env_dir):
+    path = env_dir / "Credentials" / "credentials.yml"
+    writeToFile(str(path), "")
+    with open_cred_store() as store:
+        assert store.get(path) == {}
+        store.put(path, {})
+    assert path.read_bytes() == b""
+
+
+@pytest.mark.parametrize("data", [FERNET_DATA, PLAIN_DATA], ids=["Fernet", "crypt_false"])
+def test_fernet_unchanged_untouched_changed_rewritten(monkeypatch, tmp_path, data):
+    configure(monkeypatch, tmp_path, data)
+    env_dir = tmp_path / "environments" / "cluster" / "env"
+    first = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    second = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
+    before = (first.read_bytes(), second.read_bytes())
+    with open_cred_store() as store:
+        store.get(first)
+        store.get(second)["first_cred"]["data"]["secret"] = "changed"
+    assert first.read_bytes() == before[0]
+    assert second.read_bytes() != before[1]
+    assert is_encrypted(second) is (data is FERNET_DATA)
+    assert decrypt_file(second, in_place=False)["first_cred"]["data"]["secret"] == "changed"
+
+
+@pytest.mark.parametrize("data", [FERNET_DATA, PLAIN_DATA], ids=["Fernet", "crypt_false"])
+def test_crypt_false_writes_plain(monkeypatch, tmp_path, data):
+    configure(monkeypatch, tmp_path, data)
+    path = tmp_path / "environments" / "cluster" / "env" / "Credentials" / "new-credentials.yml"
+    with open_cred_store() as store:
+        store.put(path, {"cred": {"type": "secret", "data": {"secret": "value"}}})
+    assert is_encrypted(path) is (data is FERNET_DATA)
+    assert decrypt_file(path, in_place=False)["cred"]["data"]["secret"] == "value"
+
+
+def test_put_is_thread_safe(tmp_path):
+    store = CredStore([])
+    paths = [tmp_path / f"{index}.yml" for index in range(50)]
+    threads = [threading.Thread(target=store.put, args=(path, {"index": index})) for index, path in enumerate(paths)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert [store.get(path) for path in paths] == [{"index": index} for index in range(50)]
