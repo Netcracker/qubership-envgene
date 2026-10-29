@@ -186,9 +186,9 @@ def _run_cli(cmd):
     store = current_cred_store()
     env_creds = store.get(get_current_env_dir_from_env_vars() / "Credentials" / "credentials.yml")
     read_fd, write_fd = os.pipe()
-    with os.fdopen(read_fd) as creds_output, ThreadPoolExecutor(max_workers=1) as executor:
+    with os.fdopen(read_fd, encoding="utf-8") as creds_output, ThreadPoolExecutor(max_workers=1) as executor:
         process = subprocess.Popen(f"{cmd} --creds-output=/dev/fd/{write_fd}", shell=True, stdin=subprocess.PIPE,
-                                   text=True, pass_fds=(write_fd,))
+                                   encoding="utf-8", pass_fds=(write_fd,))
         os.close(write_fd)
         output = executor.submit(creds_output.read)
         process.communicate(dumpYamlToStr(env_creds))

@@ -11,6 +11,7 @@ from envgenehelper.yaml_helper import yaml_from_string as openYamlFromStr
 from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
+from envgene_shared.crypto.cred_store import CredStore
 from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, _run_external_credential_provision_cli, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
     _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, \
@@ -531,18 +532,9 @@ class TestRunCli:
 
     @pytest.fixture
     def store(self, env_creds_path, monkeypatch):
-        class Store:
-            def __init__(self):
-                self.objects = {env_creds_path: {"cred": {"type": "usernamePassword", "data": {"username": "u"}}}}
-
-            def get(self, path):
-                return self.objects[Path(path)]
-
-            def put(self, path, obj):
-                self.objects[Path(path)] = obj
-
-        store = Store()
-        monkeypatch.setattr(effective_set_entrypoint, "current_cred_store", lambda: store)
+        store = CredStore([])
+        store.put(env_creds_path, {"cred": {"type": "usernamePassword", "data": {"username": "u"}}})
+        monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", store)
         return store
 
     @pytest.fixture
@@ -571,7 +563,7 @@ class TestRunCli:
         effective_set_entrypoint._run_cli(cmd)
 
         returned = store.get("es/cred.yml")
-        assert openYamlFromStr(returned["stdin"]) == store.objects[env_creds_path]
+        assert openYamlFromStr(returned["stdin"]) == store.get(env_creds_path)
         assert len(returned["big"]) == 200000
 
     @pytest.mark.unit
@@ -582,4 +574,4 @@ class TestRunCli:
         with pytest.raises(subprocess.CalledProcessError):
             effective_set_entrypoint._run_cli(cmd)
 
-        assert len(store.objects) == 1
+        assert not store.exists("es/cred.yml")

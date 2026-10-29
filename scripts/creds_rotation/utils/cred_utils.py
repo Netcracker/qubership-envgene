@@ -95,7 +95,6 @@ def update_cred_content(
     processed_cred_and_files: Dict[str, List[CredMap]]
 ):
     updated_files: Dict[str, List[Dict[str, Any]]] = {}
-    original_files: Dict[str, List[Dict[str, Any]]] = {}
 
     logger.info(f"Preparing updates for {len(processed_cred_and_files)} credential files")
     logger.info(f"Credential files are {list(processed_cred_and_files.keys())}")
@@ -105,8 +104,7 @@ def update_cred_content(
             continue
 
         # Deep copy original content from the first update (assumed all updates share the same original content)
-        original_content = copy.deepcopy(updates[0].shared_content)
-        content = copy.deepcopy(original_content)
+        content = copy.deepcopy(updates[0].shared_content)
 
         for update in updates:
             cred_id = update.cred_id
@@ -122,18 +120,7 @@ def update_cred_content(
             data_block[cred_field] = param_value
 
         updated_files[cred_file] = content
-        original_files[cred_file] = original_content
-    return updated_files, original_files
-
-
-def write_updated_cred_into_file(updated_files, original_files):
-    try:
-        # All files processed without errors, now write and encrypt if needed
-        update_file(updated_files)
-    except Exception as e:
-        logger.error(f"Updation of credential file failed {e} \n Hence reverting the change")
-        update_file(original_files)
-        logger.info("No creds changes are updated. Files are restored to original state")
+    return updated_files
 
 
 def update_file(files_to_update):

@@ -58,8 +58,10 @@ class CredStore:
                 return self._decrypted[key]
             if key not in self._snapshot and key.is_file():
                 self._snapshot[key] = key.read_bytes()
-        if allow_default and key not in self._snapshot:
-            return get_empty_yaml()
+        if key not in self._snapshot:
+            if allow_default:
+                return get_empty_yaml()
+            raise FileNotFoundError(f"{key} is not in the cred store and not on disk")
         return self._lazy_decrypt(key)
 
     def exists(self, path) -> bool:

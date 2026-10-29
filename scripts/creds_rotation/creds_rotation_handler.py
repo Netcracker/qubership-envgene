@@ -16,7 +16,7 @@ from creds_rotation.utils.cred_utils import (
     read_env_cred_files,
     read_shared_cred_files,
     update_cred_content,
-    write_updated_cred_into_file,
+    update_file,
 )
 from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
@@ -174,10 +174,7 @@ def run_cred_rotation():
             error_code=ErrorCodes.INVALID_STATE_CODE,
         )
     if processed_cred_and_files:
-        updated_content, original_content = update_cred_content(
-            processed_cred_and_files
-        )
-        write_updated_cred_into_file(updated_content, original_content)
+        update_file(update_cred_content(processed_cred_and_files))
         write_cred_file_path(
             list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
         )

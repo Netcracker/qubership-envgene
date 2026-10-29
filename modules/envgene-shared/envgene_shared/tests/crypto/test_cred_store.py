@@ -177,7 +177,7 @@ def test_exists_sees_put_and_disk_but_not_deleted_file(env_dir):
 
 def test_get_missing_file_without_allow_default_raises(env_dir):
     with open_cred_store() as store:
-        with pytest.raises(KeyError):
+        with pytest.raises(FileNotFoundError):
             store.get(env_dir / "Credentials" / "credentials.yml")
 
 

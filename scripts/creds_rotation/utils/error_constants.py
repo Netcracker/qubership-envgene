@@ -5,7 +5,6 @@ class ErrorMessages:
     MISSING_ENV = "Error: Missing mandatory parameter(s) {params}.\n .Please set it your pipeline_vars.yml."
     INVALID_CRED_FIELD = "Error: Invalid configuration format.\n Credential field {cred_field} is not supported. Supported credential types for cred rotation are UsernamePassword and Secret."
     PAYLOAD_DECRYPT_ERROR = "Error: Invalid configuration format.\n Failed to decrypt content of CRED_ROTATION_PAYLOAD: {e}. May be it is not encrypted correctly. Please verify the value."
-    FILE_ENCRYPT_ERROR = "Error: Invalid configuration format.\n Failed to Encrypt the credential file {file} due to {e}"
     FILE_READ_ERROR = "Error: Invalid configuration format.\n Failed to read the credential file {file} due to {e}"
     EMPTY_PARAM = "Error: Termination condition encountered.\n No affected parameters found for the given CRED_ROTATION_PAYLOAD in the current environment instance. Hence Terminating the job."
     CRED_UPDATION_FALSE = "Error: Termination condition encountered.\n Affected parameters have been identified. You can find the list of affected parameters in the artifact of this job, in the file {file}." \

@@ -8,10 +8,10 @@ Pip-installable package (`envgene_shared` — version is a setuptools formality,
 
 | File | Responsibility |
 | ------ | --------------- |
-| `crypt.py` | Encrypt/decrypt entry points: `encrypt_file`, `decrypt_file`; batch ops: `encrypt_all_cred_files_for_env`, `decrypt_all_cred_files_for_env`; `is_encrypted`, `detect_crypt_backend_from_file`, `get_all_necessary_cred_files` (respects `ENV_NAMES` for scoped discovery) |
+| `crypt.py` | Encrypt/decrypt entry points: `encrypt_file`, `decrypt_file` (files, for `crypt_cli` and the pre-commit hook), `encrypt_bytes`, `decrypt_bytes` (bytes, for the cred store); batch ops: `encrypt_all_cred_files_for_env`, `decrypt_all_cred_files_for_env`; `is_encrypted`, `detect_crypt_backend_from_file`, `get_all_necessary_cred_files` (respects `ENV_NAMES` for scoped discovery) |
 | `cred_store.py` | `CredStore`: decrypted copy of the repository cred files for the pipeline steps, writes changed files encrypted at close; `open_cred_store`, `current_cred_store` |
 | `fernet_handler.py` | Decrypt-only Fernet for cloud discovery creds: `decrypt_Fernet_data`, `is_encrypted_Fernet` |
-| `sops_handler.py` | SOPS/AGE via subprocess: `crypt_SOPS`, `is_encrypted_SOPS`, `_sops_edit` trick for minimize-diff |
+| `sops_handler.py` | SOPS/AGE via subprocess: `crypt_SOPS`, `decrypt_SOPS_bytes`, `encrypt_SOPS_bytes` (stdin), `is_encrypted_SOPS`, `_sops_edit` (writes a changed file over its old bytes, so unchanged values keep their ciphertext) |
 
 ### `utils/`
 
@@ -47,4 +47,4 @@ cd modules/envgene-shared
 python -m pytest envgene_shared/tests/
 ```
 
-Test files: `tests/crypto/test_crypt.py`, `tests/utils/test_collections_utils.py`, `tests/utils/test_file_utils.py`, `tests/utils/test_yaml_utils.py`.
+Test files: `tests/crypto/test_crypt.py`, `tests/crypto/test_cred_store.py`, `tests/utils/test_collections_utils.py`, `tests/utils/test_file_utils.py`, `tests/utils/test_yaml_utils.py`.

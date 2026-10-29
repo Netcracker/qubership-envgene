@@ -2,17 +2,14 @@ import copy
 import json
 import pathlib
 import threading
-from io import StringIO
 from pathlib import Path
 from typing import OrderedDict
 
 import jschon
-import jschon_tools
-import jsonschema
 import ruyaml
 from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
-from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+from ruyaml.scalarstring import DoubleQuotedScalarString
 import yaml as pyyaml
 
 from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, writeToFile
