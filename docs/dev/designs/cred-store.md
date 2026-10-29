@@ -1,16 +1,11 @@
 # Cred store
 
 - [Problem](#problem)
-- [Example](#example)
 - [Design](#design)
 - [Cred store sources](#cred-store-sources)
 - [Cred store and env instance store](#cred-store-and-env-instance-store)
-- [Changes by step and module](#changes-by-step-and-module)
 - [What changes for the user](#what-changes-for-the-user)
-- [Verification](#verification)
 - [Out of scope](#out-of-scope)
-- [Open questions](#open-questions)
-- [Constraints](#constraints)
 
 ## Problem
 
@@ -39,8 +34,6 @@ run_single_env_pipeline
 ```
 
 - **Cred files on disk are always encrypted.** No step decrypts a cred file in place.
-- **The cred store holds cred files in memory.** Per path: the encrypted bytes from disk and the decrypted
-  object.
 - **The cred store lives from the first step to `GitCommitStep`.** It writes changed files after the last
   step before `GitCommitStep`, also when `GenerateEffectiveSetStep` is skipped. It is separate from
   `CurrentEnvInstanceStore`, which lives inside `EnvBuildStep` and ends with `flush()`.
@@ -51,9 +44,6 @@ run_single_env_pipeline
   `multiprocessing.Pool` and writes with a `ProcessPoolExecutor` (`creds_rotation/utils/cred_utils.py`).
   A child process does not see the cred store in memory. The pools only parallelized SOPS calls, and the
   cred store makes reads from memory and writes are deferred: the step only puts objects into the store, and SOPS encryption runs once at store close, in parallel threads
-- **The cred store decrypts a file on the first read.** Later reads of the file take the object from memory.
-  No SOPS call.
-- **Steps write creds into the cred store, not to disk.**
 - **At the end the cred store writes only changed files.** A file is changed when its object differs from
   the decrypted object of its original bytes. A changed or new file is encrypted by SOPS. An unchanged file
   is not touched, so `git diff` skips it.
@@ -82,7 +72,6 @@ run_single_env_pipeline
   are safe. `minimize_cred_diffs` already runs `sops edit` in a thread pool.
 - **A failed flow writes no creds.** Disk keeps the encrypted files of the previous run. No `finally` is
   needed.
-- **The Effective Set Calculator CLI gets the env creds as an object** and does not read credentials from disk.
 - **The CLI gets the env creds on stdin and returns the ES cred files in a pipe of their own.** The output is
   one JSON object, path to content. Python opens a pipe and passes its write end as `--creds-output=/dev/fd/N`.
   Stdout is not used for the JSON: `run-java.sh` prints its `exec java ...` line to stdout before Java
@@ -124,9 +113,6 @@ run_single_env_pipeline
   `put` from a `get`, so it never brings back a file that a step deleted after reading it. No step deletes a
   cred file and then puts the same object: cloud passport cleanup keeps `<cloud>-creds.yml`, and an ES cred
   file that nobody read is always written.
-- **A cred file the cred store did not read at open is read from disk on its first `get`.** Creds rotation
-  reads `Credentials/credentials.yml` of every env of the cluster, and `get_all_necessary_cred_files`
-  holds only the env of `ENV_NAMES`.
 - **`get` of a missing file takes `allow_default`, as `decrypt_file` does.** With it the cred store returns
   an empty YAML and writes nothing until a `put`. `Environment` and `regdefv2_adapter` read env creds that
   a new env does not have yet. Without it a missing file fails.
@@ -136,7 +122,6 @@ run_single_env_pipeline
 - **`crypt` decrypts and encrypts bytes.** `decrypt_bytes` and `encrypt_bytes` take the bytes and the path
   of a cred file. SOPS reads them on stdin, with `--filename-override` for the path. The cred store keeps
   bytes in memory and needs no temp file, except for `sops edit`: it works on a file only.
-- **An ES cred file keeps the encryption rule of today.**
 - **`sops edit` keeps the encrypted regex of the old file.** Bugfix: sops edit keeps the encrypted regex of the old file. Before, minimize_cred_diffs ran sops edit for every changed cred file, so a new literal key in an ES cred file (for example, a cred that changed from a ref+ reference to a plain value) could land in git unencrypted. Now an ES cred file gets sops edit only when its old file is encrypted and has the same set of literal keys. Otherwise it gets a plain SOPS encrypt with the new regex, or is written plain.
 - **The editor script of `sops edit` compares YAML objects, not bytes.** The editor script of sops edit compares YAML objects, not bytes. The new content now comes from Python, not from a SOPS decrypt, so its bytes differ from the old file even with the same data. The script writes only when the objects differ; otherwise SOPS exits with 200 and keeps the file
 - **The literal keys of an old ES cred file are read from its encrypted bytes.** SOPS encrypts values only.
@@ -177,7 +162,6 @@ After that, these steps put cred files into it:
 | `GenerateEffectiveSetStep` | always | `effective_set/effective_set_entrypoint.py::_run_cli` | ES cred files the CLI returns in `--creds-output` |
 
 A step that changes an object it got from the cred store changes the cred store too, without a `put`.
-Readers get cred files through `current_cred_store().get`.
 
 ## Cred store and env instance store
 
