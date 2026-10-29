@@ -121,6 +121,11 @@ run_single_env_pipeline
 - **Steps read creds with `current_cred_store().get`, not with `decrypt_file`.** `decrypt_file` does not
   look into the cred store. It stays a plain function for `crypt_cli`, the pre-commit hook, and files that
   are not repository creds: discovery creds encrypted with the discovery key.
+- **`validate_creds` and `get_deployer_config` also read from disk.** The CMDB import plugin calls them in
+  `CMDB_import`, after `GitCommitStep`, when the cred store is closed. They read through
+  `list_cred_files` and `read_cred_file` (`creds_helper.py`): the cred store when it is open, else
+  `decrypt_file` on disk. Only these two functions do it. Other code reads creds only through the cred store,
+  and `current_cred_store()` fails when the cred store is closed.
 - **`crypt` decrypts and encrypts bytes.** `decrypt_bytes` and `encrypt_bytes` take the bytes and the path
   of a cred file. SOPS reads them on stdin, with `--filename-override` for the path. The cred store keeps
   bytes in memory and needs no temp file, except for `sops edit`: it works on a file only.
