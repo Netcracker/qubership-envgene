@@ -160,6 +160,14 @@ def mock_nexus(tmp_path_factory):
     crm_dir = base_dir / "release" / "org" / "test" / "crm" / "1.0"
     _write_app_manifest(crm_dir, "crm-1.0.json", "crm", "1.0", "bss")
 
+    # "app-vals:1.0" / "app-eso:1.0" - the two applications UC-EC-D-5 deploys side by side to prove
+    # VALS and ESO references can coexist in one effective set. Their AppDefs
+    # (ext-creds-template/appdefs/app-{vals,eso}.yml.j2) both use groupId=org.test with the
+    # application name as artifactId, and each is deployed into its own namespace.
+    for _app, _postfix in (("app-vals", "ns-vals"), ("app-eso", "ns-eso")):
+        _app_dir = base_dir / "release" / "org" / "test" / _app / "1.0"
+        _write_app_manifest(_app_dir, f"{_app}-1.0.json", _app, "1.0", _postfix)
+
     # "external-secrets-artifact:v1" - env template artifact for external credentials scenarios.
     ext_creds_dir = base_dir / "release" / "org" / "test" / "external-secrets-artifact" / "v1"
     _write_maven_manifest(ext_creds_dir, "external-secrets-artifact-v1.json", "external-secrets-artifact", "v1")
@@ -188,22 +196,45 @@ def workspace(tmp_path):
 
 _XFAIL_REASONS = {
     "xfail": "Known framework gap: ENVGENE_PROJECT is not validated by the orchestrator.",
-    "xfail_cli_npe": "Known bug: Calculator CLI throws a NullPointerException on "
-                      "NamespaceDTO.isCleaned() when matching BG Domain deployPostfix.",
-    "xfail_cli_no_hierarchy_rule": "Known gap: the hierarchy validation rule (Tenant level "
-                                    "parameters cannot reference Cloud/Namespace level parameters) "
-                                    "is not enforced by the Calculator CLI.",
-    "xfail_cli_no_context_rule": "Known gap: the cross-context validation rule (e2eParameters/"
-                                  "technicalConfigurationParameters/deployParameters cannot "
-                                  "reference each other) is not enforced by the Calculator CLI.",
-    "xfail_cli_macro_ns_timeout": "Known bug: a macro reference resolved across hierarchy levels "
-                                   "is dropped from the effective set deployment parameters.",
+    "xfail_cli_npe": (
+        "Calculator CLI throws NullPointerException when the requested namespace is absent from "
+        "the internal map (CliParameterParser.processAndSaveParameters / splitBgDomainParams). "
+        "Affects BG-domain scenarios (dp_2, dp_4, dp_5) and non-BG no-match scenarios (dp_3, dp_6). "
+        "dp_6 supplies two unmatched postfixes but hits the same generic NPE as the single-postfix "
+        "cases - the parallel stream aborts on whichever one it reaches first, so neither postfix "
+        "name ever appears in the error (verified against the real CLI 2026-10-07)."
+    ),
+    "xfail_cli_no_hierarchy_rule": (
+        "Calculator CLI does not enforce the documented rule that Tenant-level parameters "
+        "cannot reference Cloud- or Namespace-level parameters (doc-vs-code divergence)."
+    ),
+    "xfail_cli_no_context_rule": (
+        "Calculator CLI does not enforce the documented rule that e2eParameters and "
+        "technicalConfigurationParameters cannot cross-reference deployParameters "
+        "(doc-vs-code divergence; caught directions: deployParameters->e2eParameters and "
+        "deployParameters->technicalConfigurationParameters; uncaught: the reverse and all "
+        "other cross-context directions)."
+    ),
+    "xfail_cli_type_not_transitive": (
+        "Calculator CLI type preservation is not transitive across a chained macro reference: "
+        "ExpressionLanguage.java preserves a value's type only when the sole reference points at an "
+        "already-typed object in the merged binding (it reads the raw, unresolved referent and does "
+        "not resolve transitively), so a chained integer reference through a String-valued "
+        "intermediate macro collapses to a string (divergence D6)."
+    ),
     "xfail_cr_no_affected_rotation": "Known bug: when the rotation target's credential has no other "
                                       "parameter referencing it, run_cred_rotation() raises "
                                       "'No affected parameters found' instead of rotating the target "
                                       "and completing with no report. docs/use-cases/credential-"
                                       "rotation.md already documents success-with-no-report as the "
                                       "target behavior (PR #1800), the code fix has not landed yet.",
+    "xfail_cp_no_explicit_duplicate_check": "Known gap: find_passport_by_env_definition (via "
+                                             "find_yaml_file) returns the first os.walk match for "
+                                             "an explicitly named cloud passport with no duplicate "
+                                             "check, unlike the auto-association path "
+                                             "(findPassportInDefaultDirByName), which does raise on "
+                                             "multiple matches. docs/use-cases/cloud-passport.md "
+                                             "documents a duplicate-passport error for both paths.",
 }
 
 

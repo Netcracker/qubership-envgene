@@ -1,0 +1,12 @@
+version: "2.0"
+cloud:
+  CLOUD_API_HOST: "https://custom-api.example.com"
+  CLOUD_API_PORT: "6443"
+  CLOUD_PRIVATE_HOST: "custom-internal.example.com"
+  CLOUD_PUBLIC_HOST: "custom-public.example.com"
+  CLOUD_DASHBOARD_URL: "https://custom-dashboard.example.com"
+  CLOUD_DEPLOY_TOKEN: "custom-deploy-token"
+  CLOUD_PROTOCOL: "https"
+  PRODUCTION_MODE: "false"
+storage:
+  STORAGE_ADDRESS: "storage.example.com:9000"
