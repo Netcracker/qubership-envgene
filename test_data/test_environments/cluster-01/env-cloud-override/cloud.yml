@@ -73,7 +73,7 @@ deployParameters:
 e2eParameters:
   OVERRIDE_PARAM_1: "value-1"
   OVERRIDE_PARAM_2: "value-2"
-  param-A: "apple" # paramset: paramset-A version: n/a source: instance
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
 technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
