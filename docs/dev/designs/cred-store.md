@@ -4,6 +4,7 @@
 - [Example](#example)
 - [Design](#design)
 - [Cred store sources](#cred-store-sources)
+- [Cred store and env instance store](#cred-store-and-env-instance-store)
 - [Changes by step and module](#changes-by-step-and-module)
 - [What changes for the user](#what-changes-for-the-user)
 - [Verification](#verification)
@@ -146,12 +147,42 @@ After that, these steps put cred files into it:
 | `CredentialRotationStep` | `CRED_ROTATION_PAYLOAD` | `creds_rotation/utils/cred_utils.py::update_file` | every env, cluster, and shared cred file that holds a rotated cred |
 | `InventoryGenerationStep` | `ENV_INVENTORY_CONTENT.credentials` | `inventory/env_inventory_generation.py::handle_objects` | `<env>/Inventory/credentials/<name>.yml`, `<cluster>/credentials/<name>.yml`, `environments/credentials/<name>.yml` by `place` |
 | `InventoryGenerationStep` | `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` (deprecated) | `inventory/env_inventory_generation.py::generate_env` | `<env>/Credentials/credentials.yml`, `<env>/Inventory/credentials/inventory_generation_creds.yml` |
-| `EnvBuildStep` | always | `cloud_passport/cloud_passport.py::add_cloud_passport_creds` | `<cloud>-creds.yml` next to the Cloud Passport |
-| `EnvBuildStep` | always | `CurrentEnvInstanceStore.flush()` | every cred file in the env instance store, mainly `<env>/Credentials/credentials.yml` |
+| `EnvBuildStep` | always | `CurrentEnvInstanceStore.put` of a cred path | `<env>/Credentials/credentials.yml` |
 | `GenerateEffectiveSetStep` | always | `effective_set/effective_set_entrypoint.py::_run_cli` | ES cred files the CLI returns on stdout |
 
 A step that changes an object it got from the cred store changes the cred store too, without a `put`.
 Readers get cred files through `current_cred_store().get`.
+
+## Cred store and env instance store
+
+The two stores have different roles. `CurrentEnvInstanceStore` holds the output of one step: the files that
+`EnvBuildStep` renders. The cred store holds a decrypted copy of the cred files of the repository for all
+steps, so that no cred file is ever decrypted on disk.
+
+| | Env instance store | Cred store |
+|---|---|---|
+| Role | output of `EnvBuildStep` | decrypted copy of the repo cred files |
+| Lifetime | inside `EnvBuildStep` | from the first step to `GitCommitStep` |
+| Holds | plain objects | plain objects and the original encrypted bytes |
+| At open | empty, reads no disk | reads the bytes of the cred files of the env |
+| Filled by | `put` only, the caller reads the disk | `put`, and `get` loads a file from disk on first read |
+| `get` of an unknown file | fails | loads it from disk, or returns an empty YAML with `allow_default` |
+| `exists` | memory | memory or disk |
+| Format | `flush()`, schema and header from `beautify` | `_write`, the creds schema for every cred file, header from `put` |
+| Write | `flush()`, every put file | at close, only changed files, encrypted |
+| Key | `Path` | `Path` |
+
+- **The env instance store does not hold cred files.** `get`, `put`, and `exists` of a cred path go to the cred
+  store. So a cred file has one source of truth during `EnvBuildStep`, and `flush()` writes no cred files.
+- **The cred store reads the disk itself.** Steps read cred files they did not create: creds rotation reads
+  the creds of every env of the cluster, env build reads shared creds of the cluster and the site, cloud
+  passport creds lie in one of two places. If the cred store did not load them, every reader would read the
+  disk itself.
+- **The disk tells which cred files exist.** Steps delete files on disk, not through the cred store. Only one
+  delete matters for the cred store: cloud passport cleanup deletes `cloud-passport/credentials/<cloud>.yml`,
+  and `add_cloud_passport_creds` then asks if the file exists. `exists` checks the disk and answers right.
+  ES deletes do not matter: nobody reads ES cred files, and the cred store writes only the ones the CLI
+  returns. So the cred store has no `delete`.
 
 ## What changes for the user
 
