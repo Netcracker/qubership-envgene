@@ -1,6 +1,6 @@
-# Configuring cloud artifact registries for AWS and GCP
+# Configuring artifact registries for AWS, GCP, Nexus, and Artifactory
 
-- [Configuring cloud artifact registries for AWS and GCP](#configuring-cloud-artifact-registries-for-aws-and-gcp)
+- [Configuring artifact registries for AWS, GCP, Nexus, and Artifactory](#configuring-artifact-registries-for-aws-gcp-nexus-and-artifactory)
   - [Two registry contexts in EnvGene](#two-registry-contexts-in-envgene)
   - [Prerequisites](#prerequisites)
   - [AWS CodeArtifact configuration](#aws-codeartifact-configuration)
@@ -17,6 +17,12 @@
     - [GCP Step 2: Create the registry definition](#gcp-step-2-create-the-registry-definition)
     - [GCP Step 3: Reference the registry in an Artifact or Application Definition](#gcp-step-3-reference-the-registry-in-an-artifact-or-application-definition)
     - [GCP authentication flow](#gcp-authentication-flow)
+  - [Nexus and Artifactory configuration](#nexus-and-artifactory-configuration)
+    - [Nexus and Artifactory Step 1: Create the credential entry](#nexus-and-artifactory-step-1-create-the-credential-entry)
+    - [Nexus and Artifactory Step 2: Create the registry definition](#nexus-and-artifactory-step-2-create-the-registry-definition)
+    - [Nexus and Artifactory Step 3: Reference the registry in an Artifact or Application Definition](#nexus-and-artifactory-step-3-reference-the-registry-in-an-artifact-or-application-definition)
+    - [Nexus and Artifactory authentication flow](#nexus-and-artifactory-authentication-flow)
+  - [Fill a templated registry definition](#fill-a-templated-registry-definition)
   - [Placing configuration files](#placing-configuration-files)
   - [Supported auth methods reference](#supported-auth-methods-reference)
   - [See also](#see-also)
@@ -342,6 +348,155 @@ registry:
    GCP credentials provider library.
 4. The access token is attached to all Maven download requests as `Authorization: Bearer <token>`.
 5. Maven artifacts are downloaded from the `repositoryDomainName` endpoint.
+
+## Nexus and Artifactory configuration
+
+### Nexus and Artifactory Step 1: Create the credential entry
+
+Add an entry to `configuration/credentials/credentials.yml` in the instance repository:
+
+```yaml
+nexus-cred:
+  type: usernamePassword
+  data:
+    username: "envgene-reader"
+    password: "<password>"
+```
+
+The credential type must be `usernamePassword`. Skip this step if the registry allows anonymous read access.
+
+To encrypt the credential value, see
+[Credential Encryption](/docs/how-to/credential-encryption.md).
+
+### Nexus and Artifactory Step 2: Create the registry definition
+
+Create a Registry Definition v2.0 file. The filename and the `name` field must be the same.
+
+For Nexus, for example `configuration/regdefs/nexus-registry.yaml`:
+
+```yaml
+version: "2.0"
+name: "nexus-registry"
+authConfig:
+  nexus-auth:
+    provider: "nexus"
+    authMethod: "user_pass"
+    credentialsId: "nexus-cred"
+mavenConfig:
+  authConfig: "nexus-auth"
+  repositoryDomainName: "https://nexus.example.com/repository/"
+  targetRelease: "maven-releases"
+  targetSnapshot: "maven-snapshots"
+  releaseGroup: "maven-public"
+```
+
+For Artifactory, for example `configuration/regdefs/artifactory-registry.yaml`:
+
+```yaml
+version: "2.0"
+name: "artifactory-registry"
+authConfig:
+  artifactory-auth:
+    provider: "artifactory"
+    authMethod: "user_pass"
+    credentialsId: "artifactory-cred"
+mavenConfig:
+  authConfig: "artifactory-auth"
+  repositoryDomainName: "https://artifactory.example.com/artifactory"
+  targetRelease: "libs-release-local"
+  targetSnapshot: "libs-snapshot-local"
+```
+
+For anonymous access, set `authMethod: "anonymous"` and leave out `credentialsId`.
+
+Field reference:
+
+| Field                                         | Description                                                        |
+|-----------------------------------------------|--------------------------------------------------------------------|
+| `authConfig.<key>.provider`                   | `nexus` or `artifactory`                                           |
+| `authConfig.<key>.authMethod`                 | `user_pass` or `anonymous`                                         |
+| `authConfig.<key>.credentialsId`              | Must match the key in `credentials.yml`. Not used with `anonymous` |
+| `mavenConfig.authConfig`                      | Must match the auth config key defined above                       |
+| `mavenConfig.repositoryDomainName`            | Base URL of the registry. For Nexus 3, end it with `/repository/`  |
+| `mavenConfig.targetRelease`                   | Release repository name                                            |
+| `mavenConfig.targetSnapshot`, `targetStaging` | Snapshot and staging repository names, if the registry has them    |
+| `mavenConfig.snapshotGroup`, `releaseGroup`   | Repository group names, if the registry has groups                 |
+
+A Registry Definition in `configuration/regdefs/` is a
+[definition override](/docs/features/app-reg-defs.md#definition-overrides): it replaces a template-rendered
+definition with the same `name` as a whole, with no field-level merge.
+
+### Nexus and Artifactory Step 3: Reference the registry in an Artifact or Application Definition
+
+**For SD/DD artifacts ([Application Definition v1.0](/docs/envgene-objects.md#application-definition) + [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)):**
+
+```yaml
+# configuration/appdefs/my-app.yaml
+name: "my-app"
+registryName: "nexus-registry"
+groupId: "org.example"
+artifactId: "my-app"
+```
+
+**For environment templates ([Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20)):**
+
+The filename and the `name` field equal the application part of `envTemplate.artifact` in the Environment Inventory:
+`project-env-template:1.0.0` needs `project-env-template.yaml` with `name: project-env-template`.
+
+```yaml
+# configuration/artifact_definitions/project-env-template.yaml
+version: "2.0"
+name: "project-env-template"
+groupId: "org.example.templates"
+artifactId: "project-env-template"
+registry:
+  name: "nexus-registry"
+  authConfig:
+    nexus-auth:
+      provider: "nexus"
+      authMethod: "user_pass"
+      credentialsId: "nexus-cred"
+  mavenConfig:
+    authConfig: "nexus-auth"
+    repositoryDomainName: "https://nexus.example.com/repository/"
+    targetRelease: "maven-releases"
+    targetSnapshot: "maven-snapshots"
+```
+
+### Nexus and Artifactory authentication flow
+
+1. EnvGene resolves the `authConfig` block with `provider: nexus` or `provider: artifactory`.
+2. With `user_pass`, the credential identified by `credentialsId` is loaded from `credentials.yml`, and
+   `Authorization: Basic <token>` is attached to all Maven download requests. With `anonymous`, no credentials are sent.
+3. When `targetSnapshot`, `targetStaging`, and `targetRelease` are all set, EnvGene searches them concurrently and uses
+   the first that returns the artifact.
+4. For Nexus, if an artifact is not found at the repository URL, EnvGene retries the lookup through the Nexus browse
+   URL (`/service/rest/repository/browse/`). This needs `repositoryDomainName` to end with `/repository/`.
+
+## Fill a templated registry definition
+
+When the Environment Template ships a Registry Definition template, its author can expose the registry values
+through the [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides) macro, for example:
+
+```yaml
+# Template repository: templates/regdefs/maven.yml.j2
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides.mavenRepositoryDomainName }}"
+```
+
+Set those values in `appregdef_config.yaml` of the instance repository instead of committing a complete Registry
+Definition. Use the keys the template expects. The template author documents them.
+
+```yaml
+# environments/configuration/appregdef_config.yaml
+regdefs:
+  overrides:
+    mavenRepositoryDomainName: "https://nexus.example.com/repository/"
+```
+
+The file applies to every cluster. For one cluster, put it in
+`environments/<cluster-name>/configuration/appregdef_config.yaml`. On conflicting keys the cluster file wins. See
+[`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
 
 ## Placing configuration files
 

@@ -1,0 +1,4 @@
+name: postgresql-postgres-custom
+version: 1
+parameters:
+  "<PARAMETER>": "<value>"

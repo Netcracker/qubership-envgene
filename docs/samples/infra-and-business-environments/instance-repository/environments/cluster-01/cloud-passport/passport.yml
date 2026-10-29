@@ -1,0 +1,32 @@
+---
+# Business passport, the cluster default. Every environment in cluster-01 without an
+# inventory.cloudPassport field auto-associates this file.
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.cluster-01.example.com
+  CLOUD_API_PORT: "6443"
+  CLOUD_DEPLOY_TOKEN: cloud-deploy-sa-token
+  CLOUD_PUBLIC_HOST: cluster-01.example.com
+  CLOUD_PRIVATE_HOST: cluster-01.example.com
+  CLOUD_PROTOCOL: https
+  PRODUCTION_MODE: false
+dbaas:
+  API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
+  DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.example.com
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.get("dbaas-cred").username}
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.get("dbaas-cred").password}
+maas:
+  MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
+  MAAS_SERVICE_ADDRESS: http://maas.cluster-01.example.com
+  MAAS_CREDENTIALS_USERNAME: ${creds.get("maas-cred").username}
+  MAAS_CREDENTIALS_PASSWORD: ${creds.get("maas-cred").password}
+storage:
+  STORAGE_SERVER_URL: https://minio.cluster-01.example.com
+  STORAGE_PROVIDER: s3
+  STORAGE_REGION: eu-west-1
+  STORAGE_USERNAME: ${creds.get("minio-cred").username}
+  STORAGE_PASSWORD: ${creds.get("minio-cred").password}
+global:
+  MONITORING_ENABLED: "true"
+  TRACING_ENABLED: "false"
+  TRACING_HOST: tracing-agent

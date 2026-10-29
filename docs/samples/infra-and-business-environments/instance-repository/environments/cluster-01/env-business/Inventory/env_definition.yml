@@ -1,0 +1,18 @@
+# Business environment. Deploys the business solution of the cluster. Created by the pipeline from
+# env-inventory-content/env-business.json. Replace the <placeholders> with the values of your project.
+# No cloudPassport: the environment uses the cluster default passport.yml.
+inventory:
+  tenantName: "<tenant-name>"
+  noCmdbVersion: "v2"
+envTemplate:
+  name: "<business-template-name>"
+  artifact: "<business-template-artifact>:<version>"
+  # Variables of the business Environment Template. The list depends on the template.
+  additionalTemplateVariables:
+    use_env_prefix: true
+  # Commit these files to configuration/ by hand.
+  sharedTemplateVariables:
+    - "<ci-vars>"
+    - "<feature-toggles>"
+  sharedMasterCredentialFiles:
+    - "<ci-creds>"

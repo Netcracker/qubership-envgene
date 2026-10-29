@@ -1,0 +1,58 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {
+        "noCmdbVersion": "v2",
+        "cloudPassport": "passport-infra"
+      },
+      "envTemplate": {
+        "name": "<infra-template-name>",
+        "artifact": "<infra-template-artifact>:<version>",
+        "additionalTemplateVariables": {
+          "platform_preset": "<platform-preset>",
+          "env_type": "k8s",
+          "storage_class": "<storage-class>",
+          "logging_type": "<logging-type>",
+          "logging_host": "<logging-host>"
+        },
+        "sharedTemplateVariables": [
+          "<platform-vars>"
+        ],
+        "envSpecificParamsets": {
+          "postgresql": [
+            "postgresql-postgres-custom"
+          ],
+          "kafka": [
+            "kafka-kafka-custom"
+          ],
+          "<namespace>": [
+            "<namespace>-<service>-custom"
+          ]
+        },
+        "envSpecificE2EParamsets": {
+          "cloud": [
+            "dcl-configuration-common",
+            "dcl-configuration-custom"
+          ]
+        },
+        "sharedMasterCredentialFiles": [
+          "<platform-creds>"
+        ]
+      }
+    }
+  },
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "postgresql-postgres-custom",
+        "version": 1,
+        "parameters": {
+          "<PARAMETER>": "<value>"
+        }
+      }
+    }
+  ]
+}

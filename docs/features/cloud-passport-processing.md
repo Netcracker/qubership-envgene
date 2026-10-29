@@ -112,7 +112,9 @@ environments/
 └── <cluster-name>/
     ├── cloud-passport/
     │   ├── passport.yml           ← default passport at cluster scope (recommended name)
-    │   └── passport-infra.yml     ← additional infra passport (explicit reference)
+    │   ├── passport-creds.yml     ← credentials of passport.yml
+    │   ├── passport-infra.yml     ← additional infra passport (explicit reference)
+    │   └── passport-infra-creds.yml ← credentials of passport-infra.yml
     ├── env-01/
     │   └── Inventory/
     │       └── env_definition.yml ← cloudPassport: passport-infra  (explicit)
@@ -129,7 +131,6 @@ contains a `cloudPassport` field under `inventory`, the system uses that named p
 ```yaml
 # <cluster>/<env>/Inventory/env_definition.yml
 inventory:
-  environmentName: env-01
   cloudPassport: passport-infra    # the system resolves this exact passport
 ```
 
@@ -147,7 +148,6 @@ the system applies auto-association:
 ```yaml
 # <cluster>/<env>/Inventory/env_definition.yml
 inventory:
-  environmentName: env-01
   # no `cloudPassport` field → auto-association applies
 ```
 

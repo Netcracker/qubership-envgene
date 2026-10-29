@@ -1,136 +1,218 @@
-# Environment Inventory Creation Guide
+# Create an Environment Inventory
 
-- [Environment Inventory Creation Guide](#environment-inventory-creation-guide)
-  - [Description](#description)
-  - [1. Manual Environment Creation](#1-manual-environment-creation)
-    - [\[Manual\] Prerequisites](#manual-prerequisites)
-    - [\[Manual\] Flow](#manual-flow)
-  - [2. Environment Creation Using Pipeline execution](#2-environment-creation-using-pipeline-execution)
-    - [\[Pipeline\] Prerequisites](#pipeline-prerequisites)
-    - [\[Pipeline\] Flow](#pipeline-flow)
-  - [Results](#results)
+- [Create an Environment Inventory](#create-an-environment-inventory)
+  - [Overview](#overview)
+  - [Examples by environment type](#examples-by-environment-type)
+  - [Prerequisites](#prerequisites)
+  - [Choose the level of each file](#choose-the-level-of-each-file)
+  - [Create an environment through the pipeline (recommended)](#create-an-environment-through-the-pipeline-recommended)
+    - [Step 1: Prepare `ENV_INVENTORY_CONTENT`](#step-1-prepare-env_inventory_content)
+    - [Step 2: Run the Instance pipeline](#step-2-run-the-instance-pipeline)
+    - [Step 3: Verify the result](#step-3-verify-the-result)
+  - [Create an environment by hand](#create-an-environment-by-hand)
+    - [Step 1: Create `env_definition.yml`](#step-1-create-env_definitionyml)
+    - [Step 2: Add the referenced files](#step-2-add-the-referenced-files)
+    - [Step 3: Commit and generate](#step-3-commit-and-generate)
+  - [Set and update credentials](#set-and-update-credentials)
+  - [Related documentation](#related-documentation)
 
-## Description
+## Overview
 
-This guide provides instructions for creating a Environment Inventory in the Instance repository using two different approaches:
+Use this guide to create the Environment Inventory of one environment: `env_definition.yml`, its ParameterSets,
+and its credentials files. At the end, the Inventory is committed to the Instance repository, and with
+`ENV_BUILDER: true` the Environment Instance is built from it.
 
-1. Manual Environment Creation
-2. Environment Creation Using Pipeline
+Choose how to create the Inventory:
 
-## 1. Manual Environment Creation
+- [Through the Instance pipeline](#create-an-environment-through-the-pipeline-recommended) (recommended): pass the
+  content in `ENV_INVENTORY_CONTENT`, and the pipeline writes and commits the files.
+- [By hand](#create-an-environment-by-hand): commit the files yourself, when you cannot run the Instance pipeline.
 
-### [Manual] Prerequisites
+For every field of `env_definition.yml` and which fields to leave out, see
+[Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
 
-1. The Instance repository has already been initialized and follows the required structure.
+## Examples by environment type
 
-2. The cluster has already been created according to [cluster creation guide](/docs/how-to/create-cluster.md).
+Start from the example that matches your environment:
 
-### [Manual] Flow
+| Environment type                        | `env_definition.yml`                                                                                                                                        | Ready `ENV_INVENTORY_CONTENT`                                                                                |
+|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| Infra: deploys the infrastructure SD    | [`env_definition.yml`](/docs/samples/infra-and-business-environments/instance-repository/environments/cluster-01/env-infra/Inventory/env_definition.yml)    | [`env-infra.json`](/docs/samples/infra-and-business-environments/env-inventory-content/env-infra.json)       |
+| Business: deploys the business solution | [`env_definition.yml`](/docs/samples/infra-and-business-environments/instance-repository/environments/cluster-01/env-business/Inventory/env_definition.yml) | [`env-business.json`](/docs/samples/infra-and-business-environments/env-inventory-content/env-business.json) |
 
-1. **Clone the Instance repository to your local machine**
+## Prerequisites
 
-2. **Create the Environment folder inside `/environments/<cluster-name>`**
+- The Instance repository is initialized. See
+  [Initialize and upgrade Instance repository](/docs/how-to/envgene-maitanance.md).
+- The cluster folder `/environments/<cluster-name>/` exists, with the Cloud Passport if the environment uses one.
+  See [Create a cluster](/docs/how-to/create-cluster.md).
+- The Environment Template is published and has an
+  [Artifact Definition](/docs/envgene-objects.md#artifact-definition). For `artifact: project-env-template:1.0.0`, it
+  is `/configuration/artifact_definitions/project-env-template.yaml` with `name: project-env-template`.
+- For credentials kept in the Instance repository, credential encryption is enabled. See
+  [Credential encryption](/docs/how-to/credential-encryption.md).
 
-    ```plaintext
-    └── environments
-        └── <cluster-name>
-            └── <environment-name>
-    ```
+## Choose the level of each file
 
-    Example:
+ParameterSets, credentials files, and Resource Profile Overrides can live at three levels. Pick the level by who uses
+the file:
 
-    ```plaintext
-    └── environments
-        └── cluster-01
-            └── env-1
-    ```
+| Level       | Use it for                                          | `place` in `ENV_INVENTORY_CONTENT` |
+|-------------|-----------------------------------------------------|------------------------------------|
+| Environment | values of this environment only                     | `env`                              |
+| Cluster     | values shared by all environments of one cluster    | `cluster`                          |
+| Repository  | values shared by all environments in the repository | `site`                             |
 
-3. **Inside the Environment folder, create an `Inventory` directory:**
+Each level has its own folder:
 
-    ```plaintext
-    └── environments
-        └── <cluster-name>
-            └── <environment-name>
-                └── Inventory
-    ```
+| File                      | Environment                                                 | Cluster                                     | Repository                        |
+|---------------------------|-------------------------------------------------------------|---------------------------------------------|-----------------------------------|
+| ParameterSet              | `environments/<cluster>/<env>/Inventory/parameters/`        | `environments/<cluster>/parameters/`        | `environments/parameters/`        |
+| Credentials file          | `environments/<cluster>/<env>/Inventory/credentials/`       | `environments/<cluster>/credentials/`       | `environments/credentials/`       |
+| Resource Profile Override | `environments/<cluster>/<env>/Inventory/resource_profiles/` | `environments/<cluster>/resource_profiles/` | `environments/resource_profiles/` |
 
-    Example:
+`env_definition.yml` refers to a file by name, not by level. EnvGene looks for the name at the environment level
+first, then at the cluster level, then at the repository level, and uses the first match. A file at the environment
+level therefore hides a file with the same name at the cluster or repository level. For the full search order, see
+[File resolution for shared entities](/docs/envgene-configs.md#file-resolution-for-shared-entities).
 
-    ```plaintext
-    └── environments
-        └── cluster-01
-            └── env-1
-                └── Inventory
-    ```
+> [!WARNING]
+> A file at the cluster or repository level is shared. If a pipeline run for one environment replaces or deletes it,
+> the change applies to every environment that uses the file.
 
-4. **Inside the Inventory folder, create the `env_definition.yml` file:**
+## Create an environment through the pipeline (recommended)
 
-    ```plaintext
-    └── environments
-        └── <cluster-name>
-            └── <env-name>
-                └── Inventory
-                    └── env_definition.yml
-    ```
+### Step 1: Prepare `ENV_INVENTORY_CONTENT`
 
-    Example:
+Write the content as JSON. This example creates `env_definition.yml` and one ParameterSet for `cluster-01/env-01`:
 
-    ```plaintext
-    └── environments
-        └── cluster-01
-            └── env-1
-                └── Inventory
-                    └── env_definition.yml
-    ```
+```json
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {
+        "noCmdbVersion": "v2"
+      },
+      "envTemplate": {
+        "name": "simple",
+        "artifact": "project-env-template:1.0.0",
+        "envSpecificE2EParamsets": {
+          "cloud": [
+            "cloud-pipeline"
+          ]
+        }
+      }
+    }
+  },
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "cloud-pipeline",
+        "version": 1,
+        "parameters": {
+          "DEPLOYMENT_TIMEOUT": "1800"
+        }
+      }
+    }
+  ]
+}
+```
 
-    Example of simplest `env_definition.yml`
+- `envSpecificE2EParamsets` binds ParameterSets by name. The key `cloud` applies them to the whole environment. A
+  Namespace folder name from `Namespaces/` applies them to that Namespace only.
+- Every name in `envSpecificE2EParamsets` must match a ParameterSet that the same content creates or that already
+  exists in the repository.
+- To add credentials in the same run, see [Configure Local Credentials](/docs/how-to/configure-local-credentials.md)
+  or [Configure External Credentials](/docs/how-to/configure-external-credentials.md).
+- `place` sets the level of each file, see [Choose the level of each file](#choose-the-level-of-each-file).
 
-    ```yaml
-    inventory:
-      environmentName: string
-    envTemplate:
-      name: string
-      artifact: string
-    ```
+For all blocks, see [Environment Inventory Generation](/docs/features/env-inventory-generation.md).
 
-    See details about Environment Inventory options in the [documentation](/docs/envgene-configs.md#env_definitionyml)
+### Step 2: Run the Instance pipeline
 
-5. **Commit and push your changes**
+Pass the JSON from Step 1 as a single-line string:
 
-## 2. Environment Creation Using Pipeline execution
+```yaml
+ENV_NAMES: cluster-01/env-01
+ENV_INVENTORY_CONTENT: <JSON from Step 1>
+ENV_BUILDER: true
+```
 
-### [Pipeline] Prerequisites
+`ENV_BUILDER: true` renders the Environment Instance in the same run. Leave it out to create only the Inventory.
 
-1. The Instance repository has already been initialized and follows the required structure.
+### Step 3: Verify the result
 
-2. The cluster has already been created according to [cluster creation guide](/docs/how-to/create-cluster.md).
+After the pipeline commits, the Inventory of the environment contains:
 
-### [Pipeline] Flow
+```text
+environments/
+└── cluster-01/
+    └── env-01/
+        └── Inventory/
+            ├── env_definition.yml
+            └── parameters/
+                └── cloud-pipeline.yml
+```
 
-1. **Trigger Instance repository pipeline with parameters:**
+With `ENV_BUILDER: true`, the folder `environments/cluster-01/env-01/` also holds the generated Environment Instance:
+`cloud.yml`, `tenant.yml`, `Namespaces/`, and `Credentials/`.
 
-    ```yaml
-    ENV_NAMES: "<cluster-name>/<env-name>"
-    ENV_INVENTORY_CONTENT: <...> # JSON in string with the Environment Inventory content
-    ```
+If the job fails with a schema error, check the JSON against
+[`env-inventory-content.schema.json`](/schemas/env-inventory-content.schema.json).
 
-    See details about pipeline parameter options in the [documentation](/docs/instance-pipeline-parameters.md)
+## Create an environment by hand
 
-    > [!NOTE]
-    > `ENV_INVENTORY_INIT` and `ENV_SPECIFIC_PARAMS` are deprecated and will be removed in future
-    > releases. Use
-    > [`ENV_INVENTORY_CONTENT`](/docs/instance-pipeline-parameters.md#env_inventory_content) instead.
-  
-2. **The pipeline will automatically:**
-   - Create the required folder structure under `/environments/<cluster-name>/<env-name>`
-   - Generate the `Inventory` directory and `env_definition.yml` file
-   - Optionally create:
-       - Parameter Sets under `/Inventory/parameters/`
-       - Credential files under `/Credentials/`
-   - Commit and push the generated structure to the remote Instance repository
+### Step 1: Create `env_definition.yml`
 
-    > [!NOTE] You do not need to commit or push any files manually; the pipeline performs all repository operations automatically.
+Create the file:
 
-## Results
+```yaml
+# environments/cluster-01/env-01/Inventory/env_definition.yml
+inventory:
+  noCmdbVersion: "v2"
+envTemplate:
+  name: simple
+  artifact: project-env-template:1.0.0
+  envSpecificE2EParamsets:
+    cloud:
+      - cloud-pipeline
+```
 
-1. The new Environment Inventory is created in the remote Instance repository.
+### Step 2: Add the referenced files
+
+Create every ParameterSet and credentials file that `env_definition.yml` references. For the example above:
+
+```yaml
+# environments/cluster-01/env-01/Inventory/parameters/cloud-pipeline.yml
+name: cloud-pipeline
+version: 1
+parameters:
+  DEPLOYMENT_TIMEOUT: "1800"
+```
+
+To share a file between environments, put it in the cluster or repository folder, see
+[Choose the level of each file](#choose-the-level-of-each-file).
+
+### Step 3: Commit and generate
+
+1. Commit the files to the Instance repository.
+2. Run the Instance pipeline with `ENV_NAMES: cluster-01/env-01` and `ENV_BUILDER: true`.
+
+## Set and update credentials
+
+To set the credential values of the environment and change them later, see
+[Configure Local Credentials](/docs/how-to/configure-local-credentials.md), or
+[Configure External Credentials](/docs/how-to/configure-external-credentials.md) for a Secret Store.
+
+## Related documentation
+
+- [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
+- [Split a Cloud Passport for business and infra environments](/docs/how-to/split-cloud-passport-for-business-and-infra.md)
+- [Create a cluster](/docs/how-to/create-cluster.md)
+- [Configure Local Credentials](/docs/how-to/configure-local-credentials.md)
+- [Configure External Credentials](/docs/how-to/configure-external-credentials.md)
+- [Credential Rotation](/docs/features/cred-rotation.md)

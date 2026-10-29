@@ -7,6 +7,7 @@
     - [Blue-Green Deployment](#blue-green-deployment)
     - [Cloud artifact registries](#cloud-artifact-registries)
     - [External credentials](#external-credentials)
+    - [Infra and business environments](#infra-and-business-environments)
 
 EnvGene samples are copyable file sets of two kinds: the generic repository layouts below and
 feature-scoped sample sets under `docs/samples/<feature>/`.
@@ -84,3 +85,9 @@ Registry Definition templates, the instance, the Effective Set, and the system c
 consumes (integration, deployer, registry, and definition credentials). See the
 [external credentials samples](/docs/samples/external-credentials/) and
 [External Credentials Management](/docs/features/external-creds.md).
+
+### Infra and business environments
+
+Templates for one cluster with an infra and a business environment on the No-CMDB v2 architecture: Cloud Passports,
+Environment Inventories, and the `ENV_INVENTORY_CONTENT` values that create them. See
+[Infra and business environments](/docs/samples/infra-and-business-environments/README.md).

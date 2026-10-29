@@ -1,0 +1,33 @@
+# Infra environment. Deploys the infrastructure Solution Descriptor of the cluster. Created by the pipeline from
+# env-inventory-content/env-infra.json. Replace the <placeholders> with the values of your project.
+inventory:
+  noCmdbVersion: "v2"
+  cloudPassport: passport-infra
+envTemplate:
+  name: "<infra-template-name>"
+  artifact: "<infra-template-artifact>:<version>"
+  # Variables of the infra Environment Template. The list depends on the template.
+  additionalTemplateVariables:
+    platform_preset: "<platform-preset>"
+    env_type: k8s
+    storage_class: "<storage-class>"
+    logging_type: "<logging-type>"
+    logging_host: "<logging-host>"
+  # Commit these files to configuration/ by hand.
+  sharedTemplateVariables:
+    - "<platform-vars>"
+  # One entry per infrastructure Namespace that needs custom parameters.
+  envSpecificParamsets:
+    postgresql:
+      - postgresql-postgres-custom
+    kafka:
+      - kafka-kafka-custom
+    "<namespace>":
+      - "<namespace>-<service>-custom"
+  # Parameters of the DCL deployment tooling.
+  envSpecificE2EParamsets:
+    cloud:
+      - dcl-configuration-common
+      - dcl-configuration-custom
+  sharedMasterCredentialFiles:
+    - "<platform-creds>"

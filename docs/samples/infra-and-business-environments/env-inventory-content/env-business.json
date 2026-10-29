@@ -1,0 +1,25 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {
+        "tenantName": "<tenant-name>",
+        "noCmdbVersion": "v2"
+      },
+      "envTemplate": {
+        "name": "<business-template-name>",
+        "artifact": "<business-template-artifact>:<version>",
+        "additionalTemplateVariables": {
+          "use_env_prefix": true
+        },
+        "sharedTemplateVariables": [
+          "<ci-vars>",
+          "<feature-toggles>"
+        ],
+        "sharedMasterCredentialFiles": [
+          "<ci-creds>"
+        ]
+      }
+    }
+  }
+}
