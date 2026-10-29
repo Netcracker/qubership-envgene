@@ -170,7 +170,7 @@ Set the value of that `credId` as in Step 1. For details, see
 | What changes                     | How                                                                                                                                         |
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | A Cloud Passport credential      | Edit `<passport-name>-creds.yml`, or run Cloud Passport discovery again                                                                     |
-| A Shared Credentials file        | Run the pipeline again with the same `credentials` entry, or edit the file. The pipeline replaces the whole file, so pass every credential |
+| A Shared Credentials file        | Run the pipeline again with the same `credentials` entry, or edit the file. The pipeline replaces the whole file, so pass every credential  |
 | One value used in several places | Use [Credential Rotation](/docs/features/cred-rotation.md). SOPS encryption only                                                            |
 
 Then run the pipeline with `ENV_BUILDER: true` and `GENERATE_EFFECTIVE_SET: true`.
