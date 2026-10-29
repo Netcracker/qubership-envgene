@@ -29,5 +29,6 @@ merge_java_opts() {
 if [ -n "${CALCULATOR_CLI_JAVA_OPTIONS:-}" ]; then
 	JAVA_OPTIONS=$(merge_java_opts "$JAVA_OPTIONS" "$CALCULATOR_CLI_JAVA_OPTIONS" | tr -s '[:space:]')
 fi
+JAVA_OPTIONS="${JAVA_OPTIONS:+$JAVA_OPTIONS }-XX:SharedArchiveFile=/deployments/app.jsa"
 export JAVA_OPTIONS
 exec /deployments/run-java.sh "$@"
