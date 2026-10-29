@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import logging
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -13,6 +14,7 @@ from zipfile import ZipFile
 import aiohttp
 import requests
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
+from artifact_searcher.utils.http_trace import http_trace_configs
 from artifact_searcher.utils.models import RegistryV2, Application, FileExtension, Credentials, ArtifactSource, ArtifactDownload, Repo, RepoType, Provider, MavenConfig
 from envgene_shared.utils.logger import logger
 
@@ -189,7 +191,7 @@ async def download_all_async(downloads: list[ArtifactDownload]):
         headers = downloads_group[0].source.auth_headers
         connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers, trust_env=True, trace_configs=http_trace_configs()) as session:
             async with asyncio.TaskGroup() as tg:
                 tasks = [tg.create_task(download_async(session, download)) for download in downloads_group]
             results = []
@@ -333,7 +335,7 @@ async def _attempt_check(
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
-    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers) as session:
+    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers, trust_env=True, trace_configs=http_trace_configs()) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(
@@ -549,5 +551,6 @@ def resolve_snapshot_version(base_path, extension: FileExtension,
 
     except Exception as e:
         logger.warning(f"Snapshot resolve error: {e}")
+
 
 # --------------------------------------------------------------------------------------
