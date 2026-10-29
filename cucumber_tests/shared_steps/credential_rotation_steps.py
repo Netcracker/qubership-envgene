@@ -74,7 +74,7 @@ def no_cred_files_modified(workspace: EnvGeneWorkspace):
     )
     if not creds_file.exists():
         return
-    content = yaml.safe_load(creds_file.read_text(encoding="utf-8"))
+    content = workspace.get_decrypted_yaml(creds_file)
     cred = content.get("db-cred", {})
     actual = cred.get("data", {}).get("password")
     assert actual == "original-password", (
@@ -96,7 +96,7 @@ def credential_field_equals(workspace: EnvGeneWorkspace, cred_id: str, field: st
         f"Credentials file not found at {creds_file}.\n"
         f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
     )
-    content = yaml.safe_load(creds_file.read_text(encoding="utf-8"))
+    content = workspace.get_decrypted_yaml(creds_file)
     assert cred_id in content, f"Credential '{cred_id}' not found in {creds_file}"
     actual = content[cred_id].get("data", {}).get(field)
     assert actual == expected, (
@@ -121,7 +121,7 @@ def shared_credential_field_equals(workspace: EnvGeneWorkspace, cred_id: str, fi
         f"Shared credentials file not found at {creds_file}.\n"
         f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
     )
-    content = yaml.safe_load(creds_file.read_text(encoding="utf-8"))
+    content = workspace.get_decrypted_yaml(creds_file)
     assert cred_id in content, f"Credential '{cred_id}' not found in {creds_file}"
     actual = content[cred_id].get("data", {}).get(field)
     assert actual == expected, (

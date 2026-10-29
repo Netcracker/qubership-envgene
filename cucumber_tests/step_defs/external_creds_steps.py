@@ -27,7 +27,7 @@ def _get_env_credential_types(workspace: EnvGeneWorkspace) -> tuple[Path, set[st
 
     assert env_cred_file.exists(), (f"Environment credentials file does not exist: {env_cred_file}")
 
-    content = (yaml.safe_load(env_cred_file.read_text(encoding="utf-8")) or {})
+    content = workspace.get_decrypted_yaml(env_cred_file) or {}
 
     found_types = {
         credential["type"]
@@ -52,7 +52,7 @@ def _get_deployment_credential_value(workspace: EnvGeneWorkspace, credential_nam
     assert credentials_files, (f"No credentials.yaml found under {deployment_dir}")
 
     for credentials_file in credentials_files:
-        content = yaml.safe_load(credentials_file.read_text(encoding="utf-8")) or {}
+        content = workspace.get_decrypted_yaml(credentials_file) or {}
         if credential_name in content:
             return credentials_file, content[credential_name]
 
@@ -83,7 +83,7 @@ def _get_application_deployment_credentials(workspace: EnvGeneWorkspace, app_nam
     assert app_creds_files, (
         f"No credentials.yaml found for application '{app_name}' under {deployment_dir}"
     )
-    content = yaml.safe_load(app_creds_files[0].read_text(encoding="utf-8")) or {}
+    content = workspace.get_decrypted_yaml(app_creds_files[0]) or {}
     return app_creds_files[0], content
 
 
