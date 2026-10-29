@@ -149,6 +149,10 @@ def open_cred_store():
         _open_store = None
 
 
+def is_cred_store_open() -> bool:
+    return _open_store is not None
+
+
 def current_cred_store() -> CredStore:
     if _open_store is None:
         raise RuntimeError("Cred store is not open: it exists only inside the pipeline steps before git commit")

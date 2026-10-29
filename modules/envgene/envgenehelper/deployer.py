@@ -5,7 +5,7 @@ from envgene_shared.utils.yaml_utils import openYaml, get_or_create_nested_yaml_
 from envgene_shared.utils.file_utils import check_file_exists
 from envgene_shared.utils.logger import logger
 from envgene_shared.crypto.cred_store import current_cred_store
-from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
+from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros, read_cred_file
 from .business_helper import find_env_instances_dir, getEnvDefinition
 from .yaml_helper import find_yaml_file
 from .file_helper import getDirName
@@ -133,7 +133,7 @@ def get_deployer_config(*_args, **_kwargs):
     cmdb_url = data[deployer_name]['deployerUrl']   
 
     cred_path = get_cred_file_path(deployer_dir)
-    cred_yaml = current_cred_store().get(cred_path)
+    cred_yaml = read_cred_file(cred_path)
 
     cmdb_username = resolve_attribute_value(data[deployer_name]['username'], cred_yaml)
     cmdb_api_token = resolve_attribute_value(data[deployer_name]['token'], cred_yaml)

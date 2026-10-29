@@ -15,7 +15,7 @@ from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.file_utils import writeToFile
 from envgenehelper import getEnvCredentials, open_current_env_instance_store, readYaml, validate_creds
 from envgenehelper.errors import ValidationError
-from envgenehelper.deployer import get_value_and_attributes_from_cred
+from envgenehelper.deployer import get_deployer_config, get_value_and_attributes_from_cred
 
 SOPS_DATA = crypt_test_data[0]
 
@@ -77,6 +77,29 @@ def test_validate_creds_checks_creds_only_in_cred_store(project):
         with pytest.raises(ValidationError):
             validate_creds(str(path.parent))
         store.put(path, readYaml("cred:\n  type: secret\n  data:\n    secret: value\n"))
+
+
+def test_validate_creds_reads_disk_without_cred_store(project):
+    path = project / "environments" / "cluster" / "env" / "Credentials" / "credentials.yml"
+    writeToFile(str(path), "cred:\n  type: secret\n  data:\n    secret: envgeneNullValue\n")
+    encrypt_file(path, load_result=False)
+    with pytest.raises(ValidationError):
+        validate_creds(str(path.parent))
+
+
+def test_deployer_config_reads_creds_from_disk_without_cred_store(project, monkeypatch):
+    monkeypatch.setenv("CLUSTER_NAME", "cluster")
+    monkeypatch.setenv("ENVIRONMENT_NAME", "env")
+    writeToFile(str(project / "environments" / "cluster" / "env" / "Inventory" / "env_definition.yml"),
+                "inventory:\n  environmentName: env\n  deployer: cmdb\n")
+    writeToFile(str(project / "configuration" / "deployer.yml"),
+                "cmdb:\n  deployerUrl: https://cmdb\n"
+                "  username: ${envgen.creds.get('cmdb-cred').username}\n"
+                "  token: ${envgen.creds.get('cmdb-cred').password}\n")
+    creds = project / "configuration" / "deployer-creds.yml"
+    writeToFile(str(creds), "cmdb-cred:\n  type: usernamePassword\n  data:\n    username: user\n    password: token\n")
+    encrypt_file(creds, load_result=False)
+    assert get_deployer_config() == ("https://cmdb", "user", "token")
 
 
 def test_deployer_cred(project):
