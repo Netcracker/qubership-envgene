@@ -10,7 +10,7 @@ from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, get_all_ne
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
 from envgene_shared.utils.constants import SOPS_ID
-from envgene_shared.utils.crypt_utils import analyze_cred_file, get_crypt_backend, is_effective_set_cred_file
+from envgene_shared.utils.crypt_utils import effective_set_encrypted_keys, get_crypt_backend, is_effective_set_cred_file
 from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
     remove_cred_yaml_comments, sortYaml
 
@@ -90,7 +90,7 @@ class CredStore:
         old_text = old_data.decode("utf-8")
         if not is_encrypted_SOPS_text(old_text):
             return None
-        if is_es and _encrypted_literal_keys(readYaml(old_text)) != analyze_cred_file(obj)[0]:
+        if is_es and _encrypted_literal_keys(readYaml(old_text)) != effective_set_encrypted_keys(obj):
             return None
         return old_data
 

@@ -114,3 +114,23 @@ def analyze_cred_file(data):
                 walk(child)
     walk(data)
     return literal_keys, has_literal, has_reference
+
+
+def effective_set_encrypted_keys(data):
+    literal_keys, _, has_reference = analyze_cred_file(data)
+    if has_reference:
+        return literal_keys
+    keys = set()
+
+    def walk(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if isinstance(child, (dict, list)):
+                    walk(child)
+                elif child is not None and child != "":
+                    keys.add(key)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+    walk(data)
+    return keys
