@@ -1,8 +1,10 @@
 import base64
 import os
+import shlex
 import subprocess
 import tempfile
 import shutil
+import sys
 
 from envgene_shared.utils.business_utils import getenv_with_error
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_or_create_nested_yaml_attribute
@@ -54,18 +56,18 @@ def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, stdin_text=
 def _create_replace_content_sh(content_bytes):
     """Build an executable SOPS EDITOR script that writes plaintext bytes exactly."""
     payload = base64.b64encode(content_bytes).decode('ascii')
-    script_content = f"""#!/usr/bin/env python3
-import base64
+    script_content = f"""import base64
 import sys
 
-import yaml
+from ruyaml import YAML
 
 if len(sys.argv) < 2:
     raise SystemExit("No target file specified.")
+yaml = YAML(typ="safe")
 new_bytes = base64.b64decode({payload!r})
 with open(sys.argv[1], "rb") as f:
-    old_content = yaml.safe_load(f)
-if old_content != yaml.safe_load(new_bytes):
+    old_content = yaml.load(f)
+if old_content != yaml.load(new_bytes):
     with open(sys.argv[1], "wb") as out:
         out.write(new_bytes)
 """
@@ -81,9 +83,9 @@ def _sops_edit(encrypted_path, plaintext_path, public_key, secret_key=None):
         plaintext_bytes = f.read()
     editor_path = _create_replace_content_sh(plaintext_bytes)
     try:
-        os.chmod(editor_path, 0o777)
         sops_args = ["edit", "--age", public_key, str(encrypted_path)]
-        _run_SOPS(sops_args, secret_key=secret_key, return_codes_to_ignore=[200], EDITOR=editor_path)
+        editor = f"{shlex.quote(sys.executable)} {shlex.quote(editor_path)}"
+        _run_SOPS(sops_args, secret_key=secret_key, return_codes_to_ignore=[200], EDITOR=editor)
     finally:
         if os.path.exists(editor_path):
             os.remove(editor_path)
