@@ -7,7 +7,7 @@ import pytest
 from envgene_shared.crypto.cred_store import CredStore, current_cred_store, open_cred_store
 from envgene_shared.crypto.crypt import decrypt_bytes, decrypt_file, encrypt_bytes, encrypt_file, is_encrypted
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
-from envgene_shared.crypto.sops_handler import _sops_edit, is_encrypted_SOPS, is_encrypted_SOPS_text
+from envgene_shared.crypto.sops_handler import _sops_edit, encrypt_SOPS_bytes, is_encrypted_SOPS, is_encrypted_SOPS_text
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.file_utils import writeToFile
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, yaml
@@ -362,6 +362,22 @@ def test_bytes_round_trip_without_disk(monkeypatch, tmp_path):
     assert is_encrypted_SOPS_text(encrypted.decode("utf-8"))
     assert decrypt_bytes(encrypted, path) == readYaml(CONTENT)
     assert not path.exists()
+
+
+def test_fernet_tokens_under_sops_fail(env_dir):
+    path = env_dir / "Credentials" / "credentials.yml"
+    writeToFile(str(path), "cred:\n  type: secret\n  data:\n    secret: '[encrypted:AES256_Fernet]gAAAAA'\n")
+    path.write_bytes(encrypt_SOPS_bytes(path.read_bytes(), path, "^data$"))
+    with pytest.raises(ValueError):
+        with open_cred_store() as store:
+            store.get(path)
+
+
+def test_encrypt_file_fails_on_fernet_tokens(env_dir):
+    path = env_dir / "Credentials" / "credentials.yml"
+    writeToFile(str(path), "cred:\n  type: secret\n  data:\n    secret: '[encrypted:AES256_Fernet]gAAAAA'\n")
+    with pytest.raises(ValueError):
+        encrypt_file(path)
 
 
 def test_fernet_encrypted_cred_file_fails(env_dir):

@@ -102,6 +102,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         return openYaml(file_path) if load_result else None
 
     file_content = openYaml(file_path)
+    fail_on_Fernet(file_content, file_path)
     should_encrypt, encrypted_regex = encryption_rule(file_content, file_path, True)
     if not should_encrypt:
         return file_content if load_result else None
@@ -111,6 +112,12 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
         old_file_path=old_file_path, load_result=load_result, encrypted_regex=encrypted_regex, **kwargs
     )
+
+
+def fail_on_Fernet(content, file_path):
+    if is_encrypted_Fernet(content):
+        raise ValueError(f'Cred file is encrypted with Fernet, which is no longer supported. Move the repository to SOPS, '
+                         f'see /docs/how-to/credential-encryption.md. Path: {file_path}')
 
 
 def encryption_rule(file_content, file_path, validate):
@@ -140,9 +147,7 @@ def decrypt_bytes(data: bytes, file_path, *, secret_key=None, ignore_is_crypt=Fa
         logger.debug(f'File is empty, skipping decryption. Path: {file_path}')
         return get_empty_yaml()
     content = readYaml(text)
-    if is_encrypted_Fernet(content):
-        raise ValueError(f'Cred file is encrypted with Fernet, which is no longer supported. Move the repository to SOPS, '
-                         f'see /docs/how-to/credential-encryption.md. Path: {file_path}')
+    fail_on_Fernet(content, file_path)
     encrypted = is_encrypted_SOPS_text(text)
     is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:
@@ -153,7 +158,9 @@ def decrypt_bytes(data: bytes, file_path, *, secret_key=None, ignore_is_crypt=Fa
     if not encrypted:
         logger.warning(f'File is not encrypted. Path: {file_path}')
         return content
-    return readYaml(decrypt_SOPS_bytes(data, file_path, secret_key))
+    decrypted = readYaml(decrypt_SOPS_bytes(data, file_path, secret_key))
+    fail_on_Fernet(decrypted, file_path)
+    return decrypted
 
 
 def encrypt_bytes(data: bytes, file_path, *, old_data: bytes = None, validate=True) -> bytes:
