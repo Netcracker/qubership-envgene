@@ -11,7 +11,7 @@ from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
 from envgene_shared.utils.crypt_utils import is_effective_set_cred_file
 from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
-    remove_cred_yaml_comments, sortYaml
+    remove_cred_yaml_comments, sortYaml, validate_yaml_by_scheme_or_fail
 
 
 class CredStore:
@@ -107,6 +107,13 @@ class CredStore:
         changed = {key: obj for key, obj in decrypted.items() if self._is_changed(key, obj)}
         if not changed:
             return
+        for key, obj in changed.items():
+            if not is_effective_set_cred_file(key):
+                try:
+                    validate_yaml_by_scheme_or_fail(input_yaml_content=obj,
+                                                    schema_file_path=get_schema_dir() / "credential.schema.json")
+                except ValueError as e:
+                    raise ValueError(f"Cred file validation failed: {key}") from e
         with ThreadPoolExecutor(max_workers=min(len(changed), os.cpu_count() or 2)) as executor:
             for future in [executor.submit(self._write, key, obj) for key, obj in changed.items()]:
                 future.result()

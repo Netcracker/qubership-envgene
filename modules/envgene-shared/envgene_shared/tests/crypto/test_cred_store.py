@@ -341,6 +341,17 @@ def test_es_file_written_unformatted(plain_env_dir):
     assert path.read_text(encoding="utf-8") == "b: two\na: one\n"
 
 
+def test_invalid_cred_file_fails_close_and_writes_nothing(plain_env_dir):
+    valid = plain_env_dir / "Credentials" / "credentials.yml"
+    invalid = plain_env_dir / "Credentials" / "other-credentials.yml"
+    with pytest.raises(ValueError):
+        with open_cred_store() as store:
+            store.put(valid, {"cred": {"type": "secret", "data": {"secret": "value"}}})
+            store.put(invalid, {"cred": {"type": "unknown"}})
+    assert not valid.exists()
+    assert not invalid.exists()
+
+
 def test_empty_es_file_written_empty(env_dir):
     path = env_dir / "effective-set" / "pipeline" / "credentials.yaml"
     with open_cred_store() as store:
