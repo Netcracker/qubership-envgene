@@ -352,6 +352,24 @@ def test_invalid_cred_file_fails_close_and_writes_nothing(plain_env_dir):
     assert not invalid.exists()
 
 
+def test_plain_cred_file_not_touched_by_steps_is_encrypted(env_dir):
+    path = env_dir / "Credentials" / "credentials.yml"
+    writeToFile(str(path), CONTENT)
+    with open_cred_store():
+        pass
+    assert is_encrypted_SOPS(path)
+    assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-placeholder-123"
+
+
+def test_plain_es_file_with_references_only_stays_plain(env_dir):
+    path = env_dir / "effective-set" / "runtime" / "credentials.yaml"
+    writeToFile(str(path), f"r: {ES_REF}\n")
+    before = path.read_bytes()
+    with open_cred_store():
+        pass
+    assert path.read_bytes() == before
+
+
 def test_empty_es_file_written_empty(env_dir):
     path = env_dir / "effective-set" / "pipeline" / "credentials.yaml"
     with open_cred_store() as store:

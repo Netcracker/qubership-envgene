@@ -9,7 +9,7 @@ from typing import Iterable
 from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, encryption_rule, get_all_necessary_cred_files
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
-from envgene_shared.utils.crypt_utils import is_effective_set_cred_file
+from envgene_shared.utils.crypt_utils import get_crypt, is_effective_set_cred_file, is_empty_cred_text
 from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
     remove_cred_yaml_comments, sortYaml, validate_yaml_by_scheme_or_fail
 
@@ -101,10 +101,24 @@ class CredStore:
         os.makedirs(key.parent, exist_ok=True)
         key.write_bytes(data)
 
+    def _plain_files(self):
+        plain = {}
+        for key, data in self._snapshot.items():
+            text = data.decode("utf-8")
+            if is_empty_cred_text(text) or is_encrypted_SOPS_text(text) or not key.is_file():
+                continue
+            obj = readYaml(text)
+            if is_effective_set_cred_file(key) and not encryption_rule(obj, key, False)[0]:
+                continue
+            plain[key] = obj
+        return plain
+
     def write_changed(self) -> None:
         with self._lock:
             decrypted = dict(self._decrypted)
         changed = {key: obj for key, obj in decrypted.items() if self._is_changed(key, obj)}
+        if get_crypt():
+            changed.update({key: obj for key, obj in self._plain_files().items() if key not in changed})
         if not changed:
             return
         for key, obj in changed.items():

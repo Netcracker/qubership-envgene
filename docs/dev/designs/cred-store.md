@@ -47,7 +47,8 @@ run_single_env_pipeline
   encrypts once at store close, in parallel threads.
 - **At the end the cred store writes only changed files.** A file is changed when its object differs from
   the decrypted object of its original bytes. A changed or new file is encrypted by SOPS. An unchanged file
-  is not touched, so `git diff` skips it.
+  is not touched, so `git diff` skips it. With `crypt: true` a plain cred file in scope counts as changed
+  and is encrypted, as before the cred store, when the last step encrypted all cred files.
 - **The cred store compares a cred file in Python, an ES cred file in `sops edit`.** Steps read cred files
   with `get`, so their decrypted original is in memory and the compare costs nothing. Nobody reads ES cred
   files, so the cred store does not decrypt them: an ES cred file the CLI returns goes to `sops edit`
