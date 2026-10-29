@@ -38,10 +38,8 @@ import org.qubership.cloud.devops.cli.utils.yaml.AdaptiveYaml;
 
 import java.io.*;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
@@ -52,7 +50,6 @@ public class FileDataConverterImpl implements FileDataConverter {
     public static final String CLEANUPER = "cleanuper";
     private final ObjectMapper objectMapper;
     private final FileSystemUtils fileSystemUtils;
-    private final Map<String, Map<String, Object>> credentialFiles = new ConcurrentHashMap<>();
 
     @Inject
     public FileDataConverterImpl(FileSystemUtils fileSystemUtils) {
@@ -101,13 +98,6 @@ public class FileDataConverterImpl implements FileDataConverter {
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         File file = fileSystemUtils.getFileFromGivenPath(args);
 
-        String fileName = file.getName();
-        if (fileName.endsWith("credentials.yaml") && !fileName.equals("external-credentials.yaml")) {
-            credentialFiles.put(String.join("/", args),
-                    params == null || params.isEmpty() ? new HashMap<>() : params);
-            return;
-        }
-
         boolean expand = params != null && !params.isEmpty()
                 && AdaptiveYaml.shouldExpand(params);
         if (expand) {
@@ -121,13 +111,6 @@ public class FileDataConverterImpl implements FileDataConverter {
         }
     }
 
-
-    @Override
-    public Map<String, Map<String, Object>> takeCredentialFiles() {
-        Map<String, Map<String, Object>> taken = new HashMap<>(credentialFiles);
-        credentialFiles.clear();
-        return taken;
-    }
 
     @Override
     public <T> Map<String, Object> getObjectMap(T inputObject) {

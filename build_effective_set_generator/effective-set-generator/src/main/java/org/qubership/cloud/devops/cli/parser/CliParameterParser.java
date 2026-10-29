@@ -82,6 +82,7 @@ public class CliParameterParser {
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
     private final FileSystemUtils fileSystemUtils;
+    private final Map<String, Map<String, Object>> credentialFiles = new ConcurrentHashMap<>();
 
 
     @Inject
@@ -101,13 +102,13 @@ public class CliParameterParser {
     }
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
+        credentialFiles.clear();
         checkIfEntitiesExist();
         validateNamespaceScopedCustomParams();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
         processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
-        Map<String, Map<String, Object>> credentialFiles = fileDataConverter.takeCredentialFiles();
         if (sharedData.getCredsOutput() != null) {
             new ObjectMapper().writeValue(new File(sharedData.getCredsOutput()), credentialFiles);
             return;
@@ -115,6 +116,10 @@ public class CliParameterParser {
         new ObjectMapper().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
                 .writeValue(System.out, credentialFiles);
         System.out.flush();
+    }
+
+    private void putCredentialFile(Map<String, Object> params, String... args) {
+        credentialFiles.put(String.join("/", args), params == null || params.isEmpty() ? new HashMap<>() : params);
     }
 
     private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String, NamespaceDTO> namespaceDTOMap) throws IOException {
@@ -257,7 +262,7 @@ public class CliParameterParser {
         topologyParams.put("bg_domain", bgDomainParamsMap);
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
-        fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
+        putCredentialFile(topologySecuredParams, topologyDir, "credentials.yaml");
     }
 
     private <T> Map<String, Object> getObjectMap(T input) {
@@ -306,7 +311,7 @@ public class CliParameterParser {
 
             try {
                 fileDataConverter.writeToFile(consumerParamsMap, pipelineDir, parametersFilename);
-                fileDataConverter.writeToFile(consumerSecureMap , pipelineDir, secureFilename);
+                putCredentialFile(consumerSecureMap, pipelineDir, secureFilename);
             } catch (IOException e) {
                 throw new CreateWorkDirException(e.getMessage(), e);
             }
@@ -316,7 +321,7 @@ public class CliParameterParser {
     private void createE2EFiles(ParameterBundle parameterBundle) throws IOException {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         fileDataConverter.writeToFile(parameterBundle.getE2eParams(), pipelineDir, "parameters.yaml");
-        fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
+        putCredentialFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
     }
 
     public ParameterBundle getParameterBundleByESVer(String tenantName, String cloudName, String namespaceName, String appName,
@@ -413,7 +418,7 @@ public class CliParameterParser {
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
                 fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
             }
-            fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
+            putCredentialFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
             if (StringUtils.isBlank(parameterBundle.getAppChartName()) && MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
                 parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
@@ -426,19 +431,19 @@ public class CliParameterParser {
                     }
                 });
             }
-            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
+            putCredentialFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
+            putCredentialFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
 
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), appDirectory, "technical-configuration-parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), appDirectory, "credentials.yaml");
+            putCredentialFile(parameterBundle.getSecuredDeployParams(), appDirectory, "credentials.yaml");
         }
     }
 
@@ -501,7 +506,7 @@ public class CliParameterParser {
                 String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
                 Files.createDirectories(Path.of(cleanupDir));
                 fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
-                fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+                putCredentialFile(cleanupParameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
 
                 cleanupMappingFileData.put(originalNamespace, cleanupPostFixDir);
             }
