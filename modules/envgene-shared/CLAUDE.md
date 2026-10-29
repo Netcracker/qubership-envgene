@@ -9,7 +9,7 @@ Pip-installable package (`envgene_shared` — version is a setuptools formality,
 | File | Responsibility |
 | ------ | --------------- |
 | `crypt.py` | Encrypt/decrypt entry points: `encrypt_file`, `decrypt_file`; batch ops: `encrypt_all_cred_files_for_env`, `decrypt_all_cred_files_for_env`; `is_encrypted`, `detect_crypt_backend_from_file`, `get_all_necessary_cred_files` (respects `ENV_NAMES` for scoped discovery) |
-| `cred_store.py` | `CredStore`: decrypted copy of the repo cred files for the pipeline steps, writes changed files encrypted at close; `open_cred_store`, `current_cred_store` |
+| `cred_store.py` | `CredStore`: decrypted copy of the repository cred files for the pipeline steps, writes changed files encrypted at close; `open_cred_store`, `current_cred_store` |
 | `fernet_handler.py` | Decrypt-only Fernet for cloud discovery creds: `decrypt_Fernet_data`, `is_encrypted_Fernet` |
 | `sops_handler.py` | SOPS/AGE via subprocess: `crypt_SOPS`, `is_encrypted_SOPS`, `_sops_edit` trick for minimize-diff |
 

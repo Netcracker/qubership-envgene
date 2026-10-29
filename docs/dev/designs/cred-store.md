@@ -118,7 +118,7 @@ run_single_env_pipeline
   a new env does not have yet. Without it a missing file fails.
 - **Steps read creds with `current_cred_store().get`, not with `decrypt_file`.** `decrypt_file` does not
   look into the cred store. It stays a plain function for `crypt_cli`, the pre-commit hook, and files that
-  are not repo creds: discovery creds encrypted with the discovery key.
+  are not repository creds: discovery creds encrypted with the discovery key.
 - **`crypt` decrypts and encrypts bytes.** `decrypt_bytes` and `encrypt_bytes` take the bytes and the path
   of a cred file. SOPS reads them on stdin, with `--filename-override` for the path. The cred store keeps
   bytes in memory and needs no temp file, except for `sops edit`: it works on a file only.
@@ -171,7 +171,7 @@ steps, so that no cred file is ever decrypted on disk.
 
 | | Env instance store | Cred store |
 |---|---|---|
-| Role | output of `EnvBuildStep` | decrypted copy of the repo cred files |
+| Role | output of `EnvBuildStep` | decrypted copy of the repository cred files |
 | Lifetime | inside `EnvBuildStep` | from the first step to `GitCommitStep` |
 | Holds | plain objects | plain objects and the original encrypted bytes |
 | At open | empty, reads no disk | reads the bytes of the cred files of the env |
