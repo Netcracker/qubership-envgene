@@ -90,10 +90,26 @@ run_single_env_pipeline
   it from disk as now. Nothing encrypts it.
 - **The cred store reads the encrypted bytes of all cred files of the env when it opens, before the first
   step.** The files are those of `get_all_necessary_cred_files`: `Credentials/`, `cloud-passport/`,
-  `effective-set/`, and the others. Reading bytes needs no SOPS call. A step that deletes a cred file
-  later does not lose its original bytes: `cleanup_dir` of `cloud-passport/`, and the ES modes that delete
-  ES directories. So the rules of what each step deletes are not repeated in the cred store. An ES cred
-  file that the CLI does not return keeps its state on disk: untouched or deleted by the ES mode.
+  `effective-set/`, and the others. Reading bytes needs no SOPS call. The cred store needs the original
+  bytes of a file it writes, as the base for `sops edit`. Three steps delete cred files after the cred store
+  opens:
+
+  | Step | Deletes | Put again | Needs original bytes |
+  |---|---|---|---|
+  | `GenerateEffectiveSetStep` | ES directories with `credentials.yaml` and `collision-credentials.yaml` | yes, the CLI returns them | yes |
+  | `PassportStep` | `cloud-passport/` except `<cloud>-creds.yml`, so `credentials/<cloud>.yml` | no | no |
+  | `InventoryGenerationStep` | a credentials object with `action: delete`, the env directory with `envDefinition` `action: delete` | no | no |
+
+  Only ES needs the original bytes: the ES modes delete a directory long before the cred store writes, and
+  without the original bytes every ES cred file would get a plain encrypt and a full diff on each run.
+- **The ES modes delete ES cred files with their directories, unlike cloud passport cleanup.** Cloud passport
+  cleanup keeps `<cloud>-creds.yml` because discovery returns it on every run. An ES directory is deleted to
+  remove the applications that are no longer in the plan. If the ES modes kept `credentials.yaml`, the file
+  of a removed application would stay, and something would have to delete the cred files the CLI did not
+  return. The original bytes solve it without changes in the ES modes.
+- **Known limit: an inventory request that deletes an env and creates the same env creds again loses
+  them.** `envDefinition` with `action: delete` deletes the env directory, then a credentials object with
+  `place: env` puts the creds back. With the same content the cred store sees no change and writes nothing.
 - **A `put` of a deleted file writes it only when the object changed.** The cred store does not tell a
   `put` from a `get`, so it never brings back a file that a step deleted after reading it. No step deletes a
   cred file and then puts the same object: cloud passport cleanup keeps `<cloud>-creds.yml`, and an ES cred
