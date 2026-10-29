@@ -34,22 +34,22 @@ def _encrypted_literal_keys(value, keys=None):
 class CredStore:
     def __init__(self, files: Iterable[str]):
         self._lock = threading.Lock()
-        self._original = {}
-        self._decrypted_original = {}
+        self._snapshot = {}
+        self._decrypted_snapshot = {}
         self._decrypted = {}
         self._headers = {}
         for file in files:
             if os.path.isfile(file):
-                self._original[self._key(file)] = Path(file).read_bytes()
+                self._snapshot[self._key(file)] = Path(file).read_bytes()
 
     @staticmethod
     def _key(path):
         return Path(path).resolve()
 
     def _lazy_decrypt(self, key):
-        obj = decrypt_bytes(self._original[key], key)
+        obj = decrypt_bytes(self._snapshot[key], key)
         with self._lock:
-            self._decrypted_original.setdefault(key, copy.deepcopy(obj))
+            self._decrypted_snapshot.setdefault(key, copy.deepcopy(obj))
             return self._decrypted.setdefault(key, obj)
 
     def get(self, path, allow_default=False) -> dict:
@@ -57,9 +57,9 @@ class CredStore:
         with self._lock:
             if key in self._decrypted:
                 return self._decrypted[key]
-            if key not in self._original and key.is_file():
-                self._original[key] = key.read_bytes()
-        if allow_default and key not in self._original:
+            if key not in self._snapshot and key.is_file():
+                self._snapshot[key] = key.read_bytes()
+        if allow_default and key not in self._snapshot:
             return get_empty_yaml()
         return self._lazy_decrypt(key)
 
@@ -75,16 +75,16 @@ class CredStore:
                 self._headers[self._key(path)] = header_text
 
     def _is_changed(self, key, obj):
-        if key not in self._original:
+        if key not in self._snapshot:
             return True
-        if key not in self._decrypted_original:
+        if key not in self._decrypted_snapshot:
             if is_effective_set_cred_file(key):
                 return True
             self._lazy_decrypt(key)
-        return obj != self._decrypted_original[key]
+        return obj != self._decrypted_snapshot[key]
 
     def _sops_edit_base(self, key, obj, is_es):
-        old_data = self._original.get(key)
+        old_data = self._snapshot.get(key)
         if get_crypt_backend() != SOPS_ID or old_data is None:
             return None
         old_text = old_data.decode("utf-8")
