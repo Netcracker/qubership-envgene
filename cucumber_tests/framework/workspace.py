@@ -2,8 +2,12 @@ import os
 import subprocess
 import yaml
 from pathlib import Path
+from envgene_shared.crypto.sops_handler import decrypt_SOPS_bytes, is_encrypted_SOPS_text
 from .data_builders import DataBuilder
 from .base_workspace import BaseWorkspace
+
+TEST_AGE_PRIVATE_KEY = "AGE-SECRET-KEY-1AQVCSQDRR5F70H3WJL82EMHMPSDMJPRP0GREJE0Y3M5YJZ25GT9SN0Y6FM"
+TEST_AGE_PUBLIC_KEY = "age1y4hfj9zz05dtqycfk55y4csddch6w2lu9l6wx7r68at5x897ea3qjh0gl9"
 
 _TEST_DATA_DIR = Path(__file__).parent.parent / "test_data" / "einv" / "common"
 
@@ -116,11 +120,17 @@ class EnvGeneWorkspace(BaseWorkspace):
 
         env = os.environ.copy()
         env["CI_PROJECT_DIR"] = str(self.base_dir)
-        env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
+        env["ENVGENE_AGE_PRIVATE_KEY"] = TEST_AGE_PRIVATE_KEY
+        env["PUBLIC_AGE_KEYS"] = TEST_AGE_PUBLIC_KEY
 
         # Mock run_effective_set_cli for local tests (cross-platform)
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
-        effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
+        effective_set_cli_mock.write_text(
+            "#!/bin/sh\n"
+            "for arg in \"$@\"; do\n"
+            "  case \"$arg\" in --creds-output=*) echo '{}' > \"${arg#--creds-output=}\" ;; esac\n"
+            "done\n"
+        )
         os.chmod(effective_set_cli_mock, 0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
 
@@ -139,8 +149,6 @@ class EnvGeneWorkspace(BaseWorkspace):
         scripts_root = str(Path(project_root) / "scripts")
         env["PYTHONPATH"] = f"{project_root}{os.pathsep}{python_root}{os.pathsep}{artifact_searcher}{os.pathsep}{integration}{os.pathsep}{jschon_sort}{os.pathsep}{scripts_root}"
         
-        # Add base_dir to PATH so that sops_mock (sops.bat) can be found
-        env["PATH"] = f"{str(self.base_dir)}{os.pathsep}{env.get('PATH', '')}"
 
         import sys
         python_exe = sys.executable
@@ -230,8 +238,18 @@ class EnvGeneWorkspace(BaseWorkspace):
         import yaml
         return yaml.safe_load(path.read_text(encoding="utf-8"))
 
+    def get_decrypted_text(self, path):
+        self.assert_file_exists(path)
+        text = path.read_text(encoding="utf-8")
+        if is_encrypted_SOPS_text(text):
+            text = decrypt_SOPS_bytes(text.encode("utf-8"), path, TEST_AGE_PRIVATE_KEY)
+        return text
+
+    def get_decrypted_yaml(self, path):
+        return yaml.safe_load(self.get_decrypted_text(path))
+
     def assert_yaml_content_matches(self, path, payload: dict):
-        content = self.get_yaml(path)
+        content = self.get_decrypted_yaml(path)
         if "credentials" in str(path):
             assert len(content) > 0, "Credentials file is empty"
             for cred_key, cred_val in payload.items():

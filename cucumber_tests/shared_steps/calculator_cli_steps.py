@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import yaml
 
-from pytest_bdd import then, parsers
+from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
@@ -26,6 +26,22 @@ _MOCK_REGISTRY = {
         },
     }
 }
+
+
+@given("the Calculator CLI prints text to standard output before and after the Effective Set")
+def calculator_cli_prints_to_stdout(workspace: EnvGeneWorkspace) -> None:
+    cli_wrapper = workspace.base_dir / "noisy_effective_set_cli.sh"
+    cli_wrapper.write_text(
+        "#!/bin/sh\n"
+        "echo 'text before the Effective Set'\n"
+        f"{_PRODUCTION_CLI} \"$@\"\n"
+        "status=$?\n"
+        "echo 'text after the Effective Set'\n"
+        "exit $status\n",
+        encoding="utf-8",
+    )
+    cli_wrapper.chmod(0o755)
+    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = str(cli_wrapper)
 
 
 def _get_effective_set_dir(workspace):
@@ -180,7 +196,7 @@ def effective_set_deployment_credentials_contain(workspace: EnvGeneWorkspace, ke
     es_dir = _es_root(workspace) / "deployment"
     assert es_dir.exists(), f"effective-set/deployment directory does not exist at {es_dir}"
     cred_files = [p for p in es_dir.rglob("credentials.yaml")]
-    found = any(key_value in p.read_text(encoding="utf-8") for p in cred_files)
+    found = any(key_value in workspace.get_decrypted_text(p) for p in cred_files)
     assert found, (
         f"'{key_value}' not found in any credentials.yaml under {es_dir}.\n"
         f"credentials.yaml files: {[str(p) for p in cred_files]}"
@@ -192,7 +208,7 @@ def effective_set_runtime_credentials_contain(workspace: EnvGeneWorkspace, key_v
     es_dir = _es_root(workspace) / "runtime"
     assert es_dir.exists(), f"effective-set/runtime directory does not exist at {es_dir}"
     cred_files = [p for p in es_dir.rglob("credentials.yaml")]
-    found = any(key_value in p.read_text(encoding="utf-8") for p in cred_files)
+    found = any(key_value in workspace.get_decrypted_text(p) for p in cred_files)
     assert found, (
         f"'{key_value}' not found in any credentials.yaml under {es_dir}.\n"
         f"credentials.yaml files: {[str(p) for p in cred_files]}"

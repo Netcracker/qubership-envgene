@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, current_env_instance_store, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, openYaml, render_workspace_dir
+from envgenehelper import NamespaceRole, Path, check_dir_exists, check_environment_is_valid_or_fail, cleanup_targets, deleteFile, delete_dir, fill_missing_environment_name, find_cloud_passport_definition, getAbsPath, getEnvDefinition, get_env_instances_dir, get_parent_dir_for_dir, get_schema_dir, get_template_dirs, getenv_with_error, logger, render_workspace_dir
 from envgenehelper.deployer import *
 
 from build_env.build_env import build_env, copy_instance_paramsets, copy_template_paramsets, \
@@ -8,8 +8,6 @@ from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
 from build_env.env_specific_overrides import validate_env_specific_override_keys
 from build_env.resource_profiles import get_env_specific_resource_profiles
-
-CREDENTIALS_FILE = Path("Credentials") / "credentials.yml"
 
 
 def copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir):
@@ -39,14 +37,10 @@ def cleanup_resulting_dir(resulting_dir: Path):
 
 
 def load_env_inputs(env_name, source_env_dir, all_instances_dir) -> dict:
-    env_instance_store = current_env_instance_store()
     env_definition = getEnvDefinition(source_env_dir)
     process_additional_template_parameters(env_definition, source_env_dir, all_instances_dir)
     update_env_definition_with_cloud_name(env_definition, source_env_dir, all_instances_dir)
     fill_missing_environment_name(env_definition, env_name)
-    source_creds_path = Path(source_env_dir) / CREDENTIALS_FILE
-    if source_creds_path.is_file():
-        env_instance_store.put(source_creds_path, openYaml(source_creds_path))
     return env_definition
 
 

@@ -5,14 +5,15 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from envgene_shared.utils.business_utils import getenv_with_error
-from envgene_shared.utils.yaml_utils import openYaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.logger import logger
+from envgene_shared.crypto.cred_store import current_cred_store, is_cred_store_open
 from envgene_shared.crypto.crypt import decrypt_file
-from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
+from envgenehelper import get_env_instances_dir, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
 from .collections_helper import dict_merge
 from .current_env_instance_store import current_env_instance_store
-from envgenehelper.yaml_helper import store_value_to_yaml, yaml
+from envgenehelper.yaml_helper import findAllYamlsInDir, store_value_to_yaml, yaml
 from envgenehelper.external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, is_external_credential_reference
 
 from .logger import logger
@@ -255,9 +256,23 @@ def register_extra_creds(creds: dict) -> None:
 
 def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    cred_config = decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    cred_config = current_cred_store().get(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
     extra_creds = _extra_creds.get()
     return dict_merge(cred_config, extra_creds) if extra_creds else cred_config
+
+
+# Disk reads are only for validate_creds and get_deployer_config: the CMDB import plugin calls them
+# after git commit, when the cred store is closed. Other code reads cred files through the cred store.
+def list_cred_files(dir_path):
+    if is_cred_store_open():
+        return current_cred_store().list(dir_path)
+    return findAllYamlsInDir(str(dir_path))
+
+
+def read_cred_file(path):
+    if is_cred_store_open():
+        return current_cred_store().get(path)
+    return decrypt_file(path, in_place=False)
 
 
 def validate_creds(creds_path: str = ""):
@@ -269,10 +284,9 @@ def validate_creds(creds_path: str = ""):
         creds_path = Path(getEnvCredentialsPath(env_dir)).parent
 
     credsErrors = []
-    credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
-    for credListPath in credsYamls:
-        credListYaml = openYaml(credListPath)
+    for credListPath in list_cred_files(creds_path):
+        credListYaml = read_cred_file(credListPath)
         for key, value in credListYaml.items() :
             errorCheck = check_cred_value(key, value)
             if errorCheck :
@@ -341,7 +355,6 @@ def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_sch
     # storing credentials yaml
     env_instance_store.put(env_credentials_path, env_creds_yaml)
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_yaml, schema_file_path=creds_schema)
-    env_instance_store.beautify(env_credentials_path, creds_schema)
     
 
 def get_cred_data(cred_id: str, env_creds: dict) -> dict:

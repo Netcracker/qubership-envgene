@@ -5,7 +5,6 @@ import yaml
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from pytest_bdd import given, parsers, then
-from cryptography.fernet import Fernet
 
 
 ES_DIR_NAME = "effective-set"
@@ -28,7 +27,7 @@ def _get_env_credential_types(workspace: EnvGeneWorkspace) -> tuple[Path, set[st
 
     assert env_cred_file.exists(), (f"Environment credentials file does not exist: {env_cred_file}")
 
-    content = (yaml.safe_load(env_cred_file.read_text(encoding="utf-8")) or {})
+    content = workspace.get_decrypted_yaml(env_cred_file) or {}
 
     found_types = {
         credential["type"]
@@ -53,7 +52,7 @@ def _get_deployment_credential_value(workspace: EnvGeneWorkspace, credential_nam
     assert credentials_files, (f"No credentials.yaml found under {deployment_dir}")
 
     for credentials_file in credentials_files:
-        content = yaml.safe_load(credentials_file.read_text(encoding="utf-8")) or {}
+        content = workspace.get_decrypted_yaml(credentials_file) or {}
         if credential_name in content:
             return credentials_file, content[credential_name]
 
@@ -84,7 +83,7 @@ def _get_application_deployment_credentials(workspace: EnvGeneWorkspace, app_nam
     assert app_creds_files, (
         f"No credentials.yaml found for application '{app_name}' under {deployment_dir}"
     )
-    content = yaml.safe_load(app_creds_files[0].read_text(encoding="utf-8")) or {}
+    content = workspace.get_decrypted_yaml(app_creds_files[0]) or {}
     return app_creds_files[0], content
 
 
@@ -143,22 +142,7 @@ def _get_external_credential_context_entry(workspace: EnvGeneWorkspace, cred_nam
 
 
 def decrypt(workspace: EnvGeneWorkspace, file_path: Path) -> dict[str, Any]:
-    key = b"c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
-    fernet = Fernet(key) 
-    
-    # Decrypt values
-    def decrypt_node(node):
-        if isinstance(node, dict):
-            return {k: decrypt_node(v) for k, v in node.items()}
-        elif isinstance(node, list):
-            return [decrypt_node(v) for v in node]
-        elif isinstance(node, str) and node.startswith("[encrypted:AES256_Fernet]"):
-            token = node[len("[encrypted:AES256_Fernet]"):]
-            return fernet.decrypt(token.encode('utf-8')).decode('utf-8')
-        return node
-    
-    actual_yaml = workspace.get_yaml(file_path)         
-    return decrypt_node(actual_yaml)
+    return workspace.get_decrypted_yaml(file_path)
 
 
 @then(parsers.parse('the environment credentials file contains only credentials of type "{credential_type}"'))

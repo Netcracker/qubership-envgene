@@ -138,7 +138,7 @@ Use this guide when you need to enable [Credential](/docs/envgene-objects.md#cre
 
 ### Verify Your Encryption is Working
 
-After setting up either Fernet or SOPS, test that everything works correctly:
+After setting up SOPS, test that everything works correctly:
 
 ### Troubleshooting Common Issues
 
@@ -162,7 +162,9 @@ After setting up either Fernet or SOPS, test that everything works correctly:
 
 ## How to Migrate from Fernet to SOPS
 
-If you're currently using Fernet encryption and want to upgrade to SOPS (recommended for EnvGene), follow these steps:
+EnvGene no longer supports Fernet as a repository backend. A repository with Fernet-encrypted credential files
+must move to SOPS before it runs a current EnvGene version. Step 1 decrypts the files with the pre-commit hook
+of the EnvGene version that the repository uses now, because a current version cannot decrypt them.
 
 ### Step 1: Prepare for Migration
 

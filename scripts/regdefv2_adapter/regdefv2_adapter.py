@@ -6,6 +6,7 @@ from artifact_searcher.auth_resolver import (
 )
 
 import envgenehelper as helper
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.config_helper import get_regdef_v2_schema
 from envgenehelper.creds_helper import CRED_FIELD_DATA
@@ -54,7 +55,7 @@ _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
 
 
 def _resolve_pubreg_params(e2e_parameters: dict, env_dir: str) -> dict:
-    env_creds = helper.decrypt_file(helper.getEnvCredentialsPath(env_dir), in_place=False, allow_default=True)
+    env_creds = current_cred_store().get(helper.getEnvCredentialsPath(env_dir), allow_default=True)
     params = {}
     for key, value in e2e_parameters.items():
         is_registry_auth_param = key.startswith(REGISTRY_AUTH_PARAM_PREFIXES) or key in REGISTRY_AUTH_PARAM_NAMES

@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from envgene_shared.crypto.cred_store import CredStore
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
@@ -128,13 +129,23 @@ def test_flush_normalizes_comment_spacing(env_dir):
     assert target.read_text() == "a: 1 # c1\nd: v # inserted\nb:\n  c: 2 # c2\n"
 
 
-def test_flush_removes_comments_from_credentials(env_dir):
+def test_credentials_are_kept_in_cred_store(env_dir, monkeypatch):
+    cred_store = CredStore([])
+    monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", cred_store)
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "Credentials" / "credentials.yml"
-    objects.put(target, readYaml("cred:  # c\n  type: secret  # t\n"))
-    objects.flush()
+    shared = env_dir / "Inventory" / "credentials" / "shared.yml"
+    creds = readYaml("cred:\n  type: secret\n")
+    shared_creds = readYaml("other:\n  type: secret\n")
+    objects.put(target, creds)
+    cred_store.put(shared, shared_creds)
 
-    assert target.read_text() == "cred:\n  type: secret\n"
+    assert cred_store.get(target) is creds
+    assert objects.get(shared) is shared_creds
+    assert objects.exists(target)
+    assert objects.exists(shared)
+    objects.flush()
+    assert not target.exists()
 
 
 def test_current_store_is_available_only_while_open(env_dir):

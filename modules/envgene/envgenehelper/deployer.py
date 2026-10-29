@@ -4,8 +4,8 @@ from envgene_shared.utils.business_utils import get_envgene_config_yaml, getenv_
 from envgene_shared.utils.yaml_utils import openYaml, get_or_create_nested_yaml_attribute
 from envgene_shared.utils.file_utils import check_file_exists
 from envgene_shared.utils.logger import logger
-from envgene_shared.crypto.crypt import decrypt_file
-from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
+from envgene_shared.crypto.cred_store import current_cred_store
+from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros, read_cred_file
 from .business_helper import find_env_instances_dir, getEnvDefinition
 from .yaml_helper import find_yaml_file
 from .file_helper import getDirName
@@ -32,7 +32,7 @@ def get_value_and_attributes_from_cred(cred_macros, deployer_dir):
     if (check_is_envgen_cred(cred_macros)):
         credentials_file_path = get_cred_file_path(deployer_dir)
         cred_id, property = get_cred_id_and_property_from_cred_macros(cred_macros)
-        data = openYaml(credentials_file_path)
+        data = current_cred_store().get(credentials_file_path)
         if cred_id in data:
             cred = data[cred_id]
             attribute_path = f'{cred_id}.data.{property}'
@@ -133,7 +133,7 @@ def get_deployer_config(*_args, **_kwargs):
     cmdb_url = data[deployer_name]['deployerUrl']   
 
     cred_path = get_cred_file_path(deployer_dir)
-    cred_yaml = decrypt_file(cred_path, in_place=False)
+    cred_yaml = read_cred_file(cred_path)
 
     cmdb_username = resolve_attribute_value(data[deployer_name]['username'], cred_yaml)
     cmdb_api_token = resolve_attribute_value(data[deployer_name]['token'], cred_yaml)

@@ -1,12 +1,17 @@
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_DIR_NAME, ES_MAPPING_FILE, GenerationMode, \
     PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
+from envgenehelper.yaml_helper import yaml_from_string as openYamlFromStr
 from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 
 from effective_set import effective_set_entrypoint
+from envgene_shared.crypto.cred_store import CredStore
 from effective_set.effective_set_entrypoint import _run_deploy_plan_full, _run_deploy_plan_partial, _run_external_credential_provision_cli, \
     _run_reverse_merge, _resolve_generation_id, _save_es_app_dirs, _restore_saved_dirs, \
     _clear_uniq_for_version_dirs, run_gitlab_deploy_effective_set, \
@@ -63,11 +68,11 @@ def mock_cli(monkeypatch, on_run=None):
         staticmethod(lambda: Path("/tmp/delta-deploy-plan.yml")),
     )
 
-    def fake_run(cmd, check=False, shell=False):
+    def fake_run(cmd):
         if on_run:
             on_run()
 
-    monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+    monkeypatch.setattr(effective_set_entrypoint, "_run_cli", fake_run)
 
 
 class TestRunDeployPlanPartial:
@@ -84,7 +89,7 @@ class TestRunDeployPlanPartial:
             return "fake_cmd"
 
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_cli", lambda *a, **k: None)
 
         _run_deploy_plan_partial(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)], dp_path=delta_dp))
 
@@ -105,7 +110,7 @@ class TestRunDeployPlanPartial:
             return "fake_cmd"
 
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_cli", lambda *a, **k: None)
 
         run(es, FULL_ENV_NAME, fake_plan([], dp_path=dp))
 
@@ -432,7 +437,7 @@ class TestRunGitlabDeployEffectiveSet:
             return "fake_cmd"
 
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_cli", lambda *a, **k: None)
         called = {}
         monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
                              lambda *a, **k: called.setdefault("full", True))
@@ -517,3 +522,70 @@ class TestExternalCredentialProvisioning:
             "INFO",
             str(context_file),
         ]
+
+
+class TestRunCli:
+    @pytest.fixture
+    def env_creds_path(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
+        return tmp_path / "Credentials" / "credentials.yml"
+
+    @pytest.fixture
+    def store(self, env_creds_path, monkeypatch):
+        store = CredStore([])
+        store.put(env_creds_path, {"cred": {"type": "usernamePassword", "data": {"username": "u"}}})
+        monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", store)
+        return store
+
+    @pytest.fixture
+    def fake_cli(self, tmp_path):
+        def make(body):
+            script = tmp_path / "fake_cli.py"
+            script.write_text(
+                "import json, sys\n"
+                "creds_output = next(a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('--creds-output='))\n"
+                "stdin = sys.stdin.read()\n"
+                "print('exec java -jar app.jar')\n"
+                + body
+            )
+            return f"{sys.executable} {script}"
+        return make
+
+    @pytest.mark.unit
+    @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
+    def test_passes_env_creds_as_stdin_and_stores_returned_files(self, store, env_creds_path, fake_cli):
+        cmd = fake_cli(
+            "with open(creds_output, 'w') as f:\n"
+            "    json.dump({'es/cred.yml': {'stdin': stdin, 'big': 'x' * 200000}}, f)\n"
+            "print('noise after json')\n"
+        )
+
+        effective_set_entrypoint._run_cli(cmd)
+
+        returned = store.get("es/cred.yml")
+        assert openYamlFromStr(returned["stdin"]) == store.get(env_creds_path)
+        assert len(returned["big"]) == 200000
+
+    @pytest.mark.unit
+    @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
+    def test_env_without_creds_file_passes_empty_creds(self, env_creds_path, fake_cli, monkeypatch):
+        store = CredStore([])
+        monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", store)
+        cmd = fake_cli(
+            "with open(creds_output, 'w') as f:\n"
+            "    json.dump({'es/cred.yml': {'stdin': stdin}}, f)\n"
+        )
+
+        effective_set_entrypoint._run_cli(cmd)
+
+        assert openYamlFromStr(store.get("es/cred.yml")["stdin"]) == {}
+
+    @pytest.mark.unit
+    @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
+    def test_failed_cli_raises_and_puts_nothing(self, store, fake_cli):
+        cmd = fake_cli("sys.exit(1)\n")
+
+        with pytest.raises(subprocess.CalledProcessError):
+            effective_set_entrypoint._run_cli(cmd)
+
+        assert not store.exists("es/cred.yml")

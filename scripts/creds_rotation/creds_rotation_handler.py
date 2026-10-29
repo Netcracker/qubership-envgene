@@ -3,6 +3,8 @@ import os
 import time
 from typing import List
 
+import yaml
+
 from envgene_shared.utils.logger import logger
 from creds_rotation.core_rotation import process_entry_in_payload
 from envgene_shared.crypto import crypt
@@ -10,22 +12,21 @@ from envgenehelper.errors import RuntimeError, ValidationError, ValueError
 from creds_rotation.models import PayloadEntry, RotationResult, EnvConfig
 from creds_rotation.utils.cred_utils import (
     collect_shared_credentials,
-    decrypt_file,
+    decrypt_payload,
     read_env_cred_files,
     read_shared_cred_files,
     update_cred_content,
-    write_updated_cred_into_file,
+    update_file,
 )
 from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
-from creds_rotation.utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
+from creds_rotation.utils.yaml_utils import write_yaml_to_file
 from creds_rotation.utils.error_constants import ErrorMessages, ErrorCodes
 
 
-def validate_env_vars(is_encrypted: bool, encrypt_type: str):
+def validate_env_vars(is_encrypted: bool):
     missing_params = []
     values = {}
-    creds_path = "/tmp/payload.yml"
 
     def check_env(var_name):
         value = os.getenv(var_name)
@@ -44,21 +45,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
     cred_payload = load_payload(values["CRED_ROTATION_PAYLOAD"])
     payload_data = cred_payload
     if is_encrypted:
-        if encrypt_type == "Fernet":
-            raise ValidationError(
-                ErrorMessages.INVALID_ENCRYPT_TYPE,
-                error_code=ErrorCodes.INVALID_CONFIG_CODE,
-            )
-        elif encrypt_type == "SOPS":
-            # Decrypt the Payload file if encrypted with SOPS
-            convert_json_to_yaml(creds_path, cred_payload)
-            payload_data = decrypt_file(
-                creds_path,
-                True,
-                "SOPS",
-                ErrorMessages.PAYLOAD_DECRYPT_ERROR,
-                ErrorCodes.INVALID_CONFIG_CODE,
-            )
+        payload_data = decrypt_payload(yaml.dump(cred_payload, sort_keys=False).encode("utf-8"))
 
     if missing_params:
         raise ValueError(
@@ -122,7 +109,7 @@ def load_payload(payload: str):
 def run_cred_rotation():
     start = time.time()
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
-    config = validate_env_vars(is_encrypted, encrypt_type)
+    config = validate_env_vars(is_encrypted)
 
     logger.info(f"Starting rotation for: CLUSTER={config.cluster_name}, WORKDIR={config.work_dir}")
 
@@ -141,10 +128,10 @@ def run_cred_rotation():
     )
     shared_creds = collect_shared_credentials(env_files_map)
     shared_content_map = read_shared_cred_files(
-        shared_creds, cluster_path, config.work_dir, is_encrypted
+        shared_creds, cluster_path, config.work_dir
     )
     env_cred_map = read_env_cred_files(
-        env_creds_files, is_encrypted
+        env_creds_files
     )
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
 
@@ -187,12 +174,7 @@ def run_cred_rotation():
             error_code=ErrorCodes.INVALID_STATE_CODE,
         )
     if processed_cred_and_files:
-        updated_content, original_content = update_cred_content(
-            processed_cred_and_files
-        )
-        write_updated_cred_into_file(
-            updated_content, original_content, is_encrypted
-        )
+        update_file(update_cred_content(processed_cred_and_files))
         write_cred_file_path(
             list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
         )

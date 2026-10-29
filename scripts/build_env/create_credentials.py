@@ -1,5 +1,6 @@
 from pathlib import Path
-from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, openYaml, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
+from envgene_shared.crypto.cred_store import current_cred_store
+from envgenehelper import ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, find_yaml_file, get_cred_list_from_param, get_schema_dir, logger, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 from typing import Optional, Set
 
 #const
@@ -206,7 +207,8 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
     shared_cred_paths = [level / name for level in levels for name in cred_dir_names]
 
     for p in shared_cred_paths:
-        found_path = find_yaml_file(p, cred_name, recursively=True)
+        found_path = next((key for key in current_cred_store().list(p) if key.stem == cred_name), None) \
+            or find_yaml_file(p, cred_name, recursively=True)
         if found_path:
             logger.info(f"Shared credentials with key '{cred_name}' found in '{found_path}'")
             return found_path
@@ -222,7 +224,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryY
         logger.info(f"Inventory shared master creds list: \n{dump_as_yaml_format(sharedDictFileNames)}")
         for credFileName in inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"] :
             credFilePath = findSharedCredentials(credFileName, envDir, instancesDir)
-            credYaml = openYaml(credFilePath)
+            credYaml = current_cred_store().get(credFilePath)
             count = 0
             for key in credYaml :
                 store_value_to_yaml(credsYaml, key, credYaml[key])
@@ -319,4 +321,3 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     validate_cred_types(env_creds_map, is_external_cred_env, credYamlPath)
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(credYamlPath),
                                     schema_file_path=credsSchema)
-    env_instance_store.beautify(credYamlPath, credsSchema)

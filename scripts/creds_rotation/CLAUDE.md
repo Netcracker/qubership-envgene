@@ -5,20 +5,20 @@ Given a JSON payload (`CRED_ROTATION_PAYLOAD`) describing which parameters to ro
 ## Files
 
 | File | Responsibility |
-|------|---------------|
+| ------ | --------------- |
 | `creds_rotation_handler.py` | Entry point `run_cred_rotation()`: validates env vars, reads all files, iterates payload entries via `process_entry_in_payload`, optionally writes updates |
 | `core_rotation.py` | `process_entry_in_payload`: resolves namespace/app file, extracts the `${creds.get(...)}` macro, finds all credential files that contain the cred ID, searches for all parameters referencing that cred |
 | `models.py` | Dataclasses: `PayloadEntry`, `RotationResult`, `AffectedParameter`, `ParameterReference`, `FileUpdateEntry`, `CredMap`, `EnvConfig` |
 | `utils/cred_utils.py` | Decrypt files, read env/shared cred files, update cred content, write back |
 | `utils/search_utils.py` | `get_ns_content`, `get_app_content`, `resolve_param` (context → YAML key), `search_yaml_files` (finds all parameters using a cred value) |
 | `utils/file_utils.py` | `scan_and_get_yaml_files` — scans cluster path for all namespace/app/cred YAML files |
-| `utils/yaml_utils.py` | `convert_json_to_yaml`, `write_yaml_to_file` |
+| `utils/yaml_utils.py` | `write_yaml_to_file`, `get_nested_target_key` |
 | `utils/error_constants.py` | `ErrorMessages` and `ErrorCodes` constants |
 
 ## Required Environment Variables
 
 | Variable | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `ENV_NAME` | Target environment name |
 | `CLUSTER_NAME` | Target cluster name |
 | `CI_PROJECT_DIR` | Instance repository root |
@@ -41,7 +41,7 @@ Given a JSON payload (`CRED_ROTATION_PAYLOAD`) describing which parameters to ro
 }
 ```
 
-Payload may be raw JSON or base64-encoded JSON. If `crypt_backend == SOPS` and the file is encrypted, it is decrypted before parsing. Fernet-encrypted payloads are rejected.
+Payload may be raw JSON or base64-encoded JSON. If `crypt` is true, the SOPS-encrypted payload is decrypted in memory before parsing.
 
 ## Limitation
 

@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 import os
 import re
 import time
@@ -6,30 +5,28 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import getenv, path
 from typing import Callable
 
-from envgene_shared.utils.yaml_utils import openYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.business_utils import get_schema_dir, get_project_root
-from envgene_shared.utils.file_utils import check_file_exists, get_files_with_filter, is_cred_file
+from envgene_shared.utils.file_utils import get_files_with_filter, is_cred_file
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgene_shared.utils.crypt_utils import *
-from envgene_shared.utils.constants import FERNET_ID, SOPS_ID
+from envgene_shared.utils.constants import SOPS_ID
 
-from envgene_shared.crypto.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
-from envgene_shared.crypto.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
+from envgene_shared.crypto.fernet_handler import is_encrypted_Fernet
+from envgene_shared.crypto.sops_handler import crypt_SOPS, decrypt_SOPS_bytes, encrypt_SOPS_bytes, extract_value_SOPS, \
+    is_encrypted_SOPS, is_encrypted_SOPS_text
 
 CRYPT_FUNCTIONS = {
     'SOPS': crypt_SOPS,
-    'Fernet': crypt_Fernet
 }
 
 IS_ENCRYPTED_FUNCTIONS = {
     'SOPS': is_encrypted_SOPS,
-    'Fernet': is_encrypted_Fernet,
 }
 
 EXTRACT_FUNCTIONS = {
     'SOPS': extract_value_SOPS,
-    'Fernet': extract_value_Fernet
 }
 
 def get_configured_encryption_type():
@@ -43,6 +40,10 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
+    if not in_place:
+        with open(file_path, 'rb') as f:
+            data = f.read()
+        return decrypt_bytes(data, file_path, secret_key=secret_key, ignore_is_crypt=ignore_is_crypt, is_crypt=is_crypt)
     if is_empty_cred_file(file_path):
         logger.debug(f'File is empty, skipping decryption. Path: {file_path}')
         return get_empty_yaml() if load_result else None 
@@ -69,18 +70,8 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
 
 def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False, is_crypt=None,
-                 minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False,
-                 load_result=True, **kwargs):
+                 default_yaml: Callable = get_empty_yaml, allow_default=False, load_result=True, **kwargs):
     crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
-    if minimize_diff:
-        if not old_file_path:
-            raise ValueError('minimize_diff was set to true but old_file_path was not specified')
-        if not check_file_exists(old_file_path):
-            minimize_diff = False
-            logger.warning(f"Cred file at {old_file_path} doesn't exist, minimize_diff parameter is ignored")
-        elif not is_encrypted(old_file_path, crypt_backend):
-            minimize_diff = False
-            logger.warning(f"Cred file at {old_file_path} is not encrypted, minimize_diff parameter is ignored")
     res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
@@ -100,31 +91,80 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         logger.warning(f'File is already encrypted. Path: {file_path}')
         return openYaml(file_path) if load_result else None
 
-    encrypted_regex = None
     file_content = openYaml(file_path)
-    if is_effective_set_cred_file(file_path):  
-        literal_keys, has_literal, has_reference = analyze_cred_file(file_content)      
+    fail_on_Fernet(file_content, file_path)
+    should_encrypt, encrypted_regex = encryption_rule(file_content, file_path, True)
+    if not should_encrypt:
+        return file_content if load_result else None
+
+    return CRYPT_FUNCTIONS[crypt_backend](
+        file_path=file_path, secret_key=secret_key, in_place=in_place,
+        public_key=public_key, mode='encrypt', load_result=load_result, encrypted_regex=encrypted_regex, **kwargs
+    )
+
+
+def fail_on_Fernet(content, file_path):
+    if is_encrypted_Fernet(content):
+        raise ValueError(f'Cred file is encrypted with Fernet, which is no longer supported. Move the repository to SOPS, '
+                         f'see /docs/how-to/credential-encryption.md. Path: {file_path}')
+
+
+def encryption_rule(file_content, file_path, validate):
+    if is_effective_set_cred_file(file_path):
+        literal_keys, has_literal, has_reference = analyze_cred_file(file_content)
         if not has_literal:
             logger.debug(f"No literal keys found, skipping encryption. Path: {file_path}")
-            return file_content if load_result else None
-        elif not has_reference:
+            return False, None
+        encrypted_regex = None
+        if not has_reference:
             logger.debug(f"full file to be encrypted. Path: {file_path}")
-            encrypted_regex = None
         else:
             encrypted_regex = "|".join(
                 f"^{re.escape(key)}$"
                 for key in sorted(literal_keys)
             )
         logger.debug(f"encrypted_regex = {encrypted_regex} for file = {file_path}")
-    else:
+        return True, encrypted_regex
+    if validate:
         validate_yaml_by_scheme_or_fail(input_yaml_content=file_content, schema_file_path=get_schema_dir() / "credential.schema.json")
-        encrypted_regex = r"^data$"
+    return True, r"^data$"
 
-    return CRYPT_FUNCTIONS[crypt_backend](
-        file_path=file_path, secret_key=secret_key, in_place=in_place,
-        public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
-        old_file_path=old_file_path, load_result=load_result, encrypted_regex=encrypted_regex, **kwargs
-    )
+
+def decrypt_bytes(data: bytes, file_path, *, secret_key=None, ignore_is_crypt=False, is_crypt=None):
+    text = data.decode("utf-8")
+    if is_empty_cred_text(text):
+        logger.debug(f'File is empty, skipping decryption. Path: {file_path}')
+        return get_empty_yaml()
+    content = readYaml(text)
+    fail_on_Fernet(content, file_path)
+    encrypted = is_encrypted_SOPS_text(text)
+    is_crypt = is_crypt if is_crypt is not None else get_crypt()
+    if not ignore_is_crypt and not is_crypt:
+        if encrypted:
+            raise ValueError(f'Parameter crypt is set to false in config, but this cred file is encrypted: {file_path}')
+        logger.info("'crypt' is set to 'false', skipping decryption")
+        return content
+    if not encrypted:
+        logger.warning(f'File is not encrypted. Path: {file_path}')
+        return content
+    decrypted = readYaml(decrypt_SOPS_bytes(data, file_path, secret_key))
+    fail_on_Fernet(decrypted, file_path)
+    return decrypted
+
+
+def encrypt_bytes(data: bytes, file_path, *, old_data: bytes = None, validate=True) -> bytes:
+    text = data.decode("utf-8")
+    if is_empty_cred_text(text):
+        logger.debug(f'File is empty, skipping encryption. Path: {file_path}')
+        return data
+    if not get_crypt():
+        logger.info("'crypt' is set to 'false', skipping encryption")
+        return data
+    content = readYaml(text)
+    should_encrypt, encrypted_regex = encryption_rule(content, file_path, validate)
+    if not should_encrypt:
+        return data
+    return encrypt_SOPS_bytes(data, file_path, encrypted_regex, old_data)
 
 
 def extract_encrypted_data(file_path, attribute_str):
@@ -178,28 +218,14 @@ def is_encrypted(file_path, crypt_backend=None):
 def detect_crypt_backend_from_file(file_path: str) -> str:
     if is_encrypted_SOPS(file_path):
             return SOPS_ID
-    if is_encrypted_Fernet(file_path):
-        return FERNET_ID
     return None
-
-
-def _batch_cred_op(files, op_func, **kwargs):
-    backend = kwargs.get('crypt_backend') or get_crypt_backend()
-    if backend == 'Fernet':
-        for file_path in sorted(files):
-            op_func(file_path, **{**kwargs, 'load_result': False})
-        return
-    _parallel_cred_op(files, op_func, **kwargs)
 
 
 def _parallel_cred_op(files, op_func, **kwargs):
     file_list = sorted(files)
     if not file_list:
         return
-    if kwargs.get('minimize_diff'):
-        max_workers = 1
-    else:
-        max_workers = min(len(file_list), os.cpu_count() or 2)
+    max_workers = min(len(file_list), os.cpu_count() or 2)
     errors = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_file = {
@@ -244,11 +270,3 @@ def encrypt_all_cred_files_for_env(**kwargs):
     _parallel_cred_op(files, encrypt_file, **kwargs)
     elapsed = time.perf_counter() - t0
     logger.info(f'Encrypted {len(files)} cred files in {elapsed:.3f}s (backend={backend})')
-
-
-@contextmanager
-def decrypted_cred_files(**kwargs):
-    decrypt_all_cred_files_for_env(**kwargs)
-    yield
-    encrypt_all_cred_files_for_env(**kwargs)
-

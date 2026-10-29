@@ -126,3 +126,4 @@ class TestStepGating:
             ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION=bgd_operation)
 
             assert not GenerateEffectiveSetStep().should_run(ctx)
+

@@ -3,6 +3,7 @@ import shutil
 import pytest
 
 from build_env.main import render_environment
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper import delete_dir_if_exists, open_current_env_instance_store, render_workspace_dir
 from envgenehelper.business_helper import NamespaceRole
 
@@ -37,7 +38,7 @@ class TestBuildOverPreviousRun(BaseTest):
 
         for _ in range(2):
             delete_dir_if_exists(render_workspace_dir(self.tmp_path))
-            with open_current_env_instance_store(profiles_dir.parent) as env_instance_store:
+            with open_cred_store(), open_current_env_instance_store(profiles_dir.parent) as env_instance_store:
                 render_environment(ENV, CLUSTER, self.templates_dirs, instances_dir, self.tmp_path)
                 env_instance_store.flush()
 

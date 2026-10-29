@@ -9,7 +9,7 @@ from os import getenv
 from pathlib import Path
 
 from envgene_shared.utils.logger import logger, CustomFormatter
-from envgene_shared.crypto.crypt import decrypted_cred_files
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
@@ -287,7 +287,7 @@ class EnvBuildStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
-        with decrypted_cred_files(), open_current_env_instance_store(env_dir) as env_instance_store:
+        with open_current_env_instance_store(env_dir) as env_instance_store:
             run_build_environment()
             env_instance_store.flush()
 
@@ -307,17 +307,16 @@ class GenerateEffectiveSetStep(PipelineStep):
         return will_run
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        with decrypted_cred_files():
-            validate_creds()
-            validate_parameters()
-            if not ctx.is_gitlab_deploy():
-                apply_no_sd_mode(ctx)
-            sboms_retention_policy()
-            generate_sboms(ctx=ctx)
-            if ctx.is_gitlab_deploy():
-                run_gitlab_deploy_effective_set(ctx)
-            else:
-                run_legacy_sd_effective_set(ctx)
+        validate_creds()
+        validate_parameters()
+        if not ctx.is_gitlab_deploy():
+            apply_no_sd_mode(ctx)
+        sboms_retention_policy()
+        generate_sboms(ctx=ctx)
+        if ctx.is_gitlab_deploy():
+            run_gitlab_deploy_effective_set(ctx)
+        else:
+            run_legacy_sd_effective_set(ctx)
 
 
 class GitCommitStep(PipelineStep):
@@ -348,6 +347,31 @@ class CMDB_import(PipelineStep):
         cmdb_import.run()
 
 
+def _run_step(step: PipelineStep, ctx: PipelineParametersHandler, results: list[StepResult]) -> None:
+    if not step.should_run(ctx):
+        logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
+        results.append(StepResult(step.name, StepStatus.SKIPPED))
+        return
+
+    start_banner = colorize_segment(
+        banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
+    with log_section(f"step_{step.name}", header=start_banner):
+        start = time.time_ns()
+        status = StepStatus.SUCCESS
+        try:
+            step.execute(ctx)
+        except Exception:
+            status = StepStatus.FAILED
+            raise
+        finally:
+            duration_ms = (time.time_ns() - start) // 1_000_000
+            results.append(StepResult(step.name, status, duration_ms))
+            end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
+            end_banner = colorize_segment(
+                banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
+            logger.info(end_banner)
+
+
 @extra_creds_scope()
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
@@ -374,38 +398,19 @@ def run_single_env_pipeline() -> None:
         ProcessDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
-        GitCommitStep(),
-        CMDB_import()
     ]
+    final_steps: list[PipelineStep] = [GitCommitStep(), CMDB_import()]
 
     results: list[StepResult] = []
     metrics = MetricsCollectorActivity(ctx)
     terminal_status = PipelineStatus.UNKNOWN
     try:
         metrics.send_running()
-        for step in steps:
-            if not step.should_run(ctx):
-                logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
-                results.append(StepResult(step.name, StepStatus.SKIPPED))
-                continue
-
-            start_banner = colorize_segment(
-                banner(f"START: {step.name}"), step.name, CustomFormatter.BLUE, CustomFormatter.WHITE)
-            with log_section(f"step_{step.name}", header=start_banner):
-                start = time.time_ns()
-                status = StepStatus.SUCCESS
-                try:
-                    step.execute(ctx)
-                except Exception:
-                    status = StepStatus.FAILED
-                    raise
-                finally:
-                    duration_ms = (time.time_ns() - start) // 1_000_000
-                    results.append(StepResult(step.name, status, duration_ms))
-                    end_text = f"END: {step.name} ({_format_duration(duration_ms)}) - {status}"
-                    end_banner = colorize_segment(
-                        banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
-                    logger.info(end_banner)
+        with open_cred_store():
+            for step in steps:
+                _run_step(step, ctx, results)
+        for step in final_steps:
+            _run_step(step, ctx, results)
         terminal_status = PipelineStatus.SKIPPED if all(r.status == StepStatus.SKIPPED for r in results) \
             else PipelineStatus.SUCCESS
     except KeyboardInterrupt:
@@ -431,7 +436,7 @@ def run_single_env_pipeline() -> None:
             if terminal_status == PipelineStatus.SUCCESS and status == StepStatus.FAILED:
                 terminal_status = PipelineStatus.FAILED
             recorded = {result.name: result for result in results}
-            metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps]
+            metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps + final_steps]
             metrics_results.append(recorded["copy_env_artifact"])
             metrics.record_completion(str(terminal_status), metrics_results)
             metrics.send_running(str(terminal_status), results=metrics_results)

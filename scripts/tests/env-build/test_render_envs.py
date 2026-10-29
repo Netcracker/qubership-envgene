@@ -3,6 +3,7 @@ from os import environ
 import pytest
 
 from build_env.main import render_environment
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper import delete_dir_if_exists, dump_as_yaml_format, get_all_files_in_dir, logger, open_current_env_instance_store, os, render_workspace_dir, shutil
 from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.test_helpers import TestHelpers
@@ -62,7 +63,7 @@ class TestEnvBuild(BaseTest):
         source_dir = str((self.test_data_dir / "test_environments" / cluster_name / env_name).resolve())
         generated_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
         delete_dir_if_exists(render_workspace_dir(self.test_data_dir))
-        with open_current_env_instance_store(generated_dir) as env_instance_store:
+        with open_cred_store(), open_current_env_instance_store(generated_dir) as env_instance_store:
             render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, self.test_data_dir)
             env_instance_store.flush()
         files_to_compare = get_all_files_in_dir(source_dir)

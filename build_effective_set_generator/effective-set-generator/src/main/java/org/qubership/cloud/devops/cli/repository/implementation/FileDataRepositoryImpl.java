@@ -18,6 +18,8 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
@@ -109,6 +111,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             loadApplicationListData(nsWithAppsFromSD, appsToProcess);
             loadRegistryData();
             loadConsumerData();
+            loadCredentialsFromStdin();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess, namespaceToFolder);
             populateEnvironments();
             updateApplicationNamespaces(namespaceToFolder);
@@ -332,14 +335,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 namespaceMap.putIfAbsent(namespace, namespaceDTO);
                 break;
             case "credentials":
-                TypeReference<Map<String, CredentialDTO>> typeReference = new TypeReference<>() {
-                };
-                Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
-                if (credentialDTOMap != null) {
-                    validateUniformCredentialTypes(credentialDTOMap);
-                    loadSecretStores();
-                    inputData.setCredentialDTOMap(credentialDTOMap);
-                }
                 break;
             case "composite_structure":
                 CompositeStructureDTO compositeStructureDTO = fileDataConverter.parseInputFile(CompositeStructureDTO.class, file.toFile());
@@ -454,6 +449,17 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 registryMap.put(cleanKey, entry.getValue());
             }
             inputData.setRegistryDTOMap(registryMap);
+        }
+    }
+
+    private void loadCredentialsFromStdin() throws IOException {
+        Map<String, CredentialDTO> credentialDTOMap = new ObjectMapper(new YAMLFactory())
+                .readValue(System.in, new TypeReference<>() {
+                });
+        if (credentialDTOMap != null) {
+            validateUniformCredentialTypes(credentialDTOMap);
+            loadSecretStores();
+            inputData.setCredentialDTOMap(credentialDTOMap);
         }
     }
 

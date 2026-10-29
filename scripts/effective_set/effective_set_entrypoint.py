@@ -1,7 +1,10 @@
+import json
+import os
 import shlex
 import shutil
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from os import getenv
 from pathlib import Path
 
@@ -9,7 +12,9 @@ from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan, GenerationType
 from envgenehelper.effective_set_helper import ES_DIR_NAME, ES_MAPPING_FILE, ESGenerationContext, GenerationMode, \
     PartialMergeMode, EXTERNAL_CREDENTIAL_DIR, EXTERNAL_CREDENTIAL_FILE
+from envgenehelper.yaml_helper import dumpYamlToStr
 from envgenehelper.file_helper import delete_dir, delete_dir_if_exists, deleteFileIfExists
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
@@ -24,7 +29,7 @@ def run_gitlab_deploy_effective_set(ctx):
 
     if ctx.is_clean():
         cmd = _build_cli_cmd(effective_set_dir, full_env_name, dp_path=None)
-        subprocess.run(cmd, shell=True, check=True)
+        _run_cli(cmd)
     else:
         _run_deploy_plan_full(effective_set_dir, full_env_name, ctx.deploy_plan_delta)
 
@@ -57,7 +62,7 @@ def _run_deploy_plan_full(effective_set_dir, full_env_name, deploy_plan: Envgene
     _clear_uniq_for_version_dirs(effective_set_dir, entries)
 
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan.dp_path if entries else None)
-    subprocess.run(cmd, shell=True, check=True)
+    _run_cli(cmd)
 
 
 def _run_deploy_plan_partial(effective_set_dir, full_env_name, deploy_plan_delta: EnvgeneDeployPlan):
@@ -79,7 +84,7 @@ def _run_deploy_plan_partial(effective_set_dir, full_env_name, deploy_plan_delta
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, deploy_plan_delta.dp_path if entries else None)
-    subprocess.run(cmd, shell=True, check=True)
+    _run_cli(cmd)
 
     cleanup_mapping.update(openYaml(cleanup_mapping_path, allow_default=True))
     runtime_mapping.update(openYaml(runtime_mapping_path, allow_default=True))
@@ -175,6 +180,22 @@ def _restore_saved_dirs(tmp_root, saved):
         shutil.move(str(dest), str(src))
     if tmp_root is not None:
         shutil.rmtree(tmp_root, ignore_errors=True)
+
+
+def _run_cli(cmd):
+    store = current_cred_store()
+    env_creds = store.get(get_current_env_dir_from_env_vars() / "Credentials" / "credentials.yml", allow_default=True)
+    read_fd, write_fd = os.pipe()
+    with os.fdopen(read_fd, encoding="utf-8") as creds_output, ThreadPoolExecutor(max_workers=1) as executor:
+        process = subprocess.Popen(f"{cmd} --creds-output=/dev/fd/{write_fd}", shell=True, stdin=subprocess.PIPE,
+                                   encoding="utf-8", pass_fds=(write_fd,))
+        os.close(write_fd)
+        output = executor.submit(creds_output.read)
+        process.communicate(dumpYamlToStr(env_creds))
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, cmd)
+        for path, content in json.loads(output.result()).items():
+            store.put(path, content)
 
 
 def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):

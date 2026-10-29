@@ -194,6 +194,14 @@ Feature: Calculator CLI
     And the effective set deployment parameters for namespace "core" contain "scoped_key: from-custom"
     And the effective set deployment parameters for namespace "other" do not contain "scoped_key"
 
+  Scenario: UC-CC-CP-9: Effective Set credentials are written when the Calculator CLI prints to standard output
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_5"
+    And the Calculator CLI prints text to standard output before and after the Effective Set
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\",\"override_key\":\"injected-value\"}}"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml contains key "web"
+
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
 
   Scenario: UC-CC-GI-1: UniqForRun Application Gets Unique Generation Directory

@@ -3,7 +3,6 @@
 
 - [EnvGene Repository Variables](#envgene-repository-variables)
   - [Instance EnvGene Repository](#instance-envgene-repository)
-    - [`SECRET_KEY`](#secret_key)
     - [`GITLAB_TOKEN`](#gitlab_token)
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
@@ -38,19 +37,6 @@ The following are parameters that are set in GitLab CI/CD variables or GitHub en
 All parameters are of string data type.
 
 ## Instance EnvGene Repository
-
-### `SECRET_KEY`
-
-**Description**: Fernet key. Used to encrypt/decrypt credentials when
-[`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `Fernet`
-
-Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/secret_key.txt`.
-
-**Default Value**: None
-
-**Mandatory**: Yes, if repository encryption is enabled with `Fernet` crypt backend
-
-**Example**: `key-placeholder-123`
 
 ### `GITLAB_TOKEN`
 
