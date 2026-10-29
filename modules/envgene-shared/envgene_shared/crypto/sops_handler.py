@@ -155,7 +155,8 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
 
 
 def decrypt_SOPS_bytes(data: bytes, file_path, secret_key=None) -> str:
-    sops_args = ["decrypt", "--input-type", "yaml", "--output-type", "yaml", "--filename-override", str(file_path)]
+    sops_args = ["decrypt", "--input-type", "yaml", "--output-type", "yaml", "--filename-override", str(file_path),
+                 "/dev/stdin"]
     return _run_SOPS(sops_args, secret_key=secret_key, stdin_text=data.decode("utf-8")).stdout
 
 
@@ -177,7 +178,7 @@ def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: b
     sops_args = ["encrypt", "--input-type", "yaml", "--output-type", "yaml", "--age", PUBLIC_AGE_KEYS]
     if encrypted_regex is not None:
         sops_args.extend(["--encrypted-regex", encrypted_regex])
-    sops_args.extend(["--filename-override", str(file_path)])
+    sops_args.extend(["--filename-override", str(file_path), "/dev/stdin"])
     return _run_SOPS(sops_args, stdin_text=data.decode("utf-8")).stdout.encode("utf-8")
 
 
