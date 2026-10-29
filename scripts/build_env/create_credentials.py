@@ -207,7 +207,8 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
     shared_cred_paths = [level / name for level in levels for name in cred_dir_names]
 
     for p in shared_cred_paths:
-        found_path = find_yaml_file(p, cred_name, recursively=True)
+        found_path = next((key for key in current_cred_store().list(p) if key.stem == cred_name), None) \
+            or find_yaml_file(p, cred_name, recursively=True)
         if found_path:
             logger.info(f"Shared credentials with key '{cred_name}' found in '{found_path}'")
             return found_path

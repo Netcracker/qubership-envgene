@@ -101,6 +101,19 @@ def test_merge_shared_creds(project):
     assert_untouched(shared, before)
 
 
+def test_merge_shared_creds_only_in_cred_store(project):
+    env_dir = project / "environments" / "cluster" / "env"
+    shared = env_dir / "Inventory" / "credentials" / "inventory_generation_creds.yml"
+    env_creds = env_dir / "Credentials" / "credentials.yml"
+    with open_cred_store() as store, open_current_env_instance_store(env_dir) as objects:
+        store.put(shared, readYaml(CONTENT))
+        objects.put(env_creds, readYaml("{}"))
+        creds = mergeSharedCreds(
+            env_creds, env_dir, project / "environments",
+            None, readYaml("envTemplate:\n  sharedMasterCredentialFiles:\n    - inventory_generation_creds\n"))
+    assert creds["first_cred"]["data"]["secret"] == "token-placeholder-123"
+
+
 def test_cloud_passport_creds(project):
     env_dir = project / "environments" / "cluster" / "env"
     passport = project / "environments" / "cluster" / "cloud-passport" / "passport.yml"
