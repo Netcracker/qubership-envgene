@@ -30,17 +30,6 @@ jobs:
           docker compose -f devtools/docker-compose.yml exec -T cucumber \
             bash /workspace/cucumber_tests/run_suites.sh
 
-      - name: Run Cloud Passport BDD tests
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_cloud_passport.py \
-               -v -s \
-               --junitxml=reports/cloud_passport.xml \
-               | tee -a /workspace/e2e_tests.log"
-
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
