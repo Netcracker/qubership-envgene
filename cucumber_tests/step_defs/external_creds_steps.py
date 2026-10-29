@@ -5,7 +5,6 @@ import yaml
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from pytest_bdd import given, parsers, then
-from cryptography.fernet import Fernet
 
 
 ES_DIR_NAME = "effective-set"
@@ -143,22 +142,7 @@ def _get_external_credential_context_entry(workspace: EnvGeneWorkspace, cred_nam
 
 
 def decrypt(workspace: EnvGeneWorkspace, file_path: Path) -> dict[str, Any]:
-    key = b"c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
-    fernet = Fernet(key) 
-    
-    # Decrypt values
-    def decrypt_node(node):
-        if isinstance(node, dict):
-            return {k: decrypt_node(v) for k, v in node.items()}
-        elif isinstance(node, list):
-            return [decrypt_node(v) for v in node]
-        elif isinstance(node, str) and node.startswith("[encrypted:AES256_Fernet]"):
-            token = node[len("[encrypted:AES256_Fernet]"):]
-            return fernet.decrypt(token.encode('utf-8')).decode('utf-8')
-        return node
-    
-    actual_yaml = workspace.get_yaml(file_path)         
-    return decrypt_node(actual_yaml)
+    return workspace.get_decrypted_yaml(file_path)
 
 
 @then(parsers.parse('the environment credentials file contains only credentials of type "{credential_type}"'))

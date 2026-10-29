@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import yaml
 from pytest_bdd import when, then, parsers
-from cucumber_tests.framework.workspace import EnvGeneWorkspace
+from cucumber_tests.framework.workspace import EnvGeneWorkspace, TEST_AGE_PRIVATE_KEY, TEST_AGE_PUBLIC_KEY
 
 
 @when('I run the credential rotation parameter check')
@@ -15,7 +15,8 @@ def run_cr_parameter_check(workspace: EnvGeneWorkspace):
 
     env = os.environ.copy()
     env["CI_PROJECT_DIR"] = str(workspace.base_dir)
-    env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
+    env["ENVGENE_AGE_PRIVATE_KEY"] = TEST_AGE_PRIVATE_KEY
+    env["PUBLIC_AGE_KEYS"] = TEST_AGE_PUBLIC_KEY
     env["ENV_NAMES"] = f"{workspace.cluster_name}/{workspace.env_name}"
     env["FULL_ENV_NAME"] = f"{workspace.cluster_name}/{workspace.env_name}"
     env["IS_LOCAL_DEV_TEST_ENVGENE"] = "true"

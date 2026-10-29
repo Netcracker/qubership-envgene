@@ -2,8 +2,12 @@ import os
 import subprocess
 import yaml
 from pathlib import Path
+from envgene_shared.crypto.sops_handler import decrypt_SOPS_bytes, is_encrypted_SOPS_text
 from .data_builders import DataBuilder
 from .base_workspace import BaseWorkspace
+
+TEST_AGE_PRIVATE_KEY = "AGE-SECRET-KEY-1AQVCSQDRR5F70H3WJL82EMHMPSDMJPRP0GREJE0Y3M5YJZ25GT9SN0Y6FM"
+TEST_AGE_PUBLIC_KEY = "age1y4hfj9zz05dtqycfk55y4csddch6w2lu9l6wx7r68at5x897ea3qjh0gl9"
 
 _TEST_DATA_DIR = Path(__file__).parent.parent / "test_data" / "einv" / "common"
 
@@ -116,7 +120,8 @@ class EnvGeneWorkspace(BaseWorkspace):
 
         env = os.environ.copy()
         env["CI_PROJECT_DIR"] = str(self.base_dir)
-        env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
+        env["ENVGENE_AGE_PRIVATE_KEY"] = TEST_AGE_PRIVATE_KEY
+        env["PUBLIC_AGE_KEYS"] = TEST_AGE_PUBLIC_KEY
 
         # Mock run_effective_set_cli for local tests (cross-platform)
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
@@ -232,6 +237,13 @@ class EnvGeneWorkspace(BaseWorkspace):
         self.assert_file_exists(path)
         import yaml
         return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+    def get_decrypted_yaml(self, path):
+        self.assert_file_exists(path)
+        text = path.read_text(encoding="utf-8")
+        if is_encrypted_SOPS_text(text):
+            text = decrypt_SOPS_bytes(text.encode("utf-8"), path, TEST_AGE_PRIVATE_KEY)
+        return yaml.safe_load(text)
 
     def assert_yaml_content_matches(self, path, payload: dict):
         content = self.get_yaml(path)

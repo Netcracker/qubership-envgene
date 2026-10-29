@@ -7,7 +7,8 @@ from urllib.parse import quote
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import writeYamlToFile, readYaml, openYaml
 from envgene_shared.crypto.cred_store import current_cred_store
-from envgenehelper import unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
+from envgene_shared.crypto.fernet_handler import decrypt_Fernet_data, is_encrypted_Fernet
+from envgenehelper import unpack_archive, cleanup_dir, addHeaderToYaml, fetch_cred_value
 from envgenehelper.git_helper import GitLabClient
 from envgenehelper.errors import ValidationError
 
@@ -43,13 +44,17 @@ def get_integration_config(integration_config_path) -> dict:
 
 def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key):
     creds_path = cloud_passport_dir / f"{cloud_name}-creds.yml"
-    sensitive_file = creds_path
+    sensitive_file = None
     for f in discovery_files:
         if "sensitive" in f.name:
             update_creds_to_cmdb_format(f)
             sensitive_file = f
-    creds = crypt.decrypt_file(sensitive_file, secret_key=discovery_secret_key, in_place=False, is_crypt=True)
-    logger.info(f"Decrypted credential-cp file by discovery secret key: {sensitive_file}")
+    if sensitive_file is None:
+        raise ValidationError(f"Cloud discovery result has no sensitive file with credentials for {cloud_name}")
+    creds = openYaml(sensitive_file)
+    if is_encrypted_Fernet(creds):
+        creds = decrypt_Fernet_data(creds, discovery_secret_key)
+        logger.info(f"Decrypted credential-cp file by discovery secret key: {sensitive_file}")
     current_cred_store().put(creds_path, creds, header_text)
 
 

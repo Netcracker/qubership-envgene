@@ -13,7 +13,8 @@ from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.file_utils import writeToFile
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, yaml
 
-SOPS_DATA, FERNET_DATA, PLAIN_DATA = crypt_test_data
+SOPS_DATA = crypt_test_data[0]
+PLAIN_DATA = {}
 
 CONTENT = """\
 first_cred:
@@ -45,7 +46,6 @@ def configure(monkeypatch, tmp_path, data):
     monkeypatch.delenv("ENV_NAMES", raising=False)
     monkeypatch.setenv("ENVGENE_AGE_PRIVATE_KEY", SOPS_DATA["secret_key"])
     monkeypatch.setenv("PUBLIC_AGE_KEYS", SOPS_DATA["public_key"])
-    monkeypatch.setenv("SECRET_KEY", FERNET_DATA["secret_key"])
     config = "crypt: false\n" if data is PLAIN_DATA else f"crypt_backend: {data['crypt_backend']}\n"
     writeToFile(str(tmp_path / "configuration" / "config.yml"), config)
 
@@ -272,9 +272,8 @@ def test_empty_cred_file_is_ignored(env_dir):
     assert path.read_bytes() == b""
 
 
-@pytest.mark.parametrize("data", [FERNET_DATA, PLAIN_DATA], ids=["Fernet", "crypt_false"])
-def test_fernet_unchanged_untouched_changed_rewritten(monkeypatch, tmp_path, data):
-    configure(monkeypatch, tmp_path, data)
+def test_crypt_false_unchanged_untouched_changed_rewritten(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path, PLAIN_DATA)
     env_dir = tmp_path / "environments" / "cluster" / "env"
     first = make_cred_file(env_dir / "Credentials" / "credentials.yml")
     second = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
@@ -284,17 +283,16 @@ def test_fernet_unchanged_untouched_changed_rewritten(monkeypatch, tmp_path, dat
         store.get(second)["first_cred"]["data"]["secret"] = "changed"
     assert first.read_bytes() == before[0]
     assert second.read_bytes() != before[1]
-    assert is_encrypted(second) is (data is FERNET_DATA)
+    assert not is_encrypted(second)
     assert decrypt_file(second, in_place=False)["first_cred"]["data"]["secret"] == "changed"
 
 
-@pytest.mark.parametrize("data", [FERNET_DATA, PLAIN_DATA], ids=["Fernet", "crypt_false"])
-def test_crypt_false_writes_plain(monkeypatch, tmp_path, data):
-    configure(monkeypatch, tmp_path, data)
+def test_crypt_false_writes_plain(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path, PLAIN_DATA)
     path = tmp_path / "environments" / "cluster" / "env" / "Credentials" / "new-credentials.yml"
     with open_cred_store() as store:
         store.put(path, {"cred": {"type": "secret", "data": {"secret": "value"}}})
-    assert is_encrypted(path) is (data is FERNET_DATA)
+    assert not is_encrypted(path)
     assert decrypt_file(path, in_place=False)["cred"]["data"]["secret"] == "value"
 
 
@@ -346,11 +344,10 @@ def test_invalid_cred_file_fails_on_write(plain_env_dir):
             store.put(path, {"cred": "not-an-object"})
 
 
-@pytest.mark.parametrize("data", [SOPS_DATA, FERNET_DATA], ids=["SOPS", "Fernet"])
-def test_bytes_round_trip_without_disk(monkeypatch, tmp_path, data):
-    configure(monkeypatch, tmp_path, data)
+def test_bytes_round_trip_without_disk(monkeypatch, tmp_path):
+    configure(monkeypatch, tmp_path, SOPS_DATA)
     path = tmp_path / "environments" / "cluster" / "env" / "Credentials" / "credentials.yml"
     encrypted = encrypt_bytes(CONTENT.encode("utf-8"), path)
-    assert is_encrypted_SOPS_text(encrypted.decode("utf-8")) is (data is SOPS_DATA)
+    assert is_encrypted_SOPS_text(encrypted.decode("utf-8"))
     assert decrypt_bytes(encrypted, path) == readYaml(CONTENT)
     assert not path.exists()

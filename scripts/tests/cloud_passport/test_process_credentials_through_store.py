@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from cryptography.fernet import Fernet
 
 from cloud_passport.main import header_text, process_credentials
 from envgene_shared.crypto.cred_store import current_cred_store, open_cred_store
@@ -9,11 +10,13 @@ from envgene_shared.crypto.crypt import decrypt_file, encrypt_file
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
+from envgene_shared.utils.constants import FERNET_STR
 from envgene_shared.utils.file_utils import writeToFile
 from envgenehelper import cleanup_dir
+from envgenehelper.errors import ValidationError
 
 SOPS_DATA = crypt_test_data[0]
-DISCOVERY_KEY = crypt_test_data[1]["secret_key"]
+DISCOVERY_KEY = "n1588R0sm7Df4WJkFLEXd_d-rnKMoPl_8KFlC8yM5CY="
 
 DISCOVERY_CONTENT = """\
 first_cred:
@@ -43,12 +46,11 @@ def discovery_files(tmp_path_factory):
 
 
 def make_discovery_files(tmp_path_factory, content):
+    fernet = Fernet(DISCOVERY_KEY)
+    data = yaml.safe_load(content)["first_cred"]["data"]
+    encrypted = {key: FERNET_STR + fernet.encrypt(value.encode()).decode() for key, value in data.items()}
     path = tmp_path_factory.mktemp("discovery") / "sensitive.yml"
-    writeToFile(str(path), content)
-    encrypt_file(path, secret_key=DISCOVERY_KEY, crypt_backend="Fernet", ignore_is_crypt=True, load_result=False)
-    encrypted = yaml.safe_load(path.read_text())
-    encrypted["first_cred"] = {"type": "usernamePassword", **encrypted["first_cred"]["data"]}
-    path.write_text(yaml.safe_dump(encrypted))
+    path.write_text(yaml.safe_dump({"first_cred": {"type": "usernamePassword", **encrypted}}))
     return [path]
 
 
@@ -87,3 +89,10 @@ def test_cleanup_dir_keeps_listed_files(tmp_path):
     (tmp_path / "cloud-creds.yml").write_text("a: 1\n")
     cleanup_dir(tmp_path, keep=["cloud-creds.yml"])
     assert [p.name for p in tmp_path.iterdir()] == ["cloud-creds.yml"]
+
+
+def test_process_credentials_without_sensitive_file_fails(project, tmp_path):
+    cloud_passport_dir = project / "environments" / "cluster" / "cloud-passport"
+    with open_cred_store():
+        with pytest.raises(ValidationError):
+            process_credentials([tmp_path / "passport.yml"], cloud_passport_dir, "cloud", DISCOVERY_KEY)

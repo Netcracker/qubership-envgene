@@ -5,32 +5,27 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import getenv, path
 from typing import Callable
 
-from envgene_shared.utils.yaml_utils import dumpYamlToStr, openYaml, readYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.business_utils import get_schema_dir, get_project_root
 from envgene_shared.utils.file_utils import check_file_exists, get_files_with_filter, is_cred_file
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgene_shared.utils.crypt_utils import *
-from envgene_shared.utils.constants import FERNET_ID, SOPS_ID
+from envgene_shared.utils.constants import SOPS_ID
 
-from envgene_shared.crypto.fernet_handler import _is_encrypted_Fernet, crypt_Fernet, decrypt_Fernet_data, \
-    encrypt_Fernet_data, extract_value_Fernet, is_encrypted_Fernet
 from envgene_shared.crypto.sops_handler import crypt_SOPS, decrypt_SOPS_bytes, encrypt_SOPS_bytes, extract_value_SOPS, \
     is_encrypted_SOPS, is_encrypted_SOPS_text
 
 CRYPT_FUNCTIONS = {
     'SOPS': crypt_SOPS,
-    'Fernet': crypt_Fernet
 }
 
 IS_ENCRYPTED_FUNCTIONS = {
     'SOPS': is_encrypted_SOPS,
-    'Fernet': is_encrypted_Fernet,
 }
 
 EXTRACT_FUNCTIONS = {
     'SOPS': extract_value_SOPS,
-    'Fernet': extract_value_Fernet
 }
 
 def get_configured_encryption_type():
@@ -144,24 +139,17 @@ def decrypt_bytes(data: bytes, file_path, *, secret_key=None, ignore_is_crypt=Fa
         logger.debug(f'File is empty, skipping decryption. Path: {file_path}')
         return get_empty_yaml()
     content = readYaml(text)
-    if is_encrypted_SOPS_text(text):
-        crypt_backend = SOPS_ID
-    elif _is_encrypted_Fernet(content):
-        crypt_backend = FERNET_ID
-    else:
-        crypt_backend = None
+    encrypted = is_encrypted_SOPS_text(text)
     is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:
-        if crypt_backend is not None:
+        if encrypted:
             raise ValueError(f'Parameter crypt is set to false in config, but this cred file is encrypted: {file_path}')
         logger.info("'crypt' is set to 'false', skipping decryption")
         return content
-    if crypt_backend is None:
+    if not encrypted:
         logger.warning(f'File is not encrypted. Path: {file_path}')
         return content
-    if crypt_backend == SOPS_ID:
-        return readYaml(decrypt_SOPS_bytes(data, file_path, secret_key))
-    return decrypt_Fernet_data(content, secret_key)
+    return readYaml(decrypt_SOPS_bytes(data, file_path, secret_key))
 
 
 def encrypt_bytes(data: bytes, file_path, *, old_data: bytes = None, validate=True) -> bytes:
@@ -176,9 +164,7 @@ def encrypt_bytes(data: bytes, file_path, *, old_data: bytes = None, validate=Tr
     should_encrypt, encrypted_regex = _encryption_rule(content, file_path, validate)
     if not should_encrypt:
         return data
-    if get_crypt_backend() == SOPS_ID:
-        return encrypt_SOPS_bytes(data, file_path, encrypted_regex, old_data)
-    return dumpYamlToStr(encrypt_Fernet_data(content, encrypted_regex)).encode("utf-8")
+    return encrypt_SOPS_bytes(data, file_path, encrypted_regex, old_data)
 
 
 def extract_encrypted_data(file_path, attribute_str):
@@ -232,18 +218,7 @@ def is_encrypted(file_path, crypt_backend=None):
 def detect_crypt_backend_from_file(file_path: str) -> str:
     if is_encrypted_SOPS(file_path):
             return SOPS_ID
-    if is_encrypted_Fernet(file_path):
-        return FERNET_ID
     return None
-
-
-def _batch_cred_op(files, op_func, **kwargs):
-    backend = kwargs.get('crypt_backend') or get_crypt_backend()
-    if backend == 'Fernet':
-        for file_path in sorted(files):
-            op_func(file_path, **{**kwargs, 'load_result': False})
-        return
-    _parallel_cred_op(files, op_func, **kwargs)
 
 
 def _parallel_cred_op(files, op_func, **kwargs):

@@ -13,18 +13,13 @@ def get_crypt():
 
 def get_crypt_backend():
     config = get_envgene_config_yaml()
-    return config.get('crypt_backend', FERNET_ID)
+    return config.get('crypt_backend', SOPS_ID)
 
 
 def validate_crypto_requirements(require_private_key: bool = False,) -> None:
     if not get_crypt():
         return
     backend = get_crypt_backend()
-    if backend == FERNET_ID:
-        if not os.getenv(SECRET_KEY_ID):
-            raise ValueError(f"{SECRET_KEY_ID} is required for crypt_backend={FERNET_ID}")
-        return
-
     if backend == SOPS_ID:
         missing = []
         if not os.getenv(PUBLIC_AGE_KEYS_ID):

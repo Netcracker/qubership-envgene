@@ -19,12 +19,10 @@
       "title": "Cryptographic Backend",
       "description": "The backend system used for cryptographic operations",
       "enum": [
-        "Fernet",
         "SOPS"
       ],
-      "default": "Fernet",
+      "default": "SOPS",
       "examples": [
-        "Fernet",
         "SOPS"
       ]
     },

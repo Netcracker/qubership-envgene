@@ -9,8 +9,7 @@ from typing import Iterable
 from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, get_all_necessary_cred_files
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
-from envgene_shared.utils.constants import SOPS_ID
-from envgene_shared.utils.crypt_utils import effective_set_encrypted_keys, get_crypt_backend, is_effective_set_cred_file
+from envgene_shared.utils.crypt_utils import effective_set_encrypted_keys, is_effective_set_cred_file
 from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
     remove_cred_yaml_comments, sortYaml
 
@@ -85,7 +84,7 @@ class CredStore:
 
     def _sops_edit_base(self, key, obj, is_es):
         old_data = self._snapshot.get(key)
-        if get_crypt_backend() != SOPS_ID or old_data is None:
+        if old_data is None:
             return None
         old_text = old_data.decode("utf-8")
         if not is_encrypted_SOPS_text(old_text):

@@ -24,7 +24,7 @@ from creds_rotation.utils.yaml_utils import write_yaml_to_file
 from creds_rotation.utils.error_constants import ErrorMessages, ErrorCodes
 
 
-def validate_env_vars(is_encrypted: bool, encrypt_type: str):
+def validate_env_vars(is_encrypted: bool):
     missing_params = []
     values = {}
 
@@ -45,14 +45,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
     cred_payload = load_payload(values["CRED_ROTATION_PAYLOAD"])
     payload_data = cred_payload
     if is_encrypted:
-        if encrypt_type == "Fernet":
-            raise ValidationError(
-                ErrorMessages.INVALID_ENCRYPT_TYPE,
-                error_code=ErrorCodes.INVALID_CONFIG_CODE,
-            )
-        elif encrypt_type == "SOPS":
-            # Decrypt the Payload file if encrypted with SOPS
-            payload_data = decrypt_payload(yaml.dump(cred_payload, sort_keys=False).encode("utf-8"))
+        payload_data = decrypt_payload(yaml.dump(cred_payload, sort_keys=False).encode("utf-8"))
 
     if missing_params:
         raise ValueError(
@@ -116,7 +109,7 @@ def load_payload(payload: str):
 def run_cred_rotation():
     start = time.time()
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
-    config = validate_env_vars(is_encrypted, encrypt_type)
+    config = validate_env_vars(is_encrypted)
 
     logger.info(f"Starting rotation for: CLUSTER={config.cluster_name}, WORKDIR={config.work_dir}")
 
