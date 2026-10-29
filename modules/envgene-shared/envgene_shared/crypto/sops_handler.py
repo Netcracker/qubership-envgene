@@ -3,7 +3,6 @@ import os
 import shlex
 import subprocess
 import tempfile
-import shutil
 import sys
 
 from envgene_shared.utils.business_utils import getenv_with_error
@@ -91,17 +90,6 @@ def _sops_edit(encrypted_path, plaintext_path, public_key, secret_key=None):
             os.remove(editor_path)
 
 
-def _get_minimized_diff(file_path, old_file_path, public_key, secret_key=None):
-    tmp_file_obj = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
-    tmp_file_obj.close()
-    tmp_path = tmp_file_obj.name
-
-    shutil.copy(old_file_path, tmp_path)
-
-    _sops_edit(tmp_path, file_path, public_key, secret_key=secret_key)
-    return tmp_path
-
-
 def _return_sops_result(file_path, mode, in_place, load_result, result=None):
     logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
@@ -111,8 +99,8 @@ def _return_sops_result(file_path, mode, in_place, load_result, result=None):
     return openYaml(file_path) if load_result else None
 
 
-def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None,
-               load_result=True, encrypted_regex=None, *args, **kwargs):
+def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, load_result=True,
+               encrypted_regex=None, *args, **kwargs):
     global ENVGENE_AGE_PRIVATE_KEY, PUBLIC_AGE_KEYS
     if not secret_key or not public_key:
         if ENVGENE_AGE_PRIVATE_KEY is None:
@@ -122,21 +110,6 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         secret_key = ENVGENE_AGE_PRIVATE_KEY
     if not public_key:
         public_key = PUBLIC_AGE_KEYS
-
-    if minimize_diff and mode != "decrypt":
-        tmp_path = _get_minimized_diff(file_path, old_file_path, public_key, secret_key=secret_key)
-        try:
-            if in_place:
-                shutil.copy2(tmp_path, file_path)
-                if load_result:
-                    return openYaml(file_path)
-                return None
-            result = openYaml(tmp_path)
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-        logger.info(f'The file has been {mode}ed. Path: {file_path}')
-        return result
 
     sops_args = [f"--{SOPS_MODES[mode]}"]
     if mode != "decrypt" and encrypted_regex is not None:

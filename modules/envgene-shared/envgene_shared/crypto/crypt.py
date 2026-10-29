@@ -7,7 +7,7 @@ from typing import Callable
 
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_empty_yaml, validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.business_utils import get_schema_dir, get_project_root
-from envgene_shared.utils.file_utils import check_file_exists, get_files_with_filter, is_cred_file
+from envgene_shared.utils.file_utils import get_files_with_filter, is_cred_file
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgene_shared.utils.crypt_utils import *
@@ -70,18 +70,8 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
 
 def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None,
                  ignore_is_crypt=False, is_crypt=None,
-                 minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False,
-                 load_result=True, **kwargs):
+                 default_yaml: Callable = get_empty_yaml, allow_default=False, load_result=True, **kwargs):
     crypt_backend = crypt_backend if crypt_backend is not None else get_crypt_backend()
-    if minimize_diff:
-        if not old_file_path:
-            raise ValueError('minimize_diff was set to true but old_file_path was not specified')
-        if not check_file_exists(old_file_path):
-            minimize_diff = False
-            logger.warning(f"Cred file at {old_file_path} doesn't exist, minimize_diff parameter is ignored")
-        elif not is_encrypted(old_file_path, crypt_backend):
-            minimize_diff = False
-            logger.warning(f"Cred file at {old_file_path} is not encrypted, minimize_diff parameter is ignored")
     res = handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
@@ -109,8 +99,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
 
     return CRYPT_FUNCTIONS[crypt_backend](
         file_path=file_path, secret_key=secret_key, in_place=in_place,
-        public_key=public_key, mode='encrypt', minimize_diff=minimize_diff,
-        old_file_path=old_file_path, load_result=load_result, encrypted_regex=encrypted_regex, **kwargs
+        public_key=public_key, mode='encrypt', load_result=load_result, encrypted_regex=encrypted_regex, **kwargs
     )
 
 
@@ -236,10 +225,7 @@ def _parallel_cred_op(files, op_func, **kwargs):
     file_list = sorted(files)
     if not file_list:
         return
-    if kwargs.get('minimize_diff'):
-        max_workers = 1
-    else:
-        max_workers = min(len(file_list), os.cpu_count() or 2)
+    max_workers = min(len(file_list), os.cpu_count() or 2)
     errors = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_file = {

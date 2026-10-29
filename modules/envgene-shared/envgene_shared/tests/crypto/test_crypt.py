@@ -1,5 +1,4 @@
 import os
-import copy
 import subprocess
 import pytest
 from subprocess import SubprocessError
@@ -8,11 +7,9 @@ from pathlib import Path
 
 from ruyaml import CommentedMap
 
-from envgenehelper.yaml_helper import set_nested_yaml_attribute
-from envgene_shared.utils.collections_utils import compare_dicts
 from envgene_shared.crypto.crypt import decrypt_file, encrypt_file, is_encrypted, _parallel_cred_op
 from envgene_shared.utils.file_utils import check_file_exists, writeToFile
-from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import openYaml
 
 TEST_CONTENT = """\
 first_cred:
@@ -26,7 +23,6 @@ second_cred:
         password: pass-placeholder-123
 """
 TEST_FILE = 'test_data/test_crypt.yaml'
-TEST_FILE_OLD = 'test_data/old_test_crypt.yaml'
 NOT_EXISTING_TEST_FILE = 'test_data/not_existing_test_crypt.yaml'
 EFFECTIVE_SET_FILE = 'test_data/effective-set/runtimee/credentials.yaml'
 
@@ -176,38 +172,6 @@ def test_is_encrypted(crypt_kwargs):
 
     decrypt_file(**crypt_kwargs)
     assert not is_encrypted(cred_file, crypt_kwargs['crypt_backend'])
-
-def test_minimize_diff(crypt_kwargs):
-    cred_file = crypt_kwargs['file_path']
-
-    initial_content = openYaml(cred_file)
-
-    initial_enc_content = encrypt_file(**crypt_kwargs)
-    old_cred_file = TEST_FILE_OLD
-    writeYamlToFile(old_cred_file, initial_enc_content)
-
-    # test without changes
-    decrypt_file(**crypt_kwargs)
-    encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
-
-    diff_paths, removed_paths = compare_dicts(initial_enc_content, openYaml(cred_file))
-    assert len(removed_paths) == 0 and len(diff_paths) == 0
-
-    # test with one change
-    new_content = copy.deepcopy(initial_content)
-    set_nested_yaml_attribute(new_content, 'first_cred.data.secret', 'new-value')
-    writeYamlToFile(cred_file, new_content)
-    new_enc_content = encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
-
-    diff_paths, removed_paths = compare_dicts(initial_enc_content, new_enc_content)
-    assert len(removed_paths) == 0
-    assert ['first_cred', 'data', 'secret'] in diff_paths
-    assert ['sops', 'mac'] in diff_paths
-
-    # test wrong parameter combination
-    with pytest.raises(ValueError):
-        encrypt_file(**crypt_kwargs, minimize_diff=True)
-
 
 def test_encrypt_file_scenarios(crypt_kwargs, effective_set_setup):
     local_kwargs = crypt_kwargs.copy()
