@@ -129,16 +129,22 @@ def test_flush_normalizes_comment_spacing(env_dir):
     assert target.read_text() == "a: 1 # c1\nd: v # inserted\nb:\n  c: 2 # c2\n"
 
 
-def test_flush_puts_credentials_into_cred_store(env_dir, monkeypatch):
+def test_credentials_are_kept_in_cred_store(env_dir, monkeypatch):
     cred_store = CredStore([])
     monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", cred_store)
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "Credentials" / "credentials.yml"
-    creds = readYaml("cred:  # c\n  type: secret  # t\n")
+    shared = env_dir / "Inventory" / "credentials" / "shared.yml"
+    creds = readYaml("cred:\n  type: secret\n")
+    shared_creds = readYaml("other:\n  type: secret\n")
     objects.put(target, creds)
-    objects.flush()
+    cred_store.put(shared, shared_creds)
 
     assert cred_store.get(target) is creds
+    assert objects.get(shared) is shared_creds
+    assert objects.exists(target)
+    assert objects.exists(shared)
+    objects.flush()
     assert not target.exists()
 
 

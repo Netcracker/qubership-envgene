@@ -41,18 +41,26 @@ class CurrentEnvInstanceStore:
     def put(self, path, obj):
         key = _key(path)
         logger.debug(f"Object store put: {key}")
+        if is_cred_file(str(key)):
+            current_cred_store().put(key, obj)
+            return obj
         self._objects[key] = obj
         self._to_write.add(key)
         return obj
 
     def get(self, path):
         key = _key(path)
+        if is_cred_file(str(key)):
+            return current_cred_store().get(key)
         if key not in self._objects:
             raise FileNotFoundError(f"{key} is not in the object store")
         return self._objects[key]
 
     def exists(self, path) -> bool:
-        return _key(path) in self._objects
+        key = _key(path)
+        if is_cred_file(str(key)):
+            return current_cred_store().exists(key)
+        return key in self._objects
 
     def find_yaml(self, dir_path, name) -> Path | None:
         dir_parts = _key(dir_path).parts
@@ -96,9 +104,6 @@ class CurrentEnvInstanceStore:
     def flush(self):
         for key in self._write_targets():
             data = self._objects[key]
-            if is_cred_file(str(key)):
-                current_cred_store().put(key, data)
-                continue
             schema_path, header_text = self._beautify.get(key, (None, ""))
             if key in self._beautify:
                 if schema_path:
