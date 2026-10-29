@@ -341,6 +341,13 @@ def test_es_file_written_unformatted(plain_env_dir):
     assert path.read_text(encoding="utf-8") == "b: two\na: one\n"
 
 
+def test_empty_es_file_written_empty(env_dir):
+    path = env_dir / "effective-set" / "pipeline" / "credentials.yaml"
+    with open_cred_store() as store:
+        store.put(path, {})
+    assert path.read_bytes() == b""
+
+
 def test_header_written_before_content(plain_env_dir):
     path = plain_env_dir.parent / "cloud-passport" / "cloud-creds.yml"
     with open_cred_store() as store:

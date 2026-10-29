@@ -92,7 +92,8 @@ class CredStore:
             obj = sortYaml(obj, get_schema_dir() / "credential.schema.json", False, validate=False)
             make_quotes_for_strings(obj)
             remove_cred_yaml_comments(obj)
-        data = encrypt_bytes(dumpYamlToStr(obj).encode("utf-8"), key, old_data=self._sops_edit_base(key, obj, is_es),
+        text = "" if is_es and not obj else dumpYamlToStr(obj)
+        data = encrypt_bytes(text.encode("utf-8"), key, old_data=self._sops_edit_base(key, obj, is_es),
                              validate=False)
         header_text = self._headers.get(key)
         if header_text and not data.startswith(b"#"):
