@@ -6,28 +6,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterable
 
-from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, get_all_necessary_cred_files
+from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, encryption_rule, get_all_necessary_cred_files
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.business_utils import get_schema_dir
-from envgene_shared.utils.crypt_utils import effective_set_encrypted_keys, is_effective_set_cred_file
+from envgene_shared.utils.crypt_utils import is_effective_set_cred_file
 from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
     remove_cred_yaml_comments, sortYaml
-
-
-def _encrypted_literal_keys(value, keys=None):
-    keys = set() if keys is None else keys
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key == "sops":
-                continue
-            if isinstance(child, str) and child.startswith("ENC["):
-                keys.add(key)
-            else:
-                _encrypted_literal_keys(child, keys)
-    elif isinstance(value, list):
-        for child in value:
-            _encrypted_literal_keys(child, keys)
-    return keys
 
 
 class CredStore:
@@ -98,7 +82,7 @@ class CredStore:
         old_text = old_data.decode("utf-8")
         if not is_encrypted_SOPS_text(old_text):
             return None
-        if is_es and _encrypted_literal_keys(readYaml(old_text)) != effective_set_encrypted_keys(obj):
+        if is_es and readYaml(old_text)["sops"].get("encrypted_regex") != encryption_rule(obj, key, False)[1]:
             return None
         return old_data
 

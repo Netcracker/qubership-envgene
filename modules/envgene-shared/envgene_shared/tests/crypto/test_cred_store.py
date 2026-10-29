@@ -7,7 +7,6 @@ import pytest
 from envgene_shared.crypto.cred_store import CredStore, current_cred_store, open_cred_store
 from envgene_shared.crypto.crypt import decrypt_bytes, decrypt_file, encrypt_bytes, encrypt_file, is_encrypted
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
-from envgene_shared.utils.crypt_utils import effective_set_encrypted_keys
 from envgene_shared.crypto.sops_handler import _sops_edit, is_encrypted_SOPS, is_encrypted_SOPS_text
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.file_utils import writeToFile
@@ -208,6 +207,25 @@ def test_es_file_new_literal_key_uses_new_regex(env_dir):
     assert raw["r"] == ES_REF
 
 
+def test_es_file_encrypted_whole_keeps_new_reference_plain(env_dir):
+    path = make_es_file(env_dir, "a: one\n")
+    with open_cred_store() as store:
+        store.put(path, {"a": "one", "r": ES_REF})
+    raw = openYaml(str(path))
+    assert raw["r"] == ES_REF
+    assert raw["a"].startswith("ENC[")
+
+
+def test_es_file_with_empty_literal_uses_edit(env_dir):
+    path = make_es_file(env_dir, f"a: one\nc: three\ne: ''\nr: {ES_REF}\n")
+    old = openYaml(str(path))
+    with open_cred_store() as store:
+        store.put(path, {"a": "changed", "c": "three", "e": "", "r": ES_REF})
+    raw = openYaml(str(path))
+    assert raw["c"] == old["c"]
+    assert raw["a"] != old["a"]
+
+
 def test_es_file_same_literal_keys_uses_edit(env_dir):
     path = make_es_file(env_dir, f"a: one\nc: three\nr: {ES_REF}\n")
     old = openYaml(str(path))
@@ -230,13 +248,6 @@ def test_es_file_without_references_with_non_string_values_uses_edit(env_dir):
     assert raw["b"] == old["b"]
     assert raw["a"] != old["a"]
     assert decrypt_file(path, in_place=False)["a"] == "changed"
-
-
-def test_effective_set_encrypted_keys_follow_sops_rules():
-    without_references = {"a": "one", "n": 5, "b": True, "z": None, "e": "", "d": {"inner": 1}, "l": [{"item": "x"}]}
-    with_references = {"a": "one", "n": 5, "r": ES_REF}
-    assert effective_set_encrypted_keys(without_references) == {"a", "n", "b", "inner", "item"}
-    assert effective_set_encrypted_keys(with_references) == {"a"}
 
 
 def test_es_file_without_literal_keys_written_plain(env_dir):

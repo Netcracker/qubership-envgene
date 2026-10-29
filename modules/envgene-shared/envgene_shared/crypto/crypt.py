@@ -102,7 +102,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         return openYaml(file_path) if load_result else None
 
     file_content = openYaml(file_path)
-    should_encrypt, encrypted_regex = _encryption_rule(file_content, file_path, True)
+    should_encrypt, encrypted_regex = encryption_rule(file_content, file_path, True)
     if not should_encrypt:
         return file_content if load_result else None
 
@@ -113,7 +113,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     )
 
 
-def _encryption_rule(file_content, file_path, validate):
+def encryption_rule(file_content, file_path, validate):
     if is_effective_set_cred_file(file_path):
         literal_keys, has_literal, has_reference = analyze_cred_file(file_content)
         if not has_literal:
@@ -165,7 +165,7 @@ def encrypt_bytes(data: bytes, file_path, *, old_data: bytes = None, validate=Tr
         logger.info("'crypt' is set to 'false', skipping encryption")
         return data
     content = readYaml(text)
-    should_encrypt, encrypted_regex = _encryption_rule(content, file_path, validate)
+    should_encrypt, encrypted_regex = encryption_rule(content, file_path, validate)
     if not should_encrypt:
         return data
     return encrypt_SOPS_bytes(data, file_path, encrypted_regex, old_data)
