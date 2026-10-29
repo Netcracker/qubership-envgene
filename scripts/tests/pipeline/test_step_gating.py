@@ -9,8 +9,11 @@ import pytest
 
 from envgenehelper.models import PipelineType
 
+from envgene_shared.crypto.cred_store import current_cred_store
+
 from pipeline.orchestrator import (
     AppregdefRenderStep,
+    CMDB_import,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
     GenerateEffectiveSetStep,
@@ -126,3 +129,21 @@ class TestStepGating:
             ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION=bgd_operation)
 
             assert not GenerateEffectiveSetStep().should_run(ctx)
+
+
+@pytest.mark.unit
+def test_cmdb_import_runs_plugin_with_open_cred_store(monkeypatch):
+    stores = []
+
+    class Plugin:
+        modules = ["cmdb_import"]
+
+        def __init__(self, plugins_dir):
+            pass
+
+        def run(self):
+            stores.append(current_cred_store())
+
+    monkeypatch.setattr("pipeline.orchestrator.PluginEngine", Plugin)
+    CMDB_import().execute(_ctx())
+    assert len(stores) == 1

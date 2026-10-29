@@ -344,7 +344,8 @@ class CMDB_import(PipelineStep):
         cmdb_import = PluginEngine(plugins_dir='/module/scripts/plugins/nc_cmdb_import')
         if not cmdb_import.modules:
             raise RuntimeError("cmdb_import plugin failed to load")
-        cmdb_import.run()
+        with open_cred_store():
+            cmdb_import.run()
 
 
 def _run_step(step: PipelineStep, ctx: PipelineParametersHandler, results: list[StepResult]) -> None:
