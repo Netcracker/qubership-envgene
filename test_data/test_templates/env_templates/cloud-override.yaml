@@ -1,0 +1,12 @@
+---
+tenant: "{{ templates_dir }}/env_templates/simple/tenant.yml.j2"
+cloud:
+  template_path: "{{ templates_dir }}/env_templates/simple/cloud.yml.j2"
+  template_override:
+    e2eParameters:
+      OVERRIDE_PARAM_1: "value-1"
+      OVERRIDE_PARAM_2: "value-2"
+    e2eParameterSets:
+      - paramset-A
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/simple/billing.yml.j2"

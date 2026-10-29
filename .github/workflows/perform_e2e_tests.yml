@@ -25,72 +25,10 @@ jobs:
           docker compose -f devtools/docker-compose.yml exec -T cucumber \
             bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
 
-      - name: Run Environment Inventory Generation BDD tests
+      - name: Run BDD test suites
         run: |
-          mkdir -p reports
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_environment_inventory_generation.py \
-               -v -s \
-               --junitxml=reports/environment_inventory_generation.xml \
-               | tee /workspace/e2e_tests.log"
-
-      - name: Run SBOM Retention BDD tests
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_sbom_retention.py \
-               -v -s \
-               --junitxml=reports/sbom_retention.xml \
-               | tee -a /workspace/e2e_tests.log"
-
-
-      - name: Run BGD Sub-flows BDD tests
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_bgd_sub_flows.py \
-               -v -s \
-               --junitxml=reports/bgd_sub_flows.xml \
-               | tee -a /workspace/e2e_tests.log"
-
-      - name: Run Deploy Sub-flows BDD tests
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_deploy_sub_flows.py \
-               -v -s \
-               --junitxml=reports/deploy_sub_flows.xml \
-               | tee -a /workspace/e2e_tests.log"
-
-      - name: Run CLEAN Sub-flows BDD tests
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_clean_sub_flows.py \
-               -v -s \
-               --junitxml=reports/clean_sub_flows.xml \
-               | tee -a /workspace/e2e_tests.log"
-
-      - name: Run Calculator CLI BDD tests
-        run: |
-          docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "export PYTHONPATH=/workspace && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/test_calculator_cli.py \
-               -v -s \
-               --junitxml=reports/calculator_cli.xml \
-               | tee -a /workspace/e2e_tests.log"
+          docker compose -f devtools/docker-compose.yml exec -T cucumber \
+            bash /workspace/cucumber_tests/run_suites.sh
 
       - name: Publish Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2

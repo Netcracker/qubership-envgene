@@ -69,6 +69,7 @@
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
 - [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Generation**](/docs/features/effective-set-generation.md) - Generate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20) for an environment; covers full and [partial](/docs/features/effective-set-generation.md#partial-generation) modes
+- [**Cleanup**](/docs/features/clean.md) - What cleanup is in EnvGene, the `CLEAN` operation, and the cleanup output each deployment architecture produces
 - [**Custom Params**](/docs/instance-pipeline-parameters.md#custom_params) for session-scoped overrides
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts

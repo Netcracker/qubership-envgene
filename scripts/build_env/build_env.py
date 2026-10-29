@@ -3,7 +3,6 @@ from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, che
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
     get_profile_baseline, set_object_profile_field
-from utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -120,7 +119,7 @@ def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
 
 
 def mergeParameterSetsIntoParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map,
-                                     env_specific_params_map, env_definition):
+                                     env_definition):
     params = copy.deepcopy(paramsTemplate[parametersTag])
     application_paramsets = []
     for pset in paramsTemplate[paramsetsTag]:
@@ -134,7 +133,6 @@ def mergeParameterSetsIntoParameters(templatePath, paramsTemplate, paramsetsTag,
         for entry in paramSetDefinition:
             paramSetFile = entry["filePath"]
             logger.info(f"Processing paramset {pset} in file {paramSetFile}")
-            isEnvSpecificParamset = entry["envSpecific"]
             # Get template context from environment definition
             try:
                 # Get environment name from inventory, with fallback to derived name from path
@@ -197,29 +195,24 @@ def mergeParameterSetsIntoParameters(templatePath, paramsTemplate, paramsetsTag,
                 # get value with potential merge of dicts
                 val = get_merged_param_value(k, params, paramSetParameters)
                 store_value_to_yaml(params, k, val, paramsetDefinitionComment)
-                # fill env specific parameters map for env specific paramset
-                if isEnvSpecificParamset:
-                    storeToEnvSpecificParametersMap(env_specific_params_map, "", parametersTag, k, val, pset)
             # prepare application parameters
-            application_paramsets.append((paramsetDefinitionComment, paramSetAppParams, pset, isEnvSpecificParamset))
+            application_paramsets.append((paramsetDefinitionComment, paramSetAppParams))
     params = sortParameters(params)
     return params, application_paramsets
 
 
 def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map,
-                                     env_specific_params_map, env_definition, header_text=""):
+                                     env_definition, header_text=""):
     params, application_paramsets = mergeParameterSetsIntoParameters(
-        templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map,
-        env_definition)
-    for paramsetDefinitionComment, paramSetAppParams, pset, isEnvSpecificParamset in application_paramsets:
-        convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, paramSetAppParams, pset,
-                                          parametersTag, isEnvSpecificParamset, env_specific_params_map,
-                                          header_text)
+        templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_definition)
+    for paramsetDefinitionComment, paramSetAppParams in application_paramsets:
+        convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, paramSetAppParams,
+                                          parametersTag, header_text)
     return params
 
 
-def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, applicationsParamSets, paramsetName,
-                                      parametersTag, isEnvSpecificParamset, env_specific_params_map, header_text=""):
+def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, applicationsParamSets,
+                                      parametersTag, header_text=""):
     application_schema = f"{get_schema_dir()}/application.schema.json"
     for appParams in applicationsParamSets:
         appName = appParams["appName"] if "appName" in appParams else appParams["name"]
@@ -229,32 +222,8 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
             # get value with potential merge of dicts
             val = get_merged_param_value(j, appDefinition[parametersTag], appParams["parameters"])
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
-            if isEnvSpecificParamset:
-                storeToEnvSpecificParametersMap(env_specific_params_map, appName, parametersTag, j, val, paramsetName)
         current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
-
-
-def initParametersStructure(map, key, is_app=False):
-    if key not in map:
-        map[key] = {}
-    map[key]["deployParameters"] = {}
-    map[key]["e2eParameters"] = {}
-    map[key]["technicalConfigurationParameters"] = {}
-    if not is_app:
-        map[key]["applications"] = {}
-
-
-def storeToEnvSpecificParametersMap(env_specific_params_map, applicationName, parametersTag, paramKey, paramValue,
-                                    paramsetName):
-    if applicationName:
-        # todo: nail all 3 parameter tags
-        if applicationName not in env_specific_params_map["applications"]:
-            initParametersStructure(env_specific_params_map["applications"], applicationName, is_app=True)
-        env_specific_params_map["applications"][applicationName][parametersTag][paramKey] = {"value": paramValue,
-                                                                                             "paramsetName": paramsetName}
-    else:
-        env_specific_params_map[parametersTag][paramKey] = {"value": paramValue, "paramsetName": paramsetName}
 
 
 def getApplicationParametersYaml(appName, applicationParametersFile):
@@ -315,7 +284,7 @@ def updateEnvSpecificParamsets(envDefinitionYaml, templateName, templateContent,
     return result
 
 
-def processTemplate(templatePath, templateName, env_definition, schema_path, paramset_map, env_specific_params_map,
+def processTemplate(templatePath, templateName, env_definition, schema_path, paramset_map,
                     resource_profiles_map=None, header_text="", process_env_specific=True):
     logger.info(f"Processing template: {templateName} in {templatePath}")
     env_instance_store = current_env_instance_store()
@@ -325,14 +294,12 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
     # process deployParameters
     templateContent["deployParameters"] = convertParameterSetsToParameters(templatePath, templateContent,
                                                                            "deployParameterSets", "deployParameters",
-                                                                           paramset_map, env_specific_params_map,
-                                                                           env_definition, header_text)
+                                                                           paramset_map, env_definition, header_text)
     templateContent["deployParameterSets"] = []
     # process e2eParameters
     templateContent["e2eParameters"] = convertParameterSetsToParameters(templatePath, templateContent,
                                                                         "e2eParameterSets", "e2eParameters",
-                                                                        paramset_map, env_specific_params_map,
-                                                                        env_definition, header_text)
+                                                                        paramset_map, env_definition, header_text)
     templateContent["e2eParameterSets"] = []
     # process technicalConfigurationParameters
     templateContent["technicalConfigurationParameters"] = convertParameterSetsToParameters(templatePath,
@@ -340,7 +307,6 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
                                                                                            "technicalConfigurationParameterSets",
                                                                                            "technicalConfigurationParameters",
                                                                                            paramset_map,
-                                                                                           env_specific_params_map,
                                                                                            env_definition,
                                                                                            header_text)
     templateContent["technicalConfigurationParameterSets"] = []
@@ -436,9 +402,6 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
     tenantTemplatePath = env_dir / "tenant.yml"
     cloudTemlatePath = env_dir / "cloud.yml"
     namespaces = env_instance_store.namespaces()
-    # env specific parameters map - will be filled with env specific parameters during template processing
-    env_specific_parameters_map = {}
-    env_specific_parameters_map["namespaces"] = {}
 
     # process tenant
     logger.info(f"Processing tenant: {tenantTemplatePath}")
@@ -449,7 +412,6 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
     # process cloud
     needed_resource_profiles_map = {}
     logger.info(f"Processing cloud: {cloudTemlatePath}")
-    initParametersStructure(env_specific_parameters_map, "cloud")
     logger.info("Processing cloud without env specific parameters.")
     processTemplate(
         cloudTemlatePath,
@@ -457,7 +419,6 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         envDefinitionYaml,
         cloud_schema,
         common_paramset_map,
-        env_specific_parameters_map["cloud"],
         resource_profiles_map=needed_resource_profiles_map,
         header_text=generated_header_text,
         process_env_specific=False)
@@ -470,18 +431,13 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         envDefinitionYaml,
         cloud_schema,
         common_paramset_map,
-        env_specific_parameters_map["cloud"],
         resource_profiles_map=needed_resource_profiles_map,
         header_text=generated_header_text,
         process_env_specific=True)
 
     # process namespaces
-    template_namespace_names = []
     for ns in namespaces:
         logger.info(f"Processing namespace: {ns.definition_path}")
-        template_namespace_names.append(ns.postfix)
-        initParametersStructure(env_specific_parameters_map['namespaces'], ns.postfix)
-
         if ns.role == NamespaceRole.ORIGIN:
             ns_paramset_map = origin_paramset_map
         elif ns.role == NamespaceRole.PEER:
@@ -494,15 +450,12 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
             envDefinitionYaml,
             namespace_schema,
             ns_paramset_map,
-            env_specific_parameters_map['namespaces'][ns.postfix],
             resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text,
         )
     operation_type = OperationType(getenv("OPERATION_TYPE"))
     if operation_type == OperationType.CLEAN:
         set_cleaned_mark(namespaces)
-    logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
-    checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
 
     # process resource profiles
     result_profiles_dir = Path(f"{env_dir}/Profiles")

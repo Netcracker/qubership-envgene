@@ -130,7 +130,7 @@ jobs:
     outputs:
       PACKAGE_NAME: ${{ steps.set-outputs.outputs.PACKAGE_NAME }}
     container:
-      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.9.0' }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.10.2' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
@@ -181,13 +181,6 @@ jobs:
 
       - name: EnvGene Execution
         run: |
-          /module/scripts/utils/handle_certs.sh
-          python3 /module/scripts/pipeline/resolve_env_names.py
-          set -a && . ./envgene-resolved.env && set +a
-          python3 /module/scripts/utils/sparse_checkout.py
-          if [[ -f "${HOME}/.bashrc" ]]; then
-            source "${HOME}/.bashrc"
-          fi
           python3 /module/scripts/pipeline/orchestrator.py
           set -a && . envgene-vars.env && set +a
           if [[ "${PIPELINE_TYPE}" == "GITLAB_DEPLOY" ]]; then

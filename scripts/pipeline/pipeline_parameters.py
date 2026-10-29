@@ -21,6 +21,9 @@ from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, Operat
     DeltaDeployType, ExternalCredentialProvisioning
 from envgenehelper.plugin_engine import PluginEngine
 
+JOB_ENV_EXPORTS = (
+    "REQUESTS_CA_BUNDLE", "GIT_SSL_CAINFO", "LOCAL_APPDEFS_PATH", "LOCAL_REGDEFS_PATH", "LOCAL_PUBREG_FILE")
+
 
 class PipelineParametersHandler(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -74,7 +77,7 @@ class PipelineParametersHandler(BaseModel):
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
             'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
             'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
-            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
+            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID") or str(uuid.uuid4()),
             'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
             'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
             "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
@@ -124,6 +127,7 @@ class PipelineParametersHandler(BaseModel):
             'CLUSTER_NAME': cluster_name,
             'ENVIRONMENT_NAME': env_name,
         }
+        internal_params.update({name: value for name in JOB_ENV_EXPORTS if (value := getenv(name))})
         for k, v in internal_params.items():
             os.environ[k] = v
         return cls(

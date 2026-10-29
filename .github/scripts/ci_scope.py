@@ -43,12 +43,13 @@ def dev_build_jobs(event_name, event, skip):
     push_build = event_name == "push" and any(
         keyword in message for keyword in ("feat:", "fix:", "breaking change")
     )
+    push_envgene_build = push_build or (event_name == "push" and "test:" in message)
     manual = event_name == "workflow_dispatch"
     skip = skip or (manual and inputs.get("docs-check-only") == "true")
     return {
         "skip_tests_and_build": skip,
         "run_tests": not skip,
-        "build_envgene": not skip and (push_build or (
+        "build_envgene": not skip and (push_envgene_build or (
             manual and inputs.get("build-envgene") == "true" and inputs.get("tests-only") == "false"
         )),
         "build_gsf_instance": not skip and (

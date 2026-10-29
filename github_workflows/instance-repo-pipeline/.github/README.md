@@ -182,12 +182,10 @@ ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${ENVGENE_IMAGE}:${ENVGENE_VERSION}
 | EnvGene Execution                                   | Certs, env-name resolution, sparse checkout, orchestrator, then optional GITLAB_DEPLOY / CMDB steps     |
 | Upload generated environment package                | Artifact with `environments/`, `configuration/`, `sboms/`, `templates/`, `tmp/`, `ARGO_DPG_CONTEXT.env` |
 
-The **EnvGene Execution** step always runs:
-
-1. `/module/scripts/utils/handle_certs.sh`
-1. `python3 /module/scripts/pipeline/resolve_env_names.py` (writes `envgene-resolved.env`)
-1. `python3 /module/scripts/utils/sparse_checkout.py`
-1. `python3 /module/scripts/pipeline/orchestrator.py`
+The **EnvGene Execution** step always runs `python3 /module/scripts/pipeline/orchestrator.py`. Before any pipeline
+step, the orchestrator resolves the environment names, runs the sparse checkout, and installs the CA certificates
+in one process. When it installs certificates, it writes `REQUESTS_CA_BUNDLE` to `envgene-vars.env` for the
+commands that follow.
 
 When `PIPELINE_TYPE` is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY`, or `OPERATION_TYPE` is `BGD` with
 `BGD_OPERATION=warmup`, the same step then generates Argo DPG structure and encrypts `ARGO_DPG_CONTEXT.env` with SOPS.

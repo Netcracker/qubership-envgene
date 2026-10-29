@@ -21,13 +21,17 @@ def transform_params_registry(registry: UnifiedRegDef, params: dict) -> Registry
     if not __url:
         __url = registry.maven.get('full_repo_url', '')
 
+    __type_reg = RegistryType(params.get('MAVEN_PROVIDER', 'artifactory').lower())
+
+    if __type_reg == RegistryType.NEXUS:
+        __url = __url.rstrip("/").removesuffix("/repository")
+
     __auth_config = AuthUserPassword(
             registry_url=__url,
             username="",
             password=""
         )
 
-    __type_reg = RegistryType(params.get('MAVEN_PROVIDER', 'artifactory').lower())
     __pub_auth_method = params.get('PUB_REG_METHOD', None)
     __priv_auth_method = params.get('NON_PUB_REG_METHOD', None)
     reg_key = params.get('PUB_REG_KEY', None)
