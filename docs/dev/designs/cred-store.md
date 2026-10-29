@@ -60,7 +60,7 @@ run_single_env_pipeline
   | ES cred file | 1: `sops edit`, exit 200, bytes kept | 1: `sops edit` |
 
   An ES cred file gets no compare when its literal keys changed, or it is written plain: with `crypt: false`
-  or without literal values. The rule for ES cred files is not used for other cred files: with Fernet and
+  or without literal values. The rule for ES cred files is not used for other cred files: with
   `crypt: false` there is no `sops edit`, and an unchanged file would be rewritten on every run.
 - **A changed file is written with one `sops edit` on its original bytes.** Values that did not change keep
   their old ciphertext, so the diff is minimal at once. A new file has no original bytes and gets a plain
@@ -203,6 +203,8 @@ steps, so that no cred file is ever decrypted on disk.
   `crypt: false` skipped validation for them. With `crypt: true` they were validated by `encrypt_file`
   before, and the error message is now shorter: `Document failed schema validation`.
 - Cred files from these sources are written sorted, quoted, and without comments, as env creds were before.
+- Fernet is no longer an encryption backend of the repository. `crypt_backend` takes only `SOPS`, and SOPS is
+  the default. Fernet only decrypts cloud discovery creds with the `SECRET_KEY` of the discovery project.
 - `external-credentials.yaml` is committed unencrypted. Before, `strategy` and the `data` markers were
   encrypted, because `analyze_cred_file` takes every string without `ref+` as a secret.
 

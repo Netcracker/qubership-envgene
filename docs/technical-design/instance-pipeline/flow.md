@@ -105,7 +105,7 @@ Functions:
      - cloud passport
    - actions:
      - find the downstream discovery pipeline via bridges, download its artifacts
-     - Fernet-decrypt or re-encrypt
+     - Fernet-decrypt the discovery creds and put them into the cred store
 
 #### 1.3 step `credential_rotation`
 

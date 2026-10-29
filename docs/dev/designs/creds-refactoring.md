@@ -36,8 +36,8 @@ before code is merged.
 - **Walking env directories and reading YAML.** Creds rotation has its own `scandir_recursive`, an async YAML
   reader, and `write_yaml_to_file` on PyYAML. The shared modules have `findAllYamlsInDir`, `openYaml`, and
   `writeYamlToFile` on ruyaml. The output of the two writers differs.
-- **Two encryption APIs in `crypt.py`.** The file API (`encrypt_file`, `decrypt_file`, `crypt_SOPS`,
-  `crypt_Fernet` with `in_place`) serves only `crypt_cli` and the pre-commit hook. The bytes API
+- **Two encryption APIs in `crypt.py`.** The file API (`encrypt_file`, `decrypt_file`, `crypt_SOPS` with
+  `in_place`) serves only `crypt_cli` and the pre-commit hook. The bytes API
   (`encrypt_bytes`, `decrypt_bytes`) serves the cred store. The file API can be a thin layer over the bytes API.
 
 ## Out of scope

@@ -34,7 +34,7 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 - `CI_PROJECT_DIR` — root of the instance repository
 - `FULL_ENV_NAME` — `<cluster>/<env-name>`; `CLUSTER_NAME` and `ENVIRONMENT_NAME` are its split parts
-- `SECRET_KEY` — Fernet encryption key; `ENVGENE_AGE_PRIVATE_KEY` / `PUBLIC_AGE_KEYS` for SOPS/AGE
+- `ENVGENE_AGE_PRIVATE_KEY` / `PUBLIC_AGE_KEYS` — SOPS/AGE keys
 - `SD_DATA` / `SD_VERSION` / `SD_REPO_MERGE_MODE` — Solution Descriptor inputs
 - `EFFECTIVE_SET_CONFIG` — JSON config for the ES generator
 - `ENV_NAMES` — multi-value `<cluster>/<env>` list for batch operations
@@ -42,7 +42,7 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 ## Credentials
 
-All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. Encryption backend is configured in `configuration/config.yml` (`crypt_backend: Fernet | SOPS`). The `type` field is never encrypted.
+All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. SOPS is the only encryption backend (`crypt_backend: SOPS` in `configuration/config.yml`). Fernet is used only to decrypt cloud discovery creds with the discovery project's `SECRET_KEY`. The `type` field is never encrypted.
 
 ## Dev design
 

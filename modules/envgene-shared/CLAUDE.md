@@ -9,14 +9,15 @@ Pip-installable package (`envgene_shared` — version is a setuptools formality,
 | File | Responsibility |
 | ------ | --------------- |
 | `crypt.py` | Encrypt/decrypt entry points: `encrypt_file`, `decrypt_file`; batch ops: `encrypt_all_cred_files_for_env`, `decrypt_all_cred_files_for_env`; `is_encrypted`, `detect_crypt_backend_from_file`, `get_all_necessary_cred_files` (respects `ENV_NAMES` for scoped discovery) |
-| `fernet_handler.py` | AES-256 Fernet: `crypt_Fernet`, `is_encrypted_Fernet`, `_reuse_old_fernet_tokens` for minimize-diff |
+| `cred_store.py` | `CredStore`: decrypted copy of the repo cred files for the pipeline steps, writes changed files encrypted at close; `open_cred_store`, `current_cred_store` |
+| `fernet_handler.py` | Decrypt-only Fernet for cloud discovery creds: `decrypt_Fernet_data`, `is_encrypted_Fernet` |
 | `sops_handler.py` | SOPS/AGE via subprocess: `crypt_SOPS`, `is_encrypted_SOPS`, `_sops_edit` trick for minimize-diff |
 
 ### `utils/`
 
 | File | Responsibility |
 | ------ | --------------- |
-| `constants.py` | Crypto and file-detection constants: `FERNET_STR`, `UNENCRYPTED_REGEX_STR` (`"^type$"` — the `type` field is never encrypted), `VALID_EXTENSIONS`, `TARGET_REGEX`, `FERNET_ID`, `SOPS_ID` |
+| `constants.py` | Crypto and file-detection constants: `FERNET_STR`, `UNENCRYPTED_REGEX_STR` (`"^type$"` — the `type` field is never encrypted), `VALID_EXTENSIONS`, `TARGET_REGEX`, `SOPS_ID` |
 | `crypt_utils.py` | `get_crypt()`, `get_crypt_backend()` (reads `configuration/config.yml`), `validate_crypto_requirements`, `is_empty_cred_file`, `is_effective_set_cred_file`, `analyze_cred_file` |
 | `file_utils.py` | `check_file_exists`, `getRelPath`, `get_files_with_filter`, `is_cred_file` (credential file detection by name/path pattern), `writeToFile` |
 | `yaml_utils.py` | YAML I/O (`openYaml`, `readYaml`, `writeYamlToFile`), schema validation (`validate_yaml_by_scheme_or_fail`, `validate_yaml_data_by_schema`), deep-access helpers (`get_or_create_nested_yaml_attribute`, `ensure_nested_attr_exists`); thread-local `yaml`/`safe_yaml` processors; `jschon.create_catalog('2020-12')` called at module import time |
@@ -30,13 +31,13 @@ Bundled copies of `config.schema.json` and `credential.schema.json` used for int
 
 ### `crypt_cli.py`
 
-Click CLI (`python -m envgene_shared.crypt_cli`) with four commands: `decrypt_cred_file`, `encrypt_cred_file`, `decrypt_all`, `encrypt_all`. Options `--secret-key` / `--age-private-key` / `--age-public-key` / `--json-schemas-dir` fall back to `SECRET_KEY` / `ENVGENE_AGE_PRIVATE_KEY` / `PUBLIC_AGE_KEYS` / `JSON_SCHEMAS_DIR` env vars.
+Click CLI (`python -m envgene_shared.crypt_cli`) with four commands: `decrypt_cred_file`, `encrypt_cred_file`, `decrypt_all`, `encrypt_all`. Options `--age-private-key` / `--age-public-key` / `--json-schemas-dir` fall back to `ENVGENE_AGE_PRIVATE_KEY` / `PUBLIC_AGE_KEYS` / `JSON_SCHEMAS_DIR` env vars.
 
 ## Important Conventions
 
 - `UNENCRYPTED_REGEX_STR = "^type$"` — the `type` key in credential files is **never encrypted**.
 - `ruyaml` is used for all YAML I/O (not PyYAML) — preserves comments, round-trips safely. YAML null is rendered as `"null"` string (processor configured that way in `yaml_utils.py`).
-- Parallel encryption uses `ThreadPoolExecutor`; Fernet always runs sequentially (token reuse requires ordering).
+- Parallel encryption uses `ThreadPoolExecutor`.
 
 ## Tests
 

@@ -116,22 +116,10 @@ sops:
 
 ### Fernet
 
-Fernet is the AES-128-CBC with HMAC-SHA256 construction provided by the Python `cryptography` library.
-See the [Fernet spec](https://github.com/fernet/spec) for the primitives. The same
-`SECRET_KEY` encrypts and decrypts. The on-disk marker `[encrypted:AES256_Fernet]` is a fixed literal,
-not an algorithm identifier. The emit format preserves the file structure and prefixes each encrypted
-value with the marker followed by the base64 token. The unencrypted-keys regular expression is `^type$`. Values that are
-the empty string are left unencrypted.
-
-Using the same environment instance `credentials.yml` as the SOPS example above, after (Fernet):
-
-```yaml
-db-cred:
-  type: usernamePassword
-  data:
-    username: '[encrypted:AES256_Fernet]gAAAAA...'
-    password: '[encrypted:AES256_Fernet]gAAAAA...'
-```
+Fernet is not a backend of the repository. EnvGene uses it only to decrypt the credentials that cloud discovery
+returns, with the [`SECRET_KEY` of the discovery repository](/docs/envgene-repository-variables.md#secret_key-in-discovery-repository).
+A Fernet-encrypted value starts with the marker `[encrypted:AES256_Fernet]`. EnvGene stores these credentials
+in the repository with SOPS.
 
 ## Configuration
 
@@ -139,15 +127,11 @@ Two keys in `/configuration/config.yml` control encryption:
 
 - `crypt: true | false` enables or disables encryption. When `false`, no encrypt runs. Decrypt is a
   no-op, and any existing encrypted file triggers the safeguard in [Safeguards](#safeguards).
-- `crypt_backend: SOPS | Fernet` selects the backend used to encrypt files. Decryption detects the
-  backend from file content.
+- `crypt_backend: SOPS` selects the backend used to encrypt files. SOPS is the only value.
 
-Both keys are optional. `crypt` defaults to `true` and `crypt_backend` defaults to `Fernet`.
+Both keys are optional. `crypt` defaults to `true` and `crypt_backend` defaults to `SOPS`.
 
-Each backend requires its own CI/CD variables:
-
-- SOPS uses `PUBLIC_AGE_KEYS` for encrypt and `ENVGENE_AGE_PRIVATE_KEY` for decrypt.
-- Fernet uses `SECRET_KEY` for both encrypt and decrypt.
+SOPS uses `PUBLIC_AGE_KEYS` for encrypt and `ENVGENE_AGE_PRIVATE_KEY` for decrypt.
 
 ## Encryption rules
 
@@ -220,16 +204,10 @@ into a single file that may hold literals and references side by side.
 
 ## Decryption rules
 
-Decryption detects the backend from file-content markers, not from configuration:
+Decryption detects encryption from the file content, not from configuration:
 
 - A top-level `sops:` key means the file is SOPS-encrypted. Decrypt via SOPS.
-- Any leaf value starting with `[encrypted:AES256_Fernet]` means the file is Fernet-encrypted. Decrypt
-  via Fernet.
-- Neither marker means the file is plaintext or references-only. Decrypt is a no-op.
-
-Encryption is config-driven and decryption is content-driven. This asymmetry lets a repository switch
-`crypt_backend` between SOPS and Fernet without a bulk re-encrypt: existing files decrypt on read by
-their own marker, while new writes go through the newly selected backend.
+- Without it the file is plaintext or references-only. Decrypt is a no-op.
 
 ## Single-category validation
 
