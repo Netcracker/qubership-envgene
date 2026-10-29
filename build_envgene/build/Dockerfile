@@ -19,7 +19,7 @@ COPY build_effective_set_generator /build_effective_set_generator
 RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
 
 # Stage 2: Build Python dependencies
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
@@ -27,7 +27,7 @@ ARG RUN_JAVA_VERSION=1.3.8
 RUN apk add --no-cache \
     'libffi-dev=3.5.2-r0' \
     'openssl-dev=3.5.9-r0' \
-    'python3-dev=3.12.15-r0' \
+    'python3-dev=3.12.16-r0' \
     'cargo=1.91.1-r2' \
     'rust=1.91.1-r2' \
     'build-base=0.5-r3'
@@ -67,7 +67,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chmod 754 /module/scripts/*
 
 # Stage 3: Runtime
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
 
