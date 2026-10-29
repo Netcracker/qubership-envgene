@@ -13,6 +13,7 @@ from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgene_shared.utils.crypt_utils import *
 from envgene_shared.utils.constants import SOPS_ID
 
+from envgene_shared.crypto.fernet_handler import is_encrypted_Fernet
 from envgene_shared.crypto.sops_handler import crypt_SOPS, decrypt_SOPS_bytes, encrypt_SOPS_bytes, extract_value_SOPS, \
     is_encrypted_SOPS, is_encrypted_SOPS_text
 
@@ -139,6 +140,9 @@ def decrypt_bytes(data: bytes, file_path, *, secret_key=None, ignore_is_crypt=Fa
         logger.debug(f'File is empty, skipping decryption. Path: {file_path}')
         return get_empty_yaml()
     content = readYaml(text)
+    if is_encrypted_Fernet(content):
+        raise ValueError(f'Cred file is encrypted with Fernet, which is no longer supported. Move the repository to SOPS, '
+                         f'see /docs/how-to/credential-encryption.md. Path: {file_path}')
     encrypted = is_encrypted_SOPS_text(text)
     is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:

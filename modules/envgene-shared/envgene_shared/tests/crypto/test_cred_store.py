@@ -351,3 +351,11 @@ def test_bytes_round_trip_without_disk(monkeypatch, tmp_path):
     assert is_encrypted_SOPS_text(encrypted.decode("utf-8"))
     assert decrypt_bytes(encrypted, path) == readYaml(CONTENT)
     assert not path.exists()
+
+
+def test_fernet_encrypted_cred_file_fails(env_dir):
+    path = env_dir / "Credentials" / "credentials.yml"
+    writeToFile(str(path), "cred:\n  type: secret\n  data:\n    secret: '[encrypted:AES256_Fernet]gAAAAA'\n")
+    with pytest.raises(ValueError):
+        with open_cred_store() as store:
+            store.get(path)
