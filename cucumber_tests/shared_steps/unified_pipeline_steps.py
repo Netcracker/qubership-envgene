@@ -19,7 +19,7 @@ def set_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
 
 @when(parsers.parse('the pipeline parameter "{param}" is changed to "{value}"'))
 def change_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
-    workspace.extra_env[param] = value
+    workspace.extra_env[param] = value.replace('\\n', '\n').replace('\\"', '"')
 
 
 @when(parsers.parse('the pipeline parameter "{param}" is removed'))
