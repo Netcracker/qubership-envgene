@@ -83,8 +83,11 @@ run_single_env_pipeline
 - **A failed flow writes no creds.** Disk keeps the encrypted files of the previous run. No `finally` is
   needed.
 - **The Effective Set Calculator CLI gets the env creds as an object** and does not read credentials from disk.
-- **The CLI gets the env creds on stdin and returns the ES cred files on stdout.** The output is one JSON
-  object, path to content. The CLI logs go to stderr. `vals-reference` already works this way.
+- **The CLI gets the env creds on stdin and returns the ES cred files in a pipe of their own.** The output is
+  one JSON object, path to content. Python opens a pipe and passes its write end as `--creds-output=/dev/fd/N`.
+  Stdout is not used for the JSON: `run-java.sh` prints its `exec java ...` line to stdout before Java
+  starts, and `JAVA_DIAGNOSTICS` sends GC logs there. Any of them would break the JSON. Without
+  `--creds-output` the CLI writes the JSON to stdout, for a manual run. The CLI logs go to stderr.
 - **`external-credential/external-credentials.yaml` is not in the cred store.** It holds references to a
   secret store and no secret values. The CLI writes it to disk as now, and `external-cred-provision` reads
   it from disk as now. Nothing encrypts it.
@@ -171,7 +174,7 @@ After that, these steps put cred files into it:
 | `InventoryGenerationStep` | `ENV_INVENTORY_CONTENT.credentials` | `inventory/env_inventory_generation.py::handle_objects` | `<env>/Inventory/credentials/<name>.yml`, `<cluster>/credentials/<name>.yml`, `environments/credentials/<name>.yml` by `place` |
 | `InventoryGenerationStep` | `ENV_INVENTORY_INIT`, `ENV_SPECIFIC_PARAMS` (deprecated) | `inventory/env_inventory_generation.py::generate_env` | `<env>/Credentials/credentials.yml`, `<env>/Inventory/credentials/inventory_generation_creds.yml` |
 | `EnvBuildStep` | always | `CurrentEnvInstanceStore.put` of a cred path | `<env>/Credentials/credentials.yml` |
-| `GenerateEffectiveSetStep` | always | `effective_set/effective_set_entrypoint.py::_run_cli` | ES cred files the CLI returns on stdout |
+| `GenerateEffectiveSetStep` | always | `effective_set/effective_set_entrypoint.py::_run_cli` | ES cred files the CLI returns in `--creds-output` |
 
 A step that changes an object it got from the cred store changes the cred store too, without a `put`.
 Readers get cred files through `current_cred_store().get`.

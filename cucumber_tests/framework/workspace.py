@@ -120,7 +120,12 @@ class EnvGeneWorkspace(BaseWorkspace):
 
         # Mock run_effective_set_cli for local tests (cross-platform)
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
-        effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
+        effective_set_cli_mock.write_text(
+            "#!/bin/sh\n"
+            "for arg in \"$@\"; do\n"
+            "  case \"$arg\" in --creds-output=*) echo '{}' > \"${arg#--creds-output=}\" ;; esac\n"
+            "done\n"
+        )
         os.chmod(effective_set_cli_mock, 0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
 

@@ -80,7 +80,10 @@ public class CmdbCliTest {
     }
 
     private JsonNode returnedCredentials() throws Exception {
-        JsonNode raw = new ObjectMapper().readTree(capturedOut.toString(StandardCharsets.UTF_8));
+        return normalizedCredentials(new ObjectMapper().readTree(capturedOut.toString(StandardCharsets.UTF_8)));
+    }
+
+    private JsonNode normalizedCredentials(JsonNode raw) {
         ObjectNode normalized = new ObjectMapper().createObjectNode();
         raw.fields().forEachRemaining(e -> normalized.set(e.getKey().replace('\\', '/'), e.getValue()));
         return normalized;
@@ -631,6 +634,36 @@ public class CmdbCliTest {
                 returnedCredentials());
     }
 
+    @Test
+    void testGenerateEffectiveSetWritesCredsToCredsOutput(@TempDir Path tempDir) throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        Path credsFile = envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml");
+        byte[] creds = Files.readAllBytes(credsFile);
+        Files.delete(credsFile);
+        System.setIn(new ByteArrayInputStream(creds));
+
+        Path outputPath = tempDir.resolve("effective-set");
+        Path credsOutput = tempDir.resolve("creds.json");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", envsPath.resolve("cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false",
+                "--custom-params", "@config.json",
+                "--creds-output", credsOutput.toString());
+
+        assertEquals(0, exitCode);
+        assertEquals("", capturedOut.toString(StandardCharsets.UTF_8));
+        FileTestUtils.compareFolders(FileTestUtils.resource("environments/cluster-01/pl-01/effective-set"), outputPath,
+                normalizedCredentials(new ObjectMapper().readTree(credsOutput.toFile())));
+    }
+
     @AfterEach
     void tearDown() {
         System.setOut(originalOut);
@@ -667,6 +700,7 @@ public class CmdbCliTest {
             sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
             sharedData.setDeployPlanPath(Optional.empty());
             sharedData.setGenerateCleanupContext(false);
+            sharedData.setCredsOutput(null);
         }
     }
 }

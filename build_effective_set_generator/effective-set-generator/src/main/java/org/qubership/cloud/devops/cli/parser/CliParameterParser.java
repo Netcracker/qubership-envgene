@@ -59,6 +59,7 @@ import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV2;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,8 +107,13 @@ public class CliParameterParser {
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
         processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
+        Map<String, Map<String, Object>> credentialFiles = fileDataConverter.takeCredentialFiles();
+        if (sharedData.getCredsOutput() != null) {
+            new ObjectMapper().writeValue(new File(sharedData.getCredsOutput()), credentialFiles);
+            return;
+        }
         new ObjectMapper().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
-                .writeValue(System.out, fileDataConverter.takeCredentialFiles());
+                .writeValue(System.out, credentialFiles);
         System.out.flush();
     }
 

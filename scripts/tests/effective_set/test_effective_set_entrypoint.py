@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -544,31 +545,41 @@ class TestRunCli:
         monkeypatch.setattr(effective_set_entrypoint, "current_cred_store", lambda: store)
         return store
 
-    @pytest.mark.unit
-    def test_passes_env_creds_as_stdin_and_stores_returned_files(self, store, env_creds_path, monkeypatch):
-        captured = {}
-
-        def fake_run(cmd, **kwargs):
-            captured.update(kwargs)
-            return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps({"es/cred.yml": {"k": {"v": 1}}}))
-
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
-
-        effective_set_entrypoint._run_cli("cmd")
-
-        assert openYamlFromStr(captured["input"]) == store.objects[env_creds_path]
-        assert captured["shell"] is True
-        assert captured["stdout"] == subprocess.PIPE
-        assert store.get("es/cred.yml") == {"k": {"v": 1}}
+    @pytest.fixture
+    def fake_cli(self, tmp_path):
+        def make(body):
+            script = tmp_path / "fake_cli.py"
+            script.write_text(
+                "import json, sys\n"
+                "creds_output = next(a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('--creds-output='))\n"
+                "stdin = sys.stdin.read()\n"
+                "print('exec java -jar app.jar')\n"
+                + body
+            )
+            return f"{sys.executable} {script}"
+        return make
 
     @pytest.mark.unit
-    def test_failed_cli_raises_and_puts_nothing(self, store, monkeypatch):
-        def fake_run(cmd, **kwargs):
-            raise subprocess.CalledProcessError(1, cmd)
+    @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
+    def test_passes_env_creds_as_stdin_and_stores_returned_files(self, store, env_creds_path, fake_cli):
+        cmd = fake_cli(
+            "with open(creds_output, 'w') as f:\n"
+            "    json.dump({'es/cred.yml': {'stdin': stdin, 'big': 'x' * 200000}}, f)\n"
+            "print('noise after json')\n"
+        )
 
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", fake_run)
+        effective_set_entrypoint._run_cli(cmd)
+
+        returned = store.get("es/cred.yml")
+        assert openYamlFromStr(returned["stdin"]) == store.objects[env_creds_path]
+        assert len(returned["big"]) == 200000
+
+    @pytest.mark.unit
+    @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
+    def test_failed_cli_raises_and_puts_nothing(self, store, fake_cli):
+        cmd = fake_cli("sys.exit(1)\n")
 
         with pytest.raises(subprocess.CalledProcessError):
-            effective_set_entrypoint._run_cli("cmd")
+            effective_set_entrypoint._run_cli(cmd)
 
         assert len(store.objects) == 1

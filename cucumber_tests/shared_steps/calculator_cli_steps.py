@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import yaml
 
-from pytest_bdd import then, parsers
+from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
@@ -26,6 +26,22 @@ _MOCK_REGISTRY = {
         },
     }
 }
+
+
+@given("the Calculator CLI prints text to standard output before and after the Effective Set")
+def calculator_cli_prints_to_stdout(workspace: EnvGeneWorkspace) -> None:
+    cli_wrapper = workspace.base_dir / "noisy_effective_set_cli.sh"
+    cli_wrapper.write_text(
+        "#!/bin/sh\n"
+        "echo 'text before the Effective Set'\n"
+        f"{_PRODUCTION_CLI} \"$@\"\n"
+        "status=$?\n"
+        "echo 'text after the Effective Set'\n"
+        "exit $status\n",
+        encoding="utf-8",
+    )
+    cli_wrapper.chmod(0o755)
+    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = str(cli_wrapper)
 
 
 def _get_effective_set_dir(workspace):

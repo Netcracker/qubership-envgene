@@ -1,8 +1,10 @@
 import json
+import os
 import shlex
 import shutil
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from os import getenv
 from pathlib import Path
 
@@ -183,10 +185,17 @@ def _restore_saved_dirs(tmp_root, saved):
 def _run_cli(cmd):
     store = current_cred_store()
     env_creds = store.get(get_current_env_dir_from_env_vars() / "Credentials" / "credentials.yml")
-    result = subprocess.run(cmd, shell=True, check=True, input=dumpYamlToStr(env_creds),
-                            stdout=subprocess.PIPE, text=True)
-    for path, content in json.loads(result.stdout).items():
-        store.put(path, content)
+    read_fd, write_fd = os.pipe()
+    with os.fdopen(read_fd) as creds_output, ThreadPoolExecutor(max_workers=1) as executor:
+        process = subprocess.Popen(f"{cmd} --creds-output=/dev/fd/{write_fd}", shell=True, stdin=subprocess.PIPE,
+                                   text=True, pass_fds=(write_fd,))
+        os.close(write_fd)
+        output = executor.submit(creds_output.read)
+        process.communicate(dumpYamlToStr(env_creds))
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(process.returncode, cmd)
+        for path, content in json.loads(output.result()).items():
+            store.put(path, content)
 
 
 def _build_cli_cmd(effective_set_dir, full_env_name, dp_path):
