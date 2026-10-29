@@ -56,7 +56,7 @@ run_single_env_pipeline
   `sops edit` does anyway. SOPS calls per file:
 
   | File | Not changed | Changed |
-  |---|---|---|
+  | --- | --- | --- |
   | Cred file read with `get` | 0 | 1: `sops edit` |
   | Cred file only put: discovery creds, inventory | 1: decrypt to compare | 2: decrypt, `sops edit` |
   | ES cred file | 1: `sops edit`, exit 200, bytes kept | 1: `sops edit` |
@@ -89,7 +89,7 @@ run_single_env_pipeline
   opens:
 
   | Step | Deletes | Put again | Needs original bytes |
-  |---|---|---|---|
+  | --- | --- | --- | --- |
   | `GenerateEffectiveSetStep` | ES directories with `credentials.yaml` and `collision-credentials.yaml` | yes, the CLI returns them | yes |
   | `PassportStep` | `cloud-passport/` except `<cloud>-creds.yml`, so `credentials/<cloud>.yml` | no | no |
   | `InventoryGenerationStep` | a credentials object with `action: delete`, the env directory with `envDefinition` `action: delete` | no | no |
@@ -124,10 +124,11 @@ run_single_env_pipeline
 - **`crypt` decrypts and encrypts bytes.** `decrypt_bytes` and `encrypt_bytes` take the bytes and the path
   of a cred file. SOPS reads them on stdin, with `--filename-override` for the path. The cred store keeps
   bytes in memory and needs no temp file, except for `sops edit`: it works on a file only.
-- **`sops edit` keeps the encrypted regex of the old file.** So an ES cred file gets `sops edit` only when its
-  old file is encrypted with SOPS and the old and the new file encrypt the same keys. Otherwise it gets a plain
-  SOPS encrypt with the new regex, or is written plain. Before, `minimize_cred_diffs` ran `sops edit` on every
-  changed cred file, so a new literal key in an ES cred file could land in git unencrypted. For example, a value
+- **`sops edit` keeps the `encrypted_regex` of the old file.** So an ES cred file gets `sops edit` only when
+  its old file is encrypted with SOPS and the old and the new file encrypt the same keys. Otherwise it gets a
+  plain SOPS encrypt with the new `encrypted_regex`, or is written plain. Before, `minimize_cred_diffs` ran
+  `sops edit` on every changed cred file, so a new literal key in an ES cred file could land in Git
+  unencrypted. For example, a value
   that changed from a `ref+` reference to a plain value.
 - **The editor script of `sops edit` compares YAML objects, not bytes.** The new content comes from Python, not
   from a SOPS decrypt, so its bytes differ from the old file even with the same data. The script writes only
@@ -161,7 +162,7 @@ The cred store reads the encrypted bytes of every file of `get_all_necessary_cre
 After that, these steps put cred files into it:
 
 | Step | Trigger | Code | Cred files |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `PassportStep` | `GET_PASSPORT` | `cloud_passport/main.py::process_credentials` | `<cluster>/cloud-passport/<cloud>-creds.yml`, discovery creds, with a header |
 | `CredentialRotationStep` | `CRED_ROTATION_PAYLOAD` | `creds_rotation/utils/cred_utils.py::update_file` | every env, cluster, and shared cred file that holds a rotated cred |
 | `InventoryGenerationStep` | `ENV_INVENTORY_CONTENT.credentials` | `inventory/env_inventory_generation.py::handle_objects` | `<env>/Inventory/credentials/<name>.yml`, `<cluster>/credentials/<name>.yml`, `environments/credentials/<name>.yml` by `place` |
@@ -178,7 +179,7 @@ The two stores have different roles. `CurrentEnvInstanceStore` holds the output 
 steps, so that no cred file is ever decrypted on disk.
 
 | | Env instance store | Cred store |
-|---|---|---|
+| --- | --- | --- |
 | Role | output of `EnvBuildStep` | decrypted copy of the repository cred files |
 | Lifetime | inside `EnvBuildStep` | from the first step to `GitCommitStep` |
 | Holds | plain objects | plain objects and the original encrypted bytes |
