@@ -126,6 +126,37 @@ def mock_nexus(tmp_path_factory):
     app1_dir = base_dir / "release" / "org" / "test" / "test-app" / "1.0"
     _write_app_manifest(app1_dir, "test-app-1.0.json", "app1", "1.0", "bss")
 
+    snapshot_version = "1.0.0-20261027.123456-1"
+    snapshot_dir = base_dir / "snapshot" / "org" / "test" / "test-app" / "1.0.0-SNAPSHOT"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    (snapshot_dir / "maven-metadata.xml").write_text(f"""\
+<metadata>
+  <versioning>
+    <snapshotVersions>
+      <snapshotVersion>
+        <classifier></classifier>
+        <extension>json</extension>
+        <value>{snapshot_version}</value>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>
+""")
+    _write_app_manifest(
+        snapshot_dir,
+        f"test-app-{snapshot_version}.json",
+        "app1",
+        "1.0.0-SNAPSHOT",
+        "core",
+    )
+    _write_app_manifest(
+        base_dir / "snapshot" / "org" / "test" / "test-app" / snapshot_version,
+        f"test-app-{snapshot_version}.json",
+        "app1",
+        snapshot_version,
+        "core",
+    )
+
     crm_dir = base_dir / "release" / "org" / "test" / "crm" / "1.0"
     _write_app_manifest(crm_dir, "crm-1.0.json", "crm", "1.0", "bss")
 
