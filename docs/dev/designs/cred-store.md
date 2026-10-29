@@ -42,9 +42,9 @@ run_single_env_pipeline
 - **A put into the cred store is thread-safe.**
 - **Creds rotation reads and writes cred files through the cred store, without process pools.** Before, it read
   with a `multiprocessing.Pool` and wrote with a `ProcessPoolExecutor` (`creds_rotation/utils/cred_utils.py`).
-  A child process does not see the cred store in memory. The pools only ran SOPS calls in parallel, and the
-  cred store makes them unnecessary: reads come from memory, and SOPS encrypts once at store close, in
-  parallel threads.
+  A child process does not see the cred store in memory. The pools only ran SOPS calls in parallel, so
+  threads replace them: rotation reads the cred files through the cred store in parallel threads, and SOPS
+  encrypts once at store close, in parallel threads.
 - **At the end the cred store writes only changed files.** A file is changed when its object differs from
   the decrypted object of its original bytes. A changed or new file is encrypted by SOPS. An unchanged file
   is not touched, so `git diff` skips it.

@@ -2,6 +2,7 @@
 import os
 import copy
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Tuple, Optional, Set
 from creds_rotation.models import CredMap
 from creds_rotation.utils.yaml_utils import get_nested_target_key
@@ -72,10 +73,9 @@ def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: Li
 
 
 def read_env_cred_files(creds_files):
-    result = {}
-    for filepath in creds_files:
-        result[filepath] = get_cred_file_content(filepath)
-    return result
+    creds_files = list(creds_files)
+    with ThreadPoolExecutor() as executor:
+        return dict(zip(creds_files, executor.map(get_cred_file_content, creds_files)))
 
 def get_cred_file_content(filepath):
     try:

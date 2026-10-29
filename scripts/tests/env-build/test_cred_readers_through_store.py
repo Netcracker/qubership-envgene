@@ -1,9 +1,11 @@
+import threading
 from pathlib import Path
 
 import pytest
 
 from build_env.create_credentials import mergeSharedCreds
 from cloud_passport.cloud_passport import add_cloud_passport_creds
+from creds_rotation.utils import cred_utils
 from creds_rotation.utils.cred_utils import read_env_cred_files
 from envgene_shared.crypto.cred_store import open_cred_store
 from envgene_shared.crypto.crypt import encrypt_file
@@ -145,3 +147,14 @@ def test_rotation_read_env_cred_files(project):
     assert all(v["first_cred"]["data"]["secret"] == "token-placeholder-123" for v in result.values())
     for p in paths:
         assert_untouched(Path(p), before[p])
+
+
+def test_rotation_reads_cred_files_in_parallel(monkeypatch):
+    barrier = threading.Barrier(2, timeout=5)
+
+    def read(path):
+        barrier.wait()
+        return path
+
+    monkeypatch.setattr(cred_utils, "get_cred_file_content", read)
+    assert read_env_cred_files(["a", "b"]) == {"a": "a", "b": "b"}
