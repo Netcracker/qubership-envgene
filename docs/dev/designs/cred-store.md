@@ -112,7 +112,8 @@ run_single_env_pipeline
   file with no value change keeps its old comments, and a change of a comment alone is not written. Before
   this change it was the same: `minimize_cred_diffs` gave an unchanged file its bytes from HEAD back, with
   the comments. Removing the comments of every file on every run would rewrite every cred file and bring
-  back the diff this change removes.
+  back the diff this change removes. The header of discovery creds follows the same rule: a new header text
+  reaches `<cloud>-creds.yml` with the next change of the discovered creds.
 - **Known limit: an inventory request that deletes an env and creates the same env creds again loses
   them.** `envDefinition` with `action: delete` deletes the env directory, then a credentials object with
   `place: env` puts the creds back. With the same content the cred store sees no change and writes nothing.
