@@ -184,7 +184,7 @@ def _restore_saved_dirs(tmp_root, saved):
 
 def _run_cli(cmd):
     store = current_cred_store()
-    env_creds = store.get(get_current_env_dir_from_env_vars() / "Credentials" / "credentials.yml")
+    env_creds = store.get(get_current_env_dir_from_env_vars() / "Credentials" / "credentials.yml", allow_default=True)
     read_fd, write_fd = os.pipe()
     with os.fdopen(read_fd, encoding="utf-8") as creds_output, ThreadPoolExecutor(max_workers=1) as executor:
         process = subprocess.Popen(f"{cmd} --creds-output=/dev/fd/{write_fd}", shell=True, stdin=subprocess.PIPE,

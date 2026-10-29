@@ -568,6 +568,20 @@ class TestRunCli:
 
     @pytest.mark.unit
     @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
+    def test_env_without_creds_file_passes_empty_creds(self, env_creds_path, fake_cli, monkeypatch):
+        store = CredStore([])
+        monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", store)
+        cmd = fake_cli(
+            "with open(creds_output, 'w') as f:\n"
+            "    json.dump({'es/cred.yml': {'stdin': stdin}}, f)\n"
+        )
+
+        effective_set_entrypoint._run_cli(cmd)
+
+        assert openYamlFromStr(store.get("es/cred.yml")["stdin"]) == {}
+
+    @pytest.mark.unit
+    @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")
     def test_failed_cli_raises_and_puts_nothing(self, store, fake_cli):
         cmd = fake_cli("sys.exit(1)\n")
 
