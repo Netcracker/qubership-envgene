@@ -40,10 +40,11 @@ run_single_env_pipeline
 - **The cred store keys a file by its resolved absolute path.** Callers pass `str`, `Path`, and relative
   paths for the same file.
 - **A put into the cred store is thread-safe.**
-- **`creds_rotation` reads and writes cred files in its own process.** Today it reads with a
-  `multiprocessing.Pool` and writes with a `ProcessPoolExecutor` (`creds_rotation/utils/cred_utils.py`).
-  A child process does not see the cred store in memory. The pools only parallelized SOPS calls, and the
-  cred store makes reads from memory and writes are deferred: the step only puts objects into the store, and SOPS encryption runs once at store close, in parallel threads
+- **Creds rotation reads and writes cred files through the cred store, without process pools.** Before, it read
+  with a `multiprocessing.Pool` and wrote with a `ProcessPoolExecutor` (`creds_rotation/utils/cred_utils.py`).
+  A child process does not see the cred store in memory. The pools only ran SOPS calls in parallel, and the
+  cred store makes them unnecessary: reads come from memory, and SOPS encrypts once at store close, in
+  parallel threads.
 - **At the end the cred store writes only changed files.** A file is changed when its object differs from
   the decrypted object of its original bytes. A changed or new file is encrypted by SOPS. An unchanged file
   is not touched, so `git diff` skips it.
@@ -122,8 +123,14 @@ run_single_env_pipeline
 - **`crypt` decrypts and encrypts bytes.** `decrypt_bytes` and `encrypt_bytes` take the bytes and the path
   of a cred file. SOPS reads them on stdin, with `--filename-override` for the path. The cred store keeps
   bytes in memory and needs no temp file, except for `sops edit`: it works on a file only.
-- **`sops edit` keeps the encrypted regex of the old file.** Bugfix: sops edit keeps the encrypted regex of the old file. Before, minimize_cred_diffs ran sops edit for every changed cred file, so a new literal key in an ES cred file (for example, a cred that changed from a ref+ reference to a plain value) could land in git unencrypted. Now an ES cred file gets sops edit only when its old file is encrypted and has the same set of literal keys. Otherwise it gets a plain SOPS encrypt with the new regex, or is written plain.
-- **The editor script of `sops edit` compares YAML objects, not bytes.** The editor script of sops edit compares YAML objects, not bytes. The new content now comes from Python, not from a SOPS decrypt, so its bytes differ from the old file even with the same data. The script writes only when the objects differ; otherwise SOPS exits with 200 and keeps the file
+- **`sops edit` keeps the encrypted regex of the old file.** So an ES cred file gets `sops edit` only when its
+  old file is encrypted with SOPS and the old and the new file encrypt the same keys. Otherwise it gets a plain
+  SOPS encrypt with the new regex, or is written plain. Before, `minimize_cred_diffs` ran `sops edit` on every
+  changed cred file, so a new literal key in an ES cred file could land in git unencrypted. For example, a value
+  that changed from a `ref+` reference to a plain value.
+- **The editor script of `sops edit` compares YAML objects, not bytes.** The new content comes from Python, not
+  from a SOPS decrypt, so its bytes differ from the old file even with the same data. The script writes only
+  when the objects differ. Otherwise SOPS exits with 200 and keeps the file.
 - **The literal keys of an old ES cred file are read from its encrypted bytes.** SOPS encrypts values only.
   Keys stay plain, and a literal value is `ENC[...]`.
 - **With `crypt: false` the cred store reads and writes plain files.** Nothing to decrypt or encrypt.
