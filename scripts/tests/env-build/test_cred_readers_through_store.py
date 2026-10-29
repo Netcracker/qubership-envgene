@@ -116,7 +116,7 @@ def test_rotation_read_env_cred_files(project):
     paths = [str(encrypted(project / "environments" / f"cred{i}.yml")) for i in range(9)]
     before = {p: Path(p).read_bytes() for p in paths}
     with open_cred_store():
-        result = read_env_cred_files(paths, True)
+        result = read_env_cred_files(paths)
     assert set(result) == set(paths)
     assert all(v["first_cred"]["data"]["secret"] == "token-placeholder-123" for v in result.values())
     for p in paths:

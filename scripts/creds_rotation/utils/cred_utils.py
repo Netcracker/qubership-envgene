@@ -5,11 +5,9 @@ import re
 from typing import Any, Dict, List, Tuple, Optional, Set
 from creds_rotation.models import CredMap
 from creds_rotation.utils.yaml_utils import get_nested_target_key
-from envgene_shared.utils.file_utils import openJson
 from pathlib import Path
 from envgene_shared.crypto import crypt
 from envgene_shared.crypto.cred_store import current_cred_store
-from envgene_shared.utils.yaml_utils import openYaml
 from envgenehelper import dump_as_yaml_format, extract_external_cred
 from envgene_shared.utils.logger import logger
 from creds_rotation.utils.error_constants import *
@@ -50,7 +48,7 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any]) -> Tuple[O
         return match.group(0), match.group(1), match.group(2)
     return None
 
-def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: str,  is_encrypted: str):
+def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: str):
     shared_creds_files_set = set()
     dirs_to_scan = [f'{work_dir}/environments', f'{work_dir}/environments/credentials', f'{work_dir}/environments/Credentials']
     allowed_exts = ('.yml', '.yaml', '.json')
@@ -58,7 +56,7 @@ def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: s
     scan_dir_for_creds(source_path, shared_creds, shared_creds_files_set)
     files = [entry.path for d in dirs_to_scan if os.path.exists(d) for entry in os.scandir(d) if entry.is_file() and entry.name.endswith(allowed_exts) and os.path.splitext(entry.name)[0] in shared_creds]
     shared_creds_files_set.update(files)
-    shared_content_map = read_env_cred_files(shared_creds_files_set, is_encrypted)
+    shared_content_map = read_env_cred_files(shared_creds_files_set)
     return shared_content_map
 
 
@@ -73,24 +71,15 @@ def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: Li
                 shared_creds_files_set.add(entry.path)
 
 
-def read_env_cred_files(creds_files, is_encrypted):
+def read_env_cred_files(creds_files):
     result = {}
     for filepath in creds_files:
-        result[filepath] = decrypt_and_get_content(is_encrypted, filepath)
+        result[filepath] = get_cred_file_content(filepath)
     return result
 
-def decrypt_and_get_content(is_encrypted, filepath):
-    if is_encrypted:
-        try:
-            return current_cred_store().get(filepath)
-        except Exception as e:
-            raise ValidationError(ErrorMessages.FILE_DECRYPT_ERROR.format(file=filepath, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
+def get_cred_file_content(filepath):
     try:
-        if filepath.endswith(".json"):
-            content = openJson(filepath)
-        else:
-            content = openYaml(filepath)
-        return content
+        return current_cred_store().get(filepath)
     except Exception as e:
         raise ValidationError(ErrorMessages.FILE_READ_ERROR.format(file=filepath, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
 

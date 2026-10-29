@@ -128,10 +128,10 @@ def run_cred_rotation():
     )
     shared_creds = collect_shared_credentials(env_files_map)
     shared_content_map = read_shared_cred_files(
-        shared_creds, cluster_path, config.work_dir, is_encrypted
+        shared_creds, cluster_path, config.work_dir
     )
     env_cred_map = read_env_cred_files(
-        env_creds_files, is_encrypted
+        env_creds_files
     )
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
 
