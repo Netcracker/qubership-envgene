@@ -12,9 +12,6 @@ variables:
     options:
       - "true"
       - "false"
-  ENV_TEMPLATE_VERSION:
-    value: "qubership_envgene_templates:0.0.1"
-    description: "template version"
   DEPLOYMENT_TICKET_ID:
     value: "TICKET-0001"
     description: "Jira ticket"
