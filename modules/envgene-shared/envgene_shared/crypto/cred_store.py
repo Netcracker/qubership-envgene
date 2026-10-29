@@ -44,7 +44,7 @@ class CredStore:
 
     @staticmethod
     def _key(path):
-        return str(Path(path).resolve())
+        return Path(path).resolve()
 
     def _lazy_decrypt(self, key):
         obj = decrypt_bytes(self._original[key], key)
@@ -57,8 +57,8 @@ class CredStore:
         with self._lock:
             if key in self._decrypted:
                 return self._decrypted[key]
-            if key not in self._original and os.path.isfile(key):
-                self._original[key] = Path(key).read_bytes()
+            if key not in self._original and key.is_file():
+                self._original[key] = key.read_bytes()
         if allow_default and key not in self._original:
             return get_empty_yaml()
         return self._lazy_decrypt(key)
@@ -66,7 +66,7 @@ class CredStore:
     def exists(self, path) -> bool:
         key = self._key(path)
         with self._lock:
-            return key in self._decrypted or os.path.isfile(key)
+            return key in self._decrypted or key.is_file()
 
     def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
@@ -95,7 +95,6 @@ class CredStore:
         return old_data
 
     def _write(self, key, obj):
-        path = Path(key)
         is_es = is_effective_set_cred_file(key)
         if not is_es:
             obj = sortYaml(obj, get_schema_dir() / "credential.schema.json", False, validate=False)
@@ -106,8 +105,8 @@ class CredStore:
         header_text = self._headers.get(key)
         if header_text and not data.startswith(b"#"):
             data = ("# " + header_text.replace("\n", "\n# ") + "\n").encode("utf-8") + data
-        os.makedirs(path.parent, exist_ok=True)
-        path.write_bytes(data)
+        os.makedirs(key.parent, exist_ok=True)
+        key.write_bytes(data)
 
     def write_changed(self) -> None:
         with self._lock:
