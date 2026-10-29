@@ -354,6 +354,10 @@ to the count. Credential files, the exact `passport-infra` role, and other clust
 
 ## What is checked
 
+Checks target authored configuration. Generated instance objects, effective sets, and known pipeline
+outputs are excluded. Generated Credential catalogs remain available as reference context.
+See the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md) for the exact paths and source-directory exceptions.
+
 Except for INT-4, TPL-1, TPL-4, and TPL-6, checks apply only to entities with supported evidence of use:
 
 - YAML and JSON ParameterSets referenced through local deploy, end-to-end, or technical bindings,
@@ -362,7 +366,8 @@ Except for INT-4, TPL-1, TPL-4, and TPL-6, checks apply only to entities with su
 - Resource profiles, shared credentials and Shared Template Variables selected through supported bindings.
 - Known fixed-path inventory-generation credentials and used passport credential companions, for the applicable rules.
 - Artifact Definitions selected through supported artifact selectors.
-- Security sources used by SEC-5 and applicable INT-2 references: generated environment Credentials; selected passport and deployer companions; bound system integration, root-credentials, active legacy registry and selected artifact-registry Credential references.
+- Security sources used by SEC-5 and applicable INT-2 references include selected passport and deployer
+   companions, system integration, root Credentials, and active registry Credential references.
 
 Except for INT-4, TPL-1, TPL-4, and TPL-6, unreferenced names do not produce findings.
 TPL-1 independently checks YAML under `templates/`, `environments/`, and `configuration/`.

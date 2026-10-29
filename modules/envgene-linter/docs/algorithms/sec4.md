@@ -6,12 +6,13 @@ SEC-4 compares Credential IDs in references belonging to a named user/password p
 
 ## Input parameters
 
-| Input | Purpose |
-| --- | --- |
-| `index` | Repository boundary and discovered environments |
-| `connections` | Connected-entity graph; computed when omitted |
-| Security bags | Connected ParameterSet, application, Cloud/Namespace and selected system/deployer mappings |
+| Input         | Purpose                                                                   |
+|---------------|---------------------------------------------------------------------------|
+| `index`       | Repository boundary and discovered environments                           |
+| `connections` | Connected-entity graph; computed when omitted                             |
+| Security bags | Authored ParameterSet, application, and selected system/deployer mappings |
 
+Consumer selection follows the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md).
 Credential catalogs are not inspected by SEC-4. The shared security-source collector still determines the connected consumer scope.
 
 ## Processing flow
@@ -42,17 +43,17 @@ Pairs such as `USER` / `TOKEN`, `CLIENT_ID` / `CLIENT_SECRET`, `accessKey` / `ac
 
 Supported naming examples:
 
-| User parameter | Password parameter |
-| --- | --- |
-| `DEFAULT_TENANT_ADMIN_LOGIN` | `DEFAULT_TENANT_ADMIN_PASSWORD` |
-| `STORAGE_USERNAME` | `STORAGE_PASSWORD` |
-| `CSE_GRAYLOG_USER` | `CSE_GRAYLOG_PASSWORD` |
-| `OPENSEARCH_CLIENT_USER_NAME` | `OPENSEARCH_CLIENT_PASSWORD` |
-| `DUMPS_MONGO_USER` | `DUMPS_MONGO_PASSWD` |
-| `DB_USER` | `DB_PASS` |
-| `db_user` | `db_pwd` |
-| `kafkaAuthUsername` | `kafkaAuthPassword` |
-| `sasl.username` | `sasl.password` |
+| User parameter                | Password parameter              |
+|-------------------------------|---------------------------------|
+| `DEFAULT_TENANT_ADMIN_LOGIN`  | `DEFAULT_TENANT_ADMIN_PASSWORD` |
+| `STORAGE_USERNAME`            | `STORAGE_PASSWORD`              |
+| `CSE_GRAYLOG_USER`            | `CSE_GRAYLOG_PASSWORD`          |
+| `OPENSEARCH_CLIENT_USER_NAME` | `OPENSEARCH_CLIENT_PASSWORD`    |
+| `DUMPS_MONGO_USER`            | `DUMPS_MONGO_PASSWD`            |
+| `DB_USER`                     | `DB_PASS`                       |
+| `db_user`                     | `db_pwd`                        |
+| `kafkaAuthUsername`           | `kafkaAuthPassword`             |
+| `sasl.username`               | `sasl.password`                 |
 
 ```yaml
 parameters:

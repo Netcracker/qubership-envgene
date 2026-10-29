@@ -79,7 +79,6 @@ def test_one_finding_per_source_line_and_shared_file(repo):
     'environments/c/cloud-passport/passport.yml',
     'environments/c/cloud-passport/passport-creds.yml',
     'environments/c/cloud-passport/credentials/passport.yml',
-    'environments/c/e/Credentials/credentials.yml',
     'environments/c/e/Inventory/credentials/inventory_generation_creds.yml',
     'environments/shared-credentials/shared.yml',
 ])
@@ -108,9 +107,9 @@ def test_unused_and_shadowed_yaml_is_checked_but_readme_is_excluded(repo):
     for relative in (
         'environments/parameters/unused.yml', 'environments/shared-credentials/unused.yml',
         'environments/c/cloud-passport/unused.yml', 'templates/parameters.yml',
-        'environments/c/e/cloud.yml',
     ):
         expected.add(write(repo.root / relative, 'VALUE: "{{ unused }}"\n'))
+    write(repo.root / 'environments/c/e/cloud.yml', 'VALUE: "{{ generated }}"\n')
     write(repo.root / 'README.md', '{{ ignored }}')
     assert {item.path for item in findings(repo)} == expected
 

@@ -84,19 +84,18 @@ def test_unused_and_shadowed_technical_files(repo):
     assert findings(repo) == []
 
 
-def test_cloud_namespace_only_runtime_sections_and_connected_objects(repo):
+def test_generated_runtime_sections_are_excluded(repo):
     repo.env('c', 'e', deploy={'app': ['used'], 'missing': ['absent']})
     repo.site_paramset('used', {'VALUE': 'safe'})
     env = repo.root / 'environments/c/e'
     document = {s: {'VALUE': REFERENCE} for s in ('deployParameters', 'e2eParameters', 'technicalConfigurationParameters')}
-    cloud = write(env / 'cloud.yml', document)
-    namespace = write(env / 'Namespaces/app/namespace.yml', document)
+    write(env / 'cloud.yml', document)
+    write(env / 'Namespaces/app/namespace.yml', document)
     write(env / 'Namespaces/unused/namespace.yml', document)
     write(env / 'Namespaces/missing/namespace.yml', document)
     write(repo.root / 'environments/c/orphan/cloud.yml', document)
     result = findings(repo)
-    assert {f.path for f in result} == {cloud, namespace}
-    assert all(f.key == 'technicalConfigurationParameters.VALUE' for f in result)
+    assert result == []
 
 
 def test_direct_call_and_cli_html(repo):
@@ -128,14 +127,14 @@ def test_technical_reference_does_not_select_unrelated_deploy_file(repo):
     assert findings(repo) == []
 
 
-def test_profile_binding_selects_namespace(repo):
+def test_profile_binding_does_not_enable_generated_runtime_checks(repo):
     repo.env('c', 'e')
     env = repo.root / 'environments/c/e'
     with (env / 'Inventory/env_definition.yml').open('a') as stream:
         stream.write('  envSpecificResourceProfiles:\n    app: profile\n')
     write(repo.root / 'environments/resource_profiles/profile.yml', {'name': 'profile'})
-    path = write(env / 'Namespaces/app/namespace.yml', {'technicalConfigurationParameters': {'VALUE': REFERENCE}})
-    assert [f.path for f in findings(repo)] == [path]
+    write(env / 'Namespaces/app/namespace.yml', {'technicalConfigurationParameters': {'VALUE': REFERENCE}})
+    assert findings(repo) == []
 
 
 def test_external_cloud_not_read(repo, tmp_path):

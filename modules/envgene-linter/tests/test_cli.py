@@ -489,9 +489,11 @@ def test_html_write_failure_exits_2(repo, args):
     assert "report saved here:" not in result.stderr
 
 
-def test_sec5_reviews_generated_plaintext_without_disclosing_it(repo):
+def test_sec5_reviews_authored_plaintext_without_disclosing_it(repo):
     repo.env('c', 'e')
-    path = repo.root / 'environments/c/e/Credentials/credentials.yml'
+    definition = repo.root / 'environments/c/e/Inventory/env_definition.yml'
+    definition.write_text(definition.read_text() + '  sharedMasterCredentialFiles: [shared]\n')
+    path = repo.root / 'environments/c/e/Inventory/credentials/shared.yml'
     path.parent.mkdir(parents=True)
     path.write_text('private-identifier:\n  type: secret\n  data:\n    secret: synthetic-private-secret\n')
     result = CliRunner().invoke(main, ['check', str(repo.root), '--console'])

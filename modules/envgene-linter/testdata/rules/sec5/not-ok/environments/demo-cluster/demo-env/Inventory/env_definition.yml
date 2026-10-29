@@ -5,3 +5,4 @@ envTemplate:
   envSpecificParamsets:
     cloud:
       - service-deploy
+  sharedMasterCredentialFiles: [shared]

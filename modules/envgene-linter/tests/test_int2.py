@@ -159,10 +159,10 @@ def test_resource_profile_missing_and_existing(repo):
     assert findings(repo) == []
 
 
-def test_rendered_object_template_paramset_is_unknown_when_unavailable(repo):
+def test_generated_object_paramset_references_are_excluded(repo):
     repo.env('c', 'e')
     write(repo.root / 'environments/c/e/cloud.yml', {'deployParameterSets': ['template-only']})
-    assert_kind(findings(repo), 'unknown')
+    assert findings(repo) == []
 
 
 def test_unused_paramset_and_credential_definitions_are_not_scanned(repo):
@@ -219,7 +219,7 @@ def test_bare_runtime_id_can_use_connected_shared_catalog(repo):
     assert findings(repo) == []
 
 
-def test_rendered_profiles_use_generated_profile_files(repo):
+def test_generated_profiles_do_not_create_authored_findings(repo):
     repo.env('c', 'e')
     write(repo.root / 'environments/c/e/cloud.yml', {'profile': {'name': 'selected', 'baseline': 'base'}})
     for name in ('selected', 'base'):
@@ -229,18 +229,18 @@ def test_rendered_profiles_use_generated_profile_files(repo):
 
 @pytest.mark.parametrize('field', ['baseline', 'override_name'])
 @pytest.mark.parametrize('reference', ['missing', '${UNAVAILABLE}'])
-def test_rendered_profile_checks_name_without_other_profile_fields(repo, field, reference):
+def test_generated_profile_fields_are_excluded(repo, field, reference):
     repo.env('c', 'e')
     write(repo.root / 'environments/c/e/cloud.yml', {'profile': {'name': 'selected', field: reference}})
     write(repo.root / 'environments/c/e/Profiles/selected.yml', {'name': 'selected'})
     assert findings(repo) == []
 
 
-def test_profile_name_remains_checked_when_baseline_is_ignored(repo):
+def test_generated_dynamic_profile_name_is_excluded(repo):
     repo.env('c', 'e')
     write(repo.root / 'environments/c/e/cloud.yml', {'profile': {'name': '${UNAVAILABLE}', 'baseline': 'unused'}})
     result = findings(repo)
-    assert len(result) == 1 and result[0].action.value == 'Review'
+    assert result == []
 
 
 def test_unreadable_higher_priority_profile_does_not_fall_back(repo):
@@ -321,8 +321,8 @@ def test_explicit_namespace_binding_is_connected_without_local_template(repo):
     })
     catalog(repo, {})
     result = findings(repo)
-    assert len(result) == 3
-    assert sum(f.issue_type.value == 'Warning' for f in result) == 2
+    assert len(result) == 1 and result[0].action.value == 'Review'
+    assert result[0].path.name == 'env_definition.yml'
 
 
 def test_unsafe_paramset_target_is_unknown(repo, tmp_path):

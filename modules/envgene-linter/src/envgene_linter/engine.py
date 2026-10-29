@@ -12,6 +12,7 @@ from .effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
 from .model import Finding, SkippedCheck
 from .passport import build_catalogs
 from .read_errors import ReadProblem, collect_read_errors
+from .source_scope import finding_in_scope
 from .rules.place1 import check as check_place1
 from .rules.place2 import check as check_place2
 from .rules.place3 import check as check_place3
@@ -64,7 +65,7 @@ def _run_check(root: Path, problems: list[ReadProblem]) -> CheckResult:
         findings = check(*args)
         for problem in problems[start:]:
             skip_read(index, rule, problem)
-        return findings
+        return [finding for finding in findings if finding_in_scope(index, finding)]
 
     template_rules = tuple(rule for rule in ('TPL-4', 'TPL-6') if rule not in disabled)
     sources = analyze(index, template_rules)

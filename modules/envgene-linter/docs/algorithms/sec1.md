@@ -8,24 +8,25 @@ A parameter's last named component is normalized from camelCase to snake_case an
 
 ## Input parameters
 
-| Input | Source | Purpose |
-| --- | --- | --- |
-| `index` | Repository discovery | Discovered environments and loaded files |
-| `connections` | Shared resolution; computed if omitted | Selected ParameterSets and resolved namespace targets |
-| ParameterSet `parameters`, `applications[].parameters` | Selected, readable, non-Jinja files | Inspect parameter values |
-| `deployParameters`, `e2eParameters`, `technicalConfigurationParameters` | Known used Cloud/Namespace files | Inspect the same parameter categories on generated objects |
+| Input                                                  | Source                                 | Purpose                                               |
+|--------------------------------------------------------|----------------------------------------|-------------------------------------------------------|
+| `index`                                                | Repository discovery                   | Discovered environments and loaded files              |
+| `connections`                                          | Shared resolution; computed if omitted | Selected ParameterSets and resolved namespace targets |
+| ParameterSet `parameters`, `applications[].parameters` | Selected, readable, non-Jinja files    | Inspect parameter values                              |
 
-Cloud input is the fixed `cloud.yml` of a discovered environment. Namespace input is `Namespaces/<target>/namespace.yml` only when a local ParameterSet or resource-profile binding actually resolves for that target. A missing reference does not establish namespace use. Namespace objects known only through unavailable template/runtime inputs are outside this implementation.
+SEC-1 follows the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md). Generated
+Cloud and Namespace objects are outside its parameter inputs.
 
 ## Processing flow
 
-1. Compute or reuse the shared connections. Read each selected physical ParameterSet once, retaining its selected source path. Skip unreadable and Jinja ParameterSets.
-2. Inspect the top-level and application parameter maps. Recursively visit nested maps and lists; guard against recursive YAML aliases.
-3. Inspect the fixed Cloud paths and the Namespace paths selected by resolved bindings. Exclude absent files, paths outside the repository and paths inside `.git`. Deduplicate physical object paths.
-4. Match each leaf's last named component against the secret-name heuristic. Ignore leaves whose names do not match.
-5. Skip null and empty strings. Skip structured `$type: credRef` nodes and strings containing `${`, `{{` or `{%`: expressions are not evaluated. This skip is not a guarantee that the expression resolves to a safe value.
-6. Report remaining literals, including numeric and boolean values, simple/default passwords and literal `ENC[...]` strings. SEC-1 checks direct parameter storage; it does not validate encryption or grant exceptions for strings that merely resemble placeholders.
-7. Return findings sorted by file path, key and line.
+1. Compute or reuse connections. Inspect each selected authored ParameterSet once, retaining its source path.
+   Skip unreadable, unsafe, and Jinja inputs.
+2. Walk root and application parameter maps, including nested maps and lists. Guard recursive aliases.
+3. Match each leaf's last named component against the secret-name heuristic.
+4. Skip nulls, empty strings, structured `$type: credRef` nodes, and strings containing `${`, `{{`, or `{%`.
+   Expressions are not evaluated, and skipping one does not prove that it resolves safely.
+5. Report remaining literals, including numbers, booleans, default passwords, and literal `ENC[...]` strings.
+6. Sort findings by file path, key, and line.
 
 ## Result
 
@@ -35,7 +36,8 @@ SEC-1 follows PLACE-10; SEC-3 follows SEC-1; SEC-4, SEC-5 and INT-2 follow SEC-3
 
 ## Error handling
 
-- Malformed or non-map Cloud/Namespace documents are skipped. Parser exception text is not emitted by SEC-1 because it may contain source values.
+- Unavailable authored ParameterSets follow the shared source-read diagnostic contract.
+   Parser exception text is omitted because it can contain source values.
 - Unused files, credentials documents and missing references produce no SEC-1 findings. The rule does not search arbitrary repository YAML.
 - A secret with an unrecognized parameter name can be missed; an ordinary value under a secret-like name can be reported. Review the finding in context.
 - The rule does not validate reference syntax, existence, or the final value of macros, and does not implement SEC-2 or SEC-3.

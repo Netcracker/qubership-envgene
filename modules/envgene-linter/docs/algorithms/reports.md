@@ -14,6 +14,9 @@ HTML groups ordinary findings by rule and shows the repository folder name in th
 JSON serializes each finding with its related locations, preserving the shared rule order.
 The [JSON field reference](/modules/envgene-linter/README.md#json-reports) defines the six fields.
 
+Generated files are outside finding and incomplete-check locations under the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md).
+Context-dependent reference uncertainty remains at the authored consumer.
+
 ## Skipped checks
 
 1. When a source reader cannot read or parse YAML, JSON, or Jinja, record a generic note and one structured record

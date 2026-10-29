@@ -11,20 +11,18 @@ The check is local and deliberately limited. It does not decrypt values, verify 
 
 ## Input parameters
 
-| Input | Purpose |
-| --- | --- |
-| `index` | Repository root, discovered environments, loaded records and safe-path boundary |
-| `connections` | Existing connected entities and per-environment bindings; computed when omitted |
-| Security sources | Whole Credential files selected specifically for SEC-5, with source kind and environment retained |
-| Security bags | Connected parameter or configuration mappings, their exact prefix, environment, allowed fields and reference catalog |
-| Security issues | Known consumers whose selected source cannot be resolved or inspected safely |
+| Input            | Purpose                                                                                                              |
+|------------------|----------------------------------------------------------------------------------------------------------------------|
+| `index`          | Repository root, discovered environments, loaded records and safe-path boundary                                      |
+| `connections`    | Existing connected entities and per-environment bindings; computed when omitted                                      |
+| Security sources | Whole Credential files selected specifically for SEC-5, with source kind and environment retained                    |
+| Security bags    | Connected parameter or configuration mappings, their exact prefix, environment, allowed fields and reference catalog |
+| Security issues  | Known consumers whose selected source cannot be resolved or inspected safely                                         |
 
-SEC-5 expands source selection without adding those files to the legacy `Connections` credential sets used by other rules.
-Whole-file inputs include selected shared Credentials, `Inventory/credentials/inventory_generation_creds.yml`,
-generated environment `Credentials/credentials.yml`, and the first selected Cloud Passport credentials companion.
-Entry-level consumers include a bound deployer and its selected companion, system integration/root-credentials
-references, active legacy registry consumers, selected Artifact Definition registry references, and ordinary connected
-ParameterSet and Cloud/Namespace parameter maps.
+Whole-file inputs include selected shared Credentials, Inventory generation credentials, and the first selected Cloud
+Passport credentials companion. Entry-level consumers include selected deployer, system integration, registry, and
+Artifact Definition fields, plus authored ParameterSet maps. Source selection follows the [authored configuration
+scope](/modules/envgene-linter/docs/algorithms/source-scope.md).
 
 Modern Artifact Definitions resolve registry references in the root `configuration/credentials/credentials.yml` catalog.
 V2 selects only the authentication configuration named by `registry.mavenConfig.authConfig`, unless its method is
@@ -32,27 +30,18 @@ literal `anonymous`. See [INT-4 reference evidence](/modules/envgene-linter/docs
 An unavailable catalog or Credential entry still produces no SEC-5 reference finding because no secret content
 can be inspected. INT-2 checks target existence separately.
 
+Generated `Credentials/credentials.yml` supplies reference context without receiving secret-protection findings.
+Generated Cloud and Namespace maps are outside consumer selection.
+Reference-shape checks can use generated targets. Protection findings use authored target locations.
+
 ## Processing flow
 
-1. Collect SEC-5 security records alongside the existing connection graph. Preserve physical path, source kind, environment, consumer prefix and the exact Credential catalog used to resolve a reference. Do not mutate or widen the legacy connection sets.
-2. Apply generator selection order. For passport credentials, try `credentials/<passport-stem>.yml` before `<passport-stem>-creds.yml`. For a deployer required by `inventory.deployer`, search cluster before environment, `app-deployer` before `cloud-deployer`, and `deployer` before `app-deployer`; use `configuration/deployer.yml` only when the selected definition lacks the requested entry. Resolve its references against the selected companion beside the definition's safe logical location. A first-priority unsafe or unreadable candidate blocks fallback.
-3. Traverse every local Credential entry's nonempty leaves under `data`. For parameter bags, use SEC-1's secret-name heuristic while recognizing complete Credential references regardless of parameter name. For system consumers, inspect only the documented fields selected by the source resolver. Guard recursive YAML aliases.
-4. Treat an exact `ENC[AES256_GCM,...]` token as protected only when the same document has usable SOPS metadata: a nonblank version, an encrypted MAC and at least one supported recipient with both identity and nonblank encrypted key data. Metadata does not exempt plaintext values elsewhere in the document. Fernet is unsupported; malformed SOPS-looking values and composite strings receive Review.
-5. Resolve a complete supported call only in its documented context: system/deployer fields use
-   `envgen.creds.get(...).field`, while runtime parameter maps use `${creds.get(...).field}`; the field must be
-   `username`, `password` or `secret`. A bare literal ID is accepted only in a documented Credential-reference field and
-   selects the whole target entry. An expression kind used in the wrong context receives Review even if its target is
-   encrypted. Inspect the referenced local value, deduplicate repeated physical findings, and stop reference cycles with
-   an unknown-source Review. A structured external reference is accepted only when its target matches the local
-   external-Credential schema: `type: external`, optional literal `secretStore` (defaulting to `default_store`), no
-   `data`, and no unsupported keys or property shape. Never access the external store. A recognized reference, including
-   `credentialsId`, is not itself secret material. If its catalog or Credential entry is unavailable, skip the reference
-   without a finding; when available, inspect the target content.
-6. Classify nonempty literal secret candidates as unprotected and unknown expressions, incompatible available targets, unsupported structures and unreadable selected inputs as source/protection unknown. Expressions stored inside Credential `data` are unknown rather than recursively evaluated because the generator returns stored data verbatim. A bare `${NAME}` does not prove CI/CD protection. An absent integration `self_token` uses EnvGene's automatic `GITHUB_TOKEN` or `GITLAB_TOKEN` fallback and is silent; an explicit `self_token` is inspected.
-7. Ignore null, empty, and exact `envgeneNullValue` data values. Emit Warning / Fix only for a literal `data.username`
-   in a `type: usernamePassword` Credential. Unknown expressions and Fernet remain Information / Review.
-   Deduplicate by physical value and reason, skip unavailable reference targets, and sort by path, line, column,
-   and message. Findings keep CLI exit code `0`.
+Resolve supported calls only in their documented context. System fields use `envgen.creds.get(...).field`, and runtime
+ParameterSets use `${creds.get(...).field}`. A bare ID selects an entry only in a documented reference field.
+Incompatible available shapes produce Review at the authored consumer. Inspect secret protection only at authored
+target locations, deduplicate findings, and stop reference cycles. Generated targets remain context. Validate external
+Credential shapes locally without accessing a secret store. Unavailable catalogs or entries provide no secret content
+to classify and produce no SEC-5 reference finding.
 
 ## Result
 

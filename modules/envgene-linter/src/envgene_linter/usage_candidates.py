@@ -6,6 +6,7 @@ from .connections import Connections
 from .discovery import NON_CLUSTER_DIRS, NON_ENV_DIRS
 from .model import RepoIndex
 from .paramset_sources import scan_directory
+from .source_scope import is_generated_output
 from .security_sources import collect_security_sources
 from .usage_model import Candidate
 from .yamlio import YamlReadError, load
@@ -81,12 +82,12 @@ def collect_candidates(index: RepoIndex, connections: Connections) -> list[Candi
         physical = safe_file(index, path)
         if physical:
             implicit.add(physical)
-    generated = {p for env in index.environments
-                 if (p := safe_file(index, env.path / 'Credentials/credentials.yml'))}
 
     def add(path, kind, environments):
+        if is_generated_output(index, path):
+            return
         physical = safe_file(index, path)
-        if physical is None or physical in implicit or physical in generated:
+        if physical is None or physical in implicit:
             return
         document = read_mapping(index, path)
         if document is None or (not document.doc and kind != 'Credential'):

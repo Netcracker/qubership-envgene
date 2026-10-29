@@ -4,8 +4,9 @@ from pathlib import Path
 
 from .connections import Connections
 from .model import Category, RepoIndex
-from .security_sources import collect_security_sources
+from .security_sources import collect_direct_credential_bags, collect_security_sources
 from .security_values import literal_name
+from .source_scope import is_generated_output
 from .usage_candidates import authored_scopes, child_directories, parameter_paths, read_mapping, safe_file
 from .usage_model import Candidate, Gap, Reference, Usage
 
@@ -128,6 +129,9 @@ class _Analysis:
             doc = self.read(path, env.full_name)
             if doc is None:
                 continue
+            if path.name == 'cloud.yml':
+                # These records are usage evidence only, never security or integrity finding targets.
+                collect_direct_credential_bags(path, doc, env.full_name, catalog, self.inputs)
             for section in ('deployParameters', 'e2eParameters', 'technicalConfigurationParameters'):
                 self.parameter_bag(path, env.full_name, doc.get(section), catalog)
             for field in _BARE:
@@ -194,6 +198,8 @@ class _Analysis:
             paths = parameter_paths(self.index, base / 'parameters')
             for environment in environments or (None,):
                 for path in paths:
+                    if is_generated_output(self.index, path):
+                        continue
                     if path.suffix == '.j2':
                         self.gap(path, environment, 'Credential', 'dynamic')
                         continue

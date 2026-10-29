@@ -11,6 +11,7 @@
 statement restrictions. The collector preserves existing Jinja source spans and selects additional YAML or Jinja
 under `templates/`, `environments/`, and `configuration/` when legacy markers occur.
 Root `description_template*.yml` and `description_template*.yaml` are excluded as separate GSF/CI inputs.
+Generated instance output is excluded by the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md).
 
 Full YAML templates and ordinary template Registry/Application Definitions use the EnvGene contract.
 All files with this confirmed full-renderer contract are analyzed, including expressions without Ansible names.

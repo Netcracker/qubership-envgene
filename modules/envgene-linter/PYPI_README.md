@@ -9,6 +9,9 @@
 EnvGene Linter checks EnvGene instance and template repositories and saves findings in HTML and JSON reports.
 Template-only repositories are checked by TPL-1, TPL-4, and TPL-6. Other implemented checks require instance inputs.
 
+Checks target authored configuration. Generated instance objects and pipeline outputs are excluded.
+Generated Credential catalogs can still resolve references from authored inputs.
+
 ## Install
 
 You need Python 3.12 or newer with pip.

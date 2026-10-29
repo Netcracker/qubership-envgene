@@ -9,8 +9,9 @@ from pathlib import Path
 from ruamel.yaml.nodes import MappingNode, ScalarNode, SequenceNode
 
 from .model import RepoIndex
-from .parameter_objects import safe_parameter_path
+from .parameter_objects import authored_parameter_path
 from .parsing import ParseFailure, compose_yaml
+from .source_scope import is_generated_output
 
 _ROOTS = ('environments', 'configuration', 'templates')
 
@@ -29,10 +30,11 @@ def configuration_paths(index: RepoIndex, rule: str) -> Iterator[Path]:
             parent = Path(parent)
             directories[:] = sorted(child for child in directories
                                     if child not in ('.git', '.venv', 'node_modules', '__pycache__')
-                                    and not (parent / child).is_symlink())
+                                    and not (parent / child).is_symlink()
+                                    and not is_generated_output(index, parent / child))
             for filename in sorted(files):
                 path = parent / filename
-                if path.suffix in ('.yml', '.yaml', '.j2') and safe_parameter_path(index, path):
+                if path.suffix in ('.yml', '.yaml', '.j2') and authored_parameter_path(index, path):
                     yield path
 
 

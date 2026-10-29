@@ -4,17 +4,15 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
 from ..connections import Connections, compute_connections
-from ..parameter_objects import parameter_object_paths, safe_parameter_path
+from ..parameter_objects import authored_parameter_path
 from ..model import Finding, Location, RepoIndex, Severity
 from ..rulemeta import RULES
-from ..yamlio import LoadedYaml, YamlReadError, dotted, load
+from ..yamlio import LoadedYaml, dotted
 
 _SECRET_SUFFIX = re.compile(r"(?:^|[_.-])(?:password|passwd|pass|secret|token|private_key|api_key)$")
-_PARAMETER_SECTIONS = ("deployParameters", "e2eParameters", "technicalConfigurationParameters")
 
 
 def _secret_name(name: str) -> bool:
@@ -79,26 +77,10 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
     connections = connections or compute_connections(index)
     findings: list[Finding] = []
     for file in connections.parameter_files.values():
-        if file.is_jinja or file.error or file.loaded is None or not safe_parameter_path(index, file.path):
+        if file.is_jinja or file.error or file.loaded is None or not authored_parameter_path(index, file.path):
             continue
         scope = "/".join(part for part in (file.cluster, file.env) if part) or "repository"
         findings.extend(_check_bag(file.loaded, ("parameters",), file.parameters, scope))
         for app_index, _app_name, params in file.applications:
             findings.extend(_check_bag(file.loaded, ("applications", app_index, "parameters"), params, scope))
-    seen: set[Path] = set()
-    for path, scope in parameter_object_paths(index, connections):
-        if not safe_parameter_path(index, path) or path.resolve() in seen:
-            continue
-        seen.add(path.resolve())
-        try:
-            document = load(path)
-        except YamlReadError:
-            # Parser exceptions can contain source values; never emit their text.
-            continue
-        if not isinstance(document.doc, dict):
-            continue
-        for section in _PARAMETER_SECTIONS:
-            bag = document.doc.get(section)
-            if isinstance(bag, dict):
-                findings.extend(_check_bag(document, (section,), bag, scope))
     return sorted(findings, key=lambda item: (item.path.as_posix(), item.key, item.line))

@@ -8,25 +8,25 @@ This implementation recognizes Credential references independently of the parame
 
 ## Input parameters
 
-| Input | Purpose |
-| --- | --- |
-| `index` | Discovered environments and loaded ParameterSets |
-| `connections` | Actual selected files and their usage categories; computed if omitted |
+| Input                                     | Purpose                                                                                             |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `index`                                   | Discovered environments and loaded ParameterSets                                                    |
+| `connections`                             | Actual selected files and their usage categories; computed if omitted                               |
 | `parameters`, `applications[].parameters` | Selected ParameterSets with at least one `Category.TECHNICAL` use (`envSpecificTechnicalParamsets`) |
-| `technicalConfigurationParameters` | Used `cloud.yml` and `Namespaces/<target>/namespace.yml` objects |
 
-Cloud/Namespace selection is shared with SEC-1: a Cloud belongs to a discovered environment; a Namespace must be targeted by a resolved local ParameterSet or resource-profile binding. Presence of an arbitrary Namespace file or a missing binding does not establish usage.
+SEC-3 follows the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md). Generated
+Cloud and Namespace parameter maps are outside its inputs.
 
 ## Processing flow
 
-1. Compute or reuse connections. Select physical ParameterSets having at least one actual technical-category use. A deploy/end-to-end use alone does not qualify; an unresolved technical reference does not qualify another file.
-2. Skip unreadable, Jinja, external and `.git` inputs. Inspect both root and application parameter maps of each eligible ParameterSet once, even if several environments use it.
-3. Resolve used Cloud/Namespace paths with the shared selection helper. Deduplicate physical object files and inspect only their `technicalConfigurationParameters` maps. Ignore `deployParameters` and `e2eParameters` on those objects.
-4. Walk nested maps and lists, protecting against recursive YAML aliases. Recognize:
-   - A string containing a direct `${creds.get(` call, allowing whitespace around the macro opening, dot, method and opening parenthesis. It may occur inside a larger string and use either quote style for the ID.
-   - A map with `$type: credRef`. Treat the reference map as one parameter value, not one finding per field.
-5. Emit one finding per matching parameter occurrence, even if its string contains several Credential calls. Do not resolve, read or validate the referenced Credential.
-6. Sort findings by path, parameter key and line. A source ParameterSet and its generated object can each have a finding at their own location.
+1. Select authored ParameterSets with at least one technical-category use through `envSpecificTechnicalParamsets`.
+   Deploy or end-to-end use alone does not qualify.
+2. Skip unreadable, Jinja, external, and `.git` inputs. Inspect each eligible physical file once.
+3. Walk root and application parameter maps, protecting against recursive aliases.
+   Recognize strings containing a direct `${creds.get(` call and maps with `$type: credRef`.
+4. Emit one finding per matching parameter occurrence, even when its string contains several Credential calls.
+   Reference contents and target existence are outside this rule.
+5. Sort findings by source path, parameter key, and line.
 
 ## Result
 
@@ -36,7 +36,8 @@ The reference text, Credential ID and secret value are omitted from SEC-3 findin
 
 ## Error handling
 
-- Unused files, missing inputs and malformed/non-map Cloud/Namespace documents are skipped. SEC-3 does not emit YAML parser exception text, which can include source data.
+- Unused files and generated objects produce no SEC-3 findings.
+   Unavailable authored ParameterSets follow the shared source-read diagnostic contract.
 - The detector recognizes direct Credential macro calls and explicit `credRef` nodes. It is not a Groovy/Jinja interpreter: indirect references, computed aliases and Credential access nested inside arbitrary other expressions are outside this implementation.
 - Recognizing a call or `$type: credRef` does not validate its syntax or prove that the referenced Credential exists. Their placement in runtime parameters is the condition being reported.
 - Plain text `creds.get(...)` outside a macro is not a reference. Other macros, ordinary literal values, empty values and unrelated structured values are not SEC-3 findings.
@@ -44,22 +45,21 @@ The reference text, Credential ID and secret value are omitted from SEC-3 findin
 
 ## Example
 
+A ParameterSet selected through `envSpecificTechnicalParamsets` contains:
+
 ```yaml
-# Reported regardless of the name SOME_VALUE.
-technicalConfigurationParameters:
+name: application-runtime
+parameters:
   SOME_VALUE: ${creds.get("example-cred").password}
   nested:
     - value:
         $type: credRef
         credId: example-external-cred
         property: password
-
-# No SEC-3 finding here.
-deployParameters:
-  SOME_VALUE: ${creds.get("example-cred").password}
 ```
 
-A ParameterSet containing the same reference under `parameters.SOME_VALUE` also produces SEC-3 if selected through `envSpecificTechnicalParamsets`. If selected only through deploy or end-to-end bindings, it does not. A file used in both technical and deploy categories still receives SEC-3, independently of PLACE-7.
+Both references produce SEC-3 findings. Selecting the file only through deploy or end-to-end bindings is silent.
+A file used in both technical and deploy categories still receives SEC-3, independently of PLACE-7.
 
 ## Related documentation
 

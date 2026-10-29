@@ -14,7 +14,8 @@ Mark other enabled rules Not applicable in console and HTML reports.
 For mixed roots, retain the existing instance checks too.
 
 Walk `templates/`, `environments/`, and `configuration/` recursively for `.yml`, `.yaml`, and `.j2` files.
-This rule does not use Connections or require bindings. Unused files are eligible.
+This rule does not use Connections or require bindings. Unused authored files are eligible.
+Apply the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md) and prune generated environment directories before reading them.
 Skip directory symlinks and `.git`, `.venv`, `node_modules`, and `__pycache__` subdirectories.
 Use the shared path safety check before reading file links. Other directories and root build metadata are outside scope.
 

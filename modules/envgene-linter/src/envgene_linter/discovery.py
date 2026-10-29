@@ -18,6 +18,7 @@ from .model import (
 from .yamlio import YamlReadError, load
 from .paramset_sources import scan_directory, staging_complete
 from .read_errors import collect_read_errors
+from .source_scope import SourceScope
 
 PARAMETERS_DIR = "parameters"
 INVENTORY_DIR = "Inventory"
@@ -158,13 +159,15 @@ def _load_place8_entities(
     directories: tuple[str, ...],
     kind: str,
     skipped: list[str],
-    reused: dict[Path, ParamsetFile],
+    reused: dict[Path, ParamsetFile], scope: SourceScope,
 ) -> list[NamedEntityFile]:
     files: list[NamedEntityFile] = []
     seen: dict[Path, NamedEntityFile] = {}
     for base in bases:
         for folder in directories:
             for path in _recursive_yaml_files(base / folder, root, skipped):
+                if scope.is_generated(path):
+                    continue
                 resolved = path.resolve()
                 if resolved in seen:
                     record = seen[resolved]
@@ -176,11 +179,13 @@ def _load_place8_entities(
     return files
 
 
-def _load_named_entities(root: Path, skipped: list[str]) -> list[NamedEntityFile]:
+def _load_named_entities(root: Path, skipped: list[str], scope: SourceScope) -> list[NamedEntityFile]:
     files: list[NamedEntityFile] = []
     seen: set[Path] = set()
     for relative, kind in NAMED_ENTITY_DIRS:
         for path in _yaml_files(root / relative, root):
+            if scope.is_generated(path):
+                continue
             resolved = path.resolve()
             if resolved in seen:
                 continue
@@ -221,7 +226,7 @@ def _load_paramset(
 def _parameter_files(
     directory: Path, root: Path, layer: Layer, cluster: str | None, env: str | None,
     skipped: list[str], incomplete: set[Path],
-    layouts: dict[Path, ParamsetLayout],
+    layouts: dict[Path, ParamsetLayout], scope: SourceScope,
 ) -> list[ParamsetFile]:
     scan = scan_directory(directory, root)
     if scan.layout is not None:
@@ -231,7 +236,10 @@ def _parameter_files(
         skipped.append(f'{directory}: cannot enumerate all ParameterSet sources; connected selection skipped')
     records = []
     for path in scan.paths:
-        if path in scan.unavailable:
+        if scope.is_generated(path):
+            # Preserve its staging slot without treating output as a source or restoring lower inputs.
+            record = ParamsetFile(path, layer, paramset_stem(path), cluster, env, unavailable=True)
+        elif path in scan.unavailable:
             note = f'{path}: unavailable ParameterSet source; content skipped'
             skipped.append(note)
             record = ParamsetFile(path, layer, paramset_stem(path), cluster, env, error=note, unavailable=True)
@@ -285,9 +293,11 @@ def _passport_files(directory: Path) -> list[Path]:
 
 
 def _load_passport(
-    path: Path, cluster: str | None, env: str | None, skipped: list[str]
+    path: Path, cluster: str | None, env: str | None, skipped: list[str], scope: SourceScope
 ) -> PassportFile:
     stem = paramset_stem(path)
+    if scope.is_generated(path):
+        return PassportFile(path, stem, cluster, env, error="generated output is context only")
     if _is_jinja(path):
         skipped.append(f"{path}: jinja Cloud Passport skipped")
         return PassportFile(path=path, stem=stem, cluster=cluster, env=env, is_jinja=True)
@@ -382,34 +392,42 @@ def _build_index(root: Path) -> RepoIndex:
     skipped: list[str] = []
     incomplete: set[Path] = set()
     layouts: dict[Path, ParamsetLayout] = {}
+    environment_directories = {
+        cluster: sorted(env for env in cluster.iterdir()
+                        if env.is_dir() and env.name not in NON_ENV_DIRS
+                        and (env / INVENTORY_DIR / ENV_DEFINITION_FILE).is_file())
+        for cluster in sorted(p for p in environments_dir.iterdir()
+                              if p.is_dir() and p.name not in NON_CLUSTER_DIRS)
+    }
+    scope = SourceScope(root, frozenset(env for paths in environment_directories.values() for env in paths))
     passports: list[PassportFile] = []
     for folder in PASSPORT_DIRS:
         passports.extend(
-            _load_passport(path, None, None, skipped) for path in _passport_files(environments_dir / folder)
+            _load_passport(path, None, None, skipped, scope) for path in _passport_files(environments_dir / folder)
         )
     site = _parameter_files(environments_dir / PARAMETERS_DIR, root, Layer.REPOSITORY,
-                            None, None, skipped, incomplete, layouts)
+                            None, None, skipped, incomplete, layouts, scope)
     clusters: dict[str, ClusterModel] = {}
-    for cluster_dir in sorted(p for p in environments_dir.iterdir() if p.is_dir()):
+    for cluster_dir in environment_directories:
         if cluster_dir.name in NON_CLUSTER_DIRS:
             continue
         cluster = ClusterModel(name=cluster_dir.name, path=cluster_dir)
         cluster.paramsets = _parameter_files(cluster_dir / PARAMETERS_DIR, root, Layer.CLUSTER,
-                                            cluster.name, None, skipped, incomplete, layouts)
+                                            cluster.name, None, skipped, incomplete, layouts, scope)
         for folder in PASSPORT_DIRS:
             passports.extend(
-                _load_passport(path, cluster.name, None, skipped)
+                _load_passport(path, cluster.name, None, skipped, scope)
                 for path in _passport_files(cluster_dir / folder)
             )
-        for env_dir in sorted(p for p in cluster_dir.iterdir() if p.is_dir()):
+        for env_dir in environment_directories[cluster_dir]:
             if env_dir.name in NON_ENV_DIRS:
                 continue
             definition = env_dir / INVENTORY_DIR / ENV_DEFINITION_FILE
             if not definition.is_file():
                 continue
             try:
-                loaded_definition = load(definition)
-                doc = loaded_definition.doc
+                loaded_definition = None if scope.is_generated(definition) else load(definition)
+                doc = loaded_definition.doc if loaded_definition is not None else {}
                 bindings = _bindings(doc)
                 cloud_passport = _cloud_passport_name(doc)
                 resource_profile_bindings = _resource_profile_bindings(doc)
@@ -436,15 +454,15 @@ def _build_index(root: Path) -> RepoIndex:
                 artifact_selectors=artifact_selectors,
             )
             env.paramsets = _parameter_files(env_dir / INVENTORY_DIR / PARAMETERS_DIR, root, Layer.ENVIRONMENT,
-                                            cluster.name, env.name, skipped, incomplete, layouts)
+                                            cluster.name, env.name, skipped, incomplete, layouts, scope)
             for folder in PASSPORT_DIRS:
                 passports.extend(
-                    _load_passport(path, cluster.name, env.name, skipped)
+                    _load_passport(path, cluster.name, env.name, skipped, scope)
                     for path in _passport_files(env_dir / INVENTORY_DIR / folder)
                 )
             cluster.environments.append(env)
         clusters[cluster.name] = cluster
-    named_entities = _load_named_entities(root, skipped)
+    named_entities = _load_named_entities(root, skipped, scope)
     all_paramsets = [*site]
     bases = [environments_dir]
     for cluster in clusters.values():
@@ -460,7 +478,7 @@ def _build_index(root: Path) -> RepoIndex:
         RESOURCE_PROFILE_DIRS,
         "Resource Profile Override",
         skipped,
-        reused,
+        reused, scope,
     )
     credential_files = _load_place8_entities(
         root,
@@ -468,7 +486,7 @@ def _build_index(root: Path) -> RepoIndex:
         CREDENTIAL_DIRS,
         "Credentials file",
         skipped,
-        reused,
+        reused, scope,
     )
     index = RepoIndex(
         root=root,
@@ -481,6 +499,7 @@ def _build_index(root: Path) -> RepoIndex:
         credential_files=credential_files,
         incomplete_paramset_dirs=incomplete,
         paramset_layouts=layouts,
+        source_scope=scope,
     )
     for env in index.environments:
         if not staging_complete(index, env):

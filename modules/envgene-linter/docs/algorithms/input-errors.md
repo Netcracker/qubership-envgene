@@ -57,6 +57,9 @@ TPL-6 records unavailable YAML compatibility context while retaining source-leve
 Its compatibility parser reports failures through a callback supplied by the rule.
 Rewrite findings established before a later parser failure remain available alongside the skip.
 
+Generated files are outside finding and incomplete-check locations under the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md).
+Context-dependent reference uncertainty remains at the authored consumer.
+
 ## Merge uncertainty
 
 PLACE-1 withholds promotion findings when selected ParameterSet, passport, or environment-definition content

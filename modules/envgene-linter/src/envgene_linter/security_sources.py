@@ -8,7 +8,7 @@ from typing import Any
 
 from .connections import Connections
 from .model import EnvModel, RepoIndex
-from .parameter_objects import parameter_object_paths
+from .source_scope import is_generated_output
 from .security_values import literal_name
 from .yamlio import YamlReadError, load
 
@@ -139,6 +139,9 @@ def _add_source(
         return None
     if isinstance(selected, Path):
         _remember_path(inputs, selected, candidate)
+    if isinstance(selected, Path) and kind == "generated":
+        # A context alias retains its logical role through reads, findings, and diagnostics.
+        selected = candidate.absolute()
     if selected is _UNSAFE or _read(selected) is _UNSAFE:
         _issue(inputs, issue_path or candidate.absolute())
         return None
@@ -172,6 +175,8 @@ def _parameter_set_bags(
     inputs: SecurityInputs,
 ) -> None:
     for candidate in sorted(connections.environment_parameter_sets.get(env.full_name, ())):
+        if is_generated_output(index, candidate):
+            continue
         selected = _safe_file(index, candidate)
         if selected is _UNSAFE or selected is None:
             _issue(inputs, candidate)
@@ -216,13 +221,14 @@ def _parameter_set_bags(
             _issue(inputs, selected)
 
 
-def _direct_reference_bags(
+def collect_direct_credential_bags(
     path: Path,
     doc: dict,
     environment: str,
     catalog: Path | None,
     inputs: SecurityInputs,
 ) -> None:
+    """Collect supported Cloud Credential ID fields for source or usage-only consumers."""
     if "defaultCredentialsId" in doc:
         _append_unique(
             inputs.bags,
@@ -255,43 +261,6 @@ def _direct_reference_bags(
                         ("credentialsId",),
                     ),
                 )
-
-
-def _parameter_object_bags(
-    index: RepoIndex,
-    connections: Connections,
-    catalogs: dict[str, Path | None],
-    inputs: SecurityInputs,
-) -> None:
-    for candidate, environment in parameter_object_paths(index, connections):
-        selected = _safe_file(index, candidate)
-        if selected is None:
-            continue
-        if selected is _UNSAFE:
-            _issue(inputs, candidate.absolute())
-            continue
-        _remember_path(inputs, selected, candidate)
-        doc = _read(selected)
-        if doc is _UNSAFE or not isinstance(doc, dict):
-            _issue(inputs, selected)
-            continue
-        catalog = catalogs.get(environment)
-        for section in _PARAMETER_SECTIONS:
-            value = doc.get(section)
-            if isinstance(value, dict):
-                _append_unique(
-                    inputs.bags,
-                    SecurityBag(selected, (section,), environment, catalog),
-                )
-            elif _nonempty(value):
-                _issue(inputs, selected)
-        if candidate.name == "cloud.yml":
-            _direct_reference_bags(selected, doc, environment, catalog, inputs)
-        elif "credentialsId" in doc:
-            _append_unique(
-                inputs.bags,
-                SecurityBag(selected, (), environment, catalog, ("credentialsId",)),
-            )
 
 
 def _passport_companion(
@@ -617,13 +586,10 @@ def collect_security_sources(index: RepoIndex, connections: Connections) -> Secu
         _remember_path(inputs, physical, logical)
     _collect_shared_sources(index, connections, inputs)
 
-    catalogs: dict[str, Path | None] = {}
     for env in index.environments:
         catalog = _generated_catalog(index, env, inputs)
-        catalogs[env.full_name] = catalog
         _parameter_set_bags(index, connections, env, catalog, inputs)
 
-    _parameter_object_bags(index, connections, catalogs, inputs)
     _passport_bags(index, connections, inputs)
     _artifact_definition_bags(index, connections, inputs)
     _integration_bags(index, inputs)

@@ -45,14 +45,13 @@ def test_env_not_kebab(repo):
     assert findings[0].message == "Environment directory 'Env_01' is not kebab-case."
 
 
-def test_namespace_not_kebab(repo):
+def test_generated_namespace_name_is_excluded(repo):
     repo.env("cluster-01", "env-01", deploy={"Foo": ["cloud-deploy"]})
     repo.env_paramset("cluster-01", "env-01", "cloud-deploy", {"LOG_LEVEL": "info"})
     path = repo.root / "environments/cluster-01/env-01/Namespaces/Foo"
     path.mkdir(parents=True)
     findings = [item for item in _name3(repo) if item.key == "Foo"]
-    assert len(findings) == 1
-    assert findings[0].message == "Namespace 'Foo' is not kebab-case."
+    assert findings == []
 
 
 def test_paramset_stem_not_kebab(repo):
@@ -234,7 +233,7 @@ def test_selected_and_fixed_credentials_are_checked_by_direct_and_engine(repo):
     }
 
 
-def test_namespace_with_resolved_profile_is_checked(repo):
+def test_generated_namespace_with_resolved_profile_is_excluded(repo):
     repo.env("c", "e")
     inventory = repo.root / "environments/c/e/Inventory"
     with (inventory / "env_definition.yml").open("a") as stream:
@@ -243,7 +242,7 @@ def test_namespace_with_resolved_profile_is_checked(repo):
     profiles.mkdir()
     (profiles / "profile.yml").write_text("{}\n")
     (repo.root / "environments/c/e/Namespaces/Used_Ns").mkdir(parents=True)
-    assert [item.key for item in _name3(repo) if item.scope == "Namespace"] == ["Used_Ns"]
+    assert [item.key for item in _name3(repo) if item.scope == "Namespace"] == []
 
 
 def test_namespace_target_must_be_exact_child_name(repo):

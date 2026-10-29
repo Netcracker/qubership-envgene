@@ -9,7 +9,7 @@ from typing import Any
 
 from ..connections import Connections, compute_connections
 from ..model import Finding, Location, RepoIndex, Severity
-from ..parameter_objects import safe_parameter_path
+from ..parameter_objects import authored_parameter_path
 from ..rulemeta import RULES
 from ..security_sources import SecurityBag, collect_security_sources
 from ..security_values import parse_reference
@@ -45,7 +45,7 @@ class _Checker:
         self.findings: dict[tuple, Finding] = {}
 
     def read(self, path: Path) -> LoadedYaml | None:
-        if not safe_parameter_path(self.index, path):
+        if not authored_parameter_path(self.index, path):
             return None
         physical = path.resolve()
         if physical not in self.documents:

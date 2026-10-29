@@ -10,18 +10,18 @@ from typing import Any
 from ..connections import CREDENTIAL_DIRS, PROFILE_DIRS, Connections, compute_connections
 from ..discovery import paramset_stem
 from ..model import Action, Category, Finding, IssueType, Location, RepoIndex, Severity
-from ..parameter_objects import parameter_object_paths, safe_parameter_path
+from ..parameter_objects import safe_parameter_path
 from ..paramset_sources import reference_complete, resolve_reference
 from ..passport import PASSPORT_FOLDERS
 from ..security_sources import SecurityBag, collect_security_sources
 from ..security_values import literal_name
+from ..source_scope import is_generated_output
 from ..yamlio import LoadedYaml, YamlReadError, load
 
 _CALL = r'''creds\s*\.\s*get\s*\(\s*(["'])([^"'{}\\\r\n]+)\1\s*\)(?:\s*\.\s*[A-Za-z_]\w*)?'''
 _RUNTIME = re.compile(r'\$\{\s*' + _CALL + r'\s*\}')
 _SYSTEM = re.compile(r'envgen\s*\.\s*' + _CALL)
 _INTENT = re.compile(r'(?:envgen\s*\.\s*)?creds\s*\.\s*get\s*\(')
-_PARAMSET_FIELDS = ('deployParameterSets', 'e2eParameterSets', 'technicalConfigurationParameterSets')
 _MESSAGES = {
     'missing': 'The connected reference has a missing target.',
     'ambiguous': 'The connected reference has an ambiguous target.',
@@ -57,17 +57,17 @@ class _Checker:
     def read(self, path: Path | None) -> LoadedYaml | None:
         if path is None or not safe_parameter_path(self.index, path) or path.name.endswith('.j2'):
             return None
-        physical = path.resolve()
-        if physical not in self.documents:
+        selected = path.absolute()
+        if selected not in self.documents:
             try:
                 document = load(path)
-                self.documents[physical] = document if isinstance(document.doc, dict) else None
+                self.documents[selected] = document if isinstance(document.doc, dict) else None
             except (YamlReadError, RecursionError):
-                self.documents[physical] = None
-        return self.documents[physical]
+                self.documents[selected] = None
+        return self.documents[selected]
 
     def emit(self, document: LoadedYaml, prefix: tuple, environment: str, kind: str, state: str | None):
-        if state is None:
+        if state is None or is_generated_output(self.index, document.path):
             return
         line, column = document.position(prefix)
         identity = (document.path.resolve(), line, column, environment, kind, state)
@@ -146,6 +146,8 @@ class _Checker:
             paths = self.named_paths(env, reference, PROFILE_DIRS)
         if not paths:
             return 'unknown' if template_possible else 'missing'
+        if any(is_generated_output(self.index, path) for path in paths):
+            return 'unknown'
         if kind != 'ParameterSet' and len(paths) > 1:
             return 'ambiguous'
         return None if all(self.read(path) is not None for path in paths) else 'unknown'
@@ -158,7 +160,8 @@ class _Checker:
             return 'missing'
         # Keep directory sentinels and .j2 targets unknown, even when they contain readable YAML.
         # The generator returns the first file, so duplicates cannot prove a broken reference.
-        if len(paths) != 1 or paths[0].suffix not in ('.yml', '.yaml'):
+        if (len(paths) != 1 or paths[0].suffix not in ('.yml', '.yaml')
+                or is_generated_output(self.index, paths[0])):
             return 'unknown'
         return None if self.read(paths[0]) is not None else 'unknown'
 
@@ -254,73 +257,9 @@ class _Checker:
                 self.emit(document, ('envTemplate', 'envSpecificResourceProfiles', target), env.full_name,
                           'Resource Profile', self.named(env, reference, 'Resource Profile'))
 
-    def generated_profile(self, env, reference: Any) -> str | None:
-        if not _literal(reference):
-            return 'unknown'
-        directory = env.path / 'Profiles'
-        try:
-            physical = directory.resolve().relative_to(self.index.root)
-            logical = directory.relative_to(self.index.root)
-            if '.git' in physical.parts or '.git' in logical.parts:
-                return 'unknown'
-        except (OSError, RuntimeError, ValueError):
-            return 'unknown'
-        paths = {}
-        files, uncertain = self.directory_files(directory)
-        if uncertain:
-            return 'unknown'
-        for path in files:
-            if paramset_stem(path) == reference:
-                if not safe_parameter_path(self.index, path):
-                    return 'unknown'
-                paths.setdefault(path.resolve(), path)
-        if len(paths) > 1:
-            return 'ambiguous'
-        if paths:
-            return None if self.read(next(iter(paths.values()))) else 'unknown'
-        return self.named(env, reference, 'Resource Profile', True)
-
-    def object_paths(self):
-        paths = set(parameter_object_paths(self.index, self.connections))
-        for env in self.index.environments:
-            targets = set(env.resource_profile_bindings)
-            for category in Category:
-                targets.update(env.bound_targets(category))
-            for target in targets:
-                if isinstance(target, str) and target.lower() != 'cloud' and target not in ('.', '..') and Path(target).name == target:
-                    paths.add((env.path / 'Namespaces' / target / 'namespace.yml', env.full_name))
-        return sorted(paths)
-
-    def objects(self):
-        for path, environment in self.object_paths():
-            document = self.read(path)
-            if document is None:
-                continue
-            env = self.envs[environment]
-            generated = env.path / 'Credentials/credentials.yml'
-            catalog = generated if generated.exists() or generated.is_symlink() else None
-            for section in ('deployParameters', 'e2eParameters', 'technicalConfigurationParameters'):
-                if section in document.doc:
-                    bag = SecurityBag(path, (section,), environment, catalog)
-                    self.walk(document, bag, document.doc[section], (section,))
-            if path.name == 'namespace.yml' and document.doc.get('credentialsId') not in (None, ''):
-                bag = SecurityBag(path, (), environment, catalog, ('credentialsId',))
-                identifier = document.doc['credentialsId']
-                self.emit(document, ('credentialsId',), environment, 'Credential', self.credential(bag, identifier))
-            for field in _PARAMSET_FIELDS:
-                references = document.doc.get(field)
-                if isinstance(references, list):
-                    for i, reference in enumerate(references):
-                        self.emit(document, (field, i), environment, 'ParameterSet', self.named(env, reference, 'ParameterSet', True))
-            profile = document.doc.get('profile')
-            if isinstance(profile, dict) and profile.get('name'):
-                state = self.generated_profile(env, profile['name'])
-                self.emit(document, ('profile', 'name'), environment, 'Resource Profile', state)
-
     def run(self):
         for env in self.index.environments:
             self.bindings(env)
-        self.objects()
         for bag in self.inputs.bags:
             document = self.read(bag.path)
             if document is None:

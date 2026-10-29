@@ -4,11 +4,15 @@
 - [Catalog](#catalog)
 - [Language versions](#language-versions)
 
-This directory contains 33 development specifications in English: 25 rule specifications and eight shared designs.
+This directory contains 34 development specifications in English: 25 rule specifications and nine shared designs.
 Each rule's `*-design.md` combines its requirements specification and implementation design.
 The catalog links each rule to a separate algorithm reference. Coverage includes rules disabled by default.
 
 ## Reading order
+
+The [authored configuration design](/modules/envgene-linter/docs/superpowers/specs/2026-10-28-source-scope-design.md)
+defines source eligibility for every default check, including rules with historical generated-object inputs.
+The [source-scope algorithm](/modules/envgene-linter/docs/algorithms/source-scope.md) lists exact paths.
 
 1. Start with the [common connected-only scope](2026-09-11-connected-only-design.md). It applies to connected instance checks, including NAME-3. INT-4 and template rules define their own scope.
 2. Read the relevant rule specification. A notice at the start of each historical document identifies replaced decisions. Its remaining text preserves that development stage.
@@ -54,6 +58,9 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [Ansible compatibility](/modules/envgene-linter/docs/superpowers/specs/2026-10-15-ansible-compatibility-design.md) | 2026-10-15 | [Algorithm](/modules/envgene-linter/docs/algorithms/ansible-compatibility.md) |
 | [Shared ParameterSet sources](/modules/envgene-linter/docs/superpowers/specs/2026-10-16-paramset-sources-design.md) | 2026-10-16 | [Selection and merging](/modules/envgene-linter/docs/algorithms/effective-set.md#3-staging) |
 | [Input error handling](/modules/envgene-linter/docs/superpowers/specs/2026-10-20-input-error-handling-design.md) | 2026-10-20 | [Algorithm](/modules/envgene-linter/docs/algorithms/input-errors.md) |
+
+Shared source eligibility: [design](/modules/envgene-linter/docs/superpowers/specs/2026-10-28-source-scope-design.md)
+and [algorithm](/modules/envgene-linter/docs/algorithms/source-scope.md).
 
 ## Language versions
 

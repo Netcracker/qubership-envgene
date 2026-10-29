@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from .model import RepoIndex, SkippedCheck
 from .read_errors import ReadProblem
+from .source_scope import is_generated_output
 
 if TYPE_CHECKING:
     from .connections import Connections
@@ -18,6 +19,8 @@ _PASSPORT_RULES = {'PLACE-1', 'PLACE-4', 'PLACE-9', 'NAME-2'}
 
 def skip_check(index: RepoIndex, rule: str, path: Path, reason: str,
                line: int = 1, column: int = 1) -> None:
+    if is_generated_output(index, path):
+        return
     check = SkippedCheck(rule, path, line, column, reason)
     if check not in index.skipped_checks:
         index.skipped_checks.append(check)

@@ -18,7 +18,7 @@ from ruamel.yaml.tokens import (
 
 from ..connections import Connections, compute_connections
 from ..model import Finding, RepoIndex, Severity
-from ..parameter_objects import safe_parameter_path
+from ..parameter_objects import authored_parameter_path
 from ..rulemeta import RULES
 from ..yamlio import dotted
 
@@ -124,7 +124,7 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
     meta = RULES['VAL-4']
     findings = []
     for physical, file in sorted(connections.parameter_files.items()):
-        if file.is_jinja or file.error or file.loaded is None or not safe_parameter_path(index, file.path):
+        if file.is_jinja or file.error or file.loaded is None or not authored_parameter_path(index, file.path):
             continue
         scope = ', '.join(sorted({use.environment for use in connections.parameter_uses.get(physical, ())}))
         bags = [(('parameters',), file.parameters)]

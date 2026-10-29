@@ -9,6 +9,7 @@ from ..connections import Connections, compute_connections
 from ..model import Action, Finding, IssueType, Location, RepoIndex, Severity
 from ..parameter_objects import safe_parameter_path
 from ..security_sources import collect_security_sources
+from ..source_scope import is_generated_output
 from ..security_values import classify, literal_name, parse_reference, valid_external
 from ..yamlio import LoadedYaml, YamlReadError, load
 from .sec1 import _secret_name
@@ -45,6 +46,8 @@ class _Scanner:
 
     def emit(self, path: Path, prefix: tuple, reason: str, document: LoadedYaml | None = None,
              action: Action = Action.REVIEW):
+        if is_generated_output(self.index, path):
+            return
         line, column = document.position(prefix) if document else (1, 1)
         identity = (path.resolve(), line, column, reason)
         self.findings.setdefault(identity, Finding(
@@ -60,16 +63,16 @@ class _Scanner:
     def read(self, path: Path | None) -> LoadedYaml | None:
         if path is None or not safe_parameter_path(self.index, path):
             return None
-        physical = path.resolve()
-        if physical not in self.documents:
+        selected = path.absolute()
+        if selected not in self.documents:
             try:
                 document = load(path) if path.suffix != '.j2' else None
-                self.documents[physical] = document if document is not None and (
+                self.documents[selected] = document if document is not None and (
                     document.doc is None or isinstance(document.doc, dict)
                 ) else None
             except (YamlReadError, RecursionError):
-                self.documents[physical] = None
-        return self.documents[physical]
+                self.documents[selected] = None
+        return self.documents[selected]
 
     def reference(self, reference: tuple, doc: LoadedYaml, prefix: tuple, catalog: Path | None):
         target = self.read(catalog)
@@ -176,9 +179,13 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
     inputs = collect_security_sources(index, connections)
     scanner = _Scanner(index)
     for issue in inputs.issues:
+        if is_generated_output(index, issue.path):
+            continue
         document = scanner.read(issue.path)
         scanner.emit(issue.path, issue.prefix, 'unknown', document)
     for source in inputs.sources:
+        if is_generated_output(index, source.path):
+            continue
         document = scanner.read(source.path)
         if document is None:
             scanner.emit(source.path, (), 'unknown')
@@ -187,6 +194,8 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
                 if identifier != 'sops':
                     scanner.entry(document, identifier, entry)
     for bag in inputs.bags:
+        if is_generated_output(index, bag.path):
+            continue
         document = scanner.read(bag.path)
         if document is None:
             scanner.emit(bag.path, (), 'unknown')

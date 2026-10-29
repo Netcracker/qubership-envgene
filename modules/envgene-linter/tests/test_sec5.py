@@ -24,12 +24,18 @@ def cred(value=SECRET, kind='secret'):
     return {'type': kind, 'data': {'secret': value}}
 
 
-def setup(repo, value=SECRET, metadata=False):
+def setup(repo, value=SECRET, metadata=False, *, generated=False):
     repo.env('c', 'e')
     doc = {ID: cred(value)}
     if metadata:
         doc['sops'] = META
-    return write(repo.root / 'environments/c/e/Credentials/credentials.yml', doc)
+    if generated:
+        return write(repo.root / 'environments/c/e/Credentials/credentials.yml', doc)
+    definition = repo.root / 'environments/c/e/Inventory/env_definition.yml'
+    inventory = YAML().load(definition)
+    inventory['envTemplate']['sharedMasterCredentialFiles'] = ['shared']
+    write(definition, inventory)
+    return write(repo.root / 'environments/c/e/Inventory/credentials/shared.yml', doc)
 
 
 def findings(repo):
@@ -42,7 +48,7 @@ def findings(repo):
     ('[encrypted:AES256_Fernet]synthetic', False, 'SOPS'),
     ('', False, None), (None, False, None),
 ])
-def test_generated_credential_classification(repo, value, metadata, reason):
+def test_authored_credential_classification(repo, value, metadata, reason):
     path = setup(repo, value, metadata)
     result = findings(repo)
     if reason is None:
@@ -64,17 +70,17 @@ def test_partial_sops_document_and_encrypted_type(repo):
     assert result[0].line == 5
 
 
-@pytest.mark.parametrize('source', ['generated', 'shared', 'system-reference'])
+@pytest.mark.parametrize('source', ['environment-shared', 'shared', 'system-reference'])
 def test_plaintext_credential_username_requires_fix(repo, source):
     repo.env('c', 'e')
-    if source == 'generated':
-        path = repo.root / 'environments/c/e/Credentials/credentials.yml'
-    elif source == 'shared':
+    if source in ('environment-shared', 'shared'):
         definition = repo.root / 'environments/c/e/Inventory/env_definition.yml'
         doc = YAML().load(definition)
         doc['envTemplate']['sharedMasterCredentialFiles'] = ['shared']
         write(definition, doc)
-        path = repo.root / 'environments/credentials/shared.yml'
+        relative = ('environments/c/e/Inventory/credentials/shared.yml'
+                    if source == 'environment-shared' else 'environments/credentials/shared.yml')
+        path = repo.root / relative
     else:
         write(repo.root / 'configuration/integration.yml',
               {'self_token': 'envgen.creds.get("' + ID + '").username'})
@@ -124,15 +130,20 @@ def test_unconnected_file_is_not_checked(repo):
 
 
 def params(repo, value, key='DB_PASSWORD'):
-    repo.env('c', 'e', deploy={'cloud': ['service']})
+    definition = repo.root / 'environments/c/e/Inventory/env_definition.yml'
+    if not definition.is_file():
+        repo.env('c', 'e')
+    inventory = YAML().load(definition)
+    inventory['envTemplate']['envSpecificParamsets'] = {'cloud': ['service']}
+    write(definition, inventory)
     return write(repo.root / 'environments/parameters/service.yml', {'name': 'service', 'parameters': {key: value}})
 
 
-def test_parameter_reference_uses_generated_catalog_and_deduplicates(repo):
-    path = setup(repo)
+def test_generated_catalog_is_context_only_for_secret_protection(repo):
+    setup(repo, generated=True)
     params(repo, '${creds.get("' + ID + '").secret}', key='VALUE')
     result = findings(repo)
-    assert len(result) == 1 and result[0].path == path
+    assert result == []
 
 
 def test_unresolved_reference_is_not_a_secret_protection_finding(repo):
@@ -194,7 +205,7 @@ def test_system_catalog_only_referenced_entries(repo):
 
 
 def test_reference_wrong_kind_and_missing_property_are_unknown(repo):
-    path = setup(repo)
+    path = setup(repo, generated=True)
     write(path, {ID: {'type': 'external', 'secretStore': 'store'}})
     params(repo, '${creds.get("' + ID + '").secret}')
     assert len(findings(repo)) == 1
@@ -204,16 +215,16 @@ def test_reference_wrong_kind_and_missing_property_are_unknown(repo):
 
 
 def test_reference_to_external_definition_is_accepted(repo):
-    path = setup(repo)
+    path = setup(repo, generated=True)
     write(path, {ID: {'type': 'external', 'secretStore': 'store'}})
     params(repo, {'$type': 'credRef', 'credId': ID})
     assert findings(repo) == []
 
 
-def test_bare_credential_id_accepts_external_without_local_data(repo):
-    path = setup(repo)
+def test_authored_external_reference_accepts_catalog_without_local_data(repo):
+    path = setup(repo, generated=True)
     write(path, {ID: {'type': 'external', 'secretStore': 'store'}})
-    write(repo.root / 'environments/c/e/cloud.yml', {'defaultCredentialsId': ID})
+    params(repo, {'$type': 'credRef', 'credId': ID})
     assert findings(repo) == []
 
 
@@ -284,11 +295,14 @@ def test_credential_data_is_not_evaluated_a_second_time(repo):
 
 
 def test_structured_reference_in_bare_id_field_is_unknown(repo):
-    path = setup(repo)
+    path = setup(repo, generated=True)
     write(path, {ID: {'type': 'external'}})
-    cloud = write(repo.root / 'environments/c/e/cloud.yml', {'defaultCredentialsId': {'$type': 'credRef', 'credId': ID}})
+    repo.env('c', 'e', artifact='template:1')
+    artifact = write(repo.root / 'configuration/artifact_definitions/template.yml', {
+        'name': 'template', 'registry': {'credentialsId': {'$type': 'credRef', 'credId': ID}},
+    })
     result = findings(repo)
-    assert len(result) == 1 and result[0].path == cloud and 'source' in result[0].message
+    assert len(result) == 1 and result[0].path == artifact and 'source' in result[0].message
 
 
 @pytest.mark.parametrize('catalog_state', ['absent', 'empty', 'other', 'protected', 'literal'])
@@ -299,7 +313,7 @@ def test_artifact_credential_id_checks_only_available_secret_content(repo, catal
         'registry': {'name': 'registry', 'credentialsId': ID,
                      'mavenConfig': {'repositoryDomainName': 'https://example.invalid'}},
     })
-    catalog = repo.root / 'environments/c/e/Credentials/credentials.yml'
+    catalog = repo.root / 'configuration/credentials/credentials.yml'
     if catalog_state == 'empty':
         write(catalog, {})
     elif catalog_state == 'other':

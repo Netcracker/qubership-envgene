@@ -85,16 +85,16 @@ def test_unbound_and_shadowed_files_are_ignored(repo):
     assert findings(repo) == []
 
 
-def test_cloud_and_connected_namespace_only(repo):
+def test_generated_cloud_and_connected_namespace_are_excluded(repo):
     repo.env('c', 'e', deploy={'app': ['service-deploy'], 'missing': ['absent']})
     repo.site_paramset('service-deploy', {'LOG_LEVEL': 'info'})
     env = repo.root / 'environments/c/e'
-    cloud = write(env / 'cloud.yml', {'deployParameters': {'DB_PASSWORD': SECRET}})
-    ns = write(env / 'Namespaces/app/namespace.yml', {'technicalConfigurationParameters': {'API_KEY': SECRET}})
+    write(env / 'cloud.yml', {'deployParameters': {'DB_PASSWORD': SECRET}})
+    write(env / 'Namespaces/app/namespace.yml', {'technicalConfigurationParameters': {'API_KEY': SECRET}})
     write(env / 'Namespaces/unused/namespace.yml', {'deployParameters': {'DB_PASSWORD': SECRET}})
     write(env / 'Namespaces/missing/namespace.yml', {'deployParameters': {'DB_PASSWORD': SECRET}})
     write(repo.root / 'environments/c/orphan/cloud.yml', {'deployParameters': {'DB_PASSWORD': SECRET}})
-    assert {f.path for f in findings(repo)} == {cloud, ns}
+    assert findings(repo) == []
 
 
 def test_credentials_are_not_parameter_bags(repo):
@@ -136,15 +136,15 @@ def test_list_of_literal_secrets(repo):
     assert [f.key for f in result] == ['parameters.password.0']
 
 
-def test_profile_binding_selects_namespace(repo):
+def test_profile_binding_does_not_enable_generated_namespace_checks(repo):
     repo.env('c', 'e')
     definition = repo.root / 'environments/c/e/Inventory/env_definition.yml'
     with definition.open('a') as stream:
         stream.write('  envSpecificResourceProfiles:\n    app: profile\n')
     write(repo.root / 'environments/resource_profiles/profile.yml', {'name': 'profile'})
-    path = write(repo.root / 'environments/c/e/Namespaces/app/namespace.yml',
+    write(repo.root / 'environments/c/e/Namespaces/app/namespace.yml',
                  {'e2eParameters': {'DB_PASSWORD': SECRET}})
-    assert [f.path for f in findings(repo)] == [path]
+    assert findings(repo) == []
 
 
 def test_git_target_cloud_is_not_checked(repo):

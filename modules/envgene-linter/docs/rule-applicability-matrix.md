@@ -23,7 +23,7 @@ which rules exist, where they run, and which inputs they check.
 Rule IDs refer to the [configuration standard](/docs/configuration-standard.md).
 Each implemented rule links to its detailed algorithm.
 
-The tables describe the source checkout assessed on October 16, 2026.
+The tables describe the source checkout assessed on October 28, 2026.
 Installed packages can have different coverage. Check the package version against the
 [changelog](/modules/envgene-linter/CHANGELOG.md).
 
@@ -55,6 +55,10 @@ Most instance rules inspect **connected sources**: files selected by supported r
 The [connection algorithm](/modules/envgene-linter/docs/algorithms/connections.md) defines selection and precedence.
 INT-4 also catalogs recognized unconnected candidates. TPL-1, TPL-4, and TPL-6 select sources without instance bindings.
 The [object reference](/docs/envgene-objects.md) defines the object types named in the tables.
+
+All checks follow the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md).
+Generated objects and pipeline outputs receive no findings or incomplete-check entries.
+Generated catalogs and rendered references can supply context for authored consumers.
 
 Connected ParameterSet selection includes `.yml`, `.yaml`, and `.json` files recursively under the supported
 repository, cluster, and Inventory `parameters/` directories. INT-2, content rules, and Effective Set merging
@@ -96,7 +100,7 @@ PLACE-1 does not simulate its proposed promotion or prove preservation for all c
 
 | Rule           | Default | Implemented check                                                                                    |
 |----------------|---------|------------------------------------------------------------------------------------------------------|
-| [SEC-1][sec-1] | On      | Find literal secret candidates by parameter name in selected ParameterSets and Cloud/Namespace bags. |
+| [SEC-1][sec-1] | On      | Find literal secret candidates by parameter name in selected authored ParameterSets.                 |
 | [SEC-3][sec-3] | On      | Find Credential references in selected runtime parameter bags.                                       |
 | [SEC-4][sec-4] | On      | Review different Credential IDs in recognized username/password parameter pairs.                     |
 | [SEC-5][sec-5] | On      | Inspect protection of selected secret material and supported Credential sources.                     |
@@ -121,7 +125,7 @@ while incomplete or uncertain passport lookups receive Review.
 |------------------|---------|------------------------------------------------------------------------------------------------|
 | [NAME-1][name-1] | Off     | Review equal string values under different keys in connected ParameterSets.                    |
 | [NAME-2][name-2] | On      | Compare filename stems with declared names in selected ParameterSets and Artifact Definitions. |
-| [NAME-3][name-3] | Off     | Review kebab-case naming of selected instance files, directories, and namespaces.              |
+| [NAME-3][name-3] | Off     | Review kebab-case naming of selected authored files and instance directories.                  |
 | [NAME-4][name-4] | Off     | Review the subject/category naming pattern of bound instance ParameterSets.                    |
 | [NAME-8][name-8] | On      | Check selected default passport and companion names in single-passport cluster contexts.       |
 
@@ -205,8 +209,8 @@ The following limits affect how you interpret a run:
    An unknown consumer cannot establish that a source is unused. INT-4 retains Review without deletion advice.
 - TPL-4 recognizes confirmed descriptor context guarantees. Full `.j2` sources have different generation stages.
    The remaining guaranteed-field contract needs clarification before extending exemptions.
-- Existing source parsing has failure cases that abort a run instead of producing incomplete-check diagnostics.
-   Coverage claims require a completed run and inspection of the available diagnostics.
+- Expected source-read and parser failures produce incomplete-check diagnostics for authored inputs.
+   Unexpected implementation exceptions still propagate. Review diagnostics when assessing coverage.
 - Inline `[EXCEPTION RULE-ID]` comments from the standard do not suppress findings.
    The CLI has no shared exception-handling mechanism.
 

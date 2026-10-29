@@ -1,5 +1,6 @@
 # EnvGene Linter changelog
 
+- [Unreleased](#unreleased)
 - [0.0.7](#007)
 - [0.0.6](#006)
 - [0.0.5](#005)
@@ -7,6 +8,11 @@
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
+
+## Unreleased
+
+- Exclude generated instance objects and pipeline outputs from configuration findings and incomplete-check entries.
+   Retain generated Credential catalogs and Cloud Credential references as context for authored inputs.
 
 ## 0.0.7
 

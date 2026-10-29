@@ -179,7 +179,9 @@ def test_cli_json_write_failure_exits_two_without_success_notice(repo, args):
 
 def test_cli_json_keeps_sec5_redaction(repo):
     repo.env("cluster-a", "env-a")
-    path = repo.root / "environments/cluster-a/env-a/Credentials/credentials.yml"
+    definition = repo.root / 'environments/cluster-a/env-a/Inventory/env_definition.yml'
+    definition.write_text(definition.read_text() + '  sharedMasterCredentialFiles: [shared]\n')
+    path = repo.root / "environments/cluster-a/env-a/Inventory/credentials/shared.yml"
     path.parent.mkdir(parents=True)
     path.write_text("private-identifier:\n  type: secret\n  data:\n    secret: synthetic-private-secret\n")
     result = CliRunner().invoke(main, ["check", str(repo.root)])

@@ -9,7 +9,7 @@ from ruamel.yaml.nodes import MappingNode, ScalarNode, SequenceNode
 from .ansible_compat import CompatibilitySource
 from .jinja_analysis import TemplateSource, skip_check
 from .model import RepoIndex
-from .parameter_objects import safe_parameter_path
+from .parameter_objects import authored_parameter_path
 from .parsing import ParseFailure, compose_yaml
 from .template_sources import configuration_paths, descriptor_scalars
 
@@ -117,7 +117,7 @@ def compatibility_sources(index: RepoIndex, sources: list[TemplateSource]) -> li
             result.append(CompatibilitySource(path, text, rendering, offset, descriptor))
 
     for source in sources:
-        if not safe_parameter_path(index, source.path):
+        if not authored_parameter_path(index, source.path):
             continue
         if source.descriptor:
             text = read(source.path)

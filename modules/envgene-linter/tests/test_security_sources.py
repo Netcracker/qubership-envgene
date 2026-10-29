@@ -322,9 +322,9 @@ def test_selected_modern_artifact_registry_uses_root_catalog(repo):
     ) in inputs.bags
 
 
-def test_cloud_and_namespace_parameter_bags_use_generated_catalog(repo):
+def test_only_authored_parameter_bags_use_generated_catalog(repo):
     repo.env("c", "e", deploy={"app": ["params"]})
-    repo.site_paramset("params", {})
+    repo.site_paramset("params", {"VALUE": "safe"})
     generated = write(repo.root / "environments/c/e/Credentials/credentials.yml", {})
     cloud = write(
         repo.root / "environments/c/e/cloud.yml",
@@ -337,15 +337,9 @@ def test_cloud_and_namespace_parameter_bags_use_generated_catalog(repo):
 
     inputs, _ = collect(repo)
 
-    assert SecurityBag(
-        cloud.resolve(), ("deployParameters",), "c/e", generated.resolve()
-    ) in inputs.bags
-    assert SecurityBag(
-        namespace.resolve(),
-        ("technicalConfigurationParameters",),
-        "c/e",
-        generated.resolve(),
-    ) in inputs.bags
+    assert all(bag.path not in {cloud.resolve(), namespace.resolve()} for bag in inputs.bags)
+    parameter_set = repo.root / "environments/parameters/params.yml"
+    assert SecurityBag(parameter_set.resolve(), ("parameters",), "c/e", generated.resolve()) in inputs.bags
 
 
 def test_nonempty_unsupported_parameter_sections_record_file_issues(repo):
@@ -362,7 +356,7 @@ def test_nonempty_unsupported_parameter_sections_record_file_issues(repo):
     inputs, _ = collect(repo)
 
     assert SecurityIssue(parameter_set.resolve()) in inputs.issues
-    assert SecurityIssue(cloud.resolve()) in inputs.issues
+    assert SecurityIssue(cloud.resolve()) not in inputs.issues
 
 
 def test_nonempty_unsupported_application_entries_record_file_issue(repo):

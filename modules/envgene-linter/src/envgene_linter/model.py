@@ -9,6 +9,7 @@ from typing import Any
 
 from .yamlio import LoadedYaml
 from .read_errors import ReadProblem
+from .source_scope import SourceScope
 
 
 class Layer(Enum):
@@ -171,6 +172,7 @@ class RepoIndex:
     incomplete_paramset_dirs: set[Path] = field(default_factory=set)
     paramset_layouts: dict[Path, ParamsetLayout] = field(default_factory=dict)
     read_problems: list[ReadProblem] = field(default_factory=list)
+    source_scope: SourceScope | None = None
 
     @property
     def environments(self) -> list[EnvModel]:
