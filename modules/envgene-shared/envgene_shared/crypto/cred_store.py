@@ -67,6 +67,13 @@ class CredStore:
         with self._lock:
             return key in self._decrypted or key.is_file()
 
+    def list(self, dir_path) -> list[Path]:
+        root = self._key(dir_path)
+        with self._lock:
+            keys = set(self._decrypted) | set(self._snapshot)
+            return sorted(key for key in keys if key.is_relative_to(root) and key.suffix in (".yml", ".yaml")
+                          and (key in self._decrypted or key.is_file()))
+
     def put(self, path, obj: dict, header_text: str = "") -> None:
         with self._lock:
             self._decrypted[self._key(path)] = obj

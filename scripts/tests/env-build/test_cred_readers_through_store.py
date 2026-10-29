@@ -12,6 +12,7 @@ from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.file_utils import writeToFile
 from envgenehelper import getEnvCredentials, open_current_env_instance_store, readYaml, validate_creds
+from envgenehelper.errors import ValidationError
 from envgenehelper.deployer import get_value_and_attributes_from_cred
 
 SOPS_DATA = crypt_test_data[0]
@@ -64,6 +65,16 @@ def test_validate_creds(project):
     with open_cred_store():
         validate_creds(str(path.parent))
     assert_untouched(path, before)
+
+
+def test_validate_creds_checks_creds_only_in_cred_store(project):
+    env_dir = project / "environments" / "cluster" / "env"
+    path = env_dir / "Credentials" / "credentials.yml"
+    with open_cred_store() as store:
+        store.put(path, readYaml("cred:\n  type: secret\n  data:\n    secret: envgeneNullValue\n"))
+        with pytest.raises(ValidationError):
+            validate_creds(str(path.parent))
+        store.put(path, readYaml("cred:\n  type: secret\n  data:\n    secret: value\n"))
 
 
 def test_deployer_cred(project):

@@ -8,7 +8,7 @@ from envgene_shared.utils.business_utils import getenv_with_error
 from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 from envgene_shared.utils.logger import logger
 from envgene_shared.crypto.cred_store import current_cred_store
-from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCredentialsPath
+from envgenehelper import get_env_instances_dir, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
 from .collections_helper import dict_merge
 from .current_env_instance_store import current_env_instance_store
@@ -269,9 +269,8 @@ def validate_creds(creds_path: str = ""):
         creds_path = Path(getEnvCredentialsPath(env_dir)).parent
 
     credsErrors = []
-    credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
-    for credListPath in credsYamls:
+    for credListPath in current_cred_store().list(creds_path):
         credListYaml = current_cred_store().get(credListPath)
         for key, value in credListYaml.items() :
             errorCheck = check_cred_value(key, value)
