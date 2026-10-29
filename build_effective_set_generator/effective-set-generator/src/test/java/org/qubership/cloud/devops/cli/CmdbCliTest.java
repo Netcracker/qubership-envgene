@@ -180,6 +180,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -208,6 +210,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
