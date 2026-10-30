@@ -61,7 +61,18 @@ def given_deployed_effective_set(workspace: EnvGeneWorkspace):
         folder = namespace.removeprefix(f"{workspace.env_name}-")
         definition = env_dir / "Namespaces" / folder / "namespace.yml"
         definition.parent.mkdir(parents=True, exist_ok=True)
-        definition.write_text(yaml.safe_dump({"name": namespace, "deployPostfix": folder}), encoding="utf-8")
+        definition.write_text(yaml.safe_dump({
+            "name": namespace,
+            "isServerSideMerge": False,
+            "cleanInstallApprovalRequired": False,
+            "mergeDeployParametersAndE2EParameters": False,
+            "deployParameters": {},
+            "deployParameterSets": [],
+            "e2eParameters": {},
+            "e2eParameterSets": [],
+            "technicalConfigurationParameters": {},
+            "technicalConfigurationParameterSets": [],
+        }), encoding="utf-8")
         workspace.namespace_definitions_before[definition] = definition.read_bytes()
     es = _effective_set_dir(workspace)
     for context in ("deployment", "runtime"):
