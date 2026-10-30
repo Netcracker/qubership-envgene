@@ -21,3 +21,4 @@ junit*
 *.egg-info
 *.pytest_cache
 .venv
+.shared/

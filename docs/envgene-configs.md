@@ -403,6 +403,15 @@ sbom_retention:
   # exceeds 50 MB)
   keep_versions_per_app: integer
 # Optional
+# Resource profile cache configuration
+# See [Resource profile cache](/docs/features/resource-profile-cache.md)
+cache:
+  # Optional. Default value - `true`
+  # Set to `false` when `/.shared/` is not listed in the instance pipeline `cache:` paths,
+  # otherwise the cache files end up in the repository
+  # The string values `"true"`, `"True"`, `"TRUE"`, `"false"`, `"False"`, and `"FALSE"` are also accepted
+  enabled: boolean
+# Optional
 # Troubleshooting artifact configuration
 # See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)
 save_artifacts:

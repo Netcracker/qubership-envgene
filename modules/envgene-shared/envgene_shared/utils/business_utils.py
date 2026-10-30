@@ -15,6 +15,15 @@ def getenv_with_error(var_name, *, no_log=False):
     return var
 
 
+def to_bool(value, default: bool = False) -> bool:
+    normalized = str(value).strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    return default
+
+
 def get_schema_dir() -> Path:
     return Path(getenv("JSON_SCHEMAS_DIR", "/schemas"))
 
@@ -30,7 +39,7 @@ def get_project_root() -> Path:
 def get_envgene_config_yaml():
     envgene_config_path = get_project_root()/"configuration"/"config.yml"
     try:
-        config = openYaml(envgene_config_path)
+        config = openYaml(envgene_config_path, safe_load=True)
     except FileNotFoundError:
         logger.warning(f'Failed to find config file in {envgene_config_path}')
         return get_empty_yaml()

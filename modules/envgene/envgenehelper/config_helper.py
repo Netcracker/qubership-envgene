@@ -32,7 +32,7 @@ def get_regdef_schema_for_content(content: dict) -> dict:
 
 def validate_regdef_or_fail(yaml_file_path: str):
     """Validate a registry definition YAML file (V1 or V2) by path"""
-    content = openYaml(yaml_file_path)
+    content = openYaml(yaml_file_path, safe_load=True)
     schema = get_regdef_schema_for_content(content)
     validate_yaml_by_scheme_or_fail(yaml_file_path=yaml_file_path, input_schema_content=schema)
 

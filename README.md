@@ -182,6 +182,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**Resource Profile Cache**](/docs/features/resource-profile-cache.md) - Reuse parsed Resource Profiles between instance pipeline runs
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 - [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting

@@ -1,12 +1,17 @@
+import hashlib
+import importlib
 import json
 
 import pytest
 
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
 from envgenehelper.current_env_instance_store import (
-    CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
+    CurrentEnvInstanceStore, current_env_instance_store,
+    open_current_env_instance_store, profile_cache_dir,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
+
+STORE_MODULE = importlib.import_module("envgenehelper.current_env_instance_store")
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -231,3 +236,111 @@ def test_normalize_comments(source, expected):
     normalize_comments(data)
 
     assert dumpYamlToStr(data) == expected
+
+
+def _profile_path(tmp_path, content):
+    profile = tmp_path / "resource_profiles" / "dev_bss_override.yml"
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    profile.write_bytes(content)
+    return profile
+
+
+@pytest.fixture
+def shared_root(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    root.mkdir()
+    monkeypatch.setenv("CI_PROJECT_DIR", str(root))
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {})
+    return root
+
+
+@pytest.mark.parametrize("value, enabled", [
+    (True, True), ("true", True), ("True", True), ("TRUE", True),
+    (False, False), ("false", False), ("False", False), ("FALSE", False),
+])
+def test_profile_cache_flag_values(shared_root, monkeypatch, value, enabled):
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {"cache": {"enabled": value}})
+
+    assert (profile_cache_dir() is not None) == enabled
+
+
+@pytest.mark.parametrize("value", [False, "false", "FALSE"])
+def test_profile_cache_disabled_by_config(tmp_path, env_dir, shared_root, monkeypatch, value):
+    monkeypatch.setattr(STORE_MODULE, "get_envgene_config_yaml", lambda: {"cache": {"enabled": value}})
+    profile = _profile_path(tmp_path, b"name: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+
+    assert store.load_profile_from_cache(profile)["name"] == "dev"
+    assert profile_cache_dir() is None
+    assert not (shared_root / ".shared").exists()
+
+
+def test_profile_cache_miss_parses_and_hit_reads_pickle(tmp_path, env_dir, shared_root):
+    profile = _profile_path(tmp_path, b"name: dev_bss_override\nbaseline: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    first = store.load_profile_from_cache(profile)
+
+    assert profile_cache_dir() == shared_root / ".shared" / "profile-cache"
+    cache_file = profile_cache_dir() / (hashlib.sha256(b"name: dev_bss_override\nbaseline: dev\n").hexdigest() + ".pkl")
+    assert first["name"] == "dev_bss_override"
+    assert cache_file.is_file()
+    assert not (env_dir / ".envgene").exists()
+
+    cached_bytes = cache_file.read_bytes()
+    repeated_store = CurrentEnvInstanceStore(env_dir)
+    second = repeated_store.load_profile_from_cache(profile)
+
+    assert second == first
+    assert cache_file.read_bytes() == cached_bytes
+
+
+def test_profile_cache_disabled_without_ci_project_dir(tmp_path, env_dir, monkeypatch):
+    monkeypatch.delenv("CI_PROJECT_DIR", raising=False)
+    profile = _profile_path(tmp_path, b"name: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+
+    assert store.load_profile_from_cache(profile)["name"] == "dev"
+    assert profile_cache_dir() is None
+    assert not (env_dir / ".envgene").exists()
+
+
+def test_profile_cache_content_change_misses(tmp_path, env_dir, shared_root):
+    profile = _profile_path(tmp_path, b"name: dev\nbaseline: old\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    assert store.load_profile_from_cache(profile)["baseline"] == "old"
+    profile.write_bytes(b"name: dev\nbaseline: new\n")
+
+    changed = store.load_profile_from_cache(profile)
+
+    assert changed["baseline"] == "new"
+    cache_files = list(profile_cache_dir().glob("*.pkl"))
+    assert len(cache_files) == 2
+
+
+def test_profile_cache_corrupt_pickle_falls_back_to_parse(tmp_path, env_dir, shared_root):
+    profile = _profile_path(tmp_path, b"name: dev\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    store.load_profile_from_cache(profile)
+    cache_file = profile_cache_dir() / (hashlib.sha256(b"name: dev\n").hexdigest() + ".pkl")
+    cache_file.write_bytes(b"not a pickle")
+
+    assert store.load_profile_from_cache(profile)["name"] == "dev"
+
+
+def test_flush_never_prunes_shared_profile_cache(tmp_path, env_dir, shared_root):
+    old_key = hashlib.sha256(b"name: dev\nbaseline: old\n").hexdigest() + ".pkl"
+    new_key = hashlib.sha256(b"name: dev\nbaseline: new\n").hexdigest() + ".pkl"
+    profile = _profile_path(tmp_path, b"name: dev\nbaseline: old\n")
+    store = CurrentEnvInstanceStore(env_dir)
+    store.load_profile_from_cache(profile)
+    profile.write_bytes(b"name: dev\nbaseline: new\n")
+    store.load_profile_from_cache(profile)
+
+    store.flush()
+    assert sorted(f.name for f in profile_cache_dir().glob("*.pkl")) == sorted([old_key, new_key])
+
+    next_run = CurrentEnvInstanceStore(env_dir)
+    next_run.load_profile_from_cache(profile)
+    next_run.flush()
+
+    assert sorted(f.name for f in profile_cache_dir().glob("*.pkl")) == sorted([old_key, new_key])
