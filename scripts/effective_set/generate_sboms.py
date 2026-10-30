@@ -1,8 +1,9 @@
 from os import path, makedirs
 from pathlib import Path
 
-from effective_set.dd_downloading import download_dd_and_zip_artifacts
+from effective_set.dd_downloading import download_dd_and_zip_artifacts, resolve_artifacts
 from envgenehelper import getenv_with_error, openYaml, get_sboms_dir, logger
+from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.json_helper import writeJsonToFile
 from envgenehelper.yaml_helper import writeYamlToFile
 from sbom_generator.generate_bom import Generator, SBOMOutput, exclude_resolved_apps
@@ -19,6 +20,23 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
         logger.info('No deploy plan found, skipping SBOM generation')
         return
 
+    snapshot_apps = [app for app in deploy_plan.entities if app.version.endswith('-SNAPSHOT')]
+    if snapshot_apps:
+        resolved_dd_artifacts, _ = resolve_artifacts([app.version for app in snapshot_apps], ctx=ctx)
+        resolved_versions = {}
+        for app, artifact in zip(snapshot_apps, resolved_dd_artifacts):
+            app_name = app.version.split(':', 1)[0]
+            resolved_versions[app.version] = f'{app_name}:{artifact.source.resolved_version}'
+
+        for plan in (ctx.deploy_plan, ctx.deploy_plan_delta):
+            for app in plan.entities:
+                if app.version in resolved_versions:
+                    app.version = resolved_versions[app.version]
+
+        ctx.deploy_plan.write()
+        if ctx.deploy_plan_delta.entities:
+            ctx.deploy_plan_delta.write(EnvgeneDeployPlan.delta_path())
+
     apps_needing_sbom = exclude_resolved_apps(deploy_plan, app_sboms_path)
     unresolved_app_versions = [app.version for app in apps_needing_sbom]
     # DPG needs DDs of the whole deploy plan, zips are needed only to generate missing SBOMs
@@ -32,9 +50,10 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
         logger.info('All applications already have SBOMs, skipping SBOM generation')
         return
 
-    deploy_plan.entities = apps_needing_sbom
     sbom_and_regs: SBOMOutput = Generator.generate_bom_by_content(
-        sd_content=deploy_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path)
+        sd_content=EnvgeneDeployPlan(entities=apps_needing_sbom),
+        dd_artifacts=dd_artifacts,
+        sbom_dir_path=app_sboms_path)
 
     for id, sbom in sbom_and_regs.sboms.items():
         app_name = id.split(":")[0]

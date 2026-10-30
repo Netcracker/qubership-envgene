@@ -1,4 +1,30 @@
 {
+  "metadata": {
+    "component": "__APP_NAME__",
+    "descriptorFormat": "1.21",
+    "builderVersion": "dd-plugin/1.0.0"
+  },
+  "include": [],
+  "infrastructures": [],
+  "services": [
+    {
+      "service_name": "__APP_NAME__-service",
+      "image_type": "image",
+      "image_name": "__APP_NAME__",
+      "docker_repository_name": "",
+      "docker_registry": "",
+      "docker_tag": "__VERSION__"
+    }
+  ],
+  "configurations": [],
+  "frontends": [],
+  "smartplug": [],
+  "jobs": [],
+  "libraries": [],
+  "complexes": [],
+  "charts": [],
+  "additionalArtifacts": {},
+  "descriptors": [],
   "applications": [{"version": "__APP_NAME__:__VERSION__", "deployPostfix": "__DEPLOY_POSTFIX__"}],
   "deployGraph": [{"chunkName": "wave1", "apps": ["__APP_NAME__:__DEPLOY_POSTFIX__"]}]
 }

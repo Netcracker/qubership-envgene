@@ -58,3 +58,28 @@ Feature: Deploy sub-flows - deploy.md
     And the pipeline step "process_deployment_plan" has status "SKIPPED"
     And the pipeline step "warmup" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SKIPPED"
+
+  Scenario: No-CMDB v2 - deploys an application from a snapshot DD
+    Given the workspace is initialized with test data from "e2e/uc_deploy"
+    And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
+    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0.0-SNAPSHOT"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "process_deployment_plan" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the deploy plan contains an entry for namespace "test-env-core" with version "app1:1.0.0-20261027.123456-1"
+    And the delta deploy plan contains an entry for namespace "test-env-core" with version "app1:1.0.0-20261027.123456-1"
+    And the SBOM directory "app1" contains the file "app1-1.0.0-20261027.123456-1.sbom.json"
+
+  Scenario: No-CMDB v1 - processes an application from a snapshot DD
+    Given the workspace is initialized with test data from "e2e/uc_deploy_legacy_sd"
+    And the pipeline parameter "ENV_BUILDER" is set to "true"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0.0-SNAPSHOT"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "process_sd" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the deploy plan contains an entry for namespace "test-env-core" with version "app1:1.0.0-20261027.123456-1"
+    And the SBOM directory "app1" contains the file "app1-1.0.0-20261027.123456-1.sbom.json"
