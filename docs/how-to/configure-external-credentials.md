@@ -15,7 +15,7 @@
     - [Step 7: Describe the Secret Store](#step-7-describe-the-secret-store)
     - [Step 8: Set the Secret Store authentication variables](#step-8-set-the-secret-store-authentication-variables)
     - [Step 9: Write the Cloud Passport credentials](#step-9-write-the-cloud-passport-credentials)
-    - [Step 10: Create the environment with its Shared Credentials](#step-10-create-the-environment-with-its-shared-credentials)
+    - [Step 10: Write the Shared Credentials](#step-10-write-the-shared-credentials)
     - [Step 11: Put the values in the store and generate the Effective Set](#step-11-put-the-values-in-the-store-and-generate-the-effective-set)
     - [Step 12: Verify the result](#step-12-verify-the-result)
   - [Related documentation](#related-documentation)
@@ -45,13 +45,12 @@ and
 
 - The environment uses a No-CMDB [deployment architecture](/docs/deployment-architecture.md). CMDB import is not
   supported for External Credentials.
+- The environment exists, see [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md).
 - The Secret Store is installed and reachable from the Instance pipeline. EnvGene does not install or operate it.
 - You know the identifier of the Secret Store in the Instance repository. With one store, it is `default_store`.
 - You can set CI/CD variables of the Instance repository.
 
 ## Part 1: Template repository
-
-Skip this part if the template owner has already prepared the template for External Credentials.
 
 ### Step 1: List the credentials of the template
 
@@ -60,9 +59,6 @@ each `credId`, note what the secret holds:
 
 - a username and a password, when the parameters read both
 - one value, such as a token or a key
-
-Credentials of the cluster, such as the deploy token and DBaaS, belong to the Cloud Passport. Leave them out: you
-add them in Step 9.
 
 ### Step 2: Choose the fields of each credential
 
@@ -213,120 +209,62 @@ Never commit these values to Git.
 
 For the rest of the passport, see [Create a cluster](/docs/how-to/create-cluster.md).
 
-### Step 10: Create the environment with its Shared Credentials
+### Step 10: Write the Shared Credentials
 
-Shared Credentials hold the credentials the environment needs beyond the Credential Template and the Cloud Passport,
-such as the credentials of an integration. Write them with the fields from Step 2, and create the environment in the
-same run. For the content of `env_definition.yml`, see
-[Create an Environment Inventory](/docs/how-to/create-environment-inventory.md). Do it in one of two ways:
+Write your credentials to the Shared Credentials file of the environment in this format:
 
-- **Through the Instance pipeline:** put `env_definition.yml` in the `envDefinition` block of
-  `ENV_INVENTORY_CONTENT`, the Shared Credentials in the `credentials` block, and the file name in
-  `envTemplate.sharedMasterCredentialFiles`. Pass the content in Step 11:
+```yaml
+# environments/cluster-01/env-01/Inventory/credentials/env-01-creds.yml
+integration-cred:
+  type: external
+  secretStore: default_store
+  remoteRefPath: cluster-01/env-01
+  properties:
+    - name: username
+    - name: password
+```
 
-    ```json
-    {
-      "envDefinition": {
-        "action": "create_or_replace",
-        "content": {
-          "inventory": {},
-          "envTemplate": {
-            "name": "<template-name>",
-            "artifact": "project-env-template:2.0.0",
-            "sharedMasterCredentialFiles": ["env-01-creds"]
-          }
-        }
-      },
-      "credentials": [
-        {
-          "action": "create_or_replace",
-          "place": "env",
-          "name": "env-01-creds",
-          "content": {
-            "integration-cred": {
-              "type": "external",
-              "secretStore": "default_store",
-              "remoteRefPath": "cluster-01/env-01",
-              "properties": [{ "name": "username" }, { "name": "password" }]
-            }
-          }
-        }
-      ]
-    }
-    ```
+List the file in `env_definition.yml`, without `.yml`, and set the template version from Step 6:
 
-- **By hand:** commit `env_definition.yml` and the Shared Credentials file, and list the file name, without `.yml`,
-  in `envTemplate.sharedMasterCredentialFiles`:
-
-    ```yaml
-    # environments/cluster-01/env-01/Inventory/env_definition.yml
-    inventory: {}
-    envTemplate:
-      name: "<template-name>"
-      artifact: "project-env-template:2.0.0"
-      sharedMasterCredentialFiles:
-        - env-01-creds
-    ```
-
-    ```yaml
-    # environments/cluster-01/env-01/Inventory/credentials/env-01-creds.yml
-    integration-cred:
-      type: external
-      secretStore: default_store
-      remoteRefPath: cluster-01/env-01
-      properties:
-        - name: username
-        - name: password
-    ```
-
-The Shared Credentials file can live at the environment, cluster, or repository level, see
-[Choose the level of each file](/docs/how-to/create-environment-inventory.md#choose-the-level-of-each-file).
+```yaml
+# environments/cluster-01/env-01/Inventory/env_definition.yml
+envTemplate:
+  artifact: "project-env-template:2.0.0"
+  sharedMasterCredentialFiles:
+    - env-01-creds
+```
 
 ### Step 11: Put the values in the store and generate the Effective Set
 
-Every credential without `create: true`, from the Credential Template, the Cloud Passport, and the Shared
-Credentials, must exist in the store. If all values are already there, run only item 3.
-
-1. Run the Instance pipeline with `EXTERNAL_CREDENTIAL_PROVISIONING: skip`. The run generates the Effective Set
-   without touching the store:
+1. Run the Instance pipeline:
 
     ```yaml
     ENV_NAMES: cluster-01/env-01
-    ENV_INVENTORY_CONTENT: <JSON from Step 10>    # only if you create the environment through the pipeline
     ENV_BUILDER: true
     GENERATE_EFFECTIVE_SET: true
     EXTERNAL_CREDENTIAL_PROVISIONING: skip
     ```
 
-2. Open `environments/cluster-01/env-01/effective-set/external-credential/external-credentials.yaml`. For each
-   credential with `strategy: fail_if_absent`, create the secret in the store at the path in its `vals` field:
+2. In `environments/cluster-01/env-01/effective-set/external-credential/external-credentials.yaml`, find the
+   credentials with `strategy: fail_if_absent`. Create each of them in the store at the path from its `vals` field:
 
     ```yaml
     credentials:
       integration-cred:
         vals: "ref+vault://secret/cluster-01/env-01/integration-cred"
-        strategy: fail_if_absent      # create it yourself
+        strategy: fail_if_absent      # create it in the store
       app-db-cred:
         vals: "ref+vault://secret/cluster-01/env-01/app-db-cred"
         strategy: create_if_absent    # EnvGene creates it
     ```
 
-    For Vault and OpenBao, `ref+vault://secret/cluster-01/env-01/integration-cred` means the secret
-    `cluster-01/env-01/integration-cred` under the mount `secret`. Inside the secret, use the keys from
-    `properties`, such as `username` and `password`. For one value in Vault or OpenBao, use the key `value`.
+    Inside the secret, use the keys from `properties`, such as `username` and `password`. For one value in Vault or
+    OpenBao, use the key `value`.
 
-    Take each path from `vals` instead of building it yourself. A secret at a slightly different path is reported as
-    missing.
+    Take the path only from `vals`. A secret at a slightly different path is reported as missing.
 
-3. Run the pipeline without `EXTERNAL_CREDENTIAL_PROVISIONING`:
-
-    ```yaml
-    ENV_NAMES: cluster-01/env-01
-    ENV_BUILDER: true
-    GENERATE_EFFECTIVE_SET: true
-    ```
-
-    EnvGene checks that every secret exists and creates the ones with `create: true`.
+3. Run the pipeline again without `EXTERNAL_CREDENTIAL_PROVISIONING`. EnvGene creates the secrets with
+   `create: true`.
 
 ### Step 12: Verify the result
 
