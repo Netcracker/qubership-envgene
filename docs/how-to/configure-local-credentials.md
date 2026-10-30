@@ -2,7 +2,7 @@
 
 - [Configure Local Credentials](#configure-local-credentials)
   - [Overview](#overview)
-  - [When to use this guide](#when-to-use-this-guide)
+  - [When to use local credentials](#when-to-use-local-credentials)
   - [Prerequisites](#prerequisites)
   - [Where credentials come from](#where-credentials-come-from)
   - [Steps](#steps)
@@ -15,15 +15,15 @@
 
 ## Overview
 
-Use this guide to set the credentials of an environment when they are stored in the Instance repository. At the
-end, every credential of the environment has a real value.
+Set the credentials of an environment that keeps them in the Instance repository. At the end, every credential of
+the environment has a real value.
 
 To keep the values encrypted in Git, enable credential encryption, see
 [Credential Encryption](/docs/how-to/credential-encryption.md).
 
-## When to use this guide
+## When to use local credentials
 
-Use this guide when the site has no Secret Store. If it has one, use
+Keep credentials in the Instance repository when the site has no Secret Store. If it has one, use
 [Configure External Credentials](/docs/how-to/configure-external-credentials.md) instead. An environment uses one
 approach, never both.
 
@@ -35,15 +35,13 @@ approach, never both.
 
 ## Where credentials come from
 
-| File                                                                                        | What it holds                                                          | Who writes it |
-|---------------------------------------------------------------------------------------------|------------------------------------------------------------------------|---------------|
-| `environments/<cluster>/cloud-passport/<passport-name>-creds.yml`                           | credentials of the Cloud Passport, such as the deploy token and DBaaS  | you           |
-| Shared Credentials files in `credentials/` at the environment, cluster, or repository level | all other credentials of the environment                               | you           |
-| `environments/<cluster>/<env>/Credentials/credentials.yml`                                  | every credential of the environment, collected from the files above    | EnvGene       |
+EnvGene collects the credentials of an environment from two sources:
 
-EnvGene copies every entry of the Shared Credentials files listed in `envTemplate.sharedMasterCredentialFiles` into
-`Credentials/credentials.yml`, whether the template references it or not. Do not edit `Credentials/credentials.yml`:
-each generation writes it again.
+- the credentials file of the Cloud Passport, `<passport-name>-creds.yml`
+- the Shared Credentials files listed in `envTemplate.sharedMasterCredentialFiles`
+
+It merges them into `environments/<cluster>/<env>/Credentials/credentials.yml` on every generation. Do not edit
+this file.
 
 ## Steps
 
@@ -90,7 +88,8 @@ To find which credentials the template needs:
 
 ### Step 2: Add your own credentials
 
-A credential the template does not know about, such as the credentials of a partner integration, works the same way.
+A credential that the template does not reference, such as the credentials of a partner integration, is added the
+same way.
 
 1. Add it to a Shared Credentials file:
 
@@ -117,7 +116,7 @@ A credential the template does not know about, such as the credentials of a part
 3. Bind the ParameterSet in `env_definition.yml`, see
    [Override Template Parameters](/docs/how-to/environment-specific-parameters.md).
 
-Without step 2, the credential reaches `Credentials/credentials.yml` but no parameter uses it.
+Without the ParameterSet, the credential is copied to `Credentials/credentials.yml`, but no parameter uses it.
 
 ### Step 3: Pass the credentials files
 
@@ -174,7 +173,7 @@ Set the value of that `credId` as in Step 1. For details, see
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | A Cloud Passport credential      | Edit `<passport-name>-creds.yml`, or run Cloud Passport discovery again                                                                     |
 | A Shared Credentials file        | Run the pipeline again with the same `credentials` entry, or edit the file. The pipeline replaces the whole file, so pass every credential  |
-| One value used in several places | Use [Credential Rotation](/docs/features/cred-rotation.md). SOPS encryption only                                                            |
+| One value used in several places | Use [Credential Rotation](/docs/features/cred-rotation.md). Works with SOPS encryption only                                                           |
 
 Then run the pipeline with `ENV_BUILDER: true` and `GENERATE_EFFECTIVE_SET: true`.
 

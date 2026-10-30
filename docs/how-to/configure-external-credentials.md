@@ -2,7 +2,7 @@
 
 - [Configure External Credentials](#configure-external-credentials)
   - [Overview](#overview)
-  - [When to use this guide](#when-to-use-this-guide)
+  - [When to use External Credentials](#when-to-use-external-credentials)
   - [Prerequisites](#prerequisites)
   - [Layout](#layout)
   - [Steps](#steps)
@@ -19,16 +19,16 @@
 
 ## Overview
 
-Use this guide to create a new environment that uses External Credentials from the start. At the end, the secret values live
-in a Secret Store, and the Instance repository and the deployment hold only references to them. Supported Secret
-Stores: Vault, OpenBao, Azure Key Vault, AWS Secrets Manager, and GCP Secret Manager.
+Create a new environment that uses External Credentials from the start. At the end, the secret values live in a
+Secret Store, and the Instance repository and the deployment hold only references to them. Supported Secret Stores:
+Vault, OpenBao, Azure Key Vault, AWS Secrets Manager, and GCP Secret Manager.
 
 For the fields used below, see [External Credentials](/docs/features/external-creds.md). For a complete file set, see
 the [external credentials samples](/docs/samples/external-credentials/).
 
-## When to use this guide
+## When to use External Credentials
 
-Use this guide for a new environment. If the environment or its Environment Template already uses local
+These steps are for a new environment. If the environment or its Environment Template already uses local
 credentials, migrate them instead:
 [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md)
 and
@@ -66,7 +66,7 @@ environments/
 
 ### Step 1: Check the Environment Template
 
-External Credentials start in the Environment Template. Check that the template version you deploy has the
+External Credentials need support in the Environment Template. Check that the template version you deploy has the
 following. If it does not, ask the template owner to add it, see
 [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md).
 
@@ -107,8 +107,8 @@ them in the Cloud Passport (Step 5) or in the Shared Credentials (Step 6).
 
 ### Step 2: Decide who creates each value
 
-The Environment Template already decides this for the credentials it owns, in its Credential Template. Decide it for
-the Cloud Passport credentials and the Shared Credentials. The answer sets the `create` field:
+The Credential Template of the Environment Template sets `create` for its own credentials. Set it for the Cloud
+Passport credentials and the Shared Credentials:
 
 | Who creates the value                              | `create`       | If the secret is missing, EnvGene |
 |----------------------------------------------------|----------------|-----------------------------------|

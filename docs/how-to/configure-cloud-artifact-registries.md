@@ -30,16 +30,16 @@
 EnvGene downloads Maven artifacts ([Solution Descriptors](/docs/envgene-objects.md#solution-descriptor),
 Deployment Descriptors, and environment templates) from external cloud registries like AWS CodeArtifact and
 GCP Artifact Registry using [Registry Definition v2.0](/docs/envgene-objects.md#registry-definition-v20)
-with an `authConfig` block. This guide walks through each provider step by step.
+with an `authConfig` block. Each provider has its own steps below.
 
 > [!IMPORTANT]
 > **Pulling EnvGene Docker images from cloud registries (GAR) during pipeline execution is supported only
 > in the GitHub workflow** via the `DOCKER_REGISTRY` and `DOCKER_CLOUD_REGISTRY_PROVIDER` variables.
 > For GitLab CI pipelines, set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as masked CI/CD
-> variables and configure the runner with the Amazon ECR credential helper -
-> see [GitLab CI: pulling images from AWS ECR](#gitlab-ci-pulling-images-from-aws-ecr).
+> variables and configure the runner with the Amazon ECR credential helper. See
+> [GitLab CI: pulling images from AWS ECR](#gitlab-ci-pulling-images-from-aws-ecr).
 >
-> **Publishing environment template build artifacts to external cloud registries (GAR, ECR) is not currently supported.**
+> **Publishing environment template build artifacts to external cloud registries (GAR, ECR) is not supported.**
 
 ## Two registry contexts in EnvGene
 
@@ -51,7 +51,7 @@ documentation or configure the system.
 | **A. Artifact registries** | Download Maven artifacts (SDs, DDs, and environment templates) | [RegDef v2.0](/docs/envgene-objects.md#registry-definition-v20) or [Artifact Definition v2.0](/docs/envgene-objects.md#artifact-definition-v20) with `authConfig` |
 | **B. Image registries**    | Pull EnvGene container images during CI                        | GitHub repository variables: `DOCKER_REGISTRY`, `DOCKER_CLOUD_REGISTRY_PROVIDER`, and `GCP_SA_KEY`                                                                |
 
-This guide covers Context A only. For image registry configuration (Context B), see
+The steps below cover Context A only. For image registry configuration (Context B), see
 [Using Docker Registries in EnvGene GitHub Workflow](/docs/how-to/docker-registry-configuration.md).
 
 ## Prerequisites

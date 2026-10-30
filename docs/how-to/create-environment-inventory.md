@@ -18,8 +18,8 @@
 
 ## Overview
 
-Use this guide to create the Environment Inventory of one environment: `env_definition.yml`, its ParameterSets,
-and its credentials files. At the end, the Inventory is committed to the Instance repository, and with
+Create the Environment Inventory of one environment: `env_definition.yml`, its ParameterSets, and its credentials
+files. At the end, the Inventory is committed to the Instance repository, and with
 `ENV_BUILDER: true` the Environment Instance is built from it.
 
 Choose how to create the Inventory:

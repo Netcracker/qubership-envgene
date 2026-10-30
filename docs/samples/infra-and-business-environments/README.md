@@ -1,7 +1,7 @@
 # Infra and business environments
 
-Templates for one cluster with an infra and a business environment. Replace the `<placeholders>` with the values
-of your project.
+Use these templates to set up one cluster with an infra and a business environment. Replace the `<placeholders>`
+with the values of your project.
 
 - an **infra environment** deploys the infrastructure Solution Descriptor of the cluster, such as databases and
   message brokers

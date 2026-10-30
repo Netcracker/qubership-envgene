@@ -2,18 +2,18 @@
 
 - [Description](#description)
 - [Prerequisites](#prerequisites)
-- [Step 1: Inventory the Instance Repository](#step-1-inventory-the-instance-repository)
+- [Step 1: List the credentials of the Instance repository](#step-1-list-the-credentials-of-the-instance-repository)
 - [Step 2: Decide create and remoteRefPath](#step-2-decide-create-and-remoterefpath)
-- [Step 3: Configure Secret Store](#step-3-configure-secret-store)
-- [Step 4: Convert Cloud Passport Credentials and main file](#step-4-convert-cloud-passport-credentials-and-main-file)
-- [Step 5: Convert Shared Credentials](#step-5-convert-shared-credentials)
-- [Step 6: Convert System Credentials (optional)](#step-6-convert-system-credentials-optional)
+- [Step 3: Configure the Secret Store](#step-3-configure-the-secret-store)
+- [Step 4: Convert the Cloud Passport credentials](#step-4-convert-the-cloud-passport-credentials)
+- [Step 5: Convert the Shared Credentials](#step-5-convert-the-shared-credentials)
+- [Step 6: Convert the System Credentials (optional)](#step-6-convert-the-system-credentials-optional)
 - [Step 7: Update environment-specific parameters](#step-7-update-environment-specific-parameters)
 - [Step 8: Remove stale generated Credentials files](#step-8-remove-stale-generated-credentials-files)
 - [Step 9: Validate before the pipeline](#step-9-validate-before-the-pipeline)
-- [Step 10: Run the Instance pipeline (first run - skip)](#step-10-run-the-instance-pipeline-first-run---skip)
-- [Step 11: Transfer credential values and provision the Store](#step-11-transfer-credential-values-and-provision-the-store)
-- [Step 12: Run the Instance pipeline again (apply)](#step-12-run-the-instance-pipeline-again-apply)
+- [Step 10: Run the Instance pipeline without provisioning](#step-10-run-the-instance-pipeline-without-provisioning)
+- [Step 11: Put the values in the Secret Store](#step-11-put-the-values-in-the-secret-store)
+- [Step 12: Run the Instance pipeline with provisioning](#step-12-run-the-instance-pipeline-with-provisioning)
 - [Step 13: Verify the generated result](#step-13-verify-the-generated-result)
 - [Step 14: Run a test deployment](#step-14-run-a-test-deployment)
 - [Rollback](#rollback)
@@ -21,7 +21,7 @@
 
 ## Description
 
-Use this guide to move the credentials of an Instance repository from Git to a Secret Store. At the end, every
+Move the credentials of an Instance repository from Git to a Secret Store. At the end, every
 environment uses External Credentials, the secret values live in the store, and the repository holds only
 references.
 
@@ -29,9 +29,9 @@ For a new environment, you do not need this migration, see
 [Configure External Credentials](/docs/how-to/configure-external-credentials.md).
 
 > [!WARNING]
-> Do not remove `data` from a credential before you have saved its value. After the migration EnvGene no longer
-> reads values from Git, and a credential with `create: true` and no secret gets a new value: the old password,
-> token, or key is lost. Never put secret values in Git, merge requests, or notes.
+> Do not remove `data` from a credential before you have saved its value. After the migration, EnvGene no longer
+> reads values from Git. For a credential with `create: true` and no secret, EnvGene generates a new value, and the
+> old password, token, or key is lost. Never put secret values in Git, merge requests, or notes.
 
 ### Credential value transfer
 
@@ -39,15 +39,15 @@ Values move into the Secret Store in two parts:
 
 | When                                | What                                                   | Where                                                                  |
 |-------------------------------------|--------------------------------------------------------|------------------------------------------------------------------------|
-| Before Steps 4-6 remove `data`      | Save each real value to a secure place outside Git     | [Step 4](#step-4-convert-cloud-passport-credentials-and-main-file)     |
-| After Step 10 generates the Context | Put the saved values into the store at EnvGene's paths | [Step 11](#step-11-transfer-credential-values-and-provision-the-store) |
+| Before Steps 4–6 remove `data`      | Save each real value to a secure place outside Git     | [Step 4](#step-4-convert-the-cloud-passport-credentials)     |
+| After Step 10 generates the Context | Put the saved values into the store at EnvGene's paths | [Step 11](#step-11-put-the-values-in-the-secret-store) |
 
 ### Rules
 
 - After the migration, each environment uses only External Credentials. System Credentials are an exception: they
   may stay local. See [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
-- If the same `credId` is declared in several places, the Shared Credentials win over the Cloud Passport, and the
-  Cloud Passport wins over the Credential Template.
+- If the same `credId` is declared in several places, the Shared Credentials take precedence over the Cloud
+  Passport, and the Cloud Passport takes precedence over the Credential Template.
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ Values move into the Secret Store in two parts:
 - You can decrypt the credentials files of the repository, if credential encryption is enabled. See
   [Credential Encryption](/docs/how-to/credential-encryption.md).
 
-## Step 1: Inventory the Instance Repository
+## Step 1: List the credentials of the Instance repository
 
 List every local credential (`type: usernamePassword` or `type: secret`) in these files:
 
@@ -82,7 +82,7 @@ Record each credential in a table:
 | dbaas     | `cluster-01/cloud-passport/passport-creds.yml`             | real value                |
 | api-token | `cluster-01/env-01/Inventory/credentials/env-01-creds.yml` | stub (`envgeneNullValue`) |
 
-A real value must be saved before Steps 4-6 remove it. A stub such as `envgeneNullValue` or an empty string has
+A real value must be saved before Steps 4–6 remove it. A stub such as `envgeneNullValue` or an empty string has
 nothing to save.
 
 **Result:** a table of every local credential, its file, and whether it holds a real value.
@@ -115,7 +115,7 @@ Do not append the `credId`: EnvGene adds it.
 
 **Result:** a `create` value and a `remoteRefPath` for every credential.
 
-## Step 3: Configure Secret Store
+## Step 3: Configure the Secret Store
 
 1. Create or update `/configuration/secret-stores.yml`:
 
@@ -130,7 +130,7 @@ Do not append the `credId`: EnvGene adds it.
 2. Set the authentication variables of the store as CI/CD variables of the Instance repository, see
    [Configure External Credentials, Step 4](/docs/how-to/configure-external-credentials.md#step-4-set-the-secret-store-authentication-variables).
 
-## Step 4: Convert Cloud Passport Credentials and main file
+## Step 4: Convert the Cloud Passport credentials
 
 > [!IMPORTANT]
 > Save every real value from Step 1 before you remove its `data`. Decrypt the file first if it is encrypted.
@@ -170,7 +170,7 @@ Leave built-in fields such as `credentialsId` unchanged: they keep a plain `cred
 
 **Result:** the Cloud Passports use External Credentials.
 
-## Step 5: Convert Shared Credentials
+## Step 5: Convert the Shared Credentials
 
 > [!IMPORTANT]
 > Save every real value from Step 1 before you remove its `data`.
@@ -192,7 +192,7 @@ Leave built-in fields such as `credentialsId` unchanged: they keep a plain `cred
 
 **Result:** the Shared Credentials use External Credentials.
 
-## Step 6: Convert System Credentials (optional)
+## Step 6: Convert the System Credentials (optional)
 
 System Credentials are the Git token, the registry credentials, and the deployer credentials in
 `configuration/credentials/credentials.yml` and `environments/<cluster>/app-deployer/deployer-creds.yml`. They may stay
@@ -246,7 +246,7 @@ Check that:
 - every `property` in a `$type: credRef` matches a name in the credential's `properties`
 - `sharedMasterCredentialFiles` lists names without `.yml`
 
-## Step 10: Run the Instance pipeline (first run - skip)
+## Step 10: Run the Instance pipeline without provisioning
 
 Start with a non-production environment:
 
@@ -265,20 +265,21 @@ Secret Store, so the run does not fail while the values are not there yet. Do no
 **Result:** `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml` lists every
 credential with its path in the store.
 
-## Step 11: Transfer credential values and provision the Store
+## Step 11: Put the values in the Secret Store
 
 1. Open `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml`.
 2. For each credential with `strategy: fail_if_absent`, create the secret in the store at the path in its `vals`
-   field. Use the value you saved in Steps 4-5, or, for a value that came from Jenkins CMDB, the value from Jenkins.
+   field. Use the value you saved in Steps 4–5, or, for a value that came from Jenkins CMDB, the value from Jenkins.
 3. Inside the secret, use the keys from `properties`, such as `username` and `password`. For a single-value
    credential in Vault or OpenBao, use the key `value`.
 
-Take each path from `vals`, do not build it yourself: a secret at a slightly different path is reported as missing.
+Take each path from `vals` instead of building it yourself. A secret at a slightly different path is reported as
+missing.
 EnvGene creates the credentials with `strategy: create_if_absent` in Step 12.
 
 **Result:** every secret without `create: true` is in the Secret Store.
 
-## Step 12: Run the Instance pipeline again (apply)
+## Step 12: Run the Instance pipeline with provisioning
 
 Run the parameters from Step 10 without `EXTERNAL_CREDENTIAL_PROVISIONING`:
 
@@ -300,7 +301,7 @@ EnvGene checks that every secret exists and creates the ones with `create: true`
 2. The files under `effective-set/deployment/` hold VALS or ESO references instead of values.
 
 If a check fails, fix the configuration and run again from
-[Step 10](#step-10-run-the-instance-pipeline-first-run---skip).
+[Step 10](#step-10-run-the-instance-pipeline-without-provisioning).
 
 ## Step 14: Run a test deployment
 

@@ -13,21 +13,20 @@
 
 ## Description
 
-Use this guide to move an Environment Template from credential macros to External Credentials. At the end, the
+Move an Environment Template from credential macros to External Credentials. At the end, the
 template declares its credentials in a Credential Template, references them with `$type: credRef`, and is
 published as a new version.
 
 Repeat the steps for each Environment Template.
 
-The guide changes only the template files. The secret values stay where they are and move to the Secret Store
-during [Migrate Instance Repository to External Credentials](/docs/how-to/migrate-instance-repository-to-external-credentials.md).
+Only the template files change. The secret values stay where they are and move to the Secret Store during [Migrate Instance Repository to External Credentials](/docs/how-to/migrate-instance-repository-to-external-credentials.md).
 
 ## Prerequisites
 
 - Every environment that uses this template is on a No-CMDB
   [deployment architecture](/docs/deployment-architecture.md). CMDB import does not work with External Credentials.
 - The EnvGene version in the Instance repositories supports External Credentials.
-- You know the Secret Store identifier the Instance repositories will use. Skip this if they use `default_store`.
+- You know the Secret Store identifier that the Instance repositories use. Skip this if they use `default_store`.
 - You have write access to the Template Repository.
 
 For every field used below, see [External Credentials](/docs/features/external-creds.md). For a complete example, see
@@ -66,7 +65,7 @@ For `#creds`, `<value>` is the `credId`. For `#credscl` and `#credsns`, copy the
 
 ### Built-in string fields
 
-Leave as-is. Record the `credId` only:
+Leave these fields unchanged. Record only the `credId`:
 
 ```yaml
 credentialsId: <credId>
@@ -136,9 +135,9 @@ and Tenant templates:
 `templates/env_templates/<solution>/external-credentials.yml.j2`
 
 A descriptor that lists several namespaces still has one Credential Template. It lists every
-credential from Step 2.
+credential from Step 1.
 
-Add one entry per credential from Step 2:
+Add one entry per credential from Step 1:
 
 ```yaml
 ---
@@ -203,8 +202,8 @@ namespaces:
 Replace macros only in `deployParameters`, `e2eParameters`, and ParameterSets from
 `deployParameterSets` or `e2eParameterSets`.
 
-Do not touch built-in fields (`credentialsId`, `defaultCredentialsId`, `tokenSecret`, `credential`)
-or anything inside `technicalConfigurationParameters`.
+Leave built-in fields (`credentialsId`, `defaultCredentialsId`, `tokenSecret`, `credential`) and everything inside
+`technicalConfigurationParameters` unchanged.
 
 ### `creds.get` / `envgen.creds.get` / `cmdb.creds.get`
 
@@ -285,9 +284,9 @@ If no Environment Instance uses the new version yet, keep the previous version a
 
 If you published a bad version:
 
-1. do not switch any Environment Instance to it
-2. fix the Environment Template
-3. publish a new version
+1. Do not switch any Environment Instance to it.
+2. Fix the Environment Template.
+3. Publish a new version.
 
 ## See also
 
