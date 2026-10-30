@@ -33,6 +33,7 @@ def test_copied_client_runs_both_jobs_without_full_pipeline_package(monkeypatch,
     monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
     monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
     monkeypatch.delenv("CURL_CA_BUNDLE", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)  # set => hook tries to import the full pipeline
     monkeypatch.setenv("NO_PROXY", "127.0.0.1")
     monkeypatch.setenv("CI_PIPELINE_ID", "pipeline-1")
     monkeypatch.setenv("CI_PROJECT_ID", "project-1")
