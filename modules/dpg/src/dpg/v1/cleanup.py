@@ -103,33 +103,35 @@ def cleanup_repository(rootdir: Path, environment_id: str, namespace_names: str,
                        lambda effective_set: clean_namespaces(effective_set, namespace_names), mirror=True)
 
 
+def remove_cleaned_markers(effective_set: Path, namespaces: set[str]) -> None:
+    for context in CONTEXTS:
+        remote_mapping_file = effective_set / context / "mapping.yaml"
+        if not remote_mapping_file.is_file():
+            continue
+        remote_mapping = yaml.safe_load(remote_mapping_file.read_text()) or {}
+        for namespace in namespaces & remote_mapping.keys():
+            folder = Path(remote_mapping[namespace]).name
+            if not folder or folder in (".", ".."):
+                raise ValueError(f"Invalid effective set mapping for namespace '{namespace}'")
+            remote_dir = effective_set / context / folder
+            if not (remote_dir / ".cleaned").is_file():
+                continue
+            if (remote_dir.is_symlink() or not remote_dir.resolve().is_relative_to(
+                    (effective_set / context).resolve())):
+                raise ValueError(f"Invalid effective set mapping for namespace '{namespace}'")
+            if not any(path.is_file() and path.name not in (".cleaned", ".gitkeep")
+                       for path in remote_dir.rglob("*")):
+                raise ValueError(f"No published application content for previously cleaned namespace '{namespace}'")
+            (remote_dir / ".cleaned").unlink()
+
+
 def finalize_deployment(rootdir: Path, environment_id: str, namespaces: set[str]) -> None:
     if not namespaces:
         return
 
-    def remove_markers(effective_set):
-        for context in CONTEXTS:
-            remote_mapping_file = effective_set / context / "mapping.yaml"
-            if not remote_mapping_file.is_file():
-                continue
-            remote_mapping = yaml.safe_load(remote_mapping_file.read_text()) or {}
-            for namespace in namespaces & remote_mapping.keys():
-                folder = Path(remote_mapping[namespace]).name
-                if not folder or folder in (".", ".."):
-                    raise ValueError(f"Invalid effective set mapping for namespace '{namespace}'")
-                remote_dir = effective_set / context / folder
-                if not (remote_dir / ".cleaned").is_file():
-                    continue
-                if (remote_dir.is_symlink() or not remote_dir.resolve().is_relative_to(
-                        (effective_set / context).resolve())):
-                    raise ValueError(f"Invalid effective set mapping for namespace '{namespace}'")
-                if not any(path.is_file() and path.name not in (".cleaned", ".gitkeep")
-                           for path in remote_dir.rglob("*")):
-                    raise ValueError(f"No published application content for previously cleaned namespace '{namespace}'")
-                (remote_dir / ".cleaned").unlink()
-
     # The publisher has already written the application content. Only its cleanup signal changes here.
-    _update_repository(rootdir, environment_id, f"Finalize deployed namespaces for {environment_id}", remove_markers)
+    _update_repository(rootdir, environment_id, f"Finalize deployed namespaces for {environment_id}",
+                       lambda effective_set: remove_cleaned_markers(effective_set, namespaces))
 
 
 def _update_repository(rootdir, environment_id, commit_message, update, mirror=False):

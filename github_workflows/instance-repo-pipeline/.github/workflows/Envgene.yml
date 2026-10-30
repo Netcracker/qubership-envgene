@@ -179,7 +179,7 @@ jobs:
           set -a && . envgene-vars.env && set +a
           if [[ "${PIPELINE_TYPE}" == "GITLAB_DEPLOY" ]]; then
             if [[ "${OPERATION_TYPE}" == "DEPLOY" || ( "${OPERATION_TYPE}" == "BGD" && "${BGD_OPERATION}" == "warmup" ) ]]; then
-              python3 /python/argocd-dpg/src/argo/main.py generate structure -p params.environment_id="${FULL_ENV_NAME}" -p params.deployment_plan="${CI_PROJECT_DIR}/environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/Inventory/delta-deploy-plan.yml" --log-level "${ENVGENE_LOG_LEVEL}"
+              python3 /python/argocd-dpg/src/argo/main.py generate structure -p params.environment_id="${FULL_ENV_NAME}" -p params.deployment_plan="${CI_PROJECT_DIR}/environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/Inventory/delta-deploy-plan.yml" -p params.commit_message="Push effective set for ${FULL_ENV_NAME}" --log-level "${ENVGENE_LOG_LEVEL}"
               if [[ -v ENVGENE_AGE_PUBLIC_KEY ]]; then
                 sops --encrypt -i --age "${ENVGENE_AGE_PUBLIC_KEY}" ARGO_DPG_CONTEXT.env
               else
