@@ -7,9 +7,15 @@ Feature: Mixed flows - No-CMDB v2 and No-CMDB v1 runs on the same environment
     Given the workspace is initialized with test data from "e2e/uc_clean_deploy_no_bgd"
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "CLEAN"
+    And the environment has a deployed effective set in its ES repository
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the pipeline step "cleanup" has status "SUCCESS"
     And the deploy plan is empty
+    And the namespace "core" is marked as cleaned
+    And the namespace "bss" is marked as cleaned
+    And the ES repository keeps its namespace mappings
+    And the ES repository contains no cleanup context
     When the pipeline parameter "PIPELINE_TYPE" is removed
     And the pipeline parameter "OPERATION_TYPE" is removed
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is changed to "true"

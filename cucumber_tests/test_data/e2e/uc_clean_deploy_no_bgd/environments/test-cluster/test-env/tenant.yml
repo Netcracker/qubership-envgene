@@ -1,0 +1,9 @@
+name: "test-tenant"
+registryName: "test-registry"
+credential: "dummy"
+globalE2EParameters: {}
+deployParameters: {}
+deploymentParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalParameterSets: []
