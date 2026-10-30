@@ -48,6 +48,7 @@ class CredStore:
             raise FileNotFoundError(f"{key} is not in the cred store and not on disk")
         return self._lazy_decrypt(key)
 
+    # exists is means - will the file exist after commit?
     def exists(self, path) -> bool:
         key = self._key(path)
         with self._lock:
@@ -82,7 +83,7 @@ class CredStore:
         old_text = old_data.decode("utf-8")
         if not is_encrypted_SOPS_text(old_text):
             return None
-        if is_es and readYaml(old_text)["sops"].get("encrypted_regex") != encryption_rule(obj, key, False)[1]:
+        if is_es and readYaml(old_text).get("sops", {}).get("encrypted_regex") != encryption_rule(obj, key, False)[1]:
             return None
         return old_data
 
@@ -92,6 +93,7 @@ class CredStore:
             obj = sortYaml(obj, get_schema_dir() / "credential.schema.json", False, validate=False)
             make_quotes_for_strings(obj)
             remove_cred_yaml_comments(obj)
+        # empty cred file in es is correct case
         text = "" if is_es and not obj else dumpYamlToStr(obj)
         data = encrypt_bytes(text.encode("utf-8"), key, old_data=self._sops_edit_base(key, obj, is_es),
                              validate=False)
