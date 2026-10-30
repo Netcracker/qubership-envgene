@@ -608,7 +608,8 @@ Functions:
         `namespace-map.yml`, warn if it is absent from the repository `deploy-plan.yml`
       - run the plan filter in exclude mode, passing each namespace in `NAMESPACE_NAMES` as a `!<namespace>`
       - write the updated `deploy-plan.yml`
-2. `clean_effective_set` (`argo-dpg cleanup structure`)
+2. `clean_effective_set` (`argo-dpg cleanup structure`) - NOT IMPLEMENTED YET
+    - note: today `argo-dpg cleanup structure` runs as a separate invocation outside the orchestrator. The target described here is this `cleanup` step invoking it.
     - input:
       - effective set, fetched from the ES repository
       - `NAMESPACE_NAMES`
@@ -649,6 +650,7 @@ Triggers:
 Functions:
 
 1. `generate_argocd_repo` (`argo-dpg generate structure`)
+    - note: today `argo-dpg generate structure` runs as a separate invocation outside the orchestrator. The target described here is this `cleanup` step invoking it.
     - input:
       - `delta-deploy-plan.yml`
       - effective set
