@@ -242,7 +242,7 @@ def resolve_trace_id() -> str:
     trace_id = os.getenv("METRICS_COLLECTOR_TRACE_ID", "").strip()
     if trace_id:
         return trace_id
-    trace_id = uuid.uuid4().hex
+    trace_id = str(uuid.uuid4())
     os.environ["METRICS_COLLECTOR_TRACE_ID"] = trace_id
     return trace_id
 

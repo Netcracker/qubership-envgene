@@ -1,7 +1,7 @@
 import json
 from types import SimpleNamespace
 
-import pytest
+import pytest, uuid
 
 from pipeline.metrics_collector_cli import main
 from pipeline.metrics_collector_activity import MetricsCollectorActivity
@@ -60,7 +60,7 @@ def test_trace_id_can_be_exported_and_reused(monkeypatch, capsys):
     monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
     assert main(["trace-id"]) == 0
     trace_id = capsys.readouterr().out.strip()
-    assert len(trace_id) == 32
+    assert str(uuid.UUID(trace_id, version=4)) == trace_id
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", trace_id)
     assert main(["trace-id"]) == 0
     assert capsys.readouterr().out.strip() == trace_id
