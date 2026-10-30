@@ -398,3 +398,33 @@ def test_stop_from_fresh_shell_and_different_directory_is_not_repeated(monkeypat
     assert calls[0]["traceid"] == "original-trace"
     assert calls[0]["parentid"] == "original-parent"
     assert activity._completion_directory().exists()
+
+
+def test_start_collects_params_without_building_pipeline_context(monkeypatch):
+    from pipeline.pipeline_parameters import PipelineParametersHandler
+
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
+    monkeypatch.setenv("ENV_NAMES", "cluster/env-1\ncluster/env-2")
+    monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
+    monkeypatch.setenv("CRED_ROTATION_PAYLOAD", "secret")
+    monkeypatch.delenv("ENV_BUILDER", raising=False)
+    monkeypatch.setattr(PipelineParametersHandler, "from_env",
+                        classmethod(lambda cls: pytest.fail("start must not build the pipeline context")))
+    calls = []
+    monkeypatch.setattr(
+        "pipeline.metrics_collector_activity.requests.post",
+        lambda *args, **kwargs: calls.append(json.loads(kwargs["data"])) or SimpleNamespace(ok=True),
+    )
+    import os
+    before = dict(os.environ)
+
+    assert main(["start"]) == 0
+
+    assert dict(os.environ) == before
+    config = {item["name"]: item["value"] for item in calls[0]["data"]["config"]}
+    assert config["ENV_NAMES"] == "cluster/env-1\ncluster/env-2"
+    assert config["PIPELINE_TYPE"] == "GITLAB_DEPLOY"
+    assert config["ENV_BUILDER"] == "False"  # default from the canonical parser, not just two params
+    assert "CRED_ROTATION_PAYLOAD" not in config
