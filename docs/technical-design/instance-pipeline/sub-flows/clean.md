@@ -11,10 +11,11 @@ that actually fire for `OPERATION_TYPE: CLEAN`, plus the launch parameters that 
 the single source of truth and live in `flow.md` - this document does not redefine them, it only resolves them
 for the scenario.
 
-`CLEAN` marks the target namespaces' deployment and runtime for removal in the effective set. No cleanup context is produced. EnvGene does not
-perform the cluster-side undeployment itself; downstream tooling consumes the effective set and undeploys. A
-subsequent `DEPLOY` restores the marked namespaces. The two sub-flows differ only in scope, set by
-`NAMESPACE_NAMES`.
+`CLEAN` empties the target namespaces' deployment and runtime content in the effective set and writes a
+`.cleaned` marker in their place. No cleanup context is produced. EnvGene does not perform the cluster-side
+undeployment itself. Downstream tooling consumes the effective set and undeploys. A subsequent `DEPLOY` restores
+the cleaned namespaces, where `argo-dpg generate structure` pushes the rebuilt effective set. The two sub-flows
+differ only in scope, set by `NAMESPACE_NAMES`.
 
 `CLEAN` runs on the [No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) architecture
 (`PIPELINE_TYPE: GITLAB_DEPLOY`).
@@ -39,8 +40,7 @@ The parameters below select the sub-flow. See `flow.md` for the full definition 
 Flow:
 
 ```text
-1.1 preprocess -> 1.13 generate_deployment_plan -> 1.14 env_build -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
+1.1 preprocess -> 1.17 cleanup -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -54,22 +54,17 @@ NAMESPACE_NAMES: ""   # empty cleans the whole environment
 
 Actions:
 
-- `reduce_deployment_plan` (in `generate_deployment_plan`) removes the cleaned namespaces from the repository
-  `deploy-plan.yml` using the plan filter in exclude mode (each namespace as a `!<namespace>` token). It updates
-  the repository plan only. `CLEAN` produces no delta.
-- `set_cleaned_mark` (in `env_build`) sets `cleaned: true` on the `namespace.yml` of each cleaned namespace. No
-  other env instance content is modified.
-- `generate_effective_set` is invoked with no deployment plan. The env-level `topology/` and `pipeline/` contexts
-  are generated as always. The rest is marker-driven: for each namespace with `cleaned: true`, `.cleaned` is
-  written into `deployment/<ns>/` and `runtime/<ns>/` (no app content). The cleaned namespaces are not removed
-  from `deployment/mapping.yaml` and `runtime/mapping.yaml` - the `.cleaned` marker in each namespace folder is
-  what tells downstream tooling the namespace is cleaned. No cleanup context is produced.
-- `es_pusher` pushes the effective set with `ESPUSHER_OVERWRITE: true`, so the deploy target repository reflects
-  the reduced state.
-
-`1.14 env_build` fires only `set_cleaned_mark`. The rendering functions (`generate_composite_structure`,
-`compute_composite_topology`, `generate_solution_structure`, `run_build_environment`) are `DEPLOY` only, so the
-env instance is left otherwise untouched. `generate_argocd_repo` and the `sync` job do not fire for `CLEAN`.
+- The `cleanup` step runs `reduce_deployment_plan`: it validates `NAMESPACE_NAMES`, then removes the cleaned
+  namespaces from the repository `deploy-plan.yml` using the plan filter in exclude mode (each namespace as a
+  `!<namespace>` token). Validation fails if a namespace is absent from `namespace-map.yml` and warns if it is
+  absent from the repository `deploy-plan.yml`.
+- The `cleanup` step then runs `clean_effective_set`, performed by `argo-dpg cleanup structure`. It fetches
+  the effective set from the ES repository and, for each cleaned namespace, removes the `deployment`
+  and `runtime` context content under `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keeps
+  `<application-name>`, and writes `effective-set/<deployment|runtime>/<namespace>/.cleaned`. It warns if a namespace is absent from the effective
+  set or already cleaned.
+- `argo-dpg` then pushes the effective set to the ES repository in overwrite mode, so the repository
+  mirrors the emptied state and the removed content is deleted there as well.
 
 ## CLEAN selected namespaces
 
@@ -82,8 +77,7 @@ exactly the same way - `CLEAN` marks every target namespace regardless of its Bl
 Flow:
 
 ```text
-1.1 preprocess -> 1.13 generate_deployment_plan -> 1.14 env_build -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
+1.1 preprocess -> 1.17 cleanup -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -95,5 +89,6 @@ NAMESPACE_NAMES: env-1-bss;env-1-oss   # or a single BG side, e.g. env-1-bss-ori
 # APPLICATION_VERSIONS is not an input
 ```
 
-Actions: identical to CLEAN a whole environment, scoped to the listed namespaces. `reduce_deployment_plan` removes the entries
-whose `namespace` is in `NAMESPACE_NAMES`, and `set_cleaned_mark` marks those namespaces.
+Actions: identical to CLEAN a whole environment, scoped to the listed namespaces. The `cleanup` step removes the
+deploy-plan entries whose `namespace` is in `NAMESPACE_NAMES`, and `argo-dpg` empties those namespaces and writes
+their `.cleaned` markers.
