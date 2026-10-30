@@ -128,7 +128,7 @@ Do not append the `credId`: EnvGene adds it.
     See [Secret Store](/docs/features/external-creds.md#secret-store) for the fields of each store type.
 
 2. Set the authentication variables of the store as CI/CD variables of the Instance repository, see
-   [Configure External Credentials, Step 4](/docs/how-to/configure-external-credentials.md#step-4-set-the-secret-store-authentication-variables).
+   [Configure External Credentials, Step 8](/docs/how-to/configure-external-credentials.md#step-8-set-the-secret-store-authentication-variables).
 
 ## Step 4: Convert the Cloud Passport credentials
 
