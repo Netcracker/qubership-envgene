@@ -55,8 +55,8 @@ class PipelineParametersHandler(BaseModel):
         return {key: value for key, value in params.items() if key not in sensitive and value not in (None, "")}
 
 
-    @classmethod
-    def from_env(cls) -> Self:
+    @staticmethod
+    def build_params() -> dict: 
         full_env_name = getenv("ENV_NAMES")
 
         params = {
@@ -77,7 +77,7 @@ class PipelineParametersHandler(BaseModel):
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
             'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
             'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
-            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID") or str(uuid.uuid4()),
+            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
             'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
             'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
             "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
@@ -116,7 +116,14 @@ class PipelineParametersHandler(BaseModel):
                 continue
             if isinstance(parsed, (dict, list)):
                 params[k] = json.dumps(parsed, separators=(",", ":"), default=str)
+        return params
 
+    @classmethod
+    def from_env(cls) -> Self:
+        params = cls.build_params()
+        if not params['DEPLOYMENT_SESSION_ID']:
+            params['DEPLOYMENT_SESSION_ID'] = str(uuid.uuid4())
+        full_env_name = params['ENV_NAMES']
         cluster_name, env_name = full_env_name.split("/", 1)
 
         for k, v in params.items():
