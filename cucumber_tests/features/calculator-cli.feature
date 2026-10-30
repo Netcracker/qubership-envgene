@@ -124,7 +124,7 @@ Feature: Calculator CLI
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"override_key\":\"injected-value\"}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the effective set deployment parameters contain "override_key: injected-value"
+    And the custom-params.yaml for application "test-app" contains "override_key: injected-value"
 
   Scenario: UC-CC-CP-2: CUSTOM_PARAMS with Unknown Namespace Fails
     Given the workspace is initialized with test data from "e2e/uc_cc_cp_2"
@@ -146,28 +146,31 @@ Feature: Calculator CLI
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"override_key\":\"injected-value\"}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the "test-app" custom-params.yaml has "override_key: injected-value" at root, under global, and per-service
+    And the custom-params.yaml for application "test-app" has "override_key: injected-value" at root, under global, and per-service
 
   Scenario: UC-CC-CP-5: CUSTOM_PARAMS deployment key matching a service name goes to collision-credentials.yaml
     Given the workspace is initialized with test data from "e2e/uc_cc_cp_5"
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\",\"override_key\":\"injected-value\"}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the "test-app" collision-credentials.yaml contains key "web"
-    And the "test-app" custom-params.yaml keeps the per-service entry for "worker"
+    And the collision-credentials.yaml for application "test-app" contains key "web"
+    And the custom-params.yaml for application "test-app" does not have "web: collision-value" at root
+    And the custom-params.yaml for application "test-app" has "web: collision-value" under global
+    And the custom-params.yaml for application "test-app" has root key "web" aliasing global
 
   # NOTE (rebase onto main, 2026-10-07): main independently added its own UC-CC-CP-4/CP-5
   # (above) using the same IDs for unrelated scenarios. These three scenarios were originally
   # numbered CP-4/CP-6/CP-7 on this branch and are renumbered CP-6/CP-7/CP-8 here to resolve the
   # collision - content unchanged, only the ID and test-data folder (uc_cc_cp_4->uc_cc_cp_6,
   # uc_cc_cp_6->uc_cc_cp_7, uc_cc_cp_7->uc_cc_cp_8) shifted.
-  # why: CP-1 only injects a new key; Custom Params is rank 1 and must override an existing value
-  Scenario: UC-CC-CP-6: CUSTOM_PARAMS Overrides Existing Namespace Parameter
+  # why: Custom deployment parameters must remain in custom-params.yaml without overriding namespace-level deployment parameters.
+  Scenario: UC-CC-CP-6: CUSTOM_PARAMS Do Not Override Existing Namespace Parameter
     Given the workspace is initialized with test data from "e2e/uc_cc_cp_6"
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"shared_key\":\"from-custom\"}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the effective set deployment parameters contain "shared_key: from-custom"
+    And the effective set deployment parameters contain "shared_key: from-namespace"
+    And the custom-params.yaml for application "test-app" contains "shared_key: from-custom"
 
   # why: Custom Params applies to deployment, runtime and cleanup; only deployment is covered.
   # Per docs/features/calculator-cli.md Runtime Parameter Context: --custom-params values for
@@ -186,13 +189,13 @@ Feature: Calculator CLI
   # why: a single-namespace fixture cannot tell namespace-scoped injection apart from global
   # injection (both would land in the same place), so a second namespace ("other") with its own
   # deployed app proves the key lands ONLY in the targeted namespace
-  Scenario: UC-CC-CP-8: Namespace-Scoped CUSTOM_PARAMS Injected into Target Namespace
+  Scenario: UC-CC-CP-8: Namespace-Scoped CUSTOM_PARAMS Injected into Target Namespace Custom Parameters
     Given the workspace is initialized with test data from "e2e/uc_cc_cp_8"
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"namespaces\":{\"core\":{\"deployment\":{\"scoped_key\":\"from-custom\"}}}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the effective set deployment parameters for namespace "core" contain "scoped_key: from-custom"
-    And the effective set deployment parameters for namespace "other" do not contain "scoped_key"
+    And the custom-params.yaml for application "test-app" in namespace "core" contains "scoped_key: from-custom"
+    And the custom-params.yaml for application "test-app" in namespace "other" does not contain "scoped_key: from-custom"
 
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
 
