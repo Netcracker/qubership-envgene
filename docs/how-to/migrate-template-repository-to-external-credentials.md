@@ -36,8 +36,8 @@ the [sample template repository](/docs/samples/external-credentials/template-rep
 ## Step 1: Collect credential IDs
 
 Open the Cloud, Namespace, Tenant, and ParameterSet templates of this Environment Template and find every
-credential reference. For each `credId`, record its shape, where it is used, and where it is declared. There are
-three kinds of references.
+credential reference. For each `credId`, record its shape and where it is used. There are three kinds of
+references.
 
 ### Macros in parameter values
 
@@ -53,13 +53,16 @@ ${cmdb.creds.get('<credId>').username|password|secret}
 
 ### Legacy macro keys
 
-You replace these in [Step 5](#step-5-replace-macros). The value is the `credId`:
+You replace these in [Step 5](#step-5-replace-macros):
 
 ```text
-'#creds{PARAM_LOGIN, PARAM_PASSWORD}': <credId>
-'#credscl{PARAM_LOGIN, PARAM_PASSWORD}': <credId>
-'#credsns{PARAM_LOGIN, PARAM_PASSWORD}': <credId>
+'#creds{PARAM_LOGIN, PARAM_PASSWORD}': <value>
+'#credscl{PARAM_LOGIN, PARAM_PASSWORD}': <value>
+'#credsns{PARAM_LOGIN, PARAM_PASSWORD}': <value>
 ```
+
+For `#creds`, `<value>` is the `credId`. For `#credscl` and `#credsns`, copy the `credId` from
+`Credentials/credentials.yml` of an environment built from this template. That id is not `<value>`.
 
 ### Built-in string fields
 
@@ -77,59 +80,39 @@ The canonical list is in
 
 ### Shape
 
-The shape decides whether the credential gets `properties` in Step 3:
+The shape decides whether the credential gets `properties` in Step 3. Find it in the `type` of the credential in
+`Credentials/credentials.yml` of an environment built from this template:
 
-| If the credId appears with        | Shape                                          |
-|-----------------------------------|------------------------------------------------|
-| `.username` or `.password`        | username and password                          |
-| a `#creds*` key                   | username and password                          |
-| `.secret`                         | single value                                   |
-| Built-in field only               | built-in shape below, or other usages          |
-| `Cloud.defaultCredentialsId` only | confirm from other usages of the same `credId` |
+| `type`             | Shape                 |
+|--------------------|-----------------------|
+| `usernamePassword` | username and password |
+| `secret`           | single value          |
 
-Built-in shape hints when there is no nearby `.username`, `.password`, or `.secret` macro:
-
-| Built-in field                 | Shape                 |
-|--------------------------------|-----------------------|
-| `maasConfig.credentialsId`     | username and password |
-| `dbaasConfigs[].credentialsId` | username and password |
-| `vaultConfig.credentialsId`    | single value          |
-| `consulConfig.tokenSecret`     | single value          |
-| `Namespace.credentialsId`      | single value          |
-| `Tenant.credential`            | single value          |
-
-Build a table as you go. Check the Cloud Passport `*-creds.yml` files and the Shared Credentials files of the
-Instance repositories to fill in **Declared in**: only credentials declared by the template go to the Credential
-Template in Step 3.
-
-| credId            | Shape                 | Used in                                  | Declared in    |
-|-------------------|-----------------------|------------------------------------------|----------------|
-| app-db-cred       | username and password | `ns.yml.j2`, `deployParameters`          | template       |
-| app-sidecar-token | single value          | paramset, `deployParameters`             | template       |
-| ns-deploy-cred    | single value          | `ns.yml.j2`, built-in `credentialsId`    | template       |
-| dbaas-cred        | username and password | `cloud.yml.j2`, built-in `credentialsId` | Cloud Passport |
+Skip the credentials that come from the Cloud Passport or Shared Credentials of the Instance repository: they
+move in the Instance repository migration.
 
 `$type: credRef` does not work in `technicalConfigurationParameters`. List the macros you find there separately
 and agree with the template owner how to handle them before you publish.
 
-**Result:** a table of every `credId` with its shape, usage, and where it is declared.
+**Result:** a list of every `credId` of the template with its shape and where it is used.
 
 ## Step 2: Decide create and remoteRefPath
 
-Take the credentials from the Step 1 table that are declared in the template. Skip the ones declared in the Cloud
-Passport or Shared Credentials: they move in the Instance repository migration.
-
-For each credential, decide two values.
+For each credential from Step 1, decide two values.
 
 ### `create`
 
-| Who creates the value                               | In the Credential Template           |
-|-----------------------------------------------------|--------------------------------------|
-| EnvGene may generate a new value                    | `create: true`                       |
-| The secret already exists, or a provider creates it | omit `create`                        |
-| You do not know                                     | stop and ask the owner before Step 3 |
+Omit `create` when any environment built from this template holds a real value for the credential.
+The instance migration copies that value into the Secret Store. With `create: true`, EnvGene generates
+a new value when the secret is missing, and the existing password, token, or key is lost.
 
-`create` only says what EnvGene does when the secret is missing. Moving existing values into the store is part of
+| Credential file                                   | In the Credential Template |
+|---------------------------------------------------|----------------------------|
+| A real value in any environment                   | omit `create`              |
+| Only `envgeneNullValue`, and EnvGene generates it | `create: true`             |
+| Unknown                                           | stop and ask the owner     |
+
+Moving the saved value into the store is part of
 [Migrate Instance Repository to External Credentials](/docs/how-to/migrate-instance-repository-to-external-credentials.md).
 
 ### `remoteRefPath`
@@ -143,33 +126,37 @@ Use the path of the environment:
 Add a suffix, such as `/db`, only to group credentials. Do not append the `credId`: EnvGene adds it. Do not use
 `current_env.namespace`: it is not an EnvGene macro.
 
-**Result:** a `create` value and a `remoteRefPath` for every credential declared in the template.
+**Result:** a `create` value and a `remoteRefPath` for every credential from Step 1.
 
 ## Step 3: Create the Credential Template
 
-Create one file per Template Descriptor, named after it: for `bss.yaml`, create
-`templates/external-credentials/bss.yml.j2`.
+Create one Credential Template for this Environment Template. Put it next to the Cloud, Namespace,
+and Tenant templates:
+
+`templates/env_templates/<solution>/external-credentials.yml.j2`
+
+A descriptor that lists several namespaces still has one Credential Template. It lists every
+credential from Step 2.
 
 Add one entry per credential from Step 2:
 
 ```yaml
 ---
-# username and password, EnvGene may generate
+# username and password, value already in the environment
 app-db-cred:
   type: external
-  create: true
   secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/db"
   properties:
     - name: username
     - name: password
-# single value, EnvGene may generate
+# single value, only a stub, EnvGene generates it
 app-sidecar-token:
   type: external
   create: true
   secretStore: default_store
   remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
-# single value, already in the store
+# single value, value already in the environment
 ns-deploy-cred:
   type: external
   secretStore: default_store
@@ -179,7 +166,7 @@ ns-deploy-cred:
 For a single value, leave out `properties`. For the rules of every field, see
 [Credential](/docs/features/external-creds.md#credential).
 
-**Result:** the Credential Template file with one entry per credential declared in the template.
+**Result:** the Credential Template file with one entry per credential from Step 1.
 
 ## Step 4: Register in the Template Descriptor
 
@@ -200,7 +187,7 @@ After:
 ```yaml
 tenant: "{{ templates_dir }}/env_templates/<solution>/tenant.yml.j2"
 cloud: "{{ templates_dir }}/env_templates/<solution>/cloud.yml.j2"
-external_credential_template: "{{ templates_dir }}/external-credentials/<solution>.yml.j2"
+external_credential_template: "{{ templates_dir }}/env_templates/<solution>/external-credentials.yml.j2"
 namespaces:
   - template_path: "{{ templates_dir }}/env_templates/<solution>/ns.yml.j2"
 ```
@@ -270,8 +257,9 @@ PASSWORD:
   property: password
 ```
 
-All three variants (`#creds`, `#credscl`, `#credsns`) expand the same way. One key becomes two
-`credRef` entries: `username` and `password`.
+One key becomes two `credRef` entries, `username` and `password`. For `#creds`, `credId` is the
+value of the key. For `#credscl` and `#credsns`, `credId` is the id copied from
+`Credentials/credentials.yml` in Step 1, not the value of the key.
 
 **Result:** no credential macros left in `deployParameters`, `e2eParameters`, and their ParameterSets.
 
@@ -279,7 +267,7 @@ All three variants (`#creds`, `#credscl`, `#credsns`) expand the same way. One k
 
 1. Check the template:
     - `external_credential_template` in the Template Descriptor points to the file from Step 3
-    - every credential declared in the template, from Step 2, has an entry in the Credential Template
+    - every credential from Step 1 has an entry in the Credential Template
     - no `${creds.get(...)}`, `envgen.creds.get`, `cmdb.creds.get`, or `#creds*` macros are left in
       `deployParameters`, `e2eParameters`, and their ParameterSets
     - no `$type: credRef` in `technicalConfigurationParameters`

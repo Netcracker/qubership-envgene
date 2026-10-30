@@ -88,6 +88,6 @@ consumes (integration, deployer, registry, and definition credentials). See the
 
 ### Infra and business environments
 
-Templates for one cluster with an infra and a business environment on the No-CMDB v2 architecture: Cloud Passports,
+Templates for one cluster with an infra and a business environment: Cloud Passports,
 Environment Inventories, and the `ENV_INVENTORY_CONTENT` values that create them. See
 [Infra and business environments](/docs/samples/infra-and-business-environments/README.md).

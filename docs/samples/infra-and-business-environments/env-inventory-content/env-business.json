@@ -2,24 +2,51 @@
   "envDefinition": {
     "action": "create_or_replace",
     "content": {
-      "inventory": {
-        "tenantName": "<tenant-name>",
-        "noCmdbVersion": "v2"
-      },
+      "inventory": {},
       "envTemplate": {
         "name": "<business-template-name>",
         "artifact": "<business-template-artifact>:<version>",
         "additionalTemplateVariables": {
-          "use_env_prefix": true
+          "<variable>": "<value>"
         },
-        "sharedTemplateVariables": [
-          "<ci-vars>",
-          "<feature-toggles>"
-        ],
+        "envSpecificParamsets": {
+          "<namespace>": [
+            "<paramset-name>"
+          ]
+        },
         "sharedMasterCredentialFiles": [
-          "<ci-creds>"
+          "<shared-credentials-file>"
         ]
       }
     }
-  }
+  },
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "<paramset-name>",
+        "version": 1,
+        "parameters": {
+          "<PARAMETER>": "<value>"
+        }
+      }
+    }
+  ],
+  "credentials": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "name": "<shared-credentials-file>",
+      "content": {
+        "<cred-id>": {
+          "type": "usernamePassword",
+          "data": {
+            "username": "<username>",
+            "password": "<password>"
+          }
+        }
+      }
+    }
+  ]
 }
