@@ -104,10 +104,10 @@ def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"
     passportSameFolderPath = f'{getDirName(cloud_passport_file_path)}/{cloud_passport_name}-creds.yml'
     if current_cred_store().exists(passportSubfolderPath):
-        passportCredsYaml = current_cred_store().get(passportSubfolderPath)
+        passportCredsYaml = current_cred_store().load_decrypted(passportSubfolderPath)
         logger.info(f"Adding cloud passport credentials from {passportSubfolderPath}")
     elif current_cred_store().exists(passportSameFolderPath):
-        passportCredsYaml = current_cred_store().get(passportSameFolderPath)
+        passportCredsYaml = current_cred_store().load_decrypted(passportSameFolderPath)
         validate_yaml_by_scheme_or_fail(input_yaml_content=passportCredsYaml, schema_file_path=credsSchema)
         logger.info(f"Adding cloud passport credentials from {passportSameFolderPath}")
     else:

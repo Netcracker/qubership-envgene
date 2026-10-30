@@ -44,7 +44,7 @@ def test_update_file_puts_into_store(cred_file):
     with open_cred_store():
         update_file({str(cred_file): UPDATED})
         assert cred_file.read_bytes() == before
-        assert current_cred_store().get(cred_file) == UPDATED
+        assert current_cred_store().load_decrypted(cred_file) == UPDATED
     assert cred_file.read_bytes() != before
     assert is_encrypted_SOPS(cred_file)
     assert decrypt_file(cred_file, in_place=False)["first_cred"]["data"]["secret"] == "token-changed-456"

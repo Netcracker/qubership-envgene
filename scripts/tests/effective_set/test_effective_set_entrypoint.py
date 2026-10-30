@@ -562,8 +562,8 @@ class TestRunCli:
 
         effective_set_entrypoint._run_cli(cmd)
 
-        returned = store.get("es/cred.yml")
-        assert openYamlFromStr(returned["stdin"]) == store.get(env_creds_path)
+        returned = store.load_decrypted("es/cred.yml")
+        assert openYamlFromStr(returned["stdin"]) == store.load_decrypted(env_creds_path)
         assert len(returned["big"]) == 200000
 
     @pytest.mark.unit
@@ -578,7 +578,7 @@ class TestRunCli:
 
         effective_set_entrypoint._run_cli(cmd)
 
-        assert openYamlFromStr(store.get("es/cred.yml")["stdin"]) == {}
+        assert openYamlFromStr(store.load_decrypted("es/cred.yml")["stdin"]) == {}
 
     @pytest.mark.unit
     @pytest.mark.skipif(sys.platform == "win32", reason="pass_fds and /dev/fd need POSIX")

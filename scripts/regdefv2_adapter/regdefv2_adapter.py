@@ -55,7 +55,7 @@ _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
 
 
 def _resolve_pubreg_params(e2e_parameters: dict, env_dir: str) -> dict:
-    env_creds = current_cred_store().get(helper.getEnvCredentialsPath(env_dir), allow_default=True)
+    env_creds = current_cred_store().load_decrypted(helper.getEnvCredentialsPath(env_dir), allow_default=True)
     params = {}
     for key, value in e2e_parameters.items():
         is_registry_auth_param = key.startswith(REGISTRY_AUTH_PARAM_PREFIXES) or key in REGISTRY_AUTH_PARAM_NAMES

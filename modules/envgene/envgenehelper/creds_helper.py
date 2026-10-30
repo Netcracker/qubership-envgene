@@ -256,7 +256,7 @@ def register_extra_creds(creds: dict) -> None:
 
 def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    cred_config = current_cred_store().get(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    cred_config = current_cred_store().load_decrypted(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
     extra_creds = _extra_creds.get()
     return dict_merge(cred_config, extra_creds) if extra_creds else cred_config
 
@@ -271,7 +271,7 @@ def list_cred_files(dir_path):
 
 def read_cred_file(path):
     if is_cred_store_open():
-        return current_cred_store().get(path)
+        return current_cred_store().load_decrypted(path)
     return decrypt_file(path, in_place=False)
 
 

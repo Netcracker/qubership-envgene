@@ -224,7 +224,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryY
         logger.info(f"Inventory shared master creds list: \n{dump_as_yaml_format(sharedDictFileNames)}")
         for credFileName in inventoryYaml["envTemplate"]["sharedMasterCredentialFiles"] :
             credFilePath = findSharedCredentials(credFileName, envDir, instancesDir)
-            credYaml = current_cred_store().get(credFilePath)
+            credYaml = current_cred_store().load_decrypted(credFilePath)
             count = 0
             for key in credYaml :
                 store_value_to_yaml(credsYaml, key, credYaml[key])

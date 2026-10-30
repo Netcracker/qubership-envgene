@@ -152,7 +152,7 @@ def getEnvCredentials(env_dir):
     if not check_file_exists(envCredentialsPath):
         logger.error(f"Credentials for env {env_dir} are not found in {envCredentialsPath}")
         raise ReferenceError(f"Credentials for env {env_dir} are not found. See logs above.")
-    credYaml = current_cred_store().get(envCredentialsPath)
+    credYaml = current_cred_store().load_decrypted(envCredentialsPath)
     return credYaml
 
 

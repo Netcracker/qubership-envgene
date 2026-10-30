@@ -51,7 +51,7 @@ class CurrentEnvInstanceStore:
     def get(self, path):
         key = _key(path)
         if is_cred_file(str(key)):
-            return current_cred_store().get(key)
+            return current_cred_store().load_decrypted(key)
         if key not in self._objects:
             raise FileNotFoundError(f"{key} is not in the object store")
         return self._objects[key]

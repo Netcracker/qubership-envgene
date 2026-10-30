@@ -35,7 +35,7 @@ class CredStore:
             self._decrypted_snapshot.setdefault(key, copy.deepcopy(obj))
             return self._decrypted.setdefault(key, obj)
 
-    def get(self, path, allow_default=False) -> dict:
+    def load_decrypted(self, path, allow_default=False) -> dict:
         key = self._key(path)
         with self._lock:
             if key in self._decrypted:

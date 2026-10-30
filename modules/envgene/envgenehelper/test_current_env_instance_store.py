@@ -140,7 +140,7 @@ def test_credentials_are_kept_in_cred_store(env_dir, monkeypatch):
     objects.put(target, creds)
     cred_store.put(shared, shared_creds)
 
-    assert cred_store.get(target) is creds
+    assert cred_store.load_decrypted(target) is creds
     assert objects.get(shared) is shared_creds
     assert objects.exists(target)
     assert objects.exists(shared)

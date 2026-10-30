@@ -79,7 +79,7 @@ def read_env_cred_files(creds_files):
 
 def get_cred_file_content(filepath):
     try:
-        return current_cred_store().get(filepath)
+        return current_cred_store().load_decrypted(filepath)
     except Exception as e:
         raise ValidationError(ErrorMessages.FILE_READ_ERROR.format(file=filepath, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
 

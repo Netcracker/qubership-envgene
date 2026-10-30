@@ -50,14 +50,14 @@ run_single_env_pipeline
   is not touched, so `git diff` skips it. With `crypt: true` a plain cred file in scope counts as changed
   and is encrypted, as before the cred store, when the last step encrypted all cred files.
 - **The cred store compares a cred file in Python, an ES cred file in `sops edit`.** Steps read cred files
-  with `get`, so their decrypted original is in memory and the compare costs nothing. Nobody reads ES cred
-  files, so the cred store does not decrypt them: an ES cred file the CLI returns goes to `sops edit`
+  with `load_decrypted`, so their decrypted original is in memory and the compare costs nothing. Nobody reads
+  ES cred files, so the cred store does not decrypt them: an ES cred file the CLI returns goes to `sops edit`
   directly, and the editor script compares the objects. A separate decrypt would repeat the decrypt that
   `sops edit` does anyway. SOPS calls per file:
 
   | File | Not changed | Changed |
   | --- | --- | --- |
-  | Cred file read with `get` | 0 | 1: `sops edit` |
+  | Cred file read with `load_decrypted` | 0 | 1: `sops edit` |
   | Cred file only put: discovery creds, inventory | 1: decrypt to compare | 2: decrypt, `sops edit` |
   | ES cred file | 1: `sops edit`, exit 200, bytes kept | 1: `sops edit` |
 
@@ -111,16 +111,16 @@ run_single_env_pipeline
 - **Known limit: an inventory request that deletes an env and creates the same env creds again loses
   them.** `envDefinition` with `action: delete` deletes the env directory, then a credentials object with
   `place: env` puts the creds back. With the same content the cred store sees no change and writes nothing.
-- **A `put` of a deleted file writes it only when the object changed.** The cred store does not tell a
-  `put` from a `get`, so it never brings back a file that a step deleted after reading it. No step deletes a
-  cred file and then puts the same object: cloud passport cleanup keeps `<cloud>-creds.yml`, and an ES cred
-  file that nobody read is always written.
-- **`get` of a missing file takes `allow_default`, as `decrypt_file` does.** With it the cred store returns
-  an empty YAML and writes nothing until a `put`. `Environment` and `regdefv2_adapter` read env creds that
-  a new env does not have yet. Without it a missing file fails.
-- **Steps read creds with `current_cred_store().get`, not with `decrypt_file`.** `decrypt_file` does not
-  look into the cred store. It stays a plain function for `crypt_cli`, the pre-commit hook, and files that
-  are not repository creds: discovery creds encrypted with the discovery key.
+- **A `put` of a deleted file writes it only when the object changed.** The cred store does not tell a `put`
+  from a `load_decrypted`, so it never brings back a file that a step deleted after reading it. No step
+  deletes a cred file and then puts the same object: cloud passport cleanup keeps `<cloud>-creds.yml`, and an
+  ES cred file that nobody read is always written.
+- **`load_decrypted` of a missing file takes `allow_default`, as `decrypt_file` does.** With it the cred store
+  returns an empty YAML and writes nothing until a `put`. `Environment` and `regdefv2_adapter` read env creds
+  that a new env does not have yet. Without it a missing file fails.
+- **Steps read creds with `current_cred_store().load_decrypted`, not with `decrypt_file`.** `decrypt_file`
+  does not look into the cred store. It stays a plain function for `crypt_cli`, the pre-commit hook, and files
+  that are not repository creds: discovery creds encrypted with the discovery key.
 - **`validate_creds` and `get_deployer_config` also read from disk.** The CMDB import plugin calls them in
   `CMDB_import`, after `GitCommitStep`, when the cred store is closed. They read through
   `list_cred_files` and `read_cred_file` (`creds_helper.py`): the cred store when it is open, else
@@ -189,8 +189,8 @@ steps, so that no cred file is ever decrypted on disk.
 | Lifetime | inside `EnvBuildStep` | from the first step to `GitCommitStep` |
 | Holds | plain objects | plain objects and the original encrypted bytes |
 | At open | empty, reads no disk | reads the bytes of the cred files of the env |
-| Filled by | `put` only, the caller reads the disk | `put`, and `get` loads a file from disk on first read |
-| `get` of an unknown file | fails | loads it from disk, or returns an empty YAML with `allow_default` |
+| Filled by | `put` only, the caller reads the disk | `put`, and `load_decrypted` loads a file from disk on first read |
+| Read of an unknown file | fails | loads it from disk, or returns an empty YAML with `allow_default` |
 | `exists` | memory | memory or disk |
 | Format | `flush()`, schema and header from `beautify` | `_write`, the creds schema for every cred file, header from `put` |
 | Write | `flush()`, every put file | at close, only changed files, encrypted |

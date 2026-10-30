@@ -35,8 +35,8 @@ class Environment:
         self.inventory = openYaml(self.inventory_path, allow_default=True)
         logger.info(f"inventory: {self.inventory}")
 
-        self.creds = current_cred_store().get(self.creds_path, allow_default=True)
+        self.creds = current_cred_store().load_decrypted(self.creds_path, allow_default=True)
         logger.info(f"creds: {mask_sensitive(self.creds)}")
 
-        self.inv_gen_creds = current_cred_store().get(self.inv_gen_creds_path, allow_default=True)
+        self.inv_gen_creds = current_cred_store().load_decrypted(self.inv_gen_creds_path, allow_default=True)
         logger.info(f"inv_gen_creds: {mask_sensitive(self.inv_gen_creds)}")

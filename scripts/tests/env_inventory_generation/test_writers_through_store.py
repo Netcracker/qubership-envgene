@@ -50,6 +50,6 @@ def test_handle_objects_credentials_put_into_store(project):
     with open_cred_store():
         handle_objects(env_dir, objects, "credentials", INVENTORY, encrypt=True)
         assert path.read_bytes() == before
-        assert current_cred_store().get(path)["first_cred"]["data"]["secret"] == "token-changed-456"
+        assert current_cred_store().load_decrypted(path)["first_cred"]["data"]["secret"] == "token-changed-456"
     assert is_encrypted_SOPS(path)
     assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-changed-456"
