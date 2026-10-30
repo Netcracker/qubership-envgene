@@ -9,6 +9,8 @@ PROTECTED_FILES = {
     '.gitignore',
     'gitlab-ci/pipeline_vars.yaml',
     'gitlab-ci/pipeline_vars.yml',
+    'configuration/config.yml',
+    'configuration/credentials/credentials.yml',
 }
 
 
@@ -136,6 +138,14 @@ def main(parameters: Parameters):
             pipeline_vars_backup[f] = path.read_bytes()
             print(f'\t\tFile {f} exists. Backed up for preserve')
 
+    config_paths = ['configuration/config.yml', 'configuration/credentials/credentials.yml']
+    config_backup = {}
+    for f in config_paths:
+        path = repo_root / f
+        if path.exists() and path.is_file():
+            config_backup[f] = path.read_bytes()
+            print(f'\t\tFile {f} exists. Backed up for preserve')
+
     create_template(parameters, template, variables)
 
     # Restore pipeline_vars if it existed - never overwrite, keep only user's format
@@ -158,6 +168,13 @@ def main(parameters: Parameters):
                 if path.exists():
                     path.unlink()
                     print(f'\t\tRemoved {f} (user uses different format)')
+
+    for f in config_paths:
+        if f in config_backup:
+            path = repo_root / f
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(config_backup[f])
+            print(f'\t\tFile {f} preserved. Skip overwrite')
 
     internal_files_to_remove = ['history.log']
     for file_name in internal_files_to_remove:
