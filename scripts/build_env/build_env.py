@@ -1,4 +1,4 @@
-from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, getenv, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
+from envgenehelper import NamespaceRole, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, get_schema_dir, is_from_template_dir, logger, openJson, openYaml, os, path, pathlib, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
@@ -445,10 +445,6 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
             resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text,
         )
-    operation_type = OperationType(getenv("OPERATION_TYPE"))
-    if operation_type == OperationType.CLEAN:
-        set_cleaned_mark(namespaces)
-
     # process resource profiles
     result_profiles_dir = Path(f"{env_dir}/Profiles")
     all_profiles = collect_resource_profiles(resource_profiles_dir, profiles_schema,
@@ -487,23 +483,3 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
         env_instance_store.put(resulting_profile_path, env_instance_store.get(profile_file_path))
         env_instance_store.beautify(resulting_profile_path, profiles_schema, generated_header_text)
-
-
-def set_cleaned_mark(namespaces: list[NamespaceFile]):
-    ns_map = {ns.name: ns for ns in namespaces}
-    ns_names_var = getenv("NAMESPACE_NAMES")
-    if not ns_names_var:
-        logger.info("NAMESPACE_NAMES is empty, marking all namespaces as cleaned (env-cleanup)")
-        filtered_ns = namespaces.copy()
-    else:
-        ns_names = split_multi_value_param(ns_names_var)
-        filtered_ns = []
-        for name in ns_names:
-            ns_obj = ns_map.get(name)
-            if ns_obj is None:
-                raise ValueError(f"Operation type CLEAN: namespace '{name}' not found in env_instance")
-            filtered_ns.append(ns_obj)
-    for ns in filtered_ns:
-        logger.info(f"Operation type CLEAN: setting cleaned=true for namespace '{ns.name}'")
-        ns_yaml = current_env_instance_store().get(ns.definition_path)
-        set_nested_yaml_attribute(ns_yaml, "cleaned", True)

@@ -124,8 +124,11 @@ class GitRepoManager:
         if not full_env_name:
             return []
 
-        return [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
-                f"environments/{full_env_name}/Inventory/namespace-map.yml"]
+        excluded = [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml"]
+        # No-CMDB v2 CLEAN validates namespaces without rebuilding the environment.
+        if os.getenv("PIPELINE_TYPE") != PipelineType.GITLAB_DEPLOY:
+            excluded.append(f"environments/{full_env_name}/Inventory/namespace-map.yml")
+        return excluded
 
     def _get_dcl_paths(self) -> list[str]:
         full_env_name = os.getenv("FULL_ENV_NAME")

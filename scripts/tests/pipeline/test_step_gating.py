@@ -11,6 +11,7 @@ from envgenehelper.models import PipelineType
 
 from pipeline.orchestrator import (
     AppregdefRenderStep,
+    CleanupStep,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
     GenerateEffectiveSetStep,
@@ -84,7 +85,7 @@ class TestStepGating:
     @pytest.mark.unit
     @pytest.mark.parametrize("operation, bgd_operation, expected", [
         ("DEPLOY", "", True),
-        ("CLEAN", "", True),
+        ("CLEAN", "", False),
         ("BGD", "warmup", True),
         ("BGD", "promote", False),
     ])
@@ -100,11 +101,21 @@ class TestStepGating:
         assert not ProcessSdStep().should_run(ctx)
 
     @pytest.mark.unit
-    def test_appregdef_render_and_env_build_run_together_for_clean(self):
-        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN")
+    @pytest.mark.parametrize("force_steps", [False, True])
+    def test_clean_skips_rendering_build_and_calculator_even_when_forced(self, force_steps):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN",
+                   ENV_BUILDER=force_steps, GENERATE_EFFECTIVE_SET=force_steps)
 
-        assert AppregdefRenderStep().should_run(ctx)
-        assert EnvBuildStep().should_run(ctx)
+        for step in (AppregdefRenderStep(), RegdefV2AdapterStep(), ProcessDeploymentPlanStep(),
+                     EnvBuildStep(), GenerateEffectiveSetStep()):
+            assert not step.should_run(ctx), step.name
+        assert CleanupStep().should_run(ctx)
+
+    @pytest.mark.parametrize("pipeline_type, operation", [
+        ("LEGACY", "CLEAN"), ("GITLAB_DEPLOY", "DEPLOY"), ("GITLAB_DEPLOY", "BGD"),
+    ])
+    def test_cleanup_only_runs_for_gitlab_clean(self, pipeline_type, operation):
+        assert not CleanupStep().should_run(_ctx(PIPELINE_TYPE=pipeline_type, OPERATION_TYPE=operation))
 
     @pytest.mark.unit
     def test_env_build_skipped_for_bgd(self):
@@ -114,8 +125,8 @@ class TestStepGating:
         assert not EnvBuildStep().should_run(ctx)
 
     @pytest.mark.unit
-    def test_generate_effective_set_runs_for_deploy_clean_and_warmup(self):
-        for operation, bgd_operation in (("DEPLOY", ""), ("CLEAN", ""), ("BGD", "warmup")):
+    def test_generate_effective_set_runs_for_deploy_and_warmup(self):
+        for operation, bgd_operation in (("DEPLOY", ""), ("BGD", "warmup")):
             ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE=operation, BGD_OPERATION=bgd_operation)
 
             assert GenerateEffectiveSetStep().should_run(ctx)

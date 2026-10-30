@@ -6,6 +6,7 @@ from envgenehelper.business_helper import (
     parse_bg_ns_target,
 )
 from envgene_shared.utils.collections_utils import split_multi_value_param
+from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, resolve_namespace_entry
 
@@ -101,9 +102,25 @@ def reduce_deployment_plan(ctx: PipelineParametersHandler) -> None:
     namespace_names = split_multi_value_param(ctx.params.get("NAMESPACE_NAMES") or "")
 
     if namespace_names:
+        namespace_map_path = get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME / NAMESPACE_MAP_FILE
+        namespace_map = openYaml(namespace_map_path) or {}
+        known_namespaces = {
+            namespace
+            for entry in namespace_map.values()
+            for namespace in (entry.values() if isinstance(entry, dict) else [entry])
+        }
+        for namespace in namespace_names:
+            if namespace not in known_namespaces:
+                raise ValueError(f"Namespace '{namespace}' is absent from {NAMESPACE_MAP_FILE}")
+        deployed_namespaces = {entry.namespace for entry in ctx.deploy_plan.entities}
+        for namespace in namespace_names:
+            if namespace not in deployed_namespaces:
+                logger.warning(f"Namespace '{namespace}' is absent from deploy-plan.yml")
+
         reduced_deploy_plan = DeploymentPlanGeneratorCommand.filter(
             deploy_plan=ctx.deploy_plan,
             namespace_filter=";".join(f"!{ns}" for ns in namespace_names),
+            output_file=EnvgeneDeployPlan.path(),
         )
         reduced_entities = reduced_deploy_plan.entities
     else:

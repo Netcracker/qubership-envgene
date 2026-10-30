@@ -42,7 +42,6 @@ class TestGetExcludedPaths:
         }, clear=False):
             assert manager._get_excluded_paths() == [
                 "environments/cluster/env/Inventory/delta-deploy-plan.yml",
-                "environments/cluster/env/Inventory/namespace-map.yml",
             ]
 
     def test_gitlab_deploy_identifies_contexts_for_dcl(self):

@@ -5,6 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12.1"
 dependencies = [
+  "GitPython==3.1.50",
+  "PyYAML==6.0.2",
   "qubership_pipelines_common_library==2.0.14",
   "pydantic==2.13.2",
   "packaging==26.2",
@@ -13,4 +15,5 @@ dependencies = [
 
 [project.scripts]
 dpg = "dpg.main:cli"
+argo-dpg = "dpg.main:cli"
 

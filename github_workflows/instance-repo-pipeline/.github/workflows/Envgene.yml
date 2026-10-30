@@ -174,6 +174,7 @@ jobs:
 
       - name: EnvGene Execution
         run: |
+          set -e
           python3 /module/scripts/pipeline/orchestrator.py
           set -a && . envgene-vars.env && set +a
           if [[ "${PIPELINE_TYPE}" == "GITLAB_DEPLOY" ]]; then
@@ -185,12 +186,9 @@ jobs:
                 echo "Skipping argo-dpg context encryption because ENVGENE_AGE_PUBLIC_KEY is not defined"
               fi
             fi
-            if [[ "${OPERATION_TYPE}" == "CLEAN" ]]; then
-              export ESPUSHER_OVERWRITE="true"
-            else
-              export ESPUSHER_OVERWRITE="false"
+            if [[ "${OPERATION_TYPE}" != "CLEAN" ]]; then
+              python3 /module/scripts/effective_set/publish_effective_set.py
             fi
-            python3 /python/es-pusher/src/espusher/main.py push -p params.environment_id="${FULL_ENV_NAME}" -p params.commit_message="DEVOPS-001 Push effective set for \"${FULL_ENV_NAME}\"" -p params.overwrite="${ESPUSHER_OVERWRITE}" --log-level "${ENVGENE_LOG_LEVEL}"
           fi
 
           if [[ "${PIPELINE_TYPE}" != "GITLAB_DEPLOY" && "${CMDB_IMPORT,,}" == "true" ]]; then

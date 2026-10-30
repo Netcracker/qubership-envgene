@@ -155,6 +155,20 @@ class TestRunDeployPlanPartial:
 
 class TestRunDeployPlanFull:
     @pytest.mark.unit
+    def test_deploy_removes_previous_cleaned_markers(self, tmp_path, monkeypatch):
+        es = tmp_path / ES_DIR_NAME
+        create_es_app_dirs(es, DP_1, APP_1)
+        for context in (ESGenerationContext.DEPLOYMENT, ESGenerationContext.RUNTIME):
+            (es / context.value / DP_1 / ".cleaned").touch()
+        mock_cli(monkeypatch, on_run=lambda: create_es_app_dirs(es, DP_1, APP_1))
+
+        _run_deploy_plan_full(es, FULL_ENV_NAME, fake_plan([entry(APP_1, APP_VERSION, DP_1)]))
+
+        for context in (ESGenerationContext.DEPLOYMENT, ESGenerationContext.RUNTIME):
+            assert not (es / context.value / DP_1 / ".cleaned").exists()
+            assert (es / context.value / DP_1 / APP_1).is_dir()
+
+    @pytest.mark.unit
     def test_wipes_effective_set_dir(self, tmp_path, monkeypatch):
         es = tmp_path / ES_DIR_NAME
         create_es_app_dirs(es, DP_1, APP_1)
@@ -418,34 +432,6 @@ class TestEffectiveSetEntrypointDispatch:
 
 
 class TestRunGitlabDeployEffectiveSet:
-    @pytest.mark.unit
-    def test_clean_invokes_cli_without_deploy_plan_path(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("FULL_ENV_NAME", FULL_ENV_NAME)
-        monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
-        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: tmp_path)
-        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: tmp_path)
-
-        captured = {}
-
-        def capture_build_cli(es_dir, env_name, dp_path=None):
-            captured["dp_path"] = dp_path
-            return "fake_cmd"
-
-        monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", capture_build_cli)
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda *a, **k: None)
-        called = {}
-        monkeypatch.setattr(effective_set_entrypoint, "_run_deploy_plan_full",
-                             lambda *a, **k: called.setdefault("full", True))
-
-        class Ctx:
-            def is_clean(self):
-                return True
-
-        run_gitlab_deploy_effective_set(Ctx())
-
-        assert captured["dp_path"] is None
-        assert "full" not in called
-
     @pytest.mark.unit
     def test_deploy_regenerates_from_delta_plan(self, tmp_path, monkeypatch):
         monkeypatch.setenv("FULL_ENV_NAME", FULL_ENV_NAME)

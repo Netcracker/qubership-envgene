@@ -255,7 +255,9 @@ public class CmdbCliTest {
                 "--custom-params", "@config.json");
 
         assertEquals(0, exitCode);
-        assertTrue(Files.exists(outputPath.resolve("deployment/pg/.cleaned")));
+        assertFalse(Files.exists(outputPath.resolve("deployment/pg/.cleaned")));
+        assertFalse(Files.exists(outputPath.resolve("runtime/pg/.cleaned")));
+        assertFalse(Files.exists(outputPath.resolve("cleanup")));
         Path postgresAppDir = outputPath.resolve("deployment/pg/postgres");
         if (Files.isDirectory(postgresAppDir)) {
             assertTrue(FileUtils.listFiles(postgresAppDir.toFile(), null, true).isEmpty(),

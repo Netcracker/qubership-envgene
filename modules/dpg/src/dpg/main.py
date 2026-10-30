@@ -11,6 +11,16 @@ def cli():
 def plan():
     """Deploy Plan modification commands"""
 
+@cli.group()
+def cleanup():
+    """Clean effective set namespaces."""
+
+@cleanup.command("structure")
+@utils_cli
+def cleanup_structure(**kwargs):
+    from dpg.v1.cleanup import CleanupStructure
+    CleanupStructure(**kwargs).run()
+
 @plan.command("merge")
 @utils_cli
 def calculate_plan(**kwargs):

@@ -28,6 +28,7 @@ from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
+from effective_set.cleanup import clean_effective_set
 from effective_set.sboms_retention_policy import sboms_retention_policy
 from effective_set.generate_sboms import generate_sboms
 from deployment_plan.process_deployment_plan import merge_deployment_plan, reduce_deployment_plan
@@ -227,7 +228,7 @@ class AppregdefRenderStep(PipelineStep):
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
-            return True
+            return not ctx.is_clean()
         return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION') or ctx.params.get('SD_DATA'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
@@ -241,7 +242,7 @@ class RegdefV2AdapterStep(PipelineStep):
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if ctx.is_gitlab_deploy():
-            return ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
+            return OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY or ctx.is_bgd_warmup()
         return (ctx.has_sd_input() or bool(ctx.params.get("GENERATE_EFFECTIVE_SET"))) and bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
@@ -266,13 +267,10 @@ class ProcessDeploymentPlanStep(PipelineStep):
         return "process_deployment_plan"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
+        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        if OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.CLEAN:
-            reduce_deployment_plan(ctx)
-        else:
-            merge_deployment_plan(ctx)
+        merge_deployment_plan(ctx)
 
 
 class EnvBuildStep(PipelineStep):
@@ -281,9 +279,11 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        if ctx.is_gitlab_deploy() and ctx.is_clean():
+            return False
         if ctx.params.get('ENV_BUILDER'):
             return True
-        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
+        return ctx.is_gitlab_deploy() and OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
@@ -298,9 +298,14 @@ class GenerateEffectiveSetStep(PipelineStep):
         return "generate_effective_set"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET')) or (
-                ctx.is_gitlab_deploy() and (ctx.is_deploy_or_clean() or ctx.is_bgd_warmup())
-        )
+        if ctx.is_gitlab_deploy():
+            will_run = not ctx.is_clean() and (
+                bool(ctx.params.get('GENERATE_EFFECTIVE_SET'))
+                or OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
+                or ctx.is_bgd_warmup()
+            )
+        else:
+            will_run = bool(ctx.params.get('GENERATE_EFFECTIVE_SET'))
         if not will_run and ctx.params.get('CUSTOM_PARAMS'):
             logger.warning(
                 "'CUSTOM_PARAMS' is set but generate_effective_set is not running - CUSTOM_PARAMS has no effect here")
@@ -318,6 +323,19 @@ class GenerateEffectiveSetStep(PipelineStep):
                 run_gitlab_deploy_effective_set(ctx)
             else:
                 run_legacy_sd_effective_set(ctx)
+
+
+class CleanupStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "cleanup"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return ctx.is_gitlab_deploy() and ctx.is_clean()
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        reduce_deployment_plan(ctx)
+        clean_effective_set(ctx)
 
 
 class GitCommitStep(PipelineStep):
@@ -374,6 +392,7 @@ def run_single_env_pipeline() -> None:
         ProcessDeploymentPlanStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
+        CleanupStep(),
         GitCommitStep(),
         CMDB_import()
     ]
