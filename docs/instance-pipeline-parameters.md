@@ -635,27 +635,24 @@ deployment:
 
 ### `APPLICATION_VERSIONS`
 
-**Description**: One or more values to be deployed. Used to build the deployment plan and passed to ArgoCD repository
-generation. At `PIPELINE_TYPE: GITLAB_DEPLOY` it replaces `SD_VERSION`. Each value is either a standalone application or
-a Solution
-Descriptor, which is expanded into its applications.
+**Description**: The applications to deploy. Each application deploys to a target namespace at the given version.
+EnvGene builds the deployment plan from these values.
 
-Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`.
+In the [No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) architecture (`PIPELINE_TYPE: GITLAB_DEPLOY`), this
+parameter specifies what to deploy. It takes the place of `SD_VERSION`/`SD_DATA`, which does the same in
+[No-CMDB v1](/docs/deployment-architecture.md#no-cmdb-v1) (`PIPELINE_TYPE: LEGACY`).
 
-An application value uses one of two notations:
+Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`. Required when `OPERATION_TYPE: DEPLOY`.
 
-- `<application-name>:<version>`
-  The target namespace is resolved from the application `deployPostfix`.
-- `<namespace-name>:<application-name>:<version>`
-  The target namespace is set explicitly. Used when the application has no `deployPostfix`.
+Each value is either a standalone application or a Solution Descriptor that expands into several applications. A value
+expands only when the artifact it names is a Solution Descriptor. A single list can mix both kinds. The notation
+differs by case:
 
-Values may also be provided as a JSON or YAML list of objects:
-
-```yaml
-- version: <application-name>:<version>   # Mandatory
-  deployPostfix: <postfix>                # Optional
-  namespace: <namespace-name>             # Optional
-```
+- Standalone application: `<namespace-name>:<application-name>:<version>`
+  The target namespace is set explicitly, a standalone value carries no `deployPostfix`.
+- Solution Descriptor: `<sd-name>:<version>`
+  The descriptor expands into its applications. Each application's target namespace is resolved from the namespace map,
+  keyed by the `deployPostfix` the descriptor declares for it.
 
 If specifying more than one, separate them as described in [Multiple Values Support](#multiple-values-support).
 
@@ -665,8 +662,10 @@ If specifying more than one, separate them as described in [Multiple Values Supp
 
 **Example**:
 
-- `solution:0.64.2`
-- `env-1-bss:app-1:1.2.3`
+- Single application: `env-1-bss:app-1:1.2.3`
+- Multiple applications: `env-1-bss:app-1:1.2.3,env-1-oss:app-2:3.4.5`
+- Single Solution Descriptor: `solution:0.64.2`
+- Applications and a Solution Descriptor: `env-1-bss:app-1:1.2.3,solution:0.64.2,env-1-oss:app-2:3.4.5`
 
 ### `DEPLOY_POSTFIXES_FILTER`
 
@@ -845,16 +844,22 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `DEPLOYMENT_SESSION_ID`
 
-**Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/info/rfc4122/). This parameter is used in two scenarios:
+**Description**: Operation identifier in EnvGene, a [UUID v4](https://www.rfc-editor.org/info/rfc4122/).
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
-1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---trailertokenvalue) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
-2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator
-   command-line tool using the `--extra_params` attribute. In this case it is used together with
-   `GENERATE_EFFECTIVE_SET`.
+EnvGene generates this identifier once, at the start of the pipeline, when the caller does not supply
+it. An empty string is treated the same as an absent parameter: EnvGene generates a new UUID v4 in both
+cases. A supplied non-empty value is used unchanged.
 
-**Default Value**: None
+The generated value is exported to the pipeline environment, so later pipeline steps and downstream
+consumers read the same identifier. The same value is used everywhere the identifier appears:
+
+1. The pipeline commit includes a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---trailertokenvalue) in the format `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
+2. It is part of the deployment context of the Effective Set. EnvGene passes it to the Calculator
+   command-line tool through the `--extra_params` attribute, together with `GENERATE_EFFECTIVE_SET`.
+
+**Default Value**: A generated UUID v4
 
 **Mandatory**: No
 

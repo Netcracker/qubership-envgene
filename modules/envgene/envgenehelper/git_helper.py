@@ -7,7 +7,7 @@ from urllib.parse import quote
 import requests
 
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.business_utils import getenv_with_error, to_bool
 from envgenehelper.errors import IntegrationError
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
@@ -62,7 +62,7 @@ class GitContext(BaseModel):
                 "token": getenv_with_error("GITLAB_TOKEN", no_log=True),
                 "commit_sha": getenv_with_error("CI_COMMIT_SHA")
             }
-        elif os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+        elif to_bool(os.getenv("IS_LOCAL_DEV_TEST_ENVGENE")):
             data = {
                 "platform": "local",
                 "server_protocol": "http",
@@ -225,7 +225,7 @@ class GitRepoManager:
         return status == 1
 
     def _cherry_pick_and_push(self, snapshot_sha: str) -> None:
-        if os.getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+        if to_bool(os.getenv("IS_LOCAL_DEV_TEST_ENVGENE")):
             logger.info("Local test mode: skipping cherry-pick and push")
             return
 
@@ -272,6 +272,17 @@ class GitRepoManager:
 
         retry_call(retry_policy, run, retry_on=(RuntimeError,))
 
+    def _ensure_shared_cache_excluded(self) -> None:
+        exclude = Path(self.repo.git_dir) / "info" / "exclude"
+        pattern = ".shared/"
+        existing = exclude.read_text() if exclude.is_file() else ""
+        lines = existing.splitlines()
+        if pattern not in lines:
+            lines.append(pattern)
+            exclude.parent.mkdir(parents=True, exist_ok=True)
+            exclude.write_text("\n".join(lines) + "\n")
+            logger.info(f"Added {pattern} to {exclude}")
+
     def _metrics_collector_clean_excludes(self) -> list[str]:
         """`git clean -e` args protecting Metrics Collector state from the sparse-checkout clean.
 
@@ -304,6 +315,7 @@ class GitRepoManager:
         logger.info(f"git checkout -f {self.ctx.commit_sha}")
         self.repo.git.checkout("-f", self.ctx.commit_sha)
 
+        self._ensure_shared_cache_excluded()
         logger.info("git clean -ffd")
         self.repo.git.clean("-ffd", *self._metrics_collector_clean_excludes())
 

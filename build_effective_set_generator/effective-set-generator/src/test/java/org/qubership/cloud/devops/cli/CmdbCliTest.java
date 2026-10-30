@@ -16,6 +16,11 @@
 
 package org.qubership.cloud.devops.cli;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -28,11 +33,15 @@ import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileTestUtils;
 import picocli.CommandLine;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -344,6 +353,141 @@ public class CmdbCliTest {
                 "deployment/ns-test/vals-app/0190c7e2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/values")));
         assertTrue(Files.isDirectory(outputPath.resolve(
                 "deployment/ns-test/vals-app/0190c7e2-2b3c-8d4e-9f5a-6b7c8d9e0f1a/values")));
+    }
+
+    @Test
+    void testNamespaceBaselineAndOverrideReachEffectiveSet(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, NS_FILE, "ns-over", "dev");
+        writeProfile(envsPath, "ns-over", "prod");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "prod-mem", "REPLICAS", 5, "OVERRIDE_CPU", "700m"),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
+    void testNamespaceObjectBaselineReachesEffectiveSet(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        Path file = envsPath.resolve(NS_FILE);
+        Files.writeString(file, Files.readString(file) + "\nprofile:\n  baseline: \"dev\"\n");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "dev-mem", "REPLICAS", 1),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
+    void testCloudSideUsedWhenNamespaceHasNoProfileSignal(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, CLOUD_FILE, "cloud-over", "dev");
+        writeProfile(envsPath, "cloud-over", "prod");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "prod-mem", "REPLICAS", 5, "OVERRIDE_CPU", "700m"),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
+    void testProfileServiceWithoutParametersFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, NS_FILE, "ns-over", "dev");
+        Path profiles = envsPath.resolve("cluster-01/pl-02/Profiles");
+        Files.createDirectories(profiles);
+        Files.writeString(profiles.resolve("ns-over.yml"), """
+                name: "ns-over"
+                applications:
+                  - name: "vals-app"
+                    services:
+                      - name: "alertmanager"
+                """);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    private static final String NS_FILE = "cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
+    private static final String CLOUD_FILE = "cluster-01/pl-02/cloud.yml";
+    private static final String VALS_APP_SBOM = "vals-app/vals-app-0.1.0-20261215.141230-3-RELEASE.sbom.json";
+    private static final Set<String> BASE_SERVICE_KEYS = Set.of("ARTIFACT_DESCRIPTOR_VERSION", "DEPLOYMENT_RESOURCE_NAME",
+            "DEPLOYMENT_SESSION_ID", "DEPLOYMENT_VERSION", "DOCKER_TAG", "IMAGE_REPOSITORY", "MANAGED_BY",
+            "SERVICE_NAME", "TAG");
+
+    private Path prepareProfileEnv(Path tempDir) throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        FileUtils.copyDirectory(FileTestUtils.resource("configuration").toFile(), tempDir.resolve("configuration").toFile());
+        Path sbomsPath = tempDir.resolve("sboms");
+        FileUtils.copyDirectory(FileTestUtils.resource("sboms").toFile(), sbomsPath.toFile());
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = sbomsPath.resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        ArrayNode data = json.createArrayNode()
+                .add(baselineData(json, "dev", "BASELINE_MEMORY: dev-mem\nREPLICAS: 1\n"))
+                .add(baselineData(json, "prod", "BASELINE_MEMORY: prod-mem\nREPLICAS: 2\n"));
+        ObjectNode baselineComponent = json.createObjectNode()
+                .put("type", "data")
+                .put("mime-type", "application/vnd.qubership.resource-profile-baseline")
+                .put("bom-ref", "BomRef.profile-baselines")
+                .set("data", data);
+        ((ArrayNode) root.path("components").get(0).path("components")).add(baselineComponent);
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+        return envsPath;
+    }
+
+    private static ObjectNode baselineData(ObjectMapper json, String name, String yaml) {
+        ObjectNode attachment = json.createObjectNode()
+                .put("contentType", "application/yaml")
+                .put("encoding", "base64")
+                .put("content", Base64.getEncoder().encodeToString(yaml.getBytes(StandardCharsets.UTF_8)));
+        ObjectNode contents = json.createObjectNode().set("attachment", attachment);
+        return json.createObjectNode()
+                .put("type", "configuration")
+                .put("name", name + ".yaml")
+                .set("contents", contents);
+    }
+
+    private static void setObjectProfile(Path envsPath, String objectFile, String name, String baseline) throws Exception {
+        Path file = envsPath.resolve(objectFile);
+        Files.writeString(file, Files.readString(file)
+                + "\nprofile:\n  name: \"" + name + "\"\n  baseline: \"" + baseline + "\"\n");
+    }
+
+    private static void writeProfile(Path envsPath, String name, String baseline) throws Exception {
+        String profile = "name: \"" + name + "\"\nbaseline: \"" + baseline + "\"\n" + """
+                applications:
+                  - name: "vals-app"
+                    services:
+                      - name: "alertmanager"
+                        parameters:
+                          - name: "REPLICAS"
+                            value: 5
+                          - name: "OVERRIDE_CPU"
+                            value: "700m"
+                """;
+        Path profiles = envsPath.resolve("cluster-01/pl-02/Profiles");
+        Files.createDirectories(profiles);
+        Files.writeString(profiles.resolve(name + ".yml"), profile);
+    }
+
+    private Path generateProfileEs(Path tempDir, Path envsPath) throws Exception {
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), outputPath,
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertEquals(0, exitCode);
+        return outputPath;
+    }
+
+    private static Map<String, Object> profileParams(Path outputPath) throws Exception {
+        Path params = outputPath.resolve(
+                "deployment/ns-test/vals-app/values/per-service-parameters/alertmanager/deployment-parameters.yaml");
+        Map<String, Object> values = new ObjectMapper(new YAMLFactory()).readValue(params.toFile(),
+                new TypeReference<Map<String, Object>>() {
+                });
+        values.keySet().removeAll(BASE_SERVICE_KEYS);
+        return values;
     }
 
     private int executeGenerate(Path envsPath, Path sbomsPath, Path deployPlanPath, Path registriesPath,

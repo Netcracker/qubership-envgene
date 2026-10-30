@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 import requests
 from cloudevents.core.bindings.http import to_structured_event
 from cloudevents.core.v1.event import CloudEvent
+from envgene_shared.utils.business_utils import to_bool
 
 if TYPE_CHECKING:
     from pipeline.orchestrator import StepResult
@@ -32,7 +33,7 @@ class MetricsCollectorActivity:
     def __init__(self, ctx, trace_id: str | None = None, parent_id: str | None = None):
         self.ctx = ctx
         self.base_url = os.getenv("METRICS_COLLECTOR_URL", "").strip()
-        self.verify_ssl = os.getenv("METRICS_COLLECTOR_SSL_VERIFY", "true").strip().lower() != "false"
+        self.verify_ssl = to_bool(os.getenv("METRICS_COLLECTOR_SSL_VERIFY"), default=True)
         self.trace_id = trace_id or (resolve_trace_id() if self.base_url else "")
         self.parent_id = parent_id if parent_id is not None else os.getenv("METRICS_COLLECTOR_PARENT_ID", "")
 

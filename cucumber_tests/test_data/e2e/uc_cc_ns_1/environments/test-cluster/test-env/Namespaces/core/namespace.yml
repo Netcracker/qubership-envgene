@@ -1,0 +1,8 @@
+name: core
+deployParameters:
+  override_key: "original-value"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []

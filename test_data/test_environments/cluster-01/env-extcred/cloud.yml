@@ -14,7 +14,7 @@ dbMode: "db"
 databases: []
 maasConfig:
   credentialsId: "app-maas-cred" # cloud passport: ext-mode version: 1.5
-  enable: true  # cloud passport: ext-mode version: 1.5
+  enable: true # cloud passport: ext-mode version: 1.5
   maasUrl: "http://maas.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
   maasInternalAddress: "http://maas.maas:8080" # cloud passport: ext-mode version: 1.5
 vaultConfig:
@@ -22,7 +22,7 @@ vaultConfig:
   enable: false
   url: ""
 dbaasConfigs:
-  - credentialsId: "app-dbaas-cred"  # cloud passport: ext-mode version: 1.5
+  - credentialsId: "app-dbaas-cred" # cloud passport: ext-mode version: 1.5
     enable: true # cloud passport: ext-mode version: 1.5
     apiUrl: "http://dbaas.dbaas:8080" # cloud passport: ext-mode version: 1.5
     aggregatorUrl: "https://dbaas.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5

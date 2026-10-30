@@ -1,0 +1,6 @@
+inventory:
+  environmentName: "business-env"
+  cloudName: "mixed-cluster"
+envTemplate:
+  name: "test"
+  artifact: "test-artifact:v1"

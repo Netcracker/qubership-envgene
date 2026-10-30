@@ -49,12 +49,12 @@ You manage a solution called BSS that consists of one application (`Cloud-BSS`) 
 EnvGene manages performance parameters (CPU, memory, replicas, etc.) through a three-level hierarchy:
 
 | Level | Name                                               | Where it lives                                             | Who controls it       |
-|-------|----------------------------------------------------|------------------------------------------------------------|-----------------------|
-| 1     | Resource Profile **Baseline**                      | Application SBOM artifact                                  | Application developer |
+| ----- | -------------------------------------------------- | ---------------------------------------------------------- | --------------------- |
+| 1     | Resource Profile **Baseline**                      | Application artifact                                       | Application developer |
 | 2     | **Template** Resource Profile Override             | Template Repository `/templates/resource_profiles/`        | Template configurator |
 | 3     | **Environment-Specific** Resource Profile Override | Instance Repository `/environments/.../resource_profiles/` | Instance configurator |
 
-Each level overrides the previous one. The Baseline is the starting point; it ships inside the application (SBOM) and is selected by the name defined in the Cloud or Namespace template (e.g. `dev`, `prod`). You do not edit it.
+The Template Resource Profile Override and the Environment-Specific Resource Profile Override are combined into a single override (merged or replaced, depending on `mergeEnvSpecificResourceProfiles`), and that override's custom values are applied on top of the selected Baseline. In replace mode the Environment-Specific Resource Profile Override supersedes the Template Resource Profile Override entirely rather than layering onto it. The Baseline is the base the override sits on. It ships inside the application and is selected by the baseline name set in the Resource Profile Override, or on the Cloud or Namespace when the override does not set one (for example `dev` or `prod`). You do not edit it.
 
 A typical Baseline embedded in the application looks like this (shown for orientation only - you cannot change it):
 
@@ -73,7 +73,7 @@ REPLICAS: 1
 
 ## Step 2: Create a Template Resource Profile Override
 
-A Template Resource Profile Override lets you tune the Baseline values for all environments that use the same template - without touching the application artifact itself.
+A Template Resource Profile Override lets you set custom values on top of the Baseline for all environments that use the same template - without touching the application artifact itself.
 
 ### 2.1 Create the override file
 
@@ -126,7 +126,7 @@ applications:
 ```
 
 > The `name` field **must** exactly match the filename without the extension.
-> The `baseline` field is informational only and is not processed by EnvGene.
+> The `baseline` field selects which application baseline this override builds on. The Effective Set calculator applies that baseline's parameters first, then the override's custom values on top.
 
 ### 2.2 Reference the profile in a Namespace template
 
@@ -235,9 +235,9 @@ Key fields explained:
 | `override-profile-name` | Optional | Profile file in the **child** template repository     |
 | `parent-profile-name`   | Optional | Profile from the **parent** template to override      |
 | `baseline-profile-name` | Optional | Baseline name to set                                  |
-| `merge-with-parent`     | Optional | `true`: merge into parent; `false`: replace (default) |
+| `merge-with-parent`     | Optional | `true` merges into parent, `false` replaces (default) |
 
-When `merge-with-parent: true` the child's `project-bss-override` values are **merged into** the parent's `default-bss-override`. Only the parameters listed in `project-bss-override` are overwritten; all other parent parameters are preserved.
+When `merge-with-parent: true` the child's `project-bss-override` values are **merged into** the parent's `default-bss-override`. Only the parameters listed in `project-bss-override` are overwritten. All other parent parameters are preserved.
 
 When `merge-with-parent: false` the parent's profile is completely replaced by `project-bss-override`.
 
@@ -253,7 +253,7 @@ Place the override file in the location that matches the desired scope:
 
 | Location                                                        | Scope           | Use When                     |
 |-----------------------------------------------------------------|-----------------|------------------------------|
-| `/environments/<cluster>/<env>/Inventory/resource_profiles/`    | One environment | Env-specific tuning          |
+| `/environments/<cluster>/<env>/Inventory/resource_profiles/`    | One environment | Env-specific custom values   |
 | `/environments/<cluster>/resource_profiles/`                    | Cluster-wide    | All envs in cluster          |
 | `/environments/resource_profiles/`                              | Global          | All envs in the repository   |
 
@@ -286,7 +286,7 @@ You want all production environments to use 6 replicas. Create a cluster-wide ov
 ```yaml
 name: "prod-cluster-bss"
 baseline: "prod"
-description: "Cluster-wide production tuning for BSS"
+description: "Cluster-wide production custom values for BSS"
 applications:
   - name: "Cloud-BSS"
     services:
@@ -314,7 +314,7 @@ The key (`bss`) must match the **namespace folder name** under `Namespaces/` in 
 (for example `bss`, `core` when `deploy_postfix` is set, or `bss-origin` / `bss-peer` for Blue-Green namespaces).
 The value is the filename without the extension.
 
-By default (`mergeEnvSpecificResourceProfiles: true`) EnvGene **merges** the env-specific file into the template override. The `REPLICAS: 6` and `MEMORY_LIMIT: 6Gi` from `prod-cluster-bss` are applied on top of `prod-bss-override`; all other parameters from the template override are preserved. The resulting Resource Profile Override keeps the name of the Template Override.
+By default (`mergeEnvSpecificResourceProfiles: true`) EnvGene **merges** the env-specific file into the template override. The `REPLICAS: 6` and `MEMORY_LIMIT: 6Gi` from `prod-cluster-bss` are applied on top of `prod-bss-override`. All other parameters from the template override are preserved. The resulting Resource Profile Override keeps the name of the Template Override.
 
 To **replace** the template override entirely instead of merging, set:
 
@@ -376,7 +376,7 @@ After committing your changes, trigger environment generation and inspect two ar
 
 ### 7.1 Profile Override file in `Profiles/`
 
-The name of the resulting file in `Profiles/` depends on the combination mode:
+The name of the resulting file in `Profiles/` depends on the mode:
 
 | `mergeEnvSpecificResourceProfiles` | Resulting filename in `Profiles/`           |
 |------------------------------------|---------------------------------------------|
@@ -434,8 +434,8 @@ bss-processor:
 The two comment formats:
 
 | Comment                | Meaning                                                            |
-|------------------------|--------------------------------------------------------------------|
-| `#rp-baseline: <name>` | Value comes from the Baseline in the application SBOM              |
+| ---------------------- | ------------------------------------------------------------------ |
+| `#rp-baseline: <name>` | Value comes from the Baseline in the application                   |
 | `#rp-override: <name>` | Value was set or overridden by the named Resource Profile Override |
 
 - **Effective Set comment** - shows which `Profiles/` file contributed the value.
@@ -447,12 +447,12 @@ This makes troubleshooting straightforward: if a service is using unexpected res
 
 In this tutorial you walked through the full resource profile management workflow:
 
-- **Baseline** - ships with the application artifact; defines starting performance parameters; read-only from EnvGene's perspective.
-- **Template Resource Profile Override** - lives in `/templates/resource_profiles/`; referenced by `profile.name` in Cloud/Namespace templates; applies to all environments using the same template.
-- **`template_override`** - replace two near-identical template files with a single base template; assign different profiles in `dev.yml` / `prod.yml` Template Descriptors via the `template_override.profile` block.
+- **Baseline** - ships with the application artifact, defines starting performance parameters, and is read-only from EnvGene's perspective.
+- **Template Resource Profile Override** - lives in `/templates/resource_profiles/`, referenced by `profile.name` in Cloud/Namespace templates, and applies to all environments using the same template.
+- **`template_override`** - replace two near-identical template files with a single base template, then assign different profiles in `dev.yml` / `prod.yml` Template Descriptors via the `template_override.profile` block.
 - **`overrides-parent`** - when consuming an external versioned parent template artifact, swap or augment its profile in the child Template Descriptor without editing the parent artifact.
-- **Environment-Specific Override** - lives in the Instance Repository; referenced via `envSpecificResourceProfiles` in `env_definition.yml`; merged into or replaces the template override depending on `mergeEnvSpecificResourceProfiles`.
-- **Override of override** - give the env-specific file a distinct name and reference it explicitly in `env_definition.yml`; use the environment-specific path (`/environments/<cluster>/<env>/Inventory/resource_profiles/`) to scope it to one environment, leaving all others unaffected.
+- **Environment-Specific Override** - lives in the Instance Repository, referenced via `envSpecificResourceProfiles` in `env_definition.yml`, and merged into or replaces the template override depending on `mergeEnvSpecificResourceProfiles`.
+- **Override of override** - give the env-specific file a distinct name and reference it explicitly in `env_definition.yml`. Use the environment-specific path (`/environments/<cluster>/<env>/Inventory/resource_profiles/`) to scope it to one environment, leaving all others unaffected.
 
 **Related documentation:**
 

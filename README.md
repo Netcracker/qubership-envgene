@@ -168,6 +168,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
 - [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
+- [**Cleanup**](/docs/features/clean.md) - What cleanup is in EnvGene, the `CLEAN` operation, and the cleanup output each deployment architecture produces
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
@@ -181,6 +182,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**Resource Profile Cache**](/docs/features/resource-profile-cache.md) - Reuse parsed Resource Profiles between instance pipeline runs
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 - [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting

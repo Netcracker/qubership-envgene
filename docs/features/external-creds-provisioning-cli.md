@@ -82,6 +82,12 @@ The right column illustrates with `secret_store_id=secret_store`:
 | `gcp`      | `GOOGLE_APPLICATION_CREDENTIALS`             | `secret_store_GOOGLE_APPLICATION_CREDENTIALS`                          |
 | `aws`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | `secret_store_AWS_ACCESS_KEY_ID`, `secret_store_AWS_SECRET_ACCESS_KEY` |
 
+> [!NOTE]
+> For `gcp`, provide the service account key in one of two variables. `GOOGLE_APPLICATION_CREDENTIALS` holds a
+> path to the key file. `GOOGLE_APPLICATION_CREDENTIALS_CONTENT` holds the raw JSON content, which the CLI reads
+> directly. When both are set, `GOOGLE_APPLICATION_CREDENTIALS_CONTENT` takes precedence. The `secret_store_id`
+> prefix applies to both variants (`secret_store_GOOGLE_APPLICATION_CREDENTIALS_CONTENT`).
+
 The variable suffix conventions (`VAULT_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, etc.)
 follow the `secret_manager` module contract per store type. The authoritative source is
 the module documentation.

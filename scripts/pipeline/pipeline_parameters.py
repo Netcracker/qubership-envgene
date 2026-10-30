@@ -10,6 +10,7 @@ from typing import Optional, Self, Any
 import yaml
 from pydantic import BaseModel, Field
 
+from envgene_shared.utils.business_utils import to_bool
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.file_utils import writeToFile
 from regdefv2_adapter.regdefv2_adapter import REGDEFS_DIRNAME
@@ -19,6 +20,9 @@ from envgenehelper.sd_helper import MergeType
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, BgdOperation, \
     DeltaDeployType, ExternalCredentialProvisioning
 from envgenehelper.plugin_engine import PluginEngine
+
+JOB_ENV_EXPORTS = (
+    "REQUESTS_CA_BUNDLE", "GIT_SSL_CAINFO", "LOCAL_APPDEFS_PATH", "LOCAL_REGDEFS_PATH", "LOCAL_PUBREG_FILE")
 
 
 class PipelineParametersHandler(BaseModel):
@@ -43,6 +47,7 @@ class PipelineParametersHandler(BaseModel):
     )
     # for reg defs v2 calculated from cloud e2e params
     transient_regdefs_dir: Optional[Path] = None
+    rendered_regdef_names: list[str] = Field(default_factory=list)
 
     @staticmethod
     def exclude_sensitive_parameters(params: dict[str, Any], sensitive_params: list[str]) -> dict[str, Any]:
@@ -51,28 +56,22 @@ class PipelineParametersHandler(BaseModel):
 
 
     @staticmethod
-    def build_params() -> dict:
-        """Collect pipeline parameters from env vars: defaults, plugins, JSON normalisation.
-
-        Free of side effects (no os.environ writes, no generated IDs), so callers that only
-        need the parameter list, e.g. the Metrics Collector hooks, can use it without
-        initialising the pipeline context. DEPLOYMENT_SESSION_ID is generated in from_env().
-        """
+    def build_params() -> dict: 
         full_env_name = getenv("ENV_NAMES")
 
         params = {
             'ENV_NAMES': full_env_name,
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
-            'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
-            'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
-            'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
+            'ENV_BUILDER': to_bool(getenv("ENV_BUILDER")),
+            'GET_PASSPORT': to_bool(getenv("GET_PASSPORT")),
+            'GENERATE_EFFECTIVE_SET': to_bool(getenv("GENERATE_EFFECTIVE_SET")),
             'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
             'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
             "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE", MergeType.BASIC.value),
-            "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
+            "ENV_INVENTORY_INIT": to_bool(getenv("ENV_INVENTORY_INIT")),
             "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
@@ -135,6 +134,7 @@ class PipelineParametersHandler(BaseModel):
             'CLUSTER_NAME': cluster_name,
             'ENVIRONMENT_NAME': env_name,
         }
+        internal_params.update({name: value for name in JOB_ENV_EXPORTS if (value := getenv(name))})
         for k, v in internal_params.items():
             os.environ[k] = v
         return cls(

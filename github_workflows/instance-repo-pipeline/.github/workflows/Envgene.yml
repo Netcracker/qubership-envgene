@@ -124,14 +124,13 @@ env:
 
 
 jobs:
-  ### env-prepare - START ###
   env-prepare:
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
     outputs:
       PACKAGE_NAME: ${{ steps.set-outputs.outputs.PACKAGE_NAME }}
     container:
-      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.6.7' }}
+      image: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ vars.DOCKER_NAMESPACE || 'netcracker' }}/${{ vars.ENVGENE_IMAGE || 'qubership-envgene' }}:${{ vars.ENVGENE_VERSION || '2.11.0' }}
       options: --user root
       credentials:
         username: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP' && '_json_key' || github.actor }}
@@ -152,6 +151,13 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
+
+      - name: Restore resource profile cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: .shared/
+          key: envgene-profile-cache-${{ github.run_id }}
+          restore-keys: envgene-profile-cache-
 
       - name: Load environment variables from configuration files
         uses: ./.github/actions/load-env-files
@@ -175,13 +181,6 @@ jobs:
 
       - name: EnvGene Execution
         run: |
-          /module/scripts/utils/handle_certs.sh
-          python3 /module/scripts/pipeline/resolve_env_names.py
-          set -a && . ./envgene-resolved.env && set +a
-          python3 /module/scripts/utils/sparse_checkout.py
-          if [[ -f "${HOME}/.bashrc" ]]; then
-            source "${HOME}/.bashrc"
-          fi
           python3 /module/scripts/pipeline/orchestrator.py
           set -a && . envgene-vars.env && set +a
           if [[ "${PIPELINE_TYPE}" == "GITLAB_DEPLOY" ]]; then
@@ -217,9 +216,7 @@ jobs:
             tmp/
             ARGO_DPG_CONTEXT.env
           include-hidden-files: true
-  ### env-prepare - END ###
 
-  ### sync - START ###
   sync:
     needs: env-prepare
     if: inputs.PIPELINE_TYPE == 'GITLAB_DEPLOY' && inputs.OPERATION_TYPE != 'CLEAN'
@@ -271,4 +268,3 @@ jobs:
             deploy-report.json
           if-no-files-found: ignore
           retention-days: 1
-  ### sync - END ###

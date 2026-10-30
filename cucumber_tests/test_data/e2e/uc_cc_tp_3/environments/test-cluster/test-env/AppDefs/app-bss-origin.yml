@@ -1,0 +1,4 @@
+name: app-bss-origin
+registryName: mock-reg
+artifactId: test_app_artifact
+groupId: com.test
