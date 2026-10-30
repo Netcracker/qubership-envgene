@@ -98,11 +98,6 @@ def read_repository_config(rootdir: Path, environment_id: str) -> dict:
     return params
 
 
-def cleanup_repository(rootdir: Path, environment_id: str, namespace_names: str, commit_message: str) -> None:
-    _update_repository(rootdir, environment_id, commit_message,
-                       lambda effective_set: clean_namespaces(effective_set, namespace_names), mirror=True)
-
-
 def remove_cleaned_markers(effective_set: Path, namespaces: set[str]) -> None:
     for context in CONTEXTS:
         remote_mapping_file = effective_set / context / "mapping.yaml"
@@ -125,16 +120,7 @@ def remove_cleaned_markers(effective_set: Path, namespaces: set[str]) -> None:
             (remote_dir / ".cleaned").unlink()
 
 
-def finalize_deployment(rootdir: Path, environment_id: str, namespaces: set[str]) -> None:
-    if not namespaces:
-        return
-
-    # The publisher has already written the application content. Only its cleanup signal changes here.
-    _update_repository(rootdir, environment_id, f"Finalize deployed namespaces for {environment_id}",
-                       lambda effective_set: remove_cleaned_markers(effective_set, namespaces))
-
-
-def _update_repository(rootdir, environment_id, commit_message, update, mirror=False):
+def cleanup_repository(rootdir: Path, environment_id: str, namespace_names: str, commit_message: str) -> None:
     config = read_repository_config(rootdir, environment_id)
     url = config["DCL_GIT_URL"]
     branch = config["DCL_GIT_BRANCH"]
@@ -152,7 +138,7 @@ def _update_repository(rootdir, environment_id, commit_message, update, mirror=F
     with tempfile.TemporaryDirectory(prefix="es-cleanup-") as checkout:
         with Repo.clone_from(url, checkout, branch=branch, depth=1, single_branch=True, env=git_env) as repo:
             effective_set = Path(checkout) / relative_es
-            update(effective_set)
+            clean_namespaces(effective_set, namespace_names)
             if effective_set.is_dir():
                 repo.git.add("--all", "--", relative_es.as_posix())
             if repo.index.diff("HEAD"):
@@ -162,7 +148,7 @@ def _update_repository(rootdir, environment_id, commit_message, update, mirror=F
                 with repo.git.custom_environment(**git_env):
                     repo.remote().push(f"HEAD:refs/heads/{branch}").raise_if_error()
             # Keep local artifacts aligned with the remote ES without replacing pipeline configuration.
-            for context in (*CONTEXTS, "cleanup") if mirror else ():
+            for context in (*CONTEXTS, "cleanup"):
                 source = effective_set / context
                 destination = rootdir / relative_es / context
                 if destination.exists():

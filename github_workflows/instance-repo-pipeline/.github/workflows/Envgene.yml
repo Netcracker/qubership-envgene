@@ -186,9 +186,6 @@ jobs:
                 echo "Skipping argo-dpg context encryption because ENVGENE_AGE_PUBLIC_KEY is not defined"
               fi
             fi
-            if [[ "${OPERATION_TYPE}" != "CLEAN" ]]; then
-              python3 /module/scripts/effective_set/publish_effective_set.py
-            fi
           fi
 
           if [[ "${PIPELINE_TYPE}" != "GITLAB_DEPLOY" && "${CMDB_IMPORT,,}" == "true" ]]; then

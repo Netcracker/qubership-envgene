@@ -5,7 +5,7 @@ import pytest
 import yaml
 from git import Repo
 
-from dpg.v1.cleanup import clean_namespaces, cleanup_repository, finalize_deployment
+from dpg.v1.cleanup import clean_namespaces, cleanup_repository, remove_cleaned_markers
 
 
 def snapshot(directory):
@@ -116,9 +116,6 @@ def test_cleanup_and_redeploy_update_the_remote_effective_set(effective_set, tmp
         assert bare.commit("refs/heads/main").hexsha == commit
         assert (pipeline / "parameters.yaml").is_file()
 
-        for context in ("deployment", "runtime"):
-            (local_es / context / "core" / ".cleaned").unlink()
-            (local_es / context / "core" / "app" / "parameters.yaml").write_text("new: deployment\n")
         untouched = {
             f"{context}/bss/{path}": content
             for context in ("deployment", "runtime")
@@ -126,7 +123,7 @@ def test_cleanup_and_redeploy_update_the_remote_effective_set(effective_set, tmp
         }
 
         with pytest.raises(ValueError, match="No published application content.*env-core"):
-            finalize_deployment(local_root, "cluster/env", {"env-core"})
+            remove_cleaned_markers(local_es, {"env-core"})
         assert bare.commit("refs/heads/main").hexsha == commit
 
         with Repo.clone_from(str(remote), tmp_path / "publisher", branch="main") as publisher:
@@ -134,13 +131,13 @@ def test_cleanup_and_redeploy_update_the_remote_effective_set(effective_set, tmp
                 application = Path(publisher.working_tree_dir) / "environments/cluster/env/effective-set" / context / "core/app"
                 (application / "parameters.yaml").write_text("new: deployment\n")
                 (application / "publisher-output.yaml").write_text("publisher: output\n")
+            remove_cleaned_markers(
+                Path(publisher.working_tree_dir) / "environments/cluster/env/effective-set", {"env-core"})
             publisher.git.add(".")
             with publisher.git.custom_environment(GIT_AUTHOR_NAME="Test", GIT_AUTHOR_EMAIL="test@example.com",
                                                   GIT_COMMITTER_NAME="Test", GIT_COMMITTER_EMAIL="test@example.com"):
                 publisher.git.commit("-m", "Publish rebuilt namespace")
             publisher.remote().push("HEAD:refs/heads/main").raise_if_error()
-
-        finalize_deployment(local_root, "cluster/env", {"env-core"})
 
         tree = bare.commit("refs/heads/main").tree / "environments/cluster/env/effective-set"
         for context in ("deployment", "runtime"):
