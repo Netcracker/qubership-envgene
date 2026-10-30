@@ -6,6 +6,7 @@
   - [Request body mapping](#request-body-mapping)
     - [Event fields](#event-fields)
     - [`data` fields](#data-fields)
+    - [`data.config` item fields](#dataconfig-item-fields)
     - [`data.steps` item fields](#datasteps-item-fields)
   - [Processing flow](#processing-flow)
   - [Result](#result)
@@ -28,54 +29,73 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 
 ## Input parameters
 
-| Parameter                      | Source | Required | Default   | Values / format   | Effect                                     |
-|--------------------------------|--------|----------|-----------|-------------------|--------------------------------------------|
-| `METRICS_COLLECTOR_URL`        | CI/CD  | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
-| `METRICS_COLLECTOR_TRACE_ID`   | CI/CD  | No       | generated | 32 hex characters | Event field `traceid`                      |
-| `METRICS_COLLECTOR_PARENT_ID`  | CI/CD  | No       | `""`      | Parent event `id` | Event field `parentid`                     |
-| `METRICS_COLLECTOR_SSL_VERIFY` | CI/CD  | No       | `true`    | `true` or `false` | `false` skips TLS certificate verification |
+| Parameter                      | Source   | Required | Default   | Values / format   | Effect                                     |
+|--------------------------------|----------|----------|-----------|-------------------|--------------------------------------------|
+| `METRICS_COLLECTOR_URL`        | CI/CD    | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
+| `METRICS_COLLECTOR_TRACE_ID`   | Pipeline | No       | generated | 32 hex characters | Event field `traceid`                      |
+| `METRICS_COLLECTOR_PARENT_ID`  | Pipeline | No       | omitted   | Parent event `id` | Sets `parentid`, or omits the field        |
+| `METRICS_COLLECTOR_SSL_VERIFY` | CI/CD    | No       | `true`    | `true` or `false` | `false` skips TLS certificate verification |
 
 ## Request body mapping
 
 ### Event fields
 
-| Field           | Required | Source                                               | Example                                                   |
-|-----------------|----------|------------------------------------------------------|-----------------------------------------------------------|
-| `specversion`   | Yes      | `"1.0"`                                              | `"1.0"`                                                   |
-| `id`            | Yes      | EnvGene (UUID v4)                                    | `"123e4567-e89b-12d3-a456-426614174000"`                  |
-| `source`        | Yes      | `CI_PROJECT_URL`, or `urn:envgene:instance-pipeline` | `"https://gitlab.example.com/platform/env-instance-repo"` |
-| `type`          | Yes      | `"start"`, `"running"`, or `"stop"`                  | `"start"`                                                 |
-| `kind`          | Yes      | `"pipeline"`                                         | `"pipeline"`                                              |
-| `kindversion`   | Yes      | `"1.0"`                                              | `"1.0"`                                                   |
-| `traceid`       | Yes      | `METRICS_COLLECTOR_TRACE_ID`, or generated           | `"4bf92f3577b34da6a3ce929d0e0e4736"`                      |
-| `parentid`      | No       | `METRICS_COLLECTOR_PARENT_ID`, or `""`               | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"`                  |
-| `technicalname` | Yes      | `CI_JOB_NAME`, or `instance_pipeline`                | `"env_prepare"`                                           |
-| `displayname`   | No       | Constant `EnvGene Instance Pipeline`                 | `"EnvGene Instance Pipeline"`                             |
-| `jobid`         | Yes      | `CI_JOB_ID`                                          | `"5550001"`                                               |
-| `pipelineid`    | Yes      | `CI_PIPELINE_ID`                                     | `"987654"`                                                |
-| `projectid`     | Yes      | `CI_PROJECT_ID`                                      | `"12345"`                                                 |
-| `status`        | No       | `IN_PROGRESS`, `SUCCESS`, `FAILED`, or other         | `"SUCCESS"`                                               |
-| `time`          | Yes      | Current UTC time                                     | `"2026-06-12T14:00:00Z"`                                  |
-| `data`          | Yes      | See [`data` fields](#data-fields)                    | *(object)*                                                |
+| Field              | Required | Source                                                  | Example                                                   |
+|--------------------|----------|---------------------------------------------------------|-----------------------------------------------------------|
+| `specversion`      | Yes      | `"1.0"`                                                 | `"1.0"`                                                   |
+| `id`               | Yes      | EnvGene (UUID v4)                                       | `"123e4567-e89b-12d3-a456-426614174000"`                  |
+| `source`           | Yes      | `CI_PROJECT_URL`                                        | `"https://gitlab.example.com/platform/env-instance-repo"` |
+| `type`             | Yes      | `"start"`, `"running"`, or `"stop"`                     | `"start"`                                                 |
+| `subject`          | Yes      | `CI_JOB_ID` of the job that sends the event             | `"5550001"`                                               |
+| `kind`             | Yes      | `"pipeline"`                                            | `"pipeline"`                                              |
+| `kindversion`      | Yes      | `"1.0"`                                                 | `"1.0"`                                                   |
+| `traceid`          | Yes      | `METRICS_COLLECTOR_TRACE_ID`, or generated              | `"4bf92f3577b34da6a3ce929d0e0e4736"`                      |
+| `parentid`         | No       | `METRICS_COLLECTOR_PARENT_ID` when set. Omit when empty | `"d72800f6-29c7-42b5-a9ab-519f026bcad5"`                  |
+| `technicalname`    | Yes      | `<DD name>:<CI_JOB_NAME>`                               | `"envgene-instance-pipeline:env_prepare"`                 |
+| `technicalversion` | Yes      | Instance repository Deployment Descriptor version       | `"v3.9.1-cloud_dd-20261007.065010-1-RELEASE"`             |
+| `displayname`      | No       | Constant `EnvGene Instance Pipeline`                    | `"EnvGene Instance Pipeline"`                             |
+| `datacontenttype`  | Yes      | `"application/json"`                                    | `"application/json"`                                      |
+| `jobid`            | Yes      | `CI_JOB_ID`                                             | `"5550001"`                                               |
+| `pipelineid`       | Yes      | `CI_PIPELINE_ID`                                        | `"987654"`                                                |
+| `projectid`        | Yes      | `CI_PROJECT_ID`                                         | `"12345"`                                                 |
+| `status`           | No       | `IN_PROGRESS`, `SUCCESS`, `FAILED`, or other            | `"SUCCESS"`                                               |
+| `time`             | Yes      | Current UTC time                                        | `"2026-06-12T14:00:00Z"`                                  |
+| `data`             | Yes      | See [`data` fields](#data-fields)                       | *(object)*                                                |
 
 Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`.
 
 ### `data` fields
 
-| Field             | Required | `start` | `running` (in progress) | `running` (finished) | `stop`      | Source          |
-|-------------------|----------|---------|-------------------------|----------------------|-------------|-----------------|
-| `envgeneVersion`  | Yes      | Yes     | Yes                     | Yes                  | Yes         | EnvGene version |
-| `inputParameters` | Yes      | Yes     | Yes                     | Yes                  | Yes         | Pipeline inputs |
-| `steps`           | No       | No      | When recorded           | Yes                  | Current job | Step results    |
+`data` carries an `EnvGenePipelineReport`. Each event carries the report as it is known at the time of
+the event.
+
+| Field        | Required | `start` | `running` (in progress) | `running` (finished) | `stop`      | Source                                       |
+|--------------|----------|---------|-------------------------|----------------------|-------------|----------------------------------------------|
+| `kind`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `EnvGenePipelineReport`             |
+| `apiVersion` | Yes      | Yes     | Yes                     | Yes                  | Yes         | Constant `v1`                                |
+| `user`       | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_LOGIN`                          |
+| `email`      | Yes      | Yes     | Yes                     | Yes                  | Yes         | `GITLAB_USER_EMAIL`                          |
+| `config`     | Yes      | Yes     | Yes                     | Yes                  | Yes         | See [`data.config`](#dataconfig-item-fields) |
+| `steps`      | No       | No      | When recorded           | Yes                  | Current job | See [`data.steps`](#datasteps-item-fields)   |
+
+### `data.config` item fields
+
+| Field   | Required | Source                                     |
+|---------|----------|--------------------------------------------|
+| `name`  | Yes      | Pipeline parameter name                    |
+| `value` | Yes      | Pipeline parameter value, as a string      |
+
+`config` lists every non-empty pipeline parameter except `CRED_ROTATION_PAYLOAD` and
+`ENV_INVENTORY_CONTENT`.
 
 ### `data.steps` item fields
 
-| Field         | Required | Source                                               |
-|---------------|----------|------------------------------------------------------|
-| `name`        | Yes      | Step name                                            |
-| `status`      | Yes      | `SUCCESS`, `FAILED`, or `SKIPPED`                    |
-| `durationMs`  | No       | Milliseconds. Omitted when the step was skipped      |
-| `environment` | No       | Recorded `ENV_NAMES`, when environments are combined |
+| Field         | Required | Source                                                                            |
+|---------------|----------|-----------------------------------------------------------------------------------|
+| `name`        | Yes      | Step name                                                                         |
+| `time`        | No       | Step duration in `H:MM:SS`, rounded to seconds. Omitted when the step was skipped |
+| `status`      | Yes      | `SUCCESS`, `FAILED`, or `SKIPPED`                                                 |
+| `environment` | No       | Recorded `ENV_NAMES`, when environments are combined                              |
 
 ## Processing flow
 
@@ -94,32 +114,33 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
       pipeline passes it. Otherwise EnvGene generates a new UUID v4 for the run.
 
    3. EnvGene sets `parentid` from environment variable `METRICS_COLLECTOR_PARENT_ID` when the parent
-      pipeline passes it. Otherwise EnvGene sends `""`.
+      pipeline passes a non-empty value. Otherwise EnvGene omits `parentid`.
 
    4. When `ENV_NAMES` lists multiple environments, each child process inherits
       `METRICS_COLLECTOR_TRACE_ID` and sends its own `running` events. Child processes do not send
       `start` or `stop`. The run sends one `start` event and one `stop` event, and those events use
-      the same `traceid`. The `stop` event reads the child completion files. It uses `inputParameters`
+      the same `traceid`. The `stop` event reads the child completion files. It uses `config`
       from the first file in name order, then sets `ENV_NAMES` to the recorded environment names
       joined by commas. When more than one completion belongs to the current `CI_JOB_ID`, each
       `steps` item includes `environment`.
 
 3. **Build event payload**
 
-   1. EnvGene sets `data.envgeneVersion` to the EnvGene build version.
+   1. EnvGene sets `data.kind` to `EnvGenePipelineReport` and `data.apiVersion` to `v1`.
 
-   2. EnvGene sets `data.inputParameters` from non-empty pipeline parameters. It omits
-      `CRED_ROTATION_PAYLOAD` and `ENV_INVENTORY_CONTENT`. The `start`, `running`, and `stop` hook
-      commands, before they apply a recorded completion, include only `PIPELINE_TYPE` and `ENV_NAMES`
-      when those variables are set.
+   2. EnvGene sets `data.user` from `GITLAB_USER_LOGIN` and `data.email` from `GITLAB_USER_EMAIL`.
 
-   3. EnvGene sets the remaining event fields from [Event fields](#event-fields).
+   3. EnvGene sets `data.config` from non-empty pipeline parameters. It omits
+      `CRED_ROTATION_PAYLOAD` and `ENV_INVENTORY_CONTENT`. Every event of the run, including `start`,
+      carries the full `config`.
+
+   4. EnvGene sets the remaining event fields from [Event fields](#event-fields).
 
 4. **Send `start` event**
 
    1. EnvGene sends `type: start` with `status: IN_PROGRESS` when the run begins.
 
-   2. EnvGene sets `jobid` from `CI_JOB_ID` and `technicalname` from `CI_JOB_NAME`.
+   2. EnvGene sets `jobid` from `CI_JOB_ID` and `technicalname` to `<DD name>:<CI_JOB_NAME>`.
 
    3. EnvGene sets event field `time` to the current UTC timestamp.
 
@@ -160,7 +181,7 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
       `deploy_postfix_namespace_map`, `process_sd`, `migrate_sd_to_deploy_plan`,
       `process_deployment_plan`, `env_build`, `generate_effective_set`, `git_commit`, `CMDB_import`.
       It then records `copy_env_artifact`. For each step, the Instance pipeline records `name`,
-      `status` (`SUCCESS`, `FAILED`, or `SKIPPED`), and `durationMs` when the step ran.
+      `status` (`SUCCESS`, `FAILED`, or `SKIPPED`), and `time` when the step ran.
 
    5. EnvGene sets event field `time` to the current UTC timestamp and reuses the same `traceid` and
       `parentid` as the matching `start` event.
@@ -209,10 +230,9 @@ body exceeds 1 MiB.
 
 ## Examples
 
-JSON examples shorten `data.steps` and `inputParameters`. A real event lists every registered step, then
-`copy_env_artifact`. An orchestrator event, and any later event that reads a recorded completion, puts
-every non-empty pipeline parameter into `inputParameters` except `CRED_ROTATION_PAYLOAD` and
-`ENV_INVENTORY_CONTENT`. The examples below keep only `PIPELINE_TYPE`.
+JSON examples shorten `data.steps` and `data.config`. A real event lists every registered step, then
+`copy_env_artifact`. Every event puts every non-empty pipeline parameter into `config` except
+`CRED_ROTATION_PAYLOAD` and `ENV_INVENTORY_CONTENT`. The examples below keep only `PIPELINE_TYPE`.
 
 ### Pipeline with one job `env_prepare`
 
@@ -234,19 +254,24 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "IN_PROGRESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -262,19 +287,24 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "IN_PROGRESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:05Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -290,23 +320,28 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "SUCCESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:25:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    },
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ],
     "steps": [
       { "name": "get_passport", "status": "SKIPPED" },
-      { "name": "env_build", "status": "SUCCESS", "durationMs": 120000 },
-      { "name": "git_commit", "status": "SUCCESS", "durationMs": 15000 }
+      { "name": "env_build", "time": "0:02:00", "status": "SUCCESS" },
+      { "name": "git_commit", "time": "0:00:15", "status": "SUCCESS" }
     ]
   }
 }
@@ -323,23 +358,28 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "SUCCESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:30:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    },
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ],
     "steps": [
       { "name": "get_passport", "status": "SKIPPED" },
-      { "name": "env_build", "status": "SUCCESS", "durationMs": 120000 },
-      { "name": "git_commit", "status": "SUCCESS", "durationMs": 15000 }
+      { "name": "env_build", "time": "0:02:00", "status": "SUCCESS" },
+      { "name": "git_commit", "time": "0:00:15", "status": "SUCCESS" }
     ]
   }
 }
@@ -366,19 +406,24 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "IN_PROGRESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -394,19 +439,24 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "IN_PROGRESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:00:05Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -422,23 +472,28 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550001",
+  "subject": "5550001",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "SUCCESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "env_prepare",
+  "technicalname": "envgene-instance-pipeline:env_prepare",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:25:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    },
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ],
     "steps": [
       { "name": "get_passport", "status": "SKIPPED" },
-      { "name": "env_build", "status": "SUCCESS", "durationMs": 120000 },
-      { "name": "git_commit", "status": "SUCCESS", "durationMs": 15000 }
+      { "name": "env_build", "time": "0:02:00", "status": "SUCCESS" },
+      { "name": "git_commit", "time": "0:00:15", "status": "SUCCESS" }
     ]
   }
 }
@@ -455,19 +510,24 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550002",
+  "subject": "5550002",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "IN_PROGRESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "sync",
+  "technicalname": "envgene-instance-pipeline:sync",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:30:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -483,19 +543,24 @@ Sequence:
   "kind": "pipeline",
   "kindversion": "1.0",
   "jobid": "5550002",
+  "subject": "5550002",
   "pipelineid": "987654",
   "projectid": "12345",
   "status": "SUCCESS",
-  "parentid": "d72800f6-29c7-42b5-a9ab-519f026bcad5",
   "traceid": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "technicalname": "sync",
+  "technicalname": "envgene-instance-pipeline:sync",
+  "technicalversion": "v3.9.1-cloud_dd-20261007.065010-1-RELEASE",
   "displayname": "EnvGene Instance Pipeline",
+  "datacontenttype": "application/json",
   "time": "2026-06-12T14:35:00Z",
   "data": {
-    "envgeneVersion": "1.2.3",
-    "inputParameters": {
-      "PIPELINE_TYPE": "GITLAB_DEPLOY"
-    }
+    "kind": "EnvGenePipelineReport",
+    "apiVersion": "v1",
+    "user": "john.doe",
+    "email": "john.doe@example.com",
+    "config": [
+      { "name": "PIPELINE_TYPE", "value": "GITLAB_DEPLOY" }
+    ]
   }
 }
 ```
@@ -505,4 +570,4 @@ Sequence:
 - [Metrics Collector events](/docs/features/metrics-collector-events.md)
 - [Instance pipeline flow](/docs/technical-design/instance-pipeline/flow.md)
 - [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url)
-- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_url)
+- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_trace_id)

@@ -36,8 +36,12 @@ A run sends three event types:
    carries the job outcome and the Instance pipeline step results. An in-progress event carries step
    results only when they are already known.
 - `type: stop` when the run finishes, with a terminal status such as `SUCCESS` or `FAILED`. It carries
-   the EnvGene version, the pipeline inputs, and the step results for that job. It does not repeat
+   the pipeline inputs and the step results for that job. It does not repeat
    step results from an earlier job in the same pipeline.
+
+Every event carries an `EnvGenePipelineReport` in `data`: the user who started the pipeline, the
+pipeline inputs, and the step results known at that moment. The tool version is carried on the event in
+`technicalversion`.
 
 Each event has its own ID. Events in one run share one trace ID, and each event carries the time it
 was sent, so a collector can measure the interval from `start` to `stop`.
@@ -77,5 +81,5 @@ TLS certificate checks stay on unless `METRICS_COLLECTOR_SSL_VERIFY` is `false`.
    steps reported with the finished job
 - [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url) - CI/CD
    settings for this integration
-- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_url) - the
-   same settings as pipeline inputs
+- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_trace_id) -
+   trace id and parent event id passed when the pipeline starts
