@@ -46,9 +46,15 @@ Start from the example that matches your environment:
   [Initialize and upgrade Instance repository](/docs/how-to/envgene-maitanance.md).
 - The cluster folder `/environments/<cluster-name>/` exists, with the Cloud Passport if the environment uses one.
   See [Create a cluster](/docs/how-to/create-cluster.md).
-- The Environment Template is published and has an
-  [Artifact Definition](/docs/envgene-objects.md#artifact-definition). For `artifact: project-env-template:1.0.0`, it
-  is `/configuration/artifact_definitions/project-env-template.yaml` with `name: project-env-template`.
+- The Environment Template is published. In `env_definition.yml`, use:
+  - `envTemplate.name`: the name of the Template Descriptor in the template, the filename without extension. For
+    `templates/env_templates/simple.yaml`, it is `simple`
+  - `envTemplate.artifact`: the published template artifact in `application:version` form, such as
+    `project-env-template:1.0.0`
+- The Environment Template has an [Artifact Definition](/docs/envgene-objects.md#artifact-definition), see
+  [Configure artifact registries](/docs/how-to/configure-cloud-artifact-registries.md). For
+  `artifact: project-env-template:1.0.0`, it is `/configuration/artifact_definitions/project-env-template.yaml` with
+  `name: project-env-template`.
 - For credentials kept in the Instance repository, credential encryption is enabled. See
   [Credential encryption](/docs/how-to/credential-encryption.md).
 
@@ -130,6 +136,7 @@ Write the content as JSON. This example creates `env_definition.yml` and one Par
 - `place` sets the level of each file, see [Choose the level of each file](#choose-the-level-of-each-file).
 
 For all blocks, see [Environment Inventory Generation](/docs/features/env-inventory-generation.md).
+For all fields of `envDefinition.content`, see [`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml).
 
 ### Step 2: Run the Instance pipeline
 

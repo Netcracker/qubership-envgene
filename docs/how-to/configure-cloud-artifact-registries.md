@@ -500,22 +500,17 @@ The file applies to every cluster. For one cluster, put it in
 
 ## Placing configuration files
 
-Files can be placed at two levels. EnvGene resolves them with per-environment overriding root-level.
+EnvGene reads these files only at the root of the instance repository. They apply to all environments.
 
-| Level           | Path                                                             | Scope                |
-|-----------------|------------------------------------------------------------------|----------------------|
-| Root            | `configuration/regdefs/<name>.yaml`                              | All environments     |
-| Per-environment | `environments/<cluster>/<env>/configuration/regdefs/<name>.yaml` | This environment only|
+| File                 | Path                                              |
+|----------------------|---------------------------------------------------|
+| Registry Definition  | `configuration/regdefs/<name>.yaml`               |
+| Artifact Definition  | `configuration/artifact_definitions/<name>.yaml`  |
+| Credentials          | `configuration/credentials/credentials.yml`       |
 
-Credentials follow the same pattern:
-
-| Level           | Path                                                                     |
-|-----------------|--------------------------------------------------------------------------|
-| Root            | `configuration/credentials/credentials.yml`                              |
-| Per-environment | `environments/<cluster>/<env>/configuration/credentials/credentials.yml` |
-
-Use root-level placement for registries shared across environments. Use per-environment placement
-when different environments use different registries or accounts.
+Files under `environments/` are not read. To use a different registry for one cluster, set the values in
+`environments/<cluster-name>/configuration/appregdef_config.yaml`, see
+[Fill a templated registry definition](#fill-a-templated-registry-definition).
 
 ## Supported auth methods reference
 

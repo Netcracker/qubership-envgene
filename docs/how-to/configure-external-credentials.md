@@ -6,14 +6,15 @@
   - [Prerequisites](#prerequisites)
   - [Layout](#layout)
   - [Steps](#steps)
-    - [Step 1: Decide who creates each value](#step-1-decide-who-creates-each-value)
-    - [Step 2: Describe the Secret Store](#step-2-describe-the-secret-store)
-    - [Step 3: Set the Secret Store authentication variables](#step-3-set-the-secret-store-authentication-variables)
-    - [Step 4: Write the Cloud Passport credentials as external](#step-4-write-the-cloud-passport-credentials-as-external)
-    - [Step 5: Prepare the Shared Credentials](#step-5-prepare-the-shared-credentials)
-    - [Step 6: Add the Shared Credentials to the environment](#step-6-add-the-shared-credentials-to-the-environment)
-    - [Step 7: Put the values in the store and generate the Effective Set](#step-7-put-the-values-in-the-store-and-generate-the-effective-set)
-    - [Step 8: Verify the result](#step-8-verify-the-result)
+    - [Step 1: Check the Environment Template](#step-1-check-the-environment-template)
+    - [Step 2: Decide who creates each value](#step-2-decide-who-creates-each-value)
+    - [Step 3: Describe the Secret Store](#step-3-describe-the-secret-store)
+    - [Step 4: Set the Secret Store authentication variables](#step-4-set-the-secret-store-authentication-variables)
+    - [Step 5: Write the Cloud Passport credentials as external](#step-5-write-the-cloud-passport-credentials-as-external)
+    - [Step 6: Prepare the Shared Credentials](#step-6-prepare-the-shared-credentials)
+    - [Step 7: Create the environment](#step-7-create-the-environment)
+    - [Step 8: Put the values in the store and generate the Effective Set](#step-8-put-the-values-in-the-store-and-generate-the-effective-set)
+    - [Step 9: Verify the result](#step-9-verify-the-result)
   - [Related documentation](#related-documentation)
 
 ## Overview
@@ -41,9 +42,6 @@ and
 
 - The environment uses a No-CMDB [deployment architecture](/docs/deployment-architecture.md). CMDB import is not
   supported for External Credentials.
-- The Environment Template supports External Credentials: its Template Descriptor sets
-  `external_credential_template`, and its sensitive parameters use `$type: credRef`. The template owner prepares
-  this, see [Credential Template](/docs/envgene-objects.md#credential-template).
 - The Secret Store is installed and reachable from the Instance pipeline. EnvGene does not install or operate it.
 - You can set CI/CD variables of the Instance repository.
 
@@ -66,7 +64,48 @@ environments/
 
 ## Steps
 
-### Step 1: Decide who creates each value
+### Step 1: Check the Environment Template
+
+External Credentials start in the Environment Template. Check that the template version you deploy has the
+following. If it does not, ask the template owner to add it, see
+[Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md).
+
+1. A Credential Template that declares the credentials the template owns:
+
+    ```yaml
+    # templates/env_templates/<solution>/external-credentials.yml.j2
+    app-db-cred:
+      type: external
+      create: true
+      secretStore: default_store
+      remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}"
+      properties:
+        - name: username
+        - name: password
+    ```
+
+2. The Template Descriptor points to it:
+
+    ```yaml
+    external_credential_template: "{{ templates_dir }}/env_templates/<solution>/external-credentials.yml.j2"
+    ```
+
+3. Sensitive parameters in `deployParameters`, `e2eParameters`, and their ParameterSets use `$type: credRef`
+   instead of `${creds.get(...)}`:
+
+    ```yaml
+    DB_USER:
+      $type: credRef
+      credId: app-db-cred
+      property: username
+    ```
+
+   Built-in fields such as `credentialsId` keep a plain `credId`.
+
+Write down every `credId` the template references and does not declare in its Credential Template. You declare
+them in the Cloud Passport (Step 5) or in the Shared Credentials (Step 6).
+
+### Step 2: Decide who creates each value
 
 The Environment Template already decides this for the credentials it owns, in its Credential Template. Decide it for
 the Cloud Passport credentials and the Shared Credentials. The answer sets the `create` field:
@@ -76,7 +115,7 @@ the Cloud Passport credentials and the Shared Credentials. The answer sets the `
 | EnvGene may generate a new value                   | `create: true` | creates it                        |
 | You, or an external provider, before the first run | omit the field | fails the run                     |
 
-### Step 2: Describe the Secret Store
+### Step 3: Describe the Secret Store
 
 Create `/configuration/secret-stores.yml` in the Instance repository:
 
@@ -90,7 +129,7 @@ default_store:
 Each store type needs its own fields: `mountPath` for `vault` and `openbao`, `vaultName` for `azure`, `region` for
 `aws`, `projectId` for `gcp`. See [Secret Store](/docs/features/external-creds.md#secret-store).
 
-### Step 3: Set the Secret Store authentication variables
+### Step 4: Set the Secret Store authentication variables
 
 Add the variables of your store type as masked CI/CD variables of the Instance repository:
 
@@ -108,7 +147,7 @@ For a store other than `default_store`, prefix each variable with the store iden
 
 Never commit these values to Git.
 
-### Step 4: Write the Cloud Passport credentials as external
+### Step 5: Write the Cloud Passport credentials as external
 
 1. In the passport credentials file, declare every credential as `type: external`:
 
@@ -146,7 +185,7 @@ Never commit these values to Git.
 
 For the rest of the passport, see [Create a cluster](/docs/how-to/create-cluster.md).
 
-### Step 5: Prepare the Shared Credentials
+### Step 6: Prepare the Shared Credentials
 
 Shared Credentials hold the credentials an environment needs beyond the Credential Template and the Cloud Passport,
 for example the credentials of an integration. Skip this step if there are none.
@@ -172,7 +211,7 @@ api-token:
 | Field           | Value                                                                                             |
 |-----------------|---------------------------------------------------------------------------------------------------|
 | `type`          | Always `external`. No `data` block                                                                |
-| `create`        | `true` or omitted, from Step 1                                                                    |
+| `create`        | `true` or omitted, from Step 2                                                                    |
 | `secretStore`   | A store identifier from `secret-stores.yml`. Defaults to `default_store`                          |
 | `remoteRefPath` | Path prefix in the store. EnvGene appends the `credId` to it                                      |
 | `properties`    | `- name: username` and `- name: password` for a username and password. Omit it for a single value |
@@ -187,53 +226,72 @@ above, the secret name is:
 | `azure`, `gcp`     | `cluster-01--env-01--integration-cred`: these stores have no `/` |
 
 Azure, AWS, and GCP shorten long names, so treat this table as a guide. The exact path is in the Effective Set, see
-[Step 7](#step-7-put-the-values-in-the-store-and-generate-the-effective-set).
+[Step 8](#step-8-put-the-values-in-the-store-and-generate-the-effective-set).
 
 The file can live at the environment, cluster, or repository level, see
 [Choose the level of each file](/docs/how-to/create-environment-inventory.md#choose-the-level-of-each-file).
 
-### Step 6: Add the Shared Credentials to the environment
+### Step 7: Create the environment
 
-Do it in one of two ways, together with creating the environment, see
-[Create an Environment Inventory](/docs/how-to/create-environment-inventory.md).
+Create the environment and add the Shared Credentials to it in the same run. For the content of
+`env_definition.yml`, see [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md). Do it in
+one of two ways:
 
-- **Through the Instance pipeline:** put the file content in the `credentials` block of `ENV_INVENTORY_CONTENT`, and
-  the filename in `envTemplate.sharedMasterCredentialFiles` of the same content. Pass the content in Step 7:
+- **Through the Instance pipeline:** put `env_definition.yml` in the `envDefinition` block of
+  `ENV_INVENTORY_CONTENT`, the Shared Credentials file from Step 6 in the `credentials` block, and its name in
+  `envTemplate.sharedMasterCredentialFiles`. Pass the content in Step 8:
 
     ```json
-    "credentials": [
-      {
+    {
+      "envDefinition": {
         "action": "create_or_replace",
-        "place": "env",
-        "name": "env-01-creds",
         "content": {
-          "integration-cred": {
-            "type": "external",
-            "create": true,
-            "secretStore": "default_store",
-            "remoteRefPath": "cluster-01/env-01",
-            "properties": [{ "name": "username" }, { "name": "password" }]
-          },
-          "api-token": {
-            "type": "external",
-            "secretStore": "default_store",
-            "remoteRefPath": "cluster-01/env-01"
+          "inventory": {},
+          "envTemplate": {
+            "name": "<template-name>",
+            "artifact": "<template-artifact>:<version>",
+            "sharedMasterCredentialFiles": ["env-01-creds"]
           }
         }
-      }
-    ]
+      },
+      "credentials": [
+        {
+          "action": "create_or_replace",
+          "place": "env",
+          "name": "env-01-creds",
+          "content": {
+            "integration-cred": {
+              "type": "external",
+              "create": true,
+              "secretStore": "default_store",
+              "remoteRefPath": "cluster-01/env-01",
+              "properties": [{ "name": "username" }, { "name": "password" }]
+            },
+            "api-token": {
+              "type": "external",
+              "secretStore": "default_store",
+              "remoteRefPath": "cluster-01/env-01"
+            }
+          }
+        }
+      ]
+    }
     ```
 
-- **By hand:** commit the file from Step 5 and add its name, without `.yml`, to `env_definition.yml`:
+- **By hand:** commit `env_definition.yml` and the file from Step 6. List the file name, without `.yml`, in
+  `env_definition.yml`:
 
     ```yaml
     # environments/cluster-01/env-01/Inventory/env_definition.yml
+    inventory: {}
     envTemplate:
+      name: "<template-name>"
+      artifact: "<template-artifact>:<version>"
       sharedMasterCredentialFiles:
         - env-01-creds
     ```
 
-### Step 7: Put the values in the store and generate the Effective Set
+### Step 8: Put the values in the store and generate the Effective Set
 
 Every credential without `create: true`, from the Credential Template, the Cloud Passport, and the Shared Credentials,
 must exist in the Secret Store at its path from the Effective Set. Choose one way:
@@ -242,7 +300,7 @@ must exist in the Secret Store at its path from the Effective Set. Choose one wa
 
     ```yaml
     ENV_NAMES: cluster-01/env-01
-    ENV_INVENTORY_CONTENT: <JSON from Step 6>          # only if you add the credentials through the pipeline
+    ENV_INVENTORY_CONTENT: <JSON from Step 7>          # only if you create the environment through the pipeline
     ENV_TEMPLATE_VERSION: project-env-template:2.0.0   # the version with the Credential Template
     ENV_BUILDER: true
     GENERATE_EFFECTIVE_SET: true
@@ -275,7 +333,7 @@ must exist in the Secret Store at its path from the Effective Set. Choose one wa
 > `cluster-01/env-01/api-token` under the mount `secret`. Inside the secret, use the keys from `properties`, such as
 > `username` and `password`. For a single-value credential in Vault or OpenBao, use the key `value`.
 
-### Step 8: Verify the result
+### Step 9: Verify the result
 
 1. `environments/cluster-01/env-01/Credentials/credentials.yml` holds only `type: external` entries: from the
    Credential Template, the passport, and `env-01-creds`.

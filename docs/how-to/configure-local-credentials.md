@@ -29,8 +29,9 @@ approach, never both.
 
 ## Prerequisites
 
-- The environment exists, or you create it in Step 3, see
-  [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md).
+- The environment exists: its `env_definition.yml` is in the Instance repository, see
+  [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md). Create it without credentials
+  first. You add them in Step 3.
 
 ## Where credentials come from
 
@@ -47,6 +48,8 @@ each generation writes it again.
 ## Steps
 
 ### Step 1: Set the credentials the template needs
+
+To find which credentials the template needs:
 
 1. Run the Instance pipeline with `ENV_NAMES: <cluster>/<env>` and `ENV_BUILDER: true`.
 2. Open `environments/<cluster>/<env>/Credentials/credentials.yml`. Every credential the template references is
