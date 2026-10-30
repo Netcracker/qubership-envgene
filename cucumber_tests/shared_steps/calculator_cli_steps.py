@@ -78,28 +78,35 @@ def effective_set_params_exist_under_version(workspace: EnvGeneWorkspace, app_na
     assert found, f"No version directory '{version}/values' found for app '{app_name}' under {es_dir}"
 
 
-def _find_deployment_file(workspace: EnvGeneWorkspace, app_name: str, filename: str = "custom-params.yaml") -> Path:
-    es_dir = _get_effective_set_dir(workspace)
+def _find_app_file(
+    workspace: EnvGeneWorkspace,
+    filename: str,
+    app_name: str,
+    namespace: str | None = None,
+) -> Path:
+    base = _get_effective_set_dir(workspace)
+    if namespace is not None:
+        base = base / namespace
     candidates = [
-        path for path in es_dir.rglob(filename)
+        path for path in base.rglob(filename)
         if app_name in path.parts
     ]
     assert candidates, (
-        f"'{filename}' not found under '{app_name}' in {es_dir}.\n"
-        f"Files present: {[str(p) for p in es_dir.rglob('*.yaml')]}\n"
+        f"'{filename}' not found under application '{app_name}' in {base}.\n"
+        f"Files present: {[str(p) for p in base.rglob('*.yaml')]}\n"
         f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
     )
     return candidates[0]
 
 
-@then(parsers.parse('the "{app_name}" custom-params.yaml has "{key_value}" at root, under global, and per-service'))
-def custom_params_yaml_has_key_at_root_global_per_service(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
-    path = _find_deployment_file(workspace, app_name, "custom-params.yaml")
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" has "{key_value}" at root, under global, and per-service'))
+def custom_params_yaml_for_app_has_key_at_root_global_per_service(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
     content = path.read_text(encoding="utf-8")
     data = yaml.safe_load(content) or {}
     key, _, value = key_value.partition(":")
-    key = key.strip()
     expected = value.strip()
+    key = key.strip()
 
     assert key in data, (f"Key '{key}' not found at root of {path}")
     assert data.get(key) == expected, (f"Expected '{key}: {expected}' at root, got {data.get(key)!r}")
@@ -127,18 +134,76 @@ def custom_params_yaml_has_key_at_root_global_per_service(workspace: EnvGeneWork
     )
 
 
-@then(parsers.parse('the "{app_name}" collision-credentials.yaml contains key "{key}"'))
-def collision_credentials_yaml_contains_key(workspace: EnvGeneWorkspace, app_name: str, key: str) -> None:
-    collision_path = _find_deployment_file(workspace, app_name, "collision-credentials.yaml")
-    data = yaml.safe_load(collision_path.read_text(encoding="utf-8")) or {}
-    assert key in data, (
-        f"Key '{key}' not found in {collision_path}. Available keys: {list(data.keys())}"
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" has "{key_value}" under global'))
+def custom_params_yaml_for_app_has_key_value_under_global(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    key, _, value = key_value.partition(":")
+    global_data = data.get("global")
+    assert isinstance(global_data, dict), f"'global' is missing or not a mapping in {path}"
+    assert global_data.get(key.strip()) == value.strip(), (
+        f"Expected '{key_value}' under global, got {global_data.get(key.strip())!r}"
     )
 
 
-@then(parsers.parse('the "{app_name}" custom-params.yaml keeps the per-service entry for "{service}"'))
-def custom_params_yaml_keeps_per_service_entry(workspace: EnvGeneWorkspace, app_name: str, service: str) -> None:
-    custom_params_path = _find_deployment_file(workspace, app_name, "custom-params.yaml")
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" does not have "{key_value}" at root'))
+def custom_params_yaml_for_app_does_not_have_key_value_at_root(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    key, _, value = key_value.partition(":")
+    assert data.get(key.strip()) != value.strip(), (
+        f"'{key_value}' unexpectedly found at root of {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" has root key "{key}" aliasing global'))
+def custom_params_yaml_for_app_has_root_key_aliasing_global(workspace: EnvGeneWorkspace, app_name: str, key: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    global_data = data.get("global")
+    assert isinstance(global_data, dict), f"'global' is missing or not a mapping in {path}"
+    assert key in data, f"Root key '{key}' not found in {path}"
+    assert data[key] is global_data, (
+        f"Root key '{key}' does not alias the global mapping in {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" contains "{key_value}"'))
+def custom_params_yaml_for_app_contains(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    assert key_value in path.read_text(encoding="utf-8"), (
+        f"'{key_value}' not found in {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" in namespace "{namespace}" contains "{key_value}"'))
+def custom_params_yaml_for_app_in_namespace_contains(workspace: EnvGeneWorkspace, app_name: str, namespace: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name, namespace)
+    assert key_value in path.read_text(encoding="utf-8"), (
+        f"'{key_value}' not found in {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" in namespace "{namespace}" does not contain "{key_value}"'))
+def custom_params_yaml_for_app_in_namespace_does_not_contain(workspace: EnvGeneWorkspace, app_name: str, namespace: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name, namespace)
+    assert key_value not in path.read_text(encoding="utf-8"), (
+        f"'{key_value}' unexpectedly found in {path}"
+    )
+
+
+@then(parsers.parse('the collision-credentials.yaml for application "{app_name}" contains key "{key}"'))
+def collision_credentials_yaml_for_app_contains_key(workspace: EnvGeneWorkspace, app_name: str, key: str):
+    path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    assert key in data, (
+        f"Key '{key}' not found in {path}. Available keys: {list(data.keys())}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" keeps the per-service entry for "{service}"'))
+def custom_params_yaml_for_app_keeps_per_service_entry(workspace: EnvGeneWorkspace, app_name: str, service: str) -> None:
+    custom_params_path = _find_app_file(workspace, "custom-params.yaml", app_name)
     data = yaml.safe_load(custom_params_path.read_text(encoding="utf-8")) or {}
     assert service in data and isinstance(data[service], dict), (
         f"Per-service key '{service}' missing or not a mapping in {custom_params_path}.\n"
@@ -278,6 +343,7 @@ def effective_set_deployment_params_sorted(workspace: EnvGeneWorkspace) -> None:
     assert checked, f"No non-empty deployment-parameters.yaml found under {es_dir}"
 
 
+
 @then(parsers.parse('the effective set deployment parameters for namespace "{namespace}" contain "{key_value}"'))
 def effective_set_ns_params_contain(workspace: EnvGeneWorkspace, namespace: str, key_value: str) -> None:
     ns_dir = _es_root(workspace) / "deployment" / namespace
@@ -295,3 +361,4 @@ def effective_set_ns_params_do_not_contain(workspace: EnvGeneWorkspace, namespac
         if "credentials" not in p.name and key in p.read_text(encoding="utf-8")
     ]
     assert not offending, f"'{key}' unexpectedly found in: {[str(p) for p in offending]}"
+
