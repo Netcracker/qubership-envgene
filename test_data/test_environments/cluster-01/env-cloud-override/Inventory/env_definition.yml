@@ -1,0 +1,12 @@
+inventory:
+  environmentName: "env-cloud-override"
+  tenantName: "Applications"
+envTemplate:
+  name: "cloud-override"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  additionalTemplateVariables:
+    GLOBAL_LEVEL_PARAM1: global-level-value1
+    mergeDeployE2eParameters: false
+    additinalVarInstanceDir: "test1"
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:cloud-override"  # This value is automatically generated during job run.

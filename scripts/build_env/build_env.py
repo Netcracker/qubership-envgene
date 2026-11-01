@@ -222,7 +222,6 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
             # get value with potential merge of dicts
             val = get_merged_param_value(j, appDefinition[parametersTag], appParams["parameters"])
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
-        validate_yaml_by_scheme_or_fail(input_yaml_content=appDefinition, schema_file_path=application_schema)
         current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
 
@@ -316,8 +315,17 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
     validate_yaml_by_scheme_or_fail(input_yaml_content=templateContent, schema_file_path=schema_path)
+    validate_applications(Path(templatePath).parent / "Applications")
     env_instance_store.beautify(templatePath, schema_path, header_text)
     return
+
+
+def validate_applications(applications_dir):
+    env_instance_store = current_env_instance_store()
+    application_schema = f"{get_schema_dir()}/application.schema.json"
+    for application_path in env_instance_store.list(Path(applications_dir) / "*.yml"):
+        validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(application_path),
+                                        schema_file_path=application_schema)
 
 
 def process_additional_template_parameters(inventoryYaml, source_env_dir, all_instances_dir):

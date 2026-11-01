@@ -65,7 +65,7 @@ def resolve_attribute_value(cred_macros, cred_yaml) -> str:
 
 
 def get_value_with_path_and_attribute(fp, attr_str, default_value=None):
-    file = openYaml(fp)
+    file = openYaml(fp, safe_load=True)
     return get_or_create_nested_yaml_attribute(file, attr_str, default_value)
 
 
@@ -117,13 +117,13 @@ def get_deployer_config(*_args, **_kwargs):
 
     data = {}
     if env_deployer_file_path is not None:
-        data = openYaml(env_deployer_file_path, allow_default=True)
+        data = openYaml(env_deployer_file_path, safe_load=True, allow_default=True)
 
     if deployer_name not in data:
         logger.info(
             f"Deployer with key {deployer_name} not found in environment specific configuration for {full_env_name}. Going to root configuration: {basic_deployer_file_path}")
         env_deployer_file_path = basic_deployer_file_path
-        data = openYaml(env_deployer_file_path, allow_default=True)
+        data = openYaml(env_deployer_file_path, safe_load=True, allow_default=True)
 
         if deployer_name not in data:
             logger.error(f"Deployer with key {deployer_name} not found in {env_deployer_file_path}")

@@ -635,27 +635,24 @@ deployment:
 
 ### `APPLICATION_VERSIONS`
 
-**Description**: One or more values to be deployed. Used to build the deployment plan and passed to ArgoCD repository
-generation. At `PIPELINE_TYPE: GITLAB_DEPLOY` it replaces `SD_VERSION`. Each value is either a standalone application or
-a Solution
-Descriptor, which is expanded into its applications.
+**Description**: The applications to deploy. Each application deploys to a target namespace at the given version.
+EnvGene builds the deployment plan from these values.
 
-Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`.
+In the [No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) architecture (`PIPELINE_TYPE: GITLAB_DEPLOY`), this
+parameter specifies what to deploy. It takes the place of `SD_VERSION`/`SD_DATA`, which does the same in
+[No-CMDB v1](/docs/deployment-architecture.md#no-cmdb-v1) (`PIPELINE_TYPE: LEGACY`).
 
-An application value uses one of two notations:
+Processed only at `PIPELINE_TYPE: GITLAB_DEPLOY`. Required when `OPERATION_TYPE: DEPLOY`.
 
-- `<application-name>:<version>`
-  The target namespace is resolved from the application `deployPostfix`.
-- `<namespace-name>:<application-name>:<version>`
-  The target namespace is set explicitly. Used when the application has no `deployPostfix`.
+Each value is either a standalone application or a Solution Descriptor that expands into several applications. A value
+expands only when the artifact it names is a Solution Descriptor. A single list can mix both kinds. The notation
+differs by case:
 
-Values may also be provided as a JSON or YAML list of objects:
-
-```yaml
-- version: <application-name>:<version>   # Mandatory
-  deployPostfix: <postfix>                # Optional
-  namespace: <namespace-name>             # Optional
-```
+- Standalone application: `<namespace-name>:<application-name>:<version>`
+  The target namespace is set explicitly, a standalone value carries no `deployPostfix`.
+- Solution Descriptor: `<sd-name>:<version>`
+  The descriptor expands into its applications. Each application's target namespace is resolved from the namespace map,
+  keyed by the `deployPostfix` the descriptor declares for it.
 
 If specifying more than one, separate them as described in [Multiple Values Support](#multiple-values-support).
 
@@ -665,8 +662,10 @@ If specifying more than one, separate them as described in [Multiple Values Supp
 
 **Example**:
 
-- `solution:0.64.2`
-- `env-1-bss:app-1:1.2.3`
+- Single application: `env-1-bss:app-1:1.2.3`
+- Multiple applications: `env-1-bss:app-1:1.2.3,env-1-oss:app-2:3.4.5`
+- Single Solution Descriptor: `solution:0.64.2`
+- Applications and a Solution Descriptor: `env-1-bss:app-1:1.2.3,solution:0.64.2,env-1-oss:app-2:3.4.5`
 
 ### `DEPLOY_POSTFIXES_FILTER`
 
