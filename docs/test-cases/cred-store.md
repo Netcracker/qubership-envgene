@@ -52,6 +52,31 @@ when no step changes it.
 - `data` values are encrypted, `type` is plain
 - The file decrypts to the original values
 
+## UC-CS-RUN-1: Env build uses a shared cred created by inventory in the same run
+
+**Status:** Active
+
+**Description:** One cred store serves all steps of a run. A shared cred file that inventory creates
+exists only in memory until the end of the run, and env build in the same run merges it into the env
+credentials.
+
+**Test Data:**
+
+- `cucumber_tests/test_data/e2e/uc_cp_03_no_passport`
+- `cucumber_tests/test_data/einv/env_inventory_content/uc_cs_run_1_shared_cred.json`
+
+**Steps:**
+
+- Run the pipeline with `ENV_INVENTORY_CONTENT` that creates the shared cred file `shared-db-cred` and
+  lists it in `sharedMasterCredentialFiles`, and with `ENV_BUILDER: true`
+
+**Expected Results:**
+
+- The run succeeds
+- `Inventory/credentials/shared-db-cred.yml` is SOPS-encrypted
+- `Credentials/credentials.yml` of the environment decrypts to `shared-db-cred.data.password` equal to
+  `shared-password`
+
 ## UC-CS-DIFF-1: Run that changes no cred leaves cred files byte-equal
 
 **Status:** Active
