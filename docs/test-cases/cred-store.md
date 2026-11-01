@@ -60,7 +60,7 @@ when no step changes it.
 
 **Test Data:**
 
-- `cucumber_tests/test_data/e2e/uc_cp_01_auto_association`
+- `cucumber_tests/test_data/e2e/uc_cp_03_no_passport`
 
 **Pre-requisites:**
 

@@ -14,7 +14,7 @@ Feature: Cred store - cred-store.md
     And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "dummy-cred.data.secret" equal to "dummy-secret"
 
   Scenario: UC-CS-DIFF-1: A run that changes no cred leaves encrypted cred files byte-equal
-    Given the workspace is initialized with test data from "e2e/uc_cp_01_auto_association"
+    Given the workspace is initialized with test data from "e2e/uc_cp_03_no_passport"
     And the cred files of the environment are SOPS-encrypted with the test key
     And the cred files are recorded as a baseline
     And the pipeline parameter "ENV_BUILDER" is set to "true"
