@@ -18,8 +18,9 @@ COPY devtools/cucumber/cucumber_requirements.txt /tmp/cucumber_requirements.txt
 
 # The main image uses a virtual environment at /module/venv
 # We install the test dependencies into the same environment
-RUN /module/venv/bin/pip install --no-cache-dir "uv>=0.9.5" && \
-    /module/venv/bin/uv pip install --python /module/venv --no-cache-dir -r /tmp/cucumber_requirements.txt
+COPY --from=ghcr.io/astral-sh/uv:0.12.24 /uv /usr/local/bin/uv
+
+RUN uv pip install --python /module/venv --no-cache-dir pip==26.0.1 -r /tmp/cucumber_requirements.txt
 
 ENV PATH="/module/venv/bin:${PATH}"
 WORKDIR /workspace

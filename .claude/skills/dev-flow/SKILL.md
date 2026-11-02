@@ -15,7 +15,7 @@ description: >-
 
 # dev-flow
 
-Run the delivery flow - design, CR, plan, implement, review, verify - as a chain of **isolated phase
+Run the delivery flow - design, CR, dev design, plan, implement, review, verify - as a chain of **isolated phase
 subagents**. Each phase is a fresh context that reads a file artifact, does its work through a child
 skill, writes a file artifact, and returns a short status. The orchestrator stays thin, and each phase
 runs on the cheapest model that fits.
@@ -48,15 +48,16 @@ skill, the dispatch prompt, and the model). Summary:
 |-------------|---------------------------------|--------------------------|----------------------------|
 | design      | brainstorming + adrs + docs     | interactive, main loop   | ADR + doc edits + doc PR   |
 | cr          | design-to-cr                    | Sonnet                   | CR issue (Story or Feature)|
+| dev-design  | dev-design                      | interactive, main loop   | approved dev design file   |
 | plan        | writing-plans                   | Sonnet                   | plan file + task briefs    |
 | implement   | subagent-driven-development     | Sonnet controller        | code + tests + code PR     |
-| review      | code-review (+ writing-gherkin) | Sonnet, Spec escalates   | review report + BDD slice  |
+| review      | envgene-code-review + code-review (+ writing-gherkin) | Sonnet, Spec escalates | review report + BDD slice |
 | verify      | none (CI poll)                  | Haiku or Sonnet, async   | green checks recorded      |
 | acceptance  | none (human sign-off)           | human                    | sign-off recorded          |
 
-`design` and `acceptance` are interactive and human-gated - the orchestrator prepares their inputs and
-waits, it does not dispatch a subagent to hold a human dialogue. Everything from `cr` through `verify`
-is dispatched.
+`design`, `dev-design`, and `acceptance` are interactive and human-gated - the orchestrator prepares
+their inputs and waits, it does not dispatch a subagent to hold a human dialogue. `cr` and everything
+from `plan` through `verify` are dispatched.
 
 ## How to run
 

@@ -4,6 +4,8 @@ inventory:
   cloudName: cluster_01_env_01
   description: Composite Full Sample
   owners: Qubership team
+  config:
+    mergeEnvSpecificResourceProfiles: false
 envTemplate:
   name: composite-prod
   artifact: deployment-configuration-env-templates:1.2.3
@@ -18,6 +20,8 @@ envTemplate:
   sharedTemplateVariables:
     - prod-template-variables
     - sample-cloud-template-variables
+  envSpecificResourceProfiles:
+    core: env-specific-core-baseline
   envSpecificParamsets:
     bss:
       - env-specific-bss

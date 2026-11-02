@@ -54,13 +54,13 @@ containing the unresolved value.
 
 **Steps:**
 
-1. The `generate_effective_set` or `cmdb_import` job runs.
+1. The `generate_effective_set` or `cmdb_import` step runs.
 2. Parameter validation detects an unresolved `envgeneNullValue`.
-3. The job aborts with a validation error.
+3. The step aborts with a validation error.
 
 **Results:**
 
-1. The job fails with the message:
+1. The step fails with the message:
 
     ```text
     Error while validating parameters:
@@ -100,13 +100,13 @@ containing the unresolved value.
 
 **Steps:**
 
-1. The `generate_effective_set` or `cmdb_import` job runs.
+1. The `generate_effective_set` or `cmdb_import` step runs.
 2. Credential validation detects an unresolved `envgeneNullValue`.
-3. The job aborts with a validation error.
+3. The step aborts with a validation error.
 
 **Results:**
 
-1. The job fails with the message:
+1. The step fails with the message:
 
     ```text
     Error while validating credentials:
@@ -136,9 +136,9 @@ containing the unresolved value.
 
 **Steps:**
 
-1. The `generate_effective_set` or `cmdb_import` job runs.
+1. The `generate_effective_set` or `cmdb_import` step runs.
 2. Validation finds no `envgeneNullValue` values in parameters or credentials.
-3. The job proceeds with its remaining work.
+3. The step proceeds with its remaining work.
 
 **Results:**
 
@@ -182,14 +182,14 @@ containing the unresolved value.
 
 **Steps:**
 
-1. The `generate_effective_set` or `cmdb_import` job runs.
+1. The `generate_effective_set` or `cmdb_import` step runs.
 2. Credential validation evaluates all entries rather than failing on the first violation.
 3. Every unresolved `envgeneNullValue` value is included in a single aggregated error.
-4. The job aborts with the aggregated validation error.
+4. The step aborts with the aggregated validation error.
 
 **Results:**
 
-1. The job fails with a single error message listing every unresolved field:
+1. The step fails with a single error message listing every unresolved field:
 
     ```text
     Error while validating credentials:

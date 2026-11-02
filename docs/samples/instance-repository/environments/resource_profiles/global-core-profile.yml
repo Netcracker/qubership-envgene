@@ -1,6 +1,6 @@
 
 ---
-name: "dev_core_override"
+name: "global-core-profile"
 baseline: "dev"
 description: ""
 applications:

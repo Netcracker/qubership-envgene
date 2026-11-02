@@ -1,0 +1,4 @@
+- wave: 0
+  version: app-core:1.0.0
+  deployPostfix: dev-1-core
+  namespace: dev-1-core

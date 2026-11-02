@@ -153,16 +153,60 @@ public class ParameterUtils {
         updateParameter(customParameterDTO.getAllParams(), technicalParams);
     }
 
-    private static void updateParameter(Map<String, Parameter> customParams, Map<String, Parameter> params) {
+    private static void updateParameter(
+            Map<String, Parameter> customParams,
+            Map<String, Parameter> processedParams) {
+        if (customParams == null || processedParams == null) {
+            return;
+        }
         for (Map.Entry<String, Parameter> entry : customParams.entrySet()) {
             String key = entry.getKey();
             Parameter customParam = entry.getValue();
-
-            if (params.containsKey(key)) {
-                Parameter deployParam = params.get(key);
-                customParam.setValue(deployParam.getValue());
+            if (customParam == null) {
+                continue;
             }
-            params.remove(key);
+            Object customValue = customParam.getValue();
+            Parameter processedParam = processedParams.get(key);
+            if (customValue instanceof Map<?, ?> customMap) {
+                if (processedParam != null
+                        && processedParam.getValue() instanceof Map<?, ?> processedMap) {
+
+                    updateParameter(
+                            (Map<String, Parameter>) customMap,
+                            (Map<String, Parameter>) processedMap
+                    );
+                }
+            } else {
+                if (containsReference(customValue) && processedParam != null) {
+                    customParam.setValue(processedParam.getValue());
+                }
+                processedParams.remove(key);
+            }
         }
+    }
+
+    private static boolean containsReference(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof String) {
+            return ((String) value).contains("${");
+        }
+        if (value instanceof Map<?, ?> map) {
+            for (Object nested : map.values()) {
+                if (containsReference(nested)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (value instanceof List<?> list) {
+            for (Object item : list) {
+                if (containsReference(item)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

@@ -44,6 +44,19 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. Encryption backend is configured in `configuration/config.yml` (`crypt_backend: Fernet | SOPS`). The `type` field is never encrypted.
 
+## Dev design
+
+Before you write code for a new feature, bugfix, or refactoring in this repository, load the
+`dev-design` skill (`.claude/skills/dev-design/SKILL.md`) and write the dev design as a brainstorm with
+the developer. The dev design goes to `docs/dev/designs/<slug>.md`. When the `brainstorming` skill is
+also active, `dev-design` wins: no spec under `docs/superpowers/specs/` and no commit without a request.
+
+## Code review
+
+Before any code review in this repository, load the `envgene-code-review` skill
+(`.claude/skills/envgene-code-review/SKILL.md`). It holds the team review procedure and code rules.
+Apply them in addition to any other review skill or command.
+
 ## Tests
 
 Each Python module has its own pytest suite, installed editable first (`pip install -e "modules/envgene[dev]"`, etc. — see `.github/actions/run-tests/action.yml`), then run from its own directory:

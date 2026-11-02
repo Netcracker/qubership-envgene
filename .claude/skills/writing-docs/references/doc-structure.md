@@ -16,7 +16,7 @@ structure rules that keep each section carrying only what it uniquely contribute
     - [Avoid duplication in description](#avoid-duplication-in-description)
       - [❌ Incorrect (duplicated info)](#-incorrect-duplicated-info)
       - [✅ Correct (concise, mentioned once)](#-correct-concise-mentioned-once)
-    - [Declarative tone (reference docs)](#declarative-tone-reference-docs)
+    - [Declarative tone](#declarative-tone)
     - [Tables: one fact per row](#tables-one-fact-per-row)
     - [Validation rule sections](#validation-rule-sections)
   - [Doc index updates](#doc-index-updates)
@@ -252,14 +252,19 @@ Template-level parameters are defined in two ways:
 
 ---
 
-### Declarative tone (reference docs)
+### Declarative tone
 
-**Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
-or mark elements as "new".**
+**Documentation describes the system as it is now. Do not narrate the change that produced the current state:
+no transitions, before/after diffs, elements marked "new", or history of what was merged, renamed, split,
+moved, or deprecated.**
 
-Feature specifications and object schemas live in the Diataxis Reference quadrant. Implementation history
-(what changed, what was added, what was deprecated) belongs in tickets, PR descriptions, and commit
-messages, not in the reference docs themselves.
+This applies to every state-describing doc - reference specs and object schemas (the Diataxis Reference
+quadrant), feature and explanation docs, and technical-design docs such as the pipeline flow and architecture.
+Implementation history - what changed, what was added, what one component absorbed from another - belongs in
+tickets, PR descriptions, and commit messages, not in the doc itself. When one component absorbs another's
+function, describe only the result ("component B performs the function") and never the move itself ("the
+function, formerly in component A, is now part of B"). The reader looks the doc up to learn the current state;
+they cannot act on how it got there, and the narration ages the moment the next change lands.
 
 ❌ **INCORRECT** (transitional, history-laden):
 
@@ -287,14 +292,19 @@ For local Credentials the `envgen.creds.get(...)` macro is used.
 # Local Credential          # External Credential
 ```
 
+Change-narration reads the same way - state the result, not the move. For example:
+
+- ❌ `The push, formerly a separate step, is now part of the generator.`
+- ✅ `The generator pushes the effective set.`
+
 **Exception:** Migration documents and changelogs are explicitly about transitions. They describe how to
 move from state X to state Y and are not subject to this rule.
 
 **Scope:** Applies to **new and modified content only**.
 
-**Why:** Reference docs are looked up to learn what something IS. Mixed transitional content makes the spec
-brittle - phrases like "new" or "AS IS" age poorly as the system evolves, and force readers to mentally
-filter what is current vs what is historical.
+**Why:** Docs are looked up to learn what something IS. Mixed transitional content makes them brittle -
+phrases like "new", "AS IS", or "formerly merged into" age poorly as the system evolves, and force readers to
+mentally filter what is current from what is historical.
 
 ---
 

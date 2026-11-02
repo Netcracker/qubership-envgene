@@ -1,5 +1,6 @@
 from functools import lru_cache
 import os
+import ruamel.yaml
 import ruyaml
 import threading
 from typing import OrderedDict
@@ -44,16 +45,31 @@ def readYaml(text, safe_load=False, context=None) -> CommentedMap:
     return resultYaml
 
 
+@lru_cache(maxsize=None)
+def load_schema(schema_path: str) -> dict:
+    return openJson(schema_path)
+
+
+@lru_cache(maxsize=None)
+def get_schema_validator(schema_path: str):
+    schema = load_schema(schema_path)
+    cls = jsonschema.validators.validator_for(schema)
+    cls.check_schema(schema)
+    return cls(schema)
+
+
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
-    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
+    schema_content = load_schema(str(schema_file_path)) if schema_file_path else input_schema_content
 
     if schemas_dir:
         base_uri = Path(schemas_dir).absolute().as_uri() + "/"
         resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
         errors = validate_yaml_data_by_schema(yaml_content, schema_content, resolver=resolver)
+    elif schema_file_path:
+        errors = sorted(get_schema_validator(str(schema_file_path)).iter_errors(yaml_content), key=lambda e: e.path)
     else:
         errors = validate_yaml_data_by_schema(yaml_content, schema_content)
     if len(errors) > 0:
@@ -169,14 +185,13 @@ def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_val
 
 
 
-def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
+def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML | ruamel.yaml.YAML:
     def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     if is_safe:
-        yaml = ruyaml.main.YAML(typ='safe')
-    else:
-        yaml = ruyaml.main.YAML()
+        return ruamel.yaml.YAML(typ='safe', pure=False)
+    yaml = ruyaml.main.YAML()
     yaml.preserve_quotes = True
     yaml.width = 200
     yaml.indent(mapping=2, sequence=4, offset=2)

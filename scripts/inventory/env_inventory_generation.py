@@ -1,7 +1,13 @@
 import envgenehelper as helper
 from envgene_shared.utils.logger import logger
-from envgenehelper import *
-from envgene_shared import *
+from enum import Enum
+from pathlib import Path
+import json
+import jsonschema
+
+from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgene_shared import encrypt_file
+from envgene_shared.utils.business_utils import to_bool
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
@@ -51,15 +57,15 @@ def generate_env():
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
     helper.writeYamlToFile(env.creds_path, env.creds)
-    helper.encrypt_file(env.creds_path)
+    encrypt_file(env.creds_path)
     if env.inv_gen_creds:
         helper.writeYamlToFile(env.inv_gen_creds_path, env.inv_gen_creds)
-        helper.encrypt_file(env.inv_gen_creds_path)
+        encrypt_file(env.inv_gen_creds_path)
 
 
 @deprecated(DEPRECATED_MESSAGE)
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
-    if env_inventory_init != "true":
+    if not to_bool(env_inventory_init):
         logger.info("ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
         return
     logger.info(
@@ -88,20 +94,23 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
     creds = params.get("credentials")
     tenantName = params.get("tenantName")
     deployer = params.get("deployer")
+    cloudName = params.get("cloudName")
     logger.info(f"ENV_SPECIFIC_PARAMS TenantName is {tenantName}")
     logger.info(f"ENV_SPECIFIC_PARAMS deployer is {deployer}")
+    logger.info(f"ENV_SPECIFIC_PARAMS cloudname is {cloudName}")
 
     handle_cluster_params(env, clusterParams)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.cloudName', cloudName)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     logger.info("ENV_SPECIFIC_PARAMS env details ", vars(env))
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets, schemas_dir)
 
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
+    
+   
 
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 

@@ -22,6 +22,37 @@
         2
       ]
     },
+    "profile": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "title": "Resource profile override",
+      "description": "Resource profile override for cloud. Can be not set",
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "Name of Resource Profile Override",
+          "description": "<<filename>> of Resource profile override",
+          "examples": [
+            "dev_override"
+          ]
+        },
+        "baseline": {
+          "type": "string",
+          "title": "Baseline of RPO",
+          "description": "Baseline name of Resource profile override. Free-form string.",
+          "examples": [
+            "dev",
+            "qa",
+            "prod"
+          ]
+        }
+      }
+    },
     "apiUrl": {
       "type": "string",
       "title": "API URL",

@@ -36,20 +36,25 @@ import org.qubership.cloud.parameters.processor.dto.DeploymentConfig;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.REGISTRY_EXTRACT_FAILED;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logDebug;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logWarning;
 
 @ApplicationScoped
 public class BomCommonUtils {
     private final FileDataConverter fileDataConverter;
     private final ProfileService profileService;
     private final RegistryConfigurationService registryConfigurationService;
+    private final Set<String> reportedProfileWarnings = ConcurrentHashMap.newKeySet();
     private static final List<String> SERVICE_MIME_TYPES = List.of("application/vnd.qubership.configuration.smartplug", "application/vnd.qubership.configuration.frontend", "application/vnd.qubership.configuration.cdn", "application/vnd.qubership.configuration", "application/vnd.qubership.service", "application/octet-stream");
     private static final Pattern DOCKER_PATTERN = Pattern.compile("(pkg:docker.*)\\?registry_id=(.*)&repository_id=(.*)");
 
@@ -110,7 +115,7 @@ public class BomCommonUtils {
         String dockerTag = null;
         boolean isFacadeGateway = false;
         RegistrySummaryDTO registrySummaryDTO = null;
-        Map<String, Object> profileValues = new HashMap<>();
+        Component baselineComponent = null;
 
         for (Component subComponent : component.getComponents()) {
             switch (subComponent.getMimeType()) {
@@ -124,11 +129,13 @@ public class BomCommonUtils {
                     isFacadeGateway = extractGatewayFlag(subComponent);
                     break;
                 case "application/vnc.qs.resource-profile-baseline":
-                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                    baselineComponent = subComponent;
                     break;
 
             }
         }
+        Map<String, Object> profileValues = new HashMap<>();
+        fillProfileValues(profileValues, baselineComponent, appName, component.getName(), override, baseline);
 
         Map<String, Object> serviceParams = new HashMap<>();
         serviceParams.put("SERVICE_NAME", component.getName());
@@ -198,23 +205,36 @@ public class BomCommonUtils {
         return registrySummaryDTO;
     }
 
-    private Map<String, Object> extractProfileValues(Component dataComponent, String appName, String serviceName,
-                                                     Profile overrideProfile, String baseline) {
-        Map<String, Object> profileValues = new HashMap<>();
-        if (baseline == null) {
-            profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
-        }
-        for (ComponentData data : dataComponent.getData()) {
-            if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
-                Content content = data.getContents();
-                String encodedText = content.getAttachment().getText();
-                profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<HashMap<String, Object>>() {
-                });
-
-                profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
-                break;
+    public void fillProfileValues(Map<String, Object> profileValues, Component baselineComponent, String appName,
+                                  String serviceName, Profile overrideProfile, String baseline) {
+        List<ComponentData> baselines = baselineComponent != null && baselineComponent.getData() != null
+                ? baselineComponent.getData() : List.of();
+        if (baseline != null && !baselines.isEmpty()) {
+            ComponentData matched = baselines.stream()
+                    .filter(data -> baseline.equals(data.getName().split("\\.")[0]))
+                    .findFirst()
+                    .orElse(null);
+            if (matched != null) {
+                profileValues.putAll(fileDataConverter.decodeAndParse(matched.getContents().getAttachment().getText(),
+                        new TypeReference<HashMap<String, Object>>() {
+                        }));
+            } else {
+                warnOnce(String.format("Baseline '%s' not found in service '%s' of application '%s', applying override only",
+                        baseline, serviceName, appName));
             }
         }
-        return profileValues;
+        boolean overrideApplied = profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
+        logDebug(String.format("Resource profile for service '%s' of application '%s': baseline '%s', override applied: %s",
+                serviceName, appName, baseline, overrideApplied));
+        if (overrideApplied && baseline == null) {
+            warnOnce(String.format("Resource profile override '%s' sets parameters for service '%s' of application '%s' but no baseline is resolved",
+                    overrideProfile.getName(), serviceName, appName));
+        }
+    }
+
+    private void warnOnce(String message) {
+        if (reportedProfileWarnings.add(message)) {
+            logWarning(message);
+        }
     }
 }

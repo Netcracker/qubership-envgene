@@ -9,7 +9,8 @@ from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 from artifact_searcher.artifact import check_artifact
 from artifact_searcher.artifact import _retry_with_nexus_url
-from artifact_searcher.utils.models import FileExtension
+from artifact_searcher.artifact import get_repos
+from artifact_searcher.utils.models import FileExtension, Provider, Repo, RepoType
 
 TEST_REPO = "https://repo.example.com/repository/"
 GROUP_ID = "com.example"
@@ -21,6 +22,67 @@ class MockResponse:
     def __init__(self, status_code):
         self.status_code = status_code
 
+def _create_registry_with_unique_maven_repos():
+    mvn_cfg = models.MavenConfig(
+        target_snapshot="snapshots",
+        target_staging="staging",
+        target_release="releases",
+        snapshot_group="snapshot-group",
+        release_group="release-group",
+        repository_domain_name="https://repo.example.com",
+    )
+    return models.Registry(name="registry", maven_config=mvn_cfg)
+
+def test_get_repos_for_v1_registry():
+    registry = _create_registry_with_unique_maven_repos()
+
+    repos = get_repos(registry)
+
+    assert repos == [
+        Repo(value="snapshots", type=RepoType.TARGET_SNAPSHOT),
+        Repo(value="staging", type=RepoType.TARGET_STAGING),
+        Repo(value="releases", type=RepoType.TARGET_RELEASE),
+        Repo(value="snapshot-group", type=RepoType.SNAPSHOT_GROUP),
+        Repo(value="release-group", type=RepoType.RELEASE_GROUP),
+    ]
+
+
+@pytest.mark.parametrize("provider", [Provider.AWS, Provider.GCP])
+def test_get_repos_for_cloud_provider_uses_configured_targets(provider):
+    registry = models.RegistryV2(
+        name="registry",
+        auth_config={"cloud": models.AuthConfig(provider=provider, auth_method="anonymous")},
+        maven_config=models.MavenConfigV2(
+            auth_config="cloud",
+            repository_domain_name="https://repo.example.com",
+            target_snapshot="snapshots",
+            target_staging="",
+            target_release="releases",
+            snapshot_group="",
+            release_group="release-group",
+        ),
+    )
+
+    assert get_repos(registry) == [
+        Repo(value="snapshots", type=RepoType.TARGET_SNAPSHOT),
+        Repo(value="releases", type=RepoType.TARGET_RELEASE),
+        Repo(value="release-group", type=RepoType.RELEASE_GROUP),
+    ]
+
+
+def test_get_repos_for_cloud_provider_without_targets_uses_empty_repository():
+    registry = models.RegistryV2(
+        name="registry",
+        auth_config={"cloud": models.AuthConfig(provider=Provider.AWS, auth_method="anonymous")},
+        maven_config=models.MavenConfigV2(
+            auth_config="cloud",
+            repository_domain_name="https://repo.example.com",
+        ),
+    )
+
+    assert get_repos(registry) == [
+        Repo(value="", type=RepoType.REPOSITORY_NAME),
+    ]
 
 @pytest.mark.parametrize(
     "index_path",

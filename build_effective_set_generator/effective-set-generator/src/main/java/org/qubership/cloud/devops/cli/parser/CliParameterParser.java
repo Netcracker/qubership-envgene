@@ -72,6 +72,7 @@ import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredCons
 @Dependent
 @Slf4j
 public class CliParameterParser {
+    public static final int HELM_NORMALIZER_LIMIT = 253;
     private final ParametersCalculationServiceV1 parametersServiceV1;
     private final ParametersCalculationServiceV2 parametersServiceV2;
     private final InputData inputData;
@@ -390,7 +391,8 @@ public class CliParameterParser {
 
             Path appChartPath = null;
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), originalNamespace);
+                int helmNameLimit = HELM_NORMALIZER_LIMIT - originalNamespace.length() - 1;
+                String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), helmNameLimit);
                 appChartPath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", normalizedName).toPath();
                 Files.createDirectories(appChartPath);
             }

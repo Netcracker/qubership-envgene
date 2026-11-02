@@ -16,7 +16,6 @@ Feature: Deploy sub-flows - deploy.md
     And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "appregdef_render" has status "SUCCESS"
@@ -40,7 +39,6 @@ Feature: Deploy sub-flows - deploy.md
     And the pipeline parameter "ENV_BUILDER" is set to "true"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "appregdef_render" has status "SUCCESS"

@@ -11,7 +11,9 @@ from pathlib import Path
 from envgene_shared.utils.logger import logger, CustomFormatter
 from envgene_shared.crypto.crypt import decrypted_cred_files
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
-from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces
+from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
+    render_workspace_dir
+from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, open_current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -27,22 +29,34 @@ from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
 from effective_set.sboms_retention_policy import sboms_retention_policy
+from effective_set.generate_sboms import generate_sboms
 from deployment_plan.process_deployment_plan import merge_deployment_plan, reduce_deployment_plan
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import run_multi_env_pipeline
+from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from pipeline.resolve_env_names import build_resolved_variables, resolve_env_names
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
-from envgene_shared.utils.collections_utils import split_multi_value_param
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
+from utils.handle_certs import configure_git_server_trust, install_certificates
+from utils.sparse_checkout import run_sparse_checkout
 
 
 class StepStatus(StrEnum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+
+
+class PipelineStatus(StrEnum):
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+    SKIPPED = "SKIPPED"
+    UNKNOWN = "UNKNOWN"
 
 
 _STATUS_COLOR = {
@@ -217,7 +231,7 @@ class AppregdefRenderStep(PipelineStep):
         return bool(ctx.params.get('ENV_BUILDER') or ctx.params.get('SD_VERSION') or ctx.params.get('SD_DATA'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_appregdef_render()
+        ctx.rendered_regdef_names = run_appregdef_render()
 
 
 class RegdefV2AdapterStep(PipelineStep):
@@ -272,7 +286,10 @@ class EnvBuildStep(PipelineStep):
         return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_build_environment()
+        env_dir = get_current_env_dir_from_env_vars()
+        with decrypted_cred_files(), open_current_env_instance_store(env_dir) as env_instance_store:
+            run_build_environment()
+            env_instance_store.flush()
 
 
 class GenerateEffectiveSetStep(PipelineStep):
@@ -296,9 +313,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             if not ctx.is_gitlab_deploy():
                 apply_no_sd_mode(ctx)
             sboms_retention_policy()
-            get_sboms = PluginEngine(plugins_dir='/module/scripts/plugins/get_sboms')
-            if get_sboms.modules:
-                get_sboms.run(ctx=ctx)
+            generate_sboms(ctx=ctx)
             if ctx.is_gitlab_deploy():
                 run_gitlab_deploy_effective_set(ctx)
             else:
@@ -337,9 +352,12 @@ class CMDB_import(PipelineStep):
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
+    if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+        resolve_trace_id()
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
     ctx.write_dotenv()
+    delete_dir_if_exists(render_workspace_dir(ctx.work_dir))
 
     steps: list[PipelineStep] = [
         PassportStep(),
@@ -361,7 +379,10 @@ def run_single_env_pipeline() -> None:
     ]
 
     results: list[StepResult] = []
+    metrics = MetricsCollectorActivity(ctx)
+    terminal_status = PipelineStatus.UNKNOWN
     try:
+        metrics.send_running()
         for step in steps:
             if not step.should_run(ctx):
                 logger.info(colorize(f"Step '{step.name}' skipped.", _STATUS_COLOR[StepStatus.SKIPPED]))
@@ -385,6 +406,17 @@ def run_single_env_pipeline() -> None:
                     end_banner = colorize_segment(
                         banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
                     logger.info(end_banner)
+        terminal_status = PipelineStatus.SKIPPED if all(r.status == StepStatus.SKIPPED for r in results) \
+            else PipelineStatus.SUCCESS
+    except KeyboardInterrupt:
+        terminal_status = PipelineStatus.CANCELLED
+        raise
+    except SystemExit as exc:
+        terminal_status = PipelineStatus.SUCCESS if exc.code in (0, None) else PipelineStatus.FAILED
+        raise
+    except Exception:
+        terminal_status = PipelineStatus.FAILED
+        raise
     finally:
         start = time.time_ns()
         status = StepStatus.SUCCESS
@@ -396,7 +428,36 @@ def run_single_env_pipeline() -> None:
         finally:
             duration_ms = (time.time_ns() - start) // 1_000_000
             results.append(StepResult("copy_env_artifact", status, duration_ms))
+            if terminal_status == PipelineStatus.SUCCESS and status == StepStatus.FAILED:
+                terminal_status = PipelineStatus.FAILED
+            recorded = {result.name: result for result in results}
+            metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps]
+            metrics_results.append(recorded["copy_env_artifact"])
+            metrics.record_completion(str(terminal_status), metrics_results)
+            if os.getenv("ENVGENE_FAN_OUT_CHILD"):
+                metrics.send_running(str(terminal_status), results=metrics_results)
         log_pipeline_summary(results)
+
+
+def prepare_job() -> list[str]:
+    with log_section("prepare_job", header=banner("START: prepare_job")):
+        start = time.time_ns()
+        status = StepStatus.FAILED
+        try:
+            env_names = resolve_env_names()
+            os.environ.update(build_resolved_variables(env_names))
+            configure_git_server_trust()
+            if getenv("IS_LOCAL_DEV_TEST_ENVGENE") == "true":
+                logger.info("Local test mode: skipping sparse checkout")
+            else:
+                run_sparse_checkout(env_names)
+            install_certificates()
+            status = StepStatus.SUCCESS
+        finally:
+            duration_ms = (time.time_ns() - start) // 1_000_000
+            end_text = f"END: prepare_job ({_format_duration(duration_ms)}) - {status}"
+            logger.info(colorize(banner(end_text), _STATUS_COLOR[status]))
+    return env_names
 
 
 def dispatch() -> int:
@@ -405,13 +466,15 @@ def dispatch() -> int:
         return 0
 
     # main process
-    env_names = split_multi_value_param(os.environ["ENV_NAMES"])
+    env_names = prepare_job()
     try:
         if len(env_names) == 1:
             run_single_env_pipeline()
             return 0
 
         os.environ["ENV_NAMES"] = env_names[0]
+        if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+            resolve_trace_id()
         handler = PipelineParametersHandler.from_env()
         handler.write_dotenv(exclude_keys={"ENV_NAMES"})
 

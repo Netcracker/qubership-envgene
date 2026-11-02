@@ -1,6 +1,10 @@
 from os import environ, getenv
 from pathlib import Path
+from inspect import signature
+from unittest.mock import Mock
 
+import aioresponses.core as aioresponses_core
+from aiohttp import ClientResponse
 from scripts.tests.base_test import BaseTest
 
 import pytest
@@ -67,7 +71,15 @@ TMPL_ZIP_URL = (
 
 
 @pytest.fixture
-def mock_aio_response():
+def mock_aio_response(monkeypatch):
+    if "stream_writer" in signature(ClientResponse).parameters:
+        class ClientResponseWithStreamWriter(ClientResponse):
+            def __init__(self, *args, **kwargs):
+                kwargs.setdefault("stream_writer", Mock(output_size=0))
+                super().__init__(*args, **kwargs)
+
+        monkeypatch.setattr(aioresponses_core, "ClientResponse", ClientResponseWithStreamWriter)
+
     with aioresponses() as m:
         yield m
 

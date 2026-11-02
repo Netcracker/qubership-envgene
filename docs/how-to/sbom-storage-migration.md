@@ -23,7 +23,7 @@ Migration is **automatic** when you run the Instance pipeline with an EnvGene ve
 1. **Old SBOMs are removed** - SBOM files in the previous flat location (`/sboms/*.sbom.json`) are deleted by EnvGene.
 2. **New SBOMs are generated** - SBOMs are generated and written to the new layout: `/sboms/<application-name>/<application-name>-<application-version>.sbom.json`.
 
-You do **not** need to move or copy files manually. The first pipeline run that includes the `generate_effective_set` job (e.g. with `GENERATE_EFFECTIVE_SET: true`) and uses the new EnvGene version will clear the old flat SBOMs and produce SBOMs in the per-application directories. Because SBOM generation can be expensive, that run may take longer than usual while SBOMs are recreated.
+You do **not** need to move or copy files manually. The first pipeline run that includes the `generate_effective_set` step (e.g. with `GENERATE_EFFECTIVE_SET: true`) and uses the new EnvGene version will clear the old flat SBOMs and produce SBOMs in the per-application directories. Because SBOM generation can be expensive, that run may take longer than usual while SBOMs are recreated.
 
 Example:
 

@@ -11,8 +11,10 @@ classifiers = [
     "Programming Language :: Python :: 3"
 ]
 dependencies = [
-    "cryptography==46.0.5",
+    "cryptography==48.0.1",
     "jsonschema==4.24.1",
+    "ruamel.yaml==0.18.5",
+    "ruamel.yaml.clib==0.2.8",
     "ruyaml==0.91.0",
 ]
 
