@@ -20,7 +20,7 @@ RUN mvn --batch-mode package -Dgpg.skip=true -pl effective-set-generator -am -f 
 # Stage 2: Build minimal JRE
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS jre-build
 
-ARG JDK_VERSION=17.0.20_p8-r0
+ARG JDK_VERSION=17.0.21.0.3_p1-r0
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
