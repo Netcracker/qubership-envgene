@@ -13,7 +13,7 @@ from envgene_shared.crypto.crypt import decrypted_cred_files
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
-from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, open_current_env_instance_store
+from envgenehelper import delete_dir_if_exists, detect_credential_mode, get_current_env_dir_from_env_vars, open_current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -287,7 +287,8 @@ class EnvBuildStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
-        with decrypted_cred_files(), open_current_env_instance_store(env_dir) as env_instance_store:
+        credential_mode = detect_credential_mode()
+        with decrypted_cred_files(), open_current_env_instance_store(env_dir, credential_mode) as env_instance_store:
             run_build_environment()
             env_instance_store.flush()
 

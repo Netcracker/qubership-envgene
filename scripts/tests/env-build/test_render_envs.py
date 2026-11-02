@@ -6,6 +6,7 @@ from build_env.main import render_environment
 from envgenehelper import delete_dir_if_exists, dump_as_yaml_format, get_all_files_in_dir, logger, open_current_env_instance_store, os, render_workspace_dir, shutil
 from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.test_helpers import TestHelpers
+from envgenehelper.external_credential_helper import detect_credential_mode
 
 from scripts.tests.base_test import BaseTest
 
@@ -61,8 +62,17 @@ class TestEnvBuild(BaseTest):
 
         source_dir = str((self.test_data_dir / "test_environments" / cluster_name / env_name).resolve())
         generated_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
+
+        secret_stores_file = (self.test_data_dir / "environments" / "configuration" / "secret-stores.yml")
+        source_secret_stores_file = (self.test_data_dir / "configuration" / "secret-stores.yml")
+        if env_name == "env-extcred":
+            secret_stores_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_secret_stores_file, secret_stores_file)
+        else:
+            secret_stores_file.unlink(missing_ok=True)
+
         delete_dir_if_exists(render_workspace_dir(self.test_data_dir))
-        with open_current_env_instance_store(generated_dir) as env_instance_store:
+        with open_current_env_instance_store(generated_dir, detect_credential_mode(g_inventory_dir)) as env_instance_store:
             render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, self.test_data_dir)
             env_instance_store.flush()
         files_to_compare = get_all_files_in_dir(source_dir)

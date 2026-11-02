@@ -1,7 +1,7 @@
 import pytest
 
 from .collections_helper import dump_as_yaml_format
-from .creds_helper import CONCEALED_SECRET_MASK, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, check_is_cred, create_cred_definition, expand_cred_macro_and_return_value, get_cred_id_and_property_from_cred_macros, get_cred_id_from_cred_macros, get_cred_list_from_param, mask_sensitive
+from .creds_helper import CONCEALED_SECRET_MASK, CRED_MACRO_PATTERN, CRED_MACRO_PROPERTY_TYPES, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, check_is_cred, create_cred_definition, expand_cred_macro_and_return_value, get_cred_id_and_property_from_cred_macros, get_cred_id_from_cred_macros, get_cred_list_from_param, mask_sensitive
 from envgene_shared.utils.yaml_utils import openYaml
 
 # CONST
@@ -223,3 +223,27 @@ def test_mask_sensitive_creds():
     assert creds_masked.get("first_cred").get("data").get("secret") == CONCEALED_SECRET_MASK
     assert creds_masked.get("second_cred").get("data").get("password") == CONCEALED_SECRET_MASK
     assert creds_masked.get("second_cred").get("data").get("username") == CONCEALED_SECRET_MASK
+
+
+cred_macro_pattern_test_data = [
+    ("${creds.get(\"velero-s3-cred\").username}", "velero-s3-cred", "username"),
+    ("${creds.get('velero-s3-cred').password} ", "velero-s3-cred", "password"),
+    ("${cmdb.creds.get('creds-get-secret').secret}", "creds-get-secret", "secret"),
+    ("${cmdb.creds.get( \"smv-cert\" ).secret}", "smv-cert", "secret"),
+    ("${cmdb.creds.get(   \"creds-get-vault-cred-namespace\"  ).namespace}", "creds-get-vault-cred-namespace", "namespace"),
+    ("${creds.get(\\\"escaped-cred\\\").roleId}", "escaped-cred", "roleId"),
+]
+
+
+@pytest.mark.parametrize("value, cred_id, cred_property", cred_macro_pattern_test_data)
+def test_cred_macro_pattern(value, cred_id, cred_property):
+    match = CRED_MACRO_PATTERN.search(value)
+
+    assert match.group(1) == cred_id
+    assert match.group(2) == cred_property
+    assert cred_property in CRED_MACRO_PROPERTY_TYPES
+
+
+@pytest.mark.parametrize("value", ["plain text", "${other.get('x').password}", "${creds.get('x')}"])
+def test_cred_macro_pattern_ignores_non_macros(value):
+    assert CRED_MACRO_PATTERN.search(value) is None

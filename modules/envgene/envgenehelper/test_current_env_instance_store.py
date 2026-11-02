@@ -5,6 +5,7 @@ import json
 import pytest
 
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
+from envgenehelper.models import CredentialMode
 from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store,
     open_current_env_instance_store, profile_cache_dir,
@@ -344,3 +345,13 @@ def test_flush_never_prunes_shared_profile_cache(tmp_path, env_dir, shared_root)
     next_run.flush()
 
     assert sorted(f.name for f in profile_cache_dir().glob("*.pkl")) == sorted([old_key, new_key])
+
+
+def test_store_credential_mode_defaults_to_local(env_dir):
+    with open_current_env_instance_store(env_dir) as opened_store:
+        assert opened_store.credential_mode == CredentialMode.LOCAL
+
+
+def test_store_keeps_credential_mode_given_on_open(env_dir):
+    with open_current_env_instance_store(env_dir, CredentialMode.EXTERNAL) as opened_store:
+        assert opened_store.credential_mode == CredentialMode.EXTERNAL

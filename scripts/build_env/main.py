@@ -5,7 +5,7 @@ from build_env.build_env import build_env, copy_instance_paramsets, copy_templat
     process_additional_template_parameters
 from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
-from build_env.render_config_env import EnvGenerator
+from build_env.render_config_env import EXTERNAL_CRED_COMMENT, EnvGenerator
 from build_env.env_specific_overrides import validate_env_specific_override_keys
 from build_env.resource_profiles import get_env_specific_resource_profiles
 
@@ -91,11 +91,10 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     validate_env_specific_override_keys(source_env_dir, env_definition)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(
         source_env_dir, all_instances_dir, get_schema_dir() / "resource-profile.schema.json", env_definition)
-    build_env(source_env_dir, env_definition, render_parameters_dir, template_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.is_external_cred_env)
-    create_credentials(source_env_dir, all_instances_dir, render_context.is_external_cred_env, env_definition)
-    logger.info(f"External cred env is set as {render_context.is_external_cred_env}")
-    return source_env_dir, render_context.is_external_cred_env
+    passport_creds = build_env(source_env_dir, env_definition, render_parameters_dir, template_profiles_dir,
+                               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs)
+    credential_sources = [render_context.template_creds, passport_creds]
+    create_credentials(source_env_dir, all_instances_dir, env_definition, credential_sources, render_context)
 
 
 def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir, work_dir):
