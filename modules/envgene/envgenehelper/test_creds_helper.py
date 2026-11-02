@@ -1,7 +1,9 @@
+import yaml
 import pytest
 
 from .collections_helper import dump_as_yaml_format
-from .creds_helper import CONCEALED_SECRET_MASK, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, check_is_cred, create_cred_definition, expand_cred_macro_and_return_value, get_cred_id_and_property_from_cred_macros, get_cred_id_from_cred_macros, get_cred_list_from_param, mask_sensitive
+from .creds_helper import CONCEALED_SECRET_MASK, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, check_cred_value, check_is_cred, create_cred_definition, expand_cred_macro_and_return_value, get_cred_id_and_property_from_cred_macros, get_cred_id_from_cred_macros, get_cred_list_from_param, mask_sensitive, validate_creds
+from .errors import ValidationError
 from envgene_shared.utils.yaml_utils import openYaml
 
 # CONST
@@ -223,3 +225,94 @@ def test_mask_sensitive_creds():
     assert creds_masked.get("first_cred").get("data").get("secret") == CONCEALED_SECRET_MASK
     assert creds_masked.get("second_cred").get("data").get("password") == CONCEALED_SECRET_MASK
     assert creds_masked.get("second_cred").get("data").get("username") == CONCEALED_SECRET_MASK
+
+
+# ===================== envgeneNullValue validation (UC-NVV-2/3/4) =====================
+#
+# Credential scope of the use cases in docs/use-cases/envgene-null-value-validation.md.
+
+def _cred(cred_type, **data):
+    return {"type": cred_type, "data": data}
+
+
+@pytest.mark.parametrize(
+    "cred_id, cred, expected",
+    [
+        ("db-cred", _cred("usernamePassword", username="u", password="p"), ""),
+        ("db-cred", _cred("usernamePassword", username="envgeneNullValue", password="p"),
+         "credId: db-cred - username or password is not set"),
+        ("db-cred", _cred("usernamePassword", username="u", password="envgeneNullValue"),
+         "credId: db-cred - username or password is not set"),
+        ("consul-cred", _cred("secret", secret="s"), ""),
+        ("consul-cred", _cred("secret", secret="envgeneNullValue"),
+         "credId: consul-cred - secret is not set"),
+        ("vault-cred", _cred("vault", secretId="envgeneNullValue"),
+         "credId: vault-cred - secretId is not set"),
+        ("ext-cred", _cred("external"), ""),
+    ],
+    ids=["userpass-resolved", "userpass-null-username", "userpass-null-password",
+         "secret-resolved", "secret-null", "vault-null", "external-ignored"],
+)
+def test_check_cred_value_null_detection(cred_id, cred, expected):
+    assert check_cred_value(cred_id, cred) == expected
+
+
+def _write_creds(creds_dir, credentials):
+    creds_dir.mkdir(parents=True, exist_ok=True)
+    (creds_dir / "credentials.yml").write_text(yaml.dump(credentials), encoding="utf-8")
+
+
+RESOLVED_CREDS = {
+    "dbaas-cluster-dba-cred": _cred("usernamePassword", username="dbaas-user", password="dbaas-password"),
+    "consul-admin-cred": _cred("secret", secret="consul-admin-secret"),
+}
+
+
+def test_validate_creds_pass_when_resolved(tmp_path):
+    creds_dir = tmp_path / "Credentials"
+    _write_creds(creds_dir, RESOLVED_CREDS)
+    validate_creds(str(creds_dir))
+
+
+def test_unresolved_credential_blocks_pipeline(tmp_path):
+    creds = dict(RESOLVED_CREDS)
+    creds["dbaas-cluster-dba-cred"] = _cred("usernamePassword",
+                                            username="envgeneNullValue", password="envgeneNullValue")
+    creds_dir = tmp_path / "Credentials"
+    _write_creds(creds_dir, creds)
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate_creds(str(creds_dir))
+
+    message = str(exc_info.value)
+    assert "Error while validating credentials:" in message
+    assert "credId: dbaas-cluster-dba-cred - username or password is not set" in message
+    assert "consul-admin-cred" not in message
+
+
+def test_multiple_unresolved_credentials_reported_together(tmp_path):
+    creds = {
+        "dbaas-cluster-dba-cred": _cred("usernamePassword",
+                                        username="envgeneNullValue", password="envgeneNullValue"),
+        "consul-admin-cred": _cred("secret", secret="envgeneNullValue"),
+    }
+    creds_dir = tmp_path / "Credentials"
+    _write_creds(creds_dir, creds)
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate_creds(str(creds_dir))
+
+    message = str(exc_info.value)
+    assert message.count("Error while validating credentials:") == 1
+    assert "credId: dbaas-cluster-dba-cred - username or password is not set" in message
+    assert "credId: consul-admin-cred - secret is not set" in message
+
+
+def test_validate_creds_matching_is_case_insensitive(tmp_path):
+    creds_dir = tmp_path / "Credentials"
+    _write_creds(creds_dir, {"consol-cred": _cred("secret", secret="ENVGeneNullValue")})
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate_creds(str(creds_dir))
+
+    assert "credId: consol-cred - secret is not set" in str(exc_info.value)
