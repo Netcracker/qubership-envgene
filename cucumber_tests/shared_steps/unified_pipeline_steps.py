@@ -114,28 +114,6 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
             workspace.config_data.update(loaded)
 
 
-@given(parsers.parse('a deploy parameter "{param}" is set to "{value}" in the environment instance'))
-def set_deploy_param_null(workspace: EnvGeneWorkspace, param: str, value: str):
-    """Inject an envgeneNullValue into a deploy parameter of a namespace template override."""
-    import yaml
-    env_dir = workspace.base_dir / "environments" / workspace.cluster_name / workspace.env_name
-    overrides_dir = env_dir / "Inventory" / "overrides"
-    overrides_dir.mkdir(parents=True, exist_ok=True)
-    override_file = overrides_dir / "deploy_params_override.yml"
-    override_file.write_text(yaml.dump({"namespaces": {workspace.env_name: {"deployParameters": {param: value}}}}))
-
-
-@given(parsers.parse('a credential "{cred_id}" has "{value}" for username in the environment instance'))
-def set_credential_null(workspace: EnvGeneWorkspace, cred_id: str, value: str):
-    """Inject an envgeneNullValue into credentials."""
-    import yaml
-    env_dir = workspace.base_dir / "environments" / workspace.cluster_name / workspace.env_name
-    creds_dir = env_dir / "Credentials"
-    creds_dir.mkdir(parents=True, exist_ok=True)
-    creds_file = creds_dir / "credentials.yml"
-    creds_file.write_text(yaml.dump({cred_id: {"type": "usernamePassword", "data": {"username": value, "password": value}}}))
-
-
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
