@@ -28,7 +28,6 @@ from build_env.main import run_build_environment
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
-from effective_set.cleanup import clean_effective_set
 from effective_set.sboms_retention_policy import sboms_retention_policy
 from effective_set.generate_sboms import generate_sboms
 from deployment_plan.process_deployment_plan import merge_deployment_plan, reduce_deployment_plan
@@ -335,7 +334,6 @@ class CleanupStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         reduce_deployment_plan(ctx)
-        clean_effective_set(ctx)
 
 
 class GitCommitStep(PipelineStep):

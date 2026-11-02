@@ -13,6 +13,9 @@ Feature: CLEAN sub-flows
     And the ES repository contains an old cleanup context
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the pipeline step "cleanup" has status "SUCCESS"
     And the pipeline step "appregdef_render" has status "SKIPPED"
     And the pipeline step "regdefv2_adapter" has status "SKIPPED"
@@ -36,6 +39,9 @@ Feature: CLEAN sub-flows
     And the pipeline parameter "NAMESPACE_NAMES" is set to "test-env-core;test-env-bss-peer"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the namespace "core" is marked as cleaned
     And the namespace "bss-peer" is marked as cleaned
     And the namespace "bss-origin" is not marked as cleaned
@@ -50,6 +56,9 @@ Feature: CLEAN sub-flows
     And the pipeline parameter "NAMESPACE_NAMES" is set to "test-env-bss-origin"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the namespace "bss-origin" is marked as cleaned
     And the namespace "bss-peer" is not marked as cleaned
     And the namespace "core" is not marked as cleaned
@@ -62,6 +71,9 @@ Feature: CLEAN sub-flows
     And the pipeline parameter "NAMESPACE_NAMES" is set to "test-env-controller"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the pipeline log contains "Namespace 'test-env-controller' is absent from deploy-plan.yml"
     And the namespace "controller" is marked as cleaned
     And the namespace "core" is not marked as cleaned
@@ -74,6 +86,7 @@ Feature: CLEAN sub-flows
     Then the pipeline fails
     And the pipeline step "cleanup" has status "FAILED"
     And the pipeline log contains "Namespace 'does-not-exist' is absent from namespace-map.yml"
+    And the ES repository has not changed
     And the deploy plan contains 3 entries
     And the namespace "core" is not marked as cleaned
 
@@ -82,6 +95,9 @@ Feature: CLEAN sub-flows
     And the environment has a deployed effective set in its ES repository
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the pipeline step "cleanup" has status "SUCCESS"
     And the namespace "core" is marked as cleaned
     And the namespace "bss" is marked as cleaned
@@ -94,6 +110,9 @@ Feature: CLEAN sub-flows
     And the pipeline parameter "NAMESPACE_NAMES" is set to "test-env-core"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the namespace "core" is marked as cleaned
     And the namespace "bss" is not marked as cleaned
     And the deploy plan contains 1 entry
@@ -103,6 +122,9 @@ Feature: CLEAN sub-flows
     Given the environment has a deployed effective set in its ES repository
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the SBOM directory "app1" contains 2 files
     And no SBOM files were removed
 
@@ -111,8 +133,14 @@ Feature: CLEAN sub-flows
     And the pipeline parameter "NAMESPACE_NAMES" is set to "test-env-core"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the pipeline log contains "Namespace 'test-env-core' is already cleaned"
     And the namespace "core" is marked as cleaned
     And the namespace "bss-origin" is not marked as cleaned

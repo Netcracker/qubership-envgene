@@ -10,6 +10,9 @@ Feature: Mixed flows - No-CMDB v2 and No-CMDB v1 runs on the same environment
     And the environment has a deployed effective set in its ES repository
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the ES repository has not changed
+    When the separate effective set cleanup runs
+    Then the effective set cleanup completes successfully
     And the pipeline step "cleanup" has status "SUCCESS"
     And the deploy plan is empty
     And the namespace "core" is marked as cleaned

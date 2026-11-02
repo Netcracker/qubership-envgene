@@ -6,12 +6,14 @@ workspace init from test data, pipeline step status, BG state files) is reused f
 shared_steps/unified_pipeline_steps.py and shared_steps/common_steps.py.
 """
 import re
+import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import yaml
 from git import Actor, Repo
-from pytest_bdd import given, then, parsers
+from pytest_bdd import given, when, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
@@ -97,6 +99,7 @@ def given_deployed_effective_set(workspace: EnvGeneWorkspace):
         workspace.es_before = {blob.path: blob.data_stream.read() for blob in seed.head.commit.tree.traverse()
                                if blob.type == "blob"}
         seed.create_remote("origin", str(workspace.es_remote)).push("HEAD:refs/heads/main").raise_if_error()
+        workspace.es_commit_before = seed.head.commit.hexsha
     pipeline = es / "pipeline"
     pipeline.mkdir(exist_ok=True)
     (pipeline / "parameters.yaml").write_text(yaml.safe_dump({
@@ -113,9 +116,41 @@ def given_old_cleanup_context(workspace: EnvGeneWorkspace):
         actor = Actor("Test", "test@example.com")
         checkout.index.commit("Add old cleanup context", author=actor, committer=actor)
         checkout.remote().push("HEAD:refs/heads/main").raise_if_error()
+        workspace.es_commit_before = checkout.head.commit.hexsha
     local_cleanup = _effective_set_dir(workspace) / "cleanup"
     local_cleanup.mkdir()
     (local_cleanup / "mapping.yaml").write_text("old: mapping\n", encoding="utf-8")
+
+
+@then('the ES repository has not changed')
+def then_es_repository_unchanged(workspace: EnvGeneWorkspace):
+    with Repo(workspace.es_remote) as remote:
+        assert remote.commit("refs/heads/main").hexsha == workspace.es_commit_before, (
+            "The orchestrator must not publish ES changes before the separate cleanup invocation")
+
+
+@when('the separate effective set cleanup runs')
+def run_separate_effective_set_cleanup(workspace: EnvGeneWorkspace):
+    workspace.assert_success("Do not invoke cleanup after a failed orchestrator run")
+    params = getattr(workspace, "extra_env", {})
+    result = subprocess.run([
+        "argo-dpg", "cleanup", "structure",
+        "-p", f"params.environment_id={workspace.cluster_name}/{workspace.env_name}",
+        "-p", f"params.rootdir={workspace.base_dir}",
+        "-p", f"params.namespace_names={params.get('NAMESPACE_NAMES', '')}",
+        "-p", "params.commit_message=Clean effective set after git_commit",
+    ], cwd=workspace.base_dir, env=os.environ | params, capture_output=True, text=True)
+    workspace.stdout += result.stdout
+    workspace.stderr += result.stderr
+    workspace.returncode = result.returncode
+    if result.returncode == 0:
+        with Repo(workspace.es_remote) as remote:
+            workspace.es_commit_before = remote.commit("refs/heads/main").hexsha
+
+
+@then('the effective set cleanup completes successfully')
+def then_effective_set_cleanup_success(workspace: EnvGeneWorkspace):
+    workspace.assert_success("Separate effective set cleanup failed")
 
 
 @then('the ES repository contains no cleanup context')

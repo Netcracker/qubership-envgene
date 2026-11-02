@@ -6,6 +6,8 @@ os.environ.setdefault("CLUSTER_NAME", "cluster-01")
 os.environ.setdefault("ENVIRONMENT_NAME", "env-01")
 
 import pytest
+import subprocess
+from unittest.mock import Mock
 
 from envgenehelper.models import PipelineType
 
@@ -20,6 +22,7 @@ from pipeline.orchestrator import (
     RegdefV2AdapterStep,
 )
 from pipeline.pipeline_parameters import PipelineParametersHandler
+from pipeline import orchestrator
 
 GITLAB_DEPLOY = PipelineType.GITLAB_DEPLOY.value
 
@@ -116,6 +119,17 @@ class TestStepGating:
     ])
     def test_cleanup_only_runs_for_gitlab_clean(self, pipeline_type, operation):
         assert not CleanupStep().should_run(_ctx(PIPELINE_TYPE=pipeline_type, OPERATION_TYPE=operation))
+
+    def test_cleanup_step_only_reduces_plan(self, monkeypatch):
+        reduce_plan = Mock()
+        monkeypatch.setattr(orchestrator, "reduce_deployment_plan", reduce_plan)
+        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: pytest.fail(
+            "ES cleanup must run outside the orchestrator after git_commit"))
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN")
+
+        CleanupStep().execute(ctx)
+
+        reduce_plan.assert_called_once_with(ctx)
 
     @pytest.mark.unit
     def test_env_build_skipped_for_bgd(self):
