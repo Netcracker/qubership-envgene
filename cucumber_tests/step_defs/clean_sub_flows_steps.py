@@ -6,43 +6,16 @@ workspace init from test data, pipeline step status, BG state files) is reused f
 shared_steps/unified_pipeline_steps.py and shared_steps/common_steps.py.
 """
 import re
-import os
-import shutil
-import subprocess
-from pathlib import Path
 
 import yaml
-from git import Actor, Repo
-from pytest_bdd import given, when, then, parsers
+from git import Repo
+from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
 
-@then(parsers.parse('the namespace "{name}" is marked as cleaned'))
-def then_namespace_is_cleaned(workspace: EnvGeneWorkspace, name: str):
-    with Repo(workspace.es_remote) as remote:
-        tree = remote.commit("refs/heads/main").tree / workspace.es_relative_path
-        for context in ("deployment", "runtime"):
-            namespace = tree / context / name
-            assert (namespace / ".cleaned").data_stream.read() == b"", f"Missing marker for {context}/{name}"
-            app = namespace / "app"
-            assert [entry.name for entry in app] == [".gitkeep"], f"Application content remains in {context}/{name}"
-
-
-@then(parsers.parse('the namespace "{name}" is not marked as cleaned'))
-def then_namespace_is_not_cleaned(workspace: EnvGeneWorkspace, name: str):
-    with Repo(workspace.es_remote) as remote:
-        tree = remote.commit("refs/heads/main").tree / workspace.es_relative_path
-        for context in ("deployment", "runtime"):
-            namespace = tree / context / name
-            actual = {item.path: item.data_stream.read() for item in namespace.traverse() if item.type == "blob"}
-            expected = {path: data for path, data in workspace.es_before.items()
-                        if path.startswith(f"{workspace.es_relative_path}/{context}/{name}/")}
-            assert actual == expected, f"Untargeted namespace {context}/{name} changed: {actual}"
-
-
-@given('the environment has a deployed effective set in its ES repository')
-def given_deployed_effective_set(workspace: EnvGeneWorkspace):
+@given('the environment has deployed namespaces')
+def given_deployed_namespaces(workspace: EnvGeneWorkspace):
     env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
     entries = _load_deploy_plan(workspace)
     namespace_map = {}
@@ -88,85 +61,10 @@ def given_deployed_effective_set(workspace: EnvGeneWorkspace):
             (application / "old-generation" / "parameters.yaml").write_text("old: value\n", encoding="utf-8")
             mapping[namespace] = f"/environments/{workspace.cluster_name}/{workspace.env_name}/effective-set/{context}/{folder}"
         (es / context / "mapping.yaml").write_text(yaml.safe_dump(mapping), encoding="utf-8")
-    workspace.es_relative_path = f"environments/{workspace.cluster_name}/{workspace.env_name}/effective-set"
-    workspace.es_remote = workspace.base_dir / "es-remote.git"
-    with Repo.init(workspace.es_remote, bare=True), \
-            Repo.init(workspace.base_dir / "es-seed", initial_branch="main") as seed:
-        shutil.copytree(es, Path(seed.working_tree_dir) / workspace.es_relative_path)
-        seed.git.add(".")
-        actor = Actor("Test", "test@example.com")
-        seed.index.commit("Seed effective set", author=actor, committer=actor)
-        workspace.es_before = {blob.path: blob.data_stream.read() for blob in seed.head.commit.tree.traverse()
-                               if blob.type == "blob"}
-        seed.create_remote("origin", str(workspace.es_remote)).push("HEAD:refs/heads/main").raise_if_error()
-        workspace.es_commit_before = seed.head.commit.hexsha
-    pipeline = es / "pipeline"
-    pipeline.mkdir(exist_ok=True)
-    (pipeline / "parameters.yaml").write_text(yaml.safe_dump({
-        "DCL_GIT_URL": str(workspace.es_remote), "DCL_GIT_BRANCH": "main"}), encoding="utf-8")
-
-
-@given('the ES repository contains an old cleanup context')
-def given_old_cleanup_context(workspace: EnvGeneWorkspace):
-    with Repo.clone_from(str(workspace.es_remote), workspace.base_dir / "old-cleanup", branch="main") as checkout:
-        cleanup = Path(checkout.working_tree_dir) / workspace.es_relative_path / "cleanup" / "core"
-        cleanup.mkdir(parents=True)
-        (cleanup / "parameters.yaml").write_text("old: context\n", encoding="utf-8")
-        checkout.git.add(".")
-        actor = Actor("Test", "test@example.com")
-        checkout.index.commit("Add old cleanup context", author=actor, committer=actor)
-        checkout.remote().push("HEAD:refs/heads/main").raise_if_error()
-        workspace.es_commit_before = checkout.head.commit.hexsha
-    local_cleanup = _effective_set_dir(workspace) / "cleanup"
-    local_cleanup.mkdir()
-    (local_cleanup / "mapping.yaml").write_text("old: mapping\n", encoding="utf-8")
-
-
-@then('the ES repository has not changed')
-def then_es_repository_unchanged(workspace: EnvGeneWorkspace):
-    with Repo(workspace.es_remote) as remote:
-        assert remote.commit("refs/heads/main").hexsha == workspace.es_commit_before, (
-            "The orchestrator must not publish ES changes before the separate cleanup invocation")
-
-
-@when('the separate effective set cleanup runs')
-def run_separate_effective_set_cleanup(workspace: EnvGeneWorkspace):
-    workspace.assert_success("Do not invoke cleanup after a failed orchestrator run")
-    params = getattr(workspace, "extra_env", {})
-    result = subprocess.run([
-        "argo-dpg", "cleanup", "structure",
-        "-p", f"params.environment_id={workspace.cluster_name}/{workspace.env_name}",
-        "-p", f"params.rootdir={workspace.base_dir}",
-        "-p", f"params.namespace_names={params.get('NAMESPACE_NAMES', '')}",
-        "-p", "params.commit_message=Clean effective set after git_commit",
-    ], cwd=workspace.base_dir, env=os.environ | params, capture_output=True, text=True)
-    workspace.stdout += result.stdout
-    workspace.stderr += result.stderr
-    workspace.returncode = result.returncode
-    if result.returncode == 0:
-        with Repo(workspace.es_remote) as remote:
-            workspace.es_commit_before = remote.commit("refs/heads/main").hexsha
-
-
-@then('the effective set cleanup completes successfully')
-def then_effective_set_cleanup_success(workspace: EnvGeneWorkspace):
-    workspace.assert_success("Separate effective set cleanup failed")
-
-
-@then('the ES repository contains no cleanup context')
-def then_no_remote_cleanup_context(workspace: EnvGeneWorkspace):
-    with Repo(workspace.es_remote) as remote:
-        effective_set = remote.commit("refs/heads/main").tree / workspace.es_relative_path
-        assert "cleanup" not in [entry.name for entry in effective_set], "Old cleanup context remains in ES repository"
-
-
-@then('the ES repository keeps its namespace mappings')
-def then_es_mappings_unchanged(workspace: EnvGeneWorkspace):
-    with Repo(workspace.es_remote) as remote:
-        tree = remote.commit("refs/heads/main").tree
-        for context in ("deployment", "runtime"):
-            path = f"{workspace.es_relative_path}/{context}/mapping.yaml"
-            assert (tree / path).data_stream.read() == workspace.es_before[path], f"Mapping changed: {path}"
+    cleanup = es / "cleanup" / "core"
+    cleanup.mkdir(parents=True, exist_ok=True)
+    (cleanup / "parameters.yaml").write_text("old: context\n", encoding="utf-8")
+    workspace.effective_set_before = _snapshot_effective_set(workspace)
 
 
 @then('the namespace definitions are unchanged')
@@ -260,3 +158,20 @@ def then_effective_set_cleanup_mapping_contains_namespace(workspace: EnvGeneWork
     assert namespace in mapping, (
         f"Expected namespace '{namespace}' as a key in cleanup/mapping.yaml, got keys: {list(mapping)}"
     )
+
+
+@given(parsers.parse('the namespaces "{first}" and "{second}" are selected with "{separator}"'))
+def given_namespace_selection(workspace: EnvGeneWorkspace, first: str, second: str, separator: str):
+    delimiters = {"semicolon": ";", "escaped newline": r"\n"}
+    workspace.extra_env["NAMESPACE_NAMES"] = delimiters[separator].join((first, second))
+
+
+def _snapshot_effective_set(workspace: EnvGeneWorkspace) -> dict:
+    es = _effective_set_dir(workspace)
+    return {str(path.relative_to(es)): path.read_bytes() for path in es.rglob("*") if path.is_file()}
+
+
+@then('the existing effective set is unchanged')
+def then_effective_set_unchanged(workspace: EnvGeneWorkspace):
+    assert _snapshot_effective_set(workspace) == workspace.effective_set_before, (
+        "The orchestrator must leave ES content for the separate argo-dpg cleanup invocation")

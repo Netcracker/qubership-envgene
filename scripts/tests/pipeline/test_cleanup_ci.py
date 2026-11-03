@@ -24,10 +24,10 @@ def run_ci(tmp_path):
         "    stream.write(json.dumps({'program': program, 'args': sys.argv[1:]}) + '\\n')\n"
         "if sys.argv[1].endswith('/pipeline/orchestrator.py'):\n"
         "    sys.exit(int(os.environ.get('ORCHESTRATOR_EXIT', '0')))\n"
-        "if program == 'argo-dpg':\n"
+        "if sys.argv[2:4] == ['cleanup', 'structure']:\n"
         "    sys.exit(int(os.environ.get('CLEANUP_EXIT', '0')))\n"
     )
-    for name in ("python3", "argo-dpg"):
+    for name in ("python3",):
         executable = tmp_path / name
         executable.write_text(command)
         executable.chmod(0o755)
@@ -50,15 +50,15 @@ def run_ci(tmp_path):
     return run
 
 
-@pytest.mark.parametrize("namespaces", ["", "env-core;env-bss"])
+@pytest.mark.parametrize("namespaces", ["", "env-core;env-bss", r"env-core\nenv-bss"])
 def test_clean_runs_separately_after_orchestrator(run_ci, namespaces):
     result, calls = run_ci(NAMESPACE_NAMES=namespaces)
 
     assert result.returncode == 0, result.stderr
     assert len(calls) == 2
     assert calls[0]["args"] == ["/module/scripts/pipeline/orchestrator.py"]
-    assert calls[1]["program"] == "argo-dpg"
-    assert calls[1]["args"][:2] == ["cleanup", "structure"]
+    assert calls[1]["program"] == "python3"
+    assert calls[1]["args"][:3] == ["/python/argocd-dpg/src/argo/main.py", "cleanup", "structure"]
     assert f"params.namespace_names={namespaces}" in calls[1]["args"]
     assert "params.environment_id=cluster/env" in calls[1]["args"]
 
@@ -91,4 +91,4 @@ def test_separate_cleanup_failure_fails_job(run_ci):
 
     assert result.returncode == 23
     assert len(calls) == 2
-    assert calls[1]["program"] == "argo-dpg"
+    assert calls[1]["args"][:3] == ["/python/argocd-dpg/src/argo/main.py", "cleanup", "structure"]

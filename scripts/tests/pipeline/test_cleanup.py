@@ -35,6 +35,7 @@ def cleanup_context(tmp_path, monkeypatch):
     ("", []),
     ("env-core", ["env-origin", "env-peer"]),
     ("env-origin;env-peer", ["env-core"]),
+    (r"env-origin\nenv-peer", ["env-core"]),
 ])
 def test_reduce_plan_preserves_only_unselected_namespaces(cleanup_context, names, remaining):
     cleanup_context.params["NAMESPACE_NAMES"] = names

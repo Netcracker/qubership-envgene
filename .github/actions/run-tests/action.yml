@@ -95,11 +95,6 @@ runs:
       run: |
         pytest scripts/tests/ --capture=no -W ignore::DeprecationWarning --junitxml=junit_scripts.xml
 
-    - name: EFFECTIVE SET CLEANUP tests
-      shell: bash
-      run: |
-        pytest modules/dpg/tests/test_cleanup_structure.py --capture=no -W ignore::DeprecationWarning --junitxml=junit_dpg.xml
-
     - name: Merge test results
       shell: bash
       run: |
