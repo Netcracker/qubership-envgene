@@ -49,6 +49,7 @@ Feature: CLEAN sub-flows
     And the deploy plan contains an entry for namespace "test-env-bss-origin"
     And the ES repository keeps its namespace mappings
     And the namespace definitions are unchanged
+    And the reduced deploy plan and namespace map are committed
 
   Scenario: CLEAN of one Blue-Green side preserves the other side and BG state
     Given the environment has a deployed effective set in its ES repository
@@ -65,6 +66,7 @@ Feature: CLEAN sub-flows
     And the BG state files are origin "active" and peer "idle"
     And the deploy plan contains 2 entries
     And the deploy plan does not contain an entry for namespace "test-env-bss-origin"
+    And the reduced deploy plan and namespace map are committed
 
   Scenario: CLEAN warns for a namespace missing from the deploy plan
     Given the environment has a deployed effective set in its ES repository
@@ -117,6 +119,7 @@ Feature: CLEAN sub-flows
     And the namespace "bss" is not marked as cleaned
     And the deploy plan contains 1 entry
     And the deploy plan contains an entry for namespace "test-env-bss"
+    And the reduced deploy plan and namespace map are committed
 
   Scenario: CLEAN preserves SBOM files
     Given the environment has a deployed effective set in its ES repository
