@@ -123,7 +123,8 @@ This feature uses [SBOM](/docs/features/sbom.md) functionality
        2. Maintaining the file as a valid YAML document containing registry objects
        3. Completely replacing any existing configuration for matching `registry_id` values
 11. EnvGene must display SBOM generation library error messages in logs
-12. EnvGene must source the `helm-map-repositories` input attribute from the `HELM_MAP_REPOSITORIES` Cloud `e2eParameters` value
+12. EnvGene must apply the `HELM_MAP_REPOSITORIES` Cloud `e2eParameters` value when the DD download builds the app
+    chart URL, as described in [`full_chart_name`](#full_chart_name)
 
 ### Use Cases
 
@@ -222,16 +223,6 @@ classDiagram
 | `cmdb-token`                   | string | yes       | Token of the CMDB from which the appDef and regDef will be retrieved. Mutually exclusive with `local-app-defs-path`  and `local-reg-defs-path`    | `<cmdb-token>`                                              |
 | `local-app-defs-path`          | string | yes       | Path to the directory containing Application Definition files. Mutually exclusive with `cmdb-url`  and `cmdb-username` and `cmdb-token`           | `/environments/applicationDefinitions`                      |
 | `local-reg-defs-path`          | string | yes       | Path to the directory containing Registry Definition files. Mutually exclusive with `cmdb-url`  and `cmdb-username` and `cmdb-token`              | `/environments/registryDefinitions`                         |
-| `helm-map-repositories`        | object | no        | Overrides the reconstructed Helm chart base URL, keyed by group repository name. See [Handling DD After Delivery](#handling-dd-after-delivery).   | see below                                                   |
-
-The `helm-map-repositories` object maps a RegDef Helm group-repository name to a custom registry URL. The key is the
-value of `regDef.helmAppConfig.helmGroupRepoName`:
-
-```yaml
-# key: value of regDef.helmAppConfig.helmGroupRepoName
-nc.helm.charts:
-  url: https://mirror.example.com/helm
-```
 
 ### SBOM Generation Rules
 
@@ -361,13 +352,14 @@ The value of `regDef.DockerConfig.X` is determined in the same way as described 
 
 ##### `full_chart_name`
 
-The SBOM generator downloads the app chart to read the resource-profile baselines.
+The SBOM generator reads the resource-profile baselines from the app chart. The EnvGene DD download downloads and
+unpacks the chart before the generator runs.
 
-Under `auto`, when `helm_registry` is present, the generator downloads `DD.charts[0].full_chart_name`
-directly. Under `regdef`, the generator always reconstructs the chart URL from the RegDef and ignores
+Under `auto`, when `helm_registry` is present, the DD download downloads `DD.charts[0].full_chart_name`
+directly. Under `regdef`, the DD download always reconstructs the chart URL from the RegDef and ignores
 `DD.charts[0].full_chart_name` even when present.
 
-When the generator reconstructs the chart URL (under `auto` with `helm_registry` absent after delivery, or always
+When the DD download reconstructs the chart URL (under `auto` with `helm_registry` absent after delivery, or always
 under `regdef`), it builds the URL using this pattern:
 
 ```text
@@ -378,10 +370,17 @@ under `regdef`), it builds the URL using this pattern:
 `helmGroupRepoName`, and `helmDevRepoName`. The app chart always uses the group repository `helmGroupRepoName`,
 regardless of the Maven channel the DD came from. Docker images, by contrast, are selected by the Maven channel.
 
-The generator resolves `<base>` in this order:
+The DD download resolves `<base>` in this order:
 
-1. The `helm-map-repositories` input attribute, looked up by the `regDef.helmAppConfig.helmGroupRepoName` value. When
-   a matching entry exists, its `url` is `<base>`.
+1. The `HELM_MAP_REPOSITORIES` Cloud `e2eParameters` value, looked up by the `regDef.helmAppConfig.helmGroupRepoName`
+   value. When a matching entry exists, its `url` is `<base>`:
+
+   ```yaml
+   # key: value of regDef.helmAppConfig.helmGroupRepoName
+   nc.helm.charts:
+     url: https://mirror.example.com/helm
+   ```
+
 2. Otherwise `<base>` is `<regDef.mavenConfig.repositoryDomainName>/<regDef.helmAppConfig.helmGroupRepoName>`. The
    v1.0 Registry Definition has no separate Helm host, so the Maven host is used.
 

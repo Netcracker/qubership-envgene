@@ -58,6 +58,19 @@
         "local"
       ]
     },
+    "artifact_coordinate_source": {
+      "title": "Artifact Coordinate Source",
+      "description": "Selects the source of truth for an application artifact coordinates (its Helm chart URL and its container image URL). Used by both SBOM generation and the deploy side. auto uses the Deployment Descriptor embedded coordinates when present and reconstructs from the Registry Definition only when the Deployment Descriptor was obfuscated at delivery. regdef always reconstructs the coordinates from the Registry Definition, ignoring the Deployment Descriptor embedded coordinates even when present.",
+      "enum": [
+        "auto",
+        "regdef"
+      ],
+      "default": "auto",
+      "examples": [
+        "auto",
+        "regdef"
+      ]
+    },
     "use_committed_sd": {
       "type": "boolean",
       "title": "Use Committed Full SD",

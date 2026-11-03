@@ -22,7 +22,8 @@ TRANSIENT_CRED_ID = "transient-pub-reg-creds"
 AUTH_CONFIG_KEY = "pub-reg-auth"
 
 REGISTRY_AUTH_PARAM_PREFIXES = ("PUB_REG_", "NON_PUB_REG_")
-REGISTRY_AUTH_PARAM_NAMES = (MAVEN_PROVIDER, "HELM_REPO_BASE_URL")
+HELM_MAP_REPOSITORIES = "HELM_MAP_REPOSITORIES"
+REGISTRY_AUTH_PARAM_NAMES = (MAVEN_PROVIDER, HELM_MAP_REPOSITORIES)
 
 V2_MAVEN_CONFIG_FIELDS = (
     "repositoryDomainName",
@@ -34,8 +35,8 @@ V2_MAVEN_CONFIG_FIELDS = (
 )
 
 V2_SECTION_DOMAIN_PARAMS: dict[str, str | None] = {
-    "helmConfig": "HELM_REPO_BASE_URL",
-    "helmAppConfig": "HELM_REPO_BASE_URL",
+    "helmConfig": HELM_MAP_REPOSITORIES,
+    "helmAppConfig": HELM_MAP_REPOSITORIES,
     "goConfig": None,
     "npmConfig": None,
     "rawConfig": None,
@@ -53,11 +54,24 @@ _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
 }
 
 
+def _helm_map_repositories(e2e_parameters: dict) -> dict:
+    helm_map = e2e_parameters.get(HELM_MAP_REPOSITORIES) or {}
+    is_valid = isinstance(helm_map, dict) and all(
+        isinstance(entry, dict) and isinstance(entry.get("url"), str) for entry in helm_map.values())
+    if not is_valid:
+        raise ValueError(f"{HELM_MAP_REPOSITORIES} in Cloud e2eParameters must map a Helm group repository name "
+                         f"to an object with a string url, got: {helm_map!r}")
+    return helm_map
+
+
 def _resolve_pubreg_params(e2e_parameters: dict, env_dir: str) -> dict:
     env_creds = helper.decrypt_file(helper.getEnvCredentialsPath(env_dir), in_place=False, allow_default=True)
     params = {}
     for key, value in e2e_parameters.items():
         is_registry_auth_param = key.startswith(REGISTRY_AUTH_PARAM_PREFIXES) or key in REGISTRY_AUTH_PARAM_NAMES
+        if key == HELM_MAP_REPOSITORIES and value:
+            params[key] = value
+            continue
         if not isinstance(value, str) or not is_registry_auth_param:
             continue
         resolved = helper.expand_cred_macro_and_return_value(key, value, env_creds).strip()
@@ -107,13 +121,16 @@ def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
     return auth_config
 
 
-def _resolve_section_domain(section: str, params: dict, v1_maven: dict) -> str | None:
+def _resolve_section_domain(section: str, params: dict, v1_data: dict) -> str | None:
     param_name = V2_SECTION_DOMAIN_PARAMS[section]
     if param_name is None:
-        return v1_maven.get("repositoryDomainName", "")
-    if params.get(param_name):
-        return params[param_name]
-    logger.warning(f"{param_name} not set in Cloud e2eParameters — {section}.repositoryDomainName not set in RegDef v2")
+        return v1_data.get("mavenConfig", {}).get("repositoryDomainName", "")
+    group_repo = v1_data.get("helmAppConfig", {}).get("helmGroupRepoName", "")
+    url = ((params.get(param_name) or {}).get(group_repo) or {}).get("url")
+    if url:
+        return url
+    logger.warning(f"{param_name} has no url for {group_repo!r} in Cloud e2eParameters — "
+                   f"{section}.repositoryDomainName not set in RegDef v2")
     return None
 
 
@@ -133,7 +150,7 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
         if section not in v1_data:
             continue
         v2_data[section] = {**v1_data[section], "authConfig": AUTH_CONFIG_KEY}
-        domain = _resolve_section_domain(section, params, v1_maven)
+        domain = _resolve_section_domain(section, params, v1_data)
         if domain is not None:
             v2_data[section]["repositoryDomainName"] = domain
     return v2_data
@@ -147,6 +164,7 @@ def run_regdefv2_adapter(ctx) -> None:
     e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
         ctx.env_name, render_context_vars, env_dir, helper.render_workspace_dir(ctx.work_dir) / "parameters"
     )
+    ctx.helm_map_repositories = _helm_map_repositories(e2e_parameters)
     params = _resolve_pubreg_params(e2e_parameters, env_dir)
 
     maven_provider = params.get(MAVEN_PROVIDER, "").strip().lower()

@@ -28,8 +28,11 @@ from sbom_generator.utils.utils import load_schema, encode_dict_to_base64, load_
     find_file_by_name_in_dir
 
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan, DeployPlanEntity
+from envgenehelper.models import ArtifactCoordinateSource
 
 jschon.create_catalog('2020-12')
+
+CHART_DIR_NAME = 'chart'
 
 
 def _load_registry(reg_defs_path, registry_name):
@@ -101,76 +104,24 @@ def build_sd_sbom_component(sd_app_def: Application, sd_app_ver: str, tools: Too
     return sd_bom
 
 
-def lookup_sub_entities(app_artifacts_local_path: Path, parent_entity_name: str) -> (str, Path):
-    sub_entities_info = []
-    entity_path = app_artifacts_local_path.joinpath(parent_entity_name)
-    lookup_path = Path(f"{entity_path}/charts/{parent_entity_name}/charts")
-    if lookup_path.exists() and lookup_path.is_dir():
-        names = [p.name for p in lookup_path.iterdir() if p.is_dir()]
-        for name in names:
-            entity_configs_path = lookup_path.joinpath(name)
-            sub_entities_info.append((name, entity_configs_path))
-            logger.info(f"Additional entity found {name}")
-    return sub_entities_info
-
-
-def generate_app_components(app_name: str, registry: Registry, app_dd, app_artifacts_local_path: Path) -> list[
-    Component]:
+def generate_app_components(app_name: str, registry: Registry, app_dd, chart_path: Path) -> list[Component]:
     app_components = []
-    service_names = [s.service_name for s in app_dd.services]
     for service in app_dd.services:
         # in services can be not only services
         if service.image_type == 'service':
-            service_configs_path = app_artifacts_local_path.joinpath(service.service_name)
-            app_components.append(
-                generate_service_component(service, service_configs_path, registry))
-
-            sub_entities_info = lookup_sub_entities(app_artifacts_local_path, service.service_name)
-            for sub_entity_name, sub_entity_configs_path in sub_entities_info:
-                if sub_entity_name not in service_names:
-                    # parameters from parent entity transfer to sub entity
-                    sub_entity = service.copy()
-                    sub_entity.service_name = sub_entity_name
-                    app_components.append(
-                        generate_service_component(sub_entity, sub_entity_configs_path, registry))
+            app_components.append(generate_service_component(service, chart_path, registry))
         elif service.image_type == 'image':
             app_components.append(generate_octet_stream(service, registry))
 
     for smartplug in app_dd.smartplug:
-        cfg_configs_path = app_artifacts_local_path.joinpath(smartplug.name)
-        cfg_cmp = generate_configuration_component(smartplug, MimeType.SMARTPLUG, cfg_configs_path)
-        app_components.append(cfg_cmp)
-        sub_entities_info = lookup_sub_entities(app_artifacts_local_path, smartplug.name)
-        for sub_entity_name, sub_entity_configs_path in sub_entities_info:
-            # parameters from parent entity transfer to sub entity
-            sub_entity = smartplug.copy()
-            sub_entity.name = sub_entity_name
-            app_components.append(
-                generate_configuration_component(smartplug, MimeType.SMARTPLUG, cfg_configs_path))
+        app_components.append(generate_configuration_component(smartplug, MimeType.SMARTPLUG, chart_path))
 
     for cfg in app_dd.configurations:
-        cfg_configs_path = app_artifacts_local_path.joinpath(cfg.name)
         cfg_type = cfg.type
         if cfg_type and (cfg_type == 'cdn' or cfg_type == 'cdn-cr'):
-            cfg_cmp = generate_configuration_component(cfg, MimeType.CDN, cfg_configs_path)
-            app_components.append(cfg_cmp)
-            sub_entities_info = lookup_sub_entities(app_artifacts_local_path, cfg.name)
-            for sub_entity_name, sub_entity_configs_path in sub_entities_info:
-                # parameters from parent entity transfer to sub entity
-                sub_entity = cfg.copy()
-                sub_entity.name = sub_entity_name
-                app_components.append(
-                    generate_configuration_component(cfg, MimeType.CDN, cfg_configs_path))
+            app_components.append(generate_configuration_component(cfg, MimeType.CDN, chart_path))
         else:
-            cfg_cmp = generate_configuration_component(cfg, MimeType.CONFIGURATION, cfg_configs_path)
-            app_components.append(cfg_cmp)
-            sub_entities_info = lookup_sub_entities(app_artifacts_local_path, cfg.name)
-            for sub_entity_name, sub_entity_configs_path in sub_entities_info:
-                # parameters from parent entity transfer to sub entity
-                sub_entity = cfg.copy()
-                sub_entity.name = sub_entity_name
-                app_components.append(
-                    generate_configuration_component(cfg, MimeType.CONFIGURATION, cfg_configs_path))
+            app_components.append(generate_configuration_component(cfg, MimeType.CONFIGURATION, chart_path))
     for chart in app_dd.charts:
         app_components.append(generate_app_chart_component(app_name, chart))
 
@@ -255,7 +206,7 @@ def get_docker_repo_pointer(service: Service, registry) -> str | None:
     return docker_repo_pointer
 
 
-def generate_service_component(service: Service, service_configs_path: Path, registry) -> Component:
+def generate_service_component(service: Service, chart_path: Path, registry) -> Component:
     properties = []
     service_component = Component(
         mime_type=MimeType.SERVICE,
@@ -289,17 +240,15 @@ def generate_service_component(service: Service, service_configs_path: Path, reg
     image_cmp.hashes = generate_hashes(service)
     service_component.components.add(image_cmp)
 
-    profile_cmp = generate_profile_component(service_configs_path, service.service_name)
+    profile_cmp = generate_profile_component(chart_path, service.service_name)
     if profile_cmp:
         service_component.components.add(profile_cmp)
     return service_component
 
 
-def generate_profile_component(entity_configs_path: Path, entity_name: str):
+def generate_profile_component(chart_path: Path, entity_name: str):
     profiles = []
-    profile_paths = list_files(Path(f'{entity_configs_path}/helm-templates/{entity_name}/resource-profiles/'))
-    if not profile_paths:
-        profile_paths = list_files(Path(f'{entity_configs_path}/charts/{entity_name}/resource-profiles/'))
+    profile_paths = list_files(chart_path / 'charts' / entity_name / 'resource-profiles')
     for profile_path in profile_paths:
         profiles_dict = load_file(profile_path)
         profile_encoded = encode_dict_to_base64(profiles_dict, profile_path.suffix)
@@ -320,7 +269,7 @@ def generate_profile_component(entity_configs_path: Path, entity_name: str):
 
 
 def generate_configuration_component(configuration: Configuration, cfg_mime_type: MimeType,
-                                     cfg_configs_path) -> Component | None:
+                                     chart_path: Path) -> Component | None:
     properties = [Property(name='git_branch', value=configuration.git_branch),
                   Property(name='git_revision', value=configuration.git_revision),
                   Property(name='version', value=configuration.version),
@@ -358,7 +307,7 @@ def generate_configuration_component(configuration: Configuration, cfg_mime_type
                 )
                 configuration_component.components.add(artifact_cmp)
 
-    profile_cmp = generate_profile_component(cfg_configs_path, configuration.name)
+    profile_cmp = generate_profile_component(chart_path, configuration.name)
     if profile_cmp:
         configuration_component.components.add(profile_cmp)
     return configuration_component
@@ -426,7 +375,8 @@ def _match_appver_to_dd_artifact(
     return matches
 
 
-def generate_boms(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDownload]) -> SBOMOutput:
+def generate_boms(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDownload],
+                  artifact_coordinate_source: ArtifactCoordinateSource) -> SBOMOutput:
     logger.info(f"Starting SBOM generation for {len(sd_content.entities)} applications")
     registries_map = {}
     sboms_map = {}
@@ -440,7 +390,6 @@ def generate_boms(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDown
         repo_value = dd_artifact.source.repository.type.value
 
         dd_path = Path(dd_artifact.local_target_path)
-        app_artifacts_local_path = dd_path.parent / dd_path.stem / app_def.artifact_id
 
         app_raw_sbom = Bom()
         app_raw_sbom.serial_number = None
@@ -448,13 +397,14 @@ def generate_boms(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDown
         app_raw_sbom.metadata = generate_metadata(app_def=app_def, app_version=app_version, repo=repo_value)
 
         try:
-            app_dd = DeploymentDescriptor.by_path_with_app(dd_path, app_def, repo_value)
+            app_dd = DeploymentDescriptor.by_path_with_app(dd_path, app_def, repo_value, artifact_coordinate_source)
         except ValidationError as e:
             raise PydanticValidationError(original=e, type_obj=DeploymentDescriptor.__name__, src_path=dd_path)
         if is_dd_valid(app_dd, app_name):
             appver = f'{app_name}:{app_version}'
+            chart_path = dd_path.parent / CHART_DIR_NAME / app_dd.charts[0].helm_chart_name
             app_raw_sbom.components = generate_app_components(app_name=app_name, registry=registry, app_dd=app_dd,
-                                                              app_artifacts_local_path=app_artifacts_local_path)
+                                                              chart_path=chart_path)
             app_sbom = validate_sbom(app_raw_sbom)
             registry_name_encoded = urllib.parse.quote(registry.name)
             registries_map.setdefault(registry_name_encoded, registry)
@@ -541,6 +491,7 @@ def exclude_resolved_apps(sd: EnvgeneDeployPlan, sbom_dir_path: Path) -> list[De
 class Generator:
     @staticmethod
     def generate_bom_by_content(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDownload],
-                                sbom_dir_path: Path) -> SBOMOutput:
+                                sbom_dir_path: Path, artifact_coordinate_source: ArtifactCoordinateSource) -> SBOMOutput:
         sd_content.entities = exclude_resolved_apps(sd_content, sbom_dir_path)
-        return generate_boms(sd_content=sd_content, dd_artifacts=dd_artifacts)
+        return generate_boms(sd_content=sd_content, dd_artifacts=dd_artifacts,
+                             artifact_coordinate_source=artifact_coordinate_source)

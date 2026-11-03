@@ -583,9 +583,8 @@ Functions:
         [Handling DD After Delivery](/docs/features/sbom-generation.md#handling-dd-after-delivery)
       - download DD and app chart, unpack
       - generate SBOM from local DD and app chart
-    - AI[techDebt-PERF]: Optimize DD and ZIP downloads and SBOM generation.
+    - AI[techDebt-PERF]: Optimize DD and app chart downloads and SBOM generation.
       <https://docs.gitlab.com/ci/caching/>
-      - (??) Do not download ZIP for `generate_argocd_repo`.
       - (??) Cache DD.json in the same way as SBOM.
 4. `effective_set_entrypoint`
     - input:

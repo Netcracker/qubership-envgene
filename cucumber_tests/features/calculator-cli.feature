@@ -306,17 +306,11 @@ Feature: Calculator CLI
   # ── App Chart Validation (UC-CC-AV-*) ─────────────────────────────────────────
 
   # why: app chart validation is a documented calculator gate with zero coverage
-  Scenario: UC-CC-AV-1: App Chart Validation Enabled Fails When Chart Component Absent
+  Scenario: UC-CC-AV-1: Effective Set Generation Fails When App Chart Component Absent
     Given the workspace is initialized with test data from "e2e/uc_cc_av_1"
     When the unified pipeline orchestrator runs
     Then the pipeline fails
     And the pipeline log shows "App chart validation failed"
-
-  Scenario: UC-CC-AV-2: App Chart Validation Disabled Skips Chart Check
-    Given the workspace is initialized with test data from "e2e/uc_cc_av_1"
-    And the pipeline parameter "EFFECTIVE_SET_CONFIG" is set to "{\"version\":\"v2.0\",\"app_chart_validation\":\"false\"}"
-    When the unified pipeline orchestrator runs
-    Then the effective set is generated successfully
 
   # ── Extra Parameters (UC-CC-EP-*) ─────────────────────────────────────────────
 

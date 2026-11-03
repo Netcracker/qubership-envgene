@@ -63,6 +63,11 @@ class SaveArtifactsStrategy(CaseInsensitiveEnum):
     NEVER = "NEVER"
 
 
+class ArtifactCoordinateSource(CaseInsensitiveEnum):
+    AUTO = "AUTO"
+    REGDEF = "REGDEF"
+
+
 class ExternalCredentialProvisioning(CaseInsensitiveEnum):
     APPLY = "APPLY"
     SKIP = "SKIP"

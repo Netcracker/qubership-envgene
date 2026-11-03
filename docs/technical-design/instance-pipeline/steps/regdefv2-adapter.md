@@ -16,7 +16,7 @@
 
 The `regdefv2_adapter` step gives EnvGene's artifact downloaders registry authentication for public cloud
 and non-public registries. The **registry auth parameters** are the flat `PUB_REG_*`, `NON_PUB_REG_*`,
-`MAVEN_PROVIDER`, and `HELM_REPO_BASE_URL` values the DevOps toolset already uses for registry access.
+`MAVEN_PROVIDER`, and `HELM_MAP_REPOSITORIES` values the DevOps toolset already uses for registry access.
 Requiring operators to also author a RegDef v2 `authConfig` for EnvGene would make them enter the same auth
 twice, so this step synthesizes that auth from those parameters instead. Its outputs are transient and are
 not committed. It is a transitional step, removed once operators author RegDef v2 directly and the registry
@@ -102,7 +102,8 @@ The step sets `LOCAL_PUBREG_FILE` itself to the transient path where it writes t
    coordinates unchanged and adding an `authConfig` built from the parameters
    (see [Parameter mapping](#parameter-mapping)), with `version: "2.0"`. Each registry section present in the
    v1 RegDef (`mavenConfig`, `dockerConfig`, `helmConfig`, and the rest) references that `authConfig` by name,
-   and the step fills the `helmConfig` and `helmAppConfig` `repositoryDomainName` from `HELM_REPO_BASE_URL`.
+   and the step fills the `helmConfig` and `helmAppConfig` `repositoryDomainName` with the `url` of the
+   `HELM_MAP_REPOSITORIES` entry keyed by the RegDef `helmAppConfig.helmGroupRepoName`.
    The Maven coordinates are not present in the registry auth parameters, so they come only from the committed
    v1 RegDef. The `authConfig` references a credential by `credentialsId`, so the step also creates that
    credential from the resolved key and secret. The RegDef v2 is written to a transient directory the artifact
@@ -208,7 +209,7 @@ The complete parameter list:
 | `NON_PUB_REG_METHOD`          | non-public | none or basic_auth                                                                |
 | `NON_PUB_REG_KEY`             | non-public | User, basic_auth only                                                             |
 | `NON_PUB_REG_SECRET`          | non-public | Password, basic_auth only                                                         |
-| `HELM_REPO_BASE_URL`          | helm       | Helm repository base URL                                                          |
+| `HELM_MAP_REPOSITORIES`       | helm       | Helm repository URL by `helmAppConfig.helmGroupRepoName`                          |
 
 ## Result
 

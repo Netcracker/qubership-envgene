@@ -20,7 +20,6 @@ package org.qubership.cloud.devops.cli.parser;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
@@ -389,32 +388,16 @@ public class CliParameterParser {
             String deploymentDir = String.format("%s/%s/%s/%s%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, genSegment, "values");
             String runtimeDir = String.format("%s/%s/%s/%s%s", sharedData.getOutputDir(), "runtime", namespaceName, appName, genSegment);
 
-            Path appChartPath = null;
-            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                int helmNameLimit = HELM_NORMALIZER_LIMIT - originalNamespace.length() - 1;
-                String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), helmNameLimit);
-                appChartPath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", normalizedName).toPath();
-                Files.createDirectories(appChartPath);
-            }
+            int helmNameLimit = HELM_NORMALIZER_LIMIT - originalNamespace.length() - 1;
+            String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), helmNameLimit);
+            Path appChartPath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", normalizedName).toPath();
+            Files.createDirectories(appChartPath);
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
-            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
-            }
+            fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
-            if (StringUtils.isBlank(parameterBundle.getAppChartName()) && MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
-                parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
-                    try {
-                        Path servicePath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", entry.getKey()).toPath();
-                        Files.createDirectories(servicePath);
-                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
-                    } catch (IOException e) {
-                        throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
-                    }
-                });
-            }
             fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 

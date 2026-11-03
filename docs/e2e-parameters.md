@@ -28,7 +28,6 @@
   - [`NON_PUB_REG_METHOD`](#non_pub_reg_method)
   - [`NON_PUB_REG_KEY`](#non_pub_reg_key)
   - [`NON_PUB_REG_SECRET`](#non_pub_reg_secret)
-  - [`HELM_REPO_BASE_URL`](#helm_repo_base_url)
 
 These are the parameters EnvGene reads from a Cloud's `e2eParameters`/`pipeline` (the `e2eParameters` block of
 `cloud.yml`). Each entry names the EnvGene component that consumes it. For the RegDef v2 adapter parameters, how each
@@ -39,8 +38,8 @@ value maps into the synthesized RegDef v2 `authConfig`, and which combinations a
 
 **Description**: Overrides the reconstructed Helm chart registry base URL, keyed by the Helm group repository name
 (`helmAppConfig.helmGroupRepoName`). Lets an environment point chart downloads at a different registry without editing
-the RegDef. See the
-[`helm-map-repositories` input attribute](/docs/features/sbom-generation.md#sbom-generation-library-input-attributes).
+the RegDef. See
+[`full_chart_name`](/docs/features/sbom-generation.md#full_chart_name).
 
 **Consumer**: SBOM generation
 
@@ -214,12 +213,3 @@ the RegDef v2 adapter synthesizes a RegDef v2 with public cloud registry authent
 **Description**: Non-public registry password. Used with the `basic_auth` method only.
 
 **Consumer**: RegDef v2 adapter
-
-## `HELM_REPO_BASE_URL`
-
-**Description**: Helm repository base URL. The RegDef v2 adapter writes it into the `helmConfig` and `helmAppConfig`
-`repositoryDomainName` of the synthesized RegDef v2.
-
-**Consumer**: RegDef v2 adapter
-
-**Example**: `https://ops-portal.example.com/nexus/repository/nc.helm.charts`

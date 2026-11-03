@@ -1,8 +1,9 @@
 from os import path, makedirs
 from pathlib import Path
 
-from effective_set.dd_downloading import download_dd_and_zip_artifacts
+from effective_set.dd_downloading import download_dd_and_chart_artifacts
 from envgenehelper import getenv_with_error, openYaml, get_sboms_dir, logger
+from envgenehelper.config_helper import get_artifact_coordinate_source
 from envgenehelper.json_helper import writeJsonToFile
 from envgenehelper.yaml_helper import writeYamlToFile
 from sbom_generator.generate_bom import Generator, SBOMOutput, exclude_resolved_apps
@@ -20,13 +21,15 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
         return
 
     apps_needing_sbom = exclude_resolved_apps(deploy_plan, app_sboms_path)
+    artifact_coordinate_source = get_artifact_coordinate_source()
     unresolved_app_versions = [app.version for app in apps_needing_sbom]
-    # DPG needs DDs of the whole deploy plan, zips are needed only to generate missing SBOMs
     if ctx.is_gitlab_deploy():
-        dd_artifacts, _ = download_dd_and_zip_artifacts(
-            [app.version for app in deploy_plan.entities], ctx=ctx, unresolved_app_versions=unresolved_app_versions)
+        dd_artifacts = download_dd_and_chart_artifacts(
+            [app.version for app in deploy_plan.entities], ctx.helm_map_repositories, artifact_coordinate_source,
+            ctx=ctx, unresolved_app_versions=unresolved_app_versions)
     elif apps_needing_sbom:
-        dd_artifacts, _ = download_dd_and_zip_artifacts(unresolved_app_versions, ctx=ctx)
+        dd_artifacts = download_dd_and_chart_artifacts(
+            unresolved_app_versions, ctx.helm_map_repositories, artifact_coordinate_source, ctx=ctx)
 
     if not apps_needing_sbom:
         logger.info('All applications already have SBOMs, skipping SBOM generation')
@@ -34,7 +37,8 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
 
     deploy_plan.entities = apps_needing_sbom
     sbom_and_regs: SBOMOutput = Generator.generate_bom_by_content(
-        sd_content=deploy_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path)
+        sd_content=deploy_plan, dd_artifacts=dd_artifacts, sbom_dir_path=app_sboms_path,
+        artifact_coordinate_source=artifact_coordinate_source)
 
     for id, sbom in sbom_and_regs.sboms.items():
         app_name = id.split(":")[0]
