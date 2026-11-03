@@ -32,7 +32,7 @@ def get_value_and_attributes_from_cred(cred_macros, deployer_dir):
     if (check_is_envgen_cred(cred_macros)):
         credentials_file_path = get_cred_file_path(deployer_dir)
         cred_id, property = get_cred_id_and_property_from_cred_macros(cred_macros)
-        data = openYaml(credentials_file_path)
+        data = openYaml(credentials_file_path, safe_load=True)
         if cred_id in data:
             cred = data[cred_id]
             attribute_path = f'{cred_id}.data.{property}'
@@ -65,7 +65,7 @@ def resolve_attribute_value(cred_macros, cred_yaml) -> str:
 
 
 def get_value_with_path_and_attribute(fp, attr_str, default_value=None):
-    file = openYaml(fp)
+    file = openYaml(fp, safe_load=True)
     return get_or_create_nested_yaml_attribute(file, attr_str, default_value)
 
 
@@ -102,7 +102,7 @@ def find_env_deployer_definition(env_name, instances_dir) -> Path | None:
     return None
 
 
-def get_deployer_config():
+def get_deployer_config(*_args, **_kwargs):
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
@@ -117,13 +117,13 @@ def get_deployer_config():
 
     data = {}
     if env_deployer_file_path is not None:
-        data = openYaml(env_deployer_file_path, allow_default=True)
+        data = openYaml(env_deployer_file_path, safe_load=True, allow_default=True)
 
     if deployer_name not in data:
         logger.info(
             f"Deployer with key {deployer_name} not found in environment specific configuration for {full_env_name}. Going to root configuration: {basic_deployer_file_path}")
         env_deployer_file_path = basic_deployer_file_path
-        data = openYaml(env_deployer_file_path, allow_default=True)
+        data = openYaml(env_deployer_file_path, safe_load=True, allow_default=True)
 
         if deployer_name not in data:
             logger.error(f"Deployer with key {deployer_name} not found in {env_deployer_file_path}")

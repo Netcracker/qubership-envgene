@@ -23,7 +23,6 @@ Pip-installable package (`envgenehelper`, v0.0.1 — version is a setuptools for
 | `repo_paths.py` | `REPO_ROOT_PATHS`, `get_env_artifact_paths()`, `get_shared_entity_paths()`, `get_sparse_checkout_paths()` — path whitelists used by `GitRepoManager.sparse_checkout` / `stage_changes` |
 | `retry/` | Generic retry helper: `RetryPolicy`, `retry_call`, `parse_duration`, `Duration`; `GIT_RETRY_POLICY` (10 attempts, exponential backoff) used by `git_helper.py` |
 | `plugin_engine/` | Plugin discovery: `IPluginRegistry` metaclass, `PluginEngine` scans `plugins_dir` for `main.py` files |
-| `yaml_validator.py` | Whitelist-based structural validation (type, regular expression, allowNone) |
 | `models.py` | `TemplateVersionUpdateMode(StrEnum)`, `SbomRetentionConfig(BaseModel)` |
 | `constants.py` | `cleanup_targets` list, `CI_JOB_ARTIFACT_MAX_SIZE_MB = 600` |
 

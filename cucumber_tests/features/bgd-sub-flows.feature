@@ -140,7 +140,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-origin:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -156,7 +155,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-peer:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -178,7 +176,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "BG_NS_TARGET" is set to "ORIGIN"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
@@ -192,7 +189,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "BG_NS_TARGET" is set to "PEER"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
@@ -205,7 +201,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the pipeline fails
     And the pipeline step "process_deployment_plan" has status "FAILED"
@@ -218,7 +213,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-nonexistent:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the pipeline fails
     And the pipeline step "process_deployment_plan" has status "FAILED"
@@ -239,7 +233,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_ns_templates"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-origin:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "appregdef_render" has status "SUCCESS"

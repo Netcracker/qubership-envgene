@@ -1,9 +1,11 @@
+from functools import lru_cache
 from urllib.parse import urlsplit
 
 from envgenehelper import dumpYamlToStr
-from jinja2 import Environment, FileSystemLoader, ChainableUndefined, BaseLoader
+from jinja2 import Environment, FileSystemLoader, ChainableUndefined, BaseLoader, Template
 
 
+@lru_cache(maxsize=None)
 def create_jinja_env(templates_dir: str = "") -> Environment:
     loader = FileSystemLoader(templates_dir) if templates_dir else BaseLoader()
     if templates_dir:
@@ -21,6 +23,11 @@ def create_jinja_env(templates_dir: str = "") -> Environment:
         )
     JinjaFilters.register(env)
     return env
+
+
+@lru_cache(maxsize=None)
+def jinja_template(source: str) -> Template:
+    return create_jinja_env().from_string(source)
 
 
 def urlsplit_filter(value, part=None):

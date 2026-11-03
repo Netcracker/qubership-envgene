@@ -1,0 +1,13 @@
+name: dev-1-bss-domain
+type: bgdomain
+originNamespace:
+  name: dev-1-bss-origin
+  type: namespace
+peerNamespace:
+  name: dev-1-bss-peer
+  type: namespace
+controllerNamespace:
+  name: dev-1-controller
+  type: namespace
+  url: https://controller-dev-1.example.com
+  credentials: dev-1-controller-cred

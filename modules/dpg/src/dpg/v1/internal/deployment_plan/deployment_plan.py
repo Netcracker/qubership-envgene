@@ -27,11 +27,12 @@ class DeploymentPlanCalculator:
     def merge(cls, source: DeployPlan, dest: DeployPlan) -> DeployPlan:
         plan = source.model_copy(deep=True)
         for candidate_entity in dest.entities:
-            index, res = next(((i, obj) for i, obj in enumerate(source.entities) if obj == candidate_entity), (None, None))
-            if res is None:
+            existing = next((obj for obj in plan.entities if obj == candidate_entity), None)
+            if existing is None:
                 plan.entities.append(candidate_entity)
             else:
-                plan.entities[index].wave = max(source.entities[index].wave, candidate_entity.wave)
+                existing.version = candidate_entity.version
+                existing.wave = max(existing.wave, candidate_entity.wave)
 
         return plan
 

@@ -1,0 +1,10 @@
+version: "1.0"
+cloud:
+  CLOUD_API_HOST: "https://decoy-default-api.example.com"
+  CLOUD_API_PORT: "6443"
+  CLOUD_PRIVATE_HOST: "decoy-internal.example.com"
+  CLOUD_PUBLIC_HOST: "decoy-public.example.com"
+  CLOUD_DASHBOARD_URL: "https://decoy-dashboard.example.com"
+  CLOUD_DEPLOY_TOKEN: "decoy-deploy-token"
+  CLOUD_PROTOCOL: "https"
+  PRODUCTION_MODE: "false"

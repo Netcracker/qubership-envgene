@@ -1,5 +1,6 @@
 from functools import lru_cache
 import os
+import ruamel.yaml
 import ruyaml
 import threading
 from typing import OrderedDict
@@ -184,14 +185,13 @@ def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_val
 
 
 
-def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
+def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML | ruamel.yaml.YAML:
     def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     if is_safe:
-        yaml = ruyaml.main.YAML(typ='safe')
-    else:
-        yaml = ruyaml.main.YAML()
+        return ruamel.yaml.YAML(typ='safe', pure=False)
+    yaml = ruyaml.main.YAML()
     yaml.preserve_quotes = True
     yaml.width = 200
     yaml.indent(mapping=2, sequence=4, offset=2)

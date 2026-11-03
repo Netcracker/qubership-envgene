@@ -31,11 +31,11 @@ Topic: how EnvGene handles SSL certificates.
 Corpus assembled from a narrow grep and directory scan:
 
 - Docs: `docs/how-to/configure-system-certificates.md`, `docs/features/system-certificate.md`
-- Code entry point: `scripts/utils/handle_certs.sh`
-- Schema: none (shell script, no JSON schema)
+- Code entry point: `scripts/utils/handle_certs.py`
+- Schema: none (Python module, no JSON schema)
 
 The user confirms this corpus (or adds `configuration/config.yml` if cert-backend config is in
-scope). Phase 2 then extracts claims from the two doc files against the shell script.
+scope). Phase 2 then extracts claims from the two doc files against the Python module.
 
 ## Phase 2 - claim extraction
 

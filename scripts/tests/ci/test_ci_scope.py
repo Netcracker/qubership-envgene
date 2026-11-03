@@ -147,7 +147,8 @@ class CiScopeTests(unittest.TestCase):
             ("feat: Add feature", True), ("fix: Correct code", True),
             ("chore: Update API\n\nBREAKING CHANGE: Remove method", True),
             ("FEAT: Add feature", True), ("chore: Document fix: example", True),
-            ("chore: Update code", False), ("test: Add coverage", False),
+            ("chore: Update code", False), ("tests: Add coverage", False),
+            ("test(scope): Add coverage", False), ("test!: Change coverage", False),
             ("feat(scope): Add feature", False), ("feat!: Change API", False),
         ):
             with self.subTest(message=message):
@@ -157,11 +158,33 @@ class CiScopeTests(unittest.TestCase):
                     "build_gsf_discovery": build,
                 })
 
+    def test_test_commits_build_only_envgene(self):
+        head = self.commit({"src/code.py": "updated"})
+        for message in (
+            "test: Add coverage", "TEST: Add coverage",
+            "chore: Update coverage\n\ntest: Run E2E tests",
+        ):
+            with self.subTest(message=message):
+                self.assertEqual(self.scope(head, message), {
+                    "skip_tests_and_build": False, "run_tests": True,
+                    "build_envgene": True, "build_gsf_instance": False,
+                    "build_gsf_discovery": False,
+                })
+
+    def test_test_commits_with_fix_still_build_all_images(self):
+        head = self.commit({"src/code.py": "updated"})
+        self.assertEqual(self.scope(head, "test: Add coverage\n\nfix: Correct code"), {
+            "skip_tests_and_build": False, "run_tests": True,
+            "build_envgene": True, "build_gsf_instance": True,
+            "build_gsf_discovery": True,
+        })
+
     def test_docs_skip_all_dev_tests_and_builds(self):
         docs_head = self.commit({"docs/guide.md": "updated"}, "feat: Update guide")
         code_head = self.commit({"src/code.py": "updated"}, "docs: Explain fix: example")
         for head, message in (
             (docs_head, "feat: Update guide"), (code_head, "docs: Explain fix: example"),
+            (docs_head, "test: Update guide"), (code_head, "docs: Explain test: example"),
         ):
             with self.subTest(message=message):
                 self.assertEqual(self.scope(head, message), {
@@ -249,11 +272,13 @@ class CiScopeTests(unittest.TestCase):
 
     def test_pr_does_not_select_dev_docker_builds(self):
         head = self.commit({"src/code.py": "updated"})
-        self.assertEqual(self.scope(head, event_name="pull_request"), {
-            "skip_tests_and_build": False, "run_tests": True,
-            "build_envgene": False, "build_gsf_instance": False,
-            "build_gsf_discovery": False,
-        })
+        for message in ("fix: Correct code", "test: Add coverage"):
+            with self.subTest(message=message):
+                self.assertEqual(self.scope(head, message, event_name="pull_request"), {
+                    "skip_tests_and_build": False, "run_tests": True,
+                    "build_envgene": False, "build_gsf_instance": False,
+                    "build_gsf_discovery": False,
+                })
 
 
 if __name__ == "__main__":

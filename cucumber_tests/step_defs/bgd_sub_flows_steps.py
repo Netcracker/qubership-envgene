@@ -171,21 +171,6 @@ def given_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, ver
     _assert_deploy_plan_has_entry(workspace, namespace, version)
 
 
-@given('the environment AppDefs and RegDefs paths are resolved for the deploy')
-def given_local_appdefs_regdefs_resolved(workspace: EnvGeneWorkspace):
-    # LOCAL_APPDEFS_PATH/LOCAL_REGDEFS_PATH are not pipeline parameters a caller sets - in a real
-    # pipeline run they are derived by scripts/pipeline/resolve_env_names.py from CI_PROJECT_DIR
-    # and ENV_NAMES before the orchestrator ever starts, and consumed as plain env vars by
-    # modules/dpg's LocalClient. The BDD harness invokes the orchestrator directly and skips that
-    # dotenv step, so this step reproduces the same derivation instead of modelling the paths as
-    # externally-supplied pipeline input.
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    env_dir = f"environments/{workspace.cluster_name}/{workspace.env_name}"
-    workspace.extra_env["LOCAL_APPDEFS_PATH"] = f"{env_dir}/AppDefs"
-    workspace.extra_env["LOCAL_REGDEFS_PATH"] = f"{env_dir}/RegDefs"
-
-
 @given(parsers.parse(
     'the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with '
     'deployPostfix "{deploy_postfix}" for "{app_version}"'))

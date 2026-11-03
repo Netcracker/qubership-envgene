@@ -19,6 +19,9 @@ subsequent `DEPLOY` restores the marked namespaces. The two sub-flows differ onl
 `CLEAN` runs on the [No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) architecture
 (`PIPELINE_TYPE: GITLAB_DEPLOY`).
 
+For what cleanup is across both deployment architectures, and the output each one produces, see
+[Cleanup](/docs/features/clean.md).
+
 ## Launch parameters
 
 The parameters below select the sub-flow. See `flow.md` for the full definition of each variable.

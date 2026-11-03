@@ -69,11 +69,14 @@
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
 - [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Generation**](/docs/features/effective-set-generation.md) - Generate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20) for an environment; covers full and [partial](/docs/features/effective-set-generation.md#partial-generation) modes
+- [**Cleanup**](/docs/features/clean.md) - What cleanup is in EnvGene, the `CLEAN` operation, and the cleanup output each deployment architecture produces
 - [**Custom Params**](/docs/instance-pipeline-parameters.md#custom_params) for session-scoped overrides
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories (including BG support)
+- [**Credential Processing**](/docs/features/credential-processing.md) -
+  Credential sources, auto-generation, precedence ladder, and mode-dependent merging
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO in the Effective Set, and External Credential Context
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
@@ -83,6 +86,7 @@
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**Resource Profile Cache**](/docs/features/resource-profile-cache.md) - Reuse parsed Resource Profiles between instance pipeline runs
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Generation**](/docs/features/sbom-generation.md) - How Application and Environment Template SBOMs are generated from the Solution and Deployment Descriptors
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size

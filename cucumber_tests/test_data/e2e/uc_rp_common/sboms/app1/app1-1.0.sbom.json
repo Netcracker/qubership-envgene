@@ -50,8 +50,28 @@
           "value": "registry.test:17001/test/svc1:1.0"
         },
         {
+          "name": "git_branch",
+          "value": "main"
+        },
+        {
+          "name": "git_revision",
+          "value": "abc1234"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.example.com/test/svc1.git"
+        },
+        {
           "name": "image_type",
           "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "false"
+        },
+        {
+          "name": "qualifier",
+          "value": "release"
         }
       ],
       "components": [

@@ -111,7 +111,6 @@
         }
       },
       "required": [
-        "fullRepositoryUrl",
         "releaseGroup",
         "repositoryDomainName",
         "snapshotGroup",

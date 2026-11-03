@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from envgenehelper import openYaml, readYaml, writeYamlToFile
+from envgenehelper import dumpYamlToStr, open_current_env_instance_store, readYaml, writeYamlToFile
 
 from build_env.resource_profiles import get_env_specific_resource_profiles, has_valid_profile_name, \
     merge_resource_profiles, override_by_env_specific_profiles, set_object_profile_field, validate_resource_profiles
@@ -27,6 +27,12 @@ def _render_context(merge):
     context = MagicMock()
     context.ctx.env_definition = {"inventory": {"config": {"mergeEnvSpecificResourceProfiles": merge}}}
     return context
+
+
+@pytest.fixture
+def env_instance_store(tmp_path):
+    with open_current_env_instance_store(tmp_path) as opened_store:
+        yield opened_store
 
 
 class TestMergeResourceProfiles:
@@ -144,104 +150,105 @@ class TestMergeResourceProfiles:
 
 
 class TestOverrideByEnvSpecificProfiles:
-    def test_standalone_override_is_attached(self, tmp_path):
+    def test_standalone_override_is_attached(self, tmp_path, env_instance_store):
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"), {})
         assert result == {"bss": str(env_profile)}
 
-    def test_template_only_is_untouched(self, tmp_path):
+    def test_template_only_is_untouched(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
-        writeYamlToFile(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {}, _render_context("true"), {})
         assert result == {}
-        assert openYaml(template_profile)["baseline"] == "dev"
+        assert env_instance_store.get(template_profile)["baseline"] == "dev"
 
-    def test_standalone_override_is_attached_in_replace_mode(self, tmp_path):
+    def test_standalone_override_is_attached_in_replace_mode(self, tmp_path, env_instance_store):
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
 
-    def test_replace_drops_template_profile(self, tmp_path):
+    def test_replace_drops_template_profile(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
-        writeYamlToFile(env_profile, _profile("env-over", baseline="prod", params={"cpu": 2}))
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod", params={"cpu": 2}))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
                                                    _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
-        assert openYaml(template_profile)["baseline"] == "dev"
+        assert env_instance_store.get(template_profile)["baseline"] == "dev"
 
-    def test_merge_writes_env_specific_baseline(self, tmp_path):
+    def test_merge_writes_env_specific_baseline(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(template_profile, _profile("tmpl", baseline="dev"))
-        writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
                                                    _render_context("true"), {})
         assert result == {}
-        assert openYaml(template_profile)["baseline"] == "prod"
+        assert env_instance_store.get(template_profile)["baseline"] == "prod"
 
-    def test_merge_compares_with_object_baseline(self, tmp_path):
+    def test_merge_compares_with_object_baseline(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(template_profile, _profile("tmpl", params={"replicas": 1}))
-        writeYamlToFile(env_profile, _profile("env-over", baseline="dev"))
+        env_instance_store.put(template_profile, _profile("tmpl", params={"replicas": 1}))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="dev"))
         with patch("build_env.resource_profiles.logger") as logger:
             override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
                                               _render_context("true"), {"bss": "dev"})
         logger.warning.assert_not_called()
 
-    def test_boolean_false_mode_replaces(self, tmp_path):
+    def test_boolean_false_mode_replaces(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(template_profile, _profile("tmpl", baseline="dev"))
-        writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
                                                    _render_context(False), {})
         assert result == {"bss": str(env_profile)}
-        assert openYaml(template_profile)["baseline"] == "dev"
+        assert env_instance_store.get(template_profile)["baseline"] == "dev"
 
-    def test_merge_is_default_when_mode_not_configured(self, tmp_path):
+    def test_merge_is_default_when_mode_not_configured(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
         env_profile = tmp_path / "env-over.yml"
-        writeYamlToFile(template_profile, _profile("tmpl", baseline="dev"))
-        writeYamlToFile(env_profile, _profile("env-over", baseline="prod"))
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         context = MagicMock()
         context.ctx.env_definition = {"inventory": {}}
         result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
                                                    context, {})
         assert result == {}
-        assert openYaml(template_profile)["baseline"] == "prod"
+        assert env_instance_store.get(template_profile)["baseline"] == "prod"
 
 
 class TestSetObjectProfileField:
-    def test_sets_name_when_object_has_no_profile(self, tmp_path):
+    def test_sets_name_when_object_has_no_profile(self, tmp_path, env_instance_store):
         ns_file = tmp_path / "namespace.yml"
-        writeYamlToFile(ns_file, readYaml("name: bss"))
+        namespace = env_instance_store.put(ns_file, readYaml("name: bss"))
         set_object_profile_field(ns_file, "name", "env-over")
-        assert openYaml(ns_file)["profile"]["name"] == "env-over"
+        assert namespace["profile"]["name"] == "env-over"
 
-    def test_sets_name_when_profile_is_null(self, tmp_path):
+    def test_sets_name_when_profile_is_null(self, tmp_path, env_instance_store):
         ns_file = tmp_path / "namespace.yml"
-        Path(ns_file).write_text("name: bss\nprofile:\n", encoding="utf-8")
+        namespace = env_instance_store.put(ns_file, readYaml("name: bss\nprofile:\n"))
         set_object_profile_field(ns_file, "name", "env-over")
-        assert openYaml(ns_file)["profile"]["name"] == "env-over"
+        assert namespace["profile"]["name"] == "env-over"
 
-    def test_replaces_name_and_baseline_of_existing_profile(self, tmp_path):
+    def test_replaces_name_and_baseline_of_existing_profile(self, tmp_path, env_instance_store):
         ns_file = tmp_path / "namespace.yml"
-        writeYamlToFile(ns_file, readYaml("name: bss\nprofile:\n  name: tmpl\n  baseline: dev\n"))
+        namespace = env_instance_store.put(ns_file, readYaml("name: bss\nprofile:\n  name: tmpl\n  baseline: dev\n"))
         set_object_profile_field(ns_file, "name", "env-over")
         set_object_profile_field(ns_file, "baseline", "prod")
-        assert openYaml(ns_file)["profile"] == {"name": "env-over", "baseline": "prod"}
+        assert namespace["profile"] == {"name": "env-over", "baseline": "prod"}
 
-    def test_same_value_leaves_file_untouched(self, tmp_path):
+    def test_same_value_leaves_object_untouched(self, tmp_path, env_instance_store):
         ns_file = tmp_path / "namespace.yml"
         content = "name: bss\nprofile:\n    baseline:   dev\n    name: tmpl\n"
-        Path(ns_file).write_text(content, encoding="utf-8")
+        namespace = env_instance_store.put(ns_file, readYaml(content))
+        text_before = dumpYamlToStr(namespace)
         set_object_profile_field(ns_file, "baseline", "dev")
-        assert Path(ns_file).read_text(encoding="utf-8") == content
+        assert dumpYamlToStr(namespace) == text_before
 
 
 class TestHasValidProfileName:
@@ -265,22 +272,29 @@ class TestValidateResourceProfiles:
         path.write_text(content, encoding="utf-8")
         return str(path)
 
-    def test_no_referenced_profiles(self):
-        assert validate_resource_profiles({}, {}, RP_SCHEMA) == {}
+    def test_no_referenced_profiles(self, tmp_path):
+        assert validate_resource_profiles({}, tmp_path, RP_SCHEMA) == {}
 
-    def test_referenced_profiles_found_and_valid(self, tmp_path):
+    def test_referenced_profiles_found_and_valid(self, tmp_path, env_instance_store):
         path = self._write(tmp_path, "tmpl", "name: tmpl\nbaseline: dev\n")
-        assert validate_resource_profiles({"bss": "tmpl"}, {"tmpl": path}, RP_SCHEMA) == {"bss": path}
+        assert validate_resource_profiles({"bss": "tmpl"}, tmp_path, RP_SCHEMA) == {"bss": path}
 
-    def test_referenced_profile_not_found_fails(self, tmp_path):
-        path = self._write(tmp_path, "tmpl", "name: tmpl\n")
-        with pytest.raises(ReferenceError):
-            validate_resource_profiles({"bss": "tmpl", "core": "missing"}, {"tmpl": path}, RP_SCHEMA)
+    def test_last_profile_with_the_same_name_is_used(self, tmp_path, env_instance_store):
+        self._write(tmp_path, "tmpl", "name: tmpl\nbaseline: dev\n")
+        (tmp_path / "nested").mkdir()
+        last_path = tmp_path / "nested" / "tmpl.yaml"
+        last_path.write_text("name: tmpl\nbaseline: prod\n", encoding="utf-8")
+        assert validate_resource_profiles({"bss": "tmpl"}, tmp_path, RP_SCHEMA) == {"bss": str(last_path)}
 
-    def test_referenced_profile_invalid_by_schema_fails(self, tmp_path):
-        path = self._write(tmp_path, "tmpl", "name: tmpl\napplications: wrong\n")
+    def test_referenced_profile_not_found_fails(self, tmp_path, env_instance_store):
+        self._write(tmp_path, "tmpl", "name: tmpl\n")
         with pytest.raises(ReferenceError):
-            validate_resource_profiles({"bss": "tmpl"}, {"tmpl": path}, RP_SCHEMA)
+            validate_resource_profiles({"bss": "tmpl", "core": "missing"}, tmp_path, RP_SCHEMA)
+
+    def test_referenced_profile_invalid_by_schema_fails(self, tmp_path, env_instance_store):
+        self._write(tmp_path, "tmpl", "name: tmpl\napplications: wrong\n")
+        with pytest.raises(ReferenceError):
+            validate_resource_profiles({"bss": "tmpl"}, tmp_path, RP_SCHEMA)
 
 
 class TestGetEnvSpecificResourceProfiles:
@@ -291,11 +305,11 @@ class TestGetEnvSpecificResourceProfiles:
         return env_dir
 
     @staticmethod
-    def _write_inventory(env_dir, profiles):
+    def _env_definition(profiles):
         env_template = {"name": "tmpl"}
         if profiles is not None:
             env_template["envSpecificResourceProfiles"] = profiles
-        writeYamlToFile(env_dir / "Inventory" / "env_definition.yml", {"envTemplate": env_template})
+        return {"envTemplate": env_template}
 
     @staticmethod
     def _write_profile(folder, name, baseline):
@@ -304,29 +318,29 @@ class TestGetEnvSpecificResourceProfiles:
         writeYamlToFile(path, _profile(name, baseline=baseline))
         return path
 
-    def test_no_section_returns_empty(self, env_dir):
-        self._write_inventory(env_dir, None)
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA) == {}
+    def test_no_section_returns_empty(self, env_dir, env_instance_store):
+        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                  self._env_definition(None)) == {}
 
-    def test_finds_profile_in_environment_folder(self, env_dir):
-        self._write_inventory(env_dir, {"bss": "bss-over"})
+    def test_finds_profile_in_environment_folder(self, env_dir, env_instance_store):
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "prod")
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA) == {"bss": str(path)}
+        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
 
-    def test_environment_level_wins_over_cluster_and_global(self, env_dir):
-        self._write_inventory(env_dir, {"bss": "bss-over"})
+    def test_environment_level_wins_over_cluster_and_global(self, env_dir, env_instance_store):
         self._write_profile(env_dir.parents[1] / "resource_profiles", "bss-over", "global")
         self._write_profile(env_dir.parent / "resource_profiles", "bss-over", "cluster")
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "env")
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA) == {"bss": str(path)}
+        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
 
-    def test_falls_back_to_cluster_level(self, env_dir):
-        self._write_inventory(env_dir, {"bss": "bss-over"})
+    def test_falls_back_to_cluster_level(self, env_dir, env_instance_store):
         self._write_profile(env_dir.parents[1] / "resource_profiles", "bss-over", "global")
         path = self._write_profile(env_dir.parent / "resource_profiles", "bss-over", "cluster")
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA) == {"bss": str(path)}
+        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
 
-    def test_missing_profile_fails(self, env_dir):
-        self._write_inventory(env_dir, {"bss": "bss-over"})
+    def test_missing_profile_fails(self, env_dir, env_instance_store):
         with pytest.raises(ReferenceError):
-            get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA)
+            get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                               self._env_definition({"bss": "bss-over"}))

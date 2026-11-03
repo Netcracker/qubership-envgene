@@ -1553,15 +1553,17 @@ The contents of this file are identical to [mapping.yaml in the Deployment Param
 
 #### [Version 2.0] Cleanup Context
 
-The cleanup context is used by systems that perform cleanup operations on cluster entities within a specific namespace. This context is formed by merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
+The cleanup context holds the per-namespace parameters and credentials for a namespace teardown. For what it
+is, which deployment architecture produces it, and how it is composed, see [Cleanup](/docs/features/clean.md).
 
-Whether the cleanup context is generated for every namespace of the environment is controlled by [`--generate-cleanup-context`](#calculator-command-line-tool-execution-attributes). See [Cleanup context](/docs/features/effective-set-generation.md#cleanup-context) for when it applies.
+Whether the cleanup context is generated for every namespace of the environment is controlled by [`--generate-cleanup-context`](#calculator-command-line-tool-execution-attributes).
 
 For each namespace (identified by its folder name), the context contains the following files:
 
 ##### \[Version 2.0][Cleanup Context] `parameters.yaml`
 
-This file contains non-sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
+This file contains the non-sensitive cleanup-context parameters. For the composition, see
+[Cleanup](/docs/features/clean.md).
 
 The structure of this file is as follows:
 
@@ -1572,8 +1574,7 @@ The structure of this file is as follows:
 
 ##### \[Version 2.0][Cleanup Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and
-`Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter
+This file contains the sensitive cleanup-context parameters. For more information, refer to [Sensitive parameter
 processing](#version-20-sensitive-parameter-processing).
 
 The structure of this file is as follows:

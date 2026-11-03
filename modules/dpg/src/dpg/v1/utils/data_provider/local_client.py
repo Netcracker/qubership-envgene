@@ -10,9 +10,18 @@ from .middleware import DataProviderInterface, UnifiedAppDef, UnifiedRegDef
 from dpg.v1.utils.registry import RegistryInfo, MavenConfig, RegistryType, AuthUserPassword
 
 class LocalClient(DataProviderInterface):
-    DEFAULT_PATH_TO_APPDEFS = os.getenv("LOCAL_APPDEFS_PATH", "AppDefs")
-    DEFAULT_PATH_TO_REGDEFS = os.getenv("LOCAL_REGDEFS_PATH", "RegDefs")
-    DEFAULT_PATH_TO_PUBREG_FILE = os.getenv("LOCAL_PUBREG_FILE", "pubreg_params.yaml")
+    # Read on access: the orchestrator sets these env vars after dpg is imported.
+    @property
+    def DEFAULT_PATH_TO_APPDEFS(self) -> str:
+        return os.getenv("LOCAL_APPDEFS_PATH", "AppDefs")
+
+    @property
+    def DEFAULT_PATH_TO_REGDEFS(self) -> str:
+        return os.getenv("LOCAL_REGDEFS_PATH", "RegDefs")
+
+    @property
+    def DEFAULT_PATH_TO_PUBREG_FILE(self) -> str:
+        return os.getenv("LOCAL_PUBREG_FILE", "pubreg_params.yaml")
 
     def __init__(self, root_dir: Path = None):
         self.root_dir = root_dir

@@ -16,6 +16,7 @@
     - [`VAULT_ADDR`](#vault_addr)
     - [`VAULT_TOKEN`](#vault_token)
     - [`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials)
+    - [`GOOGLE_APPLICATION_CREDENTIALS_CONTENT`](#google_application_credentials_content)
     - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
     - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
     - [`SSL_CERTIFICATES_BUNDLE`](#ssl_certificates_bundle)
@@ -199,19 +200,35 @@ identifier is not `default_store`, set the prefixed variant `<id>_VAULT_TOKEN` i
 
 ### `GOOGLE_APPLICATION_CREDENTIALS`
 
-**Description**: GCP service account credentials used by the
+**Description**: Path to the GCP service account key file used by the
 [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
-credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). When the
-Secret Store identifier is not `default_store`, set the prefixed variant `<id>_GOOGLE_APPLICATION_CREDENTIALS`
-instead. See
+credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). The CLI reads
+the service account JSON from the file at this path. To pass the JSON content directly instead of a file, set
+[`GOOGLE_APPLICATION_CREDENTIALS_CONTENT`](#google_application_credentials_content), which takes precedence over
+this variable. When the Secret Store identifier is not `default_store`, set the prefixed variant
+`<id>_GOOGLE_APPLICATION_CREDENTIALS` instead. See
 [Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
-
-The variable holds the full JSON content of the service account key, not a file path - the CLI consumes the
-JSON directly.
 
 **Default Value**: None
 
-**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store
+**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store and
+`GOOGLE_APPLICATION_CREDENTIALS_CONTENT` is not set
+
+### `GOOGLE_APPLICATION_CREDENTIALS_CONTENT`
+
+**Description**: Full JSON content of the GCP service account key used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
+credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). The CLI
+consumes the JSON directly, so no key file on disk is needed. This variable takes precedence over
+[`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials): when it is set, the CLI uses the JSON content
+and ignores the file path. When the Secret Store identifier is not `default_store`, set the prefixed variant
+`<id>_GOOGLE_APPLICATION_CREDENTIALS_CONTENT` instead. See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store and
+`GOOGLE_APPLICATION_CREDENTIALS` is not set
 
 ### `AWS_ACCESS_KEY_ID`
 
