@@ -174,6 +174,10 @@ For how EnvGene searches the registries and resolves the version to download an 
 Resolution reads the root-level folders first and falls back to the per-environment folders. The fallback exists for
 backward compatibility only: all consumers must migrate to the root-level folders.
 
+Under [`artifact_coordinate_source: regdef`](/docs/envgene-configs.md#configyml) the RegDef is the authoritative source
+of the deployed chart and image coordinates instead of the DD embedded ones. See
+[Handling DD After Delivery](/docs/features/sbom-generation.md#handling-dd-after-delivery).
+
 > [!NOTE]
 > The Environment Template artifact is also downloaded by `application:version`, but its resolution uses an
 > [Artifact Definition](/docs/envgene-objects.md#artifact-definition) stored at
