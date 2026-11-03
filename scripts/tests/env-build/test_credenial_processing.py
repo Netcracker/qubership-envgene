@@ -79,7 +79,7 @@ def run_create_credentials(tmp_path, mode, deploy=EMPTY, e2e=EMPTY, technical=EM
         if existing:
             store.put(creds_path, readYaml(existing))
         render_context = EnvGenerator()
-        render_context.ctx.current_env = OrderedDict(cloud="cloud-01", name="env-01")
+        render_context.ctx.current_env = OrderedDict(cloud="cloud-01", name="env-01", cluster={"name": "cluster-01"})
         create_credentials(env_dir, tmp_path / "environments", inventory, list(sources), render_context)
         return store.get(creds_path), store.get(namespace_path), store, creds_path
 
@@ -100,7 +100,7 @@ def test_external_mode_keeps_declared_and_generates_undeclared(tmp_path):
                                             sources=[(template_creds, "template")])
 
     assert creds["cred-a"]["remoteRefPath"] == "template/a"
-    assert creds["cred-b"] == {"type": "external", "secretStore": "default_store", "remoteRefPath": "cloud-01/env-01"}
+    assert creds["cred-b"] == {"type": "external", "secretStore": "default_store", "remoteRefPath": "cluster-01/env-01"}
 
 
 @pytest.mark.unit

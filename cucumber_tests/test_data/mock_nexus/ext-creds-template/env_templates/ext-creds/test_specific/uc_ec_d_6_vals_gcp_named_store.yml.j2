@@ -20,4 +20,4 @@ tenant-cred:
   type: external
   create: true
   secretStore: gcp_store
-  remoteRefPath: "{{ current_env.cloud }}"
+  remoteRefPath: "{{ current_env.cluster.name }}"
