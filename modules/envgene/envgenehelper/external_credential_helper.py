@@ -76,7 +76,7 @@ def load_all_secret_stores(base_dir: Path | None = None) -> dict:
     secret_store_config = base_dir / CONFIGURATION_DIR / SECRET_STORE_FILE
     if not secret_store_config.is_file():
         return {}
-    return openYaml(secret_store_config) or {} 
+    return openYaml(secret_store_config, safe_load=True) or {} 
 
 
 def _build_vals_reference(cred_id: str, external_credential: ExternalCredential, secret_store: SecretStore) -> str:

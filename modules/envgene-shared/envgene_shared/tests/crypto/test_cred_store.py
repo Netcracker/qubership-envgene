@@ -66,8 +66,8 @@ def test_unchanged_file_is_byte_equal(env_dir):
     second = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
     before = (first.read_bytes(), second.read_bytes())
     with open_cred_store() as store:
-        obj = store.get(first)
-        store.get(second)
+        obj = store.load_decrypted(first)
+        store.load_decrypted(second)
         store.put(first, copy.deepcopy(obj))
     assert (first.read_bytes(), second.read_bytes()) == before
 
@@ -77,7 +77,7 @@ def test_changed_file_is_encrypted_and_minimal(env_dir):
     before = path.read_bytes()
     old = openYaml(str(path))
     with open_cred_store() as store:
-        store.get(path)["second_cred"]["data"]["password"] = "changed-pass"
+        store.load_decrypted(path)["second_cred"]["data"]["password"] = "changed-pass"
     new = openYaml(str(path))
     assert path.read_bytes() != before
     assert is_encrypted_SOPS(path)
@@ -101,7 +101,7 @@ def test_failed_flow_writes_nothing(env_dir):
     before = (first.read_bytes(), second.read_bytes())
     with pytest.raises(RuntimeError):
         with open_cred_store() as store:
-            obj = store.get(first)
+            obj = store.load_decrypted(first)
             obj["first_cred"]["data"]["secret"] = "changed"
             store.put(first, obj)
             raise RuntimeError("step failed")
@@ -125,16 +125,16 @@ def test_path_forms_share_one_entry(env_dir, monkeypatch):
     with open_cred_store() as store:
         store.put(str(path), obj)
         monkeypatch.chdir(path.parent)
-        assert store.get(Path(path)) is obj
-        assert store.get("credentials.yml") is obj
-        assert store.get(path.parent / ".." / "Credentials" / "credentials.yml") is obj
+        assert store.load_decrypted(Path(path)) is obj
+        assert store.load_decrypted("credentials.yml") is obj
+        assert store.load_decrypted(path.parent / ".." / "Credentials" / "credentials.yml") is obj
 
 
 def test_deleted_file_keeps_original_bytes(env_dir):
     path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
     with open_cred_store() as store:
         path.unlink()
-        obj = store.get(path)
+        obj = store.load_decrypted(path)
         assert obj["first_cred"]["data"]["secret"] == "token-placeholder-123"
     assert not path.exists()
 
@@ -143,14 +143,14 @@ def test_put_equal_object_does_not_recreate_deleted_file(env_dir):
     path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
     with open_cred_store() as store:
         path.unlink()
-        store.put(path, copy.deepcopy(store.get(path)))
+        store.put(path, copy.deepcopy(store.load_decrypted(path)))
     assert not path.exists()
 
 
 def test_get_missing_file_with_allow_default_returns_empty_and_writes_nothing(env_dir):
     path = env_dir / "Credentials" / "credentials.yml"
     with open_cred_store() as store:
-        assert store.get(path, allow_default=True) == {}
+        assert store.load_decrypted(path, allow_default=True) == {}
     assert not path.exists()
 
 
@@ -158,7 +158,7 @@ def test_get_reads_file_unknown_at_open_from_disk(env_dir):
     with open_cred_store() as store:
         path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
         before = path.read_bytes()
-        assert store.get(path)["first_cred"]["data"]["secret"] == "token-placeholder-123"
+        assert store.load_decrypted(path)["first_cred"]["data"]["secret"] == "token-placeholder-123"
     assert path.read_bytes() == before
 
 
@@ -177,7 +177,7 @@ def test_exists_sees_put_and_disk_but_not_deleted_file(env_dir):
 def test_get_missing_file_without_allow_default_raises(env_dir):
     with open_cred_store() as store:
         with pytest.raises(FileNotFoundError):
-            store.get(env_dir / "Credentials" / "credentials.yml")
+            store.load_decrypted(env_dir / "Credentials" / "credentials.yml")
 
 
 def test_editor_exits_200_on_same_content_other_format(env_dir, tmp_path):
@@ -262,7 +262,7 @@ def test_unchanged_es_file_is_byte_equal(env_dir):
     path = make_es_file(env_dir, f"a: one\nr: {ES_REF}\n")
     before = path.read_bytes()
     with open_cred_store() as store:
-        store.put(path, copy.deepcopy(store.get(path)))
+        store.put(path, copy.deepcopy(store.load_decrypted(path)))
     assert path.read_bytes() == before
 
 
@@ -278,7 +278,7 @@ def test_empty_cred_file_is_ignored(env_dir):
     path = env_dir / "Credentials" / "credentials.yml"
     writeToFile(str(path), "")
     with open_cred_store() as store:
-        assert store.get(path) == {}
+        assert store.load_decrypted(path) == {}
         store.put(path, {})
     assert path.read_bytes() == b""
 
@@ -290,8 +290,8 @@ def test_crypt_false_unchanged_untouched_changed_rewritten(monkeypatch, tmp_path
     second = make_cred_file(env_dir / "Credentials" / "other-credentials.yml")
     before = (first.read_bytes(), second.read_bytes())
     with open_cred_store() as store:
-        store.get(first)
-        store.get(second)["first_cred"]["data"]["secret"] = "changed"
+        store.load_decrypted(first)
+        store.load_decrypted(second)["first_cred"]["data"]["secret"] = "changed"
     assert first.read_bytes() == before[0]
     assert second.read_bytes() != before[1]
     assert not is_encrypted(second)
@@ -315,7 +315,7 @@ def test_put_is_thread_safe(tmp_path):
         thread.start()
     for thread in threads:
         thread.join()
-    assert [store.get(path) for path in paths] == [{"index": index} for index in range(50)]
+    assert [store.load_decrypted(path) for path in paths] == [{"index": index} for index in range(50)]
 
 
 @pytest.fixture
@@ -406,7 +406,7 @@ def test_fernet_tokens_under_sops_fail(env_dir):
     path.write_bytes(encrypt_SOPS_bytes(path.read_bytes(), path, "^data$"))
     with pytest.raises(ValueError):
         with open_cred_store() as store:
-            store.get(path)
+            store.load_decrypted(path)
 
 
 def test_encrypt_file_fails_on_fernet_tokens(env_dir):
@@ -421,4 +421,4 @@ def test_fernet_encrypted_cred_file_fails(env_dir):
     writeToFile(str(path), "cred:\n  type: secret\n  data:\n    secret: '[encrypted:AES256_Fernet]gAAAAA'\n")
     with pytest.raises(ValueError):
         with open_cred_store() as store:
-            store.get(path)
+            store.load_decrypted(path)

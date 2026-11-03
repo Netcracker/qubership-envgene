@@ -35,7 +35,7 @@ class CredStore:
             self._decrypted_snapshot.setdefault(key, copy.deepcopy(obj))
             return self._decrypted.setdefault(key, obj)
 
-    def get(self, path, allow_default=False) -> dict:
+    def load_decrypted(self, path, allow_default=False) -> dict:
         key = self._key(path)
         with self._lock:
             if key in self._decrypted:
@@ -76,7 +76,7 @@ class CredStore:
             self._lazy_decrypt(key)
         return obj != self._decrypted_snapshot[key]
 
-    def _sops_edit_base(self, key, obj, is_es):
+    def _old_data_for_sops_edit(self, key, obj, is_es):
         old_data = self._snapshot.get(key)
         if old_data is None:
             return None
@@ -95,7 +95,7 @@ class CredStore:
             remove_cred_yaml_comments(obj)
         # empty cred file in es is correct case
         text = "" if is_es and not obj else dumpYamlToStr(obj)
-        data = encrypt_bytes(text.encode("utf-8"), key, old_data=self._sops_edit_base(key, obj, is_es),
+        data = encrypt_bytes(text.encode("utf-8"), key, old_data=self._old_data_for_sops_edit(key, obj, is_es),
                              validate=False)
         header_text = self._headers.get(key)
         if header_text and not data.startswith(b"#"):

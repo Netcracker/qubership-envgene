@@ -13,8 +13,17 @@ Feature: Cred store - cred-store.md
     And in the cred file "environments/test-cluster/test-env/Credentials/credentials.yml" the value of "dummy-cred.type" is plain
     And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "dummy-cred.data.secret" equal to "dummy-secret"
 
+  Scenario: UC-CS-RUN-1: Env build uses a shared cred created by inventory in the same run
+    Given the workspace is initialized with test data from "e2e/uc_cp_03_no_passport"
+    And the pipeline parameter "ENV_INVENTORY_CONTENT" is loaded from "einv/env_inventory_content/uc_cs_run_1_shared_cred.json"
+    And the pipeline parameter "ENV_BUILDER" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the cred file "environments/test-cluster/test-env/Inventory/credentials/shared-db-cred.yml" is SOPS-encrypted
+    And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "shared-db-cred.data.password" equal to "shared-password"
+
   Scenario: UC-CS-DIFF-1: A run that changes no cred leaves encrypted cred files byte-equal
-    Given the workspace is initialized with test data from "e2e/uc_cp_01_auto_association"
+    Given the workspace is initialized with test data from "e2e/uc_cp_03_no_passport"
     And the cred files of the environment are SOPS-encrypted with the test key
     And the cred files are recorded as a baseline
     And the pipeline parameter "ENV_BUILDER" is set to "true"

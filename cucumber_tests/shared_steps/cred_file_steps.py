@@ -12,7 +12,8 @@ from envgene_shared.utils.file_utils import is_cred_file
 def _cred_files(workspace: EnvGeneWorkspace):
     return sorted(
         path for path in workspace.base_dir.rglob("*")
-        if path.is_file() and is_cred_file(str(path.relative_to(workspace.base_dir)))
+        if path.is_file() and not path.is_relative_to(workspace.base_dir / "artifacts")
+        and is_cred_file(str(path.relative_to(workspace.base_dir)))
     )
 
 

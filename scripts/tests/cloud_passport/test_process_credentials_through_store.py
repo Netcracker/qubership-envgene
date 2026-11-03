@@ -61,7 +61,7 @@ def test_process_credentials_puts_into_store(project, discovery_files):
     with open_cred_store():
         process_credentials(discovery_files, cloud_passport_dir, "cloud", DISCOVERY_KEY)
         assert not creds_path.exists()
-        assert current_cred_store().get(creds_path)["first_cred"]["data"]["username"] == "user-placeholder-123"
+        assert current_cred_store().load_decrypted(creds_path)["first_cred"]["data"]["username"] == "user-placeholder-123"
     assert creds_path.read_text().startswith("# " + header_text.splitlines()[0])
     assert is_encrypted_SOPS(creds_path)
     assert decrypt_file(creds_path, in_place=False)["first_cred"]["data"]["password"] == "pass-placeholder-123"
