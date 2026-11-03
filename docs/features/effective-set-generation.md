@@ -153,6 +153,10 @@ Key pipeline parameters that affect ES generation:
 - `EFFECTIVE_SET_CONFIG` — effective-set version selection and related options.
 - `CUSTOM_PARAMS` — optional overrides injected into `deployment`, `runtime`, and `cleanup` contexts.
 
+The `config.yml` key [`artifact_coordinate_source`](/docs/envgene-configs.md#configyml) reshapes the chart and
+image coordinates in the SBOMs the calculator consumes, so it also affects ES generation. See
+[Handling DD After Delivery](/docs/features/sbom-generation.md#handling-dd-after-delivery).
+
 See [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for the full list.
 
 ## See also
