@@ -363,16 +363,17 @@ nexus-cred:
     password: "<password>"
 ```
 
-The credential type must be `usernamePassword`. Skip this step if the registry allows anonymous read access.
+The credential type must be `usernamePassword`. Skip this step if you set `authMethod: "anonymous"` in Step 2.
 
 To encrypt the credential value, see
 [Credential Encryption](/docs/how-to/credential-encryption.md).
 
 ### Nexus and Artifactory Step 2: Create the registry definition
 
-Create a Registry Definition v2.0 file. The filename and the `name` field must be the same.
+Create a Registry Definition v2.0 file `configuration/regdefs/<name>.yml`, where `<name>` is the value of the `name`
+field.
 
-For Nexus, for example `configuration/regdefs/nexus-registry.yaml`:
+For Nexus, for example `configuration/regdefs/nexus-registry.yml`:
 
 ```yaml
 version: "2.0"
@@ -390,7 +391,7 @@ mavenConfig:
   releaseGroup: "maven-public"
 ```
 
-For Artifactory, for example `configuration/regdefs/artifactory-registry.yaml`:
+For Artifactory, for example `configuration/regdefs/artifactory-registry.yml`:
 
 ```yaml
 version: "2.0"
@@ -423,8 +424,9 @@ Field reference:
 | `mavenConfig.snapshotGroup`, `releaseGroup`   | Repository group names, if the registry has groups                 |
 
 A Registry Definition in `configuration/regdefs/` is a
-[definition override](/docs/features/app-reg-defs.md#definition-overrides): it replaces a template-rendered
-definition with the same `name` as a whole, with no field-level merge.
+[definition override](/docs/features/app-reg-defs.md#definition-overrides). EnvGene writes the Registry Definitions
+from the Environment Template as `<name>.yml`. A definition override with the same filename replaces such a
+definition as a whole, with no field-level merge.
 
 ### Nexus and Artifactory Step 3: Reference the registry in an Artifact or Application Definition
 
@@ -468,8 +470,8 @@ registry:
 1. EnvGene resolves the `authConfig` block with `provider: nexus` or `provider: artifactory`.
 2. With `user_pass`, the credential identified by `credentialsId` is loaded from `credentials.yml`, and
    `Authorization: Basic <token>` is attached to all Maven download requests. With `anonymous`, no credentials are sent.
-3. When `targetSnapshot`, `targetStaging`, and `targetRelease` are all set, EnvGene searches them concurrently and uses
-   the first that returns the artifact.
+3. EnvGene checks the repositories set in `targetSnapshot`, `targetStaging`, `targetRelease`, `snapshotGroup`, and
+   `releaseGroup` in parallel, and stops at the first one where it finds the artifact.
 4. For Nexus, if an artifact is not found at the repository URL, EnvGene retries the lookup through the Nexus browse
    URL (`/service/rest/repository/browse/`). This needs `repositoryDomainName` to end with `/repository/`.
 
