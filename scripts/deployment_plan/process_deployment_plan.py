@@ -103,7 +103,7 @@ def reduce_deployment_plan(ctx: PipelineParametersHandler) -> None:
 
     if namespace_names:
         namespace_map_path = get_current_env_dir_from_env_vars() / INVENTORY_DIR_NAME / NAMESPACE_MAP_FILE
-        namespace_map = openYaml(namespace_map_path) or {}
+        namespace_map = openYaml(namespace_map_path, allow_default=True, default_yaml=dict) or {}
         known_namespaces = {
             namespace
             for entry in namespace_map.values()

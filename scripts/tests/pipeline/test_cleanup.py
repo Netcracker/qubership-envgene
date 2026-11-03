@@ -72,9 +72,17 @@ def test_namespace_without_plan_entry_warns_and_preserves_plan(cleanup_context, 
     assert openYaml(EnvgeneDeployPlan.path()) == initial_entities
 
 
-def test_empty_namespace_map_reports_the_requested_namespace(cleanup_context):
+@pytest.mark.parametrize("map_state", ["empty", "missing"])
+def test_empty_namespace_map_reports_the_requested_namespace(cleanup_context, map_state):
     cleanup_context.params["NAMESPACE_NAMES"] = "env-core"
-    (EnvgeneDeployPlan.path().parent / "namespace-map.yml").write_text("")
+    namespace_map = EnvgeneDeployPlan.path().parent / "namespace-map.yml"
+    if map_state == "missing":
+        namespace_map.unlink()
+    else:
+        namespace_map.write_text("")
+    initial_plan = EnvgeneDeployPlan.path().read_bytes()
 
     with pytest.raises(ValueError, match="env-core.*namespace-map.yml"):
         reduce_deployment_plan(cleanup_context)
+
+    assert EnvgeneDeployPlan.path().read_bytes() == initial_plan
