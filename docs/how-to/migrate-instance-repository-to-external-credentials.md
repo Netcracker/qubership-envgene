@@ -68,8 +68,9 @@ List every local credential (`type: usernamePassword` or `type: secret`) in thes
 | `environments/<cluster>/<env>/Inventory/credentials/*.yml` | environment-level Shared Credentials    |
 | `environments/<cluster>/credentials/*.yml`                 | cluster-level Shared Credentials        |
 | `environments/credentials/*.yml`                           | repository-level Shared Credentials     |
+| `environments/<cluster>/<env>/Credentials/credentials.yml` | values set directly for the environment |
 | `configuration/credentials/credentials.yml`                | System Credentials: Git token, registry |
-| `environments/<cluster>/app-deployer/deployer-creds.yml`   | System Credentials: deployer            |
+| `deployer-creds.yml` next to each `deployer.yml`           | System Credentials: deployer            |
 
 Older repositories may keep Shared Credentials in deprecated folders such as `shared-credentials/`, see
 [File resolution for shared entities](/docs/envgene-configs.md#file-resolution-for-shared-entities). Include files
@@ -175,7 +176,7 @@ Leave built-in fields such as `credentialsId` unchanged: they keep a plain `cred
 > [!IMPORTANT]
 > Save every real value from Step 1 before you remove its `data`.
 
-1. Convert each Shared Credentials file from Step 1 the same way as in Step 4, with the values from Step 2:
+1. Convert each Shared Credentials File from Step 1 the same way as in Step 4, with the values from Step 2:
 
     ```yaml
     ID_TOCP_CLIENT_CREDS:
@@ -195,7 +196,7 @@ Leave built-in fields such as `credentialsId` unchanged: they keep a plain `cred
 ## Step 6: Convert the System Credentials (optional)
 
 System Credentials are the Git token, the registry credentials, and the deployer credentials in
-`configuration/credentials/credentials.yml` and `environments/<cluster>/app-deployer/deployer-creds.yml`. They may stay
+`configuration/credentials/credentials.yml` and in `deployer-creds.yml` next to each `deployer.yml`. They may stay
 local. Convert them only if you want these values in the Secret Store too.
 
 1. Put their values into the Secret Store with the store's own tools. Step 11 does not cover System Credentials.
@@ -230,9 +231,9 @@ Do not use `$type: credRef` in `technicalConfigurationParameters`.
 
 ## Step 8: Remove stale generated Credentials files
 
-Delete `environments/<cluster>/<env>/Credentials/credentials.yml` of every environment you migrate. It was generated
-from the old template, holds local credentials, and fails the next run with `Only external credentials allowed`. The
-pipeline creates it again with external credentials only.
+Save the real values from `environments/<cluster>/<env>/Credentials/credentials.yml`, see Step 1. Then delete the
+file in every environment you migrate. It holds local credentials and fails the next run with
+`Only external credentials allowed`. The pipeline creates it again with external credentials only.
 
 **Result:** no generated Credentials files from the old template.
 
@@ -269,7 +270,7 @@ credential with its path in the store.
 
 1. Open `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml`.
 2. For each credential with `strategy: fail_if_absent`, create the secret in the store at the path in its `vals`
-   field. Use the value you saved in Steps 4-5, or, for a value that came from Jenkins CMDB, the value from Jenkins.
+   field. Use the value you saved before removing it, or, for a value that came from Jenkins CMDB, the value from Jenkins.
 3. Inside the secret, use the keys from `properties`, such as `username` and `password`. For a single-value
    credential in Vault or OpenBao, use the key `value`.
 

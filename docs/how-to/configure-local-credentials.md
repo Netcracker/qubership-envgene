@@ -4,21 +4,25 @@
   - [Overview](#overview)
   - [When to use local credentials](#when-to-use-local-credentials)
   - [Prerequisites](#prerequisites)
-  - [Where credentials come from](#where-credentials-come-from)
-  - [Steps](#steps)
-    - [Step 1: Set the credentials the template needs](#step-1-set-the-credentials-the-template-needs)
-    - [Step 2: Add your own credentials](#step-2-add-your-own-credentials)
-    - [Step 3: Pass the credentials files](#step-3-pass-the-credentials-files)
-    - [Step 4: Rebuild and verify](#step-4-rebuild-and-verify)
-  - [Update credentials later](#update-credentials-later)
+  - [How local credentials work](#how-local-credentials-work)
+  - [Set a sensitive parameter](#set-a-sensitive-parameter)
+    - [Step 1: Reference a credential in the parameter](#step-1-reference-a-credential-in-the-parameter)
+    - [Step 2: Build the environment](#step-2-build-the-environment)
+    - [Step 3: Set the value](#step-3-set-the-value)
+    - [Step 4: Generate the Effective Set](#step-4-generate-the-effective-set)
+  - [Use one value in several environments](#use-one-value-in-several-environments)
+  - [Set a system credential](#set-a-system-credential)
+  - [Change a value](#change-a-value)
   - [Related documentation](#related-documentation)
 
 ## Overview
 
-Set the credentials of an environment that keeps them in the Instance repository. At the end, every credential of
-the environment has a real value.
+A parameter can hold a sensitive value, such as a password or a token. Set such a parameter through a credential:
+the parameter references the credential by its ID, and the value lives in a credentials file of the Instance
+repository.
 
-To keep the values encrypted in Git, enable credential encryption, see
+Credentials files can be encrypted. With `crypt: true` and `crypt_backend: SOPS` in `/configuration/config.yml` and
+the pre-commit hook installed, the values are encrypted before they reach Git. See
 [Credential Encryption](/docs/how-to/credential-encryption.md).
 
 ## When to use local credentials
@@ -29,159 +33,185 @@ approach, never both.
 
 ## Prerequisites
 
-- The environment exists: its `env_definition.yml` is in the Instance repository, see
-  [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md). Create it without credentials
-  first. You add them in Step 3.
+- The environment exists, see [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md).
 
-## Where credentials come from
+## How local credentials work
 
-EnvGene collects the credentials of an environment from two sources:
+1. A parameter in the Environment Template or in an environment-specific ParameterSet takes a credential macro as its
+   value, such as `${creds.get('app-db-cred').password}`. The template and the ParameterSet hold only the macro, not
+   the credential.
+2. When it builds the environment, EnvGene creates one credential per credential ID in
+   `environments/<cluster>/<env>/Credentials/credentials.yml`. A new credential holds the placeholder
+   `envgeneNullValue`.
+3. You replace the placeholder with the value. EnvGene keeps the values on the next builds.
+4. When it generates the Effective Set, EnvGene puts the value of the credential into the parameter. If a placeholder
+   remains, the generation fails.
 
-- the credentials file of the Cloud Passport, `<passport-name>-creds.yml`
-- the Shared Credentials files listed in `envTemplate.sharedMasterCredentialFiles`
+A Shared Credentials file, or the credentials file of the Cloud Passport, already holds values. EnvGene applies it
+to `Credentials/credentials.yml` on every build and overwrites the values of the same credential IDs.
 
-It merges them into `environments/<cluster>/<env>/Credentials/credentials.yml` on every generation. Do not edit
-this file.
+## Set a sensitive parameter
 
-## Steps
+### Step 1: Reference a credential in the parameter
 
-### Step 1: Set the credentials the template needs
+Set the value of the parameter to a credential macro. Do it in the Environment Template or in an
+environment-specific ParameterSet, see [Override Template Parameters](/docs/how-to/environment-specific-parameters.md):
 
-To find which credentials the template needs:
+```yaml
+# environments/cluster-01/env-01/Inventory/parameters/partner-integration.yml
+name: partner-integration
+version: 1
+parameters:
+  PARTNER_API_USER: "${creds.get('partner-api-cred').username}"
+  PARTNER_API_PASSWORD: "${creds.get('partner-api-cred').password}"
+  PARTNER_API_TOKEN: "${creds.get('partner-api-token').secret}"
+```
 
-1. Run the Instance pipeline with `ENV_NAMES: <cluster>/<env>` and `ENV_BUILDER: true`.
-2. Open `environments/<cluster>/<env>/Credentials/credentials.yml`. Every credential the template references is
-   listed there. A credential without a value holds the placeholder `envgeneNullValue`:
+- Choose the credential ID yourself. It must be unique in the environment. Several parameters can use one ID.
+- The field after the ID sets the type of the credential:
 
-    ```yaml
-    dbaas-cluster-dba-cred:
-      type: usernamePassword
-      data:
-        username: envgeneNullValue
-        password: envgeneNullValue
-    integration-cred:
-      type: secret
-      data:
-        secret: envgeneNullValue
-    ```
+| Field                     | Type               | Holds                     |
+|---------------------------|--------------------|---------------------------|
+| `.username`, `.password`  | `usernamePassword` | a username and a password |
+| `.secret`                 | `secret`           | one value                 |
 
-3. Put the values of the passport credentials in the credentials file next to the passport:
+### Step 2: Build the environment
 
-    ```yaml
-    # environments/cluster-01/cloud-passport/passport-creds.yml
-    dbaas-cluster-dba-cred:
-      type: usernamePassword
-      data:
-        username: dbaas-username
-        password: dbaas-password
-    ```
+Run the Instance pipeline:
 
-4. Put all other values in a Shared Credentials file:
+```yaml
+ENV_NAMES: cluster-01/env-01
+ENV_BUILDER: true
+```
 
-    ```yaml
-    # environments/cluster-01/env-01/Inventory/credentials/env-01-creds.yml
-    integration-cred:
-      type: secret
-      data:
-        secret: integration-token
-    ```
+`environments/cluster-01/env-01/Credentials/credentials.yml` now holds the credentials with placeholders:
 
-### Step 2: Add your own credentials
+```yaml
+partner-api-cred:
+  type: usernamePassword
+  data:
+    username: envgeneNullValue
+    password: envgeneNullValue
+partner-api-token:
+  type: secret
+  data:
+    secret: envgeneNullValue
+```
 
-A credential that the template does not reference, such as the credentials of a partner integration, is added the
-same way.
+### Step 3: Set the value
 
-1. Add it to a Shared Credentials file:
+Replace each `envgeneNullValue` in `Credentials/credentials.yml` with the value, and commit the file:
 
-    ```yaml
-    # environments/cluster-01/env-01/Inventory/credentials/env-01-creds.yml
-    partner-api-cred:
-      type: usernamePassword
-      data:
-        username: partner-username
-        password: partner-password
-    ```
+```yaml
+partner-api-cred:
+  type: usernamePassword
+  data:
+    username: partner-user
+    password: partner-password
+partner-api-token:
+  type: secret
+  data:
+    secret: partner-token
+```
 
-2. Reference it from an Environment Specific ParameterSet:
+If the same credential ID is in a Shared Credentials file or in the Cloud Passport credentials file, set the value
+there instead. That file overwrites `Credentials/credentials.yml` on the next build.
 
-    ```yaml
-    # environments/cluster-01/env-01/Inventory/parameters/partner-integration.yml
-    name: partner-integration
-    version: 1
-    parameters:
-      PARTNER_API_USER: ${creds.get("partner-api-cred").username}
-      PARTNER_API_PASSWORD: ${creds.get("partner-api-cred").password}
-    ```
+### Step 4: Generate the Effective Set
 
-3. Bind the ParameterSet in `env_definition.yml`, see
-   [Override Template Parameters](/docs/how-to/environment-specific-parameters.md).
+Run the Instance pipeline:
 
-Without the ParameterSet, the credential is copied to `Credentials/credentials.yml`, but no parameter uses it.
+```yaml
+ENV_NAMES: cluster-01/env-01
+ENV_BUILDER: true
+GENERATE_EFFECTIVE_SET: true
+```
 
-### Step 3: Pass the credentials files
-
-Pass the Shared Credentials file in one of two ways.
-
-- **Through the Instance pipeline.** Pass the values in the `credentials` block of `ENV_INVENTORY_CONTENT`, and the
-  filename in `envTemplate.sharedMasterCredentialFiles`:
-
-    ```json
-    "credentials": [
-      {
-        "action": "create_or_replace",
-        "place": "env",
-        "name": "env-01-creds",
-        "content": {
-          "integration-cred": {
-            "type": "secret",
-            "data": { "secret": "integration-token" }
-          }
-        }
-      }
-    ]
-    ```
-
-    The values pass through the pipeline parameter in plain text, so restrict who can see the pipeline runs. With
-    credential encryption enabled, the pipeline encrypts the file in the same run.
-
-- **By hand.** Commit the file, and add its name, without `.yml`, to `envTemplate.sharedMasterCredentialFiles` in
-  `env_definition.yml`.
-
-`place` sets the level of the file: `env`, `cluster`, or `site` for the whole repository. See
-[Choose the level of each file](/docs/how-to/create-environment-inventory.md#choose-the-level-of-each-file).
-
-Commit the passport credentials file from Step 1 by hand.
-
-### Step 4: Rebuild and verify
-
-1. Run the Instance pipeline with `ENV_BUILDER: true` and `GENERATE_EFFECTIVE_SET: true`.
-2. `Credentials/credentials.yml` holds no `envgeneNullValue`.
-
-If a placeholder remains, the Effective Set generation fails with:
+The parameters in the Effective Set hold the values from Step 3. If a value is not set, the job fails and lists the
+credentials to fill in:
 
 ```text
 Error while validating credentials:
-  credId: <credId> - <field> is not set
+  credId: partner-api-token - secret is not set
 ```
 
-Set the value of that `credId` as in Step 1. For details, see
-[Working with envgeneNullValue](/docs/tutorials/envgene-null-value.md).
+## Use one value in several environments
 
-## Update credentials later
+To set a value once for several environments, put it in a Shared Credentials file:
 
-| What changes                     | How                                                                                                                                        |
-|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| A Cloud Passport credential      | Edit `<passport-name>-creds.yml`, or run Cloud Passport discovery again                                                                    |
-| A Shared Credentials file        | Run the pipeline again with the same `credentials` entry, or edit the file. The pipeline replaces the whole file, so pass every credential |
-| One value used in several places | Use [Credential Rotation](/docs/features/cred-rotation.md). Works with SOPS encryption only                                                |
+1. Create the file at the level of the environments that use it: `environments/<cluster>/credentials/` for one
+   cluster, `environments/credentials/` for the whole repository. See
+   [Choose the level of each file](/docs/how-to/create-environment-inventory.md#choose-the-level-of-each-file).
 
-Then run the pipeline with `ENV_BUILDER: true` and `GENERATE_EFFECTIVE_SET: true`.
+    ```yaml
+    # environments/cluster-01/credentials/cluster-01-creds.yml
+    partner-api-cred:
+      type: usernamePassword
+      data:
+        username: partner-user
+        password: partner-password
+    ```
+
+2. In `env_definition.yml` of each environment, list the filename without `.yml`:
+
+    ```yaml
+    envTemplate:
+      sharedMasterCredentialFiles:
+        - cluster-01-creds
+    ```
+
+3. Build the environments as in [Step 2](#step-2-build-the-environment).
+
+EnvGene copies every credential of the file to `Credentials/credentials.yml`. A credential that no parameter
+references stays unused.
+
+The file can also be created through the `credentials` block of `ENV_INVENTORY_CONTENT`, see
+[Create an Environment Inventory](/docs/how-to/create-environment-inventory.md). The values then pass through the
+pipeline parameter in plain text.
+
+## Set a system credential
+
+System credentials are the sensitive parameters of the EnvGene configuration, such as `self_token` in
+`/configuration/integration.yml`. EnvGene does not generate placeholders for them: create the credential yourself.
+
+1. Set the parameter to a credential macro:
+
+    ```yaml
+    # configuration/integration.yml
+    self_token: envgen.creds.get('self-token-cred').secret
+    ```
+
+2. Add the credential with its value to `/configuration/credentials/credentials.yml`:
+
+    ```yaml
+    # configuration/credentials/credentials.yml
+    self-token-cred:
+      type: secret
+      data:
+        secret: <token>
+    ```
+
+Registry credentials work the same way, see
+[Configure artifact registries](/docs/how-to/configure-cloud-artifact-registries.md). The credentials of
+`deployer.yml` live in `deployer-creds.yml` next to it. For the list of system credentials, see
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
+
+## Change a value
+
+| Where the value is                    | How to change it                                                                  |
+|---------------------------------------|-----------------------------------------------------------------------------------|
+| `Credentials/credentials.yml`         | Edit the value in the file                                                        |
+| A Shared Credentials file             | Edit the value in the file                                                        |
+| The Cloud Passport credentials file   | Edit `<passport-name>-creds.yml`, or run Cloud Passport discovery again           |
+| One value used in several places      | Use [Credential Rotation](/docs/features/cred-rotation.md). Works with SOPS only  |
+
+Then generate the Effective Set as in [Step 4](#step-4-generate-the-effective-set).
 
 ## Related documentation
 
 - [Credential Encryption](/docs/how-to/credential-encryption.md)
 - [Configure External Credentials](/docs/how-to/configure-external-credentials.md)
-- [Create an Environment Inventory](/docs/how-to/create-environment-inventory.md)
 - [Override Template Parameters](/docs/how-to/environment-specific-parameters.md)
 - [Working with envgeneNullValue](/docs/tutorials/envgene-null-value.md)
 - [Credential Rotation](/docs/features/cred-rotation.md)
+- [Template macros: local credentials](/docs/template-macros.md#local-credentials-via-credsget)

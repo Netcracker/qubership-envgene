@@ -173,7 +173,7 @@ Never commit these values to Git.
 
 ### Step 9: Write the Cloud Passport credentials
 
-1. Add the credentials of the cluster to the passport credentials file, with the fields from Step 2:
+1. Add the credentials of the cluster to the Cloud Passport Credential File, with the fields from Step 2:
 
     ```yaml
     # environments/cluster-01/cloud-passport/passport-creds.yml
@@ -211,7 +211,7 @@ For the rest of the passport, see [Create a cluster](/docs/how-to/create-cluster
 
 ### Step 10: Write the Shared Credentials
 
-Write your credentials to the Shared Credentials file of the environment in this format:
+Write your credentials to the Shared Credentials File of the environment in this format:
 
 ```yaml
 # environments/cluster-01/env-01/Inventory/credentials/env-01-creds.yml
