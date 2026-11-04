@@ -386,12 +386,11 @@ class TestRegdefV2Adapter:
         assert synthesized["helmConfig"]["repositoryDomainName"] == "https://helm.example.com"
 
     @pytest.mark.unit
-    def test_helm_map_repositories_written_to_pubreg_file(self):
+    def test_helm_map_repositories_not_written_to_pubreg_file(self):
         run_regdefv2_adapter(_ctx())
 
         pubreg_params = openYaml(os.environ["LOCAL_PUBREG_FILE"])
-        assert pubreg_params["HELM_MAP_REPOSITORIES"] == {"x": {"url": "https://helm.example.com"}}
-        assert "HELM_REPO_BASE_URL" not in pubreg_params
+        assert "HELM_MAP_REPOSITORIES" not in pubreg_params
 
     @pytest.mark.unit
     def test_helm_map_repositories_reach_ctx_without_maven_provider(self, tmp_path):

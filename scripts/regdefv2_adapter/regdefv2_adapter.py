@@ -23,7 +23,7 @@ AUTH_CONFIG_KEY = "pub-reg-auth"
 
 REGISTRY_AUTH_PARAM_PREFIXES = ("PUB_REG_", "NON_PUB_REG_")
 HELM_MAP_REPOSITORIES = "HELM_MAP_REPOSITORIES"
-REGISTRY_AUTH_PARAM_NAMES = (MAVEN_PROVIDER, HELM_MAP_REPOSITORIES)
+REGISTRY_AUTH_PARAM_NAMES = (MAVEN_PROVIDER,)
 
 V2_MAVEN_CONFIG_FIELDS = (
     "repositoryDomainName",
@@ -69,9 +69,6 @@ def _resolve_pubreg_params(e2e_parameters: dict, env_dir: str) -> dict:
     params = {}
     for key, value in e2e_parameters.items():
         is_registry_auth_param = key.startswith(REGISTRY_AUTH_PARAM_PREFIXES) or key in REGISTRY_AUTH_PARAM_NAMES
-        if key == HELM_MAP_REPOSITORIES and value:
-            params[key] = value
-            continue
         if not isinstance(value, str) or not is_registry_auth_param:
             continue
         resolved = helper.expand_cred_macro_and_return_value(key, value, env_creds).strip()
@@ -121,12 +118,12 @@ def _build_auth_config(params: dict, cred_id: str, maven_provider: str) -> dict:
     return auth_config
 
 
-def _resolve_section_domain(section: str, params: dict, v1_data: dict) -> str | None:
+def _resolve_section_domain(section: str, helm_map_repositories: dict, v1_data: dict) -> str | None:
     param_name = V2_SECTION_DOMAIN_PARAMS[section]
     if param_name is None:
         return v1_data.get("mavenConfig", {}).get("repositoryDomainName", "")
     group_repo = v1_data.get("helmAppConfig", {}).get("helmGroupRepoName", "")
-    url = ((params.get(param_name) or {}).get(group_repo) or {}).get("url")
+    url = (helm_map_repositories.get(group_repo) or {}).get("url")
     if url:
         return url
     logger.warning(f"{param_name} has no url for {group_repo!r} in Cloud e2eParameters — "
@@ -134,7 +131,7 @@ def _resolve_section_domain(section: str, params: dict, v1_data: dict) -> str | 
     return None
 
 
-def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
+def _convert_v2_from_v1(v1_data: dict, auth_config: dict, helm_map_repositories: dict) -> dict:
     v1_maven = v1_data.get("mavenConfig", {})
     v2_maven = {key: v1_maven[key] for key in V2_MAVEN_CONFIG_FIELDS if key in v1_maven}
     v2_maven["authConfig"] = AUTH_CONFIG_KEY
@@ -150,7 +147,7 @@ def _convert_v2_from_v1(v1_data: dict, auth_config: dict, params: dict) -> dict:
         if section not in v1_data:
             continue
         v2_data[section] = {**v1_data[section], "authConfig": AUTH_CONFIG_KEY}
-        domain = _resolve_section_domain(section, params, v1_data)
+        domain = _resolve_section_domain(section, helm_map_repositories, v1_data)
         if domain is not None:
             v2_data[section]["repositoryDomainName"] = domain
     return v2_data
@@ -209,7 +206,7 @@ def run_regdefv2_adapter(ctx) -> None:
 
         file_auth_config = _build_auth_config(params, TRANSIENT_CRED_ID, maven_provider)
 
-        v2_data = _convert_v2_from_v1(v1_data, file_auth_config, params)
+        v2_data = _convert_v2_from_v1(v1_data, file_auth_config, ctx.helm_map_repositories)
         jsonschema.validate(instance=v2_data, schema=get_regdef_v2_schema())
         helper.writeYamlToFile(regdef_v2_tmp_dir / regdef_file.name, v2_data)
         logger.info(f"Synthesized v2 for {regdef_file.name}")

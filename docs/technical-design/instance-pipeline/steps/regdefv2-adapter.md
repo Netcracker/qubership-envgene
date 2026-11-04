@@ -15,8 +15,8 @@
 ## Description
 
 The `regdefv2_adapter` step gives EnvGene's artifact downloaders registry authentication for public cloud
-and non-public registries. The **registry auth parameters** are the flat `PUB_REG_*`, `NON_PUB_REG_*`,
-`MAVEN_PROVIDER`, and `HELM_MAP_REPOSITORIES` values the DevOps toolset already uses for registry access.
+and non-public registries. The **registry auth parameters** are the flat `PUB_REG_*`, `NON_PUB_REG_*`, and
+`MAVEN_PROVIDER` values the DevOps toolset already uses for registry access.
 Requiring operators to also author a RegDef v2 `authConfig` for EnvGene would make them enter the same auth
 twice, so this step synthesizes that auth from those parameters instead. Its outputs are transient and are
 not committed. It is a transitional step, removed once operators author RegDef v2 directly and the registry
@@ -167,8 +167,7 @@ not written into the committed credential store.
 
 ## Parameter file
 
-`pubreg_params.yaml` is a YAML map, one key per parameter. Every value is a string with the credential macros
-expanded, except `HELM_MAP_REPOSITORIES`, which the step copies from the Cloud `e2eParameters` as is:
+`pubreg_params.yaml` is a flat YAML map, one key per parameter with a string value:
 
 ```yaml
 MAVEN_PROVIDER: aws
@@ -178,9 +177,6 @@ PUB_REG_SECRET: <secret-key>
 PUB_REG_REGION: eu-west-1
 PUB_REG_DOMAIN: codeartifact-domain
 PUB_REG_ROLE_ARN: arn:aws:iam::123456789012:role/YourRole
-HELM_MAP_REPOSITORIES:
-  nc.helm.charts:
-    url: https://mirror.example.com/helm
 ```
 
 The complete parameter list:
@@ -213,7 +209,6 @@ The complete parameter list:
 | `NON_PUB_REG_METHOD`          | non-public | none or basic_auth                                                                |
 | `NON_PUB_REG_KEY`             | non-public | User, basic_auth only                                                             |
 | `NON_PUB_REG_SECRET`          | non-public | Password, basic_auth only                                                         |
-| `HELM_MAP_REPOSITORIES`       | helm       | Helm repository URL by `helmAppConfig.helmGroupRepoName`                          |
 
 ## Result
 
