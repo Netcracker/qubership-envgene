@@ -37,10 +37,10 @@ For a new environment, you do not need this migration, see
 
 Values move into the Secret Store in two parts:
 
-| When                                | What                                                   | Where                                                                  |
-|-------------------------------------|--------------------------------------------------------|------------------------------------------------------------------------|
-| Before Steps 4–6 remove `data`      | Save each real value to a secure place outside Git     | [Step 4](#step-4-convert-the-cloud-passport-credentials)     |
-| After Step 10 generates the Context | Put the saved values into the store at EnvGene's paths | [Step 11](#step-11-put-the-values-in-the-secret-store) |
+| When                                | What                                                   | Where                                                    |
+|-------------------------------------|--------------------------------------------------------|----------------------------------------------------------|
+| Before Steps 4-6 remove `data`      | Save each real value to a secure place outside Git     | [Step 4](#step-4-convert-the-cloud-passport-credentials) |
+| After Step 10 generates the Context | Put the saved values into the store at EnvGene's paths | [Step 11](#step-11-put-the-values-in-the-secret-store)   |
 
 ### Rules
 
@@ -82,7 +82,7 @@ Record each credential in a table:
 | dbaas     | `cluster-01/cloud-passport/passport-creds.yml`             | real value                |
 | api-token | `cluster-01/env-01/Inventory/credentials/env-01-creds.yml` | stub (`envgeneNullValue`) |
 
-A real value must be saved before Steps 4–6 remove it. A stub such as `envgeneNullValue` or an empty string has
+A real value must be saved before Steps 4-6 remove it. A stub such as `envgeneNullValue` or an empty string has
 nothing to save.
 
 **Result:** a table of every local credential, its file, and whether it holds a real value.
@@ -269,7 +269,7 @@ credential with its path in the store.
 
 1. Open `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml`.
 2. For each credential with `strategy: fail_if_absent`, create the secret in the store at the path in its `vals`
-   field. Use the value you saved in Steps 4–5, or, for a value that came from Jenkins CMDB, the value from Jenkins.
+   field. Use the value you saved in Steps 4-5, or, for a value that came from Jenkins CMDB, the value from Jenkins.
 3. Inside the secret, use the keys from `properties`, such as `username` and `password`. For a single-value
    credential in Vault or OpenBao, use the key `value`.
 

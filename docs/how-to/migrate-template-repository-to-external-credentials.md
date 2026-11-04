@@ -61,7 +61,7 @@ You replace these in [Step 5](#step-5-replace-macros):
 ```
 
 For `#creds`, `<value>` is the `credId`. For `#credscl` and `#credsns`, copy the `credId` from
-`Credentials/credentials.yml` of an environment built from this template. That id is not `<value>`.
+`Credentials/credentials.yml` of an environment built from this template. That ID is not `<value>`.
 
 ### Built-in string fields
 
@@ -257,7 +257,7 @@ PASSWORD:
 ```
 
 One key becomes two `credRef` entries, `username` and `password`. For `#creds`, `credId` is the
-value of the key. For `#credscl` and `#credsns`, `credId` is the id copied from
+value of the key. For `#credscl` and `#credsns`, `credId` is the ID copied from
 `Credentials/credentials.yml` in Step 1, not the value of the key.
 
 **Result:** no credential macros left in `deployParameters`, `e2eParameters`, and their ParameterSets.

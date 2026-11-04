@@ -64,13 +64,13 @@ each `credId`, note what the secret holds:
 
 Every external credential has the same fields. Choose each value as follows:
 
-| Field           | How to choose the value                                                                                                   |
-|-----------------|---------------------------------------------------------------------------------------------------------------------------|
-| `type`          | Always `external`. An external credential has no `data` block                                                              |
-| `secretStore`   | The identifier of the Secret Store in the Instance repository. With one store, `default_store`                             |
+| Field           | How to choose the value                                                                                                                                                                                                                                                 |
+|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`          | Always `external`. An external credential has no `data` block                                                                                                                                                                                                           |
+| `secretStore`   | The identifier of the Secret Store in the Instance repository. With one store, `default_store`                                                                                                                                                                          |
 | `remoteRefPath` | The folder in the store. In the Credential Template, use `{{ current_env.cloud }}/{{ current_env.name }}`. In the Instance repository, use `<cluster>` for Cloud Passport credentials and `<cluster>/<env>` for the others. Do not add the `credId`: EnvGene appends it |
-| `create`        | `true` if EnvGene may generate the value, such as an internal password nobody else uses. Leave it out if the value comes from outside, such as a token from a partner. Then you put it in the store yourself in Step 11 |
-| `properties`    | For a username and a password, list `- name: username` and `- name: password`. For one value, leave it out                 |
+| `create`        | `true` if EnvGene may generate the value, such as an internal password nobody else uses. Leave it out if the value comes from outside, such as a token from a partner. Then you put it in the store yourself in Step 11                                                 |
+| `properties`    | For a username and a password, list `- name: username` and `- name: password`. For one value, leave it out                                                                                                                                                              |
 
 Example: a database user that EnvGene may generate, and a token issued by a partner:
 
