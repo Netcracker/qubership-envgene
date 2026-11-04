@@ -54,8 +54,7 @@ public class ParametersCalculationServiceV1 {
                 namespaceName,
                 applicationName,
                 deployerInputs,
-                originalNamespace,
-                new HashMap<>());
+                originalNamespace);
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
