@@ -72,7 +72,7 @@ RUN chmod 754 /module/scripts/*
 # Stage 3: Runtime
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.3 AS runtime
 
-ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.20_p8-r0
+ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.21.0.3_p1-r0
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
