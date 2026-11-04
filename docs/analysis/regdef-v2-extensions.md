@@ -9,7 +9,7 @@
     - [EXT2 — The `REGISTRY_CREDENTIALS` variable](#ext2--the-registry_credentials-variable)
     - [EXT3 — Extend `authConfig` to match what QCL already supports](#ext3--extend-authconfig-to-match-what-qcl-already-supports)
     - [EXT4 — Repositories by artifact type](#ext4--repositories-by-artifact-type)
-    - [EXT5 — New artifact sections](#ext5--new-artifact-sections)
+    - [EXT5 — New artifact types](#ext5--new-artifact-types)
     - [EXT6 — Repository: `url` + `repoName`](#ext6--repository-url--reponame)
   - [Model](#model)
   - [`authConfig` method catalog](#authconfig-method-catalog)
@@ -24,14 +24,22 @@
    Or use separate Registry Definitions?
 2. Should `helmLibConfig` and `helmAppConfig` be unified?
 3. Should `mavenConfig` be split into two types — one for the DD, one for maven libraries?
+
+   A:
+
+   1. `mavenDD` - all cloud DD related files (.json, .zip, ...)
+   2. `maven` - smart plug, sample repo, envgene template, ...
+
 4. Extend `provider` with `gitlab`?
-5. Make artifact type flexible:
+5. Allow multiple registries for the same artifact type in one Reg Def?
+
+    A: No — one registry per artifact type (no such cases). Use the `artifactType` list format:
 
     ```yaml
-    <registry-name>:
-      artifactType: enum [ maven, docker, helm_lib_http, helm_app_http, helm_lib_oci, helm_app_oci ]
-      authConfig: string
-      repositories: list
+    registries:
+      - artifactType: enum [ maven, mavenDD, docker, helmLib, helmApp, helmLibOCI, helmAppOCI, go, npm, raw, python ]
+        authConfig: string
+        repositories: list
     ```
 
 6. Rename `scopes` to `securityScopes`, `accessRoles` or something else
@@ -61,12 +69,27 @@
           key: value
         delivery:
           key: value
+    
+    # Option 4 — no consumer specific config in Reg Def
     ```
+
+10. Extend registry type with `ftp`, `s3`, `smb` for delivery cases?
+    1. Opt1: extend Reg Def
+    2. Opt2: store it in delivery tool/pipeline config **chosen**
+11. Extend registry provider with gitlab container registry?
+    1. Opt1: extend Reg Def **chosen**
+12. How to handle promote/delivery cases - move artifact from one registry to other one
+    1. A: Source and destination (may be multiple) should be described in promote/delivery config
+13. One Reg Def per registry instance/type?
+    1. A: No
 
 ## Limitations
 
-1. `authConfig` binds at the artifact-section level, not per repository. All repositories in a section share one `authConfig`.
-   No way to point `snapshot` and `release` within the same section at registries with different authentication.
+1. `authConfig` binds at the `registries` entry (artifact-type) level, not per repository. All repositories in an entry share one `authConfig`.
+   No way to point `snapshot` and `release` within the same entry at registries with different authentication.
+2. Proxy routing is not modeled per registry. A RegDef gives each registry's `url`/`baseUrl`; whether traffic goes via a proxy or direct
+   is environment-global (`HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY`). Every internal registry host must be in `NO_PROXY`, or its traffic is sent
+   through the proxy (usually failing). Use exact hostnames — `requests` and `aiohttp` match `NO_PROXY` differently (aiohttp: host/suffix, not CIDR).
 
 ## Extensions
 
@@ -206,48 +229,51 @@ snapshot, release - mandatory, others are optional. extendable
 | artifact type  | repository types                                        |
 |----------------|---------------------------------------------------------|
 | `maven`        | snapshot, staging, release, snapshotGroup, releaseGroup |
+| `mavenDD`      | snapshot, staging, release, snapshotGroup, releaseGroup |
 | `docker`       | snapshot, staging, release, group                       |
 | `go`           | snapshot, release, proxy                                |
 | `npm`          | snapshot, release                                       |
 | `raw`          | snapshot, release, staging, proxy                       |
+| `python`       | snapshot, release                                       |
 | `helmLib`      | staging, release                                        |
 | `helmApp`      | staging, release, group, dev                            |
-| `helmLibOci` ¹ | staging, release                                        |
-| `helmAppOci` ¹ | staging, release, group, dev                            |
+| `helmLibOCI` ¹ | staging, release                                        |
+| `helmAppOCI` ¹ | staging, release, group, dev                            |
 
 ¹ types mirror helmLib/helmApp.
 
-### EXT5 — New artifact sections
+### EXT5 — New artifact types
 
-A new artifact type is added as its own `<type>Config` section, with the same shape as the rest (`authConfig` + `repositories`). The set of sections is not fixed — it is extendable. Examples:
+A new artifact type is added as another `registries` entry with its own `artifactType`, `authConfig`, and `repositories`. The set of artifact types is not fixed — it is extendable. Examples:
 
-- **OCI helm** — kept separate from HTTP helm (which stays in `helmLibConfig` / `helmAppConfig`):
+- **OCI helm** — kept separate from classic (index-based) helm (`helmLib` / `helmApp`):
 
 ```yaml
-helmLibOciConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
-helmAppOciConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
+registries:
+  - artifactType: helmLibOCI
+    authConfig: string
+    repositories:
+      - type: string
+        url: string
+        repoName: string
+  - artifactType: helmAppOCI
+    authConfig: string
+    repositories:
+      - type: string
+        url: string
+        repoName: string
 ```
 
 - **python**:
 
 ```yaml
-pythonConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
+registries:
+  - artifactType: python
+    authConfig: string
+    repositories:
+      - type: string
+        url: string
+        repoName: string
 ```
 
 ### EXT6 — Repository: `url` + `repoName`
@@ -276,12 +302,13 @@ append the repository to `baseUrl`. It applies to artifactory and nexus only. `a
 authentication.
 
 ```yaml
-<type>Config:
-  authConfig: <name>
-  repositories:
-    - type: release
-      url: https://nexus.company.internal/repository/maven-releases
-      repoName: maven-releases
+registries:
+  - artifactType: maven
+    authConfig: <name>
+    repositories:
+      - type: release
+        url: https://nexus.company.internal/repository/maven-releases
+        repoName: maven-releases
 ```
 
 ## Model
@@ -387,62 +414,21 @@ authConfig:
     azureOauth2Params:
       <key>: <value>
 
-# Each artifact section is Optional, present only for the artifact types the app uses.
-# `repositories` — a list of entries, each with `type`, `url`, `repoName`. `type` is a free string, not an enum.
-# At minimum, the `snapshot` and `release` repositories. Repository types per artifact type — EXT4.
-#   - type: string       # repository type
-#     url: string        # full pull/push base (http URL | oci host/host:port/repo.host) — carries addressing style
-#     repoName: string   # control-plane only (AQL/promote/manage); NOT for pull/push; omit for anonymous and group/proxy
-
-mavenConfig:
-  authConfig: string
-  repositories:
-    - type: string          # at least snapshot and release (mandatory); more optional
-      url: string
-      repoName: string
-
-dockerConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
-helmLibConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
-helmAppConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
-goConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
-npmConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
-rawConfig:
-  authConfig: string
-  repositories:
-    - type: string
-      url: string
-      repoName: string
-
+# Mandatory
+# Per-artifact-type registry entries. One entry per artifact type (EXT4).
+registries:
+    # Mandatory
+    # Artifact type this entry serves
+  - artifactType: enum [ maven, mavenDD, docker, helmLib, helmApp, helmLibOCI, helmAppOCI, go, npm, raw, python ]
+    # Mandatory
+    # Reference to an authConfig profile by name
+    authConfig: string
+    # Mandatory
+    # Repositories for this artifact type. At minimum snapshot and release. Repository types per artifact type — EXT4.
+    repositories:
+      - type: string       # repository type; at least snapshot and release (mandatory), more optional
+        url: string        # full pull/push base (http URL | oci host/host:port/repo.host) — carries addressing style
+        repoName: string   # control-plane only (AQL/promote/manage); NOT for pull/push; omit for anonymous and group/proxy
 ```
 
 **Valid `authMethod` values per `provider`:**
@@ -634,126 +620,126 @@ authConfig:
 ## Artifact sections
 
 ```yaml
-mavenConfig:                          # https
-  authConfig: aws-secret
-  repositories:
-    - type: snapshot
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshots
-      repoName: maven-snapshots
-    - type: staging
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-staging
-      repoName: maven-staging
-    - type: release
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-releases
-      repoName: maven-releases
-    - type: snapshotGroup
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshot-group
-    - type: releaseGroup
-      url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-release-group
+registries:
+  - artifactType: maven                 # https
+    authConfig: aws-secret
+    repositories:
+      - type: snapshot
+        url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshots
+        repoName: maven-snapshots
+      - type: staging
+        url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-staging
+        repoName: maven-staging
+      - type: release
+        url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-releases
+        repoName: maven-releases
+      - type: snapshotGroup
+        url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-snapshot-group
+      - type: releaseGroup
+        url: https://codeartifact.eu-west-1.amazonaws.com/maven/maven-release-group
 
-dockerConfig:                         # oci
-  authConfig: artifactory-up
-  repositories:
-    - type: snapshot
-      url: artifactory.company.com:18080
-      repoName: docker-snapshots
-    - type: staging
-      url: artifactory.company.com:18081
-      repoName: docker-staging
-    - type: release
-      url: artifactory.company.com:18082
-      repoName: docker-releases
-    - type: group
-      url: artifactory.company.com:18083
+  - artifactType: docker                # oci
+    authConfig: artifactory-up
+    repositories:
+      - type: snapshot
+        url: artifactory.company.com:18080
+        repoName: docker-snapshots
+      - type: staging
+        url: artifactory.company.com:18081
+        repoName: docker-staging
+      - type: release
+        url: artifactory.company.com:18082
+        repoName: docker-releases
+      - type: group
+        url: artifactory.company.com:18083
 
-helmLibConfig:                         # https
-  authConfig: nexus-up
-  repositories:
-    - type: staging
-      url: https://nexus.company.internal/repository/helm-staging
-      repoName: helm-staging
-    - type: release
-      url: https://nexus.company.internal/repository/helm-releases
-      repoName: helm-releases
+  - artifactType: helmLib               # https
+    authConfig: nexus-up
+    repositories:
+      - type: staging
+        url: https://nexus.company.internal/repository/helm-staging
+        repoName: helm-staging
+      - type: release
+        url: https://nexus.company.internal/repository/helm-releases
+        repoName: helm-releases
 
-helmAppConfig:                         # https
-  authConfig: nexus-up
-  repositories:
-    - type: staging
-      url: https://nexus.company.internal/repository/helm-staging
-      repoName: helm-staging
-    - type: release
-      url: https://nexus.company.internal/repository/helm-releases
-      repoName: helm-releases
-    - type: group
-      url: https://nexus.company.internal/repository/helm-group
-    - type: dev
-      url: https://nexus.company.internal/repository/helm-dev
-      repoName: helm-dev
+  - artifactType: helmApp               # https
+    authConfig: nexus-up
+    repositories:
+      - type: staging
+        url: https://nexus.company.internal/repository/helm-staging
+        repoName: helm-staging
+      - type: release
+        url: https://nexus.company.internal/repository/helm-releases
+        repoName: helm-releases
+      - type: group
+        url: https://nexus.company.internal/repository/helm-group
+      - type: dev
+        url: https://nexus.company.internal/repository/helm-dev
+        repoName: helm-dev
 
-# EXT5: OCI helm in separate sections
-helmLibOciConfig:                      # oci
-  authConfig: artifactory-up
-  repositories:
-    - type: staging
-      url: artifactory.company.com:18090
-      repoName: helm-oci-staging
-    - type: release
-      url: artifactory.company.com:18091
-      repoName: helm-oci-releases
+  # EXT5: OCI helm as separate artifact types
+  - artifactType: helmLibOCI            # oci
+    authConfig: artifactory-up
+    repositories:
+      - type: staging
+        url: artifactory.company.com:18090
+        repoName: helm-oci-staging
+      - type: release
+        url: artifactory.company.com:18091
+        repoName: helm-oci-releases
 
-# EXT5: OCI helm in separate sections
-helmAppOciConfig:                      # oci
-  authConfig: artifactory-up
-  repositories:
-    - type: staging
-      url: artifactory.company.com:18092
-      repoName: helm-app-oci-staging
-    - type: release
-      url: artifactory.company.com:18093
-      repoName: helm-app-oci-releases
-    - type: group
-      url: artifactory.company.com:18094
-    - type: dev
-      url: artifactory.company.com:18095
-      repoName: helm-app-oci-dev
+  - artifactType: helmAppOCI            # oci
+    authConfig: artifactory-up
+    repositories:
+      - type: staging
+        url: artifactory.company.com:18092
+        repoName: helm-app-oci-staging
+      - type: release
+        url: artifactory.company.com:18093
+        repoName: helm-app-oci-releases
+      - type: group
+        url: artifactory.company.com:18094
+      - type: dev
+        url: artifactory.company.com:18095
+        repoName: helm-app-oci-dev
 
-goConfig:                           # https
-  authConfig: nexus-up
-  repositories:
-    - type: snapshot
-      url: https://nexus.company.internal/repository/go-snapshots
-      repoName: go-snapshots
-    - type: release
-      url: https://nexus.company.internal/repository/go-releases
-      repoName: go-releases
-    - type: proxy
-      url: https://goproxy.internal/go/
+  - artifactType: go                    # https
+    authConfig: nexus-up
+    repositories:
+      - type: snapshot
+        url: https://nexus.company.internal/repository/go-snapshots
+        repoName: go-snapshots
+      - type: release
+        url: https://nexus.company.internal/repository/go-releases
+        repoName: go-releases
+      - type: proxy
+        url: https://goproxy.internal/go/
 
-npmConfig:                          # https
-  authConfig: nexus-up
-  repositories:
-    - type: snapshot
-      url: https://nexus.company.internal/repository/npm-snapshots
-      repoName: npm-snapshots
-    - type: release
-      url: https://nexus.company.internal/repository/npm-releases
-      repoName: npm-releases
+  - artifactType: npm                   # https
+    authConfig: nexus-up
+    repositories:
+      - type: snapshot
+        url: https://nexus.company.internal/repository/npm-snapshots
+        repoName: npm-snapshots
+      - type: release
+        url: https://nexus.company.internal/repository/npm-releases
+        repoName: npm-releases
 
-rawConfig:                          # https
-  authConfig: nexus-up
-  repositories:
-    - type: snapshot
-      url: https://nexus.company.internal/repository/raw-snapshots
-      repoName: raw-snapshots
-    - type: release
-      url: https://nexus.company.internal/repository/raw-releases
-      repoName: raw-releases
-    - type: staging
-      url: https://nexus.company.internal/repository/raw-staging
-      repoName: raw-staging
-    - type: proxy
-      url: https://proxy.raw.local/raw
+  - artifactType: raw                   # https
+    authConfig: nexus-up
+    repositories:
+      - type: snapshot
+        url: https://nexus.company.internal/repository/raw-snapshots
+        repoName: raw-snapshots
+      - type: release
+        url: https://nexus.company.internal/repository/raw-releases
+        repoName: raw-releases
+      - type: staging
+        url: https://nexus.company.internal/repository/raw-staging
+        repoName: raw-staging
+      - type: proxy
+        url: https://proxy.raw.local/raw
 ```
 
 ## Examples

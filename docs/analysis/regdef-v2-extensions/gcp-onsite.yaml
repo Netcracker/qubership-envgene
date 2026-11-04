@@ -21,53 +21,65 @@ authConfig:
       r: nexus-read
       rw: nexus-publish
       rwd: nexus-admin
-mavenConfig:
-  authConfig: gcp-sa
-  repositories:
-    - type: snapshot
-      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-snapshots
-      repoName: maven-snapshots
-    - type: staging
-      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-staging
-      repoName: maven-staging
-    - type: release
-      url: https://europe-west1-maven.pkg.dev/customer-proj/maven-releases
-      repoName: maven-releases
-dockerConfig:
-  authConfig: gcp-sa
-  repositories:
-    - type: snapshot
-      url: europe-west1-docker.pkg.dev/customer-proj/docker-snapshots
-      repoName: docker-snapshots
-    - type: staging
-      url: europe-west1-docker.pkg.dev/customer-proj/docker-staging
-      repoName: docker-staging
-    - type: release
-      url: europe-west1-docker.pkg.dev/customer-proj/docker-releases
-      repoName: docker-releases
-helmLibConfig:
-  authConfig: nexus
-  repositories:
-    - type: staging
-      url: https://nexus.customer.internal/repository/helm-lib-staging
-      repoName: helm-lib-staging
-    - type: release
-      url: https://nexus.customer.internal/repository/helm-lib-releases
-      repoName: helm-lib-releases
-helmAppConfig:
-  authConfig: nexus
-  repositories:
-    - type: staging
-      url: https://nexus.customer.internal/repository/helm-app-staging
-      repoName: helm-app-staging
-    - type: release
-      url: https://nexus.customer.internal/repository/helm-app-releases
-      repoName: helm-app-releases
-    - type: group
-      url: https://nexus.customer.internal/repository/helm-app
-    - type: dev
-      url: https://nexus.customer.internal/repository/helm-app-dev
-      repoName: helm-app-dev
+registries:
+  - artifactType: maven
+    authConfig: gcp-sa
+    repositories:
+      - type: snapshot
+        # authConfig: gcp-sa
+        url: https://europe-west1-maven.pkg.dev/customer-proj/maven-snapshots
+        repoName: maven-snapshots
+      - type: staging
+        # authConfig: other-gcp-sa
+        url: https://europe-west1-maven.pkg.dev/customer-proj/maven-staging
+        repoName: maven-staging
+      - type: release
+        url: https://europe-west1-maven.pkg.dev/customer-proj/maven-releases
+        repoName: maven-releases
+  - artifactType: mavenDD
+    authConfig: gcp-sa
+    repositories:
+      - type: snapshot
+        url: https://europe-west1-maven.pkg.dev/customer-proj/maven-dd-snapshots
+        repoName: maven-dd-snapshots
+      - type: release
+        url: https://europe-west1-maven.pkg.dev/customer-proj/maven-dd-releases
+        repoName: maven-dd-releases
+  - artifactType: docker
+    authConfig: gcp-sa
+    repositories:
+      - type: snapshot
+        url: europe-west1-docker.pkg.dev/customer-proj/docker-snapshots
+        repoName: docker-snapshots
+      - type: staging
+        url: europe-west1-docker.pkg.dev/customer-proj/docker-staging
+        repoName: docker-staging
+      - type: release
+        url: europe-west1-docker.pkg.dev/customer-proj/docker-releases
+        repoName: docker-releases
+  - artifactType: helmLib
+    authConfig: nexus
+    repositories:
+      - type: staging
+        url: https://nexus.customer.internal/repository/helm-lib-staging
+        repoName: helm-lib-staging
+      - type: release
+        url: https://nexus.customer.internal/repository/helm-lib-releases
+        repoName: helm-lib-releases
+  - artifactType: helmApp
+    authConfig: nexus
+    repositories:
+      - type: staging
+        url: https://nexus.customer.internal/repository/helm-app-staging
+        repoName: helm-app-staging
+      - type: release
+        url: https://nexus.customer.internal/repository/helm-app-releases
+        repoName: helm-app-releases
+      - type: group
+        url: https://nexus.customer.internal/repository/helm-app
+      - type: dev
+        url: https://nexus.customer.internal/repository/helm-app-dev
+        repoName: helm-app-dev
 
 # ---------------------------------------------------------------------------
 # Consumer CI/CD variable: REGISTRY_CREDENTIALS (literal values, no secret store)
