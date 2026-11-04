@@ -54,7 +54,7 @@ _PUBREG_PROVIDER_AUTH_FIELDS: dict[str, dict[str, str]] = {
 }
 
 
-def _helm_map_repositories(e2e_parameters: dict) -> dict:
+def _validate_helm_map_repositories(e2e_parameters: dict) -> dict:
     helm_map = e2e_parameters.get(HELM_MAP_REPOSITORIES) or {}
     is_valid = isinstance(helm_map, dict) and all(
         isinstance(entry, dict) and isinstance(entry.get("url"), str) for entry in helm_map.values())
@@ -164,7 +164,7 @@ def run_regdefv2_adapter(ctx) -> None:
     e2e_parameters = EnvGenerator().render_cloud_e2e_parameters(
         ctx.env_name, render_context_vars, env_dir, helper.render_workspace_dir(ctx.work_dir) / "parameters"
     )
-    ctx.helm_map_repositories = _helm_map_repositories(e2e_parameters)
+    ctx.helm_map_repositories = _validate_helm_map_repositories(e2e_parameters)
     params = _resolve_pubreg_params(e2e_parameters, env_dir)
 
     maven_provider = params.get(MAVEN_PROVIDER, "").strip().lower()

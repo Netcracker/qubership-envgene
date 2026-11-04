@@ -270,9 +270,9 @@ public class BomReaderUtilsImplV2 {
 
     private void validateAppChart(EntitiesMap entitiesMap, List<Component> components, String appName, String appFileRef) {
         Optional<Component> optional = components.stream().filter(key -> "application/vnd.qubership.app.chart".equalsIgnoreCase(key.getMimeType())).findAny();
-        if (optional.isEmpty()) {
+        if (optional.isEmpty() || StringUtils.isBlank(optional.get().getName())) {
             throw new AppChartValidationException(String.format("App chart validation failed: application \"%s\" from SBOM \"%s\" " +
-                    "has no component with mime-type \"application/vnd.qubership.app.chart\"", appName, new File(appFileRef).getName()));
+                    "has no named component with mime-type \"application/vnd.qubership.app.chart\"", appName, new File(appFileRef).getName()));
         }
         entitiesMap.setAppChartName(optional.get().getName());
     }

@@ -167,7 +167,8 @@ not written into the committed credential store.
 
 ## Parameter file
 
-`pubreg_params.yaml` is a flat YAML map, one key per parameter with a string value:
+`pubreg_params.yaml` is a YAML map, one key per parameter. Every value is a string with the credential macros
+expanded, except `HELM_MAP_REPOSITORIES`, which the step copies from the Cloud `e2eParameters` as is:
 
 ```yaml
 MAVEN_PROVIDER: aws
@@ -177,6 +178,9 @@ PUB_REG_SECRET: <secret-key>
 PUB_REG_REGION: eu-west-1
 PUB_REG_DOMAIN: codeartifact-domain
 PUB_REG_ROLE_ARN: arn:aws:iam::123456789012:role/YourRole
+HELM_MAP_REPOSITORIES:
+  nc.helm.charts:
+    url: https://mirror.example.com/helm
 ```
 
 The complete parameter list:
@@ -248,7 +252,8 @@ The complete parameter list:
    with a Solution Descriptor, or `GENERATE_EFFECTIVE_SET: true`), which do not require `ENV_BUILDER`. A legacy
    run with `ENV_BUILDER: false` that downloads from a public cloud registry therefore has no synthesized
    RegDef v2 auth, and the download fails. Run the legacy flow with `ENV_BUILDER: true`, or author a committed
-   RegDef v2, when the registry is public cloud.
+   RegDef v2, when the registry is public cloud. Such a run does not apply `HELM_MAP_REPOSITORIES` either, so the
+   SBOM generation downloads the app chart from the RegDef Maven host.
 
 ## Related documentation
 

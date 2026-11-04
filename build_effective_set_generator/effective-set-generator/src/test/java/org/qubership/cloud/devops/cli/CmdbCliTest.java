@@ -420,7 +420,27 @@ public class CmdbCliTest {
         assertNotEquals(0, exitCode);
     }
 
-    private static final String NS_FILE = "cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
+    @Test
+    void testSbomWithBlankAppChartNameFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = tempDir.resolve("sboms").resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        for (var component : root.path("components")) {
+            if ("application/vnd.qubership.app.chart".equals(component.path("mime-type").asText())) {
+                ((ObjectNode) component).put("name", "");
+            }
+        }
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    private static final String NS_FILE ="cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
     private static final String CLOUD_FILE = "cluster-01/pl-02/cloud.yml";
     private static final String VALS_APP_SBOM = "vals-app/vals-app-0.1.0-20261215.141230-3-RELEASE.sbom.json";
     private static final Set<String> BASE_SERVICE_KEYS = Set.of("ARTIFACT_DESCRIPTOR_VERSION", "DEPLOYMENT_RESOURCE_NAME",
