@@ -1,3 +1,4 @@
+import logging
 import shlex
 import shutil
 import subprocess
@@ -16,6 +17,7 @@ from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
 
 from effective_set.handle_effective_set_config import handle_effective_set_config
 from envgenehelper.models import ExternalCredentialProvisioning
+from external_cred_provision.provisioner import ExternalCredProvisioner
 
 
 def run_gitlab_deploy_effective_set(ctx):
@@ -218,17 +220,16 @@ def _run_external_credential_provision_cli(effective_set_dir) -> None:
                 "either EXTERNAL_CREDENTIAL_PROVISIONING is set to skip or context file is missing.")
         return
 
-    log_level = getenv("ENVGENE_LOG_LEVEL", "INFO").upper()
-
-    logger.info(f"External credential context file found: {context_file}. Invoking external-cred-provision CLI")
-    cmd = [
-        "external-cred-provision",
-        "--log-level",
-        log_level,
-        str(context_file),
-    ]
-
-    try:
-        subprocess.run(cmd, check=True, timeout=300)
-    except subprocess.TimeoutExpired as e:
-        raise RuntimeError("External credential provisioning timed out after 5 minutes.") from e
+    logger.info(f"External credential context file found: {context_file}. Invoking external-cred-provision in-process")
+    
+    external_logger = logging.getLogger("external_cred_provision")
+    external_logger.setLevel(logger.level)
+    external_logger.propagate = False
+    for handler in logger.handlers:
+        if handler not in external_logger.handlers:
+            external_logger.addHandler(handler)
+            
+    provider = ExternalCredProvisioner(context_path=str(context_file), dry_run=False)
+    exit_code = provider.run()
+    if exit_code != 0:
+        raise RuntimeError("External credential provisioning failed")

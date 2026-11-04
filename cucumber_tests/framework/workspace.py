@@ -116,17 +116,14 @@ class EnvGeneWorkspace(BaseWorkspace):
 
         env = os.environ.copy()
         env["CI_PROJECT_DIR"] = str(self.base_dir)
-        env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
+        env["SECRET_KEY"] = "c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="      
+        env["EXTERNAL_CREDENTIAL_PROVISIONING"] = "skip"
 
         # Mock run_effective_set_cli for local tests (cross-platform)
         effective_set_cli_mock = self.base_dir / "run_effective_set_cli.bat"
         effective_set_cli_mock.write_text("#!/bin/sh\nexit 0\n")
         os.chmod(effective_set_cli_mock, 0o755)
         env["EFFECTIVE_SET_CLI_PATH"] = str(effective_set_cli_mock)
-
-        external_cred_provision_mock = self.base_dir / "external-cred-provision"
-        external_cred_provision_mock.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-        os.chmod(external_cred_provision_mock, 0o755)
 
         if extra_env:
             env.update(extra_env)
