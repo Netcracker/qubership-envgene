@@ -224,7 +224,7 @@ async def download_async(session, download: ArtifactDownload) -> ArtifactDownloa
             if response.status == 200:
                 with open(download.local_target_path, "wb") as f:
                     f.write(await response.read())
-                logger.info(f"Downloaded: {download.local_target_path}")
+                logger.info(f"Downloaded: {url} -> {download.local_target_path}")
                 return download
             else:
                 logger.error(f"Download process with error {response.text}: {url}")
