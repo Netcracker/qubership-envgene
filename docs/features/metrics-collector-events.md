@@ -82,4 +82,4 @@ TLS certificate checks stay on unless `METRICS_COLLECTOR_SSL_VERIFY` is `false`.
 - [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url) - CI/CD
    settings for this integration
 - [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_trace_id) -
-   trace id and parent event id passed when the pipeline starts
+   trace ID and parent event ID passed when the pipeline starts
