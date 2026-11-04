@@ -33,7 +33,7 @@
 4. Extend `provider` with `gitlab`?
 5. Allow multiple registries for the same artifact type in one Reg Def?
 
-    A: No — one registry per artifact type (no such cases). Use the `artifactType` list format:
+    A: No — one registry per artifact type (no such cases). But use the `artifactType` list format:
 
     ```yaml
     registries:
@@ -80,8 +80,6 @@
     1. Opt1: extend Reg Def **chosen**
 12. How to handle promote/delivery cases - move artifact from one registry to other one
     1. A: Source and destination (may be multiple) should be described in promote/delivery config
-13. One Reg Def per registry instance/type?
-    1. A: No
 
 ## Limitations
 
