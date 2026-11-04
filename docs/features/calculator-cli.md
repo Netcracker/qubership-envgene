@@ -40,6 +40,7 @@
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
+          - [\[Version 2.0\] `deploy-descriptor.yaml` layouts](#version-20-deploy-descriptoryaml-layouts)
           - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
           - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
           - [\[Version 2.0\] Primary Service Artifact](#version-20-primary-service-artifact)
@@ -899,7 +900,27 @@ This file describes the parameters of the application artifacts generated during
 >[!Note]
 > The `DEPLOYMENT_SESSION_ID` parameter is an exception to this rule - it is taken from `extra_params`
 
-The structure of this file is as follows:
+The structure of this file depends on the layout of the application. See
+[`deploy-descriptor.yaml` layouts](#version-20-deploy-descriptoryaml-layouts).
+
+###### [Version 2.0] `deploy-descriptor.yaml` layouts
+
+The layout is set per application by the optional attribute `metadata.deployContextLayout` in the Deployment
+Descriptor (DD). EnvGene copies it to the Application SBOM. See
+[Application SBOM Metadata](/docs/features/sbom-generation.md#application-sbom-metadata).
+
+| `metadata.deployContextLayout` | Layout                       |
+|--------------------------------|------------------------------|
+| absent                         | [`full`](#full-layout)       |
+| `full`                         | [`full`](#full-layout)       |
+| `compact`                      | [`compact`](#compact-layout) |
+
+The layout affects only `deploy-descriptor.yaml`. Other Effective Set files do not change.
+
+**`full` layout**<a id="full-layout"></a>
+
+The default layout. Every service section contains the list of all services twice: in `deployDescriptor` and in
+`global`:
 
 ```yaml
 global: &id001
@@ -920,6 +941,32 @@ deployDescriptor: *id003
 <common-predefined-key-1>: <common-predefined-value-1>
 <common-predefined-key-N>: <common-predefined-value-N>
 ```
+
+**`compact` layout**<a id="compact-layout"></a>
+
+The list of all services is written once, in `global.deployDescriptor`. Service sections contain only the
+[common predefined parameters](#version-20-predefined-deploy-descriptoryaml-parameters):
+
+```yaml
+<common-predefined-key-1>: <common-predefined-value-1>
+<common-predefined-key-N>: <common-predefined-value-N>
+global:
+  deployDescriptor:
+    <service-name-1>:
+      <service-predefined-key-1>: <service-predefined-value-1>
+      <service-predefined-key-N>: <service-predefined-value-N>
+    <service-name-2>:
+      <service-predefined-key-1>: <service-predefined-value-1>
+      <service-predefined-key-N>: <service-predefined-value-N>
+<service-name-1>: &id001
+  <common-predefined-key-1>: <common-predefined-value-1>
+  <common-predefined-key-N>: <common-predefined-value-N>
+<service-name-2>: *id001
+```
+
+> [!IMPORTANT]
+> Before you set `compact`, make sure the application charts do not read `.Values.deployDescriptor`.
+> In the `compact` layout, the list of services is available only in `.Values.global.deployDescriptor`.
 
 ###### [Version 2.0] Predefined `deploy-descriptor.yaml` parameters
 
