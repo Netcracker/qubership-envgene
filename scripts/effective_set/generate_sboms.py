@@ -40,6 +40,7 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
 
     apps_needing_sbom = exclude_resolved_apps(deploy_plan, app_sboms_path)
     artifact_coordinate_source = get_artifact_coordinate_source()
+    logger.info(f"artifact_coordinate_source: {artifact_coordinate_source.value.lower()}")
     unresolved_app_versions = [app.version for app in apps_needing_sbom]
     if ctx.is_gitlab_deploy():
         dd_artifacts = download_dd_and_chart_artifacts(
