@@ -18,7 +18,7 @@ from .models import (
     CaseInsensitiveEnum, TemplateVersionUpdateMode, SbomRetentionConfig, OperationType, BgdOperation,
     DeltaDeployType, PipelineType, SaveArtifactsStrategy, ExternalCredentialProvisioning, SecretStore,
     PropertyMapping, ExternalCredential, BaseModel, Field, Optional, Enum,
-    SchemaValidatedModel, ProfileOverrideModel, ApplicationModel, NamespaceModel, MaasConfigModel,
+    YamlBacked, YamlModel, SchemaValidatedModel, ProfileOverrideModel, ApplicationModel, NamespaceModel, MaasConfigModel,
     VaultConfigModel, DbaasConfigModel, ConsulConfigModel, CloudModel, GlobalE2EParametersModel,
     TenantModel, ServiceParameterModel, ResourceProfileServiceModel, ResourceProfileApplicationModel,
     ResourceProfileModel, CompositeComponentModel, CompositeStructureModel, ParamsetApplicationModel,

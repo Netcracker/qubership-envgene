@@ -1,7 +1,9 @@
 import json
+import copy
 from cProfile import Profile
 
 import pytest
+from pydantic import ValidationError as PydanticValidationError
 
 from pathlib import Path
 
@@ -14,7 +16,7 @@ from envgenehelper.models import (
     EnvDefinitionModel, NamespaceModel, ParamsetModel, RegDefV1Model, RegDefV2Model,
     ResourceProfileModel, TenantModel,
 )
-from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
+from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml, sortYaml, store_value_to_yaml
 from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 import jschon_tools
 
@@ -144,10 +146,9 @@ def test_flush_rejects_invalid_schema_backed_object_before_writing(env_dir, sche
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "Namespaces" / "a" / "namespace.yml"
     objects.put(target, {"value": "missing_required_name"})
-    objects.beautify(target, schema_path)
 
     with pytest.raises(ValueError, match="Validation failed"):
-        objects.flush()
+        objects.beautify(target, schema_path)
 
     assert not target.exists()
 
@@ -323,20 +324,20 @@ def test_schema_backed_models_and_store_get_model(monkeypatch, env_dir):
     objects.put(creds_path, creds_data)
     objects.beautify(creds_path, "credential.schema.json")
 
-    with pytest.raises(ValueError, match="No finalized model"):
-        objects.get_model(app_path)
+    model_before_flush = objects.get(app_path)
+    assert isinstance(model_before_flush, ApplicationModel)
+    assert model_before_flush.name == "app1"
 
     objects.flush()
 
-    assert isinstance(objects.get_model(app_path), ApplicationModel)
-    assert objects.get_model(app_path) is objects.get_model(app_path)
-    assert objects.get_model(app_path).name == "app1"
-    assert isinstance(objects.get_model(ns_path), NamespaceModel)
-    assert objects.get_model(ns_path).profile.baseline == "dev"
-    assert isinstance(objects.get_model(tenant_path), TenantModel)
-    assert isinstance(objects.get_model(rp_path), ResourceProfileModel)
-    assert isinstance(objects.get_model(comp_path), CompositeStructureModel)
-    assert isinstance(objects.get_model(creds_path), CredentialsMapModel)
+    assert objects.get(app_path) is model_before_flush
+    assert objects.get(app_path).name == "app1"
+    assert isinstance(objects.get(ns_path), NamespaceModel)
+    assert objects.get(ns_path).profile.baseline == "dev"
+    assert isinstance(objects.get(tenant_path), TenantModel)
+    assert isinstance(objects.get(rp_path), ResourceProfileModel)
+    assert isinstance(objects.get(comp_path), CompositeStructureModel)
+    assert isinstance(objects.get(creds_path), CredentialsMapModel)
 
     assert app_path.exists()
     assert ns_path.exists()
@@ -363,38 +364,136 @@ def test_schema_backed_models_reject_invalid_payloads(monkeypatch):
         CredentialsMapModel.model_validate({"bad": {"type": "secret", "data": {}}})  # missing secret field
 
 
-def test_flush_validates_once_and_preserves_mutated_yaml(monkeypatch, tmp_path, env_dir):
+def test_mutation_updates_model_before_flush(monkeypatch, env_dir):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
-    (tmp_path / "application.schema.json").write_text('{"type":"null"}')
-    monkeypatch.chdir(tmp_path)
     target = env_dir / "Applications" / "app.yml"
     data = readYaml('name: app\ndeployParameters:\n  param: before # keep\ntechnicalConfigurationParameters: {}\n')
     objects = CurrentEnvInstanceStore(env_dir)
     objects.put(target, data)
     objects.beautify(target, "application.schema.json")
+    data = objects.get(target)
     data["deployParameters"]["param"] = "after"
+    assert isinstance(data, ApplicationModel)
+    assert data.deployParameters == {"param": "after"}
 
     profile = Profile()
     profile.runcall(objects.flush)
 
     calls = {entry.code: entry.callcount for entry in profile.getstats()}
-    assert calls.get(jschon_tools.process_json_doc.__code__) == 1
     assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
-    assert objects.get_model(target).deployParameters == {"param": "after"}
+    assert calls.get(jschon_tools.process_json_doc.__code__, 0) == 0
+    assert objects.get(target) is data
     assert target.read_text() == 'name: "app"\ndeployParameters:\n  param: "after" # keep\ntechnicalConfigurationParameters: {}\n'
 
 
-def test_flush_rejects_invalid_mutation(monkeypatch, env_dir):
+def test_invalid_mutation_fails_at_assignment(monkeypatch, env_dir):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
     target = env_dir / "Applications" / "app.yml"
     objects = CurrentEnvInstanceStore(env_dir)
-    data = objects.put(target, {"name": "app", "deployParameters": {}, "technicalConfigurationParameters": {}})
+    objects.put(target, {"name": "app", "deployParameters": {}, "technicalConfigurationParameters": {}})
     objects.beautify(target, "application.schema.json")
-    data["name"] = 123
+    data = objects.get(target)
 
+    with pytest.raises(PydanticValidationError):
+        data["name"] = 123
+
+    assert data["name"] == "app"
     with pytest.raises(ValueError, match="Validation failed"):
-        objects.flush()
+        objects.put(target, {"name": 123, "deployParameters": {}, "technicalConfigurationParameters": {}})
+    assert objects.get(target)["name"] == "app"
 
-    assert not target.exists()
-    with pytest.raises(ValueError, match="No finalized model"):
-        objects.get_model(target)
+    objects.flush()
+    assert 'name: "app"' in target.read_text()
+    assert "123" not in target.read_text()
+
+
+def test_nested_mutation_is_checked_by_model_without_schema_runs(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Namespaces" / "ns" / "namespace.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml("name: ns\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\n"
+                                 "mergeDeployParametersAndE2EParameters: false\nprofile:\n  name: p # keep\n"))
+    objects.beautify(target, "namespace.schema.json")
+    data = objects.get(target)
+
+    profile = Profile()
+    profile.runcall(store_value_to_yaml, data["profile"], "baseline", "dev", "set")
+    calls = {entry.code: entry.callcount for entry in profile.getstats()}
+    assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
+    assert calls.get(jschon_tools.process_json_doc.__code__, 0) == 0
+    with pytest.raises(PydanticValidationError):
+        data["profile"]["baseline"] = 1
+    assert data.profile.baseline == "dev"
+
+    objects.flush()
+    assert target.read_text() == (
+        'name: "ns"\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\n'
+        'mergeDeployParametersAndE2EParameters: false\nprofile:\n  name: "p" # keep\n  baseline: "dev" # set\n'
+    )
+
+
+def test_list_item_mutation_is_checked_by_model(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Profiles" / "p.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml("name: p\napplications:\n  - name: app\n    services:\n      - name: svc\n"
+                                 "        parameters:\n          - name: cpu\n            value: 100m # keep\n"))
+    objects.beautify(target, "resource-profile.schema.json")
+    parameter = objects.get(target)["applications"][0]["services"][0]["parameters"][0]
+
+    with pytest.raises(PydanticValidationError):
+        parameter["value"] = {"nested": 1}
+    parameter["value"] = "200m"
+
+    objects.flush()
+    assert target.read_text() == (
+        'name: "p"\napplications:\n  - name: "app"\n    services:\n      - name: "svc"\n'
+        '        parameters:\n          - name: "cpu"\n            value: "200m"\n'
+    )
+
+
+def test_container_mutations_are_checked_by_model():
+    profile = ResourceProfileModel.model_validate(
+        {"name": "p", "applications": []}, context={"schema_validated": True},
+    )
+    with pytest.raises(PydanticValidationError):
+        profile.applications.append({"name": "app"})
+    assert profile.applications == []
+    profile.applications.append({"name": "app", "services": []})
+    copied = copy.deepcopy(profile.applications[0])
+    profile.applications.append(copied)
+    with pytest.raises(PydanticValidationError):
+        copied.services.append({"name": "svc"})
+    assert copied.services == []
+
+    definition = AppDefModel.model_validate({
+        "name": "app", "registryName": "reg", "artifactId": "artifact", "groupId": "group",
+        "supportParallelDeploy": False, "deployParameters": {}, "technicalConfigurationParameters": {},
+    }, context={"schema_validated": True})
+    with pytest.raises(PydanticValidationError):
+        definition.deployParameters["replicas"] = 1
+    assert "replicas" not in definition.deployParameters
+
+    credentials = CredentialsMapModel.model_validate({}, context={"schema_validated": True})
+    with pytest.raises(PydanticValidationError):
+        credentials.root["bad"] = {"type": "secret", "data": {"secret": 1}}
+    assert "bad" not in credentials
+    credentials.root["ok"] = {"type": "secret", "data": {"secret": "value"}}
+    with pytest.raises(PydanticValidationError):
+        credentials.root["ok"].data["secret"] = 1
+    assert credentials["ok"]["data"]["secret"] == "value"
+
+
+def test_schema_sort_does_not_validate_document(monkeypatch):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    invalid = {"name": 1, "deployParameters": {"b": "2", "a": "1"}, "technicalConfigurationParameters": {}}
+    assert list(sortYaml(invalid, "application.schema.json", False, validate=False))[:3] == [
+        "name", "deployParameters", "technicalConfigurationParameters",
+    ]
+    with pytest.raises(ValueError, match="Validation failed"):
+        sortYaml(invalid, "application.schema.json", False, validate=True)
+
+    valid = {"technicalConfigurationParameters": {"z": "1", "a": "2"}, "name": "app", "deployParameters": {}}
+    assert sortYaml(valid, "application.schema.json", False, validate=False) == sortYaml(
+        valid, "application.schema.json", False, validate=True,
+    )

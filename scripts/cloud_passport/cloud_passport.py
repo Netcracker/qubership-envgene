@@ -65,8 +65,9 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
     if "dbaas" in cloudPassportYaml :
         dbaasPassportYaml = cloudPassportYaml["dbaas"]
         if "dbaasConfigs" not in cloudYaml or len(cloudYaml["dbaasConfigs"]) != 1 :
-            cloudYaml["dbaasConfigs"] = yaml.load("[]")
-            cloudYaml["dbaasConfigs"].append(yaml.load("enable: false"))
+            dbaasConfigs = yaml.load("[]")
+            dbaasConfigs.append(yaml.load("enable: false"))
+            cloudYaml["dbaasConfigs"] = dbaasConfigs
         dbaasConfigYaml = cloudYaml["dbaasConfigs"][0]
         store_value_to_yaml(dbaasConfigYaml, "credentialsId", extract_cred_id(dbaasPassportYaml["DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME"], is_external_cred_env), comment)
         store_value_to_yaml(dbaasConfigYaml, "enable", True, comment)

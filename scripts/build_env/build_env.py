@@ -218,11 +218,12 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
         appName = appParams["appName"] if "appName" in appParams else appParams["name"]
         applicationParametersFile = os.path.dirname(templatePath) + "/Applications/" + appName + ".yml"
         appDefinition = getApplicationParametersYaml(appName, applicationParametersFile)
+        current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
+        appDefinition = current_env_instance_store().get(applicationParametersFile)
         for j in appParams["parameters"]:
             # get value with potential merge of dicts
             val = get_merged_param_value(j, appDefinition[parametersTag], appParams["parameters"])
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
-        current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
 
 
@@ -288,6 +289,7 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
                     resource_profiles_map=None, header_text="", process_env_specific=True):
     logger.info(f"Processing template: {templateName} in {templatePath}")
     env_instance_store = current_env_instance_store()
+    env_instance_store.beautify(templatePath, schema_path, header_text)
     templateContent = env_instance_store.get(templatePath)
     if process_env_specific:
         updateEnvSpecificParamsets(env_definition, templateName, templateContent, paramset_map)
@@ -314,7 +316,6 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
     if has_valid_profile_name(templateContent):
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
-    env_instance_store.beautify(templatePath, schema_path, header_text)
     return
 
 

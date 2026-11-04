@@ -1,4 +1,4 @@
-from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
+from envgenehelper import Path, YamlBacked, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, openYaml, set_nested_yaml_attribute
 from build_env.render_config_env import EnvGenerator
 
 
@@ -31,12 +31,8 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, invent
             found_path = find_yaml_file(p, profile_file_name, recursively=True)
             if found_path:
                 logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
-                env_specific_profile = current_env_instance_store().put(found_path, openYaml(found_path))
-                validate_yaml_by_scheme_or_fail(
-                    input_yaml_content=env_specific_profile,
-                    schema_name=Path(rp_schema).name,
-                    schemas_dir=get_schema_dir(),
-                )
+                current_env_instance_store().put(found_path, openYaml(found_path))
+                current_env_instance_store().bind(found_path, Path(rp_schema).name)
                 result[templateType] = str(found_path)
                 break
         if templateType not in result:
@@ -162,9 +158,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], templat
         logger.info(f"Found resource profile {needed_profile} in path: {profile_path}")
         if profile_path not in validity_by_path:
             try:
-                validate_yaml_by_scheme_or_fail(input_yaml_content=current_env_instance_store().get(profile_path),
-                                                schema_name=Path(profiles_schema).name,
-                                                schemas_dir=get_schema_dir())
+                current_env_instance_store().bind(profile_path, Path(profiles_schema).name)
                 validity_by_path[profile_path] = True
             except ValueError:
                 validity_by_path[profile_path] = False
@@ -230,7 +224,7 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
 
 def has_valid_profile_name(content: dict) -> bool:
     profile = content.get("profile")
-    return isinstance(profile, dict) and bool(profile.get("name"))
+    return isinstance(profile, (dict, YamlBacked)) and bool(profile.get("name"))
 
 
 def set_object_profile_field(file_path, field, value):

@@ -298,6 +298,9 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
 
     #store credentials
     credYamlPath = envDir / "Credentials" / "credentials.yml"
+    if not env_instance_store.exists(credYamlPath):
+        env_instance_store.put(credYamlPath, yaml.load("{}"))
+    env_instance_store.beautify(credYamlPath, credsSchema)
     mergeAndSaveYaml(credYamlPath, resultingCreds)
     # process shared credentials
     env_creds_map = mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryYaml)

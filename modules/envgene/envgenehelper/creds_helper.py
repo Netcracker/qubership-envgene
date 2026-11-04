@@ -12,6 +12,7 @@ from envgenehelper import get_env_instances_dir, findAllYamlsInDir, getEnvCreden
 from envgenehelper.errors import ValidationError
 from .collections_helper import dict_merge
 from .current_env_instance_store import current_env_instance_store
+from .models import YamlBacked
 from envgenehelper.yaml_helper import store_value_to_yaml, yaml
 from envgenehelper.external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, is_external_credential_reference
 
@@ -317,7 +318,7 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
     types = {
         v.get("type")
         for v in creds_map.values()
-        if isinstance(v, dict) and v.get("type")
+        if isinstance(v, (dict, YamlBacked)) and v.get("type")
     }
     if not types:
         return
@@ -332,15 +333,12 @@ def validate_cred_types(creds_map, is_external_cred_env, cred_file):
 def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
     env_instance_store = current_env_instance_store()
     env_credentials_path = f"{env_dir}/Credentials/credentials.yml"
-    if env_instance_store.exists(env_credentials_path) :
-        env_creds_yaml = env_instance_store.get(env_credentials_path)
-    else:
-        env_creds_yaml = yaml.load("{}")
-    for key, value in creds_yaml_content.items() :
-        store_value_to_yaml(env_creds_yaml, key, value)
-    # storing credentials yaml
-    env_instance_store.put(env_credentials_path, env_creds_yaml)
+    if not env_instance_store.exists(env_credentials_path):
+        env_instance_store.put(env_credentials_path, yaml.load("{}"))
     env_instance_store.beautify(env_credentials_path, creds_schema)
+    env_creds_yaml = env_instance_store.get(env_credentials_path)
+    for key, value in creds_yaml_content.items():
+        store_value_to_yaml(env_creds_yaml, key, value)
     
 
 def get_cred_data(cred_id: str, env_creds: dict) -> dict:
