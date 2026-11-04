@@ -28,7 +28,7 @@
    A:
 
    1. `mavenDD` - all cloud DD related files (.json, .zip, ...)
-   2. `maven` - smart plug, sample repo, envgene template, ...
+   2. `maven` - smart plug, sample repository, envgene template, ...
 
 4. Extend `provider` with `gitlab`?
 5. Allow multiple registries for the same artifact type in one Reg Def?
@@ -76,7 +76,7 @@
 10. Extend registry type with `ftp`, `s3`, `smb` for delivery cases?
     1. Opt1: extend Reg Def
     2. Opt2: store it in delivery tool/pipeline config **chosen**
-11. Extend registry provider with gitlab container registry?
+11. Extend registry provider with GitLab container registry?
     1. Opt1: extend Reg Def **chosen**
 12. How to handle promote/delivery cases - move artifact from one registry to other one
     1. A: Source and destination (may be multiple) should be described in promote/delivery config
