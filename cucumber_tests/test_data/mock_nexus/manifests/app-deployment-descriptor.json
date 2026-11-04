@@ -22,7 +22,14 @@
   "jobs": [],
   "libraries": [],
   "complexes": [],
-  "charts": [],
+  "charts": [
+    {
+      "helm_chart_name": "__APP_NAME__",
+      "helm_chart_version": "1.0.0",
+      "helm_registry": "http://localhost:8000/charts",
+      "full_chart_name": "http://localhost:8000/charts/__APP_NAME__-1.0.0.tgz"
+    }
+  ],
   "additionalArtifacts": {},
   "descriptors": [],
   "applications": [{"version": "__APP_NAME__:__VERSION__", "deployPostfix": "__DEPLOY_POSTFIX__"}],
