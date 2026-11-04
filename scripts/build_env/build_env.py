@@ -222,7 +222,6 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
             # get value with potential merge of dicts
             val = get_merged_param_value(j, appDefinition[parametersTag], appParams["parameters"])
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
-        validate_yaml_by_scheme_or_fail(input_yaml_content=appDefinition, schema_file_path=application_schema)
         current_env_instance_store().beautify(applicationParametersFile, application_schema, header_text)
     return
 
@@ -316,8 +315,17 @@ def processTemplate(templatePath, templateName, env_definition, schema_path, par
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
     validate_yaml_by_scheme_or_fail(input_yaml_content=templateContent, schema_file_path=schema_path)
+    validate_applications(Path(templatePath).parent / "Applications")
     env_instance_store.beautify(templatePath, schema_path, header_text)
     return
+
+
+def validate_applications(applications_dir):
+    env_instance_store = current_env_instance_store()
+    application_schema = f"{get_schema_dir()}/application.schema.json"
+    for application_path in env_instance_store.list(Path(applications_dir) / "*.yml"):
+        validate_yaml_by_scheme_or_fail(input_yaml_content=env_instance_store.get(application_path),
+                                        schema_file_path=application_schema)
 
 
 def process_additional_template_parameters(inventoryYaml, source_env_dir, all_instances_dir):
@@ -361,7 +369,7 @@ def process_additional_template_parameters(inventoryYaml, source_env_dir, all_in
 
 
 def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, is_external_cred_env=False):
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
@@ -415,7 +423,7 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
-    process_cloud_passport(env_instances_dir, all_instances_dir, envDefinitionYaml, is_external_cred_env)
+    passport_creds = process_cloud_passport(env_instances_dir, all_instances_dir, envDefinitionYaml)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
         cloudTemlatePath,
@@ -487,6 +495,7 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
         env_instance_store.put(resulting_profile_path, env_instance_store.get(profile_file_path))
         env_instance_store.beautify(resulting_profile_path, profiles_schema, generated_header_text)
+    return passport_creds
 
 
 def set_cleaned_mark(namespaces: list[NamespaceFile]):

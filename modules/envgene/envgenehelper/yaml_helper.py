@@ -121,6 +121,14 @@ def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is
 primitiveTypes = (int, str, bool, float)
 
 
+def copy_comment_by_key(target_yaml, source_yaml, key):
+    comment = source_yaml.ca.items.get(key)
+    if comment is None:
+        target_yaml.ca.items.pop(key, None)
+    else:
+        target_yaml.ca.items[key] = comment
+
+
 def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,
                            overwrite_existing_comments=True):
     if source_yaml is None:
@@ -136,11 +144,11 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
     for k, v in source_yaml.items():
         if k not in target_yaml:
             target_yaml[k] = v
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            copy_comment_by_key(target_yaml, source_yaml, k)
             continue
 
         if overwrite_existing_comments:
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            copy_comment_by_key(target_yaml, source_yaml, k)
 
         if isinstance(target_yaml[k], dict) and isinstance(v, dict):
             merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)

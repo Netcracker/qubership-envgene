@@ -8,9 +8,9 @@ from deepmerge import always_merger
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
-from build_env.jinja.jinja import create_jinja_env
+from build_env.jinja.jinja import create_jinja_env, jinja_template
 from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import Optional, OrderedDict, Path, copy_creds_to_env_creds_file, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgenehelper import CredentialMode, Optional, OrderedDict, Path, create_yaml_processor, current_env_instance_store, dumpYamlToStr, dump_as_yaml_format, fill_missing_environment_name, find_cloud_passport_definition, find_files_by_basename, getEnvDefinition, get_schema_dir, get_template_dirs, logger, merge_yaml_into_target, openFileAsString, openYaml, os, path, readYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgenehelper.config_helper import get_regdef_schema_for_content
 from envgenehelper.deploy_plan_adapter import DEPLOY_PLAN_FILE_NAME, EnvgeneDeployPlan
 from envgenehelper.business_helper import (
@@ -88,7 +88,7 @@ class Context(BaseModel):
 
 def render_obj_by_context(template: dict, context: Context) -> dict:
     template_str = replace_ansible_stuff(template_str=dumpYamlToStr(template))
-    rendered_str = create_jinja_env().from_string(template_str).render(context.as_dict())
+    rendered_str = jinja_template(template_str).render(context.as_dict())
     return yml.load(rendered_str)
 
 
@@ -116,7 +116,7 @@ class EnvGenerator:
     def __init__(self):
         self.ctx = Context()
         self.used_paramset_names = set()
-        self.is_external_cred_env = False
+        self.template_creds = ({}, EXTERNAL_CRED_COMMENT)
         logger.debug("EnvGenerator initialized with context: %s",
                      self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
 
@@ -301,25 +301,28 @@ class EnvGenerator:
     def render_from_file_to_file(self, src_template_path: str, target_file_path: str) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
-        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        rendered = jinja_template(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
-        rendered_obj = readYaml(escaping_quotation(rendered))
+        rendered_obj = readYaml(escaping_quotation(rendered), safe_load=True)
         writeYamlToFile(target_file_path, rendered_obj)
         return rendered_obj
 
     def render_from_file_to_store(self, src_template_path, target_file_path) -> dict:
         return current_env_instance_store().put(target_file_path, self.render_from_file_to_obj(src_template_path))
 
-    def render_from_file_to_obj(self, src_template_path) -> dict:
+    def render_from_file_to_obj(self, src_template_path, log_rendered=True) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
-        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.debug(f"Rendered entity: \n{rendered}")
+        rendered = jinja_template(template).render(self.ctx.as_dict())
+        if log_rendered:
+            logger.debug(f"Rendered entity: \n{rendered}")
+        else:
+            logger.debug(f"Successfully rendered file: {src_template_path.name}")
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_obj(self, template) -> dict:
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
-        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        rendered = jinja_template(template).render(self.ctx.as_dict())
         logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
@@ -375,7 +378,7 @@ class EnvGenerator:
         template_override = ns.get("template_override")
         if not template_override:
             return ""
-        rendered = create_jinja_env().from_string(str(template_override)).render(self.ctx.as_dict())
+        rendered = jinja_template(str(template_override)).render(self.ctx.as_dict())
         if not rendered:
             return ""
         return readYaml(rendered).get("name", "")
@@ -462,10 +465,18 @@ class EnvGenerator:
                                             schema_file_path=get_schema_dir() / "composite-structure.schema.json")
 
     def generate_external_cred(self):
-        # render external creds
         external_credential_template = self.ctx.current_env_template.get("external_credential_template")
+        if current_env_instance_store().credential_mode != CredentialMode.EXTERNAL:
+            if external_credential_template:
+                logger.info(f"Local credential mode. External credential template {external_credential_template} is ignored")
+            return
+        # validate secret file
+        secret_store_file = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
+        validate_yaml_by_scheme_or_fail(yaml_file_path=secret_store_file,
+                                        schema_file_path=get_schema_dir() / "secret-stores.schema.json")
         if not external_credential_template:
             return
+        # render external creds
         external_cred_path = Template(external_credential_template).render(self.ctx.as_dict())
         logger.info(f"Found external template. Render external credentials for {external_cred_path}")
         external_creds = openYaml(external_cred_path)
@@ -475,16 +486,7 @@ class EnvGenerator:
                 cred_config["remoteRefPath"] = default_remote_path
         rendered_external_creds = render_obj_by_context(external_creds, self.ctx)
         logger.debug(f"Rendered external credentials is: \n{rendered_external_creds}")
-
-        # validate secret file
-        secret_store_file = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
-        validate_yaml_by_scheme_or_fail(yaml_file_path=secret_store_file,
-                                        schema_file_path=get_schema_dir() / "secret-stores.schema.json")
-
-        # copy rendered creds to env creds file
-        copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT,
-                                     get_schema_dir() / "credential.schema.json")
-        self.is_external_cred_env = True
+        self.template_creds = (rendered_external_creds, EXTERNAL_CRED_COMMENT)
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)
@@ -517,7 +519,7 @@ class EnvGenerator:
         for paramset_path in self.find_templates(render_dir, ["*.yml", "*.yaml"]):
             if paramset_path.stem not in paramset_names:
                 continue
-            paramset = openYaml(paramset_path)
+            paramset = openYaml(paramset_path, safe_load=True)
             try:
                 validate_yaml_by_scheme_or_fail(input_yaml_content=paramset,
                                                 schema_file_path=get_schema_dir() / "paramset.schema.json")
@@ -613,7 +615,7 @@ class EnvGenerator:
         if len(global_config_paths) > 0:
             global_path = global_config_paths[0]
             try:
-                cfg = openYaml(global_path)
+                cfg = openYaml(global_path, safe_load=True)
                 global_appdefs = cfg.get("appdefs", {}).get("overrides", {})
                 global_regdefs = cfg.get("regdefs", {}).get("overrides", {})
                 logger.info(f"Loaded global config from {global_path}")
@@ -623,7 +625,7 @@ class EnvGenerator:
         if len(cluster_config_paths) > 0:
             cluster_path = cluster_config_paths[0]
             try:
-                cfg = openYaml(cluster_path)
+                cfg = openYaml(cluster_path, safe_load=True)
                 cluster_appdefs = cfg.get("appdefs", {}).get("overrides", {})
                 cluster_regdefs = cfg.get("regdefs", {}).get("overrides", {})
                 logger.info(f"Loaded cluster config from {cluster_path}")

@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 import requests
 from cloudevents.core.bindings.http import to_structured_event
 from cloudevents.core.v1.event import CloudEvent
+from envgene_shared.utils.business_utils import to_bool
 
 if TYPE_CHECKING:
     from pipeline.orchestrator import StepResult
@@ -22,7 +23,9 @@ ACTIVITY_PATH = "/api/v1/activity"
 MAX_EVENT_BODY_BYTES = 1024 * 1024
 REQUEST_TIMEOUT_SECONDS = 5
 PIPELINE_DISPLAY_NAME = "EnvGene Instance Pipeline"
+PIPELINE_DD_NAME = "envgene-instance-pipeline"
 DEFAULT_EVENT_SOURCE = "urn:envgene:instance-pipeline"
+SENSITIVE_CONFIG_KEYS = {"CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"}
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +33,7 @@ class MetricsCollectorActivity:
     def __init__(self, ctx, trace_id: str | None = None, parent_id: str | None = None):
         self.ctx = ctx
         self.base_url = os.getenv("METRICS_COLLECTOR_URL", "").strip()
-        self.verify_ssl = os.getenv("METRICS_COLLECTOR_SSL_VERIFY", "true").strip().lower() != "false"
+        self.verify_ssl = to_bool(os.getenv("METRICS_COLLECTOR_SSL_VERIFY"), default=True)
         self.trace_id = trace_id or (resolve_trace_id() if self.base_url else "")
         self.parent_id = parent_id if parent_id is not None else os.getenv("METRICS_COLLECTOR_PARENT_ID", "")
 
@@ -52,6 +55,8 @@ class MetricsCollectorActivity:
                            for path in sorted(self._completion_directory().glob("*.json"))]
                 if reports:
                     data = self._completion_data(reports)
+                    if status == "IN_PROGRESS":
+                        data.pop("steps", None)
             except Exception:
                 logger.exception("Failed to read Metrics Collector pipeline progress.")
         self._send("running", status, results, data=data)
@@ -103,12 +108,15 @@ class MetricsCollectorActivity:
         return directory.parent.parent / f".metrics-collector-{directory.name}-{job_key}.sent"
 
     def _completion_data(self, reports: list[dict[str, Any]]) -> dict[str, Any]:
+        reports = sorted(reports, key=lambda report: report.get("environment", ""))
         self.trace_id = reports[0]["traceid"]
         self.parent_id = reports[0]["parentid"]
         data = dict(reports[0]["data"])
         if len(reports) > 1:
             environments = dict.fromkeys(report["environment"] for report in reports)
-            data["inputParameters"] = {**data["inputParameters"], "ENV_NAMES": ",".join(environments)}
+            config = {item["name"]: item["value"] for item in data["config"]}
+            config["ENV_NAMES"] = ",".join(environments)
+            data["config"] = [{"name": key, "value": value} for key, value in config.items()]
         data.pop("steps", None)
         job_reports = [report for report in reports if report["jobid"] == os.getenv("CI_JOB_ID", "")]
         if job_reports:
@@ -162,17 +170,17 @@ class MetricsCollectorActivity:
                     return
 
     def _event_data(self, results: list[StepResult] | None = None) -> dict[str, Any]:
-        # Sync normally reuses the saved payload; it does not need the EnvGene package.
-        try:
-            from envgenehelper.version_helper import resolve_envgene_version
-        except ModuleNotFoundError:
-            version = os.getenv("ENVGENE_VERSION", "UNKNOWN")
-        else:
-            version = resolve_envgene_version()
+        excluded = set(self.ctx.sensitive_params) | SENSITIVE_CONFIG_KEYS
         data = {
-            "envgeneVersion": version,
-            "inputParameters": {key: value for key, value in self.ctx.params.items()
-                                if key not in self.ctx.sensitive_params and value not in (None, "")},
+            "kind": "EnvGenePipelineReport",
+            "apiVersion": "v1",
+            "user": os.getenv("GITLAB_USER_LOGIN", ""),
+            "email": os.getenv("GITLAB_USER_EMAIL", ""),
+            "config": [
+                {"name": key, "value": str(value)}
+                for key, value in self.ctx.params.items()
+                if key not in excluded and value not in (None, "")
+            ],
         }
         if results is not None:
             data["steps"] = serialize_step_results(results)
@@ -241,7 +249,7 @@ def resolve_trace_id() -> str:
     trace_id = os.getenv("METRICS_COLLECTOR_TRACE_ID", "").strip()
     if trace_id:
         return trace_id
-    trace_id = uuid.uuid4().hex
+    trace_id = str(uuid.uuid4())
     os.environ["METRICS_COLLECTOR_TRACE_ID"] = trace_id
     return trace_id
 
@@ -253,8 +261,11 @@ def serialize_step_results(results: list[StepResult]) -> list[dict[str, str | in
             "name": result.name,
             "status": str(result.status),
         }
-        if result.duration_ms is not None:
-            item["durationMs"] = result.duration_ms
+        if result.status != "SKIPPED" and result.duration_ms is not None:
+            total_seconds = (result.duration_ms + 500) // 1000
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            item["time"] = f"{hours}:{minutes:02}:{seconds:02}"
         serialized.append(item)
     return serialized
 
@@ -266,6 +277,7 @@ def build_structured_event_body(
         parent_id: str,
         data: dict[str, Any],
 ) -> tuple[str, dict[str, str]]:
+    job_id = os.getenv("CI_JOB_ID", "")
     attributes = {
         "id": str(uuid.uuid4()),
         "source": os.getenv("CI_PROJECT_URL", "").strip() or DEFAULT_EVENT_SOURCE,
@@ -274,17 +286,25 @@ def build_structured_event_body(
         "kind": "pipeline",
         "kindversion": "1.0",
         "traceid": trace_id,
-        "parentid": parent_id,
-        "technicalname": os.getenv("CI_JOB_NAME", "instance_pipeline"),
+        "subject": job_id,
+        "technicalname": f"{PIPELINE_DD_NAME}:{os.getenv('CI_JOB_NAME', '')}",
+        "technicalversion": resolve_technical_version(),
         "displayname": PIPELINE_DISPLAY_NAME,
-        "jobid": os.getenv("CI_JOB_ID", ""),
+        "datacontenttype": "application/json",
+        "jobid": job_id,
         "pipelineid": os.getenv("CI_PIPELINE_ID", ""),
         "projectid": os.getenv("CI_PROJECT_ID", ""),
         "status": status,
     }
+    if parent_id.strip():
+        attributes["parentid"] = parent_id.strip()
 
     message = to_structured_event(CloudEvent(attributes=attributes, data=data))
     body = message.body
     if isinstance(body, bytes):
         body = body.decode("utf-8")
     return body, message.headers
+
+
+def resolve_technical_version() -> str:
+    return os.getenv("ENVGENE_DD_VERSION", "").strip()

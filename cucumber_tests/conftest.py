@@ -197,6 +197,13 @@ _XFAIL_REASONS = {
                                       "and completing with no report. docs/use-cases/credential-"
                                       "rotation.md already documents success-with-no-report as the "
                                       "target behavior (PR #1800), the code fix has not landed yet.",
+    "xfail_cp_no_explicit_duplicate_check": "Known gap: find_passport_by_env_definition (via "
+                                             "find_yaml_file) returns the first os.walk match for "
+                                             "an explicitly named cloud passport with no duplicate "
+                                             "check, unlike the auto-association path "
+                                             "(findPassportInDefaultDirByName), which does raise on "
+                                             "multiple matches. docs/use-cases/cloud-passport.md "
+                                             "documents a duplicate-passport error for both paths.",
 }
 
 
