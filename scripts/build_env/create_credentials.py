@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 from pathlib import Path
 from ruyaml import CommentedMap
 from envgene_shared.crypto.cred_store import current_cred_store
@@ -255,6 +256,20 @@ def add_generated_external_creds(credsYaml, collector, render_context):
     logger.info(f"Generated external credentials: {list(missing_creds)}")
 
 
+def find_shared_credential_in_dir(directory, cred_name) -> Optional[Path]:
+    # A cred file created earlier in this run exists only in the cred store, not on disk yet
+    in_store = next((key for key in current_cred_store().list(directory) if key.stem == cred_name), None)
+    if in_store:
+        return in_store
+    if not directory.is_dir():
+        return None
+    for ext in SHARED_CRED_EXTENSIONS:
+        match = next(directory.rglob(f"{cred_name}{ext}"), None)
+        if match:
+            return match
+    return None
+
+
 def find_shared_credentials(cred_names, env_dir, instances_dir) -> dict:
     pending_names = set(cred_names)
     found_paths = {}
@@ -271,16 +286,12 @@ def find_shared_credentials(cred_names, env_dir, instances_dir) -> dict:
     for level in levels:
         for dir_name in cred_dir_names:
             directory = level / dir_name
-            if not directory.is_dir():
-                continue
             for cred_name in list(pending_names):
-                for ext in SHARED_CRED_EXTENSIONS:
-                    match = next(directory.rglob(f"{cred_name}{ext}"), None)
-                    if match:
-                        found_paths[cred_name] = match
-                        pending_names.remove(cred_name)
-                        logger.info(f"Shared credentials '{cred_name}' found in '{match}'")
-                        break
+                match = find_shared_credential_in_dir(directory, cred_name)
+                if match:
+                    found_paths[cred_name] = match
+                    pending_names.remove(cred_name)
+                    logger.info(f"Shared credentials '{cred_name}' found in '{match}'")
                 if not pending_names:
                     return found_paths
     if pending_names:
