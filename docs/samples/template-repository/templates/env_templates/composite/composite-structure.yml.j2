@@ -1,0 +1,9 @@
+name: "{{ current_env.environmentName }}-composite-structure"
+baseline:
+  name: "{{ current_env.environmentName }}-core"
+  type: "namespace"
+satellites:
+  - name: "{{ current_env.environmentName }}"
+    type: "namespace"
+  - name: "{{ current_env.environmentName }}-oss"
+    type: "namespace"
