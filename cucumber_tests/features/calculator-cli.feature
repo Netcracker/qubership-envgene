@@ -203,7 +203,7 @@ Feature: Calculator CLI
     And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\",\"override_key\":\"injected-value\"}}"
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
-    And the "test-app" collision-credentials.yaml contains key "web"
+    And the collision-credentials.yaml for application "test-app" contains key "web"
 
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
 
