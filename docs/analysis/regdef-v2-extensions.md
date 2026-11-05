@@ -48,11 +48,11 @@
 
 7. [Done] Extend artifact types with `apm`?
 
-    A: No, use gsf gear (docker)
+    A: No, use gsf gear (Docker)
 
 8. [Done] "Red zone" case — how Reg Defs are scoped across sites
 
-    A: A site is an environment that holds exactly one instance of each registry type (one maven, one docker, ...).
+    A: A site is an environment that holds exactly one instance of each registry type (one `maven`, one `docker`, ...).
     Each site has its own separate set of Registry Definitions. Multiple registries of the same type are therefore
     modeled by separate Reg Def sets, not within a single Reg Def (see Q5).
 
