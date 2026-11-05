@@ -320,10 +320,11 @@ class EnvGenerator:
             logger.debug(f"Successfully rendered file: {src_template_path.name}")
         return readYaml(escaping_quotation(rendered))
 
-    def render_from_obj_to_obj(self, template) -> dict:
+    def render_from_obj_to_obj(self, template, log_rendered=True) -> dict:
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = jinja_template(template).render(self.ctx.as_dict())
-        logger.debug(f"Rendered entity: \n{rendered}")
+        if log_rendered:
+            logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
     def generate_tenant_file(self):
