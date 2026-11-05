@@ -81,12 +81,11 @@ This ensures comprehensive validation before code is merged. Docker builds are n
 
 ## Docker Images Built
 
-The workflow builds four Docker images:
+The workflow builds three Docker images:
 
 1. **Qubership GCIP** (`qubership-gcip`)
 2. **Qubership Envgene** (`qubership-envgene`)
-3. **Instance repository Pipeline** (`qubership-instance-repo-pipeline`)
-4. **Effective Set Generator** (`qubership-effective-set-generator`)
+3. **Effective Set Generator** (`qubership-effective-set-generator`)
 
 ## Automatic Triggering
 
@@ -138,7 +137,6 @@ When running manually, you can choose which images to build:
 |-----------------------|------------------------------------------|------------|
 | `build-gcip`          | Build Qubership GCIP image               | ✅ Enabled |
 | `build-envgene`       | Build Qubership Envgene image            | ✅ Enabled |
-| `build-pipeline`      | Build Instance repository Pipeline image | ✅ Enabled |
 | `build-effective-set` | Build Effective Set Generator image      | ✅ Enabled |
 
 ### Manual Execution Scenarios
@@ -146,11 +144,11 @@ When running manually, you can choose which images to build:
 #### Build All Images (Default)
 
 - Leave all options enabled
-- All four Docker images will be built
+- All three Docker images are built
 
 #### Build Single Image
 
-- Disable three options, enable only the one you need
+- Disable the other image build options and enable only the one you need
 - Example: Enable only `build-envgene` to build just the Envgene image
 
 #### Build Multiple Images
@@ -164,7 +162,6 @@ When running manually, you can choose which images to build:
 2. **Build Jobs** - Run in parallel after tests pass:
    - `build-qubership-gcip`
    - `build-qubership-envgene`
-   - `build-instance-repo-pipeline`
    - `build-effective-set-jar --> build-effective-set-generator`
 
 ### Special Case: Effective Set Generator
@@ -186,7 +183,6 @@ ghcr.io/<repository-owner>/<image-name>
 
 - `ghcr.io/netcracker/qubership-gcip`
 - `ghcr.io/netcracker/qubership-envgene`
-- `ghcr.io/netcracker/qubership-instance-repo-pipeline`
 - `ghcr.io/netcracker/qubership-effective-set-generator`
 
 ## Troubleshooting
@@ -222,7 +218,7 @@ ghcr.io/<repository-owner>/<image-name>
    - `GITHUB_TOKEN` (automatic)
    - `GIT_USER` (for GCIP and Effective Set)
    - `GIT_TOKEN` (for GCIP and Effective Set)
-   - `GH_ACCESS_TOKEN` (for Envgene and Pipeline)
+   - `GH_ACCESS_TOKEN` (for EnvGene)
 3. Check if Dockerfile exists in the specified path
 
 ## Best Practices

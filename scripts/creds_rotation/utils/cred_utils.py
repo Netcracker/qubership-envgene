@@ -38,11 +38,7 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any]) -> Tuple[O
         value = get_nested_target_key(yaml_content, target_key)
     else:
         raise ValidationError(ErrorMessages.PARAM_NOT_FOUND.format(target_key=target_key), ErrorCodes.INVALID_INPUT_CODE)
-
-    cred_id = extract_external_cred(value) if isinstance(value, dict) else None
-    if cred_id:
-        raise ValidationError(f"Target parameter '{target_key}' has an external credential reference and must be rotated directly in secret store")
-        
+     
     if not isinstance(value, str):
         raise ValueError(ErrorMessages.INVALID_DATA_TYPE.format(expected="string", value=target_key, type=type(value)), ErrorCodes.INVALID_DATA_TYPE_CODE)
     
@@ -184,14 +180,3 @@ def write_and_encrypt_task(cred_file, creds, is_encrypted):
             )
         except Exception as e:
            raise ValidationError(ErrorMessages.FILE_ENCRYPT_ERROR.format(file=cred_file, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
-
-def get_matching_cred_files(files_content: dict[str, Any], cred_id: str) -> list[str]:
-    matching_files = []
-    for path, content in files_content.items():
-        cred = content.get(cred_id)
-        if not cred:
-            continue
-        if cred.get("type") == "external":
-            raise ValidationError(f"Credential '{cred_id}' in '{path}' is an external credential and and must be rotated directly in secret store")
-        matching_files.append(path)
-    return matching_files

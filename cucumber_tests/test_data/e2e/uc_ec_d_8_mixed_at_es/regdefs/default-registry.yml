@@ -1,0 +1,18 @@
+name: default-registry
+credentialsId: dummy
+dockerConfig:
+  groupName: dummy
+  groupUri: dummy
+  releaseRepoName: dummy
+  releaseUri: dummy
+  snapshotRepoName: dummy
+  snapshotUri: dummy
+  stagingRepoName: dummy
+  stagingUri: dummy
+mavenConfig:
+  releaseGroup: dummy
+  repositoryDomainName: http://localhost:8000/
+  snapshotGroup: dummy
+  targetRelease: release
+  targetSnapshot: snapshot
+  targetStaging: staging

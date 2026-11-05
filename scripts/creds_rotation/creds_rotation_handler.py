@@ -3,6 +3,7 @@ import os
 import time
 from typing import List
 
+from envgene_shared.utils.business_utils import to_bool
 from envgene_shared.utils.logger import logger
 from creds_rotation.core_rotation import process_entry_in_payload
 from envgene_shared.crypto import crypt
@@ -20,6 +21,7 @@ from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
 from creds_rotation.utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
 from creds_rotation.utils.error_constants import ErrorMessages, ErrorCodes
+from envgenehelper import CredentialMode, detect_credential_mode
 
 
 def validate_env_vars(is_encrypted: bool, encrypt_type: str):
@@ -68,7 +70,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
 
     return EnvConfig(
         env_name=values["ENVIRONMENT_NAME"],
-        creds_rotation_enabled=values["CRED_ROTATION_FORCE"] == "true",
+        creds_rotation_enabled=to_bool(values["CRED_ROTATION_FORCE"]),
         payload_data=payload_data,
         cluster_name=values["CLUSTER_NAME"],
         work_dir=values["CI_PROJECT_DIR"]
@@ -120,6 +122,11 @@ def load_payload(payload: str):
 
 
 def run_cred_rotation():
+    if detect_credential_mode() == CredentialMode.EXTERNAL:
+        raise ValidationError(
+            ErrorMessages.EXTERNAL_MODE_NOT_SUPPORTED,
+            error_code=ErrorCodes.INVALID_STATE_CODE,
+        )
     start = time.time()
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     config = validate_env_vars(is_encrypted, encrypt_type)

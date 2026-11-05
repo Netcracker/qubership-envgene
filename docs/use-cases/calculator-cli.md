@@ -742,13 +742,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ## Cleanup context generation
 
-This section covers use cases for [Cleanup context](/docs/features/effective-set-generation.md#cleanup-context) generation by the `generate_effective_set` step. The cleanup context is the part of the Effective Set that downstream tooling reads to undeploy a namespace. Which namespaces receive it depends on the deployment architecture and the operation.
+This section covers use cases for cleanup context generation by the `generate_effective_set` step. See [Cleanup](/docs/features/clean.md) for what the cleanup context is. The cleanup context is the part of the Effective Set produced for namespace teardown. Which namespaces receive it depends on the deployment architecture and the operation.
 
 ### UC-CC-CG-1: Cleanup context for every namespace in No-CMDB v1 deploy
 
 **Pre-requisites:**
 
-1. The environment has more than one namespace, and at least one namespace has no application versions deployed to it.
+1. A Solution Descriptor exists for the environment.
+2. The environment has more than one namespace, and at least one namespace has no application versions deployed to it.
 
 **Trigger:**
 
@@ -815,5 +816,5 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. `effective-set/deployment/<namespace>/` and `effective-set/runtime/<namespace>/` contain a `.cleaned` marker and no application content.
-2. The marked namespaces are absent from `effective-set/deployment/mapping.yaml` and `effective-set/runtime/mapping.yaml`.
+2. The marked namespaces remain listed in `effective-set/deployment/mapping.yaml` and `effective-set/runtime/mapping.yaml`. The `.cleaned` marker is what signals the cleaned state.
 3. No `effective-set/cleanup/` content is produced by the clean operation.

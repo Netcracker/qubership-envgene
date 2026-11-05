@@ -7,6 +7,7 @@ import jsonschema
 
 from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, openYaml, validate_yaml_by_scheme_or_fail, writeYamlToFile
 from envgene_shared import encrypt_file
+from envgene_shared.utils.business_utils import to_bool
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
@@ -64,7 +65,7 @@ def generate_env():
 
 @deprecated(DEPRECATED_MESSAGE)
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
-    if env_inventory_init != "true":
+    if not to_bool(env_inventory_init):
         logger.info("ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
         return
     logger.info(

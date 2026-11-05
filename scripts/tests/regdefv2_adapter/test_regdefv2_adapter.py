@@ -118,9 +118,6 @@ def pipeline_env(monkeypatch, tmp_path):
     regdefs_dir = tmp_path / "regdefs"
     regdefs_dir.mkdir()
     (regdefs_dir / "registry-1.yml").write_text(yaml.safe_dump(V1_REGDEF))
-    rendered_regdefs_dir = tmp_path / "tmp" / "render" / "env-01" / "RegDefs"
-    rendered_regdefs_dir.mkdir(parents=True)
-    (rendered_regdefs_dir / "registry-1.yml").write_text(yaml.safe_dump(V1_REGDEF))
 
     templates_dir = tmp_path / "tmp" / "templates"
     env_templates_dir = templates_dir / "env_templates"
@@ -139,7 +136,9 @@ def pipeline_env(monkeypatch, tmp_path):
 
 
 def _ctx() -> PipelineParametersHandler:
-    return PipelineParametersHandler.from_env()
+    ctx = PipelineParametersHandler.from_env()
+    ctx.rendered_regdef_names = ["registry-1"]
+    return ctx
 
 
 class TestRegdefV2Adapter:
@@ -322,6 +321,15 @@ class TestRegdefV2Adapter:
 
         kept = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         assert kept == old_v2
+
+    @pytest.mark.unit
+    def test_not_rendered_regdef_is_not_synthesized(self, tmp_path):
+        (tmp_path / "regdefs" / "old-registry.yml").write_text(yaml.safe_dump({**V1_REGDEF, "name": "old-registry"}))
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        assert [path.name for path in ctx.transient_regdefs_dir.iterdir()] == ["registry-1.yml"]
 
     @pytest.mark.unit
     def test_nexus_provider_keeps_v1_no_synthesis(self, tmp_path):
