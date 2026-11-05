@@ -1,0 +1,79 @@
+# Example 1 — Shared Platform Registry: artifactory + anonymous
+
+kind: RegistryDefinition
+version: v2
+name: shared-platform-registry
+authConfig:
+  anon:
+    provider: artifactory
+    authMethod: anonymous
+registries:
+  - artifactType: maven
+    authConfig: anon
+    repositories:
+      - type: snapshot
+        url: https://artifactory.qubership.com/pd.xaas.mvn.snapshots
+      - type: staging
+        url: https://artifactory.qubership.com/pd.xaas.mvn.staging
+      - type: release
+        url: https://artifactory.qubership.com/pd.xaas.mvn
+      - type: snapshotGroup
+        url: https://artifactory.qubership.com/pd.xaas.mvn.group
+      - type: releaseGroup
+        url: https://artifactory.qubership.com/pd.xaas-release.mvn.group
+  - artifactType: mavenDD
+    authConfig: anon
+    repositories:
+      - type: snapshot
+        url: https://artifactory.qubership.com/pd.xaas.dd.snapshots
+      - type: release
+        url: https://artifactory.qubership.com/pd.xaas.dd
+  - artifactType: docker
+    authConfig: anon
+    repositories:
+      - type: snapshot
+        url: artifactory.qubership.com:17204
+      - type: staging
+        url: artifactory.qubership.com:17202
+      - type: release
+        url: artifactory.qubership.com:17203
+      - type: group
+        url: artifactory.qubership.com:17204
+  - artifactType: go
+    authConfig: anon
+    repositories:
+      - type: snapshot
+        url: https://artifactory.qubership.com/pd.xaas.golang.dev
+      - type: release
+        url: https://artifactory.qubership.com/pd.xaas.golang
+      - type: proxy
+        url: https://artifactory.qubership.com/pd.xaas-release.golang.group
+  - artifactType: npm
+    authConfig: anon
+    repositories:
+      - type: snapshot
+        url: https://artifactory.qubership.com/pd.xaas.npm.dev
+      - type: release
+        url: https://artifactory.qubership.com/pd.xaas.npm
+  - artifactType: helmLib
+    authConfig: anon
+    repositories:
+      - type: staging
+        url: https://artifactory.qubership.com/qs.libraries.helm.staging
+      - type: release
+        url: https://artifactory.qubership.com/qs.libraries.helm
+  - artifactType: helmApp
+    authConfig: anon
+    repositories:
+      - type: staging
+        url: https://artifactory.qubership.com/qs.helm.charts.staging
+      - type: release
+        url: https://artifactory.qubership.com/qs.helm.charts.release
+      - type: group
+        url: https://artifactory.qubership.com/qs.helm.charts
+      - type: dev
+        url: https://artifactory.qubership.com/qs.helm.charts.dev
+
+# ---------------------------------------------------------------------------
+# Consumer CI/CD variable: REGISTRY_CREDENTIALS — none (anonymous)
+# ---------------------------------------------------------------------------
