@@ -283,6 +283,28 @@ class GitRepoManager:
             exclude.write_text("\n".join(lines) + "\n")
             logger.info(f"Added {pattern} to {exclude}")
 
+    def _metrics_collector_clean_excludes(self) -> list[str]:
+        """`git clean -e` args protecting Metrics Collector state from the sparse-checkout clean.
+
+        State lives in METRICS_COLLECTOR_RESULTS_ROOT (default: repository root), see
+        pipeline.metrics_collector_activity.completion_root().
+        """
+        repo_root = Path(self.repo.working_tree_dir).resolve()
+        roots = {repo_root}
+        configured = os.getenv("METRICS_COLLECTOR_RESULTS_ROOT")
+        if configured:
+            roots.add((repo_root / configured).resolve())
+
+        excludes = []
+        for root in roots:
+            try:
+                prefix = root.relative_to(repo_root).as_posix()
+            except ValueError:
+                continue  # outside the repository, git clean does not touch it
+            prefix = "" if prefix == "." else f"/{prefix}"
+            excludes += ["-e", f"{prefix}/.metrics-collector-trace-id", "-e", f"{prefix}/.metrics-collector-client/"]
+        return excludes
+
     def sparse_checkout(self, sparse_paths: list[str]) -> None:
         logger.info("git sparse-checkout init --cone")
         self.repo.git.sparse_checkout("init", "--cone")
@@ -295,7 +317,7 @@ class GitRepoManager:
 
         self._ensure_shared_cache_excluded()
         logger.info("git clean -ffd")
-        self.repo.git.clean("-ffd")
+        self.repo.git.clean("-ffd", *self._metrics_collector_clean_excludes())
 
         logger.info("sparse checkout complete")
 

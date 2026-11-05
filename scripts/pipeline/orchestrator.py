@@ -13,7 +13,7 @@ from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
-from envgenehelper import delete_dir_if_exists, get_current_env_dir_from_env_vars, open_current_env_instance_store
+from envgenehelper import delete_dir_if_exists, detect_credential_mode, get_current_env_dir_from_env_vars, open_current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
     apply_no_sd_mode
@@ -287,7 +287,8 @@ class EnvBuildStep(PipelineStep):
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
-        with open_current_env_instance_store(env_dir) as env_instance_store:
+        credential_mode = detect_credential_mode()
+        with open_current_env_instance_store(env_dir, credential_mode) as env_instance_store:
             run_build_environment()
             env_instance_store.flush()
 
@@ -439,7 +440,8 @@ def run_single_env_pipeline() -> None:
             metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps + final_steps]
             metrics_results.append(recorded["copy_env_artifact"])
             metrics.record_completion(str(terminal_status), metrics_results)
-            metrics.send_running(str(terminal_status), results=metrics_results)
+            if os.getenv("ENVGENE_FAN_OUT_CHILD"):
+                metrics.send_running(str(terminal_status), results=metrics_results)
         log_pipeline_summary(results)
 
 

@@ -9,7 +9,7 @@ from unittest import result
 from envgene_shared.utils.logger import logger
 from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.errors import ValidationError
-from envgenehelper.models import ExternalCredential, SecretStore
+from envgenehelper.models import CredentialMode, ExternalCredential, SecretStore
 from envgenehelper.yaml_helper import openYaml
 
 from qubership_pipelines_common_library.v2.secret_manager.providers.multi_store_provider import MultiStoreProvider
@@ -72,7 +72,7 @@ def find_secret_store_by_id(secret_store_id: str, cred_id: str) -> SecretStore:
 
 
 def load_all_secret_stores(base_dir: Path | None = None) -> dict:
-    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))    
+    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))
     secret_store_config = base_dir / CONFIGURATION_DIR / SECRET_STORE_FILE
     if not secret_store_config.is_file():
         return {}
@@ -158,3 +158,15 @@ def has_external_creds(creds_map):
         isinstance(v, dict) and v.get("type") == "external"
         for v in creds_map.values()
     )
+
+
+def detect_credential_mode(base_dir: str | Path | None = None) -> CredentialMode:
+    base_dir = Path(base_dir or getenv_with_error('CI_PROJECT_DIR'))
+    secret_stores_file = Path(base_dir) / CONFIGURATION_DIR / SECRET_STORE_FILE
+    credential_mode = (
+        CredentialMode.EXTERNAL
+        if secret_stores_file.is_file()
+        else CredentialMode.LOCAL
+    )
+    logger.info("Detected credential mode: %s", credential_mode)
+    return credential_mode
