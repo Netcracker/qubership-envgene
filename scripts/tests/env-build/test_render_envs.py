@@ -73,7 +73,7 @@ class TestEnvBuild(BaseTest):
             secret_stores_file.unlink(missing_ok=True)
 
         delete_dir_if_exists(render_workspace_dir(self.test_data_dir))
-        with open_cred_store(), open_current_env_instance_store(generated_dir) as env_instance_store:
+        with open_cred_store(), open_current_env_instance_store(generated_dir, detect_credential_mode(g_inventory_dir)) as env_instance_store:
             render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, self.test_data_dir)
             env_instance_store.flush()
         files_to_compare = get_all_files_in_dir(source_dir)
