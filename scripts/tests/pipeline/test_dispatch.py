@@ -28,6 +28,38 @@ class TestDispatch:
         assert finalize_calls == [True]
 
     @pytest.mark.unit
+    def test_runs_optional_pipeline_extension_after_finalization(self, monkeypatch):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+        calls: list[str] = []
+
+        monkeypatch.setattr(
+            "pipeline.orchestrator.run_single_env_pipeline",
+            lambda: calls.append("pipeline"),
+        )
+        monkeypatch.setattr(
+            "pipeline.orchestrator.finalize_artifacts",
+            lambda *args, **kwargs: calls.append("finalize"),
+        )
+
+        class PipelineExtension:
+            modules = [object()]
+
+            def run(self):
+                calls.append("extension")
+
+        extension_paths: list[str] = []
+
+        def create_extension(**kwargs):
+            extension_paths.append(kwargs["plugins_dir"])
+            return PipelineExtension()
+
+        monkeypatch.setattr("pipeline.orchestrator.PluginEngine", create_extension)
+
+        assert dispatch() == 0
+        assert calls == ["pipeline", "finalize", "extension"]
+        assert extension_paths == ["/module/scripts/plugins/after_orchestrator"]
+
+    @pytest.mark.unit
     def test_fan_out_child_skips_finalize(self, monkeypatch):
         monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
         monkeypatch.setenv("ENVGENE_FAN_OUT_CHILD", "1")
