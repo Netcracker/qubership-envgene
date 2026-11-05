@@ -16,6 +16,7 @@
     - [PLACE-9 - One Cloud Passport per cluster (SHOULD)](#place-9---one-cloud-passport-per-cluster-should)
     - [PLACE-10 - Each entity in its type's directory (MUST)](#place-10---each-entity-in-its-types-directory-must)
     - [PLACE-11 - Set a resource profile on the namespace (SHOULD)](#place-11---set-a-resource-profile-on-the-namespace-should)
+    - [PLACE-12 - Shared defaults belong in the template (SHOULD)](#place-12---shared-defaults-belong-in-the-template-should)
   - [Secrets](#secrets)
     - [SEC-1 - No plaintext secrets (MUST)](#sec-1---no-plaintext-secrets-must)
     - [SEC-2 - No mixed plaintext and encrypted secrets (MUST)](#sec-2---no-mixed-plaintext-and-encrypted-secrets-must)
@@ -346,6 +347,40 @@ profile:
 # templates/env_templates/<template>/cloud.yml.j2
 profile:
   baseline: prod
+```
+
+### PLACE-12 - Shared defaults belong in the template (SHOULD)
+
+Define a parameter default shared by environments using one template in the Template repository,
+directly in the template or in a ParameterSet it references. Keep instance ParameterSets for values
+that intentionally differ.
+
+Identify comparable environments by both `envTemplate.name` and `envTemplate.artifact`. Compare only
+connected ParameterSets with the same parameter category, association target, and application scope.
+Equal values are candidates for a shared default. Confirm that the value belongs to the template's
+environment type before moving it. Cluster and platform values follow PLACE-3, and Cloud Passport
+contract keys follow PLACE-4.
+
+```yaml
+# Both environments select envTemplate.name: business
+# and envTemplate.artifact: example-env-templates:1.0.0.
+# The same deployment parameter is associated with the oss Namespace.
+
+# OK - one default in the Template repository
+# templates/parameters/business-deploy.yml
+# The selected oss Namespace template lists business-deploy in deployParameterSets.
+name: "business-deploy"
+parameters:
+  DATABASE_CLEANUP_ENABLED: "true"
+
+---
+# Not OK - the same template default copied into both instance ParameterSets
+# environments/cluster-01/env-1/Inventory/parameters/oss-env-specific.yml
+# environments/cluster-01/env-2/Inventory/parameters/oss-env-specific.yml
+# Each env_definition lists oss-env-specific under envSpecificParamsets.oss.
+name: "oss-env-specific"
+parameters:
+  DATABASE_CLEANUP_ENABLED: "true"
 ```
 
 ## Secrets
