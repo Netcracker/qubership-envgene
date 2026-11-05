@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from build_env.create_credentials import mergeSharedCreds
-from cloud_passport.cloud_passport import add_cloud_passport_creds
+from cloud_passport.cloud_passport import read_cloud_passport_creds
 from creds_rotation.utils import cred_utils
 from creds_rotation.utils.cred_utils import read_env_cred_files
 from envgene_shared.crypto.cred_store import open_cred_store
@@ -13,7 +12,7 @@ from envgene_shared.crypto.sops_handler import is_encrypted_SOPS
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from envgene_shared.utils.file_utils import writeToFile
-from envgenehelper import getEnvCredentials, open_current_env_instance_store, readYaml, validate_creds
+from envgenehelper import getEnvCredentials, readYaml, validate_creds
 from envgenehelper.errors import ValidationError
 from envgenehelper.deployer import get_deployer_config, get_value_and_attributes_from_cred
 
@@ -112,52 +111,21 @@ def test_deployer_cred(project):
     assert_untouched(path, before)
 
 
-def test_merge_shared_creds(project):
-    env_dir = project / "environments" / "cluster" / "env"
-    shared = encrypted(project / "environments" / "cluster" / "Credentials" / "shared.yml")
-    before = shared.read_bytes()
-    env_creds = env_dir / "Credentials" / "credentials.yml"
-    with open_cred_store(), open_current_env_instance_store(env_dir) as objects:
-        objects.put(env_creds, readYaml("{}"))
-        creds = mergeSharedCreds(
-            env_creds, env_dir, project / "environments",
-            None, readYaml("envTemplate:\n  sharedMasterCredentialFiles:\n    - shared\n"))
-    assert creds["first_cred"]["data"]["secret"] == "token-placeholder-123"
-    assert_untouched(shared, before)
-
-
-def test_merge_shared_creds_only_in_cred_store(project):
-    env_dir = project / "environments" / "cluster" / "env"
-    shared = env_dir / "Inventory" / "credentials" / "inventory_generation_creds.yml"
-    env_creds = env_dir / "Credentials" / "credentials.yml"
-    with open_cred_store() as store, open_current_env_instance_store(env_dir) as objects:
-        store.put(shared, readYaml(CONTENT))
-        objects.put(env_creds, readYaml("{}"))
-        creds = mergeSharedCreds(
-            env_creds, env_dir, project / "environments",
-            None, readYaml("envTemplate:\n  sharedMasterCredentialFiles:\n    - inventory_generation_creds\n"))
-    assert creds["first_cred"]["data"]["secret"] == "token-placeholder-123"
-
-
 def test_cloud_passport_creds(project):
-    env_dir = project / "environments" / "cluster" / "env"
     passport = project / "environments" / "cluster" / "cloud-passport" / "passport.yml"
     creds = encrypted(passport.parent / "passport-creds.yml")
     before = creds.read_bytes()
-    with open_cred_store(), open_current_env_instance_store(env_dir) as objects:
-        add_cloud_passport_creds("passport", str(passport), str(env_dir), "", False)
-        merged = objects.get(f"{env_dir}/Credentials/credentials.yml")
+    with open_cred_store():
+        merged = read_cloud_passport_creds("passport", str(passport))
     assert merged["first_cred"]["data"]["secret"] == "token-placeholder-123"
     assert_untouched(creds, before)
 
 
-def test_cloud_passport_creds_only_in_cred_store(project):
-    env_dir = project / "environments" / "cluster" / "env"
+def test_cloud_passport_creds_only_in_cred_store(project):  
     passport = project / "environments" / "cluster" / "cloud-passport" / "passport.yml"
-    with open_cred_store() as store, open_current_env_instance_store(env_dir) as objects:
+    with open_cred_store() as store:
         store.put(passport.parent / "passport-creds.yml", readYaml(CONTENT))
-        add_cloud_passport_creds("passport", str(passport), str(env_dir), "", False)
-        merged = objects.get(f"{env_dir}/Credentials/credentials.yml")
+        merged = read_cloud_passport_creds("passport", str(passport))
     assert merged["first_cred"]["data"]["secret"] == "token-placeholder-123"
 
 

@@ -6,8 +6,14 @@ import pytest
 
 from build_env.create_credentials import SHARED_CRED_EXTENSIONS, create_credentials
 from build_env.render_config_env import EnvGenerator
+from envgene_shared.crypto.cred_store import open_cred_store
+from envgene_shared.tests.crypto.test_crypt import crypt_test_data
+from envgene_shared.utils.business_utils import get_envgene_config_yaml
+from envgene_shared.utils.file_utils import writeToFile
 from envgenehelper import CredentialMode, ValidationError, open_current_env_instance_store
 from envgenehelper.yaml_helper import readYaml
+
+SOPS_DATA = crypt_test_data[0]
 
 TENANT = """name: tenant
 credential: tenant-cred
@@ -50,6 +56,19 @@ BUILT_IN_CREDS = readYaml(
     )
 )
 
+@pytest.fixture(autouse=True)
+def isolated_workspace(monkeypatch, tmp_path):
+    # the cred store scans CI_PROJECT_DIR: point it at the test's own tree so the checkout is not read
+    monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    monkeypatch.setenv("ENVGENE_AGE_PRIVATE_KEY", SOPS_DATA["secret_key"])
+    monkeypatch.setenv("PUBLIC_AGE_KEYS", SOPS_DATA["public_key"])
+    writeToFile(str(tmp_path / "configuration" / "config.yml"), f"crypt_backend: {SOPS_DATA['crypt_backend']}\n")
+    get_envgene_config_yaml.cache_clear()
+    yield
+    get_envgene_config_yaml.cache_clear()
+
 
 def run_create_credentials(tmp_path, mode, deploy=EMPTY, e2e=EMPTY, technical=EMPTY, sources=(), existing=None,
                            shared_files=None, declare_built_ins=True):
@@ -72,7 +91,7 @@ def run_create_credentials(tmp_path, mode, deploy=EMPTY, e2e=EMPTY, technical=EM
     inventory["envTemplate"]["sharedMasterCredentialFiles"] = shared_names
     namespace_path = env_dir / "Namespaces" / "app" / "namespace.yml"
     creds_path = env_dir / "Credentials" / "credentials.yml"
-    with open_current_env_instance_store(env_dir, mode) as store:
+    with open_cred_store(), open_current_env_instance_store(env_dir, mode) as store:
         store.put(env_dir / "tenant.yml", readYaml(TENANT))
         store.put(env_dir / "cloud.yml", readYaml(CLOUD))
         store.put(namespace_path, readYaml(NAMESPACE.format(deploy=deploy, e2e=e2e, technical=technical)))
