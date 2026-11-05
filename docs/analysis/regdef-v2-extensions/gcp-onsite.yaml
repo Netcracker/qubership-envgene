@@ -6,31 +6,29 @@ name: gcp-onsite
 authConfig:
   gcp-sa:
     provider: gcp
-    authMethod: service_account
+    authMethod: serviceAccount
     gcpRegProject: customer-proj
     gcpRegion: europe-west1
-    scopes:
-      r: gcp-sa-read
-      rw: gcp-sa-publish
-      rwd: gcp-sa-admin
+    accessRoles:
+      read: gcp-sa-read
+      publish: gcp-sa-publish
+      manage: gcp-sa-admin
   nexus:
     provider: nexus
-    authMethod: user_pass
+    authMethod: userPass
     baseUrl: https://nexus.customer.internal
-    scopes:
-      r: nexus-read
-      rw: nexus-publish
-      rwd: nexus-admin
+    accessRoles:
+      read: nexus-read
+      publish: nexus-publish
+      manage: nexus-admin
 registries:
   - artifactType: maven
     authConfig: gcp-sa
     repositories:
       - type: snapshot
-        # authConfig: gcp-sa
         url: https://europe-west1-maven.pkg.dev/customer-proj/maven-snapshots
         repoName: maven-snapshots
       - type: staging
-        # authConfig: other-gcp-sa
         url: https://europe-west1-maven.pkg.dev/customer-proj/maven-staging
         repoName: maven-staging
       - type: release

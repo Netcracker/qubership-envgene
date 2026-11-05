@@ -9,20 +9,20 @@ authConfig:
     authMethod: secret
     awsService: ecr
     awsRegion: eu-west-1
-    scopes:
-      r: aws-read
-      rw: aws-publish
-      rwd: aws-admin
+    accessRoles:
+      read: aws-read
+      publish: aws-publish
+      manage: aws-admin
   aws-ca:
     provider: aws
     authMethod: secret
-    awsService: codeartifact
+    awsService: codeArtifact
     awsRegion: eu-west-1
     awsDomain: 123456789.d.codeartifact.eu-west-1.amazonaws.com
-    scopes:
-      r: aws-read
-      rw: aws-publish
-      rwd: aws-admin
+    accessRoles:
+      read: aws-read
+      publish: aws-publish
+      manage: aws-admin
 registries:
   - artifactType: maven
     authConfig: aws-ca

@@ -1,4 +1,4 @@
-# Example 3 — Onsite: nexus + user_pass
+# Example 3 — Onsite: nexus + userPass
 
 kind: RegistryDefinition
 version: v2
@@ -6,12 +6,12 @@ name: nexus-onsite
 authConfig:
   onsite:
     provider: nexus
-    authMethod: user_pass
+    authMethod: userPass
     baseUrl: https://nexus.customer.internal
-    scopes:
-      r: onsite-read
-      rw: onsite-publish
-      rwd: onsite-admin
+    accessRoles:
+      read: onsite-read
+      publish: onsite-publish
+      manage: onsite-admin
 registries:
   - artifactType: maven
     authConfig: onsite

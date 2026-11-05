@@ -1,4 +1,4 @@
-# Example 2 — Shared Platform Registry (Vault): artifactory + user_pass + external cred store
+# Example 2 — Shared Platform Registry (Vault): artifactory + userPass + external cred store
 
 kind: RegistryDefinition
 version: v2
@@ -6,12 +6,12 @@ name: shared-platform-registry-vault
 authConfig:
   shared:
     provider: artifactory
-    authMethod: user_pass
+    authMethod: userPass
     baseUrl: https://artifactory.qubership.com
-    scopes:
-      r: shared-read
-      rw: shared-publish
-      rwd: shared-admin
+    accessRoles:
+      read: shared-read
+      publish: shared-publish
+      manage: shared-admin
 registries:
   - artifactType: maven
     authConfig: shared
