@@ -810,8 +810,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` step runs.
-2. The step marks the target namespaces' deployment and runtime for removal and produces no cleanup context.
+1. The `generate_effective_set` step does not run for No-CMDB v2 clean.
+2. The `cleanup` step empties the target namespaces' deployment and runtime content, writes a `.cleaned` marker, and produces no cleanup context.
 
 **Results:**
 

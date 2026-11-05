@@ -27,7 +27,7 @@ library consumes:
 
 - The artifact-searcher path (Solution Descriptor in `process_sd`, application in `get_sboms`) already
   consumes a RegDef v2 `authConfig`.
-- The dpg path (`generate_deployment_plan`) reads registry auth parameters.
+- The dpg path (`process_deployment_plan`) reads registry auth parameters.
 
 The decision behind this step is recorded in
 [ADR-0001](/docs/adr/0001-adapt-registry-auth-from-e2e-parameters.md). The step is defined in the Instance
@@ -77,7 +77,7 @@ The step sets `LOCAL_PUBREG_FILE` itself to the transient path where it writes t
 
 1. **Decide whether to run**
 
-   - `PIPELINE_TYPE: GITLAB_DEPLOY` and (`OPERATION_TYPE: DEPLOY` or `OPERATION_TYPE: CLEAN` or
+   - `PIPELINE_TYPE: GITLAB_DEPLOY` and (`OPERATION_TYPE: DEPLOY` or
      (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)), or
    - `PIPELINE_TYPE: LEGACY` and (`SD_VERSION` or `SD_DATA` or `GENERATE_EFFECTIVE_SET: true`) and
      `ENV_BUILDER: true`
