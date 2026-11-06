@@ -353,6 +353,8 @@ Added to Application SBOM only.
 | `component.components[0].purl`                | `pkg:maven/<appDef.groupId>/<appDef.artifactId>@<SD.application[].version.split(':')[1]>?registry_id=<regDef.registry_name>`. Must be valid [purl](https://github.com/package-url/purl-spec) | yes       | None                                              |
 | `component.components[0].properties[0].name`  | always `eso_support`. Declares whether the application can be deployed via [External Secrets Operator (ESO)](https://external-secrets.io/)                                                   | no        | `eso_support`                                     |
 | `component.components[0].properties[0].value` | always `false`                                                                                                                                                                               | no        | `false`                                           |
+| `component.components[0].properties[1].name`  | always `deploy_context_layout`. Added only when `DD.metadata.deployContextLayout` is set                                                                                                     | no        | `deploy_context_layout`                           |
+| `component.components[0].properties[1].value` | `DD.metadata.deployContextLayout`. Allowed values: `full`, `compact`                                                                                                                         | no        | None                                              |
 
 ##### `application/vnd.qubership.service` Component
 
