@@ -14,7 +14,7 @@ namespaces:
     parent: saas-default-core
     overrides-parent:
       deployParameterSets:
-        - "core-dbaas-configuration"    
+        - "core-dbaas-configuration"
       profile:
         name: prod_core_override
         baseline: prod
@@ -32,7 +32,7 @@ namespaces:
         oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}"
       profile:
         name: prod_bss_override
-        baseline: prod  
+        baseline: prod
   - template_path: "{{ templates_dir }}/env_templates/composite/oss.yml.j2"
     template_override:
       profile:
