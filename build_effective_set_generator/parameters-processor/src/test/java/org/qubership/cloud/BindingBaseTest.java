@@ -127,7 +127,7 @@ public class BindingBaseTest {
             Constructor<Binding> constructor = Binding.class.getDeclaredConstructor();
             constructor.setAccessible(true);
             Binding binding = constructor.newInstance()
-                    .init("tenant", "cloud", "namespace", "application", "namespace", new HashMap<>());
+                    .init("tenant", "cloud", "namespace", "application", "namespace");
             return binding;
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException | SecurityException e) {

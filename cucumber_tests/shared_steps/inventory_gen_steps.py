@@ -5,7 +5,6 @@ import yaml
 import shutil
 from pathlib import Path
 from pytest_bdd import given, parsers, then, when
-from cryptography.fernet import Fernet
 
 from cucumber_tests.framework.workspace import (
     TEST_ENV_DEFINITION_CONTENT,
@@ -212,24 +211,8 @@ def env_dir_is_deleted(workspace):
 
 @then(parsers.parse('the decrypted credentials file "{filename}" at "{scope}" scope matches the reference "{ref_name}"'))
 def decrypted_creds_match(workspace, filename, scope, ref_name):
-    key = b"c2VjcmV0LWtleS1tdXN0LWJlLTMyLWJ5dGVzLWxvbmc="
-    fernet = Fernet(key)
-
     path = workspace.entity_dir("credentials", scope) / filename
-    actual_yaml = yaml.safe_load(path.read_text(encoding='utf-8'))
-
-    # Decrypt values
-    def decrypt_node(node):
-        if isinstance(node, dict):
-            return {k: decrypt_node(v) for k, v in node.items()}
-        elif isinstance(node, list):
-            return [decrypt_node(v) for v in node]
-        elif isinstance(node, str) and node.startswith("[encrypted:AES256_Fernet]"):
-            token = node[len("[encrypted:AES256_Fernet]"):]
-            return fernet.decrypt(token.encode('utf-8')).decode('utf-8')
-        return node
-
-    decrypted_actual = decrypt_node(actual_yaml)
+    decrypted_actual = workspace.get_decrypted_yaml(path)
 
     # Read the golden reference
     ref_path = Path(__file__).parent.parent / "test_data" / "goldens" / ref_name / "environments"

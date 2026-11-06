@@ -2,40 +2,31 @@ import copy
 import json
 import pathlib
 import threading
-from io import StringIO
 from pathlib import Path
 from typing import OrderedDict
 
 import jschon
-import jschon_tools
-import jsonschema
 import ruyaml
 from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
-from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+from ruyaml.scalarstring import DoubleQuotedScalarString
 import yaml as pyyaml
 
 from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, writeToFile
 from .json_helper import openJson
 from envgene_shared.utils.logger import logger
 
-from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, load_schema, get_schema_validator, \
+from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, \
     validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
     remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
     ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
-    yaml, safe_yaml
+    yaml, safe_yaml, sortYaml, make_quotes_for_strings, dumpYamlToStr
 
 
 def convert_dict_to_yaml(d):
     if isinstance(d, ruyaml.CommentedMap):
         return d
     return ruyaml.CommentedMap(d)
-
-
-def dumpYamlToStr(content):
-    buffer = StringIO()
-    yaml.dump(content, buffer)
-    return buffer.getvalue()
 
 
 def addHeaderToYaml(file_path: str, header_text: str):
@@ -75,22 +66,6 @@ def alignYamlComments(yamlContent, extra_indent=0):
     return None
 
 
-def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
-    schema_data = load_schema(str(schema_path))
-    if validate:
-        logger.debug(f'Checking yaml with schema: {schema_path}')
-        error = jsonschema.exceptions.best_match(get_schema_validator(str(schema_path)).iter_errors(yaml_data))
-        if error is not None:
-            raise error
-    sort_data = jschon_tools.process_json_doc(
-        schema_data=schema_data,
-        doc_data=yaml_data,
-        sort=True,
-        remove_additional_props=remove_additional_props
-    )
-    return sort_data
-
-
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
     keys = attribute_str.split('.')
     sub_content = yaml_content
@@ -121,6 +96,14 @@ def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is
 primitiveTypes = (int, str, bool, float)
 
 
+def copy_comment_by_key(target_yaml, source_yaml, key):
+    comment = source_yaml.ca.items.get(key)
+    if comment is None:
+        target_yaml.ca.items.pop(key, None)
+    else:
+        target_yaml.ca.items[key] = comment
+
+
 def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,
                            overwrite_existing_comments=True):
     if source_yaml is None:
@@ -136,11 +119,11 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
     for k, v in source_yaml.items():
         if k not in target_yaml:
             target_yaml[k] = v
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            copy_comment_by_key(target_yaml, source_yaml, k)
             continue
 
         if overwrite_existing_comments:
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            copy_comment_by_key(target_yaml, source_yaml, k)
 
         if isinstance(target_yaml[k], dict) and isinstance(v, dict):
             merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
@@ -263,17 +246,6 @@ def make_quotes_for_all_strings(yaml_data):
             if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString):
                 yaml_data[k] = DoubleQuotedScalarString(v)
             make_quotes_for_all_strings(v)
-
-
-def make_quotes_for_strings(yaml_data):
-    if isinstance(yaml_data, (dict, list, set)):
-        for k, v in (yaml_data.items() if isinstance(yaml_data, dict) else enumerate(yaml_data)):
-            if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString) and not ("\n" in v):
-                yaml_data[k] = DoubleQuotedScalarString(v)
-            elif isinstance(v, DoubleQuotedScalarString) and ("\n" in v):
-                yaml_data[k] = LiteralScalarString(v)
-            else:
-                make_quotes_for_strings(v)
 
 
 def normalize_comments(data):

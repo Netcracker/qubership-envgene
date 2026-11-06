@@ -23,10 +23,14 @@ def _resource_profile_file(workspace: EnvGeneWorkspace, name: str) -> Path | Non
 
 def _service_params(workspace: EnvGeneWorkspace, app: str, service: str) -> dict:
     deployment_dir = _env_dir(workspace) / "effective-set" / "deployment"
-    matches = [p for p in deployment_dir.rglob(f"per-service-parameters/{service}/deployment-parameters.yaml")
+    # The directory under per-service-parameters carries the application's chart name, not the
+    # service name - every service the application provides is a key inside the one file.
+    matches = [p for p in deployment_dir.rglob("per-service-parameters/*/deployment-parameters.yaml")
                if app in p.parts]
-    assert len(matches) == 1, f"Expected one per-service parameters file for {app}/{service}, found {matches}"
-    return yaml.safe_load(matches[0].read_text(encoding="utf-8")) or {}
+    assert len(matches) == 1, f"Expected one per-service parameters file for {app}, found {matches}"
+    params = yaml.safe_load(matches[0].read_text(encoding="utf-8")) or {}
+    assert service in params, f"Service '{service}' missing from {matches[0]}, found {sorted(params)}"
+    return params[service]
 
 
 @given("the Calculator CLI generates the effective set")

@@ -1,14 +1,18 @@
 from functools import lru_cache
+from io import StringIO
 import os
+import ruamel.yaml
 import ruyaml
 import threading
 from typing import OrderedDict
 
 import jschon
+import jschon_tools
 import jsonschema
 from jsonschema import RefResolver
 from typing import Callable
 from ruyaml import CommentedMap, CommentedSeq
+from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 from pathlib import Path
 
 from envgene_shared.utils.file_utils import *
@@ -55,6 +59,33 @@ def get_schema_validator(schema_path: str):
     cls = jsonschema.validators.validator_for(schema)
     cls.check_schema(schema)
     return cls(schema)
+
+
+def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
+    schema_data = load_schema(str(schema_path))
+    if validate:
+        logger.debug(f'Checking yaml with schema: {schema_path}')
+        error = jsonschema.exceptions.best_match(get_schema_validator(str(schema_path)).iter_errors(yaml_data))
+        if error is not None:
+            raise error
+    sort_data = jschon_tools.process_json_doc(
+        schema_data=schema_data,
+        doc_data=yaml_data,
+        sort=True,
+        remove_additional_props=remove_additional_props
+    )
+    return sort_data
+
+
+def make_quotes_for_strings(yaml_data):
+    if isinstance(yaml_data, (dict, list, set)):
+        for k, v in (yaml_data.items() if isinstance(yaml_data, dict) else enumerate(yaml_data)):
+            if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString) and not ("\n" in v):
+                yaml_data[k] = DoubleQuotedScalarString(v)
+            elif isinstance(v, DoubleQuotedScalarString) and ("\n" in v):
+                yaml_data[k] = LiteralScalarString(v)
+            else:
+                make_quotes_for_strings(v)
 
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
@@ -113,6 +144,12 @@ def convert_ordereddict_to_dict(obj):
         return [convert_ordereddict_to_dict(i) for i in obj]
     else:
         return obj
+
+
+def dumpYamlToStr(content):
+    buffer = StringIO()
+    yaml.dump(content, buffer)
+    return buffer.getvalue()
 
 
 def writeYamlToFile(filePath, contents):
@@ -184,14 +221,13 @@ def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_val
 
 
 
-def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
+def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML | ruamel.yaml.YAML:
     def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     if is_safe:
-        yaml = ruyaml.main.YAML(typ='safe')
-    else:
-        yaml = ruyaml.main.YAML()
+        return ruamel.yaml.YAML(typ='safe', pure=False)
+    yaml = ruyaml.main.YAML()
     yaml.preserve_quotes = True
     yaml.width = 200
     yaml.indent(mapping=2, sequence=4, offset=2)

@@ -111,6 +111,20 @@ where the work lands at a glance rather than scanning prose for it. Keep each it
 one independent change. Do not collapse several components into one item, and do not split one change into
 terse fragments.
 
+Each in-scope item is a work instruction plus a reference, not a re-explanation of the behavior. State what
+changes and the action on it - add the step, stop it running on `CLEAN`, remove the marker path - and link the
+design section that specifies how it works. Do not re-derive the behavior's sequence or its validation rules
+inline (for example `validates NAMESPACE_NAMES first, failing if absent from the map and warning if absent from
+the plan`). That detail lives in the linked design, and its observable form is pinned in Acceptance. Repeating it
+in the item makes the slice read like a spec instead of a task list. When one
+step's work spans components - a core step that hands off to an external tool - name the component performing
+each part rather than leaving it as `a separate function`, so the developer knows which codebase each item
+lands in.
+
+An in-scope item is always a change. Something that stays as it is - a path left untouched, a mode kept, a
+format unchanged - is a boundary, not a change: it belongs in Out of scope, or nowhere. A phrase like `keep X
+unchanged` or `X still works as today` in In scope is the tell - move it to Out of scope or drop it.
+
 Carry the design-time seam into Implementation notes. When the design settled a load-bearing implementation
 insight - where the change attaches and how - record it as guidance, because the developer who implements
 this may be a different person or session than the one who designed it, and that insight does not survive
@@ -222,6 +236,11 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
 - Component visibility: each `In scope changes` item leads with or is grouped under the component or
   pipeline step it touches, so the slice scans as a work-map. An item that buries the component mid-prose
   in a flat list fails this check.
+- In-scope item is a task, not a spec: no item re-derives the behavior's sequence or validation rules inline.
+  It states the change (add, stop, remove) and links the design section that specifies how the behavior works.
+  An item that reads like a step-by-step of how the behavior works belongs in the design doc, not the ticket.
+- In-scope non-change: no item asserts that something stays as it is (`keep`, `unchanged`, `still`, `as today`).
+  A non-change is an Out-of-scope boundary, not an in-scope change - move it there or drop it.
 
 ### File the issue
 

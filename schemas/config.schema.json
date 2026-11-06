@@ -19,12 +19,10 @@
       "title": "Cryptographic Backend",
       "description": "The backend system used for cryptographic operations",
       "enum": [
-        "Fernet",
         "SOPS"
       ],
-      "default": "Fernet",
+      "default": "SOPS",
       "examples": [
-        "Fernet",
         "SOPS"
       ]
     },
@@ -93,6 +91,35 @@
             5,
             10,
             15
+          ]
+        }
+      }
+    },
+    "cache": {
+      "type": "object",
+      "title": "Cache Configuration",
+      "description": "Controls the parse cache kept under /.shared/ for the GitLab CI cache. Disable it when /.shared/ is not listed in the instance pipeline cache paths, otherwise the cache files end up in the repository.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "enum": [
+            true,
+            false,
+            "true",
+            "false",
+            "True",
+            "False",
+            "TRUE",
+            "FALSE"
+          ],
+          "title": "Enable Cache",
+          "description": "Enable or disable the parse cache",
+          "default": true,
+          "examples": [
+            true,
+            false,
+            "true",
+            "false"
           ]
         }
       }

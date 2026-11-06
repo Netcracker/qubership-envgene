@@ -361,10 +361,10 @@ Located at `/configuration/config.yml`
 # Optional. Default value - `true`
 # Parameter defines the encryption mode
 crypt: boolean
-# Optional. Default value - `Fernet`
+# Optional. Default value - `SOPS`
 # Defines the encryption technology
-# Requires setting an encryption key: `SECRET_KEY` or `ENVGENE_AGE_PRIVATE_KEY`, `PUBLIC_AGE_KEYS`
-crypt_backend: enum [`Fernet`, `SOPS`]
+# Requires setting the encryption keys `ENVGENE_AGE_PRIVATE_KEY` and `PUBLIC_AGE_KEYS`
+crypt_backend: enum [`SOPS`]
 # Optional. Default value - `auto`
 # Defines the auto-discovery mode for Artifact Definition of env template artifact
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
@@ -402,6 +402,15 @@ sbom_retention:
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
   # exceeds 50 MB)
   keep_versions_per_app: integer
+# Optional
+# Resource profile cache configuration
+# See [Resource profile cache](/docs/features/resource-profile-cache.md)
+cache:
+  # Optional. Default value - `true`
+  # Set to `false` when `/.shared/` is not listed in the instance pipeline `cache:` paths,
+  # otherwise the cache files end up in the repository
+  # The string values `"true"`, `"True"`, `"TRUE"`, `"false"`, `"False"`, and `"FALSE"` are also accepted
+  enabled: boolean
 # Optional
 # Troubleshooting artifact configuration
 # See [Troubleshooting artifacts](/docs/features/troubleshooting-artifacts.md)

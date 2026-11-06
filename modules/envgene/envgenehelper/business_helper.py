@@ -10,6 +10,7 @@ from envgenehelper import safe_yaml
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
+from envgene_shared.crypto.cred_store import current_cred_store
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
@@ -151,7 +152,7 @@ def getEnvCredentials(env_dir):
     if not check_file_exists(envCredentialsPath):
         logger.error(f"Credentials for env {env_dir} are not found in {envCredentialsPath}")
         raise ReferenceError(f"Credentials for env {env_dir} are not found. See logs above.")
-    credYaml = openYaml(envCredentialsPath)
+    credYaml = current_cred_store().load_decrypted(envCredentialsPath)
     return credYaml
 
 
@@ -405,7 +406,7 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
         return []
     namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
     bgd = get_bgd_object(env_dir)
-    namespaces = [NamespaceFile(path=p, name=openYaml(p / 'namespace.yml')['name'], bgd=bgd) for p in namespace_paths]
+    namespaces = [NamespaceFile(path=p, name=openYaml(p / 'namespace.yml', safe_load=True)['name'], bgd=bgd) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
 
