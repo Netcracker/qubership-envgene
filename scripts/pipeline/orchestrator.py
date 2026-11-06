@@ -10,13 +10,14 @@ from pathlib import Path
 
 from envgene_shared.utils.logger import logger, CustomFormatter
 from envgene_shared.crypto.cred_store import open_cred_store
+from envgene_shared.crypto.sops_handler import merge_pipeline_age_key_into_public_keys
 from envgenehelper import log_section, colorize, colorize_segment, banner, validate_creds, validate_parameters, get_artifact_size_limit_mb, extra_creds_scope
 from envgenehelper.business_helper import is_inventory_generation_needed, parse_bg_ns_target, get_namespaces, \
     render_workspace_dir
 from envgenehelper import delete_dir_if_exists, detect_credential_mode, get_current_env_dir_from_env_vars, open_current_env_instance_store
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.effective_set_helper import GenerationMode, resolve_partial_merge_mode, is_committed_sd_enabled, \
-    apply_no_sd_mode
+    apply_no_sd_mode, ES_DIR_NAME
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME, get_sd_dir
 
 from bg_manage.bg_manage import run_change_bg_state, run_warmup
@@ -318,6 +319,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             run_gitlab_deploy_effective_set(ctx)
         else:
             run_legacy_sd_effective_set(ctx)
+        merge_pipeline_age_key_into_public_keys(get_current_env_dir_from_env_vars() / ES_DIR_NAME)
 
 
 class GitCommitStep(PipelineStep):

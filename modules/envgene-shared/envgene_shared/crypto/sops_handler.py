@@ -6,6 +6,7 @@ import tempfile
 import sys
 
 from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.crypt_utils import get_crypt
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_or_create_nested_yaml_attribute
 from envgene_shared.utils.logger import logger
 
@@ -13,6 +14,8 @@ from envgene_shared.utils.constants import *
 
 ENVGENE_AGE_PRIVATE_KEY = None
 PUBLIC_AGE_KEYS = None
+
+DCL2ARGO_AGE_PUBLIC_KEY_PARAM = "DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY"
 
 
 def _sops_subprocess_env(secret_key=None, **extra):
@@ -153,6 +156,27 @@ def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: b
         sops_args.extend(["--encrypted-regex", encrypted_regex])
     sops_args.extend(["--filename-override", str(file_path), "/dev/stdin"])
     return _run_SOPS(sops_args, stdin_text=data.decode("utf-8")).stdout.encode("utf-8")
+
+
+def merge_pipeline_age_key_into_public_keys(effective_set_dir) -> None:
+    global PUBLIC_AGE_KEYS
+    if not get_crypt():
+        return
+    params_path = effective_set_dir / "pipeline" / "parameters.yaml"
+    params = openYaml(params_path, allow_default=True) or {}
+    age_public_key = str(params.get(DCL2ARGO_AGE_PUBLIC_KEY_PARAM) or "").strip()
+    if not age_public_key:
+        logger.warning(f"{DCL2ARGO_AGE_PUBLIC_KEY_PARAM} not found in pipeline context {params_path}, "
+                       "encrypting with PUBLIC_AGE_KEYS only")
+        return
+    public_age_keys = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
+    existing_keys = [key.strip() for key in public_age_keys.split(",") if key.strip()]
+    if age_public_key not in existing_keys:
+        existing_keys.append(age_public_key)
+    combined = ",".join(existing_keys)
+    os.environ["PUBLIC_AGE_KEYS"] = combined
+    PUBLIC_AGE_KEYS = combined
+    logger.info(f"PUBLIC_AGE_KEYS combined recipients: {combined}")
 
 
 def extract_value_SOPS(file_path, attribute_str):

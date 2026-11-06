@@ -204,6 +204,7 @@ Feature: Calculator CLI
     When the unified pipeline orchestrator runs
     Then the effective set is generated successfully
     And the collision-credentials.yaml for application "test-app" contains key "web"
+    
 
   # ── Generation ID Types (UC-CC-GI-*) ─────────────────────────────────────────
 
