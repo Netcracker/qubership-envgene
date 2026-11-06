@@ -321,7 +321,9 @@ class EnvGenerator:
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_obj(self, template, log_rendered=True) -> dict:
+        logger.debug(f"template: \n{template}")
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
+        logger.debug(f"template after replace_ansible_stuff: \n{template}")
         rendered = jinja_template(template).render(self.ctx.as_dict())
         if log_rendered:
             logger.debug(f"Rendered entity: \n{rendered}")
