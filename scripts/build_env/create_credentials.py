@@ -1,8 +1,9 @@
-import os
 from dataclasses import dataclass, field
+from typing import Optional
 from pathlib import Path
 from ruyaml import CommentedMap
-from envgenehelper import CRED_MACRO_PATTERN, CRED_MACRO_PROPERTY_TYPES, CredentialMode, ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, get_cred_list_from_param, get_schema_dir, logger, openFileAsString, readYaml, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
+from envgene_shared.crypto.cred_store import current_cred_store
+from envgenehelper import CRED_MACRO_PATTERN, CRED_MACRO_PROPERTY_TYPES, CredentialMode, ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, get_cred_list_from_param, get_schema_dir, logger, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 
 #const
 CRED_TYPE_SECRET="secret"
@@ -255,6 +256,20 @@ def add_generated_external_creds(credsYaml, collector, render_context):
     logger.info(f"Generated external credentials: {list(missing_creds)}")
 
 
+def find_shared_credential_in_dir(directory, cred_name) -> Optional[Path]:
+    # A cred file created earlier in this run exists only in the cred store, not on disk yet
+    in_store = next((key for key in current_cred_store().list(directory) if key.stem == cred_name), None)
+    if in_store:
+        return in_store
+    if not directory.is_dir():
+        return None
+    for ext in SHARED_CRED_EXTENSIONS:
+        match = next(directory.rglob(f"{cred_name}{ext}"), None)
+        if match:
+            return match
+    return None
+
+
 def find_shared_credentials(cred_names, env_dir, instances_dir) -> dict:
     pending_names = set(cred_names)
     found_paths = {}
@@ -271,20 +286,23 @@ def find_shared_credentials(cred_names, env_dir, instances_dir) -> dict:
     for level in levels:
         for dir_name in cred_dir_names:
             directory = level / dir_name
-            if not directory.is_dir():
-                continue
             for cred_name in list(pending_names):
-                for ext in SHARED_CRED_EXTENSIONS:
-                    match = next(directory.rglob(f"{cred_name}{ext}"), None)
-                    if match:
-                        found_paths[cred_name] = match
-                        pending_names.remove(cred_name)
-                        logger.info(f"Shared credentials '{cred_name}' found in '{match}'")
-                        break
+                match = find_shared_credential_in_dir(directory, cred_name)
+                if match:
+                    found_paths[cred_name] = match
+                    pending_names.remove(cred_name)
+                    logger.info(f"Shared credentials '{cred_name}' found in '{match}'")
                 if not pending_names:
                     return found_paths
     if pending_names:
         raise FileNotFoundError(f"Shared credentials with keys {sorted(pending_names)} not found.")
+
+
+def load_shared_credentials(cred_file_path, render_context) -> dict:
+    # Jinja templates are plain text; real cred files may be SOPS-encrypted, so go through the cred store
+    if cred_file_path.name.endswith(".j2"):
+        return render_context.render_from_file_to_obj(cred_file_path, log_rendered=False)
+    return render_context.render_from_obj_to_obj(current_cred_store().load_decrypted(cred_file_path), log_rendered=False)
 
 
 def readSharedCreds(envDir, instancesDir, inventoryYaml, render_context) :
@@ -295,7 +313,7 @@ def readSharedCreds(envDir, instancesDir, inventoryYaml, render_context) :
         credFilePaths = find_shared_credentials(sharedDictFileNames, envDir, instancesDir)
         for credFileName in sharedDictFileNames :
             credFilePath = credFilePaths[credFileName]
-            credYaml = render_context.render_from_file_to_obj(credFilePath, log_rendered=False)
+            credYaml = load_shared_credentials(credFilePath, render_context)
             logger.info(f"Read {len(credYaml)} shared master credentials from {credFilePath}")
             shared_sources.append((credYaml, f"shared credentials: {credFilePath.name}"))
     return shared_sources
@@ -367,4 +385,3 @@ def create_credentials(envDir, instancesDir, inventoryYaml, credential_sources, 
     warn_unused_external_creds(env_creds_map, collector)
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_map, schema_file_path=credsSchema)
     env_instance_store.put(credYamlPath, env_creds_map)
-    env_instance_store.beautify(credYamlPath, credsSchema)

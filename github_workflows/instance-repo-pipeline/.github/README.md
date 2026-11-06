@@ -91,14 +91,13 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 
 | Secret                    | Required                              | Description                                                          |
 |---------------------------|---------------------------------------|----------------------------------------------------------------------|
-| `SECRET_KEY`              | When using Fernet                     | Fernet key for credential encryption                                 |
 | `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS or deploy/warmup sync | Public key from the EnvGene AGE key pair (SOPS encryption)           |
 | `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS or deploy/warmup sync | Private key from the EnvGene AGE key pair (SOPS decryption)          |
 | `GH_ACCESS_TOKEN`         | Yes                                   | Token with `contents: write` so EnvGene can commit to the repository |
 | `GCP_SA_KEY`              | When using GAR                        | Full JSON key of a GCP service account for Artifact Registry access  |
 
 > [!NOTE]
-> Configure at least one encryption method (Fernet or SOPS) if the repository uses encrypted credentials. See
+> Configure the AGE secrets for SOPS if the repository uses encrypted credentials. See
 > [Credential encryption](/docs/how-to/credential-encryption.md).
 >
 > For `GITLAB_DEPLOY` with `DEPLOY` or BGD `warmup`, configure both AGE secrets. The workflow attempts to encrypt

@@ -83,7 +83,7 @@ Scenario: UC-EC-V-3: External credentials are auto-generated and macros are rewr
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
     When the unified pipeline orchestrator runs
-    Then the orchestrator fails
+    Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
     And the environment credentials file does not contain "local-cred"
 

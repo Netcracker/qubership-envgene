@@ -138,3 +138,14 @@ Feature: Cloud Passport association - cloud-passport.md
     Then the orchestrator completes successfully
     And the cloud.yml contains "BSS_WORKLOAD_KEY: business-only-value"
     And the cloud.yml parameter "BSS_WORKLOAD_KEY" has traceability comment "cloud passport: passport version: 3.0"
+
+  Scenario: UC-09: Encrypted Cloud Passport creds are merged into the encrypted environment credentials
+    Given the workspace is initialized with test data from "e2e/uc_cp_09_encrypted_creds"
+    And the cred files of the environment are SOPS-encrypted with the test key
+    And the cred files are recorded as a baseline
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the cred file "environments/test-cluster/test-env/Credentials/credentials.yml" is SOPS-encrypted
+    And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "passport-db-cred.data.password" equal to "passport-password"
+    And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "dummy-cred.data.secret" equal to "dummy-secret"
+    And the cred file "environments/test-cluster/cloud-passport/passport-creds.yml" is byte-equal to the baseline
