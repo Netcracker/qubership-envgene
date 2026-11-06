@@ -301,8 +301,8 @@ def find_shared_credentials(cred_names, env_dir, instances_dir) -> dict:
 def load_shared_credentials(cred_file_path, render_context) -> dict:
     # Jinja templates are plain text; real cred files may be SOPS-encrypted, so go through the cred store
     if cred_file_path.name.endswith(".j2"):
-        return render_context.render_from_file_to_obj(cred_file_path, log_rendered=False)
-    return render_context.render_from_obj_to_obj(current_cred_store().load_decrypted(cred_file_path), log_rendered=False)
+        return render_context.render_from_file_to_obj(cred_file_path, log_rendered=True)
+    return render_context.render_from_obj_to_obj(current_cred_store().load_decrypted(cred_file_path), log_rendered=True)
 
 
 def readSharedCreds(envDir, instancesDir, inventoryYaml, render_context) :
