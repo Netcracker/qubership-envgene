@@ -1,0 +1,10 @@
+name: dummy-tenant
+registryName: default
+credential: dummy-cred
+globalE2EParameters: {}
+deployParameters: {}
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
