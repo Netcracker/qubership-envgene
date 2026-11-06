@@ -1,0 +1,13 @@
+name: bss
+version: 25.1
+parameters: {}
+applications:
+  - appName: "cloudbss-om"
+    parameters:
+      OM_LOCALIZATION_REPO_NAME: "cloudbss-localization"
+  - appName: "CloudBSS-PIM"
+    parameters:
+      PIM_OPTIONAL_SUB_MODULES: "core"
+      PG_LEAK_DETECTION_INTERVAL: 60
+
+

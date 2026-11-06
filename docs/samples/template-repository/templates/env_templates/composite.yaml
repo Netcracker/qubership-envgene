@@ -18,14 +18,21 @@ namespaces:
       profile:
         name: prod_core_override
         baseline: prod
-  - name: "{env}-bss"
-    parent: saas-default-bss
-    overrides-parent:
+  # - name: "{env}-bss"
+  #   parent: saas-default-bss
+  #   overrides-parent:
+  #     profile:
+  #       override-profile-name: prod_bss_override
+  #       baseline-profile-name: prod
+  #     deployParameterSets:
+  #       - "cloudbss-om"
+  - template_path: "{{ templates_dir }}/env_templates/composite/bss.yml.j2"
+    template_override:
+      deployParameters:
+        oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}"
       profile:
-        override-profile-name: prod_bss_override
-        baseline-profile-name: prod
-      deployParameterSets:
-        - "cloudbss-om"
+        name: prod_bss_override
+        baseline: prod  
   - template_path: "{{ templates_dir }}/env_templates/composite/oss.yml.j2"
     template_override:
       profile:
