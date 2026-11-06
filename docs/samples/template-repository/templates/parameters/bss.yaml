@@ -1,14 +1,13 @@
 name: bss
 version: 25.1
-parameters:
-  PARAM_2: value-2
-  PARAM_6: value-6
+parameters: {}
 applications:
-  - appName: crm
+  - appName: "cloudbss-om"
     parameters:
-      PARAM_1: value-1
-      PARAM_5: value-5
-  - appName: cloud
+      OM_LOCALIZATION_REPO_NAME: "cloudbss-localization"
+  - appName: "CloudBSS-PIM"
     parameters:
-      PARAM_3: value-3
-      PARAM_4: value-4
+      PIM_OPTIONAL_SUB_MODULES: "core"
+      PG_LEAK_DETECTION_INTERVAL: 60
+
+
