@@ -59,7 +59,7 @@ def test_clean_runs_separately_after_orchestrator(run_ci, namespaces):
     assert calls[0]["args"] == ["/module/scripts/pipeline/orchestrator.py"]
     assert calls[1]["program"] == "python3"
     assert calls[1]["args"][:3] == ["/python/argocd-dpg/src/argo/main.py", "cleanup", "structure"]
-    assert f"params.namespace_names={namespaces}" in calls[1]["args"]
+    assert f"params.namespaces={namespaces}" in calls[1]["args"]
     assert "params.environment_id=cluster/env" in calls[1]["args"]
 
 

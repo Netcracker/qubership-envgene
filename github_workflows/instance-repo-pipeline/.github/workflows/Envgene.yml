@@ -186,7 +186,7 @@ jobs:
                 echo "Skipping argo-dpg context encryption because ENVGENE_AGE_PUBLIC_KEY is not defined"
               fi
             elif [[ "${OPERATION_TYPE}" == "CLEAN" ]]; then
-              python3 /python/argocd-dpg/src/argo/main.py cleanup structure -p params.environment_id="${FULL_ENV_NAME}" -p params.rootdir="${CI_PROJECT_DIR}" -p params.namespace_names="${NAMESPACE_NAMES:-}" -p params.commit_message="Clean effective set for ${FULL_ENV_NAME}" --log-level "${ENVGENE_LOG_LEVEL}"
+              python3 /python/argocd-dpg/src/argo/main.py cleanup structure -p params.environment_id="${FULL_ENV_NAME}" -p params.rootdir="${CI_PROJECT_DIR}" -p params.namespaces="${NAMESPACE_NAMES:-}" -p params.commit_message="Clean effective set for ${FULL_ENV_NAME}" --log-level "${ENVGENE_LOG_LEVEL}"
             fi
           fi
 
