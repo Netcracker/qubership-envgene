@@ -104,6 +104,7 @@ class TestStepGating:
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN")
 
         assert AppregdefRenderStep().should_run(ctx)
+        assert DeployPostfixNamespaceMapStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
 
     @pytest.mark.unit
