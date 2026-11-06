@@ -167,7 +167,7 @@ name: "{{current_env.name }}-oss"
 name: "{{ current_env.tenant }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
 ### `current_env.cloud`
 
@@ -212,7 +212,7 @@ Notes:
 name: "{{ current_env.cloudNameWithCluster }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cmdb_name`
 
@@ -469,7 +469,7 @@ Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs
 protocol: "{{current_env.cluster.cloud_api_protocol}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_url`
 
@@ -488,7 +488,7 @@ Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs
 apiUrl: "{{current_env.cluster.cloud_api_url}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_port`
 
@@ -507,7 +507,7 @@ Value is parsed from `inventory.clusterUrl` in in the [Environment Inventory](/d
 apiPort: "{{current_env.cluster.cloud_api_port}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_public_url`
 
@@ -524,7 +524,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 `apiPort: "{{current_env.cluster.cloud_api_port}}"`
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `appdefs.overrides`
 
