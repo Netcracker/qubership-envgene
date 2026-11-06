@@ -1,0 +1,16 @@
+---
+# Infra passport. Holds only cluster connectivity, because the infra environment deploys the
+# platform services that the business passport describes. Infra environments reference it
+# explicitly with inventory.cloudPassport: passport-infra.
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.cluster-01.example.com
+  CLOUD_API_PORT: "6443"
+  CLOUD_DEPLOY_TOKEN: cloud-deploy-sa-token
+  CLOUD_PUBLIC_HOST: cluster-01.example.com
+  CLOUD_PRIVATE_HOST: cluster-01.example.com
+  CLOUD_PROTOCOL: https
+  PRODUCTION_MODE: false
+global:
+  MONITORING_ENABLED: "true"
+  TRACING_ENABLED: "false"

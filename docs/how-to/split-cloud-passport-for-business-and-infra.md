@@ -111,8 +111,38 @@ field set, auto-association resolves the business passport by default:
 ```yaml
 # cluster-01/env-business-payments/Inventory/env_definition.yml
 inventory:
-  environmentName: env-business-payments
+  noCmdbVersion: "v2"
   # cloudPassport field absent → auto-association resolves passport.yml
+```
+
+Put the credentials of the business passport next to it, in `passport-creds.yml`. EnvGene reads the credentials
+of a passport from `<passport-name>-creds.yml`:
+
+```yaml
+# cluster-01/cloud-passport/passport-creds.yml
+cloud-deploy-sa-token:
+  type: secret
+  data:
+    secret: cloud-deploy-token-placeholder
+dbaas-cred:
+  type: usernamePassword
+  data:
+    username: dbaas-username
+    password: dbaas-password
+maas-cred:
+  type: usernamePassword
+  data:
+    username: maas-username
+    password: maas-password
+consul-cred:
+  type: secret
+  data:
+    secret: consul-token-placeholder
+minio-cred:
+  type: usernamePassword
+  data:
+    username: minio-username
+    password: minio-password
 ```
 
 ### 2. Configure the infra passport (minimal)
@@ -148,9 +178,23 @@ Update the infra environment's `env_definition.yml` to reference the infra passp
 ```yaml
 # cluster-01/env-infra/Inventory/env_definition.yml
 inventory:
-  environmentName: env-infra
+  noCmdbVersion: "v2"
   cloudPassport: passport-infra    # explicit, resolves passport-infra.yml
 ```
+
+Put the credentials of the infra passport next to it, in `passport-infra-creds.yml`. The infra passport
+references only the deploy token:
+
+```yaml
+# cluster-01/cloud-passport/passport-infra-creds.yml
+cloud-deploy-sa-token:
+  type: secret
+  data:
+    secret: cloud-deploy-token-placeholder
+```
+
+For complete infra and business Environment Inventories, see
+[Infra and business environments samples](/docs/samples/infra-and-business-environments/README.md).
 
 ### 3. Verify the result
 
@@ -202,5 +246,6 @@ resolving the cluster default passport, and their effective parameter set is unc
 
 - [Cloud Passport processing](/docs/features/cloud-passport-processing.md)
 - [Creating a cluster](/docs/how-to/create-cluster.md)
+- [Infra and business environments samples](/docs/samples/infra-and-business-environments/README.md)
 - [EnvGene Configs: `env_definition.yml`](/docs/envgene-configs.md#env_definitionyml)
 - [EnvGene Objects: Cloud Passport](/docs/envgene-objects.md#cloud-passport)

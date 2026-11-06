@@ -1,0 +1,54 @@
+{
+  "envDefinition": {
+    "action": "create_or_replace",
+    "content": {
+      "inventory": {
+        "cloudPassport": "passport-infra"
+      },
+      "envTemplate": {
+        "name": "<infra-template-name>",
+        "artifact": "<infra-template-artifact>:<version>",
+        "additionalTemplateVariables": {
+          "<variable>": "<value>"
+        },
+        "envSpecificParamsets": {
+          "<namespace>": [
+            "<paramset-name>"
+          ]
+        },
+        "sharedMasterCredentialFiles": [
+          "<shared-credentials-file>"
+        ]
+      }
+    }
+  },
+  "paramSets": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "content": {
+        "name": "<paramset-name>",
+        "version": 1,
+        "parameters": {
+          "<PARAMETER>": "<value>"
+        }
+      }
+    }
+  ],
+  "credentials": [
+    {
+      "action": "create_or_replace",
+      "place": "env",
+      "name": "<shared-credentials-file>",
+      "content": {
+        "<cred-id>": {
+          "type": "usernamePassword",
+          "data": {
+            "username": "<username>",
+            "password": "<password>"
+          }
+        }
+      }
+    }
+  ]
+}
