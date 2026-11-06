@@ -4,7 +4,7 @@ import yaml
 from pytest_bdd import given, then, when, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace, TEST_AGE_PUBLIC_KEY
-from cucumber_tests.shared_steps.calculator_cli_steps import _find_deployment_file
+from cucumber_tests.shared_steps.calculator_cli_steps import _find_app_file
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.file_utils import is_cred_file
 
@@ -102,20 +102,20 @@ def only_one_ciphertext_changed(workspace: EnvGeneWorkspace, path: str, key: str
 
 @then(parsers.parse('the "{app_name}" collision-credentials.yaml is SOPS-encrypted'))
 def collision_credentials_is_sops_encrypted(workspace: EnvGeneWorkspace, app_name: str):
-    file_path = _find_deployment_file(workspace, app_name, "collision-credentials.yaml")
+    file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
     assert is_encrypted_SOPS_text(file_path.read_text(encoding="utf-8")), f"{file_path} is not SOPS-encrypted"
 
 
 @then(parsers.parse('in the "{app_name}" collision-credentials.yaml the value of "{key}" is encrypted'))
 def collision_credentials_value_is_encrypted(workspace: EnvGeneWorkspace, app_name: str, key: str):
-    file_path = _find_deployment_file(workspace, app_name, "collision-credentials.yaml")
+    file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
     value = _raw_value(file_path, key)
     assert _is_ciphertext(value), f"{file_path}: {key} is not encrypted: {value}"
 
 
 @then(parsers.parse('the "{app_name}" collision-credentials.yaml is byte-equal to the baseline'))
 def collision_credentials_byte_equal(workspace: EnvGeneWorkspace, app_name: str):
-    file_path = _find_deployment_file(workspace, app_name, "collision-credentials.yaml")
+    file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
     assert file_path.read_bytes() == workspace.cred_baseline[file_path], f"{file_path} differs from the baseline"
 
 

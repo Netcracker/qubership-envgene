@@ -13,10 +13,13 @@ MISSING = "missing:1.0"
 def make_ctx(app_versions: list[str], gitlab_deploy: bool = True) -> MagicMock:
     ctx = MagicMock()
     ctx.is_gitlab_deploy.return_value = gitlab_deploy
-    ctx.resolve_source_dp.return_value = EnvgeneDeployPlan(entities=[
+    entities = [
         DeployPlanEntity(version=app_version, deployPostfix=app_version.split(":")[0])
         for app_version in app_versions
-    ])
+    ]
+    ctx.deploy_plan = MagicMock(entities=list(entities))
+    ctx.deploy_plan_delta = MagicMock(entities=[])
+    ctx.resolve_source_dp.return_value = EnvgeneDeployPlan(entities=entities)
     return ctx
 
 
@@ -59,7 +62,40 @@ def test_downloads_dds_for_all_apps_and_generates_only_missing_sboms(sboms_dir):
     download.assert_called_once_with([RESOLVED, MISSING], ctx=ctx, unresolved_app_versions=[MISSING])
     sd_content = generate.call_args.kwargs["sd_content"]
     assert [app.version for app in sd_content.entities] == [MISSING]
+    assert [app.version for app in ctx.resolve_source_dp.return_value.entities] == [RESOLVED, MISSING]
+    assert sd_content is not ctx.resolve_source_dp.return_value
     assert generate.call_args.kwargs["dd_artifacts"] == dd_artifacts
+    ctx.deploy_plan.write.assert_not_called()
+    ctx.deploy_plan_delta.write.assert_not_called()
+
+
+def test_resolves_snapshot_before_excluding_existing_sboms(sboms_dir):
+    ctx = make_ctx(["app:1.0-SNAPSHOT"])
+    ctx.deploy_plan_delta = MagicMock(entities=[
+        DeployPlanEntity(version="app:1.0-SNAPSHOT", deployPostfix="app")
+    ])
+    resolved_artifact = MagicMock()
+    resolved_artifact.source.resolved_version = "1.0-20261027.123456-1"
+    dd_artifact = MagicMock()
+    delta_path = sboms_dir / "delta-deploy-plan.yml"
+
+    with patch.object(module, "resolve_artifacts", return_value=([resolved_artifact], [])) as resolve, \
+            patch.object(module, "download_dd_and_zip_artifacts", return_value=([dd_artifact], [])) as download, \
+            patch.object(module.EnvgeneDeployPlan, "delta_path", return_value=delta_path), \
+            patch.object(module.Generator, "generate_bom_by_content",
+                         return_value=MagicMock(sboms={}, registries={})) as generate:
+        generate_sboms(ctx)
+
+    resolve.assert_called_once_with(["app:1.0-SNAPSHOT"], ctx=ctx)
+    download.assert_called_once_with(
+        ["app:1.0-20261027.123456-1"],
+        ctx=ctx,
+        unresolved_app_versions=["app:1.0-20261027.123456-1"],
+    )
+    sd_content = generate.call_args.kwargs["sd_content"]
+    assert [app.version for app in sd_content.entities] == ["app:1.0-20261027.123456-1"]
+    ctx.deploy_plan.write.assert_called_once_with()
+    ctx.deploy_plan_delta.write.assert_called_once_with(delta_path)
 
 
 def test_non_gitlab_deploy_skips_download_when_all_apps_have_sboms(sboms_dir):
