@@ -226,7 +226,7 @@
         "bgNsArtifacts": {
           "type": "object",
           "title": "Blue-Green Namespace Artifacts",
-          "description": "Per-side template artifact version pins for Blue-Green namespaces",
+          "description": "Per-side template artifact version pins for Blue-Green namespaces. Each side is optional; a namespace with no pin renders from envTemplate.artifact",
           "properties": {
             "origin": {
               "type": "string",
@@ -244,11 +244,7 @@
                 "bgd:v1.1.0-peer"
               ]
             }
-          },
-          "required": [
-            "origin",
-            "peer"
-          ]
+          }
         },
         "sharedMasterCredentialFiles": {
           "type": "array",
