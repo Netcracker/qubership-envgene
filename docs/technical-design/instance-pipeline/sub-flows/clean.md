@@ -54,17 +54,20 @@ NAMESPACE_NAMES: ""   # empty cleans the whole environment
 
 Actions:
 
-- The `cleanup` step runs `reduce_deployment_plan`: it validates `NAMESPACE_NAMES`, then removes the cleaned
-  namespaces from the repository `deploy-plan.yml` using the plan filter in exclude mode (each namespace as a
-  `!<namespace>` token). Validation fails if a namespace is absent from `namespace-map.yml` and warns if it is
-  absent from the repository `deploy-plan.yml`.
-- The `cleanup` step then runs `clean_effective_set`, performed by `argo-dpg cleanup structure`. It fetches
-  the effective set from the ES repository and, for each cleaned namespace, removes the `deployment`
-  and `runtime` context content under `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keeps
-  `<application-name>`, and writes `effective-set/<deployment|runtime>/<namespace>/.cleaned`. It warns if a namespace is absent from the effective
+- The `cleanup` step runs `reduce_deployment_plan`, which removes the cleaned namespaces' entries from the
+  repository `deploy-plan.yml`.
+- The `cleanup` step then runs `clean_effective_set`, performed by `argo-dpg cleanup structure`, which first
+  cleans the effective-set content. Because `NAMESPACE_NAMES` is empty, it cleans every namespace of the
+  environment, taken from the topology context read at its contractual location in the effective set. For each
+  namespace it removes the `deployment` and `runtime` context content under
+  `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keeps `<application-name>`, and writes
+  `effective-set/<deployment|runtime>/<namespace>/.cleaned`. It warns if a namespace is absent from the effective
   set or already cleaned.
-- `argo-dpg` then pushes the effective set to the ES repository in overwrite mode, so the repository
-  mirrors the emptied state and the removed content is deleted there as well.
+- The same clean then removes each cleaned application's ArgoCD Application CR manifest `argo-app.yaml` from its
+  `deployment` application directory, where `argo-dpg generate structure` wrote it, so the cleaned namespaces are
+  detached from ArgoCD.
+- `argo-dpg` then pushes the effective set to the ES repository in overwrite mode, so the repository mirrors the
+  emptied state and the removed content is deleted there as well.
 
 ## CLEAN selected namespaces
 
@@ -89,6 +92,18 @@ NAMESPACE_NAMES: env-1-bss;env-1-oss   # or a single BG side, e.g. env-1-bss-ori
 # APPLICATION_VERSIONS is not an input
 ```
 
-Actions: identical to CLEAN a whole environment, scoped to the listed namespaces. The `cleanup` step removes the
-deploy-plan entries whose `namespace` is in `NAMESPACE_NAMES`, and `argo-dpg` empties those namespaces and writes
-their `.cleaned` markers.
+Actions:
+
+- The `cleanup` step runs `reduce_deployment_plan`, which removes the cleaned namespaces' entries from the
+  repository `deploy-plan.yml`.
+- The `cleanup` step then runs `clean_effective_set`, performed by `argo-dpg cleanup structure`, which first
+  cleans the effective-set content. It cleans the namespaces listed in `NAMESPACE_NAMES`, rather than every
+  namespace from the topology context. For each namespace it removes the `deployment` and `runtime` context
+  content under `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keeps `<application-name>`,
+  and writes `effective-set/<deployment|runtime>/<namespace>/.cleaned`. It warns if a namespace is absent from
+  the effective set or already cleaned.
+- The same clean then removes each cleaned application's ArgoCD Application CR manifest `argo-app.yaml` from its
+  `deployment` application directory, where `argo-dpg generate structure` wrote it, so the cleaned namespaces are
+  detached from ArgoCD.
+- `argo-dpg` then pushes the effective set to the ES repository in overwrite mode, so the repository mirrors the
+  emptied state and the removed content is deleted there as well.
