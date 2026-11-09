@@ -1,207 +1,121 @@
-# Migrate Instance Repository to External Credentials
+# Migrate an instance repository to external Credentials
 
 - [Description](#description)
 - [Prerequisites](#prerequisites)
-- [Step 1: List the credentials of the Instance repository](#step-1-list-the-credentials-of-the-instance-repository)
-- [Step 2: Decide create and remoteRefPath](#step-2-decide-create-and-remoterefpath)
-- [Step 3: Configure the Secret Store](#step-3-configure-the-secret-store)
-- [Step 4: Convert the Cloud Passport credentials](#step-4-convert-the-cloud-passport-credentials)
-- [Step 5: Convert the Shared Credentials](#step-5-convert-the-shared-credentials)
-- [Step 6: Convert the System Credentials (optional)](#step-6-convert-the-system-credentials-optional)
-- [Step 7: Update environment-specific parameters](#step-7-update-environment-specific-parameters)
-- [Step 8: Remove stale generated Credentials files](#step-8-remove-stale-generated-credentials-files)
-- [Step 9: Validate before the pipeline](#step-9-validate-before-the-pipeline)
-- [Step 10: Run the Instance pipeline without provisioning](#step-10-run-the-instance-pipeline-without-provisioning)
-- [Step 11: Put the values in the Secret Store](#step-11-put-the-values-in-the-secret-store)
-- [Step 12: Run the Instance pipeline with provisioning](#step-12-run-the-instance-pipeline-with-provisioning)
-- [Step 13: Verify the generated result](#step-13-verify-the-generated-result)
-- [Step 14: Run a test deployment](#step-14-run-a-test-deployment)
+- [Step 1: Convert the credentials files of the environment](#step-1-convert-the-credentials-files-of-the-environment)
+- [Step 2: Replace the credential macros of the environment](#step-2-replace-the-credential-macros-of-the-environment)
+- [Step 3: Convert the System Credentials](#step-3-convert-the-system-credentials)
+- [Step 4: Build the environment without provisioning](#step-4-build-the-environment-without-provisioning)
+- [Step 5: Set the values in the Secret Store](#step-5-set-the-values-in-the-secret-store)
+- [Step 6: Run the Instance pipeline with provisioning](#step-6-run-the-instance-pipeline-with-provisioning)
+- [Verify the result](#verify-the-result)
 - [Rollback](#rollback)
 - [See also](#see-also)
 
 ## Description
 
-Move the credentials of an Instance repository from Git to a Secret Store. At the end, every
-environment uses External Credentials, the secret values live in the store, and the repository holds only
-references.
+Move the credentials of an Instance repository from Git to a Secret Store. After the migration, every environment and
+the System Credentials use external Credentials, the values are stored in the Secret Store, and the repository holds
+only references to them.
 
-For a new environment, you do not need this migration, see
-[Configure External Credentials](/docs/how-to/configure-external-credentials.md).
+A new environment does not need this migration, see
+[Configure external Credentials](/docs/how-to/configure-external-credentials.md).
 
 > [!WARNING]
-> Do not remove `data` from a credential before you have saved its value. After the migration, EnvGene no longer
-> reads values from Git. For a credential with `create: true` and no secret, EnvGene generates a new value, and the
-> old password, token, or key is lost. Never put secret values in Git, merge requests, or notes.
-
-### Credential value transfer
-
-Values move into the Secret Store in two parts:
-
-| When                                | What                                                   | Where                                                    |
-|-------------------------------------|--------------------------------------------------------|----------------------------------------------------------|
-| Before Steps 4-6 remove `data`      | Save each real value to a secure place outside Git     | [Step 4](#step-4-convert-the-cloud-passport-credentials) |
-| After Step 10 generates the Context | Put the saved values into the store at EnvGene's paths | [Step 11](#step-11-put-the-values-in-the-secret-store)   |
-
-### Rules
-
-- After the migration, each environment uses only External Credentials. System Credentials are an exception: they
-  may stay local. See [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
-- If the same `credId` is declared in several places, the Shared Credentials take precedence over the Cloud
-  Passport, and the Cloud Passport takes precedence over the Credential Template.
+> Save every real value before you replace its credential. After the migration, EnvGene no longer reads values from
+> Git. Never put secret values in Git, merge requests, or notes.
 
 ## Prerequisites
 
 - The Instance repository uses a No-CMDB [deployment architecture](/docs/deployment-architecture.md).
-- EnvGene is upgraded to a version that supports External Credentials.
 - The template is migrated and published as a new version, see
-  [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md).
-- You can decrypt the credentials files of the repository, if credential encryption is enabled. See
+  [Migrate a template repository to external Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md).
+- The Instance repository has a Secret Store configured, see
+  [Configure a Secret Store](/docs/how-to/configure-secret-store.md).
+- You have the [External Credentials provisioning CLI](/modules/external-cred-provision/README.md) installed and access
+  to the Secret Store from your machine.
+- If credential encryption is enabled, you can decrypt the credentials files of the repository, see
   [Credential Encryption](/docs/how-to/credential-encryption.md).
 
-## Step 1: List the credentials of the Instance repository
+## Step 1: Convert the credentials files of the environment
 
-List every local credential (`type: usernamePassword` or `type: secret`) in these files:
+Open the credentials files that the environment uses:
 
-| File                                                       | What it holds                           |
-|------------------------------------------------------------|-----------------------------------------|
-| `environments/<cluster>/cloud-passport/*-creds.yml`        | Cloud Passport credentials              |
-| `environments/<cluster>/<env>/Inventory/credentials/*.yml` | environment-level Shared Credentials    |
-| `environments/<cluster>/credentials/*.yml`                 | cluster-level Shared Credentials        |
-| `environments/credentials/*.yml`                           | repository-level Shared Credentials     |
-| `environments/<cluster>/<env>/Credentials/credentials.yml` | values set directly for the environment |
-| `configuration/credentials/credentials.yml`                | System Credentials: Git token, registry |
-| `deployer-creds.yml` next to each `deployer.yml`           | System Credentials: deployer            |
+- the Cloud Passport credentials file of the cluster, `environments/<cluster>/cloud-passport/*-creds.yml`
+- the Shared Credentials files listed in `envTemplate.sharedMasterCredentialFiles` of `env_definition.yml`
 
-Older repositories may keep Shared Credentials in deprecated folders such as `shared-credentials/`, see
-[File resolution for shared entities](/docs/envgene-configs.md#file-resolution-for-shared-entities). Include files
-that no `env_definition.yml` references.
+In each file, save the real value of each credential outside Git, then replace the credential with an external one.
+A credential that holds `envgeneNullValue` or an empty value has nothing to save.
 
-Record each credential in a table:
+Before:
 
-| credId    | File                                                       | Value in `data`           |
-|-----------|------------------------------------------------------------|---------------------------|
-| dbaas     | `cluster-01/cloud-passport/passport-creds.yml`             | real value                |
-| api-token | `cluster-01/env-01/Inventory/credentials/env-01-creds.yml` | stub (`envgeneNullValue`) |
+```yaml
+dbaas:
+  type: usernamePassword
+  data:
+    username: <username>
+    password: <password>
+```
 
-A real value must be saved before Steps 4-6 remove it. A stub such as `envgeneNullValue` or an empty string has
-nothing to save.
+After:
 
-**Result:** a table of every local credential, its file, and whether it holds a real value.
+```yaml
+dbaas:
+  type: external
+  secretStore: default_store
+  remoteRefPath: cluster-01
+  properties:
+    - name: username
+    - name: password
+```
 
-## Step 2: Decide create and remoteRefPath
+Set the fields of each credential:
 
-For each credential, decide two values.
+| Field           | Value                                                                                               |
+|-----------------|-----------------------------------------------------------------------------------------------------|
+| `type`          | Always `external`                                                                                   |
+| `secretStore`   | The identifier of the Secret Store from `secret-stores.yml`                                         |
+| `remoteRefPath` | The folder of the secret in the store, see the table below                                          |
+| `create`        | Omit it for a credential whose value you saved. Set it to `true` if EnvGene must generate the value |
+| `properties`    | `- name: username` and `- name: password` for `type: usernamePassword`. Omit it for `type: secret`  |
 
-### `create`
+Set `remoteRefPath` according to the file that holds the credential:
 
-| Who creates the value                               | In the credential      |
-|-----------------------------------------------------|------------------------|
-| EnvGene may generate a new value                    | `create: true`         |
-| The secret already exists, or a provider creates it | omit `create`          |
-| You do not know                                     | stop and ask the owner |
+| File                                  | Location                                              | `remoteRefPath`   |
+|---------------------------------------|-------------------------------------------------------|-------------------|
+| Cloud Passport credentials            | `environments/<cluster>/cloud-passport/`              | `<cluster>`       |
+| Shared Credentials of the environment | `environments/<cluster>/<env>/Inventory/credentials/` | `<cluster>/<env>` |
+| Shared Credentials of the cluster     | `environments/<cluster>/credentials/`                 | `external`        |
+| Shared Credentials of the repository  | `environments/credentials/`                           | `external`        |
 
-A credential with a real value from Step 1 keeps that value: omit `create`, and put the value into the store in
-Step 11. System Credentials never get `create: true`.
+EnvGene stores the secret at `<remoteRefPath>/<credId>`, for example `cluster-01/dbaas`, so do not include the
+`credId` in `remoteRefPath`. For the rules of every field, see [Credential](/docs/features/external-creds.md#credential).
 
-### `remoteRefPath`
+Also save the real values from `environments/<cluster>/<env>/Credentials/credentials.yml`. Do not convert this file:
+EnvGene regenerates it on the next run.
 
-| Source                       | `remoteRefPath`           |
-|------------------------------|---------------------------|
-| Cloud Passport               | `<cluster>`               |
-| Environment-level Shared     | `<cluster>/<environment>` |
-| Cluster or repository Shared | `external`                |
-| System Credentials           | `external`                |
+## Step 2: Replace the credential macros of the environment
 
-Do not append the `credId`: EnvGene adds it.
+Replace the credential macros with `$type: credRef`, as in
+[Migrate a template repository to external Credentials, Step 3](/docs/how-to/migrate-template-repository-to-external-credentials.md#step-3-replace-the-credential-macros),
+in:
 
-**Result:** a `create` value and a `remoteRefPath` for every credential.
-
-## Step 3: Configure the Secret Store
-
-1. Create or update `/configuration/secret-stores.yml`:
-
-    ```yaml
-    default_store:
-      type: vault
-      mountPath: secret
-    ```
-
-    See [Secret Store](/docs/features/external-creds.md#secret-store) for the fields of each store type.
-
-2. Set the authentication variables of the store as CI/CD variables of the Instance repository, see
-   [Configure External Credentials, Step 8](/docs/how-to/configure-external-credentials.md#step-8-set-the-secret-store-authentication-variables).
-
-## Step 4: Convert the Cloud Passport credentials
-
-> [!IMPORTANT]
-> Save every real value from Step 1 before you remove its `data`. Decrypt the file first if it is encrypted.
-
-1. In `environments/<cluster>/cloud-passport/*-creds.yml`, replace each credential with an external one, using the
-   values from Step 2.
-
-    Before:
-
-    ```yaml
-    dbaas:
-      type: usernamePassword
-      data:
-        username: <username>
-        password: <password>
-    ```
-
-    After:
-
-    ```yaml
-    dbaas:
-      type: external
-      secretStore: default_store
-      remoteRefPath: cluster-01
-      properties:
-        - name: username
-        - name: password
-    ```
-
-    For a single value (`type: secret`), leave out `properties`. For the rules of every field, see
-    [Credential](/docs/features/external-creds.md#credential).
-
-2. In the matching passport file, such as `passport.yml`, replace each credential macro with `$type: credRef`, as in
-   [Migrate Template Repository to External Credentials, Step 5](/docs/how-to/migrate-template-repository-to-external-credentials.md#step-5-replace-macros).
+- the Cloud Passport of the cluster, such as `environments/<cluster>/cloud-passport/passport.yml`
+- the environment-specific `deployParameters` and `e2eParameters`
+- the ParameterSets in `environments/<cluster>/<env>/Inventory/parameters/`, `environments/<cluster>/parameters/`, and
+  `environments/parameters/`
 
 Leave built-in fields such as `credentialsId` unchanged: they keep a plain `credId`.
 
-**Result:** the Cloud Passports use External Credentials.
+## Step 3: Convert the System Credentials
 
-## Step 5: Convert the Shared Credentials
+Perform this step once per Instance repository. System Credentials are the Git token, the registry credentials, and
+the deployer credentials in `configuration/credentials/credentials.yml` and in `deployer-creds.yml` next to each
+`deployer.yml`.
 
-> [!IMPORTANT]
-> Save every real value from Step 1 before you remove its `data`.
-
-1. Convert each Shared Credentials File from Step 1 the same way as in Step 4, with the values from Step 2:
-
-    ```yaml
-    ID_TOCP_CLIENT_CREDS:
-      type: external
-      secretStore: default_store
-      remoteRefPath: external
-      properties:
-        - name: username
-        - name: password
-    ```
-
-2. In each `env_definition.yml`, list the files in `envTemplate.sharedMasterCredentialFiles` without the `.yml`
-   extension: `shared-credentials`, not `shared-credentials.yml`.
-
-**Result:** the Shared Credentials use External Credentials.
-
-## Step 6: Convert the System Credentials (optional)
-
-System Credentials are the Git token, the registry credentials, and the deployer credentials in
-`configuration/credentials/credentials.yml` and in `deployer-creds.yml` next to each `deployer.yml`. They may stay
-local. Convert them only if you want these values in the Secret Store too.
-
-1. Put their values into the Secret Store with the store's own tools. Step 11 does not cover System Credentials.
-2. Convert the entries the same way as in Step 4, without `create`.
-3. Replace the macros in `/configuration/deployer.yml` and `/configuration/integration.yml`:
+1. Save the real values outside Git and replace the credentials as in Step 1, with `remoteRefPath: external` and
+   without `create`.
+2. Replace the macros in `/configuration/deployer.yml` and `/configuration/integration.yml`:
 
     ```yaml
     # configuration/integration.yml
@@ -212,44 +126,38 @@ local. Convert them only if you want these values in the Secret Store too.
 
     `credentialsId` fields in Artifact and Registry Definitions stay plain strings.
 
+3. EnvGene does not add System Credentials to the External Credential Context. Outside the repository, create a
+   context file for the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md)
+   with one entry per System Credential:
+
+    ```yaml
+    credentials:
+      self-token-cred:
+        vals: "ref+vault://secret/external/self-token-cred"
+        strategy: create_if_absent
+        data:
+          value: <token>
+    ```
+
+    For Vault and OpenBao, `vals` is `ref+<type>://<mountPath>/<remoteRefPath>/<credId>`. For the other store types
+    and for the shape of `data`, see [Input format](/docs/features/external-creds-provisioning-cli.md#input-format).
+
+4. Set the variables from
+   [Configure a Secret Store](/docs/how-to/configure-secret-store.md#step-2-give-the-instance-pipeline-access-to-the-secret-store)
+   in your shell, and run the CLI:
+
+    ```bash
+    external-cred-provision system-credentials.yaml
+    ```
+
+5. Delete the file: it contains the values in plain text.
+
 See [EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
-**Result:** the System Credentials you chose are in the Secret Store.
+## Step 4: Build the environment without provisioning
 
-## Step 7: Update environment-specific parameters
-
-Replace the credential macros with `$type: credRef`, as in
-[Migrate Template Repository to External Credentials, Step 5](/docs/how-to/migrate-template-repository-to-external-credentials.md#step-5-replace-macros), in:
-
-- the environment-specific `deployParameters` and `e2eParameters`
-- the ParameterSets in `environments/<cluster>/<env>/Inventory/parameters/`, `environments/<cluster>/parameters/`, and
-  `environments/parameters/`
-
-Do not use `$type: credRef` in `technicalConfigurationParameters`.
-
-**Result:** the environment-specific parameters reference the credentials with `$type: credRef`.
-
-## Step 8: Remove stale generated Credentials files
-
-Save the real values from `environments/<cluster>/<env>/Credentials/credentials.yml`, see Step 1. Then delete the
-file in every environment you migrate. It holds local credentials and fails the next run with
-`Only external credentials allowed`. The pipeline creates it again with external credentials only.
-
-**Result:** no generated Credentials files from the old template.
-
-## Step 9: Validate before the pipeline
-
-Check that:
-
-- every real value from Step 1 is saved outside the repository
-- no converted credential has a `data` block
-- every `secretStore` in the credentials is defined in `/configuration/secret-stores.yml`
-- every `property` in a `$type: credRef` matches a name in the credential's `properties`
-- `sharedMasterCredentialFiles` lists names without `.yml`
-
-## Step 10: Run the Instance pipeline without provisioning
-
-Start with a non-production environment:
+Start with a non-production environment. Run the Instance pipeline with the template version that you published
+during the template migration:
 
 ```text
 ENV_NAMES=<cluster-name>/<environment-name>
@@ -257,57 +165,58 @@ ENV_TEMPLATE_VERSION=<artifactId>:<version>
 ENV_BUILDER=true
 GENERATE_EFFECTIVE_SET=true
 EXTERNAL_CREDENTIAL_PROVISIONING=skip
-CMDB_IMPORT=false
 ```
 
-`EXTERNAL_CREDENTIAL_PROVISIONING=skip` generates the Environment Instance and the Effective Set without touching the
-Secret Store, so the run does not fail while the values are not there yet. Do not deploy from this Effective Set.
+With `EXTERNAL_CREDENTIAL_PROVISIONING=skip`, EnvGene generates the Effective Set without checking the Secret Store,
+so the run does not fail while the store does not contain the values yet. Do not deploy from this Effective Set.
 
-**Result:** `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml` lists every
-credential with its path in the store.
+## Step 5: Set the values in the Secret Store
 
-## Step 11: Put the values in the Secret Store
+EnvGene creates the secrets with `create: true` in Step 6. Set the values of the other credentials with the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md):
 
-1. Open `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml`.
-2. For each credential with `strategy: fail_if_absent`, create the secret in the store at the path in its `vals`
-   field. Use the value you saved before removing it, or, for a value that came from Jenkins CMDB, the value from Jenkins.
-3. Inside the secret, use the keys from `properties`, such as `username` and `password`. For a single-value
-   credential in Vault or OpenBao, use the key `value`.
+1. Copy `environments/<cluster>/<env>/effective-set/external-credential/external-credentials.yaml` outside the
+   repository. In the copy, for each credential with `strategy: fail_if_absent`, set `strategy: create_if_absent` and
+   add `data` with the saved value:
 
-Take each path from `vals` instead of building it yourself. A secret at a slightly different path is reported as
-missing.
-EnvGene creates the credentials with `strategy: create_if_absent` in Step 12.
+    ```yaml
+    credentials:
+      dbaas:
+        vals: "ref+vault://secret/cluster-01/dbaas"
+        strategy: create_if_absent
+        data:
+          username: <username>
+          password: <password>
+    ```
 
-**Result:** every secret without `create: true` is in the Secret Store.
+    Do not change `vals`: it holds the path of the secret in the store. For the shape of `data` for one value, see
+    [Input format](/docs/features/external-creds-provisioning-cli.md#input-format).
 
-## Step 12: Run the Instance pipeline with provisioning
+2. Set the variables from
+   [Configure a Secret Store](/docs/how-to/configure-secret-store.md#step-2-give-the-instance-pipeline-access-to-the-secret-store)
+   in your shell, and run the CLI:
 
-Run the parameters from Step 10 without `EXTERNAL_CREDENTIAL_PROVISIONING`:
+    ```bash
+    external-cred-provision external-credentials.yaml
+    ```
 
-```text
-ENV_NAMES=<cluster-name>/<environment-name>
-ENV_TEMPLATE_VERSION=<artifactId>:<version>
-ENV_BUILDER=true
-GENERATE_EFFECTIVE_SET=true
-CMDB_IMPORT=false
-```
+3. Delete the copy: it contains the values in plain text.
 
-EnvGene checks that every secret exists and creates the ones with `create: true`.
+## Step 6: Run the Instance pipeline with provisioning
 
-**Result:** the Effective Set references real values in the Secret Store.
+Run the Instance pipeline with the parameters from Step 4, without `EXTERNAL_CREDENTIAL_PROVISIONING`. EnvGene checks
+that every secret exists in the store and creates the secrets with `create: true`.
 
-## Step 13: Verify the generated result
+## Verify the result
 
 1. `environments/<cluster>/<env>/Credentials/credentials.yml` holds only `type: external` entries.
-2. The files under `effective-set/deployment/` hold VALS or ESO references instead of values.
+2. The files under `effective-set/deployment/` of the environment hold VALS or ESO references instead of values.
+3. A test deployment of the environment starts, and the applications authenticate to their dependencies.
 
-If a check fails, fix the configuration and run again from
-[Step 10](#step-10-run-the-instance-pipeline-without-provisioning).
+If a check fails, fix the configuration and repeat from
+[Step 4](#step-4-build-the-environment-without-provisioning).
 
-## Step 14: Run a test deployment
-
-Deploy the environment and check that the applications start and authenticate to their dependencies. Then migrate
-the remaining environments the same way, from Step 10.
+For each remaining environment, repeat Steps 1, 2, 4, 5, and 6. Skip the files that you have already converted.
 
 ## Rollback
 
@@ -315,11 +224,11 @@ the remaining environments the same way, from Step 10.
 2. Revert the changes in the Instance repository.
 3. Run the Instance pipeline with `ENV_BUILDER=true` and `GENERATE_EFFECTIVE_SET=true`.
 
-Keep the secrets in the store until you are sure nothing uses them.
+Keep the secrets in the store until you are sure that nothing uses them.
 
 ## See also
 
-- [Migrate Template Repository to External Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md)
-- [Configure External Credentials](/docs/how-to/configure-external-credentials.md)
+- [Migrate a template repository to external Credentials](/docs/how-to/migrate-template-repository-to-external-credentials.md)
+- [Configure external Credentials](/docs/how-to/configure-external-credentials.md)
 - [External Credentials](/docs/features/external-creds.md)
 - [Sample External Credentials](/docs/samples/external-credentials/)

@@ -55,8 +55,6 @@ Start from the example that matches your environment:
   [Configure artifact registries](/docs/how-to/configure-cloud-artifact-registries.md). For
   `artifact: project-env-template:1.0.0`, it is `/configuration/artifact_definitions/project-env-template.yaml` with
   `name: project-env-template`.
-- For credentials kept in the Instance repository, credential encryption is enabled. See
-  [Credential encryption](/docs/how-to/credential-encryption.md).
 
 ## Choose the level of each file
 
@@ -131,8 +129,8 @@ Write the content as JSON. This example creates `env_definition.yml` and one Par
   Namespace folder name from `Namespaces/` applies them to that Namespace only.
 - Every name in `envSpecificE2EParamsets` must match a ParameterSet that the same content creates or that already
   exists in the repository.
-- To add credentials in the same run, see [Configure Local Credentials](/docs/how-to/configure-local-credentials.md)
-  or [Configure External Credentials](/docs/how-to/configure-external-credentials.md).
+- To add credentials in the same run, see [Configure local Credentials](/docs/how-to/configure-local-credentials.md)
+  or [Configure external Credentials](/docs/how-to/configure-external-credentials.md).
 - `place` sets the level of each file, see [Choose the level of each file](#choose-the-level-of-each-file).
 
 For all blocks, see [Environment Inventory Generation](/docs/features/env-inventory-generation.md).
@@ -211,8 +209,8 @@ To share a file between environments, put it in the cluster or repository folder
 ## Set and update credentials
 
 To set the credential values of the environment and change them later, see
-[Configure Local Credentials](/docs/how-to/configure-local-credentials.md), or
-[Configure External Credentials](/docs/how-to/configure-external-credentials.md) for a Secret Store.
+[Configure local Credentials](/docs/how-to/configure-local-credentials.md), or
+[Configure external Credentials](/docs/how-to/configure-external-credentials.md) for a Secret Store.
 
 ## Related documentation
 
@@ -220,6 +218,6 @@ To set the credential values of the environment and change them later, see
 - [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 - [Split a Cloud Passport for business and infra environments](/docs/how-to/split-cloud-passport-for-business-and-infra.md)
 - [Create a cluster](/docs/how-to/create-cluster.md)
-- [Configure Local Credentials](/docs/how-to/configure-local-credentials.md)
-- [Configure External Credentials](/docs/how-to/configure-external-credentials.md)
+- [Configure local Credentials](/docs/how-to/configure-local-credentials.md)
+- [Configure external Credentials](/docs/how-to/configure-external-credentials.md)
 - [Credential Rotation](/docs/features/cred-rotation.md)

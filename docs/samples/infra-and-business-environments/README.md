@@ -27,8 +27,8 @@ environments/
 | `env-inventory-content/`                     | Values of the `ENV_INVENTORY_CONTENT` pipeline parameter that create them  |
 
 The credentials in this set are local. See
-[Configure local credentials](/docs/how-to/configure-local-credentials.md). To keep them in a Secret Store, see
-[Configure external credentials](/docs/how-to/configure-external-credentials.md).
+[Configure local Credentials](/docs/how-to/configure-local-credentials.md). To keep them in a Secret Store, see
+[Configure external Credentials](/docs/how-to/configure-external-credentials.md).
 
 ## What differs
 
