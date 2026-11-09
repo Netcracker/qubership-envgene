@@ -53,12 +53,12 @@
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
-- [**Configure Artifact Registries**](/docs/how-to/configure-cloud-artifact-registries.md) - Set up AWS CodeArtifact, GCP Artifact Registry, Nexus, and Artifactory for Maven artifact downloads
 - [**Configure local Credentials**](/docs/how-to/configure-local-credentials.md) - Set and update the credentials of an environment stored encrypted in the Instance repository
 - [**Configure a Secret Store**](/docs/how-to/configure-secret-store.md) - Describe a Secret Store and give the Instance pipeline access to it
 - [**Configure external Credentials**](/docs/how-to/configure-external-credentials.md) - Set a sensitive parameter through a Credential kept in a Secret Store
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 - [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Configure Cloud Artifact Registries**](/docs/how-to/configure-cloud-artifact-registries.md) - Set up AWS CodeArtifact and GCP Artifact Registry for Maven artifact downloads
 - [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
 - [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
 
