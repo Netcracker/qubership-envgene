@@ -19,8 +19,7 @@
 
 A parameter can hold a sensitive value, such as a password or a token. Set such a parameter through an external
 Credential: the parameter references the Credential by its ID, and the value lives in a Secret Store. The Instance
-repository and the deployment hold only references to the value. How EnvGene collects and generates Credentials is
-described in [Credential processing](/docs/features/credential-processing.md).
+repository and the deployment hold only references to the value.
 
 For a complete file set, see the [external credentials samples](/docs/samples/external-credentials/).
 
@@ -252,7 +251,6 @@ The Shared Credentials file overrides the description of the same credential ID 
 
 - [Configure a Secret Store](/docs/how-to/configure-secret-store.md)
 - [Configure local Credentials](/docs/how-to/configure-local-credentials.md)
-- [Credential processing](/docs/features/credential-processing.md)
 - [External Credentials](/docs/features/external-creds.md)
 - [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md)
 - [Migrate an instance repository to external Credentials](/docs/how-to/migrate-instance-repository-to-external-credentials.md)
