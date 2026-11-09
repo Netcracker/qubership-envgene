@@ -613,15 +613,21 @@ Functions:
     - input:
       - effective set, fetched from the ES repository
       - `NAMESPACE_NAMES`
+      - topology context, read from its contractual location in the effective set
     - output:
       - the cleaned namespaces emptied in the effective set and mirrored to the ES repository
     - actions:
-      - for each namespace in `NAMESPACE_NAMES` (all namespaces in the effective set `mapping.yaml` if empty),
-        remove the `deployment` and `runtime` context content under
-        `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keep `<application-name>`, and write
-        `effective-set/<deployment|runtime>/<namespace>/.cleaned`
-      - push the effective set to the ES repository
-      - warn if a namespace in `NAMESPACE_NAMES` is absent from the effective set, warn if it is already cleaned
+      - select the target namespaces in one of two modes, by `NAMESPACE_NAMES`: a set value selects the named
+        namespaces, and an empty value selects every namespace of the environment, taken from the topology
+        context
+      - clean the effective-set content: for each target namespace remove the `deployment` and `runtime` context
+        content under `effective-set/<deployment|runtime>/<namespace>/<application-name>/`, keep
+        `<application-name>`, and write `effective-set/<deployment|runtime>/<namespace>/.cleaned`
+      - clean the ArgoCD Application CRs: for each target namespace remove each application's CR manifest
+        `argo-app.yaml` from its `deployment` application directory, where `argo-dpg generate structure` wrote it,
+        detaching the cleaned applications from ArgoCD. The `runtime` context holds no Application CR
+      - push updated effective set to the ES repository in overwrite mode
+      - warn if a target namespace is absent from the effective set or already cleaned
 
 #### 1.18 step `git_commit`
 
