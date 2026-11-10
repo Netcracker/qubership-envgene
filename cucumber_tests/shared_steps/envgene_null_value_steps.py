@@ -4,7 +4,8 @@ The injection steps mutate the pre-generated instance in the workspace so the
 generate_effective_set stage validates exactly the values the scenarios state.
 """
 import yaml
-from pytest_bdd import given, then, parsers
+from pytest_bdd import given, parsers
+
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
 # Secret material layout per credential type, as produced by
@@ -46,8 +47,3 @@ def set_unresolved_credentials(workspace: EnvGeneWorkspace, table):
         creds[cred_id]["data"] = _CRED_TYPE_TO_NULL_DATA[cred_type]
 
     creds_file.write_text(yaml.dump(creds, default_flow_style=False), encoding="utf-8")
-
-
-@then(parsers.parse('the pipeline log does not contain "{message}"'))
-def pipeline_log_does_not_contain(workspace: EnvGeneWorkspace, message: str):
-    workspace.assert_logs_not_contain(message)

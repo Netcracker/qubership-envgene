@@ -6,8 +6,9 @@ Feature: envgeneNullValue validation - envgene-null-value-validation.md
   # Every scenario triggers the instance pipeline with ENV_NAMES and
   # GENERATE_EFFECTIVE_SET=true, the P1 stage of the use cases. The
   # environment instance is pre-generated (pre-requisites 1-3 of every UC):
-  # the "uc_nvv_common" fixture is a fully rendered instance, so no env build
-  # runs and the validation sees exactly the fixture content plus whatever
+  # the "uc_nvv_common" fixture is a fully rendered instance including
+  # Inventory/solution-descriptor/sd.yaml, so no env build runs and the
+  # validation sees exactly the fixture content plus whatever
   # the Given steps inject.
 
   Scenario: UC-NVV-1: Unresolved parameter blocks pipeline
@@ -19,6 +20,10 @@ Feature: envgeneNullValue validation - envgene-null-value-validation.md
     Then the orchestrator fails
     And the pipeline log contains "Error while validating parameters:"
     And the pipeline log contains "namespace.core.deployParameters.API_URL - is not set"
+    # DB_HOST stays resolved in the same namespace: its absence from the report
+    # proves the validator reports the unresolved value selectively instead of
+    # flagging every parameter of a namespace that has one failure.
+    And the pipeline log does not contain "DB_HOST"
     And the pipeline step "generate_effective_set" has status "FAILED"
 
   Scenario: UC-NVV-2: Unresolved credential blocks pipeline
