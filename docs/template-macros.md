@@ -1320,7 +1320,7 @@ kafka_password: ${creds.get('kafka-cred').password}
 k8s_token: ${creds.get('k8s-cred').secret}
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/migration/test-deploy-creds.yml)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/prjct-cloud-deploy.yml)
 
 ### External Credentials via Credential Reference
 
