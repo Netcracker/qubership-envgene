@@ -15,7 +15,8 @@ TENANT = {
     "e2eParameters": {},
     "technicalConfigurationParameters": {},
 }
-CLOUD = {"name": "dummy-cloud", "cloudParameters": {}, "deployParameters": {}}
+CLOUD = {"name": "dummy-cloud", "cloudParameters": {}, "deployParameters": {},
+         "e2eParameters": {}, "technicalConfigurationParameters": {}}
 
 
 def _write(path, data):

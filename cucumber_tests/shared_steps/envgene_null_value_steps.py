@@ -32,16 +32,21 @@ def set_namespace_deploy_param(workspace: EnvGeneWorkspace, param: str, value: s
 
 
 @given(parsers.parse('the environment instance has these unresolved credentials:'))
-def set_unresolved_credentials(workspace: EnvGeneWorkspace, table):
+def set_unresolved_credentials(workspace: EnvGeneWorkspace, datatable):
     """Replace the secret material of each listed credential with envgeneNullValue in
-    Credentials/credentials.yml. Resolved credentials not in the table stay untouched."""
+    Credentials/credentials.yml. Resolved credentials not in the table stay untouched.
+
+    The table arrives as raw rows (header row included) because pytest-bdd only injects a
+    datatable into a parameter named exactly 'datatable'."""
     creds_file = (workspace.base_dir / "environments" / workspace.cluster_name
                   / workspace.env_name / "Credentials" / "credentials.yml")
     assert creds_file.exists(), f"Credentials file not found: {creds_file}"
 
+    header, *rows = datatable
     creds = yaml.safe_load(creds_file.read_text(encoding="utf-8")) or {}
-    for row in table:
-        cred_id, cred_type = row["cred_id"], row["type"]
+    for row in rows:
+        entry = dict(zip(header, row))
+        cred_id, cred_type = entry["cred_id"], entry["type"]
         assert cred_id in creds, f"Credential '{cred_id}' not found in {creds_file}"
         assert cred_type in _CRED_TYPE_TO_NULL_DATA, f"Unsupported credential type '{cred_type}'"
         creds[cred_id]["data"] = _CRED_TYPE_TO_NULL_DATA[cred_type]

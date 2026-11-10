@@ -2,7 +2,7 @@ import yaml
 import pytest
 
 from .collections_helper import dump_as_yaml_format
-from .creds_helper import CONCEALED_SECRET_MASK, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, check_cred_value, check_is_cred, create_cred_definition, expand_cred_macro_and_return_value, get_cred_id_and_property_from_cred_macros, get_cred_id_from_cred_macros, get_cred_list_from_param, mask_sensitive, validate_creds
+from .creds_helper import CONCEALED_SECRET_MASK, CRED_TYPE_SECRET, CRED_TYPE_USERPASS, CRED_TYPE_VAULT, EXTERNAL_CREDENTIAL_TYPE, check_cred_value, check_is_cred, create_cred_definition, expand_cred_macro_and_return_value, get_cred_id_and_property_from_cred_macros, get_cred_id_from_cred_macros, get_cred_list_from_param, mask_sensitive, validate_creds
 from .errors import ValidationError
 from envgene_shared.utils.yaml_utils import openYaml
 
@@ -246,9 +246,9 @@ def _cred(cred_type, **data):
         ("consul-cred", _cred("secret", secret="s"), ""),
         ("consul-cred", _cred("secret", secret="envgeneNullValue"),
          "credId: consul-cred - secret is not set"),
-        ("vault-cred", _cred("vault", secretId="envgeneNullValue"),
+        ("vault-cred", _cred(CRED_TYPE_VAULT, secretId="envgeneNullValue"),
          "credId: vault-cred - secretId is not set"),
-        ("ext-cred", _cred("external"), ""),
+        ("ext-cred", _cred(EXTERNAL_CREDENTIAL_TYPE, name="x"), ""),
     ],
     ids=["userpass-resolved", "userpass-null-username", "userpass-null-password",
          "secret-resolved", "secret-null", "vault-null", "external-ignored"],
