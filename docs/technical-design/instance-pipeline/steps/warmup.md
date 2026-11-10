@@ -88,8 +88,9 @@ The `warmup` step copies the active BG Namespace into the candidate Namespace, u
    3. When the active-side key is absent from `envTemplate.bgNsArtifacts`, the step skips artifact
       sync.
 
-   4. When `envTemplate.bgNsArtifacts` is present and contains the active-side key, the step copies
-      the active-side artifact value to the candidate-side key.
+   4. When `envTemplate.bgNsArtifacts` is present and contains the active-side key, the step writes
+      the active-side artifact value to the candidate-side key. When the candidate-side key is absent,
+      the step adds it. When the candidate-side key is present, the step overwrites it.
 
    5. The step writes updated `env_definition.yml`.
 

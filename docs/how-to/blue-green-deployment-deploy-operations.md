@@ -3,6 +3,7 @@
 - [Blue-Green Deployment deploy operations](#blue-green-deployment-deploy-operations)
   - [Description](#description)
   - [Prerequisites](#prerequisites)
+  - [Deploy the baseline environment](#deploy-the-baseline-environment)
   - [Deploy to the origin or peer namespace](#deploy-to-the-origin-or-peer-namespace)
   - [Deploy to a non-BG namespace](#deploy-to-a-non-bg-namespace)
   - [Deploy to the controller namespace](#deploy-to-the-controller-namespace)
@@ -42,6 +43,24 @@ for a manual run. Working examples are in
 - The [No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2) architecture. BGD runs only with
   `PIPELINE_TYPE: GITLAB_DEPLOY` and an Environment Inventory that sets `noCmdbVersion: v2`.
 
+## Deploy the baseline environment
+
+The first deploy of a BG environment uses `OPERATION_TYPE: DEPLOY` with no `BG_NS_TARGET`. The Solution
+Descriptor in [`APPLICATION_VERSIONS`](/docs/instance-pipeline-parameters.md#application_versions) lists
+the whole solution, and EnvGene renders every namespace the applications target, including both BG sides.
+With no `envTemplate.bgNsArtifacts`, origin and peer both render from `envTemplate.artifact`.
+
+```yaml
+ENV_NAMES: "<cluster-name>/<environment-name>"
+OPERATION_TYPE: "DEPLOY"
+PIPELINE_TYPE: "GITLAB_DEPLOY"
+APPLICATION_VERSIONS: "<value>"
+```
+
+This is the same run that first generates the Environment Instance. See
+[Configure Blue-Green Deployment](/docs/how-to/blue-green-deployment-configure.md#step-6-generate-the-environment-instance).
+Pin a side only when it needs a different template version, as described next.
+
 ## Deploy to the origin or peer namespace
 
 EnvGene renders the selected side from a template artifact version and recalculates its parameters. The
@@ -72,6 +91,9 @@ side can be the deploy target.
 
 3. Confirm that only the target side's namespace folder changed, for example `Namespaces/bss-peer/`. The
    other side's folder stays as it was.
+
+Each side is pinned independently. A deploy with the other `BG_NS_TARGET` sets only that side, so origin
+and peer can hold different versions. There are no separate per-side version parameters.
 
 The origin/peer descriptor layout is set up once when you configure the environment. See
 [Configure Blue-Green Deployment](/docs/how-to/blue-green-deployment-configure.md#step-4-create-the-environment-template-descriptor).
@@ -121,14 +143,14 @@ When `bgNsArtifacts` is not set, the origin and peer sides render from `artifact
 
 ## Pipeline parameters by deploy operation
 
-| Parameter                                                                                | Used for                                                        |
-|------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)                           | Target environment, `<cluster-name>/<environment-name>`         |
-| [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type)                 | `DEPLOY` for a deploy operation                                 |
-| [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type)                   | `GITLAB_DEPLOY` for the No-CMDB v2 architecture                     |
-| [`APPLICATION_VERSIONS`](/docs/instance-pipeline-parameters.md#application_versions)     | Solution Descriptor of applications to deploy                   |
-| [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)                     | Select origin or peer when they share a `deployPostfix`         |
-| [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version)     | Override the template version for this run                      |
+| Parameter                                                                            | Used for                                                |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)                       | Target environment, `<cluster-name>/<environment-name>` |
+| [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type)             | `DEPLOY` for a deploy operation                         |
+| [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type)               | `GITLAB_DEPLOY` for the No-CMDB v2 architecture         |
+| [`APPLICATION_VERSIONS`](/docs/instance-pipeline-parameters.md#application_versions) | Solution Descriptor of applications to deploy           |
+| [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target)                 | Select origin or peer when they share a `deployPostfix` |
+| [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) | Override the template version for this run              |
 
 ## BG lifecycle operations
 

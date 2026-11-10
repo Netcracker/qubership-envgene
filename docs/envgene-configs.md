@@ -109,21 +109,23 @@ envTemplate:
   name: string
   # Mandatory
   # Template artifact in application:version notation
-  # Used for rendering all Environment Instance objects except peer/origin Namespaces in BG Domain
+  # Renders all Environment Instance objects. For the origin and peer Namespaces of a BG Domain it is
+  # the fallback, used when bgNsArtifacts or that side is not specified
   artifact: string
   # Optional
-  # Blue-Green deployment artifacts for peer and origin namespaces
-  # Used ONLY for rendering peer and origin Namespaces in BG Domain
-  # If specified, bgNsArtifacts and artifact are NOT mutually exclusive:
-  # - bgNsArtifacts is used for rendering peer/origin Namespaces
-  # - artifact is used for rendering all other Environment Instance objects
+  # Per-side template artifact overrides for the origin and peer Namespaces of a BG Domain
+  # bgNsArtifacts and artifact are NOT mutually exclusive:
+  # - When specified, bgNsArtifacts renders the origin and peer Namespaces and artifact renders everything else
+  # - When a side is not specified, that Namespace renders from artifact
   # The role of a Namespace (origin, peer, or controller) is determined through the BG Domain object
   bgNsArtifacts:
-    # Mandatory
-    # Template artifact in application:version notation for origin namespace
+    # Optional
+    # Template artifact in application:version notation for the origin namespace
+    # When not specified, the origin Namespace renders from artifact
     origin: string
-    # Mandatory
-    # Template artifact in application:version notation for peer namespace
+    # Optional
+    # Template artifact in application:version notation for the peer namespace
+    # When not specified, the peer Namespace renders from artifact
     peer: string
   # Optional
   # Additional variables that will be available during template rendering
