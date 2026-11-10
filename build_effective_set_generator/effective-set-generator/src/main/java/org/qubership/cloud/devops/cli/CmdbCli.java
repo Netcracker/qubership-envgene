@@ -119,6 +119,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setDeployPlanPath(Optional.ofNullable(envParams.deployPlanPath));
         sharedData.setRegistryPath(Optional.ofNullable(envParams.registryPath));
         sharedData.setOutputDir(envParams.outputDir);
+        sharedData.setCredsOutput(envParams.credsOutput);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setGenerateCleanupContext(envParams.generateCleanupContext);
         prepareCustomParameters(getCustomParams(envParams.customParams));
@@ -241,6 +242,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-cp", "--custom-params"}, description = "Custom Parameters")
         String customParams;
+
+        @CommandLine.Option(names = "--creds-output", description = "File to write the credential files JSON to, standard output when not set")
+        String credsOutput;
 
     }
 

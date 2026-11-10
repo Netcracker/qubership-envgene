@@ -3,6 +3,7 @@ from pathlib import Path
 
 import yaml
 from inventory.env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgene_shared.utils.yaml_utils import readYaml, writeYamlToFile
 from envgenehelper import get_cluster_name_from_full_name, get_environment_name_from_full_name, is_dir_empty
 from envgenehelper.test_helpers import TestHelpers
@@ -77,7 +78,8 @@ class TestEnvInvGen(BaseTest):
         self.action = Action.CREATE_OR_REPLACE
         self.set_inv_content()
 
-        generate_env_new_approach()
+        with open_cred_store():
+            generate_env_new_approach()
 
         TestHelpers.assert_dirs_content(self.ci_project_dir, self.expected_dir, check_for_extra_files=True,
                                         check_for_missing_files=True)
@@ -85,7 +87,8 @@ class TestEnvInvGen(BaseTest):
         self.action = Action.DELETE
         self.set_inv_content()
 
-        generate_env_new_approach()
+        with open_cred_store():
+            generate_env_new_approach()
 
         assert is_dir_empty(self.site_dir / "parameters")
         assert is_dir_empty(self.site_dir / "credentials")
@@ -106,7 +109,8 @@ class TestEnvInvGen(BaseTest):
         updated_version = "template:v0.0.0"
         environ["ENV_TEMPLATE_VERSION"] = updated_version
 
-        generate_env_new_approach()
+        with open_cred_store():
+            generate_env_new_approach()
 
         inventory_path = Path(
             self.ci_project_dir) / "environments" / self.full_env_name / INVENTORY / "env_definition.yml"

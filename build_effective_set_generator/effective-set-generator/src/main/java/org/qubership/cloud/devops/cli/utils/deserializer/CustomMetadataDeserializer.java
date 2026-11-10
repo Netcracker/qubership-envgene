@@ -18,6 +18,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
+
 public class CustomMetadataDeserializer extends JsonDeserializer<Metadata> {
 
     private final LifecycleDeserializer lifecycleDeserializer = new LifecycleDeserializer();
@@ -131,7 +133,7 @@ public class CustomMetadataDeserializer extends JsonDeserializer<Metadata> {
             metadata.setTimestamp(Date.from(date.toInstant()));
         } catch (Exception e) {
             metadata.setTimestamp(null);
-            System.out.println("Error dezerializing date");
+            logError("Error dezerializing date");
         }
 
 

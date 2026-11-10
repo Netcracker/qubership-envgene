@@ -45,6 +45,8 @@ public class SharedData {
 
     private String outputDir;
 
+    private String credsOutput;
+
     private EffectiveSetVersion effectiveSetVersion;
 
     private List<String> pcsspPaths;

@@ -1,10 +1,12 @@
 import base64
 import os
+import shlex
 import subprocess
 import tempfile
-import shutil
+import sys
 
 from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.crypt_utils import get_crypt
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, get_or_create_nested_yaml_attribute
 from envgene_shared.utils.logger import logger
 
@@ -12,6 +14,8 @@ from envgene_shared.utils.constants import *
 
 ENVGENE_AGE_PRIVATE_KEY = None
 PUBLIC_AGE_KEYS = None
+
+DCL2ARGO_AGE_PUBLIC_KEY_PARAM = "DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY"
 
 
 def _sops_subprocess_env(secret_key=None, **extra):
@@ -27,12 +31,12 @@ def _sops_subprocess_env(secret_key=None, **extra):
     return env
 
 
-def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, **env_extra):
+def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, stdin_text=None, **env_extra):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
     cmd = ['sops'] + cmd_arg
     env = _sops_subprocess_env(secret_key, **env_extra)
     result = subprocess.run(
-        cmd, shell=False, capture_output=True, text=True, timeout=25, env=env
+        cmd, shell=False, capture_output=True, text=True, timeout=25, env=env, input=stdin_text
     )
     if "metadata not found" in result.stderr:
         raise ValueError('File was already decrypted')
@@ -54,14 +58,20 @@ def _run_SOPS(cmd_arg, secret_key=None, return_codes_to_ignore=None, **env_extra
 def _create_replace_content_sh(content_bytes):
     """Build an executable SOPS EDITOR script that writes plaintext bytes exactly."""
     payload = base64.b64encode(content_bytes).decode('ascii')
-    script_content = f"""#!/usr/bin/env python3
-import base64
+    script_content = f"""import base64
 import sys
+
+from ruyaml import YAML
 
 if len(sys.argv) < 2:
     raise SystemExit("No target file specified.")
-with open(sys.argv[1], "wb") as out:
-    out.write(base64.b64decode({payload!r}))
+yaml = YAML(typ="safe")
+new_bytes = base64.b64decode({payload!r})
+with open(sys.argv[1], "rb") as f:
+    old_content = yaml.load(f)
+if old_content != yaml.load(new_bytes):
+    with open(sys.argv[1], "wb") as out:
+        out.write(new_bytes)
 """
     script = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode='w', encoding='utf-8')
     script.write(script_content)
@@ -75,23 +85,12 @@ def _sops_edit(encrypted_path, plaintext_path, public_key, secret_key=None):
         plaintext_bytes = f.read()
     editor_path = _create_replace_content_sh(plaintext_bytes)
     try:
-        os.chmod(editor_path, 0o777)
         sops_args = ["edit", "--age", public_key, str(encrypted_path)]
-        _run_SOPS(sops_args, secret_key=secret_key, return_codes_to_ignore=[200], EDITOR=editor_path)
+        editor = f"{shlex.quote(sys.executable)} {shlex.quote(editor_path)}"
+        _run_SOPS(sops_args, secret_key=secret_key, return_codes_to_ignore=[200], EDITOR=editor)
     finally:
         if os.path.exists(editor_path):
             os.remove(editor_path)
-
-
-def _get_minimized_diff(file_path, old_file_path, public_key, secret_key=None):
-    tmp_file_obj = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
-    tmp_file_obj.close()
-    tmp_path = tmp_file_obj.name
-
-    shutil.copy(old_file_path, tmp_path)
-
-    _sops_edit(tmp_path, file_path, public_key, secret_key=secret_key)
-    return tmp_path
 
 
 def _return_sops_result(file_path, mode, in_place, load_result, result=None):
@@ -103,8 +102,8 @@ def _return_sops_result(file_path, mode, in_place, load_result, result=None):
     return openYaml(file_path) if load_result else None
 
 
-def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None,
-               load_result=True, encrypted_regex=None, *args, **kwargs):
+def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, load_result=True,
+               encrypted_regex=None, *args, **kwargs):
     global ENVGENE_AGE_PRIVATE_KEY, PUBLIC_AGE_KEYS
     if not secret_key or not public_key:
         if ENVGENE_AGE_PRIVATE_KEY is None:
@@ -114,21 +113,6 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         secret_key = ENVGENE_AGE_PRIVATE_KEY
     if not public_key:
         public_key = PUBLIC_AGE_KEYS
-
-    if minimize_diff and mode != "decrypt":
-        tmp_path = _get_minimized_diff(file_path, old_file_path, public_key, secret_key=secret_key)
-        try:
-            if in_place:
-                shutil.copy2(tmp_path, file_path)
-                if load_result:
-                    return openYaml(file_path)
-                return None
-            result = openYaml(tmp_path)
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-        logger.info(f'The file has been {mode}ed. Path: {file_path}')
-        return result
 
     sops_args = [f"--{SOPS_MODES[mode]}"]
     if mode != "decrypt" and encrypted_regex is not None:
@@ -144,6 +128,55 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         return openYaml(file_path) if load_result else None
 
     return _return_sops_result(file_path, mode, in_place, load_result, stdout)
+
+
+def decrypt_SOPS_bytes(data: bytes, file_path, secret_key=None) -> str:
+    sops_args = ["decrypt", "--input-type", "yaml", "--output-type", "yaml", "--filename-override", str(file_path),
+                 "/dev/stdin"]
+    return _run_SOPS(sops_args, secret_key=secret_key, stdin_text=data.decode("utf-8")).stdout
+
+
+def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: bytes = None) -> bytes:
+    global PUBLIC_AGE_KEYS
+    if PUBLIC_AGE_KEYS is None:
+        PUBLIC_AGE_KEYS = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
+    if old_data is not None:
+        with tempfile.TemporaryDirectory() as tmp:
+            old_path = os.path.join(tmp, "old.yml")
+            new_path = os.path.join(tmp, "new.yml")
+            with open(old_path, "wb") as f:
+                f.write(old_data)
+            with open(new_path, "wb") as f:
+                f.write(data)
+            _sops_edit(old_path, new_path, PUBLIC_AGE_KEYS)
+            with open(old_path, "rb") as f:
+                return f.read()
+    sops_args = ["encrypt", "--input-type", "yaml", "--output-type", "yaml", "--age", PUBLIC_AGE_KEYS]
+    if encrypted_regex is not None:
+        sops_args.extend(["--encrypted-regex", encrypted_regex])
+    sops_args.extend(["--filename-override", str(file_path), "/dev/stdin"])
+    return _run_SOPS(sops_args, stdin_text=data.decode("utf-8")).stdout.encode("utf-8")
+
+
+def merge_pipeline_age_key_into_public_keys(effective_set_dir) -> None:
+    global PUBLIC_AGE_KEYS
+    if not get_crypt():
+        return
+    params_path = effective_set_dir / "pipeline" / "parameters.yaml"
+    params = openYaml(params_path, allow_default=True) or {}
+    age_public_key = str(params.get(DCL2ARGO_AGE_PUBLIC_KEY_PARAM) or "").strip()
+    if not age_public_key:
+        logger.warning(f"{DCL2ARGO_AGE_PUBLIC_KEY_PARAM} not found in pipeline context {params_path}, "
+                       "encrypting with PUBLIC_AGE_KEYS only")
+        return
+    public_age_keys = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
+    existing_keys = [key.strip() for key in public_age_keys.split(",") if key.strip()]
+    if age_public_key not in existing_keys:
+        existing_keys.append(age_public_key)
+    combined = ",".join(existing_keys)
+    os.environ["PUBLIC_AGE_KEYS"] = combined
+    PUBLIC_AGE_KEYS = combined
+    logger.info(f"PUBLIC_AGE_KEYS combined recipients: {combined}")
 
 
 def extract_value_SOPS(file_path, attribute_str):
@@ -164,6 +197,10 @@ def is_encrypted_SOPS(file_path):
             text = f.read()
     except OSError:
         return False
+    return is_encrypted_SOPS_text(text)
+
+
+def is_encrypted_SOPS_text(text: str) -> bool:
     if not text:
         return False
     for line in reversed(text.splitlines()):

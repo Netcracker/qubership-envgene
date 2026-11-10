@@ -4,6 +4,7 @@ import pytest
 
 from build_env.create_credentials import CredentialCollector, create_credentials, getNamespaceCreds, getTenantCreds
 from build_env.render_config_env import EnvGenerator
+from envgene_shared.crypto.cred_store import CredStore
 from envgenehelper import CredentialMode, open_current_env_instance_store
 from envgenehelper.yaml_helper import readYaml
 
@@ -54,7 +55,8 @@ technicalConfigurationParameters: {}
 """
 
 
-def test_create_credentials_does_not_change_store_objects(tmp_path):
+def test_create_credentials_does_not_change_store_objects(tmp_path, monkeypatch):
+    monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", CredStore([]))
     env_dir = tmp_path / "environments" / "cluster" / "env"
     paths = {
         env_dir / "tenant.yml": TENANT,
