@@ -13,10 +13,10 @@ namespaces:
     parent: saas-default-core
     overrides-parent:
       deployParameterSets:
-        - "prjct-cloud-core-deploy"    
+        - "prjct-cloud-core-deploy"
   - template_path: "{{ templates_dir }}/env_templates/composite/bss.yml.j2"
     template_override:
       deployParameters:
-        oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}" 
+        oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}"
   - template_path: "{{ templates_dir }}/env_templates/composite/oss.yml.j2"
 composite_structure: "{{ templates_dir }}/env_templates/composite/composite-structure.yml.j2"
