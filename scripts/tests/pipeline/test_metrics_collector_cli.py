@@ -1,9 +1,10 @@
 import json
+import os
 from types import SimpleNamespace
 
 import pytest, uuid
 
-from pipeline.metrics_collector_cli import main
+from pipeline.metrics_collector_cli import main, start_metrics_collector
 from pipeline.metrics_collector_activity import MetricsCollectorActivity
 
 
@@ -428,3 +429,150 @@ def test_start_collects_params_without_building_pipeline_context(monkeypatch):
     assert config["PIPELINE_TYPE"] == "GITLAB_DEPLOY"
     assert config["ENV_BUILDER"] == "False"  # default from the canonical parser, not just two params
     assert "CRED_ROTATION_PAYLOAD" not in config
+
+
+def test_start_metrics_collector_stages_client_and_sends_start(monkeypatch, tmp_path):
+    deps = tmp_path / "deps"
+    (deps / "wheels").mkdir(parents=True)
+    (deps / "requirements.txt").write_text("requests==1\n", encoding="utf-8")
+    monkeypatch.setattr("pipeline.metrics_collector_cli.METRICS_COLLECTOR_DEPS_DIR", deps)
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
+    monkeypatch.setenv("CI_JOB_NAME", "env-prepare")
+    monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    calls = []
+    monkeypatch.setattr(
+        "pipeline.metrics_collector_activity.requests.post",
+        lambda *args, **kwargs: calls.append(json.loads(kwargs["data"])) or SimpleNamespace(ok=True),
+    )
+
+    start_metrics_collector()
+
+    client = tmp_path / "tmp" / ".metrics-collector-client"
+    assert (client / "pipeline" / "metrics_collector_activity.py").is_file()
+    assert (client / "pipeline" / "metrics_collector_cli.py").is_file()
+    assert not (client / "metrics_collector_hooks.sh").exists()
+    assert (client / "deps" / "requirements.txt").read_text(encoding="utf-8") == "requests==1\n"
+    trace_id = (tmp_path / "tmp" / ".metrics-collector-trace-id").read_text(encoding="utf-8")
+    assert trace_id == os.environ["METRICS_COLLECTOR_TRACE_ID"]
+    assert "\n" not in trace_id
+    assert os.environ["METRICS_COLLECTOR_RESULTS_ROOT"] == str(tmp_path / "tmp")
+    assert [event["type"] for event in calls] == ["start"]
+    assert calls[0]["traceid"] == trace_id
+    assert calls[0]["status"] == "IN_PROGRESS"
+
+
+def test_start_metrics_collector_is_skipped_without_url(monkeypatch, tmp_path):
+    monkeypatch.delenv("METRICS_COLLECTOR_URL", raising=False)
+    monkeypatch.setattr(
+        "pipeline.metrics_collector_activity.requests.post",
+        lambda *args, **kwargs: pytest.fail("disabled integration must not POST"),
+    )
+
+    start_metrics_collector()
+
+    assert not (tmp_path / "tmp").exists()
+
+
+def _collector_posts(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "pipeline.metrics_collector_activity.requests.post",
+        lambda *args, **kwargs: calls.append(json.loads(kwargs["data"])) or SimpleNamespace(ok=True),
+    )
+    return calls
+
+
+def _write_trace(tmp_path, trace_id="trace-from-prepare"):
+    path = tmp_path / "tmp" / ".metrics-collector-trace-id"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(trace_id, encoding="utf-8")
+    client = tmp_path / "tmp" / ".metrics-collector-client"
+    client.mkdir(exist_ok=True)
+    return path, client
+
+
+def test_stop_prepare_stops_when_sync_will_not_run(monkeypatch, tmp_path):
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
+    monkeypatch.setenv("CI_JOB_NAME", "env-prepare")
+    monkeypatch.setenv("CI_JOB_STATUS", "success")
+    monkeypatch.setenv("PIPELINE_TYPE", "FULL")
+    monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    _write_trace(tmp_path)
+    calls = _collector_posts(monkeypatch)
+
+    assert main(["stop-prepare"]) == 0
+
+    assert [event["type"] for event in calls] == ["running", "stop"]
+    assert {event["traceid"] for event in calls} == {"trace-from-prepare"}
+    assert calls[-1]["status"] == "SUCCESS"
+
+
+def test_stop_prepare_leaves_stop_for_sync(monkeypatch, tmp_path):
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "job-123")
+    monkeypatch.setenv("CI_JOB_NAME", "env-prepare")
+    monkeypatch.setenv("CI_JOB_STATUS", "success")
+    monkeypatch.setenv("PIPELINE_TYPE", "GITLAB_DEPLOY")
+    monkeypatch.setenv("OPERATION_TYPE", "DEPLOY")
+    monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    _write_trace(tmp_path)
+    calls = _collector_posts(monkeypatch)
+
+    assert main(["stop-prepare"]) == 0
+
+    assert [event["type"] for event in calls] == ["running"]
+    assert calls[0]["status"] == "SUCCESS"
+
+
+def test_start_sync_sends_running_for_saved_trace(monkeypatch, tmp_path):
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "sync-1")
+    monkeypatch.setenv("CI_JOB_NAME", "sync")
+    monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    _write_trace(tmp_path, "trace-for-sync")
+    calls = _collector_posts(monkeypatch)
+
+    assert main(["start-sync"]) == 0
+
+    assert [event["type"] for event in calls] == ["running"]
+    assert calls[0]["status"] == "IN_PROGRESS"
+    assert calls[0]["traceid"] == "trace-for-sync"
+
+
+def test_stop_sync_removes_client_after_success(monkeypatch, tmp_path):
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "sync-1")
+    monkeypatch.setenv("CI_JOB_NAME", "sync")
+    monkeypatch.setenv("CI_JOB_STATUS", "success")
+    monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    _, client = _write_trace(tmp_path)
+    calls = _collector_posts(monkeypatch)
+
+    assert main(["stop-sync"]) == 0
+
+    assert [event["type"] for event in calls] == ["stop"]
+    assert not client.exists()
+    assert not (tmp_path / "tmp" / ".metrics-collector-trace-id").exists()
+
+
+def test_stop_sync_keeps_client_after_failure(monkeypatch, tmp_path):
+    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("CI_JOB_ID", "sync-1")
+    monkeypatch.setenv("CI_JOB_NAME", "sync")
+    monkeypatch.setenv("CI_JOB_STATUS", "failed")
+    monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+    monkeypatch.delenv("ENV_NAMES", raising=False)
+    _, client = _write_trace(tmp_path)
+    _collector_posts(monkeypatch)
+
+    assert main(["stop-sync"]) == 0
+
+    assert client.is_dir()
+    assert (tmp_path / "tmp" / ".metrics-collector-trace-id").is_file()

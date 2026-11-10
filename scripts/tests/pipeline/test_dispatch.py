@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+from types import SimpleNamespace
 
 import pytest
 
@@ -151,3 +153,38 @@ class TestPrepareJob:
                 dispatch()
         assert job_preparation_calls == []
         assert "- FAILED" in caplog.text
+
+    @pytest.mark.unit
+    def test_starts_metrics_before_failed_preparation(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("ENV_NAMES", raising=False)
+        monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
+        monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+        monkeypatch.setenv("CI_JOB_ID", "job-123")
+        monkeypatch.setenv("CI_JOB_NAME", "env-prepare")
+        calls = []
+        monkeypatch.setattr(
+            "pipeline.metrics_collector_activity.requests.post",
+            lambda *args, **kwargs: calls.append(json.loads(kwargs["data"])) or SimpleNamespace(ok=True),
+        )
+
+        with pytest.raises(ValueError, match="Set ENV_NAMES or both CLUSTER_NAME and ENVIRONMENT_NAME"):
+            dispatch()
+
+        assert [event["type"] for event in calls] == ["start"]
+        trace_file = tmp_path / "tmp" / ".metrics-collector-trace-id"
+        assert trace_file.read_text(encoding="utf-8") == calls[0]["traceid"]
+        assert (tmp_path / "tmp" / ".metrics-collector-client" / "pipeline" / "metrics_collector_cli.py").is_file()
+
+    @pytest.mark.unit
+    def test_fan_out_child_does_not_start_metrics(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("ENV_NAMES", "cluster-01/env-01")
+        monkeypatch.setenv("ENVGENE_FAN_OUT_CHILD", "1")
+        monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+        monkeypatch.setattr("pipeline.orchestrator.run_single_env_pipeline", lambda: None)
+        monkeypatch.setattr(
+            "pipeline.metrics_collector_activity.requests.post",
+            lambda *args, **kwargs: pytest.fail("child must not send start"),
+        )
+
+        assert dispatch() == 0
+        assert not (tmp_path / "tmp" / ".metrics-collector-trace-id").exists()
