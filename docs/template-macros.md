@@ -316,7 +316,7 @@ deployParameters:
   INSTANCES_LEVEL_VAR_CLOUD: "{{ current_env.additionalTemplateVariables.CLOUD_LEVEL_PARAM1 }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/billing.yaml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/bss.yml.j2)
 
 ### `current_env.cloud_passport`
 
