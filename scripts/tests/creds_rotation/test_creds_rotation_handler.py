@@ -1,11 +1,12 @@
-from envgenehelper.errors import ValidationError
 import pytest
 import os
 
 from creds_rotation.utils.error_constants import ErrorCodes, ErrorMessages
 from scripts.tests.base_test import BaseTest
 from envgenehelper import copy_path, delete_dir, json
+from envgenehelper.errors import ValidationError
 from creds_rotation.creds_rotation_handler import run_cred_rotation
+from envgene_shared.crypto.cred_store import open_cred_store
 import yaml
 
 test_data = [
@@ -36,7 +37,7 @@ def setup_env(cluster_name, env_name):
 @pytest.mark.parametrize("cluster_name, env_name", test_data)
 def test_rotation_fails_without_force(setup_env, cluster_name, env_name):
     os.environ["CRED_ROTATION_FORCE"] = "false"
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception) as exc_info, open_cred_store():
         run_cred_rotation()
     assert "Credentials updates are skipped because CRED_ROTATION_FORCE is not enabled" in str(exc_info.value)
     with open(f"{g_cred_dir}/affected-sensitive-parameters.yaml") as f:
@@ -49,7 +50,8 @@ def test_rotation_fails_without_force(setup_env, cluster_name, env_name):
 @pytest.mark.parametrize("cluster_name, env_name", test_data)
 def test_secret_changed_present(setup_env, cluster_name, env_name):
     os.environ["CRED_ROTATION_FORCE"] = "true"
-    run_cred_rotation()
+    with open_cred_store():
+        run_cred_rotation()
     with open(f"{g_test_dir}/environments/cluster-02/credentials/sample-cloud-name-creds.yml") as f:
         content = f.read()
     assert "secretChanged" in content, "'secretChanged' not found in YAML file"

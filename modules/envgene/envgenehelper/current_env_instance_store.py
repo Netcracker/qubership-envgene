@@ -7,10 +7,11 @@ from pathlib import Path
 
 from ruyaml import CommentedMap
 
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.business_utils import get_envgene_config_yaml, to_bool
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import openYaml, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
 from .models import CredentialMode
@@ -52,18 +53,26 @@ class CurrentEnvInstanceStore:
     def put(self, path, obj):
         key = _key(path)
         logger.debug(f"Object store put: {key}")
+        if is_cred_file(str(key)):
+            current_cred_store().put(key, obj)
+            return obj
         self._objects[key] = obj
         self._to_write.add(key)
         return obj
 
     def get(self, path):
         key = _key(path)
+        if is_cred_file(str(key)):
+            return current_cred_store().load_decrypted(key)
         if key not in self._objects:
             raise FileNotFoundError(f"{key} is not in the object store")
         return self._objects[key]
 
     def exists(self, path) -> bool:
-        return _key(path) in self._objects
+        key = _key(path)
+        if is_cred_file(str(key)):
+            return current_cred_store().exists(key)
+        return key in self._objects
 
     def find_yaml(self, dir_path, name) -> Path | None:
         dir_parts = _key(dir_path).parts
@@ -135,10 +144,7 @@ class CurrentEnvInstanceStore:
                     data = sortYaml(data, schema_path, False, validate=False)
                 make_quotes_for_strings(data)
             normalize_comments(data)
-            if is_cred_file(str(key)):
-                remove_cred_yaml_comments(data)
-            else:
-                remove_empty_list_comments(data)
+            remove_empty_list_comments(data)
             text = dumpYamlToStr(data)
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
