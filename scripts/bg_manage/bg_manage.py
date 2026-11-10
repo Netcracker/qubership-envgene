@@ -125,7 +125,7 @@ def sync_bg_ns_artifacts(active_role: NamespaceRole, candidate_role: NamespaceRo
         return
 
     logger.info(f'Syncing envTemplate.bgNsArtifacts: "{candidate_role}" := "{active_role}"')
-    bg_ns_artifacts[candidate_role] = bg_ns_artifacts[active_role]
+    bg_ns_artifacts[candidate_role.value] = bg_ns_artifacts[active_role]
     writeYamlToFile(env_definition_path, env_definition)
 
 
