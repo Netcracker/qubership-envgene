@@ -204,8 +204,6 @@ Functions:
       - updated env_definition
     - actions:
       - set template version
-    - AI[bgd] support template version change base on `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`, `ENV_TEMPLATE_VERSION_UPDATE_MODE`.
-    - AI[bgd] remove `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`
 
 #### 1.9 step `process_env_template` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
 
