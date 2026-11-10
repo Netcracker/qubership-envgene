@@ -2,7 +2,6 @@
 parent-templates:
   saas-basic-cloud: saas-basic-product-template:1.22.2-20261030044650
   saas-default-core: saas-core-product-templates:1.18.4-20261005043958
-  saas-default-bss: saas-bss-product-templates:1.12.0-20260915025323
 
 tenant:
   parent: saas-basic-cloud
@@ -14,33 +13,10 @@ namespaces:
     parent: saas-default-core
     overrides-parent:
       deployParameterSets:
-        - "core-dbaas-configuration"
-      profile:
-        name: prod_core_override
-        baseline: prod
-  # - name: "{env}-bss"
-  #   parent: saas-default-bss
-  #   overrides-parent:
-  #     profile:
-  #       override-profile-name: prod_bss_override
-  #       baseline-profile-name: prod
-  #     deployParameterSets:
-  #       - "cloudbss-om"
+        - "prjct-cloud-core-deploy"    
   - template_path: "{{ templates_dir }}/env_templates/composite/bss.yml.j2"
     template_override:
       deployParameters:
-        oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}"
-      profile:
-        name: prod_bss_override
-        baseline: prod
+        oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}" 
   - template_path: "{{ templates_dir }}/env_templates/composite/oss.yml.j2"
-    template_override:
-      profile:
-        name: prod_oss_override
-        baseline: prod
-  - template_path: "{{ templates_dir }}/env_templates/composite/billing.yaml.j2"
-    template_override:
-      profile:
-        name: prod_billing_override
-        baseline: prod
 composite_structure: "{{ templates_dir }}/env_templates/composite/composite-structure.yml.j2"

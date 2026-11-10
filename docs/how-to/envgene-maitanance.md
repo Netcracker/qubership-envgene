@@ -6,7 +6,9 @@ This guide describes the process of initializing and upgrading an Environment In
 
 ## Prerequisites
 
-> **Note:**  GSF Package Manager (git-system-follower) officially supports Linux only. Although it may run on Windows and macOS, these platforms are not officially supported.
+> [!NOTE]
+> GSF Package Manager (git-system-follower) officially supports Linux only.
+> It may run on Windows and macOS, but those platforms are not supported.
 
 ### 1. GSF Package Manager Installation
 

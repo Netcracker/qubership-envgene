@@ -1,7 +1,0 @@
-version: 1
-name: "cloudbss-om"
-parameters: {}
-applications:
-  - appName: "cloudbss-om"
-    parameters:
-      OM_LOCALIZATION_REPO_NAME: "claro-cloudbss-localization"
