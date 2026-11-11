@@ -97,6 +97,17 @@ class TestBgManage(BaseTest):
         bg_ns_artifacts = openYaml(env_definition_path)["envTemplate"]["bgNsArtifacts"]
         assert bg_ns_artifacts == {"origin": "bgd:v1.1.0-origin", "peer": "bgd:v1.1.0-origin"}
 
+    def test_warmup_removes_candidate_bg_ns_artifact_when_active_absent(self):
+        env_definition_path = getEnvDefinitionPath(self.env_path)
+        env_definition = openYaml(env_definition_path)
+        del env_definition["envTemplate"]["bgNsArtifacts"]["origin"]
+        writeYamlToFile(env_definition_path, env_definition)
+
+        bg_manage.sync_bg_ns_artifacts(NamespaceRole.ORIGIN, NamespaceRole.PEER)
+
+        bg_ns_artifacts = openYaml(env_definition_path)["envTemplate"]["bgNsArtifacts"]
+        assert bg_ns_artifacts == {}
+
     def test_change_bg_state_writes_state_files(self):
         ctx = type("Ctx", (), {})()
         ctx.params = {"BG_STATE": os.environ["BG_STATE"]}

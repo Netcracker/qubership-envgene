@@ -139,6 +139,23 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
     And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "crm:1.0"
 
+  Scenario: Sub-flow 2 - warmup removes the candidate bgNsArtifacts entry when the active one is absent
+    Given the workspace is initialized with test data from "e2e/uc_bgd_warmup"
+    And the environment inventory field "envTemplate.bgNsArtifacts.origin" is removed
+    And the BG state files are origin "active" and peer "idle"
+    And the pipeline parameter "OPERATION_TYPE" is set to "BGD"
+    And the pipeline parameter "BGD_OPERATION" is set to "warmup"
+    And the pipeline parameter "BG_STATE" targets origin "active" and peer "candidate"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "warmup" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the BG state files are origin "active" and peer "candidate"
+    And the environment inventory field "envTemplate.bgNsArtifacts.origin" is absent
+    And the environment inventory field "envTemplate.bgNsArtifacts.peer" is absent
+    And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
+    And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "crm:1.0"
+
   Scenario: Sub-flow 2 - warmup succeeds without bgNsArtifacts
     Given the workspace is initialized with test data from "e2e/uc_bgd_warmup"
     And the environment inventory field "envTemplate.bgNsArtifacts" is removed
