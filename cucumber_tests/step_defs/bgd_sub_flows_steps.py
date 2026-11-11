@@ -68,6 +68,32 @@ def then_deploy_plan_unchanged(workspace: EnvGeneWorkspace):
     )
 
 
+@given(parsers.parse('the environment inventory field "{field_path}" is removed'))
+def given_inventory_field_removed(workspace: EnvGeneWorkspace, field_path: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    env_def_path = env_dir / "Inventory" / "env_definition.yml"
+    workspace.assert_file_exists(env_def_path)
+    content = yaml.safe_load(env_def_path.read_text(encoding="utf-8"))
+    *parents, leaf = field_path.split(".")
+    node = content
+    for key in parents:
+        node = node[key]
+    del node[leaf]
+    env_def_path.write_text(yaml.safe_dump(content, sort_keys=False), encoding="utf-8")
+
+
+@then(parsers.parse('the environment inventory field "{field_path}" is absent'))
+def then_inventory_field_absent(workspace: EnvGeneWorkspace, field_path: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    env_def_path = env_dir / "Inventory" / "env_definition.yml"
+    workspace.assert_file_exists(env_def_path)
+    node = yaml.safe_load(env_def_path.read_text(encoding="utf-8"))
+    *parents, leaf = field_path.split(".")
+    for key in parents:
+        node = node.get(key) or {}
+    assert leaf not in node, f"Expected {field_path} to be absent, got '{node[leaf]}'"
+
+
 @then(parsers.parse('the environment inventory field "envTemplate.bgNsArtifacts.{role}" equals "{value}"'))
 def then_bg_ns_artifacts_field(workspace: EnvGeneWorkspace, role: str, value: str):
     env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
