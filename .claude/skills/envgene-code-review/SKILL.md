@@ -18,7 +18,7 @@ Team rules that a code change is checked against, and the procedure for the chec
 - After a rename, search the whole repository for the old name. Untracked tests break silently.
 - Report correctness bugs even when no rule in this document covers them.
 - When the reviewer names a new kind of problem, propose a new rule for section 5.
-- When a separate reviewer agent does the review, for example through the `requesting-code-review`
+- When a separate reviewer agent does the review, for example through the `component-reviewer`
   skill, add to its prompt: read `.claude/skills/envgene-code-review/SKILL.md` and check the diff
   against sections 2 to 5. The reviewer agent starts without this skill.
 
