@@ -6,6 +6,7 @@ import jsonschema
 import pytest
 import yaml
 
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper import openYaml, get_cred_config, extra_creds_scope
 from envgenehelper.business_helper import render_workspace_dir
 from envgenehelper.config_helper import get_regdef_v2_schema
@@ -131,7 +132,7 @@ def pipeline_env(monkeypatch, tmp_path):
     parameters_dir.mkdir()
     (parameters_dir / "pubreg.yaml").write_text(PUBREG_PARAMSET)
 
-    with extra_creds_scope():
+    with extra_creds_scope(), open_cred_store():
         yield
 
 

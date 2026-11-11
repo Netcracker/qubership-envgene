@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static org.qubership.cloud.devops.commons.utils.ParameterUtils.prepareCustomParams;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.ESO_SUPPORT;
 import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.VALS;
@@ -91,9 +90,7 @@ public class ParametersCalculationServiceV2 {
                 namespaceName,
                 applicationName,
                 deployerInputs,
-                originalNamespace,
-                customParams.getAllParams());
-
+                originalNamespace);
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(PER_SERVICE_DEPLOY_PARAMS)) {
@@ -103,8 +100,7 @@ public class ParametersCalculationServiceV2 {
             processDeploymentDescriptorParams(parameters, parameterBundle);
         }
         Map<String, Object> collisionCustomDeployParams = Collections.emptyMap();
-        if (MapUtils.isNotEmpty(customParams.getAllParams())) {
-            prepareCustomParams(customParams, parameters.getDeployParams(), parameters.getTechParams());
+        if (customParams != null && MapUtils.isNotEmpty(customParams.getAllParams())) {
             Map<String, Object> customDeployParamsObj = ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams());
             Set<String> serviceNames = getServiceNames(parameters.getDeployParams());
             collisionCustomDeployParams = getCollisionParams(customDeployParamsObj, serviceNames);

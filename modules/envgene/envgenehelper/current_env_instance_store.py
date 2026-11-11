@@ -7,12 +7,14 @@ from pathlib import Path
 
 from ruyaml import CommentedMap
 
+from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.business_utils import get_envgene_config_yaml, to_bool
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import openYaml, remove_cred_yaml_comments, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import openYaml, remove_empty_list_comments
 
 from .business_helper import NamespaceFile
+from .models import CredentialMode
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
@@ -36,8 +38,9 @@ def _match(parts: tuple, pattern: tuple) -> bool:
 
 
 class CurrentEnvInstanceStore:
-    def __init__(self, env_dir):
+    def __init__(self, env_dir, credential_mode=CredentialMode.LOCAL):
         self.env_dir = _key(env_dir)
+        self.credential_mode = credential_mode
         self._objects = {}
         self._to_write = set()
         self._beautify = {}
@@ -50,18 +53,26 @@ class CurrentEnvInstanceStore:
     def put(self, path, obj):
         key = _key(path)
         logger.debug(f"Object store put: {key}")
+        if is_cred_file(str(key)):
+            current_cred_store().put(key, obj)
+            return obj
         self._objects[key] = obj
         self._to_write.add(key)
         return obj
 
     def get(self, path):
         key = _key(path)
+        if is_cred_file(str(key)):
+            return current_cred_store().load_decrypted(key)
         if key not in self._objects:
             raise FileNotFoundError(f"{key} is not in the object store")
         return self._objects[key]
 
     def exists(self, path) -> bool:
-        return _key(path) in self._objects
+        key = _key(path)
+        if is_cred_file(str(key)):
+            return current_cred_store().exists(key)
+        return key in self._objects
 
     def find_yaml(self, dir_path, name) -> Path | None:
         dir_parts = _key(dir_path).parts
@@ -133,10 +144,7 @@ class CurrentEnvInstanceStore:
                     data = sortYaml(data, schema_path, False, validate=False)
                 make_quotes_for_strings(data)
             normalize_comments(data)
-            if is_cred_file(str(key)):
-                remove_cred_yaml_comments(data)
-            else:
-                remove_empty_list_comments(data)
+            remove_empty_list_comments(data)
             text = dumpYamlToStr(data)
             if header_text and not text.startswith("#"):
                 text = "# " + header_text.replace("\n", "\n# ") + "\n" + text
@@ -148,11 +156,11 @@ _open_store = None
 
 
 @contextmanager
-def open_current_env_instance_store(env_dir):
+def open_current_env_instance_store(env_dir, credential_mode=CredentialMode.LOCAL):
     global _open_store
     if _open_store is not None:
         raise RuntimeError(f"Current env instance store is already open for {_open_store.env_dir}")
-    _open_store = CurrentEnvInstanceStore(env_dir)
+    _open_store = CurrentEnvInstanceStore(env_dir, credential_mode)
     try:
         yield _open_store
     finally:

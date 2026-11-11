@@ -1,14 +1,14 @@
 import os
 import re
-import shutil
 import time
 from pathlib import Path
 from urllib.parse import quote
 
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.yaml_utils import writeYamlToFile, readYaml, openYaml
-from envgene_shared.crypto.crypt import get_configured_encryption_type
-from envgenehelper import findAllFilesInDir, unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
+from envgene_shared.crypto.cred_store import current_cred_store
+from envgene_shared.crypto.fernet_handler import decrypt_Fernet_data, is_encrypted_Fernet
+from envgenehelper import unpack_archive, cleanup_dir, addHeaderToYaml, fetch_cred_value
 from envgenehelper.git_helper import GitLabClient
 from envgenehelper.errors import ValidationError
 
@@ -44,17 +44,18 @@ def get_integration_config(integration_config_path) -> dict:
 
 def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key):
     creds_path = cloud_passport_dir / f"{cloud_name}-creds.yml"
-
+    sensitive_file = None
     for f in discovery_files:
         if "sensitive" in f.name:
             update_creds_to_cmdb_format(f)
-            shutil.copyfile(f, creds_path)
-    crypt.decrypt_file(creds_path, secret_key=discovery_secret_key, in_place=True, is_crypt=True)
-    logger.info(f"Decrypted credential-cp file by discovery secret key: {creds_path}")
-    crypt.encrypt_file(creds_path, in_place=True)
-    _, is_crypt = get_configured_encryption_type()
-    if is_crypt:
-        logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
+            sensitive_file = f
+    if sensitive_file is None:
+        raise ValidationError(f"Cloud discovery result has no sensitive file with credentials for {cloud_name}")
+    creds = openYaml(sensitive_file)
+    if is_encrypted_Fernet(creds):
+        creds = decrypt_Fernet_data(creds, discovery_secret_key)
+        logger.info(f"Decrypted credential-cp file by discovery secret key: {sensitive_file}")
+    current_cred_store().put(creds_path, creds, header_text)
 
 
 # {{ secrets('name.username') }} -> ${creds.get("name").password}
@@ -97,12 +98,10 @@ def process_discovery_files(env_name: str,
     cloud_name = env_name.split("/")[0]
     cloud_dir = envs_dir_path / cloud_name
     cloud_passport_dir = cloud_dir / "cloud-passport"
-    cleanup_dir(cloud_passport_dir)
+    cleanup_dir(cloud_passport_dir, keep=[f"{cloud_name}-creds.yml"])
 
     process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
-    for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
-        addHeaderToYaml(cp_file, header_text)
 
 
 def run_cloud_passport():
