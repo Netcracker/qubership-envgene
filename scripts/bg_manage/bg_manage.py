@@ -120,12 +120,16 @@ def sync_bg_ns_artifacts(active_role: NamespaceRole, candidate_role: NamespaceRo
     env_definition = openYaml(env_definition_path, allow_default=True)
     bg_ns_artifacts = env_definition.get('envTemplate', {}).get('bgNsArtifacts')
 
-    if not bg_ns_artifacts or active_role not in bg_ns_artifacts:
+    if not bg_ns_artifacts:
         logger.info('envTemplate.bgNsArtifacts is not set, skipping sync')
         return
 
-    logger.info(f'Syncing envTemplate.bgNsArtifacts: "{candidate_role}" := "{active_role}"')
-    bg_ns_artifacts[candidate_role] = bg_ns_artifacts[active_role]
+    if active_role in bg_ns_artifacts:
+        logger.info(f'Syncing envTemplate.bgNsArtifacts: "{candidate_role}" := "{active_role}"')
+        bg_ns_artifacts[candidate_role.value] = bg_ns_artifacts[active_role]
+    else:
+        logger.info(f'envTemplate.bgNsArtifacts.{active_role} is not set, removing "{candidate_role}"')
+        bg_ns_artifacts.pop(candidate_role.value, None)
     writeYamlToFile(env_definition_path, env_definition)
 
 

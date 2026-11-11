@@ -3,10 +3,10 @@ import os
 import shutil
 
 import bg_manage.bg_manage as bg_manage
-from envgenehelper.business_helper import getEnvDefinitionPath
+from envgenehelper.business_helper import getEnvDefinitionPath, NamespaceRole
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan
 from envgenehelper.test_helpers import TestHelpers
-from envgene_shared.utils.yaml_utils import openYaml
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 from scripts.tests.base_test import BaseTest
 
 FULL_ENV_NAME = "bgd-cluster/bgd-env"
@@ -85,6 +85,28 @@ class TestBgManage(BaseTest):
             "stale candidate entry must be replaced, not duplicated"
         assert ctx.deploy_plan.dp_path == EnvgeneDeployPlan.path()
         assert EnvgeneDeployPlan.path().is_file()
+
+    def test_warmup_creates_candidate_bg_ns_artifact_when_absent(self):
+        env_definition_path = getEnvDefinitionPath(self.env_path)
+        env_definition = openYaml(env_definition_path)
+        del env_definition["envTemplate"]["bgNsArtifacts"]["peer"]
+        writeYamlToFile(env_definition_path, env_definition)
+
+        bg_manage.sync_bg_ns_artifacts(NamespaceRole.ORIGIN, NamespaceRole.PEER)
+
+        bg_ns_artifacts = openYaml(env_definition_path)["envTemplate"]["bgNsArtifacts"]
+        assert bg_ns_artifacts == {"origin": "bgd:v1.1.0-origin", "peer": "bgd:v1.1.0-origin"}
+
+    def test_warmup_removes_candidate_bg_ns_artifact_when_active_absent(self):
+        env_definition_path = getEnvDefinitionPath(self.env_path)
+        env_definition = openYaml(env_definition_path)
+        del env_definition["envTemplate"]["bgNsArtifacts"]["origin"]
+        writeYamlToFile(env_definition_path, env_definition)
+
+        bg_manage.sync_bg_ns_artifacts(NamespaceRole.ORIGIN, NamespaceRole.PEER)
+
+        bg_ns_artifacts = openYaml(env_definition_path)["envTemplate"]["bgNsArtifacts"]
+        assert bg_ns_artifacts == {}
 
     def test_change_bg_state_writes_state_files(self):
         ctx = type("Ctx", (), {})()

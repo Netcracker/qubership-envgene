@@ -282,9 +282,9 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if ctx.params.get('ENV_BUILDER'):
-            return True
-        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
+        if ctx.is_gitlab_deploy():
+            return ctx.is_deploy_or_clean()
+        return bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
