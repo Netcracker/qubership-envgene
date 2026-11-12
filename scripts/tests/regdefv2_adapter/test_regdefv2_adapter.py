@@ -8,7 +8,7 @@ import yaml
 
 from envgenehelper import openYaml, get_cred_config, extra_creds_scope
 from envgenehelper.business_helper import render_workspace_dir
-from envgenehelper.config_helper import get_regdef_v2_schema
+from envgene_shared.utils.yaml_utils import get_schema
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
 
@@ -150,7 +150,7 @@ class TestRegdefV2Adapter:
 
         synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
         assert "fullRepositoryUrl" not in synthesized["mavenConfig"]
-        jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+        jsonschema.validate(instance=synthesized, schema=get_schema("regdef-v2.schema.json"))
         for section in ("dockerConfig", "helmConfig", "helmAppConfig"):
             assert synthesized[section] == {**V1_REGDEF[section], **synthesized[section]}
             assert synthesized[section]["authConfig"] == "pub-reg-auth"
@@ -186,7 +186,7 @@ class TestRegdefV2Adapter:
         assert auth_config["authType"] == "shortLived"
         assert auth_config["gcpRegProject"] == "my-project"
         assert auth_config["gcpRegSAEmail"] == "sa@my-project.iam.gserviceaccount.com"
-        jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+        jsonschema.validate(instance=synthesized, schema=get_schema("regdef-v2.schema.json"))
 
         assert get_cred_config()["transient-pub-reg-creds"]["data"] == {"secret": "secret"}
 
@@ -300,7 +300,7 @@ class TestRegdefV2Adapter:
         assert auth_config["authMethod"] == "anonymous"
         assert "credentialsId" not in auth_config
         assert "authType" not in auth_config
-        jsonschema.validate(instance=synthesized, schema=get_regdef_v2_schema())
+        jsonschema.validate(instance=synthesized, schema=get_schema("regdef-v2.schema.json"))
 
     @pytest.mark.unit
     def test_already_v2_regdef_is_copied_as_is(self, tmp_path):

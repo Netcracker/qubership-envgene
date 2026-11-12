@@ -214,7 +214,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
     raise FileNotFoundError(f"Shared credentials with key '{cred_name}' not found.")
 
 
-def mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryYaml) :
+def mergeSharedCreds(credYamlPath, envDir, instancesDir, inventoryYaml) :
     env_instance_store = current_env_instance_store()
     credsYaml = env_instance_store.get(credYamlPath)
     if ("sharedMasterCredentialFiles" in inventoryYaml["envTemplate"]) :
@@ -303,7 +303,7 @@ def create_credentials(envDir, instancesDir, is_external_cred_env, inventoryYaml
     env_instance_store.beautify(credYamlPath, credsSchema)
     mergeAndSaveYaml(credYamlPath, resultingCreds)
     # process shared credentials
-    env_creds_map = mergeSharedCreds(credYamlPath, envDir, instancesDir, credsSchema, inventoryYaml)
+    env_creds_map = mergeSharedCreds(credYamlPath, envDir, instancesDir, inventoryYaml)
     #validate external credentials
     if is_external_cred_env:
         if resultingCreds:

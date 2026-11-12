@@ -11,7 +11,7 @@ from envgene_shared.utils.yaml_utils import (
 )
 
 from .business_helper import NamespaceFile
-from .models import SCHEMA_TO_MODEL, YamlBacked, bind_yaml, validate_model_by_schema_name
+from .models import SCHEMA_TO_MODEL, YamlBacked, bind_yaml
 from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
@@ -28,10 +28,11 @@ def _match(parts: tuple, pattern: tuple) -> bool:
     return len(parts) == len(pattern) and all(fnmatchcase(part, name) for part, name in zip(parts, pattern))
 
 
-def _to_model(obj, schema_path):
+def _to_model(obj, schema_path, path):
     name = Path(str(schema_path)).name
     model_cls = SCHEMA_TO_MODEL.get(name)
     if model_cls is None:
+        logger.info(f"Validating {path} (schema: {schema_path})")
         if isinstance(schema_path, Path) or name != str(schema_path):
             validate_yaml_by_scheme_or_fail(input_yaml_content=obj, schema_file_path=str(schema_path))
         else:
@@ -39,7 +40,11 @@ def _to_model(obj, schema_path):
         return obj
     if isinstance(obj, model_cls):
         return obj
-    model = validate_model_by_schema_name(obj, name)
+    logger.info(f"Validating {path} (schema: {schema_path})")
+    try:
+        model = model_cls.model_validate(obj)
+    except ValueError as error:
+        raise ValueError(f"Validation failed for {path} (schema: {schema_path}): {error}") from error
     bind_yaml(model, obj)
     return model
 
@@ -61,7 +66,7 @@ class CurrentEnvInstanceStore:
         logger.debug(f"Object store put: {key}")
         schema_path = self._beautify.get(key, (None, ""))[0]
         if schema_path:
-            obj = _to_model(obj, schema_path)
+            obj = _to_model(obj, schema_path, key)
         self._objects[key] = obj
         self._to_write.add(key)
         return obj
@@ -101,7 +106,7 @@ class CurrentEnvInstanceStore:
 
     def bind(self, path, schema_path):
         key = _key(path)
-        self._objects[key] = _to_model(self.get(key), schema_path)
+        self._objects[key] = _to_model(self.get(key), schema_path, key)
         return self._objects[key]
 
     def beautify(self, path, schema_path, header_text=""):

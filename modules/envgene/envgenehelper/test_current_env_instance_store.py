@@ -14,7 +14,7 @@ from envgenehelper.current_env_instance_store import (
 from envgenehelper.models import (
     AppDefModel, ApplicationModel, CloudModel, CompositeStructureModel, CredentialsMapModel,
     EnvDefinitionModel, NamespaceModel, ParamsetModel, RegDefV1Model, RegDefV2Model,
-    ResourceProfileModel, TenantModel,
+    ResourceProfileModel, TemplateDescriptorModel, TenantModel,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml, sortYaml, store_value_to_yaml
 from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
@@ -269,7 +269,7 @@ def test_normalize_comments(source, expected):
     assert dumpYamlToStr(data) == expected
 
 
-def test_schema_backed_models_and_store_get_model(monkeypatch, env_dir):
+def test_schema_backed_models_are_used_during_processing(monkeypatch, env_dir):
     schemas_dir = Path(__file__).resolve().parents[3] / "schemas"
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schemas_dir))
 
@@ -357,7 +357,7 @@ def test_schema_backed_models_reject_invalid_payloads(monkeypatch):
     with pytest.raises(ValueError, match="Validation failed"):
         TenantModel.model_validate({"name": "tenant1"})  # missing registryName
 
-    with pytest.raises(ValueError, match="Validation failed"):
+    with pytest.raises(ValueError, match="parameters or applications"):
         ParamsetModel.model_validate({"name": "ps1"})  # requires parameters or applications
 
     with pytest.raises(ValueError, match="Validation failed"):
@@ -454,7 +454,7 @@ def test_list_item_mutation_is_checked_by_model(monkeypatch, env_dir):
 
 def test_container_mutations_are_checked_by_model():
     profile = ResourceProfileModel.model_validate(
-        {"name": "p", "applications": []}, context={"schema_validated": True},
+        {"name": "p", "applications": []},
     )
     with pytest.raises(PydanticValidationError):
         profile.applications.append({"name": "app"})
@@ -469,12 +469,12 @@ def test_container_mutations_are_checked_by_model():
     definition = AppDefModel.model_validate({
         "name": "app", "registryName": "reg", "artifactId": "artifact", "groupId": "group",
         "supportParallelDeploy": False, "deployParameters": {}, "technicalConfigurationParameters": {},
-    }, context={"schema_validated": True})
+    })
     with pytest.raises(PydanticValidationError):
         definition.deployParameters["replicas"] = 1
     assert "replicas" not in definition.deployParameters
 
-    credentials = CredentialsMapModel.model_validate({}, context={"schema_validated": True})
+    credentials = CredentialsMapModel.model_validate({})
     with pytest.raises(PydanticValidationError):
         credentials.root["bad"] = {"type": "secret", "data": {"secret": 1}}
     assert "bad" not in credentials
@@ -482,6 +482,32 @@ def test_container_mutations_are_checked_by_model():
     with pytest.raises(PydanticValidationError):
         credentials.root["ok"].data["secret"] = 1
     assert credentials["ok"]["data"]["secret"] == "value"
+
+
+@pytest.mark.parametrize("model_cls, payload, path, key, value", [
+    (CredentialsMapModel, {"cred": {"type": "secret", "data": {"secret": "value"}}},
+     ("cred",), "data", {"username": "u", "password": "p"}),
+    (RegDefV2Model, {"version": "2.0", "name": "reg", "mavenConfig": {"authConfig": "auth", "repositoryDomainName": "url"},
+                     "authConfig": {"auth": {"provider": "aws", "authMethod": "anonymous"}}},
+     ("authConfig", "auth"), "authMethod", "secret"),
+    (EnvDefinitionModel, {"envTemplate": {"name": "env", "artifact": "env:1"}, "inventory": {"noCmdbVersion": "v1"}},
+     ("inventory",), "noCmdbVersion", "v3"),
+    (ParamsetModel, {"name": "params", "parameters": {}}, (), "parameters", None),
+    (TemplateDescriptorModel, {"tenant": "tenant.j2", "cloud": "cloud.j2", "namespaces": []},
+     (), "cloud", {"template_override": {}}),
+])
+def test_schema_rules_protect_mutations_without_revalidating_schema(monkeypatch, model_cls, payload, path, key, value):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    model = model_cls.model_validate(payload)
+    node = model
+    for part in path:
+        node = node[part]
+    profile = Profile()
+    with pytest.raises(PydanticValidationError):
+        profile.runcall(store_value_to_yaml, node, key, value)
+    assert model.to_yaml() == payload
+    calls = {entry.code: entry.callcount for entry in profile.getstats()}
+    assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
 
 
 def test_schema_sort_does_not_validate_document(monkeypatch):

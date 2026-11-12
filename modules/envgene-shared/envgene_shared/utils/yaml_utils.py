@@ -70,33 +70,21 @@ def get_schema_validator(schema_path: str, schemas_dir=None):
 
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
-                                    input_yaml_content: dict = None, input_schema_content: dict = None,
-                                    schemas_dir=None, schema_name: str = None):
+                                    input_yaml_content: dict = None, schemas_dir=None, schema_name: str = None):
     if schema_file_path and schema_name:
         raise ValueError("Specify either schema_file_path or schema_name, not both")
 
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
-    if schema_file_path:
-        schema_content = load_schema(str(schema_file_path))
-    elif schema_name:
-        schema_content = get_schema(schema_name, schemas_dir)
+    if schema_name:
+        get_schema(schema_name, schemas_dir)
         schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
         schema_file_path = Path(schemas_dir) / schema_name
-    else:
-        schema_content = input_schema_content
 
-    if schema_file_path:
-        validator = get_schema_validator(
-            str(Path(schema_file_path).resolve()),
-            str(Path(schemas_dir).resolve()) if schemas_dir else None,
-        )
-        errors = sorted(validator.iter_errors(yaml_content), key=lambda e: e.path)
-    elif schemas_dir:
-        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
-        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
-        errors = validate_yaml_data_by_schema(yaml_content, schema_content, resolver=resolver)
-    else:
-        errors = validate_yaml_data_by_schema(yaml_content, schema_content)
+    validator = get_schema_validator(
+        str(Path(schema_file_path).resolve()),
+        str(Path(schemas_dir).resolve()) if schemas_dir else None,
+    )
+    errors = sorted(validator.iter_errors(yaml_content), key=lambda e: e.path)
     if len(errors) > 0:
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
@@ -141,20 +129,15 @@ def convert_ordereddict_to_dict(obj):
         return obj
 
 
-def writeYamlToFile(filePath, contents, schema_name: str = None, input_schema_content: dict = None,
-                    schemas_dir=None):
+def writeYamlToFile(filePath, contents, schema_name: str = None, schemas_dir=None):
     filePath = Path(filePath)
     logger.info(f"Writing yaml to file: {filePath}")
-    if schema_name and input_schema_content is not None:
-        raise ValueError("Specify either schema_name or input_schema_content, not both")
     if schema_name:
         validate_yaml_by_scheme_or_fail(
             input_yaml_content=contents,
             schema_name=schema_name,
             schemas_dir=schemas_dir,
         )
-    elif input_schema_content is not None:
-        validate_yaml_by_scheme_or_fail(input_yaml_content=contents, input_schema_content=input_schema_content)
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
     if is_cred_file(str(filePath)):
         remove_cred_yaml_comments(contents)

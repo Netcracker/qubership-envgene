@@ -25,30 +25,6 @@ def shell():
     return executable
 
 
-def test_merge_preserves_image_schemas_and_adds_relative_references(tmp_path, shell):
-    source = tmp_path / "source"
-    target = tmp_path / "target"
-    (source / "definitions").mkdir(parents=True)
-    target.mkdir()
-    (source / "existing.schema.json").write_text('{"type":"number"}')
-    original = '{"type":"string"}'
-    (target / "existing.schema.json").write_text(original)
-    (source / "added.schema.json").write_text('{"$ref":"definitions/name.schema.json"}')
-    (source / "definitions/name.schema.json").write_text('{"type":"string"}')
-    (source / "notes.md").write_text("Not a schema")
-
-    subprocess.run(
-        [shell, (ROOT / "build_envgene/build/merge_schemas.sh").as_posix(), source.as_posix(), target.as_posix()],
-        check=True, capture_output=True, text=True,
-    )
-
-    assert (target / "existing.schema.json").read_text() == original
-    assert not (target / "notes.md").exists()
-    validate_yaml_by_scheme_or_fail(input_yaml_content="value", schema_name="added.schema.json", schemas_dir=target)
-    with pytest.raises(ValueError, match="Validation failed"):
-        validate_yaml_by_scheme_or_fail(input_yaml_content=123, schema_name="added.schema.json", schemas_dir=target)
-
-
 def test_gsf_action_stages_required_schemas_and_retains_cleanup_history(tmp_path, shell):
     source = tmp_path / "schemas"
     source.mkdir()

@@ -1,26 +1,12 @@
-from functools import lru_cache
 from os import getenv
 
-from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, validate_yaml_by_scheme_or_fail
-from envgene_shared.utils.business_utils import getenv_with_error, get_envgene_config_yaml
-from envgene_shared.utils.logger import logger
+from envgene_shared.utils.yaml_utils import openYaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.business_utils import get_envgene_config_yaml
 from .constants import CI_JOB_ARTIFACT_MAX_SIZE_MB, SBOM_RETENTION_MAX_SIZE_MB
 from .models import SaveArtifactsStrategy
 
 
 REGDEF_V2_VERSION = "2.0"
-
-def get_regdef_schema() -> dict:
-    return get_schema("regdef.schema.json")
-
-
-def get_regdef_v2_schema() -> dict:
-    return get_schema("regdef-v2.schema.json")
-
-
-def get_regdef_schema_for_content(content: dict) -> dict:
-    """Get the appropriate schema (V1 or V2) based on registry definition content"""
-    return get_schema(get_regdef_schema_name_for_content(content))
 
 
 def get_regdef_schema_name_for_content(content: dict) -> str:

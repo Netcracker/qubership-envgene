@@ -2,8 +2,7 @@ from enum import Enum
 from typing import Optional
 import base64
 
-import jsonschema
-from envgenehelper.config_helper import get_regdef_v2_schema
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 from envgenehelper.creds_helper import get_cred_data
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 from pydantic.alias_generators import to_camel
@@ -244,8 +243,7 @@ class RegistryV2(BaseSchema):
 
 def parse_registry(data: dict) -> Registry | RegistryV2:
     if data.get("version") == REGDEF_V2_VERSION or "authConfig" in data:
-        schema = get_regdef_v2_schema()
-        jsonschema.validate(instance=data, schema=schema)
+        validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name="regdef-v2.schema.json")
         return RegistryV2.model_validate(data)
     return Registry.model_validate(data)
 

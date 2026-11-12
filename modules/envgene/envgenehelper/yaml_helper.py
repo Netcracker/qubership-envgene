@@ -20,7 +20,7 @@ from .json_helper import openJson
 from .models import YamlBacked
 from envgene_shared.utils.logger import logger
 
-from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, readYaml, load_schema, get_schema_validator, \
+from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, readYaml, load_schema, \
     validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
     remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
     ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
@@ -166,22 +166,17 @@ def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
     schema_data = load_schema(schema_name) if is_path else get_schema(schema_name)
     if not validate:
         return _sort_by_schema_shape(yaml_data, schema_data, list(_flatten_schema(schema_data, schema_data)))
-    try:
-        return jschon_tools.process_json_doc(
-            schema_data=schema_data,
-            doc_data=yaml_data,
-            sort=True,
-            remove_additional_props=remove_additional_props,
-        )
-    except ValueError as error:
-        if not validate or str(error) != "Document failed schema validation":
-            raise
-        validate_yaml_by_scheme_or_fail(
-            input_yaml_content=yaml_data,
-            schema_file_path=schema_name if is_path else None,
-            schema_name=None if is_path else schema_name,
-        )
-        raise ValueError("Validation failed") from error
+    validate_yaml_by_scheme_or_fail(
+        input_yaml_content=yaml_data,
+        schema_file_path=schema_name if is_path else None,
+        schema_name=None if is_path else schema_name,
+    )
+    return jschon_tools.process_json_doc(
+        schema_data=schema_data,
+        doc_data=yaml_data,
+        sort=True,
+        remove_additional_props=remove_additional_props,
+    )
 
 
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):

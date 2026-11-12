@@ -3,6 +3,7 @@
 - [Problem](#problem)
 - [Example](#example)
 - [Design](#design)
+- [Outputs without a schema check at write time](#outputs-without-a-schema-check-at-write-time)
 - [What changes for the user](#what-changes-for-the-user)
 - [Verification](#verification)
 - [Out of scope](#out-of-scope)
@@ -13,9 +14,8 @@
 
 EnvGene loads schemas through several paths. Callers pass local file paths, packages carry duplicate copies, and `CurrentEnvInstanceStore.flush()` sorts and writes without validating the final object. Validation is spread across mutation steps, so an object may be validated more than once and later mutations may not be covered.
 
-The approved spreadsheet lists schemas to migrate or remove and includes per-file notes. The runtime image also supplies
-schemas that must remain authoritative. Schemas supplied by the GitLab repository may add filenames but must not replace
-image schemas.
+The approved spreadsheet lists schemas to migrate or remove and includes per-file notes. The base image
+does not supply schemas. The image build copies the repository `schemas/` directory to `/schemas`.
 
 ## Example
 
@@ -27,14 +27,14 @@ validate_yaml_by_scheme_or_fail(input_yaml_content=namespace, schema_file_path=s
 store.beautify(namespace_path, schema_path)
 ```
 
-After, callers select by exact filename and register the final output schema. The shared write path validates once before serialization:
+Callers select an exact schema filename. The store validates the object once when it binds the model:
 
 ```python
 store.beautify(namespace_path, "namespace.schema.json")
 store.flush()
 ```
 
-The schema getter resolves the filename from the effective schema set. The GitLab schema assembly adds only filenames absent from the base image.
+The schema getter resolves the filename from `JSON_SCHEMAS_DIR`.
 
 ## Design
 
@@ -43,15 +43,25 @@ Shared-only consumers such as the GSF pre-commit hook use `envgene-shared` direc
 
 The getter accepts an exact schema filename and returns parsed schema content from `JSON_SCHEMAS_DIR`, which defaults to `/schemas`. It rejects path components and reports an unknown filename clearly. EnvGene keeps the only schema source in the root `schemas/` directory, and consumers configure that directory explicitly.
 
-The effective schema set contains image-provided schemas first and GitLab-provided additions second. Assembly copies a GitLab schema only when the destination filename does not exist. A filename collision preserves the image schema and does not replace it. Relative `$ref` references resolve against the effective schema directory.
+The image build copies the repository `schemas/` directory to `/schemas`. The base image does not supply
+schemas, so there is no merge step. Relative `$ref` references resolve against that directory.
 
 All schema files remain in the root `schemas/` directory. Python packages do not include schema copies. Runtime images and standalone hook packages stage files from this directory and set `JSON_SCHEMAS_DIR` to the staged directory. The canonical config schema's `save_artifacts` block is kept in the root schema.
 
-For generated environment objects, `CurrentEnvInstanceStore` records a schema filename for each schema-backed output. `flush()` validates the final in-memory object once, then sorts, formats, and writes it. Store writes without schema metadata are not silently treated as validated. Schema-backed direct writers use the same shared validation function immediately before serialization. Input validation remains where it protects data before the build uses it and is not a duplicate output check.
+For generated environment objects, `CurrentEnvInstanceStore.beautify()` binds a model and records its schema filename.
+The first binding validates the object against JSON Schema. `get(path)` then returns the model during processing.
+Field assignments and changes to typed containers use model validation without rerunning JSON Schema validation.
+The models preserve YAML comments and formatting. `flush()` sorts, formats, and writes the model's YAML representation.
+Replacing a stored object validates the replacement before it becomes available to callers.
+Validation logs and model construction errors include the target file path and schema filename.
 
-Rendering retains YAML mappings to preserve comments and formatting. At `flush()`, schema-based sorting validates the final
-object. The store then creates and retains its typed model without repeating JSON Schema validation. `get_model(path)`
-returns that finalized model after a successful flush. Models do not replace mutable YAML mappings inside rendering steps.
+Credential models enforce type-specific data fields and external credential restrictions.
+Registry V2 models enforce nested configuration fields, provider-specific authentication methods, and conditional fields.
+Environment Definition and Template Descriptor models validate their nested objects and containers.
+ParameterSet models require `parameters` or `applications`, as the schema does.
+
+`schemas/` has no schema for `bg_domain.yml`, and this change does not add one.
+`validate_bgd()` checks that the namespaces it references exist.
 
 The SBOM generator uses `generated-application.sbom.schema.json`, moved from its Python package without changing its
 validation rules. This schema permits generated SBOMs without serial numbers or timestamps. The separate
@@ -59,36 +69,57 @@ validation rules. This schema permits generated SBOMs without serial numbers or 
 
 Direct writers validate each final object once before serialization. AppDefs and RegDefs written in `dual` mode share that
 validation across both copies. Cached validators serve repeated input checks and resolve relative references from the
-configured directory. Schema failures during sorting use the common validator to report diagnostic details.
+configured directory. Standalone sorting runs the common validator before the sorting library.
+The artifact searcher's Registry V2 parser uses the same cached validator.
+
+## Outputs without a schema check at write time
+
+The following paths do not run JSON Schema validation immediately before writing.
+Input validation and typed models cover some paths. Others have no matching schema in `schemas/`.
+
+| Output                                               | Writer                        | Current coverage or gap                                               |
+|------------------------------------------------------|-------------------------------|-----------------------------------------------------------------------|
+| `Inventory/env_definition.yml`                       | `env_inventory_generation.py` | Content checked through `env-inventory-content.schema.json` on input. |
+| `Inventory/parameters/*.yml`                         | `handle_objects()`            | Content checked through `paramset.schema.json` on input.              |
+| `Inventory/credentials/*.yml`                        | `handle_objects()`            | Content checked through `credential.schema.json` before encryption.   |
+| `Inventory/resource_profiles/*.yml`                  | `handle_objects()`            | Content checked through `resource-profile.schema.json` on input.      |
+| `Inventory/env_definition.yml` after version changes | `set_template_version.py`     | No final schema check after the version update.                       |
+| `configuration/registry.yml`                         | `generate_sboms.py`           | Registry models cover new entries. No final check of the merged file. |
+| `bg_domain.yml`                                      | `generate_bgd_file()`         | No matching schema. `validate_bgd()` checks namespace references.     |
+| `Inventory/namespace-map.yml`                        | `namespace_render.py`         | No matching schema.                                                   |
+| `Inventory/deploy-plan.yml`                          | `EnvgeneDeployPlan.write()`   | Deployment plan models validate content. No matching JSON schema.     |
+| `Inventory/solution-descriptor/sd.yaml`              | `process_sd.py`               | No matching schema.                                                   |
+| `Inventory/templateVariables/*.yml`                  | `handle_objects()`            | Free-form mappings checked by the inventory content input schema.     |
+| `shared_template_variables/*.yml`                    | `handle_objects()`            | Free-form mappings checked by the inventory content input schema.     |
+
+The table covers environment generation, inventory generation, version updates, and generated registry writes.
+It does not assign an unrelated schema to an output that has no contract in this repository.
 
 ## What changes for the user
 
 - Invalid schema-backed generated output fails before the file is written.
-- A GitLab schema can add a new filename but cannot replace an image-provided schema.
 - Schema lookup by filename returns the same schema regardless of the caller's working directory.
 - GSF shared-only validation continues to work without installing `envgenehelper`.
 
 ## Verification
 
 - Test exact-name lookup, unknown names, path-like names, and every schema in the approved inventory.
-- Test `$ref` resolution from the effective schema set.
-- Test that a colliding GitLab filename preserves the base schema and a new filename is added.
-- Test that an invalid final object fails at flush after mutation, before its file is written, and that the validator runs once for that output.
+- Test `$ref` resolution from the schema directory.
+- Test that invalid mutations fail during processing and JSON Schema validation runs once at model binding.
+- Test BGD namespace reference checks during generation.
 - Test schema-backed direct writers and shared-only config and credential validation.
-- Test schema loading outside the repository root with `JSON_SCHEMAS_DIR` configured and the image or pipeline schema assembly.
+- Test schema loading outside the repository root with `JSON_SCHEMAS_DIR` configured.
 - Run the `envgene-shared` and `envgenehelper` tests, then `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/`.
 
 ## Out of scope
 
-- Replacing mutable YAML mappings with models throughout the rendering pipeline.
+- Adding models to outputs without an applicable schema.
 - Changing validation rules or schema contents beyond reconciling approved migrated schemas and existing duplicate drift.
 - Validating YAML outputs that have no applicable JSON schema.
 - Runtime network access to fetch schemas from Qubership.
 
 ## Open questions
 
-- Confirm the GitLab schema source directory and the step that assembles it with the image schema directory.
-- Identify the approved schema for `bg_domain.yml` and any schema-backed direct writer not currently registered with a schema.
 - Confirm the exact filename disposition and replacement mapping for each row in the approved spreadsheet.
 
 ## Constraints

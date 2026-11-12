@@ -116,8 +116,8 @@ def _coerce(annotation, value):
     strict = annotation in (str, int, float, bool)
     coerced = TypeAdapter(annotation).validate_python(value, strict=strict)
     if isinstance(value, dict) and isinstance(coerced, dict) and coerced == value:
-        return value
-    return coerced
+        coerced = value
+    return _guard_container(coerced, annotation)
 
 
 class CheckedMap(CommentedMap):
@@ -133,9 +133,9 @@ class CheckedMap(CommentedMap):
         self._quiet = False
 
     def _stored(self, key, value):
-        if self._quiet:
-            return value
         key_type, value_type = _pair_types(self._annotation)
+        if self._quiet:
+            return _guard_container(value, value_type)
         _coerce(key_type, key)
         return _coerce(value_type, value)
 
@@ -325,7 +325,8 @@ class YamlModel(YamlBacked, BaseModel):
 
 
 class PropertyMapping(YamlModel):
-    name: str
+    model_config = ConfigDict(extra="forbid", strict=True)
+    name: Literal["username", "password"]
 
 class ExternalCredential(BaseModel):
     type: Literal["external"]
@@ -344,11 +345,6 @@ class ExternalCredential(BaseModel):
         return cleaned if cleaned else "default_store"
 
 
-def _is_schema_entry(data: Any, info: ValidationInfo) -> bool:
-    return (isinstance(data, dict) and info.field_name is None
-            and not (info.context and info.context.get("schema_validated")))
-
-
 class SchemaValidatedModel(YamlModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
     SCHEMA_NAME: ClassVar[str]
@@ -356,16 +352,9 @@ class SchemaValidatedModel(YamlModel):
     @model_validator(mode="before")
     @classmethod
     def _validate_by_json_schema(cls, data: Any, info: ValidationInfo) -> Any:
-        if _is_schema_entry(data, info):
+        if isinstance(data, dict) and info.field_name is None:
             validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=cls.SCHEMA_NAME)
         return data
-
-    def validate_schema(self) -> None:
-        if hasattr(self, "SCHEMA_NAME") and self.SCHEMA_NAME:
-            validate_yaml_by_scheme_or_fail(
-                input_yaml_content=self.model_dump(exclude_unset=True, by_alias=True),
-                schema_name=self.SCHEMA_NAME,
-            )
 
 
 class ProfileOverrideModel(YamlModel):
@@ -530,18 +519,26 @@ class CompositeStructureModel(SchemaValidatedModel):
 
 
 class ParamsetApplicationModel(YamlModel):
-    model_config = ConfigDict(extra="allow")
-    appName: str
-    parameters: dict[str, Any]
+    model_config = ConfigDict(extra="allow", strict=True)
+    appName: str = None
+    parameters: YamlMapping = None
 
 
 class ParamsetModel(SchemaValidatedModel):
+    model_config = ConfigDict(strict=True)
     SCHEMA_NAME: ClassVar[str] = "paramset.schema.json"
 
     name: str
-    version: Optional[Union[int, float]] = None
-    parameters: Optional[dict[str, Any]] = None
-    applications: Optional[list[ParamsetApplicationModel]] = None
+    version: Union[int, float] = None
+    parameters: YamlMapping = None
+    applications: list[ParamsetApplicationModel] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _require_parameters(cls, data):
+        if isinstance(data, dict) and data.get("parameters") is None and data.get("applications") is None:
+            raise ValueError("parameters or applications is required")
+        return data
 
 
 class AppDefMetadataModel(YamlModel):
@@ -579,50 +576,209 @@ class RegDefV1Model(SchemaValidatedModel):
     helmAppConfig: Optional[dict[str, str]] = None
 
 
+class RegistryGcpOIDCModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    URL: str
+    customParams: list[dict[str, str]] = None
+
+
+class RegistryAuthModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    provider: Literal["aws", "azure", "gcp", "nexus", "artifactory"]
+    authMethod: Literal["secret", "assume_role", "federation", "service_account", "oauth2", "user_pass", "anonymous"]
+    credentialsId: str = None
+    authType: Literal["shortLived", "longLived"] = None
+    awsRegion: str = None
+    awsDomain: str = None
+    awsRoleARN: str = None
+    awsRoleSessionPrefix: str = None
+    gcpOIDC: RegistryGcpOIDCModel = None
+    gcpRegProject: str = None
+    gcpRegPoolId: str = None
+    gcpRegProviderId: str = None
+    gcpRegSAEmail: str = None
+    gcpRegion: str = None
+    azureTenantId: str = None
+    azureACRResource: str = None
+    azureACRName: str = None
+    azureArtifactsResource: str = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _check_auth_requirements(cls, data):
+        if not isinstance(data, dict):
+            return data
+        provider, method = data.get("provider"), data.get("authMethod")
+        methods = {
+            "aws": ("secret", "assume_role", "anonymous"),
+            "azure": ("oauth2", "anonymous"),
+            "gcp": ("federation", "service_account", "anonymous"),
+            "nexus": ("user_pass", "anonymous"),
+            "artifactory": ("user_pass", "anonymous"),
+        }
+        if provider in methods and method not in methods[provider]:
+            raise ValueError(f"Unsupported authMethod {method!r} for {provider}")
+        required = [] if method == "anonymous" else ["credentialsId"]
+        conditional = {("aws", "secret"): "awsRegion", ("aws", "assume_role"): "awsRoleARN",
+                       ("gcp", "federation"): "gcpOIDC"}
+        if (provider, method) in conditional:
+            required.append(conditional[provider, method])
+        for name in required:
+            if data.get(name) is None:
+                raise ValueError(f"{name} is required for {provider}/{method}")
+        return data
+
+
+class RegistryMavenModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    repositoryDomainName: str
+    targetSnapshot: str = None
+    targetStaging: str = None
+    targetRelease: str = None
+    snapshotGroup: str = None
+    releaseGroup: str = None
+
+
+class RegistryDockerModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    groupName: str
+    groupUri: str
+    releaseRepoName: str
+    releaseUri: str
+    snapshotRepoName: str
+    snapshotUri: str
+    stagingRepoName: str
+    stagingUri: str
+
+
+class RegistryGoModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    repositoryDomainName: str
+    goTargetSnapshot: str
+    goTargetRelease: str
+    goProxyRepository: str
+
+
+class RegistryRawModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    repositoryDomainName: str
+    rawTargetSnapshot: str
+    rawTargetRelease: str
+    rawTargetStaging: str
+    rawTargetProxy: str
+
+
+class RegistryNpmModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    repositoryDomainName: str
+    npmTargetSnapshot: str
+    npmTargetRelease: str
+
+
+class RegistryHelmModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    repositoryDomainName: str
+    helmTargetStaging: str
+    helmTargetRelease: str
+
+
+class RegistryHelmAppModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    authConfig: str
+    repositoryDomainName: str
+    helmStagingRepoName: str
+    helmReleaseRepoName: str
+    helmGroupRepoName: str
+    helmDevRepoName: str
+
+
 class RegDefV2Model(SchemaValidatedModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", strict=True)
     SCHEMA_NAME: ClassVar[str] = "regdef-v2.schema.json"
 
-    version: Literal["2.0"] = "2.0"
+    version: Literal["2.0"]
     name: str
-    authConfig: Optional[dict[str, dict[str, Any]]] = None
-    mavenConfig: dict[str, str]
-    dockerConfig: Optional[dict[str, str]] = None
-    goConfig: Optional[dict[str, str]] = None
-    rawConfig: Optional[dict[str, str]] = None
-    npmConfig: Optional[dict[str, str]] = None
-    helmConfig: Optional[dict[str, str]] = None
-    helmAppConfig: Optional[dict[str, str]] = None
+    authConfig: dict[str, RegistryAuthModel] = None
+    mavenConfig: RegistryMavenModel
+    dockerConfig: RegistryDockerModel = None
+    goConfig: RegistryGoModel = None
+    rawConfig: RegistryRawModel = None
+    npmConfig: RegistryNpmModel = None
+    helmConfig: RegistryHelmModel = None
+    helmAppConfig: RegistryHelmAppModel = None
+
+
+class UsernamePasswordDataModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    username: str
+    password: str
+    secret: str = None
+
+
+class SecretDataModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    secret: str
+
+
+class VaultAppRoleDataModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    roleId: str
+    secretId: str
+    path: str
+    namespace: str
 
 
 class CredentialEntryModel(YamlModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", strict=True)
     type: Literal["usernamePassword", "secret", "vaultAppRole", "external"]
-    data: Optional[dict[str, str]] = None
-    secretStore: Optional[str] = "default_store"
-    remoteRefPath: Optional[str] = None
-    create: Optional[bool] = None
-    properties: Optional[list[PropertyMapping]] = None
+    data: Union[UsernamePasswordDataModel, SecretDataModel, VaultAppRoleDataModel] = None
+    secretStore: str = "default_store"
+    remoteRefPath: str = None
+    create: bool = None
+    properties: list[PropertyMapping] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _check_credential_data(cls, data, info: ValidationInfo):
+        if not isinstance(data, dict):
+            return data
+        credential_type = data.get("type")
+        if credential_type == "external":
+            if data.get("data") is not None or ("data" in data and info.field_name in (None, "data")):
+                raise ValueError("External credentials must not contain data")
+        else:
+            model = {"usernamePassword": UsernamePasswordDataModel, "secret": SecretDataModel,
+                     "vaultAppRole": VaultAppRoleDataModel}.get(credential_type)
+            if model is not None:
+                value = data.get("data")
+                if isinstance(value, YamlBacked):
+                    value = value.model_dump(exclude_unset=True)
+                data = dict(data, data=model.model_validate(value))
+        return data
 
 
 class CredentialsMapModel(YamlBacked, RootModel[dict[str, CredentialEntryModel]]):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     SCHEMA_NAME: ClassVar[str] = "credential.schema.json"
     _yaml: Optional[CommentedMap] = PrivateAttr(default=None)
 
     @model_validator(mode="before")
     @classmethod
-    def _validate_by_json_schema(cls, data: Any, info: ValidationInfo) -> Any:
-        if isinstance(data, dict) and not (info.context and info.context.get("schema_validated")):
+    def _validate_by_json_schema(cls, data: Any) -> Any:
+        if isinstance(data, dict):
             validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=cls.SCHEMA_NAME)
         return data
 
     def __setattr__(self, name, value):
-        super().__setattr__(name, value)
         if name == "root":
-            guarded = _guard_container(self.root, dict[str, CredentialEntryModel])
-            if guarded is not self.root:
-                object.__setattr__(self, "root", guarded)
+            value = _coerce(dict[str, CredentialEntryModel], value)
+        super().__setattr__(name, value)
 
     def model_post_init(self, context):
         guarded = _guard_container(self.root, dict[str, CredentialEntryModel])
@@ -636,32 +792,121 @@ class CredentialsMapModel(YamlBacked, RootModel[dict[str, CredentialEntryModel]]
         return list(self.root)
 
     def store_value(self, key, value, comment="") -> None:
-        entry = type(self).model_validate({key: value}, context={"schema_validated": True}).root[key]
-        self.root[key] = entry
+        self.root[key] = value
         self._store_node_value(key, value, comment)
 
 
+class InventoryConfigModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    updateCredIdsWithEnvName: bool = None
+    updateRPOverrideNameWithEnvName: bool = None
+
+
+class InventoryModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    environmentName: str = None
+    tenantName: str = None
+    cloudName: str = None
+    deployer: str = None
+    noCmdbVersion: Literal["v1", "v2"] = None
+    cloudPassport: str = None
+    clusterUrl: str = None
+    description: str = None
+    owners: str = None
+    config: InventoryConfigModel = None
+
+
+class TemplateArtifactCoordinatesModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    group_id: str
+    artifact_id: str
+    version: str
+
+
+class TemplateArtifactModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    registry: str
+    repository: str
+    templateRepository: str = None
+    artifact: TemplateArtifactCoordinatesModel
+
+
+class BgNsArtifactsModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    origin: str
+    peer: str
+
+
+class EnvTemplateModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    name: str
+    artifact: str = None
+    templateArtifact: TemplateArtifactModel = None
+    additionalTemplateVariables: YamlMapping = None
+    sharedTemplateVariables: list[str] = None
+    envSpecificParamsets: dict[str, list[str]] = None
+    envSpecificTechnicalParamsets: dict[str, list[str]] = None
+    envSpecificE2EParamsets: dict[str, list[str]] = None
+    envSpecificResourceProfiles: dict[str, str] = None
+    bgNsArtifacts: BgNsArtifactsModel = None
+    sharedMasterCredentialFiles: list[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _require_artifact(cls, data):
+        if isinstance(data, dict) and data.get("artifact") is None and data.get("templateArtifact") is None:
+            raise ValueError("artifact or templateArtifact is required")
+        return data
+
+
+class GeneratedVersionsModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    generateEnvironmentLatestVersion: str = None
+
+
+class SecurityModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    accessGroups: list[str] = None
+    effectiveAccessGroups: list[str] = None
+
+
 class EnvDefinitionModel(SchemaValidatedModel):
+    model_config = ConfigDict(strict=True)
     SCHEMA_NAME: ClassVar[str] = "env-definition.schema.json"
 
-    inventory: Optional[dict[str, Any]] = None
-    envTemplate: dict[str, Any]
-    generatedVersions: Optional[dict[str, Any]] = None
-    metadata: Optional[dict[str, Any]] = None
-    security: Optional[dict[str, Any]] = None
+    inventory: InventoryModel = None
+    envTemplate: EnvTemplateModel
+    generatedVersions: GeneratedVersionsModel = None
+    metadata: YamlMapping = None
+    security: Optional[SecurityModel] = None
+
+
+class CloudTemplateModel(YamlModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    template_path: str
+    template_override: YamlMapping = None
+
+
+class NamespaceTemplateModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    template_path: str
+    name: str = None
+    deploy_postfix: str = None
+    template_override: YamlMapping = None
 
 
 class TemplateDescriptorModel(SchemaValidatedModel):
+    model_config = ConfigDict(strict=True)
     SCHEMA_NAME: ClassVar[str] = "template-descriptor.schema.json"
 
     tenant: str
-    cloud: Union[str, dict[str, Any]]
-    namespaces: list[dict[str, Any]]
-    composite_structure: Optional[str] = None
-    external_credential_template: Optional[str] = None
-    description: Optional[str] = None
-    labels: Optional[dict[str, Any]] = None
-    parametersets: Optional[list[Any]] = None
+    cloud: Union[str, CloudTemplateModel]
+    namespaces: list[NamespaceTemplateModel]
+    composite_structure: str = None
+    external_credential_template: str = None
+    description: str = None
+    labels: YamlMapping = None
+    parametersets: list[Any] = None
 
 
 SCHEMA_TO_MODEL: dict[str, type[BaseModel]] = {
@@ -679,12 +924,3 @@ SCHEMA_TO_MODEL: dict[str, type[BaseModel]] = {
     EnvDefinitionModel.SCHEMA_NAME: EnvDefinitionModel,
     TemplateDescriptorModel.SCHEMA_NAME: TemplateDescriptorModel,
 }
-
-
-def validate_model_by_schema_name(data: dict[str, Any], schema_name: str, *, schema_validated=False) -> BaseModel | None:
-    model_cls = SCHEMA_TO_MODEL.get(schema_name)
-    if model_cls is not None:
-        return model_cls.model_validate(data, context={"schema_validated": schema_validated})
-    if not schema_validated:
-        validate_yaml_by_scheme_or_fail(input_yaml_content=data, schema_name=schema_name)
-    return None
