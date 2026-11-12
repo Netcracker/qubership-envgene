@@ -50,6 +50,10 @@ A gate is passed by a row with the gate word `gate:` in the result column. Each 
 - **Append only.** Never edit or delete a row. A correction is a new row: `correction: row 14 named the wrong commit; it was 9b0e4d2`.
 - **Named source or nothing.** Each value comes from a command you ran, a file or page you read, or a person's words.
   An unknown stays `unknown`.
+- **Time from the clock.** The time column is read with `date -u +"%Y-%m-%d %H:%M"` at the moment the row is written.
+  An estimated time is not allowed.
+- **Uncommitted change, no sha.** While the change is not committed, the sha in a row is written as
+  `uncommitted (on <HEAD sha>)`, and the row says which files it covers. Such a row is not a gate.
 - **Evidence is per commit.** A row about commit X says nothing about commit Y. A new commit makes the verify, lint,
   review and docs rows stale until re-run. A commit that changes only `ledger.md`, and the archive commit, do not.
 - **Check the sha.** Before a row is used, `git merge-base --is-ancestor <sha> HEAD` must succeed.

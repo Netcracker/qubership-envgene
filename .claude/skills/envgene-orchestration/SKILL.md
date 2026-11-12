@@ -55,6 +55,12 @@ the first stage.
 
 Debug is entered from any stage on a failure and returns to the stage that failed.
 
+**Which skill fills a slot.** The package rule, applied here: the first installed of `envgene-<slot>` (this
+repository's override, the component id is `envgene` from AGENTS.md), then `component-<slot>` from the installed
+`component-flow` package. The package's own skill is used only for a slot without an override here (debug and
+orchestration-level helpers). Check the name in `.claude/skills/` before a stage starts; a package skill with the same
+slot must not be run in its place.
+
 Archive is a stage of its own, as in the factory design, but it runs before the merge: the archive commit is the last
 commit of the PR, so the merge brings the updated `openspec/specs/` with the code. `component-flow` has no archive
 slot, so `envgene-finish` runs both stages.
@@ -75,9 +81,12 @@ slot, so `envgene-finish` runs both stages.
 
 ## Stops
 
-Stop and ask instead of going on when a command, the base branch, the owner or a permission is missing; when the
-working tree has edits that belong to no task; when two sources disagree on a contract and nobody chose; when a
-credential appears in a file, a log or the conversation; or when someone asks the agent to merge.
+Stop and ask instead of going on when a command, the owner or a permission is missing; when the working tree has
+edits that belong to no task; when two sources disagree on a contract and nobody chose; when a credential appears in
+a file, a log or the conversation; or when someone asks the agent to merge.
+
+The base branch is needed only from verify on (baseline and `origin/<base>` comparisons, finish sync). A missing base
+is a stop for those stages only: propose, design and plan continue without it, and the ledger records `base: unknown`.
 
 ## Ledger
 

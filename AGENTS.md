@@ -124,6 +124,18 @@ cd cucumber_tests
 openspec validate <change-id> --strict --no-interactive
 ```
 
+### Lint
+
+CI runs super-linter (`.github/workflows/super-linter.yaml`, settings in `.github/super-linter.env`). The same checks
+locally, with Docker available (the image tag matches the action version in the workflow):
+
+```bash
+docker run --rm -e RUN_LOCAL=true --env-file .github/super-linter.env -v "$(pwd)":/tmp/lint \
+  ghcr.io/super-linter/super-linter:slim-v8.7.0
+```
+
+Not run in every environment: without Docker, record `lint: not run: no docker` in the ledger.
+
 ---
 
 ## Code Style

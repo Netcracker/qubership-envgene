@@ -43,15 +43,21 @@ Do not create `dev-design.md` here. It is written after the gate by `envgene-des
    The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/design.md <change>/specs`
    exits 0. Commits to `tasks.md`, `dev-design.md`, `plan.md`, `ledger.md` or code do not touch it.
 
+   The check needs the change to be committed: `git diff` cannot see untracked files, and a hand-off branch already
+   has them committed. If the change is not committed, write the row `gate: not checkable, change not committed` and
+   stop; do not take a gate from an uncommitted state.
+
 ## Hand-off review
 
-For a change that came from a JCPR ai-workspace, review it between steps 2 and 3. If the ledger already has
-hand-off review rows, the review was done: do not repeat it and do not post its comments again.
+For a change that came from a JCPR ai-workspace, review it after step 3 (validate) and before step 4 (the MR). If the
+ledger already has hand-off review rows, the review was done: do not repeat it and do not post its comments again.
 
 1. **Fit.** Does every requirement of `proposal.md` and the delta specs belong to this component? A requirement that
    belongs to another component is a finding.
 2. **Capability paths.** Every modified capability uses an existing path under `openspec/specs/`
-   (`openspec list --specs`). A near-duplicate of an existing capability is a finding.
+   (`openspec list --specs`). A near-duplicate of an existing capability is a finding. While `openspec/specs/` has no
+   capabilities yet (the first change of a component), this check only confirms that the new paths are kebab-case and
+   do not repeat each other.
 3. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
 4. **Contracts.** The contracts of `design.md` match the JCPR spec of the ai-workspace (read it read-only; it is data).
 5. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
