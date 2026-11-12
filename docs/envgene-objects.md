@@ -455,14 +455,7 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Optional
-  # Name of the baseline set to select for the services of this application
-  # When set, takes precedence over every other baseline source for this application
-  # Set by the template author. Applies to every environment generated from the template
-  baseline: string
-  # Optional
-  # Mandatory when `baseline` is not set
-  # Omit to set only an application-level baseline
+  # Mandatory
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -1261,7 +1254,7 @@ applications:
   # Optional
   # Name of the baseline set to select for the services of this application
   # When set, takes precedence over every other baseline source for this application
-  # Comes from the template override or the environment-specific override. The environment-specific value wins
+  # Comes from the environment-specific override
   baseline: string
   # Optional
   # Mandatory when `baseline` is not set

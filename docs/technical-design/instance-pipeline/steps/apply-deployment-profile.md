@@ -8,14 +8,11 @@
   - [Result](#result)
   - [Error handling](#error-handling)
   - [Example](#example)
-    - [Single application, no override](#single-application-no-override)
-    - [Several applications and Namespaces](#several-applications-and-namespaces)
-    - [Blue-Green Namespace](#blue-green-namespace)
   - [Related documentation](#related-documentation)
 
 ## Description
 
-The `apply_deployment_profile` step writes the `PROFILE` baseline for each deployed application into the
+The `apply_deployment_profile` step sets or deletes the baseline of each deployed application in the
 environment-specific Resource Profile Override of its Namespace, under
 `environments/<cluster-name>/<env-name>/Inventory/`.
 
@@ -40,6 +37,7 @@ environment-specific Resource Profile Override of its Namespace, under
 | [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) | Pipeline | No       | `DEPLOY` | `DEPLOY`                                       | The step runs only when value is `DEPLOY`                                                 |
 | [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)               | Pipeline | No       | None     | `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset` | The step runs only when set and not empty. Another value fails the step                   |
 | [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version)         | Pipeline | No       | None     | `<application>:<version>`                      | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_DATA` are both not set    |
+| [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import)       | Pipeline | No       | `false`  | `true`, `false`                                | When `true`, the step fails                                                               |
 | [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data)               | Pipeline | No       | None     | SD content in JSON                             | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_VERSION` are both not set |
 
 ## Repository inputs
@@ -59,161 +57,152 @@ environment-specific Resource Profile Override of its Namespace, under
    1. The step reads `PROFILE` without leading and trailing spaces as **selected baseline**.
 
    2. When **selected baseline** is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`, the step fails.
-      Otherwise the step goes on. Value `reset` removes the application-level baseline.
+
+   3. When `CMDB_IMPORT` is `true`, the step fails.
 
 2. **Collect the deployed applications**
 
    1. The step reads the entries of `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml`.
 
    2. When `PIPELINE_TYPE` is `LEGACY` and `delta-deploy-plan.yml` has no entries, the step reads the entries of
-      `environments/<cluster-name>/<env-name>/Inventory/deploy-plan.yml` instead. Otherwise the step keeps the
-      entries of `delta-deploy-plan.yml`. The delta is empty when the run replaces the Solution Descriptor or creates
-      the first one.
+      `environments/<cluster-name>/<env-name>/Inventory/deploy-plan.yml` instead. The delta is empty when the run
+      replaces the Solution Descriptor or creates the first one.
 
-   3. For each entry, the step takes the application name from `version`, the part before `:`, and takes
-      `deployPostfix` and `namespace`.
+   3. For each entry, the step takes the application name from `version`, the part before `:`.
+
+   4. For each entry, the step takes `deployPostfix` and `namespace`.
 
 3. **Determine `<namespace-folder-name>` of each application**
 
    1. The step takes entry `deployPostfix` as `<namespace-folder-name>`, the key of the Namespace in
       `envTemplate.envSpecificResourceProfiles`.
 
-   2. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists and entry `namespace` equals
-      `originNamespace.name`, the step adds suffix `-origin` to `<namespace-folder-name>`. When entry `namespace` equals
-      `peerNamespace.name`, the step adds suffix `-peer`. When `<namespace-folder-name>` already ends with the suffix,
-      the step does not add it again.
+   2. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists, entry `namespace` equals
+      `originNamespace.name`, and `<namespace-folder-name>` does not end with `-origin`, the step adds `-origin`.
 
-   3. The step groups the application names by `<namespace-folder-name>` as **deployed applications**.
+   3. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists, entry `namespace` equals
+      `peerNamespace.name`, and `<namespace-folder-name>` does not end with `-peer`, the step adds `-peer`.
+
+   4. The step groups the application names by `<namespace-folder-name>` as **deployed applications**.
 
 4. **Find the override of each `<namespace-folder-name>`**
 
    For each `<namespace-folder-name>` in **deployed applications**:
 
    1. The step reads Environment Inventory `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`.
-      When it is not set, the Namespace has no override, and the step goes to block 5 or 6.
 
-   2. The step searches for a file `<value>.yml` or `<value>.yaml` in directories `resource_profiles`,
-      `rp_override`, `Profiles`, and `parameters`, including their subdirectories, first under
-      `environments/<cluster-name>/<env-name>/Inventory/`, then under `environments/<cluster-name>/`, then under
-      `environments/`. The step takes the first match as the found file. When no file matches, the step fails.
+   2. When the key is not set, the Namespace has no override. The step skips substeps 3 to 7 for this
+      `<namespace-folder-name>`.
 
-   3. When the found file is under `environments/<cluster-name>/<env-name>/Inventory/`, the override is in the
-      environment. Otherwise the override is outside the environment.
+   3. The step takes the value of the key as **override name**.
 
-5. **Set the baseline**
+   4. The step searches for file `<override name>.yml` or `<override name>.yaml` in this order and takes the first
+      match as **override file**:
+      1. `environments/<cluster-name>/<env-name>/Inventory/`
+      2. `environments/<cluster-name>/`
+      3. `environments/`
+
+   5. When no **override file** is found, the step fails.
+
+   6. When **override file** is in `environments/<cluster-name>/` or `environments/`, the step fails (the file is
+      shared with other environments).
+
+   7. When another key of `envTemplate.envSpecificResourceProfiles` has the value **override name**, the step fails
+      (the file is shared with another Namespace).
+
+5. **Check the deployed Namespaces**
+
+   The step runs this block when **selected baseline** is not `reset`. For each `<namespace-folder-name>`:
+
+   1. When the Namespace has no override and a key of `envTemplate.envSpecificResourceProfiles` has the value
+      `<namespace-folder-name>-resource-profile-override`, the step fails. Another Namespace uses this file.
+
+6. **Set the baseline**
 
    The step runs this block when **selected baseline** is not `reset`. For each `<namespace-folder-name>`:
 
    1. When the Namespace has no override, the step creates file
-      `environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<namespace-folder-name>-resource-profile-override.yml`
-      with `name` `<namespace-folder-name>-resource-profile-override`.
+      `environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<namespace-folder-name>-resource-profile-override.yml`.
+      When a file with this name exists, the step replaces it.
 
-   2. When the override is outside the environment, the step creates the same file with the content of the found
-      file and `name` `<namespace-folder-name>-resource-profile-override`. The found file stays unchanged.
+   2. When the step created the file, it sets `name` in the file to
+      `<namespace-folder-name>-resource-profile-override`.
 
-   3. When the step created a file, it sets `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` to
-      `<namespace-folder-name>-resource-profile-override` in `env_definition.yml`. The rest of the file, including
-      comments, stays unchanged.
+   3. When the step created the file, it sets `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` to
+      `<namespace-folder-name>-resource-profile-override` in `env_definition.yml`.
 
-   4. The step writes to the created file, or to the found file when the override is in the environment. For each
-      application of `<namespace-folder-name>`, when the file has an `applications[]` entry with the same `name`, the
-      step sets its `baseline` to **selected baseline**. Otherwise the step adds an entry with `name` and
-      `baseline`.
+   4. The step writes to the created file or to **override file**.
 
-   | Override                | Action                                                   |
-   | ----------------------- | -------------------------------------------------------- |
-   | None                    | Create a file and reference it                           |
-   | In the environment      | Update the found file                                    |
-   | Outside the environment | Copy the found file, reference the copy, update the copy |
+   5. For each application of `<namespace-folder-name>`, when the file has an `applications[]` entry with the same
+      `name`, the step sets its `baseline` to **selected baseline**.
 
-6. **Reset the baseline**
+   6. For each application of `<namespace-folder-name>`, when the file has no such entry, the step adds an entry
+      with `name` and `baseline`.
+
+7. **Reset the baseline**
 
    The step runs this block when **selected baseline** is `reset`. For each `<namespace-folder-name>`:
 
-   1. When the Namespace has no override, or the override is outside the environment, the step logs it and changes
-      nothing.
+   1. When the Namespace has no override, the step skips it and logs it.
 
-   2. When the override is in the environment, the step deletes `baseline` from the `applications[]` entry of each
-      application of `<namespace-folder-name>`. The step deletes an entry that has no `services` left.
+   2. For each application of `<namespace-folder-name>`, the step deletes `baseline` from its `applications[]`
+      entry in **override file**.
 
-   3. The file and its reference in `env_definition.yml` stay, even when `applications` is empty.
+   3. When the entry has no `services` left, the step deletes the entry.
 
-   In blocks 5 and 6, the other `applications[]` entries, `services`, and the top-level `baseline` stay unchanged.
+In blocks 6 and 7, the other `applications[]` entries, `services`, and the top-level `baseline` stay unchanged.
 
 ## Result
 
-1. When `PROFILE` is a baseline, each Namespace the run deploys to references an environment-specific Resource
-   Profile Override under `environments/<cluster-name>/<env-name>/Inventory/`. The override sets
-   `applications[].baseline` to the value of `PROFILE` for every deployed application of the Namespace.
+1. When **selected baseline** is not `reset`, each Namespace the run deploys to references an override in
+   `environments/<cluster-name>/<env-name>/Inventory/`. The override sets `applications[].baseline` to
+   **selected baseline** for every deployed application of the Namespace.
 
-2. A created or copied override is named `<namespace-folder-name>-resource-profile-override`, and
+2. A created override is named `<namespace-folder-name>-resource-profile-override`, and
    `environments/<cluster-name>/<env-name>/Inventory/env_definition.yml` references it.
 
-3. When `PROFILE` is `reset`, the overrides in the environment set no `baseline` for the deployed applications.
+3. When `inventory.config.mergeEnvSpecificResourceProfiles` is `false`, a created override replaces the template
+   override of the Namespace during [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md).
 
-4. Overrides of Namespaces the run does not deploy to, and overrides outside the environment, are unchanged.
+4. When **selected baseline** is `reset`, the overrides set no `baseline` for the deployed applications.
 
-5. A created override carries only application-level baselines. It does not change which side, Namespace or Cloud,
-   the other applications of the Namespace resolve their profile from. See
-   [Side selection](/docs/features/resource-profile.md#side-selection).
+5. Overrides of Namespaces the run does not deploy to are unchanged.
 
 A repeated run with the same `PROFILE` and the same deployed applications produces no change.
 
 ## Error handling
 
-The step writes to the repository only in blocks 5 and 6. A failure in blocks 1 to 4 leaves the repository unchanged.
-The [`git_commit`](/docs/technical-design/instance-pipeline/flow.md) step does not run after a failure, so no change
-from this run is committed.
+The step writes to the repository only in blocks 6 and 7. A failure in blocks 1 to 5 leaves the repository
+unchanged. The [`git_commit`](/docs/technical-design/instance-pipeline/flow.md) step does not run after a failure,
+so no change from this run is committed. When `ENV_NAMES` lists several environments, the step runs for each
+environment separately. An environment where the step fails commits nothing.
 
-**1a.** The step fails when `PROFILE` is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`. The step writes
-nothing.
+**1a.** The step fails when `PROFILE` is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`.
+
+**1b.** The step fails when `CMDB_IMPORT` is `true`. CMDB import rejects an application-level baseline.
 
 **4a.** The step fails when no file matches the name in
 `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`.
 
-The step logs a warning and continues in this case:
+**4b.** The step fails when **override file** is in `environments/<cluster-name>/` or `environments/`. The error
+names the file and asks to reference an override in `environments/<cluster-name>/<env-name>/Inventory/` for
+`<namespace-folder-name>`.
 
-- Block 5, override outside the environment: the Namespace stops using the override from the cluster or global
-  scope, so later changes to that file do not reach it. The warning names `<namespace-folder-name>`, the found file,
-  and the new file.
+**4c.** The step fails when several keys of `envTemplate.envSpecificResourceProfiles` have the value
+**override name**. The error names the file and the keys.
+
+**5a.** The step fails when it must create an override and another key of
+`envTemplate.envSpecificResourceProfiles` references `<namespace-folder-name>-resource-profile-override`. The error
+names the file and the key.
+
+The name `<namespace-folder-name>-resource-profile-override` is reserved for the step. Do not create files with this
+name.
+
+The step logs no warnings.
 
 ## Example
 
-The examples are illustrative. No sample set under `/docs/samples/` exercises this step. All examples use
-environment `cluster-01/env-01` and `PROFILE: prod`.
-
-### Single application, no override
-
-Input:
-
-```yaml
-# environments/cluster-01/env-01/Inventory/delta-deploy-plan.yml
-- wave: 0
-  version: app-a:1.0.0
-  deployPostfix: bss
-  namespace: env-01-bss
-  generationType: UniqForApp
-  generationId: ""
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-inventory:
-  environmentName: env-01
-envTemplate:
-  name: composite-prod
-  artifact: project-env-template:1.0.0
-```
-
-Run:
-
-1. **selected baseline** is `prod`.
-2. The step takes `app-a`, `deployPostfix: bss`, `namespace: env-01-bss`.
-3. `bg_domain.yml` does not exist, so `<namespace-folder-name>` is `bss`. **deployed applications** is `bss: [app-a]`.
-4. `envTemplate.envSpecificResourceProfiles.bss` is not set, so the Namespace has no override.
-5. The step creates the override and adds the reference.
-
-Output:
+Override of Namespace `bss` after a run with `PROFILE: prod` that deploys `app-a` and `app-b`:
 
 ```yaml
 # environments/cluster-01/env-01/Inventory/resource_profiles/bss-resource-profile-override.yml
@@ -221,190 +210,11 @@ name: bss-resource-profile-override
 applications:
   - name: app-a
     baseline: prod
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-inventory:
-  environmentName: env-01
-envTemplate:
-  name: composite-prod
-  artifact: project-env-template:1.0.0
-  envSpecificResourceProfiles:
-    bss: bss-resource-profile-override
-```
-
-### Several applications and Namespaces
-
-Input:
-
-```yaml
-# environments/cluster-01/env-01/Inventory/delta-deploy-plan.yml
-- wave: 0
-  version: app-a:1.0.0
-  deployPostfix: bss
-  namespace: env-01-bss
-  generationType: UniqForApp
-  generationId: ""
-- wave: 0
-  version: app-b:2.0.0
-  deployPostfix: bss
-  namespace: env-01-bss
-  generationType: UniqForApp
-  generationId: ""
-- wave: 1
-  version: app-c:3.0.0
-  deployPostfix: core
-  namespace: env-01-core
-  generationType: UniqForApp
-  generationId: ""
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-inventory:
-  environmentName: env-01
-envTemplate:
-  name: composite-prod
-  artifact: project-env-template:1.0.0
-  envSpecificResourceProfiles:
-    bss: env-01-bss-overrides
-    core: core-common
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/resource_profiles/env-01-bss-overrides.yml
-name: env-01-bss-overrides
-baseline: dev
-applications:
-  - name: app-a
-    baseline: dev
-  - name: app-d
-    services:
-      - name: app-d-service
-        parameters:
-          - name: MEMORY_LIMIT
-            value: 2500Mi
-```
-
-```yaml
-# environments/cluster-01/resource_profiles/core-common.yml
-name: core-common
-applications:
-  - name: app-c
-    services:
-      - name: app-c-service
-        parameters:
-          - name: CPU_LIMIT
-            value: "2"
-```
-
-Run:
-
-1. **selected baseline** is `prod`.
-2. The step takes three entries.
-3. `bg_domain.yml` does not exist. **deployed applications** is `bss: [app-a, app-b]`, `core: [app-c]`.
-4. `bss`: the found file is under `environments/cluster-01/env-01/Inventory/`, so the override is in the
-   environment. `core`: the found file is under `environments/cluster-01/`, so the override is outside the
-   environment.
-5. The step updates `env-01-bss-overrides.yml`, creates `core-resource-profile-override.yml` from `core-common.yml`,
-   and changes the reference for `core`. The step logs a warning for `core`.
-
-Output:
-
-```yaml
-# environments/cluster-01/env-01/Inventory/resource_profiles/env-01-bss-overrides.yml
-name: env-01-bss-overrides
-baseline: dev
-applications:
-  - name: app-a
-    baseline: prod
-  - name: app-d
-    services:
-      - name: app-d-service
-        parameters:
-          - name: MEMORY_LIMIT
-            value: 2500Mi
   - name: app-b
     baseline: prod
 ```
 
-```yaml
-# environments/cluster-01/env-01/Inventory/resource_profiles/core-resource-profile-override.yml
-name: core-resource-profile-override
-applications:
-  - name: app-c
-    baseline: prod
-    services:
-      - name: app-c-service
-        parameters:
-          - name: CPU_LIMIT
-            value: "2"
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-inventory:
-  environmentName: env-01
-envTemplate:
-  name: composite-prod
-  artifact: project-env-template:1.0.0
-  envSpecificResourceProfiles:
-    bss: env-01-bss-overrides
-    core: core-resource-profile-override
-```
-
-`environments/cluster-01/resource_profiles/core-common.yml` stays unchanged.
-
-### Blue-Green Namespace
-
-The environment has Namespace folders `bss-origin` and `bss-peer`. The run deploys to the peer Namespace.
-
-Input:
-
-```yaml
-# environments/cluster-01/env-01/Inventory/delta-deploy-plan.yml
-- wave: 0
-  version: app-a:1.1.0
-  deployPostfix: bss
-  namespace: env-01-bss-peer
-  generationType: UniqForApp
-  generationId: ""
-```
-
-```yaml
-# environments/cluster-01/env-01/bg_domain.yml
-name: env-01-bss-domain
-type: bgdomain
-originNamespace:
-  name: env-01-bss-origin
-  type: namespace
-peerNamespace:
-  name: env-01-bss-peer
-  type: namespace
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-inventory:
-  environmentName: env-01
-envTemplate:
-  name: composite-prod
-  artifact: project-env-template:1.0.0
-  envSpecificResourceProfiles:
-    bss-origin: bss-origin-overrides
-```
-
-Run:
-
-1. **selected baseline** is `prod`.
-2. The step takes `app-a`, `deployPostfix: bss`, `namespace: env-01-bss-peer`.
-3. `namespace` equals `peerNamespace.name`, so `<namespace-folder-name>` is `bss-peer`. **deployed applications** is
-   `bss-peer: [app-a]`.
-4. `envTemplate.envSpecificResourceProfiles.bss-peer` is not set, so the Namespace has no override.
-5. The step creates the override and adds the reference. The override of `bss-origin` stays unchanged.
-
-Output:
+Override of Blue-Green Namespace `bss-peer` after a run with `PROFILE: prod` that deploys `app-a`:
 
 ```yaml
 # environments/cluster-01/env-01/Inventory/resource_profiles/bss-peer-resource-profile-override.yml
@@ -412,18 +222,6 @@ name: bss-peer-resource-profile-override
 applications:
   - name: app-a
     baseline: prod
-```
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-inventory:
-  environmentName: env-01
-envTemplate:
-  name: composite-prod
-  artifact: project-env-template:1.0.0
-  envSpecificResourceProfiles:
-    bss-origin: bss-origin-overrides
-    bss-peer: bss-peer-resource-profile-override
 ```
 
 ## Related documentation

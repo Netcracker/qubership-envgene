@@ -1207,9 +1207,7 @@ and resolves the performance parameters for each service as follows.
 combined. The Namespace is the active side when it has any profile signal, meaning its object
 baseline is set or an override is present for it. Otherwise the Cloud is the active side. The
 Namespace is the recommended layer for setting a resource profile, and the Cloud profile is a
-rarely-needed fallback. An override that carries only application-level baselines, with no
-override-level baseline and no custom values, is not a profile signal. The Calculator CLI reads the
-application-level baselines of the Namespace override whichever side is active.
+rarely-needed fallback.
 
 **Baseline precedence.** The Calculator CLI selects the baseline for each service in this order of
 priority, highest first:

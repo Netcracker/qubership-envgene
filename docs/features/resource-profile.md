@@ -152,10 +152,10 @@ the custom values bound to the old baseline are not carried onto the new one.
 
 When `mergeEnvSpecificResourceProfiles` is `true` (the default), the environment-specific override is
 merged into the template override. It adds entries the template does not have and wins on any conflicting
-leaf value. When both overrides carry a `baseline` field, the environment-specific value is used. The same
-rule applies to the `baseline` of an application entry. Application entries are matched by `name`. The
-resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of
-the template override.
+leaf value. When both overrides carry a `baseline` field, the environment-specific value is used.
+Application entries are matched by `name`. The resulting
+[Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of the template
+override.
 
 Merge mode is for adding custom values on the same baseline. Merging when the template override carries
 custom values and its baseline differs from the environment-specific override's baseline is the wrong path
@@ -189,8 +189,9 @@ For example: `acme-prod-eu-west-myprofile`.
 
 ## Application-level baseline
 
-An application entry in a [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) can set
-`baseline`. It applies only to the services of that application.
+An application entry in an
+[environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
+can set `baseline`. It applies only to the services of that application. A template override does not support it.
 
 ```yaml
 name: "env-01-bss-overrides"
@@ -209,7 +210,8 @@ applications:
 `app-a` uses `prod`. `app-b` uses `dev`.
 
 > [!NOTE]
-> In the CMDB flow, CMDB import rejects a Resource Profile Override that sets an application-level baseline.
+> In the CMDB flow, CMDB import rejects a Resource Profile Override that sets an application-level baseline, and a
+> deployment with `PROFILE` fails.
 
 ## Selecting a profile at deployment
 
@@ -231,9 +233,11 @@ object `profile.baseline` is set or an override is present for it. Otherwise the
 The Namespace is the recommended layer for setting a resource profile, and the Cloud is a rarely-needed
 fallback.
 
-An override that carries only [application-level baselines](#application-level-baseline), with no override-level
-`baseline` and no custom values, is not a profile signal. Its application-level baselines apply whichever side is
-active, so the other applications of the Namespace keep the Cloud profile when the Cloud is active.
+> [!NOTE]
+> When the Cloud has a profile and the Namespace has none, the first deployment with
+> [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) creates an override for the Namespace. From then on the
+> Namespace is the active side, and the Cloud profile no longer applies to its applications. Set the profile on the
+> Namespace, not on the Cloud.
 
 ### Baseline resolution within the active side
 

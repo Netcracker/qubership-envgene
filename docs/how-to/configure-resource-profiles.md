@@ -331,6 +331,11 @@ PROFILE=prod
 EnvGene sets `baseline: prod` for every application of the deployment and commits the change. To remove it,
 deploy the application with `PROFILE=reset`.
 
+The deployment fails when the namespace references a shared override: a file outside
+`environments/<cluster-name>/<env-name>/Inventory/`, or a file other namespaces reference too. Reference an
+override in the environment `Inventory/resource_profiles/` first. In the CMDB flow, a deployment with `PROFILE`
+fails.
+
 > [!WARNING]
 > `PROFILE` applies to every application of the deployment. Deploy the application alone if only it needs the
 > baseline.

@@ -16,8 +16,6 @@ namespace, so teams change it before every deployment or keep a second logical e
   value fails before anything is written.
 - EnvGene saves the selection in Git, so later deployments keep it without repeating it. Value `reset` removes
   the selection.
-- A per-application baseline does not switch the namespace between the namespace and cloud profile, so the other
-  applications keep theirs.
 
 Rejected:
 
@@ -29,7 +27,9 @@ Rejected:
 
 - A second logical environment is no longer needed.
 - A deployment now changes configuration, and the selection applies to later deployments by other people.
-- Baseline precedence gains a level, and the side selection of ADR-0006 gains an exception.
+- Baseline precedence gains a level.
+- When the cloud has a profile and the namespace has none, the first deployment with a profile name makes the
+  namespace use its own profile, and the cloud profile stops applying to it.
 - An override with a per-application baseline cannot be imported into CMDB.
 
 See [ADR-0006](/docs/adr/0006-resource-profile-baseline-override-resolution.md) and

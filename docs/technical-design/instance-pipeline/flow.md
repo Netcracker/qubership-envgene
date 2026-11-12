@@ -485,14 +485,16 @@ Functions:
     - output:
       - updated environment-specific Resource Profile Overrides under `Inventory/`, created ones in
         `Inventory/resource_profiles/`
-      - updated `env_definition.yml` when an override is created or copied
+      - updated `env_definition.yml` when an override is created
     - actions:
       - group the applications of the run delta by `<namespace-folder-name>`: `deployPostfix`, plus `-origin` or
         `-peer` for a Blue-Green Namespace
-      - find the override of each `<namespace-folder-name>` with the `env_build` search
-      - set `applications[].baseline` to `PROFILE`: create the override when none is referenced, update it when it is
-        under the environment `Inventory/`, copy it when it is in the cluster or global scope
-      - with `PROFILE: reset`, delete `applications[].baseline` only in an override under the environment `Inventory/`
+      - find the override of each `<namespace-folder-name>` with the `env_build` search, fail when it is outside the
+        environment `Inventory/` or referenced by several keys
+      - fail when `CMDB_IMPORT` is `true`
+      - with a baseline value: create `<namespace-folder-name>-resource-profile-override` when none is referenced,
+        set `applications[].baseline`
+      - with `PROFILE: reset`: delete `applications[].baseline`, skip a Namespace without an override
 
 #### 1.15 step `env_build`
 
@@ -566,6 +568,8 @@ Functions:
     - AI[techDebt-P1]: prepare a UC, add tests
     - AI[bgd]: Replace `apply_ns_build_filter` with SD-scoped generation. Render only namespaces from the SD,
       then apply file-replace-merge to the committed instance. `NS_BUILD_FILTER` can then be deprecated.
+    - AI[JCPR-3087]: merge `applications[].baseline` of the environment-specific override into the result, and
+      accept an application entry without `services`
 5. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
@@ -631,6 +635,8 @@ Functions:
     - AI[phase1]: remove SD support
     - AI[phase1]: implement uniq app names
     - AI[bgd]: Support the BG case in the ES structure. `<namespace-folder-01>` includes peer and origin postfixes.
+    - AI[JCPR-3087]: in the Calculator CLI, the `applications[].baseline` of the Resource Profile Override takes
+      precedence over every other baseline for the services of that application
 5. `external_credential_provisioning`
     - input:
       - Effective Set
