@@ -165,8 +165,9 @@ Domain, Profiles, and credential files.
       2. **Merge mode** (`mergeEnvSpecificResourceProfiles: true`, the default) forms a name-keyed union
          of the template override and the environment-specific override across the application, service,
          and parameter levels. Entries on one side are kept, entries on both are merged, and on a leaf
-         value and on the top-level `baseline` the environment-specific value wins. Nothing is removed,
-         and the result keeps the template override name.
+         value and on the top-level `baseline` the environment-specific value wins. On the `baseline` of an
+         application entry the environment-specific value wins too. Nothing is removed, and the result keeps
+         the template override name.
 
       3. **Replace mode** (`mergeEnvSpecificResourceProfiles: false`) replaces the template override in
          full with the environment-specific override. The result keeps the environment-specific name.

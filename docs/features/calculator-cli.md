@@ -1207,12 +1207,20 @@ and resolves the performance parameters for each service as follows.
 combined. The Namespace is the active side when it has any profile signal, meaning its object
 baseline is set or an override is present for it. Otherwise the Cloud is the active side. The
 Namespace is the recommended layer for setting a resource profile, and the Cloud profile is a
-rarely-needed fallback.
+rarely-needed fallback. An override that carries only application-level baselines, with no
+override-level baseline and no custom values, is not a profile signal. The Calculator CLI reads the
+application-level baselines of the Namespace override whichever side is active.
 
-**Baseline precedence.** Within the active side the Calculator CLI resolves the baseline name by
-precedence, highest first: the environment-specific override's baseline, then the template
-override's baseline, then the object baseline. An empty-string baseline is treated as absent at
-every level, so an empty value never wins and the next source is considered.
+**Baseline precedence.** The Calculator CLI selects the baseline for each service in this order of
+priority, highest first:
+
+1. The `baseline` of the service's application entry in the override.
+2. The `baseline` of the environment-specific override.
+3. The `baseline` of the template override.
+4. The `profile.baseline` of the object.
+
+The application-level baseline applies only to the services of that application. The other applications of
+the same Namespace use the next sources. An empty baseline counts as not set.
 
 **Applying override and baseline.** The override is always applied. Its custom values are expanded
 from dot notation and applied to the service. Baseline parameters are layered under the override
@@ -1221,15 +1229,16 @@ precedence on any matching key. When the resolved name is not found, or no basel
 resolved, the service receives the override only.
 
 **Warnings.** The resolution has no hard failures and generation always continues. The Calculator
-CLI emits a warning when a resolved baseline name is absent from a service that does ship baselines,
-and when an override sets custom values but declares no baseline. A service that ships no baselines
+CLI emits a warning when a resolved baseline name, including an application-level baseline, is absent from
+a service that does ship baselines, and when an override sets custom values but declares no baseline. A service that ships no baselines
 is not warned. A further warning covers merge mode where the template override carries custom values
 and its baseline differs from the environment-specific override's baseline.
 
 **Optional parameter list.** The override's custom-values list (its `applications`) is optional. A
 baseline-only override sets only a name and a baseline, with no custom values, and is the supported
 way to change the baseline without any custom-value overrides. A baseline-only override is not
-warned.
+warned. In the same way, an application entry may set only a `baseline` with no `services`, which
+changes the baseline of that application without custom values.
 
 ##### \[Version 2.0][Deployment Parameter Context] `mapping.yaml`
 

@@ -16,6 +16,7 @@
       - [1.12 step `deploy_postfix_namespace_map`](#112-step-deploy_postfix_namespace_map)
       - [1.13 step `process_sd`](#113-step-process_sd)
       - [1.14 step `generate_deployment_plan`](#114-step-generate_deployment_plan)
+      - [1.14.1 step `apply_deployment_profile` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#1141-step-apply_deployment_profile-to-be-implemented-not-implemented-yet)
       - [1.15 step `env_build`](#115-step-env_build)
       - [1.16 step `generate_effective_set`](#116-step-generate_effective_set)
       - [1.17 step `git_commit`](#117-step-git_commit)
@@ -462,6 +463,36 @@ Functions:
       - writes the repository plan minus the cleaned namespaces (no delta, no plan passed to the calculator)
     - AI[bgd]: Add the functions
 
+#### 1.14.1 step `apply_deployment_profile` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
+
+Design: [`apply_deployment_profile`](/docs/technical-design/instance-pipeline/steps/apply-deployment-profile.md)
+
+Triggers:
+
+- `OPERATION_TYPE: DEPLOY` and
+- `PROFILE` is set and not empty and
+- `PIPELINE_TYPE: GITLAB_DEPLOY`, or `PIPELINE_TYPE: LEGACY` with `SD_VERSION` or `SD_DATA` set
+
+Functions:
+
+1. `apply_deployment_profile`
+    - input:
+      - `PROFILE`
+      - `delta-deploy-plan.yml`, or `deploy-plan.yml` at `PIPELINE_TYPE: LEGACY` when the delta is empty
+      - `bg_domain.yml` for a Blue-Green `deployPostfix`
+      - `env_definition.yml` (`envTemplate.envSpecificResourceProfiles`)
+      - environment-specific Resource Profile Overrides
+    - output:
+      - updated environment-specific Resource Profile Overrides under `Inventory/`, created ones in
+        `Inventory/resource_profiles/`
+      - updated `env_definition.yml` when an override is created or copied
+    - actions:
+      - group the applications of the run delta by `<namespace-folder-name>`: `deployPostfix`, plus `-origin` or
+        `-peer` for a Blue-Green Namespace
+      - find the override of each `<namespace-folder-name>` with the `env_build` search: create when none is referenced,
+        update when it is under the environment `Inventory/`, copy when it is in the cluster or global scope
+      - set `applications[].baseline` to `PROFILE` in that override, or remove it when `PROFILE` is `inherit`
+
 #### 1.15 step `env_build`
 
 Design: [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md)
@@ -698,6 +729,7 @@ Functions:
 1. `cmdb_import`
     - input:
       - `build.env.FULL_ENV_NAME`
+    - AI[JCPR-3087]: fail with a readable error when a Resource Profile Override sets `applications[].baseline`
     - AI[phase1]: do not call in the new flow, call in the old flow
     - AI[phase1!]: add the step into `env_prepare` job
     - AI[phase1]: remove envgene dot env file
