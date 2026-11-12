@@ -481,7 +481,7 @@ class EnvGenerator:
         external_cred_path = Template(external_credential_template).render(self.ctx.as_dict())
         logger.info(f"Found external template. Render external credentials for {external_cred_path}")
         external_creds = openYaml(external_cred_path)
-        default_remote_path = "{{ current_env.cloud }}/{{ current_env.name }}"
+        default_remote_path = "{{ current_env.cluster.name }}/{{ current_env.name }}"
         for cred_config in external_creds.values():
             if isinstance(cred_config, dict) and "remoteRefPath" not in cred_config:
                 cred_config["remoteRefPath"] = default_remote_path
