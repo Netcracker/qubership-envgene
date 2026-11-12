@@ -10,6 +10,9 @@
   - [Scenario 5: Use a baseline with custom values for a cluster](#scenario-5-use-a-baseline-with-custom-values-for-a-cluster)
   - [Scenario 6: Use a baseline with custom values for all environments](#scenario-6-use-a-baseline-with-custom-values-for-all-environments)
   - [Scenario 7: Add custom values for one environment on top of a template override](#scenario-7-add-custom-values-for-one-environment-on-top-of-a-template-override)
+  - [Scenario 8: Use a different baseline for one application](#scenario-8-use-a-different-baseline-for-one-application)
+    - [Select the baseline when you deploy](#select-the-baseline-when-you-deploy)
+    - [Set the baseline in the repository](#set-the-baseline-in-the-repository)
   - [Best practices](#best-practices)
   - [Related documentation](#related-documentation)
 
@@ -49,8 +52,9 @@ several environments reference the same name without copying it.
 name, or both. The `baseline` selects the application's parameter set. Custom values apply on top of the
 baseline parameters.
 
-Baseline precedence, highest first: the environment-specific override's baseline, then the template
-override's baseline, then the baseline set on the namespace.
+Baseline precedence, highest first: the baseline of an application entry in the override, then the
+environment-specific override's baseline, then the template override's baseline, then the baseline set on the
+namespace. An application-level baseline applies only to the services of that application.
 
 For the full resolution rules and the outcome table, see the
 [resource profile feature doc](/docs/features/resource-profile.md).
@@ -298,6 +302,77 @@ conflicting values use the environment-specific value.
 **Sample:** an environment-specific override merged onto a template override -
 `docs/samples/instance-repository/environments/cluster-01/env-02/`.
 
+## Scenario 8: Use a different baseline for one application
+
+**When to use:** One application in a namespace needs a different baseline than the other applications of the
+same namespace (for example, the namespace uses `dev` and one application needs `prod`).
+
+Both approaches set `baseline` on the application entry in the environment-specific override of the namespace.
+For how the baseline is resolved, see
+[Application-level baseline](/docs/features/resource-profile.md#application-level-baseline).
+
+> [!NOTE]
+> Do not change the namespace baseline for one application. It changes the baseline of every application in the
+> namespace.
+
+### Select the baseline when you deploy
+
+**When to use:** You deploy the application and want it to keep the baseline for later deployments.
+
+Run the deployment with [`PROFILE`](/docs/instance-pipeline-parameters.md#profile):
+
+```text
+ENV_NAMES=cluster-01/env-01
+OPERATION_TYPE=DEPLOY
+APPLICATION_VERSIONS=app-a:1.0.0
+PROFILE=prod
+```
+
+EnvGene sets `baseline: prod` for every application of the deployment and commits the change. To remove it,
+deploy the application with `PROFILE=reset`.
+
+The deployment fails when the namespace references a shared override: a file outside
+`environments/<cluster-name>/<env-name>/Inventory/`, or a file other namespaces reference too. Reference an
+override in the environment `Inventory/resource_profiles/` first. In the CMDB flow, a deployment with `PROFILE`
+fails.
+
+> [!WARNING]
+> `PROFILE` applies to every application of the deployment. Deploy the application alone if only it needs the
+> baseline.
+
+### Set the baseline in the repository
+
+**When to use:** You set the baseline without a deployment.
+
+Add the application with `baseline` to the environment-specific override of the namespace:
+
+```yaml
+# environments/cluster-01/env-05/Inventory/resource_profiles/bss-app-baselines.yml
+name: "bss-app-baselines"
+applications:
+  - name: "app-a"
+    baseline: "prod"
+```
+
+Reference the override in `env_definition.yml` when the namespace has no environment-specific override yet:
+
+```yaml
+# environments/cluster-01/env-05/Inventory/env_definition.yml
+envTemplate:
+  # ...
+  envSpecificResourceProfiles:
+    bss: "bss-app-baselines"
+```
+
+Keep the default merge mode. Commit to the Instance repository and trigger environment generation. To remove the
+baseline, delete it from the override.
+
+**Sample:** an application-level baseline and its `env_definition.yml` -
+`docs/samples/instance-repository/environments/cluster-01/env-05/`.
+
+> [!NOTE]
+> In the CMDB flow, CMDB import rejects an override that sets an application-level baseline.
+
 ## Best practices
 
 **Set a baseline on every override that sets custom values.** An override that sets custom values but no
@@ -312,6 +387,10 @@ same baseline. Replace mode is the right tool for switching to a different basel
 
 **Prefer namespace scope.** Cloud-level profiles exist for rare cases where no namespace is appropriate.
 Use namespace scope for all standard configurations.
+
+**Use an application-level baseline for exceptions only.** Set the namespace baseline for what most applications need,
+and set an application-level baseline only for the applications that differ. Many application-level baselines in one
+namespace make the effective baseline harder to trace.
 
 ## Related documentation
 
@@ -328,3 +407,6 @@ Use namespace scope for all standard configurations.
   structure and parameters including `mergeEnvSpecificResourceProfiles`
 - [ADR-0006](/docs/adr/0006-resource-profile-baseline-override-resolution.md) - design decisions
   behind the resolution model
+- [ADR-0012](/docs/adr/0012-select-resource-profile-baseline-per-application-at-deployment.md) - the
+  application-level baseline and profile selection at deployment
+- [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) - pipeline parameter reference

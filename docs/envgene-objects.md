@@ -1251,7 +1251,14 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Mandatory
+  # Optional
+  # Name of the baseline set to select for the services of this application
+  # When set, takes precedence over every other baseline source for this application
+  # Comes from the environment-specific override
+  baseline: string
+  # Optional
+  # Mandatory when `baseline` is not set
+  # Omit to set only an application-level baseline
   services:
   - # Mandatory
     # Service name to which the override applies
@@ -1934,7 +1941,14 @@ applications:
   # Deprecated
   # Not processed by EnvGene
   sd: string
-  # Mandatory
+  # Optional
+  # Name of the baseline set to select for the services of this application
+  # When set, takes precedence over every other baseline source for this application
+  # Set by the configurator or by the PROFILE pipeline parameter at deployment
+  baseline: string
+  # Optional
+  # Mandatory when `baseline` is not set
+  # Omit to set only an application-level baseline
   services:
   - # Mandatory
     # Service name to which the override applies

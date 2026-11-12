@@ -27,6 +27,7 @@
     - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`EXTERNAL_CREDENTIAL_PROVISIONING`](#external_credential_provisioning)
     - [`CUSTOM_PARAMS`](#custom_params)
+    - [`PROFILE`](#profile)
     - [`APPLICATION_VERSIONS`](#application_versions)
     - [`DEPLOY_POSTFIXES_FILTER`](#deploy_postfixes_filter)
     - [`NAMESPACE_NAMES_FILTER`](#namespace_names_filter)
@@ -629,6 +630,26 @@ namespaces:
 deployment:
   MY_OVERRIDE: value
 ```
+
+### `PROFILE`
+
+**Description**: The baseline for every application the run deploys. EnvGene saves it as an
+[application-level baseline](/docs/features/resource-profile.md#application-level-baseline) in the
+[environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
+of each Namespace and commits it. Later deployments keep it until another `PROFILE` value replaces it. `reset`
+removes it. See
+[Selecting a profile at deployment](/docs/features/resource-profile.md#selecting-a-profile-at-deployment).
+
+Processed only when `OPERATION_TYPE` is `DEPLOY`. At `PIPELINE_TYPE: LEGACY`, processed only when `SD_VERSION` or
+`SD_DATA` is set.
+
+**Allowed values**: `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `prod`
 
 ### `APPLICATION_VERSIONS`
 

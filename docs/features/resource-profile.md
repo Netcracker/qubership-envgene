@@ -10,6 +10,8 @@
       - [Replace mode](#replace-mode)
       - [Merge mode](#merge-mode)
     - [Naming rules for Resource Profile Override](#naming-rules-for-resource-profile-override)
+  - [Application-level baseline](#application-level-baseline)
+  - [Selecting a profile at deployment](#selecting-a-profile-at-deployment)
   - [Effective Set calculation: resolving the profile](#effective-set-calculation-resolving-the-profile)
     - [Side selection](#side-selection)
     - [Baseline resolution within the active side](#baseline-resolution-within-the-active-side)
@@ -55,6 +57,9 @@ repository to apply a consistent adjustment across all environments of the same 
 An **[environment-specific override][env-specific-rpo]** (Environment Specific Resource Profile Override)
 sets a further set of custom values on top of the template override. The configurator creates these in the
 Instance repository for a specific environment.
+
+An override can also set a baseline for one application. See
+[Application-level baseline](#application-level-baseline).
 
 When generating an [Environment Instance](/docs/envgene-objects.md#environment-instance-objects), the
 template and environment-specific overrides are combined (merged or replaced) into a single
@@ -147,9 +152,10 @@ the custom values bound to the old baseline are not carried onto the new one.
 
 When `mergeEnvSpecificResourceProfiles` is `true` (the default), the environment-specific override is
 merged into the template override. It adds entries the template does not have and wins on any conflicting
-leaf value. When both overrides carry a `baseline` field, the environment-specific value is used. The
-resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of
-the template override.
+leaf value. When both overrides carry a `baseline` field, the environment-specific value is used.
+Application entries are matched by `name`. The resulting
+[Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of the template
+override.
 
 Merge mode is for adding custom values on the same baseline. Merging when the template override carries
 custom values and its baseline differs from the environment-specific override's baseline is the wrong path
@@ -181,6 +187,39 @@ When set to `true`, EnvGene prefixes the name of each
 
 For example: `acme-prod-eu-west-myprofile`.
 
+## Application-level baseline
+
+An application entry in an
+[environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
+can set `baseline`. It applies only to the services of that application. A template override does not support it.
+
+```yaml
+name: "env-01-bss-overrides"
+baseline: "dev"
+applications:
+  - name: "app-a"
+    baseline: "prod"
+  - name: "app-b"
+    services:
+      - name: "app-b-service"
+        parameters:
+          - name: "MEMORY_LIMIT"
+            value: "2500Mi"
+```
+
+`app-a` uses `prod`. `app-b` uses `dev`.
+
+> [!NOTE]
+> In the CMDB flow, CMDB import rejects a Resource Profile Override that sets an application-level baseline, and a
+> deployment with `PROFILE` fails.
+
+## Selecting a profile at deployment
+
+[`PROFILE`](/docs/instance-pipeline-parameters.md#profile) sets the baseline for every application the run
+deploys. EnvGene saves it as the [application-level baseline](#application-level-baseline) in the
+environment-specific override of each Namespace and commits it. `PROFILE: reset` removes it. See step
+[`apply_deployment_profile`](/docs/technical-design/instance-pipeline/steps/apply-deployment-profile.md).
+
 ## Effective Set calculation: resolving the profile
 
 During Effective Set calculation, the Effective Set generator resolves which Resource Profile Override
@@ -194,14 +233,22 @@ object `profile.baseline` is set or an override is present for it. Otherwise the
 The Namespace is the recommended layer for setting a resource profile, and the Cloud is a rarely-needed
 fallback.
 
+> [!NOTE]
+> When the Cloud has a profile and the Namespace has none, the first deployment with
+> [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) creates an override for the Namespace. From then on the
+> Namespace is the active side, and the Cloud profile no longer applies to its applications. Set the profile on the
+> Namespace, not on the Cloud.
+
 ### Baseline resolution within the active side
 
-Within the active side, the effective baseline name is resolved from three sources, in order of precedence
-from highest to lowest:
+Within the active side, the effective baseline name for a service is resolved from four sources, in order of
+precedence from highest to lowest:
 
-1. the `baseline` field of the environment-specific override, when set.
-2. the `baseline` field of the template override, when set.
-3. the `profile.baseline` value on the Cloud or Namespace object.
+1. the `baseline` of the service's application entry in the Resource Profile Override, when set. See
+   [Application-level baseline](#application-level-baseline).
+2. the `baseline` field of the environment-specific override, when set.
+3. the `baseline` field of the template override, when set.
+4. the `profile.baseline` value on the Cloud or Namespace object.
 
 In replace mode the template override is dropped, so its baseline drops out of the order and the precedence
 collapses to the environment-specific override's baseline, then the object baseline.
@@ -330,6 +377,8 @@ replicas: 1
 - [Resource profiles tutorial](/docs/tutorials/resource-profiles.md) - a guided end-to-end lesson
 - [Resource profiles use cases](/docs/use-cases/resource-profiles.md) - observable behavior scenarios
 - [ADR-0006](/docs/adr/0006-resource-profile-baseline-override-resolution.md) - the resolution design decision
+- [ADR-0012](/docs/adr/0012-select-resource-profile-baseline-per-application-at-deployment.md) - the
+  application-level baseline and profile selection at deployment
 - [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md) - how overrides are combined
 - [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md) - launches the calculator
 - [Calculator CLI](/docs/features/calculator-cli.md) - baseline and override resolution
