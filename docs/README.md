@@ -48,6 +48,7 @@
 **Effective Set:**
 
 - [**Generate an Effective Set**](/docs/how-to/generate-effective-set.md) - Trigger Effective Set generation from a Solution Descriptor artifact and template version
+- [**Enable the Compact `deploy-descriptor.yaml` Layout**](/docs/how-to/enable-compact-deploy-descriptor.md) - Reduce the size of `deploy-descriptor.yaml` for an application with many services
 
 **Advanced Configuration:**
 
