@@ -1,6 +1,6 @@
 # AI Agent Rules for qubership-envgene Repository
 
-Component id: envgene
+Component ID: envgene
 
 This document contains guidelines and rules for AI coding assistants working with this repository.
 Claude Code reads it through `.claude/CLAUDE.md`, which imports this file.

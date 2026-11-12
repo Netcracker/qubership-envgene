@@ -17,7 +17,7 @@ skill for that stage.
 | 3 | Dev design | `envgene-design` | `design \| <sha> \| <developer> \| <approach>` |
 | 4 | Plan | `component-plan` (no override yet) | plan entry: every contract id of `design.md` covered in `dev-design.md` |
 | 5 | Implement | `envgene-implementation` | - |
-| 6 | Verify | `envgene-verification` (not in the repository yet) | verification row for HEAD |
+| 6 | Verify | `envgene-verification` | verification row for HEAD, every suite exit 0 |
 | 7 | Review | `envgene-review` | review row |
 | 8 | Docs | `envgene-documentation` | docs row |
 | 9 | Finish | `component-finish` | person merges |
