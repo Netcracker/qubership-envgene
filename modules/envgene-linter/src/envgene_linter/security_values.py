@@ -16,6 +16,18 @@ _RECIPIENTS = {
 }
 
 
+_SECRET_SUFFIX = re.compile(r"(?:^|[_.-])(?:password|passwd|pass|secret|token|private_key|api_key)$")
+
+
+def is_secret_parameter_name(name: str) -> bool:
+    # Treat camelCase and snake_case alike, while preserving token boundaries.
+    if _SECRET_SUFFIX.search(name.lower()):
+        return True
+    normalized = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
+    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", normalized).lower()
+    return bool(_SECRET_SUFFIX.search(normalized))
+
+
 def literal_name(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip()) and not any(
         mark in value for mark in ('${', '{{', '{%', '\n', '\r')

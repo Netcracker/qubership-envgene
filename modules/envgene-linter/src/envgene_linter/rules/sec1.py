@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -10,18 +9,8 @@ from ..connections import Connections, compute_connections
 from ..parameter_objects import authored_parameter_path
 from ..model import Finding, Location, RepoIndex, Severity
 from ..rulemeta import RULES
+from ..security_values import is_secret_parameter_name
 from ..yamlio import LoadedYaml, dotted
-
-_SECRET_SUFFIX = re.compile(r"(?:^|[_.-])(?:password|passwd|pass|secret|token|private_key|api_key)$")
-
-
-def _secret_name(name: str) -> bool:
-    # Treat camelCase and snake_case alike, while preserving token boundaries.
-    if _SECRET_SUFFIX.search(name.lower()):
-        return True
-    normalized = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
-    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", normalized).lower()
-    return bool(_SECRET_SUFFIX.search(normalized))
 
 
 def _leaves(value: Any, path: tuple = (), ancestors: frozenset[int] = frozenset()) -> Iterator[tuple[tuple, Any]]:
@@ -52,7 +41,7 @@ def _check_bag(document: LoadedYaml, prefix: tuple, bag: dict, scope: str) -> It
     meta = RULES["SEC-1"]
     for path, value in _leaves(bag):
         name = next((part for part in reversed(path) if isinstance(part, str)), "")
-        if not _secret_name(name) or not _literal(value):
+        if not is_secret_parameter_name(name) or not _literal(value):
             continue
         yaml_path = (*prefix, *path)
         key = dotted(yaml_path)

@@ -12,7 +12,7 @@ from ..security_sources import collect_security_sources
 from ..source_scope import is_generated_output
 from ..security_values import classify, literal_name, parse_reference, valid_external
 from ..yamlio import LoadedYaml, YamlReadError, load
-from .sec1 import _secret_name
+from ..security_values import is_secret_parameter_name as _secret_name
 
 _MESSAGES = {
     'literal': 'A connected secret candidate contains a literal value without recognized protection.',
