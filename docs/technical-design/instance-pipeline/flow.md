@@ -491,7 +491,7 @@ Functions:
         `-peer` for a Blue-Green Namespace
       - find the override of each `<namespace-folder-name>` with the `env_build` search: create when none is referenced,
         update when it is under the environment `Inventory/`, copy when it is in the cluster or global scope
-      - set `applications[].baseline` to `PROFILE` in that override, or remove it when `PROFILE` is `inherit`
+      - set `applications[].baseline` to `PROFILE` in that override, or remove it when `PROFILE` is `reset`
 
 #### 1.15 step `env_build`
 

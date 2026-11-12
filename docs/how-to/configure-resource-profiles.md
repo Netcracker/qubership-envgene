@@ -329,7 +329,7 @@ PROFILE=prod
 ```
 
 EnvGene sets `baseline: prod` for every application of the deployment and commits the change. To remove it,
-deploy the application with `PROFILE=inherit`.
+deploy the application with `PROFILE=reset`.
 
 > [!WARNING]
 > `PROFILE` applies to every application of the deployment. Deploy the application alone if only it needs the

@@ -12,9 +12,9 @@ namespace, so teams change it before every deployment or keep a second logical e
 - An override can set a baseline per application. It takes precedence over every other baseline for that
   application, because the override already lists applications by name.
 - A deployment takes an optional profile name, one string for every application of the run, as the legacy deployer
-  did. The name is one of the standard baselines `dev`, `prod`, `dev-ha`, `prod-nonha`, or `inherit`, so a wrong
+  did. The name is one of the standard baselines `dev`, `prod`, `dev-ha`, `prod-nonha`, or `reset`, so a wrong
   value fails before anything is written.
-- EnvGene saves the selection in Git, so later deployments keep it without repeating it. Value `inherit` removes
+- EnvGene saves the selection in Git, so later deployments keep it without repeating it. Value `reset` removes
   the selection.
 - A per-application baseline does not switch the namespace between the namespace and cloud profile, so the other
   applications keep theirs.

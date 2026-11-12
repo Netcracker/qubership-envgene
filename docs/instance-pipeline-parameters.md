@@ -639,14 +639,14 @@ deployment:
 **Description**: The baseline for every application the run deploys. EnvGene saves it as an
 [application-level baseline](/docs/features/resource-profile.md#application-level-baseline) in the
 [environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
-of each Namespace and commits it. Later deployments keep it until another `PROFILE` value replaces it. `inherit`
+of each Namespace and commits it. Later deployments keep it until another `PROFILE` value replaces it. `reset`
 removes it. See
 [Selecting a profile at deployment](/docs/features/resource-profile.md#selecting-a-profile-at-deployment).
 
 Processed only when `OPERATION_TYPE` is `DEPLOY`. At `PIPELINE_TYPE: LEGACY`, processed only when `SD_VERSION` or
 `SD_DATA` is set.
 
-**Allowed values**: `dev`, `prod`, `dev-ha`, `prod-nonha`, `inherit`
+**Allowed values**: `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`
 
 **Default Value**: None
 

@@ -33,14 +33,14 @@ environment-specific Resource Profile Override of its Namespace, under
 
 ## Input parameters
 
-| Parameter                                                                | Source   | Required | Default  | Values / format                                  | Effect                                                                                    |
-| ------------------------------------------------------------------------ | -------- | -------- | -------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)           | Pipeline | Yes      | None     | `<cluster-name>/<env-name>`                      | Selects `environments/<cluster-name>/<env-name>/`                                         |
-| [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type)   | Pipeline | No       | `LEGACY` | `GITLAB_DEPLOY`, `LEGACY`                        | Selects the file the step reads the deployed applications from                            |
-| [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) | Pipeline | No       | `DEPLOY` | `DEPLOY`                                         | The step runs only when value is `DEPLOY`                                                 |
-| [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)               | Pipeline | No       | None     | `dev`, `prod`, `dev-ha`, `prod-nonha`, `inherit` | The step runs only when set and not empty. Another value fails the step                   |
-| [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version)         | Pipeline | No       | None     | `<application>:<version>`                        | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_DATA` are both not set    |
-| [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data)               | Pipeline | No       | None     | SD content in JSON                               | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_VERSION` are both not set |
+| Parameter                                                                | Source   | Required | Default  | Values / format                                | Effect                                                                                    |
+| ------------------------------------------------------------------------ | -------- | -------- | -------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)           | Pipeline | Yes      | None     | `<cluster-name>/<env-name>`                    | Selects `environments/<cluster-name>/<env-name>/`                                         |
+| [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type)   | Pipeline | No       | `LEGACY` | `GITLAB_DEPLOY`, `LEGACY`                      | Selects the file the step reads the deployed applications from                            |
+| [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) | Pipeline | No       | `DEPLOY` | `DEPLOY`                                       | The step runs only when value is `DEPLOY`                                                 |
+| [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)               | Pipeline | No       | None     | `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset` | The step runs only when set and not empty. Another value fails the step                   |
+| [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version)         | Pipeline | No       | None     | `<application>:<version>`                      | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_DATA` are both not set    |
+| [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data)               | Pipeline | No       | None     | SD content in JSON                             | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_VERSION` are both not set |
 
 ## Repository inputs
 
@@ -58,8 +58,8 @@ environment-specific Resource Profile Override of its Namespace, under
 
    1. The step reads `PROFILE` without leading and trailing spaces as **selected baseline**.
 
-   2. When **selected baseline** is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `inherit`, the step fails.
-      Otherwise the step goes on. Value `inherit` removes the application-level baseline.
+   2. When **selected baseline** is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`, the step fails.
+      Otherwise the step goes on. Value `reset` removes the application-level baseline.
 
 2. **Collect the deployed applications**
 
@@ -91,7 +91,7 @@ environment-specific Resource Profile Override of its Namespace, under
 
    1. The step reads Environment Inventory `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`. When
       it is not set, the step selects action **create**, or skips `<namespace-folder-name>` when
-      **selected baseline** is `inherit`. Otherwise the step goes to substep 2.
+      **selected baseline** is `reset`. Otherwise the step goes to substep 2.
 
    2. The step searches for the file the value names, the same way as `env_build`: file `<value>.yml` or
       `<value>.yaml` in directories `resource_profiles`, `rp_override`, `Profiles`, and `parameters`, including their
@@ -102,15 +102,15 @@ environment-specific Resource Profile Override of its Namespace, under
    3. When the found file is under `environments/<cluster-name>/<env-name>/Inventory/`, the step selects action
       **update**. Otherwise the step selects action **copy**.
 
-   4. When **selected baseline** is `inherit` and the found file sets no `baseline` for the applications of
-      `<namespace-folder-name>`, the step skips `<namespace-folder-name>`.
+   4. When **selected baseline** is `reset` and the action is **copy**, the step skips `<namespace-folder-name>`.
 
    | `envSpecificResourceProfiles.<namespace-folder-name>` | Found file                                                                       | Action |
    | ----------------------------------------------------- | -------------------------------------------------------------------------------- | ------ |
    | Not set                                               | -                                                                                | create |
-   | Not set, `PROFILE: inherit`                           | -                                                                                | skip   |
+   | Not set, `PROFILE: reset`                             | -                                                                                | skip   |
    | Set                                                   | Under `environments/<cluster-name>/<env-name>/Inventory/`                        | update |
    | Set                                                   | Under `environments/<cluster-name>/` or `environments/`, outside the environment | copy   |
+   | Set, `PROFILE: reset`                                 | Under `environments/<cluster-name>/` or `environments/`, outside the environment | skip   |
 
 5. **Write the baseline**
 
@@ -130,8 +130,8 @@ environment-specific Resource Profile Override of its Namespace, under
       `<namespace-folder-name>-resource-profile-override` in `env_definition.yml`. The rest of the file, including
       comments, stays unchanged.
 
-   5. When **selected baseline** is `inherit`, the step removes `baseline` from the `applications[]` entry of each
-      application of `<namespace-folder-name>` and removes an entry that has no `services`. Otherwise, for each
+   5. When **selected baseline** is `reset`, the step deletes `baseline` from the `applications[]` entry of each
+      application of `<namespace-folder-name>`. An entry left with only `name` is deleted. Otherwise, for each
       application of `<namespace-folder-name>`, when the file has an `applications[]` entry with the same `name`, the
       step sets its `baseline` to **selected baseline**, and when it has none, the step adds an entry with `name`
       and `baseline`.
@@ -143,7 +143,7 @@ environment-specific Resource Profile Override of its Namespace, under
 1. For each Namespace the run deploys to, `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`
    references an environment-specific Resource Profile Override under
    `environments/<cluster-name>/<env-name>/Inventory/`. The override sets `applications[].baseline` to the value of
-   `PROFILE` for every deployed application of the Namespace. With `PROFILE: inherit`, the deployed applications
+   `PROFILE` for every deployed application of the Namespace. With `PROFILE: reset`, the deployed applications
    have no `baseline` in the override.
 
 2. A created or copied override is named `<namespace-folder-name>-resource-profile-override`, and
@@ -163,7 +163,7 @@ The step writes to the repository only in block 5. A failure in blocks 1 to 4 le
 The [`git_commit`](/docs/technical-design/instance-pipeline/flow.md) step does not run after a failure, so no change
 from this run is committed.
 
-**1a.** The step fails when `PROFILE` is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `inherit`. The step writes
+**1a.** The step fails when `PROFILE` is not one of `dev`, `prod`, `dev-ha`, `prod-nonha`, `reset`. The step writes
 nothing.
 
 **4a.** The step fails when no file matches the name in
