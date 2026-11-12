@@ -25,7 +25,7 @@ already in `openspec/changes/archive/<date>-<id>/` resumes at **Archive**, step 
    `proposal.md`), the link to the change folder, the JCPR spec or ticket, the `verify` rows (commands, exit codes,
    counts) and the docs gate result. Reviewer: the owner from `CODEOWNERS`.
 4. **Wait for the checks** of HEAD (GitHub Actions, super-linter among them) and read their status. Red or missing:
-   go to `envgene-debugging`; never ask for an approval or a merge on red checks.
+   go to `component-debugging`; never ask for an approval or a merge on red checks.
 5. **The owner approves the code** in the PR. Their comments go back to `envgene-review` and
    `envgene-implementation`, then verify, docs and this stage again. Read the approval from GitHub, then append:
 

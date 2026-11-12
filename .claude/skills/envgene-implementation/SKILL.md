@@ -45,7 +45,7 @@ BDD (step 3): the BDD scenarios check the contracts approved at propose, not the
 5. **BDD review (BDD only).** When a task adds or changes BDD scenarios or their test data, run the
    `bdd-test-review` skill (`.claude/skills/bdd-test-review/`) on them. Fix the findings or answer them in the
    ledger before the task is ticked.
-6. **A failure you do not understand** goes to `envgene-debugging`. Do not stack fixes.
+6. **A failure you do not understand** goes to `component-debugging`. Do not stack fixes.
 7. **A gap the dev design never settled**: stop, and go back to `envgene-design` with that one question.
 8. **Done** when every task in `tasks.md` is ticked and green, and the BDD review has no open findings.
    Hand over to verification.

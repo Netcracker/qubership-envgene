@@ -46,7 +46,7 @@ the first stage.
 | 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row); `dev-design.md` covers every contract id of `design.md` |
 | 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `design.md` covered in `dev-design.md` and in the plan |
 | 4 | implement | `envgene-implementation` | every task in `tasks.md` ticked, red and green rows per task |
-| 5 | debug | `envgene-debugging` | entered on any failure, not a stage in the line; root cause and a regression test that failed first |
+| 5 | debug | `component-debugging` (package slot) | entered on any failure, not a stage in the line; root cause and a regression test that failed first |
 | 6 | verify | `envgene-verification` | `verify` rows at HEAD for every command in AGENTS.md Commands, exit 0 or no new failure against the baseline |
 | 7 | review | `envgene-review` | review row at HEAD: `ready` or `ready with fixes`, every critical and important finding fixed or answered |
 | 8 | docs | `envgene-documentation` | `gate: docs check passes @ <sha>` at HEAD |

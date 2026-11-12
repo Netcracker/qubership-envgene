@@ -49,7 +49,7 @@ A textlint error in `AGENTS.md` or in `docs/` fails the pipeline, so fix it in t
    | <time> | verify | `<command>` | <exit> | <passed>/<total> @ <head-sha> (baseline <counts>) |
    ```
 3. **Compare.** Every suite that passed on the baseline must pass on HEAD. A new failure is a finding, not a
-   "known issue": send it to `envgene-debugging` before review.
+   "known issue": send it to `component-debugging` before review.
 4. **Gate.** For HEAD, every command has a `verify` row with exit 0 or no new failure against its baseline row
    (or `not run: <reason>`).
 
