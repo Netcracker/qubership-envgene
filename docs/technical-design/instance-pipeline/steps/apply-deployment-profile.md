@@ -89,69 +89,71 @@ environment-specific Resource Profile Override of its Namespace, under
 
    For each `<namespace-folder-name>` in **deployed applications**:
 
-   1. The step reads Environment Inventory `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`. When
-      it is not set, the step selects action **create**, or skips `<namespace-folder-name>` when
-      **selected baseline** is `reset`. Otherwise the step goes to substep 2.
+   1. The step reads Environment Inventory `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`.
+      When it is not set, the Namespace has no override, and the step goes to block 5 or 6.
 
-   2. The step searches for the file the value names, the same way as `env_build`: file `<value>.yml` or
-      `<value>.yaml` in directories `resource_profiles`, `rp_override`, `Profiles`, and `parameters`, including their
-      subdirectories, first under `environments/<cluster-name>/<env-name>/Inventory/`, then under
-      `environments/<cluster-name>/`, then under `environments/`. The step takes the first match as the found file.
-      When no file matches, the step fails.
+   2. The step searches for a file `<value>.yml` or `<value>.yaml` in directories `resource_profiles`,
+      `rp_override`, `Profiles`, and `parameters`, including their subdirectories, first under
+      `environments/<cluster-name>/<env-name>/Inventory/`, then under `environments/<cluster-name>/`, then under
+      `environments/`. The step takes the first match as the found file. When no file matches, the step fails.
 
-   3. When the found file is under `environments/<cluster-name>/<env-name>/Inventory/`, the step selects action
-      **update**. Otherwise the step selects action **copy**.
+   3. When the found file is under `environments/<cluster-name>/<env-name>/Inventory/`, the override is in the
+      environment. Otherwise the override is outside the environment.
 
-   4. When **selected baseline** is `reset` and the action is **copy**, the step skips `<namespace-folder-name>`.
+5. **Set the baseline**
 
-   | `envSpecificResourceProfiles.<namespace-folder-name>` | Found file                                                                       | Action |
-   | ----------------------------------------------------- | -------------------------------------------------------------------------------- | ------ |
-   | Not set                                               | -                                                                                | create |
-   | Not set, `PROFILE: reset`                             | -                                                                                | skip   |
-   | Set                                                   | Under `environments/<cluster-name>/<env-name>/Inventory/`                        | update |
-   | Set                                                   | Under `environments/<cluster-name>/` or `environments/`, outside the environment | copy   |
-   | Set, `PROFILE: reset`                                 | Under `environments/<cluster-name>/` or `environments/`, outside the environment | skip   |
+   The step runs this block when **selected baseline** is not `reset`. For each `<namespace-folder-name>`:
 
-5. **Write the baseline**
-
-   For each `<namespace-folder-name>` in **deployed applications**:
-
-   1. When action is **update**, the step writes to the found file.
-
-   2. When action is **create**, the step creates file
+   1. When the Namespace has no override, the step creates file
       `environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<namespace-folder-name>-resource-profile-override.yml`
-      with `name` `<namespace-folder-name>-resource-profile-override` and writes to it.
+      with `name` `<namespace-folder-name>-resource-profile-override`.
 
-   3. When action is **copy**, the step creates the same file with the content of the found file, sets `name` to
-      `<namespace-folder-name>-resource-profile-override`, and writes to it. The found file stays unchanged.
+   2. When the override is outside the environment, the step creates the same file with the content of the found
+      file and `name` `<namespace-folder-name>-resource-profile-override`. The found file stays unchanged.
 
-   4. When action is **create** or **copy**, the step sets
-      `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` to
+   3. When the step created a file, it sets `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` to
       `<namespace-folder-name>-resource-profile-override` in `env_definition.yml`. The rest of the file, including
       comments, stays unchanged.
 
-   5. When **selected baseline** is `reset`, the step deletes `baseline` from the `applications[]` entry of each
-      application of `<namespace-folder-name>`. An entry left with only `name` is deleted. Otherwise, for each
+   4. The step writes to the created file, or to the found file when the override is in the environment. For each
       application of `<namespace-folder-name>`, when the file has an `applications[]` entry with the same `name`, the
-      step sets its `baseline` to **selected baseline**, and when it has none, the step adds an entry with `name`
-      and `baseline`.
+      step sets its `baseline` to **selected baseline**. Otherwise the step adds an entry with `name` and
+      `baseline`.
 
-   6. The other `applications[]` entries, `services`, and the top-level `baseline` stay unchanged.
+   | Override                | Action                                                   |
+   | ----------------------- | -------------------------------------------------------- |
+   | None                    | Create a file and reference it                           |
+   | In the environment      | Update the found file                                    |
+   | Outside the environment | Copy the found file, reference the copy, update the copy |
+
+6. **Reset the baseline**
+
+   The step runs this block when **selected baseline** is `reset`. For each `<namespace-folder-name>`:
+
+   1. When the Namespace has no override, or the override is outside the environment, the step logs it and changes
+      nothing.
+
+   2. When the override is in the environment, the step deletes `baseline` from the `applications[]` entry of each
+      application of `<namespace-folder-name>`. The step deletes an entry that has no `services` left.
+
+   3. The file and its reference in `env_definition.yml` stay, even when `applications` is empty.
+
+   In blocks 5 and 6, the other `applications[]` entries, `services`, and the top-level `baseline` stay unchanged.
 
 ## Result
 
-1. For each Namespace the run deploys to, `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`
-   references an environment-specific Resource Profile Override under
-   `environments/<cluster-name>/<env-name>/Inventory/`. The override sets `applications[].baseline` to the value of
-   `PROFILE` for every deployed application of the Namespace. With `PROFILE: reset`, the deployed applications
-   have no `baseline` in the override.
+1. When `PROFILE` is a baseline, each Namespace the run deploys to references an environment-specific Resource
+   Profile Override under `environments/<cluster-name>/<env-name>/Inventory/`. The override sets
+   `applications[].baseline` to the value of `PROFILE` for every deployed application of the Namespace.
 
 2. A created or copied override is named `<namespace-folder-name>-resource-profile-override`, and
    `environments/<cluster-name>/<env-name>/Inventory/env_definition.yml` references it.
 
-3. Overrides of Namespaces the run does not deploy to, and overrides in the cluster or global scope, are unchanged.
+3. When `PROFILE` is `reset`, the overrides in the environment set no `baseline` for the deployed applications.
 
-4. A created override carries only application-level baselines. It does not change which side, Namespace or Cloud,
+4. Overrides of Namespaces the run does not deploy to, and overrides outside the environment, are unchanged.
+
+5. A created override carries only application-level baselines. It does not change which side, Namespace or Cloud,
    the other applications of the Namespace resolve their profile from. See
    [Side selection](/docs/features/resource-profile.md#side-selection).
 
@@ -159,7 +161,7 @@ A repeated run with the same `PROFILE` and the same deployed applications produc
 
 ## Error handling
 
-The step writes to the repository only in block 5. A failure in blocks 1 to 4 leaves the repository unchanged.
+The step writes to the repository only in blocks 5 and 6. A failure in blocks 1 to 4 leaves the repository unchanged.
 The [`git_commit`](/docs/technical-design/instance-pipeline/flow.md) step does not run after a failure, so no change
 from this run is committed.
 
@@ -171,8 +173,9 @@ nothing.
 
 The step logs a warning and continues in this case:
 
-- Action **copy**: the Namespace stops using the override from the cluster or global scope, so later changes to that
-  file do not reach it. The warning names `<namespace-folder-name>`, the found file, and the new file.
+- Block 5, override outside the environment: the Namespace stops using the override from the cluster or global
+  scope, so later changes to that file do not reach it. The warning names `<namespace-folder-name>`, the found file,
+  and the new file.
 
 ## Example
 
@@ -207,7 +210,7 @@ Run:
 1. **selected baseline** is `prod`.
 2. The step takes `app-a`, `deployPostfix: bss`, `namespace: env-01-bss`.
 3. `bg_domain.yml` does not exist, so `<namespace-folder-name>` is `bss`. **deployed applications** is `bss: [app-a]`.
-4. `envTemplate.envSpecificResourceProfiles.bss` is not set, so the action is **create**.
+4. `envTemplate.envSpecificResourceProfiles.bss` is not set, so the Namespace has no override.
 5. The step creates the override and adds the reference.
 
 Output:
@@ -301,8 +304,9 @@ Run:
 1. **selected baseline** is `prod`.
 2. The step takes three entries.
 3. `bg_domain.yml` does not exist. **deployed applications** is `bss: [app-a, app-b]`, `core: [app-c]`.
-4. Key `bss`: the found file is under `environments/cluster-01/env-01/Inventory/`, so the action is **update**.
-   Key `core`: the found file is under `environments/cluster-01/`, so the action is **copy**.
+4. `bss`: the found file is under `environments/cluster-01/env-01/Inventory/`, so the override is in the
+   environment. `core`: the found file is under `environments/cluster-01/`, so the override is outside the
+   environment.
 5. The step updates `env-01-bss-overrides.yml`, creates `core-resource-profile-override.yml` from `core-common.yml`,
    and changes the reference for `core`. The step logs a warning for `core`.
 
@@ -397,7 +401,7 @@ Run:
 2. The step takes `app-a`, `deployPostfix: bss`, `namespace: env-01-bss-peer`.
 3. `namespace` equals `peerNamespace.name`, so `<namespace-folder-name>` is `bss-peer`. **deployed applications** is
    `bss-peer: [app-a]`.
-4. `envTemplate.envSpecificResourceProfiles.bss-peer` is not set, so the action is **create**.
+4. `envTemplate.envSpecificResourceProfiles.bss-peer` is not set, so the Namespace has no override.
 5. The step creates the override and adds the reference. The override of `bss-origin` stays unchanged.
 
 Output:

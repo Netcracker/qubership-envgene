@@ -489,9 +489,10 @@ Functions:
     - actions:
       - group the applications of the run delta by `<namespace-folder-name>`: `deployPostfix`, plus `-origin` or
         `-peer` for a Blue-Green Namespace
-      - find the override of each `<namespace-folder-name>` with the `env_build` search: create when none is referenced,
-        update when it is under the environment `Inventory/`, copy when it is in the cluster or global scope
-      - set `applications[].baseline` to `PROFILE` in that override, or remove it when `PROFILE` is `reset`
+      - find the override of each `<namespace-folder-name>` with the `env_build` search
+      - set `applications[].baseline` to `PROFILE`: create the override when none is referenced, update it when it is
+        under the environment `Inventory/`, copy it when it is in the cluster or global scope
+      - with `PROFILE: reset`, delete `applications[].baseline` only in an override under the environment `Inventory/`
 
 #### 1.15 step `env_build`
 
