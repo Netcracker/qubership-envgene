@@ -355,15 +355,21 @@ Define a parameter default shared by environments using one template in the Temp
 directly in the template or in a ParameterSet it references. Keep instance ParameterSets for values
 that intentionally differ.
 
-Identify comparable environments by both `envTemplate.name` and `envTemplate.artifact`. Compare only
-connected ParameterSets with the same parameter category, association target, and application scope.
+A complete matching ParameterSet can also be stored once in the Template repository with its original name.
+Existing Environment Inventory bindings continue to select that file. This shares storage while keeping
+environment selection explicit. Compare the complete parameter and application content before removing instance copies.
+
+Identify comparable environments by `envTemplate.name` and the artifact name before the first `:` in
+`envTemplate.artifact`. Artifact versions do not split groups. Compare only connected ParameterSets with
+the same parameter category, association target, and application scope.
 Equal values are candidates for a shared default. Confirm that the value belongs to the template's
 environment type before moving it. Cluster and platform values follow PLACE-3, and Cloud Passport
 contract keys follow PLACE-4.
 
 ```yaml
-# Both environments select envTemplate.name: business
-# and envTemplate.artifact: example-env-templates:1.0.0.
+# Both environments select envTemplate.name: business.
+# env-1 selects envTemplate.artifact: example-env-templates:1.0.0.
+# env-2 selects envTemplate.artifact: example-env-templates:2.0.0.
 # The same deployment parameter is associated with the oss Namespace.
 
 # OK - one default in the Template repository

@@ -141,6 +141,8 @@ class EnvModel:
     shared_credential_bindings: list[str] = field(default_factory=list)
     artifact_selectors: tuple[str, ...] = ()
     shared_template_variable_bindings: list[str] = field(default_factory=list)
+    template_identity: tuple[str, str] | None = None
+    parameter_bindings_complete: bool = True
 
     @property
     def full_name(self) -> str:

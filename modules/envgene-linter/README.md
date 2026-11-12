@@ -27,6 +27,7 @@ Checks run locally without network calls.
 - [HTML reports](#html-reports)
 - [JSON reports](#json-reports)
 - [Implemented rules](#implemented-rules)
+  - [PLACE-12 template-default candidates](#place-12-template-default-candidates)
 - [Build-time rule switches](#build-time-rule-switches)
 - [What is checked](#what-is-checked)
 - [Exit codes and CI](#exit-codes-and-ci)
@@ -89,6 +90,12 @@ To check another repository, pass its path:
 envgene-linter check /path/to/instance-repository
 ```
 
+To review ParameterSets with their local template sources, supply both paths:
+
+```bash
+envgene-linter check -i /path/to/instance-repository -t /path/to/template-repository
+```
+
 Every successful check writes both reports and adds their filenames to the checked repository's `.gitignore`.
 See [HTML reports](#html-reports) and [JSON reports](#json-reports) for details.
 
@@ -97,8 +104,14 @@ See [HTML reports](#html-reports) and [JSON reports](#json-reports) for details.
 The optional argument identifies the **repository root**, which contains `environments/`, `templates/`, or both.
 A template-only repository does not need `environments/`. TPL-1, TPL-4, and TPL-6 run there.
 Other checks are not yet supported in this mode and appear as `Not applicable` in HTML and console reports.
-Without an argument, the linter checks the current directory. It does not search parent directories.
+Use `-i PATH` or `--instance-repo PATH` instead of the positional argument for an explicit instance path.
+Supplying both forms is an error, even if the paths are equal.
+Without either form, the linter checks the current directory. It does not search parent directories.
 Paths may be absolute or relative to your current working directory. Quote paths containing spaces.
+
+The optional `-t PATH` or `--template-repo PATH` supplies local template context for PLACE-12 recommendations.
+It accepts the template repository root or its `templates/` directory.
+Both reports remain in the checked repository. The template source does not receive a separate check or report.
 
 A typical layout is:
 
@@ -143,11 +156,15 @@ Reference checks, content rules, and Effective Set merging use the same selected
 envgene-linter check [OPTIONS] [REPO]
 ```
 
-| Argument or option | Meaning                                                              |
-| ------------------ | -------------------------------------------------------------------- |
-| `REPO`             | Repository root. Defaults to the current directory.                  |
-| `--console`        | Also print findings in the terminal. Both files are still generated. |
-| `--help`           | Show command help and exit.                                          |
+| Argument or option         | Meaning                                                              |
+|----------------------------|----------------------------------------------------------------------|
+| `REPO`                     | Optional checked repository root.                                    |
+| `-i, --instance-repo PATH` | Instance repository to check instead of `REPO`.                      |
+| `-t, --template-repo PATH` | Optional local template source for PLACE-12 recommendations.         |
+| `--console`                | Also print findings in the terminal. Both files are still generated. |
+| `--help`                   | Show command help and exit.                                          |
+
+Without `REPO` or `-i`, check the current directory. Supplying both is an error.
 
 ```bash
 envgene-linter --help
@@ -241,11 +258,12 @@ Their locations identify the affected source, and their suggestions ask for a re
 No findings or structured skips produces `[]`, including when all rules are disabled.
 Disabled and inapplicable rules have no entries. Other skip diagnostics remain in HTML and stderr,
 so `[]` does not prove complete coverage.
-JSON serialization uses existing finding messages and recommendations. It does not read or embed source file contents.
+JSON serialization uses existing finding messages and recommendations. It does not reread or embed complete source
+files.
 
 ## Implemented rules
 
-The table lists the 22 rules enabled by default. Each link opens the processing algorithm and its coverage limits.
+The table lists the 23 rules enabled by default. Each link opens the processing algorithm and its coverage limits.
 
 | Rule                                                             | Checks                                                                                                                | Severity / action                         |
 |------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
@@ -258,6 +276,7 @@ The table lists the 22 rules enabled by default. Each link opens the processing 
 | [PLACE-8](/modules/envgene-linter/docs/algorithms/place8.md)     | Connected or used ParameterSets, resource profiles or credentials are empty                                           | Information / Review                      |
 | [PLACE-9](/modules/envgene-linter/docs/algorithms/place9.md)     | Used passport ambiguity, multiple passports per cluster role, and passport/companion placement                        | Warning / Fix                             |
 | [PLACE-10](/modules/envgene-linter/docs/algorithms/place10.md)   | Connected entities are outside their type's standard directory                                                        | Warning / Fix or Warning / Review         |
+| [PLACE-12](/modules/envgene-linter/docs/algorithms/place12.md)   | Equal selected values across environments using one template identity, as candidates for template defaults            | Information / Review                      |
 | [SEC-1](/modules/envgene-linter/docs/algorithms/sec1.md)         | Literal values in secret-named parameters of connected ParameterSets and supported Cloud/Namespace objects            | Warning / Fix                             |
 | [SEC-3](/modules/envgene-linter/docs/algorithms/sec3.md)         | Credential references in runtime parameters and ParameterSets selected through technical bindings                     | Warning / Fix                             |
 | [SEC-4](/modules/envgene-linter/docs/algorithms/sec4.md)         | Named user/password pairs reference different Credential IDs                                                          | Information / Review                      |
@@ -277,6 +296,47 @@ Three additional rules are implemented but disabled by default:
 [NAME-3](/modules/envgene-linter/docs/algorithms/name3.md), and
 [NAME-4](/modules/envgene-linter/docs/algorithms/name4.md).
 See the [coverage matrix](/modules/envgene-linter/docs/rule-applicability-matrix.md) for the remaining standard rules.
+
+### PLACE-12 template-default candidates
+
+PLACE-12 reviews equal selected ParameterSet values in at least two environments within one repository.
+The environments may belong to one cluster or several clusters and must supply distinct authored source entries.
+Environments must use the same literal `envTemplate.name` and artifact name before the first `:` in
+`envTemplate.artifact`. Artifact versions do not split groups.
+Every bound consumer in the target/category scope must agree, with separate application scopes.
+Candidates retain Review; a shared value does not prove that moving it preserves template consumers.
+Selected-input uncertainty blocks candidates.
+
+One finding groups common values from the same selected ParameterSet sources and parameter scope.
+Recommendations preserve actual values, YAML types, nested paths, and application scope in both modes.
+Without `-t`, a portable recipe shows ParameterSet YAML, a name substitution slot, the logical Cloud or Namespace
+association, and the category-specific reference item to append last. It does not invent destination paths or list indices.
+Finding groups and contributing source positions stay the same.
+
+To include local template definitions and a concrete descriptor attachment:
+
+```bash
+envgene-linter check -i /path/to/instance-repository -t /path/to/template-repository
+```
+
+The long options are `--instance-repo` and `--template-repo`. The existing positional form remains supported.
+The template option also accepts the `templates/` directory. It does not render Jinja or verify artifact equivalence.
+The report compares relevant source definitions and proposes one readable ParameterSet filename for the group.
+Each recommendation identifies both absolute repository roots.
+Source paths under `environments/` belong to the instance root. Paths under `templates/` belong to the template root.
+Resolved recipes show `Create file:` with the absolute ParameterSet destination and complete YAML.
+Partial recipes show `Edit file:` with the descriptor path, selected entry line and column, and exact YAML path.
+Namespace indices in YAML paths are zero-based. Append the new reference last in the identified override list.
+For an eligible complete ParameterSet, the report proposes its original name and preserves Environment Inventory bindings.
+Partial matches use a separate shared ParameterSet and descriptor fragment, with the new reference appended last.
+Merge that fragment into its selected entry, retaining other fields and references.
+Unresolved or inherited context receives an explanation.
+Without the option, choose an unused name for `<shared-paramset-name>` and retain the existing references and fields.
+The report explains how to connect the ParameterSet without naming uninspected destination files.
+Confirm all template consumers before removing overrides.
+Template-only references can retain INT-2 Review because the shared reference resolver remains instance-only.
+See the [PLACE-12 algorithm](/modules/envgene-linter/docs/algorithms/place12.md).
+
 
 ### PLACE-10 directory mapping
 

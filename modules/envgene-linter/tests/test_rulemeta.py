@@ -6,7 +6,7 @@ from envgene_linter.rulemeta import RULES, defaults_for
 
 def test_catalog_defaults_for_known_rules():
     assert set(RULES) == {
-        "PLACE-1", "PLACE-2", "PLACE-3", "PLACE-4", "PLACE-6", "PLACE-7", "PLACE-8", "PLACE-9", "PLACE-10",
+        "PLACE-1", "PLACE-2", "PLACE-3", "PLACE-4", "PLACE-6", "PLACE-7", "PLACE-8", "PLACE-9", "PLACE-10", "PLACE-12",
         "SEC-1", "SEC-3", "SEC-4", "SEC-5", "INT-2", "INT-3", "INT-4", "NAME-1", "NAME-2", "NAME-3", "NAME-4", "NAME-8", "VAL-4", "TPL-1",
         "TPL-4", "TPL-6",
     }
@@ -28,6 +28,7 @@ def test_catalog_defaults_for_known_rules():
     assert RULES["PLACE-10"].description == "Entities belong in their type directories"
     assert RULES["PLACE-10"].default_issue_type is IssueType.WARNING
     assert RULES["PLACE-10"].default_action is Action.FIX
+    assert defaults_for("PLACE-12") == (IssueType.INFORMATION, Action.REVIEW)
     assert defaults_for("INT-2") == (IssueType.WARNING, Action.FIX)
     assert defaults_for("SEC-5") == (IssueType.INFORMATION, Action.REVIEW)
     assert defaults_for("SEC-4") == (IssueType.INFORMATION, Action.REVIEW)

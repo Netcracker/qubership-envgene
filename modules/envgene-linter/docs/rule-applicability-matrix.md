@@ -23,11 +23,11 @@ which rules exist, where they run, and which inputs they check.
 Rule IDs refer to the [configuration standard](/docs/configuration-standard.md).
 Each implemented rule links to its detailed algorithm.
 
-The tables describe the source checkout assessed on October 28, 2026.
+The tables describe the source checkout assessed on November 12, 2026.
 Installed packages can have different coverage. Check the package version against the
 [changelog](/modules/envgene-linter/CHANGELOG.md).
 
-The standard contains **55 active rules**. The CLI implements **25**, with **22 enabled by default** and three disabled.
+The standard contains **56 active rules**. The CLI implements **26**, with **23 enabled by default** and three disabled.
 The remaining **30 have no implementation**. Retired NAME-5 is excluded from these counts.
 An implemented check covers the inputs listed below. Registration alone does not establish full standard coverage.
 
@@ -86,9 +86,25 @@ The templating section describes the additional file scopes.
 | [PLACE-8][place-8]     | On        | Review connected empty ParameterSets, Resource Profile Overrides, and Credential files.   |
 | [PLACE-9][place-9]     | On        | Check used passport roles, ambiguity, cluster ownership, layout, and companions.          |
 | [PLACE-10][place-10]   | On        | Check directories of five connected entity types.                                         |
+| [PLACE-12][place-12]   | On        | Review repeated values using the same template and artifact names, ignoring versions.     |
 
 PLACE-10 covers ParameterSets, Resource Profile Overrides, Shared Template Variables, shared Credentials,
 and Cloud Passports.
+
+PLACE-12 requires at least two environments and distinct instance-authored source entries in one repository.
+The template name and artifact name before the first colon must match. Versions do not split groups.
+One cluster is sufficient. Repository-origin values cannot supply the repeated authored entries.
+Every bound consumer in the target/category scope must agree; application scopes remain separate.
+Candidates receive Review only. Incomplete selected inputs cannot establish a template-default candidate.
+Recommendations group compatible values by selected ParameterSet sources and preserve all contributing positions.
+Both modes include actual values in YAML. Without `-t`, a portable recipe identifies the logical Cloud or Namespace
+association and the category-specific reference item to append last. The reader replaces `<shared-paramset-name>`
+with an unused name. The recipe does not invent destination files, entry indices, or existing reference lists.
+`-t PATH` / `--template-repo PATH` adds local source comparisons, absolute destination files, and descriptor entry
+positions when the selected entry can be resolved. Eligible complete ParameterSets retain their original names and bindings.
+Unresolved, anchored, or inherited context retains the observation and a reason when an edit location is uncertain.
+Local sources do not establish equivalence with published template artifacts or coverage of external consumers.
+Template-only roots retain `Not applicable`.
 
 PLACE-1 and PLACE-2 compare decoded YAML and JSON values with their scalar types intact.
 PLACE-2 reports Fix only after confirming one independent source-entry removal.
@@ -172,7 +188,7 @@ Console and HTML display `Not applicable`.
 JSON exports findings and structured skips, without execution-status records.
 Some enumeration and unsupported-source notes have no structured JSON representation.
 Recoverable source failures retain independent checks and fresh reports.
-Incomplete merge inputs cannot confirm PLACE-1 promotion or PLACE-2 removal.
+Incomplete merge inputs cannot confirm PLACE-1 promotion, PLACE-2 removal, or PLACE-12 template-default candidates.
 An empty JSON array therefore does not establish that every source was checked.
 See the [report contract](/modules/envgene-linter/docs/algorithms/reports.md).
 
@@ -303,6 +319,7 @@ Use the linked algorithms for detailed behavior and the
 [place-8]: /modules/envgene-linter/docs/algorithms/place8.md
 [place-9]: /modules/envgene-linter/docs/algorithms/place9.md
 [place-10]: /modules/envgene-linter/docs/algorithms/place10.md
+[place-12]: /modules/envgene-linter/docs/algorithms/place12.md
 [sec-1]: /modules/envgene-linter/docs/algorithms/sec1.md
 [sec-3]: /modules/envgene-linter/docs/algorithms/sec3.md
 [sec-4]: /modules/envgene-linter/docs/algorithms/sec4.md

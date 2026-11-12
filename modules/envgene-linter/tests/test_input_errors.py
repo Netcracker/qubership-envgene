@@ -298,7 +298,7 @@ def test_disabled_rules_remain_absent_from_input_error_reports(tmp_path, monkeyp
 
 
 @pytest.mark.parametrize('relative,binding,rules', [
-    ('environments/c/cloud-passport/passport.yml', '', {'PLACE-1', 'PLACE-4', 'PLACE-9', 'NAME-2'}),
+    ('environments/c/cloud-passport/passport.yml', '', {'PLACE-1', 'PLACE-4', 'PLACE-9', 'PLACE-12', 'NAME-2'}),
     ('environments/resource_profiles/selected.yml', '  envSpecificResourceProfiles: {cloud: selected}\n', {'PLACE-8'}),
     ('environments/credentials/selected.yml', '  sharedMasterCredentialFiles: [selected]\n', {'PLACE-8'}),
     ('configuration/artifact_definitions/app.yml', '  artifact: app:1\n', {'NAME-2', 'SEC-5'}),

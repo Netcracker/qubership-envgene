@@ -327,6 +327,33 @@ def _bindings(doc: object) -> dict[Category, dict[str, list[str]]]:
     return out
 
 
+def _parameter_bindings_complete(doc: object) -> bool:
+    """Retain uncertainty that normalized bindings cannot represent."""
+    if not isinstance(doc, dict) or not isinstance(doc.get("envTemplate"), dict):
+        return False
+    template = doc["envTemplate"]
+
+    def tagged(value: object) -> bool:
+        return getattr(getattr(value, "tag", None), "value", None) is not None
+
+    def literal(value: object) -> bool:
+        return (isinstance(value, str) and bool(value.strip()) and not tagged(value)
+                and not any(marker in value for marker in ("{{", "{%", "{#", "${", "\n", "\r")))
+
+    for category in Category:
+        if category.binding_field not in template:
+            continue
+        targets = template[category.binding_field]
+        if not isinstance(targets, dict) or tagged(targets):
+            return False
+        for target, names in targets.items():
+            if not literal(target) or not isinstance(names, list) or tagged(names):
+                return False
+            if any(not literal(name) for name in names):
+                return False
+    return True
+
+
 def _resource_profile_bindings(doc: object) -> dict[str, str]:
     doc = doc if isinstance(doc, dict) else {}
     template = doc.get("envTemplate") if isinstance(doc.get("envTemplate"), dict) else {}
@@ -372,6 +399,22 @@ def _artifact_selectors(doc: object) -> tuple[str, ...]:
         background.get("peer"),
     )
     return tuple(value for value in values if isinstance(value, str))
+
+
+
+def _template_identity(doc: object) -> tuple[str, str] | None:
+    if not isinstance(doc, dict) or not isinstance(doc.get("envTemplate"), dict):
+        return None
+    template = doc["envTemplate"]
+    values = (template.get("name"), template.get("artifact"))
+    if any(getattr(getattr(value, "tag", None), "value", None) is not None
+           for value in (doc, template, *values)):
+        return None
+    if any(not isinstance(value, str) or not value.strip() for value in values):
+        return None
+    if any(marker in value for value in values for marker in ("{{", "{%", "{#", "${")):
+        return None
+    return values
 
 
 def build_index(root: Path) -> RepoIndex:
@@ -434,6 +477,8 @@ def _build_index(root: Path) -> RepoIndex:
                 shared_credential_bindings = _shared_credential_bindings(doc)
                 shared_template_variable_bindings = _shared_template_variable_bindings(doc)
                 artifact_selectors = _artifact_selectors(doc)
+                template_identity = _template_identity(doc)
+                parameter_bindings_complete = _parameter_bindings_complete(doc)
             except YamlReadError:
                 skipped.append(f"{definition}: cannot parse YAML; environment definition skipped")
                 bindings = {}
@@ -442,6 +487,8 @@ def _build_index(root: Path) -> RepoIndex:
                 shared_credential_bindings = []
                 shared_template_variable_bindings = []
                 artifact_selectors = ()
+                template_identity = None
+                parameter_bindings_complete = False
             env = EnvModel(
                 cluster=cluster.name,
                 name=env_dir.name,
@@ -452,6 +499,8 @@ def _build_index(root: Path) -> RepoIndex:
                 shared_credential_bindings=shared_credential_bindings,
                 shared_template_variable_bindings=shared_template_variable_bindings,
                 artifact_selectors=artifact_selectors,
+                template_identity=template_identity,
+                parameter_bindings_complete=parameter_bindings_complete,
             )
             env.paramsets = _parameter_files(env_dir / INVENTORY_DIR / PARAMETERS_DIR, root, Layer.ENVIRONMENT,
                                             cluster.name, env.name, skipped, incomplete, layouts, scope)

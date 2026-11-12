@@ -12,9 +12,9 @@ from .source_scope import is_generated_output
 if TYPE_CHECKING:
     from .connections import Connections
 
-_PARAMSET_RULES = {'PLACE-1', 'PLACE-2', 'PLACE-4', 'PLACE-8', 'SEC-1', 'SEC-3', 'SEC-4', 'SEC-5',
+_PARAMSET_RULES = {'PLACE-1', 'PLACE-2', 'PLACE-4', 'PLACE-8', 'PLACE-12', 'SEC-1', 'SEC-3', 'SEC-4', 'SEC-5',
                    'NAME-1', 'NAME-2', 'VAL-4'}
-_PASSPORT_RULES = {'PLACE-1', 'PLACE-4', 'PLACE-9', 'NAME-2'}
+_PASSPORT_RULES = {'PLACE-1', 'PLACE-4', 'PLACE-9', 'PLACE-12', 'NAME-2'}
 
 
 def skip_check(index: RepoIndex, rule: str, path: Path, reason: str,

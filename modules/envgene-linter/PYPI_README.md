@@ -75,7 +75,18 @@ To check a repository without changing directories:
 envgene-linter check /path/to/instance-repository
 ```
 
-Both commands also create HTML and JSON reports.
+To compare PLACE-12 candidates with local template source files:
+
+```bash
+envgene-linter check -i /path/to/instance-repository -t /path/to/template-repository
+```
+
+The long options are `--instance-repo` and `--template-repo`.
+Use either the positional repository path or `-i`, not both. Without either, check the current directory.
+The optional template path also accepts the `templates/` directory.
+All commands create HTML and JSON reports in the checked repository.
+Template context does not trigger a separate template check or report.
+It does not render Jinja, download artifacts, or prove that the local source matches a published artifact.
 
 ## Troubleshooting
 
@@ -93,6 +104,23 @@ repository, cluster, and Inventory `parameters/` directories. Reference checks a
 An incomplete directory scan or unavailable role-specific template context receives Review in INT-2.
 INT-2 also checks explicit Cloud Passport references. A definitely missing target receives Fix.
 Optional passport absence is allowed, and incomplete or uncertain lookups receive Review.
+PLACE-12 reviews repeated selected values in at least two environments using the same literal template name
+and artifact name before the first `:` in `envTemplate.artifact`. Versions do not split groups.
+One cluster is sufficient, and distinct authored source entries are required.
+Every bound consumer in the scope must agree. Candidates are Review only; moving values requires confirmation
+of template consumers. Each recommendation groups compatible values from the same selected ParameterSet sources.
+Without `-t`, PLACE-12 shows actual values in ParameterSet YAML and explains how to connect the shared values.
+Choose an unused name for `<shared-paramset-name>` and append its reference to the specified override list.
+The recipe identifies a logical Cloud or Namespace association without inventing destination paths.
+Optional `-t` / `--template-repo` context adds source comparisons, exact destination files, and a scoped descriptor
+attachment when resolvable. Unresolved supplied context receives an explanation.
+Recommendations with template context identify both absolute repository roots.
+Source paths under `environments/` belong to the instance root. Paths under `templates/` belong to the template root.
+Resolved recommendations name absolute files to create or edit and include the proposed YAML.
+Descriptor changes identify the existing entry's line, column, and exact YAML path with zero-based Namespace indices.
+An eligible complete ParameterSet can be proposed for relocation with its original name and existing bindings.
+Partial matches retain the separate shared ParameterSet recommendation.
+Merge with existing content and verify the template before removing instance entries.
 TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`.
 It ignores YAML comments and allows `.j2` files regardless of their directory.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.

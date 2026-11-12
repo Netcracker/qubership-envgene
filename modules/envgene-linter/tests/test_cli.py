@@ -1,9 +1,9 @@
 import pytest
-
 from click.testing import CliRunner
 
 from envgene_linter.cli import main
 from envgene_linter.html_report import REPORT_FILENAME
+from envgene_linter.report import JSON_REPORT_FILENAME
 
 
 def test_check_reports_place1(repo):
@@ -28,6 +28,7 @@ def test_check_no_findings(repo):
         "PLACE-3\nNo findings\n\nPLACE-4\nNo findings\n\nPLACE-6\nNo findings\n\n"
         "PLACE-7\nNo findings\n\nPLACE-8\nNo findings\n\nPLACE-9\nNo findings\n\n"
         "PLACE-10\nNo findings\n\n"
+        "PLACE-12\nNo findings\n\n"
         "SEC-1\nNo findings\n\n"
         "SEC-3\nNo findings\n\n"
         "SEC-4\nNo findings\n\n"
@@ -388,6 +389,101 @@ def test_check_uses_current_directory(repo, monkeypatch, args):
         assert result.stdout.startswith("PLACE-1\n")
     else:
         assert result.stdout == ""
+
+
+@pytest.mark.parametrize("instance_option", ["-i", "--instance-repo"])
+def test_explicit_instance_path_keeps_reports_in_the_selected_repository(
+    repo, monkeypatch, instance_option
+):
+    working_directory = repo.root
+    repo.root = working_directory / "instance with spaces \u0438 Unicode"
+    repo.env("c", "e")
+    template = working_directory / "template with spaces \u0438 Unicode"
+    (template / "templates").mkdir(parents=True)
+    monkeypatch.chdir(working_directory)
+    definition = repo.root / "environments/c/e/Inventory/env_definition.yml"
+    original = definition.read_bytes()
+
+    result = CliRunner(mix_stderr=False).invoke(
+        main, ["check", instance_option, repo.root.name, "-t", template.name]
+    )
+
+    assert result.exit_code == 0, result.output
+    for label, filename in (("HTML", REPORT_FILENAME), ("JSON", JSON_REPORT_FILENAME)):
+        assert (repo.root / filename).is_file()
+        assert f"{label} report saved here: {repo.root / filename}" in result.stderr
+        assert filename in (repo.root / ".gitignore").read_text()
+        assert not (working_directory / filename).exists()
+        assert not (template / filename).exists()
+    assert not (working_directory / ".gitignore").exists()
+    assert not (template / ".gitignore").exists()
+    assert definition.read_bytes() == original
+
+
+def test_short_template_option_keeps_the_current_directory_default(repo, monkeypatch):
+    repo.env("c", "e")
+    template = repo.root / "local-template"
+    (template / "templates").mkdir(parents=True)
+    monkeypatch.chdir(repo.root)
+
+    result = CliRunner().invoke(main, ["check", "-t", "local-template"])
+
+    assert result.exit_code == 0, result.output
+    assert (repo.root / REPORT_FILENAME).is_file()
+    assert (repo.root / JSON_REPORT_FILENAME).is_file()
+    assert not (template / REPORT_FILENAME).exists()
+    assert not (template / JSON_REPORT_FILENAME).exists()
+
+
+@pytest.mark.parametrize("instance_option", ["-i", "--instance-repo"])
+@pytest.mark.parametrize("same_path", [False, True])
+def test_positional_and_explicit_instance_paths_fail_without_replacing_outputs(
+    repo, instance_option, same_path
+):
+    repo.env("c", "e")
+    other = repo.root if same_path else repo.root / "another-instance"
+    other.mkdir(exist_ok=True)
+    originals = {}
+    for directory in {repo.root, other}:
+        for filename in (REPORT_FILENAME, JSON_REPORT_FILENAME, ".gitignore"):
+            path = directory / filename
+            path.write_text("existing content\n")
+            originals[path] = path.read_bytes()
+
+    result = CliRunner().invoke(
+        main, ["check", str(repo.root), instance_option, str(other)]
+    )
+
+    assert result.exit_code == 2
+    assert "Use either REPO or --instance-repo/-i, not both." in result.output
+    assert "report saved here:" not in result.output
+    assert all(path.read_bytes() == contents for path, contents in originals.items())
+
+
+@pytest.mark.parametrize("option", ["-i", "--instance-repo", "-t"])
+@pytest.mark.parametrize("kind", ["missing", "file"])
+def test_explicit_repository_options_reject_invalid_directories(repo, option, kind):
+    repo.env("c", "e")
+    path = repo.root / kind
+    if kind == "file":
+        path.write_text("not a directory\n")
+
+    result = CliRunner().invoke(main, ["check", option, str(path)])
+
+    assert result.exit_code == 2
+    assert ("does not exist" if kind == "missing" else "is a file") in result.output
+    assert not (repo.root / REPORT_FILENAME).exists()
+    assert not (repo.root / JSON_REPORT_FILENAME).exists()
+    assert not (repo.root / ".gitignore").exists()
+
+
+def test_check_help_explains_explicit_repository_options():
+    result = CliRunner().invoke(main, ["check", "--help"])
+
+    assert result.exit_code == 0
+    assert "-i, --instance-repo" in result.output
+    assert "-t, --template-repo" in result.output
+    assert "[REPO]" in result.output
 
 
 def test_default_html_overwrites_existing_report(repo):

@@ -14,6 +14,7 @@ RULE_ENABLED: dict[str, bool] = {
     "PLACE-8": True,
     "PLACE-9": True,
     "PLACE-10": True,
+    "PLACE-12": True,
     "SEC-1": True,
     "SEC-3": True,
     "SEC-4": True,

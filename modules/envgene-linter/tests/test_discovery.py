@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -111,4 +112,51 @@ def test_place8_entities_are_separate_from_name2_entities(repo):
     assert not {profile, credential} & {item.path for item in index.named_entities}
 
 
+def _definition_template(repo, template):
+    repo.env("cluster-01", "env-01")
+    path = repo.root / "environments/cluster-01/env-01/Inventory/env_definition.yml"
+    path.write_text(json.dumps({"envTemplate": template}), encoding="utf-8")
+    return build_index(repo.root).environments[0]
+
+
+def test_template_identity_preserves_name_and_complete_artifact(repo):
+    env = _definition_template(repo, {
+        "name": "business", "artifact": "example-env-templates:1.0.0"
+    })
+    assert getattr(env, "template_identity", None) == ("business", "example-env-templates:1.0.0")
+
+
+@pytest.mark.parametrize("template", [
+    {},
+    {"name": "business"},
+    {"artifact": "example-env-templates:1.0.0"},
+    {"name": None, "artifact": "example-env-templates:1.0.0"},
+    {"name": "business", "artifact": None},
+    {"name": " ", "artifact": "example-env-templates:1.0.0"},
+    {"name": "business", "artifact": ""},
+    {"name": 1, "artifact": "example-env-templates:1.0.0"},
+    {"name": "business", "artifact": ["example-env-templates:1.0.0"]},
+    {"name": "{{ selected }}", "artifact": "example-env-templates:1.0.0"},
+    {"name": "business", "artifact": "example-env-templates:{{ version }}"},
+    {"name": "{% if enabled %}business{% endif %}", "artifact": "example-env-templates:1.0.0"},
+    {"name": "business", "artifact": "${templates.artifact}"},
+    {"name": "${templates.name}", "artifact": "example-env-templates:1.0.0"},
+    {"name": "business", "bgNsArtifacts": {"origin": "other:1", "peer": "other:2"}},
+])
+def test_template_identity_rejects_incomplete_or_dynamic_values(repo, template):
+    assert getattr(_definition_template(repo, template), "template_identity", None) is None
+
+
+
 pytestmark = pytest.mark.usefixtures("all_rules_enabled")
+
+
+@pytest.mark.parametrize("body", [
+    "!custom\nenvTemplate:\n  name: business\n  artifact: example-env-templates:1.0.0\n",
+    "envTemplate: !custom\n  name: business\n  artifact: example-env-templates:1.0.0\n",
+])
+def test_tagged_definition_identity_is_unknown(repo, body):
+    repo.env("cluster-01", "env-01")
+    path = repo.root / "environments/cluster-01/env-01/Inventory/env_definition.yml"
+    path.write_text(body)
+    assert build_index(repo.root).environments[0].template_identity is None

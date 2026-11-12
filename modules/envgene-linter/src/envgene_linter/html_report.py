@@ -65,6 +65,9 @@ summary.rule-id {
   border-bottom: 1px solid #eee;
 }
 .finding > div:nth-last-child(-n+2) { border-bottom: 0; }
+.suggestion { white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, monospace; margin: 0; }
+.source-locations { margin-top: 0.5rem; }
+.source-locations summary { cursor: pointer; }
 .file { font-family: ui-monospace, monospace; font-size: 0.88em; }
 .chip {
   display: inline-block;
@@ -110,15 +113,24 @@ def _file_html(item: Finding, root: Path) -> str:
     for loc in item.file_locations():
         text = f"{relative_path(loc.path, root)}:{loc.line}:{loc.column}"
         lines.append(f'<span class="file">{html.escape(text)}</span>')
-    return "<br>\n".join(lines)
+    positions = "<br>\n".join(lines)
+    files = dict.fromkeys(relative_path(loc.path, root) for loc in item.file_locations())
+    if item.rule == "PLACE-12" and len(lines) > len(files):
+        visible = "<br>\n".join(f'<span class="file">{html.escape(path)}</span>' for path in files)
+        return (visible + '<details class="source-locations">'
+                + f'<summary>All {len(lines)} source positions</summary>' + positions + '</details>')
+    return positions
 
 
 def _card(item: Finding, root: Path) -> list[str]:
+    suggestion = html.escape(item.hint)
+    if "\n" in item.hint:
+        suggestion = f'<pre class="suggestion">{suggestion}</pre>'
     rows = (
         ("FILE", _file_html(item, root)),
         ("ISSUE", html.escape(item.message)),
         ("ACTION", _chip(item.action.value)),
-        ("FIX SUGGESTION", html.escape(item.hint)),
+        ("FIX SUGGESTION", suggestion),
     )
     parts = ['<div class="finding">']
     for label, value in rows:

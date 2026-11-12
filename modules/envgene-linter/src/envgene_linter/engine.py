@@ -22,6 +22,7 @@ from .rules.place7 import check as check_place7
 from .rules.place8 import check as check_place8
 from .rules.place9 import check as check_place9
 from .rules.place10 import check as check_place10
+from .rules.place12 import check as check_place12
 from .rules.sec1 import check as check_sec1
 from .rules.sec3 import check as check_sec3
 from .rules.sec4 import check as check_sec4
@@ -49,12 +50,12 @@ class CheckResult:
     skipped_checks: list[SkippedCheck] = field(default_factory=list)
 
 
-def run_check(root: Path) -> CheckResult:
+def run_check(root: Path, *, template_repo: Path | None = None) -> CheckResult:
     with collect_read_errors() as problems:
-        return _run_check(root, problems)
+        return _run_check(root, problems, template_repo)
 
 
-def _run_check(root: Path, problems: list[ReadProblem]) -> CheckResult:
+def _run_check(root: Path, problems: list[ReadProblem], template_repo: Path | None = None) -> CheckResult:
     disabled = rule_config.disabled_rules()
     if len(disabled) == len(rule_config.RULES):
         return CheckResult(findings=[], skipped=[], disabled_rules=disabled)
@@ -95,6 +96,7 @@ def _run_check(root: Path, problems: list[ReadProblem]) -> CheckResult:
         ("PLACE-8", check_place8, (index, connections)),
         ("PLACE-9", check_place9, (index, connections)),
         ("PLACE-10", check_place10, (index, connections)),
+        ("PLACE-12", check_place12, (index, full, catalogs, template_repo)),
         ("SEC-1", check_sec1, (index, connections)),
         ("SEC-3", check_sec3, (index, connections)),
         ("SEC-4", check_sec4, (index, connections)),
@@ -113,7 +115,7 @@ def _run_check(root: Path, problems: list[ReadProblem]) -> CheckResult:
     findings = []
     for rule, check, args in checks:
         if rule not in disabled:
-            if rule == 'PLACE-1' and incomplete_merge:
+            if rule in {'PLACE-1', 'PLACE-12'} and incomplete_merge:
                 continue
             findings.extend(run(rule, check, args))
     return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,

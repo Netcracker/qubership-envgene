@@ -72,6 +72,12 @@ RULES: dict[str, RuleMeta] = {
         IssueType.WARNING,
         Action.FIX,
     ),
+    "PLACE-12": RuleMeta(
+        "PLACE-12",
+        "Repeated values may be shared template defaults",
+        IssueType.INFORMATION,
+        Action.REVIEW,
+    ),
     "SEC-1": RuleMeta(
         "SEC-1",
         "No literal secrets in parameters",

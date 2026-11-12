@@ -1,0 +1,8 @@
+inventory:
+  environmentName: "env-02"
+envTemplate:
+  name: "business"
+  artifact: "other-env-templates:2.0.0"
+  envSpecificParamsets:
+    cloud:
+      - "logging-deploy"

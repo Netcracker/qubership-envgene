@@ -1,5 +1,6 @@
 # EnvGene Linter changelog
 
+- [Unreleased](#unreleased)
 - [0.0.8](#008)
 - [0.0.7](#007)
 - [0.0.6](#006)
@@ -8,6 +9,28 @@
 - [0.0.3](#003)
 - [0.0.2](#002)
 - [0.0.1](#001)
+
+## Unreleased
+
+- Show portable PLACE-12 recipes without `-t`, including actual ParameterSet YAML, logical attachment targets,
+   and append-only reference instructions without guessed destination paths.
+   Add exact files and source comparisons when local template context is supplied.
+- Add `-i` / `--instance-repo` for an explicit checked instance path and `-t` as an alias for `--template-repo`.
+   Identify both repository roots in PLACE-12 recommendations when local template context is supplied.
+   Retain positional commands and reject simultaneous positional and explicit instance paths.
+- Add PLACE-12, enabled by default, to review repeated ParameterSet values in environments using the same
+   literal template name and artifact name before the first colon, within one cluster or across clusters.
+   Compare different versions of one artifact together and retain complete references in source evidence.
+   Require distinct authored source entries and agreement from every bound consumer in the scope.
+   Keep candidates as Review, exclude uncertain or unsuitable values, and show contributing source locations.
+   Group compatible values into one YAML recommendation per selected ParameterSet source combination and scope.
+   Show the environment count in findings without the cluster count.
+   Add `--template-repo` for local source comparisons, readable proposed filenames, and scoped descriptor attachments.
+   Explain the target descriptor entry, ParameterSet list, and append order in both reports.
+   Show absolute template files to create or edit, descriptor entry positions, and exact YAML paths for changes.
+   Keep anchored or inherited descriptor entries as Review when their local edit position cannot be established.
+   Propose complete ParameterSet relocation with its original name and existing bindings when the entire file is eligible.
+   Preserve actual values, YAML types, indentation, and every source position in HTML and JSON reports.
 
 ## 0.0.8
 

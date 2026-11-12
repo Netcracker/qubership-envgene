@@ -173,3 +173,45 @@ def test_ensure_report_ignored_skips_when_present(tmp_path):
     before = gitignore.read_bytes()
     ensure_report_ignored(tmp_path)
     assert gitignore.read_bytes() == before
+
+
+def test_multiline_guidance_preserves_yaml_indentation_and_escapes_content():
+    hint = 'ParameterSet YAML:\nname: "example"\nparameters:\n  SETTING: "<script>example</script>"'
+    body = render_html([_finding(hint=hint)], Path("/repo"))
+    assert "<pre" in body
+    assert (
+        "parameters:\n  SETTING: &quot;&lt;script&gt;example&lt;/script&gt;&quot;"
+        in body
+    )
+    assert "<script>example</script>" not in body
+    assert "white-space: pre-wrap" in body
+
+
+def test_place12_group_shows_unique_files_and_expandable_exact_positions():
+    finding = _finding(rule="PLACE-12", locations=tuple(
+        Location(Path("environments/" + file + ".yml"), line, 3)
+        for file in ("a", "b") for line in (4, 8)
+    ))
+    body = render_html([finding], Path("/repo"))
+    assert '<details class="source-locations">' in body
+    assert '<summary>All 4 source positions</summary>' in body
+    prefix = body.split('<details class="source-locations">', 1)[0]
+    assert 'environments/a.yml</span>' in prefix and 'environments/b.yml</span>' in prefix
+    for file in ("a", "b"):
+        for line in (4, 8):
+            assert f'environments/{file}.yml:{line}:3' in body
+
+
+def test_place12_only_without_findings_does_not_claim_all_rules_are_disabled():
+    from envgene_linter.rulemeta import RULES
+    from envgene_linter.report import render
+
+    disabled = tuple(rule for rule in RULES if rule != "PLACE-12")
+    body = render_html([], Path("/repo"), disabled_rules=disabled)
+    assert 'No findings' in body and 'No rules enabled' not in body
+    assert render([], disabled_rules=disabled) == 'PLACE-12\nNo findings\n'
+
+
+def test_place12_follows_other_placement_rules_in_report_order():
+    body = render_html([_finding(rule="SEC-1"), _finding(rule="PLACE-12"), _finding(rule="PLACE-10")], Path("/repo"))
+    assert body.index('PLACE-10') < body.index('PLACE-12') < body.index('SEC-1')
