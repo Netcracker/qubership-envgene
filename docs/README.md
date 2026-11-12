@@ -103,7 +103,6 @@
 - [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
 - [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/) - Template and inventory examples for non-BG to BGD migration
 - [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
-- [**Infra and Business Environments Samples**](/docs/samples/infra-and-business-environments/) - Cloud Passports, inventories, and `ENV_INVENTORY_CONTENT` values for infra and business environments
 
 ## Development
 

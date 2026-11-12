@@ -2,7 +2,6 @@
 
 - [Create an Environment Inventory](#create-an-environment-inventory)
   - [Overview](#overview)
-  - [Examples by environment type](#examples-by-environment-type)
   - [Prerequisites](#prerequisites)
   - [Choose the level of each file](#choose-the-level-of-each-file)
   - [Create an environment through the pipeline (recommended)](#create-an-environment-through-the-pipeline-recommended)
@@ -30,15 +29,6 @@ Choose how to create the Inventory:
 
 For every field of `env_definition.yml` and which fields to leave out, see
 [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
-
-## Examples by environment type
-
-Start from the example that matches your environment:
-
-| Environment type                        | `env_definition.yml`                                                                                                                                        | Ready `ENV_INVENTORY_CONTENT`                                                                                |
-|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Infra: deploys the infrastructure SD    | [`env_definition.yml`](/docs/samples/infra-and-business-environments/instance-repository/environments/cluster-01/env-infra/Inventory/env_definition.yml)    | [`env-infra.json`](/docs/samples/infra-and-business-environments/env-inventory-content/env-infra.json)       |
-| Business: deploys the business solution | [`env_definition.yml`](/docs/samples/infra-and-business-environments/instance-repository/environments/cluster-01/env-business/Inventory/env_definition.yml) | [`env-business.json`](/docs/samples/infra-and-business-environments/env-inventory-content/env-business.json) |
 
 ## Prerequisites
 

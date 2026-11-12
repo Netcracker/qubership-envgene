@@ -199,7 +199,6 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Environment Template Examples**](/docs/samples/template-repository/)
 - [**Environment Inventory Examples**](/docs/samples/instance-repository/)
 - [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/)
-- [**Infra and Business Environments Samples**](/docs/samples/infra-and-business-environments/)
 
 ### Development
 
