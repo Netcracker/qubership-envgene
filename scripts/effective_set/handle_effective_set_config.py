@@ -18,9 +18,6 @@ def handle_effective_set_config(config_str):
     version = config.get("version") or "v2.0"
     extra_args = [f"--effective-set-version={version}"]
 
-    app_chart_value = config.get("app_chart_validation", True)
-    extra_args.append(f"--app_chart_validation={str(app_chart_value).lower()}")
-
     consumers = (
         config.get("contexts", {})
         .get("pipeline", {})

@@ -1,8 +1,9 @@
 from os import path, makedirs
 from pathlib import Path
 
-from effective_set.dd_downloading import download_dd_and_zip_artifacts, resolve_artifacts
+from effective_set.dd_downloading import download_dd_and_chart_artifacts, resolve_dd_artifacts
 from envgenehelper import getenv_with_error, openYaml, get_sboms_dir, logger
+from envgenehelper.config_helper import get_artifact_coordinate_source
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.json_helper import writeJsonToFile
 from envgenehelper.yaml_helper import writeYamlToFile
@@ -22,7 +23,7 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
 
     snapshot_apps = [app for app in deploy_plan.entities if app.version.endswith('-SNAPSHOT')]
     if snapshot_apps:
-        resolved_dd_artifacts, _ = resolve_artifacts([app.version for app in snapshot_apps], ctx=ctx)
+        resolved_dd_artifacts = resolve_dd_artifacts([app.version for app in snapshot_apps], ctx=ctx)
         resolved_versions = {}
         for app, artifact in zip(snapshot_apps, resolved_dd_artifacts):
             app_name = app.version.split(':', 1)[0]
@@ -38,13 +39,16 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
             ctx.deploy_plan_delta.write(EnvgeneDeployPlan.delta_path())
 
     apps_needing_sbom = exclude_resolved_apps(deploy_plan, app_sboms_path)
+    artifact_coordinate_source = get_artifact_coordinate_source()
+    logger.info(f"artifact_coordinate_source: {artifact_coordinate_source.value.lower()}")
     unresolved_app_versions = [app.version for app in apps_needing_sbom]
-    # DPG needs DDs of the whole deploy plan, zips are needed only to generate missing SBOMs
     if ctx.is_gitlab_deploy():
-        dd_artifacts, _ = download_dd_and_zip_artifacts(
-            [app.version for app in deploy_plan.entities], ctx=ctx, unresolved_app_versions=unresolved_app_versions)
+        dd_artifacts = download_dd_and_chart_artifacts(
+            [app.version for app in deploy_plan.entities], ctx.helm_map_repositories, artifact_coordinate_source,
+            ctx=ctx, unresolved_app_versions=unresolved_app_versions)
     elif apps_needing_sbom:
-        dd_artifacts, _ = download_dd_and_zip_artifacts(unresolved_app_versions, ctx=ctx)
+        dd_artifacts = download_dd_and_chart_artifacts(
+            unresolved_app_versions, ctx.helm_map_repositories, artifact_coordinate_source, ctx=ctx)
 
     if not apps_needing_sbom:
         logger.info('All applications already have SBOMs, skipping SBOM generation')
@@ -53,7 +57,8 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
     sbom_and_regs: SBOMOutput = Generator.generate_bom_by_content(
         sd_content=EnvgeneDeployPlan(entities=apps_needing_sbom),
         dd_artifacts=dd_artifacts,
-        sbom_dir_path=app_sboms_path)
+        sbom_dir_path=app_sboms_path,
+        artifact_coordinate_source=artifact_coordinate_source)
 
     for id, sbom in sbom_and_regs.sboms.items():
         app_name = id.split(":")[0]

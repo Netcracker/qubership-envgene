@@ -574,14 +574,15 @@ Functions:
       - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
-      - DD and ZIP at `${APP_ARTIFACTS_DIR}`, sboms
+      - DD and app chart at `${APP_ARTIFACTS_DIR}`, sboms
     - actions:
       - resolve DD per app with appreg defs
-      - download DD+ZIP, unzip
-      - generate SBOM from local DD + ZIP
-    - AI[techDebt-PERF]: Optimize DD and ZIP downloads and SBOM generation.
+      - coordinate resolution uses `artifact_coordinate_source` from `config.yml`, per
+        [Handling DD After Delivery](/docs/features/sbom-generation.md#handling-dd-after-delivery)
+      - download DD and app chart, unpack
+      - generate SBOM from local DD and app chart
+    - AI[techDebt-PERF]: Optimize DD and app chart downloads and SBOM generation.
       <https://docs.gitlab.com/ci/caching/>
-      - (??) Do not download ZIP for `generate_argocd_repo`.
       - (??) Cache DD.json in the same way as SBOM.
 4. `effective_set_entrypoint`
     - input:
@@ -642,6 +643,8 @@ Functions:
       - local DD (from `dd_downloading`)
       - `APP_ARTIFACTS_DIR`
       - params.environment_id -> `build.env.FULL_ENV_NAME`
+      - `artifact_coordinate_source` injected from `config.yml` by the orchestrator. Deploy-side resolution uses it
+        the same way
       - TBD
     - output:
       - appset CR, app CR, TBD

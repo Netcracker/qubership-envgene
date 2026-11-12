@@ -1,4 +1,6 @@
+import io
 import json
+import tarfile
 from pathlib import Path
 
 from deepdiff import DeepDiff
@@ -17,9 +19,15 @@ def load_json(path: Path):
         return json.load(file)
 
 
-def load_zip(path: Path):
-    with open(TESTS_DIR.joinpath(f'{path}.{Extensions.ZIP.value}'), "rb") as file:
-        return file.read()
+def make_chart_tgz(files: dict[str, str]) -> bytes:
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode='w:gz') as tar:
+        for name, content in files.items():
+            data = content.encode('utf-8')
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return buffer.getvalue()
 
 
 def make_app(version: str) -> DeployPlanEntity:

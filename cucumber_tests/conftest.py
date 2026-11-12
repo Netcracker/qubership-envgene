@@ -1,7 +1,9 @@
+import io
 import sys
 import pytest
 import os
 import subprocess
+import tarfile
 import time
 import zipfile
 import urllib.request
@@ -37,6 +39,15 @@ def _write_app_manifest(dest_dir: Path, filename: str, app_name: str, version: s
         .replace("__APP_NAME__", app_name).replace("__VERSION__", version) \
         .replace("__DEPLOY_POSTFIX__", deploy_postfix)
     (dest_dir / filename).write_text(content, encoding="utf-8")
+
+
+def _build_app_chart_tgz(dest_dir: Path, app_name: str) -> None:
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    chart_yaml = f"apiVersion: v2\nname: {app_name}\nversion: 1.0.0\n".encode()
+    entry = tarfile.TarInfo(f"{app_name}/Chart.yaml")
+    entry.size = len(chart_yaml)
+    with tarfile.open(dest_dir / f"{app_name}-1.0.0.tgz", "w:gz") as tar:
+        tar.addfile(entry, io.BytesIO(chart_yaml))
 
 
 def _add_dir_to_zip(zf: zipfile.ZipFile, source_dir: Path, arc_prefix: str) -> None:
@@ -173,6 +184,9 @@ def mock_nexus(tmp_path_factory):
     _write_maven_manifest(ext_creds_dir, "external-secrets-artifact-v1.json", "external-secrets-artifact", "v1")
     _build_env_template_zip(ext_creds_dir / "external-secrets-artifact-v1.zip", "ext-creds-template")
         
+    for _app in ("test_app", "test_app_2", "app1", "crm", "app-vals", "app-eso"):
+        _build_app_chart_tgz(base_dir / "charts", _app)
+
     proc = subprocess.Popen([sys.executable, "cucumber_tests/mock_server.py", "8000", str(base_dir)])
     
     # Wait for the mock server to start

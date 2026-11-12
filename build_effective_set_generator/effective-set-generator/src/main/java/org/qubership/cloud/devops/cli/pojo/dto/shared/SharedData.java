@@ -53,8 +53,6 @@ public class SharedData {
 
     private String deploymentSessionId;
 
-    private boolean appChartValidation;
-
     private boolean generateCleanupContext;
 
     @Builder.Default

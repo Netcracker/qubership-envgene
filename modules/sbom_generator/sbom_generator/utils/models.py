@@ -11,6 +11,7 @@ from cyclonedx.model.license import License
 from cyclonedx.schema.schema import SchemaVersion1Dot6, SchemaVersion1Dot0, SchemaVersion1Dot1, SchemaVersion1Dot2, \
     SchemaVersion1Dot3, SchemaVersion1Dot4, SchemaVersion1Dot5
 from envgenehelper import logger
+from envgenehelper.models import ArtifactCoordinateSource
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, Field
 from pydantic.alias_generators import to_camel
 
@@ -75,14 +76,15 @@ class Service(BaseSchema):
             self.docker_registry = self.full_image_name.split('/')[0]
         return self
 
-    def set_full_image_name(self, app: Application, mvn_repo_pointer: str):
+    def set_full_image_name(self, app: Application, mvn_repo_pointer: str,
+                            artifact_coordinate_source: ArtifactCoordinateSource):
         repos_map = {
             "snapshotUri": "targetSnapshot",
             "stagingUri": "targetStaging",
             "releaseUri": "targetRelease",
             "groupUri": "snapshotGroup"
         }
-        if not self.full_image_name:
+        if not self.full_image_name or artifact_coordinate_source == ArtifactCoordinateSource.REGDEF:
             if not app.registry.docker_config:
                 logger.warning(
                     f"Docker config is not defined in registry '{app.registry.name}' for app '{app.name}' "
@@ -134,21 +136,23 @@ class DeploymentDescriptor(BaseSchema):
     charts: Optional[list[AppChart]] = Field(default_factory=list)
 
     @classmethod
-    def by_path_with_app(cls, path: Path, app: Application, mvn_repo_pointer):
+    def by_path_with_app(cls, path: Path, app: Application, mvn_repo_pointer,
+                         artifact_coordinate_source: ArtifactCoordinateSource):
         # factory method
         with path.open('r', encoding='utf-8') as f:
             data = json.load(f)
         dd = cls.model_validate(data)
         for service in dd.services:
-            service.set_full_image_name(app, mvn_repo_pointer)
+            service.set_full_image_name(app, mvn_repo_pointer, artifact_coordinate_source)
         return dd
 
     @classmethod
-    def from_json_with_app(cls, data, app: Application, mvn_repo_pointer):
+    def from_json_with_app(cls, data, app: Application, mvn_repo_pointer,
+                           artifact_coordinate_source: ArtifactCoordinateSource):
         # factory method
         dd = cls.model_validate(data)
         for service in dd.services:
-            service.set_full_image_name(app, mvn_repo_pointer)
+            service.set_full_image_name(app, mvn_repo_pointer, artifact_coordinate_source)
         return dd
 
 

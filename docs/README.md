@@ -28,6 +28,7 @@
 - [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
 - [**Instance Pipeline Parameters**](/docs/instance-pipeline-parameters.md) - Reference for Instance pipeline inputs
+- [**`e2eParameters`**](/docs/e2e-parameters.md) - Cloud `e2eParameters` that EnvGene reads
 
 ## How-To Guides
 

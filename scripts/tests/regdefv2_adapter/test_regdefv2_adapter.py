@@ -90,7 +90,9 @@ PUBREG_PARAMSET = textwrap.dedent("""\
       PUB_REG_DOMAIN: "my-domain"
       PUB_REG_REGION: "us-east-1"
       PUB_REG_REPOSITORY: "my-repo"
-      HELM_REPO_BASE_URL: "https://helm.example.com"
+      HELM_MAP_REPOSITORIES:
+        x:
+          url: "https://helm.example.com"
     """)
 
 
@@ -174,7 +176,9 @@ class TestRegdefV2Adapter:
               PUB_REG_SECRET: "secret"
               PUB_REG_PROJECT: "my-project"
               PUB_REG_SA_EMAIL: "sa@my-project.iam.gserviceaccount.com"
-              HELM_REPO_BASE_URL: "https://helm.example.com"
+              HELM_MAP_REPOSITORIES:
+                x:
+                  url: "https://helm.example.com"
             """))
         ctx = _ctx()
 
@@ -202,7 +206,9 @@ class TestRegdefV2Adapter:
               PUB_REG_METHOD: "service_account"
               PUB_REG_SECRET: "secret"
               PUB_REG_PROJECT: "{{ env }}-project"
-              HELM_REPO_BASE_URL: "https://helm.example.com"
+              HELM_MAP_REPOSITORIES:
+                x:
+                  url: "https://helm.example.com"
             """))
         ctx = _ctx()
 
@@ -262,7 +268,7 @@ class TestRegdefV2Adapter:
 
     @pytest.mark.unit
     def test_helm_sections_fail_schema_without_helm_domain_param(self, tmp_path):
-        paramset = "\n".join(line for line in PUBREG_PARAMSET.splitlines() if "HELM_REPO_BASE_URL:" not in line)
+        paramset = PUBREG_PARAMSET.split("  HELM_MAP_REPOSITORIES:")[0]
         (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(paramset)
 
         with pytest.raises(jsonschema.ValidationError, match="repositoryDomainName"):
@@ -290,7 +296,9 @@ class TestRegdefV2Adapter:
               MAVEN_PROVIDER: "aws"
               PUB_REG_PROVIDER: "aws"
               PUB_REG_METHOD: "anonymous"
-              HELM_REPO_BASE_URL: "https://helm.example.com"
+              HELM_MAP_REPOSITORIES:
+                x:
+                  url: "https://helm.example.com"
             """))
         ctx = _ctx()
 
@@ -364,3 +372,52 @@ class TestRegdefV2Adapter:
         ctx = _ctx()
 
         assert ctx.committed_regdefs_dir == tmp_path / "regdefs"
+
+    @pytest.mark.unit
+    def test_helm_map_repositories_url_of_group_repo_becomes_helm_domain(self, tmp_path):
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(
+            PUBREG_PARAMSET.replace('    x:\n', '    other:\n      url: "https://other.example.com"\n    x:\n')
+        )
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        synthesized = openYaml(ctx.transient_regdefs_dir / "registry-1.yml")
+        assert synthesized["helmAppConfig"]["repositoryDomainName"] == "https://helm.example.com"
+        assert synthesized["helmConfig"]["repositoryDomainName"] == "https://helm.example.com"
+
+    @pytest.mark.unit
+    def test_helm_map_repositories_not_written_to_pubreg_file(self):
+        run_regdefv2_adapter(_ctx())
+
+        pubreg_params = openYaml(os.environ["LOCAL_PUBREG_FILE"])
+        assert "HELM_MAP_REPOSITORIES" not in pubreg_params
+
+    @pytest.mark.unit
+    def test_helm_map_repositories_reach_ctx_without_maven_provider(self, tmp_path):
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(textwrap.dedent("""\
+            name: "pubreg"
+            parameters:
+              HELM_MAP_REPOSITORIES:
+                nc.helm.charts:
+                  url: "https://mirror.example.com/helm"
+            """))
+        ctx = _ctx()
+
+        run_regdefv2_adapter(ctx)
+
+        assert ctx.helm_map_repositories == {"nc.helm.charts": {"url": "https://mirror.example.com/helm"}}
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("helm_map", [
+        "https://mirror.example.com/helm",
+        {"nc.helm.charts": "https://mirror.example.com/helm"},
+        {"nc.helm.charts": {"host": "https://mirror.example.com/helm"}},
+    ])
+    def test_malformed_helm_map_repositories_fails(self, tmp_path, helm_map):
+        (tmp_path / "tmp" / "templates" / "parameters" / "pubreg.yaml").write_text(
+            yaml.safe_dump({"name": "pubreg", "parameters": {"HELM_MAP_REPOSITORIES": helm_map}})
+        )
+
+        with pytest.raises(ValueError, match="HELM_MAP_REPOSITORIES"):
+            run_regdefv2_adapter(_ctx())

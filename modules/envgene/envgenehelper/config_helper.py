@@ -8,7 +8,7 @@ from envgene_shared.utils.yaml_utils import openYaml, get_empty_yaml, validate_y
 from envgene_shared.utils.business_utils import getenv_with_error, get_envgene_config_yaml
 from envgene_shared.utils.logger import logger
 from .constants import CI_JOB_ARTIFACT_MAX_SIZE_MB, SBOM_RETENTION_MAX_SIZE_MB
-from .models import SaveArtifactsStrategy
+from .models import ArtifactCoordinateSource, SaveArtifactsStrategy
 
 
 REGDEF_V2_VERSION = "2.0"
@@ -50,6 +50,10 @@ def get_save_artifacts_strategy() -> SaveArtifactsStrategy:
         return SaveArtifactsStrategy(env_override)
     value = get_envgene_config_yaml().get("save_artifacts", {}).get("strategy", "ALWAYS")
     return SaveArtifactsStrategy(value)
+
+
+def get_artifact_coordinate_source() -> ArtifactCoordinateSource:
+    return ArtifactCoordinateSource(get_envgene_config_yaml().get("artifact_coordinate_source", "auto"))
 
 
 def get_sbom_retention_size_limit_mb() -> int:
