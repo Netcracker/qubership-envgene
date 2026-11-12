@@ -1,6 +1,6 @@
 name: envgene-component
 version: 1
-description: EnvGene component flow - proposal → specs → handoff-design → tasks (propose gate) → dev-design → implement
+description: EnvGene component flow - proposal → specs → tasks (propose gate) → dev-design → implement; hand-off design.md is an input, not an artifact
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -52,27 +52,9 @@ artifacts:
     requires:
       - proposal
 
-  - id: handoff-design
-    generates: design.md
-    description: Cross-component slice of the JCPR plan for this component - contracts, order and dependencies. Written by the analysis side, not a design of how to implement.
-    template: design.md
-    instruction: |
-      Create the hand-off design: this component's slice of the JCPR plan from the ai-workspace.
-      It describes WHAT this component must provide to and receive from the other components,
-      not HOW the component implements it.
-
-      Sections:
-      - **Context**: See proposal.md - Why. Name the JCPR and the plan row for this component.
-      - **Contracts**: Every interface this component provides or consumes, with the other
-        component and the agreed shape. One line per contract, with an id (for example C-1),
-        because the dev design must cover each id.
-      - **Order and dependencies**: What must be merged first, and what waits on this component.
-      - **Open Questions**: Only items the plan has not settled. Omit if none.
-
-      Do not copy the spec requirements here. Point to the specs instead.
-      The dev design of the component decides how; do not decide it here.
-    requires:
-      - proposal
+  # The hand-off design.md (contracts, order, dependencies) is an input from the JCPR workspace, not an artifact
+  # generated in this change. It is deliberately not declared here: openspec puts every existing artifact of the
+  # schema into the apply context, and implement must not receive it (it reads plan.md and dev-design.md).
 
   - id: tasks
     generates: tasks.md
@@ -92,7 +74,6 @@ artifacts:
       Reference specs for what needs to be built.
     requires:
       - specs
-      - handoff-design
 
   - id: dev-design
     generates: dev-design.md
@@ -115,7 +96,6 @@ artifacts:
       If the decision changes scope or the set of tasks, say so: the change returns to the propose gate.
     requires:
       - specs
-      - handoff-design
 
 apply:
   requires: [tasks, dev-design]

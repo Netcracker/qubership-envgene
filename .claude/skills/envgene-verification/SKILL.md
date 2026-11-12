@@ -11,7 +11,7 @@ commands with exit codes, compared with a baseline. What this slot adds are the 
 ## When it runs
 
 After implement: every task in `tasks.md` is ticked and green. It runs again after any new commit, because the
-verification row is tied to HEAD. Review does not start without a verification row for the current HEAD.
+`verify` rows are tied to HEAD. Review does not start without the `verify` rows for the current HEAD.
 
 ## Commands
 
@@ -33,19 +33,25 @@ Docker or the local Python environment for it is available. If it cannot run her
 Lint is run by CI through super-linter (`.github/workflows/super-linter.yaml`, settings in `.github/super-linter.env`).
 It checks the prose of the Markdown files (textlint, rule `terminology` among them), spelling (codespell), YAML,
 gitleaks and pre-commit. The paths `.claude/`, `.agents/` and `cucumber_tests/test_data/` are excluded.
-Locally run the same image with the same env file, and record the result as `lint | <sha> | <n errors>`.
+Locally run the same image with the same env file, and record a row: stage `verify`, the lint command, its exit, result `<n> errors @ <sha>`.
 A textlint error in `AGENTS.md` or in `docs/` fails the pipeline, so fix it in the same change (for example
 `ID`, not `id`, in a terminology list).
 
 ## Steps
 
-1. **Baseline.** Check out the base branch in a separate worktree. Run the commands above that apply to the
-   change. Record exit codes and counts in the ledger as `baseline | <base-sha> | ...`.
-2. **Change.** Run the same commands on HEAD. Record `verification | <head-sha> | <suite>: exit <n>, <passed>/<total>`
-   for each suite.
+1. **Baseline.** Use the `baseline:` rows that `envgene-implementation` wrote before the first change; do not take
+   a new baseline. Only a command that has no baseline row (for example BDD or the Maven suite, when implement did
+   not run it) is run once on the base branch in a separate worktree, with the row
+   `| <time> | verify | <command> | <exit> | baseline: <counts> @ <base-sha> |`.
+2. **Change.** Run the same commands on HEAD. One row per command:
+
+   ```text
+   | <time> | verify | `<command>` | <exit> | <passed>/<total> @ <head-sha> (baseline <counts>) |
+   ```
 3. **Compare.** Every suite that passed on the baseline must pass on HEAD. A new failure is a finding, not a
-   "known issue": send it to `component-debugging` before review.
-4. **Gate.** The verification row for HEAD exists and every row is exit 0 (or `not run` with a reason).
+   "known issue": send it to `envgene-debugging` before review.
+4. **Gate.** For HEAD, every command has a `verify` row with exit 0 or no new failure against its baseline row
+   (or `not run: <reason>`).
 
 ## Rules
 

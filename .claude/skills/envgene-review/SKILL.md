@@ -11,16 +11,20 @@ and the result goes into the ledger.
 
 ## Request
 
-1. **Entry check.** The verification row for the current HEAD exists in `openspec/changes/<id>/ledger.md`.
+1. **Entry check.** The `verify` rows for the current HEAD exist in `openspec/changes/<id>/ledger.md` (gate of
+   `envgene-verification`).
 2. **Range.** `BASE=$(git merge-base origin/<base> HEAD)` and `HEAD=$(git rev-parse HEAD)`.
 3. **Dispatch `envgene-reviewer`** (`.claude/agents/envgene-reviewer.md`) in a fresh context with the
    change folder `openspec/changes/<id>/`, BASE, HEAD, and the path of `AGENTS.md`. The agent reads the
    `envgene-code-review` rules itself.
 4. **Lenses:**
-   - correctness: every delta-spec scenario implemented and tested; the CR acceptance conditions met;
+   - WHAT: every delta-spec scenario implemented and tested; every contract of `design.md` met; the CR acceptance
+     conditions met;
+   - HOW: the code follows the Decision and the Constraints of `dev-design.md`; nothing from Out of Scope built;
    - security: input validation, secrets in code, logs or tests, new dependencies;
    - conventions and docs: `envgene-code-review` sections 2 to 5, `docs/glossary.md`, docs updated in the same change.
-5. **Ledger row:** `review | - | - | envgene-reviewer @ <sha>: <n> critical, <n> important, <n> minor; ready: yes|no|with fixes`.
+5. **Ledger row** (format of `envgene-orchestration/references/ledger.md`):
+   `| <time> | review | - | - | gate: review <ready|ready with fixes|not ready> by envgene-reviewer @ <sha>, <n> critical, <n> important, <n> minor |`.
 
 ## Receive
 

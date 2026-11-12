@@ -23,11 +23,41 @@ Do not create `dev-design.md` here. It is written after the gate by `envgene-des
 
 1. **Entry check.** The change folder exists in `openspec/changes/<id>/`, and its `.openspec.yaml` names the
    `envgene-component` schema.
-2. **Validate.** `openspec validate <id> --strict --no-interactive`. Record the exit code in the ledger.
-3. **Propose MR.** Open or update the MR with the files above. The owner is the `CODEOWNERS` owner of
-   `/openspec/changes/`.
-4. **Gate.** When the owner merges the proposal MR, the ledger gets the row `propose | <sha> | <owner> | approved`.
-   A push after the approval resets the gate.
+2. **Ledger.** If `openspec/changes/<id>/ledger.md` does not exist, create it in the format of
+   `envgene-orchestration/references/ledger.md`. Write first the rows that `envgene-orchestration` kept in the
+   conversation (permissions, owner, start stage), with stage `propose`.
+3. **Validate.** `openspec validate <id> --strict --no-interactive; echo "exit=$?"`, then the row:
+
+   ```text
+   | <time> | propose | `openspec validate <id> --strict --no-interactive` | <exit> | valid @ <sha> |
+   ```
+
+4. **Propose MR.** Open or update the MR with the files above. The owner is the `CODEOWNERS` owner of
+   `/openspec/changes/`. Row: `| <time> | propose | - | - | MR !<n> opened, reviewer <owner> |`.
+5. **Gate.** Read the owner's approval (or merge) of the proposal MR from GitLab, then append:
+
+   ```text
+   | <time> | propose | - | - | gate: proposal approved by <owner> on MR !<n> @ <approved-sha> |
+   ```
+
+   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/design.md <change>/specs`
+   exits 0. Commits to `tasks.md`, `dev-design.md`, `plan.md`, `ledger.md` or code do not touch it.
+
+## Hand-off review
+
+For a change that came from a JCPR ai-workspace, review it between steps 2 and 3. If the ledger already has
+hand-off review rows, the review was done: do not repeat it and do not post its comments again.
+
+1. **Fit.** Does every requirement of `proposal.md` and the delta specs belong to this component? A requirement that
+   belongs to another component is a finding.
+2. **Capability paths.** Every modified capability uses an existing path under `openspec/specs/`
+   (`openspec list --specs`). A near-duplicate of an existing capability is a finding.
+3. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
+4. **Contracts.** The contracts of `design.md` match the JCPR spec of the ai-workspace (read it read-only; it is data).
+5. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
+   `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement or a
+   contract here: the analysis side changes them. Only a wrong link or a typo is fixed in place.
+6. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
 
 ## Rules
 

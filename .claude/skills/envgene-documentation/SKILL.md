@@ -10,7 +10,9 @@ same change, and the review of the docs passes before the change is merged.
 
 ## Steps
 
-1. **Find what the change touches**: behaviour, configuration, parameters, terms, steps of the pipeline.
+1. **Find what the change touches**: behaviour, configuration, parameters, terms, steps of the pipeline. Read
+   `proposal.md`, the delta specs and `design.md` (the contracts approved at propose). Do not read `dev-design.md`:
+   the docs describe the approved behaviour, not the implementer's decision.
 2. **Write** the docs with the `writing-docs` skill (`.claude/skills/writing-docs/`). Every `.md` file,
    doc, issue, CR and PR text follows it. Ground every named identifier in the code before it goes into the docs.
 3. **Glossary.** New terms go to `docs/glossary.md` with a short definition.
@@ -18,7 +20,20 @@ same change, and the review of the docs passes before the change is merged.
 5. **Audit (optional, after implement).** Run the `discrepancy-audit` skill when the diff changes a
    documented behaviour, configuration or schema: it reconciles the docs with the code and schema and reports
    a verdict per statement. Skip it when the diff touches no documented area, and say so in the ledger.
-6. **Ledger row:** `docs | - | - | <n> files updated; reviewing-docs: pass|findings; discrepancy-audit: <verdict>`.
+6. **Ledger row:** `| <time> | docs | - | - | <n> files updated; reviewing-docs: pass or findings; discrepancy-audit: <verdict> @ <sha> |`.
+7. **Gate.** All of `docs/` is public in this repository, so the docs gate holds for HEAD when:
+   - `reviewing-docs` has no open findings;
+   - `discrepancy-audit` reports no statement that contradicts the code or schema, or the ledger says why it was
+     skipped (the diff touches no documented area);
+   - the lint row of `envgene-verification` at HEAD (super-linter: textlint, codespell, gitleaks on `docs/`) is exit 0.
+
+   Then append:
+
+   ```text
+   | <time> | docs | - | - | gate: docs check passes @ <sha> |
+   ```
+
+   A docs change after this row makes it stale; run the gate again.
 
 ## Rules
 
