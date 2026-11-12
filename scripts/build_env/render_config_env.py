@@ -368,7 +368,9 @@ class EnvGenerator:
     def generate_bgd_file(self):
         rendered_bgd = self.render_bgd()
         if rendered_bgd is not None:
-            current_env_instance_store().put(Path(self.ctx.current_env_dir) / "bg_domain.yml", rendered_bgd)
+            bg_domain_path = Path(self.ctx.current_env_dir) / "bg_domain.yml"
+            current_env_instance_store().put(bg_domain_path, rendered_bgd)
+            current_env_instance_store().bind(bg_domain_path, "bg-domain.schema.json")
 
     def _fetch_template_override_name(self, ns: dict) -> str:
         template_override = ns.get("template_override")

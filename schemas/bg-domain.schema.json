@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BG Domain",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "const": "bgdomain"
+    },
+    "originNamespace": {
+      "$ref": "#/definitions/namespace"
+    },
+    "peerNamespace": {
+      "$ref": "#/definitions/namespace"
+    },
+    "controllerNamespace": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/namespace"
+        }
+      ],
+      "properties": {
+        "credentials": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": ["credentials"]
+    }
+  },
+  "required": ["name", "type", "originNamespace", "peerNamespace", "controllerNamespace"],
+  "definitions": {
+    "namespace": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "namespace"
+        }
+      },
+      "required": ["name", "type"]
+    }
+  }
+}

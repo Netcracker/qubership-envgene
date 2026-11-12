@@ -360,7 +360,7 @@ class SchemaValidatedModel(YamlModel):
 class ProfileOverrideModel(YamlModel):
     model_config = ConfigDict(extra="allow")
     name: Optional[str] = None
-    baseline: Optional[str] = None
+    baseline: str = None
 
 
 class ApplicationModel(SchemaValidatedModel):
@@ -375,7 +375,7 @@ class NamespaceModel(SchemaValidatedModel):
     SCHEMA_NAME: ClassVar[str] = "namespace.schema.json"
 
     name: str
-    credentialsId: Optional[str] = None
+    credentialsId: str = None
     isServerSideMerge: bool
     labels: list[str] = Field(default_factory=list)
     cleanInstallApprovalRequired: bool
@@ -387,38 +387,38 @@ class NamespaceModel(SchemaValidatedModel):
     deployParameterSets: list[str] = Field(default_factory=list)
     e2eParameterSets: list[str] = Field(default_factory=list)
     technicalConfigurationParameterSets: list[str] = Field(default_factory=list)
-    version: Optional[Union[int, float]] = None
+    version: Union[int, float] = None
 
 
 class MaasConfigModel(YamlModel):
     model_config = ConfigDict(extra="allow")
-    credentialsId: Optional[str] = None
-    maasUrl: Optional[str] = None
-    maasInternalAddress: Optional[str] = None
-    enable: Optional[bool] = None
+    credentialsId: str = None
+    maasUrl: str = None
+    maasInternalAddress: str = None
+    enable: bool = None
 
 
 class VaultConfigModel(YamlModel):
     model_config = ConfigDict(extra="allow")
-    credentialsId: Optional[str] = None
-    url: Optional[str] = None
-    enable: Optional[bool] = None
+    credentialsId: str = None
+    url: str = None
+    enable: bool = None
 
 
 class DbaasConfigModel(YamlModel):
     model_config = ConfigDict(extra="allow")
-    credentialsId: Optional[str] = None
-    apiUrl: Optional[str] = None
-    aggregatorUrl: Optional[str] = None
-    enable: Optional[bool] = None
+    credentialsId: str = None
+    apiUrl: str = None
+    aggregatorUrl: str = None
+    enable: bool = None
 
 
 class ConsulConfigModel(YamlModel):
     model_config = ConfigDict(extra="allow")
-    tokenSecret: Optional[str] = None
-    publicUrl: Optional[str] = None
-    internalUrl: Optional[str] = None
-    enabled: Optional[bool] = None
+    tokenSecret: str = None
+    publicUrl: str = None
+    internalUrl: str = None
+    enabled: bool = None
 
 
 class CloudModel(SchemaValidatedModel):
@@ -427,15 +427,15 @@ class CloudModel(SchemaValidatedModel):
     name: str
     apiUrl: str
     apiPort: Union[int, str]
-    privateUrl: Optional[str] = None
-    publicUrl: Optional[str] = None
+    privateUrl: str = None
+    publicUrl: str = None
     dashboardUrl: str
     labels: list[str]
     defaultCredentialsId: str
     protocol: str
-    dbMode: Optional[str] = None
+    dbMode: str = None
     databases: list[YamlMapping] = Field(default_factory=list)
-    mergeDeployParametersAndE2EParameters: Optional[bool] = None
+    mergeDeployParametersAndE2EParameters: bool = None
     profile: Optional[ProfileOverrideModel] = None
     deployParameters: YamlMapping
     e2eParameters: YamlMapping
@@ -447,14 +447,14 @@ class CloudModel(SchemaValidatedModel):
     vaultConfig: VaultConfigModel
     dbaasConfigs: list[DbaasConfigModel] = Field(default_factory=list)
     consulConfig: ConsulConfigModel
-    version: Optional[Union[int, float]] = None
+    version: Union[int, float] = None
 
 
 class GlobalE2EParametersModel(YamlModel):
     model_config = ConfigDict(extra="allow")
-    pipelineDefaultRecipients: Optional[str] = None
-    recipientsStrategy: Optional[str] = None
-    mergeTenantsAndE2EParameters: Optional[bool] = None
+    pipelineDefaultRecipients: str = None
+    recipientsStrategy: str = None
+    mergeTenantsAndE2EParameters: bool = None
     environmentParameters: YamlMapping = Field(default_factory=dict)
 
 
@@ -463,14 +463,14 @@ class TenantModel(SchemaValidatedModel):
 
     name: str
     registryName: str
-    description: Optional[str] = None
-    owners: Optional[str] = None
-    defaultBranch: Optional[str] = None
-    gitRepository: Optional[str] = None
-    credential: Optional[str] = None
+    description: str = None
+    owners: str = None
+    defaultBranch: str = None
+    gitRepository: str = None
+    credential: str = None
     labels: list[str] = Field(default_factory=list)
     deployParameters: YamlMapping = Field(default_factory=dict)
-    globalE2EParameters: Optional[GlobalE2EParametersModel] = None
+    globalE2EParameters: GlobalE2EParametersModel = None
 
 
 class ServiceParameterModel(YamlModel):
@@ -488,18 +488,18 @@ class ResourceProfileServiceModel(YamlModel):
 class ResourceProfileApplicationModel(YamlModel):
     model_config = ConfigDict(extra="allow")
     name: str
-    version: Optional[Union[str, int, float]] = None
-    sd: Optional[str] = None
+    version: Union[str, int, float] = None
+    sd: str = None
     services: list[ResourceProfileServiceModel]
 
 
 class ResourceProfileModel(SchemaValidatedModel):
     SCHEMA_NAME: ClassVar[str] = "resource-profile.schema.json"
 
-    name: Optional[str] = None
-    version: Optional[Union[str, int, float]] = None
-    baseline: Optional[str] = None
-    description: Optional[str] = None
+    name: str = None
+    version: Union[str, int, float] = None
+    baseline: str = None
+    description: str = None
     applications: list[ResourceProfileApplicationModel] = Field(default_factory=list)
 
 
@@ -543,7 +543,7 @@ class ParamsetModel(SchemaValidatedModel):
 
 class AppDefMetadataModel(YamlModel):
     model_config = ConfigDict(extra="allow")
-    helmReleaseNameStrategy: Optional[str] = None
+    helmReleaseNameStrategy: str = None
 
 
 class AppDefModel(SchemaValidatedModel):
@@ -555,7 +555,7 @@ class AppDefModel(SchemaValidatedModel):
     artifactId: str
     groupId: str
     supportParallelDeploy: bool
-    solutionDescriptor: Optional[bool] = None
+    solutionDescriptor: bool = None
     metadata: Optional[AppDefMetadataModel] = None
     deployParameters: dict[str, str]
     technicalConfigurationParameters: dict[str, str]
@@ -569,11 +569,11 @@ class RegDefV1Model(SchemaValidatedModel):
     credentialsId: str
     mavenConfig: dict[str, str]
     dockerConfig: dict[str, str]
-    goConfig: Optional[dict[str, str]] = None
-    rawConfig: Optional[dict[str, str]] = None
-    npmConfig: Optional[dict[str, str]] = None
-    helmConfig: Optional[dict[str, str]] = None
-    helmAppConfig: Optional[dict[str, str]] = None
+    goConfig: dict[str, str] = None
+    rawConfig: dict[str, str] = None
+    npmConfig: dict[str, str] = None
+    helmConfig: dict[str, str] = None
+    helmAppConfig: dict[str, str] = None
 
 
 class RegistryGcpOIDCModel(YamlModel):
@@ -909,6 +909,28 @@ class TemplateDescriptorModel(SchemaValidatedModel):
     parametersets: list[Any] = None
 
 
+class BgDomainNamespaceModel(YamlModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+    name: str
+    type: Literal["namespace"]
+
+
+class BgDomainControllerNamespaceModel(BgDomainNamespaceModel):
+    credentials: str
+    url: str = None
+
+
+class BgDomainModel(SchemaValidatedModel):
+    model_config = ConfigDict(strict=True)
+    SCHEMA_NAME: ClassVar[str] = "bg-domain.schema.json"
+
+    name: str
+    type: Literal["bgdomain"]
+    originNamespace: BgDomainNamespaceModel
+    peerNamespace: BgDomainNamespaceModel
+    controllerNamespace: BgDomainControllerNamespaceModel
+
+
 SCHEMA_TO_MODEL: dict[str, type[BaseModel]] = {
     ApplicationModel.SCHEMA_NAME: ApplicationModel,
     NamespaceModel.SCHEMA_NAME: NamespaceModel,
@@ -923,4 +945,5 @@ SCHEMA_TO_MODEL: dict[str, type[BaseModel]] = {
     CredentialsMapModel.SCHEMA_NAME: CredentialsMapModel,
     EnvDefinitionModel.SCHEMA_NAME: EnvDefinitionModel,
     TemplateDescriptorModel.SCHEMA_NAME: TemplateDescriptorModel,
+    BgDomainModel.SCHEMA_NAME: BgDomainModel,
 }

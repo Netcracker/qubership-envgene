@@ -60,8 +60,9 @@ Registry V2 models enforce nested configuration fields, provider-specific authen
 Environment Definition and Template Descriptor models validate their nested objects and containers.
 ParameterSet models require `parameters` or `applications`, as the schema does.
 
-`schemas/` has no schema for `bg_domain.yml`, and this change does not add one.
+`bg_domain.yml` uses `bg-domain.schema.json`. The store binds its model after rendering.
 `validate_bgd()` checks that the namespaces it references exist.
+The controller URL is optional because existing templates omit it. Its value must be a string when provided.
 
 The SBOM generator uses `generated-application.sbom.schema.json`, moved from its Python package without changing its
 validation rules. This schema permits generated SBOMs without serial numbers or timestamps. The separate
@@ -85,7 +86,7 @@ Input validation and typed models cover some paths. Others have no matching sche
 | `Inventory/resource_profiles/*.yml`                  | `handle_objects()`            | Content checked through `resource-profile.schema.json` on input.      |
 | `Inventory/env_definition.yml` after version changes | `set_template_version.py`     | No final schema check after the version update.                       |
 | `configuration/registry.yml`                         | `generate_sboms.py`           | Registry models cover new entries. No final check of the merged file. |
-| `bg_domain.yml`                                      | `generate_bgd_file()`         | No matching schema. `validate_bgd()` checks namespace references.     |
+| `bg_domain.yml`                                      | `generate_bgd_file()`         | A typed model checks structure. `validate_bgd()` checks references.   |
 | `Inventory/namespace-map.yml`                        | `namespace_render.py`         | No matching schema.                                                   |
 | `Inventory/deploy-plan.yml`                          | `EnvgeneDeployPlan.write()`   | Deployment plan models validate content. No matching JSON schema.     |
 | `Inventory/solution-descriptor/sd.yaml`              | `process_sd.py`               | No matching schema.                                                   |
@@ -106,7 +107,7 @@ It does not assign an unrelated schema to an output that has no contract in this
 - Test exact-name lookup, unknown names, path-like names, and every schema in the approved inventory.
 - Test `$ref` resolution from the schema directory.
 - Test that invalid mutations fail during processing and JSON Schema validation runs once at model binding.
-- Test BGD namespace reference checks during generation.
+- Test BGD structure, model mutations, and namespace reference checks during generation.
 - Test schema-backed direct writers and shared-only config and credential validation.
 - Test schema loading outside the repository root with `JSON_SCHEMAS_DIR` configured.
 - Run the `envgene-shared` and `envgenehelper` tests, then `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/`.

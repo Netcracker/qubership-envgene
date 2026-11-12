@@ -54,6 +54,7 @@ class CurrentEnvInstanceStore:
         self.env_dir = _key(env_dir)
         self._objects = {}
         self._to_write = set()
+        self._schemas = {}
         self._beautify = {}
 
     def _relative(self, key: Path) -> Path | None:
@@ -64,7 +65,7 @@ class CurrentEnvInstanceStore:
     def put(self, path, obj):
         key = _key(path)
         logger.debug(f"Object store put: {key}")
-        schema_path = self._beautify.get(key, (None, ""))[0]
+        schema_path = self._schemas.get(key)
         if schema_path:
             obj = _to_model(obj, schema_path, key)
         self._objects[key] = obj
@@ -87,7 +88,7 @@ class CurrentEnvInstanceStore:
                 return key
         return None
 
-    def bg_domain(self) -> CommentedMap:
+    def bg_domain(self) -> CommentedMap | YamlBacked:
         bg_domain_path = self.env_dir / "bg_domain.yml"
         return self.get(bg_domain_path) if self.exists(bg_domain_path) else CommentedMap()
 
@@ -107,6 +108,7 @@ class CurrentEnvInstanceStore:
     def bind(self, path, schema_path):
         key = _key(path)
         self._objects[key] = _to_model(self.get(key), schema_path, key)
+        self._schemas[key] = schema_path
         return self._objects[key]
 
     def beautify(self, path, schema_path, header_text=""):

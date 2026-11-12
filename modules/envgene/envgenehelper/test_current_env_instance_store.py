@@ -12,8 +12,8 @@ from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store, open_current_env_instance_store,
 )
 from envgenehelper.models import (
-    AppDefModel, ApplicationModel, CloudModel, CompositeStructureModel, CredentialsMapModel,
-    EnvDefinitionModel, NamespaceModel, ParamsetModel, RegDefV1Model, RegDefV2Model,
+    AppDefModel, ApplicationModel, BgDomainModel, CompositeStructureModel, CredentialsMapModel,
+    EnvDefinitionModel, NamespaceModel, ParamsetModel, RegDefV2Model,
     ResourceProfileModel, TemplateDescriptorModel, TenantModel,
 )
 from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml, sortYaml, store_value_to_yaml
@@ -142,7 +142,7 @@ def test_flush_loads_schema_by_filename(monkeypatch, env_dir, schema_path):
     assert target.read_text() == 'name: "a"\nprofile:\n  baseline: "b"\n  name: "n"\n'
 
 
-def test_flush_rejects_invalid_schema_backed_object_before_writing(env_dir, schema_path):
+def test_beautify_rejects_invalid_schema_backed_object_before_writing(env_dir, schema_path):
     objects = CurrentEnvInstanceStore(env_dir)
     target = env_dir / "Namespaces" / "a" / "namespace.yml"
     objects.put(target, {"value": "missing_required_name"})
@@ -407,6 +407,22 @@ def test_invalid_mutation_fails_at_assignment(monkeypatch, env_dir):
     assert "123" not in target.read_text()
 
 
+def test_replacing_bound_object_preserves_validation(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Profiles" / "profile.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, {"name": "profile", "applications": []})
+    original = objects.bind(target, "resource-profile.schema.json")
+
+    with pytest.raises(ValueError):
+        objects.put(target, {"applications": [{"name": "broken"}]})
+
+    assert objects.get(target) is original
+    replacement = objects.put(target, {"name": "replacement", "applications": []})
+    assert isinstance(replacement, ResourceProfileModel)
+    assert objects.get(target) is replacement
+
+
 def test_nested_mutation_is_checked_by_model_without_schema_runs(monkeypatch, env_dir):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
     target = env_dir / "Namespaces" / "ns" / "namespace.yml"
@@ -495,6 +511,14 @@ def test_container_mutations_are_checked_by_model():
     (ParamsetModel, {"name": "params", "parameters": {}}, (), "parameters", None),
     (TemplateDescriptorModel, {"tenant": "tenant.j2", "cloud": "cloud.j2", "namespaces": []},
      (), "cloud", {"template_override": {}}),
+    (NamespaceModel, {"name": "ns", "isServerSideMerge": False, "cleanInstallApprovalRequired": False,
+                      "mergeDeployParametersAndE2EParameters": False}, (), "credentialsId", None),
+    (NamespaceModel, {"name": "ns", "isServerSideMerge": False, "cleanInstallApprovalRequired": False,
+                      "mergeDeployParametersAndE2EParameters": False}, (), "version", None),
+    (BgDomainModel, {"name": "bgd", "type": "bgdomain", "originNamespace": {"name": "origin", "type": "namespace"},
+                     "peerNamespace": {"name": "peer", "type": "namespace"},
+                     "controllerNamespace": {"name": "controller", "type": "namespace", "credentials": "cred"}},
+     ("controllerNamespace",), "credentials", 1),
 ])
 def test_schema_rules_protect_mutations_without_revalidating_schema(monkeypatch, model_cls, payload, path, key, value):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
