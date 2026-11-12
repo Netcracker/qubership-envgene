@@ -51,11 +51,12 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. SOPS is the only encryption backend (`crypt_backend: SOPS` in `configuration/config.yml`). Fernet is used only to decrypt cloud discovery creds with the discovery project's `SECRET_KEY`. The `type` field is never encrypted.
 
-## Dev design
+## Change flow
 
-Before you write code for a new feature, bugfix, or refactoring, agree the approach with the developer
-in the design stage (`component-design`). It records the decision in the ledger; `envgene-propose` writes
-`openspec/changes/<id>/design.md` from it.
+The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
+
+- Implement does not start without the propose and design gate rows in `ledger.md`.
+- The dev design (`openspec/changes/<id>/dev-design.md`) covers every contract id of the hand-off `design.md`.
 
 ## Code review
 

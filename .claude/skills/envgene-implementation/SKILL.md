@@ -11,7 +11,9 @@ with an approved change, a reuse check before new code, a red run before every g
 ## Entry check
 
 - The ledger has the propose gate row (the owner merged the proposal MR at the recorded commit).
-- `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
+- The ledger has the design gate row (the developer accepted the approach in `envgene-design`).
+- `dev-design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`. `dev-design.md` covers every
+  contract id of `design.md`.
 - The edit belongs to an open task in `tasks.md`.
 
 ## Steps
@@ -37,7 +39,7 @@ with an approved change, a reuse check before new code, a red run before every g
    `bdd-test-review` skill (`.claude/skills/bdd-test-review/`) on them. Fix the findings or answer them in the
    ledger before the task is ticked.
 6. **A failure you do not understand** goes to `component-debugging`. Do not stack fixes.
-7. **A gap the design never settled**: stop, and go back to the design stage with that one question.
+7. **A gap the dev design never settled**: stop, and go back to `envgene-design` with that one question.
 8. **Done** when every task in `tasks.md` is ticked and green, and the BDD review has no open findings.
    Hand over to verification.
 

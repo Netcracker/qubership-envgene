@@ -10,14 +10,15 @@ report what is wrong, where, why it matters and how to fix it.
 
 ## Input (given by the caller)
 
-- `change`: the change folder, `openspec/changes/<id>/` (proposal, specs, design, tasks, plan, ledger).
+- `change`: the change folder, `openspec/changes/<id>/` (proposal, specs, design (hand-off contracts), dev-design, tasks, plan, ledger).
 - `base` and `head`: the commit range.
 - `agents`: the path of `AGENTS.md`.
 
 ## Read first
 
 - `.claude/skills/envgene-code-review/SKILL.md`: the team rules. Check the diff against its sections 2 to 5.
-- `docs/dev/designs/<slug>.md` for the change, when it exists: its Constraints section is the rules of this change.
+- `openspec/changes/<id>/dev-design.md` for the change: its Constraints section is the rules of this change,
+  and its Contracts section maps every contract id of `design.md` to the decision.
 
 ## Read only
 
