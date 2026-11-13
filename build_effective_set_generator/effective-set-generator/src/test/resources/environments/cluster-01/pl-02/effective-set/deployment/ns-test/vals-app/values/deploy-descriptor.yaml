@@ -1,5 +1,5 @@
-global: &id002
-  deployDescriptor: &id001
+global:
+  deployDescriptor:
     alertmanager:
       artifacts: []
       deploy_param: ''
@@ -18,13 +18,10 @@ global: &id002
       promote_artifacts: ''
       qualifier: ''
       version: ''
-deployDescriptor: *id001
 alertmanager:
   APPLICATION_NAME: vals-app
   DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
   MANAGED_BY: argocd
-  deployDescriptor: *id001
-  global: *id002
 APPLICATION_NAME: vals-app
 DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
 MANAGED_BY: argocd

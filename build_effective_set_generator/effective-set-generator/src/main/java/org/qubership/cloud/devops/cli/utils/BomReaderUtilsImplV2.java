@@ -82,10 +82,12 @@ public class BomReaderUtilsImplV2 {
                         .stream()
                         .map(subComp -> {
                             String esoSupport = bomCommonUtils.getPropertyValue(subComp, ESO_SUPPORT);
+                            String deployContextLayout = bomCommonUtils.getPropertyValue(subComp, DEPLOY_CONTEXT_LAYOUT);
                             RegistrySummaryDTO registrySummaryDTO = bomCommonUtils.getRegistrySummaryDTO(subComp, MAVEN_PATTERN);
                             String mavenRepoName = registryConfigurationService.getMavenRepoForApp(registrySummaryDTO);
                             return ApplicationBomDTO.builder().name(appName).artifactId(subComp.getName()).groupId(subComp.getGroup())
-                                    .version(subComp.getVersion()).mavenRepo(mavenRepoName).esoSupport(esoSupport).build();
+                                    .version(subComp.getVersion()).mavenRepo(mavenRepoName).esoSupport(esoSupport)
+                                    .deployContextLayout(deployContextLayout).build();
                         }).findFirst().orElse(null);
 
                 bomCommonUtils.getServiceEntities(entitiesMap, bomContent.getComponents());

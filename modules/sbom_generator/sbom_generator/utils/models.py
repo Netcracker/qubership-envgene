@@ -129,7 +129,12 @@ class AppChart(BaseSchema):
     helm_chart_version: str
 
 
+class DeploymentDescriptorMetadata(BaseSchema):
+    deploy_context_layout: Optional[str] = None
+
+
 class DeploymentDescriptor(BaseSchema):
+    metadata: Optional[DeploymentDescriptorMetadata] = None
     services: Optional[list[Service]] = Field(default_factory=list)
     configurations: Optional[list[Configuration]] = Field(default_factory=list)
     smartplug: Optional[list[Configuration]] = Field(default_factory=list)

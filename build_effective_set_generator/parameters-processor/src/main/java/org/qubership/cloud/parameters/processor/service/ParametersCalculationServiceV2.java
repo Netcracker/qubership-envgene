@@ -96,8 +96,13 @@ public class ParametersCalculationServiceV2 {
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(PER_SERVICE_DEPLOY_PARAMS)) {
             processPerServiceParams(parameters, parameterBundle);
         }
+        boolean compactLayout = false;
+        if (MapUtils.isNotEmpty(parameters.getDeployParams())) {
+            Parameter deployContextLayout = parameters.getDeployParams().remove(DEPLOY_CONTEXT_LAYOUT);
+            compactLayout = deployContextLayout != null && "compact".equals(deployContextLayout.getValue());
+        }
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(DEPLOY_DESC)) {
-            processDeploymentDescriptorParams(parameters, parameterBundle);
+            processDeploymentDescriptorParams(parameters, parameterBundle, compactLayout);
         }
         Map<String, Object> collisionCustomDeployParams = Collections.emptyMap();
         if (customParams != null && MapUtils.isNotEmpty(customParams.getAllParams())) {
@@ -138,7 +143,7 @@ public class ParametersCalculationServiceV2 {
         parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
     }
 
-    private static void processDeploymentDescriptorParams(Params parameters, ParameterBundle parameterBundle) {
+    private static void processDeploymentDescriptorParams(Params parameters, ParameterBundle parameterBundle, boolean compactLayout) {
         Parameter commParameter = parameters.getDeployParams().get(COMMON_DEPLOY_DESC);
         if (commParameter.getValue() == null) {
             parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
@@ -161,18 +166,24 @@ public class ParametersCalculationServiceV2 {
         Map<String, Object> deployDescParamMap = new LinkedHashMap<>();
         deployDescParamMap.put("deployDescriptor", deployDescParams);
 
-        Map<String, Object> globalMap = new HashMap<>();
-        globalMap.put("global", deployDescParamMap);
-        globalMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
+        if (compactLayout) {
+            finalDeployDescMap.put("global", deployDescParamMap);
+            deployDescParams.keySet().forEach(serviceName -> finalDeployDescMap.put(serviceName, commonParamMap));
+            finalDeployDescMap.putAll(commonParamMap);
+        } else {
+            Map<String, Object> globalMap = new HashMap<>();
+            globalMap.put("global", deployDescParamMap);
+            globalMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
 
-        Map<String, Object> serviceParamsMap = new LinkedHashMap<>();
-        commonParamMap.entrySet().stream().forEach(entry -> serviceParamsMap.put(entry.getKey(), entry.getValue()));
-        serviceParamsMap.put("deployDescriptor", deployDescParamMap.get("deployDescriptor"));
-        serviceParamsMap.put("global", finalDeployDescMap.get("global"));
+            Map<String, Object> serviceParamsMap = new LinkedHashMap<>();
+            commonParamMap.entrySet().stream().forEach(entry -> serviceParamsMap.put(entry.getKey(), entry.getValue()));
+            serviceParamsMap.put("deployDescriptor", deployDescParamMap.get("deployDescriptor"));
+            serviceParamsMap.put("global", finalDeployDescMap.get("global"));
 
-        deployDescParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
-        deployDescParams.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), serviceParamsMap));
-        commonParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
+            deployDescParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
+            deployDescParams.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), serviceParamsMap));
+            commonParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
+        }
 
 
         parameterBundle.setDeployDescParams(finalDeployDescMap);

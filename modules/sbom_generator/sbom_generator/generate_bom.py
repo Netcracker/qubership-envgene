@@ -391,15 +391,17 @@ def generate_boms(sd_content: EnvgeneDeployPlan, dd_artifacts: list[ArtifactDown
 
         dd_path = Path(dd_artifact.local_target_path)
 
-        app_raw_sbom = Bom()
-        app_raw_sbom.serial_number = None
-        app_raw_sbom.timestamp = None
-        app_raw_sbom.metadata = generate_metadata(app_def=app_def, app_version=app_version, repo=repo_value)
-
         try:
             app_dd = DeploymentDescriptor.by_path_with_app(dd_path, app_def, repo_value, artifact_coordinate_source)
         except ValidationError as e:
             raise PydanticValidationError(original=e, type_obj=DeploymentDescriptor.__name__, src_path=dd_path)
+
+        app_raw_sbom = Bom()
+        app_raw_sbom.serial_number = None
+        app_raw_sbom.timestamp = None
+        deploy_context_layout = (getattr(app_dd.metadata, "deploy_context_layout", None) if app_dd.metadata else None)
+        app_raw_sbom.metadata = generate_metadata(app_def=app_def, app_version=app_version, repo=repo_value,
+                                                  deploy_context_layout=deploy_context_layout)
         if is_dd_valid(app_dd, app_name):
             appver = f'{app_name}:{app_version}'
             chart_path = dd_path.parent / CHART_DIR_NAME / app_dd.charts[0].helm_chart_name
@@ -437,7 +439,7 @@ def generate_app_chart_component(app_name: str, app_chart: AppChart) -> Componen
     )
 
 
-def generate_metadata(app_def: Application, app_version: str, repo: str):
+def generate_metadata(app_def: Application, app_version: str, repo: str, deploy_context_layout: str | None = None):
     mvn_purl = PackageURL(type='maven', namespace=app_def.group_id, name=app_def.artifact_id,
                           version=app_version,
                           qualifiers={"registry_id": app_def.registry.name,
@@ -455,6 +457,8 @@ def generate_metadata(app_def: Application, app_version: str, repo: str):
 
     eso_property = Property(name='eso_support', value="false")
     dd_component.properties.add(eso_property)
+    if deploy_context_layout:
+        dd_component.properties.add(Property(name='deploy_context_layout', value=deploy_context_layout))
 
     app_metadata_component = Component(
         mime_type=MimeType.APPLICATION,
