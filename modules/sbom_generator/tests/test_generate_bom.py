@@ -53,15 +53,18 @@ class TestSBOMGenerator:
     @staticmethod
     def create_get_artifacts_mock(app: Application, sd: list[DeployPlanEntity], mock_aio_response,
                                   chart_url: str, chart_files: dict[str, str], dd_name: str = "",
-                                  chart_status: int = 200):
+                                  chart_status: int = 200, dd_metadata: dict | None = None):
         app_version = next(
             (item.version.split(':')[1] for item in sd if item.version.split(':')[0] == app.name), None)
         input_url = TestSBOMGenerator.create_artifact_url(app=app, app_version=app_version,
                                                           extension=FileExtension.JSON)
         if not dd_name:
             dd_name = app.name
-        mock_aio_response.head(input_url, payload=load_json(ARTIFACTS_PATH.joinpath(dd_name)), status=200)
-        mock_aio_response.get(input_url, payload=load_json(ARTIFACTS_PATH.joinpath(dd_name)), status=200)
+        dd_payload = load_json(ARTIFACTS_PATH.joinpath(dd_name))
+        if dd_metadata is not None:
+            dd_payload = {**dd_payload, "metadata": {**dd_payload.get("metadata", {}), **dd_metadata}}
+        mock_aio_response.head(input_url, payload=dd_payload, status=200)
+        mock_aio_response.get(input_url, payload=dd_payload, status=200)
         mock_aio_response.get(chart_url, body=make_chart_tgz(chart_files), status=chart_status)
 
     @staticmethod
@@ -122,6 +125,45 @@ class TestSBOMGenerator:
         component_names = {c.get('name') for c in sbom.get('components', [])}
         assert {'metrics-operator', 'blackbox-exporter'} <= component_names
         assert 'common-lib' not in component_names
+
+    @staticmethod
+    def generate_sbom_for_dd_metadata(mock_aio_response, tmp_path, dd_metadata, sbom_dir_path=SBOMS_PATH):
+        app_vers = [
+                    DeployPlanEntity(version='sample-om:1.0.0-RELEASE', deploy_postfix='sample-om')
+                ]
+        sd_content = EnvgeneDeployPlan(entities=app_vers)
+        sample_om = Application.model_validate(load_json(APP_RESOLVER_PATH.joinpath("sd_content_apps"))[0])
+        TestSBOMGenerator.create_get_artifacts_mock(
+            sample_om, app_vers, mock_aio_response, f"{REGISTRY_HELM_BASE}/sample-om-chart-1.0.0.tgz",
+            {"sample-om-chart/charts/sample-api/resource-profiles/dev.yaml": "REPLICAS: 1\n"},
+            dd_metadata=dd_metadata)
+        dd_artifacts = TestSBOMGenerator.download_dd_artifacts([sample_om], [app_vers[0].version], tmp_path)
+        return Generator.generate_bom_by_content(sd_content, dd_artifacts, sbom_dir_path, AUTO)
+
+    @pytest.mark.parametrize('dd_metadata,expected_layouts', [
+        ({'deployContextLayout': 'compact'}, ['compact']),
+        ({'deployContextLayout': 'full'}, ['full']),
+        ({}, []),
+    ])
+    def test_dd_deploy_context_layout_is_copied_to_sbom_property(
+            self, mock_aio_response, tmp_path, dd_metadata, expected_layouts):
+        output = TestSBOMGenerator.generate_sbom_for_dd_metadata(mock_aio_response, tmp_path, dd_metadata)
+
+        dd_component = output.sboms['sample-om:1.0.0-RELEASE']['metadata']['component']['components'][0]
+        layouts = [p['value'] for p in dd_component['properties'] if p['name'] == 'deploy_context_layout']
+        assert layouts == expected_layouts
+
+    def test_existing_sbom_is_not_regenerated_for_compact_dd(self, mock_aio_response, tmp_path):
+        sbom_dir_path = tmp_path / 'sboms'
+        existing_sbom_path = sbom_dir_path / 'sample-om' / 'sample-om-1.0.0-RELEASE.sbom.json'
+        existing_sbom_path.parent.mkdir(parents=True)
+        existing_sbom_path.write_text('{}', encoding='utf-8')
+
+        output = TestSBOMGenerator.generate_sbom_for_dd_metadata(
+            mock_aio_response, tmp_path, {'deployContextLayout': 'compact'}, sbom_dir_path)
+
+        assert output.sboms == {}
+        assert existing_sbom_path.read_text(encoding='utf-8') == '{}'
 
     def test_stable_bom_ref_is_deterministic(self):
         assert _stable_bom_ref('service', 'v1') == _stable_bom_ref('service', 'v1')

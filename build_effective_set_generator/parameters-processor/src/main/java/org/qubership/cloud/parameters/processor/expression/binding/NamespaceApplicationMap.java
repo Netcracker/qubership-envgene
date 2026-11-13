@@ -85,6 +85,7 @@ public class NamespaceApplicationMap extends DynamicMap {
             map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO", applicationBomDto.getMavenRepo());
             map.put(APPR_CHART_NAME, applicationBomDto.getAppChartName());
             map.put(ESO_SUPPORT, applicationBomDto.getEsoSupport());
+            map.put(DEPLOY_CONTEXT_LAYOUT, applicationBomDto.getDeployContextLayout());
             map.put(SERVICES, applicationBomDto.getServices());
             map.put(CONFIGURATIONS, applicationBomDto.getConfigurations());
             map.put(FRONTENDS, applicationBomDto.getFrontends());
