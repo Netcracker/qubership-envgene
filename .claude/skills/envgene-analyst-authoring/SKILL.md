@@ -201,7 +201,7 @@ of `envgene-propose` into this phase - propose is now gate-and-review only. The 
 
 - The ADR lives under `docs/adr/`, the EnvGene convention, and is not an OpenSpec artifact. Whether it
   should instead become a schema artifact is still open.
-- `tasks.md` is not produced here. It belongs to the developer side after the propose gate. Do not author
+- `tasks.md` is not produced here. `envgene-propose` writes it on the developer side, before the propose gate. Do not author
   it in this phase.
 - `design.md` is not produced here. The design phase writes it after the propose gate, from the proposal, the
   specs and the ADR, and it defines the cross-component contracts itself. Whether a cross-component change needs

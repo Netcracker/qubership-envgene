@@ -1,6 +1,6 @@
 ---
 name: envgene-propose
-description: EnvGene override of the component-propose slot. Prepares the OpenSpec change of a hand-off (or the team's own change) for the propose gate - proposal, delta specs and tasks, validated with openspec. Does not write the design; that comes after the gate. Use when a change folder in openspec/changes/ needs its proposal MR.
+description: EnvGene override of the component-propose slot. Gates the OpenSpec change of a hand-off (or the team's own change) at the propose gate - reviews the proposal, delta specs and ADR that the analysis phase hands off, writes tasks.md, validates with openspec and opens the MR. Does not write the design; that comes after the gate. Use when a change folder in openspec/changes/ needs its proposal MR.
 ---
 
 # EnvGene propose (override of component-propose)
@@ -10,9 +10,9 @@ proposal MR at a recorded commit. What changes is the content: this slot covers 
 
 ## Content of the change
 
-- `proposal.md`: why, what changes, capabilities, impact.
-- `specs/**/spec.md`: delta specs for every capability listed in the proposal.
-- `tasks.md`: the tracked tasks, each with a verification.
+- `proposal.md` and `specs/**/spec.md`: authored in the analysis phase (or by the team for its own change). Propose
+  reviews and validates them; it does not rewrite them. The ADR under `docs/adr/` comes with them.
+- `tasks.md`: the one artifact propose writes. The tracked tasks, each with a verification.
 
 Do not create `design.md` here. It is written after the gate by `envgene-design`, from the proposal, the specs and the
 ADR.
@@ -20,7 +20,8 @@ ADR.
 ## Steps
 
 1. **Entry check.** The change folder exists in `openspec/changes/<id>/`, and its `.openspec.yaml` names the
-   `envgene-component` schema.
+   `envgene-component` schema. `proposal.md` and `specs/` exist. The ADR the change names exists under `docs/adr/`,
+   or the proposal says the change has none.
 2. **Ledger.** If `openspec/changes/<id>/ledger.md` does not exist, create it in the format of
    `envgene-orchestration/references/ledger.md`. Write first the rows that `envgene-orchestration` kept in the
    conversation (permissions, owner, start stage), with stage `propose`.
@@ -38,8 +39,9 @@ ADR.
    | <time> | propose | - | - | gate: proposal approved by <owner> on MR !<n> @ <approved-sha> |
    ```
 
-   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs`
-   exits 0. Commits to `tasks.md`, `design.md`, `plan.md`, `ledger.md` or code do not touch it.
+   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs <adr-path>`
+   exits 0, where `<adr-path>` is the ADR under `docs/adr/` (omit it if the change has none). Commits to `tasks.md`,
+   `design.md`, `plan.md`, `ledger.md` or code do not touch it.
 
    The check needs the change to be committed: `git diff` cannot see untracked files, and a hand-off branch already
    has them committed. If the change is not committed, write the row `gate: not checkable, change not committed` and

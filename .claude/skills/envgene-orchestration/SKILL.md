@@ -31,12 +31,12 @@ the first stage.
 ## Start
 
 - **A change in progress** (`openspec/changes/<id>/ledger.md` exists): start at the first stage whose gate is not met
-  (see Stages). The propose gate holds while `proposal.md` and `specs/` are unchanged since the approved
+  (see Stages). The propose gate holds while `proposal.md`, `specs/` and the ADR are unchanged since the approved
   commit; verify, lint, docs and review are checked again for the current HEAD.
-- **Hand-off from a JCPR ai-workspace** (no ledger yet): the change `openspec/changes/<key>-<slug>/` exists in a branch
-  with `proposal.md`, `tasks.md` and `specs/`. Start at **propose**: review the
-  hand-off MR. Do not redesign it and do not open a second MR.
-- **The team's own change**: the team writes the same four files, then starts at **propose**.
+- **Hand-off from the analysis phase** (no ledger yet): the change `openspec/changes/<id>/` exists in a branch with
+  `proposal.md` and `specs/`, and the ADR under `docs/adr/`. Start at **propose**: it writes `tasks.md`, reviews the
+  hand-off and opens the MR. Do not redesign it and do not open a second MR.
+- **The team's own change**: the team writes `proposal.md`, `specs/` and the ADR, then starts at **propose**.
 
 ## Stages
 
