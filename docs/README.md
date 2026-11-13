@@ -101,7 +101,8 @@
 - [**Template Examples**](/docs/samples/template-repository/) - Ready-to-use template examples
 - [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
 - [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/) - Template and inventory examples for non-BG to BGD migration
-- [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
+- [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef v1.0, registry auth parameters,
+  and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
 
 ## Development
 

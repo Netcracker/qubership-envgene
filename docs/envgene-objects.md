@@ -2534,6 +2534,11 @@ dockerConfig:
 
 #### Registry Definition v2.0
 
+Registry Definition v2.0 is the format EnvGene uses internally to authenticate to AWS CodeArtifact and GCP Artifact
+Registry. For these registries, create a [Registry Definition v1.0](#registry-definition-v10) and set the registry auth
+parameters in Cloud `e2eParameters`. See
+[Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
+
 ```yaml
 # Mandatory
 # Registry Definition object version

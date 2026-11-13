@@ -68,7 +68,10 @@ flowchart TD
 | Parameter                | Source                | Required    | Default | Values / format                       | Effect                                                   |
 |--------------------------|-----------------------|-------------|---------|---------------------------------------|----------------------------------------------------------|
 | registry auth parameters | Cloud `e2eParameters` | Conditional | None    | see [Parameter file](#parameter-file) | Provider-specific auth values the step resolves and maps |
-| `credentials.yml`        | Instance repository   | Yes         | None    | decrypted at pipeline start           | Source of the registry secret                            |
+| `credentials.yml`        | Instance repository   | Conditional | None    | decrypted at pipeline start           | Source of the registry secret                            |
+
+`credentials.yml` is `environments/<cluster-name>/<env-name>/Credentials/credentials.yml`. It is required only when a
+registry auth parameter holds a credential macro, for example `${creds.get('<id>').password}`.
 
 The step sets `LOCAL_PUBREG_FILE` itself to the transient path where it writes the parameter file for dpg
 (see [Result](#result)). It does not read a preset value.
@@ -91,9 +94,10 @@ The step sets `LOCAL_PUBREG_FILE` itself to the transient path where it writes t
 
 3. **Write the parameter file for dpg**
 
-   The step writes all the resolved registry auth parameters to the path in `LOCAL_PUBREG_FILE` environment
-   variable. The file is a flat YAML map, one key per parameter with a string value
-   (see [Parameter file](#parameter-file)). The file is transient and kept out of the commit.
+   When `MAVEN_PROVIDER` is not set, the step stops here. It writes no parameter file and synthesizes no RegDef v2,
+   even when `NON_PUB_REG_*` parameters are set. Otherwise the step writes all the resolved registry auth parameters
+   to the path in `LOCAL_PUBREG_FILE` environment variable. The file is a flat YAML map, one key per parameter with a
+   string value (see [Parameter file](#parameter-file)). The file is transient and kept out of the commit.
 
 4. **Synthesize RegDef v2 for artifact-searcher**
 
@@ -113,10 +117,10 @@ The step sets `LOCAL_PUBREG_FILE` itself to the transient path where it writes t
    synthesizes no v2. For `azure`, the dpg path authenticates from the parameter file, but RegDef v2 synthesis
    is planned and not implemented yet.
 
-   A rendered RegDef that already carries a `version` or an `authConfig` (a v2 RegDef) is left as is. The step
+   A RegDef that already carries `version: "2.0"` or an `authConfig` (a v2 RegDef) is left as is. The step
    does not transform it and does not apply the registry auth parameters to it, even when they are set and the
-   v2 `authConfig` is incomplete. A v2 RegDef comes from the template, which the adapter cannot reach, so the
-   template's v2 takes priority. The step logs a warning for it (see [Error handling](#error-handling)).
+   v2 `authConfig` is incomplete. A v2 RegDef comes from the template or from `configuration/regdefs/`, and its own
+   `authConfig` takes priority. The step logs a warning for it (see [Error handling](#error-handling)).
 
    The auth is global. EnvGene downloads only Maven artifacts and `MAVEN_PROVIDER` is a single value, so one
    auth applies to every Maven registry the solution uses, while coordinates come from each RegDef. This
@@ -171,44 +175,44 @@ not written into the committed credential store.
 
 ```yaml
 MAVEN_PROVIDER: aws
-PUB_REG_METHOD: assume_role
+PUB_REG_METHOD: secret
 PUB_REG_KEY: <access-key>
 PUB_REG_SECRET: <secret-key>
 PUB_REG_REGION: eu-west-1
 PUB_REG_DOMAIN: codeartifact-domain
-PUB_REG_ROLE_ARN: arn:aws:iam::123456789012:role/YourRole
+PUB_REG_REPOSITORY: codeartifact-repository
 ```
 
 The complete parameter list:
 
-| Parameter                     | Scope      | Purpose                                                                           |
-| ----------------------------- | ---------- | --------------------------------------------------------------------------------- |
-| `MAVEN_PROVIDER`              | common     | Registry type: `nexus`, `artifactory`, `aws`, `azure`, `gcp`                      |
-| `PUB_REG_METHOD`              | common     | Auth method: secret, assume_role, federation, service_account, oauth2, basic_auth |
-| `PUB_REG_KEY`                 | common     | Access key or client ID                                                           |
-| `PUB_REG_SECRET`              | common     | Secret key, client secret, or service account JSON                                |
-| `PUB_REG_REGION`              | aws        | Region                                                                            |
-| `PUB_REG_DOMAIN`              | aws        | CodeArtifact domain                                                               |
-| `PUB_REG_REPOSITORY`          | aws        | Repository                                                                        |
-| `PUB_REG_ROLE_ARN`            | aws        | Role ARN, assume_role only                                                        |
-| `PUB_REG_ROLE_SESSION_PREFIX` | aws        | Session name prefix, assume_role only                                             |
-| `PUB_REG_PROJECT`             | gcp        | Project number                                                                    |
-| `PUB_REG_PROVIDER_ID`         | gcp        | Workload identity provider ID, federation only                                    |
-| `PUB_REG_POOL_ID`             | gcp        | Workload identity pool ID, federation only                                        |
-| `PUB_REG_SA_EMAIL`            | gcp        | Service account email                                                             |
-| `PUB_REG_OIDC_URL`            | gcp        | External OIDC server URL, federation only                                         |
-| `PUB_REG_OIDC_METHOD`         | gcp        | External OIDC auth method, federation only                                        |
-| `PUB_REG_OIDC_CUSTOM_PARAM`   | gcp        | Extra OIDC request params, federation only                                        |
-| `PUB_REG_OIDC_PROVIDER`       | gcp        | OIDC provider, dpg reader only                                                    |
-| `PUB_REG_OIDC_CLIENT_ID`      | gcp        | OIDC client ID, dpg reader only                                                   |
-| `PUB_REG_OIDC_CLIENT_SECRET`  | gcp        | OIDC client secret, dpg reader only                                               |
-| `PUB_REG_TENANT_ID`           | Azure      | AD tenant ID                                                                      |
-| `PUB_REG_ACR_RESOURCE`        | Azure      | ACR target resource                                                               |
-| `PUB_REG_ACR_NAME`            | Azure      | ACR name                                                                          |
-| `PUB_REG_AA_RESOURCE`         | Azure      | Azure Artifacts resource                                                          |
-| `NON_PUB_REG_METHOD`          | non-public | none or basic_auth                                                                |
-| `NON_PUB_REG_KEY`             | non-public | User, basic_auth only                                                             |
-| `NON_PUB_REG_SECRET`          | non-public | Password, basic_auth only                                                         |
+| Parameter                     | Scope      | Purpose                                                                                      |
+|-------------------------------|------------|----------------------------------------------------------------------------------------------|
+| `MAVEN_PROVIDER`              | common     | Registry type: `nexus`, `artifactory`, `aws`, `azure`, `gcp`                                 |
+| `PUB_REG_METHOD`              | common     | Auth method: secret, assume_role, federation, service_account, oauth2, basic_auth, anonymous |
+| `PUB_REG_KEY`                 | common     | Access key or client ID                                                                      |
+| `PUB_REG_SECRET`              | common     | Secret key, client secret, or service account JSON                                           |
+| `PUB_REG_REGION`              | aws        | Region                                                                                       |
+| `PUB_REG_DOMAIN`              | aws        | CodeArtifact domain                                                                          |
+| `PUB_REG_REPOSITORY`          | aws        | Repository                                                                                   |
+| `PUB_REG_ROLE_ARN`            | aws        | Role ARN, assume_role only                                                                   |
+| `PUB_REG_ROLE_SESSION_PREFIX` | aws        | Session name prefix, assume_role only                                                        |
+| `PUB_REG_PROJECT`             | gcp        | Project number                                                                               |
+| `PUB_REG_PROVIDER_ID`         | gcp        | Workload identity provider ID, federation only                                               |
+| `PUB_REG_POOL_ID`             | gcp        | Workload identity pool ID, federation only                                                   |
+| `PUB_REG_SA_EMAIL`            | gcp        | Service account email                                                                        |
+| `PUB_REG_OIDC_URL`            | gcp        | External OIDC server URL, federation only                                                    |
+| `PUB_REG_OIDC_METHOD`         | gcp        | External OIDC auth method, federation only                                                   |
+| `PUB_REG_OIDC_CUSTOM_PARAM`   | gcp        | Extra OIDC request params, federation only                                                   |
+| `PUB_REG_OIDC_PROVIDER`       | gcp        | OIDC provider, dpg reader only                                                               |
+| `PUB_REG_OIDC_CLIENT_ID`      | gcp        | OIDC client ID, dpg reader only                                                              |
+| `PUB_REG_OIDC_CLIENT_SECRET`  | gcp        | OIDC client secret, dpg reader only                                                          |
+| `PUB_REG_TENANT_ID`           | Azure      | AD tenant ID                                                                                 |
+| `PUB_REG_ACR_RESOURCE`        | Azure      | ACR target resource                                                                          |
+| `PUB_REG_ACR_NAME`            | Azure      | ACR name                                                                                     |
+| `PUB_REG_AA_RESOURCE`         | Azure      | Azure Artifacts resource                                                                     |
+| `NON_PUB_REG_METHOD`          | non-public | none or basic_auth                                                                           |
+| `NON_PUB_REG_KEY`             | non-public | User, basic_auth only                                                                        |
+| `NON_PUB_REG_SECRET`          | non-public | Password, basic_auth only                                                                    |
 
 ## Result
 
@@ -228,17 +232,32 @@ The complete parameter list:
 
 ## Error handling
 
-1. The step fails when an auth method is present but a parameter that the selected provider and
-   method require is missing. The error names the missing parameter.
+1. The step fails when `MAVEN_PROVIDER` is `aws` or `gcp` and `PUB_REG_METHOD` is not set:
+   `PUB_REG_METHOD is required in Cloud e2eParameters for public cloud MAVEN_PROVIDER`.
 
-2. The step fails when a resolved registry auth parameter references a credential that is not present in the
-   decrypted credentials. The error names the credential reference.
+2. The step fails when a parameter that the selected provider and method require is missing. The error names the
+   missing parameter: `<parameter> is required in Cloud e2eParameters for MAVEN_PROVIDER=<provider> and
+   PUB_REG_METHOD=<method>`.
 
-3. The step fails when a synthesized RegDef v2 does not validate against the RegDef v2 schema.
+3. The step fails when `HELM_MAP_REPOSITORIES` is set and is not a map of objects with a string `url`. The check runs
+   before the `MAVEN_PROVIDER` check, so it applies to every provider.
 
-4. The step logs a warning, and does not fail, when a rendered RegDef already carries a `version` or an
-   `authConfig` (a v2 RegDef). The warning names the registry and states that it is already v2, so its auth is
-   used as is and the registry auth parameters are not applied to it.
+4. The step fails when `MAVEN_PROVIDER` is `aws` or `gcp` and the `regdefs/` directory does not exist:
+   `<path> does not exist; cannot synthesize RegDef v2`.
+
+5. The step fails when a resolved registry auth parameter references a credential that is not present in the
+   decrypted credentials: `Credential for env <id> is not found in environment credentials.`
+
+6. The step fails when a synthesized RegDef v2 does not validate against the RegDef v2 schema. This happens with
+   `PUB_REG_METHOD` values other than `secret` and `anonymous` for `aws`, or `service_account` and `anonymous` for
+   `gcp`. It also happens when a RegDef has `helmConfig` or `helmAppConfig` and `HELM_MAP_REPOSITORIES` has no `url`
+   for its `helmAppConfig.helmGroupRepoName`. The step first logs a warning that `repositoryDomainName` is not set,
+   then fails with `'repositoryDomainName' is a required property`.
+
+The step logs a warning and continues in this case:
+
+- A RegDef already carries `version: "2.0"` or an `authConfig` (a v2 RegDef). The warning names the registry and
+  states that it is already v2, so its auth is used as is and the registry auth parameters are not applied to it.
 
 ## Limitations
 

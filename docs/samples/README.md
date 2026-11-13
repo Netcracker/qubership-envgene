@@ -72,10 +72,11 @@ the `env-01` sample environment. See [BGD samples](/docs/samples/blue-green-depl
 
 ### Cloud artifact registries
 
-Registry Definition v2.0 and Artifact Definition v2.0 sample files for AWS CodeArtifact and GCP
-Artifact Registry, plus a credentials file with placeholder values for both providers. See the
-[cloud artifact registries samples](/docs/samples/cloud-artifact-registries/) and
-[Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
+Registry Definition v1.0 files, registry auth ParameterSets, Environment Inventories that reference them, and
+Environment Credentials Files for AWS CodeArtifact and GCP Artifact Registry, plus Artifact Definition v2.0 files and
+system credentials for the environment template download. All credential values are placeholders. See the [cloud
+artifact registries samples](/docs/samples/cloud-artifact-registries/) and [Configuring cloud artifact registries for
+AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
 
 ### External credentials
 
