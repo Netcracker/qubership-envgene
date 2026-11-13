@@ -14,7 +14,7 @@ Local installation uses your working files, including uncommitted changes.
 
 - Python 3.12 or newer with pip.
 - A checkout of the EnvGene repository.
-- An instance repository containing an `environments/` directory to check.
+- A local EnvGene repository containing `environments/`, `templates/`, or both.
 
 The commands below use Bash. Use `python3` instead of `python` if that is your Python command.
 If pip reports `externally-managed-environment`, use a virtual environment.
@@ -91,21 +91,49 @@ That machine also needs Python 3.12 or newer and access to the runtime dependenc
 
 ## Run a check
 
-From any directory, pass the instance repository path:
+From any directory, pass the repository root:
 
 ```bash
 envgene-linter check /path/to/instance-repository
 ```
 
-Or open a terminal in the instance repository root and run:
+For an explicit instance path, use `-i` instead of the positional argument:
+
+```bash
+envgene-linter check -i /path/to/instance-repository
+```
+
+To include local template sources in PLACE-12 recommendations, supply both paths:
+
+```bash
+envgene-linter check -i /path/to/instance-repository -t /path/to/template-repository
+```
+
+The long options are `--instance-repo` and `--template-repo`.
+The template option accepts a repository root or its `templates/` directory.
+Without `-t`, PLACE-12 gives portable ParameterSet YAML and logical attachment instructions.
+With `-t`, resolved recommendations identify exact template files and edits.
+Template context does not trigger a separate template check or report.
+
+Or run from the checked repository root:
 
 ```bash
 envgene-linter check
 ```
 
-Open `envgene-linter-report.html` in your browser using the absolute path printed in the terminal.
+Both report locations appear in the terminal:
+
+```text
+HTML report saved here: /path/to/instance-repository/envgene-linter-report.html
+JSON report saved here: /path/to/instance-repository/envgene-linter-report.json
+```
+
+Open the HTML report in your browser. Use the JSON report for automated processing or AI tools.
 Add `--console` if you also want findings in the terminal.
-Each successful check replaces the HTML report and adds its filename to the instance repository's `.gitignore`.
+Each successful check replaces both reports in the checked repository and adds their filenames to its `.gitignore`.
+Recommendations do not change configuration files.
+For template-only checks and the complete option reference, see
+[Choosing the repository to check](/modules/envgene-linter/README.md#choosing-the-repository-to-check).
 
 ## Publish to PyPI
 
