@@ -30,6 +30,25 @@ class LoadedYaml:
     doc: Any
     positions: dict[tuple, tuple[int, int]] | None = None
 
+    def exact_position(self, key_path: tuple) -> tuple[int, int] | None:
+        """Return only occurrence-specific coordinates, never a parent fallback."""
+        if self.positions is not None:
+            return self.positions.get(key_path)
+        node, position = self.doc, None
+        for part in key_path:
+            if getattr(getattr(node, "anchor", None), "value", None):
+                return None
+            try:
+                position = (
+                    node.lc.item(part) if isinstance(part, int) else node.lc.key(part)
+                )
+                node = node[part]
+            except (AttributeError, KeyError, IndexError, TypeError):
+                return None
+            if not position or getattr(getattr(node, "anchor", None), "value", None):
+                return None
+        return (position[0] + 1, position[1] + 1) if position else None
+
     def position(self, key_path: tuple) -> tuple[int, int]:
         if self.positions is not None:
             for length in range(len(key_path), -1, -1):

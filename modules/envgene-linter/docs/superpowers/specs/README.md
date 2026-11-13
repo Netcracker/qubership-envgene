@@ -4,7 +4,7 @@
 - [Catalog](#catalog)
 - [Language versions](#language-versions)
 
-This directory contains 41 development specifications in English: 26 rule specifications and fifteen shared designs.
+This directory contains 42 development specifications in English: 26 rule specifications and sixteen shared designs.
 Each rule's `*-design.md` combines its requirements specification and implementation design.
 The catalog links each rule to a separate algorithm reference. Coverage includes rules disabled by default.
 
@@ -61,6 +61,7 @@ Specifications record requirements and their history. Algorithms describe the cu
 | [CLI repository paths](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-cli-repository-options-design.md)              | 2026-11-11 | [Report algorithm](/modules/envgene-linter/docs/algorithms/reports.md)                      |
 | [PLACE-12 edits](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-place12-template-edit-instructions-design.md)        | 2026-11-11 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
 | [PLACE-12 modes](/modules/envgene-linter/docs/superpowers/specs/2026-11-12-place12-guidance-modes-design.md)                    | 2026-11-12 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [PLACE-12 merge](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-merge-cleanup-design.md)                     | 2026-11-13 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
 | [Skipped checks](/modules/envgene-linter/docs/superpowers/specs/2026-10-12-skipped-checks-design.md)                            | 2026-10-12 | [Report algorithm](/modules/envgene-linter/docs/algorithms/reports.md)                      |
 | [Ansible compatibility](/modules/envgene-linter/docs/superpowers/specs/2026-10-15-ansible-compatibility-design.md)              | 2026-10-15 | [Algorithm](/modules/envgene-linter/docs/algorithms/ansible-compatibility.md)               |
 | [Shared ParameterSet sources](/modules/envgene-linter/docs/superpowers/specs/2026-10-16-paramset-sources-design.md)             | 2026-10-16 | [Selection and merging](/modules/envgene-linter/docs/algorithms/effective-set.md#3-staging) |

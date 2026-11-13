@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from .model import Category, Scope
-from .parsing import ParseFailure, parse_yaml
+from .parsing import ParseFailure, parse_json, parse_yaml
+from .security_values import literal_name
 from .yaml_values import equal
 from .yamlio import LoadedYaml
 
@@ -49,21 +50,25 @@ class _Source:
     problem: str | None = None
 
 
+def _static_membership(source: _Source, entry: dict, category: Category) -> bool:
+    if source.partial or source.loaded is None:
+        return False
+    override = entry.get("template_override", {})
+    if not isinstance(override, dict) or _tagged(override):
+        return False
+    field = _FIELDS[category][0]
+    for references in (source.loaded.doc.get(field, []), override.get(field, [])):
+        if not isinstance(references, list) or _tagged(references):
+            return False
+        if any(
+            not literal_name(ref) or _tagged(ref) or "{#" in ref for ref in references
+        ):
+            return False
+    return True
+
+
 def _entry_position(descriptor: _Source, path: tuple) -> tuple[int, int] | None:
-    node = descriptor.loaded.doc
-    position = None
-    for part in path:
-        try:
-            position = (
-                node.lc.item(part) if isinstance(part, int) else node.lc.key(part)
-            )
-            node = node[part]
-        except (AttributeError, KeyError, IndexError, TypeError):
-            return None
-        # Aliases retain their anchor's coordinates. Merged keys can lack local coordinates.
-        if not position or getattr(getattr(node, "anchor", None), "value", None):
-            return None
-    return (position[0] + 1, position[1] + 1) if position else None
+    return descriptor.loaded.exact_position(path)
 
 
 @dataclass
@@ -75,6 +80,29 @@ class TemplateProposal:
     reason: str | None = None
     entry_path: tuple[str | int, ...] = ()
     entry_position: tuple[int, int] | None = None
+    reference_present: bool = False
+
+
+@dataclass
+class ExistingParameterSet:
+    reference: str
+    path: Path
+    loaded: LoadedYaml | None = None
+    attachment: TemplateProposal | None = None
+    reason: str | None = None
+
+
+def common_stem(scope: Scope) -> str:
+    parts = [
+        scope.target,
+        *([scope.application] if scope.application else []),
+        "common",
+        _FIELDS[scope.category][2],
+    ]
+    return "-".join(
+        re.sub(r"[^a-z0-9]+", "-", part.lower()).strip("-") or "shared"
+        for part in parts
+    )[:120].rstrip("-")
 
 
 class TemplateContext:
@@ -123,6 +151,8 @@ class TemplateContext:
                 text = stream.read(2_000_001)
             if len(text) > 2_000_000:
                 raise ValueError("source size limit")
+            if path.suffix == ".json":
+                parse_json(text)
             if "{%" in text:
                 source.partial = True
                 # Only content before control flow is unconditional source evidence.
@@ -245,16 +275,7 @@ class TemplateContext:
         if key in self._names:
             return self._names[key]
         self._reserved.update(reference.casefold() for reference in references)
-        parts = [
-            scope.target,
-            *([scope.application] if scope.application else []),
-            "common",
-            _FIELDS[scope.category][2],
-        ]
-        base = "-".join(
-            re.sub(r"[^a-z0-9]+", "-", part.lower()).strip("-") or "shared"
-            for part in parts
-        )[:120].rstrip("-")
+        base = common_stem(scope)
         stem, ordinal = base, 2
         while stem.casefold() in self._reserved:
             stem, ordinal = f"{base}-{ordinal}", ordinal + 1
@@ -433,12 +454,68 @@ class TemplateContext:
         path = self._path(entry.get("template_path"))
         if path is None or self._read(path).problem:
             return None
+        if not _static_membership(self._read(path), entry, scope.category):
+            return None
         template_references = self._known_template_references()
         if template_references is None or reference in template_references:
             return None
         self._reserved.add(reference.casefold())
         self._relocations.add(reference.casefold())
         return f"templates/parameters/{reference}.yml"
+
+    def existing_paramset(
+        self,
+        name: str,
+        scope: Scope,
+        entries: list,
+        references: tuple[str, ...],
+    ) -> ExistingParameterSet | None:
+        sources = self._parameter_sources()
+        names = list(
+            dict.fromkeys(
+                [
+                    *(references if len(references) == 1 else ()),
+                    common_stem(scope),
+                ]
+            )
+        )
+        for reference in names:
+            matches = [
+                s for s in sources if _stem(s.path).casefold() == reference.casefold()
+            ]
+            if not matches:
+                continue
+            source = matches[0]
+            target = ExistingParameterSet(reference, source.path, source.loaded)
+            if self.problem or len(matches) != 1:
+                target.reason = (
+                    self.problem or "The existing ParameterSet name is ambiguous."
+                )
+            elif (
+                source.problem
+                or source.partial
+                or source.path.suffix == ".j2"
+                or _stem(source.path) != reference
+            ):
+                target.reason = (
+                    source.problem
+                    or "The existing ParameterSet is not a static, exact-name source."
+                )
+            elif source.loaded.doc.get("name") != reference:
+                target.reason = (
+                    "The existing ParameterSet filename and name do not agree."
+                )
+            else:
+                target.attachment = self.propose(
+                    name,
+                    "",
+                    scope,
+                    entries,
+                    reuse=reference,
+                )
+                target.reason = target.attachment.reason
+            return target
+        return None
 
     def propose(
         self,
@@ -449,6 +526,7 @@ class TemplateContext:
         *,
         identity: tuple = (),
         source_references: tuple[str, ...] = (),
+        reuse: str | None = None,
     ) -> TemplateProposal:
         if self.problem or self._root.is_symlink() or self.directory.is_symlink():
             return TemplateProposal(
@@ -522,7 +600,15 @@ class TemplateContext:
         definitions = self._definitions(
             descriptor, source, entry, scope, entries, [*base_refs, *extra_refs]
         )
-        stem = self._reserve(
+        if not _static_membership(source, entry, scope.category):
+            return TemplateProposal(
+                descriptor=label,
+                definitions=definitions,
+                entry_path=entry_path,
+                entry_position=entry_position,
+                reason="Template ParameterSet membership is conditional or dynamic.",
+            )
+        stem = reuse or self._reserve(
             name,
             artifact,
             scope,
@@ -534,7 +620,10 @@ class TemplateContext:
             for key in ("template_path", "deploy_postfix", "name")
             if key in entry
         }
-        fragment["template_override"] = {binding: [*extra_refs, stem]}
+        reference_present = stem in [*base_refs, *extra_refs]
+        fragment["template_override"] = {
+            binding: [*extra_refs] if reference_present else [*extra_refs, stem]
+        }
         attachment = (
             {"cloud": fragment}
             if scope.target == "cloud"
@@ -547,4 +636,5 @@ class TemplateContext:
             definitions,
             entry_path=entry_path,
             entry_position=entry_position,
+            reference_present=reference_present,
         )

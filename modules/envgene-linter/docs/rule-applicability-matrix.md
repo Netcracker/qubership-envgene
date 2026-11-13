@@ -23,7 +23,7 @@ which rules exist, where they run, and which inputs they check.
 Rule IDs refer to the [configuration standard](/docs/configuration-standard.md).
 Each implemented rule links to its detailed algorithm.
 
-The tables describe the source checkout assessed on November 12, 2026.
+The tables describe the source checkout assessed on November 13, 2026.
 Installed packages can have different coverage. Check the package version against the
 [changelog](/modules/envgene-linter/CHANGELOG.md).
 
@@ -94,7 +94,7 @@ and Cloud Passports.
 PLACE-12 requires at least two environments and distinct instance-authored source entries in one repository.
 The template name and artifact name before the first colon must match. Versions do not split groups.
 One cluster is sufficient. Repository-origin values cannot supply the repeated authored entries.
-Every bound consumer in the target/category scope must agree; application scopes remain separate.
+Every bound consumer in the target/category scope must agree. Application scopes remain separate.
 Candidates receive Review only. Incomplete selected inputs cannot establish a template-default candidate.
 Recommendations group compatible values by selected ParameterSet sources and preserve all contributing positions.
 Both modes include actual values in YAML. Without `-t`, a portable recipe identifies the logical Cloud or Namespace
@@ -103,6 +103,9 @@ with an unused name. The recipe does not invent destination files, entry indices
 `-t PATH` / `--template-repo PATH` adds local source comparisons, absolute destination files, and descriptor entry
 positions when the selected entry can be resolved. Eligible complete ParameterSets retain their original names and bindings.
 Unresolved, anchored, or inherited context retains the observation and a reason when an edit location is uncertain.
+Matching existing ParameterSets receive merge or reuse instructions. Conflicts keep instance entries.
+Reference lists append without duplicates. Parameter value lists compare without concatenation.
+Recipes identify exact instance cleanup after publication and generation checks, withholding uncertain removals.
 Local sources do not establish equivalence with published template artifacts or coverage of external consumers.
 Template-only roots retain `Not applicable`.
 

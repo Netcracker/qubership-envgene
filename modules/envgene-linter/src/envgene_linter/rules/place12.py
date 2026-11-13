@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 from ..diagnostics import skip_check
 from ..effective import EffectiveLeaf, EnvEffective
+from ..instance_cleanup import cleanup_hint
 from ..model import (
     Action,
     EnvModel,
@@ -20,12 +22,14 @@ from ..model import (
     Scope,
     Severity,
 )
+from ..paramset_merge import MergePlanner
 from ..paramset_relocation import propose_relocation
 from ..paramset_sources import resolve_reference
 from ..passport import Catalogs, resolve_passport
 from ..security_values import is_secret_parameter_name, literal_name
 from ..template_context import TemplateContext
 from ..template_default_guidance import (
+    build_merge_hint,
     build_relocation_hint,
     build_template_default_hint,
 )
@@ -231,6 +235,8 @@ def check(
     template_repo: Path | None = None,
 ) -> list[Finding]:
     context = TemplateContext(template_repo) if template_repo is not None else None
+    planner = MergePlanner(context) if context is not None else None
+    pending = []
     all_references = tuple(
         sorted(
             {
@@ -310,15 +316,32 @@ def check(
                     repr(reference) for reference in references
                 )
                 count = len(entries)
-                relocation = propose_relocation(
-                    index, name, artifact_name, scope, entries, context
+                merge = (
+                    planner.propose(
+                        name,
+                        scope,
+                        [(path, owners[0][1].value) for path, owners in entries],
+                        tuple(references),
+                    )
+                    if planner
+                    else None
                 )
-                hint = (
-                    build_relocation_hint(
+                relocation = (
+                    None
+                    if merge
+                    else propose_relocation(
+                        index, name, artifact_name, scope, entries, context
+                    )
+                )
+                if merge is not None:
+                    hint = ""
+                    pending.append((len(findings), merge, scope, entries))
+                elif relocation is not None:
+                    hint = build_relocation_hint(
                         relocation, scope, context=context, instance_root=index.root
                     )
-                    if relocation is not None
-                    else build_template_default_hint(
+                else:
+                    hint = build_template_default_hint(
                         name,
                         artifact_name,
                         scope,
@@ -326,8 +349,8 @@ def check(
                         context=context,
                         identity=identity,
                         source_references=all_references,
+                        cleanup=cleanup_hint(index, scope, entries),
                     )
-                )
                 if context is not None:
                     hint = (
                         f"Instance repository: {index.root.absolute()}\n"
@@ -359,4 +382,14 @@ def check(
                         ),
                     )
                 )
+    # Render only after every claim is known, including conflicts discovered later.
+    for number, merge, scope, entries in pending:
+        hint = build_merge_hint(merge, context)
+        if merge.target.reason is None:
+            hint += cleanup_hint(index, scope, entries, merge.accepted)
+        findings[number] = replace(
+            findings[number],
+            hint=f"Instance repository: {index.root.absolute()}\n"
+            f"Template repository: {context.directory.parent}\n\n" + hint,
+        )
     return findings

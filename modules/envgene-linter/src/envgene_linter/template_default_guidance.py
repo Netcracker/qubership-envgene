@@ -12,6 +12,7 @@ from ruamel.yaml.scalarbool import ScalarBoolean
 from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 from .model import Category, Scope
+from .paramset_merge import MergePlan, parameter_payload, selector
 from .paramset_relocation import ParamsetRelocation
 from .template_context import TemplateContext
 
@@ -77,13 +78,83 @@ def build_relocation_hint(
         "2. Keep the existing Environment Inventory bindings and reference order.\n"
         f"Existing reference lists (no edits required):\n{bindings}\n\n"
         "No descriptor override is needed. Only environments selecting this reference use the ParameterSet.\n\n"
-        "Publication and later instance cleanup:\n"
+        "Instance repository changes:\n"
         "3. Publish the updated template artifact and update the participating environments before removing these copies:\n"
         + "\n".join(f"- {instance_root / path}" for path in proposal.sources)
         + "\n\nReview actual generation and other template consumers before removing source files.\n"
         "Local source comparison only. Published artifact equivalence remains unverified.\n"
         "INT-2 can retain Review for template-only references until their sources are resolved."
     )
+
+
+def build_merge_hint(plan: MergePlan, context: TemplateContext) -> str:
+    target = plan.target
+    if target.reason:
+        return f"Review: {target.reason}\nExisting file: {target.path}"
+    text = "Template repository changes:\n"
+    if plan.additions:
+        payload = {
+            "name": target.reference,
+            **parameter_payload(plan.scope, plan.additions),
+        }
+        fragment = (
+            "ParameterSet JSON:\n"
+            + json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False)
+            if target.path.suffix == ".json"
+            else "ParameterSet YAML:\n" + _yaml(_quoted(payload))
+        )
+        text += (
+            f"Merge into file: {target.path}\n"
+            "Merge only the shown fields. Preserve other fields and values.\n"
+            f"{fragment}\n\n"
+        )
+        if plan.scope.application is not None:
+            text += (
+                f"Match the application by appName/name {json.dumps(plan.scope.application)}. "
+                "Merge its parameters, or append that application entry if absent. Keep other applications.\n\n"
+            )
+    elif plan.accepted:
+        text += f"Reuse file: {target.path}\nThe shown common values are already present.\n\n"
+    else:
+        text += f"Review: no keys can be merged or reused in {target.path}.\n"
+    for path, state in plan.states.items():
+        if state == "conflict":
+            text += (
+                f"Conflict: {selector(('parameters', *path))}"
+                + (
+                    f" in application {json.dumps(plan.scope.application)}"
+                    if plan.scope.application
+                    else ""
+                )
+                + ". Keep the template and instance entries unchanged.\n"
+            )
+    if not plan.accepted:
+        return text
+    proposal = target.attachment
+    if plan.original_binding:
+        text += (
+            "Keep the existing Environment Inventory bindings and reference order.\n"
+        )
+    elif proposal.reference_present:
+        text += f"Keep the existing reference {json.dumps(target.reference)} in its current position.\n"
+    else:
+        field = next(
+            iter(
+                (
+                    proposal.attachment["cloud"]
+                    if plan.scope.target == "cloud"
+                    else proposal.attachment["namespaces"][0]
+                )["template_override"]
+            )
+        )
+        text += (
+            f"Edit file: {_template_file(context, proposal.descriptor)}"
+            f":{proposal.entry_position[0]}:{proposal.entry_position[1]}\n"
+            f"YAML path: {_yaml_selector(proposal.entry_path)}.template_override.{field}\n"
+            f'Append "{target.reference}" as the last item. Keep existing references in their current order.\n'
+            f"Descriptor YAML:\n{_yaml(_quoted(proposal.attachment))}\n\n"
+        )
+    return text
 
 
 def _portable_template_hint(
@@ -140,6 +211,7 @@ def build_template_default_hint(
     context: TemplateContext | None = None,
     identity: tuple = (),
     source_references: tuple[str, ...] = (),
+    cleanup: str = "",
 ) -> str:
     """Build a portable recipe or a scoped local template recipe."""
     application_note = (
@@ -159,7 +231,8 @@ def build_template_default_hint(
             "applications": [{"appName": scope.application, "parameters": parameters}]
         }
     if context is None:
-        return _portable_template_hint(template_name, scope, paramset, application_note)
+        hint = _portable_template_hint(template_name, scope, paramset, application_note)
+        return hint + (cleanup if not application_note else "")
     proposal = None
     if application_note:
         reason = application_note
@@ -224,9 +297,5 @@ def build_template_default_hint(
         "Preserve other descriptor entries and override fields.\n"
         "Keep the order of existing references.\n\n"
         f"Descriptor YAML:\n{_yaml(_quoted(proposal.attachment))}\n\n"
-        f"{evidence}"
-        "Later ParameterSets override earlier values.\n"
-        "Environment-specific ParameterSets are applied afterwards and keep priority.\n"
-        "Review before removing matching instance entries. Keep their existing ParameterSet references for other overrides.\n"
-        "Local source comparison only: artifact equivalence, Jinja output, and all template consumers remain unverified."
+        f"{evidence}{cleanup}"
     )

@@ -12,6 +12,9 @@
 
 ## Unreleased
 
+- Show exact PLACE-12 instance keys to remove after template publication and generation checks.
+   Merge into uniquely named existing template ParameterSets, reuse equal values, and retain conflicts in instance.
+   Preserve reference order without duplicates and omit the generic recommendation footer.
 - Show portable PLACE-12 recipes without `-t`, including actual ParameterSet YAML, logical attachment targets,
    and append-only reference instructions without guessed destination paths.
    Add exact files and source comparisons when local template context is supplied.

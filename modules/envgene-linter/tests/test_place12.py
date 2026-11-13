@@ -1049,7 +1049,11 @@ def test_whole_relocation_rejects_incomplete_or_conflicting_sources(
     ]
     assert len(findings) == 1
     assert "Whole ParameterSet transfer candidate." not in findings[0].hint
-    assert "Descriptor YAML:" in findings[0].hint
+    if scenario == "occupied":
+        assert "Conflict:" in findings[0].hint
+        assert "Instance repository changes:" not in findings[0].hint
+    else:
+        assert "Descriptor YAML:" in findings[0].hint
     assert "private-value" not in findings[0].hint
 
 

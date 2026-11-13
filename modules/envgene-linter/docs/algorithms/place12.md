@@ -125,7 +125,23 @@ Prepend both absolute repository roots to complete, partial, and unresolved reco
 For a `templates/` input, identify its parent as the template root without resolving linked sources.
 CLI users can select the instance root with `-i` / `--instance-repo` instead of the positional argument.
 
-First consider complete ParameterSet relocation with its existing name and Environment Inventory binding.
+With explicit local context, first look for an existing ParameterSet by the common original reference name,
+then by the standard proposed common name. Different original names do not provide one original destination.
+Require a unique ordinary YAML or valid JSON file with a consistent name and resolvable association.
+Ambiguity, Jinja, custom tags, anchors, dynamic membership, and unsupported containers block merging and cleanup.
+
+Plan absent keys as additions and typed-equal values as reuse. Keep conflicting keys in instance and show their paths.
+Lists inside values compare as ordered wholes and are not concatenated.
+Render only added fields, preserving unrelated source data without exporting it into the recommendation.
+JSON destinations receive JSON fragments. Values that cannot preserve their YAML types in JSON remain conflicts.
+Application parameters merge by application identity, retaining other Application entries.
+Coordinate claims to one physical file across findings before rendering recommendations.
+Conflicting values or parent/child claims invalidate the affected paths and their cleanup in every involved finding.
+Existing Inventory references keep their order. Other existing template references remain in place.
+Only absent references append last to the selected category list.
+A blocked or conflict-only target does not fall back to a new file that would bypass the conflict.
+
+After existing-target resolution, consider complete ParameterSet relocation with its existing name and Inventory binding.
 Require one environment-owned source per participant, equal complete payloads, and coverage of every source value
 by the current eligible finding. Reject extra consumers or bindings, occupied destinations, unsupported fields,
 and incomplete local context. Application parameters retain their container and scope.
@@ -197,7 +213,13 @@ namespaces:
 
 Descriptor overrides merge before ParameterSet processing. Primitive references append without duplicates.
 Instance-specific references are attached later. A distinct proposed name avoids repeating the instance reference.
-Both reports explain that later ParameterSets take precedence and environment-specific ParameterSets keep priority.
+Resolved and portable recipes include an instance cleanup step after publication, environment updates, and generation
+checks. List exact source files, positions, and YAML paths for the accepted entries only.
+Keep literal dotted keys distinct from nested paths and retain Application indices.
+Withhold removal for anchored occurrences and physical sources selected by consumers outside the proposal's scope.
+Whole-file relocation retains its complete-source removal instructions. Existing-file merges propose key removal.
+Unresolved template associations and unsupported Application end-to-end scope have no cleanup instructions.
+The former generic four-sentence recommendation footer is omitted.
 See [Template Override](/docs/features/template-override.md) and
 [ParameterSet processing](/scripts/build_env/build_env.py).
 
@@ -292,3 +314,5 @@ PLACE-1 and PLACE-2 retain their separate layer-placement and removal meanings.
 - [Artifact grouping design](/modules/envgene-linter/docs/superpowers/specs/2026-11-09-place12-artifact-name-design.md)
 - [Guidance tests](/modules/envgene-linter/tests/test_template_default_guidance.py)
 - [Runnable examples](/modules/envgene-linter/testdata/rules/place12)
+
+- [Merge and cleanup design](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-merge-cleanup-design.md)

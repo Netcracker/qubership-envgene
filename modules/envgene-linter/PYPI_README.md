@@ -119,8 +119,11 @@ Source paths under `environments/` belong to the instance root. Paths under `tem
 Resolved recommendations name absolute files to create or edit and include the proposed YAML.
 Descriptor changes identify the existing entry's line, column, and exact YAML path with zero-based Namespace indices.
 An eligible complete ParameterSet can be proposed for relocation with its original name and existing bindings.
-Partial matches retain the separate shared ParameterSet recommendation.
-Merge with existing content and verify the template before removing instance entries.
+Existing ParameterSets with matching original or proposed names receive merge instructions.
+Missing keys are added, equal values are reused, and conflicts retain the instance entries.
+New references append last without duplicates. Lists inside parameter values are compared without concatenation.
+Recipes identify exact instance entries to remove after publication, environment updates, and generation checks.
+Unresolved changes retain Review without cleanup instructions.
 TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`.
 It ignores YAML comments and allows `.j2` files regardless of their directory.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.

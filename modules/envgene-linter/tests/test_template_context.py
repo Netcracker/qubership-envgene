@@ -138,7 +138,8 @@ profile:
         {"name": "product-v1", "parameters": {"SETTING": "other"}},
     )
     proposal = _proposal(TemplateContext(root))
-    assert proposal.attachment is not None
+    assert proposal.attachment is None
+    assert "membership" in proposal.reason
     assert len(proposal.definitions) == 2
     assert any(
         "oss.yml.j2:2:3" in line and "same value" in line

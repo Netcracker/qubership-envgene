@@ -34,6 +34,10 @@ Resolved recipes name absolute template files to create or edit and include copy
 Descriptor edits identify the selected entry's original line, column, and YAML path with zero-based Namespace indices.
 The same instructions and coordinates appear in HTML, JSON, and console output.
 Issue messages and provenance for PLACE-12 remain value-free.
+PLACE-12 recipes include located instance cleanup after publication and generation checks.
+Existing same-name template ParameterSets receive added-field merge fragments or reuse instructions.
+JSON destinations receive JSON fragments. Conflicts keep the instance entries.
+Destination claims are coordinated before rendering so contradictory recommendations cannot authorize cleanup.
 The [JSON field reference](/modules/envgene-linter/README.md#json-reports) defines the six fields.
 
 Generated files are outside finding and incomplete-check locations under the [authored configuration scope](/modules/envgene-linter/docs/algorithms/source-scope.md).

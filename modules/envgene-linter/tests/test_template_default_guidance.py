@@ -240,10 +240,7 @@ def test_local_recipe_identifies_where_to_append_the_shared_reference(
     )
     assert location in hint
     assert f'Append "{stem}" as the last item in template_override.{binding}.' in hint
-    assert (
-        "Environment-specific ParameterSets are applied afterwards and keep priority."
-        in hint
-    )
+    assert "Environment-specific ParameterSets are applied afterwards and keep priority." not in hint
     fragment = YAML(typ="safe").load(
         hint.split("Descriptor YAML:\n", 1)[1].split("\n\n", 1)[0]
     )
@@ -254,7 +251,7 @@ def test_local_recipe_identifies_where_to_append_the_shared_reference(
         stem,
     ]
     assert "Descriptor YAML:" in hint and "template_path:" in hint
-    assert "artifact" in hint and "unverified" in hint
+    assert "Local source comparison only:" not in hint
     assert hint.count("ParameterSet YAML:") == 1
 
 

@@ -328,12 +328,18 @@ Resolved recipes show `Create file:` with the absolute ParameterSet destination 
 Partial recipes show `Edit file:` with the descriptor path, selected entry line and column, and exact YAML path.
 Namespace indices in YAML paths are zero-based. Append the new reference last in the identified override list.
 For an eligible complete ParameterSet, the report proposes its original name and preserves Environment Inventory bindings.
-Partial matches use a separate shared ParameterSet and descriptor fragment, with the new reference appended last.
+Existing ParameterSets with the common original name or proposed common name receive a merge recommendation.
+Missing keys are added, equal values are reused, and conflicting values stay in instance with a Review note.
+Value types and list order remain significant. JSON destinations receive JSON fragments.
+Other matches use a separate shared ParameterSet and descriptor fragment, with the new reference appended last.
+Existing references keep their position without duplicates.
 Merge that fragment into its selected entry, retaining other fields and references.
 Unresolved or inherited context receives an explanation.
 Without the option, choose an unused name for `<shared-paramset-name>` and retain the existing references and fields.
 The report explains how to connect the ParameterSet without naming uninspected destination files.
-Confirm all template consumers before removing overrides.
+Resolved and portable recipes list the exact instance files, positions, and YAML paths to remove after publication,
+environment updates, and generation checks. Conflicting entries and entries with uncertain cleanup remain in instance.
+Whole-file deletion is proposed only for eligible complete relocation.
 Template-only references can retain INT-2 Review because the shared reference resolver remains instance-only.
 See the [PLACE-12 algorithm](/modules/envgene-linter/docs/algorithms/place12.md).
 
