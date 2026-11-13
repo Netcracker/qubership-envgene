@@ -1,0 +1,11 @@
+# Registry auth parameters for the Cloud. Reference this ParameterSet in env_definition.yml:
+# envTemplate.envSpecificE2EParamsets.cloud: ["registry-auth"]
+name: "registry-auth"
+parameters:
+  MAVEN_PROVIDER: "aws"
+  PUB_REG_METHOD: "secret"
+  PUB_REG_KEY: "${creds.get('aws-codeartifact-creds').username}"
+  PUB_REG_SECRET: "${creds.get('aws-codeartifact-creds').password}"
+  PUB_REG_REGION: "us-east-1"
+  PUB_REG_DOMAIN: "my-domain"
+  PUB_REG_REPOSITORY: "my-repo"

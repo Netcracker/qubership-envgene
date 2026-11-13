@@ -1,0 +1,11 @@
+# Environment Inventory. Connects the registry-auth ParameterSet to the Cloud e2eParameters.
+inventory:
+  environmentName: "aws-env"
+  tenantName: "tenant"
+  cloudName: "cluster_01_aws_env"
+envTemplate:
+  name: "sample-template"
+  artifact: "env-template-aws:1.0.0"
+  envSpecificE2EParamsets:
+    cloud:
+      - "registry-auth"

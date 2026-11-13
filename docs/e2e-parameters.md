@@ -41,7 +41,8 @@ value maps into the synthesized RegDef v2 `authConfig`, and which combinations a
 the RegDef. See
 [`full_chart_name`](/docs/features/sbom-generation.md#full_chart_name).
 
-**Consumer**: SBOM generation
+**Consumer**: SBOM generation, artifact download from AWS and GCP. The pipeline fails when the value is not a map of
+objects with a string `url`.
 
 **Example**:
 
@@ -52,8 +53,9 @@ nc.helm.charts:
 
 ## `MAVEN_PROVIDER`
 
-**Description**: Registry type - `nexus`, `artifactory`, `aws`, `azure`, or `gcp`. When it is `aws`, `azure`, or `gcp`,
-the RegDef v2 adapter synthesizes a RegDef v2 with public cloud registry authentication.
+**Description**: Registry type - `nexus`, `artifactory`, `aws`, `azure`, or `gcp`. When it is `aws` or `gcp`, EnvGene
+authenticates to the registry with the `PUB_REG_*` parameters. When it is not set, EnvGene ignores the registry auth
+parameters.
 
 **Consumer**: RegDef v2 adapter
 
@@ -61,12 +63,14 @@ the RegDef v2 adapter synthesizes a RegDef v2 with public cloud registry authent
 
 ## `PUB_REG_METHOD`
 
-**Description**: Public registry auth method - `secret`, `assume_role`, `federation`, `service_account`, `oauth2`, or
-`basic_auth`.
+**Description**: Public registry auth method - `secret`, `assume_role`, `federation`, `service_account`, `oauth2`,
+`basic_auth`, or `anonymous`. Mandatory when `MAVEN_PROVIDER` is `aws` or `gcp`. For `aws`, EnvGene supports
+`secret` and `anonymous`. For `gcp`, it supports `service_account` and `anonymous`. With any other value, the pipeline
+fails.
 
 **Consumer**: RegDef v2 adapter
 
-**Example**: `assume_role`
+**Example**: `secret`
 
 ## `PUB_REG_KEY`
 
