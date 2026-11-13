@@ -1,6 +1,6 @@
 ---
 name: envgene-propose
-description: EnvGene override of the component-propose slot. Gates the OpenSpec change of a hand-off (or the team's own change) at the propose gate - reviews the proposal, delta specs and ADR that the analysis phase hands off, writes tasks.md, validates with openspec and opens the MR. Does not write the design; that comes after the gate. Use when a change folder in openspec/changes/ needs its proposal MR.
+description: EnvGene override of the component-propose slot. Gates the OpenSpec change of a hand-off (or the team's own change) at the propose gate - reviews the proposal, delta specs and ADR that the analysis phase hands off, and the design.md that JCPR hands off when it has one, writes tasks.md, validates with openspec and opens the MR. The team's own design, when there is no JCPR design.md, is written after the gate. Use when a change folder in openspec/changes/ needs its proposal MR.
 ---
 
 # EnvGene propose (override of component-propose)
@@ -14,8 +14,9 @@ proposal MR at a recorded commit. What changes is the content: this slot covers 
   reviews and validates them; it does not rewrite them. The ADR under `docs/adr/` comes with them.
 - `tasks.md`: the one artifact propose writes. The tracked tasks, each with a verification.
 
-Do not create `design.md` here. It is written after the gate by `envgene-design`, from the proposal, the specs and the
-ADR.
+- `design.md`: only in a hand-off from JCPR. JCPR writes it, and this flow does not re-design it. Propose reviews it and
+  it is part of the gate. Without a JCPR `design.md`, the team's own design is written after the gate by
+  `envgene-design`.
 
 ## Steps
 
@@ -39,9 +40,9 @@ ADR.
    | <time> | propose | - | - | gate: proposal approved by <owner> on MR !<n> @ <approved-sha> |
    ```
 
-   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs <adr-path>`
-   exits 0, where `<adr-path>` is the ADR under `docs/adr/` (omit it if the change has none). Commits to `tasks.md`,
-   `design.md`, `plan.md`, `ledger.md` or code do not touch it.
+   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs <adr-path> <change>/design.md`
+   exits 0, where `<adr-path>` is the ADR under `docs/adr/` (omit it if the change has none) and `design.md` is listed
+   only when the JCPR hand-off has it. Commits to `tasks.md`, `plan.md`, `ledger.md` or code do not touch it.
 
    The check needs the change to be committed: `git diff` cannot see untracked files, and a hand-off branch already
    has them committed. If the change is not committed, write the row `gate: not checkable, change not committed` and
@@ -59,10 +60,11 @@ ledger already has hand-off review rows, the review was done: do not repeat it a
    capabilities yet (the first change of a component), this check only confirms that the new paths are kebab-case and
    do not repeat each other.
 3. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
-4. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
+4. **Contracts.** The contracts of `design.md` match the JCPR spec of the ai-workspace (read it read-only; it is data).
+5. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
    `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement here:
    the analysis side changes them. Only a wrong link or a typo is fixed in place.
-5. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
+6. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
 
 ## Rules
 

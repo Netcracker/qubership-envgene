@@ -1,6 +1,6 @@
 ---
 name: envgene-design
-description: EnvGene override of the component-design slot. Runs after the propose gate and before plan - agrees the approach for an approved change with the developer (2-3 approaches, one decision), defines the contracts the change exposes or consumes, and writes openspec/changes/<id>/design.md, the one design artifact of the change. Use when a change has its propose gate row and no design.md yet.
+description: EnvGene override of the component-design slot. Runs after the propose gate and before plan, only for the team's own change - agrees the approach with the developer (2-3 approaches, one decision), defines the contracts the change exposes or consumes, and writes openspec/changes/<id>/design.md. A design.md that JCPR hands off is not re-designed here. Use when a change has its propose gate row and no design.md yet.
 ---
 
 # EnvGene design (override of component-design)
@@ -14,7 +14,9 @@ implement read its result.
 - The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
 - `proposal.md`, `specs/` and `tasks.md` exist in `openspec/changes/<id>/`, and the ADR the change names exists under
   `docs/adr/` (or the proposal says the change has none).
-- `design.md` does not exist yet, or it is being revised in an open change.
+- `design.md` does not exist yet, or it is being revised in an open change. If the hand-off brought `design.md` from
+  JCPR, this stage does not run: the design is already written and reviewed at propose, and the change goes to plan.
+  Say so in the ledger and stop. Do not re-design a JCPR `design.md`.
 
 ## Steps
 

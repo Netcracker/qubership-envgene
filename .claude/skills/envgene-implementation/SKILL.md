@@ -11,7 +11,8 @@ with an approved change, a reuse check before new code, a red run before every g
 ## Entry check
 
 - The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
-- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (design.md @ <sha>)`).
+- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (design.md @ <sha>)`), or, for a JCPR
+  hand-off, the propose gate row with `design.md` in its gate.
 - The ledger has the plan row (stage `plan`, result `plan.md: <n> steps for <m> tasks, contracts <k>/<k> covered`).
 - `design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
 - The edit belongs to an open task in `tasks.md`.

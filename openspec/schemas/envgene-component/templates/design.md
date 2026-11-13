@@ -13,6 +13,10 @@
 <!-- One line per interface the change exposes or consumes, with an id: C-1 | provides | <what> | <shape>.
      Derived from proposal.md, the specs and the ADR. Every id is covered by the plan. -->
 
+## Order and Dependencies
+
+<!-- What must be merged first, and what waits on this component. Required for a JCPR design.md, which has no Decision -->
+
 ## Constraints
 
 <!-- Team rules from envgene-code-review, one line each -->

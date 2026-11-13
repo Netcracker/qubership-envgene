@@ -34,7 +34,7 @@ the first stage.
   (see Stages). The propose gate holds while `proposal.md`, `specs/` and the ADR are unchanged since the approved
   commit; verify, lint, docs and review are checked again for the current HEAD.
 - **Hand-off from the analysis phase** (no ledger yet): the change `openspec/changes/<id>/` exists in a branch with
-  `proposal.md` and `specs/`, and the ADR under `docs/adr/`. Start at **propose**: it writes `tasks.md`, reviews the
+  `proposal.md` and `specs/`, the ADR under `docs/adr/`, and, when JCPR made it, `design.md`. Start at **propose**: it writes `tasks.md`, reviews the
   hand-off and opens the MR. Do not redesign it and do not open a second MR.
 - **The team's own change**: the team writes `proposal.md`, `specs/` and the ADR, then starts at **propose**.
 
@@ -43,7 +43,7 @@ the first stage.
 | # | Stage | Skill | Gate to leave the stage |
 |---|-------|-------|-------------------------|
 | 1 | propose | `envgene-propose` | **proposal MR approved by the component owner** (`gate: proposal approved by …` row) |
-| 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row); `design.md` defines every contract id it lists |
+| 2 | design | `envgene-design` | team's own change: **developer accepted the approach** (`gate: approach … accepted by …` row) and `design.md` defines every contract id it lists. Skipped for a hand-off that brought `design.md` from JCPR: the design was reviewed at propose, and the ledger says so |
 | 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `design.md` covered in the plan |
 | 4 | implement | `envgene-implementation` | every task in `tasks.md` ticked, red and green rows per task |
 | 5 | debug | `component-debugging` (package slot) | entered on any failure, not a stage in the line; root cause and a regression test that failed first |
@@ -69,7 +69,8 @@ slot, so `envgene-finish` runs both stages.
 
 | Event | Go to |
 |---|---|
-| The developer changes the approach after design | design; update `design.md` and validate |
+| The developer changes the approach after design (team's own change) | design; update `design.md` and validate |
+| A JCPR `design.md` needs a change | back to JCPR; this flow does not re-design it. A wrong link or a typo is fixed in place at propose |
 | The developer's scope change touches the proposal, specs or tasks | propose (back to the owner) |
 | Implementation finds a gap the design never settled, or a case the specs do not cover | design, with that one question |
 | A command fails and the cause is not obvious | debug, then the stage that failed |
