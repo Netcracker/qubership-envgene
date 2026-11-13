@@ -12,8 +12,7 @@ implement read its result.
 ## Entry check
 
 - The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
-- `proposal.md`, `specs/` and `tasks.md` exist in `openspec/changes/<id>/`, and the ADR the change names exists under
-  `docs/adr/` (or the proposal says the change has none).
+- `proposal.md`, `specs/` and `tasks.md` exist in `openspec/changes/<id>/`.
 - `design.md` does not exist yet, or it is being revised in an open change.
 
 ## Steps
