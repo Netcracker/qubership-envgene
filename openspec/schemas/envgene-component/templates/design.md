@@ -1,18 +1,26 @@
-# Hand-off Design
+# Design
 
-## Context
+## Approaches
 
-<!-- The JCPR and its plan row for this component. See proposal.md for motivation - don't restate it -->
+<!-- 2-3 approaches with trade-offs and a recommendation -->
+
+## Decision
+
+<!-- The chosen approach, who accepted it, and the ledger row of the design gate -->
 
 ## Contracts
 
-<!-- One line per contract with an id, for example: C-1 | provides | <other component> | <agreed shape>.
-     The dev design must cover every id listed here. -->
+<!-- One line per interface the change exposes or consumes, with an id: C-1 | provides | <what> | <shape>.
+     Derived from proposal.md, the specs and the ADR. Every id is covered by the plan. -->
 
-## Order and Dependencies
+## Constraints
 
-<!-- What must be merged first, and what waits on this component -->
+<!-- Team rules from envgene-code-review, one line each -->
+
+## Out of Scope
+
+<!-- What is deliberately not done -->
 
 ## Open Questions
 
-<!-- Only items the JCPR plan has not settled. Omit if none. -->
+<!-- Only items that do not change the specs, the approach or the tasks. Omit if none. -->

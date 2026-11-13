@@ -1,7 +1,7 @@
 schema: envgene-component
 
 rules:
-  dev-design:
+  design:
     - "Constraints section: copy the rules from sections 2 to 5 of .claude/skills/envgene-code-review/SKILL.md, one line each. envgene-plan copies them into the plan; implement and the reviewer agent read them from this section."
 
 # Project context (optional)

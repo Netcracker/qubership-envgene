@@ -11,8 +11,8 @@ same change, and the review of the docs passes before the change is merged.
 ## Steps
 
 1. **Find what the change touches**: behaviour, configuration, parameters, terms, steps of the pipeline. Read
-   `proposal.md`, the delta specs and `design.md` (the contracts approved at propose). Do not read `dev-design.md`:
-   the docs describe the approved behaviour, not the implementer's decision.
+   `proposal.md`, the delta specs and the Contracts of `design.md`. Do not read the Approaches and the Decision of
+   `design.md`: the docs describe the approved behaviour, not the implementer's choice.
 2. **Write** the docs with the `writing-docs` skill (`.claude/skills/writing-docs/`). Every `.md` file,
    doc, issue, CR and PR text follows it. Ground every named identifier in the code before it goes into the docs.
 3. **Glossary.** New terms go to `docs/glossary.md` with a short definition.

@@ -1,6 +1,6 @@
 ---
 name: envgene-implementation
-description: EnvGene override of the component-implementation slot. Implements an approved OpenSpec change step by step, test first, and adds the BDD steps of this repository - the missing Gherkin scenarios are enumerated before the tests are written, and the BDD tests are reviewed with bdd-test-review before the change goes to verification. Use when plan.md and tasks.md of an approved change are ready and code must be written.
+description: EnvGene override of the component-implementation slot. Implements an approved OpenSpec change step by step, test first, and adds the BDD steps of this repository - the Gherkin scenarios come from the delta specs, and the BDD tests are reviewed with bdd-test-review before the change goes to verification. Use when plan.md and tasks.md of an approved change are ready and code must be written.
 ---
 
 # EnvGene implementation (override of component-implementation)
@@ -11,27 +11,25 @@ with an approved change, a reuse check before new code, a red run before every g
 ## Entry check
 
 - The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
-- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (dev-design.md @ <sha>)`).
+- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (design.md @ <sha>)`).
 - The ledger has the plan row (stage `plan`, result `plan.md: <n> steps for <m> tasks, contracts <k>/<k> covered`).
-- `dev-design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
+- `design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
 - The edit belongs to an open task in `tasks.md`.
 
 ## Inputs
 
-Implement reads `plan.md` and `dev-design.md` (Decision and Constraints). The hand-off `design.md` is read only for
-BDD (step 3): the BDD scenarios check the contracts approved at propose, not the dev design.
+Implement reads `plan.md` and `design.md` (Decision and Constraints). The BDD scenarios come from the delta specs
+under `specs/`, which the analysis phase already rendered with the writing-gherkin craft.
 
 ## Steps
 
 1. **Worktree.** Work in a worktree on the change branch, never on the base branch. Read the Decision and the
-   Constraints of `dev-design.md` and the Global constraints of `plan.md` before the first step.
+   Constraints of `design.md` and the Global constraints of `plan.md` before the first step.
 2. **Baseline.** Run the test commands from `AGENTS.md` (section Commands) on the untouched branch. One row per
    command: stage `implement`, the command, its exit, result `baseline: <counts> @ <sha>`. A failing baseline is reported to the developer, not fixed silently.
-3. **Enumerate BDD scenarios (BDD only).** For a behaviour that is covered by BDD tests, use the
-   `writing-gherkin` skill (`.claude/skills/writing-gherkin/`) to list the scenarios the delta specs and the
-   contracts of `design.md` require, and the ones that are missing. Add the missing scenarios to the feature file before the step definitions.
-   Each scenario comes from a spec scenario or from an edge case the spec is silent on, and says which.
-   For the layout of `cucumber_tests/`, the feature-file, test-data and step-definition conventions, read the
+3. **BDD scenarios (BDD only).** Put the scenarios of the delta specs that this task covers into the feature file
+   before the step definitions. Do not invent scenarios: a case the specs do not cover is a gap, and it goes back
+   to the analysis side through `envgene-design` (step 7). For the layout of `cucumber_tests/`, the feature-file, test-data and step-definition conventions, read the
    `envgene-bdd-tests` skill (`.claude/skills/envgene-bdd-tests/SKILL.md`).
 4. **For every task, red, green, refactor:**
    - **Reuse check** before any new function, module or helper: search the code first, and write in the step
@@ -46,7 +44,7 @@ BDD (step 3): the BDD scenarios check the contracts approved at propose, not the
    `bdd-test-review` skill (`.claude/skills/bdd-test-review/`) on them. Fix the findings or answer them in the
    ledger before the task is ticked.
 6. **A failure you do not understand** goes to `component-debugging`. Do not stack fixes.
-7. **A gap the dev design never settled**: stop, and go back to `envgene-design` with that one question.
+7. **A gap the design never settled, or a case the specs do not cover**: stop, and go back to `envgene-design` with that one question.
 8. **Done** when every task in `tasks.md` is ticked and green, and the BDD review has no open findings.
    Hand over to verification.
 

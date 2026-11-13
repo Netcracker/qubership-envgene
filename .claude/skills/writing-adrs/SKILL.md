@@ -47,7 +47,7 @@ Two skeletons, picked by how much decision there is to carry.
   Negative, and the chosen option's pros and cons must name what you accept. An ADR with only upsides is
   hiding the trade-off, and a reader cannot trust a record that reads as a sales pitch.
 - **No code references, describe in domain and behavior terms.** Do not name files, functions, classes,
-  or modules in the prose. A code reference goes stale and belongs in the specs or the dev-design, not in
+  or modules in the prose. A code reference goes stale and belongs in the specs or the design.md, not in
   a durable decision record. Prefer naming the observable behavior or the documented object over the code
   that implements it, for example "the effective set resolves the profile by signal-gated side selection"
   over naming the resolver class and the method it calls. A design mechanism that is not a code symbol is
@@ -170,7 +170,7 @@ Chosen: <A>, because <reason>. Rejected <B> and <C> because <one clause each>.
 - **Consequences.** At least one Positive and at least one Negative. The Negative is required, not
   optional - it is the cost you accept or the party who must now do something new.
 - **More information.** Links out for depth - the specs that carry the behavior detail, the proposal,
-  the implementing issue. Push detail here and into the specs and dev-design rather than growing the ADR.
+  the implementing issue. Push detail here and into the specs and design.md rather than growing the ADR.
 
 ### State the reason in the same breath as the choice
 
@@ -195,7 +195,7 @@ With the why, each line stands on its own:
 ### Keep detail out of the ADR
 
 The ADR carries the decision and its reasoning. The behavior detail lives in the specs, and the
-implementation detail lives in the dev-design. One diagram per option is allowed inside the ADR, when a
+implementation detail lives in design.md. One diagram per option is allowed inside the ADR, when a
 picture carries an option better than prose. More than one diagram, or inline code, crosses the line
 into a design doc squeezed into an ADR - push that detail out.
 
@@ -261,5 +261,5 @@ Reject these. They are the failure modes that make an ADR untrustworthy or unrea
   missing. Ask who runs and maintains the result, and let their forces into the problem statement and
   the pros and cons.
 - **Mega-ADR.** A whole design doc squeezed into one ADR - multiple diagrams, inline code, or exhaustive
-  behavior detail. Push that detail to the specs and the dev-design. One diagram per option is the line.
+  behavior detail. Push that detail to the specs and design.md. One diagram per option is the line.
 ```

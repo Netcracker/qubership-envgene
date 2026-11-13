@@ -1,6 +1,6 @@
 ---
 name: envgene-orchestration
-description: EnvGene override of the component-orchestration slot. Runs one change of qubership-envgene through the component flow with OpenSpec - propose gate, then dev design, plan, implement, verify, review, docs, finish with archive - picks the stage to start from, hands each stage to its envgene override or the package slot, checks gates and keeps the ledger. Use when a change in openspec/changes/ moves to its next stage, when a hand-off MR from the JCPR workspace arrives, or when someone asks where a change stands.
+description: EnvGene override of the component-orchestration slot. Runs one change of qubership-envgene through the component flow with OpenSpec - propose gate, then design, plan, implement, verify, review, docs, finish with archive - picks the stage to start from, hands each stage to its envgene override or the package slot, checks gates and keeps the ledger. Use when a change in openspec/changes/ moves to its next stage, when a hand-off MR from the JCPR workspace arrives, or when someone asks where a change stands.
 ---
 
 # EnvGene orchestration (override of component-orchestration)
@@ -11,7 +11,7 @@ of each slot, checks the gates and keeps the ledger.
 
 **Deliberate deviation from the package.** The package order is design → propose → plan, and a hand-off starts at
 propose. This repository runs propose → design → plan: the owner approves WHAT changes, then the team decides HOW
-(dev design). A hand-off always starts at propose, and so does the team's own change. Use this order only with the
+(design). A hand-off always starts at propose, and so does the team's own change. Use this order only with the
 component owner's yes, recorded in the ledger as a decision row.
 
 ## Orient (before the first stage)
@@ -31,10 +31,10 @@ the first stage.
 ## Start
 
 - **A change in progress** (`openspec/changes/<id>/ledger.md` exists): start at the first stage whose gate is not met
-  (see Stages). The propose gate holds while `proposal.md`, `design.md` and `specs/` are unchanged since the approved
+  (see Stages). The propose gate holds while `proposal.md` and `specs/` are unchanged since the approved
   commit; verify, lint, docs and review are checked again for the current HEAD.
 - **Hand-off from a JCPR ai-workspace** (no ledger yet): the change `openspec/changes/<key>-<slug>/` exists in a branch
-  with `proposal.md`, `design.md` (the cross-component slice), `tasks.md` and `specs/`. Start at **propose**: review the
+  with `proposal.md`, `tasks.md` and `specs/`. Start at **propose**: review the
   hand-off MR. Do not redesign it and do not open a second MR.
 - **The team's own change**: the team writes the same four files, then starts at **propose**.
 
@@ -43,8 +43,8 @@ the first stage.
 | # | Stage | Skill | Gate to leave the stage |
 |---|-------|-------|-------------------------|
 | 1 | propose | `envgene-propose` | **proposal MR approved by the component owner** (`gate: proposal approved by …` row) |
-| 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row); `dev-design.md` covers every contract id of `design.md` |
-| 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `design.md` covered in `dev-design.md` and in the plan |
+| 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row); `design.md` defines every contract id it lists |
+| 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `design.md` covered in the plan |
 | 4 | implement | `envgene-implementation` | every task in `tasks.md` ticked, red and green rows per task |
 | 5 | debug | `component-debugging` (package slot) | entered on any failure, not a stage in the line; root cause and a regression test that failed first |
 | 6 | verify | `envgene-verification` | `verify` rows at HEAD for every command in AGENTS.md Commands, exit 0 or no new failure against the baseline |
@@ -69,9 +69,9 @@ slot, so `envgene-finish` runs both stages.
 
 | Event | Go to |
 |---|---|
-| The developer changes the approach after design | design; update `dev-design.md` and validate |
+| The developer changes the approach after design | design; update `design.md` and validate |
 | The developer's scope change touches the proposal, specs or tasks | propose (back to the owner) |
-| Implementation finds a gap the dev design never settled | design, with that one question |
+| Implementation finds a gap the design never settled, or a case the specs do not cover | design, with that one question |
 | A command fails and the cause is not obvious | debug, then the stage that failed |
 | Verification shows new failures against the baseline | debug, then implement |
 | Review asks for changes | implement (new commits), then verify again |

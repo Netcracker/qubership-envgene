@@ -20,7 +20,7 @@ and the result goes into the ledger.
 4. **Lenses:**
    - WHAT: every delta-spec scenario implemented and tested; every contract of `design.md` met; the CR acceptance
      conditions met;
-   - HOW: the code follows the Decision and the Constraints of `dev-design.md`; nothing from Out of Scope built;
+   - HOW: the code follows the Decision and the Constraints of `design.md`; nothing from Out of Scope built;
    - security: input validation, secrets in code, logs or tests, new dependencies;
    - conventions and docs: `envgene-code-review` sections 2 to 5, `docs/glossary.md`, docs updated in the same change.
 5. **Ledger row** (format of `envgene-orchestration/references/ledger.md`):

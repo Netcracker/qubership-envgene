@@ -16,7 +16,7 @@
 | 2026-11-12 09:12 | propose | - | - | owner: <owner> from CODEOWNERS; order change approved by <owner> (MR !n) |
 | 2026-11-12 10:00 | propose | `openspec validate <id> --strict --no-interactive` | 0 | valid @ 3f2a9c1 |
 | 2026-11-12 14:30 | propose | - | - | gate: proposal approved by <owner> on MR !n @ 3f2a9c1 |
-| 2026-11-12 15:00 | design | - | - | gate: approach B accepted by <developer> (dev-design.md @ 9b0e4d2) |
+| 2026-11-12 15:00 | design | - | - | gate: approach B accepted by <developer> (design.md @ 9b0e4d2) |
 | 2026-11-12 15:20 | implement | `python -m pytest modules/envgene/envgenehelper -k X` | 1 | red: 2 failures, function missing |
 | 2026-11-12 15:41 | implement | `python -m pytest modules/envgene/envgenehelper -k X` | 0 | green: 2 tests @ 9b0e4d2 |
 | 2026-11-12 17:10 | verify | `cd modules/envgene/envgenehelper && python -m pytest` | 0 | 412 passed, baseline 405 @ 7c01d2e |
@@ -36,8 +36,8 @@ A gate is passed by a row with the gate word `gate:` in the result column. Each 
 
 | Gate | Written by | Row | Passed when |
 |---|---|---|---|
-| propose | `envgene-propose` | `gate: proposal approved by <owner> on MR !n @ <sha>` | owner merged or approved the proposal MR; `proposal.md`, `design.md`, `specs/` unchanged since `<sha>` |
-| design | `envgene-design` | `gate: approach <x> accepted by <developer> (dev-design.md @ <sha>)` | developer accepted the decision; every contract id of `design.md` covered |
+| propose | `envgene-propose` | `gate: proposal approved by <owner> on MR !n @ <sha>` | owner merged or approved the proposal MR; `proposal.md` and `specs/` unchanged since `<sha>` |
+| design | `envgene-design` | `gate: approach <x> accepted by <developer> (design.md @ <sha>)` | developer accepted the decision; every contract id of `design.md` defined and covered in the design |
 | verify | `envgene-verification` | one `verify` row per command, at HEAD: `<passed>/<total> @ <sha> (baseline <counts>)` | every command exit 0, or no new failure against its `baseline:` row |
 | lint | `envgene-verification` | a `verify` row for the lint command at HEAD: `<n> errors @ <sha>` | exit 0 |
 | review | `envgene-review` | `gate: review <verdict> by envgene-reviewer @ <sha>, <n> critical, <n> important` | verdict `ready` or `ready with fixes`, no open critical or important |

@@ -36,7 +36,7 @@ already in `openspec/changes/archive/<date>-<id>/` resumes at **Archive**, step 
 ## Archive (stage 10)
 
 1. Only after the code approval and green checks for that commit: `openspec archive <id> --yes`. It merges the delta
-   specs into `openspec/specs/` and moves the change folder (with `design.md`, `dev-design.md`, `plan.md` and
+   specs into `openspec/specs/` and moves the change folder (with `design.md`, `plan.md` and
    `ledger.md`) to `openspec/changes/archive/<date>-<id>/`.
 2. `openspec validate --all --strict; echo "exit=$?"` must exit 0. Append both rows to the archived ledger, then the
    gate row, and commit `docs: archive OpenSpec change <id>` (with the yes for commits) and push:

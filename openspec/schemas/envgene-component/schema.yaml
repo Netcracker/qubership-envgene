@@ -1,6 +1,6 @@
 name: envgene-component
 version: 1
-description: EnvGene component flow - proposal → specs → tasks (propose gate) → dev-design → implement; hand-off design.md is an input, not an artifact
+description: EnvGene component flow - proposal → specs → tasks (propose gate) → design (design gate) → implement; design.md is the one design artifact
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -49,10 +49,6 @@ artifacts:
     requires:
       - proposal
 
-  # The hand-off design.md (contracts, order, dependencies) is an input from the JCPR workspace, not an artifact
-  # generated in this change. It is deliberately not declared here: openspec puts every existing artifact of the
-  # schema into the apply context, and implement must not receive it (it reads plan.md and dev-design.md).
-
   - id: tasks
     generates: tasks.md
     description: Implementation checklist with trackable tasks
@@ -60,10 +56,9 @@ artifacts:
     instruction: |
       Create the task list that breaks down the implementation work for this component.
 
-      Tasks are approved at the propose gate together with the proposal, the specs and the
-      hand-off design. If the dev design later changes the scope or the set of tasks, the change
-      goes back to the propose gate; a change that only refines the implementation may update
-      the tasks without a new approval.
+      Tasks are approved at the propose gate together with the proposal and the specs. If the design
+      later changes the scope or the set of tasks, the change goes back to the propose gate; a change
+      that only refines the implementation may update the tasks without a new approval.
 
       **IMPORTANT: Follow the template below for tracked tasks.** Each tracked task MUST be a
       checkbox: `- [ ] X.Y Task description`, and states how to verify completion.
@@ -72,19 +67,21 @@ artifacts:
     requires:
       - specs
 
-  - id: dev-design
-    generates: dev-design.md
-    description: Component team's design decision for the change - approaches, the chosen one, constraints. Written after the propose gate and before plan.
-    template: dev-design.md
+  - id: design
+    generates: design.md
+    description: The one design artifact - approaches, the chosen one, contracts, constraints. Written after the propose gate and before plan, from the proposal, the specs and the ADR.
+    template: design.md
     instruction: |
-      Create the dev design: the component team's decision on HOW this change is implemented.
-      It is written after the propose gate, so the owner has already approved WHAT is changed.
+      Create the design: the component team's decision on HOW this change is implemented. It is the
+      only design artifact of the change. It is written after the propose gate, so the owner has already
+      approved WHAT is changed. Render it from proposal.md, the delta specs and the ADR under docs/adr/.
 
       Sections:
-      - **Approaches**: 2-3 approaches with trade-offs and a recommendation.
+      - **Approaches**: 2-3 approaches with trade-offs and a recommendation. Component-level; the ADR
+        holds the system-level options and is not re-argued here.
       - **Decision**: The chosen approach and who accepted it (the ledger row of the design gate).
-      - **Contracts**: Cover every contract id from design.md (hand-off). For each one: how the
-        decision meets it, or why it cannot be met. A contract without a line here blocks plan.
+      - **Contracts**: One line per interface the change exposes or consumes, with an id (C-1, C-2, ...).
+        Every id is covered by the plan. A contract without a line here blocks plan.
       - **Constraints**: The team rules from the envgene-code-review skill, one line each.
       - **Out of scope**: What is deliberately not done.
       - **Open Questions**: Only items that do not change the specs, the approach or the tasks.
@@ -95,7 +92,7 @@ artifacts:
       - specs
 
 apply:
-  requires: [tasks, dev-design]
+  requires: [tasks, design]
   tracks: tasks.md
   instruction: |
     Read context files, work through pending tasks, mark complete as you go.

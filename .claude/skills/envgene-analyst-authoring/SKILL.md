@@ -11,7 +11,7 @@ description: >-
   the proposal and the specs follow the envgene-component schema's per-artifact instruction, served by
   `openspec instructions`, and the ADR is writing-adrs. For the discovery that produces the brief, use
   envgene-explore. Never use it for
-  developer-side work after the hand-off - the dev design, plan, implementation, verification, review,
+  developer-side work after the hand-off - the design, plan, implementation, verification, review,
   docs, or finish, which are envgene-design and the sibling dev-flow skills.
 ---
 
@@ -47,7 +47,7 @@ shared authoring contract this phase renders from. Editing those two instruction
 change, so no separate analyst schema exists any more.
 
 What this phase must not touch: the developer-side artifacts of `envgene-component` - the `tasks` and
-`dev-design` artifacts and their instructions - and the developer-side skills (`envgene-propose`,
+`design` artifact and its instruction - and the developer-side skills (`envgene-propose`,
 `envgene-design`, `envgene-plan`, `envgene-implementation`, `envgene-verification`, `envgene-review`,
 `envgene-documentation`, `envgene-finish`, `envgene-orchestration`). `envgene-propose` is now
 gate-and-review only - it no longer authors the proposal or the specs, the analyst does, agreed with the
@@ -173,7 +173,7 @@ The hand-off is a change folder plus a pull request, and each artifact answers a
 concern. Make each one legible on its own:
 
 - `proposal.md` - what the component owner gates and approves at propose.
-- the delta specs - the behavior contract the dev design must cover and that later becomes tests.
+- the delta specs - the behavior contract the design must cover and that later becomes tests.
 - the ADR - the durable why the developer references, kept under `docs/adr/` outside the change folder.
 - the capability paths - written the way `openspec list --specs` shows them.
 - new terms the change introduces - added to `docs/glossary.md`, so the vocabulary lands where the
@@ -203,10 +203,10 @@ of `envgene-propose` into this phase - propose is now gate-and-review only. The 
   should instead become a schema artifact is still open.
 - `tasks.md` is not produced here. It belongs to the developer side after the propose gate. Do not author
   it in this phase.
-- A hand-off `design.md` carries cross-component contracts - what this component provides to or consumes
-  from others - which a self-contained single-component change does not have. Whether such a change still
-  needs a `design.md` for the developer-side four-file expectation, as a thin Context stub or an input from
-  above, is an open seam. The parent-and-child decomposition case is out of scope for this phase.
+- `design.md` is not produced here. The design phase writes it after the propose gate, from the proposal, the
+  specs and the ADR, and it defines the cross-component contracts itself. Whether a cross-component change needs
+  anything from above before the design phase is an open seam. The parent-and-child decomposition case is out of
+  scope for this phase.
 
 ## House style
 
