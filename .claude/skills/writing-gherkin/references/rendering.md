@@ -1,9 +1,11 @@
-# Rendering - the ladder into two forms
+# Rendering - the ladder into its forms
 
-Phase 4 renders the grounded case list. The same list produces two projections at different levels of
-detail: collapsed-Gherkin acceptance criteria for a CR, and full Cucumber scenarios for a `.feature`
-file. Render whichever the caller asked for, or both when running standalone. Because both come from one
-case list, a CR's acceptance section and the suite's scenarios describe the same behavior.
+Phase 4 renders the grounded case list. The same list produces projections at different levels of
+detail: collapsed-Gherkin acceptance criteria for a CR, full Cucumber scenarios for a `.feature` file,
+and - when the caller is authoring an OpenSpec change - an OpenSpec delta spec. Render whichever the
+caller asked for; standalone renders the CR acceptance and the Cucumber scenarios, and adds the OpenSpec
+delta spec only when the caller asks for it. Because every form comes from one case list, a CR's
+acceptance, the suite's scenarios, and the OpenSpec scenarios describe the same behavior and cannot drift.
 
 ## Acceptance criteria (collapsed Gherkin)
 
@@ -60,6 +62,45 @@ paste-ready, because a scenario that invents its own step vocabulary cannot run.
 - **Start each draft with a `# why:` comment** stating the case it covers, so any case ID can be found
   by search.
 
+## OpenSpec delta spec (Requirement + WHEN/THEN)
+
+Rendered when the caller is authoring an OpenSpec change (for example the envgene-analyst-authoring phase): the
+grounded case list becomes delta specs in `openspec/changes/<id>/specs/<capability>/spec.md`. This is the
+same behavior the collapsed-Gherkin acceptance states, projected into OpenSpec's requirement-and-scenario
+shape so `openspec validate --strict` can check it and each scenario can become one test. Honor the same
+grounding every other form does - every outcome observable, each independent failure its own scenario,
+the discriminating precondition in the WHEN.
+
+- Group the cases under `### Requirement: <behaviour name>` carrying a single SHALL statement that names
+  the one behavior (keep it under about 500 characters). One requirement per behavior; several
+  requirements when the change covers several behaviors.
+- Under each requirement, write one `#### Scenario: <case name>` per independently-failing case, each
+  with a `- **WHEN** <trigger and discriminating fixture>` line and a `- **THEN** <observable outcome>`
+  line. The collapsed-Gherkin `Given <fixture>, <outcome>.` maps directly: the fixture and run mode
+  become the WHEN, the observable outcome becomes the THEN. Keep every THEN on the grounded channel, as
+  the acceptance and Cucumber forms do.
+- Group the requirements under a delta header by how they change the capability's living spec:
+  `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements` (and `## RENAMED
+  Requirements` when a name changes). A new capability's file opens with `## Purpose` - one or two
+  sentences; a delta to an existing capability has no Purpose section.
+- The capability name, the file path, and the New-versus-Modified decision are the caller's (for example
+  a config rule such as "one capability per feature area"). This rendering fills the requirements and
+  scenarios inside the file the caller names; it does not invent the capability taxonomy.
+
+Example (the same case as the collapsed-Gherkin example above):
+
+> ## ADDED Requirements
+>
+> ### Requirement: AppDef resolution checks both locations
+>
+> The pipeline SHALL resolve an AppDef from the instance root or from `configuration/`, and SHALL fail
+> with an error naming the missing definition and both checked locations when neither holds it.
+>
+> #### Scenario: AppDef only under configuration
+>
+> - **WHEN** an AppDef is committed only under `configuration/` and none at the instance root
+> - **THEN** the job fails with an error naming the missing definition and both checked locations
+
 ## Handling data that does not exist yet
 
 - Paths and fixtures that already exist in the repository stay real, so the draft is paste-ready.
@@ -94,9 +135,9 @@ with a comment that it is a stub pending step definitions. This tells the reader
 are designed but not yet runnable, which is more useful than a green-looking block that cannot execute.
 Treat a file-absence or file-content assertion the same way when the suite has no step for it.
 
-## Keep the two forms in step
+## Keep the forms in step
 
-The acceptance line and the full scenario for one case must assert the same channel. If rendering an
-acceptance line reveals that the full scenario would check a different observable, the case was
-under-specified - go back and fix the case, not one rendering. The value of the ladder is that the two
-forms cannot drift, and that only holds if both trace to the same grounded case.
+The acceptance line, the full scenario, and the OpenSpec scenario for one case must assert the same
+channel. If rendering one form reveals that another would check a different observable, the case was
+under-specified - go back and fix the case, not one rendering. The value of the ladder is that the
+forms cannot drift, and that only holds if every form traces to the same grounded case.

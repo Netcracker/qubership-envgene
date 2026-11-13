@@ -59,10 +59,12 @@ review existing tests, to file a CR, or to edit prose.
    trigger the behavior, are flagged rather than rendered as tests that pass vacuously. Read
    `references/grounding.md`.
 4. **Rendering** - render the grounded case list as collapsed-Gherkin acceptance criteria and full
-   Cucumber scenarios, reusing the suite's existing step vocabulary. Read `references/rendering.md`.
-5. **Output** - present the case list, the two renderings, and the grounding report. Default to chat.
-   On request, write a `.feature` draft under `cucumber_tests/features/` or a scratch draft under
-   `stuff/`. Never commit or push without explicit confirmation.
+   Cucumber scenarios, and - when the caller is authoring an OpenSpec change - an OpenSpec delta spec,
+   reusing the suite's existing step vocabulary. Read `references/rendering.md`.
+5. **Output** - present the case list, the renderings, and the grounding report. Default to chat.
+   On request, write a `.feature` draft under `cucumber_tests/features/`, an OpenSpec delta spec under
+   `openspec/changes/<id>/specs/<capability>/spec.md`, or a scratch draft under `stuff/`. Never commit
+   or push without explicit confirmation.
 
 ## Input modes
 
@@ -81,7 +83,7 @@ The router in this file picks the mode. Phases 2 to 5 and the core reference fil
 | Input handling per mode (phase 1)         | `references/acquisition.md`     |
 | Case enumeration (phase 2)                | `references/enumeration.md`     |
 | Observable-channel grounding (phase 3)    | `references/grounding.md`       |
-| Ladder rendering to both forms (phase 4)  | `references/rendering.md`       |
+| Ladder rendering to its forms (phase 4)   | `references/rendering.md`       |
 
 ## Output discipline
 
