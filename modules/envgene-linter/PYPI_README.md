@@ -124,6 +124,9 @@ Missing keys are added, equal values are reused, and conflicts retain the instan
 New references append last without duplicates. Lists inside parameter values are compared without concatenation.
 Recipes identify exact instance entries to remove after publication, environment updates, and generation checks.
 Unresolved changes retain Review without cleanup instructions.
+Supported data-path reference expressions resolve separately for each participating environment.
+The report shows selected references or explains the missing inputs and source positions that prevent a proposal.
+Template code is not rendered or executed.
 TPL-1 checks Jinja in YAML under `templates/`, `environments/`, and `configuration/`.
 It ignores YAML comments and allows `.j2` files regardless of their directory.
 Exit code `0` means the check completed, including runs with findings. Exit code `2` indicates a command or execution error.

@@ -90,8 +90,17 @@ def build_relocation_hint(
 def build_merge_hint(plan: MergePlan, context: TemplateContext) -> str:
     target = plan.target
     if target.reason:
-        return f"Review: {target.reason}\nExisting file: {target.path}"
+        return (
+            "Template relocation proposal not generated.\n"
+            f"Review: {target.reason}\nExisting file: {target.path}"
+        )
     text = "Template repository changes:\n"
+    if target.attachment.selection_evidence:
+        text += (
+            "Resolved ParameterSet references:\n"
+            + "\n".join("- " + value for value in target.attachment.selection_evidence)
+            + "\n\n"
+        )
     if plan.additions:
         payload = {
             "name": target.reference,
@@ -244,6 +253,7 @@ def build_template_default_hint(
             entries,
             identity=identity,
             source_references=source_references,
+            participants=tuple(item[0] for item in identity),
         )
         reason = proposal.reason
     if proposal is None or proposal.attachment is None:
@@ -255,15 +265,21 @@ def build_template_default_hint(
         if proposal and proposal.entry_path:
             location += f"YAML entry: {_yaml_selector(proposal.entry_path)}\n"
         return (
-            f"Shared values for {scope.target} / {scope.category.value}.\n"
+            "Template relocation proposal not generated.\n"
+            f"Shared instance values for {scope.target} / {scope.category.value} (observation only).\n"
             f"ParameterSet YAML:\n{_yaml(_quoted(paramset))}\n\n"
-            f"{location}{reason}\n"
-            "Review all template consumers before removing instance overrides."
+            f"{location}{reason}"
         )
     paramset = {"name": proposal.stem, **paramset}
     evidence = ""
+    if proposal.selection_evidence:
+        evidence += (
+            "Resolved ParameterSet references:\n"
+            + "\n".join("- " + value for value in proposal.selection_evidence)
+            + "\n\n"
+        )
     if proposal.definitions:
-        evidence = (
+        evidence += (
             "Local source definitions (selection and final values unverified):\n"
             + "\n".join("- " + definition for definition in proposal.definitions)
             + "\n\n"

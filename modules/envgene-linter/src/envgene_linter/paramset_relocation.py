@@ -128,7 +128,12 @@ def propose_relocation(
                             continue
                         if physical in physical_sources:
                             return None
-    destination = context.relocation_destination(template_name, scope, reference)
+    destination = context.relocation_destination(
+        template_name,
+        scope,
+        reference,
+        participants=tuple(env.full_name for env, _ in owners),
+    )
     if destination is None:
         return None
     payload = payloads[0]

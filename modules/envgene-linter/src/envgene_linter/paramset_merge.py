@@ -115,11 +115,19 @@ class MergePlanner:
         self.claims: dict[tuple, list] = {}
 
     def propose(
-        self, name: str, scope: Scope, entries: list, references: tuple
+        self,
+        name: str,
+        scope: Scope,
+        entries: list,
+        references: tuple,
+        *,
+        participants: tuple[str, ...] = (),
     ) -> MergePlan | None:
         if scope.category is Category.E2E and scope.application is not None:
             return None
-        target = self.context.existing_paramset(name, scope, entries, references)
+        target = self.context.existing_paramset(
+            name, scope, entries, references, participants
+        )
         if target is None:
             return None
         plan = MergePlan(target, scope, entries, references == (target.reference,))

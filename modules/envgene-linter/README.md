@@ -333,6 +333,10 @@ Missing keys are added, equal values are reused, and conflicting values stay in 
 Value types and list order remain significant. JSON destinations receive JSON fragments.
 Other matches use a separate shared ParameterSet and descriptor fragment, with the new reference appended last.
 Existing references keep their position without duplicates.
+Supported dynamic reference names resolve from each environment's selected Cloud Passport and known identity fields.
+Resolved names require unique readable local targets. Unavailable values or unsupported expressions retain Review.
+Jinja in other fields can retain a recipe when bounded analysis establishes that the reference list is unconditional.
+Blocked recommendations identify the unresolved expression or control-flow location and explain that no move is proposed.
 Merge that fragment into its selected entry, retaining other fields and references.
 Unresolved or inherited context receives an explanation.
 Without the option, choose an unused name for `<shared-paramset-name>` and retain the existing references and fields.

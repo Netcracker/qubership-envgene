@@ -105,6 +105,8 @@ positions when the selected entry can be resolved. Eligible complete ParameterSe
 Unresolved, anchored, or inherited context retains the observation and a reason when an edit location is uncertain.
 Matching existing ParameterSets receive merge or reuse instructions. Conflicts keep instance entries.
 Reference lists append without duplicates. Parameter value lists compare without concatenation.
+Supported data-path reference expressions use per-environment local context and require unique readable targets.
+Unconditional prefix lists can retain guidance despite unrelated Jinja. Unresolved selection has located Review.
 Recipes identify exact instance cleanup after publication and generation checks, withholding uncertain removals.
 Local sources do not establish equivalence with published template artifacts or coverage of external consumers.
 Template-only roots retain `Not applicable`.

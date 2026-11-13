@@ -130,6 +130,21 @@ then by the standard proposed common name. Different original names do not provi
 Require a unique ordinary YAML or valid JSON file with a consistent name and resolvable association.
 Ambiguity, Jinja, custom tags, anchors, dynamic membership, and unsupported containers block merging and cleanup.
 
+Resolve supported dynamic reference names before choosing an attachment or existing destination.
+Data-only Jinja attribute paths and literal string-key paths can read each participant's selected Cloud Passport,
+name, and environmentName. Ordinary nonempty strings and finite numeric values can form safe ParameterSet names.
+Calls, filters, protected paths, unavailable values, tagged ancestors, booleans, and unsupported syntax remain unresolved.
+Each resolved dynamic name must identify exactly one readable local ParameterSet file.
+Never borrow one participant's values for another. Compare source definitions using the actual selected names.
+
+Later Jinja does not block a list already closed by an unconditional root key when bounded syntax analysis excludes
+membership changes. Statements must occupy separate lines without whitespace controls, and later output must stay
+inside the unrelated root value. Conditional lists, root-key output, includes, and unconfirmed output remain Review.
+A blocked report explicitly states that no relocation proposal was generated and gives the offending source locations.
+Successful source-comparison recipes list resolved references per participant.
+Mixed existing-reference membership cannot justify a shared append and retains Review.
+No Jinja rendering, Python evaluation, environment lookup, network access, or configuration edits are performed.
+
 Plan absent keys as additions and typed-equal values as reuse. Keep conflicting keys in instance and show their paths.
 Lists inside values compare as ordered wholes and are not concatenated.
 Render only added fields, preserving unrelated source data without exporting it into the recommendation.
@@ -316,3 +331,5 @@ PLACE-1 and PLACE-2 retain their separate layer-placement and removal meanings.
 - [Runnable examples](/modules/envgene-linter/testdata/rules/place12)
 
 - [Merge and cleanup design](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-merge-cleanup-design.md)
+
+- [Reference resolution design](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-reference-resolution-design.md)

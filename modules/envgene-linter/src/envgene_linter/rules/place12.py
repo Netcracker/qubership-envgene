@@ -234,7 +234,11 @@ def check(
     catalogs: Catalogs,
     template_repo: Path | None = None,
 ) -> list[Finding]:
-    context = TemplateContext(template_repo) if template_repo is not None else None
+    context = (
+        TemplateContext(template_repo, index=index)
+        if template_repo is not None
+        else None
+    )
     planner = MergePlanner(context) if context is not None else None
     pending = []
     all_references = tuple(
@@ -322,6 +326,7 @@ def check(
                         scope,
                         [(path, owners[0][1].value) for path, owners in entries],
                         tuple(references),
+                        participants=tuple(env.full_name for env, _ in entries[0][1]),
                     )
                     if planner
                     else None

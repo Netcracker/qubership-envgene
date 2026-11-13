@@ -6,6 +6,9 @@
 
 ## Requirements
 
+The later [reference resolution design](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-reference-resolution-design.md)
+extends this stage's restrictions on dynamic references and unrelated template control flow.
+
 PLACE-12 recommendations describe template changes followed by the corresponding instance cleanup.
 All proposals remain Review and require publication, environment updates, and generation checks before cleanup.
 The CLI does not edit configuration files. Candidate detection and the six JSON fields remain unchanged.

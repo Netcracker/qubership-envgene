@@ -12,6 +12,9 @@
 
 ## Unreleased
 
+- Resolve supported PLACE-12 ParameterSet reference expressions from each environment's local data.
+   Continue recipes for unconditional lists followed by unrelated Jinja, and explain blocked proposals with source locations.
+
 - Show exact PLACE-12 instance keys to remove after template publication and generation checks.
    Merge into uniquely named existing template ParameterSets, reuse equal values, and retain conflicts in instance.
    Preserve reference order without duplicates and omit the generic recommendation footer.
