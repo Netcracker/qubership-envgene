@@ -6,6 +6,10 @@ This guide describes the process of initializing and upgrading an Environment In
 
 ## Prerequisites
 
+> [!NOTE]
+> GSF Package Manager (git-system-follower) officially supports Linux only.
+> It may run on Windows and macOS, but those platforms are not supported.
+
 ### 1. GSF Package Manager Installation
 
 GSF package manager must be installed on your local machine. [How to install GSF](https://github.com/Netcracker/qubership-git-system-follower/blob/main/docs/getting_started/installation.md).

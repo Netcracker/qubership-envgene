@@ -1,0 +1,14 @@
+version: 25.1
+name: prjct-cloud-core-deploy
+parameters: {}
+applications:
+  - appName: "Cloud-Core"
+    parameters:
+{% if current_env.additionalTemplateVariables.toggles.global.is_onsite|default(false) %}
+      DNS_LOOKUP_FAMILY: "V4_PREFERRED"
+      DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
+      DBAAS_ON_MICROSERVICES_PHYSDB_RULE: "[]"
+{% else %}
+      DNS_LOOKUP_FAMILY: "V4_PREFERRED"
+      DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
+{% endif %}
