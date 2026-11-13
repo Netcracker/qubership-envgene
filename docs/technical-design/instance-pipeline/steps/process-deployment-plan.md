@@ -16,41 +16,31 @@
 
 The `process_deployment_plan` step writes file
 `environments/<cluster-name>/<env-name>/Inventory/deploy-plan.yml`. On `OPERATION_TYPE: DEPLOY` the
-step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml`. On
-`OPERATION_TYPE: CLEAN` the step reduces the full deploy plan and does not write a delta file.
+step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml`.
 
 ## Input parameters
 
 | Parameter                 | Source   | Required    | Default | Values / format                 | Effect                                                                                   |
 | ------------------------- | -------- | ----------- | ------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
 | `ENV_NAMES`               | Pipeline | Yes         | None    | `<cluster-name>/<env-name>`     | Selects `environments/<cluster-name>/<env-name>/`                                        |
-| `PIPELINE_TYPE`           | Pipeline | Yes         | None    | `GITLAB_DEPLOY`                 | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY` or `CLEAN` |
-| `OPERATION_TYPE`          | Pipeline | Yes         | None    | `DEPLOY`, `CLEAN`               | Selects merge path (`DEPLOY`) or reduce path (`CLEAN`)                                   |
+| `PIPELINE_TYPE`           | Pipeline | Yes         | None    | `GITLAB_DEPLOY`                 | Step runs only when value is `GITLAB_DEPLOY` and `OPERATION_TYPE` is `DEPLOY`            |
+| `OPERATION_TYPE`          | Pipeline | Yes         | None    | `DEPLOY`                        | Selects the merge path                                                                   |
 | `APPLICATION_VERSIONS`    | Pipeline | Conditional | None    | SD or application-version list  | Required on `DEPLOY`; supplies applications to calculate                                 |
 | `DEPLOY_POSTFIXES_FILTER` | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by deploy postfix                                         |
 | `NAMESPACE_NAMES_FILTER`  | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by namespace name                                         |
 | `COMPONENT_NAMES_FILTER`  | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by component name                                         |
 | `WAVE_NAMES_FILTER`       | Pipeline | No          | empty   | filter expression               | Filters calculated deploy plan by wave name                                              |
 | `BG_NS_TARGET`            | Pipeline | Conditional | None    | `origin`, `peer`                | On `DEPLOY` with BG postfixes, selects origin or peer Namespace from `namespace-map.yml` |
-| `NAMESPACE_NAMES`         | Pipeline | Conditional | empty   | comma-separated namespace names | On `CLEAN`, namespaces to remove; empty removes all entries                              |
 
 ## Processing flow
 
 1. **Decide whether to run**
 
    The Instance pipeline runs this step when pipeline parameter `PIPELINE_TYPE` is `GITLAB_DEPLOY`
-   and pipeline parameter `OPERATION_TYPE` is `DEPLOY` or `CLEAN`. Otherwise the Instance pipeline
-   skips this step.
+   and pipeline parameter `OPERATION_TYPE` is `DEPLOY`. Otherwise the Instance pipeline skips this
+   step.
 
-2. **Select processing path**
-
-   1. When pipeline parameter `OPERATION_TYPE` is `CLEAN`, the step runs the reduce path (blocks
-      6-7).
-
-   2. When pipeline parameter `OPERATION_TYPE` is `DEPLOY`, the step runs the merge path (blocks
-      3-5).
-
-3. **Read namespace map and validate DEPLOY inputs**
+2. **Read namespace map and validate DEPLOY inputs**
 
    1. The step reads file
       `environments/<cluster-name>/<env-name>/Inventory/namespace-map.yml`.
@@ -61,7 +51,7 @@ step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-
 
    4. When pipeline parameter `APPLICATION_VERSIONS` is absent or empty, the step fails (3b).
 
-4. **Calculate deploy plan from application versions**
+3. **Calculate deploy plan from application versions**
 
    1. The step resolves Solution Descriptor or application-version entries from pipeline parameter
       `APPLICATION_VERSIONS` against the repository root directory.
@@ -69,7 +59,7 @@ step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-
    2. The step writes ordered deploy-plan entries to temporary file
       `Inventory/deploy-plan-calculated.yml`.
 
-5. **Map, filter, and merge deploy plan**
+4. **Map, filter, and merge deploy plan**
 
    1. The step reads each calculated entry and determines whether it is a bare `deployPostfix`
       entry (`name:version`) or a `namespace:name:version` entry.
@@ -115,25 +105,6 @@ step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-
    15. The step deletes temporary files `Inventory/deploy-plan-calculated.yml` and
        `Inventory/deploy-plan-mapped.yml`.
 
-6. **Read full deploy plan on CLEAN**
-
-   1. The step reads the existing full deploy plan loaded at pipeline start from file
-      `Inventory/deploy-plan.yml`.
-
-7. **Reduce deploy plan on CLEAN**
-
-   1. The step reads pipeline parameter `NAMESPACE_NAMES`.
-
-   2. When pipeline parameter `NAMESPACE_NAMES` is empty, the step sets the full deploy plan to an
-      empty entry list.
-
-   3. When pipeline parameter `NAMESPACE_NAMES` lists one or more namespace names, the step removes
-      deploy-plan entries whose field `namespace` matches any listed name.
-
-   4. The step writes file `Inventory/deploy-plan.yml` with the reduced entry list.
-
-   5. On the reduce path, the step does not write `Inventory/delta-deploy-plan.yml`.
-
 ## Result
 
 1. On `OPERATION_TYPE: DEPLOY`, file
@@ -144,11 +115,7 @@ step also writes `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-
    `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml` contains only the
    current run delta.
 
-3. On `OPERATION_TYPE: CLEAN`, file
-   `environments/<cluster-name>/<env-name>/Inventory/deploy-plan.yml` contains the reduced full
-   deploy plan.
-
-4. Temporary files `Inventory/deploy-plan-calculated.yml` and `Inventory/deploy-plan-mapped.yml`
+3. Temporary files `Inventory/deploy-plan-calculated.yml` and `Inventory/deploy-plan-mapped.yml`
    exist only during a `DEPLOY` run.
 
 ## Error handling

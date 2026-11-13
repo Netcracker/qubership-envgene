@@ -20,9 +20,9 @@ The `generate_effective_set` step writes the Effective Set under
 | ------------------------ | -------- | ----------- | -------------- | --------------------------- | ---------------------------------------------------------------------------------- |
 | `ENV_NAMES`              | Pipeline | Yes         | None           | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                  |
 | `PIPELINE_TYPE`          | Pipeline | Yes         | None           | `GITLAB_DEPLOY`             | Selects GitLab deploy Effective Set path                                           |
-| `OPERATION_TYPE`         | Pipeline | Yes         | None           | `DEPLOY`, `CLEAN`, `BGD`    | Selects deploy, clean, or BGD warmup generation path                               |
+| `OPERATION_TYPE`         | Pipeline | Yes         | None           | `DEPLOY`, `BGD`             | Selects deploy or BGD warmup generation path                                       |
 | `BGD_OPERATION`          | Pipeline | Conditional | None           | `warmup`                    | With `OPERATION_TYPE: BGD`, only `warmup` triggers this step under `GITLAB_DEPLOY` |
-| `GENERATE_EFFECTIVE_SET` | Pipeline | No          | `false`        | `true`, `false`             | When `true`, step runs even outside `GITLAB_DEPLOY` deploy/clean/warmup triggers   |
+| `GENERATE_EFFECTIVE_SET` | Pipeline | No          | `false`        | `true`, `false`             | When `true`, step runs even outside `GITLAB_DEPLOY` deploy/warmup triggers         |
 | `EFFECTIVE_SET_CONFIG`   | Pipeline | No          | None           | JSON config                 | Passes extra Calculator CLI arguments                                              |
 | `CUSTOM_PARAMS`          | Pipeline | No          | None           | JSON-in-string              | Injects session-scoped parameters into the Effective Set                           |
 | `DEPLOYMENT_SESSION_ID`  | Pipeline | No          | generated UUID | string                      | Passed to Calculator CLI as extra parameter                                        |
@@ -33,7 +33,7 @@ The `generate_effective_set` step writes the Effective Set under
 
    The Instance pipeline runs this step when pipeline parameter `GENERATE_EFFECTIVE_SET` is `true`.
    Otherwise the Instance pipeline runs this step when pipeline parameter `PIPELINE_TYPE` is
-   `GITLAB_DEPLOY` and pipeline parameter `OPERATION_TYPE` is `DEPLOY` or `CLEAN`. Otherwise the
+   `GITLAB_DEPLOY` and pipeline parameter `OPERATION_TYPE` is `DEPLOY`. Otherwise the
    Instance pipeline runs this step when pipeline parameter `PIPELINE_TYPE` is `GITLAB_DEPLOY`,
    pipeline parameter `OPERATION_TYPE` is `BGD`, and pipeline parameter `BGD_OPERATION` is
    `warmup`. Otherwise the Instance pipeline skips this step.
@@ -50,19 +50,15 @@ The `generate_effective_set` step writes the Effective Set under
    4. The step runs SBOM retention policy processing when configured.
 
    5. When SBOM download plugins are installed, the step downloads SBOM artifacts for deploy-plan
-      delta entries on `OPERATION_TYPE: DEPLOY` and BGD warmup. On `OPERATION_TYPE: CLEAN` the step
-      skips SBOM download.
+      delta entries on `OPERATION_TYPE: DEPLOY` and BGD warmup.
 
 3. **Select Effective Set input on GITLAB_DEPLOY**
 
-   1. When pipeline parameter `OPERATION_TYPE` is `CLEAN`, the step selects Calculator CLI invocation
-      without deploy-plan file path.
-
-   2. When pipeline parameter `OPERATION_TYPE` is `DEPLOY`, the step reads deploy-plan delta from
+   1. When pipeline parameter `OPERATION_TYPE` is `DEPLOY`, the step reads deploy-plan delta from
       file `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml` loaded into
       pipeline context by step `process_deployment_plan`.
 
-   3. When pipeline parameter `OPERATION_TYPE` is `BGD` and pipeline parameter `BGD_OPERATION` is
+   2. When pipeline parameter `OPERATION_TYPE` is `BGD` and pipeline parameter `BGD_OPERATION` is
       `warmup`, the step reads deploy-plan delta from file
       `Inventory/delta-deploy-plan.yml` written by step `warmup`.
 
@@ -89,16 +85,13 @@ The `generate_effective_set` step writes the Effective Set under
       `configuration/registry.yml`, SBOM path `sboms/`, and deploy-plan path
       `Inventory/delta-deploy-plan.yml`.
 
-   2. On `OPERATION_TYPE: CLEAN`, the step invokes Calculator CLI with environment ID
-      `<cluster-name>/<env-name>` and output path `effective-set/` without deploy-plan file path.
-
-   3. When pipeline parameter `EFFECTIVE_SET_CONFIG` is set, the step appends configured extra CLI
+   2. When pipeline parameter `EFFECTIVE_SET_CONFIG` is set, the step appends configured extra CLI
       arguments.
 
-   4. When pipeline parameter `DEPLOYMENT_SESSION_ID` is set, the step passes it as an extra CLI
+   3. When pipeline parameter `DEPLOYMENT_SESSION_ID` is set, the step passes it as an extra CLI
       parameter.
 
-   5. When pipeline parameter `CUSTOM_PARAMS` is set, the step passes it to Calculator CLI as
+   4. When pipeline parameter `CUSTOM_PARAMS` is set, the step passes it to Calculator CLI as
       custom parameters.
 
 6. **Finalize credentials**
@@ -115,11 +108,7 @@ The `generate_effective_set` step writes the Effective Set under
    entries. Previous Effective Set content is removed except temporarily saved
    `UNIQ_FOR_RUN` and `UNIQ_FOR_VERSION` application directories restored before CLI invocation.
 
-2. On `OPERATION_TYPE: CLEAN`, directory
-   `environments/<cluster-name>/<env-name>/effective-set/` is updated by Calculator CLI clean
-   processing without a deploy-plan input file.
-
-3. Subdirectories `effective-set/topology/`, `effective-set/pipeline/`,
+2. Subdirectories `effective-set/topology/`, `effective-set/pipeline/`,
    `effective-set/deployment/`, `effective-set/runtime/`, and `effective-set/cleanup/` contain
    generated artifacts for the processed operation.
 

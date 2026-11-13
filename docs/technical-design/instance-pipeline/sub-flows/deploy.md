@@ -46,9 +46,9 @@ Flow:
 
 ```text
 1.1 preprocess -> (1.2 get_passport, 1.3 credential_rotation, 1.6 env_inventory_generation, 1.8 set_template_version - if requested)
-              -> 1.9 process_env_template -> 1.10 appregdef_render -> 1.11 deploy_postfix_namespace_map
-              -> 1.13 generate_deployment_plan -> 1.14 env_build -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.17 generate_argocd_repo -> 1.18 es_pusher -> 1.20 postprocess
+              -> 1.9 process_env_template -> 1.10 appregdef_render -> 1.12 deploy_postfix_namespace_map
+              -> 1.14 process_deployment_plan -> 1.15 env_build -> 1.16 generate_effective_set
+              -> 1.18 git_commit -> 1.19 generate_argocd_repo -> 1.22 postprocess
               -> [job 2] sync
 ```
 
@@ -60,10 +60,10 @@ OPERATION_TYPE: DEPLOY
 APPLICATION_VERSIONS: <SD or application versions>
 ```
 
-Actions: `generate_deployment_plan` builds the delta from `APPLICATION_VERSIONS` and merges it onto the
+Actions: `process_deployment_plan` builds the delta from `APPLICATION_VERSIONS` and merges it onto the
 repository full plan. `env_build` renders the env instance. `generate_effective_set` produces all contexts.
-`generate_argocd_repo` and `es_pusher` publish the result to the deploy target repository, and the `sync` job
-applies it.
+`generate_argocd_repo` (`argo-dpg generate structure`) publishes the result to the ES repository, and
+the `sync` job applies it.
 
 ### Deploy to a Blue-Green side
 
@@ -83,7 +83,7 @@ APPLICATION_VERSIONS: <SD or application versions>
 BG_NS_TARGET: <ORIGIN|PEER>
 ```
 
-Actions: identical to Deploy, except `generate_deployment_plan` binds each bare Blue-Green `deployPostfix` to the
+Actions: identical to Deploy, except `process_deployment_plan` binds each bare Blue-Green `deployPostfix` to the
 `BG_NS_TARGET` side.
 
 ## No-CMDB v1
@@ -95,9 +95,9 @@ Descriptor. The effective set is committed to the instance repository.
 Flow:
 
 ```text
-1.1 preprocess -> 1.9 process_env_template -> 1.10 appregdef_render -> 1.11 deploy_postfix_namespace_map
-              -> 1.12 process_sd -> 1.14 env_build -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.20 postprocess
+1.1 preprocess -> 1.9 process_env_template -> 1.10 appregdef_render -> 1.12 deploy_postfix_namespace_map
+              -> 1.13 process_sd -> 1.15 env_build -> 1.16 generate_effective_set
+              -> 1.18 git_commit -> 1.22 postprocess
 ```
 
 Launch parameters:
@@ -122,8 +122,8 @@ the CMDB computes it.
 Flow:
 
 ```text
-1.1 preprocess -> 1.9 process_env_template -> 1.10 appregdef_render -> 1.14 env_build
-              -> 1.16 git_commit -> 1.19 cmdb_import -> 1.20 postprocess
+1.1 preprocess -> 1.9 process_env_template -> 1.10 appregdef_render -> 1.15 env_build
+              -> 1.18 git_commit -> 1.21 cmdb_import -> 1.22 postprocess
 ```
 
 Launch parameters:
