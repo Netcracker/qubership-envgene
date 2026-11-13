@@ -7,18 +7,23 @@ artifacts:
     description: Initial proposal document outlining the change
     template: proposal.md
     instruction: |
-      Create the proposal document that establishes WHY this change is needed.
+      Create the proposal that establishes WHY this change is needed and WHAT it covers, rendered from the
+      exploration brief's Problem and Why and the decided scope.
 
       Sections:
-      - **Why**: 1-2 sentences on the problem or opportunity. What problem does this solve? Why now?
-      - **What Changes**: Bullet list of changes. Be specific about new capabilities, modifications, or removals. Mark breaking changes with **BREAKING**.
-      - **Capabilities**: Identify which specs will be created or modified:
-        - **New Capabilities**: List capabilities being introduced. Each becomes a new `specs/<capability-path>/spec.md`. Name each capability for a durable system behavior, not the work in this change. Use kebab-case for path segments you introduce and follow the project's existing spec organization.
-        - **Modified Capabilities**: List existing capabilities whose REQUIREMENTS are changing. Only include if spec-level behavior changes. Use the exact existing path under `openspec/specs/`. Leave empty if no requirement changes.
-      - **Impact**: Affected code, APIs, dependencies, or systems.
+      - **Why**: one or two sentences on the problem and why now.
+      - **What Changes**: the implementation slice as a work-map. Group items by the component or pipeline
+        step they touch, each item atomic to one change, naming only the documented surface a reader can look
+        up in the docs, never code internals (no file paths, no private function names). Mark a breaking change
+        with **BREAKING**.
+      - **Capabilities**: New Capabilities (each becomes specs/<capability-path>/spec.md, named for a durable
+        behavior not the work in this change, kebab-case) and Modified Capabilities (exact existing paths
+        under openspec/specs/, left empty if no requirement changes).
+      - **Impact**: affected objects, parameters, pipeline steps, and docs.
 
-      Keep it concise (1-2 pages). Focus on the "why" not the "how".
-      This is the document the component owner approves at the propose gate, together with the specs and tasks.
+      Keep it to one or two pages. References point to the change's own siblings - the delta specs under
+      specs/ and the ADR under docs/adr/ - not to an external design doc. Acceptance conditions do NOT go
+      here, they live in the specs as scenarios. Honor the writing-docs house style and the analyst voice.
     requires: []
 
   - id: specs
@@ -26,29 +31,21 @@ artifacts:
     description: Detailed specifications for the change
     template: spec.md
     instruction: |
-      Create specification files that define WHAT the system should do.
+      Create the delta spec files that define WHAT the system must do, one per capability the proposal names,
+      rendered from the exploration brief's Intended-behavior cases. Fill each per the writing-gherkin OpenSpec
+      delta-spec projection:
 
-      A spec is a behavior contract, not an implementation plan. Describe observable behavior,
-      inputs, outputs, error conditions and testable scenarios. Avoid internal names, library
-      choices and step-by-step plans.
+      - Group requirements under a delta header: ## ADDED Requirements, ## MODIFIED Requirements,
+        ## REMOVED Requirements, or ## RENAMED Requirements.
+      - Each requirement is ### Requirement: <name> followed by one SHALL statement naming the behavior.
+      - Each scenario is #### Scenario: <name> with a - **WHEN** line (trigger and discriminating fixture) and
+        a - **THEN** line (observable outcome on the grounded channel). Use exactly four hashtags for Scenario.
+      - Every requirement has at least one scenario. One scenario per independently-failing case.
+      - A new capability's file opens with ## Purpose (one or two sentences, 50 or more characters). A delta to
+        an existing capability has no Purpose section.
 
-      Create one spec file per capability listed in the proposal's Capabilities section.
-
-      Delta operations (use ## headers):
-      - **ADDED Requirements**: New capabilities
-      - **MODIFIED Requirements**: Changed behavior - MUST include full updated content
-      - **REMOVED Requirements**: Deprecated features - MUST include **Reason** and **Migration**
-      - **RENAMED Requirements**: Name changes only - use FROM:/TO: format
-
-      Format requirements:
-      - Each requirement: `### Requirement: <name>` followed by description
-      - Use SHALL/MUST for normative requirements
-      - Each scenario: `#### Scenario: <name>` with WHEN/THEN format
-      - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`).
-      - Every requirement MUST have at least one scenario.
-
-      New capabilities only: the delta spec starts with `## Purpose` (50+ characters).
-      Do NOT add `## Purpose` to a delta for an existing capability.
+      Enumerate observable cases, one per distinct outcome, the discriminating precondition in the WHEN, every
+      THEN on an observable channel. Honor the writing-gherkin grounding and the writing-docs house style.
     requires:
       - proposal
 
