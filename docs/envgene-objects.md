@@ -85,7 +85,7 @@ It has the following structure:
 description: string
 # Optional
 # Template Composition configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+# See details in /docs/features/template-composition.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -96,7 +96,7 @@ tenant: string
 # or
 tenant:
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -107,16 +107,16 @@ cloud:
   template_path: string
   # Optional
   # Template Override configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  # See details in /docs/features/template-override.md
   template_override:
     <yaml or jinja expression>
   # Optional
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   parent: string
   # Optional
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   overrides-parent:
     # Optional
     # Override the name of the cloud in rendering result
@@ -158,16 +158,16 @@ namespaces:
     # If the value is not specified, the name of the namespace template file (without extension) is used
     deploy_postfix: <deploy-postfix>
     # Optional
-    # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+    # See details /docs/features/template-override.md
     template_override:
       <yaml or jinja expression>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     parent: string
     # Optional
     # Selects the parent namespace when the parent template has several namespaces
@@ -178,7 +178,7 @@ namespaces:
     parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     overrides-parent:
       # Optional
       # Override the name of the namespace in rendering result
