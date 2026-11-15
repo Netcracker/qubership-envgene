@@ -39,7 +39,8 @@ described at two levels of detail.
 |--------------------------|-----------------------------------------------------|-------------------------------------------------------|
 | `bdd-test-review`        | Validate and grade scenarios that already exist     | That reviews existing tests. This authors new cases.  |
 | `design-to-cr`           | File the CR issue and write its body                | That publishes the issue. This only drafts the cases. |
-| `writing-docs`           | Write the prose of docs, readmes, issues            | That is prose style. This is behavior enumeration.    |
+| `writing-style`          | The prose voice of any text - docs, readmes, issues | That is prose voice. This is behavior enumeration.    |
+| `writing-docs`           | Author a document deliverable on that voice         | That shapes a doc. This enumerates behavior cases.    |
 | step definitions / code  | Implement the Gherkin steps in Python               | This authors scenarios, never their executable code.  |
 
 ## Trigger

@@ -67,7 +67,7 @@ Two skeletons, picked by how much decision there is to carry.
   example, how an empty value is treated). Do not drop a settled rule to save space. Do not assume the
   existing text is complete.
 - **When revising, audit the whole document.** Apply every rule in this skill to the entire ADR, not
-  only the lines you set out to change. This differs from the `writing-docs` scope, which limits style
+  only the lines you set out to change. This differs from the `writing-style` scope, which limits style
   fixes to new and modified content only. Check all sections against these rules and against the source
   decision before you submit any revision.
 
@@ -207,9 +207,8 @@ the cost of the downside, the alternatives, or a settled rule.
 - Cut sales-pitch language. Check every adjective and adverb: is it needed, and is the claim behind it
   true? If not, delete it. "Clean, elegant, robust" earns nothing.
 - Prefer plain declaratives over hedging. "We do X" beats "It is proposed that X may be".
-- Follow the repo's `writing-docs` rules. In particular: plain hyphens, never em or en dashes. No
-  semicolons, split into separate sentences. 120-character lines, sentence-case headings. An ADR is a
-  repo doc like any other.
+- Follow the `writing-style` house voice. An ADR is a repo doc like any other and obeys the repository
+  voice rules.
 - When a section enumerates cases, options, warnings, or rules, present each one as a bullet, not as a
   run-on inline sentence. One item per bullet, and one distinct rule per bullet. Do not restate the same
   fact as both a mechanism bullet and its outcome. A sentence that lists several items separated by

@@ -68,12 +68,15 @@ Apply them in addition to any other review skill or command.
 
 ### Writing documentation and text
 
-All rules for how text is written in this repository - documentation under `docs/`, the readme files,
-and prose for issues, change requests, and pull requests - live in the `writing-docs` skill at
-`.claude/skills/writing-docs/`. Read that skill before you write or edit any `.md` file, any doc under
-`docs/`, or any issue, CR, or PR prose for this repository. Its `SKILL.md` routes to the reference file
-for the task: prose style, Markdown formatting, document structure, content integrity, object examples,
-sample files, and use-case design.
+Two skills cover text in this repository. The `writing-style` skill at `.claude/skills/writing-style/` is
+the house voice for the prose of ANY text - documentation, readme files, and the bodies of issues, change
+requests, pull requests, ADRs, proposals, and specs. Read it before you write or edit any such prose. Its
+`SKILL.md` routes to prose style, Markdown and YAML formatting, and accuracy and vocabulary.
+
+The `writing-docs` skill at `.claude/skills/writing-docs/` is the document-authoring layer that builds on
+`writing-style`. Read it in addition when you author a document deliverable - a how-to, tutorial, feature
+doc, reference doc, use case, or README. Its `SKILL.md` routes to document structure, document mechanics,
+content integrity, object examples, sample files, and use-case design.
 
 ### Tests
 

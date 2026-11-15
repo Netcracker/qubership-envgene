@@ -23,7 +23,7 @@ artifacts:
 
       Keep it to one or two pages. References point to the change's own siblings - the delta specs under
       specs/ and the ADR under docs/adr/ - not to an external design doc. Acceptance conditions do NOT go
-      here, they live in the specs as scenarios. Honor the writing-docs house style and the analyst voice.
+      here, they live in the specs as scenarios. Honor the `writing-style` voice and the analyst voice.
     requires: []
 
   - id: specs
@@ -45,7 +45,7 @@ artifacts:
         an existing capability has no Purpose section.
 
       Enumerate observable cases, one per distinct outcome, the discriminating precondition in the WHEN, every
-      THEN on an observable channel. Honor the writing-gherkin grounding and the writing-docs house style.
+      THEN on an observable channel. Honor the writing-gherkin grounding and the `writing-style` voice.
     requires:
       - proposal
 

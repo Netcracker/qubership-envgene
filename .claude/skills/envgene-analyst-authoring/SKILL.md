@@ -210,11 +210,9 @@ of `envgene-propose` into this phase - propose is now gate-and-review only. The 
 
 ## House style
 
-The artifacts this phase produces are prose and specs this repository ships, so follow the `writing-docs`
-house style: plain hyphen-minus dashes (never em or en dashes), no semicolons in prose, sentence-case
-headings, and lines wrapped at about 120 characters (table rows excluded). Use block-style YAML for any
-object examples, never inline flow maps. Each craft also carries its own house-style rules - honor those
-where they are stricter, and this phase does not override them.
+The artifacts this phase produces are prose and specs this repository ships, so follow the `writing-style`
+house voice. Each craft also carries its own house-style rules - honor those where they are stricter, and
+this phase does not override them.
 
 ## Red flags
 

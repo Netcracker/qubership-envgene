@@ -165,10 +165,8 @@ it on its own.
 
 ## House style
 
-The brief is prose this repository produces, so follow the `writing-docs` house style for it: plain
-hyphen-minus dashes (never em or en dashes), no semicolons in prose, sentence-case headings, and lines
-wrapped at about 120 characters. Use block-style YAML for any object examples, never inline flow maps.
-Keep it lean - the brief earns its keep by being read and projected from, not by being exhaustive.
+The brief is prose this repository produces, so follow the `writing-style` house voice for it. Keep it
+lean - the brief earns its keep by being read and projected from, not by being exhaustive.
 
 ## Attribution
 
