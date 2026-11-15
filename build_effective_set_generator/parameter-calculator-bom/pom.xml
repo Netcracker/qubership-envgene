@@ -20,7 +20,7 @@
         <!--plugin versions-->
         <apache-httpcomponents-client-4-api.version>4.5.13-1.0</apache-httpcomponents-client-4-api.version>
         <commons-io.version>2.15.1</commons-io.version>
-        <slf4j-api.version>2.0.7</slf4j-api.version>
+        <slf4j-api.version>2.0.20</slf4j-api.version>
         <jcl-over-slf4j.version>${slf4j-api.version}</jcl-over-slf4j.version>
         <log4j-over-slf4j.version>${slf4j-api.version}</log4j-over-slf4j.version>
         <slf4j-jdk14.version>${slf4j-api.version}</slf4j-jdk14.version>
