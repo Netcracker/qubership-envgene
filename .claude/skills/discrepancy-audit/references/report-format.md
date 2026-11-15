@@ -55,6 +55,5 @@ Run these three checks before presenting the report to the user:
 
 The default output is chat. On the user's explicit request, write the report to
 `stuff/<topic>-discrepancy-audit.md` beside the repository clone (the scratch directory, not inside
-the repository). When writing to a file, apply house style: English, prose wrapped at 120 characters,
-no em dashes, no en dashes, no semicolons, `|---|` table separators with aligned pipes. Nothing is
+the repository). When writing to a file, apply the `writing-style` house voice (English prose). Nothing is
 pushed or committed without explicit confirmation from the user.

@@ -1,7 +1,8 @@
 # Object examples and sample files
 
 How to write validated object examples inside docs, and how to build copyable sample file sets under
-`docs/samples/`. Both derive from the authoritative schemas, never from guesswork.
+`docs/samples/`. Both derive from the authoritative schemas, never from guesswork. The YAML block-style
+rule (never inline flow maps) lives in the `writing-style` skill (`references/formatting.md`).
 
 - [Object examples and sample files](#object-examples-and-sample-files)
   - [Object examples in documentation](#object-examples-in-documentation)
@@ -190,7 +191,8 @@ Before you declare a sample set done:
    reference. For `.j2` files, check the rendered shape against the target schema.
 2. Check names the code resolves by convention: the template descriptor filename equals
    `envTemplate.name`, BG Domain namespace names equal `template_override.name` values, and so on.
-   Confirm each convention in the code (see [Verify, don't fabricate](content-integrity.md#verify-dont-fabricate)).
+   Confirm each convention in the code (see Verify, don't fabricate in the `writing-style` skill,
+   `references/integrity.md`).
 3. Exclude system-generated fields (for example `generatedVersions`) from files the reader copies.
 4. Exclude references to resources the sample set does not provide (for example a `cloudPassport`
    name without a passport file), or state where they come from in the referencing guide or in a
