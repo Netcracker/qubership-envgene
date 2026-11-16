@@ -15,7 +15,7 @@
 
 ## Order and Dependencies
 
-<!-- What must be merged first, and what waits on this component. Required for a JCPR design.md, which has no Decision -->
+<!-- What must be merged first, and what waits on this component. Required for an upstream design.md, which has no Decision -->
 
 ## Constraints
 

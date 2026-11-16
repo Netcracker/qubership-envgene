@@ -22,7 +22,7 @@ already in `openspec/changes/archive/<date>-<id>/` resumes at **Archive**, step 
    base moved, run `envgene-verification` again before going on.
 2. **Push** after the developer's yes. Never force-push a branch others use; ask first if a rebase needs it.
 3. **Make the PR ready**: take it out of draft and fill `.github/pull_request_template.md`: what changed and why (from
-   `proposal.md`), the link to the change folder, the JCPR spec or ticket, the `verify` rows (commands, exit codes,
+   `proposal.md`), the link to the change folder, the upstream spec or ticket, the `verify` rows (commands, exit codes,
    counts) and the docs gate result. Reviewer: the owner from `CODEOWNERS`.
 4. **Wait for the checks** of HEAD (GitHub Actions, super-linter among them) and read their status. Red or missing:
    go to `component-debugging`; never ask for an approval or a merge on red checks.
