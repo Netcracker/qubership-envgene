@@ -1,0 +1,7 @@
+name: uc-cc-dd-full
+registryName: mock-reg
+groupId: org.test
+artifactId: uc-cc-dd-full
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}

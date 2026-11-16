@@ -1,0 +1,9 @@
+name: mock-reg
+credentialsId: dummy
+mavenConfig:
+  releaseGroup: dummy
+  repositoryDomainName: http://localhost:8000/
+  snapshotGroup: dummy
+  targetRelease: release
+  targetSnapshot: snapshot
+  targetStaging: staging
