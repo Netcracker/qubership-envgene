@@ -1,0 +1,16 @@
+version: "2.0"
+name: "github-maven"
+authConfig:
+  github-maven:
+    credentialsId: "github-maven-cred"
+    authType: "longLived"
+    provider: "nexus"
+    authMethod: "user_pass"
+  # Empty Maven repository names are searched only for a public-cloud registry.
+  # GitHub Packages keeps the repository path in repositoryDomainName.
+  github-layout:
+    provider: "aws"
+    authMethod: "anonymous"
+mavenConfig:
+  authConfig: "github-maven"
+  repositoryDomainName: "https://maven.pkg.github.com/Netcracker/qubership-envgene"

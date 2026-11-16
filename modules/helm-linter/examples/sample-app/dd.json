@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "component": "sample-app",
+    "descriptorFormat": "1.0",
+    "builderVersion": "sample-builder/1.0.0"
+  },
+  "include": [],
+  "infrastructures": [],
+  "services": [
+    {
+      "service_name": "sample-service",
+      "image_type": "service",
+      "image_name": "sample-service",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.0",
+      "full_image_name": "registry.example/library/sample-service:1.0.0",
+      "version": "1.0.0",
+      "promote_artifacts": false
+    }
+  ],
+  "configurations": [],
+  "frontends": [],
+  "smartplug": [],
+  "jobs": [],
+  "libraries": [],
+  "complexes": [],
+  "charts": [
+    {
+      "helm_chart_name": "sample-chart",
+      "helm_chart_version": "1.0.0",
+      "helm_registry": "example-registry",
+      "full_chart_name": "https://maven.pkg.github.com/Netcracker/qubership-envgene/com/example/sample-chart/1.0.0/sample-chart-1.0.0.tgz"
+    }
+  ],
+  "additionalArtifacts": {},
+  "descriptors": []
+}

@@ -1,0 +1,8 @@
+name: "sample-app"
+registryName: "github-maven"
+artifactId: "sample-app"
+groupId: "com.example"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false

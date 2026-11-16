@@ -1,0 +1,6 @@
+replicaCount: 1
+image:
+  repository: registry.example/library/sample-service
+  tag: "1.0.0"
+config:
+  message: sample
