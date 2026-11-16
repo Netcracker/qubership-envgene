@@ -13,6 +13,10 @@
   - [Instance Repository](#instance-repository)
   - [Namespace](#namespace)
   - [Environment Template Artifact](#environment-template-artifact)
+  - [Solution Descriptor](#solution-descriptor)
+  - [Deployment Descriptor](#deployment-descriptor)
+  - [SBOM](#sbom)
+  - [SBOM Cache](#sbom-cache)
 
 This glossary provides definitions of key terms used in the EnvGene documentation.
 
@@ -65,3 +69,19 @@ An EnvGene object that groups parameters specific to applications within a singl
 ## Environment Template Artifact
 
 A versioned Maven artifact containing one or more [Environment Templates](#environment-template) from the Template Repository. Published during Template Repository build process and referenced in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) using `application:version` notation (e.g., `project-env-template:v1.2.3`). Used by EnvGene to generate Environment Instances. Also referred to as "Environment Template Artifact". See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects).
+
+## Solution Descriptor
+
+A list of `application:version` entries with their [Deploy Postfixes](#deploy-postfix) that declares which applications are deployed to an [Environment](#environment) and at which versions. Drives [Effective Set](#effective-set) generation. See [Solution Descriptor Processing](/docs/features/sd-processing.md).
+
+## Deployment Descriptor
+
+An artifact describing an application's deployable components (services, configurations, and images) together with their registry coordinates. EnvGene resolves and downloads one per application and derives the Application [SBOM](#sbom) from it. See [SBOM Generation](/docs/features/sbom-generation.md) and [Artifact resolution](/docs/features/artifact-resolution.md).
+
+## SBOM
+
+A Software Bill of Materials: the CycloneDX list of an application's components, derived from its [Deployment Descriptor](#deployment-descriptor) and consumed by [Effective Set](#effective-set) generation. EnvGene produces an Application SBOM per `application:version` and an Environment Template SBOM per template. See [SBOM](/docs/features/sbom.md).
+
+## SBOM Cache
+
+The `/sboms/` directory of the [Instance Repository](#instance-repository) where generated [SBOMs](#sbom) are stored and committed, keyed by application name, so an SBOM is regenerated only when its file is absent. Whether SBOMs are cached is set by the `sbom_cache.enabled` configuration, and the cache is cleaned by SBOM retention. See [SBOM Storage and Retention](/docs/features/sbom.md#sbom-storage-and-retention) and [SBOM Retention](/docs/features/sbom-retention.md).
