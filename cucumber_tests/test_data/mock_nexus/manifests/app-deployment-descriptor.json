@@ -2,7 +2,7 @@
   "metadata": {
     "component": "__APP_NAME__",
     "descriptorFormat": "1.21",
-    "builderVersion": "dd-plugin/1.0.0"
+    "builderVersion": "dd-plugin/1.0.0"__DEPLOY_CONTEXT_LAYOUT__
   },
   "include": [],
   "infrastructures": [],
