@@ -328,13 +328,16 @@ APPLICATION_VERSIONS=app-a:1.0.0
 PROFILE=prod
 ```
 
-EnvGene sets `baseline: prod` for every application of the deployment and commits the change. To remove it,
-deploy the application with `PROFILE=reset`.
+EnvGene sets `baseline: prod` for every application of the deployment and commits the change.
 
-The deployment fails when the namespace references a shared override: a file outside
-`environments/<cluster-name>/<env-name>/Inventory/`, or a file other namespaces reference too. Reference an
-override in the environment `Inventory/resource_profiles/` first. In the CMDB flow, a deployment with `PROFILE`
-fails.
+When the namespace references a shared override (a file outside `environments/<cluster-name>/<env-name>/Inventory/`,
+or a file other namespaces reference too), EnvGene copies it to
+`environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<namespace-folder-name>-deployment-profile.yml`,
+points the namespace to the copy, and logs a warning. From then on the namespace no longer receives changes to the
+shared override. In the CMDB flow, a deployment with `PROFILE` fails.
+
+To remove the baseline, delete `baseline` of the application from the environment-specific override of the
+namespace. Then commit to the Instance repository and trigger environment generation.
 
 > [!WARNING]
 > `PROFILE` applies to every application of the deployment. Deploy the application alone if only it needs the

@@ -217,7 +217,8 @@ applications:
 
 [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) sets the baseline for every application the run
 deploys. EnvGene saves it as the [application-level baseline](#application-level-baseline) in the
-environment-specific override of each Namespace and commits it. `PROFILE: reset` removes it. See step
+environment-specific override of each Namespace and commits it. When the Namespace references a shared override,
+EnvGene first copies it into the environment, and the Namespace stops receiving changes to the shared file. See step
 [`apply_deployment_profile`](/docs/technical-design/instance-pipeline/steps/apply-deployment-profile.md).
 
 ## Effective Set calculation: resolving the profile

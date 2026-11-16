@@ -473,6 +473,8 @@ Triggers:
 - `PROFILE` is set and not empty and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`, or `PIPELINE_TYPE: LEGACY` with `SD_VERSION` or `SD_DATA` set
 
+When `PROFILE` is set and the step is skipped, log a warning that `PROFILE` has no effect.
+
 Functions:
 
 1. `apply_deployment_profile`
@@ -489,12 +491,12 @@ Functions:
     - actions:
       - group the applications of the run delta by `<namespace-folder-name>`: `deployPostfix`, plus `-origin` or
         `-peer` for a Blue-Green Namespace
-      - find the override of each `<namespace-folder-name>` with the `env_build` search, fail when it is outside the
-        environment `Inventory/` or referenced by several keys
+      - find the override of each `<namespace-folder-name>` with the `env_build` search. The override is shared when
+        it is outside the environment `Inventory/` or referenced by several keys
       - fail when `CMDB_IMPORT` is `true`
-      - with a baseline value: create `<namespace-folder-name>-resource-profile-override` when none is referenced,
-        set `applications[].baseline`
-      - with `PROFILE: reset`: delete `applications[].baseline`, skip a Namespace without an override
+      - create `<namespace-folder-name>-deployment-profile` when none is referenced, copy a shared override into it
+        and reference the copy
+      - set `applications[].baseline` to `PROFILE`
 
 #### 1.15 step `env_build`
 
