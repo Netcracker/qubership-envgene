@@ -2,7 +2,7 @@
 
 ## Why
 
-The SBOM generator builds the application SBOM from the Deployment Descriptor (DD) zip part, but after
+The SBOM generator builds the application SBOM from the Deployment Descriptor (DD) ZIP part, but after
 delivery to an onsite site the DD is obfuscated and that archive layout no longer matches, so the build
 reads the wrong source. Traversing the archive also risks pulling in helm libraries that are not
 deployable components. The deployable component list already lives in the DD JSON, and the only extra
@@ -11,7 +11,7 @@ input the SBOM needs is the application chart named in the DD, for its resource 
 ## What Changes
 
 - The SBOM generator downloads the application chart `.tgz` named in the DD `charts[0]` instead of the
-  DD zip part. The chart is read only for resource profiles.
+  DD ZIP part. The chart is read only for resource profiles.
 - The application SBOM component list is taken strictly from the DD - services, configurations, and
   images - with each component named by its DD name and each image-type component carrying the
   `application/octet-stream` MIME type. The chart-tree traversal that extended the list is removed, so

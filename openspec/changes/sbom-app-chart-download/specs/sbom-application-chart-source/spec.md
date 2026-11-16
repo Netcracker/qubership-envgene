@@ -12,14 +12,14 @@ a hard dependency whose absence fails generation loud.
 ### Requirement: Application SBOM sourced from the DD and the application chart
 
 The SBOM generator SHALL build the application SBOM from the DD JSON and the application chart `.tgz`
-named in the DD `charts[0]`, downloading the chart in place of the DD zip part and reading the chart only
+named in the DD `charts[0]`, downloading the chart in place of the DD ZIP part and reading the chart only
 for resource profiles under `<helm-chart-name>/charts/<entity>/resource-profiles/`, where `<entity>` is
 each deployable entity named in the DD (a service or a configuration).
 
 #### Scenario: Chart is the source of resource profiles
 
 - **WHEN** the SBOM generator builds the application SBOM and the DD names an application chart
-- **THEN** it downloads the application chart `.tgz` named in `charts[0]`, not the DD zip part, and reads
+- **THEN** it downloads the application chart `.tgz` named in `charts[0]`, not the DD ZIP part, and reads
   resource profiles from `<helm-chart-name>/charts/<entity>/resource-profiles/` in that chart
 
 ### Requirement: Component list taken strictly from the DD

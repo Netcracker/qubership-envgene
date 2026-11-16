@@ -56,7 +56,7 @@ All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credential
 The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
 
 - Implement does not start without the propose and design gate rows in `ledger.md`.
-- The design (`openspec/changes/<id>/design.md`) is the one design artifact of a change. It defines every contract id it lists, and the plan covers each of them.
+- The design (`openspec/changes/<id>/design.md`) is the one design artifact of a change. It defines every contract ID it lists, and the plan covers each of them.
 
 ## Code review
 

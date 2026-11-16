@@ -5,7 +5,7 @@ Status: Proposed
 ## Context and problem statement
 
 EnvGene builds the application SBOM from the deployment-artifacts archive carried in the Deployment
-Descriptor zip part. After a solution is delivered to an onsite site the Deployment Descriptor is
+Descriptor ZIP part. After a solution is delivered to an onsite site the Deployment Descriptor is
 obfuscated, and that archive layout no longer matches what the build expects, so the SBOM is built from
 the wrong source. Reading the archive is also risky even offsite, because traversing the chart tree can
 pull in helm libraries that are not deployable components. The deployable component list already lives in
@@ -14,7 +14,7 @@ SBOM still needs is the application chart, for its resource profiles.
 
 ## Decision drivers
 
-- The source must stay correct after onsite obfuscation, where the zip part no longer matches.
+- The source must stay correct after onsite obfuscation, where the ZIP part no longer matches.
 - The application SBOM must list only deployable components, and must not newly leak helm libraries.
 - The SBOM must resolve the same application chart the deploy side resolves, so both read an identical
   chart.
@@ -24,7 +24,7 @@ SBOM still needs is the application chart, for its resource profiles.
 
 - Source the application SBOM from the Deployment Descriptor JSON plus the application chart, with the
   component list taken strictly from the Deployment Descriptor (chosen).
-- Keep reading the Deployment Descriptor zip part and building the SBOM from the extracted archive.
+- Keep reading the Deployment Descriptor ZIP part and building the SBOM from the extracted archive.
 - Take the component list from a traversal of the application chart tree.
 
 ## Decision outcome
@@ -69,7 +69,7 @@ silently.
 - Bad, because removing the presence-check toggle means a site that still sets it silently loses that
   setting's effect.
 
-### Keep reading the Deployment Descriptor zip part
+### Keep reading the Deployment Descriptor ZIP part
 
 - Good, because it changes nothing and keeps the current tolerant behavior.
 - Bad, because the archive layout no longer matches an obfuscated onsite Deployment Descriptor, so the
