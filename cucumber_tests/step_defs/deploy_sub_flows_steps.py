@@ -39,6 +39,27 @@ def then_effective_set_folder_contains_file(
     workspace.assert_file_exists(file_path)
 
 
+@then(parsers.parse(
+    'the delta deploy plan contains an entry for namespace "{namespace}" with version "{version}"'))
+def then_delta_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, version: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    plan_path = env_dir / "Inventory" / "delta-deploy-plan.yml"
+    workspace.assert_file_exists(plan_path)
+    entries = yaml.safe_load(plan_path.read_text(encoding="utf-8")) or []
+    matches = [entry for entry in entries
+               if entry.get("namespace") == namespace and entry.get("version") == version]
+    assert matches, (
+        f"No delta-deploy-plan.yml entry for namespace='{namespace}' version='{version}'. "
+        f"Entries: {entries}"
+    )
+
+
+@then(parsers.parse('the SBOM directory "{app}" contains the file "{filename}"'))
+def then_sbom_directory_contains_file(workspace: EnvGeneWorkspace, app: str, filename: str):
+    sbom_path = workspace.sboms_dir / app / filename
+    workspace.assert_file_exists(sbom_path)
+
+
 @then(parsers.parse('the effective set cleanup mapping contains namespace "{namespace}"'))
 def then_effective_set_cleanup_mapping_contains_namespace(
     workspace: EnvGeneWorkspace, namespace: str

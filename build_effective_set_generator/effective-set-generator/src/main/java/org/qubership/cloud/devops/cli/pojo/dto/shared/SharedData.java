@@ -45,13 +45,13 @@ public class SharedData {
 
     private String outputDir;
 
+    private String credsOutput;
+
     private EffectiveSetVersion effectiveSetVersion;
 
     private List<String> pcsspPaths;
 
     private String deploymentSessionId;
-
-    private boolean appChartValidation;
 
     private boolean generateCleanupContext;
 

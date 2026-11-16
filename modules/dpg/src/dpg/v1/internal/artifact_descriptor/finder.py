@@ -1,4 +1,3 @@
-import requests
 import tempfile
 import logging
 import os
@@ -10,7 +9,7 @@ from typing import Optional
 import dpg.v1.utils as utils
 from dpg.v1.utils.data_provider import DataProviderInterface
 from dpg.v1.utils.singleton import Singleton
-from dpg.v1.utils.registry import ArtifactoryUtils, RegistryInfo
+from dpg.v1.utils.registry import ArtifactoryUtils
 
 def _ddcache_folder() -> Path:
     return Path(os.getenv("APP_ARTIFACTS_DIR", ".ddcache"))

@@ -47,6 +47,7 @@
     - [VAL-7 - A Resource Profile Override with custom values declares a baseline (SHOULD)](#val-7---a-resource-profile-override-with-custom-values-declares-a-baseline-should)
     - [VAL-8 - Change a baseline with replace mode (SHOULD)](#val-8---change-a-baseline-with-replace-mode-should)
     - [VAL-9 - One Resource Profile Override per key, as a string (SHOULD)](#val-9---one-resource-profile-override-per-key-as-a-string-should)
+    - [VAL-10 - No secret and non-secret values in the same list (MUST)](#val-10---no-secret-and-non-secret-values-in-the-same-list-must)
   - [Templating](#templating)
     - [TPL-1 - Jinja lives only in `.j2` templates (MUST)](#tpl-1---jinja-lives-only-in-j2-templates-must)
     - [TPL-2 - Override at a layer, not through Jinja plumbing (MUST)](#tpl-2---override-at-a-layer-not-through-jinja-plumbing-must)
@@ -882,6 +883,34 @@ envSpecificResourceProfiles:
 # Not OK - a list is not supported here, generation fails to resolve it
 envSpecificResourceProfiles:
   core: ["core-prod-override"]
+```
+
+### VAL-10 - No secret and non-secret values in the same list (MUST)
+
+Keep a list either all-secret or all-non-secret. Do not pair a secret value, a `${creds.get(...)}`
+reference, with a non-secret value in the elements of one list. EnvGene writes secret and non-secret
+values to separate Effective Set files, so a mixed list is split across the credentials file and the
+parameters file under the same key. The deployer merges maps by key but replaces a list, so a list that
+lands in both files keeps one copy and silently drops the other. Model the data as a map keyed by its
+non-secret identity: the identity becomes a key, each secret sits at a leaf, and the list no longer mixes
+the two. The consumer reads the map, so a chart that requires a list cannot use this shape (VAL-1). An
+all-secret or all-non-secret list is not split and stays a list. See
+[Do not mix secret and non-secret values in one list](/docs/how-to/defining-complex-parameters-using-yaml-objects.md#do-not-mix-secret-and-non-secret-values-in-one-list).
+
+```yaml
+# Not OK - secret token paired with non-secret region in one list, split across files, one copy dropped
+REGION_TOKENS:
+  - region: eu
+    token: ${creds.get("eu-token").secret}
+  - region: us
+    token: ${creds.get("us-token").secret}
+
+# OK - keyed by region, so the list holds only secrets and is not split
+REGION_TOKENS:
+  eu:
+    token: ${creds.get("eu-token").secret}
+  us:
+    token: ${creds.get("us-token").secret}
 ```
 
 ## Templating

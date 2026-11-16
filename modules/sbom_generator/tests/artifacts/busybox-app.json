@@ -22,7 +22,7 @@
   "jobs": [],
   "libraries": [],
   "complexes": [],
-  "charts": [],
+  "charts": [{"helm_chart_name": "busybox-app", "helm_chart_version": "1.0.0"}],
   "additionalArtifacts": {},
   "descriptors": []
 }

@@ -2,7 +2,7 @@ import os, time
 import asyncio
 from pathlib import Path
 import aiofiles
-import yaml, json
+import yaml
 from typing import Any, Dict, List, Tuple, Set
 from creds_rotation.utils.error_constants import *
 from creds_rotation.utils.search_utils import trim_path_from_environments
@@ -31,43 +31,6 @@ async def load_yaml_files_parallel(paths: List[str]) -> Dict[str, dict]:
     results = await asyncio.gather(*tasks)
     return {path: content for path, content in results if content is not None}
 
-
-def scandir_recursive_optimized(
-    path: str,
-    ns_files: List[str],
-    definition_files: List[str],
-    env_creds_files: List[str]
-) -> None:
-
-    yaml_extensions = ('.yml', '.yaml')
-    try:
-        with os.scandir(path) as entries:
-            dirs_to_process = []
-
-            for entry in entries:
-                if entry.is_dir(follow_symlinks=False):
-                    dirs_to_process.append(entry.path)
-                elif entry.is_file(follow_symlinks=False):
-                    name = entry.name
-
-                    if name.endswith(yaml_extensions):
-                        entry_path = entry.path
-
-                        path_obj = Path(entry_path)
-                        path_parts = path_obj.parts
-
-                        if "Namespaces" in path_parts:
-                            ns_files.append(entry_path)
-                        elif name == "env-definition.yml" and "Inventory" in path_parts:
-                            definition_files.append(entry_path)
-                        elif name == "credentials.yml" and "Credentials" in path_parts:
-                            env_creds_files.append(entry_path)
-
-            for dir_path in dirs_to_process:
-                scandir_recursive_optimized(dir_path, ns_files, definition_files, env_creds_files)
-
-    except (OSError, PermissionError):
-        pass
 
 def scandir_recursive(
     path: str,
@@ -104,11 +67,6 @@ def scan_and_get_yaml_files(
     env_files_map = asyncio.run(load_yaml_files_parallel(env_def_files))
     return  entity_files_map, env_files_map, env_creds_files
 
-
-def openJson(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
-    return json.loads(content)
 
 def write_cred_file_path(cred_paths:  List[str], env_dir: str):
     with open(f"{env_dir}/credfilestoupdate.yml", "w") as f:

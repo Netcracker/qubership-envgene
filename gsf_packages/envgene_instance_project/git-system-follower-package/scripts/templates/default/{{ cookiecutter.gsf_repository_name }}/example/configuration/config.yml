@@ -4,8 +4,8 @@
 # Parameter defines the encryption mode. Default - `true`
 crypt: false
 # Optional
-# Defines the encryption technology. Default - `Fernet`
-# crypt_backend: enum [Fernet, SOPS]
+# Defines the encryption technology. Default - `SOPS`
+# crypt_backend: enum [SOPS]
 # Optional
 # SBOM retention configuration
 # sbom_retention:

@@ -1,0 +1,7 @@
+name: test-app
+registryName: default-registry
+groupId: com.test
+artifactId: test_app_artifact
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}

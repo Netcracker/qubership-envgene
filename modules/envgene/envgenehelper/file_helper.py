@@ -223,11 +223,17 @@ def unpack_archive(src: str, dest: str):
         raise ValueError(f"Unsupported archive format: {src}")
 
 
-def cleanup_dir(path: str):
+def cleanup_dir(path: str, keep=()):
     dir_path = Path(path)
 
     if dir_path.exists() and dir_path.is_dir():
-        shutil.rmtree(dir_path)
+        for child in dir_path.iterdir():
+            if child.name in keep:
+                continue
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
 
     dir_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Directory has been recreated: {path}")

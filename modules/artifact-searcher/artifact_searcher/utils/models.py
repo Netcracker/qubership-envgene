@@ -283,6 +283,7 @@ class ArtifactSource(BaseSchema):
     application: Application
     repository: Repo
     auth_headers: Optional[dict] = None
+    resolved_version: Optional[str] = None
 
 
 class ArtifactDownload(BaseSchema):

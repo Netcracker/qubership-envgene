@@ -57,6 +57,11 @@ Supports working with SOPS encryption.
 8. `CRED_ROTATION_PAYLOAD` and `GET_PASSPORT: true` cannot be combined in one pipeline run.
    The pipeline fails at validation before any per-environment job starts.
 9. Affected-parameter detection is scoped to the target Environment's cluster. When a rotated credential is shared across clusters, parameters that reference it in other clusters are not reported.
+10. Credential rotation runs only in local Instance repositories (`/configuration/secret-stores.yml` absent).
+   In external Instance repositories, Credential values live in the external Secret Store and rotation must
+   be performed at the Secret Store directly. See
+   [Mode detection](/docs/features/credential-processing.md#mode-detection) and
+   [During Credential Rotation](/docs/features/external-creds.md#during-credential-rotation).
 
 ### Requirements
 

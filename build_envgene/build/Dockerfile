@@ -57,6 +57,12 @@ RUN apk add --no-cache \
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
+COPY build_envgene/build/metrics-collector-requirements.txt /build/metrics-collector-requirements.txt
+
+ENV PATH="/module/venv/bin:${PATH}"
+
+RUN python3 -m venv /module/venv && \
+    pip install --no-cache-dir pip==26.0.1
 
 ENV PATH="/module/venv/bin:${PATH}"
 
@@ -66,6 +72,13 @@ RUN python3 -m venv /module/venv && \
 COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
+
+RUN mkdir -p /module/metrics-collector-deps/wheels && \
+    cp /build/metrics-collector-requirements.txt /module/metrics-collector-deps/requirements.txt && \
+    pip download --no-cache-dir --retries 10 --timeout 60 --only-binary=:all: --platform manylinux_2_28_x86_64 --python-version 3.12 --implementation cp --abi cp312 \
+        --dest /module/metrics-collector-deps/wheels \
+        -r /module/metrics-collector-deps/requirements.txt
+
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     -r /build/requirements.txt \
@@ -82,7 +95,7 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     ghapi fastcore \
     python-jenkins pbr multi-key-dict \
     webexpythonsdk \
-    http-exceptions asyncio
+    http-exceptions
 
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
@@ -120,8 +133,7 @@ ENV LANG='en_US.UTF-8' \
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc=15.2.0-r2 \
-    gcompat=1.1.0-r4
+    libgcc=15.2.0-r2
 
 COPY --from=jre-build /opt/jre /opt/jre
 COPY --from=build --chown=ci:ci /module /module

@@ -121,7 +121,6 @@ EFFECTIVE_SET_CONFIG:     {"enable_traceability":true}
 |---------------------------------|----------|-----------------------------------------------------------------|
 | `version`                       | `v2.0`   | Effective Set version. `v1.0` is legacy                         |
 | `enable_traceability`           | `false`  | Add source comments showing each parameter's origin object type |
-| `app_chart_validation`          | `true`   | Fail if any application is not an app chart application         |
 | `effective_set_expiry`          | `1 hour` | CI artifact retention time                                      |
 | `contexts.pipeline.consumers[]` | none     | Consumer-specific pipeline context schemas                      |
 

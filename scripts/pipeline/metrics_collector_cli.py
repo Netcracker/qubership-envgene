@@ -21,11 +21,7 @@ def main(argv: list[str] | None = None) -> int:
         print(resolve_trace_id())
         return 0
 
-    # Hooks must work before environment preparation, including jobs without ENV_NAMES.
-    ctx = SimpleNamespace(
-        params={key: os.getenv(key, "") for key in ("PIPELINE_TYPE", "ENV_NAMES")},
-        sensitive_params=[],
-    )
+    ctx = _pipeline_context()
     activity = MetricsCollectorActivity(ctx)
     if args.event == "start":
         activity.send_start()
@@ -42,6 +38,24 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("stop requires a terminal status")
         activity.send_stop(status, use_recorded_completion=True, override_status=args.status is not None)
     return 0
+
+
+def _pipeline_context():
+    # Collect params only so the report contains the same complete, secret-filtered config as the orchestrator.
+    if os.getenv("ENV_NAMES", "").strip():
+        try:
+            from pipeline.pipeline_parameters import PipelineParametersHandler
+        except ModuleNotFoundError:
+            pass
+        else:
+            # Secrets are filtered by MetricsCollectorActivity (SENSITIVE_CONFIG_KEYS).
+            return SimpleNamespace(params=PipelineParametersHandler.build_params(), sensitive_params=[])
+
+    # Portable sync hooks do not include the EnvGene package. They consume
+    # the config saved by env-prepare; retain a minimal fallback for early errors.
+    names = ["PIPELINE_TYPE", "ENV_NAMES"]
+    params = {key: os.getenv(key, "") for key in names}
+    return SimpleNamespace(params=params, sensitive_params=[])
 
 
 if __name__ == "__main__":

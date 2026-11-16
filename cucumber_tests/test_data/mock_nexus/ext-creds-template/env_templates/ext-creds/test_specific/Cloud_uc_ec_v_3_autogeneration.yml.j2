@@ -1,0 +1,19 @@
+name: dummy-cloud
+deployParameters:
+  API_KEY: "${creds.get('apiToken').secret}"
+  DB_USERNAME: "${creds.get('dbCredentials').username}"
+deployParameterSets: []
+e2eParameters: {}
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
+apiUrl: dummy
+apiPort: 80
+dashboardUrl: dummy
+labels: []
+defaultCredentialsId: ""
+protocol: dummy
+maasConfig: {credentialsId: ""}
+vaultConfig: {credentialsId: ""}
+consulConfig: {tokenSecret: ""}
+dbaasConfigs: []

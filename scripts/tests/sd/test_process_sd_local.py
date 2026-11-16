@@ -4,6 +4,7 @@ import pytest
 from envgenehelper import SD_FILE_NAME, OperationType
 from envgenehelper.effective_set_helper import GenerationMode
 from envgenehelper.env_helper import Environment
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgene_shared.utils.logger import logger
 
 from scripts.tests.base_test import BaseTest
@@ -79,16 +80,17 @@ class TestSdProcessArtifact(BaseTest):
 
     @pytest.mark.parametrize("test_case_name", TEST_CASES_POSITIVE)
     def test_sd_positive(self, test_case_name):
-        env = Environment(self.output_dir, self.cluster, self.env_name)
-        do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
-        logger.info(f"Starting SD test:\n\tTest case: {test_case_name}")
+        with open_cred_store():
+            env = Environment(self.output_dir, self.cluster, self.env_name)
+            do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
+            logger.info(f"Starting SD test:\n\tTest case: {test_case_name}")
 
-        sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(
-            self.test_data_dir, test_case_name)
+            sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(
+                self.test_data_dir, test_case_name)
 
-        handler = make_handler(self.output_dir, self.cluster, self.env_name,
-                               sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
-        handle_sd(handler)
+            handler = make_handler(self.output_dir, self.cluster, self.env_name,
+                                   sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+            handle_sd(handler)
 
         assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)
         logger.info(f"=====SUCCESS - {test_case_name}======")

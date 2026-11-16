@@ -3,11 +3,8 @@ class ErrorMessages:
     INVALID_JSON = "Error: Invalid configuration format.\n Failed to parse JSON content in CRED_ROTATION_PAYLOAD. Error:\n {e}"
     INCORRECT_TYPE = "Error: Invalid configuration format.\n Please provide CRED_ROTATION_PAYLOAD in json string format."
     MISSING_ENV = "Error: Missing mandatory parameter(s) {params}.\n .Please set it your pipeline_vars.yml."
-    INVALID_ENCRYPT_TYPE = "Error: Invalid configuration format.\n Current encryption type is Fernet. Only SOPS is supported for CRED_ROTATION_PAYLOAD and credential files encryption/decryption in cred rotation. Please find configuration at CI_PROJECT_DIR/configurations/config.yaml."
     INVALID_CRED_FIELD = "Error: Invalid configuration format.\n Credential field {cred_field} is not supported. Supported credential types for cred rotation are UsernamePassword and Secret."
     PAYLOAD_DECRYPT_ERROR = "Error: Invalid configuration format.\n Failed to decrypt content of CRED_ROTATION_PAYLOAD: {e}. May be it is not encrypted correctly. Please verify the value."
-    FILE_ENCRYPT_ERROR = "Error: Invalid configuration format.\n Failed to Encrypt the credential file {file} due to {e}"
-    FILE_DECRYPT_ERROR = "Error: Invalid configuration format.\n Failed to Decrypt the credential file {file} due to {e}"
     FILE_READ_ERROR = "Error: Invalid configuration format.\n Failed to read the credential file {file} due to {e}"
     EMPTY_PARAM = "Error: Termination condition encountered.\n No affected parameters found for the given CRED_ROTATION_PAYLOAD in the current environment instance. Hence Terminating the job."
     CRED_UPDATION_FALSE = "Error: Termination condition encountered.\n Affected parameters have been identified. You can find the list of affected parameters in the artifact of this job, in the file {file}." \
@@ -24,6 +21,7 @@ class ErrorMessages:
     INVALID_DATA_TYPE = "Error: Invalid Data Type.\n Expected {expected} at {value}, got {type}. Incorrect value for the parameter found while lookig for affected parameters."
     OUT_OF_RANGE = "Error: Out Of Range.\n Index {index} out of bounds for key: {key}. Incorrect value for the parameter found while lookig for affected parameters."
     INVALID_PATH = "Error: Invalid path hierarchy.\n {stop_dir} is not a parent of {source_path}. Something wrong with the folder structure in environment instance. Expected structure: project_dir/environments/cluster/env."
+    EXTERNAL_MODE_NOT_SUPPORTED = "Error: Termination condition encountered.\n Credential rotation is not supported in external credential mode. Rotate the credentials using the rotation mechanism of the secret store."
 
 class ErrorCodes:
     """Error code constants"""

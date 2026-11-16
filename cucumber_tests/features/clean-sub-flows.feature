@@ -25,7 +25,7 @@ Feature: CLEAN sub-flows - clean.md
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
     And the pipeline step "git_commit" has status "SUCCESS"
-    And the pipeline step "deploy_postfix_namespace_map" has status "SKIPPED"
+    And the pipeline step "deploy_postfix_namespace_map" has status "SUCCESS"
     And the pipeline step "warmup" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SKIPPED"
     And the namespace "core" is marked as cleaned
@@ -133,7 +133,7 @@ Feature: CLEAN sub-flows - clean.md
     And the pipeline step "env_build" has status "SUCCESS"
     And the pipeline step "generate_effective_set" has status "SUCCESS"
     And the pipeline step "git_commit" has status "SUCCESS"
-    And the pipeline step "deploy_postfix_namespace_map" has status "SKIPPED"
+    And the pipeline step "deploy_postfix_namespace_map" has status "SUCCESS"
     And the pipeline step "warmup" has status "SKIPPED"
     And the pipeline step "change_bg_state" has status "SKIPPED"
     And the namespace "core" is marked as cleaned

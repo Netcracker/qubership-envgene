@@ -173,8 +173,7 @@ Feature: Credential Rotation - credential-rotation.md
   # fail JSON parsing rather than being decrypted. The four original ENC-1..4
   # scenarios (plaintext/encrypted payload x enabled/disabled encryption) therefore
   # collapsed to two distinct, reachable code paths: ENC-1 now exercises the
-  # crypt:true + SOPS decrypt-then-reencrypt branch (through the mocked `sops`
-  # binary - this proves the branch runs, not that real cryptography is correct),
+  # crypt:true + SOPS decrypt-then-reencrypt branch with the real `sops` binary,
   # ENC-3 keeps exercising the crypt:false branch. Docs (docs/use-cases/
   # credential-rotation.md) describe four flows and need a follow-up correction to
   # match - left for the maintainer, not done here.
@@ -182,14 +181,37 @@ Feature: Credential Rotation - credential-rotation.md
 
   Scenario: UC-CR-ENC-1: Update credentials when encryption is enabled (SOPS)
     Given the workspace is initialized with test data from "e2e/uc_cr_common_sops"
+    And the cred files of the environment are SOPS-encrypted with the test key
     And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
-    And the pipeline parameter "ENVGENE_AGE_PRIVATE_KEY" is set to "AGE-SECRET-KEY-TEST0000000000000000000000000000000000000000"
-    And the pipeline parameter "PUBLIC_AGE_KEYS" is set to "age1test0000000000000000000000000000000000000000000000000000000"
     And the pipeline parameter "CRED_ROTATION_PAYLOAD" is set to "{\"rotation_items\":[{\"namespace\":\"test-ns\",\"context\":\"pipeline\",\"parameter_key\":\"SOME_PARAM\",\"parameter_value\":\"enc1-value\"}]}"
     And the pipeline parameter "CRED_ROTATION_FORCE" is set to "true"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
+    And the cred file "environments/test-cluster/test-env/Credentials/credentials.yml" is SOPS-encrypted
     And the credential "db-cred" field "password" equals "enc1-value" in the env credentials file
+
+  Scenario: UC-CR-ENC-4: Update an encrypted shared credential file when encryption is enabled (SOPS)
+    Given the workspace is initialized with test data from "e2e/uc_cr_lch_3"
+    And the config parameter "crypt" is set to true
+    And the cred files of the environment are SOPS-encrypted with the test key
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "CRED_ROTATION_PAYLOAD" is set to "{\"rotation_items\":[{\"namespace\":\"test-ns\",\"context\":\"pipeline\",\"parameter_key\":\"SHARED_PARAM\",\"parameter_value\":\"rotated-shared\"}]}"
+    And the pipeline parameter "CRED_ROTATION_FORCE" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the cred file "environments/test-cluster/credentials/shared-db-cred.yml" is SOPS-encrypted
+    And the shared credential "shared-db-cred" field "password" equals "rotated-shared" in shared credential file "shared-db-cred"
+
+  Scenario: UC-CR-ENC-5: A failed rotation leaves encrypted credential files byte-equal (SOPS)
+    Given the workspace is initialized with test data from "e2e/uc_cr_common_sops"
+    And the cred files of the environment are SOPS-encrypted with the test key
+    And the cred files are recorded as a baseline
+    And the pipeline parameter "ENV_NAMES" is set to "test-cluster/test-env"
+    And the pipeline parameter "CRED_ROTATION_PAYLOAD" is set to "{\"rotation_items\":[{\"namespace\":\"test-ns\",\"context\":\"pipeline\",\"parameter_key\":\"SOME_PARAM\",\"parameter_value\":\"v1\"},{\"namespace\":\"test-ns\",\"context\":\"pipeline\",\"parameter_key\":\"NON_EXISTENT_PARAM\",\"parameter_value\":\"v2\"}]}"
+    And the pipeline parameter "CRED_ROTATION_FORCE" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator fails
+    And every cred file is byte-equal to the baseline
 
   Scenario: UC-CR-ENC-3: Update credentials with plaintext payload when encryption is disabled
     Given the workspace is initialized with test data from "e2e/uc_cr_common"

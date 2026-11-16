@@ -1,18 +1,18 @@
 import asyncio
 import base64
+import logging
 import os
 import re
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
 from collections import defaultdict
-from zipfile import ZipFile
 
 import aiohttp
 import requests
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
+from artifact_searcher.utils.http_trace import http_trace_configs
 from artifact_searcher.utils.models import RegistryV2, Application, FileExtension, Credentials, ArtifactSource, ArtifactDownload, Repo, RepoType, Provider, MavenConfig
 from envgene_shared.utils.logger import logger
 
@@ -88,7 +88,8 @@ async def resolve_snapshot_version_async(
                 stop_snapshot_event_for_others.set()
                 logger.info(
                     f"[Task {task_id}] [Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
-            return resolved_version, task_id
+                return resolved_version, task_id
+            return None
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
@@ -189,7 +190,7 @@ async def download_all_async(downloads: list[ArtifactDownload]):
         headers = downloads_group[0].source.auth_headers
         connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers, trust_env=True, trace_configs=http_trace_configs()) as session:
             async with asyncio.TaskGroup() as tg:
                 tasks = [tg.create_task(download_async(session, download)) for download in downloads_group]
             results = []
@@ -223,7 +224,7 @@ async def download_async(session, download: ArtifactDownload) -> ArtifactDownloa
             if response.status == 200:
                 with open(download.local_target_path, "wb") as f:
                     f.write(await response.read())
-                logger.info(f"Downloaded: {download.local_target_path}")
+                logger.info(f"Downloaded: {url} -> {download.local_target_path}")
                 return download
             else:
                 logger.error(f"Download process with error {response.text}: {url}")
@@ -273,7 +274,13 @@ async def check_artifact_by_full_url_async(
             logger.info(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}"
             )
-            return ArtifactSource(source_url=full_url, repository=repo, application=app, auth_headers=auth_headers)
+            return ArtifactSource(
+                source_url=full_url,
+                repository=repo,
+                application=app,
+                auth_headers=auth_headers,
+                resolved_version=resolved_version,
+            )
 
     for full_url, status, error in candidate_results:
         if error:
@@ -333,7 +340,7 @@ async def _attempt_check(
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
-    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers) as session:
+    async with aiohttp.ClientSession(timeout=timeout, headers=session_headers, trust_env=True, trace_configs=http_trace_configs()) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(
@@ -406,10 +413,18 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
         repo = repos[0]
         domain = app.registry.maven_config.repository_domain_name
         repo_url = domain if not repo.value else domain.rstrip('/') + '/' + repo.value
-        url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
-                             artifact_extension, auth_headers=auth_headers, classifier=classifier)
-        if url:
-            return ArtifactSource(source_url=url, repository=repo, application=app, auth_headers=auth_headers)
+        result = _check_artifact_with_resolved_version(
+            repo_url, app.group_id, app.artifact_id, version,
+            artifact_extension, auth_headers=auth_headers, classifier=classifier)
+        if result:
+            url, resolved_version = result
+            return ArtifactSource(
+                source_url=url,
+                repository=repo,
+                application=app,
+                auth_headers=auth_headers,
+                resolved_version=resolved_version,
+            )
         if _should_retry_nexus_url(app.registry):
             return await _retry_with_nexus_url(app, version, artifact_extension, auth_headers, classifier)
         return None
@@ -424,21 +439,6 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
 
     logger.warning("Artifact not found")
     return None
-
-
-def unzip_file(artifact_id: str, source_zip_path: Path, target_dir: Path):
-    extracted = False
-    entry_prefix = f"{artifact_id}/"
-    try:
-        with ZipFile(source_zip_path, "r") as zip_file:
-            for file in zip_file.namelist():
-                if file.startswith(entry_prefix):
-                    zip_file.extract(file, target_dir)
-                    extracted = True
-    except Exception as e:
-        logger.error(f"Error unpacking {e}")
-    if not extracted:
-        logger.warning(f"No files were extracted for artifact {artifact_id} from {source_zip_path}")
 
 
 def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, version: str,
@@ -474,6 +474,16 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    auth_headers: dict | None = None,
                    classifier: str = "") -> str | None:
+    result = _check_artifact_with_resolved_version(
+        repo_url, group_id, artifact_id, version, artifact_extension,
+        auth_headers=auth_headers, classifier=classifier)
+    return result[0] if result else None
+
+
+def _check_artifact_with_resolved_version(
+        repo_url: str, group_id: str, artifact_id: str, version: str,
+        artifact_extension: FileExtension, auth_headers: dict | None = None,
+        classifier: str = "") -> tuple[str, str] | None:
     if MavenConfig.is_nexus(repo_url):
         repo_url = convert_nexus_repo_url_to_index_view(repo_url)
 
@@ -505,7 +515,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
             )
-            return full_url
+            return full_url, version
 
     for full_url, status, error in candidate_results:
         if error:
@@ -549,5 +559,6 @@ def resolve_snapshot_version(base_path, extension: FileExtension,
 
     except Exception as e:
         logger.warning(f"Snapshot resolve error: {e}")
+
 
 # --------------------------------------------------------------------------------------

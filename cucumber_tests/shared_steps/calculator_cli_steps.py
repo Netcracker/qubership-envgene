@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import yaml
 
-from pytest_bdd import then, parsers
+from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 
@@ -26,6 +26,22 @@ _MOCK_REGISTRY = {
         },
     }
 }
+
+
+@given("the Calculator CLI prints text to standard output before and after the Effective Set")
+def calculator_cli_prints_to_stdout(workspace: EnvGeneWorkspace) -> None:
+    cli_wrapper = workspace.base_dir / "noisy_effective_set_cli.sh"
+    cli_wrapper.write_text(
+        "#!/bin/sh\n"
+        "echo 'text before the Effective Set'\n"
+        f"{_PRODUCTION_CLI} \"$@\"\n"
+        "status=$?\n"
+        "echo 'text after the Effective Set'\n"
+        "exit $status\n",
+        encoding="utf-8",
+    )
+    cli_wrapper.chmod(0o755)
+    workspace.extra_env["EFFECTIVE_SET_CLI_PATH"] = str(cli_wrapper)
 
 
 def _get_effective_set_dir(workspace):
@@ -78,28 +94,35 @@ def effective_set_params_exist_under_version(workspace: EnvGeneWorkspace, app_na
     assert found, f"No version directory '{version}/values' found for app '{app_name}' under {es_dir}"
 
 
-def _find_deployment_file(workspace: EnvGeneWorkspace, app_name: str, filename: str = "custom-params.yaml") -> Path:
-    es_dir = _get_effective_set_dir(workspace)
+def _find_app_file(
+    workspace: EnvGeneWorkspace,
+    filename: str,
+    app_name: str,
+    namespace: str | None = None,
+) -> Path:
+    base = _get_effective_set_dir(workspace)
+    if namespace is not None:
+        base = base / namespace
     candidates = [
-        path for path in es_dir.rglob(filename)
+        path for path in base.rglob(filename)
         if app_name in path.parts
     ]
     assert candidates, (
-        f"'{filename}' not found under '{app_name}' in {es_dir}.\n"
-        f"Files present: {[str(p) for p in es_dir.rglob('*.yaml')]}\n"
+        f"'{filename}' not found under application '{app_name}' in {base}.\n"
+        f"Files present: {[str(p) for p in base.rglob('*.yaml')]}\n"
         f"STDOUT: {workspace.stdout}\nSTDERR: {workspace.stderr}"
     )
     return candidates[0]
 
 
-@then(parsers.parse('the "{app_name}" custom-params.yaml has "{key_value}" at root, under global, and per-service'))
-def custom_params_yaml_has_key_at_root_global_per_service(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
-    path = _find_deployment_file(workspace, app_name, "custom-params.yaml")
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" has "{key_value}" at root, under global, and per-service'))
+def custom_params_yaml_for_app_has_key_at_root_global_per_service(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
     content = path.read_text(encoding="utf-8")
     data = yaml.safe_load(content) or {}
     key, _, value = key_value.partition(":")
-    key = key.strip()
     expected = value.strip()
+    key = key.strip()
 
     assert key in data, (f"Key '{key}' not found at root of {path}")
     assert data.get(key) == expected, (f"Expected '{key}: {expected}' at root, got {data.get(key)!r}")
@@ -127,20 +150,231 @@ def custom_params_yaml_has_key_at_root_global_per_service(workspace: EnvGeneWork
     )
 
 
-@then(parsers.parse('the "{app_name}" collision-credentials.yaml contains key "{key}"'))
-def collision_credentials_yaml_contains_key(workspace: EnvGeneWorkspace, app_name: str, key: str) -> None:
-    collision_path = _find_deployment_file(workspace, app_name, "collision-credentials.yaml")
-    data = yaml.safe_load(collision_path.read_text(encoding="utf-8")) or {}
-    assert key in data, (
-        f"Key '{key}' not found in {collision_path}. Available keys: {list(data.keys())}"
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" has "{key_value}" under global'))
+def custom_params_yaml_for_app_has_key_value_under_global(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    key, _, value = key_value.partition(":")
+    global_data = data.get("global")
+    assert isinstance(global_data, dict), f"'global' is missing or not a mapping in {path}"
+    assert global_data.get(key.strip()) == value.strip(), (
+        f"Expected '{key_value}' under global, got {global_data.get(key.strip())!r}"
     )
 
 
-@then(parsers.parse('the "{app_name}" custom-params.yaml keeps the per-service entry for "{service}"'))
-def custom_params_yaml_keeps_per_service_entry(workspace: EnvGeneWorkspace, app_name: str, service: str) -> None:
-    custom_params_path = _find_deployment_file(workspace, app_name, "custom-params.yaml")
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" does not have "{key_value}" at root'))
+def custom_params_yaml_for_app_does_not_have_key_value_at_root(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    key, _, value = key_value.partition(":")
+    assert data.get(key.strip()) != value.strip(), (
+        f"'{key_value}' unexpectedly found at root of {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" has root key "{key}" aliasing global'))
+def custom_params_yaml_for_app_has_root_key_aliasing_global(workspace: EnvGeneWorkspace, app_name: str, key: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    global_data = data.get("global")
+    assert isinstance(global_data, dict), f"'global' is missing or not a mapping in {path}"
+    assert key in data, f"Root key '{key}' not found in {path}"
+    assert data[key] is global_data, (
+        f"Root key '{key}' does not alias the global mapping in {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" contains "{key_value}"'))
+def custom_params_yaml_for_app_contains(workspace: EnvGeneWorkspace, app_name: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name)
+    assert key_value in path.read_text(encoding="utf-8"), (
+        f"'{key_value}' not found in {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" in namespace "{namespace}" contains "{key_value}"'))
+def custom_params_yaml_for_app_in_namespace_contains(workspace: EnvGeneWorkspace, app_name: str, namespace: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name, namespace)
+    assert key_value in path.read_text(encoding="utf-8"), (
+        f"'{key_value}' not found in {path}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" in namespace "{namespace}" does not contain "{key_value}"'))
+def custom_params_yaml_for_app_in_namespace_does_not_contain(workspace: EnvGeneWorkspace, app_name: str, namespace: str, key_value: str):
+    path = _find_app_file(workspace, "custom-params.yaml", app_name, namespace)
+    assert key_value not in path.read_text(encoding="utf-8"), (
+        f"'{key_value}' unexpectedly found in {path}"
+    )
+
+
+@then(parsers.parse('the collision-credentials.yaml for application "{app_name}" contains key "{key}"'))
+def collision_credentials_yaml_for_app_contains_key(workspace: EnvGeneWorkspace, app_name: str, key: str):
+    path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    assert key in data, (
+        f"Key '{key}' not found in {path}. Available keys: {list(data.keys())}"
+    )
+
+
+@then(parsers.parse('the custom-params.yaml for application "{app_name}" keeps the per-service entry for "{service}"'))
+def custom_params_yaml_for_app_keeps_per_service_entry(workspace: EnvGeneWorkspace, app_name: str, service: str) -> None:
+    custom_params_path = _find_app_file(workspace, "custom-params.yaml", app_name)
     data = yaml.safe_load(custom_params_path.read_text(encoding="utf-8")) or {}
     assert service in data and isinstance(data[service], dict), (
         f"Per-service key '{service}' missing or not a mapping in {custom_params_path}.\n"
         f"Top-level keys: {list(data.keys())}"
     )
+
+
+def _es_root(workspace: EnvGeneWorkspace):
+    return workspace.base_dir / "environments" / workspace.cluster_name / workspace.env_name / "effective-set"
+
+
+@then(parsers.parse('the effective set deployment parameters do not contain "{key_value}"'))
+def effective_set_deployment_params_do_not_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
+    es_dir = _es_root(workspace) / "deployment"
+    assert es_dir.exists(), f"effective-set/deployment directory does not exist at {es_dir}"
+    # credentials.yaml/collision-credentials.yaml are excluded: a sensitive value split out of
+    # deployment-parameters.yaml is expected to land there, so an absence claim must not trip on it.
+    offending = [
+        p for p in es_dir.rglob("*.yaml")
+        if "credentials" not in p.name and key_value in p.read_text(encoding="utf-8")
+    ]
+    assert not offending, f"'{key_value}' unexpectedly found in: {[str(p) for p in offending]}"
+
+
+@then(parsers.parse('the effective set context "{context}" exists'))
+def effective_set_context_exists(workspace: EnvGeneWorkspace, context: str) -> None:
+    ctx_dir = _es_root(workspace) / context
+    assert ctx_dir.is_dir(), f"effective-set/{context} directory does not exist at {ctx_dir}"
+
+
+@then(parsers.parse('the effective set context "{context}" does not exist'))
+def effective_set_context_does_not_exist(workspace: EnvGeneWorkspace, context: str) -> None:
+    ctx_dir = _es_root(workspace) / context
+    assert not ctx_dir.exists(), f"effective-set/{context} unexpectedly exists at {ctx_dir}"
+
+
+@then(parsers.parse('the effective set deployment credentials contain "{key_value}"'))
+def effective_set_deployment_credentials_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
+    es_dir = _es_root(workspace) / "deployment"
+    assert es_dir.exists(), f"effective-set/deployment directory does not exist at {es_dir}"
+    cred_files = [p for p in es_dir.rglob("credentials.yaml")]
+    found = any(key_value in workspace.get_decrypted_text(p) for p in cred_files)
+    assert found, (
+        f"'{key_value}' not found in any credentials.yaml under {es_dir}.\n"
+        f"credentials.yaml files: {[str(p) for p in cred_files]}"
+    )
+
+
+@then(parsers.parse('the effective set runtime credentials contain "{key_value}"'))
+def effective_set_runtime_credentials_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
+    es_dir = _es_root(workspace) / "runtime"
+    assert es_dir.exists(), f"effective-set/runtime directory does not exist at {es_dir}"
+    cred_files = [p for p in es_dir.rglob("credentials.yaml")]
+    found = any(key_value in workspace.get_decrypted_text(p) for p in cred_files)
+    assert found, (
+        f"'{key_value}' not found in any credentials.yaml under {es_dir}.\n"
+        f"credentials.yaml files: {[str(p) for p in cred_files]}"
+    )
+
+
+@then(parsers.parse('the effective set runtime parameters contain "{key_value}"'))
+def effective_set_runtime_params_contain(workspace: EnvGeneWorkspace, key_value: str) -> None:
+    es_dir = _es_root(workspace) / "runtime"
+    assert es_dir.exists(), f"effective-set/runtime directory does not exist at {es_dir}"
+    yaml_files = list(es_dir.rglob("*.yaml"))
+    found = any(key_value in p.read_text(encoding="utf-8") for p in yaml_files)
+    assert found, (
+        f"'{key_value}' not found in any *.yaml under {es_dir}.\n"
+        f"YAML files: {[str(p) for p in yaml_files]}\n"
+        f"Contents: {[(str(p), p.read_text(encoding='utf-8')) for p in yaml_files]}"
+    )
+
+
+@then(parsers.parse(
+    '"{key}" is present in "{collision_file}" and absent from the root of "{source_file}"'))
+def collision_key_moved(workspace: EnvGeneWorkspace, key: str, collision_file: str, source_file: str) -> None:
+    es_dir = _es_root(workspace) / "deployment"
+    assert es_dir.exists(), f"effective-set/deployment directory does not exist at {es_dir}"
+    collision_paths = list(es_dir.rglob(collision_file))
+    assert collision_paths, f"No {collision_file} found under {es_dir}"
+    found_in_collision = False
+    for cpath in collision_paths:
+        collision_data = yaml.safe_load(cpath.read_text(encoding="utf-8")) or {}
+        if key in collision_data:
+            found_in_collision = True
+            spath = cpath.parent / source_file
+            source_data = (yaml.safe_load(spath.read_text(encoding="utf-8")) or {}) if spath.exists() else {}
+            # NOTE: the root of deployment-parameters.yaml legitimately has a top-level key
+            # named after every service (its own parameter section, see calculator-cli.md),
+            # so "test-app" as a bare *key* is always present there when a service is named
+            # "test-app" - that's unrelated to collision handling. What must actually be
+            # absent from the root is the *scalar* colliding value itself.
+            assert source_data.get(key) != collision_data[key], (
+                f"'{key}' expected removed from the root of {spath} after moving to the "
+                f"collision file, but the same scalar value {collision_data[key]!r} is still there"
+            )
+            break
+    assert found_in_collision, f"'{key}' not found in any {collision_file} under {es_dir}"
+
+
+@then(parsers.parse('the value of "{key}" is identical across all effective set files'))
+def value_identical_across_all_files(workspace: EnvGeneWorkspace, key: str) -> None:
+    es_dir = _es_root(workspace)
+    assert es_dir.exists(), f"effective-set directory does not exist at {es_dir}"
+    pattern = re.compile(rf'^\s*{re.escape(key)}\s*:\s*(.+?)\s*(?:#.*)?$')
+    values_by_file = {}
+    for yaml_path in es_dir.rglob("*.yaml"):
+        for line in yaml_path.read_text(encoding="utf-8").splitlines():
+            m = pattern.match(line)
+            if m:
+                values_by_file[str(yaml_path)] = m.group(1).strip().strip('"\'')
+                break
+    assert values_by_file, f"'{key}' not found in any file under {es_dir}"
+    assert len(values_by_file) >= 2, (
+        f"'{key}' was found in only one file, so 'identical across all files' is trivially true "
+        f"and proves nothing: {values_by_file}"
+    )
+    distinct = set(values_by_file.values())
+    assert len(distinct) == 1, f"'{key}' has differing values across files: {values_by_file}"
+
+
+@then('the effective set deployment parameters are sorted alphabetically')
+def effective_set_deployment_params_sorted(workspace: EnvGeneWorkspace) -> None:
+    es_dir = _es_root(workspace) / "deployment"
+    assert es_dir.exists(), f"effective-set/deployment directory does not exist at {es_dir}"
+    checked = 0
+    for params_path in es_dir.rglob("deployment-parameters.yaml"):
+        data = yaml.safe_load(params_path.read_text(encoding="utf-8")) or {}
+        if not isinstance(data, dict) or not data:
+            continue
+        checked += 1
+        # "global" is a reserved aggregate section (collision-avoidance home for image params
+        # that collide with a service name), not an ordinary parameter - it is excluded from the
+        # ordering check the same way per-service-parameters (a separate directory) would be.
+        keys = [k for k in data.keys() if k != "global"]
+        assert keys == sorted(keys), f"Top-level keys not sorted alphabetically in {params_path}: {keys}"
+    assert checked, f"No non-empty deployment-parameters.yaml found under {es_dir}"
+
+
+
+@then(parsers.parse('the effective set deployment parameters for namespace "{namespace}" contain "{key_value}"'))
+def effective_set_ns_params_contain(workspace: EnvGeneWorkspace, namespace: str, key_value: str) -> None:
+    ns_dir = _es_root(workspace) / "deployment" / namespace
+    assert ns_dir.exists(), f"effective-set/deployment/{namespace} directory does not exist at {ns_dir}"
+    found = any(key_value in p.read_text(encoding="utf-8") for p in ns_dir.rglob("*.yaml"))
+    assert found, f"'{key_value}' not found in any *.yaml under {ns_dir}"
+
+
+@then(parsers.parse('the effective set deployment parameters for namespace "{namespace}" do not contain "{key}"'))
+def effective_set_ns_params_do_not_contain(workspace: EnvGeneWorkspace, namespace: str, key: str) -> None:
+    ns_dir = _es_root(workspace) / "deployment" / namespace
+    assert ns_dir.exists(), f"effective-set/deployment/{namespace} directory does not exist at {ns_dir}"
+    offending = [
+        p for p in ns_dir.rglob("*.yaml")
+        if "credentials" not in p.name and key in p.read_text(encoding="utf-8")
+    ]
+    assert not offending, f"'{key}' unexpectedly found in: {[str(p) for p in offending]}"
+

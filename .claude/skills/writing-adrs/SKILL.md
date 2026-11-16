@@ -18,6 +18,12 @@ short.
   the analysis belongs in a linked design doc, not here.
 - **State a downside.** Every real decision costs something. An ADR with only upsides is hiding the
   trade-off. Name at least one negative consequence you accept.
+- **Say why, not just what.** Each decision carries the reason that drove it, in the same breath as the
+  choice: one clause or a short sentence. A bare assertion, like "the app chart uses the group
+  repository", makes the next reader reverse-engineer the motive, which is exactly the recall an ADR
+  exists to prevent. State the affirmative driver for the choice. Do not repeat why the alternative
+  fails (that is in Rejected) or the cost you accept (that is in Consequences). If a choice needs more
+  than a sentence to justify, the depth belongs in the linked design doc, not here.
 - **No diagrams, no code, no deep dives.** Link them. The ADR carries the choice and the why, nothing
   that needs scrolling.
 - **No code references, describe abstractly.** State the decision in domain and behavior terms. Do not
@@ -62,7 +68,8 @@ tension. Not a history lesson.>
 
 ## Decision
 
-<What we do, present tense, 1-3 sentences: "We do X.">
+<What we do and why, present tense. Pair each choice with the force that drove it: "We do X because Y".
+When the decision is several choices, make each a bullet that carries its own reason.>
 
 Rejected:
 
@@ -77,6 +84,25 @@ Rejected:
 
 - **Title**: a short present-tense imperative, the decision itself, not a topic. Good: "Adapt registry
   auth from e2e params". Weak: "Registry authentication".
+- **Decision**: pair each choice with its reason, so the trail survives without the surrounding
+  conversation. One clause of why per choice, not a paragraph.
+
+  Bare, hard to recall later:
+
+  ```markdown
+  - The app chart always uses the group repository, regardless of the Maven channel.
+  - The app chart is required. Generation fails when the DD names no chart.
+  ```
+
+  With the why, each line stands on its own:
+
+  ```markdown
+  - The app chart uses the group repository regardless of the Maven channel, because the deploy side
+    resolves it the same way and the SBOM must point at the identical chart.
+  - The app chart is required, so a missing chart fails fast with a readable error instead of a silently
+    incomplete result downstream.
+  ```
+
 - **Rejected alternatives**: option titles plus a single `because` clause each, as a bullet list. This
   is the line people cite years later to avoid redoing dead work, so name the real contenders, but
   resist per-option pros and cons prose. One clause conveys enough. With one or two contenders you may
@@ -148,3 +174,5 @@ Reject these. They are the failure modes that make ADRs unread.
 - A Consequences line that tracks implementation status ("this is ahead of code", "not yet wired", "until the change
   lands"). The `Status` field carries the lifecycle. Such prose ages into falsehood the moment the code ships, and the
   next reader trusts a record that is now wrong.
+- A Decision that is a list of bare assertions with no why. The reader sees what was chosen but not what
+  drove it, so they cannot tell whether the force still holds. Pair each choice with its reason.

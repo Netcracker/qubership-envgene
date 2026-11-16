@@ -16,9 +16,12 @@ structure rules that keep each section carrying only what it uniquely contribute
     - [Avoid duplication in description](#avoid-duplication-in-description)
       - [❌ Incorrect (duplicated info)](#-incorrect-duplicated-info)
       - [✅ Correct (concise, mentioned once)](#-correct-concise-mentioned-once)
-    - [Declarative tone (reference docs)](#declarative-tone-reference-docs)
+    - [Declarative tone](#declarative-tone)
     - [Tables: one fact per row](#tables-one-fact-per-row)
     - [Validation rule sections](#validation-rule-sections)
+  - [Document scope and naming](#document-scope-and-naming)
+    - [Title names the job](#title-names-the-job)
+    - [One document, one job](#one-document-one-job)
   - [Doc index updates](#doc-index-updates)
 
 ## Documentation structure (Diataxis framework)
@@ -252,14 +255,19 @@ Template-level parameters are defined in two ways:
 
 ---
 
-### Declarative tone (reference docs)
+### Declarative tone
 
-**Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
-or mark elements as "new".**
+**Documentation describes the system as it is now. Do not narrate the change that produced the current state:
+no transitions, before/after diffs, elements marked "new", or history of what was merged, renamed, split,
+moved, or deprecated.**
 
-Feature specifications and object schemas live in the Diataxis Reference quadrant. Implementation history
-(what changed, what was added, what was deprecated) belongs in tickets, PR descriptions, and commit
-messages, not in the reference docs themselves.
+This applies to every state-describing doc - reference specs and object schemas (the Diataxis Reference
+quadrant), feature and explanation docs, and technical-design docs such as the pipeline flow and architecture.
+Implementation history - what changed, what was added, what one component absorbed from another - belongs in
+tickets, PR descriptions, and commit messages, not in the doc itself. When one component absorbs another's
+function, describe only the result ("component B performs the function") and never the move itself ("the
+function, formerly in component A, is now part of B"). The reader looks the doc up to learn the current state;
+they cannot act on how it got there, and the narration ages the moment the next change lands.
 
 ❌ **INCORRECT** (transitional, history-laden):
 
@@ -287,14 +295,19 @@ For local Credentials the `envgen.creds.get(...)` macro is used.
 # Local Credential          # External Credential
 ```
 
+Change-narration reads the same way - state the result, not the move. For example:
+
+- ❌ `The push, formerly a separate step, is now part of the generator.`
+- ✅ `The generator pushes the effective set.`
+
 **Exception:** Migration documents and changelogs are explicitly about transitions. They describe how to
 move from state X to state Y and are not subject to this rule.
 
 **Scope:** Applies to **new and modified content only**.
 
-**Why:** Reference docs are looked up to learn what something IS. Mixed transitional content makes the spec
-brittle - phrases like "new" or "AS IS" age poorly as the system evolves, and force readers to mentally
-filter what is current vs what is historical.
+**Why:** Docs are looked up to learn what something IS. Mixed transitional content makes them brittle -
+phrases like "new", "AS IS", or "formerly merged into" age poorly as the system evolves, and force readers to
+mentally filter what is current from what is historical.
 
 ---
 
@@ -364,6 +377,78 @@ A validation section catalogs semantic checks the system applies on top of schem
 descriptions of validator behavior. Phase grouping helps readers locate rules relevant to the
 operation they care about. Shared failure semantics factored out reduces noise and prevents
 inconsistencies between rules.
+
+---
+
+## Document scope and naming
+
+### Title names the job
+
+A document's title and filename name the job the document actually does, in the reader's terms. When the
+content changes, the title and filename change with it. A name that still describes an older or narrower
+scope sends readers to the wrong place and hides the document from a search for what it now covers.
+
+❌ **INCORRECT:**
+
+- A guide retitled to cover four registries but still filed as `configure-cloud-artifact-registries.md`, so
+  the filename claims "cloud" while the body now covers on-prem Nexus and Artifactory.
+- A title that names one object the document happens to mention (`Create a Registry Definition`) when the
+  document is really about authenticating to a registry.
+- A tutorial extended with a second scenario but still titled and filed for the first one only.
+
+✅ **CORRECT:**
+
+- Rename the file and the heading together when the scope changes, and update the index readmes and inbound
+  links in the same change (see [Doc index updates](#doc-index-updates)).
+- Take the title from the reader's goal ("Configure registry authentication"), not from one object in the
+  body.
+
+**Scope:** Applies to **new and modified content only**. When an edit changes what a document covers, bring
+its title and filename into line in the same change.
+
+**Why:** The title and filename are the first thing a reader matches against their task. A stale name is a
+silent miss: the link checker still passes, but readers and searches land on a promise the body no longer
+keeps.
+
+---
+
+### One document, one job
+
+A document does one job for one reader. Name that job in the opening lines, and let every section serve it.
+When a draft fuses several jobs - a one-time setup, a migration, and a recurring task, each with its own
+reader and cadence - it serves none of them well: the reader doing one job wades through the other two.
+
+This cuts by job and cadence, not by Diataxis type: the Diataxis separation (see
+[Documentation types](#documentation-types)) keeps how-to, explanation, and reference apart, while this
+rule separates one-time setup, migration, and recurring work even within one quadrant. See also
+[Section value audit](#section-value-audit).
+
+A useful test: state the document's job in one sentence ("set a sensitive parameter for an existing
+environment"). If a step does not serve that sentence - it onboards infrastructure, or discovers what an
+existing setup already holds - it belongs to a different job. Framing matters too: a step that exists only
+to consume or verify the result is not an authoring step, and it reads wrong when numbered among them.
+
+❌ **INCORRECT:**
+
+- A "create credentials" guide that opens by *finding* credentials that already exist - a discovery step
+  from a migration, not a creation step.
+- A guide that interleaves connecting to a secret store (once per repository), converting an existing
+  template (once per template), and adding one parameter (recurring) as a single procedure.
+- One page that documents both the initial cluster setup and the day-to-day task that later runs on it.
+
+✅ **CORRECT:**
+
+- The document names its single job up front, and each section advances it.
+- One-time setup and migration are their own documents, or clearly separated sections, referenced by the
+  task document rather than inlined into it.
+- A reference doc that states what an object is and links to the how-to that configures it, rather than
+  absorbing the procedure.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** A reader arrives with one job. A document scoped to that job is shorter, is easier to keep correct,
+and does not force the reader to work out which steps are theirs. Fused jobs also drift: a change made for
+one job disturbs the steps of another that happens to share the page.
 
 ---
 

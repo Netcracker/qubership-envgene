@@ -1,8 +1,8 @@
-json-exporter: pass-placeholder-123
-username: user-placeholder-123
+json-exporter: minio-cred_password
+username: minio-cred_username
 global: &id001
-  json-exporter: pass-placeholder-123
-  username: user-placeholder-123
+  json-exporter: minio-cred_password
+  username: minio-cred_username
 vault_env: *id001
 pg_patroni: *id001
 postgres_operator_tests: *id001

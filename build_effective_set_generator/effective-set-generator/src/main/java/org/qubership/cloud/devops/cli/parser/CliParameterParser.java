@@ -17,10 +17,11 @@
 package org.qubership.cloud.devops.cli.parser;
 
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
@@ -57,6 +58,7 @@ import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV2;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,6 +81,7 @@ public class CliParameterParser {
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
     private final FileSystemUtils fileSystemUtils;
+    private final Map<String, Map<String, Object>> credentialFiles = new ConcurrentHashMap<>();
 
 
     @Inject
@@ -98,12 +101,24 @@ public class CliParameterParser {
     }
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
+        credentialFiles.clear();
         checkIfEntitiesExist();
         validateNamespaceScopedCustomParams();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
         processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
+        if (sharedData.getCredsOutput() != null) {
+            new ObjectMapper().writeValue(new File(sharedData.getCredsOutput()), credentialFiles);
+            return;
+        }
+        new ObjectMapper().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
+                .writeValue(System.out, credentialFiles);
+        System.out.flush();
+    }
+
+    private void putCredentialFile(Map<String, Object> params, String... args) {
+        credentialFiles.put(String.join("/", args), params == null || params.isEmpty() ? new HashMap<>() : params);
     }
 
     private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String, NamespaceDTO> namespaceDTOMap) throws IOException {
@@ -246,7 +261,7 @@ public class CliParameterParser {
         topologyParams.put("bg_domain", bgDomainParamsMap);
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
-        fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
+        putCredentialFile(topologySecuredParams, topologyDir, "credentials.yaml");
     }
 
     private <T> Map<String, Object> getObjectMap(T input) {
@@ -295,7 +310,7 @@ public class CliParameterParser {
 
             try {
                 fileDataConverter.writeToFile(consumerParamsMap, pipelineDir, parametersFilename);
-                fileDataConverter.writeToFile(consumerSecureMap , pipelineDir, secureFilename);
+                putCredentialFile(consumerSecureMap, pipelineDir, secureFilename);
             } catch (IOException e) {
                 throw new CreateWorkDirException(e.getMessage(), e);
             }
@@ -305,7 +320,7 @@ public class CliParameterParser {
     private void createE2EFiles(ParameterBundle parameterBundle) throws IOException {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         fileDataConverter.writeToFile(parameterBundle.getE2eParams(), pipelineDir, "parameters.yaml");
-        fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
+        putCredentialFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
     }
 
     public ParameterBundle getParameterBundleByESVer(String tenantName, String cloudName, String namespaceName, String appName,
@@ -389,45 +404,29 @@ public class CliParameterParser {
             String deploymentDir = String.format("%s/%s/%s/%s%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, genSegment, "values");
             String runtimeDir = String.format("%s/%s/%s/%s%s", sharedData.getOutputDir(), "runtime", namespaceName, appName, genSegment);
 
-            Path appChartPath = null;
-            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                int helmNameLimit = HELM_NORMALIZER_LIMIT - originalNamespace.length() - 1;
-                String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), helmNameLimit);
-                appChartPath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", normalizedName).toPath();
-                Files.createDirectories(appChartPath);
-            }
+            int helmNameLimit = HELM_NORMALIZER_LIMIT - originalNamespace.length() - 1;
+            String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), helmNameLimit);
+            Path appChartPath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", normalizedName).toPath();
+            Files.createDirectories(appChartPath);
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
-            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
-            }
-            fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
+            putCredentialFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
-            if (StringUtils.isBlank(parameterBundle.getAppChartName()) && MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
-                parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
-                    try {
-                        Path servicePath = fileSystemUtils.getFileFromGivenPath(deploymentDir, "per-service-parameters", entry.getKey()).toPath();
-                        Files.createDirectories(servicePath);
-                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
-                    } catch (IOException e) {
-                        throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
-                    }
-                });
-            }
-            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
+            putCredentialFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
+            putCredentialFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
 
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), appDirectory, "technical-configuration-parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), appDirectory, "credentials.yaml");
+            putCredentialFile(parameterBundle.getSecuredDeployParams(), appDirectory, "credentials.yaml");
         }
     }
 
@@ -490,7 +489,7 @@ public class CliParameterParser {
                 String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
                 Files.createDirectories(Path.of(cleanupDir));
                 fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
-                fileDataConverter.writeToFile(cleanupParameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+                putCredentialFile(cleanupParameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
 
                 cleanupMappingFileData.put(originalNamespace, cleanupPostFixDir);
             }

@@ -51,40 +51,8 @@ runs:
     - name: Run BDD test suites
       shell: bash
       run: |
-        set -uo pipefail
-        mkdir -p reports
-        : > e2e_tests.log
-
-        failed=0
-        run_suite() {
-          local py_file="$1"
-          local xml_name="$2"
-
-          echo "::group::${py_file}"
-          if docker compose -f devtools/docker-compose.yml exec -T cucumber bash -c \
-            "set -o pipefail && \
-             export PYTHONPATH=/workspace:/workspace/scripts && \
-             cd /workspace && \
-             pytest cucumber_tests/step_defs/${py_file} \
-               -c cucumber_tests/pytest.ini \
-               -v -s \
-               --junitxml=reports/${xml_name} \
-               | tee -a /workspace/e2e_tests.log"; then
-            echo "${py_file} passed"
-          else
-            echo "::error::${py_file} failed"
-            failed=1
-          fi
-          echo "::endgroup::"
-        }
-
-        run_suite test_environment_inventory_generation.py environment_inventory_generation.xml
-        run_suite test_sbom_retention.py sbom_retention.xml
-        run_suite test_bgd_sub_flows.py bgd_sub_flows.xml
-        run_suite test_deploy_sub_flows.py deploy_sub_flows.xml
-        run_suite test_calculator_cli.py calculator_cli.xml
-
-        exit "${failed}"
+        docker compose -f devtools/docker-compose.yml exec -T cucumber \
+          bash /workspace/cucumber_tests/run_suites.sh
 
     - name: Publish Test Report
       uses: EnricoMi/publish-unit-test-result-action@v2

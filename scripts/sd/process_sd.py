@@ -161,7 +161,7 @@ def extract_sds_from_content(namespace_by_deploy_postfix: dict, base_sd_path: Pa
     if effective_merge_mode == MergeType.REPLACE:
         logger.info("Inside replace")
         if helper.check_file_exists(sd_path):
-            full_sd_yaml = helper.openYaml(sd_path)
+            full_sd_yaml = helper.openYaml(sd_path, safe_load=True)
             logger.info(f"Full sd before replacement: {dumpYamlToStr(full_sd_yaml)}")
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
@@ -224,8 +224,8 @@ def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx) -> artifact_mode
     app_defs_path = str(ctx.committed_regdefs_dir.parent / APPDEFS_DIRNAME.lower())
     reg_defs_path = str(ctx.transient_regdefs_dir or ctx.committed_regdefs_dir)
     app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
-    app_dict = helper.openYaml(app_def_path)
+    app_dict = helper.openYaml(app_def_path, safe_load=True)
     reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")
-    app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
+    app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path, safe_load=True))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def

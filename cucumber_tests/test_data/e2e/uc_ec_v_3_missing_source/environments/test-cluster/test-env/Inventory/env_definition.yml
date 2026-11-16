@@ -1,6 +1,0 @@
-inventory:
-  environmentName: "test-env"
-  cloudName: "test-cluster"
-envTemplate:
-  name: "ext_creds_uc_ec_v_3_missing_source"
-  artifact: "external-secrets-artifact:v1"

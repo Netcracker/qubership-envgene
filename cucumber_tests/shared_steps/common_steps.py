@@ -66,7 +66,7 @@ def environment_matches_reference(workspace, cluster, env, reference_path):
     else:
         expected_dir = base_expected_dir
 
-    # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
+    # Ignore Credentials directory because its files are encrypted with non-deterministic keys (SOPS)
     compare_directories(expected_dir, actual_dir, ignore_patterns=['Credentials'])
 
 @then(parsers.parse('the workspace matches the reference "{reference_path}"'))
@@ -78,7 +78,7 @@ def workspace_matches_reference(workspace, reference_path):
     actual_dir = workspace.base_dir
     expected_dir = Path.cwd() / "cucumber_tests" / "test_data" / "golden" / reference_path
 
-    # Ignore Credentials directory because its files are encrypted with non-deterministic keys (Fernet)
+    # Ignore Credentials directory because its files are encrypted with non-deterministic keys (SOPS)
     import os
     # Ignore extra framework generated files
     ignore_patterns = ['Credentials', os.path.normpath('configuration/credentials'), os.path.normpath('configuration/config.yml'), 'tmp', 'sops', 'sops.bat', os.path.normpath('configuration/registry.yml'), 'build.env', '__pycache__', 'sboms', 'inventory', 'blueprints', 'environments', 'artifacts']

@@ -69,6 +69,11 @@ class SaveArtifactsStrategy(CaseInsensitiveEnum):
     NEVER = "NEVER"
 
 
+class ArtifactCoordinateSource(CaseInsensitiveEnum):
+    AUTO = "AUTO"
+    REGDEF = "REGDEF"
+
+
 class ExternalCredentialProvisioning(CaseInsensitiveEnum):
     APPLY = "APPLY"
     SKIP = "SKIP"
@@ -327,6 +332,7 @@ class YamlModel(YamlBacked, BaseModel):
 class PropertyMapping(YamlModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     name: Literal["username", "password"]
+
 
 class ExternalCredential(BaseModel):
     type: Literal["external"]
@@ -947,3 +953,6 @@ SCHEMA_TO_MODEL: dict[str, type[BaseModel]] = {
     TemplateDescriptorModel.SCHEMA_NAME: TemplateDescriptorModel,
     BgDomainModel.SCHEMA_NAME: BgDomainModel,
 }
+class CredentialMode(CaseInsensitiveEnum):
+    LOCAL = "LOCAL"
+    EXTERNAL = "EXTERNAL"

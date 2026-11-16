@@ -85,7 +85,7 @@ It has the following structure:
 description: string
 # Optional
 # Template Composition configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+# See details in /docs/features/template-composition.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -96,7 +96,7 @@ tenant: string
 # or
 tenant:
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -107,16 +107,16 @@ cloud:
   template_path: string
   # Optional
   # Template Override configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  # See details in /docs/features/template-override.md
   template_override:
     <yaml or jinja expression>
   # Optional
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   parent: string
   # Optional
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   overrides-parent:
     # Optional
     # Override the name of the cloud in rendering result
@@ -158,16 +158,16 @@ namespaces:
     # If the value is not specified, the name of the namespace template file (without extension) is used
     deploy_postfix: <deploy-postfix>
     # Optional
-    # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+    # See details /docs/features/template-override.md
     template_override:
       <yaml or jinja expression>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     parent: string
     # Optional
     # Selects the parent namespace when the parent template has several namespaces
@@ -178,7 +178,7 @@ namespaces:
     parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     overrides-parent:
       # Optional
       # Override the name of the namespace in rendering result
@@ -631,17 +631,30 @@ solutionDescriptor: false
 
 This is a Jinja file in the Template Repository used to render [Credential](#credential) objects with `type: external`.
 
-The rendered document must be a map of `<cred-id>` entries that each conform to the [Credential](#credential) object for `external` as defined in [Credential JSON schema](/schemas/credential.schema.json).
+The rendered file must be a map of `<cred-id>` entries that each conform to the
+[Credential](#credential) object for `external` as defined in
+[Credential JSON schema](/schemas/credential.schema.json).
 
-During Environment Instance generation, the result is merged into the instance [Environment Credentials File](#environment-credentials-file) together with Credentials created for local types from `${creds.get(...)}`.
+The Credential Template is **optional**. When present, EnvGene renders it in external mode and merges the
+output into the instance [Environment Credentials File](#environment-credentials-file). When absent, EnvGene
+auto-generates an external Credential for every referenced `credId` with defaults. See
+[Credential auto-generation](/docs/features/credential-processing.md#credential-auto-generation).
 
-Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+The Credential Template is rendered only in external mode. See
+[Mode detection](/docs/features/credential-processing.md#mode-detection).
 
-For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 Sensitive parameters via external Credentials](/docs/features/calculator-cli.md#version-20-sensitive-parameters-via-external-credentials).
+Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via
+[Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules,
+see [External Credentials Management](/docs/features/external-creds.md#credential-template) and
+[Calculator CLI - Sensitive parameters via external Credentials](/docs/features/calculator-cli.md#version-20-sensitive-parameters-via-external-credentials).
 
 Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
 
-**Location:** The path to the Credential Template is set in the [Template Descriptor](#template-descriptor) as `external_credential_template`: a string path to a **single** Jinja file (for example `.yml`, `.yaml`, `.yml.j2`, or `.yaml.j2`).
+**Location:** The path to the Credential Template is set in the
+[Template Descriptor](#template-descriptor) as `external_credential_template`: a string path to a Jinja file
+(for example `.yml`, `.yaml`, `.yml.j2`, or `.yaml.j2`).
 
 **Example:**
 
@@ -1662,7 +1675,15 @@ EnvGene checks these locations in order (environment → cluster → site) and u
 *For the file search-path priority, see
 [File resolution → Shared credentials](/docs/envgene-configs.md#shared-credentials).*
 
-Any YAML file located in these folders is treated as a Shared Credentials File.
+Any YAML or Jinja (`.yml.j2`/`.yaml.j2`) file located in these folders is treated as a Shared Credentials File.
+
+**Jinja rendering.** A Shared Credentials File is rendered as a Jinja template during Environment Instance
+generation regardless of extension; rendered output replaces the file content in memory before merging.
+Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`) are available. This lets external
+Credential entries parameterize `remoteRefPath` per environment or cluster from a single shared file. The
+`.yml.j2`/`.yaml.j2` suffix is optional and changes nothing in EnvGene — use it only to keep the file out of
+`yamllint` in an instance repository that runs it. A literal Credential value must not contain raw `{{`/`{%`;
+wrap it with `{% raw %}` if needed.
 
 **Example:**
 
@@ -1676,6 +1697,15 @@ token:
   type: secret
   data:
     secret: "token-placeholder-123"
+```
+
+**Jinja example** (`<name>.yml.j2`):
+
+```yaml
+db_cred:
+  type: external
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/db"
 ```
 
 ### System Credentials File (in Instance repository)

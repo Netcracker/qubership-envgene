@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from yaml import safe_load, safe_dump
-from envgenehelper.yaml_helper import beautifyYaml
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 
 
 def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:
@@ -27,9 +27,13 @@ def map_creds_to_cmdb_format(sensitive_data: dict) -> dict:
     return sensitive_data
 
 
-def update_creds_to_cmdb_format(creds_path: str, schema_path: str = "credential.schema.json"):
+def update_creds_to_cmdb_format(creds_path: str, schema_path: str = None):
+    schema_path = schema_path or "credential.schema.json"
     creds_path = Path(creds_path)
     data = safe_load(creds_path.read_text(encoding="utf-8"))
     cmdb_mapped = map_creds_to_cmdb_format(data)
     creds_path.write_text(safe_dump(cmdb_mapped), encoding="utf-8")
-    beautifyYaml(str(creds_path), schema_path)
+    if Path(schema_path).name == str(schema_path):
+        validate_yaml_by_scheme_or_fail(input_yaml_content=cmdb_mapped, schema_name=str(schema_path))
+    else:
+        validate_yaml_by_scheme_or_fail(input_yaml_content=cmdb_mapped, schema_file_path=schema_path)

@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import pytest
@@ -8,6 +9,7 @@ os.environ["DEFAULT_REQUEST_TIMEOUT"] = "0.2"  # for test cases to run quicker
 from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 from artifact_searcher.artifact import check_artifact
+from artifact_searcher.artifact import resolve_snapshot_version_async
 from artifact_searcher.artifact import _retry_with_nexus_url
 from artifact_searcher.artifact import get_repos
 from artifact_searcher.utils.models import FileExtension, Provider, Repo, RepoType
@@ -45,6 +47,59 @@ def test_get_repos_for_v1_registry():
         Repo(value="snapshot-group", type=RepoType.SNAPSHOT_GROUP),
         Repo(value="release-group", type=RepoType.RELEASE_GROUP),
     ]
+
+
+async def test_snapshot_metadata_without_requested_entry_is_not_success():
+    class MockSession:
+        def get(self, url):
+            class MockResponse:
+                status = 200
+
+                async def text(self):
+                    return content
+
+                async def __aenter__(self):
+                    return self
+
+                async def __aexit__(self, *args):
+                    pass
+
+            return MockResponse()
+
+    app = models.Application(
+        name="app",
+        artifact_id="app",
+        group_id="com.example",
+        registry=_create_registry_with_unique_maven_repos(),
+        solution_descriptor=False,
+    )
+
+    content = """
+    <metadata>
+      <versioning>
+        <snapshotVersions>
+          <snapshotVersion>
+            <classifier></classifier>
+            <extension>pom</extension>
+            <value>1.0.0-20240702.123456-1</value>
+          </snapshotVersion>
+        </snapshotVersions>
+      </versioning>
+    </metadata>
+    """
+
+    result = await resolve_snapshot_version_async(
+        MockSession(),
+        app,
+        version="1.0.0-SNAPSHOT",
+        repo_value="repo",
+        task_id=0,
+        stop_artifact_event=asyncio.Event(),
+        stop_snapshot_event_for_others=asyncio.Event(),
+        extension=FileExtension.JSON,
+    )
+
+    assert result is None
 
 
 @pytest.mark.parametrize("provider", [Provider.AWS, Provider.GCP])
@@ -169,6 +224,7 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
 
     result = await check_artifact_async(app, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
     assert result is not None
+    assert result.resolved_version == TIMESTAMPED_VERSION
     full_url = result.source_url
 
     sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"

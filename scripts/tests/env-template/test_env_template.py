@@ -11,6 +11,7 @@ import pytest
 import responses
 from aioresponses import aioresponses
 from build_env.env_template.process_env_template import process_env_template
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper.test_helpers import TestHelpers
 
 GROUP_ID = "org.qubership"
@@ -196,7 +197,8 @@ class TestEnvTemplate:
         mock_dd_response()
         mock_zip(STAGING_ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
@@ -211,7 +213,8 @@ class TestEnvTemplate:
         mock_dd_response_without_mvn_repo()
         mock_zip(SNAPSHOT_ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
@@ -227,7 +230,8 @@ class TestEnvTemplate:
         mock_aio_response.head(ZIP_URL, payload="", status=200)
         mock_zip(ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == ZIP_URL
@@ -242,7 +246,8 @@ class TestEnvTemplate:
         responses.add(responses.GET, DD_URL, json=dd_json, status=200)
         mock_zip(TMPL_ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         called_urls = [call.request.url for call in responses.calls]
 
@@ -264,7 +269,8 @@ class TestEnvTemplate:
 
         mock_zip(tmpl_zip_url)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         called_urls = [call.request.url for call in responses.calls]
 

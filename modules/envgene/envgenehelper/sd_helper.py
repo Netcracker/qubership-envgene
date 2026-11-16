@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 
+from envgene_shared.utils.business_utils import to_bool
 from envgene_shared.utils.logger import logger
 from envgenehelper.business_helper import INVENTORY_DIR_NAME, get_current_env_dir_from_env_vars, get_env_dir_by_env_cluster_name
 
@@ -145,7 +146,7 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
     if sd_merge_mode:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
     # sd_delta var is deprecated
-    elif sd_delta == "false":
+    elif not to_bool(sd_delta, default=True):
         effective_merge_mode = MergeType.REPLACE
         logger.info(
             f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")

@@ -21,7 +21,7 @@
           "name": "test.platform.system.monitoring_monitoring-operator",
           "version": "0.1.0-20261215.141230-3-RELEASE",
           "purl": "pkg:maven/org.qubership.deploy.product/test.platform.system.monitoring_monitoring-operator@0.1.0-20261215.141230-3-RELEASE?registry_id=registry-2&repository_id=targetRelease",
-	      "properties": [
+          "properties": [
             {
               "name": "eso_support",
               "value": "false"
@@ -96,9 +96,16 @@
           "purl": "pkg:docker/prom/alertmanager@v0.28.1?registry_id=registry-2"
         }
       ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "BomRef.vals-app-chart",
+      "name": "vals-app",
+      "version": "0.1.0"
     }
   ],
-  "dependencies": [    
+  "dependencies": [
     {
       "ref": "BomRef.9326066192873279.6463074100259174"
     }
