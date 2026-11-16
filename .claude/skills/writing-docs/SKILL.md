@@ -59,12 +59,12 @@ this same catalog.
 
 The factual input in step 3 is concrete per type family:
 
-| Document type                                                        | Factual input                                                                        |
-|----------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| Object-model reference, parameter catalog, macro catalog, glossary   | the code and schemas - the fields, parameters, macros, and terms read from source    |
-| Feature, technical-design                                            | the design decision and the observable behavior - the ADR or design plus how it acts |
-| How-to, tutorial                                                     | a procedure or worked scenario run against the system                                |
-| Policy/architecture note                                             | the standing policy or the architecture as it is                                     |
+| Document type                                                      | Factual input                                                                        |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Object-model reference, parameter catalog, macro catalog, glossary | the code and schemas - the fields, parameters, macros, and terms read from source    |
+| Feature, technical-design                                          | the design decision and the observable behavior - the ADR or design plus how it acts |
+| How-to, tutorial                                                   | a procedure or worked scenario run against the system                                |
+| Policy/architecture note                                           | the standing policy or the architecture as it is                                     |
 
 The voice is `writing-style`, the shape is this catalog, and the review is `reviewing-docs` - this section
 is only the sequence that connects them for standalone work.
@@ -74,17 +74,17 @@ is only the sequence that connects them for standalone work.
 Each standalone document under `docs/` is one of these nine types. Find the type, read its reference, and
 write to that shape.
 
-| Type                     | Job of the document                                               | Read                                 |
-|--------------------------|-------------------------------------------------------------------|--------------------------------------|
-| Feature                  | Explain one capability and why, for someone who uses EnvGene       | `references/feature.md`              |
-| How-to                   | Walk a reader through one task they came to do                     | `references/how-to.md`               |
-| Tutorial                 | Teach a beginner one capability end to end with a worked example   | `references/tutorial.md`             |
-| Technical-design         | Specify the internal wiring - jobs, steps, I/O - for a developer   | `references/technical-design.md`     |
-| Object-model reference   | Define an EnvGene object or config file: its fields and semantics  | `references/object-model-reference.md` |
-| Parameter catalog        | List pipeline or config parameters with values and effect          | `references/parameter-catalog.md`    |
-| Macro catalog            | List template macros with their inputs and output                  | `references/macro-catalog.md`        |
-| Policy/architecture note | State a standing policy or classify a small architecture domain    | `references/policy-architecture-note.md` |
-| Glossary                 | Define the repository's cross-document terms in one place          | `references/glossary.md`             |
+| Type                     | Job of the document                                               | Read                                     |
+| ------------------------ | ----------------------------------------------------------------- | ---------------------------------------- |
+| Feature                  | Explain one capability and why, for someone who uses EnvGene      | `references/feature.md`                  |
+| How-to                   | Walk a reader through one task they came to do                    | `references/how-to.md`                   |
+| Tutorial                 | Teach a beginner one capability end to end with a worked example  | `references/tutorial.md`                 |
+| Technical-design         | Specify the internal wiring - jobs, steps, I/O - for a developer  | `references/technical-design.md`         |
+| Object-model reference   | Define an EnvGene object or config file: its fields and semantics | `references/object-model-reference.md`   |
+| Parameter catalog        | List pipeline or config parameters with values and effect         | `references/parameter-catalog.md`        |
+| Macro catalog            | List template macros with their inputs and output                 | `references/macro-catalog.md`            |
+| Policy/architecture note | State a standing policy or classify a small architecture domain   | `references/policy-architecture-note.md` |
+| Glossary                 | Define the repository's cross-document terms in one place         | `references/glossary.md`                 |
 
 ## How to use this skill
 
@@ -92,21 +92,21 @@ Match the task to a reference file and read that file before writing. For any pr
 first. Pick the document type from the catalog above and read its reference. Then add the cross-type files
 below that fit the document-level job.
 
-| Task                                                                       | Read                                 |
-|----------------------------------------------------------------------------|--------------------------------------|
-| Structure a document or shape its sections - Diataxis type, section value  | `references/doc-structure.md`        |
-| Write a feature doc under `docs/features/`                                  | `references/feature.md`              |
-| Write a how-to guide under `docs/how-to/`                                   | `references/how-to.md`               |
-| Write a tutorial under `docs/tutorials/`                                    | `references/tutorial.md`             |
-| Write a technical-design doc under `docs/technical-design/`                 | `references/technical-design.md`     |
-| Define EnvGene objects or config files as an annotated-field register       | `references/object-model-reference.md` |
-| List pipeline or repository parameters with values and effect               | `references/parameter-catalog.md`    |
-| List template macros with their resolution scope and usage                  | `references/macro-catalog.md`        |
-| State a standing policy or classify a small architecture domain             | `references/policy-architecture-note.md` |
-| Define the repository's cross-document terms in one place                   | `references/glossary.md`             |
-| Add document mechanics - table of contents, callouts, heading numbering    | `references/markdown.md`             |
-| Keep docs truthful - internal-analysis wording, pre-flight linters, checks | `references/content-integrity.md`    |
-| Write a YAML or JSON object example, or build a `docs/samples/` set         | `references/examples-and-samples.md` |
+| Task                                                                       | Read                                     |
+| -------------------------------------------------------------------------- | ---------------------------------------- |
+| Structure a document or shape its sections - Diataxis type, section value  | `references/doc-structure.md`            |
+| Write a feature doc under `docs/features/`                                 | `references/feature.md`                  |
+| Write a how-to guide under `docs/how-to/`                                  | `references/how-to.md`                   |
+| Write a tutorial under `docs/tutorials/`                                   | `references/tutorial.md`                 |
+| Write a technical-design doc under `docs/technical-design/`                | `references/technical-design.md`         |
+| Define EnvGene objects or config files as an annotated-field register      | `references/object-model-reference.md`   |
+| List pipeline or repository parameters with values and effect              | `references/parameter-catalog.md`        |
+| List template macros with their resolution scope and usage                 | `references/macro-catalog.md`            |
+| State a standing policy or classify a small architecture domain            | `references/policy-architecture-note.md` |
+| Define the repository's cross-document terms in one place                  | `references/glossary.md`                 |
+| Add document mechanics - table of contents, callouts, heading numbering    | `references/markdown.md`                 |
+| Keep docs truthful - internal-analysis wording, pre-flight linters, checks | `references/content-integrity.md`        |
+| Write a YAML or JSON object example, or build a `docs/samples/` set        | `references/examples-and-samples.md`     |
 
 For a substantial new or reworked document you touch several of these. A typical feature doc needs the
 `writing-style` voice, the feature-doc reference, document structure, document mechanics, content

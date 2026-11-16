@@ -38,10 +38,10 @@ Match the task to a reference file and read that file before writing. Most text 
 add the file that fits the specific job.
 
 | Task                                                                        | Read                        |
-|-----------------------------------------------------------------------------|-----------------------------|
-| Write or edit any prose - a doc, readme, issue, CR, PR, ADR, proposal, spec | `references/prose-style.md`  |
-| Format Markdown or YAML - line length, lists, tables, link text, block YAML | `references/formatting.md`   |
-| State an identifier, name a concept, define a term, or link in-repo files   | `references/integrity.md`    |
+| --------------------------------------------------------------------------- | --------------------------- |
+| Write or edit any prose - a doc, readme, issue, CR, PR, ADR, proposal, spec | `references/prose-style.md` |
+| Format Markdown or YAML - line length, lists, tables, link text, block YAML | `references/formatting.md`  |
+| State an identifier, name a concept, define a term, or link in-repo files   | `references/integrity.md`   |
 
 ## Scope
 

@@ -261,4 +261,3 @@ Reject these. They are the failure modes that make an ADR untrustworthy or unrea
   the pros and cons.
 - **Mega-ADR.** A whole design doc squeezed into one ADR - multiple diagrams, inline code, or exhaustive
   behavior detail. Push that detail to the specs and design.md. One diagram per option is the line.
-```

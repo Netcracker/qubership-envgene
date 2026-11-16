@@ -75,8 +75,8 @@ requests, pull requests, ADRs, proposals, and specs. Read it before you write or
 
 The `writing-docs` skill at `.claude/skills/writing-docs/` is the document-authoring layer that builds on
 `writing-style`. Read it in addition when you author a document deliverable - a how-to, tutorial, feature
-doc, reference doc, use case, or README. Its `SKILL.md` routes to document structure, document mechanics,
-content integrity, object examples, sample files, and use-case design.
+doc, technical-design doc, reference doc, or readme. Its `SKILL.md` routes to a per-type reference for each
+document type plus the cross-type rules for document structure, mechanics, content integrity, and examples.
 
 ### Tests
 
