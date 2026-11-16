@@ -11,11 +11,13 @@ from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.business_utils import get_envgene_config_yaml, to_bool
 from envgene_shared.utils.file_utils import is_cred_file, writeToFile
 from envgene_shared.utils.logger import logger
-from envgene_shared.utils.yaml_utils import openYaml, remove_empty_list_comments
+from envgene_shared.utils.yaml_utils import (
+    remove_empty_list_comments, validate_yaml_by_scheme_or_fail, openYaml, dumpYamlToStr, make_quotes_for_strings
+)
 
 from .business_helper import NamespaceFile
-from .models import CredentialMode
-from .yaml_helper import dumpYamlToStr, make_quotes_for_strings, normalize_comments, sortYaml
+from .models import SCHEMA_TO_MODEL, YamlBacked, bind_yaml, CredentialMode
+from .yaml_helper import normalize_comments, sortYaml
 
 # An env-specific Resource Profile from Inventory is put into the store only to be read later.
 # It is an input file of the user, so flush() must not write it back.
@@ -37,12 +39,34 @@ def _match(parts: tuple, pattern: tuple) -> bool:
     return len(parts) == len(pattern) and all(fnmatchcase(part, name) for part, name in zip(parts, pattern))
 
 
+def _to_model(obj, schema_path, path):
+    name = Path(str(schema_path)).name
+    model_cls = SCHEMA_TO_MODEL.get(name)
+    if model_cls is None:
+        logger.info(f"Validating {path} (schema: {schema_path})")
+        if isinstance(schema_path, Path) or name != str(schema_path):
+            validate_yaml_by_scheme_or_fail(input_yaml_content=obj, schema_file_path=str(schema_path))
+        else:
+            validate_yaml_by_scheme_or_fail(input_yaml_content=obj, schema_name=name)
+        return obj
+    if isinstance(obj, model_cls):
+        return obj
+    logger.info(f"Validating {path} (schema: {schema_path})")
+    try:
+        model = model_cls.model_validate(obj)
+    except ValueError as error:
+        raise ValueError(f"Validation failed for {path} (schema: {schema_path}): {error}") from error
+    bind_yaml(model, obj)
+    return model
+
+
 class CurrentEnvInstanceStore:
     def __init__(self, env_dir, credential_mode=CredentialMode.LOCAL):
         self.env_dir = _key(env_dir)
         self.credential_mode = credential_mode
         self._objects = {}
         self._to_write = set()
+        self._schemas = {}
         self._beautify = {}
 
     def _relative(self, key: Path) -> Path | None:
@@ -53,8 +77,13 @@ class CurrentEnvInstanceStore:
     def put(self, path, obj):
         key = _key(path)
         logger.debug(f"Object store put: {key}")
+        schema_path = self._schemas.get(key)
+        if schema_path:
+            obj = _to_model(obj, schema_path, key)
         if is_cred_file(str(key)):
-            current_cred_store().put(key, obj)
+            current_cred_store().put(key, obj.to_yaml() if isinstance(obj, YamlBacked) else obj)
+            if schema_path:
+                self._objects[key] = obj
             return obj
         self._objects[key] = obj
         self._to_write.add(key)
@@ -62,7 +91,7 @@ class CurrentEnvInstanceStore:
 
     def get(self, path):
         key = _key(path)
-        if is_cred_file(str(key)):
+        if is_cred_file(str(key)) and key not in self._schemas:
             return current_cred_store().load_decrypted(key)
         if key not in self._objects:
             raise FileNotFoundError(f"{key} is not in the object store")
@@ -103,7 +132,7 @@ class CurrentEnvInstanceStore:
                 logger.warning(f"Profile parse cache is unwritable for {Path(profile_path).name}: {ex}")
         return profile
 
-    def bg_domain(self) -> CommentedMap:
+    def bg_domain(self) -> CommentedMap | YamlBacked:
         bg_domain_path = self.env_dir / "bg_domain.yml"
         return self.get(bg_domain_path) if self.exists(bg_domain_path) else CommentedMap()
 
@@ -120,9 +149,15 @@ class CurrentEnvInstanceStore:
         return sorted(k for k in self._objects
                       if k.parts[:len(root_parts)] == root_parts and _match(k.parts[len(root_parts):], rest))
 
+    def bind(self, path, schema_path):
+        key = _key(path)
+        self._objects[key] = _to_model(self.get(key), schema_path, key)
+        self._schemas[key] = schema_path
+        return self._objects[key]
+
     def beautify(self, path, schema_path, header_text=""):
         key = _key(path)
-        self.get(key)
+        self.bind(key, schema_path)
         previous_header = self._beautify.get(key, (None, ""))[1]
         self._beautify[key] = (schema_path, header_text or previous_header)
         self._to_write.add(key)
@@ -136,8 +171,18 @@ class CurrentEnvInstanceStore:
             yield key
 
     def flush(self):
+        # Credential models keep schema checks while the cred store owns encryption and disk writes.
+        for key in self._schemas:
+            if is_cred_file(str(key)):
+                data = self._objects[key]
+                header_text = self._beautify.get(key, (None, ""))[1]
+                current_cred_store().put(key, data.to_yaml() if isinstance(data, YamlBacked) else data, header_text)
         for key in self._write_targets():
+            if is_cred_file(str(key)):
+                continue
             data = self._objects[key]
+            if isinstance(data, YamlBacked):
+                data = data.to_yaml()
             schema_path, header_text = self._beautify.get(key, (None, ""))
             if key in self._beautify:
                 if schema_path:

@@ -53,12 +53,24 @@ def load_schema(schema_path: str) -> dict:
     return openJson(schema_path)
 
 
+def get_schema(schema_name: str, schemas_dir=None) -> dict:
+    if not schema_name or Path(schema_name).name != schema_name or "/" in schema_name or "\\" in schema_name:
+        raise ValueError(f"Schema name must be a filename: {schema_name!r}")
+
+    schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
+    schema_path = Path(schemas_dir) / schema_name
+    if schema_path.is_file():
+        return load_schema(str(schema_path.resolve()))
+    raise FileNotFoundError(f"Schema '{schema_name}' was not found in '{schemas_dir}'")
+
+
 @lru_cache(maxsize=None)
-def get_schema_validator(schema_path: str):
+def get_schema_validator(schema_path: str, schemas_dir=None):
     schema = load_schema(schema_path)
     cls = jsonschema.validators.validator_for(schema)
     cls.check_schema(schema)
-    return cls(schema)
+    base_uri = Path(schemas_dir or Path(schema_path).parent).resolve().as_uri() + "/"
+    return cls(schema, resolver=RefResolver(base_uri=base_uri, referrer=schema))
 
 
 def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
@@ -89,19 +101,21 @@ def make_quotes_for_strings(yaml_data):
 
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
-                                    input_yaml_content: dict = None, input_schema_content: dict = None,
-                                    schemas_dir=None):
-    yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
-    schema_content = load_schema(str(schema_file_path)) if schema_file_path else input_schema_content
+                                    input_yaml_content: dict = None, schemas_dir=None, schema_name: str = None):
+    if schema_file_path and schema_name:
+        raise ValueError("Specify either schema_file_path or schema_name, not both")
 
-    if schemas_dir:
-        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
-        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
-        errors = validate_yaml_data_by_schema(yaml_content, schema_content, resolver=resolver)
-    elif schema_file_path:
-        errors = sorted(get_schema_validator(str(schema_file_path)).iter_errors(yaml_content), key=lambda e: e.path)
-    else:
-        errors = validate_yaml_data_by_schema(yaml_content, schema_content)
+    yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    if schema_name:
+        get_schema(schema_name, schemas_dir)
+        schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
+        schema_file_path = Path(schemas_dir) / schema_name
+
+    validator = get_schema_validator(
+        str(Path(schema_file_path).resolve()),
+        str(Path(schemas_dir).resolve()) if schemas_dir else None,
+    )
+    errors = sorted(validator.iter_errors(yaml_content), key=lambda e: e.path)
     if len(errors) > 0:
         if yaml_file_path:
             rel_path = getRelPath(yaml_file_path)
@@ -152,9 +166,15 @@ def dumpYamlToStr(content):
     return buffer.getvalue()
 
 
-def writeYamlToFile(filePath, contents):
+def writeYamlToFile(filePath, contents, schema_name: str = None, schemas_dir=None):
     filePath = Path(filePath)
     logger.info(f"Writing yaml to file: {filePath}")
+    if schema_name:
+        validate_yaml_by_scheme_or_fail(
+            input_yaml_content=contents,
+            schema_name=schema_name,
+            schemas_dir=schemas_dir,
+        )
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
     if is_cred_file(str(filePath)):
         remove_cred_yaml_comments(contents)

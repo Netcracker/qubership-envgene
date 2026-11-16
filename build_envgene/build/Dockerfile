@@ -64,6 +64,11 @@ ENV PATH="/module/venv/bin:${PATH}"
 RUN python3 -m venv /module/venv && \
     pip install --no-cache-dir pip==26.0.1
 
+ENV PATH="/module/venv/bin:${PATH}"
+
+RUN python3 -m venv /module/venv && \
+    pip install --no-cache-dir pip==26.0.1
+
 COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/

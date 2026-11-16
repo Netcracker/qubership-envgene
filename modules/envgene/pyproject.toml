@@ -29,7 +29,6 @@ where = ["."]
 
 [tool.setuptools.package-data]
 envgenehelper = [
-    "schemas/*.json",
     "py.typed"
 ]
 

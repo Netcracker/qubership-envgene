@@ -1,6 +1,6 @@
 
 from envgene_shared.crypto.cred_store import current_cred_store
-from envgenehelper import CredentialMode, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, getEnvDefinition, get_cred_id_from_cred_macros, get_schema_dir, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, validate_yaml_by_scheme_or_fail, writeYamlToFile, yaml, extract_external_cred
+from envgenehelper import CredentialMode, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, get_cred_id_from_cred_macros, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 
 # const
 CLOUD_SUBSTITUTIONS = {
@@ -28,7 +28,7 @@ def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, cre
             store_value_to_yaml(cloudYaml["deployParameters"], paramKey, paramValue, comment)
 
 def process_cloud_definition(cloudPassportYaml, env_dir, comment, credential_mode) :
-    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
+    cloud_schema = "cloud.schema.json"
     # cloud
     cloudYamlPath = f"{env_dir}/cloud.yml"
     cloudYaml = current_env_instance_store().get(cloudYamlPath)
@@ -65,8 +65,9 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, credential_mod
     if "dbaas" in cloudPassportYaml :
         dbaasPassportYaml = cloudPassportYaml["dbaas"]
         if "dbaasConfigs" not in cloudYaml or len(cloudYaml["dbaasConfigs"]) != 1 :
-            cloudYaml["dbaasConfigs"] = yaml.load("[]")
-            cloudYaml["dbaasConfigs"].append(yaml.load("enable: false"))
+            dbaasConfigs = yaml.load("[]")
+            dbaasConfigs.append(yaml.load("enable: false"))
+            cloudYaml["dbaasConfigs"] = dbaasConfigs
         dbaasConfigYaml = cloudYaml["dbaasConfigs"][0]
         store_value_to_yaml(dbaasConfigYaml, "credentialsId", extract_cred_id(dbaasPassportYaml["DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME"], credential_mode), comment)
         store_value_to_yaml(dbaasConfigYaml, "enable", True, comment)
@@ -93,12 +94,11 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, credential_mod
     logger.debug(f"Rest of params from cloud passport are: \n{dump_as_yaml_format(cloudPassportYaml)}")
     mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, credential_mode)
     # storing cloud yaml
-    validate_yaml_by_scheme_or_fail(input_yaml_content=cloudYaml, schema_file_path=cloud_schema)
     current_env_instance_store().beautify(cloudYamlPath, cloud_schema)
 
 def read_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path):
     logger.info(f"Searching credentials for cloud passport {cloud_passport_file_path}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = "credential.schema.json"
     # first searching in subfolder
     passportSubfolderPath = f'{getDirName(cloud_passport_file_path)}/credentials/{cloud_passport_name}.yml'
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"
@@ -108,7 +108,7 @@ def read_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path):
         logger.info(f"Adding cloud passport credentials from {passportSubfolderPath}")
     elif current_cred_store().exists(passportSameFolderPath):
         passportCredsYaml = current_cred_store().load_decrypted(passportSameFolderPath)
-        validate_yaml_by_scheme_or_fail(input_yaml_content=passportCredsYaml, schema_file_path=credsSchema)
+        validate_yaml_by_scheme_or_fail(input_yaml_content=passportCredsYaml, schema_name=credsSchema)
         logger.info(f"Adding cloud passport credentials from {passportSameFolderPath}")
     else:
         logger.error(f"No cloud pasport credentials files found in either {passportSubfolderPath} or {passportSameFolderPath}.")
