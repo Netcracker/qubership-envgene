@@ -164,8 +164,8 @@ Known primary, origin, and peer artifact consumers participate in the conflict c
 Physical-source aliases and existing template references block relocation.
 Participants with unresolved role-specific destinations retain partial guidance.
 Identical numeric versions are retained. Other versions are omitted with an explicit note about the deprecated field.
-The report shows an absolute template destination with complete file YAML and lists absolute instance source paths.
-It requires artifact publication and environment updates before source removal.
+The report shows an absolute template destination with complete file YAML and lists relative instance source paths.
+These copies can be removed once the environments use a template that contains the ParameterSet.
 It shows each participant's complete reference list as an unchanged binding, rather than replacement YAML.
 Files spanning several finding scopes remain partial recommendations.
 See the [relocation design](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-place12-paramset-relocation-design.md).
@@ -229,7 +229,9 @@ namespaces:
 Descriptor overrides merge before ParameterSet processing. Primitive references append without duplicates.
 Instance-specific references are attached later. A distinct proposed name avoids repeating the instance reference.
 Resolved and portable recipes include an instance cleanup step after publication, environment updates, and generation
-checks. List exact source files, positions, and YAML paths for the accepted entries only.
+checks. The recipe names each instance file once and lists YAML paths for the accepted entries.
+Files with the same path set share one list. A map is named once when every child is removed, and a remaining sibling
+keeps the leaf paths. Exact line and column positions stay in the finding locations.
 Keep literal dotted keys distinct from nested paths and retain Application indices.
 Withhold removal for anchored occurrences and physical sources selected by consumers outside the proposal's scope.
 Whole-file relocation retains its complete-source removal instructions. Existing-file merges propose key removal.
@@ -251,9 +253,9 @@ so INT-2 can report Review for a binding whose file exists only in a template ar
 
 ## Incomplete inputs
 
-The engine withholds PLACE-12 candidates whenever discovery reports selected ParameterSet, passport, or
-instance-definition read failures that make merge inputs incomplete. Located `Check skipped:` entries remain
-available in reports. Independent rules continue. See the
+A failed read of a selected ParameterSet, Cloud Passport, or environment definition is recorded as a
+located `Check skipped:` entry. PLACE-12 still compares environments whose selected inputs were read.
+Independent rules continue. See the
 [input error algorithm](/modules/envgene-linter/docs/algorithms/input-errors.md).
 
 Within a comparable group, missing, invalid, unavailable, or unrendered selected ParameterSets block the group.

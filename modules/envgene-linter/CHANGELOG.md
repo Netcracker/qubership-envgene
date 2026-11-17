@@ -12,6 +12,9 @@
 
 ## Unreleased
 
+- Keep PLACE-12 comparisons for environments whose inputs were read when another selected file or
+  environment definition cannot be parsed. A comparable group still stays silent when one of its own
+  environments has an unavailable input. PLACE-1 promotion remains withheld for incomplete merge inputs.
 - Resolve supported PLACE-12 ParameterSet reference expressions from each environment's local data.
    Continue recipes for unconditional lists followed by unrelated Jinja, and explain blocked proposals with source locations.
 

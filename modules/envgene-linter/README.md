@@ -341,8 +341,10 @@ Merge that fragment into its selected entry, retaining other fields and referenc
 Unresolved or inherited context receives an explanation.
 Without the option, choose an unused name for `<shared-paramset-name>` and retain the existing references and fields.
 The report explains how to connect the ParameterSet without naming uninspected destination files.
-Resolved and portable recipes list the exact instance files, positions, and YAML paths to remove after publication,
-environment updates, and generation checks. Conflicting entries and entries with uncertain cleanup remain in instance.
+Resolved and portable recipes name each instance file once and list the YAML paths to remove after publication,
+environment updates, and generation checks. Exact positions stay in the finding locations. Files that share a path set
+use one list, and a map is named once when every child is removed. Conflicting entries and entries with uncertain
+cleanup remain in instance.
 Whole-file deletion is proposed only for eligible complete relocation.
 Template-only references can retain INT-2 Review because the shared reference resolver remains instance-only.
 See the [PLACE-12 algorithm](/modules/envgene-linter/docs/algorithms/place12.md).

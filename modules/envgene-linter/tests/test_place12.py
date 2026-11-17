@@ -530,6 +530,43 @@ def test_selected_parameter_read_failure_is_visible_for_place12(repo):
     )
 
 
+def test_unreadable_parameter_set_outside_the_group_keeps_other_candidates(repo):
+    from envgene_linter.engine import run_check
+
+    first = _env(repo, "cluster-01")
+    second = _env(repo, "cluster-02")
+    broken = _env(
+        repo, "cluster-03", template="platform", artifact="other-env-templates:1.0.0"
+    )
+    broken.write_text("parameters: [\n")
+    result = run_check(repo.root)
+    findings = [finding for finding in result.findings if finding.rule == "PLACE-12"]
+    assert len(findings) == 1
+    assert {location.path for location in findings[0].file_locations()} == {first, second}
+    assert any(
+        check.rule == "PLACE-12" and check.path == broken
+        for check in result.skipped_checks
+    )
+
+
+def test_unreadable_environment_definition_keeps_other_place12_candidates(repo):
+    from envgene_linter.engine import run_check
+
+    first = _env(repo, "cluster-01")
+    second = _env(repo, "cluster-02")
+    _env(repo, "cluster-03", template="platform", artifact="other-env-templates:1.0.0")
+    definition = repo.root / "environments/cluster-03/env-01/Inventory/env_definition.yml"
+    definition.write_text("inventory: [\n")
+    result = run_check(repo.root)
+    findings = [finding for finding in result.findings if finding.rule == "PLACE-12"]
+    assert len(findings) == 1
+    assert {location.path for location in findings[0].file_locations()} == {first, second}
+    assert any(
+        check.rule == "PLACE-12" and check.path == definition
+        for check in result.skipped_checks
+    )
+
+
 @pytest.mark.parametrize("second_cluster", ["cluster-01", "cluster-02"])
 def test_place12_findings_reach_html_and_six_field_json_reports(repo, second_cluster):
     from html import escape
@@ -964,7 +1001,20 @@ def test_complete_paramset_relocation_preserves_the_existing_binding(
     assert "Descriptor YAML:" not in hint
     assert "Edit file:" not in hint
     assert "No descriptor override is needed." in hint
-    assert all(f"- {path}\n" in hint for path in files)
+    assert "Publish the updated template artifact" not in hint
+    assert "Review actual generation" not in hint
+    assert "Published artifact equivalence" not in hint
+    assert "INT-2 can retain Review" not in hint
+    assert (
+        "3. These copies can be removed once the environments use a template "
+        "that contains this ParameterSet:\n"
+    ) in hint
+    assert (
+        "Keep the references shown above. They select this ParameterSet "
+        "after the file moves into the template."
+    ) in hint
+    assert all(f"- {path.relative_to(repo.root).as_posix()}\n" in hint for path in files)
+    assert all(f"- {path}\n" not in hint for path in files)
     payload = parse_yaml(hint.split("ParameterSet YAML:\n", 1)[1].split("\n\n", 1)[0])
     assert payload == {
         "name": "params",

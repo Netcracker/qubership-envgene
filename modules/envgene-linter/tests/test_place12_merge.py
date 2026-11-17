@@ -5,6 +5,8 @@ from ruamel.yaml import YAML
 from test_place12 import _env, _relocation_template
 
 from envgene_linter.engine import run_check
+from envgene_linter.html_report import render_html
+from envgene_linter.report import render_json
 
 REMOVED = (
     "Later ParameterSets override earlier values.",
@@ -67,12 +69,18 @@ def test_cleanup_identifies_exact_source_paths(
     hint = _findings(repo, template)[0].hint
     assert not any(text in hint for text in REMOVED)
     cleanup = hint.split("Instance repository changes:\n", 1)[1]
-    assert "Publish" in cleanup and "verify generation" in cleanup
+    assert (
+        "Publish the updated template artifact, update the participating environments, and verify generation."
+        not in hint
+    )
     prefix = 'applications[0]["parameters"]' if application else "parameters"
     for source in sources:
-        assert str(source) + ":" in cleanup
-    assert prefix + '["NESTED"]["common"]' in cleanup
+        assert source.relative_to(repo.root).as_posix() in cleanup
+        assert f"{source}:" not in cleanup
+    assert prefix + '["NESTED"]' in cleanup
+    assert prefix + '["NESTED"]["common"]' not in cleanup
     assert prefix + '["NESTED.common"]' in cleanup
+    assert cleanup.count(prefix + '["NESTED.common"]') == 1
     assert '["LOCAL"]' not in cleanup
 
 
@@ -123,6 +131,81 @@ def test_conflicts_keep_instance_entries_without_fallback_file(
     assert _yaml(hint)["parameters"] == {"ADD": "shared"}
     cleanup = hint.split("Instance repository changes:\n", 1)[1]
     assert '["ADD"]' in cleanup and '["CONFLICT"]' not in cleanup
+
+
+def test_cleanup_lists_each_shared_key_once_and_keeps_partial_fields(repo, tmp_path):
+    sources = [
+        _env(
+            repo,
+            cluster,
+            params={
+                "EMAIL": "same",
+                "APP_FOLDERING_MAPPING": {"Product": "one", "Project": "two"},
+                "ATP_PARAMS_FILE": {
+                    "url": "https://example.test/repo.git",
+                    "branch": "master",
+                    "filePath": f"{cluster}/atp.yaml",
+                },
+                "LOCAL": cluster,
+            },
+        )
+        for cluster in ("cluster-01", "cluster-02")
+    ]
+    template = _relocation_template(tmp_path)
+    result = run_check(repo.root, template_repo=template)
+    finding = next(item for item in result.findings if item.rule == "PLACE-12")
+    cleanup = finding.hint.split("Instance repository changes:\n", 1)[1]
+    instruction = (
+        "Remove the keys below from the files above. "
+        "Keep other parameters and their existing ParameterSet references."
+    )
+    assert "Remove only these keys" not in cleanup
+    assert cleanup.count(instruction) == 1
+    first_file = sources[0].relative_to(repo.root).as_posix()
+    assert cleanup.index(first_file) < cleanup.index(instruction) < cleanup.index("Remove the whole key:")
+    assert "Remove the whole key:" in cleanup
+    assert "Remove only these fields; keep the rest of the key:" in cleanup
+    assert 'parameters["APP_FOLDERING_MAPPING"]' in cleanup
+    assert 'parameters["APP_FOLDERING_MAPPING"]["Product"]' not in cleanup
+    assert 'parameters["ATP_PARAMS_FILE"]["url"]' in cleanup
+    assert 'parameters["ATP_PARAMS_FILE"]["branch"]' in cleanup
+    assert 'parameters["ATP_PARAMS_FILE"]["filePath"]' not in cleanup
+    assert '["LOCAL"]' not in cleanup
+    assert cleanup.count('parameters["EMAIL"]') == 1
+    for source in sources:
+        assert source.relative_to(repo.root).as_posix() in cleanup
+    html = render_html(result.findings, repo.root)
+    report = json.loads(render_json(result.findings, repo.root))
+    record = next(item for item in report if item["rule_id"] == "PLACE-12")
+    assert "Remove the keys below from the files above." in record["fix_suggestion"]
+    assert "Remove the whole key:" in record["fix_suggestion"]
+    assert "Remove YAML path:" not in record["fix_suggestion"]
+    assert any(item.rsplit(":", 2)[-2].isdigit() for item in record["files"])
+    assert "Remove the whole key:" in html
+    assert f"All {len(record['files'])} source positions" in html
+
+
+def test_cleanup_keeps_a_map_when_one_file_retains_a_sibling(repo, tmp_path):
+    complete = _env(
+        repo, "cluster-01", params={"APP": {"A": "shared"}, "LOCAL": "cluster-01"}
+    )
+    partial = _env(
+        repo,
+        "cluster-02",
+        params={"APP": {"A": "shared", "extra": "local"}, "LOCAL": "cluster-02"},
+    )
+    template = _relocation_template(tmp_path)
+    cleanup = _findings(repo, template)[0].hint.split("Instance repository changes:\n", 1)[1]
+    complete_block, partial_block = cleanup.split("Files:\n", 1)[1].split("Files:\n")
+    instruction = "Remove the keys below from the files above."
+    assert complete_block.index(complete.relative_to(repo.root).as_posix()) < complete_block.index(instruction)
+    assert partial_block.index(partial.relative_to(repo.root).as_posix()) < partial_block.index(instruction)
+    assert complete.relative_to(repo.root).as_posix() in complete_block
+    assert 'parameters["APP"]' in complete_block
+    assert 'parameters["APP"]["A"]' not in complete_block
+    assert partial.relative_to(repo.root).as_posix() in partial_block
+    assert 'parameters["APP"]["A"]' in partial_block
+    assert "\n- parameters[\"APP\"]\n" not in partial_block
 
 
 def test_equal_values_are_reused_without_empty_merge_or_duplicate_reference(
@@ -357,13 +440,15 @@ def test_json_instance_cleanup_uses_exact_json_key_coordinates(
         file.write_text(text)
         sources.append(file)
     template = _relocation_template(tmp_path) if with_template else None
-    hint = _findings(repo, template)[0].hint
-    cleanup = hint.split("Instance repository changes:\n")[1]
+    finding = _findings(repo, template)[0]
+    cleanup = finding.hint.split("Instance repository changes:\n")[1]
     for file in sources:
-        # The JSON key is on line 4, indented by four spaces.
-        assert f"{file}:4:5" in cleanup
+        assert file.relative_to(repo.root).as_posix() in cleanup
+        assert f"{file}:4:5" not in cleanup
     assert 'parameters["SETTING"]' in cleanup
-    assert "Cleanup Review:" not in hint
+    assert cleanup.count('parameters["SETTING"]') == 1
+    assert (4, 5) in {(loc.line, loc.column) for loc in finding.file_locations()}
+    assert "Cleanup Review:" not in finding.hint
 
 
 @pytest.mark.parametrize("existing", [False, True])

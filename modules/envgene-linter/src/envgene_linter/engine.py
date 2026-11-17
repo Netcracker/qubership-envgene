@@ -115,7 +115,7 @@ def _run_check(root: Path, problems: list[ReadProblem], template_repo: Path | No
     findings = []
     for rule, check, args in checks:
         if rule not in disabled:
-            if rule in {'PLACE-1', 'PLACE-12'} and incomplete_merge:
+            if rule == 'PLACE-1' and incomplete_merge:
                 continue
             findings.extend(run(rule, check, args))
     return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,

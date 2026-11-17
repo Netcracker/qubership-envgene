@@ -342,9 +342,7 @@ def check(
                     hint = ""
                     pending.append((len(findings), merge, scope, entries))
                 elif relocation is not None:
-                    hint = build_relocation_hint(
-                        relocation, scope, context=context, instance_root=index.root
-                    )
+                    hint = build_relocation_hint(relocation, scope, context=context)
                 else:
                     hint = build_template_default_hint(
                         name,

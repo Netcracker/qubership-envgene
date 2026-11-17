@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from io import StringIO
-from pathlib import Path
 from typing import Any
 
 from ruamel.yaml import YAML
@@ -60,7 +59,6 @@ def build_relocation_hint(
     scope: Scope,
     *,
     context: TemplateContext,
-    instance_root: Path,
 ) -> str:
     field = f"envTemplate.{scope.category.binding_field}.{scope.target}"
     bindings = "\n".join(
@@ -79,11 +77,9 @@ def build_relocation_hint(
         f"Existing reference lists (no edits required):\n{bindings}\n\n"
         "No descriptor override is needed. Only environments selecting this reference use the ParameterSet.\n\n"
         "Instance repository changes:\n"
-        "3. Publish the updated template artifact and update the participating environments before removing these copies:\n"
-        + "\n".join(f"- {instance_root / path}" for path in proposal.sources)
-        + "\n\nReview actual generation and other template consumers before removing source files.\n"
-        "Local source comparison only. Published artifact equivalence remains unverified.\n"
-        "INT-2 can retain Review for template-only references until their sources are resolved."
+        "3. These copies can be removed once the environments use a template that contains this ParameterSet:\n"
+        + "\n".join(f"- {path}" for path in proposal.sources)
+        + "\n\nKeep the references shown above. They select this ParameterSet after the file moves into the template."
     )
 
 
@@ -200,8 +196,7 @@ def _portable_template_hint(
             recipe += "If cloud is a path string, convert it to object form with the same value in template_path.\n"
         recipe += (
             f'\nReference item to append:\n- "{shared_name}"\n\n'
-            "3. Publish the updated template artifact, update the participating environments, and verify generation.\n"
-            "Then remove only the shown duplicate parameter entries from the instance ParameterSets.\n"
+            "3. Remove only the shown duplicate parameter entries from the instance ParameterSets.\n"
             "Keep other parameters and their existing ParameterSet references.\n\n"
         )
     return (
