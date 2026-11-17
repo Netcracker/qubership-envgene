@@ -475,21 +475,28 @@ def dispatch() -> int:
 
     # main process
     env_names = prepare_job()
+    pipeline_status = 0
     try:
         if len(env_names) == 1:
             run_single_env_pipeline()
-            return 0
-
-        os.environ["ENV_NAMES"] = env_names[0]
-        if os.getenv("METRICS_COLLECTOR_URL", "").strip():
-            resolve_trace_id()
-        handler = PipelineParametersHandler.from_env()
-        handler.write_dotenv(exclude_keys={"ENV_NAMES"})
-
-        return run_multi_env_pipeline(env_names)
+        else:
+            os.environ["ENV_NAMES"] = env_names[0]
+            if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+                resolve_trace_id()
+            handler = PipelineParametersHandler.from_env()
+            handler.write_dotenv(exclude_keys={"ENV_NAMES"})
+            pipeline_status = run_multi_env_pipeline(env_names)
     finally:
         work_dir = Path(getenv("CI_PROJECT_DIR"))
         finalize_artifacts(artifacts_output_root(work_dir), get_artifact_size_limit_mb())
+
+    if pipeline_status != 0:
+        return pipeline_status
+
+    pipeline_extension = PluginEngine(plugins_dir='/module/scripts/plugins/after_orchestrator')
+    if pipeline_extension.modules:
+        pipeline_extension.run()
+    return 0
 
 
 def _format_duration(duration_ms: int | None) -> str:
