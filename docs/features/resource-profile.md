@@ -108,6 +108,16 @@ envTemplate:
     <namespace-folder-name>: <env-specific-override-name>
 ```
 
+The value is usually one name. A list of names applies the overrides in list order, the last on top:
+
+```yaml
+envTemplate:
+  envSpecificResourceProfiles:
+    <namespace-folder-name>:
+      - <shared-override-name>
+      - <deploy-postfix>-profile-override
+```
+
 Once a name is referenced, EnvGene resolves it to a file by searching the Instance repository in the
 following order, from the most specific scope to the least specific. The first match wins, so the same
 name resolves to the most specific file available:
@@ -126,6 +136,7 @@ Namespace in the template, EnvGene attaches the override to the object directly.
 ### Merge and replace
 
 When an environment-specific override is present, it is merged with or replaces the template override.
+A list of overrides is first merged in list order into one.
 The mode is controlled by `inventory.config.mergeEnvSpecificResourceProfiles` in the
 [Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
 
@@ -143,7 +154,8 @@ inventory:
 When `mergeEnvSpecificResourceProfiles` is `false`, the environment-specific override completely
 replaces the template override. The resulting
 [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) takes the name of the
-environment-specific override.
+environment-specific override, or of the last listed override for a list. The override that
+[`PROFILE`](#selecting-a-profile-at-deployment) creates is the exception: it is merged on top of the result.
 
 Replace mode is how you change the baseline for an environment. Because replace drops the template override,
 the custom values bound to the old baseline are not carried onto the new one.
@@ -209,16 +221,13 @@ applications:
 
 `app-a` uses `prod`. `app-b` uses `dev`.
 
-> [!NOTE]
-> In the CMDB flow, CMDB import rejects a Resource Profile Override that sets an application-level baseline, and a
-> deployment with `PROFILE` fails.
-
 ## Selecting a profile at deployment
 
 [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) sets the baseline for every application the run
 deploys. EnvGene saves it as the [application-level baseline](#application-level-baseline) in the
-environment-specific override of each Namespace and commits it. When the Namespace references a shared override,
-EnvGene first copies it into the environment, and the Namespace stops receiving changes to the shared file. See step
+environment-specific override `<deploy-postfix>-profile-override` and adds it as the last item of the
+Namespace key in `envTemplate.envSpecificResourceProfiles`. The origin and peer Namespaces of a Blue-Green pair share
+this override. The other overrides of the Namespace stay unchanged and apply under it. See step
 [`apply_deployment_profile`](/docs/technical-design/instance-pipeline/steps/apply-deployment-profile.md).
 
 ## Effective Set calculation: resolving the profile

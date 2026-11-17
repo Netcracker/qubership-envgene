@@ -158,22 +158,30 @@ Domain, Profiles, and credential files.
    6. The step combines resource profile overrides for the rendered Cloud and Namespace objects, writing
       one result file per object under `tmp/render/<env-name>/Profiles/`.
 
-      1. **Resolve the file.** For each `envTemplate.envSpecificResourceProfiles` entry, the step
-         resolves the referenced name to a file, searching the environment `resource_profiles/` folder,
-         then the cluster scope, then the global scope, and taking the first match.
+      1. **Resolve the files.** For each `envTemplate.envSpecificResourceProfiles` entry, the step
+         resolves each referenced name to a file, searching the environment `resource_profiles/` folder,
+         then the cluster scope, then the global scope, and taking the first match. The value of an entry
+         is a name or a list of names.
 
-      2. **Merge mode** (`mergeEnvSpecificResourceProfiles: true`, the default) forms a name-keyed union
+      2. **Combine a list.** When the entry is a list, the step merges the listed overrides in list
+         order, the last on top, by the rules of merge mode. The step uses the result as the
+         environment-specific override of the object. The listed overrides stay unchanged.
+
+      3. **Merge mode** (`mergeEnvSpecificResourceProfiles: true`, the default) forms a name-keyed union
          of the template override and the environment-specific override across the application, service,
          and parameter levels. Entries on one side are kept, entries on both are merged, and on a leaf
-         value and on the top-level `baseline` the environment-specific value wins. On the `baseline` of an
-         application entry the environment-specific value wins too. Nothing is removed, and the result keeps
-         the template override name.
+         value and on the top-level `baseline` the environment-specific value wins. The `baseline` of an
+         application entry comes from the environment-specific override. Nothing is removed, and the result
+         keeps the template override name.
 
-      3. **Replace mode** (`mergeEnvSpecificResourceProfiles: false`) replaces the template override in
-         full with the environment-specific override. The result keeps the environment-specific name.
+      4. **Replace mode** (`mergeEnvSpecificResourceProfiles: false`) replaces the template override in
+         full with the environment-specific override. The `<deploy-postfix>-profile-override` item
+         does not replace: the step merges it on top of the result. The result keeps the name of the
+         environment-specific override, or of the last listed override for a list.
 
-      4. **Standalone override.** An environment-specific override that references no template profile on
-         its object is attached to that object.
+      5. **Standalone override.** An environment-specific override of an object without a template
+         profile is attached to that object. The result keeps the name of the environment-specific
+         override, or of the last listed override for a list.
 
       The `generate_effective_set` step reads these files during effective set generation. See
       [resource profiles](/docs/features/resource-profile.md) for the end-to-end model.

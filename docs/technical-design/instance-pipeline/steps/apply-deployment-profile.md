@@ -12,52 +12,45 @@
 
 ## Description
 
-The `apply_deployment_profile` step sets the baseline of each deployed application in the
-environment-specific Resource Profile Override of its Namespace, under
-`environments/<cluster-name>/<env-name>/Inventory/`.
+The `apply_deployment_profile` step creates or updates
+`environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<deploy-postfix>-profile-override.yml`
+with the `PROFILE` baseline of each deployed application, and references it in
+`envTemplate.envSpecificResourceProfiles`. For the concept, see
+[Selecting a profile at deployment](/docs/features/resource-profile.md#selecting-a-profile-at-deployment).
 
 - **Runs when**: `OPERATION_TYPE` is `DEPLOY`, `PROFILE` is set and not empty, and, at `PIPELINE_TYPE: LEGACY`,
-  `SD_VERSION` or `SD_DATA` is set. Otherwise the Instance pipeline skips the step. When `PROFILE` is set and the
-  step is skipped, the Instance pipeline logs a warning that `PROFILE` has no effect.
-- **Used by**:
-  - [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md) combines the updated overrides into
-    the Resource Profile Override of each Namespace.
-  - [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md) applies
-    the application-level baseline to the services of each application.
-
-  At `PIPELINE_TYPE: LEGACY`, `env_build` runs only with `ENV_BUILDER: true` and `generate_effective_set` only with
-  `GENERATE_EFFECTIVE_SET: true`. Without them, the Effective Set gets the stored baseline in the first later run
-  that sets them.
+  `SD_VERSION` or `SD_DATA` is set, `ENV_BUILDER` is `true`, and `GENERATE_EFFECTIVE_SET` is `true`. Otherwise the
+  Instance pipeline skips the step and logs a warning when `PROFILE` is set.
+- **Used by**: [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md).
 
 ## Input parameters
 
-| Parameter                                                                | Source   | Required | Default  | Values / format             | Effect                                                                                    |
-| ------------------------------------------------------------------------ | -------- | -------- | -------- | --------------------------- | ----------------------------------------------------------------------------------------- |
-| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)           | Pipeline | Yes      | None     | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                         |
-| [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type)   | Pipeline | No       | `LEGACY` | `GITLAB_DEPLOY`, `LEGACY`   | Selects the file the step reads the deployed applications from                            |
-| [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type) | Pipeline | No       | `DEPLOY` | `DEPLOY`                    | The step runs only when value is `DEPLOY`                                                 |
-| [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)               | Pipeline | No       | None     | Baseline name               | The step runs only when set and not empty                                                 |
-| [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version)         | Pipeline | No       | None     | `<application>:<version>`   | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_DATA` are both not set    |
-| [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import)       | Pipeline | No       | `false`  | `true`, `false`             | When `true`, the step fails                                                               |
-| [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data)               | Pipeline | No       | None     | SD content in JSON          | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_VERSION` are both not set |
+| Parameter                                                                                | Source   | Required | Default  | Values / format             | Effect                                                                                    |
+| ---------------------------------------------------------------------------------------- | -------- | -------- | -------- | --------------------------- | ----------------------------------------------------------------------------------------- |
+| [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)                           | Pipeline | Yes      | None     | `<cluster-name>/<env-name>` | Selects `environments/<cluster-name>/<env-name>/`                                         |
+| [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type)                   | Pipeline | No       | `LEGACY` | `GITLAB_DEPLOY`, `LEGACY`   | Selects the file the step reads the deployed applications from                            |
+| [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type)                 | Pipeline | No       | `DEPLOY` | `DEPLOY`                    | The step runs only when value is `DEPLOY`                                                 |
+| [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)                               | Pipeline | No       | None     | Baseline name               | The step runs only when set and not empty                                                 |
+| [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version)                         | Pipeline | No       | None     | `<application>:<version>`   | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_DATA` are both not set    |
+| [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data)                               | Pipeline | No       | None     | SD content in JSON          | At `PIPELINE_TYPE: LEGACY`, the step is skipped when it and `SD_VERSION` are both not set |
+| [`ENV_BUILDER`](/docs/instance-pipeline-parameters.md#env_builder)                       | Pipeline | No       | `false`  | `true`, `false`             | At `PIPELINE_TYPE: LEGACY`, the step is skipped when not `true`                           |
+| [`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set) | Pipeline | No       | `false`  | `true`, `false`             | At `PIPELINE_TYPE: LEGACY`, the step is skipped when not `true`                           |
 
 ## Repository inputs
 
-| File                                                                     | Object                                                                                                                    | What the step uses                                                                                       |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml` | Deployment plan delta of the run                                                                                          | `version`, `deployPostfix`, `namespace` of each entry. Written earlier in the same run and not committed |
-| `environments/<cluster-name>/<env-name>/Inventory/deploy-plan.yml`       | Full deployment plan                                                                                                      | The same fields. Only at `PIPELINE_TYPE: LEGACY` when the delta has no entries                           |
-| `environments/<cluster-name>/<env-name>/bg_domain.yml`                   | [BG Domain](/docs/envgene-objects.md#bg-domain)                                                                           | `originNamespace.name`, `peerNamespace.name`. Only when the file exists                                  |
-| `environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`    | [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)                                                       | `envTemplate.envSpecificResourceProfiles`                                                                |
-| [Resource profile locations](/docs/envgene-configs.md#resource-profiles) | [Environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override) | The file each referenced name resolves to. `name`, `applications[].name`, `applications[].baseline`      |
+| File                                                                                                              | Object                                                              | What the step uses                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `environments/<cluster-name>/<env-name>/Inventory/delta-deploy-plan.yml`                                          | Deployment plan delta of the run                                    | `version`, `deployPostfix`, `namespace` of each entry. Written earlier in the same run and not committed |
+| `environments/<cluster-name>/<env-name>/Inventory/deploy-plan.yml`                                                | Full deployment plan                                                | The same fields. Only at `PIPELINE_TYPE: LEGACY` when the delta has no entries                           |
+| `environments/<cluster-name>/<env-name>/bg_domain.yml`                                                            | [BG Domain](/docs/envgene-objects.md#bg-domain)                     | `originNamespace.name`, `peerNamespace.name`. Only when the file exists                                  |
+| `environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`                                             | [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) | `envTemplate.envSpecificResourceProfiles`                                                                |
+| `environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<deploy-postfix>-profile-override.yml`        | PROFILE override                                                    | `applications[].name`, `applications[].baseline`. Only when the file exists                              |
 
 ## Processing flow
 
 1. **Read the selected profile**
 
    1. The step reads `PROFILE` without leading and trailing spaces as **selected baseline**.
-
-   2. When `CMDB_IMPORT` is `true`, the step fails.
 
 2. **Collect the deployed applications**
 
@@ -70,116 +63,98 @@ environment-specific Resource Profile Override of its Namespace, under
 
    4. For each entry, the step takes `deployPostfix` and `namespace`.
 
-3. **Determine `<namespace-folder-name>` of each application**
+3. **Determine `<deploy-postfix>` and `<namespace-folder-name>` of each application**
 
-   1. The step takes entry `deployPostfix` as `<namespace-folder-name>`, the key of the Namespace in
+   1. The step takes entry `deployPostfix` without a trailing `-origin` or `-peer` as `<deploy-postfix>`, the
+      name part of the PROFILE override.
+
+   2. The step takes `<deploy-postfix>` as `<namespace-folder-name>`, the key of the Namespace in
       `envTemplate.envSpecificResourceProfiles`.
 
-   2. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists, entry `namespace` equals
-      `originNamespace.name`, and `<namespace-folder-name>` does not end with `-origin`, the step adds `-origin`.
+   3. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists and entry `namespace` equals
+      `originNamespace.name`, the step adds `-origin` to `<namespace-folder-name>`.
 
-   3. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists, entry `namespace` equals
-      `peerNamespace.name`, and `<namespace-folder-name>` does not end with `-peer`, the step adds `-peer`.
+   4. When `environments/<cluster-name>/<env-name>/bg_domain.yml` exists and entry `namespace` equals
+      `peerNamespace.name`, the step adds `-peer` to `<namespace-folder-name>`.
 
-   4. The step groups the application names by `<namespace-folder-name>` as **deployed applications**.
+   5. The step groups the application names by `<deploy-postfix>` and `<namespace-folder-name>` as
+      **deployed applications**.
 
-4. **Find the override of each `<namespace-folder-name>`**
+4. **Write the PROFILE override**
 
-   For each `<namespace-folder-name>` in **deployed applications**:
+   For each `<deploy-postfix>` in **deployed applications**:
 
-   1. The step reads Environment Inventory `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`.
+   1. When the file
+      `environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<deploy-postfix>-profile-override.yml`
+      does not exist:
+      1. The step creates the file with a header comment: the file is generated by EnvGene from `PROFILE`, with a
+         link to [Selecting a profile at deployment](/docs/features/resource-profile.md#selecting-a-profile-at-deployment).
+      2. The step sets `name` in the file to `<deploy-postfix>-profile-override`.
 
-   2. When the key is not set, the Namespace has no override. The step skips substeps 3 to 8 for this
-      `<namespace-folder-name>`.
+   2. When the file exists, the step changes it in place.
 
-   3. The step takes the value of the key as **override name**.
+   3. For each application of `<deploy-postfix>`, when the file has an `applications[]` entry with the same
+      `name`, the step sets its `baseline` to **selected baseline**.
 
-   4. The step searches for file `<override name>.yml` or `<override name>.yaml` in the
-      [resource profile locations](/docs/envgene-configs.md#resource-profiles), in their priority order, and takes the
-      first match as **override file**.
+   4. For each application of `<deploy-postfix>`, when the file has no such entry, the step adds an entry with
+      `name` and `baseline`.
 
-   5. When no **override file** is found, the step fails.
+   The other `applications[]` entries stay unchanged.
 
-   6. When **override file** is in `environments/<cluster-name>/` or `environments/`, the override is shared (other
-      environments can use this file).
+5. **Reference the PROFILE override**
 
-   7. When another key of `envTemplate.envSpecificResourceProfiles` has the value **override name**, the override is
-      shared (another Namespace uses this file).
+   For each `<namespace-folder-name>` in **deployed applications**, the step reads Environment Inventory
+   `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`:
 
-   8. Otherwise the override is owned by the Namespace.
+   1. When the key is not set, the step sets it to `<deploy-postfix>-profile-override`.
 
-5. **Set the baseline**
+   2. When the key is a string other than `<deploy-postfix>-profile-override`, the step replaces it with a list:
+      the string, then `<deploy-postfix>-profile-override`.
 
-   For each `<namespace-folder-name>` in **deployed applications**:
+   3. When the key is a list without `<deploy-postfix>-profile-override`, the step adds
+      `<deploy-postfix>-profile-override` to the end of the list.
 
-   1. When the Namespace has no override:
-      1. The step creates file
-         `environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<namespace-folder-name>-deployment-profile.yml`.
-         When a file with this name exists, the step replaces it.
-      2. The step sets `name` in the created file to `<namespace-folder-name>-deployment-profile`.
-      3. The step sets `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` to
-         `<namespace-folder-name>-deployment-profile` in `env_definition.yml`.
+   4. When the key is a list with `<deploy-postfix>-profile-override` not as the last item, the step moves it to
+      the end of the list.
 
-   2. When the override is shared:
-      1. The step creates the same file with the content of **override file**. **override file** stays unchanged.
-      2. The step sets `name` in the created file to `<namespace-folder-name>-deployment-profile`.
-      3. The step sets `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` to
-         `<namespace-folder-name>-deployment-profile` in `env_definition.yml`.
+   5. When the key already references `<deploy-postfix>-profile-override` as its only value or last item, the step
+      changes nothing.
 
-   3. When the override is owned, the step changes **override file** in place. The step creates no file and does not
-      change `env_definition.yml`.
-
-   4. For each application of `<namespace-folder-name>`, when the created file or the owned **override file** has an
-      `applications[]` entry with the same `name`, the step sets its `baseline` to **selected baseline**.
-
-   5. For each application of `<namespace-folder-name>`, when the file has no such entry, the step adds an entry
-      with `name` and `baseline`.
-
-   The other `applications[]` entries, `services`, and the top-level `baseline` stay unchanged.
+   The other keys of `envTemplate.envSpecificResourceProfiles` and the files they reference stay unchanged.
 
 ## Result
 
-1. Each Namespace the run deploys to references an override in
-   `environments/<cluster-name>/<env-name>/Inventory/`. The override sets `applications[].baseline` to
-   **selected baseline** for every deployed application of the Namespace.
+1. Each `<deploy-postfix>` the run deploys to has a PROFILE override that sets `applications[].baseline` to
+   **selected baseline** for every deployed application. The origin and peer Namespaces of a Blue-Green pair share
+   one PROFILE override.
 
-2. A created or copied override is named `<namespace-folder-name>-deployment-profile`, and
-   `environments/<cluster-name>/<env-name>/Inventory/env_definition.yml` references it.
+2. `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>` references the PROFILE override as its last
+   item.
 
-3. When `inventory.config.mergeEnvSpecificResourceProfiles` is `false`, a created override replaces the template
-   override of the Namespace during [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md).
-
-4. Shared overrides and overrides of Namespaces the run does not deploy to are unchanged.
+3. Other Resource Profile Overrides are unchanged.
 
 A repeated run with the same `PROFILE` and the same deployed applications produces no change.
 
 ## Error handling
 
-The step writes to the repository only in block 5. A failure in blocks 1 to 4 leaves the repository
-unchanged. The [`git_commit`](/docs/technical-design/instance-pipeline/flow.md) step does not run after a failure,
-so no change from this run is committed. At `PIPELINE_TYPE: LEGACY`, when `ENV_NAMES` lists several environments,
-the step runs for each environment separately. An environment where the step fails commits nothing.
+The step writes to the repository only in blocks 4 and 5. The
+[`git_commit`](/docs/technical-design/instance-pipeline/flow.md) step does not run after a failure, so no change
+from this run is committed. At `PIPELINE_TYPE: LEGACY`, when `ENV_NAMES` lists several environments, the step runs
+for each environment separately. An environment where the step fails commits nothing.
 
-**1a.** The step fails when `CMDB_IMPORT` is `true`. The error is `PROFILE and CMDB_IMPORT cannot be used
-together`.
+The name `<deploy-postfix>-profile-override` is reserved for the step. Do not create files with this name.
 
-**4a.** The step fails when no file matches the name in
-`envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`.
-
-The name `<namespace-folder-name>-deployment-profile` is reserved for the step. Do not create files with this name.
-
-The step logs a warning and continues in this case:
-
-- The override is shared and the step copies it. The Namespace stops using the shared file, so later changes to that
-  file do not reach it. The warning names `<namespace-folder-name>`, **override file**, and the created file.
+The step logs no warnings.
 
 ## Example
 
-Override of Namespace `bss` after a run with `PROFILE: prod` that deploys `app-a` and `app-b`:
+PROFILE override of Namespace `bss` after a run with `PROFILE: prod` that deploys `app-a` and `app-b`:
 
 ```yaml
-# environments/cluster-01/env-01/Inventory/resource_profiles/bss-deployment-profile.yml
-name: bss-deployment-profile
+# environments/cluster-01/env-01/Inventory/resource_profiles/bss-profile-override.yml
+# Generated by EnvGene from the PROFILE pipeline parameter.
+# See /docs/features/resource-profile.md#selecting-a-profile-at-deployment
+name: bss-profile-override
 applications:
   - name: app-a
     baseline: prod
@@ -187,14 +162,22 @@ applications:
     baseline: prod
 ```
 
-Override of Blue-Green Namespace `bss-peer` after a run with `PROFILE: prod` that deploys `app-a`:
+Reference of `bss` before and after the run, when `bss` references the shared override `bss-override`:
 
 ```yaml
-# environments/cluster-01/env-01/Inventory/resource_profiles/bss-peer-deployment-profile.yml
-name: bss-peer-deployment-profile
-applications:
-  - name: app-a
-    baseline: prod
+# environments/cluster-01/env-01/Inventory/env_definition.yml, before
+envTemplate:
+  envSpecificResourceProfiles:
+    bss: bss-override
+```
+
+```yaml
+# environments/cluster-01/env-01/Inventory/env_definition.yml, after
+envTemplate:
+  envSpecificResourceProfiles:
+    bss:
+      - bss-override
+      - bss-profile-override
 ```
 
 ## Related documentation
@@ -204,4 +187,3 @@ applications:
 - [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)
 - [ADR-0012](/docs/adr/0012-select-resource-profile-baseline-per-application-at-deployment.md)
 - [Modern toolset flow](/docs/technical-design/instance-pipeline/flow.md#1141-step-apply_deployment_profile-to-be-implemented-not-implemented-yet)
-- [Version 2: deployment override](/docs/technical-design/instance-pipeline/steps/apply-deployment-profile-v2.md)

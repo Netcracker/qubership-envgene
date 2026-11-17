@@ -323,21 +323,26 @@ Run the deployment with [`PROFILE`](/docs/instance-pipeline-parameters.md#profil
 
 ```text
 ENV_NAMES=cluster-01/env-01
+PIPELINE_TYPE=GITLAB_DEPLOY
 OPERATION_TYPE=DEPLOY
 APPLICATION_VERSIONS=app-a:1.0.0
 PROFILE=prod
 ```
 
-EnvGene sets `baseline: prod` for every application of the deployment and commits the change.
+EnvGene writes `baseline: prod` for every application of the deployment to
+`environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<deploy-postfix>-profile-override.yml`
+and adds this file as the last item of the namespace key in `envSpecificResourceProfiles`:
 
-When the namespace references a shared override (a file outside `environments/<cluster-name>/<env-name>/Inventory/`,
-or a file other namespaces reference too), EnvGene copies it to
-`environments/<cluster-name>/<env-name>/Inventory/resource_profiles/<namespace-folder-name>-deployment-profile.yml`,
-points the namespace to the copy, and logs a warning. From then on the namespace no longer receives changes to the
-shared override. In the CMDB flow, a deployment with `PROFILE` fails.
+```yaml
+envTemplate:
+  envSpecificResourceProfiles:
+    bss:
+      - bss-override
+      - bss-profile-override
+```
 
-To remove the baseline, delete `baseline` of the application from the environment-specific override of the
-namespace. Then commit to the Instance repository and trigger environment generation.
+To remove the baseline, delete the application entry from `<deploy-postfix>-profile-override.yml`. Then commit
+to the Instance repository and trigger environment generation.
 
 > [!WARNING]
 > `PROFILE` applies to every application of the deployment. Deploy the application alone if only it needs the
@@ -372,9 +377,6 @@ baseline, delete it from the override.
 
 **Sample:** an application-level baseline and its `env_definition.yml` -
 `docs/samples/instance-repository/environments/cluster-01/env-05/`.
-
-> [!NOTE]
-> In the CMDB flow, CMDB import rejects an override that sets an application-level baseline.
 
 ## Best practices
 

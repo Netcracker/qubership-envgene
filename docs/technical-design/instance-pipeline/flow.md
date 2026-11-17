@@ -471,7 +471,8 @@ Triggers:
 
 - `OPERATION_TYPE: DEPLOY` and
 - `PROFILE` is set and not empty and
-- `PIPELINE_TYPE: GITLAB_DEPLOY`, or `PIPELINE_TYPE: LEGACY` with `SD_VERSION` or `SD_DATA` set
+- `PIPELINE_TYPE: GITLAB_DEPLOY`, or `PIPELINE_TYPE: LEGACY` with `SD_VERSION` or `SD_DATA` set,
+  `ENV_BUILDER: true`, and `GENERATE_EFFECTIVE_SET: true`
 
 When `PROFILE` is set and the step is skipped, log a warning that `PROFILE` has no effect.
 
@@ -483,20 +484,15 @@ Functions:
       - `delta-deploy-plan.yml`, or `deploy-plan.yml` at `PIPELINE_TYPE: LEGACY` when the delta is empty
       - `bg_domain.yml` for a Blue-Green `deployPostfix`
       - `env_definition.yml` (`envTemplate.envSpecificResourceProfiles`)
-      - environment-specific Resource Profile Overrides
     - output:
-      - updated environment-specific Resource Profile Overrides under `Inventory/`, created ones in
-        `Inventory/resource_profiles/`
-      - updated `env_definition.yml` when an override is created
+      - `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml`, created or updated
+      - updated `env_definition.yml` when the PROFILE override is not the last item of the Namespace key
     - actions:
-      - group the applications of the run delta by `<namespace-folder-name>`: `deployPostfix`, plus `-origin` or
-        `-peer` for a Blue-Green Namespace
-      - find the override of each `<namespace-folder-name>` with the `env_build` search. The override is shared when
-        it is outside the environment `Inventory/` or referenced by several keys
-      - fail when `CMDB_IMPORT` is `true`
-      - create `<namespace-folder-name>-deployment-profile` when none is referenced, copy a shared override into it
-        and reference the copy
-      - set `applications[].baseline` to `PROFILE`
+      - group the applications of the run delta by `<deploy-postfix>`: `deployPostfix` without `-origin` or `-peer`,
+        and by `<namespace-folder-name>`: `<deploy-postfix>`, plus `-origin` or `-peer` for a Blue-Green Namespace
+      - set `applications[].baseline` to `PROFILE` in `<deploy-postfix>-profile-override`
+      - add `<deploy-postfix>-profile-override` as the last item of
+        `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`
 
 #### 1.15 step `env_build`
 
@@ -570,7 +566,11 @@ Functions:
     - AI[techDebt-P1]: prepare a UC, add tests
     - AI[bgd]: Replace `apply_ns_build_filter` with SD-scoped generation. Render only namespaces from the SD,
       then apply file-replace-merge to the committed instance. `NS_BUILD_FILTER` can then be deprecated.
-    - AI[JCPR-3087]: merge `applications[].baseline` of the environment-specific override into the result, and
+    - AI[resource-profile]: accept a list in `envTemplate.envSpecificResourceProfiles.<key>` and combine the listed
+      overrides in list order into a new object, keeping the listed overrides unchanged. In replace mode, merge
+      `<deploy-postfix>-profile-override` on top of the result. For a list, name the result after the last
+      listed override
+    - AI[resource-profile]: merge `applications[].baseline` of the environment-specific override into the result, and
       accept an application entry without `services`
 5. `set_cleaned_mark`
     - triggers:
@@ -637,7 +637,7 @@ Functions:
     - AI[phase1]: remove SD support
     - AI[phase1]: implement uniq app names
     - AI[bgd]: Support the BG case in the ES structure. `<namespace-folder-01>` includes peer and origin postfixes.
-    - AI[JCPR-3087]: in the Calculator CLI, the `applications[].baseline` of the Resource Profile Override takes
+    - AI[resource-profile]: in the Calculator CLI, the `applications[].baseline` of the Resource Profile Override takes
       precedence over every other baseline for the services of that application
 5. `external_credential_provisioning`
     - input:
@@ -738,7 +738,6 @@ Functions:
 1. `cmdb_import`
     - input:
       - `build.env.FULL_ENV_NAME`
-    - AI[JCPR-3087]: fail with a readable error when a Resource Profile Override sets `applications[].baseline`
     - AI[phase1]: do not call in the new flow, call in the old flow
     - AI[phase1!]: add the step into `env_prepare` job
     - AI[phase1]: remove envgene dot env file
