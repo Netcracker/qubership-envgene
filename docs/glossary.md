@@ -1,615 +1,226 @@
 # Glossary
 
 - [Glossary](#glossary)
-  - [Active Side (Resource Profile)](#active-side-resource-profile)
+  - [How to use this glossary](#how-to-use-this-glossary)
   - [Application](#application)
-  - [Application Definition](#application-definition)
-  - [Application SBOM](#application-sbom)
-  - [`appregdef_config.yaml`](#appregdef_configyaml)
-  - [Artifact Definition](#artifact-definition)
+  - [Artifact](#artifact)
   - [Baseline](#baseline)
-  - [BG Domain](#bg-domain)
-  - [BG Side Role](#bg-side-role)
-  - [BG State Files](#bg-state-files)
-  - [`bgNsArtifacts`](#bgnsartifacts)
-  - [Blue-Green Deployment](#blue-green-deployment)
-  - [Calculator CLI](#calculator-cli)
-  - [Cleanup Context](#cleanup-context)
-  - [Cloud](#cloud)
-  - [Cloud Passport](#cloud-passport)
-  - [Cloud Template](#cloud-template)
-  - [Composite Structure](#composite-structure)
-  - [Credential](#credential)
-  - [Credential Reference](#credential-reference)
-  - [Credential Template](#credential-template)
-  - [`current_env`](#current_env)
-  - [Custom Params](#custom-params)
-  - [DCL Repository](#dcl-repository)
-  - [Definition Override](#definition-override)
-  - [Delta SD](#delta-sd)
-  - [Deploy Plan](#deploy-plan)
-  - [Deploy Postfix](#deploy-postfix)
-  - [Deployment Architecture](#deployment-architecture)
+  - [Clean](#clean)
+  - [Context](#context)
+  - [Definition](#definition)
+  - [Delta](#delta)
   - [Deployment Descriptor](#deployment-descriptor)
-  - [Deployment Parameter Context](#deployment-parameter-context)
-  - [`deployParameters`](#deployparameters)
-  - [Discovery Repository](#discovery-repository)
-  - [`e2eParameters`](#e2eparameters)
-  - [Effective Definition](#effective-definition)
-  - [Effective Set](#effective-set)
-  - [`envgeneNullValue`](#envgenenullvalue)
-  - [Environment](#environment)
-  - [Environment Credentials File](#environment-credentials-file)
-  - [Environment Instance](#environment-instance)
-  - [Environment Inventory](#environment-inventory)
-  - [Environment Specific ParameterSet](#environment-specific-parameterset)
-  - [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override)
-  - [Environment Template](#environment-template)
-  - [Environment Template Artifact](#environment-template-artifact)
-  - [Environment Template SBOM](#environment-template-sbom)
-  - [ESO](#eso)
-  - [`eso_support`](#eso_support)
-  - [External Credential Context](#external-credential-context)
-  - [Full SD](#full-sd)
-  - [Instance Pipeline](#instance-pipeline)
-  - [Instance Repository](#instance-repository)
-  - [Macro](#macro)
-  - [Namespace](#namespace)
-  - [Namespace Template](#namespace-template)
-  - [Operation Type](#operation-type)
-  - [ParameterSet](#parameterset)
-  - [Partial Generation](#partial-generation)
-  - [Pipeline Parameter Context](#pipeline-parameter-context)
-  - [Pipeline Type](#pipeline-type)
-  - [Registry Definition](#registry-definition)
-  - [Resource Profile](#resource-profile)
-  - [Resource Profile Override](#resource-profile-override)
-  - [Runtime Parameter Context](#runtime-parameter-context)
-  - [SBOM](#sbom)
-  - [SD Merge Mode](#sd-merge-mode)
-  - [Secret Store](#secret-store)
-  - [`SECRET_FLOW`](#secret_flow)
-  - [Shared Credentials File](#shared-credentials-file)
-  - [Shared Template Variable File](#shared-template-variable-file)
-  - [Solution Descriptor](#solution-descriptor)
-  - [System Credentials File](#system-credentials-file)
-  - [`technicalConfigurationParameters`](#technicalconfigurationparameters)
-  - [Template Composition](#template-composition)
-  - [Template Descriptor](#template-descriptor)
-  - [Template Override](#template-override)
-  - [Template Pipeline](#template-pipeline)
-  - [Template Repository](#template-repository)
-  - [Template Resource Profile Override](#template-resource-profile-override)
-  - [Template Variables](#template-variables)
-  - [Template-rendered Definition](#template-rendered-definition)
-  - [Tenant](#tenant)
-  - [Tenant Template](#tenant-template)
-  - [Topology Context](#topology-context)
-  - [VALS](#vals)
-  - [Warmup](#warmup)
+  - [External](#external)
+  - [Merge Mode](#merge-mode)
+  - [Namespace Name](#namespace-name)
+  - [Override](#override)
+  - [Parameters](#parameters)
+  - [Pipeline](#pipeline)
+  - [Profile](#profile)
+  - [Side](#side)
+  - [Template](#template)
+  - [Version](#version)
 
-This glossary provides definitions of key terms used in the EnvGene documentation.
+This glossary lists the EnvGene words that have more than one meaning, where picking the wrong meaning changes what a
+change touches. Each entry splits the word into its senses, names the field or ADR where each sense appears, and links
+to the document that defines it.
 
-## Active Side (Resource Profile)
+## How to use this glossary
 
-The object, a [Namespace](#namespace) or a [Cloud](#cloud), whose profile EnvGene uses to resolve the
-[Resource Profile](#resource-profile) of an application. The Namespace is the active side when its own profile
-carries any signal, meaning its `profile.baseline` is set or a [Resource Profile Override](#resource-profile-override)
-is present for it. Otherwise the cloud profile is used as a fallback. Not to be confused with the active
-[BG Side Role](#bg-side-role). See [Side selection](/docs/features/resource-profile.md#side-selection).
+A word gets an entry when it appears in the Decision or Consequences section of an ADR under `docs/adr/`, or in the
+name of a field, and has more than one sense. Words with one meaning are not listed here. Look them up in
+[EnvGene Objects](/docs/envgene-objects.md), [Configuration Files](/docs/envgene-configs.md), and the
+[feature docs](/docs/features/).
+
+When you meet a listed word, decide which sense it carries before you act on it.
 
 ## Application
 
-An EnvGene object that holds parameters specific to one application within a [Namespace](#namespace). Generated
-from the `applications` section of [ParameterSets](#parameterset). See
-[Application](/docs/envgene-objects.md#application).
+1. **Application object.** The EnvGene object in the Environment Instance that holds parameters of one application in
+   one Namespace, generated from the `applications` section of ParameterSets. See
+   [Application](/docs/envgene-objects.md#application).
+2. **Application in the Solution Descriptor.** An `application:version` entry with a `deployPostfix`, the unit that is
+   deployed and for which an Application SBOM is generated. See
+   [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor).
+3. **Service.** A component of an application, taken from its Application SBOM. The Effective Set writes per-service
+   parameters, so "per application" and "per service" are different scopes. See [Service Inclusion
+   Criteria](/docs/features/calculator-cli.md#version-20-service-inclusion-criteria-and-naming-convention).
 
-## Application Definition
+## Artifact
 
-An object, also called AppDef, that maps an application name to its artifact ID, group ID, and [Registry
-Definition](#registry-definition), so that the `application:version` notation resolves to a downloadable Maven artifact.
-See [Application Definition](/docs/envgene-objects.md#application-definition).
-
-## Application SBOM
-
-A CycloneDX JSON file describing an application: its services, the coordinates of their artifacts, and their
-attributes, including [Baselines](#baseline). The [Calculator CLI](#calculator-cli) reads it to build the
-[Effective Set](#effective-set). See [SBOM types](/docs/features/sbom.md#application-sbom).
-
-## `appregdef_config.yaml`
-
-The configuration file that supplies parameters to Application and Registry Definition templates through the
-`appdefs.overrides` and `regdefs.overrides` [Macros](#macro). See
-[`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
-
-## Artifact Definition
-
-An object that describes where the [Environment Template Artifact](#environment-template-artifact) is stored, so that
-its `application:version` notation resolves to a registry and Maven coordinates. See
-[Artifact Definition](/docs/envgene-objects.md#artifact-definition).
+1. **Environment Template Artifact.** The versioned Maven artifact with the Environment Templates, set in
+   `envTemplate.artifact`. Its location is described by an Artifact Definition. See
+   [Artifact Definition](/docs/envgene-objects.md#artifact-definition).
+2. **Application artifact.** An artifact of an application, such as its Deployment Descriptor, Helm chart, or Docker
+   image. Its location is described by an Application Definition and a Registry Definition. See
+   [Artifact Resolution](/docs/features/artifact-resolution.md).
+3. **Job artifact.** The files a pipeline job saves for troubleshooting, decided by `save_artifacts.strategy`
+   (ADR-0002). See [Troubleshooting Artifacts](/docs/features/troubleshooting-artifacts.md).
 
 ## Baseline
 
-A named set of performance parameters, such as CPU, memory, and replicas, that an application ships for its services.
-Typical names are `dev` and `prod`, but the name is free-form. A configurator selects a baseline and cannot change its
-values except through a [Resource Profile Override](#resource-profile-override). See
-[Three-level hierarchy](/docs/features/resource-profile.md#three-level-hierarchy).
+1. **Application baseline.** A named set of performance parameters, such as `dev` or `prod`, that an application ships
+   for its services in its Helm chart. The configurator cannot change its values, only select it. See
+   [Three-level hierarchy](/docs/features/resource-profile.md#three-level-hierarchy).
+2. **`baseline` field.** The name that selects one application baseline. It is set in `profile.baseline` on a Cloud or
+   Namespace and in the `baseline` field of a Resource Profile Override. Precedence among these fields is set by
+   ADR-0006. See
+   [Baseline resolution](/docs/features/resource-profile.md#baseline-resolution-within-the-active-side).
+3. **Composite Structure baseline.** The core namespace, or BG Domain, that the satellite namespaces of a solution
+   depend on. It is unrelated to resource profiles. See [Composite
+   Structure](/docs/envgene-objects.md#composite-structure).
 
-## BG Domain
+## Clean
 
-An EnvGene object that groups the three namespaces of a [Blue-Green Deployment](#blue-green-deployment): origin and
-peer, which hold the two application sides, and controller, which hosts the coordination service. See
-[BG Domain](/docs/envgene-objects.md#bg-domain).
+1. **`CLEAN` operation.** An Instance pipeline run with `OPERATION_TYPE: CLEAN`, available only in No-CMDB v2. It
+   replaces the content of the target namespaces with a `.cleaned` marker. See [Cleanup](/docs/features/clean.md).
+2. **Cleanup context.** The part of the Effective Set with per-namespace parameters for teardown. Only No-CMDB v1
+   generates it, on every deploy (ADR-0011). See
+   [Cleanup Context](/docs/features/calculator-cli.md#version-20-cleanup-context).
+3. **Working tree cleanup.** Removing untracked files from the runner's checkout at the start of each run (ADR-0008).
+   It is unrelated to cleaning a namespace. See
+   [preprocess](/docs/technical-design/instance-pipeline/steps/preprocess.md).
 
-## BG Side Role
+## Context
 
-The role of the origin or peer side of a [BG Domain](#bg-domain) relative to traffic: active (serving), idle
-(standby), candidate (prepared for switch), or legacy (demoted after a promote). [BG State Files](#bg-state-files)
-record it. See [Lifecycle in plain terms](/docs/features/blue-green-deployment.md#lifecycle-in-plain-terms).
+1. **Effective Set context.** One of the parts of the Effective Set, each for its own consumer: deployment, runtime,
+   pipeline, topology, cleanup, and External Credential Context. See
+   [Effective Set v2.0](/docs/features/calculator-cli.md#effective-set-v20).
+2. **Rendering context.** The variables a Jinja template sees during Environment Instance generation, such as
+   `current_env`. See [Template Macros](/docs/template-macros.md).
 
-## BG State Files
+## Definition
 
-Empty marker files in the environment folder, such as `.origin-active` or `.peer-idle`, that record the current state
-of the origin and peer sides of a [BG Domain](#bg-domain). See
-[What state files tell you](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
+1. **Application Definition and Registry Definition.** Also called AppDef and RegDef. They map `application:version`
+   to registry and Maven coordinates of an application artifact. See
+   [Application and Registry Definition](/docs/features/app-reg-defs.md).
+2. **Artifact Definition.** The same mapping for the Environment Template Artifact only. See
+   [Artifact Definition](/docs/envgene-objects.md#artifact-definition).
+3. **Template-rendered, Definition Override, and Effective Definition.** The stages of an AppDef or RegDef: rendered
+   from a template, replaced by a plain file in the Instance repository, and the final result in `/appdefs/` and
+   `/regdefs/`. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides).
 
-## `bgNsArtifacts`
+## Delta
 
-The [Environment Inventory](#environment-inventory) attribute `envTemplate.bgNsArtifacts` that pins a separate
-[Environment Template Artifact](#environment-template-artifact) version for the origin and peer sides of a
-[BG Domain](#bg-domain). Without it, both sides render from `envTemplate.artifact`. See
-[What a BG environment looks like](/docs/features/blue-green-deployment.md#what-a-bg-environment-looks-like).
-
-## Blue-Green Deployment
-
-A release pattern, also called BGD, that keeps two copies of the same application stack side by side, one serving
-live traffic and one being prepared for promotion. In EnvGene it is modeled by a [BG Domain](#bg-domain) and requires
-the No-CMDB v2 [Deployment Architecture](#deployment-architecture). See
-[Blue-Green Deployment](/docs/features/blue-green-deployment.md).
-
-## Calculator CLI
-
-The command-line tool, also called the Effective Set generator, that computes the [Effective Set](#effective-set) from
-the [Environment Instance](#environment-instance), the [Deploy Plan](#deploy-plan), and the
-[Application SBOMs](#application-sbom). See [Calculator CLI](/docs/features/calculator-cli.md).
-
-## Cleanup Context
-
-The part of the [Effective Set](#effective-set) that holds per-namespace parameters and credentials for removing a
-namespace from a cluster. Only the No-CMDB v1 [Deployment Architecture](#deployment-architecture) produces it, on
-`DEPLOY`. No-CMDB v2 replaces the content of a cleaned namespace with a `.cleaned` marker instead. EnvGene does not
-remove anything itself. Teardown tooling consumes this output. See [Cleanup](/docs/features/clean.md).
-
-## Cloud
-
-An EnvGene object that holds cluster-level parameters, common to all namespaces of the
-[Environment](#environment). Rendered from the Cloud template. See [Cloud](/docs/envgene-objects.md#cloud).
-
-## Cloud Passport
-
-A contracted set of parameters describing a cluster and the platform applications installed in it, such as databases
-and message brokers. It is obtained through cloud discovery or gathered manually, and merged into the [Cloud](#cloud)
-object during [Environment Instance](#environment-instance) generation. See
-[Cloud Passport](/docs/envgene-objects.md#cloud-passport).
-
-## Cloud Template
-
-A Jinja template in the [Template Repository](#template-repository) that renders the [Cloud](#cloud) object. See
-[Cloud Template](/docs/envgene-objects.md#cloud-template).
-
-## Composite Structure
-
-An EnvGene object that describes how a solution is composed: a baseline, which is the core infrastructure namespace
-or a [BG Domain](#bg-domain), and the satellite namespaces that consume its services. This baseline is unrelated to
-the Resource Profile [Baseline](#baseline). See [Composite Structure](/docs/envgene-objects.md#composite-structure).
-
-## Credential
-
-An EnvGene object that holds a sensitive parameter. Its `type` is `usernamePassword`, `secret`, or `vaultAppRole` for a
-value kept encrypted in the repository, or `external` for a value kept in a [Secret Store](#secret-store). See
-[Credential](/docs/envgene-objects.md#credential).
-
-## Credential Reference
-
-A parameter value of `$type: credRef` that points at an `external` [Credential](#credential) by its `credId`. The
-local counterpart is the `creds.get` [Macro](#macro). See
-[Credential Reference](/docs/features/external-creds.md#credential-reference).
-
-## Credential Template
-
-A Jinja file in the [Template Repository](#template-repository) that renders `external` [Credentials](#credential).
-See [Credential Template](/docs/envgene-objects.md#credential-template).
-
-## `current_env`
-
-The Jinja [Macro](#macro) namespace with the attributes of the [Environment](#environment) being generated, such as
-`current_env.name`, `current_env.cloud`, and `current_env.solution_structure`. See
-[Template Macros](/docs/template-macros.md#jinja-macros).
-
-## Custom Params
-
-Session-scoped parameters passed via the Instance pipeline parameter [`CUSTOM_PARAMS`](/docs/instance-pipeline-parameters.md#custom_params) and applied to the [Effective Set](/docs/features/calculator-cli.md#version-20-effective-set-structure) with the highest priority. Custom Params are not persisted between parameter calculation sessions and are treated as sensitive. See [Calculator CLI](/docs/features/calculator-cli.md) for details.
-
-## DCL Repository
-
-A separate Git repository to which the No-CMDB v2 [Deployment Architecture](#deployment-architecture) pushes the
-[Effective Set](#effective-set) contexts other than topology and pipeline. See
-[No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2).
-
-## Definition Override
-
-A plain YAML file in the instance repository that replaces a Template-rendered Definition with the same filename, or adds a new definition. Applied as-is, never rendered. See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides).
-
-## Delta SD
-
-A partial [Solution Descriptor](#solution-descriptor) with incremental changes to apply to the [Full SD](#full-sd).
-It exists only within one pipeline run and drives partial [Effective Set](#effective-set) generation. See
-[Delta SD](/docs/features/sd-processing.md#delta-sd).
-
-## Deploy Plan
-
-A YAML list of the application deployments of an [Environment](#environment), stored at
-`Inventory/deploy-plan.yml`. The [Calculator CLI](#calculator-cli) takes it, or the delta of the current operation
-in `delta-deploy-plan.yml`, as the list of applications to calculate. EnvGene builds it from the
-[Solution Descriptor](#solution-descriptor) or directly from the deploy operation. See
-[Calculator command-line tool execution attributes](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes).
-
-## Deploy Postfix
-
-A short identifier for a [Namespace](/docs/envgene-objects.md#namespace) role. Used in the Solution Descriptor.
-Typically matches the namespace folder name or template name. See [`useDeployPostfixAsNamespace`
-Handling](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling).
-
-## Deployment Architecture
-
-The way EnvGene delivers its output for an [Environment](#environment), one of CMDB, No-CMDB v1, or No-CMDB v2.
-No-CMDB v1 is the default when the [Environment Inventory](#environment-inventory) sets neither
-`inventory.noCmdbVersion` nor `inventory.deployer`. CMDB imports the [Environment Instance](#environment-instance)
-into an external CMDB. No-CMDB v1 commits the [Effective Set](#effective-set) to the
-[Instance Repository](#instance-repository). No-CMDB v2 commits the topology and pipeline contexts to the Instance
-Repository, pushes the other contexts to the [DCL Repository](#dcl-repository), and generates the Argo CD
-configuration. See [Deployment architecture](/docs/deployment-architecture.md).
+1. **Delta SD.** The incoming Solution Descriptor changes, passed between steps of one run and never committed. It
+   drives partial Effective Set generation in the SD flow. See [Delta SD](/docs/features/sd-processing.md#delta-sd).
+2. **Delta deploy plan.** The `delta-deploy-plan.yml` with the deployments of the current operation. For
+   `PIPELINE_TYPE: GITLAB_DEPLOY` it is what the Calculator CLI receives through `--deploy-plan-path`. See
+   [Calculator CLI attributes](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes).
 
 ## Deployment Descriptor
 
-An application artifact, also called DD, that lists the services of an application and their artifacts. EnvGene
-downloads it to generate the [Application SBOM](#application-sbom). See
-[SBOM Generation](/docs/features/sbom-generation.md).
-
-## Deployment Parameter Context
-
-The part of the [Effective Set](#effective-set) used to render Helm manifests on application deployment. It merges
-the `deployParameters` of the [Tenant](#tenant), [Cloud](#cloud), [Namespace](#namespace), and
-[Application](#application) objects with parameters from the [Application SBOM](#application-sbom) and the
-[Resource Profile](#resource-profile). See
-[Deployment Parameter Context](/docs/features/calculator-cli.md#version-20-deployment-parameter-context).
-
-## `deployParameters`
-
-The parameter section of a [Tenant](#tenant), [Cloud](#cloud), [Namespace](#namespace), or
-[Application](#application) object that feeds the [Deployment Parameter Context](#deployment-parameter-context). See
-[Deployment Parameter Context](/docs/features/calculator-cli.md#version-20-deployment-parameter-context).
-
-## Discovery Repository
-
-The repository whose pipeline discovers a cluster and generates its [Cloud Passport](#cloud-passport). The
-[Instance Pipeline](#instance-pipeline) triggers it when `GET_PASSPORT` is `true`. See
-[Discovery Pipeline Parameters](/docs/discovery-pipeline-parameters.md).
-
-## `e2eParameters`
-
-The parameter section of the [Cloud](#cloud) object that feeds the
-[Pipeline Parameter Context](#pipeline-parameter-context). See [`e2eParameters`](/docs/e2e-parameters.md).
-
-## Effective Definition
-
-An Application or Registry Definition after template rendering and Definition Overrides are applied. Lives in the root-level `/appdefs/` and `/regdefs/` folders. See [Output layout](/docs/features/app-reg-defs.md#output-layout).
-
-## Effective Set
-
-The complete set of parameters generated for a specific Environment, used by consumers (e.g., ArgoCD). See [Effective Set Structure](/docs/features/calculator-cli.md#version-20-effective-set-structure).
-
-## `envgeneNullValue`
-
-A placeholder value that EnvGene writes where a value must be set but is not known, for example in an
-auto-generated [Credential](#credential). The user replaces it with the actual value. See
-[Credential](/docs/envgene-objects.md#credential).
-
-## Environment
-
-A logical grouping representing parameters for deployment target, defined by a unique combination of cluster and environment name (e.g., `cluster-01/env-1`). See [Environment Instance Objects](/docs/envgene-objects.md#environment-instance-objects)
-
-## Environment Credentials File
-
-The file that stores every [Credential](#credential) of an [Environment](#environment), at
-`/environments/<cluster-name>/<environment-name>/Credentials/credentials.yml`. See
-[Environment Credentials File](/docs/envgene-objects.md#environment-credentials-file).
-
-## Environment Instance
-
-A file structure in the [Instance Repository](#instance-repository) that describes the configuration of one
-[Environment](#environment). EnvGene generates it by rendering the [Environment Template](#environment-template) with
-the environment-specific parameters from the [Environment Inventory](#environment-inventory). See
-[Environment Instance Objects](/docs/envgene-objects.md#environment-instance-objects).
-
-## Environment Inventory
-
-The configuration file describing a specific Environment, including template reference and parameters. See [env_definition.yml](/docs/envgene-configs.md#env_definitionyml).
-
-## Environment Specific ParameterSet
-
-A [ParameterSet](#parameterset) in the [Instance Repository](#instance-repository) that overrides template-level
-parameters for one environment or a group of environments. Its values take precedence over Template ParameterSets.
-See [Environment Specific ParameterSet](/docs/envgene-objects.md#environment-specific-parameterset).
-
-## Environment Specific Resource Profile Override
-
-A [Resource Profile Override](#resource-profile-override) in the [Instance Repository](#instance-repository) that sets
-custom values for one environment, on top of the
-[Template Resource Profile Override](#template-resource-profile-override). It wins on conflicts. See
-[Environment Specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override).
-
-## Environment Template
-
-A file structure within the Template Repository describing the structure and parameters of a solution type. Consists of a Template Descriptor and component templates (Tenant, Cloud, Namespaces). Template Descriptors can be Jinja templates (`.yml.j2`, `.yaml.j2`) or static YAML files (`.yml`, `.yaml`).
-
-A single Environment Template can be used for multiple projects or environment types (commonly referred to as a "unified Environment Template"), with namespace filtering used to include only relevant components for each specific deployment. See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects) and [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md).
-
-## Environment Template Artifact
-
-A versioned Maven artifact containing one or more [Environment Templates](#environment-template) from the Template
-Repository. Published during Template Repository build process and referenced in the [Environment
-Inventory](/docs/envgene-configs.md#env_definitionyml) using `application:version` notation (e.g.,
-`project-env-template:v1.2.3`). Used by EnvGene to generate Environment Instances. See [Environment Template
-Objects](/docs/envgene-objects.md#environment-template-objects).
-
-## Environment Template SBOM
-
-A CycloneDX JSON file with the coordinates of an [Environment Template Artifact](#environment-template-artifact). See
-[SBOM types](/docs/features/sbom.md#environment-template-sbom).
-
-## ESO
-
-External Secrets Operator, one of two ways an application receives an `external` [Credential](#credential). It is
-used when the effective [`SECRET_FLOW`](#secret_flow) is `external-values`. The deployment context carries ESO
-references, and the application's Helm chart consumes them to render `ExternalSecret` resources. The alternative is
-[VALS](#vals). See [Parameter with ESO reference](/docs/features/external-creds.md#parameter-with-eso-reference).
-
-## `eso_support`
-
-An application-side marker in the [Application SBOM](#application-sbom) that declares whether the application can be
-deployed with [ESO](#eso). It validates the choice made by [`SECRET_FLOW`](#secret_flow). See
-[`eso_support` attribute](/docs/features/external-creds.md#eso_support-attribute).
-
-## External Credential Context
-
-The part of the [Effective Set](#effective-set) with one entry for every `external` [Credential](#credential). Tooling
-outside EnvGene reads it to provision secrets in a [Secret Store](#secret-store). See
-[External Credential Context](/docs/features/calculator-cli.md#version-20-external-credential-context).
-
-## Full SD
-
-The [Solution Descriptor](#solution-descriptor) that defines the complete application composition of an
-[Environment](#environment). There is one per environment, at
-`/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/sd.yaml`. See
-[Full SD](/docs/features/sd-processing.md#full-sd).
-
-## Instance Pipeline
-
-The main EnvGene pipeline in the [Instance Repository](#instance-repository). It generates the
-[Environment Instance](#environment-instance) and the [Effective Set](#effective-set) and, for deploy operations,
-hands the result to the deployer. See [Instance pipeline](/docs/envgene-pipelines.md#instance-pipeline).
-
-## Instance Repository
-
-The Git repository containing Environment Inventories, generated Environment Instances, and related configuration. See
-[Instance Repository Objects](/docs/envgene-objects.md#instance-repository-objects).
-
-## Macro
-
-A variable or function available in templates, such as `current_env.name` or `creds.get`. Jinja macros resolve during
-[Environment Instance](#environment-instance) generation. Calculator macros resolve during
-[Effective Set](#effective-set) calculation. See [Template Macros](/docs/template-macros.md).
-
-## Namespace
-
-An EnvGene object that groups parameters specific to applications within a single namespace in a cluster. Defined in the Environment Instance. See [Namespace](/docs/envgene-objects.md#namespace)
-
-## Namespace Template
-
-A Jinja template in the [Template Repository](#template-repository) that renders a [Namespace](#namespace) object.
-See [Namespace Template](/docs/envgene-objects.md#namespace-template).
-
-## Operation Type
-
-What one [Instance Pipeline](#instance-pipeline) run does, set by `OPERATION_TYPE`: `DEPLOY` (the default) deploys
-applications, `CLEAN` cleans namespaces, and `BGD` runs the [Blue-Green Deployment](#blue-green-deployment)
-operation selected by `BGD_OPERATION`. See [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type).
-
-## ParameterSet
-
-A reusable container, also written Parameter Set, of parameters that a [Cloud](#cloud) or [Namespace](#namespace)
-template references by name.
-During [Environment Instance](#environment-instance) generation its parameters are set on the referencing object, and
-its `applications` section produces [Application](#application) objects. See
-[Template ParameterSet](/docs/envgene-objects.md#template-parameterset).
-
-## Partial Generation
-
-An [Effective Set](#effective-set) generation mode that updates only the applications in the [Delta SD](#delta-sd).
-With `basic-merge` the calculator recalculates them and the result is merged into the existing Effective Set. With
-`basic-exclusion-merge` the calculator is not invoked and their slices are deleted. See
-[Partial Generation](/docs/features/effective-set-generation.md#partial-generation).
-
-## Pipeline Parameter Context
-
-The part of the [Effective Set](#effective-set) for deployment orchestrators and CI/CD workflows. It is built from the
-`e2eParameters` of the [Cloud](#cloud). See
-[Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context).
-
-## Pipeline Type
-
-The execution model of an [Instance Pipeline](#instance-pipeline) run, set by `PIPELINE_TYPE`: `LEGACY` (the default)
-or `GITLAB_DEPLOY`. Some parameters and [Operation Types](#operation-type), such as `CLEAN` and `BGD`, are processed
-only at `GITLAB_DEPLOY`. See [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type).
-
-## Registry Definition
-
-An object, also called RegDef, that describes a registry where application artifacts are stored. An
-[Application Definition](#application-definition) points to it. Two schema versions exist, v1.0 and v2.0. A v2.0
-definition sets `version: "2.0"` and supports cloud registries such as AWS, Azure, and GCP. See
-[Registry Definition](/docs/envgene-objects.md#registry-definition).
-
-## Resource Profile
-
-The performance parameters of a service, such as CPU, memory, and replicas, kept separate from other deployment
-parameters. A Resource Profile is a [Baseline](#baseline) plus a [Resource Profile Override](#resource-profile-override)
-on top of it. See [Resource profiles](/docs/features/resource-profile.md).
-
-## Resource Profile Override
-
-A set of custom performance values on top of a [Baseline](#baseline), attached to a [Cloud](#cloud) or
-[Namespace](#namespace) in the [Environment Instance](#environment-instance). It combines the
-[Template Resource Profile Override](#template-resource-profile-override) and the
-[Environment Specific Resource Profile Override](#environment-specific-resource-profile-override), and always takes
-precedence over the Baseline. See [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override).
-
-## Runtime Parameter Context
-
-The part of the [Effective Set](#effective-set) with parameters that change application behavior without
-redeployment. It merges the `technicalConfigurationParameters` of the [Tenant](#tenant), [Cloud](#cloud),
-[Namespace](#namespace), and [Application](#application) objects. See
-[Runtime Parameter Context](/docs/features/calculator-cli.md#version-20-runtime-parameter-context).
-
-## SBOM
-
-A CycloneDX-based software bill of materials that EnvGene uses to exchange artifact and parameter data. EnvGene uses
-two kinds, the [Application SBOM](#application-sbom) and the [Environment Template SBOM](#environment-template-sbom).
-See [SBOM](/docs/features/sbom.md).
-
-## SD Merge Mode
-
-The way an incoming [Solution Descriptor](#solution-descriptor) is combined with the [Full SD](#full-sd) already in
-the repository, set by `SD_REPO_MERGE_MODE`: `basic-merge` (the default), `basic-exclusion-merge`, or `replace`. See
-[SD merge](/docs/features/sd-processing.md#sd-merge).
-
-## Secret Store
-
-A named entry in the [Instance Repository](#instance-repository) configuration that describes how to reach an
-external secret backend, such as Vault. `external` [Credentials](#credential) point to it. See
-[Secret Store](/docs/envgene-objects.md#secret-store).
-
-## `SECRET_FLOW`
-
-An environment-side attribute, discovered from the [Cloud Passport](#cloud-passport) and overridable on the
-[Cloud](#cloud), that selects how `external` [Credentials](#credential) reach an application: `helm-values` for
-[VALS](#vals) or `external-values` for [ESO](#eso). See
-[`SECRET_FLOW` attribute](/docs/features/external-creds.md#secret_flow-attribute).
-
-## Shared Credentials File
-
-A file with [Credentials](#credential) shared across environments. EnvGene copies the relevant ones into the
-[Environment Credentials File](#environment-credentials-file) during generation. See
-[Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file).
-
-## Shared Template Variable File
-
-A file with [Template Variables](#template-variables) shared across environments. EnvGene merges them with
-`additionalTemplateVariables` from the [Environment Inventory](#environment-inventory). See
-[Shared Template Variable Files](/docs/envgene-objects.md#shared-template-variable-files).
-
-## Solution Descriptor
-
-The object, also called SD, that lists the applications of a solution, each as `application:version` with a
-[Deploy Postfix](#deploy-postfix). EnvGene converts it into the [Deploy Plan](#deploy-plan) that drives
-[Effective Set](#effective-set) calculation. See [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor).
-
-## System Credentials File
-
-A file with the [Credentials](#credential) EnvGene itself uses to reach external systems, such as artifact
-registries, GitLab, and GitHub. See
-[System Credentials File](/docs/envgene-objects.md#system-credentials-file-in-instance-repository).
-
-## `technicalConfigurationParameters`
-
-The parameter section of a [Tenant](#tenant), [Cloud](#cloud), [Namespace](#namespace), or
-[Application](#application) object that feeds the [Runtime Parameter Context](#runtime-parameter-context). See
-[Runtime Parameter Context](/docs/features/calculator-cli.md#version-20-runtime-parameter-context).
-
-## Template Composition
-
-A feature that builds a child [Environment Template](#environment-template) from the Tenant, Cloud, and Namespace
-templates of one or more parent templates. See [Template Composition](/docs/features/template-composition.md).
-
-## Template Descriptor
-
-The file that describes the structure of an [Environment Template](#environment-template) and links to its Tenant,
-Cloud, and Namespace templates. Its filename is the name of the Environment Template. See
-[Template Descriptor](/docs/envgene-objects.md#template-descriptor).
-
-## Template Override
-
-A feature that merges the content of the `template_override` attribute into a rendered [Cloud](#cloud) or
-[Namespace](#namespace), so one [Environment Template](#environment-template) serves several environment types. See
-[Template Override](/docs/features/template-override.md).
-
-## Template Pipeline
-
-The pipeline of the [Template Repository](#template-repository). It runs on every push or merge request, builds the
-[Environment Template Artifact](#environment-template-artifact), and publishes it. See
-[Template Pipeline Parameters](/docs/template-pipeline-parameters.md).
-
-## Template Repository
-
-The Git repository that holds [Environment Templates](#environment-template), [ParameterSets](#parameterset), Resource
-Profile Overrides, and Application and Registry Definition templates. See
-[Template Repository Objects](/docs/envgene-objects.md#template-repository-objects).
-
-## Template Resource Profile Override
-
-A [Resource Profile Override](#resource-profile-override) in the [Template Repository](#template-repository) that
-applies the same adjustment to all environments of one type. A [Cloud](#cloud) or [Namespace](#namespace) template
-references it by `profile.name`. See
-[Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override).
-
-## Template Variables
-
-Variables available during [Environment Template](#environment-template) rendering, set in
-`envTemplate.additionalTemplateVariables` of the [Environment Inventory](#environment-inventory) or in a
-[Shared Template Variable File](#shared-template-variable-file). Templates read them through
-`current_env.additionalTemplateVariables`. See
-[`current_env.additionalTemplateVariables`](/docs/template-macros.md#current_envadditionaltemplatevariables).
-
-## Template-rendered Definition
-
-An Application or Registry Definition produced by rendering a template from the template repository. The filename comes from the definition's `name` field. See [Templates](/docs/features/app-reg-defs.md#templates).
-
-## Tenant
-
-An EnvGene object that holds tenant-level parameters, such as registry configuration and ownership, common to all
-environments of the tenant. See [Tenant](/docs/envgene-objects.md#tenant).
-
-## Tenant Template
-
-A Jinja template in the [Template Repository](#template-repository) that renders the [Tenant](#tenant) object. See
-[Tenant Template](/docs/envgene-objects.md#tenant-template).
-
-## Topology Context
-
-The part of the [Effective Set](#effective-set) that describes how systems and their components relate: the
-[Composite Structure](#composite-structure), the [BG Domain](#bg-domain), cluster endpoints, and namespaces. See
-[Topology Context](/docs/features/calculator-cli.md#version-20-topology-context).
-
-## VALS
-
-One of two ways an application receives an `external` [Credential](#credential). It is used when the effective
-[`SECRET_FLOW`](#secret_flow) is `helm-values`. The [Effective Set](#effective-set) carries `ref+...` reference
-strings, and the Effective Set consumer, such as `vals` or `argocd-vault-plugin`, resolves them at deploy time. VALS
-references also appear in the pipeline and topology contexts. The alternative is [ESO](#eso). See
-[Parameter with VALS reference](/docs/features/external-creds.md#parameter-with-vals-reference).
-
-## Warmup
-
-The [Blue-Green Deployment](#blue-green-deployment) lifecycle step that makes the candidate side a copy of the active
-side in Git, so a new version is deployed on top of what production runs. See [BG Side Role](#bg-side-role) and
-[Warmup and why it matters](/docs/features/blue-green-deployment.md#warmup-and-why-it-matters).
+1. **Deployment Descriptor JSON.** Also called DD. The record of the deployable components of an application. The
+   Application SBOM takes its component list from it only (ADR-0003, ADR-0012). See
+   [SBOM Generation](/docs/features/sbom-generation.md).
+2. **DD ZIP part.** The archive delivered with the DD. EnvGene no longer downloads it. The resource-profile baselines
+   are read from the application Helm chart instead (ADR-0009). See
+   [ADR-0009](/docs/adr/0009-download-app-chart-for-sbom-generation.md).
+
+## External
+
+1. **`external` Credential type.** A Credential whose value lives in a Secret Store, referenced by `$type: credRef`.
+   See [Credential](/docs/envgene-objects.md#credential).
+2. **External mode.** A repository-wide state of the Instance repository, on when `/configuration/secret-stores.yml`
+   exists. In external mode, `creds.get` is rewritten to Credential References (ADR-0009). See
+   [Mode detection](/docs/features/credential-processing.md#mode-detection).
+3. **External systems.** Tools outside EnvGene that consume its output, such as deployers and CMDB.
+
+## Merge Mode
+
+1. **SD merge mode.** How an incoming Solution Descriptor is combined with the Full SD, set by `SD_REPO_MERGE_MODE`:
+   `basic-merge` (the default), `basic-exclusion-merge`, or `replace`. See
+   [SD merge](/docs/features/sd-processing.md#sd-merge).
+2. **Resource profile merge mode.** Whether the environment-specific Resource Profile Override merges with or replaces
+   the template override, set by `inventory.config.mergeEnvSpecificResourceProfiles`. Changing a baseline needs
+   replace mode (ADR-0006). See [Merge and replace](/docs/features/resource-profile.md#merge-and-replace).
+3. **Effective Set merge.** How partial generation writes into the existing Effective Set: forward merge for
+   `basic-merge`, reverse merge for `basic-exclusion-merge`. See
+   [Partial Generation](/docs/features/effective-set-generation.md#partial-generation).
+
+## Namespace Name
+
+1. **Namespace folder name.** The folder under `Namespaces/` in the Environment Instance. It keys
+   `envTemplate.envSpecificResourceProfiles` and the Effective Set folders, and usually matches the Deploy Postfix.
+2. **Namespace `name` attribute.** The real Kubernetes namespace name. The Effective Set maps folders to these names in
+   `mapping.yaml`. See [Namespace](/docs/envgene-objects.md#namespace).
+3. **Deploy Postfix.** The namespace role used in the Solution Descriptor. With
+   `useDeployPostfixAsNamespace: true` the SD carries the `name` attribute instead, and EnvGene converts it. See
+   [`useDeployPostfixAsNamespace` Handling](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling).
+
+## Override
+
+1. **Resource Profile Override.** Custom performance values on top of a baseline. Template overrides come from
+   `profile.name`, environment-specific overrides from `envTemplate.envSpecificResourceProfiles`, and the combined
+   result lives in the Environment Instance. See [Resource profiles](/docs/features/resource-profile.md).
+2. **Template Override.** The `template_override` attribute that merges content into a rendered Cloud or Namespace. See
+   [Template Override](/docs/features/template-override.md).
+3. **Definition Override.** A plain AppDef or RegDef file in the Instance repository that replaces the rendered one.
+   See [Definition overrides](/docs/features/app-reg-defs.md#definition-overrides).
+4. **Custom Params override.** Session parameters from `CUSTOM_PARAMS`, applied to the deployment and runtime contexts
+   with the highest priority (ADR-0005). See [`CUSTOM_PARAMS`](/docs/instance-pipeline-parameters.md#custom_params).
+
+## Parameters
+
+1. **Parameter sections.** `deployParameters`, `e2eParameters`, and `technicalConfigurationParameters` on Tenant,
+   Cloud, Namespace, and Application. They feed the deployment, pipeline, and runtime contexts. See
+   [Cloud](/docs/envgene-objects.md#cloud).
+2. **ParameterSet.** A reusable named container of parameters, referenced from a template or the Environment Inventory.
+   See [Template ParameterSet](/docs/envgene-objects.md#template-parameterset).
+3. **Pipeline parameters.** Inputs of a pipeline run, such as `ENV_NAMES` or `SD_DATA`. See
+   [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md).
+
+## Pipeline
+
+1. **Instance pipeline.** The pipeline in the Instance repository that generates the Environment Instance and the
+   Effective Set. See [Instance pipeline](/docs/envgene-pipelines.md#instance-pipeline).
+2. **Template pipeline and Discovery pipeline.** The pipelines of the Template and Discovery repositories. See
+   [Template Pipeline Parameters](/docs/template-pipeline-parameters.md) and
+   [Discovery Pipeline Parameters](/docs/discovery-pipeline-parameters.md).
+3. **Pipeline context.** The part of the Effective Set built from `e2eParameters` for orchestrators. See
+   [Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context).
+4. **Pipeline type.** `PIPELINE_TYPE`, `LEGACY` (the default) or `GITLAB_DEPLOY`. Many parameters and the `CLEAN` and
+   `BGD` operations apply only to `GITLAB_DEPLOY`. See
+   [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type).
+
+## Profile
+
+1. **`profile` attribute.** The object on a Cloud or Namespace with `name`, the Resource Profile Override to apply,
+   and `baseline`. See [Cloud](/docs/envgene-objects.md#cloud).
+2. **Resource Profile.** The result for a service: the application baseline plus the override on top. See
+   [Resource profiles](/docs/features/resource-profile.md).
+3. **Namespace profile and cloud profile.** The `profile` of one of the two objects. Only one of them is used, chosen
+   by side selection (ADR-0006). See [Side selection](/docs/features/resource-profile.md#side-selection).
+
+## Side
+
+1. **Resource profile side.** The Namespace or the Cloud, whichever EnvGene takes the resource profile from. The
+   Namespace wins when it has its own baseline or an override (ADR-0006). See
+   [Side selection](/docs/features/resource-profile.md#side-selection).
+2. **Blue-Green side.** The origin or peer namespace of a BG Domain, selected by `BG_NS_TARGET`. Its role is active,
+   idle, candidate, or legacy. See [Lifecycle in plain
+   terms](/docs/features/blue-green-deployment.md#lifecycle-in-plain-terms).
+3. **Deploy side.** The deployer outside EnvGene that pulls charts and images. ADR-0009 and ADR-0012 require EnvGene
+   to resolve the same chart as the deploy side. See
+   [ADR-0012](/docs/adr/0012-select-artifact-coordinate-source.md).
+
+## Template
+
+1. **Environment Template.** The Template Descriptor plus the Tenant, Cloud, and Namespace templates for one solution
+   type. See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects).
+2. **Object templates.** Jinja files for other objects: ParameterSets, Template Resource Profile Overrides, Credential
+   Templates, and AppDef and RegDef templates. See
+   [Template Repository Objects](/docs/envgene-objects.md#template-repository-objects).
+3. **Template Override and Template Composition.** Ways to reuse templates: merging content into a rendered object, or
+   building a child template from parent templates. See [Template Override](/docs/features/template-override.md) and
+   [Template Composition](/docs/features/template-composition.md).
+
+## Version
+
+1. **RegDef and Artifact Definition v1.0 and v2.0.** Object schema versions. v2.0 sets `version: "2.0"` and supports
+   cloud registry authentication. See [Registry Definition](/docs/envgene-objects.md#registry-definition).
+2. **Effective Set v1.0 and v2.0.** The output layout, set by `--effective-set-version`. See
+   [Effective Set v2.0](/docs/features/calculator-cli.md#effective-set-v20).
+3. **No-CMDB v1 and v2.** Deployment architectures, set by `inventory.noCmdbVersion`. See
+   [Deployment architecture](/docs/deployment-architecture.md).
+4. **Application version.** The `version` part of `application:version` in the Solution Descriptor.
