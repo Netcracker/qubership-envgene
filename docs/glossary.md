@@ -1,32 +1,43 @@
 # Glossary
 
 - [Glossary](#glossary)
-  - [Active Side](#active-side)
+  - [Active Side (Resource Profile)](#active-side-resource-profile)
   - [Application](#application)
   - [Application Definition](#application-definition)
   - [Application SBOM](#application-sbom)
+  - [`appregdef_config.yaml`](#appregdef_configyaml)
   - [Artifact Definition](#artifact-definition)
   - [Baseline](#baseline)
   - [BG Domain](#bg-domain)
+  - [BG Side Role](#bg-side-role)
   - [BG State Files](#bg-state-files)
+  - [`bgNsArtifacts`](#bgnsartifacts)
   - [Blue-Green Deployment](#blue-green-deployment)
   - [Calculator CLI](#calculator-cli)
   - [Cleanup Context](#cleanup-context)
   - [Cloud](#cloud)
   - [Cloud Passport](#cloud-passport)
+  - [Cloud Template](#cloud-template)
   - [Composite Structure](#composite-structure)
   - [Credential](#credential)
   - [Credential Reference](#credential-reference)
   - [Credential Template](#credential-template)
+  - [`current_env`](#current_env)
   - [Custom Params](#custom-params)
+  - [DCL Repository](#dcl-repository)
   - [Definition Override](#definition-override)
   - [Delta SD](#delta-sd)
+  - [Deploy Plan](#deploy-plan)
   - [Deploy Postfix](#deploy-postfix)
   - [Deployment Architecture](#deployment-architecture)
   - [Deployment Descriptor](#deployment-descriptor)
   - [Deployment Parameter Context](#deployment-parameter-context)
+  - [`deployParameters`](#deployparameters)
+  - [Discovery Repository](#discovery-repository)
+  - [`e2eParameters`](#e2eparameters)
   - [Effective Definition](#effective-definition)
   - [Effective Set](#effective-set)
+  - [`envgeneNullValue`](#envgenenullvalue)
   - [Environment](#environment)
   - [Environment Credentials File](#environment-credentials-file)
   - [Environment Instance](#environment-instance)
@@ -37,13 +48,17 @@
   - [Environment Template Artifact](#environment-template-artifact)
   - [Environment Template SBOM](#environment-template-sbom)
   - [ESO](#eso)
+  - [`eso_support`](#eso_support)
   - [External Credential Context](#external-credential-context)
   - [Full SD](#full-sd)
   - [Instance Pipeline](#instance-pipeline)
   - [Instance Repository](#instance-repository)
   - [Macro](#macro)
   - [Namespace](#namespace)
+  - [Namespace Template](#namespace-template)
+  - [Operation Type](#operation-type)
   - [ParameterSet](#parameterset)
+  - [Partial Generation](#partial-generation)
   - [Pipeline Parameter Context](#pipeline-parameter-context)
   - [Registry Definition](#registry-definition)
   - [Resource Profile](#resource-profile)
@@ -52,10 +67,12 @@
   - [SBOM](#sbom)
   - [SD Merge Mode](#sd-merge-mode)
   - [Secret Store](#secret-store)
+  - [`SECRET_FLOW`](#secret_flow)
   - [Shared Credentials File](#shared-credentials-file)
   - [Shared Template Variable File](#shared-template-variable-file)
   - [Solution Descriptor](#solution-descriptor)
   - [System Credentials File](#system-credentials-file)
+  - [`technicalConfigurationParameters`](#technicalconfigurationparameters)
   - [Template Composition](#template-composition)
   - [Template Descriptor](#template-descriptor)
   - [Template Override](#template-override)
@@ -64,19 +81,20 @@
   - [Template Resource Profile Override](#template-resource-profile-override)
   - [Template-rendered Definition](#template-rendered-definition)
   - [Tenant](#tenant)
+  - [Tenant Template](#tenant-template)
   - [Topology Context](#topology-context)
   - [VALS](#vals)
   - [Warmup](#warmup)
 
 This glossary provides definitions of key terms used in the EnvGene documentation.
 
-## Active Side
+## Active Side (Resource Profile)
 
 The object, a [Namespace](#namespace) or a [Cloud](#cloud), whose profile EnvGene uses to resolve the
 [Resource Profile](#resource-profile) of an application. The Namespace is the active side when its own profile
 carries any signal, meaning its `profile.baseline` is set or a [Resource Profile Override](#resource-profile-override)
-is present for it. Otherwise the cloud profile is used as a fallback. See
-[Side selection](/docs/features/resource-profile.md#side-selection).
+is present for it. Otherwise the cloud profile is used as a fallback. Not to be confused with the active
+[BG Side Role](#bg-side-role). See [Side selection](/docs/features/resource-profile.md#side-selection).
 
 ## Application
 
@@ -95,6 +113,12 @@ so that the `application:version` notation resolves to a downloadable Maven arti
 A CycloneDX JSON file describing an application: its services, the coordinates of their artifacts, and their
 attributes, including [Baselines](#baseline). The [Calculator CLI](#calculator-cli) reads it to build the
 [Effective Set](#effective-set). See [SBOM types](/docs/features/sbom.md#application-sbom).
+
+## `appregdef_config.yaml`
+
+The configuration file that supplies parameters to Application and Registry Definition templates through the
+`appdefs.overrides` and `regdefs.overrides` [Macros](#macro). See
+[`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
 
 ## Artifact Definition
 
@@ -115,11 +139,24 @@ An EnvGene object that groups the three namespaces of a [Blue-Green Deployment](
 peer, which hold the two application sides, and controller, which hosts the coordination service. See
 [BG Domain](/docs/envgene-objects.md#bg-domain).
 
+## BG Side Role
+
+The role of the origin or peer side of a [BG Domain](#bg-domain) relative to traffic: active (serving), idle
+(standby), candidate (prepared for switch), or legacy (demoted after a promote). [BG State Files](#bg-state-files)
+record it. See [Lifecycle in plain terms](/docs/features/blue-green-deployment.md#lifecycle-in-plain-terms).
+
 ## BG State Files
 
 Empty marker files in the environment folder, such as `.origin-active` or `.peer-idle`, that record the current state
 of the origin and peer sides of a [BG Domain](#bg-domain). See
 [What state files tell you](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
+
+## `bgNsArtifacts`
+
+The [Environment Inventory](#environment-inventory) attribute `envTemplate.bgNsArtifacts` that pins a separate
+[Environment Template Artifact](#environment-template-artifact) version for the origin and peer sides of a
+[BG Domain](#bg-domain). Without it, both sides render from `envTemplate.artifact`. See
+[What a BG environment looks like](/docs/features/blue-green-deployment.md#what-a-bg-environment-looks-like).
 
 ## Blue-Green Deployment
 
@@ -131,7 +168,7 @@ the No-CMDB v2 [Deployment Architecture](#deployment-architecture). See
 ## Calculator CLI
 
 The command-line tool, also called the Effective Set generator, that computes the [Effective Set](#effective-set) from
-the [Environment Instance](#environment-instance), the [Solution Descriptor](#solution-descriptor), and the
+the [Environment Instance](#environment-instance), the [Deploy Plan](#deploy-plan), and the
 [Application SBOMs](#application-sbom). See [Calculator CLI](/docs/features/calculator-cli.md).
 
 ## Cleanup Context
@@ -152,6 +189,11 @@ and message brokers. It is obtained through cloud discovery or gathered manually
 object during [Environment Instance](#environment-instance) generation. See
 [Cloud Passport](/docs/envgene-objects.md#cloud-passport).
 
+## Cloud Template
+
+A Jinja template in the [Template Repository](#template-repository) that renders the [Cloud](#cloud) object. See
+[Cloud Template](/docs/envgene-objects.md#cloud-template).
+
 ## Composite Structure
 
 An EnvGene object that describes how a solution is composed: a baseline, which is the core infrastructure namespace
@@ -160,8 +202,8 @@ the Resource Profile [Baseline](#baseline). See [Composite Structure](/docs/envg
 
 ## Credential
 
-An EnvGene object that holds a sensitive parameter. Its `type` is `usernamePassword` or `secret` for a value kept
-encrypted in the repository, or `external` for a value kept in a [Secret Store](#secret-store). See
+An EnvGene object that holds a sensitive parameter. Its `type` is `usernamePassword`, `secret`, or `vaultAppRole` for a
+value kept encrypted in the repository, or `external` for a value kept in a [Secret Store](#secret-store). See
 [Credential](/docs/envgene-objects.md#credential).
 
 ## Credential Reference
@@ -175,9 +217,21 @@ local counterpart is the `creds.get` [Macro](#macro). See
 A Jinja file in the [Template Repository](#template-repository) that renders `external` [Credentials](#credential).
 See [Credential Template](/docs/envgene-objects.md#credential-template).
 
+## `current_env`
+
+The Jinja [Macro](#macro) namespace with the attributes of the [Environment](#environment) being generated, such as
+`current_env.name`, `current_env.cloud`, and `current_env.solution_structure`. See
+[Template Macros](/docs/template-macros.md#jinja-macros).
+
 ## Custom Params
 
 Session-scoped parameters passed via the Instance pipeline parameter [`CUSTOM_PARAMS`](/docs/instance-pipeline-parameters.md#custom_params) and applied to the [Effective Set](/docs/features/calculator-cli.md#version-20-effective-set-structure) with the highest priority. Custom Params are not persisted between parameter calculation sessions and are treated as sensitive. See [Calculator CLI](/docs/features/calculator-cli.md) for details.
+
+## DCL Repository
+
+A separate Git repository to which the No-CMDB v2 [Deployment Architecture](#deployment-architecture) pushes the
+[Effective Set](#effective-set) contexts other than topology and pipeline. See
+[No-CMDB v2](/docs/deployment-architecture.md#no-cmdb-v2).
 
 ## Definition Override
 
@@ -189,17 +243,27 @@ A partial [Solution Descriptor](#solution-descriptor) with incremental changes t
 It exists only within one pipeline run and drives partial [Effective Set](#effective-set) generation. See
 [Delta SD](/docs/features/sd-processing.md#delta-sd).
 
+## Deploy Plan
+
+A YAML list of the application deployments of an [Environment](#environment), stored at
+`Inventory/deploy-plan.yml`. The [Calculator CLI](#calculator-cli) takes it, or the delta of the current operation
+in `delta-deploy-plan.yml`, as the list of applications to calculate. EnvGene builds it from the
+[Solution Descriptor](#solution-descriptor) or directly from the deploy operation. See
+[Calculator command-line tool execution attributes](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes).
+
 ## Deploy Postfix
 
-A short identifier for a [Namespace](/docs/envgene-objects.md#namespace) role. Used in the Solution Descriptor. Typically matches the namespace folder name or template name.
+A short identifier for a [Namespace](/docs/envgene-objects.md#namespace) role. Used in the Solution Descriptor. Typically matches the namespace folder name or template name. See [`useDeployPostfixAsNamespace` Handling](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling).
 
 ## Deployment Architecture
 
-The way EnvGene delivers its output for an [Environment](#environment), one of CMDB, No-CMDB v1, or No-CMDB v2. CMDB
-imports the [Environment Instance](#environment-instance) into an external CMDB. No-CMDB v1 commits the
-[Effective Set](#effective-set) to the [Instance Repository](#instance-repository). No-CMDB v2 also splits the
-Effective Set by context and pushes part of it to a separate repository. See
-[Deployment architecture](/docs/deployment-architecture.md).
+The way EnvGene delivers its output for an [Environment](#environment), one of CMDB, No-CMDB v1, or No-CMDB v2.
+No-CMDB v1 is the default when the [Environment Inventory](#environment-inventory) sets neither
+`inventory.noCmdbVersion` nor `inventory.deployer`. CMDB imports the [Environment Instance](#environment-instance)
+into an external CMDB. No-CMDB v1 commits the [Effective Set](#effective-set) to the
+[Instance Repository](#instance-repository). No-CMDB v2 commits the topology and pipeline contexts to the Instance
+Repository, pushes the other contexts to the [DCL Repository](#dcl-repository), and generates the Argo CD
+configuration. See [Deployment architecture](/docs/deployment-architecture.md).
 
 ## Deployment Descriptor
 
@@ -215,6 +279,23 @@ the `deployParameters` of the [Tenant](#tenant), [Cloud](#cloud), [Namespace](#n
 [Resource Profile](#resource-profile). See
 [Deployment Parameter Context](/docs/features/calculator-cli.md#version-20-deployment-parameter-context).
 
+## `deployParameters`
+
+The parameter section of a [Tenant](#tenant), [Cloud](#cloud), [Namespace](#namespace), or
+[Application](#application) object that feeds the [Deployment Parameter Context](#deployment-parameter-context). See
+[Deployment Parameter Context](/docs/features/calculator-cli.md#version-20-deployment-parameter-context).
+
+## Discovery Repository
+
+The repository whose pipeline discovers a cluster and generates its [Cloud Passport](#cloud-passport). The
+[Instance Pipeline](#instance-pipeline) triggers it when `GET_PASSPORT` is `true`. See
+[Discovery Pipeline Parameters](/docs/discovery-pipeline-parameters.md).
+
+## `e2eParameters`
+
+The parameter section of the [Cloud](#cloud) object that feeds the
+[Pipeline Parameter Context](#pipeline-parameter-context). See [`e2eParameters`](/docs/e2e-parameters.md).
+
 ## Effective Definition
 
 An Application or Registry Definition after template rendering and Definition Overrides are applied. Lives in the root-level `/appdefs/` and `/regdefs/` folders. See [Output layout](/docs/features/app-reg-defs.md#output-layout).
@@ -222,6 +303,12 @@ An Application or Registry Definition after template rendering and Definition Ov
 ## Effective Set
 
 The complete set of parameters generated for a specific Environment, used by consumers (e.g., ArgoCD). See [Effective Set Structure](/docs/features/calculator-cli.md#version-20-effective-set-structure).
+
+## `envgeneNullValue`
+
+A placeholder value that EnvGene writes where a value must be set but is not known, for example in an
+auto-generated [Credential](#credential). The user replaces it with the actual value. See
+[Credential](/docs/envgene-objects.md#credential).
 
 ## Environment
 
@@ -265,7 +352,7 @@ A single Environment Template can be used for multiple projects or environment t
 
 ## Environment Template Artifact
 
-A versioned Maven artifact containing one or more [Environment Templates](#environment-template) from the Template Repository. Published during Template Repository build process and referenced in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) using `application:version` notation (e.g., `project-env-template:v1.2.3`). Used by EnvGene to generate Environment Instances. Also referred to as "Environment Template Artifact". See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects).
+A versioned Maven artifact containing one or more [Environment Templates](#environment-template) from the Template Repository. Published during Template Repository build process and referenced in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) using `application:version` notation (e.g., `project-env-template:v1.2.3`). Used by EnvGene to generate Environment Instances. See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects).
 
 ## Environment Template SBOM
 
@@ -274,9 +361,16 @@ A CycloneDX JSON file with the coordinates of an [Environment Template Artifact]
 
 ## ESO
 
-External Secrets Operator, one of two ways an application receives an `external` [Credential](#credential). The
-[Effective Set](#effective-set) carries an ESO reference that the operator resolves in the cluster. The alternative is
-[VALS](#vals). See [External Credentials Management](/docs/features/external-creds.md#overview).
+External Secrets Operator, one of two ways an application receives an `external` [Credential](#credential). It is
+used when the effective [`SECRET_FLOW`](#secret_flow) is `external-values`. The deployment context carries ESO
+references, and the application's Helm chart consumes them to render `ExternalSecret` resources. The alternative is
+[VALS](#vals). See [Parameter with ESO reference](/docs/features/external-creds.md#parameter-with-eso-reference).
+
+## `eso_support`
+
+An application-side marker in the [Application SBOM](#application-sbom) that declares whether the application can be
+deployed with [ESO](#eso). It validates the choice made by [`SECRET_FLOW`](#secret_flow). See
+[`eso_support` attribute](/docs/features/external-creds.md#eso_support-attribute).
 
 ## External Credential Context
 
@@ -299,7 +393,7 @@ hands the result to the deployer. See [Instance pipeline](/docs/envgene-pipeline
 
 ## Instance Repository
 
-The Git repository containing Environment Inventories, generated Environment Instances, and related configuration.
+The Git repository containing Environment Inventories, generated Environment Instances, and related configuration. See [Instance Repository Objects](/docs/envgene-objects.md#instance-repository-objects).
 
 ## Macro
 
@@ -311,12 +405,29 @@ A variable or function available in templates, such as `current_env.name` or `cr
 
 An EnvGene object that groups parameters specific to applications within a single namespace in a cluster. Defined in the Environment Instance. See [Namespace](/docs/envgene-objects.md#namespace)
 
+## Namespace Template
+
+A Jinja template in the [Template Repository](#template-repository) that renders a [Namespace](#namespace) object.
+See [Namespace Template](/docs/envgene-objects.md#namespace-template).
+
+## Operation Type
+
+What one [Instance Pipeline](#instance-pipeline) run does, set by `OPERATION_TYPE`: `DEPLOY` (the default) deploys
+applications, `CLEAN` cleans namespaces, and `BGD` runs the [Blue-Green Deployment](#blue-green-deployment)
+operation selected by `BGD_OPERATION`. See [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type).
+
 ## ParameterSet
 
-A reusable container of parameters that a [Cloud](#cloud) or [Namespace](#namespace) template references by name.
+A reusable container, also written Parameter Set, of parameters that a [Cloud](#cloud) or [Namespace](#namespace) template references by name.
 During [Environment Instance](#environment-instance) generation its parameters are set on the referencing object, and
 its `applications` section produces [Application](#application) objects. See
 [Template ParameterSet](/docs/envgene-objects.md#template-parameterset).
+
+## Partial Generation
+
+An [Effective Set](#effective-set) generation mode that recalculates only the applications in the
+[Delta SD](#delta-sd) and merges the result into the existing Effective Set. See
+[Partial Generation](/docs/features/effective-set-generation.md#partial-generation).
 
 ## Pipeline Parameter Context
 
@@ -327,7 +438,8 @@ The part of the [Effective Set](#effective-set) for deployment orchestrators and
 ## Registry Definition
 
 An object that describes a registry where application artifacts are stored. An
-[Application Definition](#application-definition) points to it. See
+[Application Definition](#application-definition) points to it. Two schema versions exist, v1.0 and v2.0. A v2.0
+definition sets `version: "2.0"` and supports cloud registries such as AWS, Azure, and GCP. See
 [Registry Definition](/docs/envgene-objects.md#registry-definition).
 
 ## Resource Profile
@@ -360,14 +472,21 @@ See [SBOM](/docs/features/sbom.md).
 ## SD Merge Mode
 
 The way an incoming [Solution Descriptor](#solution-descriptor) is combined with the [Full SD](#full-sd) already in
-the repository, set by `SD_REPO_MERGE_MODE`: `basic-merge`, `basic-exclusion-merge`, `extended-merge`, or `replace`.
-See [SD merge](/docs/features/sd-processing.md#sd-merge).
+the repository, set by `SD_REPO_MERGE_MODE`: `basic-merge` (the default), `basic-exclusion-merge`, or `replace`. See
+[SD merge](/docs/features/sd-processing.md#sd-merge).
 
 ## Secret Store
 
 A named entry in the [Instance Repository](#instance-repository) configuration that describes how to reach an
 external secret backend, such as Vault. `external` [Credentials](#credential) point to it. See
 [Secret Store](/docs/envgene-objects.md#secret-store).
+
+## `SECRET_FLOW`
+
+An environment-side attribute, discovered from the [Cloud Passport](#cloud-passport) and overridable on the
+[Cloud](#cloud), that selects how `external` [Credentials](#credential) reach an application: `helm-values` for
+[VALS](#vals) or `external-values` for [ESO](#eso). See
+[`SECRET_FLOW` attribute](/docs/features/external-creds.md#secret_flow-attribute).
 
 ## Shared Credentials File
 
@@ -384,14 +503,20 @@ from the [Environment Inventory](#environment-inventory). See
 ## Solution Descriptor
 
 The object, also called SD, that lists the applications of a solution, each as `application:version` with a
-[Deploy Postfix](#deploy-postfix). It is the primary input for [Effective Set](#effective-set) calculation. See
-[Solution Descriptor](/docs/envgene-objects.md#solution-descriptor).
+[Deploy Postfix](#deploy-postfix). EnvGene converts it into the [Deploy Plan](#deploy-plan) that drives
+[Effective Set](#effective-set) calculation. See [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor).
 
 ## System Credentials File
 
 A file with the [Credentials](#credential) EnvGene itself uses to reach external systems, such as artifact
 registries, GitLab, and GitHub. See
 [System Credentials File](/docs/envgene-objects.md#system-credentials-file-in-instance-repository).
+
+## `technicalConfigurationParameters`
+
+The parameter section of a [Tenant](#tenant), [Cloud](#cloud), [Namespace](#namespace), or
+[Application](#application) object that feeds the [Runtime Parameter Context](#runtime-parameter-context). See
+[Runtime Parameter Context](/docs/features/calculator-cli.md#version-20-runtime-parameter-context).
 
 ## Template Composition
 
@@ -438,6 +563,11 @@ An Application or Registry Definition produced by rendering a template from the 
 An EnvGene object that holds tenant-level parameters, such as registry configuration and ownership, common to all
 environments of the tenant. See [Tenant](/docs/envgene-objects.md#tenant).
 
+## Tenant Template
+
+A Jinja template in the [Template Repository](#template-repository) that renders the [Tenant](#tenant) object. See
+[Tenant Template](/docs/envgene-objects.md#tenant-template).
+
 ## Topology Context
 
 The part of the [Effective Set](#effective-set) that describes how systems and their components relate: the
@@ -446,12 +576,14 @@ The part of the [Effective Set](#effective-set) that describes how systems and t
 
 ## VALS
 
-One of two ways an application receives an `external` [Credential](#credential). The [Effective Set](#effective-set)
-carries a VALS reference that is resolved into the Helm values at deployment. The alternative is [ESO](#eso). See
-[External Credentials Management](/docs/features/external-creds.md#overview).
+One of two ways an application receives an `external` [Credential](#credential). It is used when the effective
+[`SECRET_FLOW`](#secret_flow) is `helm-values`. The [Effective Set](#effective-set) carries `ref+...` reference
+strings, and the Effective Set consumer, such as `vals` or `argocd-vault-plugin`, resolves them at deploy time. VALS
+references also appear in the pipeline and topology contexts. The alternative is [ESO](#eso). See
+[Parameter with VALS reference](/docs/features/external-creds.md#parameter-with-vals-reference).
 
 ## Warmup
 
 The [Blue-Green Deployment](#blue-green-deployment) lifecycle step that makes the candidate side a copy of the active
-side in Git, so a new version is deployed on top of what production runs. See
+side in Git, so a new version is deployed on top of what production runs. See [BG Side Role](#bg-side-role) and
 [Warmup and why it matters](/docs/features/blue-green-deployment.md#warmup-and-why-it-matters).
