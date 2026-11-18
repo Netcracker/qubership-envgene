@@ -25,3 +25,5 @@
 | 2026-11-18 17:17 | implement | - | - | regression test_render_envs[cluster01-env03-test-template-1] is an expected golden update: env03 uses cloudPassport and no clusterUrl, so cloud.yml maas/dbaas/consul hosts now render the passport domain; reference cloud.yml corrected |
 | 2026-11-18 17:18 | implement | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | green: 5 new tests pass; 29 failed == baseline, no new failure @ uncommitted (on e48f85e4c) |
 | 2026-11-18 17:18 | implement | - | - | task 2.2 covered by the env03 full-render integration test; no separate cucumber fixture |
+| 2026-11-18 17:22 | implement | `docker run ghcr.io/igorshubovych/markdownlint-cli --config .github/linters/.markdown-lint.yml docs/template-macros.md` | 0 | 4 macro entries reworded to fallback; markdownlint clean |
+| 2026-11-18 17:23 | implement | - | - | all tasks ticked (1.1-1.3, 2.1, 2.2, 3.1); doc-vs-code reconciled for the four cluster macros |
