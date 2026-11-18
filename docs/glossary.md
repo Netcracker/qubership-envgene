@@ -60,6 +60,7 @@
   - [ParameterSet](#parameterset)
   - [Partial Generation](#partial-generation)
   - [Pipeline Parameter Context](#pipeline-parameter-context)
+  - [Pipeline Type](#pipeline-type)
   - [Registry Definition](#registry-definition)
   - [Resource Profile](#resource-profile)
   - [Resource Profile Override](#resource-profile-override)
@@ -79,6 +80,7 @@
   - [Template Pipeline](#template-pipeline)
   - [Template Repository](#template-repository)
   - [Template Resource Profile Override](#template-resource-profile-override)
+  - [Template Variables](#template-variables)
   - [Template-rendered Definition](#template-rendered-definition)
   - [Tenant](#tenant)
   - [Tenant Template](#tenant-template)
@@ -104,7 +106,7 @@ from the `applications` section of [ParameterSets](#parameterset). See
 
 ## Application Definition
 
-An object that maps an application name to its artifact ID, group ID, and [Registry Definition](#registry-definition),
+An object, also called AppDef, that maps an application name to its artifact ID, group ID, and [Registry Definition](#registry-definition),
 so that the `application:version` notation resolves to a downloadable Maven artifact. See
 [Application Definition](/docs/envgene-objects.md#application-definition).
 
@@ -174,8 +176,9 @@ the [Environment Instance](#environment-instance), the [Deploy Plan](#deploy-pla
 ## Cleanup Context
 
 The part of the [Effective Set](#effective-set) that holds per-namespace parameters and credentials for removing a
-namespace from a cluster. EnvGene does not remove anything itself. Teardown tooling consumes this context. See
-[Cleanup](/docs/features/clean.md).
+namespace from a cluster. Only the No-CMDB v1 [Deployment Architecture](#deployment-architecture) produces it, on
+`DEPLOY`. No-CMDB v2 replaces the content of a cleaned namespace with a `.cleaned` marker instead. EnvGene does not
+remove anything itself. Teardown tooling consumes this output. See [Cleanup](/docs/features/clean.md).
 
 ## Cloud
 
@@ -253,7 +256,9 @@ in `delta-deploy-plan.yml`, as the list of applications to calculate. EnvGene bu
 
 ## Deploy Postfix
 
-A short identifier for a [Namespace](/docs/envgene-objects.md#namespace) role. Used in the Solution Descriptor. Typically matches the namespace folder name or template name. See [`useDeployPostfixAsNamespace` Handling](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling).
+A short identifier for a [Namespace](/docs/envgene-objects.md#namespace) role. Used in the Solution Descriptor.
+Typically matches the namespace folder name or template name. See [`useDeployPostfixAsNamespace`
+Handling](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling).
 
 ## Deployment Architecture
 
@@ -352,7 +357,11 @@ A single Environment Template can be used for multiple projects or environment t
 
 ## Environment Template Artifact
 
-A versioned Maven artifact containing one or more [Environment Templates](#environment-template) from the Template Repository. Published during Template Repository build process and referenced in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) using `application:version` notation (e.g., `project-env-template:v1.2.3`). Used by EnvGene to generate Environment Instances. See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects).
+A versioned Maven artifact containing one or more [Environment Templates](#environment-template) from the Template
+Repository. Published during Template Repository build process and referenced in the [Environment
+Inventory](/docs/envgene-configs.md#env_definitionyml) using `application:version` notation (e.g.,
+`project-env-template:v1.2.3`). Used by EnvGene to generate Environment Instances. See [Environment Template
+Objects](/docs/envgene-objects.md#environment-template-objects).
 
 ## Environment Template SBOM
 
@@ -418,15 +427,17 @@ operation selected by `BGD_OPERATION`. See [`OPERATION_TYPE`](/docs/instance-pip
 
 ## ParameterSet
 
-A reusable container, also written Parameter Set, of parameters that a [Cloud](#cloud) or [Namespace](#namespace) template references by name.
+A reusable container, also written Parameter Set, of parameters that a [Cloud](#cloud) or [Namespace](#namespace)
+template references by name.
 During [Environment Instance](#environment-instance) generation its parameters are set on the referencing object, and
 its `applications` section produces [Application](#application) objects. See
 [Template ParameterSet](/docs/envgene-objects.md#template-parameterset).
 
 ## Partial Generation
 
-An [Effective Set](#effective-set) generation mode that recalculates only the applications in the
-[Delta SD](#delta-sd) and merges the result into the existing Effective Set. See
+An [Effective Set](#effective-set) generation mode that updates only the applications in the [Delta SD](#delta-sd).
+With `basic-merge` the calculator recalculates them and the result is merged into the existing Effective Set. With
+`basic-exclusion-merge` the calculator is not invoked and their slices are deleted. See
 [Partial Generation](/docs/features/effective-set-generation.md#partial-generation).
 
 ## Pipeline Parameter Context
@@ -435,9 +446,15 @@ The part of the [Effective Set](#effective-set) for deployment orchestrators and
 `e2eParameters` of the [Cloud](#cloud). See
 [Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context).
 
+## Pipeline Type
+
+The execution model of an [Instance Pipeline](#instance-pipeline) run, set by `PIPELINE_TYPE`: `LEGACY` (the default)
+or `GITLAB_DEPLOY`. Some parameters and [Operation Types](#operation-type), such as `CLEAN` and `BGD`, are processed
+only at `GITLAB_DEPLOY`. See [`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type).
+
 ## Registry Definition
 
-An object that describes a registry where application artifacts are stored. An
+An object, also called RegDef, that describes a registry where application artifacts are stored. An
 [Application Definition](#application-definition) points to it. Two schema versions exist, v1.0 and v2.0. A v2.0
 definition sets `version: "2.0"` and supports cloud registries such as AWS, Azure, and GCP. See
 [Registry Definition](/docs/envgene-objects.md#registry-definition).
@@ -496,8 +513,8 @@ A file with [Credentials](#credential) shared across environments. EnvGene copie
 
 ## Shared Template Variable File
 
-A file with template variables shared across environments. EnvGene merges them with `additionalTemplateVariables`
-from the [Environment Inventory](#environment-inventory). See
+A file with [Template Variables](#template-variables) shared across environments. EnvGene merges them with
+`additionalTemplateVariables` from the [Environment Inventory](#environment-inventory). See
 [Shared Template Variable Files](/docs/envgene-objects.md#shared-template-variable-files).
 
 ## Solution Descriptor
@@ -553,6 +570,14 @@ A [Resource Profile Override](#resource-profile-override) in the [Template Repos
 applies the same adjustment to all environments of one type. A [Cloud](#cloud) or [Namespace](#namespace) template
 references it by `profile.name`. See
 [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override).
+
+## Template Variables
+
+Variables available during [Environment Template](#environment-template) rendering, set in
+`envTemplate.additionalTemplateVariables` of the [Environment Inventory](#environment-inventory) or in a
+[Shared Template Variable File](#shared-template-variable-file). Templates read them through
+`current_env.additionalTemplateVariables`. See
+[`current_env.additionalTemplateVariables`](/docs/template-macros.md#current_envadditionaltemplatevariables).
 
 ## Template-rendered Definition
 
