@@ -35,3 +35,4 @@
 | 2026-11-18 17:27 | review | - | - | minor answered (not changed): red row count 2 is correct; the red run was `2 failed, 3 passed` (full_passport, missing_port failed; absent_no_passport passed pre-fix) |
 | 2026-11-18 17:27 | review | - | - | minor noted: `in in the` typo fix at template-macros.md:498 is within a fully reworded sentence, acceptable |
 | 2026-11-18 17:28 | verify | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | re-verify after review fixes: 5 new pass, 29 failed == baseline, no new failure @ pending commit |
+| 2026-11-18 17:31 | review | - | - | extra docs fix (developer-directed): cloud_public_url Basic usage showed apiPort copy-paste; corrected to publicUrl macro in a yaml block matching siblings; separate commit |

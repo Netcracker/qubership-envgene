@@ -522,7 +522,9 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 **Basic usage:**
 
-`apiPort: "{{current_env.cluster.cloud_api_port}}"`
+```yaml
+publicUrl: "{{current_env.cluster.cloud_public_url}}"
+```
 
 **Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
 
