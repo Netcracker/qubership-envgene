@@ -828,7 +828,6 @@ Available values:
 
 - `basic-merge`
 - `basic-exclusion-merge`
-- `extended-merge`
 - `replace`
 
 See details in [SD processing](/docs/features/sd-processing.md)
@@ -837,7 +836,7 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 **Mandatory**: No
 
-**Example**: `extended-merge`
+**Example**: `basic-merge`
 
 ### `DEPLOYMENT_SESSION_ID`
 
@@ -1110,7 +1109,7 @@ The following parameters are planned for removal
 
 Processed only at `PIPELINE_TYPE: LEGACY`.
 
-If `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`
+If `true`: behaves identically to `SD_REPO_MERGE_MODE: basic-merge`
 
 If `false`: behaves identically to `SD_REPO_MERGE_MODE: replace`
 

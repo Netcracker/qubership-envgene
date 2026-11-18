@@ -20,10 +20,6 @@
         - [`basic-exclusion-merge` SD Merge Mode Terms](#basic-exclusion-merge-sd-merge-mode-terms)
         - [`basic-exclusion-merge` SD Merge Mode Assumptions](#basic-exclusion-merge-sd-merge-mode-assumptions)
         - [`basic-exclusion-merge` SD Merge Mode Rules](#basic-exclusion-merge-sd-merge-mode-rules)
-      - [`extended-merge` SD Merge Mode](#extended-merge-sd-merge-mode)
-        - [`extended-merge` SD Merge Mode Terms](#extended-merge-sd-merge-mode-terms)
-        - [`extended-merge` Merge Mode Assumptions](#extended-merge-merge-mode-assumptions)
-        - [`extended-merge` SD Merge Mode Rules](#extended-merge-sd-merge-mode-rules)
   - [`useDeployPostfixAsNamespace` Handling](#usedeploypostfixasnamespace-handling)
   - [Use Cases](#use-cases)
   - [Invalid Input Combinations](#invalid-input-combinations)
@@ -86,8 +82,8 @@ git add -A && git commit -m "Remove legacy Delta SD files"
 | `SD_VERSION`         | string                                                                         | no        | Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator. EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None          | `solution:0.64.1`           |
 | `SD_DATA`            | string                                                                         | no        | Specifies the **list** of contents of one or more SD in JSON-in-string format. EnvGene sequentially merges them in the `basic-merge` mode described, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode                                      | None          | [Example](#sd_data-example) |
 | `SD_SOURCE_TYPE`     | enumerate[`artifact`,`json`]                                                   | TBD       | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in `application:version` notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format                                                                                                                                | TBD           | `artifact`                  |
-| `SD_DELTA`           | enumerate[`true`, `false`]                                                     | no        | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence                                                                                                                                  | `true`        | `false`                     |
-| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no        | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge)                                                                                                                                                                                                                                                                      | `basic-merge` | `extended-merge`            |
+| `SD_DELTA`           | enumerate[`true`, `false`]                                                     | no        | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: basic-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence                                                                                                                                     | `true`        | `false`                     |
+| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `replace`]                   | no        | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge)                                                                                                                                                                                                                                                                      | `basic-merge` | `basic-merge`               |
 
 #### `SD_DATA` Example
 
@@ -118,12 +114,11 @@ SD merging occurs in the following cases:
 > When processing Multiple SD in `SD_VERSION`/`SD_DATA` variables, the first SD is treated as Full,
 > and subsequent ones as Delta.
 
-There are four merge modes. They differ in their algorithms and output results:
+There are three merge modes. They differ in their algorithms and output results:
 
 1. [`basic-merge`](#basic-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are added and/or modified.
 2. [`basic-exclusion-merge`](#basic-exclusion-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are removed and/or modified.
-3. [`extended-merge`](#extended-merge-sd-merge-mode): The merge produces an SD that can be used (with certain limitations) outside of EnvGene, for deployment or delivery purposes as well as Effective Set calculation by EnvGene. In this mode, SD applications and components are added and/or modified.
-4. `replace`: Performs complete replacement - the incoming SD entirely overwrites the repository SD without merging.
+3. `replace`: Performs complete replacement - the incoming SD entirely overwrites the repository SD without merging.
 
 #### `basic-merge` SD Merge Mode
 
@@ -202,81 +197,6 @@ The same as for [`basic-merge`](#basic-merge-sd-merge-mode-assumptions)
 4. Resulting SD must not contain any attributes other than `application`
 5. Application in the Resulting SD may contain `alias`
 
-#### `extended-merge` SD Merge Mode
-
-The comprehensive merge strategy that maintains full SD structure for deployment purposes. This mode:
-
-- Handles both applications list and deployment graph (`deployGraph`)
-- Preserves all SD attributes (version, type, deployMode) with consistency checks
-- Maintains strict ordering in all lists (applications, chunks, apps)
-- Requires complete deployGraph consistency when present
-- Typical use case: Where both EnvGene and deployment systems need the SD
-
-##### `extended-merge` SD Merge Mode Terms
-
-The following set of terms is used to describe the rules and assumptions of SD merge
-
-**Application** - is an entry in a SD's applications list
-
-**Application Name** - attribute of an Application, equals:
-
-- `split(':')[0]` if Application is a string
-- `version.split(':')[0]` if Application is a map
-
-**Application Version** - attribute of an Application, equals:
-
-- `split(':')[0]` if Application is a string
-- `version.split(':')[0]` if Application is a map
-
-**Matching Application** - is an entry in the Full SD's applications list that has a corresponding entry in the Delta SD's applications list. These corresponding entries must match in the following fields:
-
-- Application Name
-- `deployPostfix` (if it present in Application)
-- `alias` (if it present in Application)
-
-**Duplicating Application** - is an entry in the Full SD's applications list that has a corresponding entry in the Delta SD's applications list. These corresponding entries must match in the following fields:
-
-- Application Name
-- Application Version
-- `deployPostfix` (if it present in Application)
-- `alias` (if it present in Application)
-
-**New Application** - is an entry in the Delta SD's applications list that has NOT a corresponding entry in the Full SD's applications list. The matching rule the same as for Matching application
-
-**Application Alias** - Uniquely identifies an application within a specific SD. Is the alias attribute of an entry in the applications list. Applications are identified within the `deployGraph` using their Application Alias in the apps section. This attribute is optional, and its default value is determined as follows:
-
-- if `deployPostfix` is not present, the alias defaults to the Application Name
-- if `deployPostfix` is present, the alias defaults to the Application Name + : + `deployPostfix` (concatenation of Application Name, a colon, and `deployPostfix`)
-
-**Chunk** - is an entry in a SD's `deployGraph` list. A Chunk is uniquely identified by its name attribute within a specific SD
-
-##### `extended-merge` Merge Mode Assumptions
-
-1. The values of the attributes `version`, `type`, and `deployMode` in both Full and Delta SDs must match.
-2. All Applications must conform to the same model as in both Full and Delta SDs. Valid models include:
-   1. `<application:version>`
-   2. `version: <application:version>`
-      `deployPostfix:  <>`
-   3. `version: <application:version>`
-      `deployPostfix: <>`
-      `alias: <>`
-3. If the Full SD does not contain a `deployGraph`, the Delta SD must not contain one either.
-4. If either the Full or Delta SD contains a `deployGraph`, then all applications listed in applications must also be present in the `deployGraph`
-5. The `deployGraph` in the Delta SD can contains applications that are not listed in its own applications section. (This is a case where the Delta SD contains a complete `deployGraph`)
-6. The Delta SD must not contain any chunks that are not present in the Full SD
-7. If the Delta SD introduces a New Application, it must also contains a `deployGraph` that contains this New Application
-
-##### `extended-merge` SD Merge Mode Rules
-
-1. For each Matching Application in Full SD, replace the Application Version with the one from Delta SD. See use cases UC-1-X as examples
-2. For each New Application:
-   1. Append the New Application from the Delta SD to the end of the applications list in the Full SD
-   2. Append the Alias of the New Application to the end of the apps list in the chunk with the equal as in the Delta SD
-3. Each Duplicating Application must remain unchanged
-4. The order of elements in the applications list must remain unchanged
-5. The order of elements in the deployGraph list must remain unchanged
-6. The order of elements in the apps list must remain unchanged
-
 ## `useDeployPostfixAsNamespace` Handling
 
 In the Solution Descriptor, the `deployPostfix` attribute is required for Effective Set generation, but external systems may only work with the namespace and do not know which `deployPostfix` corresponds to it.
@@ -348,13 +268,8 @@ For information on use cases, refer to the [documentation](/docs/use-cases/sd-pr
 |  4  | Both `SD_REPO_MERGE_MODE` and `SD_DELTA` specified                                            |
 |  5  | Malformed JSON in `SD_DATA`                                                                   |
 |  6  | Invalid `SD_REPO_MERGE_MODE` value                                                            |
-|  7  | `SD_DELTA=true` with no existing Delta SD (only for `extended-merge`)                         |
-|  8  | New Application without **corresponding** `deployGraph` entry (only for `extended-merge`)     |
-|  9  | `version`/`type`/`deployMode` mismatch between SDs (only for `extended-merge`)                |
-| 10  | Delta SD contains Chunk not in Full SD (only for `extended-merge`)                            |
-| 11  | `deployGraph` presence mismatch between SDs (only for `extended-merge`)                       |
-| 12  | Input SD contains duplicate `(Application Name, Application Version, deployPostfix)` entries  |
-| 13  | Existing `sd.yaml` in repository contains duplicate entries (checked before repository merge) |
+|  7  | Input SD contains duplicate `(Application Name, Application Version, deployPostfix)` entries  |
+|  8  | Existing `sd.yaml` in repository contains duplicate entries (checked before repository merge) |
 
 ## Test Cases
 
