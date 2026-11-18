@@ -53,18 +53,11 @@ All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credential
 
 ### Glossary and module context
 
-Use the EnvGene terms as the glossary defines them. Each module keeps its own `AGENTS.md` with the rules for that
-module.
+Use the EnvGene terms as the glossary defines them: @docs/glossary.md
 
-- Glossary: @docs/glossary.md
-- `scripts/`: @scripts/AGENTS.md
-- `scripts/creds_rotation/`: @scripts/creds_rotation/AGENTS.md
-- `modules/envgene/`: @modules/envgene/AGENTS.md
-- `modules/envgene-shared/`: @modules/envgene-shared/AGENTS.md
-- `modules/artifact-searcher/`: @modules/artifact-searcher/AGENTS.md
-- `schemas/`: @schemas/AGENTS.md
-- `build_envgene/`: @build_envgene/AGENTS.md
-- `build_effective_set_generator/`: @build_effective_set_generator/AGENTS.md
+Each module keeps its own `AGENTS.md` with the rules for that module. It loads when you work in the module:
+`scripts/`, `scripts/creds_rotation/`, `modules/envgene/`, `modules/envgene-shared/`, `modules/artifact-searcher/`,
+`schemas/`, `build_envgene/`, `build_effective_set_generator/`.
 
 ## Change flow
 
