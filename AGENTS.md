@@ -53,7 +53,7 @@ All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credential
 
 ### Glossary and module context
 
-Use the EnvGene terms as the glossary defines them: @docs/glossary.md
+When a word has several meanings, check its senses in the glossary: @docs/glossary.md
 
 Each module keeps its own `AGENTS.md` with the rules for that module. It loads when you work in the module:
 `scripts/`, `scripts/creds_rotation/`, `modules/envgene/`, `modules/envgene-shared/`, `modules/artifact-searcher/`,
