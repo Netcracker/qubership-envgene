@@ -36,9 +36,9 @@ Passport does not provide its value.
 #### Scenario: clusterUrl is not set and the Cloud Passport provides the cluster values
 
 - **WHEN** an environment whose Environment Inventory does not set `clusterUrl` is generated with a Cloud Passport that
-  carries the cluster public host, api host, api port, and protocol
+  carries the cluster public host, API host, API port, and protocol
 - **THEN** in the generated environment configuration `current_env.cluster.cloud_public_url` is the Cloud Passport
-  public host, and the three api macros are the Cloud Passport api host, api port, and protocol, so a template host
+  public host, and the three API macros are the Cloud Passport API host, API port, and protocol, so a template host
   `<prefix>.{{ current_env.cluster.cloud_public_url }}` renders with its domain
 
 #### Scenario: clusterUrl is not set and no Cloud Passport is used
@@ -50,6 +50,6 @@ Passport does not provide its value.
 #### Scenario: clusterUrl is not set and the Cloud Passport omits a cluster value
 
 - **WHEN** an environment whose Environment Inventory does not set `clusterUrl` is generated with a Cloud Passport that
-  carries the public host but omits the api port
+  carries the public host but omits the API port
 - **THEN** in the generated environment configuration `current_env.cluster.cloud_public_url` is the Cloud Passport
   public host and `current_env.cluster.cloud_api_port` is an empty string

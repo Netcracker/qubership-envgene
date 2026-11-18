@@ -13,7 +13,7 @@ cluster facts, independent of the environment architecture.
 ## What Changes
 
 - The four `current_env.cluster.*` connection macros fall back to the Cloud Passport's cluster values (public host,
-  api host, api port, protocol) when `clusterUrl` is not set in the Environment Inventory.
+  API host, API port, protocol) when `clusterUrl` is not set in the Environment Inventory.
 - Precedence is fallback, not override: when `clusterUrl` is set it stays the source and the Cloud Passport is not
   consulted. The Cloud Passport fills only the otherwise-empty case. When neither source provides a value the macro
   stays an empty string, as today.
@@ -33,7 +33,7 @@ cluster facts, independent of the environment architecture.
 
 ## Impact
 
-- Objects: Environment Inventory (`clusterUrl`), Cloud Passport (cluster public host, api host, api port, protocol),
+- Objects: Environment Inventory (`clusterUrl`), Cloud Passport (cluster public host, API host, API port, protocol),
   and the generated environment configuration context (`current_env.cluster`).
 - Macros: `current_env.cluster.cloud_api_protocol`, `current_env.cluster.cloud_api_url`,
   `current_env.cluster.cloud_api_port`, `current_env.cluster.cloud_public_url`.

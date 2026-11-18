@@ -51,7 +51,7 @@ None. Single component, no cross-component merge order.
 
 - `cloud.yml` generation and the `cloud_passport` context block, both unchanged.
 - The `current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST` macro, which keeps working as before.
-- Passport fields other than the four cluster connection values (private url, dashboard, credentials, and the rest).
+- Passport fields other than the four cluster connection values (private URL, dashboard, credentials, and the rest).
 - Override precedence, where the passport would win over a set `clusterUrl`. Rejected in favor of fallback.
 
 ## Open Questions

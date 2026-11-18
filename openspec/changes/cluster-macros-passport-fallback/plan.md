@@ -48,7 +48,7 @@ empty string when neither provides a value. Correct the template-macros document
   - `test_clusterurl_absent_full_passport`: no `clusterUrl`, passport with all four cluster values -> cluster values
     from the passport; `cloud_public_url` equals the passport public host.
   - `test_clusterurl_absent_no_passport`: no `clusterUrl`, no passport -> all four cluster values empty.
-  - `test_clusterurl_absent_passport_missing_port`: no `clusterUrl`, passport without the api port -> `cloud_api_port`
+  - `test_clusterurl_absent_passport_missing_port`: no `clusterUrl`, passport without the API port -> `cloud_api_port`
     empty, `cloud_public_url` set from the passport.
 - [ ] 2. Run `<one-test command>`; expect FAIL on the three `clusterurl_absent` tests with a passport (empty cluster
   values today); the two `clusterurl_set` tests pass as regression guards.

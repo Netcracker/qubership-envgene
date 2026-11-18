@@ -1,11 +1,11 @@
 # Ledger: cluster-macros-passport-fallback
 
 | time (UTC) | stage | command | exit | result |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 2026-11-18 17:01 | propose | `git rev-parse --short HEAD` | 0 | start at propose; base main @ c0771dd70 |
 | 2026-11-18 17:01 | propose | - | - | permissions: commit yes, push yes, PR yes (popoveugene, chat) |
 | 2026-11-18 17:01 | propose | - | - | owner: @miyamuraga from CODEOWNERS (/openspec/changes/); docs/ owner @popoveugene |
-| 2026-11-18 17:01 | propose | - | - | decision: repo runs propose → design → plan order (orchestration convention) |
+| 2026-11-18 17:01 | propose | - | - | decision: repository runs propose → design → plan order (orchestration convention) |
 | 2026-11-18 17:01 | propose | - | - | no ADR: bounded change, rationale in proposal.md |
 | 2026-11-18 17:01 | propose | - | - | note: change reopens prior owner decision (param deprecated / not propagated from Cloud Passport); re-litigated at owner approval of PR #1960 |
 | 2026-11-18 17:02 | propose | `openspec validate cluster-macros-passport-fallback --strict --no-interactive` | 0 | valid @ c0771dd70 |
@@ -35,7 +35,7 @@
 | 2026-11-18 17:27 | review | - | - | minor answered (not changed): red row count 2 is correct; the red run was `2 failed, 3 passed` (full_passport, missing_port failed; absent_no_passport passed pre-fix) |
 | 2026-11-18 17:27 | review | - | - | minor noted: `in in the` typo fix at template-macros.md:498 is within a fully reworded sentence, acceptable |
 | 2026-11-18 17:28 | verify | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | re-verify after review fixes: 5 new pass, 29 failed == baseline, no new failure @ pending commit |
-| 2026-11-18 17:31 | review | - | - | extra docs fix (developer-directed): cloud_public_url Basic usage showed apiPort copy-paste; corrected to publicUrl macro in a yaml block matching siblings; separate commit |
+| 2026-11-18 17:31 | review | - | - | extra docs fix (developer-directed): cloud_public_url Basic usage showed the apiPort macro by mistake; corrected to the publicUrl macro in a YAML block matching siblings; separate commit |
 | 2026-11-18 19:12 | docs | - | - | docs stage (run after review, was skipped): docs already aligned during implement (template-macros.md 4 entries + example fix); no new edits needed |
 | 2026-11-18 19:12 | docs | - | - | discrepancy-audit: consistent, no contradictions. 4 cluster.* statements match env_config.yml.j2 elif + cloud_passport.py CLOUD_SUBSTITUTIONS (CLOUD_PROTOCOL/CLOUD_API_HOST/CLOUD_API_PORT/CLOUD_PUBLIC_HOST); adjacent docs (envgene-objects.md, envgene-configs.md, samples) are valid examples, no inventory-only claim anywhere |
 | 2026-11-18 19:12 | docs | - | - | reviewing-docs: pass, no findings (reference entries consistent, precedence clear, identifiers grounded) |
