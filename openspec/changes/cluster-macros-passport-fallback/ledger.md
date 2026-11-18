@@ -36,3 +36,9 @@
 | 2026-11-18 17:27 | review | - | - | minor noted: `in in the` typo fix at template-macros.md:498 is within a fully reworded sentence, acceptable |
 | 2026-11-18 17:28 | verify | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | re-verify after review fixes: 5 new pass, 29 failed == baseline, no new failure @ pending commit |
 | 2026-11-18 17:31 | review | - | - | extra docs fix (developer-directed): cloud_public_url Basic usage showed apiPort copy-paste; corrected to publicUrl macro in a yaml block matching siblings; separate commit |
+| 2026-11-18 19:12 | docs | - | - | docs stage (run after review, was skipped): docs already aligned during implement (template-macros.md 4 entries + example fix); no new edits needed |
+| 2026-11-18 19:12 | docs | - | - | discrepancy-audit: consistent, no contradictions. 4 cluster.* statements match env_config.yml.j2 elif + cloud_passport.py CLOUD_SUBSTITUTIONS (CLOUD_PROTOCOL/CLOUD_API_HOST/CLOUD_API_PORT/CLOUD_PUBLIC_HOST); adjacent docs (envgene-objects.md, envgene-configs.md, samples) are valid examples, no inventory-only claim anywhere |
+| 2026-11-18 19:12 | docs | - | - | reviewing-docs: pass, no findings (reference entries consistent, precedence clear, identifiers grounded) |
+| 2026-11-18 19:13 | docs | `codespell docs/template-macros.md` | 0 | clean |
+| 2026-11-18 19:13 | docs | - | - | lint note: markdownlint + codespell clean; textlint (terminology) and gitleaks via super-linter deferred to CI on PR #1960 |
+| 2026-11-18 19:14 | docs | - | - | gate: docs check passes @ 436111d8e |
