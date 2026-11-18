@@ -57,6 +57,11 @@ environment:
     cloud_api_url: "{{ env_definition.inventory.clusterUrl | urlsplit('hostname') }}"
     cloud_api_port: "{{ env_definition.inventory.clusterUrl | urlsplit('port') }}"
     cloud_public_url: "{{ env_definition.inventory.clusterUrl | urlsplit('hostname') | replace('api.', '') }}"
+{% elif cloud_passport.cloud is defined %}
+    cloud_api_protocol: "{{ cloud_passport.cloud.CLOUD_PROTOCOL | default('') | upper }}"
+    cloud_api_url: "{{ cloud_passport.cloud.CLOUD_API_HOST | default('') }}"
+    cloud_api_port: "{{ cloud_passport.cloud.CLOUD_API_PORT | default('') }}"
+    cloud_public_url: "{{ cloud_passport.cloud.CLOUD_PUBLIC_HOST | default('') }}"
 {% else %}
     cloud_api_protocol: ""
     cloud_api_url: ""
