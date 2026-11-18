@@ -42,3 +42,5 @@
 | 2026-11-18 19:13 | docs | `codespell docs/template-macros.md` | 0 | clean |
 | 2026-11-18 19:13 | docs | - | - | lint note: markdownlint + codespell clean; textlint (terminology) and gitleaks via super-linter deferred to CI on PR #1960 |
 | 2026-11-18 19:14 | docs | - | - | gate: docs check passes @ 436111d8e |
+| 2026-11-18 19:44 | docs | - | - | wording fix (developer challenge): "generated from a Cloud Passport" implied the passport is the sole input; reworded docs/proposal/specs to "used for environment generation" / "generated with a Cloud Passport". markdownlint + codespell clean; openspec validate green |
+| 2026-11-18 19:44 | docs | - | - | gate: docs check passes @ 538460340 (supersedes stale gate @ 436111d8e) |
