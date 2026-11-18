@@ -92,7 +92,7 @@
 
 1. If a Solution Descriptor is not present for the Environment for which Effective Set generation is launched, the Calculator must be launched WITHOUT the following attributes:
    1. `--sboms-path`/`-sp`
-   2. `--sd-path`/`-sdp`
+   2. `--deploy-plan-path`/`-dpp`
    3. `--registries`/`-r`
 
 ## Proposed Approach
@@ -108,8 +108,8 @@ Below is a **complete** list of attributes
 | `--env-id`/`-e`                                     | string  | yes       | Environment ID in `<cluster-name>/<environment-name>` notation                                                                                                                                                                                                                                                | N/A     | `cluster/platform-00`                                                     |
 | `--envs-path`/`-ep`                                 | string  | yes       | Path to `/environments` folder                                                                                                                                                                                                                                                                                | N/A     | `/environments`                                                           |
 | `--sboms-path`/`-sp`                                | string  | no        | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                  | N/A     | `/sboms`                                                                  |
-| `--sd-path`/`-sdp`                                  | string  | yes       | Path to the Solution Descriptor                                                                                                                                                                                                                                                                               | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
-| `--registries`/`-r`                                 | string  | no        | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                                            | N/A     | `/configuration/registry.yml`                                             |
+| `--deploy-plan-path`/`-dpp`                         | string  | no        | Path to the deploy plan, a non-empty YAML list of the applications to calculate. Mandatory for Effective Set v1.0                                                                                                                                                                                             | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
+| `--registries`/`-r`                                 | string  | no        | Required when `--deploy-plan-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                                   | N/A     | `/configuration/registry.yml`                                             |
 | `--output`/`-o`                                     | string  | yes       | Folder where the result will be put by Calculator command-line tool                                                                                                                                                                                                                                           | N/A     | `/environments/cluster/platform-00/effective-set`                         |
 | `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                                                                                                     | `v2.0`  | `v1.0`                                                                    |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                                                                                                               | N/A     |                                                                           |
@@ -481,7 +481,7 @@ Normative algorithms for normalization to `normalizedSecretName`, VALS reference
 
 SBOMs for Effective Set calculation are optional. When the Calculator command-line tool is launched without the following attributes:
 
-- `--sd-path`/`-ssp`
+- `--deploy-plan-path`/`-dpp`
 - `--sboms-path`/`-sp`
 - `--registries`/`-r`
 
