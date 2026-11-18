@@ -6,7 +6,7 @@ Inventory does not set `clusterUrl`.
 read the passport cluster values when `clusterUrl` is absent, keeping `clusterUrl` as the source when it is set and an
 empty string when neither provides a value. Correct the template-macros documentation to match.
 **Change:** openspec/changes/cluster-macros-passport-fallback/ (proposal, specs, design, tasks)
-**Commands:** one test: `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/test_cluster_macros_passport_fallback.py`; all tests: `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/`; lint: super-linter (markdownlint/textlint) via docker, or "not run: no docker"
+**Commands:** one test: `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/test_cluster_macros_passport_fallback.py`; all tests: `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/`; lint: super-linter (markdownlint/textlint) via Docker, or "not run: no Docker"
 
 ## Global constraints
 
@@ -82,4 +82,4 @@ cluster values".
 - [ ] 1. Replace "the value will be overwritten from Cloud Passport file" in the four macro entries with the fallback
   statement: the Cloud Passport provides the value when `clusterUrl` is not set.
 - [ ] 2. Verify: the four entries read as fallback and no entry still says "overwritten"; markdownlint and textlint
-  pass (or "not run: no docker"). Tick 3.1; commit `docs: state cluster.* macros fall back to the Cloud Passport`.
+  pass (or "not run: no Docker"). Tick 3.1; commit `docs: state cluster.* macros fall back to the Cloud Passport`.
