@@ -51,6 +51,21 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. SOPS is the only encryption backend (`crypt_backend: SOPS` in `configuration/config.yml`). Fernet is used only to decrypt cloud discovery creds with the discovery project's `SECRET_KEY`. The `type` field is never encrypted.
 
+### Glossary and module context
+
+Use the EnvGene terms as the glossary defines them. Each module keeps its own `CLAUDE.md` with the rules for that
+module.
+
+- Glossary: @docs/glossary.md
+- `scripts/`: @scripts/CLAUDE.md
+- `scripts/creds_rotation/`: @scripts/creds_rotation/CLAUDE.md
+- `modules/envgene/`: @modules/envgene/CLAUDE.md
+- `modules/envgene-shared/`: @modules/envgene-shared/CLAUDE.md
+- `modules/artifact-searcher/`: @modules/artifact-searcher/CLAUDE.md
+- `schemas/`: @schemas/CLAUDE.md
+- `build_envgene/`: @build_envgene/CLAUDE.md
+- `build_effective_set_generator/`: @build_effective_set_generator/CLAUDE.md
+
 ## Change flow
 
 The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
