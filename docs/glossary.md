@@ -12,6 +12,7 @@
     - [Definition](#definition)
     - [Deployment Descriptor](#deployment-descriptor)
     - [External](#external)
+    - [Macro](#macro)
     - [Merge mode](#merge-mode)
     - [Namespace name](#namespace-name)
     - [Override](#override)
@@ -35,7 +36,8 @@ field or ADR where it appears, and a link. Decide which sense a listed word carr
 
 A word gets a list of senses when it appears in the Decision or Consequences section of an ADR under `docs/adr/`, or
 in the name of a field, and has more than one meaning. Two ADR numbers are shared by two files each, so ADRs are
-cited with their topic, for example ADR-0009 (app chart).
+cited with their topic, for example ADR-0009 (app chart). Both ADR-0009 and both ADR-0012 files have the status
+Proposed.
 
 ## Terms with one meaning
 
@@ -46,8 +48,7 @@ cited with their topic, for example ADR-0009 (app chart).
 - **Artifact Definition** - see [Artifact Definition](/docs/envgene-objects.md#artifact-definition).
 - **BG Domain** - see [BG Domain](/docs/envgene-objects.md#bg-domain).
 - **BG Side Role** - see [Lifecycle in plain terms](/docs/features/blue-green-deployment.md#lifecycle-in-plain-terms).
-- **BG State Files** - see [What state files tell
-  you](/docs/features/blue-green-deployment.md#what-state-files-tell-you).
+- **BG State Files** - see [BG State Files](/docs/envgene-objects.md#bg-state-files).
 - **BGD** - see [Blue-Green Deployment](/docs/features/blue-green-deployment.md).
 - **`bgNsArtifacts`** - see [What a BG environment looks
   like](/docs/features/blue-green-deployment.md#what-a-bg-environment-looks-like).
@@ -58,8 +59,10 @@ cited with their topic, for example ADR-0009 (app chart).
 - **Cloud Passport** - see [Cloud Passport](/docs/envgene-objects.md#cloud-passport).
 - **Cloud Template** - see [Cloud Template](/docs/envgene-objects.md#cloud-template).
 - **Composite Structure** - see [Composite Structure](/docs/envgene-objects.md#composite-structure).
+- **`config.yml`** - see [`config.yml`](/docs/envgene-configs.md#configyml).
 - **Credential** - see [Credential](/docs/envgene-objects.md#credential).
 - **Credential Reference** - see [Credential Reference](/docs/features/external-creds.md#credential-reference).
+- **Credential Rotation** - see [Credential Rotation](/docs/features/cred-rotation.md).
 - **Credential Template** - see [Credential Template](/docs/envgene-objects.md#credential-template).
 - **`current_env`** - see [Template Macros](/docs/template-macros.md#jinja-macros).
 - **Custom Params** - see [`CUSTOM_PARAMS`](/docs/instance-pipeline-parameters.md#custom_params).
@@ -71,6 +74,9 @@ cited with their topic, for example ADR-0009 (app chart).
   attributes](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes).
 - **Deploy Postfix** - see [`useDeployPostfixAsNamespace`
   Handling](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling).
+- **Deployer** - see [`deployer.yml`](/docs/envgene-configs.md#deployeryml), set per environment by
+  `inventory.deployer`.
+- **`deployer.yml`** - see [`deployer.yml`](/docs/envgene-configs.md#deployeryml).
 - **Deployment Architecture** - see [Deployment architecture](/docs/deployment-architecture.md).
 - **Deployment Parameter Context** - see [Deployment Parameter
   Context](/docs/features/calculator-cli.md#version-20-deployment-parameter-context).
@@ -78,7 +84,7 @@ cited with their topic, for example ADR-0009 (app chart).
   Context](/docs/features/calculator-cli.md#version-20-deployment-parameter-context).
 - **Discovery Repository** - see [Discovery Pipeline Parameters](/docs/discovery-pipeline-parameters.md).
 - **`e2eParameters`** - see [`e2eParameters`](/docs/e2e-parameters.md).
-- **Effective Definition** - see [Output layout](/docs/features/app-reg-defs.md#output-layout).
+- **Effective Definition** - see [Overview](/docs/features/app-reg-defs.md#overview).
 - **Effective Set** - see [Effective Set
   Structure](/docs/features/calculator-cli.md#version-20-effective-set-structure).
 - **`envgeneNullValue`** - see [Credential](/docs/envgene-objects.md#credential).
@@ -103,9 +109,11 @@ cited with their topic, for example ADR-0009 (app chart).
 - **Full SD** - see [Full SD](/docs/features/sd-processing.md#full-sd).
 - **Instance Pipeline** - see [Instance pipeline](/docs/envgene-pipelines.md#instance-pipeline).
 - **Instance Repository** - see [Instance Repository Objects](/docs/envgene-objects.md#instance-repository-objects).
-- **Macro** - see [Template Macros](/docs/template-macros.md).
+- **`integration.yml`** - see [`integration.yml`](/docs/envgene-configs.md#integrationyml).
+- **Local mode** - see [Mode detection](/docs/features/credential-processing.md#mode-detection).
 - **Namespace** - see [Namespace](/docs/envgene-objects.md#namespace).
 - **Namespace Template** - see [Namespace Template](/docs/envgene-objects.md#namespace-template).
+- **No-CMDB** - see [Deployment architecture](/docs/deployment-architecture.md).
 - **Operation Type** - see [`OPERATION_TYPE`](/docs/instance-pipeline-parameters.md#operation_type).
 - **ParameterSet** - see [Template ParameterSet](/docs/envgene-objects.md#template-parameterset).
 - **Partial Generation** - see [Partial Generation](/docs/features/effective-set-generation.md#partial-generation).
@@ -178,7 +186,7 @@ cited with their topic, for example ADR-0009 (app chart).
 
 ### Clean
 
-1. **`CLEAN` operation** - `OPERATION_TYPE: CLEAN`, run only at `PIPELINE_TYPE: GITLAB_DEPLOY`. See
+1. **`CLEAN` operation** - `OPERATION_TYPE: CLEAN`, replaces namespace content with a `.cleaned` marker. See
    [Cleanup](/docs/features/clean.md).
 2. **Cleanup context** - Effective Set part for teardown, ADR-0011. See [Cleanup
    Context](/docs/features/calculator-cli.md#version-20-cleanup-context).
@@ -217,13 +225,23 @@ cited with their topic, for example ADR-0009 (app chart).
 3. **External systems** - deployers and CMDB outside EnvGene. See [Deployment
    architecture](/docs/deployment-architecture.md).
 
+### Macro
+
+1. **Jinja macro** - resolved during Environment Instance generation, such as `current_env.name`. See [Jinja
+   Macros](/docs/template-macros.md#jinja-macros).
+2. **Calculator CLI macro** - resolved during Effective Set calculation, such as `NAMESPACE`. See [Calculator
+   command-line tool macros](/docs/template-macros.md#calculator-command-line-tool-macros).
+3. **Credential macro** - `creds.get` and deprecated `#creds`, rewritten in external mode, ADR-0009 (shared template).
+   See [Credential Macro and Credential Reference](/docs/template-macros.md#credential-macro-and-credential-reference).
+
 ### Merge mode
 
 1. **SD merge mode** - `SD_REPO_MERGE_MODE`. See [SD merge](/docs/features/sd-processing.md#sd-merge).
 2. **Resource profile merge mode** - `inventory.config.mergeEnvSpecificResourceProfiles`, ADR-0006. See [Merge and
    replace](/docs/features/resource-profile.md#merge-and-replace).
-3. **Effective Set merge** - forward or reverse merge in partial generation. See [Partial
-   Generation](/docs/features/effective-set-generation.md#partial-generation).
+3. **Effective Set merge** - forward or reverse merge in partial generation. See [Forward
+   merge](/docs/features/effective-set-generation.md#forward-merge) and [Reverse
+   merge](/docs/features/effective-set-generation.md#reverse-merge).
 
 ### Namespace name
 
@@ -281,16 +299,18 @@ cited with their topic, for example ADR-0009 (app chart).
    Definition](/docs/envgene-objects.md#registry-definition).
 2. **`registry.yml`** - deprecated config, `--registries` of the Calculator CLI. See
    [`registry.yml`](/docs/envgene-configs.md#registryyml).
-3. **Registry type** - Maven (`MAVEN_PROVIDER`, ADR-0001), Helm, or Docker. See [Artifact
-   Resolution](/docs/features/artifact-resolution.md).
+3. **Registry provider** - `MAVEN_PROVIDER` value such as `aws`, `gcp`, or `nexus` (ADR-0001), or the provider a RegDef
+   v2 declares. See [Artifact Resolution](/docs/features/artifact-resolution.md).
 
 ### Repository
 
 1. **Template and Instance Repository** - the two EnvGene Git repositories. See [EnvGene
    Objects](/docs/envgene-objects.md).
-2. **Discovery and DCL repository** - Cloud Passport source, and No-CMDB v2 push target. See [No-CMDB
+2. **Discovery repository** - generates Cloud Passports. See [Discovery Pipeline
+   Parameters](/docs/discovery-pipeline-parameters.md).
+3. **DCL repository** - No-CMDB v2 push target for Effective Set contexts. See [No-CMDB
    v2](/docs/deployment-architecture.md#no-cmdb-v2).
-3. **Group repository** - Helm repository for a rebuilt chart URL, ADR-0009 (app chart). See [SBOM
+4. **Group repository** - Helm repository for a rebuilt chart URL, ADR-0009 (app chart). See [SBOM
    Generation](/docs/features/sbom-generation.md).
 
 ### SBOM
@@ -327,3 +347,6 @@ cited with their topic, for example ADR-0009 (app chart).
 3. **No-CMDB v1 and v2** - `inventory.noCmdbVersion`. See [Deployment architecture](/docs/deployment-architecture.md).
 4. **Application version** - `version` in `application:version`. See [Solution
    Descriptor](/docs/envgene-objects.md#solution-descriptor).
+5. **SD version** - SD schema version, only 2.1 and 2.2 are usable. `SD_VERSION` is a different thing: the SD artifact
+   to download. See [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) and
+   [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version).
