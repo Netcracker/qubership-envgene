@@ -52,7 +52,7 @@ In EnvGene, there are two types of SDs that differ in their purpose and composit
 
 #### Full SD
 
-Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yml`.
+Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml`.
 
 #### Delta SD
 

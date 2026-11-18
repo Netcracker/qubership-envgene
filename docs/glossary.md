@@ -382,7 +382,7 @@ outside EnvGene reads it to provision secrets in a [Secret Store](#secret-store)
 
 The [Solution Descriptor](#solution-descriptor) that defines the complete application composition of an
 [Environment](#environment). There is one per environment, at
-`/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/sd.yml`. See
+`/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/sd.yaml`. See
 [Full SD](/docs/features/sd-processing.md#full-sd).
 
 ## Instance Pipeline
