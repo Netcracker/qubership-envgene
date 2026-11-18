@@ -106,9 +106,9 @@ from the `applications` section of [ParameterSets](#parameterset). See
 
 ## Application Definition
 
-An object, also called AppDef, that maps an application name to its artifact ID, group ID, and [Registry Definition](#registry-definition),
-so that the `application:version` notation resolves to a downloadable Maven artifact. See
-[Application Definition](/docs/envgene-objects.md#application-definition).
+An object, also called AppDef, that maps an application name to its artifact ID, group ID, and [Registry
+Definition](#registry-definition), so that the `application:version` notation resolves to a downloadable Maven artifact.
+See [Application Definition](/docs/envgene-objects.md#application-definition).
 
 ## Application SBOM
 
@@ -402,7 +402,8 @@ hands the result to the deployer. See [Instance pipeline](/docs/envgene-pipeline
 
 ## Instance Repository
 
-The Git repository containing Environment Inventories, generated Environment Instances, and related configuration. See [Instance Repository Objects](/docs/envgene-objects.md#instance-repository-objects).
+The Git repository containing Environment Inventories, generated Environment Instances, and related configuration. See
+[Instance Repository Objects](/docs/envgene-objects.md#instance-repository-objects).
 
 ## Macro
 
