@@ -20,3 +20,8 @@
 | 2026-11-18 17:07 | design | - | - | gate: approach A accepted by popoveugene (design.md @ acfea8a50) |
 | 2026-11-18 17:09 | plan | `openspec validate cluster-macros-passport-fallback --strict --no-interactive` | 0 | valid @ acfea8a50 |
 | 2026-11-18 17:09 | plan | - | - | plan.md: 3 steps for 6 tasks, contracts 3/3 covered @ acfea8a50 |
+| 2026-11-18 17:15 | implement | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | baseline: 117 passed, 29 failed @ e48f85e4c (29 pre-existing, unrelated: missing native dep and other env issues) |
+| 2026-11-18 17:16 | implement | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/test_cluster_macros_passport_fallback.py -q` | 1 | red: 2 passport-fallback tests fail (cluster macros empty today) |
+| 2026-11-18 17:17 | implement | - | - | regression test_render_envs[cluster01-env03-test-template-1] is an expected golden update: env03 uses cloudPassport and no clusterUrl, so cloud.yml maas/dbaas/consul hosts now render the passport domain; reference cloud.yml corrected |
+| 2026-11-18 17:18 | implement | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | green: 5 new tests pass; 29 failed == baseline, no new failure @ uncommitted (on e48f85e4c) |
+| 2026-11-18 17:18 | implement | - | - | task 2.2 covered by the env03 full-render integration test; no separate cucumber fixture |
