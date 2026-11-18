@@ -81,7 +81,5 @@ cluster values".
 
 - [ ] 1. Replace "the value will be overwritten from Cloud Passport file" in the four macro entries with the fallback
   statement: the Cloud Passport provides the value when `clusterUrl` is not set.
-- [ ] 2. Remove the deprecated note on `cloud_public_url`, since the macro now resolves from the Cloud Passport as
-  documented.
-- [ ] 3. Verify: the four entries read as fallback and no entry still says "overwritten"; markdownlint and textlint
+- [ ] 2. Verify: the four entries read as fallback and no entry still says "overwritten"; markdownlint and textlint
   pass (or "not run: no docker"). Tick 3.1; commit `docs: state cluster.* macros fall back to the Cloud Passport`.

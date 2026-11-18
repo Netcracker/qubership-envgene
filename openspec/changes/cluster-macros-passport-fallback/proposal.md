@@ -17,9 +17,8 @@ cluster facts, independent of the environment architecture.
 - Precedence is fallback, not override: when `clusterUrl` is set it stays the source and the Cloud Passport is not
   consulted. The Cloud Passport fills only the otherwise-empty case. When neither source provides a value the macro
   stays an empty string, as today.
-- The template-macros documentation is corrected for the four macros: the description changes from "overwritten from
-  Cloud Passport file" to a fallback statement, and the deprecated note on `cloud_public_url` is removed, because the
-  macro now resolves from the Cloud Passport as documented.
+- The template-macros documentation is corrected for the four macros: each description changes from "overwritten from
+  Cloud Passport file" to a fallback statement that names the Cloud Passport value used when `clusterUrl` is not set.
 
 ## Capabilities
 

@@ -12,9 +12,9 @@ def render_cluster(inventory, cloud_passport):
 FULL_PASSPORT = {
     "cloud": {
         "CLOUD_PROTOCOL": "https",
-        "CLOUD_API_HOST": "api.example.com",
-        "CLOUD_API_PORT": "6443",
-        "CLOUD_PUBLIC_HOST": "example.com",
+        "CLOUD_API_HOST": "api.passport-host.cloud",
+        "CLOUD_API_PORT": "7443",
+        "CLOUD_PUBLIC_HOST": "passport-host.cloud",
     }
 }
 
@@ -36,9 +36,9 @@ FROM_CLUSTER_URL = {
 
 FROM_PASSPORT = {
     "cloud_api_protocol": "HTTPS",
-    "cloud_api_url": "api.example.com",
-    "cloud_api_port": "6443",
-    "cloud_public_url": "example.com",
+    "cloud_api_url": "api.passport-host.cloud",
+    "cloud_api_port": "7443",
+    "cloud_public_url": "passport-host.cloud",
 }
 
 EMPTY = {
@@ -77,4 +77,4 @@ def test_clusterurl_absent_passport_missing_port():
     passport = {"cloud": {k: v for k, v in FULL_PASSPORT["cloud"].items() if k != "CLOUD_API_PORT"}}
     cluster = render_cluster({"environmentName": "e"}, passport)
     assert cluster["cloud_api_port"] == ""
-    assert cluster["cloud_public_url"] == "example.com"
+    assert cluster["cloud_public_url"] == "passport-host.cloud"

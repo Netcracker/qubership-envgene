@@ -27,3 +27,11 @@
 | 2026-11-18 17:18 | implement | - | - | task 2.2 covered by the env03 full-render integration test; no separate cucumber fixture |
 | 2026-11-18 17:22 | implement | `docker run ghcr.io/igorshubovych/markdownlint-cli --config .github/linters/.markdown-lint.yml docs/template-macros.md` | 0 | 4 macro entries reworded to fallback; markdownlint clean |
 | 2026-11-18 17:23 | implement | - | - | all tasks ticked (1.1-1.3, 2.1, 2.2, 3.1); doc-vs-code reconciled for the four cluster macros |
+| 2026-11-18 17:24 | verify | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | 122 passed, 29 failed @ 28d749f8a (baseline 117 passed, 29 failed; +5 new, no new failure) |
+| 2026-11-18 17:24 | verify | - | - | env limit: full scripts/tests, per-module pytest, Maven and cucumber suites not runnable here (missing native dep ruamel.yaml.clib blocks artifact_searcher install); cross-suite verify deferred to CI on PR #1960 |
+| 2026-11-18 17:26 | review | - | - | gate: review ready with fixes by envgene-reviewer @ 28d749f8a, 0 critical, 1 important, 3 minor |
+| 2026-11-18 17:27 | review | - | - | important fixed: proposal.md/tasks.md/plan.md claimed a deprecated note on cloud_public_url was removed; base doc had none; reworded to describe the four-entry reword only |
+| 2026-11-18 17:27 | review | - | - | minor fixed: FULL_PASSPORT given distinct hosts (api.passport-host.cloud:7443) so FROM_PASSPORT differs from FROM_CLUSTER_URL and proves passport sourcing |
+| 2026-11-18 17:27 | review | - | - | minor answered (not changed): red row count 2 is correct; the red run was `2 failed, 3 passed` (full_passport, missing_port failed; absent_no_passport passed pre-fix) |
+| 2026-11-18 17:27 | review | - | - | minor noted: `in in the` typo fix at template-macros.md:498 is within a fully reworded sentence, acceptable |
+| 2026-11-18 17:28 | verify | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/env-build/ -q` | 1 | re-verify after review fixes: 5 new pass, 29 failed == baseline, no new failure @ pending commit |

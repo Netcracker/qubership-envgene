@@ -25,5 +25,5 @@
 ## 3. Documentation
 
 - [x] 3.1 Correct `docs/template-macros.md` for the four macros: replace "overwritten from Cloud Passport file" with
-  the fallback statement (the Cloud Passport fills the value when `clusterUrl` is not set), and remove the deprecated
-  note on `cloud_public_url`. Verify: the docs match the implemented behavior (docs stage discrepancy check).
+  the fallback statement that names the Cloud Passport value used when `clusterUrl` is not set. Verify: the docs match
+  the implemented behavior (docs stage discrepancy check).
