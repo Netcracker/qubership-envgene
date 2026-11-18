@@ -18,7 +18,7 @@
   present with and without a passport, clusterUrl absent with a full passport, with no passport, and with a passport
   missing a field). Verify: the new tests pass and the baseline suite is unaffected.
 - [x] 2.2 Integration coverage: the existing `test_render_envs[cluster01-env03-test-template-1]` full-render test
-  exercises a passport-based environment without `clusterUrl` end to end. Its golden reference was corrected from the
+  exercises a passport-based environment without `clusterUrl` end-to-end. Its golden reference was corrected from the
   truncated hosts to the passport domain. A separate cucumber fixture would be disproportionate for a template
   fallback, so this real-pipeline test covers the behavior.
 
