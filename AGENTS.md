@@ -35,7 +35,7 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 - **Template Repository** → Jinja2 templates for Tenant/Cloud/Namespace/Application objects, ParameterSets, ResourceProfiles, Registry/Application Definitions.
 - **Instance Repository** → `environments/<cluster>/<env>/` tree: `Inventory/env_definition.yml`, `Namespaces/`, `Credentials/credentials.yml`, `Inventory/solution-descriptor/sd.yaml`.
 - **Effective Set** → `effective-set/{topology,pipeline,deployment,runtime,cleanup}/` — final YAML for deployers.
-- **Solution Descriptor (SD)** — list of `application:version` + `deployPostfix` entries driving ES generation. Merge modes: `basic-merge`, `basic-exclusion-merge`, `replace`.
+- **Solution Descriptor (SD)** - list of `application:version` + `deployPostfix` entries driving ES generation. Merge modes: `basic-merge`, `basic-exclusion-merge`, `replace`.
 
 ### Key Environment Variables (runtime)
 

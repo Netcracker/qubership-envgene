@@ -86,7 +86,7 @@ Application and Registry Definitions for every application in the Full SD must b
 
 The `topology`, `pipeline`, `deployment`, and `runtime` contexts remain present in the persistent ES, exactly as in full generation. The `cleanup` context follows [Cleanup context](#cleanup-context). The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
 
-Applied when SD processing produces a Delta SD — that is, `SD_REPO_MERGE_MODE` is `basic-merge` or `basic-exclusion-merge`, and a Full SD already exists.
+Applied when SD processing produces a Delta SD, that is, `SD_REPO_MERGE_MODE` is `basic-merge` or `basic-exclusion-merge`, and a Full SD already exists.
 
 Application and Registry Definitions for every application in the Delta SD must be available.
 

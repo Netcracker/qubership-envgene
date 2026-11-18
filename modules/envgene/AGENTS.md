@@ -9,7 +9,7 @@ Pip-installable package (`envgenehelper`, v0.0.1 — version is a setuptools for
 | `yaml_helper.py` | All YAML I/O (ruyaml), deep merge with comment preservation, schema-ordered sort (`sortYaml` → `jschon_tools.process_json_doc`, an external pip dependency in this branch, not a local package), JSON schema validation (`validate_yaml_by_scheme_or_fail`) |
 | `business_helper.py` | Env directory navigation (`find_env_instances_dir`, `get_current_env_dir_from_env_vars`), `env_definition.yml` read/write, `NamespaceFile` / `NamespaceRole`, cloud passport lookup, BG domain helpers |
 | `creds_helper.py` | Credential macro detection (`check_is_cred`), macro expansion (`expand_cred_macro_and_return_value`), credential YAML merging, `validate_creds` |
-| `sd_helper.py` | SD merge algorithms: `basic_merge`, `extended_merge`, `basic_exclusion_merge`; `MergeType` enum; `calculate_merge_mode` |
+| `sd_helper.py` | SD merge algorithms: `basic_merge`, `basic_exclusion_merge`; `MergeType` enum; `calculate_merge_mode` |
 | `effective_set_helper.py` | `GenerationMode` (FULL/PARTIAL), `PartialMergeMode` (FORWARD/REVERSE), `resolve_es_generation_mode`, `get_es_generation_mode` |
 | `config_helper.py` | Reads `configuration/config.yml`, loads regdef V1/V2 JSON schemas, auto-detects schema version |
 | `env_helper.py` | `Environment` dataclass — loads inventory + credentials together |
