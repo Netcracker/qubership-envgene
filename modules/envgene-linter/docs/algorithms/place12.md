@@ -56,13 +56,15 @@ Unbound files and generated Cloud, Namespace, and Credential values do not suppl
 
 3. **Select participants for each scope.** Include every group environment with a nonempty binding list for
    the scope's target and category. An empty selected parameter bag still participates. For an application scope,
-   a bound environment without that application bag still participates and prevents agreement on its keys.
+   a bound environment without that application bag still participates. A missing bag counts as an exception on its keys.
    Environments without the target/category binding do not participate. Require at least two participants.
    Same-cluster participants remain eligible.
 
-4. **Intersect leaf paths and compare values.** Every participant must supply the same leaf path.
-   Missing keys, conflicting values, and unconfirmed comparisons block that path. A conflict within one cluster
-   also blocks it; there is no majority vote. Other paths can still qualify.
+4. **Compare leaf values with a bounded number of exceptions.** Consider every leaf path present for any participant.
+   A path is shared when at least `N - floor(N/4)` participants have the same literal value. `N` is the participant
+   count for that scope. Two or three participants must all agree. Four participants need three. Eight need six.
+   Name each other participant in the recommendation and leave its instance value in place. A missing key is such
+   an exception. An even split, or any larger dissent, leaves the path silent. Other paths can still qualify.
    Use typed YAML equality: `true`, `1`, `1.0`, and `"1"` differ. Lists compare in order, while mapping order inside
    lists does not matter. Dictionaries outside lists use Effective Set leaf paths. Accept only string path components.
 
@@ -228,13 +230,14 @@ namespaces:
 
 Descriptor overrides merge before ParameterSet processing. Primitive references append without duplicates.
 Instance-specific references are attached later. A distinct proposed name avoids repeating the instance reference.
-Resolved and portable recipes include an instance cleanup step after publication, environment updates, and generation
-checks. The recipe names each instance file once and lists YAML paths for the accepted entries.
+Resolved and portable recipes include an instance cleanup step. The recipe names each instance file once and
+lists YAML paths for the accepted entries.
 Files with the same path set share one list. A map is named once when every child is removed, and a remaining sibling
 keeps the leaf paths. Exact line and column positions stay in the finding locations.
 Keep literal dotted keys distinct from nested paths and retain Application indices.
 Withhold removal for anchored occurrences and physical sources selected by consumers outside the proposal's scope.
-Whole-file relocation retains its complete-source removal instructions. Existing-file merges propose key removal.
+Whole-file relocation retains its complete-source removal instructions and is proposed only when every participant
+agrees. A named exception keeps that instance value in place. Existing-file merges propose key removal.
 Unresolved template associations and unsupported Application end-to-end scope have no cleanup instructions.
 The former generic four-sentence recommendation footer is omitted.
 See [Template Override](/docs/features/template-override.md) and
@@ -298,6 +301,8 @@ Environments in different clusters can qualify too. PLACE-1 can also identify du
 its recommendation concerns the cluster layer, while PLACE-12 asks for review against template consumers.
 
 If a third bound environment uses `APP_LOG_LEVEL: "debug"`, or its selected bag is empty, this path is silent.
+Three participants still require all three to agree. With four participants, three may share `info` while one
+differs or lacks the key. The message then says 3 of 4 environments, and the recommendation names the exception.
 An environment using another version of the same artifact joins the group. Its selected inputs and values
 participate in the same completeness and agreement checks.
 Different filenames can contribute when their selected scopes and parameter paths agree.

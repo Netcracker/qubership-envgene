@@ -245,6 +245,80 @@ def test_conflict_inside_one_cluster_blocks_majority_agreement(repo):
     assert _check(repo) == []
 
 
+def test_three_of_four_shared_values_name_the_exception(repo):
+    agreed = [_env(repo, f"cluster-0{number}") for number in range(1, 4)]
+    _env(repo, "cluster-04", params={"SETTING": "other-value"})
+    findings = _check(repo)
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding.key == "SETTING"
+    assert "3 of 4 environments" in finding.message
+    assert "other-value" not in finding.message
+    assert "shared-default-value" not in finding.message
+    assert {location.path for location in finding.file_locations()} == set(agreed)
+    assert "Exceptions, leave these instance values in place:" in finding.hint
+    assert '- cluster-04/env-01: SETTING = "other-value"' in finding.hint
+    assert "environments/cluster-04/env-01/Inventory/parameters/params.yml" not in finding.hint
+
+
+def test_even_split_stays_silent(repo):
+    _env(repo, "cluster-01", params={"SETTING": "one"})
+    _env(repo, "cluster-02", params={"SETTING": "one"})
+    _env(repo, "cluster-03", params={"SETTING": "two"})
+    _env(repo, "cluster-04", params={"SETTING": "two"})
+    assert _check(repo) == []
+
+
+def test_missing_key_is_an_allowed_exception(repo):
+    _env(repo, "cluster-01")
+    _env(repo, "cluster-02")
+    _env(repo, "cluster-03")
+    _env(repo, "cluster-04", params={"OTHER": "kept"})
+    findings = _check(repo)
+    assert [finding.key for finding in findings] == ["SETTING"]
+    assert "3 of 4 environments" in findings[0].message
+    assert "- cluster-04/env-01: SETTING is absent" in findings[0].hint
+
+
+def test_full_agreement_does_not_mention_an_exception(repo):
+    for number in range(1, 5):
+        _env(repo, f"cluster-0{number}")
+    findings = _check(repo)
+    assert len(findings) == 1
+    assert "4 environments using template" in findings[0].message
+    assert " of " not in findings[0].message
+    assert "Exceptions, leave these instance values in place:" not in findings[0].hint
+
+
+@pytest.mark.parametrize(("same", "expected"), [(6, 1), (5, 0)])
+def test_eight_environments_allow_at_most_two_exceptions(repo, same, expected):
+    for number in range(1, same + 1):
+        _env(repo, f"cluster-{number:02d}", params={"SETTING": "shared"})
+    for number in range(same + 1, 9):
+        _env(repo, f"cluster-{number:02d}", params={"SETTING": "other"})
+    findings = _check(repo)
+    assert len(findings) == expected
+    if expected:
+        assert "6 of 8 environments" in findings[0].message
+
+
+def test_partial_agreement_does_not_relocate_the_whole_parameter_set(repo, tmp_path):
+    from envgene_linter.engine import run_check
+
+    for number in range(1, 4):
+        _env(repo, f"cluster-0{number}")
+    _env(repo, "cluster-04", params={"SETTING": "other-value"})
+    findings = [
+        finding
+        for finding in run_check(repo.root, template_repo=_relocation_template(tmp_path)).findings
+        if finding.rule == "PLACE-12"
+    ]
+    assert len(findings) == 1
+    assert "3 of 4 environments" in findings[0].message
+    assert "Whole ParameterSet transfer candidate." not in findings[0].hint
+    assert '- cluster-04/env-01: SETTING = "other-value"' in findings[0].hint
+
+
 def test_missing_application_bag_blocks_agreement(repo):
     _env(repo, "cluster-01", application="app-a")
     _env(repo, "cluster-02", application="app-a")

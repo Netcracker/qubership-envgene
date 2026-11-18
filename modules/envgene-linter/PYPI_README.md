@@ -107,8 +107,10 @@ Optional passport absence is allowed, and incomplete or uncertain lookups receiv
 PLACE-12 reviews repeated selected values in at least two environments using the same literal template name
 and artifact name before the first `:` in `envTemplate.artifact`. Versions do not split groups.
 One cluster is sufficient, and distinct authored source entries are required.
-Every bound consumer in the scope must agree. Candidates are Review only; moving values requires confirmation
-of template consumers. Each recommendation groups compatible values from the same selected ParameterSet sources.
+At least `N - floor(N/4)` bound consumers in the scope must share the value. The recommendation names every
+other consumer and leaves its instance value in place. Two or three consumers must all agree.
+Candidates are Review only; moving values requires confirmation of template consumers.
+Each recommendation groups compatible values from the same selected ParameterSet sources.
 Without `-t`, PLACE-12 shows actual values in ParameterSet YAML and explains how to connect the shared values.
 Choose an unused name for `<shared-paramset-name>` and append its reference to the specified override list.
 The recipe identifies a logical Cloud or Namespace association without inventing destination paths.
@@ -118,11 +120,12 @@ Recommendations with template context identify both absolute repository roots.
 Source paths under `environments/` belong to the instance root. Paths under `templates/` belong to the template root.
 Resolved recommendations name absolute files to create or edit and include the proposed YAML.
 Descriptor changes identify the existing entry's line, column, and exact YAML path with zero-based Namespace indices.
-An eligible complete ParameterSet can be proposed for relocation with its original name and existing bindings.
+An eligible complete ParameterSet can be proposed for relocation with its original name and existing bindings
+when every participant agrees. A named exception does not move the whole file.
 Existing ParameterSets with matching original or proposed names receive merge instructions.
 Missing keys are added, equal values are reused, and conflicts retain the instance entries.
 New references append last without duplicates. Lists inside parameter values are compared without concatenation.
-Recipes identify exact instance entries to remove after publication, environment updates, and generation checks.
+Recipes name each instance file once and list the YAML paths to remove. Named exceptions stay in the instance.
 Unresolved changes retain Review without cleanup instructions.
 Supported data-path reference expressions resolve separately for each participating environment.
 The report shows selected references or explains the missing inputs and source positions that prevent a proposal.

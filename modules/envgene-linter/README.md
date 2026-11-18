@@ -303,7 +303,9 @@ PLACE-12 reviews equal selected ParameterSet values in at least two environments
 The environments may belong to one cluster or several clusters and must supply distinct authored source entries.
 Environments must use the same literal `envTemplate.name` and artifact name before the first `:` in
 `envTemplate.artifact`. Artifact versions do not split groups.
-Every bound consumer in the target/category scope must agree, with separate application scopes.
+At least `N - floor(N/4)` bound consumers in the target/category scope must share the value. The recommendation
+names every other consumer and leaves its instance value in place. Two or three consumers must all agree.
+Application scopes stay separate. Whole-file relocation still requires every participant to agree.
 Candidates retain Review; a shared value does not prove that moving it preserves template consumers.
 Selected-input uncertainty blocks candidates.
 
@@ -341,8 +343,8 @@ Merge that fragment into its selected entry, retaining other fields and referenc
 Unresolved or inherited context receives an explanation.
 Without the option, choose an unused name for `<shared-paramset-name>` and retain the existing references and fields.
 The report explains how to connect the ParameterSet without naming uninspected destination files.
-Resolved and portable recipes name each instance file once and list the YAML paths to remove after publication,
-environment updates, and generation checks. Exact positions stay in the finding locations. Files that share a path set
+Resolved and portable recipes name each instance file once and list the YAML paths to remove.
+Exact positions stay in the finding locations. Files that share a path set
 use one list, and a map is named once when every child is removed. Conflicting entries and entries with uncertain
 cleanup remain in instance.
 Whole-file deletion is proposed only for eligible complete relocation.

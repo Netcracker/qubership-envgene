@@ -34,7 +34,7 @@ Resolved recipes name absolute template files to create or edit and include copy
 Descriptor edits identify the selected entry's original line, column, and YAML path with zero-based Namespace indices.
 The same instructions and coordinates appear in HTML, JSON, and console output.
 Issue messages and provenance for PLACE-12 remain value-free.
-PLACE-12 recipes include grouped instance cleanup after publication and generation checks.
+PLACE-12 recipes include grouped instance cleanup.
 Exact positions remain in the finding locations. The suggestion names each file once and lists YAML paths.
 Existing same-name template ParameterSets receive added-field merge fragments or reuse instructions.
 JSON destinations receive JSON fragments. Conflicts keep the instance entries.

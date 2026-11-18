@@ -105,7 +105,7 @@ def test_no_context_explains_what_how_and_where_without_destination_paths(
         item = hint.split("Reference item to append:\n", 1)[1].split("\n\n", 1)[0]
         assert YAML(typ="safe").load(item) == [payload["name"]]
         assert "Keep the existing references in their current order" in hint
-        assert "remove only the shown duplicate parameter entries" in hint
+        assert "Remove only the shown duplicate parameter entries" in hint
         if scope.target == "cloud":
             assert "same value in template_path" in hint
 

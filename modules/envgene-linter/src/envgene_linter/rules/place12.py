@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from dataclasses import replace
 from pathlib import Path
@@ -28,6 +29,7 @@ from ..paramset_sources import resolve_reference
 from ..passport import Catalogs, resolve_passport
 from ..security_values import is_secret_parameter_name, literal_name
 from ..template_context import TemplateContext
+from ..yamlio import plain
 from ..template_default_guidance import (
     build_merge_hint,
     build_relocation_hint,
@@ -182,6 +184,27 @@ def _complete(
     return reason is None
 
 
+def _agreement_floor(count: int) -> int:
+    """Shared values needed: all but at most floor(N/4) participants."""
+    return count - count // 4
+
+
+def _exception_line(env: EnvModel, key: str, leaf: EffectiveLeaf | None) -> str:
+    if leaf is None:
+        return f"{env.full_name}: {key} is absent"
+    if not _literal(leaf.value):
+        return f"{env.full_name}: {key} = a different value"
+    shown = json.dumps(plain(leaf.value), ensure_ascii=False)
+    return f"{env.full_name}: {key} = {shown}"
+
+
+def _note_exceptions(hint: str, lines: tuple[str, ...]) -> str:
+    if not lines:
+        return hint
+    listed = "\n".join(f"- {line}" for line in lines)
+    return f"{hint}\nExceptions, leave these instance values in place:\n{listed}\n"
+
+
 def _candidate(
     index: RepoIndex,
     participants: list[EnvModel],
@@ -189,43 +212,63 @@ def _candidate(
     path: tuple,
     full: dict[str, EnvEffective],
     catalogs: Catalogs,
-) -> list[tuple[EnvModel, EffectiveLeaf]]:
+) -> tuple[list[tuple[EnvModel, EffectiveLeaf]], tuple[str, ...]]:
     if not path or not all(isinstance(part, str) for part in path):
-        return []
+        return [], ()
     if any(not _literal(part) or is_secret_parameter_name(part) for part in path):
-        return []
+        return [], ()
     if not _literal(scope.target) or (
         scope.application is not None and not _literal(scope.application)
     ):
-        return []
+        return [], ()
     if any(path[0] in catalogs.env[env.full_name] for env in participants):
-        return []
-    owners = [
+        return [], ()
+    observed = [
         (env, full[env.full_name].scopes.get(scope, {}).get(path))
         for env in participants
     ]
-    if any(leaf is None for _, leaf in owners):
-        return []
+    groups: list[list[tuple[EnvModel, EffectiveLeaf]]] = []
+    for env, leaf in observed:
+        if leaf is None:
+            continue
+        for group in groups:
+            if equal(group[0][1].value, leaf.value) is True:
+                group.append((env, leaf))
+                break
+        else:
+            groups.append([(env, leaf)])
+    floor = _agreement_floor(len(participants))
+    winners = [group for group in groups if len(group) >= floor]
+    if len(winners) != 1:
+        return [], ()
+    owners = winners[0]
     first = owners[0][1].value
-    if not _literal(first) or any(
-        equal(first, leaf.value) is not True for _, leaf in owners
-    ):
-        return []
+    if not _literal(first):
+        return [], ()
     identifiers = {
         name for env in participants for name in (env.cluster, env.name, env.full_name)
     }
     if isinstance(first, str) and first in identifiers:
-        return []
+        return [], ()
     if any(
         not _owned_source(index, env, leaf) or not _raw_literal(leaf)
         for env, leaf in owners
     ):
-        return []
+        return [], ()
     sources = {
         (leaf.provenance.file.path.resolve(), leaf.provenance.yaml_path)
         for _, leaf in owners
     }
-    return owners if len(sources) >= 2 else []
+    if len(sources) < 2:
+        return [], ()
+    agreed = {env.full_name for env, _ in owners}
+    key = owners[0][1].key
+    exceptions = tuple(
+        _exception_line(env, key, leaf)
+        for env, leaf in observed
+        if env.full_name not in agreed
+    )
+    return owners, exceptions
 
 
 def check(
@@ -278,12 +321,14 @@ def check(
             ]
             if len(participants) < 2:
                 continue
-            paths = set(full[participants[0].full_name].scopes.get(scope, {}))
-            for env in participants[1:]:
-                paths &= set(full[env.full_name].scopes.get(scope, {}))
+            paths = set()
+            for env in participants:
+                paths |= set(full[env.full_name].scopes.get(scope, {}))
             candidates = defaultdict(list)
             for path in sorted(paths, key=lambda item: tuple(map(str, item))):
-                owners = _candidate(index, participants, scope, path, full, catalogs)
+                owners, exceptions = _candidate(
+                    index, participants, scope, path, full, catalogs
+                )
                 if owners:
                     # Preserve original selected references and physical source membership.
                     identity = tuple(
@@ -294,10 +339,10 @@ def check(
                         )
                         for env, leaf in owners
                     )
-                    candidates[identity].append((path, owners))
+                    candidates[identity].append((path, owners, exceptions))
             for identity, entries in candidates.items():
                 locations = {}
-                for _, owners in entries:
+                for _, owners, _exceptions in entries:
                     for _, leaf in owners:
                         line, column = leaf.provenance.position
                         source = leaf.provenance.file.path
@@ -312,7 +357,7 @@ def check(
                     )
                 )
                 primary = ordered[0]
-                keys = [owners[0][1].key for _, owners in entries]
+                keys = [owners[0][1].key for _, owners, _exceptions in entries]
                 references = sorted(
                     {leaf.provenance.reference for _, leaf in entries[0][1]}
                 )
@@ -320,27 +365,39 @@ def check(
                     repr(reference) for reference in references
                 )
                 count = len(entries)
+                exception_lines = tuple(
+                    line for _, _owners, lines in entries for line in lines
+                )
+                agreed = len(entries[0][1])
+                environment_count = (
+                    f"{agreed} of {len(participants)}"
+                    if exception_lines
+                    else str(len(participants))
+                )
+                comparable = [
+                    (path, owners) for path, owners, _exceptions in entries
+                ]
                 merge = (
                     planner.propose(
                         name,
                         scope,
-                        [(path, owners[0][1].value) for path, owners in entries],
+                        [(path, owners[0][1].value) for path, owners in comparable],
                         tuple(references),
-                        participants=tuple(env.full_name for env, _ in entries[0][1]),
+                        participants=tuple(env.full_name for env, _ in comparable[0][1]),
                     )
                     if planner
                     else None
                 )
                 relocation = (
                     None
-                    if merge
+                    if merge or exception_lines
                     else propose_relocation(
-                        index, name, artifact_name, scope, entries, context
+                        index, name, artifact_name, scope, comparable, context
                     )
                 )
                 if merge is not None:
                     hint = ""
-                    pending.append((len(findings), merge, scope, entries))
+                    pending.append((len(findings), merge, scope, comparable, exception_lines))
                 elif relocation is not None:
                     hint = build_relocation_hint(relocation, scope, context=context)
                 else:
@@ -348,17 +405,18 @@ def check(
                         name,
                         artifact_name,
                         scope,
-                        [(path, owners[0][1].value) for path, owners in entries],
+                        [(path, owners[0][1].value) for path, owners in comparable],
                         context=context,
                         identity=identity,
                         source_references=all_references,
-                        cleanup=cleanup_hint(index, scope, entries),
+                        cleanup=cleanup_hint(index, scope, comparable),
                     )
                 if context is not None:
                     hint = (
                         f"Instance repository: {index.root.absolute()}\n"
                         f"Template repository: {context.directory.parent}\n\n" + hint
                     )
+                hint = _note_exceptions(hint, exception_lines)
                 findings.append(
                     Finding(
                         rule=RULE,
@@ -373,26 +431,29 @@ def check(
                         locations=ordered,
                         message=(
                             f"ParameterSet {source_description} contains {count} shared parameter{'s' if count != 1 else ''} "
-                            f"with the same values in {len(participants)} environments "
+                            f"with the same values in {environment_count} environments "
                             f"using template {name!r} from {artifact_name!r}."
                         ),
                         hint=hint,
                         related=tuple(
                             f"{env.full_name} (artifact {env.template_identity[1]!r}): "
                             f"{leaf.key}: {leaf.provenance.describe()}"
-                            for _, owners in entries
+                            for _, owners, _exceptions in entries
                             for env, leaf in owners
                         ),
                     )
                 )
     # Render only after every claim is known, including conflicts discovered later.
-    for number, merge, scope, entries in pending:
+    for number, merge, scope, entries, exception_lines in pending:
         hint = build_merge_hint(merge, context)
         if merge.target.reason is None:
             hint += cleanup_hint(index, scope, entries, merge.accepted)
         findings[number] = replace(
             findings[number],
-            hint=f"Instance repository: {index.root.absolute()}\n"
-            f"Template repository: {context.directory.parent}\n\n" + hint,
+            hint=_note_exceptions(
+                f"Instance repository: {index.root.absolute()}\n"
+                f"Template repository: {context.directory.parent}\n\n" + hint,
+                exception_lines,
+            ),
         )
     return findings

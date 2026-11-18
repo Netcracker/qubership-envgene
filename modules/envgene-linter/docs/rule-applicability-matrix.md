@@ -94,20 +94,24 @@ and Cloud Passports.
 PLACE-12 requires at least two environments and distinct instance-authored source entries in one repository.
 The template name and artifact name before the first colon must match. Versions do not split groups.
 One cluster is sufficient. Repository-origin values cannot supply the repeated authored entries.
-Every bound consumer in the target/category scope must agree. Application scopes remain separate.
-Candidates receive Review only. Incomplete selected inputs cannot establish a template-default candidate.
+At least `N - floor(N/4)` bound consumers in the target/category scope must share the value.
+The recommendation names every other consumer and leaves its instance value in place.
+Two or three consumers must all agree. Application scopes remain separate.
+Candidates receive Review only. An unavailable selected input withholds that comparable group only.
 Recommendations group compatible values by selected ParameterSet sources and preserve all contributing positions.
 Both modes include actual values in YAML. Without `-t`, a portable recipe identifies the logical Cloud or Namespace
 association and the category-specific reference item to append last. The reader replaces `<shared-paramset-name>`
 with an unused name. The recipe does not invent destination files, entry indices, or existing reference lists.
 `-t PATH` / `--template-repo PATH` adds local source comparisons, absolute destination files, and descriptor entry
-positions when the selected entry can be resolved. Eligible complete ParameterSets retain their original names and bindings.
+positions when the selected entry can be resolved. Eligible complete ParameterSets retain their original names and
+bindings when every participant agrees.
 Unresolved, anchored, or inherited context retains the observation and a reason when an edit location is uncertain.
 Matching existing ParameterSets receive merge or reuse instructions. Conflicts keep instance entries.
 Reference lists append without duplicates. Parameter value lists compare without concatenation.
 Supported data-path reference expressions use per-environment local context and require unique readable targets.
 Unconditional prefix lists can retain guidance despite unrelated Jinja. Unresolved selection has located Review.
-Recipes identify exact instance cleanup after publication and generation checks, withholding uncertain removals.
+Recipes name each instance file once and list the YAML paths to remove. Named exceptions stay in the instance.
+Uncertain removals stay withheld.
 Local sources do not establish equivalence with published template artifacts or coverage of external consumers.
 Template-only roots retain `Not applicable`.
 
@@ -193,7 +197,8 @@ Console and HTML display `Not applicable`.
 JSON exports findings and structured skips, without execution-status records.
 Some enumeration and unsupported-source notes have no structured JSON representation.
 Recoverable source failures retain independent checks and fresh reports.
-Incomplete merge inputs cannot confirm PLACE-1 promotion, PLACE-2 removal, or PLACE-12 template-default candidates.
+Incomplete merge inputs cannot confirm PLACE-1 promotion or PLACE-2 removal.
+An unavailable selected input withholds PLACE-12 only for the comparable group that uses it.
 An empty JSON array therefore does not establish that every source was checked.
 See the [report contract](/modules/envgene-linter/docs/algorithms/reports.md).
 
