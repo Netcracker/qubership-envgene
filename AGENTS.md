@@ -24,11 +24,11 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 | `schemas/` | JSON schemas for all EnvGene objects (validated at runtime) |
 | `docs/` | Comprehensive documentation — start with `docs/envgene-objects.md` and `docs/envgene-configs.md` |
 
-**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/CLAUDE.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `modules/envgene/CLAUDE.md`). `python/` (main's name for the directory below) was renamed to `modules/` in this branch — same pip packages as before, just a clearer top-level name.
+**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/AGENTS.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `modules/envgene/AGENTS.md`). `python/` (main's name for the directory below) was renamed to `modules/` in this branch — same pip packages as before, just a clearer top-level name.
 
 ### Python module layout
 
-`modules/envgene`, `modules/envgene-shared`, `modules/artifact-searcher`, `modules/external-cred-provision` are ordinary pip packages (`pyproject.toml` + `[build-system]`), installed editable (`pip install -e`) in dev/CI and plain (`pip install`) in the Docker image — see each `pyproject.toml`'s `[project] version`, which is a required-by-setuptools formality, not a tracked release version. None of them are ever published anywhere (no PyPI, no internal registry) — `pip install -e`/`pip install <dir>` only registers the package into the local `site-packages`, nothing leaves the machine. `scripts/` itself is not a package; it's resolved purely via `PYTHONPATH` (see `scripts/CLAUDE.md`). Directory-vs-package-name note: `modules/envgene` contains package `envgenehelper`; `modules/envgene-shared` contains package `envgene_shared`; `modules/artifact-searcher` contains package `artifact_searcher`; `modules/external-cred-provision/src` contains package `external_cred_provision`.
+`modules/envgene`, `modules/envgene-shared`, `modules/artifact-searcher`, `modules/external-cred-provision` are ordinary pip packages (`pyproject.toml` + `[build-system]`), installed editable (`pip install -e`) in dev/CI and plain (`pip install`) in the Docker image — see each `pyproject.toml`'s `[project] version`, which is a required-by-setuptools formality, not a tracked release version. None of them are ever published anywhere (no PyPI, no internal registry) — `pip install -e`/`pip install <dir>` only registers the package into the local `site-packages`, nothing leaves the machine. `scripts/` itself is not a package; it's resolved purely via `PYTHONPATH` (see `scripts/AGENTS.md`). Directory-vs-package-name note: `modules/envgene` contains package `envgenehelper`; `modules/envgene-shared` contains package `envgene_shared`; `modules/artifact-searcher` contains package `artifact_searcher`; `modules/external-cred-provision/src` contains package `external_cred_provision`.
 
 ### Core Concepts
 
@@ -53,18 +53,18 @@ All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credential
 
 ### Glossary and module context
 
-Use the EnvGene terms as the glossary defines them. Each module keeps its own `CLAUDE.md` with the rules for that
+Use the EnvGene terms as the glossary defines them. Each module keeps its own `AGENTS.md` with the rules for that
 module.
 
 - Glossary: @docs/glossary.md
-- `scripts/`: @scripts/CLAUDE.md
-- `scripts/creds_rotation/`: @scripts/creds_rotation/CLAUDE.md
-- `modules/envgene/`: @modules/envgene/CLAUDE.md
-- `modules/envgene-shared/`: @modules/envgene-shared/CLAUDE.md
-- `modules/artifact-searcher/`: @modules/artifact-searcher/CLAUDE.md
-- `schemas/`: @schemas/CLAUDE.md
-- `build_envgene/`: @build_envgene/CLAUDE.md
-- `build_effective_set_generator/`: @build_effective_set_generator/CLAUDE.md
+- `scripts/`: @scripts/AGENTS.md
+- `scripts/creds_rotation/`: @scripts/creds_rotation/AGENTS.md
+- `modules/envgene/`: @modules/envgene/AGENTS.md
+- `modules/envgene-shared/`: @modules/envgene-shared/AGENTS.md
+- `modules/artifact-searcher/`: @modules/artifact-searcher/AGENTS.md
+- `schemas/`: @schemas/AGENTS.md
+- `build_envgene/`: @build_envgene/AGENTS.md
+- `build_effective_set_generator/`: @build_effective_set_generator/AGENTS.md
 
 ## Change flow
 
