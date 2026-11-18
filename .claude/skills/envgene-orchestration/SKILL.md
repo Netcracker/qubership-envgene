@@ -34,10 +34,10 @@ the first stage.
   (see Stages). The propose gate holds while `proposal.md`, `specs/` and the ADR are unchanged since the approved
   commit; verify, lint, docs and review are checked again for the current HEAD.
 - **Hand-off from the analysis phase** (no ledger yet): the change `openspec/changes/<id>/` exists in a branch with
-  `proposal.md` and `specs/`, the ADR under `docs/adr/`, and, when the upstream workspace made it, a `design.md` that
-  is the WHAT/HLD input. Start at **propose**: it writes `tasks.md`, reviews the hand-off and opens the MR; do not open
-  a second MR. Then design runs: `envgene-design` authors the component `design.md` (HOW, Contracts) over the upstream
-  one; it does not re-argue the WHAT.
+  `proposal.md` and `specs/`, the ADR under `docs/adr/`, and, when the upstream workspace made it, a `design.md` that is
+  the read-only WHAT/HLD input. Start at **propose**: it writes `tasks.md`, reviews the hand-off and opens the MR; do
+  not open a second MR. Then design runs: `envgene-design` writes `component-design.md` (HOW, Contracts) from that
+  input; it does not re-argue the WHAT or edit the upstream `design.md`.
 - **The team's own change**: the team writes `proposal.md`, `specs/` and the ADR, then starts at **propose**.
 
 ## Stages
@@ -45,8 +45,8 @@ the first stage.
 | # | Stage | Skill | Gate to leave the stage |
 |---|-------|-------|-------------------------|
 | 1 | propose | `envgene-propose` | **proposal MR approved by the component owner** (`gate: proposal approved by …` row) |
-| 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row) and `design.md` defines every contract id it lists. Runs for every change, including a hand-off: the upstream `design.md` is a WHAT/HLD input the stage builds on, never the component design |
-| 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `design.md` covered in the plan |
+| 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row) and `component-design.md` defines every contract id it lists. Runs for every change, including a hand-off: the stage writes `component-design.md`; the upstream `design.md` is a read-only HLD input it builds on |
+| 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `component-design.md` covered in the plan |
 | 4 | implement | `envgene-implementation` | every task in `tasks.md` ticked, red and green rows per task |
 | 5 | debug | `component-debugging` (package slot) | entered on any failure, not a stage in the line; root cause and a regression test that failed first |
 | 6 | verify | `envgene-verification` | `verify` rows at HEAD for every command in AGENTS.md Commands, exit 0 or no new failure against the baseline |
@@ -71,7 +71,7 @@ slot, so `envgene-finish` runs both stages.
 
 | Event | Go to |
 |---|---|
-| The developer changes the approach after design (team's own change) | design; update `design.md` and validate |
+| The developer changes the approach after design | design; update `component-design.md` and validate |
 | Re-arguing the upstream WHAT or the ADR options a hand-off settled | back to the upstream workspace; the design stage builds on the upstream `design.md`, it does not re-argue it. A wrong link or a typo is fixed in place at propose |
 | The developer's scope change touches the proposal, specs or tasks | propose (back to the owner) |
 | Implementation finds a gap the design never settled, or a case the specs do not cover | design, with that one question |

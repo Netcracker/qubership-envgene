@@ -1,12 +1,13 @@
 ---
 name: envgene-plan
-description: EnvGene override of the component-plan slot. Turns tasks.md of an approved change into a step plan with a failing test first for every step, using the decision of design.md and checking that every contract of design.md is covered. Saves openspec/changes/<id>/plan.md. Use after the design gate, before implement.
+description: EnvGene override of the component-plan slot. Turns tasks.md of an approved change into a step plan with a failing test first for every step, using the decision of component-design.md and checking that every contract of component-design.md is covered. Saves openspec/changes/<id>/plan.md. Use after the design gate, before implement.
 ---
 
 # EnvGene plan (override of component-plan)
 
 Replaces `component-plan` in this repository. The plan reads the approach, the constraints and the contracts from
-`design.md`, the one design artifact of the change.
+`component-design.md`, the component's own design artifact of the change (the upstream `design.md`, if present, is the
+read-only HLD context).
 
 The gates and evidence rules of the package stay: a failing test first for every step, every scenario mapped to a
 test, the plan saved in the change folder and noted in the ledger.
@@ -16,8 +17,8 @@ test, the plan saved in the change folder and noted in the ledger.
 1. The ledger has the propose gate row (`gate: proposal approved by <owner> ...`).
 2. The ledger has the design gate row (`gate: approach <x> accepted by <developer> ...`). It is present for every
    change, including an upstream hand-off: design always runs.
-3. `design.md` exists in `openspec/changes/<id>/`.
-4. **Contract coverage.** Every contract id listed in the Contracts section of `design.md` (`C-1`, `C-2`, ...) is
+3. `component-design.md` exists in `openspec/changes/<id>/`.
+4. **Contract coverage.** Every contract id listed in the Contracts section of `component-design.md` (`C-1`, `C-2`, ...) is
    covered by a step of the plan. Check with a command, not by reading: for each id, `grep -n "<id>"` on `plan.md`.
    A missing id stops the plan: go back to `envgene-design` with that id.
 
@@ -25,12 +26,12 @@ If any check fails, stop and say which one.
 
 ## Steps
 
-1. **Read.** `proposal.md`, the delta specs, `tasks.md`, `design.md` (Decision, Contracts, Constraints, Out of scope),
+1. **Read.** `proposal.md`, the delta specs, `tasks.md`, `component-design.md` (Decision, Contracts, Constraints, Out of scope),
    `AGENTS.md` (Commands, conventions, task routing) and the code the tasks touch.
 2. **Map the files.** Which files are created or modified and the one responsibility of each. Follow the repository's
    patterns; do not restructure what the change does not need.
-3. **Copy the constraints.** Values the specs fix and the Constraints of `design.md` (names, limits, formats,
-   versions) go verbatim into **Global constraints** of the plan. Contract shapes from `design.md` go there too.
+3. **Copy the constraints.** Values the specs fix and the Constraints of `component-design.md` (names, limits, formats,
+   versions) go verbatim into **Global constraints** of the plan. Contract shapes from `component-design.md` go there too.
 4. **Name the review focus.** Up to five inputs or conditions the specs are silent on, each with the behaviour a
    reasonable user expects. Each one gets a test step.
 5. **Write the steps**, task by task:
@@ -56,7 +57,7 @@ recorded in the ledger.
 # Plan: <id>
 
 **Goal:** one sentence.
-**Approach:** two or three sentences from the Decision of design.md. For an upstream `design.md` without a Decision, from its Order and Dependencies.
+**Approach:** two or three sentences from the Decision of component-design.md. If the upstream `design.md` (the read-only HLD) names order or dependencies, use them here.
 **Change:** openspec/changes/<id>/ (proposal, specs, design, tasks)
 **Commands:** one test: `<from AGENTS.md>`; all tests: `<from AGENTS.md>`; lint: `<from AGENTS.md, or "not defined">`
 
@@ -66,7 +67,7 @@ recorded in the ledger.
 
 ## Contracts
 
-- C-1: <shape from design.md>; covered in step <n.m>
+- C-1: <shape from component-design.md>; covered in step <n.m>
 
 ## Review focus
 

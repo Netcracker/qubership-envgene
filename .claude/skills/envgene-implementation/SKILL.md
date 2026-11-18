@@ -11,21 +11,21 @@ with an approved change, a reuse check before new code, a red run before every g
 ## Entry check
 
 - The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
-- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (design.md @ <sha>)`), or, for an upstream
-  hand-off, the propose gate row with `design.md` in its gate.
+- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (component-design.md @ <sha>)`),
+  present for every change including a hand-off.
 - The ledger has the plan row (stage `plan`, result `plan.md: <n> steps for <m> tasks, contracts <k>/<k> covered`).
-- `design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
+- `component-design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
 - The edit belongs to an open task in `tasks.md`.
 
 ## Inputs
 
-Implement reads `plan.md` and `design.md` (Decision and Constraints). The BDD scenarios come from the delta specs
+Implement reads `plan.md` and `component-design.md` (Decision and Constraints). The BDD scenarios come from the delta specs
 under `specs/`, which the analysis phase already rendered with the writing-gherkin craft.
 
 ## Steps
 
 1. **Worktree.** Work in a worktree on the change branch, never on the base branch. Read the Decision and the
-   Constraints of `design.md` and the Global constraints of `plan.md` before the first step.
+   Constraints of `component-design.md` and the Global constraints of `plan.md` before the first step.
 2. **Baseline.** Run the test commands from `AGENTS.md` (section Commands) on the untouched branch. One row per
    command: stage `implement`, the command, its exit, result `baseline: <counts> @ <sha>`. A failing baseline is reported to the developer, not fixed silently.
 3. **BDD scenarios (BDD only).** Put the scenarios of the delta specs that this task covers into the feature file

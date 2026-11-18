@@ -203,7 +203,7 @@ of `envgene-propose` into this phase - propose is now gate-and-review only. The 
   should instead become a schema artifact is still open.
 - `tasks.md` is not produced here. `envgene-propose` writes it on the developer side, before the propose gate. Do not author
   it in this phase.
-- `design.md` is not produced here. The design phase writes it after the propose gate, from the proposal, the
+- `component-design.md` is not produced here. The design phase writes it after the propose gate, from the proposal, the
   specs and the ADR, and it defines the cross-component contracts itself. Whether a cross-component change needs
   anything from above before the design phase is an open seam. The parent-and-child decomposition case is out of
   scope for this phase.
