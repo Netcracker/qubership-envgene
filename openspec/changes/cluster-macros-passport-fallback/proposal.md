@@ -4,7 +4,7 @@
 
 The four `current_env.cluster.*` connection macros (`cloud_api_protocol`, `cloud_api_url`, `cloud_api_port`,
 `cloud_public_url`) take their values only from the Environment Inventory's `clusterUrl`. When an environment is
-generated from a Cloud Passport and `clusterUrl` is not set, the macros resolve to empty strings, so a template that
+generated with a Cloud Passport and `clusterUrl` is not set, the macros resolve to empty strings, so a template that
 builds a host from `cloud_public_url` produces a hostname with no domain, which the deployment target rejects. The
 template-macros documentation already states these values come from the Cloud Passport, so template authors rely on a
 behavior the generator does not provide. The condition follows from an absent `clusterUrl` with passport-sourced

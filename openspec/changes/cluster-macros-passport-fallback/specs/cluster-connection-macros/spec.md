@@ -22,7 +22,7 @@ connection macros from `clusterUrl` and SHALL NOT consult the Cloud Passport for
 
 #### Scenario: clusterUrl is set and a Cloud Passport is also present
 
-- **WHEN** an environment whose Environment Inventory sets `clusterUrl` is generated from a Cloud Passport that also
+- **WHEN** an environment whose Environment Inventory sets `clusterUrl` is generated with a Cloud Passport that also
   carries cluster values
 - **THEN** in the generated environment configuration the four `current_env.cluster` connection macros are derived
   from `clusterUrl`, and the Cloud Passport cluster values are not used for them
@@ -35,7 +35,7 @@ Passport does not provide its value.
 
 #### Scenario: clusterUrl is not set and the Cloud Passport provides the cluster values
 
-- **WHEN** an environment whose Environment Inventory does not set `clusterUrl` is generated from a Cloud Passport that
+- **WHEN** an environment whose Environment Inventory does not set `clusterUrl` is generated with a Cloud Passport that
   carries the cluster public host, api host, api port, and protocol
 - **THEN** in the generated environment configuration `current_env.cluster.cloud_public_url` is the Cloud Passport
   public host, and the three api macros are the Cloud Passport api host, api port, and protocol, so a template host
@@ -49,7 +49,7 @@ Passport does not provide its value.
 
 #### Scenario: clusterUrl is not set and the Cloud Passport omits a cluster value
 
-- **WHEN** an environment whose Environment Inventory does not set `clusterUrl` is generated from a Cloud Passport that
+- **WHEN** an environment whose Environment Inventory does not set `clusterUrl` is generated with a Cloud Passport that
   carries the public host but omits the api port
 - **THEN** in the generated environment configuration `current_env.cluster.cloud_public_url` is the Cloud Passport
   public host and `current_env.cluster.cloud_api_port` is an empty string
