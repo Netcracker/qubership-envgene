@@ -17,4 +17,6 @@
 | 2026-11-18 17:05 | design | - | - | open question resolved: render-context cloud_passport is a fresh full load of the passport file (set_cloud_passport), independent of the cloud.yml deletion path; all 4 CLOUD_* keys present at render |
 | 2026-11-18 17:06 | design | - | - | approach A chosen by popoveugene (chat): elif passport-fallback branch, per-field default(''), protocol upper-cased for parity |
 | 2026-11-18 17:07 | design | `openspec validate cluster-macros-passport-fallback --strict --no-interactive` | 0 | valid @ 9c6e5edb1 |
-| 2026-11-18 17:07 | design | - | - | gate: approach A accepted by popoveugene (design.md pending commit) |
+| 2026-11-18 17:07 | design | - | - | gate: approach A accepted by popoveugene (design.md @ acfea8a50) |
+| 2026-11-18 17:09 | plan | `openspec validate cluster-macros-passport-fallback --strict --no-interactive` | 0 | valid @ acfea8a50 |
+| 2026-11-18 17:09 | plan | - | - | plan.md: 3 steps for 6 tasks, contracts 3/3 covered @ acfea8a50 |
