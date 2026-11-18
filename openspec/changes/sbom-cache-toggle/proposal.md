@@ -7,7 +7,7 @@ differ per zone. The SBOM cache lives in the shared root `/sboms/` of the Instan
 application name, and the generator regenerates an SBOM only when its file is absent. When one Instance
 Repository spans several zones, the first environment commits an SBOM carrying its own zone's addresses,
 and an environment in another zone finds the file present, skips regeneration, and inherits the wrong
-addresses. Storing SBOMs per environment would fix this but grows git history and repository size, and a
+addresses. Storing SBOMs per environment would fix this but grows Git history and repository size, and a
 registry-aware regeneration criterion would make the cache regenerate on every run and erase its benefit.
 For such a repository the operator needs a way to turn SBOM caching off.
 

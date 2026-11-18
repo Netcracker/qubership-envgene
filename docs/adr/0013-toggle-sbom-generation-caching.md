@@ -52,7 +52,7 @@ relies on.
 ### Option B: per-environment SBOM storage
 
 - Good, because each environment would hold its own correct SBOM.
-- Bad, because a separate SBOM per environment grows git history and repository size for every
+- Bad, because a separate SBOM per environment grows Git history and repository size for every
   repository, not only the ones that span zones.
 
 ### Option C: registry-aware regeneration criterion
