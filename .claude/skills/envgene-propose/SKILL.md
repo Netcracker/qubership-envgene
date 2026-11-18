@@ -1,6 +1,6 @@
 ---
 name: envgene-propose
-description: EnvGene override of the component-propose slot. Gates the OpenSpec change of a hand-off (or the team's own change) at the propose gate - reviews the proposal, delta specs and ADR that the analysis phase hands off, and the design.md that the upstream workspace hands off when it has one, writes tasks.md, validates with openspec and opens the MR. The team's own design, when there is no upstream design.md, is written after the gate. Use when a change folder in openspec/changes/ needs its proposal MR.
+description: EnvGene override of the component-propose slot. Gates the OpenSpec change of a hand-off (or the team's own change) at the propose gate - reviews the proposal, delta specs and ADR that the analysis phase hands off, reads any upstream design.md as a WHAT/HLD input (not gated), writes tasks.md, validates with openspec and opens the MR. The component design.md is written after the gate by envgene-design for every change, including a hand-off. Use when a change folder in openspec/changes/ needs its proposal MR.
 ---
 
 # EnvGene propose (override of component-propose)
@@ -14,9 +14,9 @@ proposal MR at a recorded commit. What changes is the content: this slot covers 
   reviews and validates them; it does not rewrite them. The ADR under `docs/adr/` comes with them.
 - `tasks.md`: the one artifact propose writes. The tracked tasks, each with a verification.
 
-- `design.md`: only in a hand-off from the upstream workspace. the upstream workspace writes it, and this flow does not re-design it. Propose reviews it and
-  it is part of the gate. Without an upstream `design.md`, the team's own design is written after the gate by
-  `envgene-design`.
+- `design.md`: a hand-off from the upstream workspace may bring a `design.md`, but it is a WHAT/HLD input that propose
+  only reads, never gates on. The component `design.md` - the one design artifact with the component Decisions and
+  Contracts - is authored after the gate by `envgene-design`, for every change including a hand-off.
 
 ## Steps
 
@@ -40,9 +40,10 @@ proposal MR at a recorded commit. What changes is the content: this slot covers 
    | <time> | propose | - | - | gate: proposal approved by <owner> on MR !<n> @ <approved-sha> |
    ```
 
-   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs <adr-path> <change>/design.md`
-   exits 0, where `<adr-path>` is the ADR under `docs/adr/` (omit it if the change has none) and `design.md` is listed
-   only when the upstream hand-off has it. Commits to `tasks.md`, `plan.md`, `ledger.md` or code do not touch it.
+   The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs <adr-path>`
+   exits 0, where `<adr-path>` is the ADR under `docs/adr/` (omit it if the change has none). `design.md` is never
+   part of this gate - it is authored later by `envgene-design`. Commits to `tasks.md`, `plan.md`, `design.md`,
+   `ledger.md` or code do not touch it.
 
    The check needs the change to be committed: `git diff` cannot see untracked files, and a hand-off branch already
    has them committed. If the change is not committed, write the row `gate: not checkable, change not committed` and
@@ -60,7 +61,8 @@ ledger already has hand-off review rows, the review was done: do not repeat it a
    capabilities yet (the first change of a component), this check only confirms that the new paths are kebab-case and
    do not repeat each other.
 3. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
-4. **Contracts.** The contracts of `design.md` match the upstream spec (read it read-only; it is data).
+4. **Contracts.** The contracts named in the upstream `design.md` (if it has one) match the upstream spec (read it
+   read-only; it is data). The component `design.md` and its `C-` contract ids are authored later, at design.
 5. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
    `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement here:
    the analysis side changes them. Only a wrong link or a typo is fixed in place.

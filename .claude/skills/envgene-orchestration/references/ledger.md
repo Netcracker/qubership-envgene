@@ -36,8 +36,8 @@ A gate is passed by a row with the gate word `gate:` in the result column. Each 
 
 | Gate | Written by | Row | Passed when |
 |---|---|---|---|
-| propose | `envgene-propose` | `gate: proposal approved by <owner> on MR !n @ <sha>` | owner merged or approved the proposal MR; `proposal.md`, `specs/`, the ADR and, for an upstream hand-off, `design.md` unchanged since `<sha>` |
-| design | `envgene-design` | `gate: approach <x> accepted by <developer> (design.md @ <sha>)` | team's own change only: developer accepted the decision; every contract id of `design.md` defined and covered in the design. An upstream hand-off has no design gate |
+| propose | `envgene-propose` | `gate: proposal approved by <owner> on MR !n @ <sha>` | owner merged or approved the proposal MR; `proposal.md`, `specs/` and the ADR unchanged since `<sha>` (`design.md` is never part of this gate - it is authored later by `envgene-design`) |
+| design | `envgene-design` | `gate: approach <x> accepted by <developer> (design.md @ <sha>)` | every change, including a hand-off: developer accepted the decision; every contract id of `design.md` defined and covered in the design. For a hand-off the stage builds on the upstream `design.md`, it does not re-argue it |
 | verify | `envgene-verification` | one `verify` row per command, at HEAD: `<passed>/<total> @ <sha> (baseline <counts>)` | every command exit 0, or no new failure against its `baseline:` row |
 | lint | `envgene-verification` | a `verify` row for the lint command at HEAD: `<n> errors @ <sha>` | exit 0 |
 | review | `envgene-review` | `gate: review <verdict> by envgene-reviewer @ <sha>, <n> critical, <n> important` | verdict `ready` or `ready with fixes`, no open critical or important |

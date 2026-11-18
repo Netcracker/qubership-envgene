@@ -1,6 +1,6 @@
 ---
 name: envgene-design
-description: EnvGene override of the component-design slot. Runs after the propose gate and before plan, only for the team's own change - agrees the approach with the developer (2-3 approaches, one decision), defines the contracts the change exposes or consumes, and writes openspec/changes/<id>/design.md. A design.md that the upstream workspace hands off is not re-designed here. Use when a change has its propose gate row and no design.md yet.
+description: EnvGene override of the component-design slot. Runs after the propose gate and before plan, for every change - including one the upstream workspace handed off. Agrees the approach with the developer (2-3 approaches, one decision), defines the contracts the change exposes or consumes, and writes openspec/changes/<id>/design.md. A design.md that the upstream workspace hands off is a WHAT/HLD input, never the final component design; this stage always authors the component design.md over it. Use when a change has its propose gate row.
 ---
 
 # EnvGene design (override of component-design)
@@ -9,21 +9,27 @@ Replaces `component-design` in this repository. It runs after the propose gate, 
 WHAT changes. This slot decides HOW, and writes the only design artifact of the change: `design.md`. Plan and
 implement read its result.
 
+It runs for every change, including one the upstream workspace handed off. The upstream `design.md` is a WHAT/HLD
+input (context), never the final component design: this stage always authors `design.md` over it. The WHAT and the
+ADR options the upstream design settled are not re-argued here - the stage settles HOW and defines the Contracts.
+
 ## Entry check
 
 - The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
 - `proposal.md`, `specs/` and `tasks.md` exist in `openspec/changes/<id>/`, and the ADR the change names exists under
   `docs/adr/` (or the proposal says the change has none).
-- `design.md` does not exist yet, or it is being revised in an open change. If the hand-off brought `design.md` from
-  the upstream workspace, this stage does not run: the design is already written and reviewed at propose, and the
-  change goes to plan.
-  Say so in the ledger and stop. Do not re-design an upstream `design.md`.
+- `design.md` does not exist yet (the team's own change), or it exists and is refined: the team's own change in
+  progress, or a hand-off where the upstream `design.md` is the WHAT/HLD input. This stage always runs and authors
+  `openspec/changes/<id>/design.md`. It does not re-argue the WHAT or the ADR options the upstream design settled -
+  it settles HOW and defines the Contracts. A hand-off runs design here; it does not skip to plan.
 
 ## Steps
 
 1. **Read.** `proposal.md` (the HLD), the delta specs (the behavior contract, and the BDD scenarios) and the ADR under
    `docs/adr/` that the change names. The ADR holds the system-level options and their consequences; do not re-argue
-   them without new facts. Then `tasks.md`.
+   them without new facts. Then `tasks.md`. For a hand-off, read its `design.md` as the WHAT/HLD input (its
+   approaches, decisions, contracts and open questions): build on it, do not re-argue its WHAT. Whatever it left to
+   the component owner is a question to ask in step 3.
 2. **Brainstorm.** Map the work-map of `proposal.md` to the components and code paths it touches, and find the path
    that handles each spec scenario. Read the code, do not guess. Turn each ADR consequence into a constraint. What the
    code does not settle is a question, not an assumption.

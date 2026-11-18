@@ -14,8 +14,8 @@ test, the plan saved in the change folder and noted in the ledger.
 ## Entry check
 
 1. The ledger has the propose gate row (`gate: proposal approved by <owner> ...`).
-2. The ledger has the design gate row (`gate: approach <x> accepted by <developer> ...`), or, for an upstream hand-off,
-   the propose gate row with `design.md` in its gate.
+2. The ledger has the design gate row (`gate: approach <x> accepted by <developer> ...`). It is present for every
+   change, including an upstream hand-off: design always runs.
 3. `design.md` exists in `openspec/changes/<id>/`.
 4. **Contract coverage.** Every contract id listed in the Contracts section of `design.md` (`C-1`, `C-2`, ...) is
    covered by a step of the plan. Check with a command, not by reading: for each id, `grep -n "<id>"` on `plan.md`.
