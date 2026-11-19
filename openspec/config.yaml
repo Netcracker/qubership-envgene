@@ -2,6 +2,7 @@ schema: envgene-component
 
 rules:
   design:
+    - "Work map section: one row per requirement or spec scenario, naming its file or function in this repository, its status (`tracked`, `new-in-repo` or `not-in-repo`) and evidence from the repository. A `not-in-repo` row is a scope finding and blocks design until the work is moved to the owning component or scoped out."
     - "Constraints section: copy the rules from sections 2 to 5 of .claude/skills/envgene-code-review/SKILL.md, one line each. envgene-plan copies them into the plan; implement and the reviewer agent read them from this section."
 
 # Project context (optional)

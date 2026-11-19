@@ -33,16 +33,21 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
    them without new facts. Then `tasks.md`. For a hand-off, read its `design.md` as the WHAT/HLD input (its
    approaches, decisions, contracts and open questions): build on it, do not re-argue its WHAT. Whatever it left to
    the component owner is a question to ask in step 3.
-2. **Brainstorm.** Map the work-map of `proposal.md` to the components and code paths it touches, and find the path
-   that handles each spec scenario. Read the code, do not guess. Turn each ADR consequence into a constraint. What the
-   code does not settle is a question, not an assumption.
+2. **Work map, then brainstorm.** Before proposing an approach, write the Work map from the design template: one row
+   per requirement or spec scenario, with its file or function in this repository, its status (`tracked`,
+   `new-in-repo` or `not-in-repo`) and evidence from the repository. Verify `tracked` rows with `git ls-files` at the
+   current commit; do not guess. If a named target is absent and belongs to a sibling repository, mark
+   `not-in-repo`, stop design, and return the finding to propose/upstream as a wrong-target or component-split problem.
+   Do not turn it into an approach. Once every row is `tracked` or `new-in-repo`, map the code paths that handle each
+   spec scenario and turn each ADR consequence into a constraint. What the code does not settle is a question, not an
+   assumption.
 3. **Questions.** Ask the developer what the specs, the ADR and the code do not settle. Ask in one batch, not one by one.
 4. **Approaches.** Propose 2-3 component-level approaches with trade-offs and a recommendation. Stop until the
    developer chooses.
 5. **Decision.** Record the chosen approach and who chose it:
    `| <time> | design | - | - | approach <x> chosen by <developer>, <chat or MR> |`.
 6. **Write `component-design.md`** from the design template `envgene-component/templates/design.md`:
-   - Approaches, Decision, Out of Scope, Open Questions as in the template;
+   - Work map, Approaches, Decision, Out of Scope, Open Questions as in the template;
    - **Contracts:** one line per interface the change exposes or consumes, with an id (`C-1`, `C-2`, ...), and how the
      decision meets it. A contract without a line blocks plan;
    - **Constraints:** one line per rule of sections 2 to 5 of `.claude/skills/envgene-code-review/SKILL.md`.

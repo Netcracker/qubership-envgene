@@ -18,7 +18,9 @@ test, the plan saved in the change folder and noted in the ledger.
 2. The ledger has the design gate row (`gate: approach <x> accepted by <developer> ...`). It is present for every
    change, including an upstream hand-off: design always runs.
 3. `component-design.md` exists in `openspec/changes/<id>/`.
-4. **Contract coverage.** Every contract id listed in the Contracts section of `component-design.md` (`C-1`, `C-2`, ...) is
+4. **Work map.** Its Work map has no `not-in-repo` rows. For every contract and task path, `git ls-files` shows the file
+   exists, or the design says it is `new-in-repo`. A path outside this repository stops the plan: go back to design.
+5. **Contract coverage.** Every contract id listed in the Contracts section of `component-design.md` (`C-1`, `C-2`, ...) is
    covered by a step of the plan. Check with a command, not by reading: for each id, `grep -n "<id>"` on `plan.md`.
    A missing id stops the plan: go back to `envgene-design` with that id.
 

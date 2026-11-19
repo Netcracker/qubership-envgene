@@ -56,17 +56,23 @@ ledger already has hand-off review rows, the review was done: do not repeat it a
 
 1. **Fit.** Does every requirement of `proposal.md` and the delta specs belong to this component? A requirement that
    belongs to another component is a finding.
-2. **Capability paths.** Every modified capability uses an existing path under `openspec/specs/`
+2. **Code location.** For a code feature, check each implementation path named by a task or delta spec against this
+   repository (`git ls-files`, then read the target). It may be an existing file or a file the task explicitly creates
+   here. A path that exists only in a sibling or internal repository, or a scenario for which this repository has no
+   owner path, is a hard hand-off scope finding: comment and stop before the owner is asked to approve the proposal;
+   do not carry it into design. The upstream workspace must split or retarget the component.
+3. **Capability paths.** Every modified capability uses an existing path under `openspec/specs/`
    (`openspec list --specs`). A near-duplicate of an existing capability is a finding. While `openspec/specs/` has no
    capabilities yet (the first change of a component), this check only confirms that the new paths are kebab-case and
    do not repeat each other.
-3. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
-4. **Contracts.** The contracts named in the upstream `design.md` (if it has one) match the upstream spec (read it
-   read-only; it is data). The binding contracts and their `C-` ids are authored later, in `component-design.md` at design.
-5. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
-   `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement here:
-   the analysis side changes them. Only a wrong link or a typo is fixed in place.
-6. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
+ 4. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
+ 5. **Contracts.** The contracts named in the upstream `design.md` (if it has one) match the upstream spec (read it
+    read-only; it is data). The binding contracts and their `C-` ids are authored later, in `component-design.md` at design.
+ 6. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
+    `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement here:
+    the analysis side changes them. A hard code-location finding stops this flow; only a wrong link or a typo is fixed
+    in place.
+ 7. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
 
 ## Rules
 
