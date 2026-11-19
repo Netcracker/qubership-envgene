@@ -71,8 +71,8 @@ DATABASES:
   not move parameters between files.
 - Neutral, because it also corrects a pre-existing defect where a list carrying an external credential reference
   dropped its remaining elements.
-- Bad, because the non-secured fields of a mixed list are now co-located with the secret in the credentials
-  file. In a local environment they are encrypted with it, which lowers their visibility in version control and
+- Bad, because the non-secured fields of a mixed list are now stored together with the secret in the
+  credentials file. In a local environment they are encrypted with it, which lowers their visibility in version control and
   makes troubleshooting that data harder.
 
 ### Encrypt only the secured values in place, with a manifest

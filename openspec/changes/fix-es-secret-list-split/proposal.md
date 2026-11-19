@@ -24,7 +24,7 @@ Effective Set generation, secured and non-secured separation:
 - The behavior change is confined to the version 2 Effective Set path, which is the default. The version 1
   path already separates whole top-level keys atomically and is unchanged.
 
-Accepted trade-off: the non-secured fields of a mixed list are now co-located with the secret in the
+Accepted trade-off: the non-secured fields of a mixed list are now stored together with the secret in the
 credentials file. For a local secret they are encrypted together with it, which lowers their plaintext
 visibility. For an external credential reference they stay readable, because the credentials file holds
 references, not ciphertext. Alternatives that keep every field in its original file were rejected because
