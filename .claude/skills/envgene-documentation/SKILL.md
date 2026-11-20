@@ -15,7 +15,9 @@ same change, and the review of the docs passes before the change is merged.
    Decision of `component-design.md`: the docs describe the approved behaviour, not the implementer's choice.
 2. **Write** the docs with the `writing-docs` skill (`.claude/skills/writing-docs/`). Every `.md` file,
    doc, issue, CR and PR text follows it. Ground every named identifier in the code before it goes into the docs.
-3. **Glossary.** New terms go to `docs/glossary.md` with a short definition.
+3. **Glossary.** `docs/glossary.md` is a link index, not a place for definitions. Define a new term in the doc
+   that owns it, then add the term to the glossary as a link to that doc. A term with several meanings gets its list
+   of senses, as described in the glossary's How to use section.
 4. **Review** the docs with the `reviewing-docs` skill (`.claude/skills/reviewing-docs/`) for fitness for purpose.
 5. **Audit (optional, after implement).** Run the `discrepancy-audit` skill when the diff changes a
    documented behaviour, configuration or schema: it reconciles the docs with the code and schema and reports
