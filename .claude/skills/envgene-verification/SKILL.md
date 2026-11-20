@@ -15,27 +15,12 @@ After implement: every task in `tasks.md` is ticked and green. It runs again aft
 
 ## Commands
 
-Run each block from the repository root unless it says otherwise. Install the editable packages first.
+Run every command of `AGENTS.md`, section Commands (Tests, BDD End-to-End Tests, Lint), as written there.
 
-| Suite | Command | Source |
-|-------|---------|--------|
-| envgene-shared | `cd modules/envgene-shared && python -m pytest envgene_shared/tests/` | AGENTS.md, Tests |
-| envgene | `cd modules/envgene/envgenehelper && python -m pytest` | AGENTS.md, Tests |
-| artifact-searcher | `cd modules/artifact-searcher/artifact_searcher && python -m pytest` | AGENTS.md, Tests |
-| external-cred-provision | `cd modules/external-cred-provision && python -m pytest` | AGENTS.md, Tests |
-| scripts pipeline | `PYTHONPATH=".:./scripts" python -m pytest scripts/tests/` | AGENTS.md, Tests |
-| Effective Set generator | `cd build_effective_set_generator && ./mvnw test` | AGENTS.md, Tests |
-| BDD end-to-end | `cd cucumber_tests && ./run_bdd_tests.sh` (Windows: `.\run_bdd_tests.ps1`) | AGENTS.md, BDD |
-
-Run the BDD suite only when the change touches the pipeline, scripts or the step definitions, and only where
-Docker or the local Python environment for it is available. If it cannot run here, record `not run: <reason>`.
-
-Lint is run by CI through super-linter (`.github/workflows/super-linter.yaml`, settings in `.github/super-linter.env`).
-It checks the prose of the Markdown files (textlint, rule `terminology` among them), spelling (codespell), YAML,
-gitleaks and pre-commit. The paths `.claude/`, `.agents/` and `cucumber_tests/test_data/` are excluded.
-Locally run the same image with the same env file, and record a row: stage `verify`, the lint command, its exit, result `<n> errors @ <sha>`.
-A textlint error in `AGENTS.md` or in `docs/` fails the pipeline, so fix it in the same change (for example
-`ID`, not `id`, in a terminology list).
+- Run the BDD suite only when the change touches the pipeline, scripts or the step definitions, and only where
+  Docker or the local Python environment for it is available. If it cannot run here, record `not run: <reason>`.
+- A textlint error in `AGENTS.md` or in `docs/` fails the pipeline, so fix it in the same change (for example
+  `ID`, not `id`, in a terminology list).
 
 ## Steps
 
