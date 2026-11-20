@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Cloud Passport and Environment Specific Configuration",
+  "description": "Configuration for cloud passport and environment-specific settings, including whitelisted and blacklisted parameters.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "cloudPassport": {
+      "$ref": "cloud-passport.schema.json"
+    },
+    "envSpecific": {
+      "type": "object",
+      "description": "Environment-specific configurations",
+      "additionalProperties": true,
+      "properties": {
+        "whiteList": {
+          "type": "object",
+          "description": "List of allowed items",
+          "additionalProperties": true,
+          "properties": {
+            "cloud": {
+              "type": "array",
+              "description": "Allowed cloud environments"
+            },
+            "namespaces": {
+              "type": "array",
+              "description": "Allowed namespaces"
+            }
+          }
+        },
+        "blackList": {
+          "type": "object",
+          "description": "List of disallowed items",
+          "additionalProperties": true,
+          "properties": {
+            "deployParameters": {
+              "type": "array",
+              "description": "Disallowed deployment parameters"
+            },
+            "e2eParameters": {
+              "type": "array",
+              "description": "Disallowed end-to-end parameters"
+            },
+            "technicalConfigurationParameters": {
+              "type": "array",
+              "description": "Disallowed technical configuration parameters",
+              "default": []
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "cloudPassport",
+    "envSpecific"
+  ]
+}

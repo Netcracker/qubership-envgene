@@ -1,0 +1,203 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Solution Descriptor",
+  "description": "Configuration for the cloud environment and its associated services",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "title": "Configuration Version",
+      "description": "The version of the configuration file schema",
+      "type": ["number", "string"],
+      "enum": [
+        "2.0", 2.0,
+        "2.1", 2.1,
+        "2.2", 2.2
+      ],
+      "examples": [
+        "2.0",
+        "2.1",
+        "2.2"
+      ]
+    },
+    "type": {
+      "title": "Deployment Type",
+      "description": "Specifies the type of the deployment, such as 'deploy'",
+      "type": "string",
+      "examples": [
+        "deploy"
+      ]
+    },
+    "deployMode": {
+      "title": "Deployment Mode",
+      "description": "Mode of the deployment, e.g., 'composite' or 'sequential'",
+      "type": "string",
+      "examples": [
+        "composite"
+      ]
+    },
+    "applications": {
+      "title": "List of Applications",
+      "description": "A list of applications to be deployed, each with its version, deploy postfix, and alias",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "deployPostfix": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "alias"
+        ]
+      },
+      "examples": [
+        {
+          "version": "MONITORING:0.64.1-delivery-20240506.063654-1-RELEASE",
+          "deployPostfix": "platform-monitoring",
+          "alias": "platform-monitoring/platform-monitoring-monitoring-sf"
+        },
+        {
+          "version": "postgres:1.32.6-delivery_pg14-20240531.092603-2-RELEASE",
+          "deployPostfix": "postgresql",
+          "alias": "postgresql/postgresql-postgres"
+        }
+      ]
+    },
+    "cmdbConfigs": {
+      "title": "CMDB Configurations",
+      "description": "Configuration details for CMDB",
+      "type": "array",
+      "examples": [
+        "bssParamSet:release-7-3-6-20211111.122104-3-RELEASE"
+      ]
+    },
+    "devopsTools": {
+      "title": "DevOps Tools",
+      "description": "List of DevOps tools used in deployment",
+      "type": "array",
+      "examples": [
+        "Platform-Jenkins:release-2-311-1-20211117.135353-8-RELEASE"
+      ]
+    },
+    "artifacts": {
+      "title": "Artifacts",
+      "description": "Different types of artifacts",
+      "type": "object",
+      "properties": {
+        "maven": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "repo": { "type": "string" },
+              "artifacts": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "raw": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "repo": { "type": "string" },
+              "artifacts": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "docker": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "registry": { "type": "string" },
+              "images": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "examples": [
+        {
+          "maven": [
+            { "repo": "pd.saas.mvn", "artifacts": ["com.qubership.smartplug:smartplug-annotation-processor:0.8.3"] }
+          ],
+          "raw": [
+            { "repo": "https://artifactorycn.qubership.com/pd.sandbox.files", "artifacts": ["product/prod.billing.applications/event-aggregator/feature_account-for-open_20210705-082430/generic1.0/ea-model/public-model.zip"] }
+          ],
+          "docker": [
+            { "registry": "artifactorycn.qubership.com:17084", "images": ["mongo:3.6.16"] }
+          ]
+        }
+      ]
+    },
+    "dvm": {
+      "title": "DVM Configuration",
+      "description": "Configuration for DVM",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" }
+      },
+      "required": ["url"],
+      "examples": [
+        { "url": "/mnt/FTPCN_Corp/SandboxBS.Builds/Staging/internal/demo.platform.clouddevops/dvm-git/master_20200223-075212/generic1.0/paas-infra-dvm.tar.gz" }
+      ]
+    },
+    "userData": {
+      "title": "User Data",
+      "description": "Any user-specific data",
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "examples": [
+        { "myKey": "myValue" }
+      ]
+    }
+  },
+  "deployGraph": {
+      "title": "Deployment Graph",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "parallel": { "type": "boolean" },
+          "chunkName": { "type": "string" },
+          "apps": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["chunkName", "apps"]
+      },
+      "examples": [
+        {
+          "parallel": false,
+          "chunkName": "sequentialChunk",
+          "apps": [
+            "e2e-framework",
+            "deployer",
+            "dsl-processor",
+            "create-tenant",
+            "e2e-framework_1"
+          ]
+        }
+      ]
+    },
+  "required": ["version", "type", "applications"]
+}
+
