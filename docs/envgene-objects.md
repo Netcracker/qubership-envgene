@@ -111,6 +111,37 @@ cloud:
   # See details in /docs/features/template-override.md
   template_override:
     <yaml or jinja expression>
+    # Any part of the Cloud object can be set below. The attributes listed here are the ones that `overrides-parent` generates
+    # Optional
+    # Name of the Cloud that replaces the name rendered from the template
+    name: string
+    # Optional
+    # Resource Profile Override of the Cloud
+    profile:
+      # Optional
+      # Name of the Resource Profile Override
+      name: <resource-profile-override-name>
+      # Optional
+      # Name of the baseline Resource Profile
+      baseline: <resource-profile-baseline-name>
+    # Optional
+    # Merged recursively into `deployParameters` of the Cloud. The values from `template_override` win on a conflict
+    deployParameters: <hashmap-with-parameters>
+    # Optional
+    # Merged recursively into `e2eParameters` of the Cloud. The values from `template_override` win on a conflict
+    e2eParameters: <hashmap-with-parameters>
+    # Optional
+    # Merged recursively into `technicalConfigurationParameters` of the Cloud. The values from `template_override` win on a conflict
+    technicalConfigurationParameters: <hashmap-with-parameters>
+    # Optional
+    # ParameterSet names appended to `deployParameterSets` of the Cloud if not already present
+    deployParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSet names appended to `e2eParameterSets` of the Cloud if not already present
+    e2eParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSet names appended to `technicalConfigurationParameterSets` of the Cloud if not already present
+    technicalConfigurationParameterSets: <list-with-parameter-sets>
   # Optional
   # Template Composition configuration
   # See details in /docs/features/template-composition.md
@@ -186,6 +217,37 @@ namespaces:
     # See details /docs/features/template-override.md
     template_override:
       <yaml or jinja expression>
+      # Any part of the Namespace object can be set below. The attributes listed here are the ones that `overrides-parent` generates
+      # Optional
+      # Name of the Namespace that replaces the name rendered from the template
+      name: string
+      # Optional
+      # Resource Profile Override of the Namespace
+      profile:
+        # Optional
+        # Name of the Resource Profile Override
+        name: <resource-profile-override-name>
+        # Optional
+        # Name of the baseline Resource Profile
+        baseline: <resource-profile-baseline-name>
+      # Optional
+      # Merged recursively into `deployParameters` of the Namespace. The values from `template_override` win on a conflict
+      deployParameters: <hashmap-with-parameters>
+      # Optional
+      # Merged recursively into `e2eParameters` of the Namespace. The values from `template_override` win on a conflict
+      e2eParameters: <hashmap-with-parameters>
+      # Optional
+      # Merged recursively into `technicalConfigurationParameters` of the Namespace. The values from `template_override` win on a conflict
+      technicalConfigurationParameters: <hashmap-with-parameters>
+      # Optional
+      # ParameterSet names appended to `deployParameterSets` of the Namespace if not already present
+      deployParameterSets: <list-with-parameter-sets>
+      # Optional
+      # ParameterSet names appended to `e2eParameterSets` of the Namespace if not already present
+      e2eParameterSets: <list-with-parameter-sets>
+      # Optional
+      # ParameterSet names appended to `technicalConfigurationParameterSets` of the Namespace if not already present
+      technicalConfigurationParameterSets: <list-with-parameter-sets>
     # Optional
     # Name of Namespace in Parent Template
     # See details in /docs/features/template-composition.md
