@@ -1,0 +1,3 @@
+schema: envgene-component
+created: 2026-11-20
+goal: Emit EnvPrepareReport JSON artifact from the env_prepare job
