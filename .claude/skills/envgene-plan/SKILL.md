@@ -19,9 +19,6 @@ test, the plan saved in the change folder and noted in the ledger.
 3. `component-design.md` exists in `openspec/changes/<id>/`.
 4. **Work map.** Its Work map has no `not-in-repo` rows. For every contract and task path, `git ls-files` shows the file
    exists, or the design says it is `new-in-repo`. A path outside this repository stops the plan: go back to design.
-5. **Contract coverage.** Every contract id listed in the Contracts section of `component-design.md` (`C-1`, `C-2`, ...) is
-   covered by a step of the plan. Check with a command, not by reading: for each id, `grep -n "<id>"` on `plan.md`.
-   A missing id stops the plan: go back to `envgene-design` with that id.
 
 If any check fails, stop and say which one.
 
@@ -41,11 +38,13 @@ If any check fails, stop and say which one.
    - each step: write the failing test, run it (command and expected failure), the minimal code, run it (expected
      pass), commit;
    - the test commands come from `AGENTS.md` Commands: one test and all tests of the affected module.
-6. **Self-review:** every scenario mapped to a test; no step without a check; no placeholders such as "add error
-   handling"; names and signatures the same in every step that uses them; the plan does not contradict the specs or
-   the design Decision.
-7. **Save** `openspec/changes/<id>/plan.md` in the format below. Append the plan gate row (format: Gate rows of
-   `envgene-orchestration/references/ledger.md`).
+6. **Save and self-review.** Write `openspec/changes/<id>/plan.md` in the format below, then check it: every
+   scenario mapped to a test; no step without a check; no placeholders such as "add error handling"; names and
+   signatures the same in every step that uses them; the plan does not contradict the specs or the design Decision.
+   **Contract coverage:** every contract id listed in the Contracts section of `component-design.md` (`C-1`, `C-2`, ...) is
+   covered by a step. Check with a command, not by reading: for each id, `grep -n "<id>"` on `plan.md`. A missing id
+   needs a step; a contract that `component-design.md` does not settle goes back to `envgene-design` with that id.
+7. **Gate.** Append the plan gate row (format: Gate rows of `envgene-orchestration/references/ledger.md`).
 8. **Show the plan** to the developer and adjust it to their comments. It is committed with the next commit of the
    change, after the developer's yes for commits.
 
