@@ -10,25 +10,24 @@ without parsing logs.
 
 ### Requirement: EnvPrepareReport artifact publication
 
-The `env_prepare` job SHALL write an `EnvPrepareReport` artifact for each environment it processes, at
-`logs/<cluster>/<env>/env-prepare-report.json` inside the job artifacts, at the end of the run.
+The `env_prepare` job SHALL write an `EnvPrepareReport` artifact at `env-prepare-report.json` in the root
+of the job artifacts at the end of a single-environment run.
 
 #### Scenario: Single environment run writes the report
 
-- **WHEN** the `env_prepare` job runs for a single environment `<cluster>/<env>`
-- **THEN** the job artifacts contain `logs/<cluster>/<env>/env-prepare-report.json` with `kind`
-  `EnvPrepareReport` and `apiVersion` `v1`
+- **WHEN** the `env_prepare` job runs for a single environment
+- **THEN** the job artifacts contain `env-prepare-report.json` at the root, with `kind` `EnvPrepareReport`
+  and `apiVersion` `v1`
 
 #### Scenario: Report is written even when the pipeline fails
 
-- **WHEN** the `env_prepare` job fails on one of its steps
-- **THEN** the job artifacts still contain the environment's `env-prepare-report.json`
+- **WHEN** the `env_prepare` job fails on one of its steps in a single-environment run
+- **THEN** the job artifacts still contain `env-prepare-report.json`
 
-#### Scenario: Each environment in a multi-environment run writes its own report
+#### Scenario: Multi-environment run produces no report
 
 - **WHEN** the `env_prepare` job runs for several environments through the fan-out
-- **THEN** the job artifacts contain one `logs/<cluster>/<env>/env-prepare-report.json` per environment,
-  with no cross-environment aggregation
+- **THEN** the job artifacts contain no `env-prepare-report.json`
 
 ### Requirement: EnvPrepareReport step content
 
@@ -54,23 +53,23 @@ run order, followed by the `copy_env_artifact` step, each entry carrying `name`,
 
 ### Requirement: EnvPrepareReport is always published
 
-The `EnvPrepareReport` SHALL be published on every run, independent of `METRICS_COLLECTOR_URL` and
-`SAVE_ARTIFACTS_STRATEGY`, and SHALL survive the artifact size-limit trim.
+The `EnvPrepareReport` SHALL be published on every single-environment run, independent of
+`METRICS_COLLECTOR_URL` and `SAVE_ARTIFACTS_STRATEGY`, and SHALL survive the artifact size-limit trim.
 
 #### Scenario: Published when Metrics Collector is not configured
 
 - **WHEN** the `env_prepare` job runs with `METRICS_COLLECTOR_URL` unset
-- **THEN** the job artifacts contain the environment's `env-prepare-report.json`
+- **THEN** the job artifacts contain `env-prepare-report.json`
 
 #### Scenario: Published when artifact saving is disabled
 
 - **WHEN** the `env_prepare` job runs with `SAVE_ARTIFACTS_STRATEGY` set to `NEVER`
-- **THEN** the job artifacts contain the environment's `env-prepare-report.json`
+- **THEN** the job artifacts contain `env-prepare-report.json`
 
 #### Scenario: Preserved when the artifact size limit trims the publish set
 
-- **WHEN** the published artifacts exceed the size limit and the pipeline trims them to the `logs/` subtree
-- **THEN** the job artifacts still contain the environment's `env-prepare-report.json`
+- **WHEN** the published artifacts exceed the size limit and the pipeline trims them
+- **THEN** the job artifacts still contain `env-prepare-report.json`
 
 ### Requirement: EnvPrepareReport steps match the Metrics Collector event
 
@@ -82,3 +81,13 @@ the Metrics Collector activity event for the same run.
 - **WHEN** the `env_prepare` job runs with `METRICS_COLLECTOR_URL` set
 - **THEN** the `steps` in `env-prepare-report.json` list the same step names, statuses, and times as the
   `steps` in the Metrics Collector activity event for that run
+
+### Requirement: EnvPrepareReport generation is fail-safe
+
+Writing the `EnvPrepareReport` SHALL NOT change the job's outcome. A write error is logged and the run
+continues.
+
+#### Scenario: A report write error does not fail the job
+
+- **WHEN** writing `env-prepare-report.json` raises an error
+- **THEN** the error is logged and the job's outcome is the same as it would be without the report

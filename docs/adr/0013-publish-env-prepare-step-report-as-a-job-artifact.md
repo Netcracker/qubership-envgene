@@ -5,49 +5,55 @@ Status: Proposed
 ## Context and problem statement
 
 An upstream orchestration pipeline drives the Instance pipeline among other tools, and needs to build its
-own aggregation report and show operation status and troubleshooting information for each environment. To
-do that it needs a machine-readable record of the `env_prepare` job's step results. Today that record
-exists only as the end-of-job log summary, which is human-oriented text, and, when Metrics Collector is
-configured, as an internal file that is hidden, gated on that integration, and shaped for a different
-consumer. The orchestrator has nothing it can read straight from the job artifacts.
+own aggregation report and show operation status and troubleshooting information. To do that it needs a
+machine-readable record of the `env_prepare` job's step results. Today that record exists only as the
+end-of-job log summary, which is human-oriented text, and, when Metrics Collector is configured, as an
+internal file that is hidden, gated on that integration, and shaped for a different consumer. The
+orchestrator has nothing it can read straight from the job artifacts.
 
 ## Decision drivers
 
-- The upstream pipeline must read the report from the job artifacts by convention, without parsing logs.
-- The report must be present whether or not Metrics Collector is deployed.
+- The upstream pipeline must read the report from the job artifacts at a fixed, discoverable path, without
+  parsing logs.
+- The report must be present whether or not Metrics Collector is deployed, and whether or not the job
+  saves its other artifacts.
 - The report must stay consistent with the step results the Metrics Collector event already reports, so
   two records of the same run never disagree.
+- Writing the report must never change the job's outcome.
 
 ## Considered options
 
-- Option A: a standalone, always-published `EnvPrepareReport` artifact, rendered from the same step-result
-  source that feeds the log summary and the Metrics Collector event.
+- Option A: a standalone `EnvPrepareReport` artifact at a fixed artifacts-root path, rendered from the same
+  step-result source that feeds the log summary and the Metrics Collector event.
 - Option B: reuse the existing internal Metrics Collector completion file as the artifact.
 - Option C: emit the richer growing pipeline report with per-job stages now.
 - Option D: produce the report by parsing the end-of-job log summary text.
 
 ## Decision outcome
 
-Chosen: Option A, because it gives the consumer a stable, always-present, conventionally-located file while
-sharing the event's single step-result source, so the artifact and the event cannot diverge.
+Chosen: Option A, because it gives the consumer a stable file at a fixed path on every run while sharing
+the event's single step-result source, so the artifact and the event cannot diverge.
 
-The report is written for each environment at a fixed path under the job's `logs/` subtree. Placing it
-there reuses the log lifecycle: the artifact survives the size-limit trim and the "do not save artifacts"
-setting, both of which already keep the `logs/` subtree, so the report publishes on every run without any
-new save-strategy handling.
+The report is written to `env-prepare-report.json` in the root of the job artifacts, for a single-
+environment run only. To keep it present even when the job trims its artifacts to stay under the size
+limit, the trim's keep-set is extended to this named file. Under the "do not save artifacts" setting the
+finalizer deletes nothing, so the report survives there as well. Writing is fail-safe: a write error is
+logged and the run continues, the same contract the Metrics Collector completion write already follows.
 
 ## Pros and cons of the options
 
 ### Option A: standalone always-published report (chosen)
 
-- Good, because the consumer finds the report at a fixed artifact path on every run, independent of the
-  Metrics Collector integration.
+- Good, because the consumer finds the report at a fixed root path on every single-environment run,
+  independent of the Metrics Collector integration and of the artifact-save setting.
 - Good, because rendering it from the same step-result source as the event keeps the two records
   consistent by construction.
-- Neutral, because living under the `logs/` subtree reuses the existing log lifecycle instead of adding a
-  new publish rule.
+- Neutral, because a named root file makes the "preserve on trim" intent explicit, through one keep-set
+  entry, rather than hiding it behind an unrelated directory.
 - Bad, because the step results now exist in two serialized forms, the artifact and the event, that must
   be kept consistent as the report evolves.
+- Bad, because the size-limit trim gains a named-file exception, a small special case in the publish
+  logic.
 
 ### Option B: reuse the internal Metrics Collector file
 
@@ -70,14 +76,17 @@ new save-strategy handling.
 
 ## Consequences
 
-- Positive: the upstream orchestration pipeline gets a machine-readable, per-environment step report from
-  the job artifacts, present regardless of whether Metrics Collector is deployed.
-- Positive: placing the report under the `logs/` subtree reuses the existing log lifecycle, so no change
-  to the artifact save-strategy or size-limit behavior is needed.
+- Positive: the upstream orchestration pipeline gets a machine-readable step report from the job
+  artifacts, at a fixed root path, present regardless of whether Metrics Collector is deployed.
+- Positive: writing is fail-safe, so adding the report cannot change the job's pass or fail outcome.
 - Negative: the step results are now serialized in two places, the artifact and the Metrics Collector
   event, which must be kept consistent; a shared source mitigates this but the coupling remains.
-- Negative: because the report always publishes under `logs/`, it appears even when the operator has asked
-  for no artifacts, so "no artifacts published" is no longer strictly true for this file.
+- Negative: the size-limit trim carries a special case for a named file, a small coupling in the publish
+  logic.
+- Negative: because the report always publishes, it appears even when the operator has asked for no
+  artifacts, so "no artifacts published" is no longer strictly true for this file.
+- Negative: a multi-environment fan-out run produces no report. The consumer need is per single-
+  environment run, so the fan-out stays crash-free but unserved; a later change can add it if needed.
 
 ## More information
 
