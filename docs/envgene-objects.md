@@ -68,13 +68,20 @@ This object is a describes the structure of a solution, links to solution's comp
 
 The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
-**Location:** Any YAML or Jinja file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+**Location:** Any YAML file located directly in the `/templates/env_templates/` folder is considered a Template
+Descriptor. Files in its subfolders are the templates that the Template Descriptor references, such as Tenant, Cloud,
+and Namespace templates.
 
 **Supported file extensions:**
 
 - `.yml` / `.yaml` — Static Template Descriptor
 
-When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in descending priority order: `yml.j2` > `yaml.j2` > `yml` > `yaml`. Jinja Template Descriptors enable conditional namespace inclusion. See [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) for details.
+When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in
+descending priority order: `yml` > `yaml`.
+
+A Template Descriptor does not support Jinja. The template build fails if the `/templates/env_templates/` folder
+contains a `.yml.j2` or `.yaml.j2` Template Descriptor. The templates that the Template Descriptor references support
+Jinja.
 
 It has the following structure:
 
