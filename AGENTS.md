@@ -64,7 +64,7 @@ Each module keeps its own `AGENTS.md` with the rules for that module. It loads w
 The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
 
 - Implement does not start without the propose and design gate rows in `ledger.md`.
-- The design (`openspec/changes/<id>/design.md`) is the one design artifact of a change. It defines every contract ID it lists, and the plan covers each of them.
+- The component design (`openspec/changes/<id>/component-design.md`) is the one design artifact the component writes. An upstream `design.md` is read-only input. The component design defines every contract ID it lists, and the plan covers each of them.
 
 ## Code review
 

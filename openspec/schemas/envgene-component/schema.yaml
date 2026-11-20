@@ -1,6 +1,6 @@
 name: envgene-component
 version: 1
-description: EnvGene component flow - proposal → specs → tasks (propose gate) → design (design gate) → implement; design.md is the one design artifact
+description: EnvGene component flow - proposal → specs → tasks (propose gate) → design (design gate) → implement; component-design.md is the one design artifact the component writes
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -68,7 +68,7 @@ artifacts:
       - specs
 
   - id: design
-    generates: design.md
+    generates: component-design.md
     description: The one design artifact - approaches, the chosen one, contracts, constraints. Written after the propose gate and before plan, from the proposal, the specs and the ADR.
     template: design.md
     instruction: |
