@@ -368,3 +368,12 @@ def environment_credentials_file_does_not_contain_credential(workspace: EnvGeneW
         f"Regeneration check failed: Stale or unexpected credential '{cred_id}' "
         f"was found inside {env_cred_file.name} when it should have been purged or skipped."
     )
+
+
+@then(parsers.parse('the environment credentials file contains external credential "{cred_id}" with remoteRefPath "{remote_ref_path}"'))
+def verify_external_credential_remote_ref_path(workspace: EnvGeneWorkspace, remote_ref_path: str, cred_id: str):
+    env_cred_file, content = _load_environment_credentials(workspace)
+    assert cred_id in content, f"Credential '{cred_id}' is missing in {env_cred_file}"
+    cred_entry = content[cred_id]
+    assert isinstance(cred_entry, dict), f"Credential entry for '{cred_id}' must be an object dictionary"
+    assert cred_entry.get("remoteRefPath") == remote_ref_path
