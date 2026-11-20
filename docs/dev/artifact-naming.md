@@ -13,7 +13,6 @@ Artifact names (artifact ID for Maven artifacts, Docker image names, etc.) match
 - `qubership-envgene`
 - `qubership-pipegene`
 - `qubership-effective-set-generator`
-- `qubership-instance-repo-pipeline`
 
 ## Artifact Versions
 

@@ -6,11 +6,12 @@ from pathlib import Path
 
 from dpg.v1.cmd import DeploymentPlanGeneratorCommand
 from dpg.v1.internal.deployment_plan.deployment_plan import DeploymentPlanCalculator
-from envgenehelper import logger, writeYamlToFile
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.yaml_utils import writeYamlToFile, openYaml
+from envgene_shared.utils.file_utils import writeToFile
 from envgenehelper.business_helper import get_current_env_dir_from_env_vars, get_namespaces, \
     NamespaceRole, getEnvDefinitionPath
-from envgenehelper.file_helper import deleteFileIfExists, writeToFile
-from envgenehelper.yaml_helper import openYaml
+from envgenehelper.file_helper import deleteFileIfExists
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
@@ -119,12 +120,16 @@ def sync_bg_ns_artifacts(active_role: NamespaceRole, candidate_role: NamespaceRo
     env_definition = openYaml(env_definition_path, allow_default=True)
     bg_ns_artifacts = env_definition.get('envTemplate', {}).get('bgNsArtifacts')
 
-    if not bg_ns_artifacts or active_role not in bg_ns_artifacts:
+    if not bg_ns_artifacts:
         logger.info('envTemplate.bgNsArtifacts is not set, skipping sync')
         return
 
-    logger.info(f'Syncing envTemplate.bgNsArtifacts: "{candidate_role}" := "{active_role}"')
-    bg_ns_artifacts[candidate_role] = bg_ns_artifacts[active_role]
+    if active_role in bg_ns_artifacts:
+        logger.info(f'Syncing envTemplate.bgNsArtifacts: "{candidate_role}" := "{active_role}"')
+        bg_ns_artifacts[candidate_role.value] = bg_ns_artifacts[active_role]
+    else:
+        logger.info(f'envTemplate.bgNsArtifacts.{active_role} is not set, removing "{candidate_role}"')
+        bg_ns_artifacts.pop(candidate_role.value, None)
     writeYamlToFile(env_definition_path, env_definition)
 
 

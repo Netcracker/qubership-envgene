@@ -1,15 +1,27 @@
 import os
 import yaml
 import functools
+import logging
 from pathlib import Path
 
+from .transformer import transform_params_registry
 from .middleware import DataProviderInterface, UnifiedAppDef, UnifiedRegDef
 
 from dpg.v1.utils.registry import RegistryInfo, MavenConfig, RegistryType, AuthUserPassword
 
 class LocalClient(DataProviderInterface):
-    DEFAULT_PATH_TO_APPDEFS = os.getenv("LOCAL_APPDEFS_PATH", "AppDefs")
-    DEFAULT_PATH_TO_REGDEFS = os.getenv("LOCAL_REGDEFS_PATH", "RegDefs")
+    # Read on access: the orchestrator sets these env vars after dpg is imported.
+    @property
+    def DEFAULT_PATH_TO_APPDEFS(self) -> str:
+        return os.getenv("LOCAL_APPDEFS_PATH", "AppDefs")
+
+    @property
+    def DEFAULT_PATH_TO_REGDEFS(self) -> str:
+        return os.getenv("LOCAL_REGDEFS_PATH", "RegDefs")
+
+    @property
+    def DEFAULT_PATH_TO_PUBREG_FILE(self) -> str:
+        return os.getenv("LOCAL_PUBREG_FILE", "pubreg_params.yaml")
 
     def __init__(self, root_dir: Path = None):
         self.root_dir = root_dir
@@ -20,7 +32,7 @@ class LocalClient(DataProviderInterface):
     def get_app_def(self, application: str) -> UnifiedAppDef:
         apppath = self.root_dir / Path(self.DEFAULT_PATH_TO_APPDEFS) / f"{application}.yml"
         if not apppath.exists():
-            raise Exception("File with appdef & fallback client doesn't exists.")
+            raise Exception(f"File with appdef & fallback client doesn't exists for `{application}` application")
 
         appdef_d = yaml.safe_load(apppath.read_text())
         if appdef_d is None:
@@ -40,7 +52,7 @@ class LocalClient(DataProviderInterface):
     def get_reg_def(self, registry: str) -> UnifiedAppDef:
         regpath = self.root_dir / Path(self.DEFAULT_PATH_TO_REGDEFS) / f"{registry}.yml"
         if not regpath.exists():
-            raise Exception("File with appdef & fallback client doesn't exists.")
+            raise Exception(f"File with regdef & fallback client doesn't exists for `{registry}` registry")
 
         regdef_d = yaml.safe_load(regpath.read_text())
         if regdef_d is None:
@@ -97,11 +109,18 @@ class LocalClient(DataProviderInterface):
             password=""
         )
 
-        # TODO: need to implement getting auth config from something config
+        pubregfile = self.root_dir / self.DEFAULT_PATH_TO_PUBREG_FILE
+        if not pubregfile.exists():
+            pubregfile = self.root_dir / self.DEFAULT_PATH_TO_REGDEFS / self.DEFAULT_PATH_TO_PUBREG_FILE
+        if not pubregfile.exists():
+            logging.warning(f"File with PUBREG params doesn't exists, skipping auth in registry.")
+            return RegistryInfo(
+                url=__url,
+                type=__type_reg,
+                maven_config=__maven_config,
+                auth_config=__auth_config
+            )
 
-        return RegistryInfo(
-            url=__url,
-            type=__type_reg,
-            maven_config=__maven_config,
-            auth_config=__auth_config
-        )
+        params = yaml.safe_load(pubregfile.read_text())
+        return transform_params_registry(regdef, params)
+

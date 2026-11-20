@@ -34,13 +34,13 @@ CMDB_IMPORT: true
 
 **Steps:**
 
-1. The `cmdb_import` job runs.
+1. The `cmdb_import` step runs.
 2. Environment Instance data is exported to CMDB.
 3. Credential objects are created in CMDB from `credentials.yml`.
 
 **Results:**
 
-1. The `cmdb_import` job completes with status SUCCESS.
+1. The `cmdb_import` step completes with status SUCCESS.
 2. Credential objects are created in CMDB.
 3. Environment data is available in CMDB.
 
@@ -68,12 +68,12 @@ CMDB_IMPORT: true
 
 **Steps:**
 
-1. The `cmdb_import` job runs.
+1. The `cmdb_import` step runs.
 2. Environment Instance data is exported to CMDB.
 
 **Results:**
 
-1. The `cmdb_import` job completes with status SUCCESS.
+1. The `cmdb_import` step completes with status SUCCESS.
 2. No credential objects are created in CMDB.
 3. Environment data is available in CMDB.
 
@@ -102,13 +102,13 @@ CMDB_IMPORT: true
 
 **Steps:**
 
-1. The `cmdb_import` job runs.
+1. The `cmdb_import` step runs.
 2. Credential IDs are validated against CMDB.
 3. Environment Instance data is exported to CMDB.
 
 **Results:**
 
-1. The `cmdb_import` job completes with status SUCCESS.
+1. The `cmdb_import` step completes with status SUCCESS.
 2. No credential objects are created in CMDB.
 3. Environment data is available in CMDB.
 
@@ -147,14 +147,14 @@ CMDB_IMPORT: true
 
 **Steps:**
 
-1. The `cmdb_import` job runs.
+1. The `cmdb_import` step runs.
 2. Credential validation accepts `envgeneNullValue` placeholders in `credentials.yml`.
 3. Credential ID existence in CMDB is validated.
 4. Environment Instance data is exported to CMDB.
 
 **Results:**
 
-1. The `cmdb_import` job completes with status SUCCESS.
+1. The `cmdb_import` step completes with status SUCCESS.
 2. Credential validation does not report `username or password is not set` or `secret is not set`.
 3. No credential objects are created in CMDB.
 4. Environment data is available in CMDB.

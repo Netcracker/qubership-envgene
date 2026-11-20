@@ -1,0 +1,5 @@
+passport-db-cred:
+  type: usernamePassword
+  data:
+    username: "passport-user"
+    password: "passport-password"

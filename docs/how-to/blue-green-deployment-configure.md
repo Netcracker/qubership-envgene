@@ -139,6 +139,7 @@ requirement and the optional `bgNsArtifacts` and env-specific bindings.
 3. Set `envTemplate.artifact`, the mandatory template artifact. It renders the controller, baseline,
    satellites, and standalone namespaces, plus the tenant, cloud, and other objects.
 4. Add `envTemplate.bgNsArtifacts` to track the origin and peer template artifact versions separately.
+   Each side is optional. A side you omit renders from `artifact`.
 5. Optionally bind env-specific parametersets to a side through `envTemplate.envSpecificParamsets`, keyed by
    the namespace deploy postfix (`bss-origin`, `bss-peer`). A parameterset listed under both keys applies to
    both sides. A parameterset listed under one key applies to that side only.

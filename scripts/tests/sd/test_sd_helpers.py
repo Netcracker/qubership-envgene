@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from envgenehelper import openYaml, writeYamlToFile
+from envgene_shared.utils.yaml_utils import openYaml, writeYamlToFile
 from envgenehelper.test_helpers import TestHelpers
 
 

@@ -14,12 +14,16 @@
       ]
     },
     "version": {
-      "type": "number",
+      "type": [
+        "string",
+        "number"
+      ],
       "title": "Version Number",
       "description": "Version number of the specific parameter set",
       "examples": [
         1.2,
-        2
+        2,
+        "1.2"
       ]
     },
     "parameters": {

@@ -1,8 +1,10 @@
 from pathlib import Path
-from envgenehelper import getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml
+from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.yaml_utils import openYaml
+from envgene_shared.utils.logger import logger
+from envgenehelper import get_env_instances_dir, findAllYamlsInDir
 from envgenehelper.creds_helper import is_envgenenullvalue
 from envgenehelper.errors import ValidationError
-from .logger import logger
 def validate_parameters(env_dir: str = ""):
     if not env_dir:
         environment_name = getenv_with_error('ENVIRONMENT_NAME')
@@ -29,18 +31,18 @@ def validate_parameters(env_dir: str = ""):
                     )
 
     tenant_file = f"{env_dir}/tenant.yml"
-    tenant_yaml = openYaml(tenant_file)
+    tenant_yaml = openYaml(tenant_file, safe_load=True)
     tenant_name = tenant_yaml.get("name", "tenant")
     validate_yaml(tenant_name, tenant_yaml)
 
     cloud_file = f"{env_dir}/cloud.yml"
-    cloud_yaml = openYaml(cloud_file)
+    cloud_yaml = openYaml(cloud_file, safe_load=True)
     cloud_name = cloud_yaml.get("name", "cloud")
     validate_yaml(cloud_name, cloud_yaml)
 
     namespaces = findAllYamlsInDir(f"{env_dir}/Namespaces")
     for ns_path in namespaces:
-        ns_yaml = openYaml(ns_path)
+        ns_yaml = openYaml(ns_path, safe_load=True)
         namespace_name = ns_yaml.get("name", "namespace")
         validate_yaml(f"namespace.{namespace_name}", ns_yaml)
 

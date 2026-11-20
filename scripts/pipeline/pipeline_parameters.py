@@ -5,18 +5,24 @@ import shlex
 import uuid
 from os import getenv
 from pathlib import Path
-from typing import Self
+from typing import Optional, Self, Any
 
 import yaml
 from pydantic import BaseModel, Field
 
-from envgenehelper import logger, writeToFile
+from envgene_shared.utils.business_utils import to_bool
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.file_utils import writeToFile
+from regdefv2_adapter.regdefv2_adapter import REGDEFS_DIRNAME
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.effective_set_helper import GenerationMode, PartialMergeMode, resolve_es_generation_mode
 from envgenehelper.sd_helper import MergeType
 from envgenehelper.models import PipelineType, TemplateVersionUpdateMode, OperationType, BgdOperation, \
-    DeltaDeployType
+    DeltaDeployType, ExternalCredentialProvisioning
 from envgenehelper.plugin_engine import PluginEngine
+
+JOB_ENV_EXPORTS = (
+    "REQUESTS_CA_BUNDLE", "GIT_SSL_CAINFO", "LOCAL_APPDEFS_PATH", "LOCAL_REGDEFS_PATH", "LOCAL_PUBREG_FILE")
 
 
 class PipelineParametersHandler(BaseModel):
@@ -24,7 +30,8 @@ class PipelineParametersHandler(BaseModel):
 
     params: dict
     internal_params: dict
-    sensitive_params: list
+    sensitive_params: list[str] = Field(
+        default_factory=lambda: ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"])
     full_env_name: str
     cluster_name: str
     env_name: str
@@ -35,30 +42,43 @@ class PipelineParametersHandler(BaseModel):
     deploy_plan_delta: EnvgeneDeployPlan = Field(default_factory=lambda: EnvgeneDeployPlan(entities=[]))
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/envgene-vars.env"))
+    committed_regdefs_dir: Path = Field(
+        default_factory=lambda: Path(getenv('CI_PROJECT_DIR')) / REGDEFS_DIRNAME.lower()
+    )
+    # for reg defs v2 calculated from cloud e2e params
+    transient_regdefs_dir: Optional[Path] = None
+    rendered_regdef_names: list[str] = Field(default_factory=list)
+    helm_map_repositories: dict = Field(default_factory=dict)
 
-    @classmethod
-    def from_env(cls) -> Self:
+    @staticmethod
+    def exclude_sensitive_parameters(params: dict[str, Any], sensitive_params: list[str]) -> dict[str, Any]:
+        sensitive = set(sensitive_params)
+        return {key: value for key, value in params.items() if key not in sensitive and value not in (None, "")}
+
+
+    @staticmethod
+    def build_params() -> dict: 
         full_env_name = getenv("ENV_NAMES")
 
         params = {
             'ENV_NAMES': full_env_name,
             'PIPELINE_TYPE': getenv("PIPELINE_TYPE"),
-            'ENV_BUILDER': getenv("ENV_BUILDER", "false").lower() == "true",
-            'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
-            'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
+            'ENV_BUILDER': to_bool(getenv("ENV_BUILDER")),
+            'GET_PASSPORT': to_bool(getenv("GET_PASSPORT")),
+            'GENERATE_EFFECTIVE_SET': to_bool(getenv("GENERATE_EFFECTIVE_SET")),
             'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
             'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
             "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE", MergeType.BASIC.value),
-            "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
+            "ENV_INVENTORY_INIT": to_bool(getenv("ENV_INVENTORY_INIT")),
             "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
             'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
             'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
             'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
-            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
+            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
             'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
             'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
             "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
@@ -80,6 +100,10 @@ class PipelineParametersHandler(BaseModel):
             "CRED_ROTATION_PAYLOAD": getenv("CRED_ROTATION_PAYLOAD"),
             "BGD_OPERATION": getenv("BGD_OPERATION"),
             "BG_STATE": getenv("BG_STATE"),
+            "EXTERNAL_CREDENTIAL_PROVISIONING": getenv("EXTERNAL_CREDENTIAL_PROVISIONING", ExternalCredentialProvisioning.APPLY.value),
+            "METRICS_COLLECTOR_URL": getenv("METRICS_COLLECTOR_URL", ""),
+            "METRICS_COLLECTOR_PARENT_ID": getenv("METRICS_COLLECTOR_PARENT_ID", ""),
+            "METRICS_COLLECTOR_TRACE_ID": getenv("METRICS_COLLECTOR_TRACE_ID", ""),
         }
 
         pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
@@ -93,7 +117,14 @@ class PipelineParametersHandler(BaseModel):
                 continue
             if isinstance(parsed, (dict, list)):
                 params[k] = json.dumps(parsed, separators=(",", ":"), default=str)
+        return params
 
+    @classmethod
+    def from_env(cls) -> Self:
+        params = cls.build_params()
+        if not params['DEPLOYMENT_SESSION_ID']:
+            params['DEPLOYMENT_SESSION_ID'] = str(uuid.uuid4())
+        full_env_name = params['ENV_NAMES']
         cluster_name, env_name = full_env_name.split("/", 1)
 
         for k, v in params.items():
@@ -104,12 +135,11 @@ class PipelineParametersHandler(BaseModel):
             'CLUSTER_NAME': cluster_name,
             'ENVIRONMENT_NAME': env_name,
         }
+        internal_params.update({name: value for name in JOB_ENV_EXPORTS if (value := getenv(name))})
         for k, v in internal_params.items():
             os.environ[k] = v
-        sensitive_params = ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"]
         return cls(
             params=params,
-            sensitive_params=sensitive_params,
             internal_params=internal_params,
             full_env_name=full_env_name,
             cluster_name=cluster_name,
@@ -123,6 +153,13 @@ class PipelineParametersHandler(BaseModel):
     def is_bgd_warmup(self) -> bool:
         return (OperationType(self.params.get('OPERATION_TYPE')) == OperationType.BGD
                 and BgdOperation(self.params.get('BGD_OPERATION')) == BgdOperation.WARMUP)
+
+    def has_sd_input(self) -> bool:
+        sd_version = self.params.get("SD_VERSION")
+        sd_data = self.params.get("SD_DATA")
+        if sd_version and sd_data:
+            raise ValueError("SD_VERSION and SD_DATA cannot be provided at the same time")
+        return bool(sd_version or sd_data)
 
     def is_clean(self) -> bool:
         return OperationType(self.params.get('OPERATION_TYPE')) == OperationType.CLEAN

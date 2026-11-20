@@ -1,12 +1,21 @@
 import re
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
-from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
+from envgene_shared.utils.business_utils import getenv_with_error
+from envgene_shared.utils.logger import logger
+from envgene_shared.crypto.cred_store import current_cred_store, is_cred_store_open
+from envgene_shared.crypto.crypt import decrypt_file
+from envgenehelper import get_env_instances_dir, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
-from envgenehelper.yaml_helper import store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
-
-from .logger import logger
+from .models import CredentialMode
+from .collections_helper import dict_merge
+from .current_env_instance_store import current_env_instance_store
+from .models import YamlBacked
+from envgenehelper.yaml_helper import findAllYamlsInDir, store_value_to_yaml, yaml
+from envgenehelper.external_credential_helper import resolve_external_credential_reference, resolve_external_credential_data, is_external_credential_reference
 
 # const
 CRED_TYPE_SECRET = "secret"
@@ -18,26 +27,37 @@ CRED_VALUE_TYPE_PASSWORD = "password"
 CRED_VALUE_TYPE_SECRET = "secret"
 CONCEALED_SECRET_MASK = "*****"
 
+CRED_FIELD_DATA = "data"
+EXTERNAL_CREDENTIAL_TYPE = "external"
+
+CRED_MACRO_PATTERN = re.compile(
+    r"""\$\{[^{}]*?creds\.get\(\s*\\?["']\s*([^"'\\]+?)\s*\\?["']\s*\)\.(\w+)\s*\}""")
+CRED_MACRO_PROPERTY_TYPES = {
+    "username": CRED_TYPE_USERPASS,
+    "password": CRED_TYPE_USERPASS,
+    "secret": CRED_TYPE_SECRET,
+    "roleId": CRED_TYPE_VAULT,
+    "secretId": CRED_TYPE_VAULT,
+    "path": CRED_TYPE_VAULT,
+    "namespace": CRED_TYPE_VAULT,
+}
+
+CRED_KEY_RE = re.compile(r'#(?:creds|credscl|credsns)\{(.+)\s*,\s*(.+)\}')
+CRED_VALUE_RE = re.compile(
+    r'\${.*creds\.get.*\.(?:username|password|secret|roleId|secretId|path|namespace)}'
+)
+
 
 def check_is_cred(param_key, param_value):
-    if isinstance(param_value, str):
-        # if we are iterationg through array, than cred macros can't be in key (it is integer)
-        credKey = param_key.replace(" ", "") if isinstance(param_key, str) else ""
-        credValue = param_value.replace("'", "\"")
-        if re.match(r'#creds{(.+)\s*,\s*(.+)}', credKey) or re.match(r'#credscl{(.+)\s*,\s*(.+)}', credKey) or re.match(
-                r'#credsns{(.+)\s*,\s*(.+)}', credKey):
+    if not isinstance(param_value, str):
+        return False
+    if isinstance(param_key, str):
+        credKey = param_key.replace(" ", "")
+        if CRED_KEY_RE.match(credKey):  
             return True
-        elif re.search(r'\${.*creds\.get.*\.username}', credValue) or re.search(r'\${.*creds\.get.*\.password}',
-                                                                                credValue):
-            return True
-        elif re.search(r'\${.*creds\.get.*\.secret}', credValue):
-            return True
-        elif re.search(r'\${.*creds\.get.*\.roleId}', credValue) or re.search(r'\${.*creds\.get.*\.secretId}',
-                                                                              credValue) \
-                or re.search(r'\${.*creds\.get.*\.path}', credValue) or re.search(r'\${.*creds\.get.*\.namespace}',
-                                                                                  credValue):
-            return True
-    return False
+    if "creds.get" not in param_value:
+        return False
+    return bool(CRED_VALUE_RE.search(param_value))
 
 
 def create_cred_definition(cred_id, cred_type):
@@ -127,7 +147,7 @@ def _remove_first_cred_from_input(value):
     return re.sub(r'\${.*creds\.get\(.*\).*}', "", value, 1)
 
 
-# #creds, #credscl, #credsns macroses are not supported
+# #creds, #credscl, #credsns macros are not supported
 # vault creds are not supported
 def expand_cred_macro_and_return_value(param_key, param_value, env_creds):
     credValue = param_value.strip()
@@ -209,6 +229,9 @@ def mask_sensitive(data: dict,
 
 
 def fetch_cred_value(val, cred_config) -> str:
+    if is_external_credential_reference(val):
+        return resolve_external_credential_reference(val, cred_config)
+    
     match = re.search(r".*\('([^']+)'\)\.(\w+)", val)
     if match:
         cred_name = match.group(1)
@@ -218,10 +241,45 @@ def fetch_cred_value(val, cred_config) -> str:
         raise ValueError(f"Value '{val}' does not match expected format")
 
 
+_extra_creds: ContextVar[dict | None] = ContextVar("extra_creds", default=None)
+
+
+@contextmanager
+def extra_creds_scope():
+    token = _extra_creds.set({})
+    try:
+        yield
+    finally:
+        _extra_creds.reset(token)
+
+
+def register_extra_creds(creds: dict) -> None:
+    current = _extra_creds.get()
+    if current is None:
+        _extra_creds.set(dict(creds))
+    else:
+        current.update(creds)
+
+
 def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
-    return cred_config
+    cred_config = current_cred_store().load_decrypted(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    extra_creds = _extra_creds.get()
+    return dict_merge(cred_config, extra_creds) if extra_creds else cred_config
+
+
+# Disk reads are only for validate_creds and get_deployer_config: the CMDB import plugin calls them
+# after git commit, when the cred store is closed. Other code reads cred files through the cred store.
+def list_cred_files(dir_path):
+    if is_cred_store_open():
+        return current_cred_store().list(dir_path)
+    return findAllYamlsInDir(str(dir_path))
+
+
+def read_cred_file(path):
+    if is_cred_store_open():
+        return current_cred_store().load_decrypted(path)
+    return decrypt_file(path, in_place=False)
 
 
 def validate_creds(creds_path: str = ""):
@@ -231,12 +289,11 @@ def validate_creds(creds_path: str = ""):
         instances_dir = f"{getenv_with_error('CI_PROJECT_DIR')}/environments"
         env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
         creds_path = Path(getEnvCredentialsPath(env_dir)).parent
-    
+
     credsErrors = []
-    credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
-    for credListPath in credsYamls:
-        credListYaml = openYaml(credListPath)
+    for credListPath in list_cred_files(creds_path):
+        credListYaml = read_cred_file(credListPath)
         for key, value in credListYaml.items() :
             errorCheck = check_cred_value(key, value)
             if errorCheck :
@@ -246,7 +303,7 @@ def validate_creds(creds_path: str = ""):
         for err in credsErrors:
             errorMessage += f"\t{err}\n"
         raise ValidationError(errorMessage)
-    
+
     logger.info(f"Validation of credentials is completed")
 
 
@@ -276,43 +333,39 @@ def is_envgenenullvalue(value: object) -> bool:
         return True
     return False
 
-def extract_external_cred(cred_map):
-    if cred_map.get("$type") != "credRef":
-        return None
-    cred_id = cred_map.get("credId")
-    if not isinstance(cred_id, str) or not cred_id.strip():
-        raise ValueError(f"Invalid credRef: 'credId' is missing or empty in {cred_map}")
-    return cred_id
 
-def validate_cred_types(creds_map, is_external_cred_env, cred_file):
+def validate_cred_types(creds_map, credential_mode, cred_file):
     types = {
         v.get("type")
         for v in creds_map.values()
-        if isinstance(v, dict) and v.get("type")
+        if isinstance(v, (dict, YamlBacked)) and v.get("type")
     }
     if not types:
         return
-    if is_external_cred_env:
-        if types != {"external"}:
+    if credential_mode == CredentialMode.EXTERNAL:
+        if types != {EXTERNAL_CREDENTIAL_TYPE}:
             raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
     else:
-        if "external" in types:
-            raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
-        
-def has_external_creds(creds_map):
-    return any(
-        isinstance(v, dict) and v.get("type") == "external"
-        for v in creds_map.values()
-    )
+        if EXTERNAL_CREDENTIAL_TYPE in types:
+            raise ValueError(f"External credentials not allowed in local only environment. Found: {types} in {cred_file}")
+
 
 def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
-    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"       
-    if os.path.exists(env_credentials_path) :
-        env_creds_yaml = openYaml(env_credentials_path)
-    else:
-        env_creds_yaml = yaml.load("{}")
-    for key, value in creds_yaml_content.items() :
+    env_instance_store = current_env_instance_store()
+    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"
+    if not env_instance_store.exists(env_credentials_path):
+        env_instance_store.put(env_credentials_path, yaml.load("{}"))
+    env_instance_store.beautify(env_credentials_path, creds_schema)
+    env_creds_yaml = env_instance_store.get(env_credentials_path)
+    for key, value in creds_yaml_content.items():
         store_value_to_yaml(env_creds_yaml, key, value)
-    # storing credentials yaml
-    writeYamlToFile(env_credentials_path, env_creds_yaml)
-    beautifyYaml(env_credentials_path, creds_schema)
+    
+
+def get_cred_data(cred_id: str, env_creds: dict) -> dict:
+    if not env_creds or cred_id not in env_creds:       
+        return {}        
+    credential = env_creds[cred_id]    
+    if credential.get("type") == EXTERNAL_CREDENTIAL_TYPE:
+        return resolve_external_credential_data(cred_id, env_creds)
+    logger.info(f"Using local credential '{cred_id}'")
+    return credential.get(CRED_FIELD_DATA, {})

@@ -3,10 +3,8 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 
-from envgenehelper import logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.git_helper import GitRepoManager
-
-from git_commit.minimize_cred_diffs import minimize_cred_diffs
 
 
 @contextmanager
@@ -46,9 +44,6 @@ def git_commit() -> None:
     repo_manager = GitRepoManager()
     with _git_commit_lock(repo_manager):
         repo_manager.configure()
-
-        logger.info("Minimizing credential file diffs...")
-        minimize_cred_diffs()
 
         repo_manager.stage_changes()
         repo_manager.remove_dcl_paths_from_index()

@@ -1,1 +1,12 @@
-username: user-placeholder-123
+json-exporter: minio-cred_password
+username: minio-cred_username
+global: &id001
+  json-exporter: minio-cred_password
+  username: minio-cred_username
+vault_env: *id001
+pg_patroni: *id001
+postgres_operator_tests: *id001
+pg_upgrade: *id001
+postgres_operator_init: *id001
+patroni-core: *id001
+pgbackrest_sidecar: *id001

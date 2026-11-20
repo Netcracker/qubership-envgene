@@ -2,124 +2,33 @@ import copy
 import json
 import pathlib
 import threading
-from io import StringIO
+from pathlib import Path
 from typing import OrderedDict
 
 import jschon
 import jschon_tools
-import jsonschema
 import ruyaml
 from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
-from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+from ruyaml.scalarstring import DoubleQuotedScalarString
 import yaml as pyyaml
 
-from .file_helper import *
+from .file_helper import os, check_dir_exists, findFiles, openFileAsString, writeToFile
 from .json_helper import openJson
-from .logger import logger
+from .models import YamlBacked
+from envgene_shared.utils.logger import logger
 
-
-def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
-    def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
-        return self.represent_scalar('tag:yaml.org,2002:null', 'null')
-
-    if is_safe:
-        yaml = ruyaml.main.YAML(typ='safe')
-    else:
-        yaml = ruyaml.main.YAML()
-    yaml.preserve_quotes = True
-    yaml.width = 200
-    yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.Representer.add_representer(type(None), _null_representer)
-    return yaml
-
-
-def get_empty_yaml():
-    return ruyaml.CommentedMap()
-
-
-def openYaml(filePath, safe_load=False, default_yaml: Callable = get_empty_yaml, allow_default=False):
-    if allow_default and not check_file_exists(filePath):
-        logger.info(f'{filePath} not found. Returning default value')
-        return default_yaml()
-
-    logger.debug(f"Open yaml file: {filePath}")
-    with open(filePath, 'r') as f:
-        resultYaml = readYaml(f.read(), safe_load, context=f"File: {filePath}")
-    return resultYaml
-
-
-def readYaml(text, safe_load=False, context=None) -> CommentedMap:
-    if text is None:
-        resultYaml = None
-    elif safe_load:
-        resultYaml = safe_yaml.load(text)
-    else:
-        resultYaml = yaml.load(text)
-
-    if not resultYaml:
-        logger.warning(f"Failed to read yaml. Returning empty dictionary. Context: {context}")
-        return get_empty_yaml()
-    return resultYaml
+from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, readYaml, load_schema, \
+    validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
+    remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
+    ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
+    yaml, safe_yaml, make_quotes_for_strings, dumpYamlToStr
 
 
 def convert_dict_to_yaml(d):
     if isinstance(d, ruyaml.CommentedMap):
         return d
     return ruyaml.CommentedMap(d)
-
-
-def remove_cred_yaml_comments(data):
-    if not isinstance(data, (CommentedMap, CommentedSeq)):
-        return
-    if data.ca:
-        data.ca.comment = None
-        if data.ca.items:
-            data.ca.items.clear()
-    children = data.values() if isinstance(data, CommentedMap) else data
-    for child in children:
-        remove_cred_yaml_comments(child)
-
-
-def remove_empty_list_comments(data):
-    # There are cases when list has values and those values have comments related
-    # to them. When all values are removed from list, comments are left behind
-    # and when rendered by ruyaml create an invalid file content that makes
-    # future parsing to fail. To avoid this we clean up those comments
-    if isinstance(data, CommentedMap):
-        for key, value in data.items():
-            if isinstance(value, list) and not value:
-                if data.ca and data.ca.items and key in data.ca.items:
-                    comment_info = data.ca.items[key]
-                    if len(comment_info) > 3:
-                        comment_info[3] = None
-            if isinstance(value, (CommentedMap, CommentedSeq)):
-                remove_empty_list_comments(value)
-    elif isinstance(data, CommentedSeq):
-        for item in data:
-            if isinstance(item, (CommentedMap, CommentedSeq)):
-                remove_empty_list_comments(item)
-
-
-def writeYamlToFile(filePath, contents):
-    from .crypt import is_cred_file
-
-    filePath = Path(filePath)
-    logger.info(f"Writing yaml to file: {filePath}")
-    os.makedirs(os.path.dirname(filePath), exist_ok=True)
-    if is_cred_file(str(filePath)):
-        remove_cred_yaml_comments(contents)
-    else:
-        remove_empty_list_comments(contents)
-    with open(filePath, 'w+') as f:
-        yaml.dump(contents, f)
-    return
-
-
-def dumpYamlToStr(content):
-    buffer = StringIO()
-    yaml.dump(content, buffer)
-    return buffer.getvalue()
 
 
 def addHeaderToYaml(file_path: str, header_text: str):
@@ -159,18 +68,107 @@ def alignYamlComments(yamlContent, extra_indent=0):
     return None
 
 
-def sortYaml(yaml_data, schema_path, remove_additional_props):
-    with open(schema_path, 'r') as f:
-        schema_data = json.load(f)
-    logger.debug(f'Checking yaml with schema: {schema_path}')
-    jsonschema.validate(yaml_data, schema_data)
-    sort_data = jschon_tools.process_json_doc(
+def _resolve_ref(root, schema):
+    if not isinstance(schema, dict) or "$ref" not in schema:
+        return schema if isinstance(schema, dict) else {}
+    ref = schema["$ref"]
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return schema
+    node = root
+    for raw in ref[2:].split("/"):
+        part = raw.replace("~1", "/").replace("~0", "~")
+        if not isinstance(node, dict) or part not in node:
+            return schema
+        node = node[part]
+    return _resolve_ref(root, node)
+
+
+def _flatten_schema(root, schema, seen=None):
+    seen = set() if seen is None else seen
+    schema = _resolve_ref(root, schema)
+    marker = id(schema)
+    if marker in seen:
+        return
+    seen.add(marker)
+    yield schema
+    for key in ("allOf", "anyOf", "oneOf"):
+        for subschema in schema.get(key) or []:
+            yield from _flatten_schema(root, subschema, seen)
+    for key in ("then", "else"):
+        branch = schema.get(key)
+        if isinstance(branch, dict):
+            yield from _flatten_schema(root, branch, seen)
+
+
+def _property_order(schemas):
+    order = []
+    for schema in schemas:
+        for name in schema.get("properties") or {}:
+            if name not in order:
+                order.append(name)
+    return order
+
+
+def _child_schemas(root, schemas, key):
+    children = []
+    known = False
+    for schema in schemas:
+        properties = schema.get("properties") or {}
+        if key in properties:
+            known = True
+            children.extend(_flatten_schema(root, properties[key]))
+    if known:
+        return children
+    for schema in schemas:
+        extra = schema.get("additionalProperties")
+        if isinstance(extra, dict):
+            children.extend(_flatten_schema(root, extra))
+    return children
+
+
+def _item_schemas(root, schemas):
+    children = []
+    for schema in schemas:
+        items = schema.get("items")
+        if isinstance(items, dict):
+            children.extend(_flatten_schema(root, items))
+    return children
+
+
+def _sort_by_schema_shape(node, root, schemas):
+    if isinstance(node, dict):
+        order = {name: index for index, name in enumerate(_property_order(schemas))}
+        pairs = [
+            (key, _sort_by_schema_shape(value, root, _child_schemas(root, schemas, key)))
+            for key, value in node.items()
+        ]
+        pairs.sort(key=lambda pair: (0, order[pair[0]]) if pair[0] in order else (1, pair[0]))
+        copied = node.copy()
+        copied.clear()
+        copied.update(pairs)
+        return copied
+    if isinstance(node, list):
+        return [_sort_by_schema_shape(item, root, _item_schemas(root, schemas)) for item in node]
+    return node
+
+
+def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
+    schema_name = str(schema_path)
+    is_path = isinstance(schema_path, Path) or "/" in schema_name or "\\" in schema_name
+    schema_data = load_schema(schema_name) if is_path else get_schema(schema_name)
+    if not validate:
+        return _sort_by_schema_shape(yaml_data, schema_data, list(_flatten_schema(schema_data, schema_data)))
+    validate_yaml_by_scheme_or_fail(
+        input_yaml_content=yaml_data,
+        schema_file_path=schema_name if is_path else None,
+        schema_name=None if is_path else schema_name,
+    )
+    return jschon_tools.process_json_doc(
         schema_data=schema_data,
         doc_data=yaml_data,
         sort=True,
-        remove_additional_props=remove_additional_props
+        remove_additional_props=remove_additional_props,
     )
-    return sort_data
 
 
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
@@ -183,29 +181,6 @@ def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
             raise ValueError(f"Failed to find attribute '{attribute_str}', key '{key}' doesn't exist")
         sub_content = sub_content[key]
     return sub_content
-
-
-def ensure_nested_attr_parents_exist(yaml_content, attribute_str):
-    keys = attribute_str.split('.')
-    sub_content = yaml_content
-    for key in keys[:-1]:
-        if key not in sub_content:
-            sub_content[key] = get_empty_yaml()
-        sub_content = sub_content[key]
-    last_key = keys[-1]
-    return sub_content, last_key
-
-
-def ensure_nested_attr_exists(yaml_content, attribute_str, default_value=None):
-    sub_content, last_key = ensure_nested_attr_parents_exist(yaml_content, attribute_str)
-    if not last_key in sub_content:
-        sub_content[last_key] = default_value
-    return sub_content, last_key
-
-
-def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_value=None):
-    yaml_content, key = ensure_nested_attr_exists(yaml_content, attribute_str, default_value)
-    return yaml_content[key]
 
 
 def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is_overwriting=True):
@@ -226,6 +201,14 @@ def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is
 primitiveTypes = (int, str, bool, float)
 
 
+def copy_comment_by_key(target_yaml, source_yaml, key):
+    comment = source_yaml.ca.items.get(key)
+    if comment is None:
+        target_yaml.ca.items.pop(key, None)
+    else:
+        target_yaml.ca.items[key] = comment
+
+
 def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,
                            overwrite_existing_comments=True):
     if source_yaml is None:
@@ -241,11 +224,11 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
     for k, v in source_yaml.items():
         if k not in target_yaml:
             target_yaml[k] = v
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            copy_comment_by_key(target_yaml, source_yaml, k)
             continue
 
         if overwrite_existing_comments:
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            copy_comment_by_key(target_yaml, source_yaml, k)
 
         if isinstance(target_yaml[k], dict) and isinstance(v, dict):
             merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
@@ -278,6 +261,9 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
 
 def store_value_to_yaml(yamlContent, key, value, comment=""):
     logger.debug(f"Updating key {key} with value {value} in yaml")
+    if isinstance(yamlContent, YamlBacked):
+        yamlContent.store_value(key, value, comment)
+        return
     if key in yamlContent:
         deleteCommentByKey(yamlContent, key)
         del yamlContent[key]
@@ -296,19 +282,19 @@ def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, co
 
 
 def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=False, wrap_all_strings=False,
-                 remove_additional_props=False):
+                 remove_additional_props=False, validate=True):
     logger.info(f'Beautifying yaml: {file_path} with schema: {schema_path}')
     yamlData = openYaml(file_path)
     if schema_path:
-        yamlData = sortYaml(yamlData, schema_path, remove_additional_props)
+        yamlData = sortYaml(yamlData, schema_path, remove_additional_props, validate)
     if wrap_all_strings:
         make_quotes_for_all_strings(yamlData)
     else:
         make_quotes_for_strings(yamlData)
 
+    normalize_comments(yamlData)
     writeYamlToFile(file_path, yamlData)
     addHeaderToYaml(file_path, header_text)
-    align_spaces_before_comments(file_path)
     if allign_comments:
         alignYamlFileComments(file_path)
 
@@ -370,30 +356,24 @@ def make_quotes_for_all_strings(yaml_data):
             make_quotes_for_all_strings(v)
 
 
-def make_quotes_for_strings(yaml_data):
-    if isinstance(yaml_data, (dict, list, set)):
-        for k, v in (yaml_data.items() if isinstance(yaml_data, dict) else enumerate(yaml_data)):
-            if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString) and not ("\n" in v):
-                yaml_data[k] = DoubleQuotedScalarString(v)
-            elif isinstance(v, DoubleQuotedScalarString) and ("\n" in v):
-                yaml_data[k] = LiteralScalarString(v)
-            else:
-                make_quotes_for_strings(v)
-
-
-def align_spaces_before_comments(filePath):
-    result = ""
-    f = open(filePath, 'r')
-    fileLines = f.readlines()
-    for line in fileLines:
-        if re.match(r'^(.*):( +)#(.*)$', line):
-            pattern = r'^(.*):( +)#(.*)$'
-            alignedLine = re.sub(pattern, r'\1: #\3', line)
-        else:
-            alignedLine = line
-        result += alignedLine
-
-    writeToFile(filePath, result)
+def normalize_comments(data):
+    if isinstance(data, (CommentedMap, CommentedSeq)):
+        for key in [k for k, v in data.ca.items.items() if v is None]:
+            del data.ca.items[key]
+        eol_index = 2 if isinstance(data, CommentedMap) else 0
+        tokens = [t[eol_index] if len(t) > eol_index else None for t in data.ca.items.values()]
+        if data.ca.comment:
+            tokens.append(data.ca.comment[0])
+        for token in tokens:
+            if token is not None and not isinstance(token, list) and token.value.lstrip(" ").startswith("#"):
+                token.value = token.value.lstrip(" ")
+                token.column = 0
+    if isinstance(data, dict):
+        for child in data.values():
+            normalize_comments(child)
+    elif isinstance(data, list):
+        for child in data:
+            normalize_comments(child)
 
 
 def copy_yaml_and_remove_empty_dicts(source_yaml):
@@ -421,60 +401,6 @@ def yaml_from_string(yaml_str):
     return result
 
 
-def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
-                                    input_yaml_content: dict = None, input_schema_content: dict = None,
-                                    schemas_dir=None):
-    yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
-    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
-
-    if schemas_dir:
-        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
-        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
-        errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
-    else:
-        errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
-    if len(errors) > 0:
-        if yaml_file_path:
-            rel_path = getRelPath(yaml_file_path)
-            logger.error(f"Validation of {rel_path} file has failed")
-        for err in errors:
-            log_jsonschema_validation_error(err)
-        raise ValueError("Validation failed") from None
-
-
-def validate_yaml_data_by_scheme(data, schema, cls=None, *args, **kwargs):
-    if cls is None:
-        cls = jsonschema.validators.validator_for(schema)
-    cls.check_schema(schema)
-    validator = cls(schema, *args, **kwargs)
-    errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
-    return errors
-
-
-def log_jsonschema_validation_error(err):
-    key_path = '.'.join(str(index) for index in err.absolute_path)
-    if isinstance(err.instance, OrderedDict):
-        err.instance = convert_ordereddict_to_dict(err.instance)
-    if "is not of type" in err.message:
-        logger.error(f"Attribute {key_path} has value {err.instance}")
-        logger.error(f"Value of type {err.validator_value} is expected instead")
-    elif "is a required property" in err.message:
-        if len(key_path) > 0: err.message += f" at '{key_path}' property"
-        logger.error(err.message)
-    else:
-        logger.error(err.message)
-    logger.error(f"\n")
-
-
-def convert_ordereddict_to_dict(obj):
-    if isinstance(obj, OrderedDict):
-        return {k: convert_ordereddict_to_dict(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_ordereddict_to_dict(i) for i in obj]
-    else:
-        return obj
-
-
 def find_files_by_basename(path: str, extensions_priority: tuple[str] = ("yml", "yaml")) -> list[Path]:
     base_path = Path(path)
     found_files: list[Path] = []
@@ -492,23 +418,3 @@ def load_json_or_yaml(content: str):
     if isinstance(data, (dict, list)):
         return data
     return None
-
-
-class _ThreadLocalYaml:
-    def __init__(self, is_safe: bool = False):
-        self.is_safe = is_safe
-        self._local = threading.local()
-
-    def _get_instance(self):
-        attr = "safe_yaml" if self.is_safe else "yaml"
-        if not hasattr(self._local, attr):
-            setattr(self._local, attr, create_yaml_processor(self.is_safe))
-        return getattr(self._local, attr)
-
-    def __getattr__(self, name):
-        return getattr(self._get_instance(), name)
-
-
-jschon.create_catalog('2020-12')
-yaml = _ThreadLocalYaml(is_safe=False)
-safe_yaml = _ThreadLocalYaml(is_safe=True)

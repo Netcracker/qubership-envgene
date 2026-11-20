@@ -97,8 +97,8 @@ The `deploy_postfix_namespace_map` step writes file
    7. The step renders Namespace template file to
       `tmp/render/<env-name>/Namespaces/<folder-name>/namespace.yml`.
 
-   8. When Template Descriptor `namespaces[].template_override` is present, the step writes
-      `namespace.yml_override` beside the rendered Namespace file.
+   8. When Template Descriptor `namespaces[].template_override` is present, the step renders it
+      and merges it into the rendered Namespace file.
 
 7. **Resolve map entries and write output**
 
@@ -127,8 +127,8 @@ The `deploy_postfix_namespace_map` step writes file
    keyed by `deployPostfix`. A non-BG `deployPostfix` maps to a scalar Namespace name. A BG
    `deployPostfix` maps to an object with `origin` and `peer` keys holding both Namespace names.
 
-2. Files `tmp/render/<env-name>/Namespaces/<folder-name>/namespace.yml` and optional
-   `namespace.yml_override` exist only during the pipeline run. The step does not copy them to
+2. Files `tmp/render/<env-name>/Namespaces/<folder-name>/namespace.yml` exist only during the
+   pipeline run. The step does not copy them to
    `environments/<cluster-name>/<env-name>/Namespaces/`.
 
 3. File `tmp/render/<env-name>/bg_domain.yml` exists only during the pipeline run when Template

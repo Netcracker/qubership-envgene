@@ -12,6 +12,8 @@ class TestCopyScope:
         _write(tmp_path / "tmp" / "templates" / "common" / "t.yml", b"t")
         _write(tmp_path / "tmp" / "app-artifacts" / "app" / "1.0" / "dd.json", b"d")
         _write(tmp_path / "tmp" / "app-artifacts" / "app" / "1.0" / "dd.zip", b"z")
+        _write(tmp_path / "tmp" / "envgene-regdefv2-adapter" / "RegDefs" / "r.yml", b"r")
+        _write(tmp_path / "tmp" / "envgene-regdefv2-adapter" / "pubreg_params.yaml", b"secret")
 
         dest = tmp_path / "dest"
         copy_scope(tmp_path, dest)
@@ -20,4 +22,7 @@ class TestCopyScope:
         assert (dest / "templates" / "common" / "t.yml").read_bytes() == b"t"
         assert (dest / "app-artifacts" / "app" / "1.0" / "dd.json").read_bytes() == b"d"
         assert not (dest / "app-artifacts" / "app" / "1.0" / "dd.zip").exists()
-        assert not (dest / "tmp").exists()
+        assert (dest / "tmp" / "envgene-regdefv2-adapter" / "RegDefs" / "r.yml").read_bytes() == b"r"
+        assert not (dest / "tmp" / "envgene-regdefv2-adapter" / "pubreg_params.yaml").exists()
+        assert not (dest / "tmp" / "templates").exists()
+        assert not (dest / "tmp" / "app-artifacts").exists()

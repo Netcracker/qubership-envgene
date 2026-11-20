@@ -21,7 +21,7 @@ fact of a discrepancy plus what code or schema says, and leaves the fix directio
 
 | Skill                              | Its job                                              | Why not it                                                  |
 |------------------------------------|------------------------------------------------------|-------------------------------------------------------------|
-| `writing-docs` (content-integrity) | Verify one identifier while writing a doc            | Not a systematic audit, no doc-vs-doc, no verdict report    |
+| `writing-style` (integrity)        | Verify one identifier while writing text             | Not a systematic audit, no doc-vs-doc, no verdict report    |
 | `bdd-test-review`                  | Discrepancies seen through BDD tests on a PR         | Intermediary is tests. Here there is none.                  |
 | `code-review` (mattpocock)         | Code vs coding standards or issue spec               | Truth is code standards, not documentation                  |
 | `design-to-cr`                     | Turn a settled decision into a CR                    | Downstream. Consumes the verdict report from this skill.    |

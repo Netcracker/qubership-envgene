@@ -5,7 +5,7 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 ## Schema Index
 
 | File | Validates |
-|------|-----------|
+| ------ | ----------- |
 | `env-definition.schema.json` | `Inventory/env_definition.yml` |
 | `config.schema.json` | `configuration/config.yml` |
 | `integration.schema.json` | `configuration/integration.yml` |
@@ -20,7 +20,7 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 | `paramset.schema.json` | ParameterSet files |
 | `resource-profile.schema.json` | ResourceProfile files |
 | `regdef.schema.json` | Registry Definition v1.0 |
-| `regdef-v2.schema.json` | Registry Definition v2.0 (also bundled in `modules/envgene/envgenehelper/schemas/`) |
+| `regdef-v2.schema.json` | Registry Definition v2.0 |
 | `appdef.schema.json` | Application Definition |
 | `artifact-definition.schema.json` | Artifact Definition v1 |
 | `artifact-definition-v2.schema.json` | Artifact Definition v2 |
@@ -38,4 +38,8 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 
 ## Usage
 
-Schema files are referenced by relative path from `CI_PROJECT_DIR` (e.g., `schemas/env-definition.schema.json`) or from the `envgenehelper` package resources for regdef schemas.
+The SBOM generator uses `generated-application.sbom.schema.json`, which preserves its existing rules for generated output
+without serial numbers or timestamps. `application.sbom.schema.json` keeps its separate contract.
+`solution.sbom.schema.json` also lives in this directory.
+
+Schema files are loaded from this directory through `JSON_SCHEMAS_DIR`. Runtime images use `/schemas`. Validation is performed via `envgene_shared.utils.yaml_utils.validate_yaml_by_scheme_or_fail`.

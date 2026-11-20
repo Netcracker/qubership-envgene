@@ -48,8 +48,7 @@ class TestGitCommit:
     @staticmethod
     def _run_commit(manager):
         with patch("git_commit.git_commit.GitRepoManager", return_value=manager), \
-                patch("git_commit.git_commit._git_commit_lock"), \
-                patch("git_commit.git_commit.minimize_cred_diffs"):
+                patch("git_commit.git_commit._git_commit_lock"):
             git_commit()
 
     def test_removes_dcl_paths_before_checking_for_staged_changes(self):

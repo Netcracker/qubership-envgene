@@ -131,6 +131,33 @@ class TestDeploymentPlanCalculatorMerge:
 
         assert result.entities[0].wave == 3
 
+    def test_uniq_for_app_uses_incoming_version_and_max_wave(self):
+        source = make_plan(make_entity("App", version="1.0", namespace="ns", wave=1))
+        dest = make_plan(make_entity("App", version="2.0", namespace="ns", wave=5))
+
+        result = DeploymentPlanCalculator.merge(source, dest)
+
+        assert len(result.entities) == 1
+        assert result.entities[0].version == "App:2.0"
+        assert result.entities[0].wave == 5
+
+    def test_uniq_for_app_incoming_version_updates_when_source_wave_is_higher(self):
+        source = make_plan(make_entity("App", version="1.0", namespace="ns", wave=7))
+        dest = make_plan(make_entity("App", version="2.0", namespace="ns", wave=2))
+
+        result = DeploymentPlanCalculator.merge(source, dest)
+
+        assert result.entities[0].version == "App:2.0"
+        assert result.entities[0].wave == 7
+
+    def test_uniq_for_version_keeps_different_versions_separate(self):
+        source = make_plan(make_entity("App", version="1.0", namespace="ns", generation_type=GenerationType.UNIQ_FOR_VERSION))
+        dest = make_plan(make_entity("App", version="2.0", namespace="ns", generation_type=GenerationType.UNIQ_FOR_VERSION))
+
+        result = DeploymentPlanCalculator.merge(source, dest)
+
+        assert [entity.version for entity in result.entities] == ["App:1.0", "App:2.0"]
+
     def test_source_is_not_mutated(self):
         source = make_plan(make_entity("App", namespace="ns", wave=1))
         dest = make_plan(make_entity("App", namespace="ns", wave=9))

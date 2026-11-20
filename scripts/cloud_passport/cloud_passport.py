@@ -1,5 +1,6 @@
-from envgenehelper import *
-from utils.schema_validation import checkCloudPassportBySchema
+
+from envgene_shared.crypto.cred_store import current_cred_store
+from envgenehelper import CredentialMode, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, find_cloud_name_from_passport, find_cloud_passport_definition, getDirName, get_cred_id_from_cred_macros, logger, merge_dict_key_with_comment, openYaml, store_value_to_yaml, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 
 # const
 CLOUD_SUBSTITUTIONS = {
@@ -18,19 +19,19 @@ def process_and_update_key(targetKey, targetYaml, sourceKey, sourceYaml, comment
     merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, comment)
     del sourceYaml[sourceKey]
 
-def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, is_external_cred_env) :
+def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, credential_mode) :
     for domain in cloudPassportYaml:
         if domain == "version": continue
         for paramKey, paramValue in cloudPassportYaml[domain].items():
-            if is_external_cred_env and paramKey == "SECRET_FLOW" and paramKey in cloudYaml["deployParameters"]:
+            if credential_mode == CredentialMode.EXTERNAL and paramKey == "SECRET_FLOW" and paramKey in cloudYaml["deployParameters"]:
                 continue
             store_value_to_yaml(cloudYaml["deployParameters"], paramKey, paramValue, comment)
 
-def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cred_env) :
-    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
+def process_cloud_definition(cloudPassportYaml, env_dir, comment, credential_mode) :
+    cloud_schema = "cloud.schema.json"
     # cloud
     cloudYamlPath = f"{env_dir}/cloud.yml"
-    cloudYaml = openYaml(cloudYamlPath)
+    cloudYaml = current_env_instance_store().get(cloudYamlPath)
     for cloudKey, passportKey in CLOUD_SUBSTITUTIONS.items() :
         process_and_update_key(cloudKey, cloudYaml, passportKey, cloudPassportYaml["cloud"], comment)
         if (passportKey == "CLOUD_DASHBOARD_URL"):
@@ -41,7 +42,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
         maasPassportYaml = cloudPassportYaml["maas"]
         # if maas is presented in cloud passport - than maas is enabled
         store_value_to_yaml(cloudYaml["maasConfig"], "enable", True, comment)
-        store_value_to_yaml(cloudYaml["maasConfig"], "credentialsId", extract_cred_id(maasPassportYaml["MAAS_CREDENTIALS_USERNAME"], is_external_cred_env), comment)
+        store_value_to_yaml(cloudYaml["maasConfig"], "credentialsId", extract_cred_id(maasPassportYaml["MAAS_CREDENTIALS_USERNAME"], credential_mode), comment)
         process_and_update_key("maasUrl", cloudYaml["maasConfig"], "MAAS_SERVICE_ADDRESS", maasPassportYaml, comment)
         process_and_update_key("maasInternalAddress", cloudYaml["maasConfig"], "MAAS_INTERNAL_ADDRESS", maasPassportYaml, comment)
         del cloudPassportYaml["maas"]
@@ -51,7 +52,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
         vaultPassportYaml = cloudPassportYaml["vault"]
         vaultUrl = vaultPassportYaml["VAULT_ADDR"]
         if vaultUrl :
-            store_value_to_yaml(cloudYaml["vaultConfig"], "credentialsId", extract_cred_id(vaultPassportYaml["VAULT_AUTH_ROLE_ID"], is_external_cred_env), comment)
+            store_value_to_yaml(cloudYaml["vaultConfig"], "credentialsId", extract_cred_id(vaultPassportYaml["VAULT_AUTH_ROLE_ID"], credential_mode), comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "enable", True, comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "url", vaultUrl, comment)
         else :
@@ -64,10 +65,11 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
     if "dbaas" in cloudPassportYaml :
         dbaasPassportYaml = cloudPassportYaml["dbaas"]
         if "dbaasConfigs" not in cloudYaml or len(cloudYaml["dbaasConfigs"]) != 1 :
-            cloudYaml["dbaasConfigs"] = yaml.load("[]")
-            cloudYaml["dbaasConfigs"].append(yaml.load("enable: false"))
+            dbaasConfigs = yaml.load("[]")
+            dbaasConfigs.append(yaml.load("enable: false"))
+            cloudYaml["dbaasConfigs"] = dbaasConfigs
         dbaasConfigYaml = cloudYaml["dbaasConfigs"][0]
-        store_value_to_yaml(dbaasConfigYaml, "credentialsId", extract_cred_id(dbaasPassportYaml["DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME"], is_external_cred_env), comment)
+        store_value_to_yaml(dbaasConfigYaml, "credentialsId", extract_cred_id(dbaasPassportYaml["DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME"], credential_mode), comment)
         store_value_to_yaml(dbaasConfigYaml, "enable", True, comment)
         process_and_update_key("apiUrl", dbaasConfigYaml, "API_DBAAS_ADDRESS", dbaasPassportYaml, comment)
         process_and_update_key("aggregatorUrl", dbaasConfigYaml, "DBAAS_AGGREGATOR_ADDRESS", dbaasPassportYaml, comment)
@@ -78,7 +80,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
     if "consul" in cloudPassportYaml :
           consulPassportYaml = cloudPassportYaml["consul"]
           consulConfigYaml = cloudYaml["consulConfig"]
-          store_value_to_yaml(consulConfigYaml, "tokenSecret", extract_cred_id(consulPassportYaml["CONSUL_ADMIN_TOKEN"], is_external_cred_env), comment)
+          store_value_to_yaml(consulConfigYaml, "tokenSecret", extract_cred_id(consulPassportYaml["CONSUL_ADMIN_TOKEN"], credential_mode), comment)
           process_and_update_key("enabled", consulConfigYaml, "CONSUL_ENABLED", consulPassportYaml, comment)
           process_and_update_key("publicUrl", consulConfigYaml, "CONSUL_PUBLIC_URL", consulPassportYaml, comment)
           process_and_update_key("internalUrl", consulConfigYaml, "CONSUL_URL", consulPassportYaml, comment)
@@ -90,32 +92,31 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment, is_external_cr
         
     # adding rest of cloud passport parameters to cloud deploy parameters
     logger.debug(f"Rest of params from cloud passport are: \n{dump_as_yaml_format(cloudPassportYaml)}")
-    mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, is_external_cred_env)
+    mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment, credential_mode)
     # storing cloud yaml
-    writeYamlToFile(cloudYamlPath, cloudYaml)
-    beautifyYaml(cloudYamlPath, cloud_schema)
+    current_env_instance_store().beautify(cloudYamlPath, cloud_schema)
 
-def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_dir, comment, is_external_cred_env):
+def read_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path):
     logger.info(f"Searching credentials for cloud passport {cloud_passport_file_path}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = "credential.schema.json"
     # first searching in subfolder
     passportSubfolderPath = f'{getDirName(cloud_passport_file_path)}/credentials/{cloud_passport_name}.yml'
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"
     passportSameFolderPath = f'{getDirName(cloud_passport_file_path)}/{cloud_passport_name}-creds.yml'
-    if os.path.exists(passportSubfolderPath):
-        passportCredsYaml = openYaml(passportSubfolderPath)
+    if current_cred_store().exists(passportSubfolderPath):
+        passportCredsYaml = current_cred_store().load_decrypted(passportSubfolderPath)
         logger.info(f"Adding cloud passport credentials from {passportSubfolderPath}")
-    elif os.path.exists(passportSameFolderPath):
-        passportCredsYaml = openYaml(passportSameFolderPath)
-        beautifyYaml(passportSameFolderPath, credsSchema)
+    elif current_cred_store().exists(passportSameFolderPath):
+        passportCredsYaml = current_cred_store().load_decrypted(passportSameFolderPath)
+        validate_yaml_by_scheme_or_fail(input_yaml_content=passportCredsYaml, schema_name=credsSchema)
         logger.info(f"Adding cloud passport credentials from {passportSameFolderPath}")
     else:
         logger.error(f"No cloud pasport credentials files found in either {passportSubfolderPath} or {passportSameFolderPath}.")
         raise ReferenceError(f"No cloud pasport credentials files found. See logs above")
-    copy_creds_to_env_creds_file(env_dir, passportCredsYaml, comment, credsSchema)  
+    return passportCredsYaml
 
-def extract_cred_id(param, is_external=False):
-    if is_external:
+def extract_cred_id(param, credential_mode):
+    if credential_mode == CredentialMode.EXTERNAL:
         if isinstance(param, dict):
             cred_id = extract_external_cred(param)
             if cred_id is None:
@@ -126,27 +127,24 @@ def extract_cred_id(param, is_external=False):
     return get_cred_id_from_cred_macros(param)
 
 
-def update_env_definition_with_cloud_name(render_env_dir, source_env_dir, all_instances_dir):
-    inventoryYaml = getEnvDefinition(render_env_dir)
-    cloudName = find_cloud_name_from_passport(source_env_dir, all_instances_dir)
+def update_env_definition_with_cloud_name(inventoryYaml, source_env_dir, all_instances_dir):
+    cloudName = find_cloud_name_from_passport(source_env_dir, all_instances_dir, inventoryYaml)
     if cloudName:
-        logger.info(f"Env definition for {render_env_dir} updated with cloud name: {cloudName}")
+        logger.info(f"Env definition for {source_env_dir} updated with cloud name: {cloudName}")
         inventoryYaml["inventory"]["passportCloudName"] = cloudName
-        writeYamlToFile(getEnvDefinitionPath(render_env_dir), inventoryYaml)
     else:
-        logger.info(f"No cloud name found for env {render_env_dir} from passport")
+        logger.info(f"No cloud name found for env {source_env_dir} from passport")
 
-def process_cloud_passport(render_env_dir, env_instances_dir, instances_dir, is_external_cred_env=False) :
+def process_cloud_passport(env_instances_dir, instances_dir, inventoryYaml) :
     logger.info(f"Trying to find cloud passport definition file")
-    cloudPassportFilePath = find_cloud_passport_definition(env_instances_dir, instances_dir)
+    cloudPassportFilePath = find_cloud_passport_definition(env_instances_dir, instances_dir, inventoryYaml)
     cloudPassportFileName = extractNameFromFile(cloudPassportFilePath)
-    # checking passport by schema
-    checkCloudPassportBySchema(render_env_dir, cloudPassportFilePath)
     if cloudPassportFilePath:
         logger.info(f"Processing cloud passport: {cloudPassportFilePath}")
         cloudPassportYaml = openYaml(cloudPassportFilePath)
         comment = f"cloud passport: {cloudPassportFileName} version: {cloudPassportYaml['version']}"
-        process_cloud_definition(cloudPassportYaml, render_env_dir, comment, is_external_cred_env)
-        add_cloud_passport_creds(cloudPassportFileName, cloudPassportFilePath, render_env_dir, comment, is_external_cred_env)
-    else:
-        logger.info("No cloud passport definition found. Cloud passport processing skipped...")
+        process_cloud_definition(cloudPassportYaml, env_instances_dir, comment,
+                                 current_env_instance_store().credential_mode)
+        return read_cloud_passport_creds(cloudPassportFileName, cloudPassportFilePath), comment
+    logger.info("No cloud passport definition found. Cloud passport processing skipped...")
+    return {}, ""

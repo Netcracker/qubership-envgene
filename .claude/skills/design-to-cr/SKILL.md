@@ -111,6 +111,24 @@ where the work lands at a glance rather than scanning prose for it. Keep each it
 one independent change. Do not collapse several components into one item, and do not split one change into
 terse fragments.
 
+Each in-scope item is a work instruction plus a reference, not a re-explanation of the behavior. State what
+changes and the action on it - add the step, stop it running on `CLEAN`, remove the marker path - and link the
+design section that specifies how it works. Do not re-derive the behavior's sequence or its validation rules
+inline (for example `validates NAMESPACE_NAMES first, failing if absent from the map and warning if absent from
+the plan`). That detail lives in the linked design, and its observable form is pinned in Acceptance. Repeating it
+in the item makes the slice read like a spec instead of a task list. When one
+step's work spans components - a core step that hands off to an external tool - name the component performing
+each part rather than leaving it as `a separate function`, so the developer knows which codebase each item
+lands in.
+
+An in-scope item is always a change. Something that stays as it is - a path left untouched, a mode kept, a
+format unchanged - is a boundary, not a change: it belongs in Out of scope, or nowhere. A phrase like `keep X
+unchanged` or `X still works as today` in In scope is the tell - move it to Out of scope or drop it.
+
+Do not list test coverage as an in-scope item. Tests for the change are implied and ship with the
+implementation, so a `Tests: cover ...` item is noise. The one exception is a ticket whose primary
+deliverable is the tests themselves - a test-only CR - where the tests are the change.
+
 Carry the design-time seam into Implementation notes. When the design settled a load-bearing implementation
 insight - where the change attaches and how - record it as guidance, because the developer who implements
 this may be a different person or session than the one who designed it, and that insight does not survive
@@ -155,6 +173,13 @@ deletion of its source branch. This rule holds for every source.
   `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/<path>.md`. Get the SHA from the
   PR head (`mcp__github__pull_request_read` method `get`, field `head.sha`), the merge commit, or
   `git log -1 --format=%H -- <path>` for a committed local file.
+- When the design was authored through the analyst flow, it lives in the OpenSpec change folder, not a
+  single feature doc. The design is the change's own artifacts: the proposal, the delta spec, and the ADR
+  under `docs/adr/`. The `Design reference` entry must still be clickable: use the hand-off PR reference
+  (`#NNNN`), which carries all three and stays after merge, or SHA-permalinks to each file. Never paste
+  bare repo paths as the reference - they render as dead text on GitHub, so a path names which file to
+  link, not the link itself. Anchor each in-scope item to its own spec requirement heading
+  (`### Requirement: <name>`) rather than to a feature-doc section.
 - Give each `In scope changes` item an inline anchor permalink to the specific design section that
   motivates it, on the most relevant noun (the modified file, schema field, job, or parameter):
   `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/<path>.md#<anchor>`. Compute the
@@ -185,11 +210,9 @@ capability. The H1 carries the prefix, so the filed issue title carries it too.
 
 ### House-rule compliance
 
-Keep the body publish-ready under the repository house rules in the `writing-docs` skill, even though the draft file
-lives outside the repository: plain hyphen-minus for dashes (no em or en dash), no semicolons in
-prose, wrap prose at 120 characters, vertically aligned table pipes, sentence-case headings, and
-GitHub native callouts. Chat may be Russian, but the artifact ships in English. Run the pre-file gate
-below before the `issue_write` call.
+The CR body is prose, so keep it publish-ready under the `writing-style` house voice, even though the
+draft file lives outside the repository. Chat may be Russian, but the artifact ships in English. Run the
+pre-file gate below before the `issue_write` call.
 
 ### Pre-file gate
 
@@ -204,19 +227,31 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   docs. If it does not, replace it with the observable outcome.
 - Links: no repo-relative `/docs/...` links in the issue body - GitHub renders them as dead paths.
   Use commit-SHA permalinks, pinned to the doc PR head commit when the doc has not merged yet.
-- House rules (as stated under House-rule compliance): no em or en dashes, no semicolons in prose,
-  prose wrapped at 120.
+- House rules: the body obeys the `writing-style` house voice (see House-rule compliance above).
 - No doc-ahead-of-code meta line: strip any sentence that frames the CR as catching code up to docs,
   for example "the design docs are ahead of the code" or "this CR wires the described behavior". It is
   noise, not guidance - the reader is the developer who will write the code, and the code's current
   state is theirs to change. State the behavior contract and how to verify it, nothing about the gap.
-- No documentation item in scope: no `In scope changes` item asks to write, rewrite, or update
-  documentation, including a feature or explanation doc, an ADR, a use case, or any file under `docs/`.
-  The docs are the design reference the CR links, not implementation work. If a drafted item says to write
-  or update a doc, drop it, or if it names real code work, restate it as that code work.
+- Design-reference boundary: no `In scope changes` item modifies a file that already ships in the
+  design-reference PR - the docs text, the schemas, and the samples committed alongside the docs.
+  That PR delivers those, and the CR carries only the code slice that consumes the settled contract.
+  This catches the common case of a documentation item in scope (a feature or explanation doc, an
+  ADR, a use case, or any file under `docs/`), and it catches schema or sample items too when those
+  files ship in the design PR - for example an item like "Update `docs/features/X.md` section Y" or
+  "Add `foo` to the enum in `schemas/X.json`" fails the gate when either file is already committed
+  to the design-reference PR. If a drafted item names such a file, drop it, or if it names real
+  code work behind that file, restate it as that code work.
 - Component visibility: each `In scope changes` item leads with or is grouped under the component or
   pipeline step it touches, so the slice scans as a work-map. An item that buries the component mid-prose
   in a flat list fails this check.
+- In-scope item is a task, not a spec: no item re-derives the behavior's sequence or validation rules inline.
+  It states the change (add, stop, remove) and links the design section that specifies how the behavior works.
+  An item that reads like a step-by-step of how the behavior works belongs in the design doc, not the ticket.
+- In-scope non-change: no item asserts that something stays as it is (`keep`, `unchanged`, `still`, `as today`).
+  A non-change is an Out-of-scope boundary, not an in-scope change - move it there or drop it.
+- In-scope tests: no item is a bare test-coverage task (`Tests: cover ...`, `Add tests for ...`). Test
+  coverage is implied and ships with the implementation - drop it, unless the ticket's primary deliverable
+  is the tests themselves.
 
 ### File the issue
 

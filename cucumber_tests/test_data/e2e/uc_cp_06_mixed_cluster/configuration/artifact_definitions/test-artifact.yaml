@@ -1,0 +1,11 @@
+name: "test-artifact"
+groupId: "org.test"
+artifactId: "test-artifact"
+registry:
+  name: "test-registry"
+  credentialsId: "test-registry"
+  mavenConfig:
+    repositoryDomainName: "http://localhost:8000/"
+    targetRelease: "release"
+    targetSnapshot: "release"
+    targetStaging: "release"

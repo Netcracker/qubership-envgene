@@ -33,5 +33,6 @@ class TestMultiEnvChildSubprocess:
         assert captured["env"]["CLUSTER_NAME"] == "cluster-02"
         assert captured["env"]["ENVIRONMENT_NAME"] == "env-02"
         assert captured["env"]["CI_PROJECT_DIR"] == str(worktree)
+        assert captured["env"]["METRICS_COLLECTOR_RESULTS_ROOT"] == str(tmp_path)
         assert captured["env"]["ARTIFACTS_OUTPUT_DIR"] == str(artifacts_output_dir)
         assert captured["env"]["ENVGENE_FAN_OUT_CHILD"] == "1"

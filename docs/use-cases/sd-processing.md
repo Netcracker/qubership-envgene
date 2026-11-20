@@ -74,7 +74,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. If Full SD exists in repository, replaces it completely with the downloaded SD
@@ -109,7 +109,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Saves downloaded SD as a Delta SD pipeline artifact
@@ -146,7 +146,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Detects that Full SD does not exist in repository
@@ -190,7 +190,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Saves downloaded SD as a Delta SD pipeline artifact
@@ -235,7 +235,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Detects that Full SD does not exist in repository
@@ -271,7 +271,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Saves downloaded SD as a Delta SD pipeline artifact
@@ -308,7 +308,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Detects that Full SD does not exist in repository
@@ -398,7 +398,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -490,7 +490,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -553,7 +553,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -617,7 +617,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -680,7 +680,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Attempts to process multiple SDs with `extended-merge` mode
@@ -745,7 +745,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Attempts to process multiple SDs with `extended-merge` mode
@@ -807,7 +807,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -846,7 +846,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Saves downloaded SD as a Delta SD pipeline artifact
@@ -883,7 +883,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. Detects that Full SD does not exist in repository
@@ -920,7 +920,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
    3. If Full SD exists in repository, replaces it completely with the downloaded SD
@@ -966,7 +966,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. If Full SD exists in repository, replaces it completely with the SD from `SD_DATA`
@@ -1011,7 +1011,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
@@ -1057,7 +1057,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Detects that Full SD does not exist in repository
@@ -1120,7 +1120,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
@@ -1184,7 +1184,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Detects that Full SD does not exist in repository
@@ -1229,7 +1229,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
@@ -1277,7 +1277,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Detects that Full SD does not exist in repository
@@ -1321,7 +1321,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -1367,7 +1367,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -1403,7 +1403,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -1442,7 +1442,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -1478,7 +1478,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Attempts to process multiple SDs with `extended-merge` mode
@@ -1516,7 +1516,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Attempts to process multiple SDs with `extended-merge` mode
@@ -1551,7 +1551,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
@@ -1599,7 +1599,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
@@ -1649,7 +1649,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. Detects that Full SD does not exist in repository
@@ -1699,7 +1699,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
    3. If Full SD exists in repository, replaces it completely with the SD from `SD_DATA`
@@ -1740,7 +1740,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads the input SD from the `SD_DATA` parameter or downloads the SD artifact for the specified `SD_VERSION`
    2. For each input SD, validates that no two entries in `applications` share the same `(Application Name, Application Version, deployPostfix)` triplet
    3. Detects duplicate entries in `SD[N]`
@@ -1776,7 +1776,7 @@ The SD processing logic depends on:
 
 **Steps:**
 
-1. The `process_sd` job runs in the pipeline:
+1. The `process_sd` step runs in the pipeline:
    1. Reads and validates the incoming SD
    2. Detects that Full SD already exists in repository and a repository merge is required
    3. Reads the existing `sd.yaml` from the repository

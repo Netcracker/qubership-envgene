@@ -14,7 +14,7 @@
 
 ## Overview
 
-This document covers use cases for [Blue-Green Deployment](/docs/features/blue-green-deployment.md) operations performed by the `bg_manage` job in EnvGene pipeline. These operations manage state transitions between origin and peer namespaces in Blue-Green Domains.
+This document covers use cases for [Blue-Green Deployment](/docs/features/blue-green-deployment.md) operations performed by the `bg_manage` step in EnvGene pipeline. These operations manage state transitions between origin and peer namespaces in Blue-Green Domains.
 
 ### UC-BG-1: Init Domain
 
@@ -37,7 +37,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-active` and `.peer-idle`
 
@@ -66,7 +66,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Replaces the contents of the candidate namespace folder (peer) with the contents (including nested Applications) of the active namespace folder (origin), keeping only the candidate namespace `name` attribute
    3. Updates the Environment Inventory: Copies `envTemplate.bgNsArtifacts.origin` → `envTemplate.bgNsArtifacts.peer`
@@ -98,7 +98,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-legacy` and `.peer-active` in the Environment folder
 
@@ -127,7 +127,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-idle` and `.peer-active` in the Environment folder
 
@@ -159,7 +159,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-idle` and `.peer-active` in the Environment folder
 
@@ -188,7 +188,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Replaces the contents of the candidate namespace folder (origin) with the contents (including nested Applications) of the active namespace folder (peer), keeping only the candidate namespace `name` attribute
    3. Updates the Environment Inventory: Copies `envTemplate.bgNsArtifacts.peer` → `envTemplate.bgNsArtifacts.origin`
@@ -220,7 +220,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-active` and `.peer-legacy` in the Environment folder
 
@@ -249,7 +249,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-active` and `.peer-idle` in the Environment folder
 
@@ -281,7 +281,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 
 **Steps:**
 
-1. The `bg_manage` job runs in the pipeline:
+1. The `bg_manage` step runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Updates state files: Creates `.origin-active` and `.peer-idle` in the Environment folder
 

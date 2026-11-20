@@ -56,7 +56,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention configuration is checked. `enabled` is false (or the section is absent).
 3. SBOM cleanup is skipped.
 4. The effective set generation completes.
@@ -97,7 +97,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. Per-application SBOM retention runs over each subdirectory. Every subdirectory already
@@ -142,7 +142,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. For each per-application subdirectory, the 10 most recent files are kept and older files are
@@ -192,7 +192,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention is enabled with `keep_versions_per_app: 3`. The cleanup procedure starts.
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. For `/sboms/postgres/`, the 3 most recent files are kept and the 7 older files are deleted.
@@ -241,7 +241,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. Per-application SBOM retention runs over each subdirectory. No subdirectory exceeds
@@ -290,7 +290,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
 3. Legacy flat SBOM files at the top of `/sboms/` are detected and removed.
 4. Per-application SBOM retention runs over each subdirectory. `/sboms/app-a/` has 3 files
@@ -326,7 +326,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs.
+1. The `generate_effective_set` step runs.
 2. SBOM retention is enabled but `keep_versions_per_app` is not set. The cleanup procedure
    starts.
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).

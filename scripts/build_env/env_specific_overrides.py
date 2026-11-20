@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from envgenehelper import check_dir_exists, getEnvDefinition
+from envgenehelper import current_env_instance_store
 from envgenehelper.business_helper import get_namespaces_path
 
 ENV_SPECIFIC_TARGET_FIELDS = (
@@ -11,14 +11,14 @@ ENV_SPECIFIC_TARGET_FIELDS = (
 )
 
 
-def validate_env_specific_override_keys(env_dir: Path | str) -> None:
+def validate_env_specific_override_keys(env_dir: Path | str, env_definition: dict) -> None:
     env_dir = Path(env_dir)
-    env_template = getEnvDefinition(str(env_dir)).get("envTemplate", {})
+    env_template = env_definition.get("envTemplate", {})
 
     namespaces_path = get_namespaces_path(env_dir)
     available_keys = {"cloud"}
-    if check_dir_exists(str(namespaces_path)):
-        available_keys |= {p.name for p in namespaces_path.iterdir() if p.is_dir()}
+    namespace_files = current_env_instance_store().list(namespaces_path / "*" / "namespace.yml")
+    available_keys |= {p.parent.name for p in namespace_files}
 
     for field_name in ENV_SPECIFIC_TARGET_FIELDS:
         field_value = env_template.get(field_name)

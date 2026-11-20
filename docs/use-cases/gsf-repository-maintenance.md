@@ -293,6 +293,11 @@ git-system-follower install <path_to_template_package_image> \
 
 ## Instance Repository Maintenance via GSF
 
+> **Note:** GSF supports passing additional variables during installation and upgrade.
+> Depending on the variable, GSF can use it as a template package parameter or configure it as a GitLab CI/CD variable.
+> For details on passing additional variables and automatic CI/CD variable configuration,
+> see the [GSF cicd variable provisioning usecase](/docs/use-cases/gsf-cicd-variable-provisioning.md)
+
 ### UC-GSF-INST-1: Initialize Instance Repository via GSF
 
 **Pre-requisites:**
@@ -325,6 +330,8 @@ git-system-follower install <path_to_instance_package_image> \
 1. Instance Repository is initialized.
 2. Required files from the selected version are present.
 3. Repository matches the reference structure.
+4. `configuration/config.yml` is created with `crypt: false`.
+5. `configuration/credentials/credentials.yml` is created with an empty `artifactory-cred` of type `usernamePassword`.
 
 ### UC-GSF-INST-2: Upgrade Instance Repository via GSF
 
@@ -360,6 +367,7 @@ git-system-follower install <path_to_instance_package_image> \
 1. Instance Repository is upgraded to the target version.
 2. Repository matches the reference structure.
 3. `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
+4. `configuration/config.yml` and `configuration/credentials/credentials.yml` are not modified if they already exist. Each file is handled independently: a missing file is created with the default content.
 
 ### UC-GSF-INST-3: Downgrade Instance Repository via GSF
 

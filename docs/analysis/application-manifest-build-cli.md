@@ -650,7 +650,7 @@ Each individual registry is described by a separate `yaml` file in the `/configu
 
 The `name` attribute must match the filename without the extension.
 
-[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) (see envgene-objects.md for schema details)
+[Registry Definition v2.0](/schemas/regdef-v2.schema.json) (see envgene-objects.md for schema details)
 
 [Example](/docs/examples/sandbox.yml)
 
@@ -795,7 +795,7 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
     | `?QUALIFIERS`  | from Step 3. `registry_name=<>` and from Step 2 `file_name=<>` `ARTIFACT-FILE` (only for `github`) |
 
     **Qualifier value encoding.** Qualifier values (including `registry_name` and `file_name`)
-    MUST be percent-encoded according to [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986)
+    MUST be percent-encoded according to [RFC 3986](https://www.rfc-editor.org/info/rfc3986/)
     and the [purl spec](https://github.com/package-url/purl-spec) before being placed in the PURL.
     Registry names are not constrained to URL-safe characters: in particular, the `name` attribute
     of a Registry Definition can contain spaces (e.g. `Sandbox Registry`). Such values

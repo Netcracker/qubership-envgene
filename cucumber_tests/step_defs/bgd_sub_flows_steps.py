@@ -68,6 +68,32 @@ def then_deploy_plan_unchanged(workspace: EnvGeneWorkspace):
     )
 
 
+@given(parsers.parse('the environment inventory field "{field_path}" is removed'))
+def given_inventory_field_removed(workspace: EnvGeneWorkspace, field_path: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    env_def_path = env_dir / "Inventory" / "env_definition.yml"
+    workspace.assert_file_exists(env_def_path)
+    content = yaml.safe_load(env_def_path.read_text(encoding="utf-8"))
+    *parents, leaf = field_path.split(".")
+    node = content
+    for key in parents:
+        node = node[key]
+    del node[leaf]
+    env_def_path.write_text(yaml.safe_dump(content, sort_keys=False), encoding="utf-8")
+
+
+@then(parsers.parse('the environment inventory field "{field_path}" is absent'))
+def then_inventory_field_absent(workspace: EnvGeneWorkspace, field_path: str):
+    env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
+    env_def_path = env_dir / "Inventory" / "env_definition.yml"
+    workspace.assert_file_exists(env_def_path)
+    node = yaml.safe_load(env_def_path.read_text(encoding="utf-8"))
+    *parents, leaf = field_path.split(".")
+    for key in parents:
+        node = node.get(key) or {}
+    assert leaf not in node, f"Expected {field_path} to be absent, got '{node[leaf]}'"
+
+
 @then(parsers.parse('the environment inventory field "envTemplate.bgNsArtifacts.{role}" equals "{value}"'))
 def then_bg_ns_artifacts_field(workspace: EnvGeneWorkspace, role: str, value: str):
     env_dir = workspace.builder.get_env_dir(workspace.cluster_name, workspace.env_name)
@@ -171,21 +197,6 @@ def given_deploy_plan_has_entry(workspace: EnvGeneWorkspace, namespace: str, ver
     _assert_deploy_plan_has_entry(workspace, namespace, version)
 
 
-@given('the environment AppDefs and RegDefs paths are resolved for the deploy')
-def given_local_appdefs_regdefs_resolved(workspace: EnvGeneWorkspace):
-    # LOCAL_APPDEFS_PATH/LOCAL_REGDEFS_PATH are not pipeline parameters a caller sets - in a real
-    # pipeline run they are derived by scripts/pipeline/resolve_env_names.py from CI_PROJECT_DIR
-    # and ENV_NAMES before the orchestrator ever starts, and consumed as plain env vars by
-    # modules/dpg's LocalClient. The BDD harness invokes the orchestrator directly and skips that
-    # dotenv step, so this step reproduces the same derivation instead of modelling the paths as
-    # externally-supplied pipeline input.
-    if not hasattr(workspace, "extra_env"):
-        workspace.extra_env = {}
-    env_dir = f"environments/{workspace.cluster_name}/{workspace.env_name}"
-    workspace.extra_env["LOCAL_APPDEFS_PATH"] = f"{env_dir}/AppDefs"
-    workspace.extra_env["LOCAL_REGDEFS_PATH"] = f"{env_dir}/RegDefs"
-
-
 @given(parsers.parse(
     'the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with '
     'deployPostfix "{deploy_postfix}" for "{app_version}"'))
@@ -199,11 +210,21 @@ def given_application_versions_as_solution_descriptor(workspace: EnvGeneWorkspac
     sd_dir = workspace.base_dir / "solution_descriptors"
     sd_dir.mkdir(parents=True, exist_ok=True)
     sd_path = sd_dir / "bgd-sd.yml"
-    sd_path.write_text(yaml.dump({
-        "version": 2.2,
-        "type": "solutionDeploy",
-        "applications": [{"version": app_version, "deployPostfix": deploy_postfix}],
-    }))
+    if sd_path.exists():
+        sd = yaml.safe_load(sd_path.read_text(encoding="utf-8")) or {}
+    else:
+        sd = {
+            "version": 2.2,
+            "type": "solutionDeploy",
+            "applications": [],
+        }
+
+    sd["applications"].append({
+        "version": app_version,
+        "deployPostfix": deploy_postfix,
+    })
+    sd_path.write_text(yaml.safe_dump(sd), encoding="utf-8")
+   
     if not hasattr(workspace, "extra_env"):
         workspace.extra_env = {}
     workspace.extra_env["APPLICATION_VERSIONS"] = str(sd_path)

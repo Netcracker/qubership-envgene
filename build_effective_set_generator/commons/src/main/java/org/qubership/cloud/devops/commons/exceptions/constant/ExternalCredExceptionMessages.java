@@ -32,14 +32,6 @@ public class ExternalCredExceptionMessages {
 
     public static final String INVALID_PROPERTY = "Invalid property '%s' referred in parameter for external credential id '%s'.";
 
-    public static final String NORMALIZATION_INPUT_ERROR = "Inputs to build Normalized secret name is null. remoteRefPath = %s, credId = %s, secretStoreType = %s";
-
-    public static final String UNSUPPORTED_SECRET_TYPE = "Unsupported secret store type: '%s' for credId [%s] and remoteRefPath [%s]. Supported are vault, aws, gcp, azure.";
-
-    public static final String INVALID_CHARACTER = "Invalid characters in %s [%s] for type %s. %n Allowed pattern: %s. %n Please validate cred id and remoteRefPath.";
-
-    public static final String INVALID_LENGTH = "Length exceeded for %s [%s] for type %s. Max allowed: %d, actual: %d";
-
     public static final String INVALID_CRED_TYPE = "Below external creds found in local creds only environment:\n%s";
 
     public static final String INVALID_CRED_MAP = "Invalid value found in external credential reference:\n%s";

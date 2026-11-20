@@ -17,12 +17,15 @@
 package org.qubership.cloud.parameters.processor.expression.binding;
 
 import org.qubership.cloud.devops.commons.Injector;
+import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
 import org.qubership.cloud.devops.commons.pojo.parameterset.ParameterSet;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 
 import java.io.Serializable;
 import java.util.*;
+
+import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.INVALID_PROPERTY;
 
 public abstract class DynamicMap implements Map<String, Parameter>, Serializable {
 
@@ -167,6 +170,9 @@ public abstract class DynamicMap implements Map<String, Parameter>, Serializable
         boolean propertyExists = credential.getProperties() != null &&
                 credential.getProperties().stream()
                         .anyMatch(p -> property.equals(p.getName()));
+        if (!property.isEmpty() && !propertyExists) {
+            throw new ExternalCredProcessingException(String.format(INVALID_PROPERTY, property, credId));
+        }
         Map<String, Parameter> result = new HashMap<>();
         result.put("$type", Parameter.builder()
                 .value("credRef")

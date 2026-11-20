@@ -122,6 +122,56 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the environment inventory field "envTemplate.bgNsArtifacts.origin" equals "test-artifact:v1"
     And the deploy plan contains an entry for namespace "test-env-bss-origin" with version "crm:1.0"
 
+  Scenario: Sub-flow 2 - warmup creates the candidate bgNsArtifacts entry when it is absent
+    Given the workspace is initialized with test data from "e2e/uc_bgd_warmup"
+    And the environment inventory field "envTemplate.bgNsArtifacts.peer" is removed
+    And the BG state files are origin "active" and peer "idle"
+    And the pipeline parameter "OPERATION_TYPE" is set to "BGD"
+    And the pipeline parameter "BGD_OPERATION" is set to "warmup"
+    And the pipeline parameter "BG_STATE" targets origin "active" and peer "candidate"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "warmup" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the BG state files are origin "active" and peer "candidate"
+    And the environment inventory field "envTemplate.bgNsArtifacts.origin" equals "test-artifact:v1"
+    And the environment inventory field "envTemplate.bgNsArtifacts.peer" equals "test-artifact:v1"
+    And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
+    And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "crm:1.0"
+
+  Scenario: Sub-flow 2 - warmup removes the candidate bgNsArtifacts entry when the active one is absent
+    Given the workspace is initialized with test data from "e2e/uc_bgd_warmup"
+    And the environment inventory field "envTemplate.bgNsArtifacts.origin" is removed
+    And the BG state files are origin "active" and peer "idle"
+    And the pipeline parameter "OPERATION_TYPE" is set to "BGD"
+    And the pipeline parameter "BGD_OPERATION" is set to "warmup"
+    And the pipeline parameter "BG_STATE" targets origin "active" and peer "candidate"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "warmup" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the BG state files are origin "active" and peer "candidate"
+    And the environment inventory field "envTemplate.bgNsArtifacts.origin" is absent
+    And the environment inventory field "envTemplate.bgNsArtifacts.peer" is absent
+    And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
+    And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "crm:1.0"
+
+  Scenario: Sub-flow 2 - warmup succeeds without bgNsArtifacts
+    Given the workspace is initialized with test data from "e2e/uc_bgd_warmup"
+    And the environment inventory field "envTemplate.bgNsArtifacts" is removed
+    And the BG state files are origin "active" and peer "idle"
+    And the pipeline parameter "OPERATION_TYPE" is set to "BGD"
+    And the pipeline parameter "BGD_OPERATION" is set to "warmup"
+    And the pipeline parameter "BG_STATE" targets origin "active" and peer "candidate"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the pipeline step "warmup" has status "SUCCESS"
+    And the pipeline step "generate_effective_set" has status "SUCCESS"
+    And the BG state files are origin "active" and peer "candidate"
+    And the environment inventory field "envTemplate.bgNsArtifacts" is absent
+    And the namespace "bss-peer" application "crm" deploy parameter "PARAM_1" equals "active-value"
+    And the deploy plan contains an entry for namespace "test-env-bss-peer" with version "crm:1.0"
+
   # ── Sub-flow 3 - deploy to active or candidate ────────────────────────────────
   # A regular DEPLOY scoped to one physical BG side. Unlike warmup this is the full deploy
   # chain, including env_build, and it deploys the versions from APPLICATION_VERSIONS rather
@@ -140,7 +190,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-origin:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -156,7 +205,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-peer:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "env_build" has status "SUCCESS"
@@ -178,7 +226,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "BG_NS_TARGET" is set to "ORIGIN"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
@@ -192,7 +239,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "BG_NS_TARGET" is set to "PEER"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "process_deployment_plan" has status "SUCCESS"
@@ -205,7 +251,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the pipeline fails
     And the pipeline step "process_deployment_plan" has status "FAILED"
@@ -218,7 +263,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_deploy"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "bss-nonexistent:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the pipeline fails
     And the pipeline step "process_deployment_plan" has status "FAILED"
@@ -239,7 +283,6 @@ Feature: BGD sub-flows - bgd-sub-flows.md
     Given the workspace is initialized with test data from "e2e/uc_bgd_ns_templates"
     And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
     And the pipeline parameter "APPLICATION_VERSIONS" is set to "test-env-bss-origin:app1:1.0"
-    And the environment AppDefs and RegDefs paths are resolved for the deploy
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the pipeline step "appregdef_render" has status "SUCCESS"

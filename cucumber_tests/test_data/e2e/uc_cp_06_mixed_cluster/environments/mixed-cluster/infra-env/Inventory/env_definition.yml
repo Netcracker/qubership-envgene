@@ -1,0 +1,7 @@
+inventory:
+  environmentName: "infra-env"
+  cloudName: "mixed-cluster"
+  cloudPassport: "passport-infra"
+envTemplate:
+  name: "test"
+  artifact: "test-artifact:v1"

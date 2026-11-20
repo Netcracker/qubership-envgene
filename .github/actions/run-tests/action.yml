@@ -42,12 +42,22 @@ runs:
         pip install --no-cache-dir -e "modules/envgene[dev]"
         pip install --no-cache-dir -e "modules/artifact-searcher[dev]"
         pip install --no-cache-dir -e "modules/external-cred-provision"
+        pip install --no-cache-dir -e "modules/envgene-shared[dev]"
         pip install --no-cache-dir -e "modules/dpg"
+        pip install --no-cache-dir -e "modules/sbom_generator[dev]"
 
     - name: Configure test environment
       shell: bash
       run: |
         echo "PYTHONPATH=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/scripts" >> "${GITHUB_ENV}"
+        echo "JSON_SCHEMAS_DIR=${GITHUB_WORKSPACE}/schemas" >> "${GITHUB_ENV}"
+
+    - name: ENVGENE SHARED test
+      shell: bash
+      run: |
+        cd modules/envgene-shared/envgene_shared
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit_envgene_shared.xml
+        cd ../../..
 
     - name: ENVGENE HELPER test
       shell: bash
@@ -70,6 +80,13 @@ runs:
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
         cd ../..
         mv junit.xml junit_external_cred_provision.xml
+
+    - name: SBOM GENERATOR test
+      shell: bash
+      run: |
+        cd modules/sbom_generator
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit_sbom_generator.xml
+        cd ../..
 
     - name: ENVGENE SCRIPTS SCOPE tests
       shell: bash

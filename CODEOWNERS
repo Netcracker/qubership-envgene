@@ -9,7 +9,7 @@
 #  https://help.github.com/en/articles/about-code-owners
 #
 
-* @chethana-shastry-p @GlimmerCape @miyamuraga
+* @chethana-shastry-p @GlimmerCape @miyamuraga @ormig
 
 /.github/ @andyroode
 
@@ -28,3 +28,6 @@ CONTRIBUTING.md @popoveugene
 LICENSE @popoveugene
 
 SECURITY.md @popoveugene
+
+# Propose gate: the component owner approves OpenSpec changes
+/openspec/changes/ @miyamuraga

@@ -3,7 +3,7 @@ from creds_rotation.models import PayloadEntry, RotationResult, ParameterReferen
 from creds_rotation.utils.error_constants import ErrorMessages, ErrorCodes
 from creds_rotation.utils.search_utils import get_ns_content, get_app_content, resolve_param, search_yaml_files
 from creds_rotation.utils.cred_utils import extract_credential
-import envgenehelper.logger as logger
+from envgene_shared.utils.logger import logger
 from envgenehelper.errors import ValidationError, ReferenceError
 
 
@@ -49,7 +49,7 @@ def process_entry_in_payload(
     if not value_to_search or not cred_id:
         raise ReferenceError(ErrorMessages.MISSING_CRED.format(target_file=target_file, context=entry.context),
                              error_code=ErrorCodes.INVALID_INPUT_CODE)
-
+    
     shared_match_files = [k for k, v in shared_cred_content.items() if cred_id in v]
     env_cred_files = [k for k, v in env_cred_content.items() if cred_id in v]
 

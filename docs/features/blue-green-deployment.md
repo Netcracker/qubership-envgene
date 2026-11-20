@@ -121,6 +121,11 @@ When origin and peer share one deploy postfix, set
 [`BG_NS_TARGET`](/docs/instance-pipeline-parameters.md#bg_ns_target) to `origin` or `peer` for
 the side you deploy to.
 
+To change a side's template version, pass
+[`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) with
+`BG_NS_TARGET`. Both sides share `envTemplate.artifact` until a side is pinned. See
+[Deploy to the origin or peer namespace](/docs/how-to/blue-green-deployment-deploy-operations.md#deploy-to-the-origin-or-peer-namespace).
+
 ## Lifecycle in plain terms
 
 BG lifecycle moves the origin and peer namespaces through a small set of **roles** relative to
@@ -212,6 +217,11 @@ Schema and naming rules:
 Warmup is the lifecycle step that makes the candidate side a **replica of the active side** in
 Git: namespace folder content (including applications), and the candidate's template artifact pin
 in inventory. Only the namespace **name** stays that of the candidate side.
+
+The template artifact pin copy applies only when the environment uses per-side pins
+(`envTemplate.bgNsArtifacts`). Warmup copies the active side's pin to the candidate side, and adds
+the candidate pin when it was absent. When both sides render from the common `envTemplate.artifact`,
+warmup leaves the pins untouched.
 
 That matters because a candidate should start from what production actually runs, not from an
 empty or stale template render. After warmup, deploy puts the **delta** (new application

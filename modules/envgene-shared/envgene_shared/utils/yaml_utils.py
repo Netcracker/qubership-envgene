@@ -1,0 +1,275 @@
+from functools import lru_cache
+from io import StringIO
+import os
+import ruamel.yaml
+import ruyaml
+import threading
+from typing import OrderedDict
+
+import jschon
+import jschon_tools
+import jsonschema
+from jsonschema import RefResolver
+from typing import Callable
+from ruyaml import CommentedMap, CommentedSeq
+from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+from pathlib import Path
+
+from envgene_shared.utils.file_utils import *
+from envgene_shared.utils.logger import logger
+
+
+def get_empty_yaml():
+    return ruyaml.CommentedMap()
+
+
+def openYaml(filePath, safe_load=False, default_yaml: Callable = get_empty_yaml, allow_default=False):
+    if allow_default and not check_file_exists(filePath):
+        logger.info(f'{filePath} not found. Returning default value')
+        return default_yaml()
+
+    logger.debug(f"Open yaml file: {filePath}")
+    with open(filePath, 'r') as f:
+        resultYaml = readYaml(f.read(), safe_load, context=f"File: {filePath}")
+    return resultYaml
+
+
+def readYaml(text, safe_load=False, context=None) -> CommentedMap:
+    if text is None:
+        resultYaml = None
+    elif safe_load:
+        resultYaml = safe_yaml.load(text)
+    else:
+        resultYaml = yaml.load(text)
+
+    if not resultYaml:
+        logger.warning(f"Failed to read yaml. Returning empty dictionary. Context: {context}")
+        return get_empty_yaml()
+    return resultYaml
+
+
+@lru_cache(maxsize=None)
+def load_schema(schema_path: str) -> dict:
+    return openJson(schema_path)
+
+
+def get_schema(schema_name: str, schemas_dir=None) -> dict:
+    if not schema_name or Path(schema_name).name != schema_name or "/" in schema_name or "\\" in schema_name:
+        raise ValueError(f"Schema name must be a filename: {schema_name!r}")
+
+    schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
+    schema_path = Path(schemas_dir) / schema_name
+    if schema_path.is_file():
+        return load_schema(str(schema_path.resolve()))
+    raise FileNotFoundError(f"Schema '{schema_name}' was not found in '{schemas_dir}'")
+
+
+@lru_cache(maxsize=None)
+def get_schema_validator(schema_path: str, schemas_dir=None):
+    schema = load_schema(schema_path)
+    cls = jsonschema.validators.validator_for(schema)
+    cls.check_schema(schema)
+    base_uri = Path(schemas_dir or Path(schema_path).parent).resolve().as_uri() + "/"
+    return cls(schema, resolver=RefResolver(base_uri=base_uri, referrer=schema))
+
+
+def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
+    schema_data = load_schema(str(schema_path))
+    if validate:
+        logger.debug(f'Checking yaml with schema: {schema_path}')
+        error = jsonschema.exceptions.best_match(get_schema_validator(str(schema_path)).iter_errors(yaml_data))
+        if error is not None:
+            raise error
+    sort_data = jschon_tools.process_json_doc(
+        schema_data=schema_data,
+        doc_data=yaml_data,
+        sort=True,
+        remove_additional_props=remove_additional_props
+    )
+    return sort_data
+
+
+def make_quotes_for_strings(yaml_data):
+    if isinstance(yaml_data, (dict, list, set)):
+        for k, v in (yaml_data.items() if isinstance(yaml_data, dict) else enumerate(yaml_data)):
+            if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString) and not ("\n" in v):
+                yaml_data[k] = DoubleQuotedScalarString(v)
+            elif isinstance(v, DoubleQuotedScalarString) and ("\n" in v):
+                yaml_data[k] = LiteralScalarString(v)
+            else:
+                make_quotes_for_strings(v)
+
+
+def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
+                                    input_yaml_content: dict = None, schemas_dir=None, schema_name: str = None):
+    if schema_file_path and schema_name:
+        raise ValueError("Specify either schema_file_path or schema_name, not both")
+
+    yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    if schema_name:
+        get_schema(schema_name, schemas_dir)
+        schemas_dir = schemas_dir or os.getenv("JSON_SCHEMAS_DIR", "/schemas")
+        schema_file_path = Path(schemas_dir) / schema_name
+
+    validator = get_schema_validator(
+        str(Path(schema_file_path).resolve()),
+        str(Path(schemas_dir).resolve()) if schemas_dir else None,
+    )
+    errors = sorted(validator.iter_errors(yaml_content), key=lambda e: e.path)
+    if len(errors) > 0:
+        if yaml_file_path:
+            rel_path = getRelPath(yaml_file_path)
+            logger.error(f"Validation of {rel_path} file has failed")
+        for err in errors:
+            log_jsonschema_validation_error(err)
+        raise ValueError("Validation failed") from None
+
+
+def validate_yaml_data_by_schema(data, schema, cls=None, *args, **kwargs):
+    if cls is None:
+        cls = jsonschema.validators.validator_for(schema)
+    cls.check_schema(schema)
+    validator = cls(schema, *args, **kwargs)
+    errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
+    return errors
+
+
+def log_jsonschema_validation_error(error: jsonschema.ValidationError) -> None:
+    key_path = '.'.join(str(index) for index in error.absolute_path)
+    if isinstance(error.instance, OrderedDict):
+        error.instance = convert_ordereddict_to_dict(error.instance)
+    if error.validator == "type":
+        logger.error(f"Attribute {key_path} has value {error.instance}")
+        logger.error(f"Value of type {error.validator_value} is expected instead")
+    elif error.validator == "required":
+        message = error.message
+        if key_path:
+            message = f"{message} at '{key_path}' property"
+        logger.error(message)
+    else:
+        logger.error(error.message)
+    logger.error(f"\n")
+
+
+def convert_ordereddict_to_dict(obj):
+    if isinstance(obj, OrderedDict):
+        return {k: convert_ordereddict_to_dict(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_ordereddict_to_dict(i) for i in obj]
+    else:
+        return obj
+
+
+def dumpYamlToStr(content):
+    buffer = StringIO()
+    yaml.dump(content, buffer)
+    return buffer.getvalue()
+
+
+def writeYamlToFile(filePath, contents, schema_name: str = None, schemas_dir=None):
+    filePath = Path(filePath)
+    logger.info(f"Writing yaml to file: {filePath}")
+    if schema_name:
+        validate_yaml_by_scheme_or_fail(
+            input_yaml_content=contents,
+            schema_name=schema_name,
+            schemas_dir=schemas_dir,
+        )
+    os.makedirs(os.path.dirname(filePath), exist_ok=True)
+    if is_cred_file(str(filePath)):
+        remove_cred_yaml_comments(contents)
+    else:
+        remove_empty_list_comments(contents)
+    with open(filePath, 'w+') as f:
+        yaml.dump(contents, f)
+    return
+
+
+def remove_cred_yaml_comments(data):
+    if not isinstance(data, (CommentedMap, CommentedSeq)):
+        return
+    if data.ca:
+        data.ca.comment = None
+        if data.ca.items:
+            data.ca.items.clear()
+    children = data.values() if isinstance(data, CommentedMap) else data
+    for child in children:
+        remove_cred_yaml_comments(child)
+
+
+def remove_empty_list_comments(data):
+    # There are cases when list has values and those values have comments related
+    # to them. When all values are removed from list, comments are left behind
+    # and when rendered by ruyaml create an invalid file content that makes
+    # future parsing to fail. To avoid this we clean up those comments
+    if isinstance(data, CommentedMap):
+        for key, value in data.items():
+            if isinstance(value, list) and not value:
+                if data.ca and data.ca.items and key in data.ca.items:
+                    comment_info = data.ca.items[key]
+                    if len(comment_info) > 3:
+                        comment_info[3] = None
+            if isinstance(value, (CommentedMap, CommentedSeq)):
+                remove_empty_list_comments(value)
+    elif isinstance(data, CommentedSeq):
+        for item in data:
+            if isinstance(item, (CommentedMap, CommentedSeq)):
+                remove_empty_list_comments(item)
+
+
+def ensure_nested_attr_parents_exist(yaml_content, attribute_str):
+    keys = attribute_str.split('.')
+    sub_content = yaml_content
+    for key in keys[:-1]:
+        if key not in sub_content:
+            sub_content[key] = get_empty_yaml()
+        sub_content = sub_content[key]
+    last_key = keys[-1]
+    return sub_content, last_key
+
+
+def ensure_nested_attr_exists(yaml_content, attribute_str, default_value=None):
+    sub_content, last_key = ensure_nested_attr_parents_exist(yaml_content, attribute_str)
+    if not last_key in sub_content:
+        sub_content[last_key] = default_value
+    return sub_content, last_key
+
+
+def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_value=None):
+    yaml_content, key = ensure_nested_attr_exists(yaml_content, attribute_str, default_value)
+    return yaml_content[key]
+
+
+
+def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML | ruamel.yaml.YAML:
+    def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
+        return self.represent_scalar('tag:yaml.org,2002:null', 'null')
+
+    if is_safe:
+        return ruamel.yaml.YAML(typ='safe', pure=False)
+    yaml = ruyaml.main.YAML()
+    yaml.preserve_quotes = True
+    yaml.width = 200
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.Representer.add_representer(type(None), _null_representer)
+    return yaml
+
+
+class _ThreadLocalYaml:
+    def __init__(self, is_safe: bool = False):
+        self.is_safe = is_safe
+        self._local = threading.local()
+
+    def _get_instance(self):
+        attr = "safe_yaml" if self.is_safe else "yaml"
+        if not hasattr(self._local, attr):
+            setattr(self._local, attr, create_yaml_processor(self.is_safe))
+        return getattr(self._local, attr)
+
+    def __getattr__(self, name):
+        return getattr(self._get_instance(), name)
+
+
+jschon.create_catalog('2020-12')
+yaml = _ThreadLocalYaml(is_safe=False)
+safe_yaml = _ThreadLocalYaml(is_safe=True)

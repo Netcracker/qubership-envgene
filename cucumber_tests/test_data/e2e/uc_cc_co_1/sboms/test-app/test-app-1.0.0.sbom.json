@@ -1,0 +1,57 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:00000000-0000-0000-0000-000000000001",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-01-01T00:00:00.000000+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "test-app-bom-ref",
+      "name": "test-app",
+      "version": "1.0.0",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "test-app-dd-bom-ref",
+          "group": "com.test",
+          "name": "test_app_artifact",
+          "version": "1.0.0",
+          "purl": "pkg:maven/com.test/test_app_artifact@1.0.0?registry_id=mock-reg&repository_id=release"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "container",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "test-app-chart-bom-ref",
+      "name": "test-app",
+      "version": "1.0.0",
+      "purl": "pkg:oci/test-app@1.0.0"
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "test-app-service-bom-ref",
+      "name": "test-app",
+      "version": "1.0.0",
+      "properties": [
+        {"name": "full_image_name", "value": "registry.example.com/test/test-app:1.0.0"},
+        {"name": "docker_registry", "value": "registry.example.com"},
+        {"name": "git_branch", "value": "main"},
+        {"name": "git_revision", "value": "abc1234"},
+        {"name": "git_url", "value": "https://git.example.com/test/test-app.git"},
+        {"name": "image_type", "value": "docker"},
+        {"name": "promote_artifacts", "value": "false"},
+        {"name": "qualifier", "value": "release"}
+      ],
+      "components": []
+    }
+  ],
+  "dependencies": []
+}

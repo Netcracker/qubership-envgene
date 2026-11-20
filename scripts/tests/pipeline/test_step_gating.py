@@ -16,6 +16,7 @@ from pipeline.orchestrator import (
     GenerateEffectiveSetStep,
     ProcessDeploymentPlanStep,
     ProcessSdStep,
+    RegdefV2AdapterStep,
 )
 from pipeline.pipeline_parameters import PipelineParametersHandler
 
@@ -66,6 +67,33 @@ class TestStepGating:
         assert AppregdefRenderStep().should_run(ctx)
 
     @pytest.mark.unit
+    @pytest.mark.parametrize("env_builder, sd_version, generate_effective_set, expected", [
+        ("true", "Cloud-Core:1.0", "true", True),
+        ("false", "Cloud-Core:1.0", "true", False),
+        ("true", "", "true", True),
+        ("true", "Cloud-Core:1.0", "false", True),
+        ("true", "", "false", False),
+    ])
+    def test_legacy_regdefv2_adapter_requires_env_builder_and_sd_or_effective_set(self, env_builder, sd_version,
+                                                                                  generate_effective_set, expected):
+        ctx = _ctx(ENV_BUILDER=env_builder, SD_VERSION=sd_version,
+                   GENERATE_EFFECTIVE_SET=generate_effective_set)
+
+        assert RegdefV2AdapterStep().should_run(ctx) == expected
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("operation, bgd_operation, expected", [
+        ("DEPLOY", "", True),
+        ("CLEAN", "", True),
+        ("BGD", "warmup", True),
+        ("BGD", "promote", False),
+    ])
+    def test_gitlab_deploy_regdefv2_adapter_gating(self, operation, bgd_operation, expected):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE=operation, BGD_OPERATION=bgd_operation)
+
+        assert RegdefV2AdapterStep().should_run(ctx) == expected
+
+    @pytest.mark.unit
     def test_process_sd_skipped_for_gitlab_deploy_even_with_application_versions(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, APPLICATION_VERSIONS="Cloud-Core:1.0")
 
@@ -76,11 +104,14 @@ class TestStepGating:
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN")
 
         assert AppregdefRenderStep().should_run(ctx)
+        assert DeployPostfixNamespaceMapStep().should_run(ctx)
         assert EnvBuildStep().should_run(ctx)
 
     @pytest.mark.unit
-    def test_env_build_skipped_for_bgd(self):
-        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="warmup")
+    @pytest.mark.parametrize("env_builder", ["false", "true"])
+    def test_env_build_skipped_for_bgd(self, env_builder):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="warmup",
+                   ENV_BUILDER=env_builder)
 
         assert AppregdefRenderStep().should_run(ctx)
         assert not EnvBuildStep().should_run(ctx)
@@ -98,3 +129,4 @@ class TestStepGating:
             ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION=bgd_operation)
 
             assert not GenerateEffectiveSetStep().should_run(ctx)
+

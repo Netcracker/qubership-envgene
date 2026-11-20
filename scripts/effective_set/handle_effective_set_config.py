@@ -3,7 +3,8 @@ import os
 import shutil
 import tempfile
 
-from envgenehelper import logger, get_schema_dir
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.business_utils import get_schema_dir
 
 
 def handle_effective_set_config(config_str):
@@ -16,9 +17,6 @@ def handle_effective_set_config(config_str):
 
     version = config.get("version") or "v2.0"
     extra_args = [f"--effective-set-version={version}"]
-
-    app_chart_value = config.get("app_chart_validation", True)
-    extra_args.append(f"--app_chart_validation={str(app_chart_value).lower()}")
 
     consumers = (
         config.get("contexts", {})

@@ -1,0 +1,14 @@
+name: test-ns
+labels: []
+deployParameters: {}
+deployParameterSets: []
+e2eParameters:
+  SHARED_PARAM: "${creds.get('shared-db-cred').password}"
+  SHARED_OTHER_PARAM: "${creds.get('shared-db-cred').password}"
+e2eParameterSets: []
+technicalConfigurationParameters: {}
+technicalConfigurationParameterSets: []
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+credentialsId: dummy

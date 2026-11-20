@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from functools import lru_cache
 from creds_rotation.models import AffectedParameter
 from pathlib import Path, PurePath
-import envgenehelper.logger as logger
+from envgene_shared.utils.logger import logger
 from creds_rotation.utils.error_constants import *
 from envgenehelper.errors import  ReferenceError
 import re

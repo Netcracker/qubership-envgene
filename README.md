@@ -1,6 +1,6 @@
 # EnvGene
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/Apache-2.0)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/Netcracker/qubership-envgene/actions)
 
 ![Environment generator logo](/docs/images/envgene-logo.png "Environment generator")
@@ -135,7 +135,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Create Simple Template**](/docs/how-to/create-simple-template.md) - Create your first environment template
 - [**Create Cluster**](/docs/how-to/create-cluster.md) - Set up a new cluster
-- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Define environment inventory
+- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Create an environment with `ENV_INVENTORY_CONTENT` or by hand
 - [**Initialize and Upgrade Instance Repository**](/docs/how-to/envgene-maitanance.md) - Set up or upgrade Instance Repository using GSF
 
 **Configuration Management:**
@@ -153,6 +153,9 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+- [**Configure local Credentials**](/docs/how-to/configure-local-credentials.md) - Set and update the credentials of an environment stored encrypted in the Instance repository
+- [**Configure a Secret Store**](/docs/how-to/configure-secret-store.md) - Describe a Secret Store and give the Instance pipeline access to it
+- [**Configure external Credentials**](/docs/how-to/configure-external-credentials.md) - Set a sensitive parameter through a Credential kept in a Secret Store
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 - [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
 - [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
@@ -162,16 +165,21 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate a template repository to external Credentials**](/docs/how-to/migrate-template-repository-to-external-credentials.md) - Move Environment Templates from local credential macros to a Credential Template and `credRef`
+- [**Migrate an instance repository to external Credentials**](/docs/how-to/migrate-instance-repository-to-external-credentials.md) - Move Cloud Passport, Shared, and System Credentials of an Instance repository to a Secret Store
 
 ### Advanced Features
 
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
 - [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
+- [**Cleanup**](/docs/features/clean.md) - What cleanup is in EnvGene, the `CLEAN` operation, and the cleanup output each deployment architecture produces
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
+- [**Credential Processing**](/docs/features/credential-processing.md) -
+  Credential sources, auto-generation, precedence ladder, and mode-dependent merging
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
@@ -181,9 +189,12 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**Resource Profile Cache**](/docs/features/resource-profile-cache.md) - Reuse parsed Resource Profiles between instance pipeline runs
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 - [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
+- [**Metrics Collector events**](/docs/features/metrics-collector-events.md) - Instance pipeline activity
+   events sent to Metrics Collector Service
 
 ### Examples & Samples
 

@@ -1,10 +1,13 @@
 import os
 from os import getenv
 
-from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, \
-    get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, \
-    check_file_exists, validate_yaml_by_scheme_or_fail, get_schema_dir
-from envgenehelper.collections_helper import split_multi_value_param
+from envgene_shared.utils.logger import logger
+from envgene_shared.utils.file_utils import check_file_exists
+from envgene_shared.utils.yaml_utils import openYaml, validate_yaml_by_scheme_or_fail
+from envgene_shared.utils.business_utils import get_schema_dir, to_bool
+from envgene_shared.utils.collections_utils import split_multi_value_param
+from envgenehelper import check_for_cyrillic, findAllYamlsInDir, check_dir_exists, \
+    get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
@@ -70,7 +73,7 @@ def real_execution_checks(env_names, get_passport, env_build, env_inventory_init
 
 def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init,
                       env_inventory_content):
-    if env_inventory_init == "true" or env_inventory_content:
+    if to_bool(env_inventory_init) or env_inventory_content:
         return
     schemas_dir = get_schema_dir()
     all_environments_dir = f"{project_dir}/environments"
@@ -82,9 +85,12 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, e
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"{get_schema_dir()}/integration.schema.json"
         if check_file_exists(integration_path):
-            validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
+            validate_yaml_by_scheme_or_fail(
+                integration_path,
+                schema_name="integration.schema.json",
+                schemas_dir=get_schema_dir(),
+            )
         else:
             logger.error(f'File configuration/integration.yml not exists in {integration_path}')
             raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")

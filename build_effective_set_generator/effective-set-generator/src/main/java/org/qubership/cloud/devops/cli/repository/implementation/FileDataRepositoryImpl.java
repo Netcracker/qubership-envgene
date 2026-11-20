@@ -18,6 +18,8 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
@@ -43,14 +45,16 @@ import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ApplicationProfileDto;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ServiceProfileDto;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataRepository;
+import org.qubership.cloud.devops.vals.core.dto.SecretStoreDTO;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +64,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.qubership.cloud.devops.cli.constants.GenericConstants.*;
+import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.SECRET_STORE_FILE_NOT_FOUND;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.MIXED_CREDS;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 
 
 @ApplicationScoped
@@ -105,6 +111,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             loadApplicationListData(nsWithAppsFromSD, appsToProcess);
             loadRegistryData();
             loadConsumerData();
+            loadCredentialsFromStdin();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess, namespaceToFolder);
             populateEnvironments();
             updateApplicationNamespaces(namespaceToFolder);
@@ -283,7 +290,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 }
             });
         } catch (Exception e) {
-            throw new FileParseException("Failure in reading input Directory", e);
+            throw new FileParseException("Failure in reading input Directory: " + e.getMessage(), e);
         }
         inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
     }
@@ -328,14 +335,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 namespaceMap.putIfAbsent(namespace, namespaceDTO);
                 break;
             case "credentials":
-                TypeReference<Map<String, CredentialDTO>> typeReference = new TypeReference<>() {
-                };
-                Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
-                if (credentialDTOMap != null) {
-                    validateUniformCredentialTypes(credentialDTOMap);
-                    loadSecretStores();
-                    inputData.setCredentialDTOMap(credentialDTOMap);
-                }
                 break;
             case "composite_structure":
                 CompositeStructureDTO compositeStructureDTO = fileDataConverter.parseInputFile(CompositeStructureDTO.class, file.toFile());
@@ -358,7 +357,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         String folderName = parent.getFileName().toString();
         if (folderName.equals(GenericConstants.PROFILES_FOLDER)) {
             ProfileFullDto profileFullDto = fileDataConverter.parseInputFile(ProfileFullDto.class, file.toFile());
-            profileFullDto.setApplications(profileFullDto.getApplications().stream()
+            validateProfileStructure(file, profileFullDto);
+            profileFullDto.setApplications(Optional.ofNullable(profileFullDto.getApplications()).orElse(List.of()).stream()
                     .filter(app -> appsToProcess.contains(app.getName())).collect(Collectors.toList()));
             profilesMap.putIfAbsent(profileFullDto.getName(), profileFullDto);
 
@@ -452,6 +452,17 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         }
     }
 
+    private void loadCredentialsFromStdin() throws IOException {
+        Map<String, CredentialDTO> credentialDTOMap = new ObjectMapper(new YAMLFactory())
+                .readValue(System.in, new TypeReference<>() {
+                });
+        if (credentialDTOMap != null) {
+            validateUniformCredentialTypes(credentialDTOMap);
+            loadSecretStores();
+            inputData.setCredentialDTOMap(credentialDTOMap);
+        }
+    }
+
     private void loadSecretStores() {
         if (!inputData.isExternalOnly()) {
             return;
@@ -468,7 +479,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 };
         Map<String, SecretStoreDTO> secretStores = fileDataConverter.parseInputFile(typeRef, new File(secretStorePath.toString()));
         if (secretStores == null) {
-            throw new ExternalCredProcessingException(String.format("Mandatory file for external cred mode /configuration/secret-stores.yml is not found"));
+            logError(SECRET_STORE_FILE_NOT_FOUND);
+            throw new ExternalCredProcessingException(SECRET_STORE_FILE_NOT_FOUND );
         }
         inputData.setSecretStoreDTOMap(secretStores);
     }
@@ -482,10 +494,27 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 hasNonExternal = true;
             }
             if (hasExternal && hasNonExternal) {
+                logError(MIXED_CREDS);
                 throw new ExternalCredProcessingException(MIXED_CREDS);
             }
         }
         inputData.setExternalOnly(hasExternal);
     }
 
+
+    private void validateProfileStructure(Path file, ProfileFullDto profile) {
+        for (ApplicationProfileDto app : Optional.ofNullable(profile.getApplications()).orElse(List.of())) {
+            if (app.getServices() == null) {
+                throw new FileParseException(String.format("Resource profile %s: application '%s' has no 'services'",
+                        file, app.getName()));
+            }
+            for (ServiceProfileDto service : app.getServices()) {
+                if (service.getParameters() == null) {
+                    throw new FileParseException(String.format(
+                            "Resource profile %s: service '%s' of application '%s' has no 'parameters'",
+                            file, service.getName(), app.getName()));
+                }
+            }
+        }
+    }
 }

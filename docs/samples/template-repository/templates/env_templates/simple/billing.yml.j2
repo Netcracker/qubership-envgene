@@ -7,7 +7,6 @@ isServerSideMerge: false
 cleanInstallApprovalRequired: true
 mergeDeployParametersAndE2EParameters: false
 profile:
-  name: ""
   baseline: dev
 deployParameters:
   ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"

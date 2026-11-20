@@ -43,7 +43,7 @@ All other modules import and use it.
 
 A new parameter was added to control logging behavior.
 
-[Link to documentation](/docs/envgene-repository-variables.md#envgene_log_level)
+[Link to documentation](/docs/instance-pipeline-parameters.md#envgene_log_level)
 
 ---
 

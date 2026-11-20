@@ -16,11 +16,18 @@
 
 package org.qubership.cloud.devops.cli;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
@@ -28,11 +35,21 @@ import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileTestUtils;
 import picocli.CommandLine;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,6 +69,26 @@ public class CmdbCliTest {
     @Inject
     SharedData sharedData;
 
+    private final InputStream originalIn = System.in;
+    private final PrintStream originalOut = System.out;
+    private ByteArrayOutputStream capturedOut;
+
+    @BeforeEach
+    void captureStdout() {
+        capturedOut = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+    }
+
+    private JsonNode returnedCredentials() throws Exception {
+        return normalizedCredentials(new ObjectMapper().readTree(capturedOut.toString(StandardCharsets.UTF_8)));
+    }
+
+    private JsonNode normalizedCredentials(JsonNode raw) {
+        ObjectNode normalized = new ObjectMapper().createObjectNode();
+        raw.fields().forEachRemaining(e -> normalized.set(e.getKey().replace('\\', '/'), e.getValue()));
+        return normalized;
+    }
+
     @Test
     void testGenerateEffectiveSetFromDeployPlan(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
@@ -59,6 +96,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -73,7 +112,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json"
         );
 
@@ -81,7 +119,8 @@ public class CmdbCliTest {
 
         Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");
 
-        FileTestUtils.compareFolders(expected, outputPath);
+        FileTestUtils.compareFolders(expected, outputPath, returnedCredentials());
+        assertCredentialFilesNotOnDisk(outputPath);
     }
 
     @Test
@@ -91,6 +130,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -105,7 +146,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@namespace-custom-param/namespace-custom-param.json"
         );
 
@@ -122,16 +162,13 @@ public class CmdbCliTest {
                 FileTestUtils.resource("namespace-custom-param/pg-custom-params.yaml"),
                 pgCustomParams);
 
-        Path pgRuntimeCredentials = outputPath.resolve("runtime/pg/postgres/credentials.yaml");
-        assertTrue(Files.exists(pgRuntimeCredentials));
-        FileTestUtils.compareFiles(
-                FileTestUtils.resource("namespace-custom-param/pg-runtime-credentials.yaml"),
-                pgRuntimeCredentials);
-
-        Path monitoringRuntimeCredentials = outputPath.resolve(
-                "runtime/monitoring-origin/MONITORING/credentials.yaml");
-        assertTrue(Files.exists(monitoringRuntimeCredentials));
-        assertEquals(0, Files.size(monitoringRuntimeCredentials));
+        String keyPrefix = outputPath.toString().replace('\\', '/');
+        JsonNode returned = returnedCredentials();
+        assertEquals(new ObjectMapper(new YAMLFactory()).readTree(
+                        FileTestUtils.resource("namespace-custom-param/pg-runtime-credentials.yaml").toFile()),
+                returned.get(keyPrefix + "/runtime/pg/postgres/credentials.yaml"));
+        assertEquals(0, returned.get(keyPrefix + "/runtime/monitoring-origin/MONITORING/credentials.yaml").size());
+        assertCredentialFilesNotOnDisk(outputPath);
     }
 
     @Test
@@ -141,6 +178,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -155,7 +194,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@namespace-custom-param/namespace-custom-param-invalid.json"
         );
 
@@ -169,6 +207,8 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-01/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -183,7 +223,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@namespace-custom-param/namespace-custom-param-mixed.json"
         );
 
@@ -197,6 +236,10 @@ public class CmdbCliTest {
         Path deployPlanPath = FileTestUtils.resource(
                 "environments/cluster-01/pl-02/Inventory/deploy-plan.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
+        Path consumerSchemaPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-02/consumer/consumer-v1.0.schema.json");
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-02/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -211,14 +254,75 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
-                "--app_chart_validation", "false"
+                "--pipeline-consumer-specific-schema-path", consumerSchemaPath.toString()
         );
 
         assertEquals(0, exitCode);
 
         Path expected = FileTestUtils.resource("environments/cluster-01/pl-02/effective-set");
 
-        FileTestUtils.compareFolders(expected, outputPath);
+        FileTestUtils.compareFolders(expected, outputPath, returnedCredentials());
+    }
+
+    @Test
+    void testCredFilesAreReturnedNotWritten(@TempDir Path tempDir) throws Exception {
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                FileTestUtils.resource("environments/cluster-01/pl-01/Credentials/credentials.yml"))));
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", FileTestUtils.resource("environments").toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", FileTestUtils.resource("environments/cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--custom-params", "@config.json");
+
+        assertEquals(0, exitCode);
+        assertCredentialFilesNotOnDisk(outputPath);
+        Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");
+        Set<String> expectedKeys = new HashSet<>();
+        try (Stream<Path> files = Files.walk(expected)) {
+            files.filter(Files::isRegularFile).filter(FileTestUtils::isCredentialFile).forEach(f ->
+                    expectedKeys.add(outputPath.toString().replace('\\', '/') + "/"
+                            + expected.relativize(f).toString().replace('\\', '/')));
+        }
+        JsonNode returned = returnedCredentials();
+        assertTrue(returned.isObject());
+        Set<String> returnedKeys = new HashSet<>();
+        returned.fieldNames().forEachRemaining(returnedKeys::add);
+        assertEquals(expectedKeys, returnedKeys);
+    }
+
+    @Test
+    void testExternalCredentialsFileStillWrittenToDisk(@TempDir Path tempDir) throws Exception {
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                FileTestUtils.resource("environments/cluster-01/pl-02/Credentials/credentials.yml"))));
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-02",
+                "--envs-path", FileTestUtils.resource("environments").toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", FileTestUtils.resource("environments/cluster-01/pl-02/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
+                "--pipeline-consumer-specific-schema-path",
+                FileTestUtils.resource("environments/cluster-01/pl-02/consumer/consumer-v1.0.schema.json").toString());
+
+        assertEquals(0, exitCode);
+        assertTrue(Files.exists(outputPath.resolve("external-credential/external-credentials.yaml")));
+        JsonNode returned = returnedCredentials();
+        returned.fieldNames().forEachRemaining(key -> assertFalse(key.endsWith("external-credentials.yaml")));
+    }
+
+    private void assertCredentialFilesNotOnDisk(Path outputPath) throws Exception {
+        try (Stream<Path> files = Files.walk(outputPath)) {
+            assertTrue(files.filter(Files::isRegularFile).noneMatch(FileTestUtils::isCredentialFile));
+        }
     }
 
     @Test
@@ -229,6 +333,8 @@ public class CmdbCliTest {
         Files.writeString(pgNamespace, Files.readString(pgNamespace).replaceFirst(
                 "(?m)^name: ", "cleaned: true\nname: "));
 
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
         Path outputPath = tempDir.resolve("effective-set");
         int exitCode = new CommandLine(cli).execute(
                 "--env-id", "cluster-01/pl-01",
@@ -239,7 +345,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json");
 
         assertEquals(0, exitCode);
@@ -261,6 +366,8 @@ public class CmdbCliTest {
         Files.writeString(emptyNamespace, Files.readString(
                 envsPath.resolve("cluster-01/pl-01/Namespaces/pg/namespace.yml"))
                 .replace("pl-01-pg", "pl-01-empty"));
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml"))));
 
         Path outputPath = tempDir.resolve("effective-set");
         int exitCode = new CommandLine(cli).execute(
@@ -272,8 +379,7 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--generate-cleanup-context",
-                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false");
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c");
 
         assertEquals(0, exitCode);
         assertTrue(Files.exists(outputPath.resolve("cleanup/pg/parameters.yaml")));
@@ -343,8 +449,187 @@ public class CmdbCliTest {
                 "deployment/ns-test/vals-app/0190c7e2-2b3c-8d4e-9f5a-6b7c8d9e0f1a/values")));
     }
 
+    @Test
+    void testNamespaceBaselineAndOverrideReachEffectiveSet(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, NS_FILE, "ns-over", "dev");
+        writeProfile(envsPath, "ns-over", "prod");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "prod-mem", "REPLICAS", 5, "OVERRIDE_CPU", "700m"),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
+    void testNamespaceObjectBaselineReachesEffectiveSet(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        Path file = envsPath.resolve(NS_FILE);
+        Files.writeString(file, Files.readString(file) + "\nprofile:\n  baseline: \"dev\"\n");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "dev-mem", "REPLICAS", 1),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
+    void testCloudSideUsedWhenNamespaceHasNoProfileSignal(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, CLOUD_FILE, "cloud-over", "dev");
+        writeProfile(envsPath, "cloud-over", "prod");
+
+        assertEquals(Map.of("BASELINE_MEMORY", "prod-mem", "REPLICAS", 5, "OVERRIDE_CPU", "700m"),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
+    void testProfileServiceWithoutParametersFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, NS_FILE, "ns-over", "dev");
+        Path profiles = envsPath.resolve("cluster-01/pl-02/Profiles");
+        Files.createDirectories(profiles);
+        Files.writeString(profiles.resolve("ns-over.yml"), """
+                name: "ns-over"
+                applications:
+                  - name: "vals-app"
+                    services:
+                      - name: "alertmanager"
+                """);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    @Test
+    void testSbomWithoutAppChartFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = tempDir.resolve("sboms").resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        ArrayNode components = (ArrayNode) root.path("components");
+        for (int i = components.size() - 1; i >= 0; i--) {
+            if ("application/vnd.qubership.app.chart".equals(components.get(i).path("mime-type").asText())) {
+                components.remove(i);
+            }
+        }
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    @Test
+    void testSbomWithBlankAppChartNameFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = tempDir.resolve("sboms").resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        for (var component : root.path("components")) {
+            if ("application/vnd.qubership.app.chart".equals(component.path("mime-type").asText())) {
+                ((ObjectNode) component).put("name", "");
+            }
+        }
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    private static final String NS_FILE ="cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
+    private static final String CLOUD_FILE = "cluster-01/pl-02/cloud.yml";
+    private static final String VALS_APP_SBOM = "vals-app/vals-app-0.1.0-20261215.141230-3-RELEASE.sbom.json";
+    private static final Set<String> BASE_SERVICE_KEYS = Set.of("ARTIFACT_DESCRIPTOR_VERSION", "DEPLOYMENT_RESOURCE_NAME",
+            "DEPLOYMENT_SESSION_ID", "DEPLOYMENT_VERSION", "DOCKER_TAG", "IMAGE_REPOSITORY", "MANAGED_BY",
+            "SERVICE_NAME", "TAG");
+
+    private Path prepareProfileEnv(Path tempDir) throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        FileUtils.copyDirectory(FileTestUtils.resource("configuration").toFile(), tempDir.resolve("configuration").toFile());
+        Path sbomsPath = tempDir.resolve("sboms");
+        FileUtils.copyDirectory(FileTestUtils.resource("sboms").toFile(), sbomsPath.toFile());
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = sbomsPath.resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        ArrayNode data = json.createArrayNode()
+                .add(baselineData(json, "dev", "BASELINE_MEMORY: dev-mem\nREPLICAS: 1\n"))
+                .add(baselineData(json, "prod", "BASELINE_MEMORY: prod-mem\nREPLICAS: 2\n"));
+        ObjectNode baselineComponent = json.createObjectNode()
+                .put("type", "data")
+                .put("mime-type", "application/vnd.qubership.resource-profile-baseline")
+                .put("bom-ref", "BomRef.profile-baselines")
+                .set("data", data);
+        ((ArrayNode) root.path("components").get(0).path("components")).add(baselineComponent);
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+        return envsPath;
+    }
+
+    private static ObjectNode baselineData(ObjectMapper json, String name, String yaml) {
+        ObjectNode attachment = json.createObjectNode()
+                .put("contentType", "application/yaml")
+                .put("encoding", "base64")
+                .put("content", Base64.getEncoder().encodeToString(yaml.getBytes(StandardCharsets.UTF_8)));
+        ObjectNode contents = json.createObjectNode().set("attachment", attachment);
+        return json.createObjectNode()
+                .put("type", "configuration")
+                .put("name", name + ".yaml")
+                .set("contents", contents);
+    }
+
+    private static void setObjectProfile(Path envsPath, String objectFile, String name, String baseline) throws Exception {
+        Path file = envsPath.resolve(objectFile);
+        Files.writeString(file, Files.readString(file)
+                + "\nprofile:\n  name: \"" + name + "\"\n  baseline: \"" + baseline + "\"\n");
+    }
+
+    private static void writeProfile(Path envsPath, String name, String baseline) throws Exception {
+        String profile = "name: \"" + name + "\"\nbaseline: \"" + baseline + "\"\n" + """
+                applications:
+                  - name: "vals-app"
+                    services:
+                      - name: "alertmanager"
+                        parameters:
+                          - name: "REPLICAS"
+                            value: 5
+                          - name: "OVERRIDE_CPU"
+                            value: "700m"
+                """;
+        Path profiles = envsPath.resolve("cluster-01/pl-02/Profiles");
+        Files.createDirectories(profiles);
+        Files.writeString(profiles.resolve(name + ".yml"), profile);
+    }
+
+    private Path generateProfileEs(Path tempDir, Path envsPath) throws Exception {
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), outputPath,
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertEquals(0, exitCode);
+        return outputPath;
+    }
+
+    private static Map<String, Object> profileParams(Path outputPath) throws Exception {
+        Path params = outputPath.resolve(
+                "deployment/ns-test/vals-app/values/per-service-parameters/vals-app/deployment-parameters.yaml");
+        Map<String, Map<String, Object>> services = new ObjectMapper(new YAMLFactory()).readValue(params.toFile(),
+                new TypeReference<Map<String, Map<String, Object>>>() {
+                });
+        Map<String, Object> values = services.get("alertmanager");
+        values.keySet().removeAll(BASE_SERVICE_KEYS);
+        return values;
+    }
+
     private int executeGenerate(Path envsPath, Path sbomsPath, Path deployPlanPath, Path registriesPath,
                                  Path outputPath, String deploymentSessionId) throws Exception {
+        System.setIn(new ByteArrayInputStream(Files.readAllBytes(
+                envsPath.resolve("cluster-01/pl-02/Credentials/credentials.yml"))));
         CommandLine cmd = new CommandLine(cli);
         return cmd.execute(
                 "--env-id", "cluster-01/pl-02",
@@ -354,13 +639,69 @@ public class CmdbCliTest {
                 "--registries", registriesPath.toString(),
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
-                "--extra_params", "DEPLOYMENT_SESSION_ID=" + deploymentSessionId,
-                "--app_chart_validation", "false"
+                "--extra_params", "DEPLOYMENT_SESSION_ID=" + deploymentSessionId
         );
+    }
+
+    @Test
+    void testGenerateEffectiveSetReadsEnvCredsFromStdin(@TempDir Path tempDir) throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        Path credsFile = envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml");
+        byte[] creds = Files.readAllBytes(credsFile);
+        Files.delete(credsFile);
+        System.setIn(new ByteArrayInputStream(creds));
+
+        Path outputPath = tempDir.resolve("effective-set");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", envsPath.resolve("cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--custom-params", "@config.json");
+
+        assertEquals(0, exitCode);
+        FileTestUtils.compareFolders(FileTestUtils.resource("environments/cluster-01/pl-01/effective-set"), outputPath,
+                returnedCredentials());
+    }
+
+    @Test
+    void testGenerateEffectiveSetWritesCredsToCredsOutput(@TempDir Path tempDir) throws Exception {
+        Path envsPath = tempDir.resolve("environments");
+        FileUtils.copyDirectory(FileTestUtils.resource("environments").toFile(), envsPath.toFile());
+        Path credsFile = envsPath.resolve("cluster-01/pl-01/Credentials/credentials.yml");
+        byte[] creds = Files.readAllBytes(credsFile);
+        Files.delete(credsFile);
+        System.setIn(new ByteArrayInputStream(creds));
+
+        Path outputPath = tempDir.resolve("effective-set");
+        Path credsOutput = tempDir.resolve("creds.json");
+        int exitCode = new CommandLine(cli).execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", FileTestUtils.resource("sboms").toString(),
+                "--deploy-plan-path", envsPath.resolve("cluster-01/pl-01/Inventory/deploy-plan.yml").toString(),
+                "--registries", FileTestUtils.resource("configuration/registry.yml").toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--custom-params", "@config.json",
+                "--creds-output", credsOutput.toString());
+
+        assertEquals(0, exitCode);
+        assertEquals("", capturedOut.toString(StandardCharsets.UTF_8));
+        FileTestUtils.compareFolders(FileTestUtils.resource("environments/cluster-01/pl-01/effective-set"), outputPath,
+                normalizedCredentials(new ObjectMapper().readTree(credsOutput.toFile())));
     }
 
     @AfterEach
     void tearDown() {
+        System.setOut(originalOut);
+        System.setIn(originalIn);
         resetInputData(inputData);
         resetSharedData(sharedData);
     }
@@ -393,6 +734,7 @@ public class CmdbCliTest {
             sharedData.setCustomParamsNamespaceKeys(Collections.emptySet());
             sharedData.setDeployPlanPath(Optional.empty());
             sharedData.setGenerateCleanupContext(false);
+            sharedData.setCredsOutput(null);
         }
     }
 }

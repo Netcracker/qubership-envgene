@@ -17,6 +17,16 @@ def set_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
     workspace.extra_env[param] = processed_value
 
 
+@when(parsers.parse('the pipeline parameter "{param}" is changed to "{value}"'))
+def change_pipeline_parameter(workspace: EnvGeneWorkspace, param: str, value: str):
+    workspace.extra_env[param] = value.replace('\\n', '\n').replace('\\"', '"')
+
+
+@when(parsers.parse('the pipeline parameter "{param}" is removed'))
+def remove_pipeline_parameter(workspace: EnvGeneWorkspace, param: str):
+    workspace.extra_env.pop(param)
+
+
 @given(parsers.parse('the config parameter "{param}" is set to {value}'))
 def set_config_parameter_raw(workspace: EnvGeneWorkspace, param: str, value: str):
     if value.lower() == 'true':
@@ -32,11 +42,6 @@ def set_config_parameter_raw(workspace: EnvGeneWorkspace, param: str, value: str
 
 @when('the unified pipeline orchestrator runs')
 def run_unified_pipeline_orchestrator(workspace: EnvGeneWorkspace):
-    sops_mock = workspace.base_dir / "sops.bat"
-    sops_mock.write_text("@echo off\nif \"%1\" == \"--decrypt\" (\n  type %4\n) else if \"%1\" == \"--extract\" (\n  echo extracted\n) else if \"%1\" == \"edit\" (\n  python %EDITOR% %4\n) else (\n  exit /b 0\n)\n")
-    sops_sh_mock = workspace.base_dir / "sops"
-    sops_sh_mock.write_text("#!/bin/sh\nif [ \"$1\" = \"--decrypt\" ]; then\n  cat \"$4\"\nelif [ \"$1\" = \"--extract\" ]; then\n  echo extracted\nelif [ \"$1\" = \"edit\" ]; then\n  python $EDITOR \"$4\"\nelse\n  exit 0\nfi\n")
-    os.chmod(sops_sh_mock, 0o755)
     # Ensure extra_env is initialized
     extra_env = getattr(workspace, 'extra_env', {})
     workspace.run_pipeline(extra_env=extra_env)
@@ -102,28 +107,6 @@ def initialize_workspace_with_test_data(workspace: EnvGeneWorkspace, test_data_p
         loaded = _yaml.safe_load(config_file.read_text(encoding="utf-8"))
         if isinstance(loaded, dict):
             workspace.config_data.update(loaded)
-
-
-@given(parsers.parse('a deploy parameter "{param}" is set to "{value}" in the environment instance'))
-def set_deploy_param_null(workspace: EnvGeneWorkspace, param: str, value: str):
-    """Inject an envgeneNullValue into a deploy parameter of a namespace template override."""
-    import yaml
-    env_dir = workspace.base_dir / "environments" / workspace.cluster_name / workspace.env_name
-    overrides_dir = env_dir / "Inventory" / "overrides"
-    overrides_dir.mkdir(parents=True, exist_ok=True)
-    override_file = overrides_dir / "deploy_params_override.yml"
-    override_file.write_text(yaml.dump({"namespaces": {workspace.env_name: {"deployParameters": {param: value}}}}))
-
-
-@given(parsers.parse('a credential "{cred_id}" has "{value}" for username in the environment instance'))
-def set_credential_null(workspace: EnvGeneWorkspace, cred_id: str, value: str):
-    """Inject an envgeneNullValue into credentials."""
-    import yaml
-    env_dir = workspace.base_dir / "environments" / workspace.cluster_name / workspace.env_name
-    creds_dir = env_dir / "Credentials"
-    creds_dir.mkdir(parents=True, exist_ok=True)
-    creds_file = creds_dir / "credentials.yml"
-    creds_file.write_text(yaml.dump({cred_id: {"type": "usernamePassword", "data": {"username": value, "password": value}}}))
 
 
 _ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")

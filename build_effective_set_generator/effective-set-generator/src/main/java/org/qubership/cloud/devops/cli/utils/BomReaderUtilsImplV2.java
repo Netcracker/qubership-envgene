@@ -270,16 +270,15 @@ public class BomReaderUtilsImplV2 {
 
     private void validateAppChart(EntitiesMap entitiesMap, List<Component> components, String appName, String appFileRef) {
         Optional<Component> optional = components.stream().filter(key -> "application/vnd.qubership.app.chart".equalsIgnoreCase(key.getMimeType())).findAny();
-        if (sharedData.isAppChartValidation() && !optional.isPresent()) {
+        if (optional.isEmpty() || StringUtils.isBlank(optional.get().getName())) {
             throw new AppChartValidationException(String.format("App chart validation failed: application \"%s\" from SBOM \"%s\" " +
-                    "has no component with mime-type \"application/vnd.qubership.app.chart\"", appName, new File(appFileRef).getName()));
-        } else if (optional.isPresent()) {
-            entitiesMap.setAppChartName(optional.get().getName());
+                    "has no named component with mime-type \"application/vnd.qubership.app.chart\"", appName, new File(appFileRef).getName()));
         }
+        entitiesMap.setAppChartName(optional.get().getName());
     }
 
     private void processConfigServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
-        Map<String, Object> profileValues = new TreeMap<>();
+        Component baselineComponent = null;
         Map<String, Object> serviceParams = new TreeMap<>();
         String entity = "service:" + component.getName();
         serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity));
@@ -291,10 +290,12 @@ public class BomReaderUtilsImplV2 {
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
-                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                    baselineComponent = subComponent;
                 }
             }
         }
+        Map<String, Object> profileValues = new TreeMap<>();
+        bomCommonUtils.fillProfileValues(profileValues, baselineComponent, appName, component.getName(), override, baseline);
 
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
@@ -306,7 +307,7 @@ public class BomReaderUtilsImplV2 {
 
     private void processImageServiceComponent(EntitiesMap entitiesMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
         Map<String, Map<String, Object>> perServiceMap = entitiesMap.getPerServiceParams();
-        Map<String, Object> profileValues = new TreeMap<>();
+        Component baselineComponent = null;
         Map<String, Object> serviceParams = new TreeMap<>();
         String tag = null;
         String entity = "service:" + component.getName();
@@ -324,11 +325,13 @@ public class BomReaderUtilsImplV2 {
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
                     tag = subComponent.getVersion();
                 } else if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
-                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                    baselineComponent = subComponent;
                 }
             }
             serviceParams.put("TAG", checkIfMandatory(tag, "TAG", entity));
         }
+        Map<String, Object> profileValues = new TreeMap<>();
+        bomCommonUtils.fillProfileValues(profileValues, baselineComponent, appName, component.getName(), override, baseline);
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
@@ -356,25 +359,5 @@ public class BomReaderUtilsImplV2 {
             return dockerTag.substring(0, dockerTag.lastIndexOf(":"));
         }
         return null;
-    }
-
-    private Map<String, Object> extractProfileValues(Component dataComponent, String appName, String serviceName,
-                                                     Profile overrideProfile, String baseline) {
-        Map<String, Object> profileValues = new TreeMap<>();
-        if (baseline == null) {
-            profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
-        }
-        for (ComponentData data : dataComponent.getData()) {
-            if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
-                Content content = data.getContents();
-                String encodedText = content.getAttachment().getText();
-                profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<TreeMap<String, Object>>() {
-                });
-
-                profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
-                break;
-            }
-        }
-        return profileValues;
     }
 }

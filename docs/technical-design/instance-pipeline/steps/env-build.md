@@ -53,7 +53,10 @@ Domain, Profiles, and credential files.
    3. The step copies ParameterSet trees from `tmp/templates/parameters/`,
       `tmp/origin/templates/parameters/`, `tmp/peer/templates/parameters/`, cluster-level
       `environments/<cluster-name>/parameters/`, global `environments/parameters/`, and Environment
-      Inventory `Inventory/parameters/` into `tmp/parameters_templates/`.
+      Inventory `Inventory/parameters/` into `tmp/render-workspace/parameters/`. If the
+      `regdefv2_adapter` step already prepared this directory in the current run, the step reuses it:
+      Jinja templates of Cloud `e2eParameterSets` are already rendered there, and the step adds only
+      `tmp/origin/templates/parameters/` and `tmp/peer/templates/parameters/`.
 
    4. The step copies Template Repository `resource_profiles/` into `tmp/resource_profiles/`.
 
@@ -107,10 +110,27 @@ Domain, Profiles, and credential files.
        `tmp/render/<env-name>/composite_structure.yml` and validates against
        `schemas/composite-structure.schema.json`.
 
-   11. When Template Descriptor `external_credential_template` is present, the step renders
-       external credentials into the Environment credential files.
+   11. The step performs external credential rendering under the mode of the Instance repository:
 
-   12. The step renders ParameterSet Jinja templates from `tmp/parameters_templates/` into
+       1. The step detects mode: the Instance repository is in **external mode** when
+          `/configuration/secret-stores.yml` is present, and in **local mode** when the file is absent.
+          See
+          [Mode detection](/docs/features/credential-processing.md#mode-detection).
+
+       2. In external mode, when Template Descriptor `external_credential_template` is present, the
+          step renders the Credential Template entries into the in-memory external credentials map.
+          The map is applied at the "parent Credential Template" or "nested Credential Template"
+          ladder position during credentials assembly in step 7.
+
+       3. In local mode, when Template Descriptor `external_credential_template` is present, the
+          step emits an INFO log naming the Credential Template path and does not render.
+
+       4. When the Credential Template is absent in external mode, the step emits no entries at
+          this point. Missing entries are filled by
+          [Credential auto-generation](/docs/features/credential-processing.md#credential-auto-generation)
+          during credentials assembly in step 7.
+
+   12. The step renders ParameterSet Jinja templates from `tmp/render-workspace/parameters/` into
        `tmp/render/<env-name>/`.
 
    13. The step validates that every Namespace name referenced in `bg_domain.yml` exists among
@@ -118,7 +138,7 @@ Domain, Profiles, and credential files.
 
 6. **Process Tenant, Cloud, Namespaces, and Applications**
 
-   1. The step builds role-specific ParameterSet maps from `tmp/parameters_templates/`. Origin-side
+   1. The step builds role-specific ParameterSet maps from `tmp/render-workspace/parameters/`. Origin-side
        Namespaces use origin-side ParameterSets when `tmp/origin/templates/` exists. Peer-side
        Namespaces use peer-side ParameterSets when `tmp/peer/templates/` exists. Other Namespaces use
        common ParameterSets.
@@ -135,22 +155,67 @@ Domain, Profiles, and credential files.
    5. When pipeline parameter `OPERATION_TYPE` is `CLEAN`, the step marks cleaned Namespaces in
        rendered Namespace objects.
 
-   6. The step collects and copies Resource Profiles into `tmp/render/<env-name>/Profiles/`,
-       applying Environment Inventory `envTemplate.envSpecificResourceProfiles` overrides.
+   6. The step combines resource profile overrides for the rendered Cloud and Namespace objects, writing
+      one result file per object under `tmp/render/<env-name>/Profiles/`.
+
+      1. **Resolve the file.** For each `envTemplate.envSpecificResourceProfiles` entry, the step
+         resolves the referenced name to a file, searching the environment `resource_profiles/` folder,
+         then the cluster scope, then the global scope, and taking the first match.
+
+      2. **Merge mode** (`mergeEnvSpecificResourceProfiles: true`, the default) forms a name-keyed union
+         of the template override and the environment-specific override across the application, service,
+         and parameter levels. Entries on one side are kept, entries on both are merged, and on a leaf
+         value and on the top-level `baseline` the environment-specific value wins. Nothing is removed,
+         and the result keeps the template override name.
+
+      3. **Replace mode** (`mergeEnvSpecificResourceProfiles: false`) replaces the template override in
+         full with the environment-specific override. The result keeps the environment-specific name.
+
+      4. **Standalone override.** An environment-specific override that references no template profile on
+         its object is attached to that object.
+
+      The `generate_effective_set` step reads these files during effective set generation. See
+      [resource profiles](/docs/features/resource-profile.md) for the end-to-end model.
 
    7. The step merges `*_override` files into rendered Cloud and Namespace YAML and deletes the
        override files.
 
 7. **Write credentials and publish Environment Instance**
 
-   1. The step scans rendered Tenant, Cloud, and Namespace parameters for credential references and
-      writes or updates `Credentials/credentials.yml`.
+   1. The step scans rendered Tenant, Cloud, Namespace, and Application parameters for Credential
+      References, `${creds.get('<credId>').<field>}` macros, and
+      [Built-in credential references](/docs/features/external-creds.md#built-in-credential-references),
+      collecting the referenced `credId` values.
 
-   2. The step copies rendered content from `tmp/render/<env-name>/` to
+   2. In **local mode**, the step merges the credential sources into the existing
+      `Credentials/credentials.yml`, preserving user-authored values, per
+      [credential sources](/docs/features/credential-processing.md#credential-sources) and
+      [merging behavior](/docs/features/credential-processing.md#merging-behavior).
+
+   3. In **external mode**, the step assembles the sources by the
+      [precedence ladder](/docs/features/credential-processing.md#precedence-ladder) and regenerates
+      `Credentials/credentials.yml` in a single write (see
+      [merging behavior](/docs/features/credential-processing.md#merging-behavior)). Shared Credentials
+      Files are rendered per [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file),
+      and gaps are filled per
+      [credential auto-generation](/docs/features/credential-processing.md#credential-auto-generation).
+
+   4. In **external mode**, the step enforces the
+      [external-mode credential restrictions](/docs/features/credential-processing.md#external-mode-credential-restrictions):
+      no `vaultAppRole` Credential, whole-value references only, and no deprecated `#creds` / `#credscl` /
+      `#credsns` macros. A violation fails with an error naming the parameter key and the `credId`.
+
+   5. In **external mode**, the step rewrites every `${creds.get('<credId>').<field>}` macro in
+      rendered parameter values to a
+      [Credential Reference](/docs/features/external-creds.md#credential-reference) (`$type: credRef`).
+      The rewrite applies to parameter values only. Built-in credential references already carry a
+      bare `credId`.
+
+   6. The step copies rendered content from `tmp/render/<env-name>/` to
       `environments/<cluster-name>/<env-name>/`, restoring committed `env_definition.yml` from the
       pre-copy Inventory source before overwrite.
 
-   3. The step encrypts credential files under
+   7. The step encrypts credential files under
       `environments/<cluster-name>/<env-name>/Credentials/`.
 
 ## Result
@@ -165,7 +230,7 @@ Domain, Profiles, and credential files.
 3. Namespace directories not selected from the deploy plan keep their pre-run content. When no
    deploy plan is present, all Namespaces are rendered.
 
-4. Directories `tmp/render/`, `tmp/parameters_templates/`, and `tmp/resource_profiles/` exist
+4. Directories `tmp/render/`, `tmp/render-workspace/parameters/`, and `tmp/resource_profiles/` exist
    only during the pipeline run.
 
 5. The step does not rewrite `Inventory/namespace-map.yml`. That file remains as written by step
@@ -193,6 +258,12 @@ and pipeline parameter `BG_NS_TARGET` is absent or empty. The error names `BG_NS
 **5d.** The step fails when rendered BG Domain references a Namespace name that was not rendered.
 The Environment Instance is not rebuilt.
 
+**7a.** In external mode, the step fails when an
+[external-mode credential restriction](/docs/features/credential-processing.md#external-mode-credential-restrictions)
+is violated: a referenced `vaultAppRole` Credential, a non-whole-value reference, or a deprecated
+`#creds` / `#credscl` / `#credsns` macro. The error names the parameter key and the `credId`. The
+Environment Instance is not rebuilt.
+
 ## Example
 
 - [`bgd.yaml`](/docs/samples/blue-green-deployment/template-repository/templates/env_templates/bgd.yaml)
@@ -203,3 +274,8 @@ The Environment Instance is not rebuilt.
 
 - [`deploy_postfix_namespace_map`](/docs/technical-design/instance-pipeline/steps/deploy-postfix-namespace-map.md)
 - [`process_deployment_plan`](/docs/technical-design/instance-pipeline/steps/process-deployment-plan.md)
+- [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md)
+- [Resource profiles](/docs/features/resource-profile.md)
+- [Calculator CLI](/docs/features/calculator-cli.md)
+- [Credential processing](/docs/features/credential-processing.md)
+- [External Credentials Management](/docs/features/external-creds.md)

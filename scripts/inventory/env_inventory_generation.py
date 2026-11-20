@@ -1,6 +1,13 @@
 import envgenehelper as helper
-import envgenehelper.logger as logger
-from envgenehelper import *
+from envgene_shared.utils.logger import logger
+from enum import Enum
+from os import path
+from pathlib import Path
+import json
+
+from envgenehelper import beautifyYaml, deleteFileIfExists, delete_dir, get_current_env_dir_from_env_vars, get_schema_dir, getenv, getenv_and_log, getenv_with_error, validate_yaml_by_scheme_or_fail, writeYamlToFile
+from envgene_shared.crypto.cred_store import current_cred_store
+from envgene_shared.utils.business_utils import to_bool
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
@@ -20,10 +27,8 @@ def generate_env_new_approach():
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
     schemas_dir = get_schema_dir()
-    env_inv_content_schema_path = f"{schemas_dir}/env-inventory-content.schema.json"
-
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
-                                    schema_file_path=env_inv_content_schema_path,
+                                    schema_name="env-inventory-content.schema.json",
                                     schemas_dir=schemas_dir)
 
     handle_env_inv_content(env_inventory_content)
@@ -49,16 +54,14 @@ def generate_env():
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
-    helper.writeYamlToFile(env.creds_path, env.creds)
-    helper.encrypt_file(env.creds_path)
+    current_cred_store().put(env.creds_path, env.creds)
     if env.inv_gen_creds:
-        helper.writeYamlToFile(env.inv_gen_creds_path, env.inv_gen_creds)
-        helper.encrypt_file(env.inv_gen_creds_path)
+        current_cred_store().put(env.inv_gen_creds_path, env.inv_gen_creds)
 
 
 @deprecated(DEPRECATED_MESSAGE)
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
-    if env_inventory_init != "true":
+    if not to_bool(env_inventory_init):
         logger.info("ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
         return
     logger.info(
@@ -87,20 +90,23 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
     creds = params.get("credentials")
     tenantName = params.get("tenantName")
     deployer = params.get("deployer")
+    cloudName = params.get("cloudName")
     logger.info(f"ENV_SPECIFIC_PARAMS TenantName is {tenantName}")
     logger.info(f"ENV_SPECIFIC_PARAMS deployer is {deployer}")
+    logger.info(f"ENV_SPECIFIC_PARAMS cloudname is {cloudName}")
 
     handle_cluster_params(env, clusterParams)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.cloudName', cloudName)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     logger.info("ENV_SPECIFIC_PARAMS env details ", vars(env))
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets, schemas_dir)
 
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
+    
+   
 
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 
@@ -109,15 +115,13 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
 def create_paramset_files(env, paramsets, schemas_dir):
     if not paramsets:
         return
-    PARAMSET_SCHEMA_PATH = path.join(schemas_dir, "paramset.schema.json")
     ps_dir_path = path.join(env.env_path, PARAMSETS_DIR_PATH)
     helper.check_dir_exist_and_create(ps_dir_path)
     logger.info(f"Creating paramsets in {ps_dir_path}")
     for k, v in paramsets.items():
-        jsonschema.validate(v, openYaml(PARAMSET_SCHEMA_PATH))
         filename = k + ".yml"
         ps_path = path.join(ps_dir_path, filename)
-        helper.writeYamlToFile(ps_path, v)  # overwrites file
+        helper.writeYamlToFile(ps_path, v, schema_name="paramset.schema.json", schemas_dir=schemas_dir)
         logger.info(f"Created paramset {filename}")
 
 
@@ -189,9 +193,10 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
 
         logger.info(f"Processing {subdir}, action={action.value}, place={place.value}. Target path: {obj_path}")
         if action is Action.CREATE_OR_REPLACE:
-            writeYamlToFile(obj_path, content)
             if encrypt:
-                encrypt_file(obj_path)
+                current_cred_store().put(obj_path, content)
+                continue
+            writeYamlToFile(obj_path, content)
             beautifyYaml(obj_path)
 
         elif action is Action.DELETE:

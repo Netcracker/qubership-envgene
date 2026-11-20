@@ -125,6 +125,7 @@ class TestStageChanges:
 
         manager = make_manager()
         manager.repo.git.add = MagicMock()
+        manager.repo.git.ls_files = MagicMock(return_value="")
         manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
 
         manager.stage_changes([str(existing), "/nonexistent/path"])
@@ -132,6 +133,19 @@ class TestStageChanges:
         added_paths = manager.repo.git.add.call_args[0]
         assert str(existing) in added_paths
         assert "/nonexistent/path" not in added_paths
+
+    def test_includes_deleted_tracked_paths(self, tmp_path):
+        deleted = tmp_path / "environments" / "cluster" / "env" / "deleted.yml"
+
+        manager = make_manager()
+        manager.repo.git.add = MagicMock()
+        manager.repo.git.ls_files = MagicMock(return_value=str(deleted))
+        manager.repo.git.diff = MagicMock(side_effect=["", (1, "", "")])
+
+        manager.stage_changes([str(deleted)])
+
+        added_paths = manager.repo.git.add.call_args[0]
+        assert str(deleted) in added_paths
 
     def test_raises_on_unexpected_exit_code(self):
         manager = make_manager()
@@ -189,3 +203,44 @@ class TestCherryPickAndPush:
             manager._cherry_pick_and_push("deadbeef")
 
         manager.repo.git.cherry_pick.assert_called_once()
+
+
+class TestSparseCheckoutCleanKeepsMetricsState:
+    @staticmethod
+    def _run_clean(tmp_path, monkeypatch, results_root):
+        from git import Repo
+        if results_root is None:
+            monkeypatch.delenv("METRICS_COLLECTOR_RESULTS_ROOT", raising=False)
+        else:
+            monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", results_root)
+        repo = Repo.init(tmp_path)
+        manager = make_manager()
+        manager.repo = repo
+        state_dirs = {tmp_path} | ({tmp_path / results_root} if results_root else set())
+        for directory in state_dirs:
+            (directory / ".metrics-collector-client" / "state").mkdir(parents=True)
+            (directory / ".metrics-collector-client" / "state" / "a.json").write_text("{}")
+            (directory / ".metrics-collector-trace-id").write_text("trace")
+        (tmp_path / "stray.txt").write_text("x")
+        repo.git.clean("-ffd", *manager._metrics_collector_clean_excludes())
+        return state_dirs
+
+    def test_default_root_state_survives_clean(self, tmp_path, monkeypatch):
+        (state_root,) = self._run_clean(tmp_path, monkeypatch, None)
+        assert (state_root / ".metrics-collector-client" / "state" / "a.json").exists()
+        assert (state_root / ".metrics-collector-trace-id").exists()
+        assert not (tmp_path / "stray.txt").exists()
+
+    def test_configured_tmp_root_state_survives_clean(self, tmp_path, monkeypatch):
+        for state_root in self._run_clean(tmp_path, monkeypatch, "tmp"):
+            assert (state_root / ".metrics-collector-client" / "state" / "a.json").exists()
+            assert (state_root / ".metrics-collector-trace-id").exists()
+        assert not (tmp_path / "stray.txt").exists()
+
+    def test_root_outside_repo_is_not_excluded(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path.parent / "elsewhere"))
+        from git import Repo
+        manager = make_manager()
+        manager.repo = Repo.init(tmp_path)
+        excludes = manager._metrics_collector_clean_excludes()
+        assert excludes == ["-e", "/.metrics-collector-trace-id", "-e", "/.metrics-collector-client/"]

@@ -1,7 +1,7 @@
 ---
 name: "prod_billing_override"
 baseline: "prod"
-description: "Override for dev-profile"
+description: "Override for prod-profile"
 applications:
 - name: "billing-app"
   #version: "release-2023.3-8.4.0-20231103.225817-60-RELEASE"

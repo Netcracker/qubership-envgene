@@ -1,12 +1,17 @@
 from os import environ, getenv
 from pathlib import Path
+from inspect import signature
+from unittest.mock import Mock
 
+import aioresponses.core as aioresponses_core
+from aiohttp import ClientResponse
 from scripts.tests.base_test import BaseTest
 
 import pytest
 import responses
 from aioresponses import aioresponses
 from build_env.env_template.process_env_template import process_env_template
+from envgene_shared.crypto.cred_store import open_cred_store
 from envgenehelper.test_helpers import TestHelpers
 
 GROUP_ID = "org.qubership"
@@ -67,7 +72,15 @@ TMPL_ZIP_URL = (
 
 
 @pytest.fixture
-def mock_aio_response():
+def mock_aio_response(monkeypatch):
+    if "stream_writer" in signature(ClientResponse).parameters:
+        class ClientResponseWithStreamWriter(ClientResponse):
+            def __init__(self, *args, **kwargs):
+                kwargs.setdefault("stream_writer", Mock(output_size=0))
+                super().__init__(*args, **kwargs)
+
+        monkeypatch.setattr(aioresponses_core, "ClientResponse", ClientResponseWithStreamWriter)
+
     with aioresponses() as m:
         yield m
 
@@ -184,7 +197,8 @@ class TestEnvTemplate:
         mock_dd_response()
         mock_zip(STAGING_ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
@@ -199,7 +213,8 @@ class TestEnvTemplate:
         mock_dd_response_without_mvn_repo()
         mock_zip(SNAPSHOT_ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
@@ -215,7 +230,8 @@ class TestEnvTemplate:
         mock_aio_response.head(ZIP_URL, payload="", status=200)
         mock_zip(ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == ZIP_URL
@@ -230,7 +246,8 @@ class TestEnvTemplate:
         responses.add(responses.GET, DD_URL, json=dd_json, status=200)
         mock_zip(TMPL_ZIP_URL)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         called_urls = [call.request.url for call in responses.calls]
 
@@ -252,7 +269,8 @@ class TestEnvTemplate:
 
         mock_zip(tmpl_zip_url)
 
-        process_env_template()
+        with open_cred_store():
+            process_env_template()
 
         called_urls = [call.request.url for call in responses.calls]
 

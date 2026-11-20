@@ -59,12 +59,12 @@ runs:
       with:
         ref: ${{ inputs.ref || (inputs.version != '' && format('v{0}', inputs.version) || github.ref) }}
 
-    - name: Copy config.schema.json to git_hooks
+    - name: Copy schemas to git_hooks
       shell: bash
       run: |
-        mkdir -p "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks"
-        cp schemas/config.schema.json \
-          "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/config.schema.json"
+        mkdir -p "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/schemas"
+        cp schemas/config.schema.json schemas/credential.schema.json \
+          "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/schemas/"
 
     - name: Update history.log
       shell: bash
