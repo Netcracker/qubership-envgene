@@ -250,6 +250,9 @@ def generate_profile_component(chart_path: Path, entity_name: str):
     profiles = []
     profile_paths = list_files(chart_path / 'charts' / entity_name / 'resource-profiles')
     for profile_path in profile_paths:
+        if profile_path.suffix not in {'.json', '.yaml', '.yml'}:
+            logger.warning(f"Skipping resource profile file with unsupported extension: {profile_path}")
+            continue
         profiles_dict = load_file(profile_path)
         profile_encoded = encode_dict_to_base64(profiles_dict, profile_path.suffix)
         content = Content(
