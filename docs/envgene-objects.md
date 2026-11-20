@@ -140,22 +140,22 @@ cloud:
       # `true` - `override-profile-name` is merged into `parent-profile-name`. Jinja Resource Profiles are not supported
       merge-with-parent: <boolean>
     # Optional
-    # Merged into the parameters of the parent Cloud. The values from `overrides-parent` win on a conflict
+    # Merged into `template_override.deployParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
     deployParameters: <hashmap-with-parameters>
     # Optional
-    # Merged into the parameters of the parent Cloud. The values from `overrides-parent` win on a conflict
+    # Merged into `template_override.e2eParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
     e2eParameters: <hashmap-with-parameters>
     # Optional
-    # Merged into the parameters of the parent Cloud. The values from `overrides-parent` win on a conflict
+    # Merged into `template_override.technicalConfigurationParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
     technicalConfigurationParameters: <hashmap-with-parameters>
     # Optional
-    # ParameterSet names appended to the list of the parent Cloud
+    # ParameterSet names appended to `template_override.deployParameterSets` inherited from the parent template
     deployParameterSets: <list-with-parameter-sets>
     # Optional
-    # ParameterSet names appended to the list of the parent Cloud
+    # ParameterSet names appended to `template_override.e2eParameterSets` inherited from the parent template
     e2eParameterSets: <list-with-parameter-sets>
     # Optional
-    # ParameterSet names appended to the list of the parent Cloud
+    # ParameterSet names appended to `template_override.technicalConfigurationParameterSets` inherited from the parent template
     technicalConfigurationParameterSets: <list-with-parameter-sets>
 # Optional
 composite_structure: <path-to-the-composite-structure-template-file>
@@ -203,7 +203,7 @@ namespaces:
     parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
-    # Overrides applied to the Namespace inherited from the parent template. Requires `parent`
+    # Overrides applied to the Namespace inherited from the parent template. Requires `parent` and `name`
     # See details in /docs/features/template-composition.md
     overrides-parent:
       # Optional
@@ -226,22 +226,22 @@ namespaces:
         # `true` - `override-profile-name` is merged into `parent-profile-name`. Jinja Resource Profiles are not supported
         merge-with-parent: boolean
       # Optional
-      # Merged into the parameters of the parent Namespace. The values from `overrides-parent` win on a conflict
+      # Merged into `template_override.deployParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
       deployParameters: hashmap
       # Optional
-      # Merged into the parameters of the parent Namespace. The values from `overrides-parent` win on a conflict
+      # Merged into `template_override.e2eParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
       e2eParameters: hashmap
       # Optional
-      # Merged into the parameters of the parent Namespace. The values from `overrides-parent` win on a conflict
+      # Merged into `template_override.technicalConfigurationParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
       technicalConfigurationParameters: hashmap
       # Optional
-      # ParameterSet names appended to the list of the parent Namespace
+      # ParameterSet names appended to `template_override.deployParameterSets` inherited from the parent template
       deployParameterSets: list
       # Optional
-      # ParameterSet names appended to the list of the parent Namespace
+      # ParameterSet names appended to `template_override.e2eParameterSets` inherited from the parent template
       e2eParameterSets: list
       # Optional
-      # ParameterSet names appended to the list of the parent Namespace
+      # ParameterSet names appended to `template_override.technicalConfigurationParameterSets` inherited from the parent template
       technicalConfigurationParameterSets: list
       template_path: string
 ```
