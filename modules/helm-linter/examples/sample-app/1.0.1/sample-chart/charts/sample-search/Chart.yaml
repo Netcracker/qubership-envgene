@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sample-search
+description: Answers sample search queries from an index.
+type: application
+version: 1.0.1
+appVersion: "1.0.1"

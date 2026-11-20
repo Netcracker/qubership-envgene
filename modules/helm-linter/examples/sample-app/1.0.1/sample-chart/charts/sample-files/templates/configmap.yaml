@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+data:
+  message: {{ .Values.config.message | quote }}
+  path: {{ .Values.config.path | quote }}

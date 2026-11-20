@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sample-catalog
+description: Serves a list of sample records over HTTP.
+type: application
+version: 1.0.1
+appVersion: "1.0.1"

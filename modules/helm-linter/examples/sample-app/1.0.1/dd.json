@@ -1,0 +1,161 @@
+{
+  "metadata": {
+    "component": "sample-app",
+    "descriptorFormat": "1.21",
+    "builderVersion": "sample-builder/1.0.1"
+  },
+  "include": [],
+  "infrastructures": [],
+  "services": [
+    {
+      "service_name": "sample-catalog",
+      "image_type": "service",
+      "image_name": "sample-catalog-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:01ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-catalog",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-worker",
+      "image_type": "service",
+      "image_name": "sample-worker-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:02ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-worker",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-gateway",
+      "image_type": "service",
+      "image_name": "sample-gateway-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:03ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-gateway",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-session",
+      "image_type": "service",
+      "image_name": "sample-session-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:04ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-session",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-report",
+      "image_type": "service",
+      "image_name": "sample-report-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:05ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-report",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-search",
+      "image_type": "service",
+      "image_name": "sample-search-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:06ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-search",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-audit",
+      "image_type": "service",
+      "image_name": "sample-audit-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:07ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-audit",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-files",
+      "image_type": "service",
+      "image_name": "sample-files-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:08ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-files",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-schedule",
+      "image_type": "service",
+      "image_name": "sample-schedule-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:09ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-schedule",
+      "promote_artifacts": false
+    },
+    {
+      "service_name": "sample-health",
+      "image_type": "service",
+      "image_name": "sample-health-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.1-r1",
+      "docker_digest": "sha256:10ababababababababababababababababababababababababababababababab",
+      "version": "1.0.1",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-health",
+      "promote_artifacts": false
+    }
+  ],
+  "configurations": [],
+  "frontends": [],
+  "smartplug": [],
+  "jobs": [],
+  "libraries": [],
+  "complexes": [],
+  "charts": [
+    {
+      "helm_chart_name": "sample-chart",
+      "helm_chart_version": "1.0.1",
+      "type": "app-chart",
+      "qualifier": "assembly",
+      "version": "1.0.1",
+      "promote_artifacts": true,
+      "helm_registry": "example-registry",
+      "full_chart_name": "https://maven.pkg.github.com/Netcracker/qubership-envgene/com/example/sample-chart/1.0.1/sample-chart-1.0.1.tgz"
+    }
+  ],
+  "additionalArtifacts": {},
+  "descriptors": []
+}

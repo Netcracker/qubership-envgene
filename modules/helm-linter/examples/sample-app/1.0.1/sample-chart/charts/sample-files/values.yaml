@@ -1,0 +1,14 @@
+role: files
+replicaCount: 1
+image:
+  repository: registry.example/library/sample-files-image
+  tag: "1.0.1-r1"
+  pullPolicy: IfNotPresent
+service:
+  port: 8088
+config:
+  message: files
+  path: /sample/files
+resources:
+  cpu: "100m"
+  memory: "128Mi"

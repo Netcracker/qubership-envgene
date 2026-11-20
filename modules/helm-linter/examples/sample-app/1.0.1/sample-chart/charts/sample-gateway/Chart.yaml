@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sample-gateway
+description: Accepts a sample notice and forwards it.
+type: application
+version: 1.0.1
+appVersion: "1.0.1"

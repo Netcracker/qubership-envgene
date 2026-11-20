@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sample-worker
+description: Reads a sample queue and stores the result.
+type: application
+version: 1.0.1
+appVersion: "1.0.1"

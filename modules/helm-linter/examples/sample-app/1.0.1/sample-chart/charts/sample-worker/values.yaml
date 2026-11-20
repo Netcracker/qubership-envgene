@@ -1,0 +1,14 @@
+role: worker
+replicaCount: 2
+image:
+  repository: registry.example/library/sample-worker-image
+  tag: "1.0.1-r1"
+  pullPolicy: IfNotPresent
+service:
+  port: 8082
+config:
+  message: worker
+  path: /sample/queue
+resources:
+  cpu: "200m"
+  memory: "256Mi"
