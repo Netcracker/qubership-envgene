@@ -27,11 +27,7 @@ same change, and the review of the docs passes before the change is merged.
      skipped (the diff touches no documented area);
    - the lint row of `envgene-verification` at HEAD (super-linter: textlint, codespell, gitleaks on `docs/`) is exit 0.
 
-   Then append:
-
-   ```text
-   | <time> | docs | - | - | gate: docs check passes @ <sha> |
-   ```
+   Then append the docs gate row (format: Gate rows of `envgene-orchestration/references/ledger.md`).
 
    A docs change after this row makes it stale; run the gate again.
 

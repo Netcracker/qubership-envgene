@@ -43,11 +43,8 @@ A textlint error in `AGENTS.md` or in `docs/` fails the pipeline, so fix it in t
    a new baseline. Only a command that has no baseline row (for example BDD or the Maven suite, when implement did
    not run it) is run once on the base branch in a separate worktree, with the row
    `| <time> | verify | <command> | <exit> | baseline: <counts> @ <base-sha> |`.
-2. **Change.** Run the same commands on HEAD. One row per command:
-
-   ```text
-   | <time> | verify | `<command>` | <exit> | <passed>/<total> @ <head-sha> (baseline <counts>) |
-   ```
+2. **Change.** Run the same commands on HEAD. One `verify` row per command (format: Gate rows of
+   `envgene-orchestration/references/ledger.md`).
 3. **Compare.** Every suite that passed on the baseline must pass on HEAD. A new failure is a finding, not a
    "known issue": send it to `component-debugging` before review.
 4. **Gate.** For HEAD, every command has a `verify` row with exit 0 or no new failure against its baseline row

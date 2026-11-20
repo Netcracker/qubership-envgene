@@ -11,8 +11,8 @@ and the result goes into the ledger.
 
 ## Request
 
-1. **Entry check.** The `verify` rows for the current HEAD exist in `openspec/changes/<id>/ledger.md` (gate of
-   `envgene-verification`).
+1. **Entry check.** The verify and lint gates are passed for the current HEAD (Gate rows of
+   `envgene-orchestration/references/ledger.md`).
 2. **Range.** `BASE=$(git merge-base origin/<base> HEAD)` and `HEAD=$(git rev-parse HEAD)`.
 3. **Dispatch `envgene-reviewer`** (`.claude/agents/envgene-reviewer.md`) in a fresh context with the
    change folder `openspec/changes/<id>/`, BASE, HEAD, and the path of `AGENTS.md`. The agent reads the
@@ -23,8 +23,8 @@ and the result goes into the ledger.
    - HOW: the code follows the Decision and the Constraints of `component-design.md`; nothing from Out of Scope built;
    - security: input validation, secrets in code, logs or tests, new dependencies;
    - conventions and docs: `envgene-code-review` sections 2 to 5, `docs/glossary.md`, docs updated in the same change.
-5. **Ledger row** (format of `envgene-orchestration/references/ledger.md`):
-   `| <time> | review | - | - | gate: review <ready|ready with fixes|not ready> by envgene-reviewer @ <sha>, <n> critical, <n> important, <n> minor |`.
+5. **Ledger row:** the review gate row with the verdict and the counts per severity (format: Gate rows of
+   `envgene-orchestration/references/ledger.md`).
 
 ## Receive
 

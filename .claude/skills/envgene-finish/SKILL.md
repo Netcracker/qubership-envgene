@@ -12,8 +12,8 @@ its ledger, and the merge by a person. The agent never merges and never approves
 
 ## Entry check
 
-For the current HEAD the ledger shows the `verify` rows, the `gate: review …` row with no open critical or important
-finding, and the `gate: docs check passes …` row. Anything missing or stale: stop and go back to that stage. A change
+For the current HEAD the verify, lint, review and docs gates are passed (Gate rows of
+`envgene-orchestration/references/ledger.md`). Anything missing or stale: stop and go back to that stage. A change
 already in `openspec/changes/archive/<date>-<id>/` resumes at **Archive**, step 3.
 
 ## Finish (stage 9)
@@ -27,11 +27,8 @@ already in `openspec/changes/archive/<date>-<id>/` resumes at **Archive**, step 
 4. **Wait for the checks** of HEAD (GitHub Actions, super-linter among them) and read their status. Red or missing:
    go to `component-debugging`; never ask for an approval or a merge on red checks.
 5. **The owner approves the code** in the PR. Their comments go back to `envgene-review` and
-   `envgene-implementation`, then verify, docs and this stage again. Read the approval from GitHub, then append:
-
-   ```text
-   | <time> | finish | - | - | gate: code approved by <owner> on PR #<n> @ <sha>, checks green |
-   ```
+   `envgene-implementation`, then verify, docs and this stage again. Read the approval from GitHub, then append the
+   finish gate row (format: Gate rows of `envgene-orchestration/references/ledger.md`).
 
 ## Archive (stage 10)
 
@@ -39,11 +36,8 @@ already in `openspec/changes/archive/<date>-<id>/` resumes at **Archive**, step 
    specs into `openspec/specs/` and moves the change folder (with `design.md`, `component-design.md`, `plan.md` and
    `ledger.md`) to `openspec/changes/archive/<date>-<id>/`.
 2. `openspec validate --all --strict; echo "exit=$?"` must exit 0. Append both rows to the archived ledger, then the
-   gate row, and commit `docs: archive OpenSpec change <id>` (with the yes for commits) and push:
-
-   ```text
-   | <time> | archive | - | - | gate: archived as the last commit, openspec validate --all --strict exit 0 @ <sha> |
-   ```
+   archive gate row (format: Gate rows of `envgene-orchestration/references/ledger.md`), and commit
+   `docs: archive OpenSpec change <id>` (with the yes for commits) and push.
 
    The archive commit changes only `openspec/`, so it does not make the verify and docs rows stale.
 3. **Ask the person to merge** once the checks of the archive commit are green. Post that evidence as a PR comment in

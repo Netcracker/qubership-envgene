@@ -34,11 +34,8 @@ proposal MR at a recorded commit. What changes is the content: this slot covers 
 
 4. **Propose MR.** Open or update the MR with the files above. The owner is the `CODEOWNERS` owner of
    `/openspec/changes/`. Row: `| <time> | propose | - | - | MR !<n> opened, reviewer <owner> |`.
-5. **Gate.** Read the owner's approval (or merge) of the proposal MR from GitLab, then append:
-
-   ```text
-   | <time> | propose | - | - | gate: proposal approved by <owner> on MR !<n> @ <approved-sha> |
-   ```
+5. **Gate.** Read the owner's approval (or merge) of the proposal MR from GitLab, then append the propose gate row
+   at the approved sha (format: Gate rows of `envgene-orchestration/references/ledger.md`).
 
    The gate holds while `git diff --quiet <approved-sha> HEAD -- <change>/proposal.md <change>/specs <adr-path>`
    exits 0, where `<adr-path>` is the ADR under `docs/adr/` (omit it if the change has none). `design.md` (the read-only

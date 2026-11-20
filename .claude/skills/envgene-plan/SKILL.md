@@ -14,9 +14,8 @@ test, the plan saved in the change folder and noted in the ledger.
 
 ## Entry check
 
-1. The ledger has the propose gate row (`gate: proposal approved by <owner> ...`).
-2. The ledger has the design gate row (`gate: approach <x> accepted by <developer> ...`). It is present for every
-   change, including an upstream hand-off: design always runs.
+1. The propose gate is passed (Gate rows of `envgene-orchestration/references/ledger.md`).
+2. The design gate is passed (same table). Design runs for every change, including an upstream hand-off.
 3. `component-design.md` exists in `openspec/changes/<id>/`.
 4. **Work map.** Its Work map has no `not-in-repo` rows. For every contract and task path, `git ls-files` shows the file
    exists, or the design says it is `new-in-repo`. A path outside this repository stops the plan: go back to design.
@@ -45,13 +44,13 @@ If any check fails, stop and say which one.
 6. **Self-review:** every scenario mapped to a test; no step without a check; no placeholders such as "add error
    handling"; names and signatures the same in every step that uses them; the plan does not contradict the specs or
    the design Decision.
-7. **Save** `openspec/changes/<id>/plan.md` in the format below. Append a ledger row:
-   `| <time> | plan | - | - | plan.md: <n> steps for <m> tasks, contracts <k>/<k> covered @ <sha>`.
+7. **Save** `openspec/changes/<id>/plan.md` in the format below. Append the plan gate row (format: Gate rows of
+   `envgene-orchestration/references/ledger.md`).
 8. **Show the plan** to the developer and adjust it to their comments. It is committed with the next commit of the
    change, after the developer's yes for commits.
 
-Gate: none formal. Implement starts from this plan. A change to the plan during implement is an edit to `plan.md`,
-recorded in the ledger.
+Gate: the plan gate row of step 7. Implement starts from this plan. A change to the plan during implement is an edit
+to `plan.md`, recorded in the ledger.
 
 ## Format of plan.md
 

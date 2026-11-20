@@ -10,10 +10,8 @@ with an approved change, a reuse check before new code, a red run before every g
 
 ## Entry check
 
-- The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
-- The ledger has the design gate row (`gate: approach <x> accepted by <developer> (component-design.md @ <sha>)`),
-  present for every change including a hand-off.
-- The ledger has the plan row (stage `plan`, result `plan.md: <n> steps for <m> tasks, contracts <k>/<k> covered`).
+- The propose, design and plan gates are passed (Gate rows of `envgene-orchestration/references/ledger.md`). Design
+  runs for every change, including a hand-off.
 - `component-design.md`, `plan.md` and `tasks.md` exist in `openspec/changes/<id>/`.
 - The edit belongs to an open task in `tasks.md`.
 

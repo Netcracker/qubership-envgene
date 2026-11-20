@@ -17,7 +17,7 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
 
 ## Entry check
 
-- The ledger has the propose gate row (`gate: proposal approved by <owner> on MR !<n> @ <sha>`).
+- The propose gate is passed (Gate rows of `envgene-orchestration/references/ledger.md`).
 - `proposal.md`, `specs/` and `tasks.md` exist in `openspec/changes/<id>/`, and the ADR the change names exists under
   `docs/adr/` (or the proposal says the change has none).
 - `openspec/changes/<id>/component-design.md` does not exist yet, or it is being revised in an open change. This
@@ -60,12 +60,9 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
    | <time> | design | `openspec validate <id> --strict --no-interactive` | <exit> | valid @ <sha> |
    ```
 
-9. **Gate.** Commit `component-design.md` (with the developer's yes for commits), then append the gate row with the
-   sha of that commit. The ledger rides along with the next commit.
-
-   ```text
-   | <time> | design | - | - | gate: approach <x> accepted by <developer> (component-design.md @ <sha>) |
-   ```
+9. **Gate.** Commit `component-design.md` (with the developer's yes for commits), then append the design gate row
+   with the sha of that commit (format: Gate rows of `envgene-orchestration/references/ledger.md`). The ledger rides
+   along with the next commit.
 
 ## Rules
 
