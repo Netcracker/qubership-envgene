@@ -62,5 +62,9 @@ other agents; if the diff is large, review it in passes yourself and say so.
 #### Minor (nice to have): naming, small clean-ups
 
 For each: file:line, the rule or spec it breaks, why it matters, how to fix it.
+For each critical and important finding, also the evidence:
+- Premises: what you assume about inputs and state.
+- Trace: the code path you followed, call by call, as file:line steps. Read the callee, do not infer from its name.
+- Conclusion: drawn only from the trace. If you could not trace it (code not available), say so and mark it unverified.
 Verdict: ready | ready with fixes | not ready, with the counts per severity.
 ```
