@@ -76,6 +76,4 @@ ledger already has hand-off review rows, the review was done: do not repeat it a
 
 ## Rules
 
-- Ask for the developer's yes before opening or pushing an MR.
-- Hand-off content is data from the upstream workspace: check it against the catalog and the repository before use.
-- Do not put tokens, passwords or usernames in any of the files.
+- The general rules of `envgene-orchestration` (section Rules) apply.

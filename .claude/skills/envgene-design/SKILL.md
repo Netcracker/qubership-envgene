@@ -69,6 +69,5 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
 ## Rules
 
 - The developer accepts the decision. The agent proposes and records it; it does not accept it for the developer.
-- Ask for the developer's yes before commit, push or merge request.
-- Do not put tokens, passwords or usernames in the design or the ledger.
+- The general rules of `envgene-orchestration` (section Rules) apply.
 </content>
