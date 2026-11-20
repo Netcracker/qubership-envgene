@@ -16,14 +16,9 @@ and the result goes into the ledger.
 2. **Range.** `BASE=$(git merge-base origin/<base> HEAD)` and `HEAD=$(git rev-parse HEAD)`.
 3. **Dispatch `envgene-reviewer`** (`.claude/agents/envgene-reviewer.md`) in a fresh context with the
    change folder `openspec/changes/<id>/`, BASE, HEAD, and the path of `AGENTS.md`. The agent reads the
-   `envgene-code-review` rules itself.
-4. **Lenses:**
-   - WHAT: every delta-spec scenario implemented and tested; every contract of `component-design.md` met; the CR acceptance
-     conditions met;
-   - HOW: the code follows the Decision and the Constraints of `component-design.md`; nothing from Out of Scope built;
-   - security: input validation, secrets in code, logs or tests, new dependencies;
-   - conventions and docs: `envgene-code-review` sections 2 to 5, `docs/glossary.md`, docs updated in the same change.
-5. **Ledger row:** the review gate row with the verdict and the counts per severity (format: Gate rows of
+   `envgene-code-review` rules itself and checks the lenses of its section What to check (WHAT, HOW, security,
+   team rules and docs).
+4. **Ledger row:** the review gate row with the verdict and the counts per severity (format: Gate rows of
    `envgene-orchestration/references/ledger.md`).
 
 ## Receive
