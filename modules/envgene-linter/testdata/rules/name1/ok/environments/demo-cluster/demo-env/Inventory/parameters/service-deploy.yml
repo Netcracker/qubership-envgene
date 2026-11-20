@@ -1,0 +1,3 @@
+name: service-deploy
+parameters:
+  KAFKA_URL: broker.example.test:9092

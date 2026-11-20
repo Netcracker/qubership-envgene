@@ -1,0 +1,556 @@
+"""Walk environments/. Do not merge."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from .model import (
+    Category,
+    ClusterModel,
+    EnvModel,
+    Layer,
+    NamedEntityFile,
+    ParamsetFile,
+    ParamsetLayout,
+    PassportFile,
+    RepoIndex,
+)
+from .yamlio import YamlReadError, load
+from .paramset_sources import scan_directory, staging_complete
+from .read_errors import collect_read_errors
+from .source_scope import SourceScope
+
+PARAMETERS_DIR = "parameters"
+INVENTORY_DIR = "Inventory"
+ENV_DEFINITION_FILE = "env_definition.yml"
+PASSPORT_DIRS = ("cloud-passport", "cloud-passports")
+RESOURCE_PROFILE_DIRS = ("resource_profiles", "rp_override", "Profiles", "parameters")
+CREDENTIAL_DIRS = ("credentials", "Credentials", "shared-credentials")
+
+NON_CLUSTER_DIRS = {
+    PARAMETERS_DIR,
+    "resource_profiles",
+    "rp_override",
+    "Profiles",
+    "credentials",
+    "Credentials",
+    "shared-credentials",
+    "configuration",
+    "configurations",
+    "shared_template_variables",
+    "shared-template-variables",
+    *PASSPORT_DIRS,
+}
+NON_ENV_DIRS = NON_CLUSTER_DIRS | {"app-deployer", "cloud-deployer"}
+
+NAMED_ENTITY_DIRS = (
+    ("appdefs", "Application definition"),
+    ("configuration/appdefs", "Application definition"),
+    ("regdefs", "Registry definition"),
+    ("configuration/regdefs", "Registry definition"),
+    ("configuration/artifact_definitions", "Artifact definition"),
+)
+
+
+class DiscoveryError(Exception):
+    pass
+
+
+def paramset_stem(path: Path) -> str:
+    name = path.name
+    if name.endswith(".j2"):
+        name = name[: -len(".j2")]
+    for suffix in (".yml", ".yaml", ".json"):
+        if name.endswith(suffix):
+            return name[: -len(suffix)]
+    return name
+
+
+def _is_jinja(path: Path) -> bool:
+    return path.name.endswith(".yml.j2") or path.name.endswith(".yaml.j2")
+
+
+def _yaml_files(directory: Path, root: Path | None = None) -> list[Path]:
+    if not directory.is_dir():
+        return []
+    files = [
+        path
+        for path in directory.iterdir()
+        if path.is_file()
+        and (root is None or path.resolve().is_relative_to(root))
+        and (
+            path.suffix in {".yml", ".yaml"}
+            or path.name.endswith(".yml.j2")
+            or path.name.endswith(".yaml.j2")
+        )
+    ]
+    return sorted(files)
+
+
+def _recursive_yaml_files(directory: Path, root: Path, skipped: list[str]) -> list[Path]:
+    """Return YAML candidates without traversing .git or escaping through symlinks."""
+    if not directory.is_dir():
+        return []
+    files: list[Path] = []
+    pending = [directory]
+    while pending:
+        current = pending.pop()
+        try:
+            entries = sorted(current.iterdir(), reverse=True)
+        except OSError:
+            skipped.append(f"{current}: cannot enumerate directory; PLACE-8 skipped")
+            continue
+        for path in entries:
+            if path.name == ".git":
+                continue
+            try:
+                resolved = path.resolve()
+            except OSError:
+                continue
+            if not resolved.is_relative_to(root):
+                continue
+            if path.is_dir():
+                if not path.is_symlink():
+                    pending.append(path)
+                continue
+            if not path.is_file():
+                continue
+            if (
+                path.suffix in {".yml", ".yaml"}
+                or path.name.endswith(".yml.j2")
+                or path.name.endswith(".yaml.j2")
+            ):
+                files.append(path)
+    return sorted(files)
+
+
+def _load_place8_entity(
+    path: Path,
+    kind: str,
+    skipped: list[str],
+    reused: dict[Path, ParamsetFile],
+) -> NamedEntityFile:
+    stem = paramset_stem(path)
+    paramset = reused.get(path.resolve())
+    if paramset is not None:
+        return NamedEntityFile(
+            path=path,
+            stem=stem,
+            kind=kind,
+            is_jinja=paramset.is_jinja,
+            loaded=paramset.loaded,
+            error=paramset.error,
+        )
+    if _is_jinja(path):
+        skipped.append(f"{path}: jinja {kind} skipped")
+        return NamedEntityFile(path=path, stem=stem, kind=kind, is_jinja=True)
+    try:
+        loaded = load(path)
+    except YamlReadError:
+        note = f"{path}: cannot parse YAML; PLACE-8 skipped"
+        skipped.append(note)
+        return NamedEntityFile(path=path, stem=stem, kind=kind, error=note)
+    return NamedEntityFile(path=path, stem=stem, kind=kind, loaded=loaded)
+
+
+def _load_place8_entities(
+    root: Path,
+    bases: list[Path],
+    directories: tuple[str, ...],
+    kind: str,
+    skipped: list[str],
+    reused: dict[Path, ParamsetFile], scope: SourceScope,
+) -> list[NamedEntityFile]:
+    files: list[NamedEntityFile] = []
+    seen: dict[Path, NamedEntityFile] = {}
+    for base in bases:
+        for folder in directories:
+            for path in _recursive_yaml_files(base / folder, root, skipped):
+                if scope.is_generated(path):
+                    continue
+                resolved = path.resolve()
+                if resolved in seen:
+                    record = seen[resolved]
+                    record.aliases = (*record.aliases, path)
+                    continue
+                record = _load_place8_entity(path, kind, skipped, reused)
+                seen[resolved] = record
+                files.append(record)
+    return files
+
+
+def _load_named_entities(root: Path, skipped: list[str], scope: SourceScope) -> list[NamedEntityFile]:
+    files: list[NamedEntityFile] = []
+    seen: set[Path] = set()
+    for relative, kind in NAMED_ENTITY_DIRS:
+        for path in _yaml_files(root / relative, root):
+            if scope.is_generated(path):
+                continue
+            resolved = path.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            stem = paramset_stem(path)
+            if _is_jinja(path):
+                skipped.append(f"{path}: jinja named entity skipped")
+                files.append(NamedEntityFile(path=path, stem=stem, kind=kind, is_jinja=True))
+                continue
+            try:
+                loaded = load(path)
+            except YamlReadError:
+                note = f"{path}: cannot parse YAML; {kind} skipped"
+                skipped.append(note)
+                files.append(NamedEntityFile(path=path, stem=stem, kind=kind, error=note))
+                continue
+            files.append(NamedEntityFile(path=path, stem=stem, kind=kind, loaded=loaded))
+    return files
+
+
+def _load_paramset(
+    path: Path, layer: Layer, cluster: str | None, env: str | None, skipped: list[str]
+) -> ParamsetFile:
+    stem = paramset_stem(path)
+    if path.suffix == '.j2':
+        skipped.append(f"{path}: jinja ParameterSet skipped")
+        return ParamsetFile(path=path, layer=layer, stem=stem, cluster=cluster, env=env, is_jinja=True)
+    try:
+        loaded = load(path)
+    except YamlReadError:
+        format_name = 'JSON' if path.suffix == '.json' else 'YAML'
+        note = f"{path}: cannot parse {format_name}; ParameterSet skipped"
+        skipped.append(note)
+        return ParamsetFile(path=path, layer=layer, stem=stem, cluster=cluster, env=env, error=note)
+    return ParamsetFile(path=path, layer=layer, stem=stem, cluster=cluster, env=env, loaded=loaded)
+
+
+def _parameter_files(
+    directory: Path, root: Path, layer: Layer, cluster: str | None, env: str | None,
+    skipped: list[str], incomplete: set[Path],
+    layouts: dict[Path, ParamsetLayout], scope: SourceScope,
+) -> list[ParamsetFile]:
+    scan = scan_directory(directory, root)
+    if scan.layout is not None:
+        layouts[directory] = scan.layout
+    if scan.incomplete:
+        incomplete.add(directory)
+        skipped.append(f'{directory}: cannot enumerate all ParameterSet sources; connected selection skipped')
+    records = []
+    for path in scan.paths:
+        if scope.is_generated(path):
+            # Preserve its staging slot without treating output as a source or restoring lower inputs.
+            record = ParamsetFile(path, layer, paramset_stem(path), cluster, env, unavailable=True)
+        elif path in scan.unavailable:
+            note = f'{path}: unavailable ParameterSet source; content skipped'
+            skipped.append(note)
+            record = ParamsetFile(path, layer, paramset_stem(path), cluster, env, error=note, unavailable=True)
+        else:
+            record = _load_paramset(path, layer, cluster, env, skipped)
+        record.relative_path = path.relative_to(directory)
+        records.append(record)
+    return records
+
+
+def _cloud_passport_name(doc: object) -> str | None:
+    doc = doc if isinstance(doc, dict) else {}
+    inventory = doc.get("inventory") if isinstance(doc.get("inventory"), dict) else {}
+    value = inventory.get("cloudPassport")
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _is_creds_passport(path: Path) -> bool:
+    name = path.name
+    if name.endswith(".j2"):
+        name = name[: -len(".j2")]
+    return name.endswith("-creds.yml") or name.endswith("-creds.yaml")
+
+
+def _under_credentials(path: Path, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return False
+    return any(part in {"credentials", "Credentials"} for part in relative.parts)
+
+
+def _passport_files(directory: Path) -> list[Path]:
+    if not directory.is_dir():
+        return []
+    files = [
+        path
+        for path in directory.rglob("*")
+        if path.is_file()
+        and not _under_credentials(path, directory)
+        and not _is_creds_passport(path)
+        and (
+            path.suffix in {".yml", ".yaml"}
+            or path.name.endswith(".yml.j2")
+            or path.name.endswith(".yaml.j2")
+        )
+    ]
+    return sorted(files)
+
+
+def _load_passport(
+    path: Path, cluster: str | None, env: str | None, skipped: list[str], scope: SourceScope
+) -> PassportFile:
+    stem = paramset_stem(path)
+    if scope.is_generated(path):
+        return PassportFile(path, stem, cluster, env, error="generated output is context only")
+    if _is_jinja(path):
+        skipped.append(f"{path}: jinja Cloud Passport skipped")
+        return PassportFile(path=path, stem=stem, cluster=cluster, env=env, is_jinja=True)
+    try:
+        loaded = load(path)
+    except YamlReadError:
+        note = f"{path}: cannot parse YAML; Cloud Passport skipped"
+        skipped.append(note)
+        return PassportFile(path=path, stem=stem, cluster=cluster, env=env, error=note)
+    return PassportFile(path=path, stem=stem, cluster=cluster, env=env, loaded=loaded)
+
+
+def _bindings(doc: object) -> dict[Category, dict[str, list[str]]]:
+    doc = doc if isinstance(doc, dict) else {}
+    template = doc.get("envTemplate") if isinstance(doc.get("envTemplate"), dict) else {}
+    out: dict[Category, dict[str, list[str]]] = {}
+    for category in Category:
+        raw = template.get(category.binding_field)
+        if not isinstance(raw, dict):
+            continue
+        targets: dict[str, list[str]] = {}
+        for target, names in raw.items():
+            if isinstance(names, list):
+                targets[str(target)] = [str(item) for item in names]
+        if targets:
+            out[category] = targets
+    return out
+
+
+def _parameter_bindings_complete(doc: object) -> bool:
+    """Retain uncertainty that normalized bindings cannot represent."""
+    if not isinstance(doc, dict) or not isinstance(doc.get("envTemplate"), dict):
+        return False
+    template = doc["envTemplate"]
+
+    def tagged(value: object) -> bool:
+        return getattr(getattr(value, "tag", None), "value", None) is not None
+
+    def literal(value: object) -> bool:
+        return (isinstance(value, str) and bool(value.strip()) and not tagged(value)
+                and not any(marker in value for marker in ("{{", "{%", "{#", "${", "\n", "\r")))
+
+    for category in Category:
+        if category.binding_field not in template:
+            continue
+        targets = template[category.binding_field]
+        if not isinstance(targets, dict) or tagged(targets):
+            return False
+        for target, names in targets.items():
+            if not literal(target) or not isinstance(names, list) or tagged(names):
+                return False
+            if any(not literal(name) for name in names):
+                return False
+    return True
+
+
+def _resource_profile_bindings(doc: object) -> dict[str, str]:
+    doc = doc if isinstance(doc, dict) else {}
+    template = doc.get("envTemplate") if isinstance(doc.get("envTemplate"), dict) else {}
+    raw = template.get("envSpecificResourceProfiles")
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        target: reference
+        for target, reference in raw.items()
+        if isinstance(target, str) and isinstance(reference, str)
+    }
+
+
+def _shared_credential_bindings(doc: object) -> list[str]:
+    doc = doc if isinstance(doc, dict) else {}
+    template = doc.get("envTemplate") if isinstance(doc.get("envTemplate"), dict) else {}
+    raw = template.get("sharedMasterCredentialFiles")
+    if not isinstance(raw, list):
+        return []
+    return [reference for reference in raw if isinstance(reference, str)]
+
+
+def _shared_template_variable_bindings(doc: object) -> list[str]:
+    doc = doc if isinstance(doc, dict) else {}
+    template = doc.get("envTemplate") if isinstance(doc.get("envTemplate"), dict) else {}
+    raw = template.get("sharedTemplateVariables")
+    if not isinstance(raw, list):
+        return []
+    return [reference for reference in raw if isinstance(reference, str)]
+
+
+def _artifact_selectors(doc: object) -> tuple[str, ...]:
+    doc = doc if isinstance(doc, dict) else {}
+    template = doc.get("envTemplate") if isinstance(doc.get("envTemplate"), dict) else {}
+    background = (
+        template.get("bgNsArtifacts")
+        if isinstance(template.get("bgNsArtifacts"), dict)
+        else {}
+    )
+    values = (
+        template.get("artifact"),
+        background.get("origin"),
+        background.get("peer"),
+    )
+    return tuple(value for value in values if isinstance(value, str))
+
+
+
+def _template_identity(doc: object) -> tuple[str, str] | None:
+    if not isinstance(doc, dict) or not isinstance(doc.get("envTemplate"), dict):
+        return None
+    template = doc["envTemplate"]
+    values = (template.get("name"), template.get("artifact"))
+    if any(getattr(getattr(value, "tag", None), "value", None) is not None
+           for value in (doc, template, *values)):
+        return None
+    if any(not isinstance(value, str) or not value.strip() for value in values):
+        return None
+    if any(marker in value for value in values for marker in ("{{", "{%", "{#", "${")):
+        return None
+    return values
+
+
+def build_index(root: Path) -> RepoIndex:
+    with collect_read_errors() as problems:
+        index = _build_index(root)
+    index.read_problems = problems
+    return index
+
+
+def _build_index(root: Path) -> RepoIndex:
+    root = root.resolve()
+    environments_dir = root / "environments"
+    if not environments_dir.is_dir():
+        if (root / "templates").is_dir():
+            return RepoIndex(root=root)
+        raise DiscoveryError(f"{root} is not an EnvGene repository: no environments/ or templates/ directory")
+
+    skipped: list[str] = []
+    incomplete: set[Path] = set()
+    layouts: dict[Path, ParamsetLayout] = {}
+    environment_directories = {
+        cluster: sorted(env for env in cluster.iterdir()
+                        if env.is_dir() and env.name not in NON_ENV_DIRS
+                        and (env / INVENTORY_DIR / ENV_DEFINITION_FILE).is_file())
+        for cluster in sorted(p for p in environments_dir.iterdir()
+                              if p.is_dir() and p.name not in NON_CLUSTER_DIRS)
+    }
+    scope = SourceScope(root, frozenset(env for paths in environment_directories.values() for env in paths))
+    passports: list[PassportFile] = []
+    for folder in PASSPORT_DIRS:
+        passports.extend(
+            _load_passport(path, None, None, skipped, scope) for path in _passport_files(environments_dir / folder)
+        )
+    site = _parameter_files(environments_dir / PARAMETERS_DIR, root, Layer.REPOSITORY,
+                            None, None, skipped, incomplete, layouts, scope)
+    clusters: dict[str, ClusterModel] = {}
+    for cluster_dir in environment_directories:
+        if cluster_dir.name in NON_CLUSTER_DIRS:
+            continue
+        cluster = ClusterModel(name=cluster_dir.name, path=cluster_dir)
+        cluster.paramsets = _parameter_files(cluster_dir / PARAMETERS_DIR, root, Layer.CLUSTER,
+                                            cluster.name, None, skipped, incomplete, layouts, scope)
+        for folder in PASSPORT_DIRS:
+            passports.extend(
+                _load_passport(path, cluster.name, None, skipped, scope)
+                for path in _passport_files(cluster_dir / folder)
+            )
+        for env_dir in environment_directories[cluster_dir]:
+            if env_dir.name in NON_ENV_DIRS:
+                continue
+            definition = env_dir / INVENTORY_DIR / ENV_DEFINITION_FILE
+            if not definition.is_file():
+                continue
+            try:
+                loaded_definition = None if scope.is_generated(definition) else load(definition)
+                doc = loaded_definition.doc if loaded_definition is not None else {}
+                bindings = _bindings(doc)
+                cloud_passport = _cloud_passport_name(doc)
+                resource_profile_bindings = _resource_profile_bindings(doc)
+                shared_credential_bindings = _shared_credential_bindings(doc)
+                shared_template_variable_bindings = _shared_template_variable_bindings(doc)
+                artifact_selectors = _artifact_selectors(doc)
+                template_identity = _template_identity(doc)
+                parameter_bindings_complete = _parameter_bindings_complete(doc)
+            except YamlReadError:
+                skipped.append(f"{definition}: cannot parse YAML; environment definition skipped")
+                bindings = {}
+                cloud_passport = None
+                resource_profile_bindings = {}
+                shared_credential_bindings = []
+                shared_template_variable_bindings = []
+                artifact_selectors = ()
+                template_identity = None
+                parameter_bindings_complete = False
+            env = EnvModel(
+                cluster=cluster.name,
+                name=env_dir.name,
+                path=env_dir,
+                bindings=bindings,
+                cloud_passport=cloud_passport,
+                resource_profile_bindings=resource_profile_bindings,
+                shared_credential_bindings=shared_credential_bindings,
+                shared_template_variable_bindings=shared_template_variable_bindings,
+                artifact_selectors=artifact_selectors,
+                template_identity=template_identity,
+                parameter_bindings_complete=parameter_bindings_complete,
+            )
+            env.paramsets = _parameter_files(env_dir / INVENTORY_DIR / PARAMETERS_DIR, root, Layer.ENVIRONMENT,
+                                            cluster.name, env.name, skipped, incomplete, layouts, scope)
+            for folder in PASSPORT_DIRS:
+                passports.extend(
+                    _load_passport(path, cluster.name, env.name, skipped, scope)
+                    for path in _passport_files(env_dir / INVENTORY_DIR / folder)
+                )
+            cluster.environments.append(env)
+        clusters[cluster.name] = cluster
+    named_entities = _load_named_entities(root, skipped, scope)
+    all_paramsets = [*site]
+    bases = [environments_dir]
+    for cluster in clusters.values():
+        all_paramsets.extend(cluster.paramsets)
+        bases.append(cluster.path)
+        for env in cluster.environments:
+            all_paramsets.extend(env.paramsets)
+            bases.append(env.path / INVENTORY_DIR)
+    reused = {item.path.resolve(): item for item in all_paramsets if not item.unavailable}
+    resource_profiles = _load_place8_entities(
+        root,
+        bases,
+        RESOURCE_PROFILE_DIRS,
+        "Resource Profile Override",
+        skipped,
+        reused, scope,
+    )
+    credential_files = _load_place8_entities(
+        root,
+        bases,
+        CREDENTIAL_DIRS,
+        "Credentials file",
+        skipped,
+        reused, scope,
+    )
+    index = RepoIndex(
+        root=root,
+        site_paramsets=site,
+        clusters=clusters,
+        passports=passports,
+        skipped=skipped,
+        named_entities=named_entities,
+        resource_profiles=resource_profiles,
+        credential_files=credential_files,
+        incomplete_paramset_dirs=incomplete,
+        paramset_layouts=layouts,
+        source_scope=scope,
+    )
+    for env in index.environments:
+        if not staging_complete(index, env):
+            index.skipped.append(f'{env.path}: ParameterSet staging is uncertain; connected selection skipped')
+    return index

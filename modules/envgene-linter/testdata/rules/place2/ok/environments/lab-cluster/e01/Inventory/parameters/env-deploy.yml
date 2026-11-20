@@ -1,0 +1,3 @@
+name: env-deploy
+parameters:
+  REPLICA_COUNT: 3

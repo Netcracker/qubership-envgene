@@ -1,0 +1,8 @@
+inventory:
+  environmentName: demo-env
+envTemplate:
+  name: composite
+  envSpecificParamsets:
+    cloud:
+      - service-deploy
+  sharedMasterCredentialFiles: [shared]

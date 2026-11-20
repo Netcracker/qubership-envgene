@@ -1,0 +1,5 @@
+inventory:
+  environmentName: demo-env
+  cloudPassport: one
+envTemplate:
+  name: composite
