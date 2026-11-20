@@ -1,5 +1,6 @@
 import asyncio
 from os import path, getenv
+import os
 from pathlib import Path
 
 import envgenehelper as helper
@@ -222,7 +223,13 @@ def get_appdef_for_app(appver: str, plugins: PluginEngine, ctx) -> artifact_mode
         if result is not None:
             return result
     app_defs_path = str(ctx.committed_regdefs_dir.parent / APPDEFS_DIRNAME.lower())
+    logger.info(f"app_defs_path '{app_defs_path}'")
+    logger.info(f"app_name '{app_name}'")
+    logger.info("Files inside app definitions directory:")
+    for file in os.listdir(app_defs_path):
+        logger.info(file)
     reg_defs_path = str(ctx.transient_regdefs_dir or ctx.committed_regdefs_dir)
+    logger.info(f"reg_defs_path '{reg_defs_path}'")
     app_def_path = identify_yaml_extension(f"{app_defs_path}/{app_name}")
     app_dict = helper.openYaml(app_def_path, safe_load=True)
     reg_def_path = identify_yaml_extension(f"{reg_defs_path}/{app_dict['registryName']}")
