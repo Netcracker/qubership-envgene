@@ -52,8 +52,8 @@ the first stage.
 | 6 | verify | `envgene-verification` | `verify` rows at HEAD for every command in AGENTS.md Commands, exit 0 or no new failure against the baseline |
 | 7 | review | `envgene-review` | review row at HEAD: `ready` or `ready with fixes`, every critical and important finding fixed or answered |
 | 8 | docs | `envgene-documentation` | `gate: docs check passes @ <sha>` at HEAD |
-| 9 | finish | `envgene-finish` | `gate: code approved by <owner> on PR #<n> @ <sha>, checks green` |
-| 10 | archive | `envgene-finish` | `gate: archived as the last commit …`; then merged by a person (read from the PR) |
+| 9 | finish | `envgene-finish` | `gate: code approved by <owner> on MR !<n> @ <sha>, checks green` |
+| 10 | archive | `envgene-finish` | `gate: archived as the last commit …`; then merged by a person (read from the MR) |
 
 Debug is entered from any stage on a failure and returns to the stage that failed.
 
@@ -64,7 +64,7 @@ orchestration-level helpers). Check the name in `.claude/skills/` before a stage
 slot must not be run in its place.
 
 Archive is a stage of its own, as in the factory design, but it runs before the merge: the archive commit is the last
-commit of the PR, so the merge brings the updated `openspec/specs/` with the code. `component-flow` has no archive
+commit of the GitLab MR, so the merge brings the updated `openspec/specs/` with the code. `component-flow` has no archive
 slot, so `envgene-finish` runs both stages.
 
 ## Transitions

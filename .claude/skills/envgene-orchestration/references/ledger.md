@@ -43,8 +43,8 @@ A gate is passed by a row with the gate word `gate:` in the result column. Each 
 | lint | `envgene-verification` | a `verify` row for the lint command at HEAD: `<n> errors @ <sha>` | exit 0 |
 | review | `envgene-review` | `gate: review <ready\|ready with fixes\|not ready> by envgene-reviewer @ <sha>, <n> critical, <n> important, <n> minor` | verdict `ready` or `ready with fixes`, no open critical or important |
 | docs | `envgene-documentation` | `gate: docs check passes @ <sha>` | `reviewing-docs` has no open findings; `discrepancy-audit` finds no contradiction with the code or schema, or the ledger says why it was skipped; the lint row at HEAD is exit 0 |
-| finish | `envgene-finish` | `gate: code approved by <owner> on PR #<n> @ <sha>, checks green` | owner approval read from the PR; GitHub Actions checks green for that commit |
-| archive | `envgene-finish` | `gate: archived as the last commit, openspec validate --all --strict exit 0 @ <sha>` | archive commit is the last commit; the merge by a person is read from the PR and posted as a PR comment |
+| finish | `envgene-finish` | `gate: code approved by <owner> on MR !<n> @ <sha>, checks green` | owner approval read from the GitLab MR; its pipeline green for that commit; a GitHub PR, when there is one, merged and its image referenced in the MR |
+| archive | `envgene-finish` | `gate: archived as the last commit, openspec validate --all --strict exit 0 @ <sha>` | archive commit is the last commit; the merge by a person is read from the GitLab MR and posted as an MR comment |
 
 ## Rules
 
