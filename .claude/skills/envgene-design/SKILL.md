@@ -68,4 +68,3 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
 
 - The developer accepts the decision. The agent proposes and records it; it does not accept it for the developer.
 - The general rules of `envgene-orchestration` (section Rules) apply.
-</content>
