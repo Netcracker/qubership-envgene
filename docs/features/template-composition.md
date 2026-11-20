@@ -58,6 +58,7 @@ This diagram shows parent and child templates with their components. The color o
      - Cloud template (override allowed)
      - Namespace template (override allowed)
    - **Overridable Attributes** (for Cloud/Namespace templates only):
+     - `name`
      - `profile`
      - `deployParameters`
      - `e2eParameters`
@@ -133,6 +134,10 @@ The sequence below describes how composition is executed during template build.
    - Create the resulting descriptor as a copy of the child descriptor, then remove `parent-templates` from that resulting descriptor.
    - If `tenant: { parent: <parent-key> }` is used, replace child `tenant` with the `tenant` value from the parent template descriptor referenced by `<parent-key>`.
    - If `cloud: { parent: <parent-key> }` is used, replace child `cloud` with the `cloud` value from the parent template descriptor referenced by `<parent-key>`.
+     - In a descriptor with `parent-templates`, a `cloud` object must have `parent`. The build fails without it.
+     - If the child `cloud` has `overrides-parent` and the parent `cloud` is a path string, the result is an object with
+       that path as `template_path`.
+     - Other attributes of the child `cloud` are ignored, except `overrides-parent`. See step 8.
    - If top-level `tenant`, `cloud` or `composite_structure` are missing in child, they are inherited from the first matching parent in namespace iteration order (`first parent wins`) and are not overwritten later.
 
 7. **Process namespaces**
@@ -142,27 +147,63 @@ The sequence below describes how composition is executed during template build.
      - Otherwise by `name`. When `deploy_postfix` is set, preprocessing first matches both `name` and `deploy_postfix`, then falls back to matching `name` only when no such parent namespace exists.
    - The child `name` becomes the namespace name in the generated descriptor. `parent_namespace_template_name` selects the inherited parent namespace only and is not included in the generated descriptor.
    - Then, if the child namespace defines `template_path`, overwrite the inherited `template_path` with the child value.
+   - The resulting namespace is a copy of the parent namespace, including its `template_override`. Only `name`,
+     `template_path`, and `deploy_postfix` of the child namespace replace the copied values. EnvGene ignores a
+     `template_override` in the child namespace.
 
 8. **Apply `overrides-parent` (Cloud and Namespace only)**
 
-   - Parameter maps (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) are merged into `template_override`.
-   - Parameter set lists (`deployParameterSets`, `e2eParameterSets`, `technicalConfigurationParameterSets`) are appended into `template_override`.
+   - `name` is written to `template_override.name`.
+   - Parameter maps (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) are merged into
+     `template_override`. EnvGene merges them recursively into the `template_override` that the Cloud or Namespace
+     inherited from the parent template. The value from `overrides-parent` wins on a conflict. EnvGene merges lists
+     inside the maps by `name`: it merges items with the same `name` recursively and appends the other items.
+   - Parameter set lists (`deployParameterSets`, `e2eParameterSets`, `technicalConfigurationParameterSets`) are appended
+     into `template_override`, after the entries that the inherited `template_override` already has. EnvGene does not
+     remove duplicates at build time.
    - **Override priority within `overrides-parent`:**
      - Parameter sets (e.g. `deployParameterSets`) have **higher priority** than directly specified parameters (e.g. `deployParameters`). If the same key is defined in both, the value from the parameter set wins.
      - Within a parameter set list, each successive entry has **higher priority** than the previous one — the last entry in the list wins if the same key appears in multiple sets.
    - `profile` override has two modes:
      - default mode (`merge-with-parent` is false or not set): use the override profile as the resulting profile reference;
+       - `profile.name` is `override-profile-name`, or `parent-profile-name` if `override-profile-name` is not set.
+       - `profile.baseline` is `baseline-profile-name`, when it is set.
+       - EnvGene does not read or merge any profile file in this mode, so Jinja profiles are allowed.
      - merge mode (`merge-with-parent: true`): merge override profile content into the selected parent profile and use the merged result.
+       - `override-profile-name` and `parent-profile-name` are mandatory.
+       - The `override-profile-name` profile must exist in `templates/resource_profiles` of the child template. The
+         `parent-profile-name` profile must exist in the parent template artifact.
+       - Neither profile can be a Jinja file.
+       - EnvGene saves the merged profile as `resource_profiles/<override-profile-name>.yml` in the output.
+         `profile.name` is `override-profile-name`, and `profile.baseline` is `baseline-profile-name`, when it is set.
+         The saved file overwrites a file with the same name from the child template.
+       - The build fails if a name is missing, a profile does not exist, or a profile is a Jinja file.
    - `tenant` does not support `overrides-parent` in template composition (inherit-only behavior).
+   - EnvGene does not render Jinja expressions in any `overrides-parent` value during the build. It renders them during
+     Environment Instance generation, for example a Jinja expression in `name`.
+   - The generated descriptor does not contain `overrides-parent`. If the result is empty, it does not contain
+     `template_override` either.
 
 9. **Persist output**
 
    - Save composed descriptor to output `env_templates`.
    - Save generated/merged resource profiles to output `resource_profiles`.
 
-10. **Resulting artifact**
+10. **Validate ParameterSets**
 
-   The output is a regular EnvGene template artifact and does not require special runtime handling.
+    After EnvGene processes all descriptors, it checks the resulting template. This step runs on every template build,
+    with or without `parent-templates`.
+
+    - Each ParameterSet file in `parameters`, including files copied from parent templates, must have a `name`
+      attribute that matches its filename.
+    - Each ParameterSet name that a file under `env_templates` references in `deployParameterSets`, `e2eParameterSets`,
+      or `technicalConfigurationParameterSets` must exist in `parameters`. This includes the names that
+      `overrides-parent` adds. EnvGene does not check names that contain Jinja expressions.
+    - The build fails if a check fails.
+
+11. **Resulting artifact**
+
+    The output is a regular EnvGene template artifact and does not require special runtime handling.
 
 > [!IMPORTANT]
 > File precedence is copy-order based. If the same file path exists in multiple sources, the last copied file wins.

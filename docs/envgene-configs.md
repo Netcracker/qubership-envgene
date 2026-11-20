@@ -375,13 +375,6 @@ crypt_backend: enum [`SOPS`]
 # `auto` - Artifact Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # Optional. Default value - `auto`
-# Defines the auto-discovery mode for Application and Registry Definitions
-# Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
-# `local` - Only repository-located Application and Registry Definitions are used for application:version resolution
-# `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
-# `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
-app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
-# Optional. Default value - `auto`
 # Selects the source of truth for an application artifact coordinates (its Helm chart URL and its container image URL)
 # Used by both SBOM generation and the deploy side
 # `auto` - Use the Deployment Descriptor embedded chart/image coordinates when present. Reconstruct them from the Registry Definition only when the Deployment Descriptor was obfuscated at delivery
