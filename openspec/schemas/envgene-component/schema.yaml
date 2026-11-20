@@ -86,7 +86,9 @@ artifacts:
       - **Decision**: The chosen approach and who accepted it (the ledger row of the design gate).
       - **Contracts**: One line per interface the change exposes or consumes, with an id (C-1, C-2, ...).
         Every id is covered by the plan. A contract without a line here blocks plan.
-      - **Constraints**: The team rules from the envgene-code-review skill, one line each.
+      - **Constraints**: Constraints specific to this change (limits, formats, compatibility, values the
+        code must keep), one line each. The team rules of envgene-code-review apply to every change and
+        are not copied here.
       - **Out of scope**: What is deliberately not done.
       - **Open Questions**: Only items that do not change the specs, the approach or the tasks.
         If an open question would change them, resolve it with the developer first.

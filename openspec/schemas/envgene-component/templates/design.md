@@ -26,7 +26,7 @@
 
 ## Constraints
 
-<!-- Team rules from envgene-code-review, one line each -->
+<!-- Constraints specific to this change, one line each. The envgene-code-review rules are not copied here -->
 
 ## Out of Scope
 

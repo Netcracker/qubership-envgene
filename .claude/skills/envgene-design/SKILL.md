@@ -50,7 +50,8 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
    - Work map, Approaches, Decision, Out of Scope, Open Questions as in the template;
    - **Contracts:** one line per interface the change exposes or consumes, with an id (`C-1`, `C-2`, ...), and how the
      decision meets it. A contract without a line blocks plan;
-   - **Constraints:** one line per rule of sections 2 to 5 of `.claude/skills/envgene-code-review/SKILL.md`.
+   - **Constraints:** one line per constraint specific to this change (limits, formats, compatibility, values the
+     code must keep). The team rules of `envgene-code-review` apply to every change and are not copied here.
 7. **Scope check.** If the decision changes the scope, the set of tasks or a spec, stop: the change returns to the
    propose gate. A change that only refines the implementation may update `tasks.md` without a new approval.
 8. **Validate.** `openspec validate <id> --strict --no-interactive; echo "exit=$?"`, then the row:
