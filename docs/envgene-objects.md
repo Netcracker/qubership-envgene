@@ -73,13 +73,14 @@ The name of this file serves as the name of the Environment Template. In the Env
 **Supported file extensions:**
 
 - `.yml` / `.yaml` — Static Template Descriptor
-- `.yml.j2` / `.yaml.j2` — Jinja Template Descriptor (rendered before Environment Instance generation)
 
 When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in descending priority order: `yml.j2` > `yaml.j2` > `yml` > `yaml`. Jinja Template Descriptors enable conditional namespace inclusion. See [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) for details.
 
 It has the following structure:
 
 ```yaml
+# Jinja expressions are not supported in the Template Descriptor
+
 # Optional
 # Free-form text describing the purpose of this Template Descriptor
 description: string
@@ -116,21 +117,45 @@ cloud:
   parent: string
   # Optional
   # Template Composition configuration
+  # Overrides applied to the Cloud inherited from the parent template. Requires `parent`
   # See details in /docs/features/template-composition.md
   overrides-parent:
     # Optional
     # Override the name of the cloud in rendering result
     name: string
+    # Optional
+    # Resource Profile Override of the Cloud
     profile:
+      # Optional
+      # Resource Profile Override from this template repository. Mandatory if `merge-with-parent` is `true`
+      # If not specified, `parent-profile-name` is used as the profile name
       override-profile-name: <resource-profile-override-name>
+      # Optional
+      # Resource Profile Override from the parent template. Mandatory if `merge-with-parent` is `true`
       parent-profile-name: <resource-profile-override-name>
+      # Optional
+      # Baseline Resource Profile of the resulting profile
       baseline-profile-name: <resource-profile-baseline-name>
+      # Optional. Default value - `false`
+      # `true` - `override-profile-name` is merged into `parent-profile-name`. Jinja Resource Profiles are not supported
       merge-with-parent: <boolean>
+    # Optional
+    # Merged into the parameters of the parent Cloud. The values from `overrides-parent` win on a conflict
     deployParameters: <hashmap-with-parameters>
+    # Optional
+    # Merged into the parameters of the parent Cloud. The values from `overrides-parent` win on a conflict
     e2eParameters: <hashmap-with-parameters>
+    # Optional
+    # Merged into the parameters of the parent Cloud. The values from `overrides-parent` win on a conflict
     technicalConfigurationParameters: <hashmap-with-parameters>
+    # Optional
+    # ParameterSet names appended to the list of the parent Cloud
     deployParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSet names appended to the list of the parent Cloud
     e2eParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSet names appended to the list of the parent Cloud
     technicalConfigurationParameterSets: <list-with-parameter-sets>
 # Optional
 composite_structure: <path-to-the-composite-structure-template-file>
@@ -178,21 +203,45 @@ namespaces:
     parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
+    # Overrides applied to the Namespace inherited from the parent template. Requires `parent`
     # See details in /docs/features/template-composition.md
     overrides-parent:
       # Optional
       # Override the name of the namespace in rendering result
       name: string
+      # Optional
+      # Resource Profile Override of the Namespace
       profile:
+        # Optional
+        # Resource Profile Override from this template repository. Mandatory if `merge-with-parent` is `true`
+        # If not specified, `parent-profile-name` is used as the profile name
         override-profile-name: string
+        # Optional
+        # Resource Profile Override from the parent template. Mandatory if `merge-with-parent` is `true`
         parent-profile-name: string
+        # Optional
+        # Baseline Resource Profile of the resulting profile
         baseline-profile-name: string
+        # Optional. Default value - `false`
+        # `true` - `override-profile-name` is merged into `parent-profile-name`. Jinja Resource Profiles are not supported
         merge-with-parent: boolean
+      # Optional
+      # Merged into the parameters of the parent Namespace. The values from `overrides-parent` win on a conflict
       deployParameters: hashmap
+      # Optional
+      # Merged into the parameters of the parent Namespace. The values from `overrides-parent` win on a conflict
       e2eParameters: hashmap
+      # Optional
+      # Merged into the parameters of the parent Namespace. The values from `overrides-parent` win on a conflict
       technicalConfigurationParameters: hashmap
+      # Optional
+      # ParameterSet names appended to the list of the parent Namespace
       deployParameterSets: list
+      # Optional
+      # ParameterSet names appended to the list of the parent Namespace
       e2eParameterSets: list
+      # Optional
+      # ParameterSet names appended to the list of the parent Namespace
       technicalConfigurationParameterSets: list
       template_path: string
 ```
