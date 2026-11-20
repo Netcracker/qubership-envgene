@@ -9,7 +9,7 @@
 
 ## Approaches
 
-<!-- 2-3 approaches with trade-offs and a recommendation -->
+<!-- 2-3 approaches with trade-offs and a recommendation; then each shape the brainstorm dropped, one line with the reason -->
 
 ## Decision
 

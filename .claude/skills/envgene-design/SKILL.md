@@ -1,6 +1,6 @@
 ---
 name: envgene-design
-description: EnvGene override of the component-design slot. Runs after the propose gate and before plan, for every change - including one the upstream workspace handed off. Agrees the approach with the developer (2-3 approaches, one decision), defines the contracts the change exposes or consumes, and writes openspec/changes/<id>/component-design.md, the component's own design (HOW + Contracts + Constraints). A design.md the upstream workspace hands off is a read-only WHAT/HLD input, never the component design; this stage always writes component-design.md. Use when a change has its propose gate row.
+description: EnvGene override of the component-design slot. Runs after the propose gate and before plan, for every change - including one the upstream workspace handed off. Brainstorms HOW with the developer, then agrees the approach (2-3 approaches, one decision), defines the contracts the change exposes or consumes, and writes openspec/changes/<id>/component-design.md, the component's own design (HOW + Contracts + Constraints). A design.md the upstream workspace hands off is a read-only WHAT/HLD input, never the component design; this stage always writes component-design.md. Use when a change has its propose gate row.
 ---
 
 # EnvGene design (override of component-design)
@@ -32,8 +32,8 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
    `docs/adr/` that the change names. The ADR holds the system-level options and their consequences; do not re-argue
    them without new facts. Then `tasks.md`. For a hand-off, read its `design.md` as the WHAT/HLD input (its
    approaches, decisions, contracts and open questions): build on it, do not re-argue its WHAT. Whatever it left to
-   the component owner is a question to ask in step 3.
-2. **Work map, then brainstorm.** Before proposing an approach, write the Work map from the design template: one row
+   the component owner is open for step 3; what it decided is a constraint there.
+2. **Work map.** Before proposing an approach, write the Work map from the design template: one row
    per requirement or spec scenario, with its file or function in this repository, its status (`tracked`,
    `new-in-repo` or `not-in-repo`) and evidence from the repository. Verify `tracked` rows with `git ls-files` at the
    current commit; do not guess. If a named target is absent and belongs to a sibling repository, mark
@@ -41,13 +41,30 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
    Do not turn it into an approach. Once every row is `tracked` or `new-in-repo`, map the code paths that handle each
    spec scenario and turn each ADR consequence into a constraint. What the code does not settle is a question, not an
    assumption.
-3. **Questions.** Ask the developer what the specs, the ADR and the code do not settle. Ask in one batch, not one by one.
-4. **Approaches.** Propose 2-3 component-level approaches with trade-offs and a recommendation. Stop until the
-   developer chooses.
+3. **Brainstorm - diverge on HOW.** With the developer, over what the inputs leave open: everything the proposal,
+   the specs, the ADR and an upstream `design.md` decided is a constraint, not an option. The method is adapted from
+   the superpowers brainstorming skill (see Attribution):
+   - Open questions before options: what the developer already has in mind, which code they want reused or left
+     alone, and the anti-goals - what would make the implementation a failure even if every scenario passes
+     (coupling, a migration, performance, a second way to do the same thing).
+   - One question at a time. Prefer multiple choice when the developer is unsure; offer a concrete guess they can
+     correct when they say "you decide".
+   - Widen before narrowing: list every shape that could meet the specs and the contracts, including "change less",
+     "reuse what exists" and "no new code". Do not judge them yet.
+   - Play your understanding back in small chunks, and separate what the developer said from what you assume.
+   - A behaviour question is not a HOW option: a parameter, an error path or a mode the specs do not settle, or a
+     scenario the code shows is wrong (with the trace). Stop design and take it back to whoever wrote the specs - the
+     analysis phase, the upstream workspace, or the team for its own change. A spec change re-opens the propose gate.
+
+   Do not invoke a brainstorming skill as a live skill even if one is present: it brings its own approval gate and
+   design document, which collide with the design gate and `component-design.md`.
+4. **Converge.** Ask in one batch what is still unsettled. Then pick 2-3 component-level approaches from the
+   brainstorm list, with trade-offs and a recommendation. Stop until the developer chooses.
 5. **Decision.** Record the chosen approach and who chose it:
    `| <time> | design | - | - | approach <x> chosen by <developer>, <chat or MR> |`.
 6. **Write `component-design.md`** from the design template `envgene-component/templates/design.md`:
    - Work map, Approaches, Decision, Out of Scope, Open Questions as in the template;
+   - **Approaches** also lists each shape the brainstorm dropped, one line with the reason;
    - **Contracts:** one line per interface the change exposes or consumes, with an id (`C-1`, `C-2`, ...), and how the
      decision meets it. A contract without a line blocks plan;
    - **Constraints:** one line per constraint specific to this change (limits, formats, compatibility, values the
@@ -68,3 +85,7 @@ upstream `design.md`; the stage writes `component-design.md` from `proposal.md`,
 
 - The developer accepts the decision. The agent proposes and records it; it does not accept it for the developer.
 - The general rules of `envgene-orchestration` (section Rules) apply.
+
+## Attribution
+
+The brainstorm step adapts the brainstorming method from obra/superpowers (MIT, Copyright (c) 2025 Jesse Vincent).
