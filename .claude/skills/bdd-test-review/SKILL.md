@@ -228,8 +228,8 @@ Publication, only on the user's explicit command:
 
 1. Translate to English (chat iterations may be Russian, the published artifact ships in English).
 2. Critic-author loop: a FRESH-context agent checks translation fidelity against the source, internal
-   consistency, 3-4 repository spot-facts, and house style (no semicolons, no em or en dashes, aligned table
-   pipes, prose at 120 chars). Fix and re-run until a clean round. If the user capped the iterations and
+   consistency, 3-4 repository spot-facts, and the `writing-style` house voice. Fix and re-run until a
+   clean round. If the user capped the iterations and
    complaints remain at the cap, stop and surface them instead of publishing. Critic findings are
    advisory: verify each against the report-format intent before applying, since a fresh-context critic
    lacks the review's reasoning and can over-reach - for example demanding a format change these rules

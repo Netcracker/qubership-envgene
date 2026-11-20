@@ -18,12 +18,14 @@ description: >-
 
 # Reviewing docs
 
-This skill reviews documentation someone has written. It is the discriminator counterpart to `writing-docs`
-(the generator): `writing-docs` holds the rules for how text is written, and this skill applies them plus a
-method that catches what rule-by-rule scanning misses.
+This skill reviews documentation someone has written. It is the discriminator counterpart to the writing
+skills (the generators): `writing-style` holds the house voice (prose, formatting, accuracy, vocabulary) and
+`writing-docs` holds the document-authoring layer (Diataxis structure, mechanics, examples, samples). This
+skill applies both plus a method that catches what rule-by-rule scanning misses.
 
-Read the rules you review against from `writing-docs`
-(`.claude/skills/writing-docs/references/`) - do not restate them here. This skill is the procedure.
+Read the rules you review against from `writing-style` (`.claude/skills/writing-style/references/`) for the
+voice and from `writing-docs` (`.claude/skills/writing-docs/references/`) for the document structure - do
+not restate them here. This skill is the procedure.
 
 ## Why a method, not a checklist
 
@@ -149,7 +151,7 @@ inlined sample. Do not drop a sweep because the change looks clean to you; run i
 
 - **Vocabulary.** Does the change coin new labels for concepts the product already names? Grep the docs,
   schemas, and code for the established term and flag coinages. (See "Use existing vocabulary" in
-  `writing-docs`.) Also check one term, one capitalization across all touched files - a term written three
+  `writing-style`.) Also check one term, one capitalization across all touched files - a term written three
   ways across H1, index, and a sample README is a consistency finding.
 - **Index and naming coherence.** Are new docs in both index readmes, under the correct section (a
   configuration guide filed under "Migrations" is a finding)? Do title, filename, and index entry agree?
@@ -195,7 +197,10 @@ review (a single body grouped as above) unless the user asks for inline per-line
 
 ## Relationship to other skills
 
-- **writing-docs** - the rules this skill reviews against. Load it; do not duplicate its rules here.
+- **writing-style** - the house voice this skill reviews against (prose, formatting, accuracy, vocabulary).
+  Load it; do not duplicate its rules here.
+- **writing-docs** - the document-authoring rules this skill reviews against (structure, mechanics,
+  examples, samples). Load it; do not duplicate its rules here.
 - **envgene-code-review** - code, not docs.
 - **bdd-test-review** - a PR judged through its BDD scenarios and test data.
 - **discrepancy-audit** - the explicit-trigger, report-only doc-vs-code-vs-schema reconciliation. This skill

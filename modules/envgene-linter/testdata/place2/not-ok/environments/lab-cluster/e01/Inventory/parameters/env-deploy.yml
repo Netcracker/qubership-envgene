@@ -1,0 +1,4 @@
+name: env-deploy
+parameters:
+  LOG_LEVEL: info
+  REPLICA_COUNT: 3

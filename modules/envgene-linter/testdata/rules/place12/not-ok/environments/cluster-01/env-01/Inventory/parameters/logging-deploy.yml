@@ -1,0 +1,3 @@
+name: "logging-deploy"
+parameters:
+  APP_LOG_LEVEL: "info"

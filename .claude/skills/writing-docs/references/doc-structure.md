@@ -1,24 +1,23 @@
 # Document structure and voice
 
-How to structure a document and shape its sections: the Diataxis document types, and the voice and
-structure rules that keep each section carrying only what it uniquely contributes.
+How to structure a document and shape its sections: the Diataxis document types as a cross-type map, and
+the cross-type voice and structure rules that keep each section carrying only what it uniquely contributes.
+Rules specific to one document type live in that type's reference (for example feature-doc rules in
+`references/feature.md`, how-to rules in `references/how-to.md`), not here.
 
 - [Document structure and voice](#document-structure-and-voice)
   - [Documentation structure (Diataxis framework)](#documentation-structure-diataxis-framework)
     - [Documentation types](#documentation-types)
     - [When creating documentation](#when-creating-documentation)
-    - [Multi-approach how-to guides](#multi-approach-how-to-guides)
   - [Section voice and structure](#section-voice-and-structure)
     - [Section adds only what it uniquely contributes](#section-adds-only-what-it-uniquely-contributes)
     - [Section value audit](#section-value-audit)
     - [Don't silently extend the spec](#dont-silently-extend-the-spec)
-    - [Observable behavior over implementation detail](#observable-behavior-over-implementation-detail)
     - [Avoid duplication in description](#avoid-duplication-in-description)
       - [❌ Incorrect (duplicated info)](#-incorrect-duplicated-info)
       - [✅ Correct (concise, mentioned once)](#-correct-concise-mentioned-once)
     - [Declarative tone](#declarative-tone)
     - [Tables: one fact per row](#tables-one-fact-per-row)
-    - [Validation rule sections](#validation-rule-sections)
   - [Document scope and naming](#document-scope-and-naming)
     - [Title names the job](#title-names-the-job)
     - [One document, one job](#one-document-one-job)
@@ -30,13 +29,11 @@ This repository follows the [Diataxis documentation framework](https://github.co
 
 ### Documentation types
 
-1. **How-to Guides** (`/docs/how-to/`)
-   - Goal-oriented, practical steps
-   - Solve specific problems
-   - Minimal theory, maximum action
-   - Terse recipes for a reader who knows the domain; omit filler steps such as "open the file"
-   - If a tutorial covers the topic, do not re-teach it end to end
-   - Target: ~200-400 lines
+This is the cross-type map: one line per Diataxis quadrant, so a doc lands in the right directory. For the
+per-type detail - the canonical shape, line targets, and do/don't specifics - read that type's reference.
+
+1. **How-to Guides** (`/docs/how-to/`) - goal-oriented, terse recipes for a task the reader came to do.
+   See [`references/how-to.md`](/.claude/skills/writing-docs/references/how-to.md).
 
 2. **Explanation** (`/docs/features/`)
    - Conceptual understanding
@@ -44,16 +41,18 @@ This repository follows the [Diataxis documentation framework](https://github.co
    - Background and context
    - Design decisions and trade-offs
 
-3. **Reference** (`/docs/`)
-   - Technical specifications
-   - Object schemas
-   - API documentation
-   - Factual, precise
+3. **Reference** (`/docs/`) - factual, precise lookup registers with no "why" narrative. The catalog splits
+   this quadrant into five per-type references: an object-model reference
+   ([`references/object-model-reference.md`](/.claude/skills/writing-docs/references/object-model-reference.md)),
+   a parameter catalog ([`references/parameter-catalog.md`](/.claude/skills/writing-docs/references/parameter-catalog.md)),
+   a macro catalog ([`references/macro-catalog.md`](/.claude/skills/writing-docs/references/macro-catalog.md)),
+   a policy or architecture note
+   ([`references/policy-architecture-note.md`](/.claude/skills/writing-docs/references/policy-architecture-note.md)),
+   and the glossary ([`references/glossary.md`](/.claude/skills/writing-docs/references/glossary.md)).
 
-4. **Tutorials** (`/docs/tutorials/`)
-   - Learning-oriented
-   - Step-by-step for beginners
-   - Complete working example
+4. **Tutorials** (`/docs/tutorials/`) - learning-oriented, a complete worked example that teaches a
+   beginner one capability end to end. See
+   [`references/tutorial.md`](/.claude/skills/writing-docs/references/tutorial.md).
 
 ### When creating documentation
 
@@ -71,45 +70,6 @@ This repository follows the [Diataxis documentation framework](https://github.co
 - Create long (>500 lines) how-to guides
 - Include detailed theory in practical guides
 - Use fantasy/made-up examples
-
-### Multi-approach how-to guides
-
-A how-to that presents several valid approaches to the same task must help the reader choose, not just list
-recipes. Apply this pattern only when a how-to genuinely covers multiple approaches; it is not a universal
-requirement for every how-to.
-
-When a how-to covers more than one approach:
-
-1. Name each approach by the reader's goal so the table of contents itself becomes the decision index.
-   Well-named approaches plus the one-line "When to use" below usually let a reader jump straight to the
-   right one. Add a separate decision table only when the names alone cannot disambiguate the approaches.
-2. Give each approach a one-line "When to use" that states the condition under which it is the right
-   choice, not an explanation of how it works.
-3. Mark the recommended approach and add a short NOTE flagging the common wrong path (the anti-pattern)
-   so readers do not take it by default.
-4. Keep deep rationale and trade-offs out of the how-to. Put the "why" in the feature (explanation) doc
-   and cross-link it. The how-to stays action-oriented.
-5. Put full, copyable example files under `docs/samples/` and reference them rather than inlining every
-   approach's complete files, so the how-to stays within the target length.
-
-❌ **INCORRECT:**
-
-- A how-to that lists several approaches with steps but provides no guidance on which to pick.
-- A how-to that embeds paragraphs of trade-off rationale inline next to each approach.
-
-✅ **CORRECT:**
-
-- Approaches named by goal so the table of contents is the decision index, with a separate table added
-  only when names cannot disambiguate.
-- Each approach has a one-line "When to use" and a marked recommended path.
-- Rationale and trade-offs are cross-linked to the feature (explanation) doc, not inlined.
-
-**Scope:** Applies to new and modified content only.
-
-**Why:** When a task has several valid approaches, the reader's hardest step is choosing. A bare list of
-recipes without guidance on which to pick fails them at that step. Keeping the trigger to one line and
-moving rationale to the feature doc preserves the Diataxis separation of how-to from explanation and
-keeps the guide within its target length.
 
 ---
 
@@ -190,34 +150,6 @@ as an open question and write the section against the current spec.
 
 **Why:** Spec changes propagate to validation rules, schemas, tooling, and migration. They deserve
 explicit decisions, not implicit drafting assumptions.
-
----
-
-### Observable behavior over implementation detail
-
-Documentation works best when it foregrounds observable behavior - what users, downstream tools, or
-consuming systems can rely on. Internal mechanism - phases, ordering of components, runtime fallback
-paths - is worth including when it is part of what readers depend on. Otherwise the observable outcome
-often communicates more clearly.
-
-A useful self-check: would a reasonable alternative implementation that produces the same outcome
-invalidate this paragraph? If yes, the mechanism is load-bearing - keep it. If no, the observable
-outcome alone may carry the message.
-
-❌ **INCORRECT** (when mechanism is not load-bearing):
-
-- Describing the sequence of internal components (step 1: X reads file. Step 2: Y exports value).
-- Naming runtime phases that have no user-visible meaning.
-
-✅ **CORRECT:**
-
-- Stating the observable outcome (the value is available to downstream consumer Y).
-- Documenting mechanism only when it is part of the commitment (timing, atomicity, ordering).
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Implementation choices evolve faster than the observables they deliver. Documenting mechanism
-that is not load-bearing forces stale doc updates with every implementation change.
 
 ---
 
@@ -333,50 +265,6 @@ the document already defines, not invented labels.
 
 **Why:** Tables in documentation are dense lookups. Composite cells and free-text columns reduce their
 lookup value.
-
----
-
-### Validation rule sections
-
-**When documenting semantic validation rules in a feature spec, group them by phase, state invariants
-declaratively, and factor out shared failure behavior into a single note.**
-
-A validation section catalogs semantic checks the system applies on top of schema validation. The pattern:
-
-1. **Open with a note that establishes shared context** - what schema validation already covers, the
-   default failure behavior (fail vs warn), and the error-message contract. Do not repeat these in
-   each rule.
-2. **Group rules by phase** - each phase (a generation stage, an import operation, a runtime check)
-   gets its own subsection.
-3. **State invariants, not actions** - write what must be true. The reader infers the negative case.
-4. **Name each rule** with a short bold noun-phrase followed by a period, then the explanation.
-5. **Mark exceptions inline** - non-failure cases (warnings, deferred checks) are noted in the rule
-   name itself.
-6. **Cross-link, do not restate** - reference the canonical object definitions and field semantics
-   rather than duplicating them.
-
-❌ **INCORRECT:**
-
-- Describing the validator's actions ("The validator iterates over...", "The check runs after...")
-  instead of the invariant.
-- Repeating "If this fails, generation stops with an error" in every rule.
-- Listing field constraints already documented in the object schema.
-- Mixing rules across phases in one undifferentiated list.
-
-✅ **CORRECT:**
-
-- "Every X of type Y has a Z field referencing a known W." (invariant form)
-- A single note block at the top of the section describing the default failure behavior and the
-  error-message contract.
-- Cross-link to the object definition for field semantics.
-- Subsections per phase ("During X generation", "During Y import").
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Declarative invariants are easier to scan and harder to misinterpret than procedural
-descriptions of validator behavior. Phase grouping helps readers locate rules relevant to the
-operation they care about. Shared failure semantics factored out reduces noise and prevents
-inconsistencies between rules.
 
 ---
 

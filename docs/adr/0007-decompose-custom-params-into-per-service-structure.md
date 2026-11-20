@@ -40,4 +40,4 @@ Rejected:
 - Custom params cannot override image or artifact metadata, so an override that needs a different tag,
   registry, or image has no path through this mechanism.
 
-See ticket JCPR-3049 for the tracked implementation.
+See the tracked implementation ticket.

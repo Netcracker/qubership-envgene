@@ -1,0 +1,3 @@
+REFERENCE: '{{ lookup("ansible.builtin.env", "EXAMPLE_REFERENCE") | default("") }}'
+PARAMETERS: "{{ PARAMETERS | default({}) | to_nice_yaml(indent=2) }}"
+CUSTOM: "{{ PARAMETERS | default({}) | unavailable_filter }}"
