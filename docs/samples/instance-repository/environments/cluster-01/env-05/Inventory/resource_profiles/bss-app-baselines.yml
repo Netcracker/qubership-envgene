@@ -1,0 +1,5 @@
+---
+name: "bss-app-baselines"
+applications:
+- name: "app-a"
+  baseline: "prod"

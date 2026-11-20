@@ -912,16 +912,16 @@ inventory:
 ### VAL-9 - One Resource Profile Override per key, as a string (SHOULD)
 
 Each `envSpecificResourceProfiles` entry maps a namespace key (or `cloud`) to the name of one Resource
-Profile Override, written as a string. The sibling fields `envSpecificParamsets`, `envSpecificE2EParamsets`,
-and `envSpecificTechnicalParamsets` take a list, but this field does not. EnvGene resolves the value as a
-single filename, so a list matches no file and generation fails, and the schema rejects a non-string value.
+Profile Override, written as a string. Do not write a list by hand. A list appears only when the
+[`PROFILE`](/docs/instance-pipeline-parameters.md#profile) pipeline parameter adds
+`<deploy-postfix>-profile-override` to the entry.
 
 ```yaml
 # OK - one override name, as a string
 envSpecificResourceProfiles:
   core: "core-prod-override"
 
-# Not OK - a list is not supported here, generation fails to resolve it
+# Not OK - a list written by hand
 envSpecificResourceProfiles:
   core: ["core-prod-override"]
 ```

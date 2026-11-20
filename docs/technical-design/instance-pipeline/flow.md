@@ -16,6 +16,7 @@
       - [1.12 step `deploy_postfix_namespace_map`](#112-step-deploy_postfix_namespace_map)
       - [1.13 step `process_sd`](#113-step-process_sd)
       - [1.14 step `generate_deployment_plan`](#114-step-generate_deployment_plan)
+      - [1.14.1 step `apply_deployment_profile` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#1141-step-apply_deployment_profile-to-be-implemented-not-implemented-yet)
       - [1.15 step `env_build`](#115-step-env_build)
       - [1.16 step `generate_effective_set`](#116-step-generate_effective_set)
       - [1.17 step `git_commit`](#117-step-git_commit)
@@ -462,6 +463,37 @@ Functions:
       - writes the repository plan minus the cleaned namespaces (no delta, no plan passed to the calculator)
     - AI[bgd]: Add the functions
 
+#### 1.14.1 step `apply_deployment_profile` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
+
+Design: [`apply_deployment_profile`](/docs/technical-design/instance-pipeline/steps/apply-deployment-profile.md)
+
+Triggers:
+
+- `OPERATION_TYPE: DEPLOY` and
+- `PROFILE` is set and not empty and
+- `PIPELINE_TYPE: GITLAB_DEPLOY`, or `PIPELINE_TYPE: LEGACY` with `SD_VERSION` or `SD_DATA` set,
+  `ENV_BUILDER: true`, and `GENERATE_EFFECTIVE_SET: true`
+
+When `PROFILE` is set and the step is skipped, log a warning that `PROFILE` has no effect.
+
+Functions:
+
+1. `apply_deployment_profile`
+    - input:
+      - `PROFILE`
+      - `delta-deploy-plan.yml`, or `deploy-plan.yml` at `PIPELINE_TYPE: LEGACY` when the delta is empty
+      - `bg_domain.yml` for a Blue-Green `deployPostfix`
+      - `env_definition.yml` (`envTemplate.envSpecificResourceProfiles`)
+    - output:
+      - `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml`, created or updated
+      - updated `env_definition.yml` when the PROFILE override is not the last item of the Namespace key
+    - actions:
+      - group the applications of the run delta by `<deploy-postfix>`: `deployPostfix` without `-origin` or `-peer`,
+        and by `<namespace-folder-name>`: `<deploy-postfix>`, plus `-origin` or `-peer` for a Blue-Green Namespace
+      - set `applications[].baseline` to `PROFILE` in `<deploy-postfix>-profile-override`
+      - add `<deploy-postfix>-profile-override` as the last item of
+        `envTemplate.envSpecificResourceProfiles.<namespace-folder-name>`
+
 #### 1.15 step `env_build`
 
 Design: [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md)
@@ -534,6 +566,12 @@ Functions:
     - AI[techDebt-P1]: prepare a UC, add tests
     - AI[bgd]: Replace `apply_ns_build_filter` with SD-scoped generation. Render only namespaces from the SD,
       then apply file-replace-merge to the committed instance. `NS_BUILD_FILTER` can then be deprecated.
+    - AI[resource-profile]: accept a list in `envTemplate.envSpecificResourceProfiles.<key>` and combine the listed
+      overrides in list order into a new object, keeping the listed overrides unchanged. In replace mode, merge
+      `<deploy-postfix>-profile-override` on top of the result. For a list, name the result after the last
+      listed override
+    - AI[resource-profile]: merge `applications[].baseline` of the environment-specific override into the result, and
+      accept an application entry without `services`
 5. `set_cleaned_mark`
     - triggers:
       - `OPERATION_TYPE: CLEAN`
@@ -600,6 +638,8 @@ Functions:
     - AI[phase1]: remove SD support
     - AI[phase1]: implement uniq app names
     - AI[bgd]: Support the BG case in the ES structure. `<namespace-folder-01>` includes peer and origin postfixes.
+    - AI[resource-profile]: in the Calculator CLI, the `applications[].baseline` of the Resource Profile Override takes
+      precedence over every other baseline for the services of that application
 5. `external_credential_provisioning`
     - input:
       - Effective Set
