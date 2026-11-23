@@ -42,6 +42,7 @@ committed change, no OpenSpec folder yet.
 | D29 | Webhook: one per cluster to the sync-owner, no pub/sub, backstop          | settled   | C2          |
 | D30 | Read-after-write via a cache watermark (last indexed commit SHA)          | settled   | C2          |
 | D31 | Malformed def is skipped per entry, not an all-or-nothing blackout        | settled   | C2          |
+| D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI     | settled   | challenge   |
 
 ## Change class
 
@@ -55,8 +56,8 @@ Architectural. A new capability with an interface that EnvGene, DPG, and other c
 
 ## Backlog
 
-Open work, grouped. The Decision Log above holds settled decisions. Migration is deferred. Current focus:
-the deliverables (OpenAPI and algorithms) now that components and topology are settled.
+Open work, grouped. The Decision Log above holds settled decisions. Migration is a separate one-time CLI
+(DL5). Current focus: the deliverables (OpenAPI and algorithms) now that components and topology are settled.
 
 Open questions (API shaping):
 
@@ -81,10 +82,13 @@ Cross-cutting:
 Deliverables (end of design):
 
 - DL1 - OpenAPI specs for the resolve, read, and write interfaces.
-- DL2 - algorithm descriptions with sequence diagrams: resolve, v1-to-v2 normalization, auth-ready
-  assembly, DD vs SD discrimination, write and commit.
+- DL2 - algorithm descriptions with sequence diagrams: resolve, auth-ready assembly, DD vs SD
+  discrimination, write and commit.
 - DL3 - the components and deploy scheme, detailed enough to implement. Largely in Topology and deployment.
 - DL4 - DTO and response schemas plus the error model.
+- DL5 - the v1-to-v2 migration CLI and its spec, a one-time tool separate from the runtime service. Its
+  scope includes normalizing legacy def names to the kebab DNS-safe convention (no spaces) with
+  coordinated `registryName` updates (was P3).
 
 Parked:
 
@@ -92,8 +96,6 @@ Parked:
   deployment. On create, the def name is validated or normalized to the kebab DNS-safe convention (validate
   vs auto-transform is a sub-choice).
 - P2 - multizonality. The design stays extensible to it (D13).
-- P3 - store defs as v2 vs project v1 to v2. Migration is deferred, and its scope includes normalizing
-  legacy def names to the kebab DNS-safe convention (no spaces) with coordinated `registryName` updates.
 
 Todo:
 
@@ -148,7 +150,7 @@ resolve( app:version | [app:version, ...], zone? ):
     gav: ...
     downloadUrl: ...
     authReady: ...     # provider/method + non-secret params + cred ref (blind)
-  registry:            # all sections present in the def, normalized to v2
+  registry:            # all registry sections present in the def
     maven: ...
     docker: ...
     helm: ...
@@ -168,11 +170,11 @@ Derived from the responsibilities above. This is the list, not the detailed cont
 Read and resolve:
 
 - `resolve(app:version, zone?)` - artifact (DD or SD) download-info, all registry sections, and appdef
-  metadata, normalized to v2 and auth-ready (blind). `zone` is optional with one default zone today. Core.
+  metadata, auth-ready (blind). `zone` is optional with one default zone today. Core.
 - `resolveBatch([app:version])` - the `resolve` result per entry. Core.
-- `getRegDef(name)` - the normalized v2 reg def object, for version-independent access (publish and
+- `getRegDef(name)` - the v2 reg def object, for version-independent access (publish and
   promote). Core.
-- `getAppDef(name)` - the normalized app def object. Open (O2).
+- `getAppDef(name)` - the app def object. Open (O2).
 - `listRegDefs(filter)` / `listAppDefs(filter)` - a list of defs. Open (O3), filter included.
 
 Write (parked, P1). Create and update are separate operations, and each returns the written object:
@@ -218,7 +220,7 @@ Lite profile (form 1, ship first):
 - One `Deployment`, `replicas: 1`, `Recreate` strategy, so a rollout never runs two pods writing git.
 - All components in one process, in-process cache, `emptyDir` for the git working copies, no PVC, rebuilt
   from git on start.
-- Bootstrap: clone the branch (D16), parse and normalize every def (D6) into the cache, set the cache
+- Bootstrap: clone the branch (D16), parse every def into the cache, set the cache
   watermark to HEAD, become ready.
 
 HA profile (form 2, additive):

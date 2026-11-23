@@ -10,23 +10,23 @@ The service's components and its read, sync, and write flows. For the rest, see
 
 The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo. It turns
 `application:version` into the DD or SD download-info plus all registry sections and the appdef metadata,
-normalized to RegDef v2 and auth-ready. It is blind on credentials: it returns the `authConfig` and the
+auth-ready. It is blind on credentials: it returns the `authConfig` and the
 credId references, and the consumer mints the secret with its own identity.
 
 ```mermaid
 flowchart LR
-  consumers["Consumers<br/>EnvGene, DPG"] -->|"resolve, read, write"| svc["App Reg Def service"]
-  svc <-->|"fetch, push"| git[("git<br/>defs repo, source of truth")]
+  consumers["Consumers"] -->|"resolve, read, write"| svc["App Reg Def service"]
+  svc <-->|"fetch, push"| git[("git<br/>App Reg Def repo")]
   git -->|"webhook on push"| svc
 ```
 
 ## Components
 
-Six runtime components and two shared modules. The Normalizer and the Git adapter are libraries used by
-more than one component, not independently deployed units. The Git adapter works two separate worktrees, a
-read worktree the Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do
-not race on one checkout (D25). The Indexer is the single writer of the cache, the invariant that keeps
-reads correct (see consistency-and-sync).
+Six runtime components and one shared module. The Git adapter is a library used by more than one
+component rather than an independently deployed unit. It works two separate worktrees, a read worktree
+the Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do not race on
+one checkout (D25). The Indexer is the single writer of the cache, the invariant that keeps reads correct
+(see consistency-and-sync).
 
 ```mermaid
 flowchart TB
@@ -37,7 +37,6 @@ flowchart TB
     cache[("Cache")]
     indexer["Indexer<br/>sole cache writer"]
     writer["Writer"]
-    norm["Normalizer"]
     gitad["Git adapter"]
   end
   api -->|read| resolver
@@ -45,23 +44,21 @@ flowchart TB
   api -->|write| writer
   wh -->|changed paths| indexer
   indexer -->|upsert| cache
-  indexer --> norm
   indexer --> gitad
   writer --> gitad
   writer -->|wait watermark| cache
   writer -. "notify SHA" .-> indexer
 ```
 
-| Component      | Responsibility                                                                                        | Depends on                     |
-|----------------|-------------------------------------------------------------------------------------------------------|--------------------------------|
-| Consumer API   | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer        | Resolver, Writer               |
-| Webhook ingest | validates the git HMAC and passes the changed paths to the Indexer                                    | Indexer                        |
-| Resolver       | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)            | Cache                          |
-| Cache          | holds the normalized v2 def objects by name and exposes the watermark for read-after-write            | -                              |
-| Indexer        | sole cache writer, syncs git on a webhook or the backstop, incremental plus a periodic full reconcile | Git adapter, Normalizer, Cache |
-| Writer         | create and update, validates the schema and the name, commits and pushes, notifies the Indexer        | Git adapter, Indexer, Cache    |
-| Normalizer     | projects a v1 def to the v2 object                                                                    | -                              |
-| Git adapter    | clone, fetch, commit, push, and the changed-path diff, on the read and the write worktrees            | -                              |
+| Component      | Responsibility                                                                                        | Depends on                  |
+|----------------|-------------------------------------------------------------------------------------------------------|-----------------------------|
+| Consumer API   | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer        | Resolver, Writer            |
+| Webhook ingest | validates the git HMAC and passes the changed paths to the Indexer                                    | Indexer                     |
+| Resolver       | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)            | Cache                       |
+| Cache          | holds the def objects by name and exposes the watermark for read-after-write                          | -                           |
+| Indexer        | sole cache writer, syncs git on a webhook or the backstop, incremental plus a periodic full reconcile | Git adapter, Cache          |
+| Writer         | create and update, validates the schema and the name, commits and pushes, notifies the Indexer        | Git adapter, Indexer, Cache |
+| Git adapter    | clone, fetch, commit, push, and the changed-path diff, on the read and the write worktrees            | -                           |
 
 ## Data flows
 
@@ -76,7 +73,7 @@ sequenceDiagram
   C->>API: resolve(app:version, zone?)
   API->>R: resolve
   R->>Cache: look up appdef and regdef by name
-  Cache-->>R: normalized v2 objects
+  Cache-->>R: the def objects
   R->>R: select DD or SD from the appdef, build authReady from authConfig and credId, no secret
   R-->>API: artifact (DD or SD) download-info, registry sections, authReady, appdef metadata
   API-->>C: response
@@ -90,15 +87,13 @@ sequenceDiagram
   participant WI as Webhook ingest
   participant IX as Indexer
   participant GA as Git adapter
-  participant N as Normalizer
   participant Cache
   Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop (D20)
   GS->>WI: webhook with changed paths
   WI->>IX: trigger
   IX->>GA: fetch and diff (changed paths on a webhook, full tree on the backstop)
   GA-->>IX: changed def files
-  IX->>N: normalize to v2
-  N-->>IX: v2 objects, malformed entries skipped (D31)
+  IX->>IX: parse, malformed entries skipped (D31)
   IX->>Cache: upsert the entries, set the watermark to HEAD
 ```
 
@@ -122,7 +117,7 @@ sequenceDiagram
   IX->>GA: fetch on the read worktree
   IX->>Cache: upsert, set the watermark
   W->>Cache: block until the watermark covers the SHA
-  Cache-->>W: the normalized object
+  Cache-->>W: the def object
   W-->>API: the written object
   deactivate W
   API-->>C: object
@@ -142,6 +137,5 @@ election, the shared store, and the multi-cluster deployment are in
 Dependencies point inward through ports, and the graph is acyclic: the Resolver reaches only the Cache,
 and only the Indexer and the Writer reach git, each through the Git adapter. The Cache is warmed in full at
 bootstrap and is authoritative, so a resolve miss is a not-found, never a git fallback on the read path.
-This is what lets the cache
-move from in-process to Redis and the write and sync plane move to a separate process without touching the
-read path.
+This is what lets the cache move from in-process to Redis and the write and sync plane move to a separate
+process without touching the read path.
