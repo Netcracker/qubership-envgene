@@ -33,7 +33,7 @@ Indexer, and the Writer, and the outbound adapters are the Cache and the Git ada
 The Git adapter works two separate worktrees, a read worktree the Indexer resyncs and a write worktree
 the Writer commits on, so the resync and write paths do not race on one checkout.
 
-The Indexer is the single writer of the cache, the invariant that keeps reads correct.
+The Indexer is the sole writer of the cache, the invariant that keeps reads correct.
 
 ```mermaid
 flowchart TB
@@ -55,15 +55,15 @@ flowchart TB
   writer -->|commit, push| gitad
 ```
 
-| Module           | Responsibility                                                                                 |
-|------------------|------------------------------------------------------------------------------------------------|
-| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer |
-| Webhook receiver | validates the git HMAC and triggers a resync                                                   |
-| Resolver         | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)     |
-| Cache            | the cache port, in-proc or Redis, holds the def objects by name and the watermark              |
-| Indexer          | cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache    |
-| Writer           | create and update, validates the schema and the name, commits and pushes to git                |
-| Git adapter      | the git port, clone, fetch, commit, and push on the read and the write worktrees               |
+| Module           | Responsibility                                                                                   |
+|------------------|--------------------------------------------------------------------------------------------------|
+| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
+| Webhook receiver | validates the git HMAC and triggers a resync                                                     |
+| Resolver         | looks up the cache, selects DD or SD, assembles the resolve response, builds authReady (blind)   |
+| Cache            | the cache port, in-proc or Redis, holds the def objects by name and the watermark                |
+| Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
+| Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
+| Git adapter      | the git port, clone, fetch, commit, and push on the read and the write worktrees                 |
 
 ## Data flows
 
