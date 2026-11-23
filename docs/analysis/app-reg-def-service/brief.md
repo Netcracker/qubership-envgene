@@ -34,7 +34,7 @@ committed change, no OpenSpec folder yet.
 | D21 | Any change triggers a full repo resync, incremental resync deferred       | settled   | G2.3        |
 | D22 | Single-layer cache of def objects, resolve on the fly, memo deferred      | settled   | G3.1        |
 | D23 | Cache store in-process per replica, Redis-ready for shared HA             | settled   | G3.2        |
-| D24 | Indexer is the sole cache writer, Writer commits and notifies only        | settled   | C1 critic   |
+| D24 | Indexer is the sole cache writer, the Writer commits and pushes only      | settled   | C1 critic   |
 | D25 | Separate git working copies for resync-read and write, settles G8         | settled   | C1 critic   |
 | D26 | Webhook receiver is a separate component from the consumer API            | settled   | C1 critic   |
 | D27 | Deploy profiles: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2          |
