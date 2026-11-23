@@ -26,7 +26,7 @@ One deployable, laid out as ports and adapters, so the calls below are in-proces
 hops. Inbound adapters accept outside traffic, the core holds the logic, and outbound adapters sit behind
 ports, as grouped in the diagram. The Git adapter works two separate worktrees, a read worktree the
 Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do not race on one
-checkout (D25). The Indexer is the single writer of the cache, the invariant that keeps reads correct
+checkout. The Indexer is the single writer of the cache, the invariant that keeps reads correct
 (see consistency-and-sync).
 
 ```mermaid
@@ -95,12 +95,12 @@ sequenceDiagram
   participant IX as Indexer
   participant GA as Git adapter
   participant Cache
-  Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop (D20)
+  Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop
   GS->>WI: webhook with changed paths
   WI->>IX: trigger
   IX->>GA: fetch and diff (changed paths on a webhook, full tree on the backstop)
   GA-->>IX: changed def files
-  IX->>IX: parse, malformed entries skipped (D31)
+  IX->>IX: parse, malformed entries skipped
   IX->>Cache: upsert the entries, set the watermark to HEAD
 ```
 
