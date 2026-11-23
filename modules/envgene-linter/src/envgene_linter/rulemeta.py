@@ -78,6 +78,12 @@ RULES: dict[str, RuleMeta] = {
         IssueType.INFORMATION,
         Action.REVIEW,
     ),
+    "PLACE-13": RuleMeta(
+        "PLACE-13",
+        "A deploy parameter stays where every reached application accepts it",
+        IssueType.WARNING,
+        Action.FIX,
+    ),
     "SEC-1": RuleMeta(
         "SEC-1",
         "No literal secrets in parameters",

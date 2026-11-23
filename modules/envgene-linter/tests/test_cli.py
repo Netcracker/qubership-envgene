@@ -29,6 +29,7 @@ def test_check_no_findings(repo):
         "PLACE-7\nNo findings\n\nPLACE-8\nNo findings\n\nPLACE-9\nNo findings\n\n"
         "PLACE-10\nNo findings\n\n"
         "PLACE-12\nNo findings\n\n"
+        "PLACE-13\nNot applicable\n\n"
         "SEC-1\nNo findings\n\n"
         "SEC-3\nNo findings\n\n"
         "SEC-4\nNo findings\n\n"
@@ -483,6 +484,7 @@ def test_check_help_explains_explicit_repository_options():
     assert result.exit_code == 0
     assert "-i, --instance-repo" in result.output
     assert "-t, --template-repo" in result.output
+    assert "--helm-parameter-catalog" in result.output
     assert "[REPO]" in result.output
 
 

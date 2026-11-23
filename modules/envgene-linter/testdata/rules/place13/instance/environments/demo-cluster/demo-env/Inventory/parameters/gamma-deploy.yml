@@ -1,0 +1,6 @@
+name: gamma-deploy
+parameters: {}
+applications:
+  - appName: sample-gamma
+    parameters:
+      role: gamma

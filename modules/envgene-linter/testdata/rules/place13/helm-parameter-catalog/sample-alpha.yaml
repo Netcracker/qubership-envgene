@@ -1,0 +1,40 @@
+schemaVersion: 1
+application:
+  name: sample-alpha
+  version: "1.0.1"
+  appVersion: sample-alpha:1.0.1
+  deployPostfixes:
+    - records
+supportedParameters:
+  - config.message
+  - config.path
+  - replicaCount
+  - role
+  - traceToken
+parameters:
+  - key: config.message
+    definedByServices: [sample-catalog]
+  - key: config.path
+    definedByServices: [sample-catalog]
+  - key: replicaCount
+    definedByServices: [sample-catalog]
+  - key: role
+    definedByServices: [sample-catalog]
+  - key: traceToken
+    definedByServices: [sample-catalog]
+services:
+  - serviceName: sample-catalog
+    schemaPath: charts/sample-catalog/values.schema.json
+    parameters:
+      - key: config.message
+        type: string
+      - key: config.path
+        type: string
+      - key: replicaCount
+        type: integer
+      - key: role
+        type: string
+      - key: traceToken
+        type: string
+        internal: true
+unresolvedServices: []

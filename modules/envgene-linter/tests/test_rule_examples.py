@@ -21,7 +21,8 @@ def test_rule_example(rule, case):
     folder = ROOT / rule.lower().replace('-', '')
     repo = folder / case
     assert (repo / 'environments').is_dir() or (repo / 'templates').is_dir()
-    result = run_check(repo)
+    catalog = folder / "helm-parameter-catalog"
+    result = run_check(repo, helm_parameter_catalog=catalog if catalog.is_dir() else None)
     if rule == 'PLACE-8':
         # These examples deliberately contain empty authored entities. INT-4
         # records why it cannot treat them as cleanup candidates.

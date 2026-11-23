@@ -1,0 +1,4 @@
+name: shared-deploy
+parameters:
+  # Bound by demo-env and other-env. Only sample-alpha accepts role.
+  role: shared

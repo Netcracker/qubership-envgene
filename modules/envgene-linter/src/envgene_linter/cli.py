@@ -39,18 +39,26 @@ def main() -> None:
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="Compare PLACE-12 candidates with local template sources (repository root or templates directory).",
 )
+@click.option(
+    "--helm-parameter-catalog",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help="Directory of ready <application>.yaml Helm parameter catalogs for PLACE-13.",
+)
 def check_cmd(
     repo: Path | None,
     instance_repo: Path | None,
     console: bool,
     template_repo: Path | None,
+    helm_parameter_catalog: Path | None,
 ) -> None:
     """Check REPO or --instance-repo (the current directory by default) and save HTML and JSON reports."""
     if repo is not None and instance_repo is not None:
         raise click.UsageError("Use either REPO or --instance-repo/-i, not both.")
     repo = (instance_repo or repo or Path(".")).resolve()
     try:
-        result = run_check(repo, template_repo=template_repo)
+        result = run_check(
+            repo, template_repo=template_repo, helm_parameter_catalog=helm_parameter_catalog
+        )
     except (DiscoveryError, RuleConfigError) as exc:
         click.echo(str(exc), err=True)
         raise SystemExit(2) from exc

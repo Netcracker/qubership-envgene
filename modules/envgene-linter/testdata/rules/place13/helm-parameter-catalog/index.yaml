@@ -1,0 +1,20 @@
+schemaVersion: 1
+applications:
+  - name: sample-alpha
+    version: "1.0.1"
+    appVersion: sample-alpha:1.0.1
+    catalog: sample-alpha.yaml
+    supportedParameterCount: 5
+    unresolvedServiceCount: 0
+  - name: sample-beta
+    version: "1.0.1"
+    appVersion: sample-beta:1.0.1
+    catalog: sample-beta.yaml
+    supportedParameterCount: 2
+    unresolvedServiceCount: 0
+  - name: sample-gamma
+    version: "1.0.1"
+    appVersion: sample-gamma:1.0.1
+    catalog: sample-gamma.yaml
+    supportedParameterCount: 0
+    unresolvedServiceCount: 1

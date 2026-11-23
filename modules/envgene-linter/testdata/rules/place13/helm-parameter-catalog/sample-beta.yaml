@@ -1,0 +1,25 @@
+schemaVersion: 1
+application:
+  name: sample-beta
+  version: "1.0.1"
+  appVersion: sample-beta:1.0.1
+  deployPostfixes:
+    - records
+supportedParameters:
+  - extra
+  - replicaCount
+parameters:
+  - key: extra
+    definedByServices: [sample-worker]
+  - key: replicaCount
+    definedByServices: [sample-worker]
+services:
+  - serviceName: sample-worker
+    schemaPath: charts/sample-worker/values.schema.json
+    parameters:
+      - key: extra
+        type: object
+        additionalProperties: true
+      - key: replicaCount
+        type: integer
+unresolvedServices: []

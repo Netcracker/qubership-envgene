@@ -1,0 +1,13 @@
+inventory:
+  environmentName: demo-env
+envTemplate:
+  name: composite
+  artifact: sample-templates:1.0.1
+  envSpecificParamsets:
+    cloud:
+      - cloud-deploy
+      - shared-deploy
+    records:
+      - records-deploy
+    notes:
+      - gamma-deploy

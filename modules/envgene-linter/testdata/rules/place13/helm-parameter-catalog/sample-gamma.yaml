@@ -1,0 +1,12 @@
+schemaVersion: 1
+application:
+  name: sample-gamma
+  version: "1.0.1"
+  appVersion: sample-gamma:1.0.1
+  deployPostfixes: []
+supportedParameters: []
+parameters: []
+services: []
+unresolvedServices:
+  - serviceName: sample-notes
+    reason: values.schema.json not found

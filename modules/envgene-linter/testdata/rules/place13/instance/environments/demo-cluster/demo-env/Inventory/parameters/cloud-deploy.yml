@@ -1,0 +1,16 @@
+name: cloud-deploy
+parameters:
+  # sample-alpha and sample-beta both accept this key.
+  replicaCount: 1
+  # Only sample-alpha accepts this key.
+  config.message: catalog
+  # Only sample-beta accepts this key, through additionalProperties on extra.
+  extra.note: hello
+  # Neither application accepts this key.
+  legacyFlag: true
+  # records-deploy sets the same key to a different value.
+  config.path: wide
+  # sample-alpha marks this key internal, so the rule skips it.
+  traceToken: skip
+  # Cloud Passport contract key. PLACE-4 owns it, so PLACE-13 leaves it alone.
+  CLOUD_API_HOST: api.example

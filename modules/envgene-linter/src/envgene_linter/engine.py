@@ -23,6 +23,7 @@ from .rules.place8 import check as check_place8
 from .rules.place9 import check as check_place9
 from .rules.place10 import check as check_place10
 from .rules.place12 import check as check_place12
+from .rules.place13 import check as check_place13
 from .rules.sec1 import check as check_sec1
 from .rules.sec3 import check as check_sec3
 from .rules.sec4 import check as check_sec4
@@ -50,12 +51,22 @@ class CheckResult:
     skipped_checks: list[SkippedCheck] = field(default_factory=list)
 
 
-def run_check(root: Path, *, template_repo: Path | None = None) -> CheckResult:
+def run_check(
+    root: Path,
+    *,
+    template_repo: Path | None = None,
+    helm_parameter_catalog: Path | None = None,
+) -> CheckResult:
     with collect_read_errors() as problems:
-        return _run_check(root, problems, template_repo)
+        return _run_check(root, problems, template_repo, helm_parameter_catalog)
 
 
-def _run_check(root: Path, problems: list[ReadProblem], template_repo: Path | None = None) -> CheckResult:
+def _run_check(
+    root: Path,
+    problems: list[ReadProblem],
+    template_repo: Path | None = None,
+    helm_parameter_catalog: Path | None = None,
+) -> CheckResult:
     disabled = rule_config.disabled_rules()
     if len(disabled) == len(rule_config.RULES):
         return CheckResult(findings=[], skipped=[], disabled_rules=disabled)
@@ -97,6 +108,7 @@ def _run_check(root: Path, problems: list[ReadProblem], template_repo: Path | No
         ("PLACE-9", check_place9, (index, connections)),
         ("PLACE-10", check_place10, (index, connections)),
         ("PLACE-12", check_place12, (index, full, catalogs, template_repo)),
+        ("PLACE-13", check_place13, (index, full, connections, helm_parameter_catalog)),
         ("SEC-1", check_sec1, (index, connections)),
         ("SEC-3", check_sec3, (index, connections)),
         ("SEC-4", check_sec4, (index, connections)),
@@ -117,6 +129,11 @@ def _run_check(root: Path, problems: list[ReadProblem], template_repo: Path | No
         if rule not in disabled:
             if rule == 'PLACE-1' and incomplete_merge:
                 continue
+            if rule == 'PLACE-13' and helm_parameter_catalog is None:
+                continue
             findings.extend(run(rule, check, args))
-    return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
-                       skipped_checks=index.skipped_checks)
+    inactive = ("PLACE-13",) if helm_parameter_catalog is None and "PLACE-13" not in disabled else ()
+    return CheckResult(
+        findings=findings, skipped=index.skipped, disabled_rules=disabled,
+        not_applicable_rules=inactive, skipped_checks=index.skipped_checks,
+    )
