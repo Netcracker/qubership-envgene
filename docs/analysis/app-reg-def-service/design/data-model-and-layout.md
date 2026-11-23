@@ -6,8 +6,8 @@ and the RegDef v2 analysis rather than being restated here in full.
 ## Application definition
 
 A thin pointer from an application to its registry and its artifact coordinates. It names the RegDef, and
-the version plus the AppDef `groupId` and `artifactId` form the maven coordinates of the DD or SD artifact. Full fields in
-[appdef.schema.json](/schemas/appdef.schema.json).
+the version plus the AppDef `groupId` and `artifactId` form the maven coordinates of the DD or SD artifact.
+Full fields in [appdef.schema.json](/schemas/appdef.schema.json).
 
 ```yaml
 # application name, the def identity
