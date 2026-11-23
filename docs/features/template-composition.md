@@ -189,19 +189,7 @@ The sequence below describes how composition is executed during template build.
    - Save composed descriptor to output `env_templates`.
    - Save generated/merged resource profiles to output `resource_profiles`.
 
-10. **Validate ParameterSets**
-
-    After EnvGene processes all descriptors, it checks the resulting template. This step runs on every template build,
-    with or without `parent-templates`.
-
-    - Each ParameterSet file in `parameters`, including files copied from parent templates, must have a `name`
-      attribute that matches its filename.
-    - Each ParameterSet name that a file under `env_templates` references in `deployParameterSets`, `e2eParameterSets`,
-      or `technicalConfigurationParameterSets` must exist in `parameters`. This includes the names that
-      `overrides-parent` adds. EnvGene does not check names that contain Jinja expressions.
-    - The build fails if a check fails.
-
-11. **Resulting artifact**
+10. **Resulting artifact**
 
     The output is a regular EnvGene template artifact and does not require special runtime handling.
 
@@ -209,6 +197,11 @@ The sequence below describes how composition is executed during template build.
 > File precedence is copy-order based. If the same file path exists in multiple sources, the last copied file wins.
 > Effective precedence is:
 > **namespace parents** - **tenant parent** - **cloud parent** - **child template files**.
+
+EnvGene validates the ParameterSets a template uses at Environment Instance generation, not during the template
+build. This includes the ParameterSets that `overrides-parent` adds. For each used ParameterSet file, EnvGene checks
+that it is valid against the ParameterSet schema, that its `name` equals the filename without extension, and that no
+two files share a ParameterSet name within the same source template.
 
 ### Nested Application and Registry Definitions (appdefs / regdefs)
 

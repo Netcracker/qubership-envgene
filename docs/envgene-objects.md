@@ -86,8 +86,6 @@ Jinja.
 It has the following structure:
 
 ```yaml
-# Jinja expressions are not supported in the Template Descriptor
-
 # Optional
 # Free-form text describing the purpose of this Template Descriptor
 description: string
@@ -117,7 +115,6 @@ cloud:
   # Template Override configuration
   # See details in /docs/features/template-override.md
   template_override:
-    <yaml or jinja expression>
     # Any part of the Cloud object can be set below. The attributes listed here are the ones that `overrides-parent` generates
     # Optional
     # Name of the Cloud that replaces the name rendered from the template
@@ -132,22 +129,22 @@ cloud:
       # Name of the baseline Resource Profile
       baseline: <resource-profile-baseline-name>
     # Optional
-    # Merged recursively into `deployParameters` of the Cloud. The values from `template_override` win on a conflict
+    # Overrides the Cloud's deployParameters
     deployParameters: <hashmap-with-parameters>
     # Optional
-    # Merged recursively into `e2eParameters` of the Cloud. The values from `template_override` win on a conflict
+    # Overrides the Cloud's e2eParameters
     e2eParameters: <hashmap-with-parameters>
     # Optional
-    # Merged recursively into `technicalConfigurationParameters` of the Cloud. The values from `template_override` win on a conflict
+    # Overrides the Cloud's technicalConfigurationParameters
     technicalConfigurationParameters: <hashmap-with-parameters>
     # Optional
-    # ParameterSet names appended to `deployParameterSets` of the Cloud if not already present
+    # ParameterSets added to the Cloud's deployParameterSets
     deployParameterSets: <list-with-parameter-sets>
     # Optional
-    # ParameterSet names appended to `e2eParameterSets` of the Cloud if not already present
+    # ParameterSets added to the Cloud's e2eParameterSets
     e2eParameterSets: <list-with-parameter-sets>
     # Optional
-    # ParameterSet names appended to `technicalConfigurationParameterSets` of the Cloud if not already present
+    # ParameterSets added to the Cloud's technicalConfigurationParameterSets
     technicalConfigurationParameterSets: <list-with-parameter-sets>
   # Optional
   # Template Composition configuration
@@ -166,7 +163,6 @@ cloud:
     profile:
       # Optional
       # Resource Profile Override from this template repository. Mandatory if `merge-with-parent` is `true`
-      # If not specified, `parent-profile-name` is used as the profile name
       override-profile-name: <resource-profile-override-name>
       # Optional
       # Resource Profile Override from the parent template. Mandatory if `merge-with-parent` is `true`
@@ -175,25 +171,25 @@ cloud:
       # Baseline Resource Profile of the resulting profile
       baseline-profile-name: <resource-profile-baseline-name>
       # Optional. Default value - `false`
-      # `true` - `override-profile-name` is merged into `parent-profile-name`. Jinja Resource Profiles are not supported
+      # Merge the override profile into the parent profile
       merge-with-parent: <boolean>
     # Optional
-    # Merged into `template_override.deployParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
+    # Overrides the inherited deployParameters
     deployParameters: <hashmap-with-parameters>
     # Optional
-    # Merged into `template_override.e2eParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
+    # Overrides the inherited e2eParameters
     e2eParameters: <hashmap-with-parameters>
     # Optional
-    # Merged into `template_override.technicalConfigurationParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
+    # Overrides the inherited technicalConfigurationParameters
     technicalConfigurationParameters: <hashmap-with-parameters>
     # Optional
-    # ParameterSet names appended to `template_override.deployParameterSets` inherited from the parent template
+    # ParameterSets added to the inherited deployParameterSets
     deployParameterSets: <list-with-parameter-sets>
     # Optional
-    # ParameterSet names appended to `template_override.e2eParameterSets` inherited from the parent template
+    # ParameterSets added to the inherited e2eParameterSets
     e2eParameterSets: <list-with-parameter-sets>
     # Optional
-    # ParameterSet names appended to `template_override.technicalConfigurationParameterSets` inherited from the parent template
+    # ParameterSets added to the inherited technicalConfigurationParameterSets
     technicalConfigurationParameterSets: <list-with-parameter-sets>
 # Optional
 composite_structure: <path-to-the-composite-structure-template-file>
@@ -223,7 +219,6 @@ namespaces:
     # Optional
     # See details /docs/features/template-override.md
     template_override:
-      <yaml or jinja expression>
       # Any part of the Namespace object can be set below. The attributes listed here are the ones that `overrides-parent` generates
       # Optional
       # Name of the Namespace that replaces the name rendered from the template
@@ -238,22 +233,22 @@ namespaces:
         # Name of the baseline Resource Profile
         baseline: <resource-profile-baseline-name>
       # Optional
-      # Merged recursively into `deployParameters` of the Namespace. The values from `template_override` win on a conflict
+      # Overrides the Namespace's deployParameters
       deployParameters: <hashmap-with-parameters>
       # Optional
-      # Merged recursively into `e2eParameters` of the Namespace. The values from `template_override` win on a conflict
+      # Overrides the Namespace's e2eParameters
       e2eParameters: <hashmap-with-parameters>
       # Optional
-      # Merged recursively into `technicalConfigurationParameters` of the Namespace. The values from `template_override` win on a conflict
+      # Overrides the Namespace's technicalConfigurationParameters
       technicalConfigurationParameters: <hashmap-with-parameters>
       # Optional
-      # ParameterSet names appended to `deployParameterSets` of the Namespace if not already present
+      # ParameterSets added to the Namespace's deployParameterSets
       deployParameterSets: <list-with-parameter-sets>
       # Optional
-      # ParameterSet names appended to `e2eParameterSets` of the Namespace if not already present
+      # ParameterSets added to the Namespace's e2eParameterSets
       e2eParameterSets: <list-with-parameter-sets>
       # Optional
-      # ParameterSet names appended to `technicalConfigurationParameterSets` of the Namespace if not already present
+      # ParameterSets added to the Namespace's technicalConfigurationParameterSets
       technicalConfigurationParameterSets: <list-with-parameter-sets>
     # Optional
     # Name of Namespace in Parent Template
@@ -283,7 +278,6 @@ namespaces:
       profile:
         # Optional
         # Resource Profile Override from this template repository. Mandatory if `merge-with-parent` is `true`
-        # If not specified, `parent-profile-name` is used as the profile name
         override-profile-name: string
         # Optional
         # Resource Profile Override from the parent template. Mandatory if `merge-with-parent` is `true`
@@ -292,25 +286,25 @@ namespaces:
         # Baseline Resource Profile of the resulting profile
         baseline-profile-name: string
         # Optional. Default value - `false`
-        # `true` - `override-profile-name` is merged into `parent-profile-name`. Jinja Resource Profiles are not supported
+        # Merge the override profile into the parent profile
         merge-with-parent: boolean
       # Optional
-      # Merged into `template_override.deployParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
+      # Overrides the inherited deployParameters
       deployParameters: hashmap
       # Optional
-      # Merged into `template_override.e2eParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
+      # Overrides the inherited e2eParameters
       e2eParameters: hashmap
       # Optional
-      # Merged into `template_override.technicalConfigurationParameters` inherited from the parent template. The values from `overrides-parent` win on a conflict
+      # Overrides the inherited technicalConfigurationParameters
       technicalConfigurationParameters: hashmap
       # Optional
-      # ParameterSet names appended to `template_override.deployParameterSets` inherited from the parent template
+      # ParameterSets added to the inherited deployParameterSets
       deployParameterSets: list
       # Optional
-      # ParameterSet names appended to `template_override.e2eParameterSets` inherited from the parent template
+      # ParameterSets added to the inherited e2eParameterSets
       e2eParameterSets: list
       # Optional
-      # ParameterSet names appended to `template_override.technicalConfigurationParameterSets` inherited from the parent template
+      # ParameterSets added to the inherited technicalConfigurationParameterSets
       technicalConfigurationParameterSets: list
       template_path: string
 ```

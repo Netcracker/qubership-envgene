@@ -34,9 +34,9 @@ The configuration file describing a specific Environment, including template ref
 
 ## Environment Template
 
-A file structure within the Template Repository describing the structure and parameters of a solution type. Consists of a Template Descriptor and component templates (Tenant, Cloud, Namespaces). Template Descriptors can be Jinja templates (`.yml.j2`, `.yaml.j2`) or static YAML files (`.yml`, `.yaml`).
+A file structure within the Template Repository describing the structure and parameters of a solution type. Consists of a Template Descriptor and component templates (Tenant, Cloud, Namespaces).
 
-A single Environment Template can be used for multiple projects or environment types (commonly referred to as a "unified Environment Template"), with namespace filtering used to include only relevant components for each specific deployment. See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects) and [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md).
+A single Environment Template can be used for multiple projects or environment types (commonly referred to as a "unified Environment Template"). See [Environment Template Objects](/docs/envgene-objects.md#environment-template-objects).
 
 ## Template-rendered Definition
 
