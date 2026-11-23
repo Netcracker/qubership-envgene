@@ -3,7 +3,7 @@
 > _Placeholder. How to deploy and run the service for an operator. The logical architecture is in
 > architecture.md, this doc is the operational detail._
 
-## Deploy profiles
+## Deployment schemas
 
 > _Placeholder. Lite (one pod, in-process cache) and HA (read-service plus a write/sync singleton plus
 > Redis), selected by config._

@@ -5,16 +5,16 @@ How the cache stays correct and fresh, and how writes stay safe. The flows these
 [data-model-and-layout.md](data-model-and-layout.md).
 
 The service is one deployable, not a set of networked services, so the in-process path is trivial. In the
-lite profile one process holds the cache as a local map, the Indexer rebuilds it and the Resolver reads it,
+lite deployment schema one process holds the cache as a local map, the Indexer rebuilds it and the Resolver reads it,
 and there is nothing to coordinate. The rules below bite where the design crosses a boundary and shares
-state: the HA profile, with read replicas and a write and resync leader over a shared Redis cache, and the
+state: the HA deployment schema, with read replicas and a write and resync leader over a shared Redis cache, and the
 multi-cluster case, with several instances over one git. Each section notes where it applies.
 
 ## The shared cache and its single writer
 
 The Indexer is the only writer of the cache. The Resolver reads it, and the Writer writes git and never
-touches it. In the lite profile that is one in-process map, so it is just the module layout. It earns its
-name in the HA profile, where the write and resync leader is the only process that writes the shared Redis
+touches it. In the lite deployment schema that is one in-process map, so it is just the module layout. It earns its
+name in the HA deployment schema, where the write and resync leader is the only process that writes the shared Redis
 cache and the read replicas only read, so the shared cache has no cross-process write race.
 
 ## Resync
@@ -41,7 +41,7 @@ The rebuild keeps a read correct across a resync by three properties:
 
 ## Visibility
 
-Reads are eventually consistent with writes, in every profile including lite, since the write and the
+Reads are eventually consistent with writes, in every deployment schema including lite, since the write and the
 resync that catches the cache up are separate steps. A write returns once its commit is pushed, and the
 cache catches up through the resync the push triggers. A resolve immediately after a write may briefly see the
 state before the write, for at most one resync.
@@ -56,7 +56,7 @@ Writes share one piece of state, the git remote. Three races, each settled by co
 a lock.
 
 - Writer against writer. Writes go through one write and resync owner, the single process in the lite
-  profile and the leader in the HA profile, so two writes never run at once within a cluster.
+  deployment schema and the leader in the HA deployment schema, so two writes never run at once within a cluster.
 - Writer against resync. The Indexer resyncs on a read worktree and the Writer commits on a separate write
   worktree, so a resync and a write never contend on one checkout.
 - Writer against an external or manual push. The Writer commits and pushes with a fetch-rebase retry on a
@@ -78,4 +78,4 @@ resync is the guarantee for a cluster that missed a delivery.
 - A missed webhook. The periodic resync catches the change within its interval.
 - A malformed def. It is skipped per entry and logged, and the rest of the repo indexes normally.
 - A restart. The instance re-clones and warms the cache from git before it becomes ready. In the HA
-  profile the read replicas keep serving from the shared cache while a new leader warms.
+  deployment schema the read replicas keep serving from the shared cache while a new leader warms.

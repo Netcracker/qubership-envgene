@@ -124,11 +124,11 @@ reads are eventually consistent with a write.
 
 ## Logical topology
 
-The same modules run in two profiles. The split that matters at the logical level is the read plane
+The same modules run in two deployment schemas. The split that matters at the logical level is the read plane
 (Consumer API and Resolver over the Cache) versus the write and resync plane (Webhook receiver, Indexer,
-Writer). In the lite profile both planes share one process. In the HA profile the read plane scales as
-stateless replicas and the write and resync plane runs as one leader. The replica counts, the leader
-election, the shared store, and the multi-cluster deployment are in
+Writer). In the lite deployment schema both planes share one process. In the HA deployment schema the read
+plane scales as stateless replicas and the write and resync plane runs as one leader. The replica counts,
+the leader election, the shared store, and the multi-cluster deployment are in
 [deployment-and-operations.md](deployment-and-operations.md).
 
 ## Dependency direction

@@ -37,7 +37,7 @@ committed change, no OpenSpec folder yet.
 | D24 | Indexer is the sole cache writer, the Writer commits and pushes only      | settled   | C1 critic   |
 | D25 | Separate git working copies for resync-read and write, settles G8         | settled   | C1 critic   |
 | D26 | Webhook receiver is a separate component from the consumer API            | settled   | C1 critic   |
-| D27 | Deploy profiles: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2          |
+| D27 | Deployment schemas: lite (in-proc) and HA (Redis) from one codebase       | settled   | C2          |
 | D28 | Multi-cluster: one instance per cluster over the shared git SOT           | settled   | C2          |
 | D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer  | settled   | C2          |
 | D30 | Write returns on commit, cache is eventually consistent via resync        | settled   | C2          |
@@ -218,18 +218,18 @@ registry sections, D11), and CMDB access (D5).
 
 ## Topology and deployment
 
-Two deploy profiles from one codebase, selected by config (the cache is a port, D23): lite and HA. A
+Two deployment schemas from one codebase, selected by config (the cache is a port, D23): lite and HA. A
 malformed def is skipped and logged, never an all-or-nothing blackout (D31). A resync is idempotent (fetch
 and re-parse to HEAD), so duplicate or out-of-order webhook deliveries converge.
 
-Lite profile (form 1, ship first):
+Lite deployment schema (form 1, ship first):
 
 - One `Deployment`, `replicas: 1`, `Recreate` strategy, so a rollout never runs two pods writing git.
 - All components in one process, in-process cache, `emptyDir` for the git working copies, no PVC, rebuilt
   from git on start.
 - Bootstrap: clone the branch (D16), parse every def into the cache, become ready.
 
-HA profile (form 2, additive):
+HA deployment schema (form 2, additive):
 
 - Read-service: a `Deployment` of N stateless replicas (API plus Resolver) that read the shared Redis
   cache and hold no git.
@@ -238,7 +238,7 @@ HA profile (form 2, additive):
 - Redis holds the cache (`defs:appdef:<name>`, `defs:regdef:<name>`) and needs its own HA.
 - Routing: read verbs go to the read-service, write verbs and the webhook go to the singleton.
 
-Git working copies (both profiles):
+Git working copies (both deployment schemas):
 
 - Read worktree (Indexer): one shallow, blob-filtered, sparse checkout of application-definitions/ and
   registry-definitions/ (D19). A resync is a `git fetch` to HEAD plus a full re-read of the checkout (D21).
@@ -252,7 +252,7 @@ ever needs to see its own write immediately, the Writer can run an in-process re
 Multi-cluster (D28): one independent instance per cluster over the one shared git SOT. Reads are local and
 eventually consistent as each instance resyncs the same git. Writes go through git's own optimistic
 concurrency (the fetch-rebase retry), so git is the cross-cluster write serializer with no distributed
-lock. Each cluster picks its own profile.
+lock. Each cluster picks its own deployment schema.
 
 Webhook delivery (D29): the repo holds one webhook per cluster, so the cross-cluster fan-out is at cluster
 granularity, which is viable because clusters are few and stable. Inside a cluster the webhook reaches the

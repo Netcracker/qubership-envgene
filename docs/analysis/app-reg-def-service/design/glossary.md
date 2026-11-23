@@ -24,11 +24,11 @@ a term lands here once it is used in a sibling doc.
   instance repos. Also def store.
 - **Git adapter** - the driven adapter for git, clone, fetch, commit, and push on the read and write
   worktrees.
-- **HA profile** - the deployment profile with N stateless read replicas and one leader-elected write and
+- **HA deployment schema** - the deployment schema with N stateless read replicas and one leader-elected write and
   resync singleton over a shared Redis cache.
 - **Indexer** - the core module that is the sole cache writer, resyncs the repo to HEAD, and rebuilds the
   cache.
-- **lite profile** - the single-process deployment profile with an in-process cache, shipped first.
+- **lite deployment schema** - the single-process deployment schema with an in-process cache, shipped first.
 - **periodic resync** - a resync run on a timer as the safety net for a missed webhook. Replaces the term
   backstop.
 - **read worktree** - the git checkout the Indexer resyncs, separate from the write worktree so resync and

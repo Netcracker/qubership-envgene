@@ -11,4 +11,4 @@ Planned records:
 - 0004 - Def source is git only (CMDB not fronted).
 - 0005 - v2 authConfig as the target source of truth for registry auth.
 - 0006 - Single cache writer (Indexer) and separate git working copies for sync and write.
-- 0007 - Two deploy profiles (lite and HA) and the multi-cluster model.
+- 0007 - Two deployment schemas (lite and HA) and the multi-cluster model.
