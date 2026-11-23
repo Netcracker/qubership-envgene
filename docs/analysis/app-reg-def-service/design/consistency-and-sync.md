@@ -7,7 +7,7 @@ How the cache stays correct and fresh, and how writes stay safe. The flows these
 ## Cache and the single-writer invariant
 
 The Indexer is the sole writer of the cache. The Resolver only reads it, and the Writer only commits and
-pushes to git, it never touches the cache. Every cache mutation goes through one component.
+pushes to git, it never touches the cache.
 
 This removes the two-writer race. If both the Writer and the resync could write the cache, they would race
 on the same entries, and a late write could overwrite a fresher resync. With one writer, all mutations are
@@ -29,8 +29,8 @@ blackout, so one bad file cannot stall the rest.
 The rebuild keeps a read correct across a resync by three properties:
 
 - it is atomic. A read sees either the whole pre-resync snapshot or the whole post-resync one, never a mix.
-- it never moves the cache backward. Resyncs do not overlap, and a rebuild is kept only if its commit is
-  newer than the cache's, so an out-of-order completion cannot regress to an older commit.
+- it never moves the cache backward. Resyncs do not overlap, and across an HA leader handover a late
+  rebuild from the old leader is kept only if its commit is newer, so it cannot regress to an older commit.
 - it reflects exactly the defs at HEAD, so an add, a change, and a delete are all applied, a removed def
   dropped from the cache.
 
