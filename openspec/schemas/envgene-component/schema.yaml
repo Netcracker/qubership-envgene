@@ -1,6 +1,6 @@
 name: envgene-component
 version: 1
-description: EnvGene component flow - proposal → specs → tasks (propose gate) → design (design gate) → implement; design.md is the one design artifact
+description: EnvGene component flow - proposal → specs → tasks (propose gate) → design (design gate) → implement; component-design.md is the one design artifact the component writes
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -68,7 +68,7 @@ artifacts:
       - specs
 
   - id: design
-    generates: design.md
+    generates: component-design.md
     description: The one design artifact - approaches, the chosen one, contracts, constraints. Written after the propose gate and before plan, from the proposal, the specs and the ADR.
     template: design.md
     instruction: |
@@ -77,12 +77,18 @@ artifacts:
       approved WHAT is changed. Render it from proposal.md, the delta specs and the ADR under docs/adr/.
 
       Sections:
+      - **Work map**: one row per requirement or spec scenario, with its file or function in this repository,
+        its status (`tracked`, `new-in-repo` or `not-in-repo`) and evidence from the repository. A
+        `not-in-repo` row is a scope finding and blocks the design until the work is moved to the owning
+        component or scoped out.
       - **Approaches**: 2-3 approaches with trade-offs and a recommendation. Component-level; the ADR
         holds the system-level options and is not re-argued here.
       - **Decision**: The chosen approach and who accepted it (the ledger row of the design gate).
       - **Contracts**: One line per interface the change exposes or consumes, with an id (C-1, C-2, ...).
         Every id is covered by the plan. A contract without a line here blocks plan.
-      - **Constraints**: The team rules from the envgene-code-review skill, one line each.
+      - **Constraints**: Constraints specific to this change (limits, formats, compatibility, values the
+        code must keep), one line each. The team rules of envgene-code-review apply to every change and
+        are not copied here.
       - **Out of scope**: What is deliberately not done.
       - **Open Questions**: Only items that do not change the specs, the approach or the tasks.
         If an open question would change them, resolve it with the developer first.

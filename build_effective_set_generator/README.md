@@ -24,7 +24,7 @@ solution descriptor.
 2. To run the application, create quarkus maven run configuration with working directory as
     effective-set-generator and VM Options as below.
 
-    `-Dquarkus.args="--env-id xxxxx --envs-path xxxx--local-sd-path xxxxx/sd.yml --output xxx/effective-set
+    `-Dquarkus.args="--env-id xxxxx --envs-path xxxx --deploy-plan-path xxxxx/deploy-plan.yml --output xxx/effective-set
     --cmdb-url=<url> --cmdb-username=<username> --cmdb-token=<API Token>"`
 
 ## **Running in a Docker Container**
@@ -42,7 +42,7 @@ First run mvn clean install and run below command
 Finally, to run it, mount the directory you want to scan to /configs and pass the appropriate inputs:
 
     `docker run  -v ${Directory}:/configs/ effective-set-generator:latest
-    --env-id xxxxx --envs-path xxxx--local-sd-path xxxxx /sd.yml --output /configs/effective-set
+    --env-id xxxxx --envs-path xxxx --deploy-plan-path xxxxx/deploy-plan.yml --output /configs/effective-set
     --cmdb-url=<url> --cmdb-username=<username> --cmdb-token=<API Token>
     `
 Usages:
@@ -51,6 +51,6 @@ Usages:
 
     --envs-path/-ep         path to '/environments' folder
 
-    --local-sd-path/-lsdp   path to Full SD file.
+    --deploy-plan-path/-dpp path to the deploy plan file.
 
     --output/-o             Destination folder to write final effective set parameter files.`
