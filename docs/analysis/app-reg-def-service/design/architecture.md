@@ -60,7 +60,7 @@ flowchart TB
 | Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
 | Webhook receiver | validates the git HMAC and triggers a resync                                                     |
 | Resolver         | looks up the cache, selects DD or SD, assembles the resolve response, builds authReady (blind)   |
-| Cache            | the cache port, in-proc or Redis, holds the def objects by name and the watermark                |
+| Cache            | the cache port, in-proc or Redis, holds the def objects by name                                  |
 | Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
 | Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
 | Git adapter      | the git port, clone, fetch, commit, and push on the read and the write worktrees                 |
@@ -99,7 +99,7 @@ sequenceDiagram
   IX->>GA: fetch to HEAD and read the whole repo
   GA-->>IX: all def files
   IX->>IX: parse, malformed entries skipped
-  IX->>Cache: rebuild the cache, set the watermark to HEAD
+  IX->>Cache: rebuild the cache to HEAD
 ```
 
 ### Write
@@ -114,7 +114,7 @@ sequenceDiagram
   API->>W: write request
   W->>W: validate the schema and the name
   W->>GA: commit and push on the write worktree, fetch-rebase retry on a non-fast-forward
-  GA-->>W: commit SHA
+  GA-->>W: pushed
   W-->>API: the written object
   API-->>C: object
 ```

@@ -78,7 +78,7 @@ Cross-cutting:
 - X2 - security and authz: refine the authn model for the consumer API (sketched in Topology).
 - X4 - rollout: replace the two resolvers (artifact-searcher, DPG) with coexistence or a shadow mode.
 - X6 - failure modes: refine beyond the Topology sketch if needed.
-- X7 - a resolve-response version signal (did the answer change?), reusing the watermark (D30).
+- X7 - a resolve-response version signal (did the answer change?), a change signal for consumers.
 
 Deliverables (end of design):
 
@@ -227,8 +227,7 @@ Lite profile (form 1, ship first):
 - One `Deployment`, `replicas: 1`, `Recreate` strategy, so a rollout never runs two pods writing git.
 - All components in one process, in-process cache, `emptyDir` for the git working copies, no PVC, rebuilt
   from git on start.
-- Bootstrap: clone the branch (D16), parse every def into the cache, set the cache
-  watermark to HEAD, become ready.
+- Bootstrap: clone the branch (D16), parse every def into the cache, become ready.
 
 HA profile (form 2, additive):
 
@@ -236,7 +235,7 @@ HA profile (form 2, additive):
   cache and hold no git.
 - Write/resync singleton: one active instance (leader-elected via a k8s Lease) that owns the git working
   copies, the Indexer, the Writer, and the webhook receiver, and writes the shared Redis cache.
-- Redis holds the cache (`defs:appdef:<name>`, `defs:regdef:<name>`, `defs:watermark`) and needs its own HA.
+- Redis holds the cache (`defs:appdef:<name>`, `defs:regdef:<name>`) and needs its own HA.
 - Routing: read verbs go to the read-service, write verbs and the webhook go to the singleton.
 
 Git working copies (both profiles):
@@ -248,8 +247,7 @@ Git working copies (both profiles):
 Write and visibility (D30): a write validates, commits, and pushes with a fetch-rebase retry on a
 non-fast-forward, then returns the written object (D9). The push fires the webhook, so the write takes the
 same resync path as an external or manual commit (G6), and the cache is eventually consistent. If a consumer
-ever needs to see its own write immediately, the Writer can run an in-process resync before returning. The
-cache still carries a watermark, the last resynced commit SHA, for the resync-lag metric.
+ever needs to see its own write immediately, the Writer can run an in-process resync before returning.
 
 Multi-cluster (D28): one independent instance per cluster over the one shared git SOT. Reads are local and
 eventually consistent as each instance resyncs the same git. Writes go through git's own optimistic
@@ -267,7 +265,7 @@ behind its own NetworkPolicy. Consumers reach a Service, the git server reaches 
 Security (X2): webhook HMAC, consumer authn and authz, git credentials as a least-privilege Secret, and the
 blind boundary (the service reads credId references only and never holds a registry secret, D2 and D17).
 
-Observability (X1): resolve latency, cache entry counts, resync lag (now minus the watermark commit time),
+Observability (X1): resolve latency, cache entry counts, resync lag (time since the last resync),
 webhook deliveries and failures, write latency, and the conflict rate.
 
 Failure modes (X6): git unreachable serves the stale cache while the periodic resync retries, a missed webhook is

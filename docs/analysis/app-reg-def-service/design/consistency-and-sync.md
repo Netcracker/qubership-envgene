@@ -10,8 +10,8 @@ The Indexer is the sole writer of the cache. The Resolver only reads it, and the
 pushes to git, it never touches the cache. Every cache mutation goes through one component.
 
 This removes the two-writer race. If both the Writer and the resync could write the cache, they would race
-on the same entries and on the watermark, and a late write could overwrite a fresher resync. With one
-writer, all mutations are serialized and the cache is always a coherent snapshot of a single git commit.
+on the same entries, and a late write could overwrite a fresher resync. With one writer, all mutations are
+serialized and the cache is always a coherent snapshot of a single git commit.
 
 ## Resync
 
@@ -26,10 +26,7 @@ re-parses to HEAD and rebuilds the cache from scratch, so duplicate or out-of-or
 converge on the same state. A malformed def is skipped per entry and logged, never an all-or-nothing
 blackout, so one bad file cannot stall the rest.
 
-## Watermark and visibility
-
-The cache carries a watermark, the last resynced commit SHA. It is the freshness signal, the resync lag is
-now minus the watermark commit time.
+## Visibility
 
 Reads are eventually consistent with writes. A write returns once its commit is pushed, and the cache
 catches up through the resync the push triggers. A resolve immediately after a write may briefly see the

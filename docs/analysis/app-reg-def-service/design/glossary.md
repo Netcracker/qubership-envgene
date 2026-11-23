@@ -12,7 +12,7 @@ a term lands here once it is used in a sibling doc.
   credId reference, never a secret value.
 - **authReady** - the resolve response's assembled auth, the authConfig plus the credId reference, ready
   for the consumer to mint a secret with its own identity.
-- **Cache** - the driven adapter that holds the def objects by name and the watermark, in-process or Redis.
+- **Cache** - the driven adapter that holds the def objects by name, in-process or Redis.
 - **Consumer API** - the inbound REST adapter that validates and authorizes requests and routes them to the
   Resolver or the Writer.
 - **credId** - a reference to a credential in an external store, carried in the authConfig, never the secret
@@ -48,7 +48,6 @@ a term lands here once it is used in a sibling doc.
   or a periodic resync.
 - **SD** - the Solution Descriptor, a list of `application:version` entries. The caller expands it into
   resolve calls.
-- **watermark** - the last resynced commit SHA the Cache carries, used for the resync-lag metric.
 - **Webhook receiver** - the inbound adapter that validates the git HMAC and triggers a resync.
 - **write worktree** - the ephemeral git checkout the Writer commits and pushes on, discarded after each
   write.

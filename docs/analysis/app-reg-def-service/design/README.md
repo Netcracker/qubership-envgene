@@ -11,7 +11,7 @@
 | Document                        | Audience              | Job                                         |
 |---------------------------------|-----------------------|---------------------------------------------|
 | architecture.md                 | developer, architect  | components, flows, logical topology         |
-| consistency-and-sync.md         | developer             | cache, watermark, resync, commit race       |
+| consistency-and-sync.md         | developer             | cache, resync, commit race                  |
 | api-reference.md + openapi.yaml | consumer, developer   | the API contract                            |
 | data-model-and-layout.md        | def author, developer | RegDef v2, AppDef, repo layout, naming      |
 | deployment-and-operations.md    | operator              | profiles, config, scaling, failure, metrics |
