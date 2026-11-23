@@ -44,8 +44,9 @@ EnvGene searches the selected repositories concurrently, and the first to return
 the DD, resolution fails.
 
 The registry provider selects the repository model, traditional or public cloud. Registry Definition v2
-declares the provider. Registry Definition v1 has no provider and always uses the traditional model. The model
-sets which repositories are searched.
+declares the provider. Registry Definition v1 has no provider and uses the traditional model, unless Cloud
+`e2eParameters` set `MAVEN_PROVIDER` to `aws` or `gcp`. Then EnvGene uses that provider's model for the pipeline run.
+The model sets which repositories are searched.
 
 ### Traditional registries
 
