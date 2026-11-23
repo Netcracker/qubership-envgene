@@ -67,7 +67,7 @@ flowchart TB
 | Cache            | holds the def objects by name and exposes the watermark for read-after-write                     | -                           |
 | Indexer          | sole cache writer, on a webhook or the backstop re-reads the repo to HEAD and rebuilds the cache | Git adapter, Cache          |
 | Writer           | create and update, validates the schema and the name, commits and pushes, notifies the Indexer   | Git adapter, Indexer, Cache |
-| Git adapter      | clone, fetch, commit, push, and the changed-path diff, on the read and the write worktrees       | -                           |
+| Git adapter      | clone, fetch, commit, and push on the read and the write worktrees                               | -                           |
 
 ## Data flows
 
@@ -93,13 +93,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant GS as git server
-  participant WI as Webhook receiver
+  participant WR as Webhook receiver
   participant IX as Indexer
   participant GA as Git adapter
   participant Cache
   Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop
-  GS->>WI: webhook on push
-  WI->>IX: resync
+  GS->>WR: webhook on push
+  WR->>IX: resync
   IX->>GA: fetch to HEAD and read the whole repo
   GA-->>IX: all def files
   IX->>IX: parse, malformed entries skipped
