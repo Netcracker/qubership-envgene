@@ -27,49 +27,43 @@ flowchart LR
 One deployable, laid out as ports and adapters, so the calls below are in-process rather than network
 hops.
 
-Inbound adapters accept outside traffic, the core holds the logic, and outbound adapters sit behind
-ports, as grouped in the diagram.
+The inbound adapters are the Consumer API and the Webhook receiver, the core is the Resolver, the
+Indexer, and the Writer, and the outbound adapters are the Cache and the Git adapter.
 
 The Git adapter works two separate worktrees, a read worktree the Indexer resyncs and a write worktree
 the Writer commits on, so the resync and write paths do not race on one checkout.
 
-The Indexer is the single writer of the cache, the invariant that keeps reads correct
+The Indexer is the single writer of the cache, the invariant that keeps reads correct.
 
 ```mermaid
 flowchart TB
   subgraph svc["App Reg Def service"]
-    subgraph inb["inbound adapters"]
-      api["Consumer API"]
-      wh["Webhook receiver"]
-    end
-    subgraph cor["core"]
-      resolver["Resolver"]
-      writer["Writer"]
-      indexer["Indexer<br/>sole cache writer"]
-    end
-    subgraph outb["outbound adapters, behind ports"]
-      cache[("Cache<br/>in-proc or Redis")]
-      gitad["Git adapter"]
-    end
+    api["Consumer API"]
+    wh["Webhook receiver"]
+    resolver["Resolver"]
+    writer["Writer"]
+    indexer["Indexer"]
+    cache[("Cache")]
+    gitad["Git adapter"]
   end
   api -->|read| resolver
   resolver -->|lookup| cache
   api -->|write| writer
   wh -->|resync| indexer
-  indexer -->|upsert| cache
-  indexer --> gitad
-  writer --> gitad
+  indexer -->|rebuild| cache
+  indexer -->|fetch| gitad
+  writer -->|commit, push| gitad
 ```
 
-| Module           | Responsibility                                                                                   |
-|------------------|--------------------------------------------------------------------------------------------------|
-| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
-| Webhook receiver | validates the git HMAC and triggers a resync                                                     |
-| Resolver         | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)       |
-| Cache            | holds the def objects by name and the watermark, the last resynced commit                        |
-| Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
-| Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
-| Git adapter      | clone, fetch, commit, and push on the read and the write worktrees                               |
+| Module           | Responsibility                                                                                 |
+|------------------|------------------------------------------------------------------------------------------------|
+| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer |
+| Webhook receiver | validates the git HMAC and triggers a resync                                                   |
+| Resolver         | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)     |
+| Cache            | the cache port, in-proc or Redis, holds the def objects by name and the watermark              |
+| Indexer          | cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache    |
+| Writer           | create and update, validates the schema and the name, commits and pushes to git                |
+| Git adapter      | the git port, clone, fetch, commit, and push on the read and the write worktrees               |
 
 ## Data flows
 
