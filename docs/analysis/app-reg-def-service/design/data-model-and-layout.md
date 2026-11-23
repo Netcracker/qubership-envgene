@@ -42,15 +42,17 @@ returns these sections in the resolve response and never reads a secret from the
 `authConfig` that is blind: the provider and method, the non-secret parameters, and `credId` references
 into a consumer-held credential store, never a secret value.
 
-The baseline shape is in [regdef-v2.schema.json](/schemas/regdef-v2.schema.json): `version: "2.0"`, a
-`name`, an `authConfig`, and the registry sections per artifact type. The proposed direction, the access
-roles, the `credId` model, repositories by type, and `url` plus `repoName`, is worked out in
-[regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md). This doc restates neither.
+The target shape is the extended v2 worked out in
+[regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md): the registry sections as a `registries`
+list by artifact type, an `authConfig` with access roles and `credId` references, and `url` plus `repoName`
+per repository. The committed [regdef-v2.schema.json](/schemas/regdef-v2.schema.json) is the current
+baseline (`version: "2.0"`, per-type sections) and is being brought up to that shape. This doc restates
+neither.
 
-The service relies on three properties, whichever shape v2 settles on:
+The service relies on three properties of the target shape:
 
 - per artifact type the RegDef carries the registry coordinates a consumer needs to pull or push, with
-  the type set the schema and the extensions analysis define.
+  the type set the extensions analysis defines.
 - the `authConfig` is blind, the method and non-secret parameters plus `credId` references, with no
   secrets in the repo.
 - one registry per artifact type, so a resolve answer has at most one coordinate set per type.

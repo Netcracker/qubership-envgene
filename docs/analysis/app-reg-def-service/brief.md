@@ -43,6 +43,7 @@ committed change, no OpenSpec folder yet.
 | D30 | Write returns on commit, cache is eventually consistent via resync        | settled   | C2          |
 | D31 | Malformed def is skipped per entry, not an all-or-nothing blackout        | settled   | C2          |
 | D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI     | settled   | challenge   |
+| D33 | Service targets the extended RegDef v2, schema brought up to it           | settled   | challenge   |
 
 ## Change class
 
@@ -102,6 +103,8 @@ Parked:
 Todo:
 
 - T1 - how RegDef v2 affects EnvGene and DPG.
+- T2 - bring `regdef-v2.schema.json` up to the extended v2 (registries list by artifactType,
+  accessRoles, credId, url plus repoName) and add a `kind` to the RegDef and `appdef.schema.json`.
 
 ## Problem / why
 
