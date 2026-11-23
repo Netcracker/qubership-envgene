@@ -26,6 +26,7 @@ from regdefv2_adapter.regdefv2_adapter import run_regdefv2_adapter
 from build_env.namespace_render import compute_namespace_map
 from build_env.env_template.set_template_version import update_version
 from build_env.main import run_build_environment
+from build_env.deployment_profile import apply_deployment_profile
 from cloud_passport.main import run_cloud_passport
 from creds_rotation.creds_rotation_handler import run_cred_rotation
 from effective_set.effective_set_entrypoint import run_gitlab_deploy_effective_set, run_legacy_sd_effective_set
@@ -276,6 +277,19 @@ class ProcessDeploymentPlanStep(PipelineStep):
             merge_deployment_plan(ctx)
 
 
+class DeploymentProfileStep(PipelineStep):
+    @property
+    def name(self) -> str:
+        return "deployment_profile"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return bool(ctx.params.get("PROFILE")) and EnvBuildStep().should_run(ctx)
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        env_dir = get_current_env_dir_from_env_vars()
+        apply_deployment_profile(env_dir, ctx.params["PROFILE"])
+
+
 class EnvBuildStep(PipelineStep):
     @property
     def name(self) -> str:
@@ -399,6 +413,7 @@ def run_single_env_pipeline() -> None:
         ProcessSdStep(),
         MigrateSdToDeployPlanStep(),
         ProcessDeploymentPlanStep(),
+        DeploymentProfileStep(),
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
     ]

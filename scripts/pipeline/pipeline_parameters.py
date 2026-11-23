@@ -88,6 +88,7 @@ class PipelineParametersHandler(BaseModel):
             "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
                 "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
             "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
+            "PROFILE": getenv("PROFILE", ""),
             "DELTA_DEPLOY": getenv("DELTA_DEPLOY", DeltaDeployType.NONE.value),
             "SSL_CERTIFICATES_BUNDLE": getenv("SSL_CERTIFICATES_BUNDLE"),
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),

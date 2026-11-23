@@ -37,7 +37,8 @@ flowchart TB
         D --> SV[set_template_version]
         SV --> E[app_reg_def_process]
         E --> F[process_sd]
-        F --> G[env_build]
+        F --> DP[deployment_profile]
+        DP --> G[env_build]
         G --> H[generate_effective_set]
         H --> I[git_commit]
         I --> J[cmdb_import]
@@ -106,7 +107,25 @@ pipeline parameters.
      [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version). A `GITLAB_DEPLOY` pipeline builds the
      deployment plan directly.
 
-8. **env_build** - renders the Environment Instance from Jinja2 templates.
+8. **deployment_profile** - turns the [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) parameter of the
+   run into a Resource Profile override.
+   - **Condition**: [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) is set and `env_build` runs.
+
+   This step:
+
+   1. Reads the applications of the run from the delta deployment plan, or from the deployment plan when the run
+      produced no delta or its delta deploys no application. The step does nothing when the Environment has no
+      deployment plan at all or when no plan names an application.
+   2. Writes `Inventory/resource_profiles/deployment-profile.yml`, which sets the baseline named by `PROFILE` as the
+      default of every one of those applications.
+   3. Appends `deployment-profile` last to the override list of every Namespace and of the Cloud, without adding it
+      twice.
+
+   An application that does not define the named baseline keeps the baseline it had, and an override listed before
+   `deployment-profile` keeps priority over it. See
+   [Resource Profiles](/docs/how-to/configure-resource-profiles.md).
+
+9. **env_build** - renders the Environment Instance from Jinja2 templates.
    - **Condition**: [`ENV_BUILDER: true`](/docs/instance-pipeline-parameters.md#env_builder), or a
      `GITLAB_DEPLOY` deploy or clean operation.
 
@@ -118,25 +137,25 @@ pipeline parameters.
    3. Applies template and environment-specific ParameterSets and Resource Profiles.
    4. Creates Credentials, including shared Credentials.
 
-9. **generate_effective_set** - generates the Effective Set with the
-   [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
-   CLI, invoked inside the `env-prepare` job.
-   - **Condition**: [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set),
-     or a `GITLAB_DEPLOY` deploy, clean, or BGD warmup operation.
+10. **generate_effective_set** - generates the Effective Set with the
+    [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
+    CLI, invoked inside the `env-prepare` job.
+    - **Condition**: [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set),
+      or a `GITLAB_DEPLOY` deploy, clean, or BGD warmup operation.
 
-   This step:
+    This step:
 
-   1. Generates the Effective Set.
-   2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to
-      materialize each external Credential in its target Secret Store. It is skipped when the Environment
-      Instance contains no external Credentials. See
-      [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD
-      variable contract and failure semantics.
+    1. Generates the Effective Set.
+    2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to
+       materialize each external Credential in its target Secret Store. It is skipped when the Environment
+       Instance contains no external Credentials. See
+       [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD
+       variable contract and failure semantics.
 
-10. **git_commit** - commits the generated files to the Instance repository.
+11. **git_commit** - commits the generated files to the Instance repository.
     - **Condition**: always runs. It commits only when a step produced changes to the repository.
 
-11. **cmdb_import** - imports data into a CMDB.
+12. **cmdb_import** - imports data into a CMDB.
     - **Condition**: [`CMDB_IMPORT: true`](/docs/instance-pipeline-parameters.md#cmdb_import). It does not run
       in a `GITLAB_DEPLOY` pipeline.
 

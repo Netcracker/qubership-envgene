@@ -216,10 +216,20 @@
         "envSpecificResourceProfiles": {
           "type": "object",
           "title": "Environment-Specific Resource Profiles",
-          "description": "Environment-specific resource profiles override",
+          "description": "Environment-specific resource profiles override, applied in list order, an earlier entry winning",
           "patternProperties": {
             ".*": {
-              "type": "string"
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
             }
           }
         },

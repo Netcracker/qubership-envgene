@@ -25,6 +25,7 @@ import org.cyclonedx.model.component.data.ComponentData;
 import org.cyclonedx.model.component.data.Content;
 import org.qubership.cloud.devops.commons.exceptions.BomProcessingException;
 import org.qubership.cloud.devops.commons.pojo.bom.EntitiesMap;
+import org.qubership.cloud.devops.commons.pojo.profile.model.ApplicationProfile;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
@@ -207,29 +208,58 @@ public class BomCommonUtils {
 
     public void fillProfileValues(Map<String, Object> profileValues, Component baselineComponent, String appName,
                                   String serviceName, Profile overrideProfile, String baseline) {
+        String chosenBaseline = applicationBaseline(overrideProfile, appName);
+        String resolvedBaseline = chosenBaseline != null ? chosenBaseline : baseline;
         List<ComponentData> baselines = baselineComponent != null && baselineComponent.getData() != null
                 ? baselineComponent.getData() : List.of();
-        if (baseline != null && !baselines.isEmpty()) {
-            ComponentData matched = baselines.stream()
-                    .filter(data -> baseline.equals(data.getName().split("\\.")[0]))
-                    .findFirst()
-                    .orElse(null);
+        if (resolvedBaseline != null && !baselines.isEmpty()) {
+            ComponentData matched = findBaseline(baselines, resolvedBaseline);
+            if (matched == null && chosenBaseline != null && baseline != null) {
+                warnOnce(String.format("Baseline '%s' of application '%s' is not defined in service '%s', "
+                                + "the baseline '%s' of the resource profile is used instead",
+                        chosenBaseline, appName, serviceName, baseline));
+                resolvedBaseline = baseline;
+                matched = findBaseline(baselines, resolvedBaseline);
+            }
             if (matched != null) {
                 profileValues.putAll(fileDataConverter.decodeAndParse(matched.getContents().getAttachment().getText(),
                         new TypeReference<HashMap<String, Object>>() {
                         }));
             } else {
                 warnOnce(String.format("Baseline '%s' not found in service '%s' of application '%s', applying override only",
-                        baseline, serviceName, appName));
+                        resolvedBaseline, serviceName, appName));
             }
         }
         boolean overrideApplied = profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
         logDebug(String.format("Resource profile for service '%s' of application '%s': baseline '%s', override applied: %s",
-                serviceName, appName, baseline, overrideApplied));
-        if (overrideApplied && baseline == null) {
+                serviceName, appName, resolvedBaseline, overrideApplied));
+        if (overrideApplied && resolvedBaseline == null) {
             warnOnce(String.format("Resource profile override '%s' sets parameters for service '%s' of application '%s' but no baseline is resolved",
                     overrideProfile.getName(), serviceName, appName));
         }
+    }
+
+    private static ComponentData findBaseline(List<ComponentData> baselines, String baseline) {
+        return baselines.stream()
+                .filter(data -> baseline.equals(data.getName().split("\\.")[0]))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static String applicationBaseline(Profile overrideProfile, String appName) {
+        if (overrideProfile == null || overrideProfile.getApplications() == null) {
+            return null;
+        }
+        return overrideProfile.getApplications().stream()
+                .filter(app -> appName.equals(app.getName()))
+                .map(ApplicationProfile::getBaseline)
+                .filter(appBaseline -> !isBlank(appBaseline))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     private void warnOnce(String message) {

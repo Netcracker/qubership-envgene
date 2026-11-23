@@ -460,6 +460,29 @@ public class CmdbCliTest {
     }
 
     @Test
+    void testApplicationBaselineReachesEffectiveSet(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        setObjectProfile(envsPath, NS_FILE, "ns-over", "dev");
+        Path profiles = envsPath.resolve("cluster-01/pl-02/Profiles");
+        Files.createDirectories(profiles);
+        Files.writeString(profiles.resolve("ns-over.yml"), """
+                name: "ns-over"
+                baseline: "dev"
+                applications:
+                  - name: "vals-app"
+                    baseline: "prod"
+                    services:
+                      - name: "alertmanager"
+                        parameters:
+                          - name: "REPLICAS"
+                            value: 5
+                """);
+
+        assertEquals(Map.of("BASELINE_MEMORY", "prod-mem", "REPLICAS", 5),
+                profileParams(generateProfileEs(tempDir, envsPath)));
+    }
+
+    @Test
     void testNamespaceObjectBaselineReachesEffectiveSet(@TempDir Path tempDir) throws Exception {
         Path envsPath = prepareProfileEnv(tempDir);
         Path file = envsPath.resolve(NS_FILE);

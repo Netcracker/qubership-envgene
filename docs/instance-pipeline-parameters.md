@@ -21,6 +21,7 @@
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
     - [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode)
+    - [`PROFILE`](#profile)
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
@@ -371,6 +372,20 @@ template artifact version that was actually applied in this run, for example:
 **Mandatory**: No
 
 **Example**: `PERSISTENT`
+
+### `PROFILE`
+
+**Description**: The name of a [Resource Profile](/docs/how-to/configure-resource-profiles.md) baseline. The
+`deployment_profile` step writes `Inventory/resource_profiles/deployment-profile.yml`, which sets this baseline as the
+default of every application the run deploys, and appends that override last to the override list of every Namespace
+and of the Cloud. An override placed before it keeps priority, and an application that does not define the named
+baseline keeps the baseline it had.
+
+**Default Value**: None. An absent or empty value skips the `deployment_profile` step.
+
+**Mandatory**: No
+
+**Example**: `prod`
 
 ### `ENV_INVENTORY_CONTENT`
 

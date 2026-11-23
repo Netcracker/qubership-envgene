@@ -29,6 +29,19 @@ def _render_context(merge):
     return context
 
 
+def _apps_profile(name, baseline, apps):
+    profile = {"name": name, "baseline": baseline, "applications": apps}
+    return readYaml(json.dumps(profile))
+
+
+def _app(name, baseline, param=None):
+    app = {"name": name, "baseline": baseline, "services": []}
+    if param:
+        key, value = param
+        app["services"] = [{"name": "svc", "parameters": [{"name": key, "value": value}]}]
+    return app
+
+
 @pytest.fixture
 def env_instance_store(tmp_path):
     with open_current_env_instance_store(tmp_path) as opened_store:
@@ -148,13 +161,91 @@ class TestMergeResourceProfiles:
         assert template["applications"][0]["version"] == "2.0"
         assert template["applications"][0]["sd"] == "sd-2"
 
+    def test_application_baseline_comes_from_env_specific(self):
+        template = _apps_profile("tmpl", "dev", [_app("Core", "dev", ("replicas", 1)), _app("Billing", "dev-ha")])
+        env_specific = _apps_profile("env", "prod", [_app("Core", "prod")])
+        merge_resource_profiles(template, env_specific, "env")
+        baselines = {app["name"]: app["baseline"] for app in template["applications"]}
+        assert baselines == {"Core": "prod", "Billing": "dev-ha"}
+
+    def test_application_baseline_is_added_to_application_missing_in_template(self):
+        template = _apps_profile("tmpl", "dev", [_app("Core", "dev")])
+        env_specific = _apps_profile("env", "prod", [_app("Billing", "prod-nonha")])
+        merge_resource_profiles(template, env_specific, "env")
+        baselines = {app["name"]: app["baseline"] for app in template["applications"]}
+        assert baselines == {"Core": "dev", "Billing": "prod-nonha"}
+
 
 class TestOverrideByEnvSpecificProfiles:
     def test_standalone_override_is_attached(self, tmp_path, env_instance_store):
         env_profile = tmp_path / "env-over.yml"
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"), {})
+        result = override_by_env_specific_profiles({}, {"bss": [str(env_profile)]}, _render_context("true"), {})
         assert result == {"bss": str(env_profile)}
+
+    @pytest.mark.parametrize("profile_key", ["bss", "cloud"])
+    def test_earlier_entry_of_the_list_wins(self, profile_key, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        first = tmp_path / "first.yml"
+        second = tmp_path / "second.yml"
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 1}))
+        env_instance_store.put(first, _profile("first", baseline="prod", params={"replicas": 2}))
+        env_instance_store.put(second, _profile("second", baseline="stage", params={"replicas": 3}))
+        result = override_by_env_specific_profiles({profile_key: str(template_profile)},
+                                                  {profile_key: [str(first), str(second)]},
+                                                  _render_context("true"), {})
+        assert result == {}
+        merged = env_instance_store.get(template_profile)
+        assert merged["baseline"] == "prod"
+        assert merged["applications"][0]["services"][0]["parameters"][0]["value"] == 2
+
+    def test_application_baseline_selects_that_application_baseline(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        env_profile = tmp_path / "env-over.yml"
+        env_instance_store.put(template_profile, _apps_profile("tmpl", "dev",
+                                                               [_app("Core", "dev", ("replicas", 1)),
+                                                                _app("Billing", "dev-ha")]))
+        env_instance_store.put(env_profile, _apps_profile("env-over", "prod", [_app("Core", "prod")]))
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": [str(env_profile)]},
+                                                   _render_context("true"), {})
+        assert result == {}
+        merged = env_instance_store.get(template_profile)
+        baselines = {app["name"]: app["baseline"] for app in merged["applications"]}
+        assert baselines == {"Core": "prod", "Billing": "dev-ha"}
+
+    def test_application_override_beats_the_profile_default(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        manual = tmp_path / "manual.yml"
+        profile_default = tmp_path / "deployment-profile.yml"
+        env_instance_store.put(template_profile, _apps_profile("tmpl", "dev", [_app("Core", "dev")]))
+        env_instance_store.put(manual, _apps_profile("manual", "", [_app("Core", "dev")]))
+        env_instance_store.put(profile_default, _apps_profile("deployment-profile", "", [_app("Core", "prod")]))
+        result = override_by_env_specific_profiles({"bss": str(template_profile)},
+                                                   {"bss": [str(manual), str(profile_default)]},
+                                                   _render_context("true"), {})
+        assert result == {}
+        merged = env_instance_store.get(template_profile)
+        assert {app["name"]: app["baseline"] for app in merged["applications"]} == {"Core": "dev"}
+
+    def test_replace_mode_attaches_the_first_entry(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        first = tmp_path / "first.yml"
+        second = tmp_path / "second.yml"
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
+        env_instance_store.put(first, _profile("first", baseline="prod"))
+        env_instance_store.put(second, _profile("second", baseline="stage"))
+        result = override_by_env_specific_profiles({"bss": str(template_profile)},
+                                                   {"bss": [str(first), str(second)]},
+                                                   _render_context("false"), {})
+        assert result == {"bss": str(first)}
+
+    def test_standalone_list_attaches_the_first_entry(self, tmp_path, env_instance_store):
+        first = tmp_path / "first.yml"
+        second = tmp_path / "second.yml"
+        env_instance_store.put(first, _profile("first", baseline="prod"))
+        env_instance_store.put(second, _profile("second", baseline="stage"))
+        result = override_by_env_specific_profiles({}, {"bss": [str(first), str(second)]}, _render_context("true"), {})
+        assert result == {"bss": str(first)}
 
     def test_template_only_is_untouched(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
@@ -166,7 +257,7 @@ class TestOverrideByEnvSpecificProfiles:
     def test_standalone_override_is_attached_in_replace_mode(self, tmp_path, env_instance_store):
         env_profile = tmp_path / "env-over.yml"
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("false"), {})
+        result = override_by_env_specific_profiles({}, {"bss": [str(env_profile)]}, _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
 
     def test_replace_drops_template_profile(self, tmp_path, env_instance_store):
@@ -174,7 +265,7 @@ class TestOverrideByEnvSpecificProfiles:
         env_profile = tmp_path / "env-over.yml"
         env_instance_store.put(template_profile, _profile("tmpl", baseline="dev", params={"replicas": 3}))
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod", params={"cpu": 2}))
-        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": [str(env_profile)]},
                                                    _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
         assert env_instance_store.get(template_profile)["baseline"] == "dev"
@@ -184,7 +275,7 @@ class TestOverrideByEnvSpecificProfiles:
         env_profile = tmp_path / "env-over.yml"
         env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": [str(env_profile)]},
                                                    _render_context("true"), {})
         assert result == {}
         assert env_instance_store.get(template_profile)["baseline"] == "prod"
@@ -195,7 +286,7 @@ class TestOverrideByEnvSpecificProfiles:
         env_instance_store.put(template_profile, _profile("tmpl", params={"replicas": 1}))
         env_instance_store.put(env_profile, _profile("env-over", baseline="dev"))
         with patch("build_env.resource_profiles.logger") as logger:
-            override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+            override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": [str(env_profile)]},
                                               _render_context("true"), {"bss": "dev"})
         logger.warning.assert_not_called()
 
@@ -204,7 +295,7 @@ class TestOverrideByEnvSpecificProfiles:
         env_profile = tmp_path / "env-over.yml"
         env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": [str(env_profile)]},
                                                    _render_context(False), {})
         assert result == {"bss": str(env_profile)}
         assert env_instance_store.get(template_profile)["baseline"] == "dev"
@@ -216,7 +307,7 @@ class TestOverrideByEnvSpecificProfiles:
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         context = MagicMock()
         context.ctx.env_definition = {"inventory": {}}
-        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": [str(env_profile)]},
                                                    context, {})
         assert result == {}
         assert env_instance_store.get(template_profile)["baseline"] == "prod"
@@ -325,22 +416,41 @@ class TestGetEnvSpecificResourceProfiles:
     def test_finds_profile_in_environment_folder(self, env_dir, env_instance_store):
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "prod")
         assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": [str(path)]}
 
     def test_environment_level_wins_over_cluster_and_global(self, env_dir, env_instance_store):
         self._write_profile(env_dir.parents[1] / "resource_profiles", "bss-over", "global")
         self._write_profile(env_dir.parent / "resource_profiles", "bss-over", "cluster")
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "env")
         assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": [str(path)]}
 
     def test_falls_back_to_cluster_level(self, env_dir, env_instance_store):
         self._write_profile(env_dir.parents[1] / "resource_profiles", "bss-over", "global")
         path = self._write_profile(env_dir.parent / "resource_profiles", "bss-over", "cluster")
         assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": [str(path)]}
+
+    def test_single_value_is_a_list_of_one_entry(self, env_dir, env_instance_store):
+        path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "prod")
+        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                  self._env_definition({"bss": "bss-over"})) == {"bss": [str(path)]}
+
+    def test_list_is_returned_in_its_order(self, env_dir, env_instance_store):
+        folder = env_dir / "Inventory" / "resource_profiles"
+        first = self._write_profile(folder, "bss-first", "prod")
+        second = self._write_profile(folder, "bss-second", "stage")
+        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                  self._env_definition({"bss": ["bss-first", "bss-second"]})) == \
+            {"bss": [str(first), str(second)]}
 
     def test_missing_profile_fails(self, env_dir, env_instance_store):
         with pytest.raises(ReferenceError):
             get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
                                                self._env_definition({"bss": "bss-over"}))
+
+    def test_missing_entry_of_a_list_fails(self, env_dir, env_instance_store):
+        self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-first", "prod")
+        with pytest.raises(ReferenceError):
+            get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                               self._env_definition({"bss": ["bss-first", "bss-second"]}))

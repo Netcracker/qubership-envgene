@@ -11,6 +11,7 @@ from envgenehelper.models import PipelineType
 
 from pipeline.orchestrator import (
     AppregdefRenderStep,
+    DeploymentProfileStep,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
     GenerateEffectiveSetStep,
@@ -129,4 +130,18 @@ class TestStepGating:
             ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION=bgd_operation)
 
             assert not GenerateEffectiveSetStep().should_run(ctx)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("profile, expected", [("prod", True), ("", False)])
+    def test_deployment_profile_step_is_gated_on_profile(self, profile, expected):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, PROFILE=profile)
+
+        assert DeploymentProfileStep().should_run(ctx) == expected
+
+    @pytest.mark.unit
+    def test_deployment_profile_step_skipped_when_environment_is_not_built(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="promote", PROFILE="prod")
+
+        assert not EnvBuildStep().should_run(ctx)
+        assert not DeploymentProfileStep().should_run(ctx)
 
