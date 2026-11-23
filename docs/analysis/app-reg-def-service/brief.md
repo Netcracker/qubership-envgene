@@ -31,12 +31,12 @@ committed change, no OpenSpec folder yet.
 | D18 | Casing by role: kind PascalCase, path identifiers kebab, fields camelCase | settled   | industry    |
 | D19 | Folders: application-definitions/ and registry-definitions/               | settled   | G1.2        |
 | D20 | Sync: webhook-primary plus periodic backstop, not poll-only               | settled   | G2.1        |
-| D21 | Incremental sync by changed paths, backstop does full reconcile           | settled   | G2.3        |
+| D21 | Any change triggers a full repo resync, incremental sync deferred         | settled   | G2.3        |
 | D22 | Single-layer cache of def objects, resolve on the fly, memo deferred      | settled   | G3.1        |
 | D23 | Cache store in-process per replica, Redis-ready for shared HA             | settled   | G3.2        |
 | D24 | Indexer is the sole cache writer, Writer commits and notifies only        | settled   | C1 critic   |
 | D25 | Separate git working copies for sync-read and write, settles G8           | settled   | C1 critic   |
-| D26 | Webhook ingest is a separate component from the consumer API              | settled   | C1 critic   |
+| D26 | Webhook receiver is a separate component from the consumer API            | settled   | C1 critic   |
 | D27 | Deploy profiles: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2          |
 | D28 | Multi-cluster: one instance per cluster over the shared git SOT           | settled   | C2          |
 | D29 | Webhook: one per cluster to the sync-owner, no pub/sub, backstop          | settled   | C2          |
@@ -96,6 +96,8 @@ Parked:
   deployment. On create, the def name is validated or normalized to the kebab DNS-safe convention (validate
   vs auto-transform is a sub-choice).
 - P2 - multizonality. The design stays extensible to it (D13).
+- P4 - incremental sync by changed paths. Deferred. The webhook and the backstop both do a full repo
+  resync for now, to be revisited if the resync cost matters.
 
 Todo:
 
@@ -228,14 +230,14 @@ HA profile (form 2, additive):
 - Read-service: a `Deployment` of N stateless replicas (API plus Resolver) that read the shared Redis
   cache and hold no git.
 - Write/sync singleton: one active instance (leader-elected via a k8s Lease) that owns the git working
-  copies, the Indexer, the Writer, and the webhook ingest, and writes the shared Redis cache.
+  copies, the Indexer, the Writer, and the webhook receiver, and writes the shared Redis cache.
 - Redis holds the cache (`defs:appdef:<name>`, `defs:regdef:<name>`, `defs:watermark`) and needs its own HA.
 - Routing: read verbs go to the read-service, write verbs and the webhook go to the singleton.
 
 Git working copies (both profiles):
 
 - Read worktree (Indexer): one shallow, blob-filtered, sparse checkout of application-definitions/ and
-  registry-definitions/ (D19). A sync is a `git fetch` plus a diff of the changed paths (D21).
+  registry-definitions/ (D19). A sync is a `git fetch` to HEAD plus a full re-read of the checkout (D21).
 - Write worktree (Writer): an ephemeral worktree per write, committed, pushed, then discarded (D25).
 
 Read-after-write (D30): the cache carries a watermark, the last indexed commit SHA. A write commits, pushes
@@ -252,7 +254,7 @@ granularity, which is viable because clusters are few and stable. Inside a clust
 single sync owner (the one pod in lite, the singleton leader in HA) and Redis fans out to the read pods.
 There is no pub/sub. The periodic backstop is the guarantee for any missed delivery.
 
-Ports and network: :8080 consumer API, :8081 webhook ingest (HMAC), :8082 health, :9090 metrics, each
+Ports and network: :8080 consumer API, :8081 webhook receiver (HMAC), :8082 health, :9090 metrics, each
 behind its own NetworkPolicy. Consumers reach a Service, the git server reaches a webhook Ingress.
 
 Security (X2): webhook HMAC, consumer authn and authz, git credentials as a least-privilege Secret, and the
