@@ -11,8 +11,7 @@ The service's components and its read, sync, and write flows. For the rest, see
 The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo. It turns
 `application:version` into the DD or SD download-info plus all registry sections and the appdef metadata,
 normalized to RegDef v2 and auth-ready. It is blind on credentials: it returns the `authConfig` and the
-credId references, and the consumer mints the secret with its own identity. The service never reads a
-registry secret.
+credId references, and the consumer mints the secret with its own identity.
 
 ```mermaid
 flowchart LR
@@ -20,8 +19,6 @@ flowchart LR
   svc <-->|"fetch, push"| git[("git<br/>defs repo, source of truth")]
   git -->|"webhook on push"| svc
 ```
-
-The git webhook enters a distinct Webhook ingest component, not the consumer API (D26, see Components).
 
 ## Components
 
@@ -53,16 +50,16 @@ flowchart TB
   writer -. "notify SHA" .-> indexer
 ```
 
-| Component      | Responsibility                                                                                 | Depends on                     |
-|----------------|------------------------------------------------------------------------------------------------|--------------------------------|
-| Consumer API   | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer | Resolver, Writer               |
-| Webhook ingest | validates the git HMAC and passes the changed paths to the Indexer                             | Indexer                        |
-| Resolver       | assembles the resolve response from cached objects, builds authReady (blind)                   | Cache                          |
-| Cache          | holds the normalized v2 def objects by name and exposes the watermark for read-after-write     | -                              |
-| Indexer        | the sole cache writer, syncs git and updates the cache, incremental and idempotent             | Git adapter, Normalizer, Cache |
-| Writer         | create and update, validates the schema and the name, commits and pushes, notifies the Indexer | Git adapter, Indexer, Cache    |
-| Normalizer     | projects a v1 def to the v2 object                                                             | -                              |
-| Git adapter    | clone, fetch, commit, push, and the changed-path diff, on the read and the write worktrees     | -                              |
+| Component      | Responsibility                                                                                        | Depends on                     |
+|----------------|-------------------------------------------------------------------------------------------------------|--------------------------------|
+| Consumer API   | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer        | Resolver, Writer               |
+| Webhook ingest | validates the git HMAC and passes the changed paths to the Indexer                                    | Indexer                        |
+| Resolver       | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)            | Cache                          |
+| Cache          | holds the normalized v2 def objects by name and exposes the watermark for read-after-write            | -                              |
+| Indexer        | sole cache writer, syncs git on a webhook or the backstop, incremental plus a periodic full reconcile | Git adapter, Normalizer, Cache |
+| Writer         | create and update, validates the schema and the name, commits and pushes, notifies the Indexer        | Git adapter, Indexer, Cache    |
+| Normalizer     | projects a v1 def to the v2 object                                                                    | -                              |
+| Git adapter    | clone, fetch, commit, push, and the changed-path diff, on the read and the write worktrees            | -                              |
 
 ## Data flows
 
@@ -78,7 +75,7 @@ sequenceDiagram
   API->>R: resolve
   R->>Cache: look up appdef and regdef by name
   Cache-->>R: normalized v2 objects
-  R->>R: build authReady from authConfig and credId, no secret
+  R->>R: select DD or SD from the appdef, build authReady from authConfig and credId, no secret
   R-->>API: artifact (DD or SD) download-info, registry sections, authReady, appdef metadata
   API-->>C: response
 ```
@@ -96,10 +93,10 @@ sequenceDiagram
   Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop (D20)
   GS->>WI: webhook with changed paths
   WI->>IX: trigger
-  IX->>GA: fetch and diff the changed paths on the read worktree
+  IX->>GA: fetch and diff (changed paths on a webhook, full tree on the backstop)
   GA-->>IX: changed def files
   IX->>N: normalize to v2
-  N-->>IX: v2 objects
+  N-->>IX: v2 objects, malformed entries skipped (D31)
   IX->>Cache: upsert the entries, set the watermark to HEAD
 ```
 
@@ -122,7 +119,6 @@ sequenceDiagram
   W--)IX: notify the SHA
   IX->>GA: fetch on the read worktree
   IX->>Cache: upsert, set the watermark
-  Note over IX,Cache: the watermark may be advanced by this notify, the backstop, or an external commit (D30)
   W->>Cache: block until the watermark covers the SHA
   Cache-->>W: the normalized object
   W-->>API: the written object
@@ -141,7 +137,7 @@ election, the shared store, and the multi-cluster deployment are in
 
 ## Dependency direction
 
-The Resolver depends on the Cache as a port. The Normalizer is a pure v1 to v2 projection with no port
-dependency, invoked by the Indexer. Only the Indexer and the Writer reach git, and only through the Git
-adapter port. This is what lets the cache move from in-process to Redis and the write and sync plane move
-to a separate process without touching the read path.
+Dependencies point inward through ports, and the graph is acyclic: the Resolver reaches only the Cache,
+and only the Indexer and the Writer reach git, each through the Git adapter. This is what lets the cache
+move from in-process to Redis and the write and sync plane move to a separate process without touching the
+read path.
