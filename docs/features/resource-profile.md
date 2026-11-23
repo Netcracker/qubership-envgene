@@ -118,6 +118,10 @@ envTemplate:
       - <deploy-postfix>-profile-override
 ```
 
+EnvGene produces this list. The [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) parameter adds
+`<deploy-postfix>-profile-override` as the last item, so you do not write a list by hand. For a sample, see
+[`env-06`](/docs/samples/instance-repository/environments/cluster-01/env-06/Inventory/env_definition.yml).
+
 Once a name is referenced, EnvGene resolves it to a file by searching the Instance repository in the
 following order, from the most specific scope to the least specific. The first match wins, so the same
 name resolves to the most specific file available:
