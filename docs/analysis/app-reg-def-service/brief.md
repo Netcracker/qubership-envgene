@@ -30,16 +30,16 @@ committed change, no OpenSpec folder yet.
 | D17 | Zero secrets in the repo, credId refs only, no encryption                 | settled   | G1.4        |
 | D18 | Casing by role: kind PascalCase, path identifiers kebab, fields camelCase | settled   | industry    |
 | D19 | Folders: application-definitions/ and registry-definitions/               | settled   | G1.2        |
-| D20 | Sync: webhook-primary plus periodic backstop, not poll-only               | settled   | G2.1        |
-| D21 | Any change triggers a full repo resync, incremental sync deferred         | settled   | G2.3        |
+| D20 | Resync triggered by a push webhook plus a periodic timer, not poll-only   | settled   | G2.1        |
+| D21 | Any change triggers a full repo resync, incremental resync deferred       | settled   | G2.3        |
 | D22 | Single-layer cache of def objects, resolve on the fly, memo deferred      | settled   | G3.1        |
 | D23 | Cache store in-process per replica, Redis-ready for shared HA             | settled   | G3.2        |
 | D24 | Indexer is the sole cache writer, Writer commits and notifies only        | settled   | C1 critic   |
-| D25 | Separate git working copies for sync-read and write, settles G8           | settled   | C1 critic   |
+| D25 | Separate git working copies for resync-read and write, settles G8         | settled   | C1 critic   |
 | D26 | Webhook receiver is a separate component from the consumer API            | settled   | C1 critic   |
 | D27 | Deploy profiles: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2          |
 | D28 | Multi-cluster: one instance per cluster over the shared git SOT           | settled   | C2          |
-| D29 | Webhook: one per cluster to the sync-owner, no pub/sub, backstop          | settled   | C2          |
+| D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer  | settled   | C2          |
 | D30 | Read-after-write via a cache watermark (last indexed commit SHA)          | settled   | C2          |
 | D31 | Malformed def is skipped per entry, not an all-or-nothing blackout        | settled   | C2          |
 | D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI     | settled   | challenge   |
@@ -96,7 +96,7 @@ Parked:
   deployment. On create, the def name is validated or normalized to the kebab DNS-safe convention (validate
   vs auto-transform is a sub-choice).
 - P2 - multizonality. The design stays extensible to it (D13).
-- P4 - incremental sync by changed paths. Deferred. The webhook and the backstop both do a full repo
+- P4 - incremental resync by changed paths. Deferred. The webhook and the periodic timer both do a full repo
   resync for now, to be revisited if the resync cost matters.
 
 Todo:
@@ -214,7 +214,7 @@ registry sections, D11), and CMDB access (D5).
 ## Topology and deployment
 
 Two deploy profiles from one codebase, selected by config (the cache is a port, D23): lite and HA. A
-malformed def is skipped and logged, never an all-or-nothing blackout (D31). A sync is idempotent (fetch
+malformed def is skipped and logged, never an all-or-nothing blackout (D31). A resync is idempotent (fetch
 and re-parse to HEAD), so duplicate or out-of-order webhook deliveries converge.
 
 Lite profile (form 1, ship first):
@@ -229,7 +229,7 @@ HA profile (form 2, additive):
 
 - Read-service: a `Deployment` of N stateless replicas (API plus Resolver) that read the shared Redis
   cache and hold no git.
-- Write/sync singleton: one active instance (leader-elected via a k8s Lease) that owns the git working
+- Write/resync singleton: one active instance (leader-elected via a k8s Lease) that owns the git working
   copies, the Indexer, the Writer, and the webhook receiver, and writes the shared Redis cache.
 - Redis holds the cache (`defs:appdef:<name>`, `defs:regdef:<name>`, `defs:watermark`) and needs its own HA.
 - Routing: read verbs go to the read-service, write verbs and the webhook go to the singleton.
@@ -237,7 +237,7 @@ HA profile (form 2, additive):
 Git working copies (both profiles):
 
 - Read worktree (Indexer): one shallow, blob-filtered, sparse checkout of application-definitions/ and
-  registry-definitions/ (D19). A sync is a `git fetch` to HEAD plus a full re-read of the checkout (D21).
+  registry-definitions/ (D19). A resync is a `git fetch` to HEAD plus a full re-read of the checkout (D21).
 - Write worktree (Writer): an ephemeral worktree per write, committed, pushed, then discarded (D25).
 
 Read-after-write (D30): the cache carries a watermark, the last indexed commit SHA. A write commits, pushes
@@ -245,14 +245,14 @@ with a fetch-rebase retry on a non-fast-forward, notifies the Indexer, and waits
 its commit before returning the object (D9). An external or manual commit takes the same Indexer path (G6).
 
 Multi-cluster (D28): one independent instance per cluster over the one shared git SOT. Reads are local and
-eventually consistent as each instance syncs the same git. Writes go through git's own optimistic
+eventually consistent as each instance resyncs the same git. Writes go through git's own optimistic
 concurrency (the fetch-rebase retry), so git is the cross-cluster write serializer with no distributed
 lock. Each cluster picks its own profile.
 
 Webhook delivery (D29): the repo holds one webhook per cluster, so the cross-cluster fan-out is at cluster
 granularity, which is viable because clusters are few and stable. Inside a cluster the webhook reaches the
-single sync owner (the one pod in lite, the singleton leader in HA) and Redis fans out to the read pods.
-There is no pub/sub. The periodic backstop is the guarantee for any missed delivery.
+single resync owner (the one pod in lite, the singleton leader in HA) and Redis fans out to the read pods.
+There is no pub/sub. The periodic resync is the guarantee for any missed delivery.
 
 Ports and network: :8080 consumer API, :8081 webhook receiver (HMAC), :8082 health, :9090 metrics, each
 behind its own NetworkPolicy. Consumers reach a Service, the git server reaches a webhook Ingress.
@@ -260,11 +260,11 @@ behind its own NetworkPolicy. Consumers reach a Service, the git server reaches 
 Security (X2): webhook HMAC, consumer authn and authz, git credentials as a least-privilege Secret, and the
 blind boundary (the service reads credId references only and never holds a registry secret, D2 and D17).
 
-Observability (X1): resolve latency, cache entry counts, sync lag (now minus the watermark commit time),
+Observability (X1): resolve latency, cache entry counts, resync lag (now minus the watermark commit time),
 webhook deliveries and failures, write latency, and the conflict rate.
 
-Failure modes (X6): git unreachable serves the stale cache while the backstop retries, a missed webhook is
-caught by the backstop, a malformed def is skipped per entry (D31), and a restart re-clones and warms (in
+Failure modes (X6): git unreachable serves the stale cache while the periodic resync retries, a missed webhook is
+caught by the periodic resync, a malformed def is skipped per entry (D31), and a restart re-clones and warms (in
 HA the read pods keep serving from Redis).
 
 Provenance note: current-behavior claims are grounded in code research over qubership-envgene and the

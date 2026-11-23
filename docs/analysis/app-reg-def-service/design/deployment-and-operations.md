@@ -10,7 +10,7 @@
 
 ## Configuration reference
 
-> _Placeholder. A table of config inputs: git URL, branch, credentials, webhook secret, backstop interval,
+> _Placeholder. A table of config inputs: git URL, branch, credentials, webhook secret, periodic resync interval,
 > cache backend, and the rest._
 
 ## Scaling and multi-cluster

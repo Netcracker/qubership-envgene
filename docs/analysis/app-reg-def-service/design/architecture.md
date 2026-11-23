@@ -1,6 +1,6 @@
 # Architecture
 
-The service's components and its read, sync, and write flows. For the rest, see
+The service's components and its read, resync, and write flows. For the rest, see
 [api-reference.md](api-reference.md) for the API contract,
 [data-model-and-layout.md](data-model-and-layout.md) for the data model and repository layout,
 [consistency-and-sync.md](consistency-and-sync.md) for the consistency rules, and
@@ -27,7 +27,7 @@ flowchart LR
 One deployable, laid out as ports and adapters, so the calls below are in-process rather than network
 hops. Inbound adapters accept outside traffic, the core holds the logic, and outbound adapters sit behind
 ports, as grouped in the diagram. The Git adapter works two separate worktrees, a read worktree the
-Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do not race on one
+Indexer resyncs and a write worktree the Writer commits on, so the resync and write paths do not race on one
 checkout. The Indexer is the single writer of the cache, the invariant that keeps reads correct
 (see consistency-and-sync).
 
@@ -51,23 +51,23 @@ flowchart TB
   api -->|read| resolver
   resolver -->|lookup| cache
   api -->|write| writer
-  writer --> gitad
   writer -->|wait watermark| cache
   writer -. "notify SHA" .-> indexer
   wh -->|resync| indexer
   indexer -->|upsert| cache
   indexer --> gitad
+  writer --> gitad
 ```
 
-| Module           | Responsibility                                                                                   | Depends on                  |
-|------------------|--------------------------------------------------------------------------------------------------|-----------------------------|
-| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   | Resolver, Writer            |
-| Webhook receiver | validates the git HMAC and triggers a resync                                                     | Indexer                     |
-| Resolver         | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)       | Cache                       |
-| Cache            | holds the def objects by name and exposes the watermark for read-after-write                     | -                           |
-| Indexer          | sole cache writer, on a webhook or the backstop re-reads the repo to HEAD and rebuilds the cache | Git adapter, Cache          |
-| Writer           | create and update, validates the schema and the name, commits and pushes, notifies the Indexer   | Git adapter, Indexer, Cache |
-| Git adapter      | clone, fetch, commit, and push on the read and the write worktrees                               | -                           |
+| Module           | Responsibility                                                                                   |
+|------------------|--------------------------------------------------------------------------------------------------|
+| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
+| Webhook receiver | validates the git HMAC and triggers a resync                                                     |
+| Resolver         | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)       |
+| Cache            | holds the def objects by name and exposes the watermark for read-after-write                     |
+| Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
+| Writer           | create and update, validates the schema and the name, commits and pushes, notifies the Indexer   |
+| Git adapter      | clone, fetch, commit, and push on the read and the write worktrees                               |
 
 ## Data flows
 
@@ -88,7 +88,7 @@ sequenceDiagram
   API-->>C: response
 ```
 
-### Sync
+### Resync
 
 ```mermaid
 sequenceDiagram
@@ -97,7 +97,7 @@ sequenceDiagram
   participant IX as Indexer
   participant GA as Git adapter
   participant Cache
-  Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop
+  Note over GS,Cache: a resync runs on a push webhook or a periodic timer, the safety net for a missed webhook
   GS->>WR: webhook on push
   WR->>IX: resync
   IX->>GA: fetch to HEAD and read the whole repo
@@ -135,9 +135,9 @@ sequenceDiagram
 ## Logical topology
 
 The same modules run in two profiles. The split that matters at the logical level is the read plane
-(Consumer API and Resolver over the Cache) versus the write and sync plane (Webhook receiver, Indexer,
+(Consumer API and Resolver over the Cache) versus the write and resync plane (Webhook receiver, Indexer,
 Writer). In the lite profile both planes share one process. In the HA profile the read plane scales as
-stateless replicas and the write and sync plane runs as one leader. The replica counts, the leader
+stateless replicas and the write and resync plane runs as one leader. The replica counts, the leader
 election, the shared store, and the multi-cluster deployment are in
 [deployment-and-operations.md](deployment-and-operations.md).
 
@@ -146,5 +146,5 @@ election, the shared store, and the multi-cluster deployment are in
 Dependencies point inward through ports, and the graph is acyclic: the Resolver reaches only the Cache,
 and only the Indexer and the Writer reach git, each through the Git adapter. The Cache is warmed in full at
 bootstrap and is authoritative, so a resolve miss is a not-found, never a git fallback on the read path.
-This is what lets the cache move from in-process to Redis and the write and sync plane move to a separate
+This is what lets the cache move from in-process to Redis and the write and resync plane move to a separate
 process without touching the read path.

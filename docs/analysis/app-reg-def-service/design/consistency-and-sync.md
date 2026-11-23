@@ -10,7 +10,7 @@
 
 ## Sync
 
-> _Placeholder. Webhook-primary plus a periodic backstop, incremental by changed paths, and idempotent
+> _Placeholder. Webhook-primary plus a periodic resync, a full repo resync on any change, and idempotent
 > (fetch and re-parse to HEAD) so duplicate or out-of-order deliveries converge._
 
 ## Watermark and read-after-write
@@ -30,5 +30,5 @@
 
 ## Failure modes
 
-> _Placeholder. Git unreachable serves stale, a missed webhook is caught by the backstop, a malformed def
+> _Placeholder. Git unreachable serves stale, a missed webhook is caught by the periodic resync, a malformed def
 > is skipped per entry._
