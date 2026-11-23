@@ -17,6 +17,7 @@
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
     - [`current_env.composite_topology`](#current_envcomposite_topology)
+    - [`current_env.cluster.name`](#current_envclustername)
     - [`current_env.cluster.cloud_api_protocol`](#current_envclustercloud_api_protocol)
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
@@ -451,6 +452,31 @@ satellites:
 ```
 
 **Usage in sample:** TBD
+
+### `current_env.cluster.name`
+
+---
+**Description:** Name of the cluster that the Environment belongs to. The value is the `<clusterName>` folder
+name in the path `/environments/<clusterName>/<environmentName>/`.
+
+The value does not change with the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) or a linked
+[Cloud Passport](/docs/envgene-objects.md#cloud-passport).
+
+**Type:** String
+
+**Default Value:** `<clusterName>` from the Environment path structure
+
+**Basic usage:**
+
+```yaml
+argocd-cred:
+  type: external
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cluster.name }}"
+```
+
+For the Environment at `/environments/test-cluster-01/test-env-01/`, the rendered value is
+`remoteRefPath: test-cluster-01`.
 
 ### `current_env.cluster.cloud_api_protocol`
 
