@@ -1,62 +1,72 @@
-# App Reg Def library - interface specification
+# App Reg Def resolver - interface specification
 
-- [App Reg Def library - interface specification](#app-reg-def-library---interface-specification)
-  - [Overview and scope](#overview-and-scope)
-  - [Concepts and data contracts](#concepts-and-data-contracts)
-  - [Operations](#operations)
-    - [open\_defs](#open_defs)
-    - [resolve](#resolve)
-    - [download](#download)
-    - [get\_regdef](#get_regdef)
-    - [get\_appdef](#get_appdef)
-    - [create](#create)
-    - [update](#update)
-    - [refresh](#refresh)
-  - [Behaviors](#behaviors)
-  - [Error model](#error-model)
+- [Overview and scope](#overview-and-scope)
+- [Concepts and data contracts](#concepts-and-data-contracts)
+- [Operations](#operations)
+  - [open_defs](#open_defs)
+  - [resolve](#resolve)
+  - [provider_for](#provider_for)
+  - [get_regdef](#get_regdef)
+  - [get_appdef](#get_appdef)
+  - [create](#create)
+  - [update](#update)
+  - [refresh](#refresh)
+- [Behaviors](#behaviors)
+- [Error model](#error-model)
 
-This specifies the App Reg Def library at the contract level, enough for a developer to implement without
-prescribing the internals. The key words MUST, SHOULD, and MAY follow RFC 2119. The object shapes are in
-[data-model-and-layout.md](design/data-model-and-layout.md) and the schemas under `/schemas`.
+This specifies the App Reg Def resolver library (working name `appregdef-resolver`) at the contract level,
+enough for a developer to implement without prescribing the internals. The key words MUST, SHOULD, and MAY
+follow RFC 2119. The object shapes are in [data-model-and-layout.md](design/data-model-and-layout.md) and
+the schemas under `/schemas`.
 
 ## Overview and scope
 
-The library is embedded in a consumer process and resolves an `application:version` to its artifact
-download-info, from a dedicated defs git repo, using the consumer's own credentials. It is the variant of
-the App Reg Def capability that is a library, not a service. Consumers today are Python, so the library is
-a Python package.
+The library resolves an application to its registry definition and artifact coordinates from a dedicated
+defs git repo, and maps a RegDef v2 to a provider of the artifacts_finder common library
+(`qubership_pipelines_common_library.v2.artifacts_finder`). It is the EnvGene-specific defs layer. It does
+not search for or download artifacts. That is artifacts_finder.
 
 It does:
 
 - fetch the defs repo by git, a shallow and sparse checkout of the def folders.
 - parse the AppDef and RegDef v2 objects.
-- resolve an application and version to download-info, including the registry tier probing, the snapshot
-  resolution, and minting the registry auth from the consumer's credentials.
-- return a RegDef or an AppDef by name.
+- join an AppDef to its RegDef by `registryName`.
+- map a RegDef v2 to a configured artifacts_finder provider, and an AppDef and version to an
+  artifacts_finder artifact.
 - create and update defs, validating them and committing to git.
 
 It does not:
 
-- hold or persist secrets. It reads the consumer's credentials transiently to build auth, nothing is
+- probe registry tiers, resolve snapshots, execute the registry auth, or download artifacts. The library
+  returns the provider and the artifact, and the consumer runs artifacts_finder with them.
+- run as a long-lived service, hold a shared cache, or need HA. Freshness is the consumer's git fetch.
+- hold or persist secrets. It passes the consumer's credentials into the provider it builds, nothing is
   stored.
 - migrate v1 defs to v2. That stays a separate one-time CLI.
 
-The consumer supplies git access to the defs repo and the registry credentials for the artifact registries.
+The handoff is: `resolve` returns a `ResolvedTarget`, and the consumer runs
+`ArtifactFinder(target.provider).find_artifact_urls(artifact=target.artifact)` and `download_artifact`.
+The tier probing, the snapshot resolution, the auth, and the download are artifacts_finder's contract.
+
+The consumer supplies git access to the defs repo and the registry credentials for the artifact
+registries.
 
 ## Concepts and data contracts
 
 - **DefsSource** - a handle bound to a local checkout of the defs repo at a ref. All operations run against
   it.
-- **DownloadInfo** - the resolve result: `downloadUrl`, `kind` (`dd.json` or `sd.yaml`), `authHeaders`
-  (the minted registry auth), `registry` (the RegDef sections), and `appdef` (the appdef coordinates and
-  metadata).
-- **AppDef** and **RegDef** - the def objects, defined in
-  [data-model-and-layout.md](design/data-model-and-layout.md) and the schemas. RegDef is the extended v2
-  shape.
-- **RegistryCredentials** - a lookup from a `credId` to its secret material, supplied by the consumer, for
-  example from its secret store or environment. The library uses it to mint registry auth.
+- **Artifact** - an artifacts_finder artifact, the `groupId`, `artifactId`, `version`, and `extension`
+  (`json` for a DD, `yaml` for an SD). The library builds it, artifacts_finder consumes it.
+- **Provider** - a configured artifacts_finder provider (Artifactory, Nexus, AWS, GCP, or Azure), its
+  repositories set to the RegDef tiers and its credentials from the RegDef `authConfig`. The library builds
+  it, artifacts_finder consumes it.
+- **ResolvedTarget** - what `resolve` returns: the `artifact`, the `kind` (`DD` or `SD`), the `provider`,
+  and the `appdef` metadata. It is the handoff to artifacts_finder.
+- **RegistryCredentials** - a lookup from a `credId` to its secret material, supplied by the consumer. The
+  library passes it into the provider credentials.
 - **GitAuth** - a token or an ssh key for a private defs repo. Omitted for an anonymous public repo.
-- **Strategy** - the tier-probing order for resolve, an enum with a default.
+- **TierOrder** - the order the RegDef tiers are listed in the provider, which sets artifacts_finder's
+  probe order. An optional input with a default.
 
 ## Operations
 
@@ -85,58 +95,65 @@ The consumer supplies git access to the defs repo and the registry credentials f
 
 ### resolve
 
-**Purpose** resolve an application and version to its artifact download-info, using the consumer's registry
-credentials.
+**Purpose** resolve an application and version to the artifact coordinates and the configured provider that
+artifacts_finder needs to fetch it.
 
-**Signature** `resolve(app, version, registry_credentials, strategy = "release-first") -> DownloadInfo`
+**Signature** `resolve(app, version, registry_credentials, tier_order = default) -> ResolvedTarget`
 
 **Parameters**
 
 - `app` (string, required): the application name. An AppDef MUST exist for it.
-- `version` (string, required): a release version or a `-SNAPSHOT` version.
-- `registry_credentials` (RegistryCredentials, required): the lookup from `credId` to secret, used to mint
-  auth and to probe and download.
-- `strategy` (Strategy, optional, default `release-first`): the tier-probing order.
+- `version` (string, required): a release version or a `-SNAPSHOT` version. It is carried into the
+  artifact coordinates, not interpreted here.
+- `registry_credentials` (RegistryCredentials, required): the lookup from `credId` to secret, passed into
+  the provider credentials.
+- `tier_order` (TierOrder, optional, default release-first): the order the tiers are listed in the
+  provider.
 
-**Returns** `DownloadInfo`.
+**Returns** a `ResolvedTarget`.
 
-**Errors** `AppNotFound`, `RegistryNotFound`, `ArtifactNotFound`, `RegistryUnreachable`, `Unauthorized`.
+**Errors** `AppNotFound`, `RegistryNotFound`, `UnsupportedProvider`, `UnsupportedAuthMethod`.
 
 **Behavior**
 
 - MUST join the AppDef to its RegDef by `registryName`. A missing RegDef is `RegistryNotFound`.
-- MUST mint the registry auth from the RegDef `authConfig` and `registry_credentials`, per the provider and
-  the method.
-- MUST set `kind` from the AppDef `solutionDescriptor` flag, `sd.yaml` when it marks a solution
-  descriptor and `dd.json` otherwise, and probe for that artifact.
-- MUST probe the maven tiers in the order `strategy` defines and return the first tier that holds the
-  artifact. No tier holding it is `ArtifactNotFound`.
-- For a `-SNAPSHOT` version, MUST resolve the timestamped artifact from `maven-metadata.xml`.
-- MUST NOT persist any secret. It reads `registry_credentials` only to build `authHeaders`.
+- MUST build the artifact from the AppDef `groupId` and `artifactId`, the `version`, and the extension,
+  `json` for a DD and `yaml` for an SD, chosen by the AppDef `solutionDescriptor` flag. The `kind` is `DD`
+  or `SD` accordingly.
+- MUST build the provider by mapping the RegDef: the provider type from the RegDef provider, the
+  repositories from the RegDef tiers in `tier_order`, and the credentials from the RegDef `authConfig` and
+  `registry_credentials`.
+- MUST fail with `UnsupportedProvider` or `UnsupportedAuthMethod` when the RegDef uses a provider or a
+  method artifacts_finder does not support.
+- MUST NOT contact the registry or download anything. It returns the inputs for artifacts_finder.
 - Read-only, with no side effect on the defs repo.
 
-### download
+### provider_for
 
-**Purpose** fetch a resolved artifact to a local path.
+**Purpose** map a RegDef to a configured artifacts_finder provider, for flows that address a registry
+directly, such as publish and promote.
 
-**Signature** `download(info, dest) -> path`
+**Signature** `provider_for(regdef, registry_credentials, tier_order = default) -> Provider`
 
 **Parameters**
 
-- `info` (DownloadInfo, required): a resolve result.
-- `dest` (path, required): the local destination.
+- `regdef` (RegDef, required): the registry definition.
+- `registry_credentials` (RegistryCredentials, required): passed into the provider credentials.
+- `tier_order` (TierOrder, optional, default release-first).
 
-**Returns** the local path of the downloaded file.
+**Returns** a configured artifacts_finder `Provider`.
 
-**Errors** `RegistryUnreachable`, `Unauthorized`, `ArtifactNotFound`.
+**Errors** `UnsupportedProvider`, `UnsupportedAuthMethod`.
 
 **Behavior**
 
-- MUST get `info.downloadUrl` with `info.authHeaders` and write it to `dest`.
+- MUST map the RegDef provider, the tiers in `tier_order`, and the `authConfig` with
+  `registry_credentials` to the provider.
+- MUST NOT contact the registry.
 
 ### get_regdef
 
-**Purpose** return a RegDef by name, with no application and no version.
+**Purpose** return a RegDef by name.
 
 **Signature** `get_regdef(name) -> RegDef`
 
@@ -233,40 +250,43 @@ credentials.
 ## Behaviors
 
 ```gherkin
-Scenario: resolve a release version from the release tier
-  Given an AppDef "billing" pointing at RegDef "shared-platform"
-  And the maven release tier holds "billing:1.2.3"
-  When resolve("billing", "1.2.3", creds, strategy="release-first")
-  Then the DownloadInfo downloadUrl points at the release tier
-  And kind is "dd.json"
+Scenario: resolve maps a nexus-backed application to a provider and an artifact
+  Given an AppDef "billing" pointing at a nexus RegDef "shared-platform"
+  When resolve("billing", "1.2.3", creds)
+  Then the ResolvedTarget artifact is billing's groupId, artifactId, "1.2.3", extension "json"
+  And kind is "DD"
+  And the provider is a Nexus provider with the RegDef tiers as its repositories
 
 Scenario: resolve an application whose artifact is a solution descriptor
   Given an AppDef "platform" with solutionDescriptor true
   When resolve("platform", "2.0.0", creds)
-  Then kind is "sd.yaml"
-  And the downloadUrl points at the sd.yaml artifact
+  Then the artifact extension is "yaml"
+  And kind is "SD"
 
-Scenario: resolve a snapshot version through maven-metadata
-  Given the maven snapshot tier holds "billing:1.2.3-SNAPSHOT"
-  When resolve("billing", "1.2.3-SNAPSHOT", creds)
-  Then the timestamped artifact is resolved from maven-metadata.xml
-  And the downloadUrl points at the timestamped artifact
+Scenario: resolve maps an aws assume-role RegDef to aws credentials
+  Given a RegDef whose authConfig is aws with assumeRole
+  When resolve runs for an app on that RegDef
+  Then the provider carries assume-role credentials built from registry_credentials
 
-Scenario: the strategy sets the tier order
-  Given "release-first" and "snapshot-first" strategies
-  When resolve runs with each
-  Then the tiers are probed in the strategy order
-  And the first tier that holds the artifact wins
+Scenario: the tier order sets the provider repository order
+  Given a RegDef with snapshot, staging, and release tiers
+  When resolve runs with tier_order release-first
+  Then the provider repositories list release before snapshot
 
-Scenario: the artifact is in no tier
-  Given no maven tier holds "billing:9.9.9"
-  When resolve("billing", "9.9.9", creds)
-  Then it fails with ArtifactNotFound
+Scenario: the application is unknown
+  Given no AppDef "unknown"
+  When resolve("unknown", "1.0.0", creds)
+  Then it fails with AppNotFound
 
 Scenario: the AppDef points at a missing RegDef
   Given an AppDef whose registryName has no RegDef
   When resolve runs for that app
   Then it fails with RegistryNotFound
+
+Scenario: the RegDef provider is unsupported
+  Given a RegDef with a provider artifacts_finder does not support
+  When resolve runs for an app on that RegDef
+  Then it fails with UnsupportedProvider
 
 Scenario: open a private defs repo
   Given a private defs repo
@@ -294,14 +314,9 @@ Scenario: create a def with an invalid name
   When create_regdef(obj)
   Then it fails with ValidationError
 
-Scenario: a write races an external push
-  Given an external push lands between the local commit and the push
-  When the push is a non-fast-forward on an unrelated def
-  Then the write fetch-rebase retries and succeeds
-
 Scenario: a write overlaps the same def
   Given an external push changed the same def
-  When the write retries
+  When the write fetch-rebase retries
   Then it fails with WriteConflict
 
 Scenario: read your own write in one DefsSource
@@ -312,16 +327,19 @@ Scenario: read your own write in one DefsSource
 
 ## Error model
 
-| Error               | Raised when                                                              |
-|---------------------|--------------------------------------------------------------------------|
-| `AppNotFound`       | no AppDef exists for the application                                      |
-| `RegistryNotFound`  | the AppDef `registryName` has no RegDef                                   |
-| `ArtifactNotFound`  | no maven tier holds the application and version                          |
-| `RegistryUnreachable` | the registry could not be reached to probe or download                 |
-| `Unauthorized`      | the registry rejected the minted auth                                    |
-| `DefNotFound`       | a get or update addressed a def that does not exist                      |
-| `DefExists`         | a create addressed a def that already exists                             |
-| `ValidationError`   | the def fails its schema, or the name is not kebab DNS-safe              |
-| `WriteConflict`     | a write overlaps a concurrent change to the same def                     |
-| `GitUnreachable`    | the defs repo could not be reached                                       |
-| `GitUnauthorized`   | the defs repo rejected the git credentials, or none were given           |
+The library raises the defs and mapping errors below. The registry errors, an artifact not found, a
+registry unreachable, or a registry auth rejection, are raised by artifacts_finder when the consumer runs
+it, not by this library.
+
+| Error                   | Raised when                                                          |
+|-------------------------|---------------------------------------------------------------------|
+| `AppNotFound`           | no AppDef exists for the application                                 |
+| `RegistryNotFound`      | the AppDef `registryName` has no RegDef                              |
+| `UnsupportedProvider`   | the RegDef provider has no artifacts_finder provider                 |
+| `UnsupportedAuthMethod` | the RegDef `authMethod` has no artifacts_finder credentials mapping  |
+| `DefNotFound`           | a get or update addressed a def that does not exist                  |
+| `DefExists`             | a create addressed a def that already exists                         |
+| `ValidationError`       | the def fails its schema, or the name is not kebab DNS-safe         |
+| `WriteConflict`         | a write overlaps a concurrent change to the same def                 |
+| `GitUnreachable`        | the defs repo could not be reached                                   |
+| `GitUnauthorized`       | the defs repo rejected the git credentials, or none were given       |
