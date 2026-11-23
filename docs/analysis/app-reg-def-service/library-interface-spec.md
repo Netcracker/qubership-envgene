@@ -1,4 +1,4 @@
-# App Reg Def library — interface specification
+# App Reg Def library - interface specification
 
 - [Overview and scope](#overview-and-scope)
 - [Concepts and data contracts](#concepts-and-data-contracts)
