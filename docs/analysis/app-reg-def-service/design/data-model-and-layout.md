@@ -37,8 +37,8 @@ roles, the `credId` model, repositories by type, and `url` plus `repoName`, is w
 
 The service relies on three properties, whichever shape v2 settles on:
 
-- per artifact type (maven, docker, helm, helmApp, go, npm, raw, and the OCI helm variants) the RegDef
-  carries the registry coordinates a consumer needs to pull or push.
+- per artifact type the RegDef carries the registry coordinates a consumer needs to pull or push, with
+  the type set the schema and the extensions analysis define.
 - the `authConfig` is blind, the method and non-secret parameters plus `credId` references, with no
   secrets in the repo.
 - one registry per artifact type, so a resolve answer has at most one coordinate set per type.
