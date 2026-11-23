@@ -12,15 +12,27 @@ pick the RegDef and to build the DD or SD download-info. The resolve request ver
 [appdef.schema.json](/schemas/appdef.schema.json).
 
 ```yaml
-name:                              # application name, the def identity
-registryName:                     # the RegDef this application resolves against, by name
-groupId:                          # maven group of the DD or SD artifact
-artifactId:                       # maven artifact of the DD or SD artifact
-supportParallelDeploy:            # deploy behaviour, passed through
-deployParameters:                 # parameter block, passed through, not interpreted by the service
-technicalConfigurationParameters: # parameter block, passed through
-solutionDescriptor:               # present when the artifact is an SD rather than a DD
-metadata:                         # release-name and argocd options, carried into the resolve response
+# application name, the def identity
+name: string
+# the RegDef this application resolves against, by name
+registryName: string
+# maven group of the DD or SD artifact
+groupId: string
+# maven artifact of the DD or SD artifact
+artifactId: string
+# deploy behaviour, passed through
+supportParallelDeploy: boolean
+# parameter block, passed through, not interpreted by the service
+deployParameters:
+  <key>: string
+# parameter block, passed through
+technicalConfigurationParameters:
+  <key>: string
+# true when the artifact is an SD, not a DD
+solutionDescriptor: boolean
+# release-name and argocd options, carried into the resolve response
+metadata:
+  <key>: string
 ```
 
 ## Registry definition (v2)
