@@ -26,6 +26,14 @@ re-parses to HEAD and rebuilds the cache from scratch, so duplicate or out-of-or
 converge on the same state. A malformed def is skipped per entry and logged, never an all-or-nothing
 blackout, so one bad file cannot stall the rest.
 
+The rebuild keeps a read correct across a resync by three properties:
+
+- it is atomic. A read sees either the whole pre-resync snapshot or the whole post-resync one, never a mix.
+- it never moves the cache backward. Resyncs do not overlap, and a rebuild is kept only if its commit is
+  newer than the cache's, so an out-of-order completion cannot regress to an older commit.
+- it reflects exactly the defs at HEAD, so an add, a change, and a delete are all applied, a removed def
+  dropped from the cache.
+
 ## Visibility
 
 Reads are eventually consistent with writes. A write returns once its commit is pushed, and the cache
