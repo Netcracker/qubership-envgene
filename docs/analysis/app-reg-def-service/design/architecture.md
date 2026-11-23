@@ -23,8 +23,10 @@ flowchart LR
 ## Components
 
 Six runtime components and two shared modules. The Normalizer and the Git adapter are libraries used by
-more than one component, not independently deployed units. The Indexer is the single writer of the cache,
-the invariant that keeps reads correct (see consistency-and-sync).
+more than one component, not independently deployed units. The Git adapter works two separate worktrees, a
+read worktree the Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do
+not race on one checkout (D25). The Indexer is the single writer of the cache, the invariant that keeps
+reads correct (see consistency-and-sync).
 
 ```mermaid
 flowchart TB
@@ -138,6 +140,8 @@ election, the shared store, and the multi-cluster deployment are in
 ## Dependency direction
 
 Dependencies point inward through ports, and the graph is acyclic: the Resolver reaches only the Cache,
-and only the Indexer and the Writer reach git, each through the Git adapter. This is what lets the cache
+and only the Indexer and the Writer reach git, each through the Git adapter. The Cache is warmed in full at
+bootstrap and is authoritative, so a resolve miss is a not-found, never a git fallback on the read path.
+This is what lets the cache
 move from in-process to Redis and the write and sync plane move to a separate process without touching the
 read path.
