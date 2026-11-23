@@ -105,6 +105,8 @@ Todo:
 - T1 - how RegDef v2 affects EnvGene and DPG.
 - T2 - bring `regdef-v2.schema.json` up to the extended v2 (registries list by artifactType,
   accessRoles, credId, url plus repoName) and add a `kind` to the RegDef and `appdef.schema.json`.
+- T3 - revisit `solutionDescriptor` (a boolean on the AppDef) when the interfaces are discussed, how
+  it maps to the resolve artifact kind DD or SD.
 
 ## Problem / why
 
