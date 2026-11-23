@@ -145,7 +145,7 @@ GET /api/v1/registry-definitions/shared-platform
 **Response** `200 OK`
 
 ```yaml
-# the v2 RegDef object, see data-model-and-layout.md and regdef-v2-extensions.md
+# the v2 RegDef object, see data-model-and-layout.md
 name: shared-platform
 version: v2
 authConfig:
