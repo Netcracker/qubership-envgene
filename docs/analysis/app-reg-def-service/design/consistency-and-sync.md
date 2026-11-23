@@ -41,8 +41,9 @@ The rebuild keeps a read correct across a resync by three properties:
 
 ## Visibility
 
-Reads are eventually consistent with writes. A write returns once its commit is pushed, and the cache
-catches up through the resync the push triggers. A resolve immediately after a write may briefly see the
+Reads are eventually consistent with writes, in every profile including lite, since the write and the
+resync that catches the cache up are separate steps. A write returns once its commit is pushed, and the
+cache catches up through the resync the push triggers. A resolve immediately after a write may briefly see the
 state before the write, for at most one resync.
 
 If a consumer ever needs to see its own write immediately, the Writer can run a resync in process before
