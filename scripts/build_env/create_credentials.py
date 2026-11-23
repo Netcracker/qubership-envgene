@@ -244,7 +244,7 @@ def add_generated_external_creds(credsYaml, collector, render_context):
     if not missing_creds:
         return
     current_env = render_context.ctx.current_env
-    remote_ref_path = f"{current_env['cloud']}/{current_env['name']}"
+    remote_ref_path = f"{current_env['cluster']['name']}/{current_env['name']}"
     for cred_id, (cred_type, comment) in missing_creds.items():
         cred = CommentedMap()
         cred["type"] = CRED_TYPE_EXTERNAL

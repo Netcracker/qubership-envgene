@@ -1,0 +1,5 @@
+inventory:
+  environmentName: "test-env"
+envTemplate:
+  name: "ext_creds_uc_ec_v_8_cluster_macro_no_cloud"
+  artifact: "external-secrets-artifact:v1"

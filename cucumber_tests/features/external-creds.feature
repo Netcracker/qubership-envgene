@@ -98,6 +98,18 @@ Scenario: UC-EC-V-3: External credentials are auto-generated and macros are rewr
     And the pipeline step "env_build" has status "FAILED"
     And the pipeline log shows "technicalConfigurationParameters"
 
+#why: External credential remoteRefPath supports current_env.cluster.name even without inventory.cloudName or inventory.cloudPassport
+  Scenario: UC-EC-V-8: External credential remoteRefPath resolves current_env.cluster.name without cloud inventory details
+    Given the workspace is initialized with test data from "e2e/uc_ec_v_8_cluster_macro_no_cloud"
+    And the pipeline parameter "PIPELINE_TYPE" is set to "GITLAB_DEPLOY"
+    And the pipeline parameter "OPERATION_TYPE" is set to "DEPLOY"
+    And the pipeline parameter "APPLICATION_VERSIONS" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
+    When the unified pipeline orchestrator runs
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment credentials file contains external credential "app-db-cred" with remoteRefPath "test-cluster"
+    And the environment credentials file contains external credential "cloud-cred" with remoteRefPath "test_cluster_test_env"
+    And the effective set deployment parameters contain "DB_ADMIN_USER: ref+vault://secret/test-cluster/app-db-cred#/username"
 
 #===================================================================================
 #Group D — deployment effective-set reference shape (stage: generate_effective_set)
