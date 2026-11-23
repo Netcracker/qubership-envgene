@@ -185,7 +185,7 @@ def test_standalone_statements_and_application_parameters(repo):
 def test_yaml_extension_and_crlf_source_positions(repo):
     path = parameter(repo, '')
     path = path.rename(path.with_suffix('.yaml'))
-    path.write_bytes('parameters:\r\n  VALUE: "текст {{ value }}"\r\n'.encode('utf-8'))
+    path.write_bytes('parameters:\r\n  VALUE: "label {{ value }}"\r\n'.encode('utf-8'))
     result = findings(repo)
     assert [(item.path, item.line, item.column) for item in result] == [(path, 2, 17)]
 
