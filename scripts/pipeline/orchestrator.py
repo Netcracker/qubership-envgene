@@ -37,6 +37,7 @@ from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import run_multi_env_pipeline
 from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id
+from pipeline.metrics_collector_cli import start_metrics_collector
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from pipeline.resolve_env_names import build_resolved_variables, resolve_env_names
 from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
@@ -474,6 +475,7 @@ def dispatch() -> int:
         return 0
 
     # main process
+    start_metrics_collector()
     env_names = prepare_job()
     try:
         if len(env_names) == 1:
