@@ -307,4 +307,4 @@ def build_structured_event_body(
 
 
 def resolve_technical_version() -> str:
-    return os.getenv("ENVGENE_DD_VERSION", "").strip()
+    return os.getenv("ENVGENE_VERSION", "").strip()

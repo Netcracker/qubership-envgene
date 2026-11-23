@@ -39,7 +39,7 @@ def test_copied_client_runs_both_jobs_without_full_pipeline_package(monkeypatch,
     monkeypatch.setenv("CI_PROJECT_ID", "project-1")
     monkeypatch.setenv("CI_PROJECT_DIR", str(job1))
     monkeypatch.setenv("CI_JOB_ID", "prepare")
-    monkeypatch.setenv("ENVGENE_DD_VERSION", "1.2.3")
+    monkeypatch.setenv("ENVGENE_VERSION", "1.2.3")
 
     prefix = """
 import os, sys

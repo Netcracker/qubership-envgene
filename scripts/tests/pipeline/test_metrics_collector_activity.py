@@ -61,7 +61,7 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
     monkeypatch.setenv("CI_PROJECT_URL", "https://gitlab.example.com/platform/env-instance-repo")
     monkeypatch.setenv("CI_JOB_NAME", "instance_pipeline")
     monkeypatch.setenv("CI_JOB_ID", "5550001")
-    monkeypatch.setenv("ENVGENE_DD_VERSION", "1.2.3")
+    monkeypatch.setenv("ENVGENE_VERSION", "1.2.3")
     monkeypatch.setenv("CI_PIPELINE_ID", "987654")
     monkeypatch.setenv("CI_PROJECT_ID", "12345")
 
@@ -97,7 +97,7 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
 def test_build_structured_event_body_omits_empty_parent_id(monkeypatch):
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.delenv("CI_JOB_NAME", raising=False)
-    monkeypatch.delenv("ENVGENE_DD_VERSION", raising=False)
+    monkeypatch.delenv("ENVGENE_VERSION", raising=False)
 
     body, _ = build_structured_event_body(
         event_type="start", status="IN_PROGRESS", trace_id="trace-1", parent_id=" ", data={},
@@ -147,7 +147,7 @@ def test_send_start_and_stop_events(monkeypatch, ssl_verify, expected_verify):
     else:
         monkeypatch.setenv("METRICS_COLLECTOR_SSL_VERIFY", ssl_verify)
     monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com/base")
-    monkeypatch.setenv("ENVGENE_DD_VERSION", "2.3.4")
+    monkeypatch.setenv("ENVGENE_VERSION", "2.3.4")
     monkeypatch.setenv("CI_JOB_NAME", "instance_pipeline")
     monkeypatch.setenv("CI_JOB_ID", "5550001")
     monkeypatch.setenv("GITLAB_USER_LOGIN", "test-user")
