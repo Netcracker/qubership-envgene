@@ -28,8 +28,9 @@ The git webhook enters a distinct Webhook ingest component, not the consumer API
 
 ## Components
 
-Six runtime components and two shared modules, the Normalizer and the Git adapter. The Indexer is the
-single writer of the cache, the invariant that keeps reads correct (see consistency-and-sync).
+Six runtime components and two shared modules. The Normalizer and the Git adapter are libraries used by
+more than one component, not independently deployed units. The Indexer is the single writer of the cache,
+the invariant that keeps reads correct (see consistency-and-sync).
 
 ```mermaid
 flowchart TB
@@ -121,9 +122,10 @@ sequenceDiagram
   W->>W: validate the schema and the name
   W->>GA: commit and push on the write worktree, fetch-rebase retry on a non-fast-forward
   GA-->>W: commit SHA
-  W->>IX: notify the SHA
+  W--)IX: notify the SHA
   IX->>GA: fetch on the read worktree
   IX->>Cache: upsert, set the watermark
+  Note over IX,Cache: the watermark may be advanced by this notify, the backstop, or an external commit (D30)
   W->>Cache: block until the watermark covers the SHA
   Cache-->>W: the normalized object
   W-->>API: the written object
@@ -142,7 +144,7 @@ election, the shared store, and the multi-cluster deployment are in
 
 ## Dependency direction
 
-The domain logic lives in the Resolver and the Normalizer, the Normalizer as a shared module. They depend
-on the Cache and the Git adapter as ports, not on git, HTTP, or the store implementation. This is what
-lets the cache move from in-process to Redis and the write and sync plane move to a separate process
-without touching the read path.
+The Resolver depends on the Cache as a port. The Normalizer is a pure v1 to v2 projection with no port
+dependency, invoked by the Indexer. Only the Indexer and the Writer reach git, and only through the Git
+adapter port. This is what lets the cache move from in-process to Redis and the write and sync plane move
+to a separate process without touching the read path.
