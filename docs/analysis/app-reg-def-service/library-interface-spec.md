@@ -1,18 +1,19 @@
 # App Reg Def library - interface specification
 
-- [Overview and scope](#overview-and-scope)
-- [Concepts and data contracts](#concepts-and-data-contracts)
-- [Operations](#operations)
-  - [open_defs](#open_defs)
-  - [resolve](#resolve)
-  - [download](#download)
-  - [get_regdef](#get_regdef)
-  - [get_appdef](#get_appdef)
-  - [create](#create)
-  - [update](#update)
-  - [refresh](#refresh)
-- [Behaviors](#behaviors)
-- [Error model](#error-model)
+- [App Reg Def library - interface specification](#app-reg-def-library---interface-specification)
+  - [Overview and scope](#overview-and-scope)
+  - [Concepts and data contracts](#concepts-and-data-contracts)
+  - [Operations](#operations)
+    - [open\_defs](#open_defs)
+    - [resolve](#resolve)
+    - [download](#download)
+    - [get\_regdef](#get_regdef)
+    - [get\_appdef](#get_appdef)
+    - [create](#create)
+    - [update](#update)
+    - [refresh](#refresh)
+  - [Behaviors](#behaviors)
+  - [Error model](#error-model)
 
 This specifies the App Reg Def library at the contract level, enough for a developer to implement without
 prescribing the internals. The key words MUST, SHOULD, and MAY follow RFC 2119. The object shapes are in
@@ -36,8 +37,6 @@ It does:
 
 It does not:
 
-- run as a long-lived service, hold a shared cache, or need HA. Freshness is the consumer's git fetch.
-- serve non-Python consumers. That is the only case a thin service facade would add, over the library.
 - hold or persist secrets. It reads the consumer's credentials transiently to build auth, nothing is
   stored.
 - migrate v1 defs to v2. That stays a separate one-time CLI.
@@ -108,6 +107,8 @@ credentials.
 - MUST join the AppDef to its RegDef by `registryName`. A missing RegDef is `RegistryNotFound`.
 - MUST mint the registry auth from the RegDef `authConfig` and `registry_credentials`, per the provider and
   the method.
+- MUST set `kind` from the AppDef `solutionDescriptor` flag, `sd.yaml` when it marks a solution
+  descriptor and `dd.json` otherwise, and probe for that artifact.
 - MUST probe the maven tiers in the order `strategy` defines and return the first tier that holds the
   artifact. No tier holding it is `ArtifactNotFound`.
 - For a `-SNAPSHOT` version, MUST resolve the timestamped artifact from `maven-metadata.xml`.
@@ -171,7 +172,7 @@ credentials.
 
 ### create
 
-**Purpose** create a new RegDef or AppDef.
+**Purpose** create a new RegDef or AppDef. The two entry points, one per object, share this contract.
 
 **Signature** `create_regdef(obj) -> RegDef` and `create_appdef(obj) -> AppDef`
 
@@ -194,7 +195,7 @@ credentials.
 
 ### update
 
-**Purpose** update an existing RegDef or AppDef.
+**Purpose** update an existing RegDef or AppDef. The two entry points, one per object, share this contract.
 
 **Signature** `update_regdef(name, obj) -> RegDef` and `update_appdef(name, obj) -> AppDef`
 
@@ -219,6 +220,12 @@ credentials.
 
 **Signature** `refresh() -> None`
 
+**Parameters** none.
+
+**Returns** none.
+
+**Errors** `GitUnreachable`, `GitUnauthorized`.
+
 **Behavior**
 
 - MUST re-fetch and reload. Reads after it reflect the new state.
@@ -232,6 +239,12 @@ Scenario: resolve a release version from the release tier
   When resolve("billing", "1.2.3", creds, strategy="release-first")
   Then the DownloadInfo downloadUrl points at the release tier
   And kind is "dd.json"
+
+Scenario: resolve an application whose artifact is a solution descriptor
+  Given an AppDef "platform" with solutionDescriptor true
+  When resolve("platform", "2.0.0", creds)
+  Then kind is "sd.yaml"
+  And the downloadUrl points at the sd.yaml artifact
 
 Scenario: resolve a snapshot version through maven-metadata
   Given the maven snapshot tier holds "billing:1.2.3-SNAPSHOT"
