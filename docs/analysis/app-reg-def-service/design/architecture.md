@@ -40,8 +40,8 @@ flowchart TB
     end
     subgraph cor["core"]
       resolver["Resolver"]
-      indexer["Indexer<br/>sole cache writer"]
       writer["Writer"]
+      indexer["Indexer<br/>sole cache writer"]
     end
     subgraph outb["outbound adapters, behind ports"]
       cache[("Cache<br/>in-proc or Redis")]
@@ -51,12 +51,12 @@ flowchart TB
   api -->|read| resolver
   resolver -->|lookup| cache
   api -->|write| writer
-  wh -->|resync| indexer
-  indexer -->|upsert| cache
-  indexer --> gitad
   writer --> gitad
   writer -->|wait watermark| cache
   writer -. "notify SHA" .-> indexer
+  wh -->|resync| indexer
+  indexer -->|upsert| cache
+  indexer --> gitad
 ```
 
 | Module           | Responsibility                                                                                   | Depends on                  |
