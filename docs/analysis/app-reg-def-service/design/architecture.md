@@ -1,12 +1,10 @@
 # Architecture
 
-The internal wiring of the service for a developer: its components, how the read, sync, and write flows run
-through them, and the logical topology. The API contract is in [api-reference.md](api-reference.md), the
-data model and repository layout are in [data-model-and-layout.md](data-model-and-layout.md), the detailed
-consistency rules are in [consistency-and-sync.md](consistency-and-sync.md), and the operational detail is
-in [deployment-and-operations.md](deployment-and-operations.md).
-
-Diagrams are Mermaid, so they live in the doc, render on GitHub, and diff with the text.
+The service's components and its read, sync, and write flows. For the rest, see
+[api-reference.md](api-reference.md) for the API contract,
+[data-model-and-layout.md](data-model-and-layout.md) for the data model and repository layout,
+[consistency-and-sync.md](consistency-and-sync.md) for the consistency rules, and
+[deployment-and-operations.md](deployment-and-operations.md) for the operational detail.
 
 ## System overview
 
@@ -19,9 +17,8 @@ registry secret.
 ```mermaid
 flowchart LR
   consumers["Consumers<br/>EnvGene, DPG"] -->|"resolve, read, write"| svc["App Reg Def service"]
-  gitrepo[("git defs repo<br/>source of truth")] <-->|"fetch, push"| svc
-  gitsrv["git server"] -->|"webhook on push"| svc
-  svc -. "never reads" .-> secrets["registry secret store"]
+  svc <-->|"fetch, push"| git[("git<br/>defs repo, source of truth")]
+  git -->|"webhook on push"| svc
 ```
 
 The git webhook enters a distinct Webhook ingest component, not the consumer API (D26, see Components).
