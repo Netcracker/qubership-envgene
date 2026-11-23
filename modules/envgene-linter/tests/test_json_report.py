@@ -50,12 +50,12 @@ def test_json_omits_type_and_preserves_finding_action(tmp_path, issue_type):
 
 
 def test_json_preserves_text_without_html_escaping(tmp_path):
-    text = 'Review "значение" <tag> & \\path\nnext line'
+    text = 'Review "\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435" <tag> & \\path\nnext line'
     output = report.render_json([_finding(message=text, hint=text)], tmp_path)
     data = json.loads(output)
     assert data[0]["issue"] == text
     assert data[0]["fix_suggestion"] == text
-    assert "значение" in output
+    assert "\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435" in output
 
 
 def test_json_filters_disabled_and_inapplicable_rules(tmp_path):
