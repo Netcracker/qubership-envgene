@@ -40,7 +40,7 @@ committed change, no OpenSpec folder yet.
 | D27 | Deploy profiles: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2          |
 | D28 | Multi-cluster: one instance per cluster over the shared git SOT           | settled   | C2          |
 | D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer  | settled   | C2          |
-| D30 | Read-after-write via a cache watermark (last indexed commit SHA)          | settled   | C2          |
+| D30 | Write returns on commit, cache is eventually consistent via resync        | settled   | C2          |
 | D31 | Malformed def is skipped per entry, not an all-or-nothing blackout        | settled   | C2          |
 | D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI     | settled   | challenge   |
 
@@ -240,9 +240,11 @@ Git working copies (both profiles):
   registry-definitions/ (D19). A resync is a `git fetch` to HEAD plus a full re-read of the checkout (D21).
 - Write worktree (Writer): an ephemeral worktree per write, committed, pushed, then discarded (D25).
 
-Read-after-write (D30): the cache carries a watermark, the last indexed commit SHA. A write commits, pushes
-with a fetch-rebase retry on a non-fast-forward, notifies the Indexer, and waits until the watermark covers
-its commit before returning the object (D9). An external or manual commit takes the same Indexer path (G6).
+Write and visibility (D30): a write validates, commits, and pushes with a fetch-rebase retry on a
+non-fast-forward, then returns the written object (D9). The push fires the webhook, so the write takes the
+same resync path as an external or manual commit (G6), and the cache is eventually consistent. If a consumer
+ever needs to see its own write immediately, the Writer can run an in-process resync before returning. The
+cache still carries a watermark, the last resynced commit SHA, for the resync-lag metric.
 
 Multi-cluster (D28): one independent instance per cluster over the one shared git SOT. Reads are local and
 eventually consistent as each instance resyncs the same git. Writes go through git's own optimistic

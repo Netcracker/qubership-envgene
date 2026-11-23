@@ -12,13 +12,9 @@ a term lands here once it is used in a sibling doc.
   credId reference, never a secret value.
 - **authReady** - the resolve response's assembled auth, the authConfig plus the credId reference, ready
   for the consumer to mint a secret with its own identity.
-- **backstop** - retired term, see periodic resync.
-- **blind** - the service returns the authConfig and the credId references and never reads or holds a
-  registry secret, the consumer mints it.
 - **Cache** - the driven adapter that holds the def objects by name and the watermark, in-process or Redis.
 - **Consumer API** - the inbound REST adapter that validates and authorizes requests and routes them to the
   Resolver or the Writer.
-- **core** - the application-logic modules, the Resolver, the Indexer, and the Writer.
 - **credId** - a reference to a credential in an external store, carried in the authConfig, never the secret
   itself.
 - **DD** - the Deployment Descriptor, the maven artifact an AppDef points to, with services,
@@ -37,8 +33,8 @@ a term lands here once it is used in a sibling doc.
   backstop.
 - **read worktree** - the git checkout the Indexer resyncs, separate from the write worktree so resync and
   write do not race.
-- **read-after-write** - the guarantee that a write returns only after the watermark covers its commit, so
-  the written object is readable.
+- **read-after-write** - seeing a just-written def on an immediately following resolve. Not guaranteed
+  today, the cache is eventually consistent via resync, deferred to the write API.
 - **RegDef** - the registry definition, registry coordinates plus auth. v1 has a single `credentialsId`, v2
   has an `authConfig` map.
 - **registry sections** - the per-type registry blocks in a def, maven, docker, helm, helmApp, go, npm, and
@@ -52,7 +48,7 @@ a term lands here once it is used in a sibling doc.
   or a periodic resync.
 - **SD** - the Solution Descriptor, a list of `application:version` entries. The caller expands it into
   resolve calls.
-- **watermark** - the last indexed commit SHA the Cache carries, used for read-after-write.
+- **watermark** - the last resynced commit SHA the Cache carries, used for the resync-lag metric.
 - **Webhook receiver** - the inbound adapter that validates the git HMAC and triggers a resync.
 - **write worktree** - the ephemeral git checkout the Writer commits and pushes on, discarded after each
   write.

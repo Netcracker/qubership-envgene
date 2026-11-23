@@ -25,15 +25,19 @@ flowchart LR
 ## Components
 
 One deployable, laid out as ports and adapters, so the calls below are in-process rather than network
-hops. Inbound adapters accept outside traffic, the core holds the logic, and outbound adapters sit behind
-ports, as grouped in the diagram. The Git adapter works two separate worktrees, a read worktree the
-Indexer resyncs and a write worktree the Writer commits on, so the resync and write paths do not race on one
-checkout. The Indexer is the single writer of the cache, the invariant that keeps reads correct
-(see consistency-and-sync).
+hops.
+
+Inbound adapters accept outside traffic, the core holds the logic, and outbound adapters sit behind
+ports, as grouped in the diagram.
+
+The Git adapter works two separate worktrees, a read worktree the Indexer resyncs and a write worktree
+the Writer commits on, so the resync and write paths do not race on one checkout.
+
+The Indexer is the single writer of the cache, the invariant that keeps reads correct
 
 ```mermaid
 flowchart TB
-  subgraph svc["App Reg Def service (one deployable)"]
+  subgraph svc["App Reg Def service"]
     subgraph inb["inbound adapters"]
       api["Consumer API"]
       wh["Webhook receiver"]
@@ -51,8 +55,6 @@ flowchart TB
   api -->|read| resolver
   resolver -->|lookup| cache
   api -->|write| writer
-  writer -->|wait watermark| cache
-  writer -. "notify SHA" .-> indexer
   wh -->|resync| indexer
   indexer -->|upsert| cache
   indexer --> gitad
@@ -64,9 +66,9 @@ flowchart TB
 | Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
 | Webhook receiver | validates the git HMAC and triggers a resync                                                     |
 | Resolver         | selects DD or SD from the appdef, assembles the resolve response, builds authReady (blind)       |
-| Cache            | holds the def objects by name and exposes the watermark for read-after-write                     |
+| Cache            | holds the def objects by name and the watermark, the last resynced commit                        |
 | Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
-| Writer           | create and update, validates the schema and the name, commits and pushes, notifies the Indexer   |
+| Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
 | Git adapter      | clone, fetch, commit, and push on the read and the write worktrees                               |
 
 ## Data flows
@@ -114,23 +116,17 @@ sequenceDiagram
   participant API as Consumer API
   participant W as Writer
   participant GA as Git adapter
-  participant IX as Indexer
-  participant Cache
   C->>API: create or update a def
   API->>W: write request
-  activate W
   W->>W: validate the schema and the name
   W->>GA: commit and push on the write worktree, fetch-rebase retry on a non-fast-forward
   GA-->>W: commit SHA
-  W--)IX: notify the SHA
-  IX->>GA: fetch on the read worktree
-  IX->>Cache: rebuild the cache, set the watermark
-  W->>Cache: block until the watermark covers the SHA
-  Cache-->>W: the def object
   W-->>API: the written object
-  deactivate W
   API-->>C: object
 ```
+
+A write returns once the commit is pushed. The cache catches up through the resync the push triggers, so
+reads are eventually consistent with a write.
 
 ## Logical topology
 
