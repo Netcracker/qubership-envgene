@@ -4,14 +4,18 @@ How the cache stays correct and fresh, and how writes stay safe. The flows these
 [architecture.md](architecture.md), and the objects they move are in
 [data-model-and-layout.md](data-model-and-layout.md).
 
-## Cache and the single-writer invariant
+The service is one deployable, not a set of networked services, so the in-process path is trivial. In the
+lite profile one process holds the cache as a local map, the Indexer rebuilds it and the Resolver reads it,
+and there is nothing to coordinate. The rules below bite where the design crosses a boundary and shares
+state: the HA profile, with read replicas and a write and resync leader over a shared Redis cache, and the
+multi-cluster case, with several instances over one git. Each section notes where it applies.
 
-The Indexer is the sole writer of the cache. The Resolver only reads it, and the Writer only commits and
-pushes to git, it never touches the cache.
+## The shared cache and its single writer
 
-This removes the two-writer race. If both the Writer and the resync could write the cache, they would race
-on the same entries, and a late write could overwrite a fresher resync. With one writer, all mutations are
-serialized and the cache is always a coherent snapshot of a single git commit.
+The Indexer is the only writer of the cache. The Resolver reads it, and the Writer writes git and never
+touches it. In the lite profile that is one in-process map, so it is just the module layout. It earns its
+name in the HA profile, where the write and resync leader is the only process that writes the shared Redis
+cache and the read replicas only read, so the shared cache has no cross-process write race.
 
 ## Resync
 
@@ -28,7 +32,8 @@ blackout, so one bad file cannot stall the rest.
 
 The rebuild keeps a read correct across a resync by three properties:
 
-- it is atomic. A read sees either the whole pre-resync snapshot or the whole post-resync one, never a mix.
+- it is atomic. A read sees either the whole pre-resync snapshot or the whole post-resync one, never a
+  mix. In lite that is a reference swap, in HA a swap in the shared store.
 - it never moves the cache backward. Resyncs do not overlap, and across an HA leader handover a late
   rebuild from the old leader is kept only if its commit is newer, so it cannot regress to an older commit.
 - it reflects exactly the defs at HEAD, so an add, a change, and a delete are all applied, a removed def
@@ -46,7 +51,8 @@ consumer appears.
 
 ## The commit race
 
-Three races, each settled by construction rather than by a lock.
+Writes share one piece of state, the git remote. Three races, each settled by construction rather than by
+a lock.
 
 - Writer against writer. Writes go through one write and resync owner, the single process in the lite
   profile and the leader in the HA profile, so two writes never run at once within a cluster.
