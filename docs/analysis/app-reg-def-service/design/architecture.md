@@ -2,18 +2,19 @@
 
 The internal wiring of the service for a developer: its components, how the read, sync, and write flows run
 through them, and the logical topology. The API contract is in [api-reference.md](api-reference.md), the
-detailed consistency rules are in [consistency-and-sync.md](consistency-and-sync.md), and the operational
-detail is in [deployment-and-operations.md](deployment-and-operations.md).
+data model and repository layout are in [data-model-and-layout.md](data-model-and-layout.md), the detailed
+consistency rules are in [consistency-and-sync.md](consistency-and-sync.md), and the operational detail is
+in [deployment-and-operations.md](deployment-and-operations.md).
 
 Diagrams are Mermaid, so they live in the doc, render on GitHub, and diff with the text.
 
 ## System overview
 
-The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo (its
-layout and naming are in [data-model-and-layout.md](data-model-and-layout.md)). It turns
-`application:version` into artifact download-info plus all registry sections, normalized to RegDef v2 and
-auth-ready. It is blind on credentials: it returns the `authConfig` and the credId references, and the
-consumer mints the secret with its own identity. The service never reads a registry secret.
+The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo. It turns
+`application:version` into the DD or SD download-info plus all registry sections and the appdef metadata,
+normalized to RegDef v2 and auth-ready. It is blind on credentials: it returns the `authConfig` and the
+credId references, and the consumer mints the secret with its own identity. The service never reads a
+registry secret.
 
 ```mermaid
 flowchart LR
@@ -49,7 +50,6 @@ flowchart TB
   indexer -->|upsert| cache
   indexer --> norm
   indexer --> gitad
-  writer --> norm
   writer --> gitad
   writer -->|wait watermark| cache
   writer -. "notify SHA" .-> indexer
@@ -60,11 +60,11 @@ flowchart TB
 | Consumer API   | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer | Resolver, Writer               |
 | Webhook ingest | validates the git HMAC and passes the changed paths to the Indexer                             | Indexer                        |
 | Resolver       | assembles the resolve response from cached objects, builds authReady (blind)                   | Cache                          |
-| Cache          | holds the normalized v2 def objects by name plus the watermark                                 | -                              |
+| Cache          | holds the normalized v2 def objects by name and exposes the watermark for read-after-write     | -                              |
 | Indexer        | the sole cache writer, syncs git and updates the cache, incremental and idempotent             | Git adapter, Normalizer, Cache |
-| Writer         | create and update, validates, commits and pushes, notifies the Indexer                         | Git adapter, Normalizer, Cache |
+| Writer         | create and update, validates the schema and the name, commits and pushes, notifies the Indexer | Git adapter, Indexer, Cache    |
 | Normalizer     | projects a v1 def to the v2 object                                                             | -                              |
-| Git adapter    | clone, fetch, commit, push, and the changed-path diff over the working copies                  | -                              |
+| Git adapter    | clone, fetch, commit, push, and the changed-path diff, on the read and the write worktrees     | -                              |
 
 ## Data flows
 
@@ -81,7 +81,7 @@ sequenceDiagram
   R->>Cache: look up appdef and regdef by name
   Cache-->>R: normalized v2 objects
   R->>R: build authReady from authConfig and credId, no secret
-  R-->>API: artifact download-info, registry sections, authReady
+  R-->>API: artifact (DD or SD) download-info, registry sections, authReady, appdef metadata
   API-->>C: response
 ```
 
@@ -95,10 +95,10 @@ sequenceDiagram
   participant GA as Git adapter
   participant N as Normalizer
   participant Cache
+  Note over GS,Cache: sync is triggered by a push webhook or the periodic backstop (D20)
   GS->>WI: webhook with changed paths
   WI->>IX: trigger
-  Note over IX: a periodic backstop triggers the same path
-  IX->>GA: fetch and diff the changed paths
+  IX->>GA: fetch and diff the changed paths on the read worktree
   GA-->>IX: changed def files
   IX->>N: normalize to v2
   N-->>IX: v2 objects
@@ -117,15 +117,17 @@ sequenceDiagram
   participant Cache
   C->>API: create or update a def
   API->>W: write request
+  activate W
   W->>W: validate the schema and the name
-  W->>GA: commit and push, fetch-rebase retry on a non-fast-forward
+  W->>GA: commit and push on the write worktree, fetch-rebase retry on a non-fast-forward
   GA-->>W: commit SHA
   W->>IX: notify the SHA
-  IX->>GA: fetch
+  IX->>GA: fetch on the read worktree
   IX->>Cache: upsert, set the watermark
-  W->>Cache: wait until the watermark covers the SHA
-  Cache-->>W: watermark covers the SHA
+  W->>Cache: block until the watermark covers the SHA
+  Cache-->>W: the normalized object
   W-->>API: the written object
+  deactivate W
   API-->>C: object
 ```
 
@@ -140,6 +142,7 @@ election, the shared store, and the multi-cluster deployment are in
 
 ## Dependency direction
 
-The domain is the Resolver and the Normalizer. They depend on the Cache and the Git adapter as ports, not
-on git, HTTP, or the store implementation. This is what lets the cache move from in-process to Redis and
-the write and sync plane move to a separate process without touching the read path.
+The domain logic lives in the Resolver and the Normalizer, the Normalizer as a shared module. They depend
+on the Cache and the Git adapter as ports, not on git, HTTP, or the store implementation. This is what
+lets the cache move from in-process to Redis and the write and sync plane move to a separate process
+without touching the read path.
