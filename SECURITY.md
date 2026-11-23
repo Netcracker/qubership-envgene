@@ -2,8 +2,10 @@
 
 ## Security Reporting Process
 
+<!-- markdownlint-disable-next-line MD034 -->
 Please, report any security issue to opensourcegroup@netcracker.com. The issue will be triaged appropriately.
 
+<!-- markdownlint-disable-next-line MD034 -->
 If you know of a publicly disclosed security vulnerability please IMMEDIATELY email opensourcegroup@netcracker.com.
 Inform the team about the vulnerability, so we may start the patch, release, and communication process.
 

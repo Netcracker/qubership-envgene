@@ -65,6 +65,7 @@ that they deem inappropriate, threatening, offensive, or harmful.
 ## Reporting
 
 If you believe you’re experiencing unacceptable behavior that will not be tolerated as outlined above,
+<!-- markdownlint-disable-next-line MD034 -->
 please report to opensourcegroup@netcracker.com. All complaints will be reviewed and investigated and will result in a response
 that is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality
 with regard to the reporter of an incident.
