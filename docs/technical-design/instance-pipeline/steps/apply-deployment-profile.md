@@ -186,4 +186,4 @@ envTemplate:
 - [Environment-specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
 - [`PROFILE`](/docs/instance-pipeline-parameters.md#profile)
 - [ADR-0012](/docs/adr/0012-select-resource-profile-baseline-per-application-at-deployment.md)
-- [Modern toolset flow](/docs/technical-design/instance-pipeline/flow.md#1141-step-apply_deployment_profile-to-be-implemented-not-implemented-yet)
+- [Modern toolset flow](/docs/technical-design/instance-pipeline/flow.md#1141-step-apply_deployment_profile)
