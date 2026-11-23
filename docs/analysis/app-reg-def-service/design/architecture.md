@@ -22,22 +22,29 @@ flowchart LR
 
 ## Components
 
-Six runtime components and one shared module. The Git adapter is a library used by more than one
-component rather than an independently deployed unit. It works two separate worktrees, a read worktree
-the Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do not race on
-one checkout (D25). The Indexer is the single writer of the cache, the invariant that keeps reads correct
+One deployable, laid out as ports and adapters, so the calls below are in-process rather than network
+hops. Inbound adapters accept outside traffic, the core holds the logic, and outbound adapters sit behind
+ports, as grouped in the diagram. The Git adapter works two separate worktrees, a read worktree the
+Indexer syncs and a write worktree the Writer commits on, so the sync and write paths do not race on one
+checkout (D25). The Indexer is the single writer of the cache, the invariant that keeps reads correct
 (see consistency-and-sync).
 
 ```mermaid
 flowchart TB
-  subgraph svc["App Reg Def service"]
-    api["Consumer API"]
-    wh["Webhook ingest"]
-    resolver["Resolver"]
-    cache[("Cache")]
-    indexer["Indexer<br/>sole cache writer"]
-    writer["Writer"]
-    gitad["Git adapter"]
+  subgraph svc["App Reg Def service (one deployable)"]
+    subgraph inb["inbound adapters"]
+      api["Consumer API"]
+      wh["Webhook ingest"]
+    end
+    subgraph cor["core"]
+      resolver["Resolver"]
+      indexer["Indexer<br/>sole cache writer"]
+      writer["Writer"]
+    end
+    subgraph outb["outbound adapters, behind ports"]
+      cache[("Cache<br/>in-proc or Redis")]
+      gitad["Git adapter"]
+    end
   end
   api -->|read| resolver
   resolver -->|lookup| cache
@@ -50,7 +57,7 @@ flowchart TB
   writer -. "notify SHA" .-> indexer
 ```
 
-| Component      | Responsibility                                                                                        | Depends on                  |
+| Module         | Responsibility                                                                                        | Depends on                  |
 |----------------|-------------------------------------------------------------------------------------------------------|-----------------------------|
 | Consumer API   | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer        | Resolver, Writer            |
 | Webhook ingest | validates the git HMAC and passes the changed paths to the Indexer                                    | Indexer                     |
@@ -125,7 +132,7 @@ sequenceDiagram
 
 ## Logical topology
 
-The same components run in two profiles. The split that matters at the logical level is the read plane
+The same modules run in two profiles. The split that matters at the logical level is the read plane
 (Consumer API and Resolver over the Cache) versus the write and sync plane (Webhook ingest, Indexer,
 Writer). In the lite profile both planes share one process. In the HA profile the read plane scales as
 stateless replicas and the write and sync plane runs as one leader. The replica counts, the leader
