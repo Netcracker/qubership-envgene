@@ -110,3 +110,16 @@ Feature: Cred store - cred-store.md
     Then the effective set is generated successfully
     And in the "test-app" collision-credentials.yaml the value of "web" is encrypted
     And in the "test-app" collision-credentials.yaml the value of "worker" is encrypted
+
+  Scenario: UC-CS-KEY-1: A newly added AGE recipient is applied to an existing ES cred file
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_5"
+    And the pipeline has GENERATE_EFFECTIVE_SET set to "true"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\"}}"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml has the default AGE recipient
+    When the added AGE recipient is enabled in the pipeline parameters
+    And the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml has the default and added AGE recipients
+    And the decrypted "test-app" collision-credentials.yaml has "web" equal to "collision-value"

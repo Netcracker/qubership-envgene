@@ -3,8 +3,9 @@ import subprocess
 import yaml
 from pytest_bdd import given, then, when, parsers
 
-from cucumber_tests.framework.workspace import EnvGeneWorkspace, TEST_AGE_PUBLIC_KEY
+from cucumber_tests.framework.workspace import EnvGeneWorkspace, TEST_AGE_EXTRA_PUBLIC_KEY, TEST_AGE_PUBLIC_KEY
 from cucumber_tests.shared_steps.calculator_cli_steps import _find_app_file
+from cucumber_tests.shared_steps.unified_pipeline_steps import set_pipeline_parameter
 from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
 from envgene_shared.utils.file_utils import is_cred_file
 
@@ -127,3 +128,51 @@ def deployment_credentials_not_encrypted(workspace: EnvGeneWorkspace):
     assert files, f"No credentials.yaml under {deployment_dir}"
     encrypted = [str(f) for f in files if is_encrypted_SOPS_text(f.read_text(encoding="utf-8"))]
     assert not encrypted, f"SOPS-encrypted deployment credentials files: {encrypted}"
+
+
+def _sops_age_recipients(path):
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    metadata = doc.get("sops")
+    if not isinstance(metadata, dict):
+        return set()
+
+    recipients = set()
+    key_groups = metadata.get("key_groups")
+    if isinstance(key_groups, list):
+        for group in key_groups:
+            for item in group.get("age", []) if isinstance(group, dict) else []:
+                if isinstance(item, dict) and item.get("recipient"):
+                    recipients.add(str(item["recipient"]))
+        return recipients
+
+    for item in metadata.get("age", []):
+        if isinstance(item, dict) and item.get("recipient"):
+            recipients.add(str(item["recipient"]))
+    return recipients
+
+
+@when('the added AGE recipient is enabled in the pipeline parameters')
+def enable_added_age_recipient(workspace: EnvGeneWorkspace):
+    set_pipeline_parameter(workspace, "PUBLIC_AGE_KEYS", f"{TEST_AGE_PUBLIC_KEY},{TEST_AGE_EXTRA_PUBLIC_KEY}")
+
+
+@then(parsers.parse('the "{app_name}" collision-credentials.yaml has the default AGE recipient'))
+def collision_credentials_default_age_recipient(workspace: EnvGeneWorkspace, app_name: str):
+    file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
+    actual = _sops_age_recipients(file_path)
+    assert actual == {TEST_AGE_PUBLIC_KEY}, f"{file_path}: AGE recipients are {sorted(actual)}"
+
+
+@then(parsers.parse('the "{app_name}" collision-credentials.yaml has the default and added AGE recipients'))
+def collision_credentials_default_and_added_age_recipients(workspace: EnvGeneWorkspace, app_name: str):
+    file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
+    expected = {TEST_AGE_PUBLIC_KEY, TEST_AGE_EXTRA_PUBLIC_KEY}
+    actual = _sops_age_recipients(file_path)
+    assert actual == expected, f"{file_path}: AGE recipients are {sorted(actual)}, expected {sorted(expected)}"
+
+
+@then(parsers.parse('the decrypted "{app_name}" collision-credentials.yaml has "{key}" equal to "{expected}"'))
+def decrypted_collision_credentials_value(workspace: EnvGeneWorkspace, app_name: str, key: str, expected: str):
+    file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
+    value = workspace.get_decrypted_yaml(file_path)[key]
+    assert value == expected, f"{file_path}: {key} is '{value}', expected '{expected}'"

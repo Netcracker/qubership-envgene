@@ -16,6 +16,81 @@ ENVGENE_AGE_PRIVATE_KEY = None
 PUBLIC_AGE_KEYS = None
 
 DCL2ARGO_AGE_PUBLIC_KEY_PARAM = "DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY"
+NON_AGE_SOPS_KEY_GROUP_PROVIDERS = ("pgp", "kms", "gcp_kms", "azure_kv", "hc_vault")
+
+
+def _normalize_age_keys(public_keys):
+    return list(dict.fromkeys([key.strip() for key in public_keys.split(",") if key.strip()]))
+
+
+def _collect_sops_age_recipients(items):
+    if not isinstance(items, list):
+        return
+    for item in items:
+        if isinstance(item, dict) and item.get("recipient"):
+            yield str(item["recipient"])
+
+
+def _sops_age_recipients(encrypted_data):
+    doc = readYaml(encrypted_data.decode("utf-8"))
+    if not isinstance(doc, dict):
+        return set(), False
+    metadata = doc.get("sops")
+    if not isinstance(metadata, dict):
+        return set(), False
+
+    recipients = set()
+    key_groups = metadata.get("key_groups")
+    if isinstance(key_groups, list):
+        for group in key_groups:
+            if not isinstance(group, dict):
+                continue
+            recipients.update(_collect_sops_age_recipients(group.get("age")))
+            if any(group.get(provider) for provider in NON_AGE_SOPS_KEY_GROUP_PROVIDERS):
+                return recipients, True
+        return recipients, False
+
+    recipients.update(_collect_sops_age_recipients(metadata.get("age")))
+    if any(metadata.get(provider) for provider in NON_AGE_SOPS_KEY_GROUP_PROVIDERS):
+        return recipients, True
+    return recipients, False
+
+
+def _read_file_bytes(file_path):
+    with open(file_path, "rb") as f:
+        return f.read()
+
+
+def _write_sops_update_keys_config(public_keys):
+    age_keys = ",".join(_normalize_age_keys(public_keys))
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".sops.yaml", mode="w", encoding="utf-8") as config:
+        config.write("creation_rules:\n")
+        config.write("  - path_regex: '.*'\n")
+        config.write(f'    age: "{age_keys}"\n')
+        return config.name
+
+
+def _update_sops_age_keys(file_path, public_keys):
+    desired_recipients = set(_normalize_age_keys(public_keys))
+    current_recipients, has_non_age_groups = _sops_age_recipients(_read_file_bytes(file_path))
+    if not desired_recipients or not current_recipients or current_recipients == desired_recipients:
+        return
+    if has_non_age_groups:
+        logger.warning(f"Skipping SOPS key update for a file with non-age key groups: {file_path}")
+        return
+
+    config_path = _write_sops_update_keys_config(public_keys)
+    try:
+        _run_SOPS(["--config", config_path, "updatekeys", "--yes", str(file_path)])
+    finally:
+        if os.path.exists(config_path):
+            os.remove(config_path)
+
+    updated_recipients, _ = _sops_age_recipients(_read_file_bytes(file_path))
+    if updated_recipients != desired_recipients:
+        raise subprocess.SubprocessError(
+            f"sops updatekeys did not set expected age recipients for {file_path}: {sorted(updated_recipients)}"
+        )
 
 
 def _sops_subprocess_env(secret_key=None, **extra):
@@ -149,6 +224,7 @@ def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: b
             with open(new_path, "wb") as f:
                 f.write(data)
             _sops_edit(old_path, new_path, PUBLIC_AGE_KEYS)
+            _update_sops_age_keys(old_path, PUBLIC_AGE_KEYS)
             with open(old_path, "rb") as f:
                 return f.read()
     sops_args = ["encrypt", "--input-type", "yaml", "--output-type", "yaml", "--age", PUBLIC_AGE_KEYS]

@@ -1,18 +1,21 @@
 import copy
 import threading
 from pathlib import Path
+from subprocess import SubprocessError
 
 import pytest
 
 from envgene_shared.crypto.cred_store import CredStore, current_cred_store, open_cred_store
 from envgene_shared.crypto.crypt import decrypt_bytes, decrypt_file, encrypt_bytes, encrypt_file, is_encrypted
 from envgene_shared.utils.business_utils import get_envgene_config_yaml
+from envgene_shared.crypto import sops_handler
 from envgene_shared.crypto.sops_handler import _sops_edit, encrypt_SOPS_bytes, is_encrypted_SOPS, is_encrypted_SOPS_text
 from envgene_shared.tests.crypto.test_crypt import crypt_test_data
 from envgene_shared.utils.file_utils import writeToFile
 from envgene_shared.utils.yaml_utils import openYaml, readYaml, yaml
 
 SOPS_DATA = crypt_test_data[0]
+SECOND_PUBLIC_AGE_KEY = "age196vkex39py4dtkccfh9gg57vxh8z2tyytk4flht3vdldtfl6pa5s4salhv"
 PLAIN_DATA = {}
 
 CONTENT = """\
@@ -53,6 +56,26 @@ def make_cred_file(path, content=CONTENT):
     writeToFile(str(path), content)
     encrypt_file(path, load_result=False)
     return path
+
+
+def set_public_age_keys(monkeypatch, public_keys):
+    monkeypatch.setenv("PUBLIC_AGE_KEYS", public_keys)
+    monkeypatch.setattr(sops_handler, "PUBLIC_AGE_KEYS", public_keys)
+
+
+def sops_age_recipients(text):
+    doc = readYaml(text)
+    recipients = set()
+    for group in doc.get("sops", {}).get("key_groups", []):
+        for item in group.get("age", []):
+            recipient = item.get("recipient")
+            if recipient:
+                recipients.add(recipient)
+    for item in doc.get("sops", {}).get("age", []):
+        recipient = item.get("recipient")
+        if recipient:
+            recipients.add(recipient)
+    return recipients
 
 
 @pytest.fixture
@@ -191,6 +214,78 @@ def test_editor_exits_200_on_same_content_other_format(env_dir, tmp_path):
     )
     _sops_edit(path, reformatted, SOPS_DATA["public_key"])
     assert path.read_bytes() == before
+
+
+def test_added_public_age_key_updates_recipients_on_existing_file(env_dir, monkeypatch):
+    set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+    old_doc = readYaml(before.decode("utf-8"))
+
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    after = encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
+
+    assert sops_age_recipients(after.decode("utf-8")) == {SOPS_DATA["public_key"], SECOND_PUBLIC_AGE_KEY}
+    after_doc = readYaml(after.decode("utf-8"))
+    assert after_doc["first_cred"]["data"]["secret"] == old_doc["first_cred"]["data"]["secret"]
+    assert after_doc["second_cred"]["data"]["password"] == old_doc["second_cred"]["data"]["password"]
+
+
+def test_same_public_age_keys_keep_encrypted_bytes(env_dir, monkeypatch):
+    set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+
+    after = encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
+
+    assert after == before
+
+
+def test_removed_public_age_key_drops_recipient_from_existing_file(env_dir, monkeypatch):
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+    assert sops_age_recipients(before.decode("utf-8")) == {SOPS_DATA["public_key"], SECOND_PUBLIC_AGE_KEY}
+
+    set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
+    after = encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
+
+    assert sops_age_recipients(after.decode("utf-8")) == {SOPS_DATA["public_key"]}
+    path.write_bytes(after)
+    assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-placeholder-123"
+
+
+@pytest.mark.parametrize("provider", ["pgp", "kms", "gcp_kms", "azure_kv", "hc_vault"])
+def test_non_age_key_group_skips_key_update(tmp_path, provider):
+    path = tmp_path / "credentials.yml"
+    path.write_text(
+        "first_cred:\n    type: secret\n"
+        "    data:\n        secret: ENC[AES256_GCM,data:placeholder,type:str]\n"
+        "sops:\n    key_groups:\n        - age:\n"
+        f"            - recipient: {SOPS_DATA['public_key']}\n"
+        "              enc: ENC[AES256_GCM,data:placeholder,type:str]\n"
+        f"          {provider}:\n            - recipient: placeholder\n"
+        "              enc: ENC[AES256_GCM,data:placeholder,type:str]\n"
+        "    version: 3.9.0\n",
+        encoding="utf-8",
+    )
+    before = path.read_bytes()
+
+    sops_handler._update_sops_age_keys(path, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+
+    assert path.read_bytes() == before
+
+
+def test_key_update_fails_when_recipients_do_not_match(env_dir, monkeypatch):
+    set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    monkeypatch.setattr(sops_handler, "_run_SOPS", lambda *args, **kwargs: None)
+
+    with pytest.raises(SubprocessError):
+        encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
 
 
 def make_es_file(env_dir, content):
