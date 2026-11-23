@@ -1,5 +1,5 @@
-# Registry auth parameters for the Cloud. Reference this ParameterSet in env_definition.yml:
-# envTemplate.envSpecificE2EParamsets.cloud: ["registry-auth"]
+# Registry auth parameters for the Cloud. Reference this ParameterSet by name under
+# envTemplate.envSpecificE2EParamsets.cloud in env_definition.yml.
 name: "registry-auth"
 parameters:
   MAVEN_PROVIDER: "gcp"

@@ -48,7 +48,9 @@ documentation or configure the system.
 | **A. Artifact registries** | Download Maven artifacts (SDs, DDs, and environment templates) | SDs and DDs: RegDef v1.0 and registry auth parameters. Environment templates: ArtDef v2.0          |
 | **B. Image registries**    | Pull EnvGene container images during CI                        | GitHub repository variables: `DOCKER_REGISTRY`, `DOCKER_CLOUD_REGISTRY_PROVIDER`, and `GCP_SA_KEY` |
 
-This guide covers Context A only. For image registry configuration (Context B), see
+This guide covers Context A, plus one Context B task for GitLab CI: pulling images from AWS ECR (see
+[GitLab CI: pulling images from AWS ECR](#gitlab-ci-pulling-images-from-aws-ecr)). For image registries in the
+GitHub workflow, see
 [Using Docker Registries in EnvGene GitHub Workflow](/docs/how-to/docker-registry-configuration.md).
 
 ## Prerequisites
@@ -440,6 +442,9 @@ For SD and DD downloads, set the provider in `MAVEN_PROVIDER` and the method in 
 | `aws`            | `secret`          | `PUB_REG_KEY`, `PUB_REG_SECRET`, `PUB_REG_REGION`, `PUB_REG_DOMAIN`, `PUB_REG_REPOSITORY` |
 | `gcp`            | `service_account` | `PUB_REG_SECRET`                                                                          |
 | `aws`, `gcp`     | `anonymous`       | none                                                                                      |
+
+For a public registry that needs no credentials, set `PUB_REG_METHOD` to `anonymous` and omit the credential entry
+and the `PUB_REG_KEY` / `PUB_REG_SECRET` parameters. The rest of the setup is the same as the provider steps above.
 
 ## See also
 
