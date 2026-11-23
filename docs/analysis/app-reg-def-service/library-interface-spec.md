@@ -336,7 +336,7 @@ it, not by this library.
 | `AppNotFound`           | no AppDef exists for the application                                 |
 | `RegistryNotFound`      | the AppDef `registryName` has no RegDef                              |
 | `UnsupportedProvider`   | the RegDef provider has no artifacts_finder provider                 |
-| `UnsupportedAuthMethod` | the RegDef `authMethod` has no artifacts_finder credentials mapping  |
+| `UnsupportedAuthMethod` | the RegDef `authConfig` method has no artifacts_finder credentials mapping  |
 | `DefNotFound`           | a get or update addressed a def that does not exist                  |
 | `DefExists`             | a create addressed a def that already exists                         |
 | `ValidationError`       | the def fails its schema, or the name is not kebab DNS-safe         |

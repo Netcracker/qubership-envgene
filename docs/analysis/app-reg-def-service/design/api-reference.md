@@ -1,14 +1,15 @@
 # API reference
 
-- [Conventions](#conventions)
-- [GET /api/v1/resolve](#get-apiv1resolve)
-- [POST /api/v1/resolve:batch](#post-apiv1resolvebatch)
-- [GET /api/v1/registry-definitions/{name}](#get-apiv1registry-definitionsname)
-- [POST /api/v1/registry-definitions](#post-apiv1registry-definitions)
-- [PUT /api/v1/registry-definitions/{name}](#put-apiv1registry-definitionsname)
-- [POST /api/v1/application-definitions](#post-apiv1application-definitions)
-- [PUT /api/v1/application-definitions/{name}](#put-apiv1application-definitionsname)
-- [Error model](#error-model)
+- [API reference](#api-reference)
+  - [Conventions](#conventions)
+  - [GET /api/v1/resolve](#get-apiv1resolve)
+  - [POST /api/v1/resolve:batch](#post-apiv1resolvebatch)
+  - [GET /api/v1/registry-definitions/{name}](#get-apiv1registry-definitionsname)
+  - [POST /api/v1/registry-definitions](#post-apiv1registry-definitions)
+  - [PUT /api/v1/registry-definitions/{name}](#put-apiv1registry-definitionsname)
+  - [POST /api/v1/application-definitions](#post-apiv1application-definitions)
+  - [PUT /api/v1/application-definitions/{name}](#put-apiv1application-definitionsname)
+  - [Error model](#error-model)
 
 The App Reg Def service exposes a small HTTP API. The read interfaces turn an `application:version`, or a
 registry name, into the coordinates and the blind auth a consumer needs to pull artifacts. The write
@@ -30,7 +31,7 @@ which is the machine-readable contract. The objects in the payloads are in
 
 ## GET /api/v1/resolve
 
-Resolves one application and version to its artifact download-info, all registry sections, the blind
+Resolves one application:version to its artifact download-info, all registry sections, the blind
 `authReady`, and the appdef metadata.
 
 **Parameters**
