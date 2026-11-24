@@ -195,8 +195,8 @@ technicalConfigurationParameters:
 
 ## POST /api/v1/registry-definitions
 
-Creates a RegDef. Parked (P1), the shape is settled. The write is eventually consistent, the response
-carries the written object and the cache catches up on the next resync.
+Creates a RegDef. Parked (P1), the shape is settled. The write is eventually consistent. The response
+carries the written object, and the cache catches up on the next resync.
 
 **Parameters**
 

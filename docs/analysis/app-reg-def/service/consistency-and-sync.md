@@ -25,7 +25,7 @@ A resync fetches the repo to HEAD and rebuilds the cache. It runs on two trigger
 - a periodic resync, the safety net. A timer runs a resync regardless of webhooks, so a missed or
   undelivered webhook is caught within the interval.
 
-Any change triggers a full repo resync, not an incremental diff. A resync is idempotent, it fetches and
+Any change triggers a full repo resync, not an incremental diff. A resync is idempotent. It fetches and
 re-parses to HEAD and rebuilds the cache from scratch, so duplicate or out-of-order webhook deliveries
 converge on the same state. A malformed def is skipped per entry and logged, never an all-or-nothing
 blackout, so one bad file cannot stall the rest.

@@ -1,19 +1,17 @@
 # Data model and repository layout
 
 The objects the App Reg Def capability works with, in brief. The full field definitions live in the schemas
-and the RegDef v2 analysis linked below, not restated here. The behaviour that uses these objects is in
+and the RegDef v2 analysis linked below, not restated here. The behavior that uses these objects is in
 [library/interface-spec.md](library/interface-spec.md).
 
 ## Objects
 
-- **AppDef** - the stored application definition, a thin pointer: `name`, `registryName`, `groupId`,
-  `artifactId`, `solutionDescriptor`, and metadata. [appdef.schema.json](/schemas/appdef.schema.json).
-- **RegDef** - the stored registry definition, `Registry` (v1) or `RegistryV2` (v2): registry coordinates
-  plus auth. v1 [regdef.schema.json](/schemas/regdef.schema.json), v2
-  [regdef-v2.schema.json](/schemas/regdef-v2.schema.json), the extended v2 target in
+- **AppDef** - the stored application definition. [appdef.schema.json](/schemas/appdef.schema.json).
+- **RegDef** - the stored registry definition.
+  [regdef.schema.json](/schemas/regdef.schema.json)
   [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md).
-- **Application** - the runtime join of an AppDef and its RegDef (`registry: Registry | RegistryV2`),
-  artifact-searcher's `Application`. This is what `resolve` returns.
+- **Application** - the runtime join of an AppDef and its RegDef, artifact-searcher's `Application`. This is
+  what `resolve` returns.
 - **Artifact** - the artifacts_finder coordinates of the DD or SD, the `groupId`, `artifactId`, `version`,
   and `extension`.
 - **ArtifactProvider** - a configured artifacts_finder provider, its type, repositories, and credentials.

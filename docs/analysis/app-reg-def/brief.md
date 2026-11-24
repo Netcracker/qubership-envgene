@@ -111,7 +111,7 @@ Todo:
 - T1 - how RegDef v2 affects EnvGene and DPG.
 - T2 - bring `regdef-v2.schema.json` up to the extended v2 (registries list by artifactType,
   accessRoles, credId, url plus repoName) and add a `kind` to the RegDef and `appdef.schema.json`.
-- T3 - revisit `solutionDescriptor` (a boolean on the AppDef) when the interfaces are discussed, how
+- T3 - revisit `solutionDescriptor` (a boolean on the AppDef) when the interfaces are discussed: how
   it maps to the resolve artifact kind DD or SD.
 
 ## Problem / why
@@ -123,8 +123,9 @@ duplicated across at least two resolvers with their own models:
 - DPG (`UnifiedRegDef` / `RegistryInfo`) for deploy-plan building.
 - The internal extend adds a third, CMDB-backed `appver_resolver`, which is out of scope here.
 
-The duplication carries fragile seams: the purl `repository_id` pointer-name contract, the registry-name
-key reconciliation (`quote` on write vs `%20` un-escape on read), and a v1->v2 projection that runs only
+The duplication carries fragile seams: the purl (package URL) `repository_id` pointer-name contract, the
+registry-name key reconciliation (`quote` on write vs `%20` un-escape on read), and a v1->v2 projection
+that runs only
 for aws and gcp. The DD is even resolved and downloaded twice, by EnvGene and DPG independently, over a
 shared on-disk cache.
 
