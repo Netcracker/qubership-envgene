@@ -45,7 +45,8 @@ def get_resource_profiles_map(env_dir, instances_dir, rp_schema, inventoryYaml,
                 result[templateType] = str(found_path)
                 break
         if templateType not in result:
-            raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
+            raise ReferenceError(f"Resource profile file '{profile_file_name}' of "
+                                 f"'{map_key}.{templateType}' is not found.")
     return result
 
 
@@ -82,8 +83,6 @@ def has_profile_parameters(profile_yaml):
 
 
 def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProfileName, object_baseline=None):
-    """Merge `overrideProfileYaml` into `sourceProfileYaml`, the override winning on conflicts."""
-    write_key = merge_dict_key_with_comment
     commentText = f"from {overrideProfileName}"
     template_name = sourceProfileYaml.get("name")
     template_baseline = get_profile_baseline(sourceProfileYaml)
@@ -102,7 +101,7 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
                            f"and has {source_origin}. Use replace mode to change the baseline.")
         logger.info(f"Template profile '{template_name}' takes baseline '{override_baseline}' from environment "
                     f"specific profile '{overrideProfileName}', previously {source_origin}")
-        write_key("baseline", sourceProfileYaml, "baseline", overrideProfileYaml, commentText)
+        merge_dict_key_with_comment("baseline", sourceProfileYaml, "baseline", overrideProfileYaml, commentText)
     else:
         logger.info(f"Environment specific profile '{overrideProfileName}' does not change the baseline, "
                     f"template profile '{template_name}' keeps {source_origin}")
@@ -116,25 +115,25 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
         if not sourceApp:
             sourceApp = copy.deepcopy(app)
             sourceProfileYaml["applications"].append(sourceApp)
-            write_key("name", sourceApp, "name", app, commentText)
-        write_key("version", sourceApp, "version", app, commentText)
-        write_key("sd", sourceApp, "sd", app, commentText)
-        write_key("baseline", sourceApp, "baseline", app, commentText)
+            merge_dict_key_with_comment("name", sourceApp, "name", app, commentText)
+        merge_dict_key_with_comment("version", sourceApp, "version", app, commentText)
+        merge_dict_key_with_comment("sd", sourceApp, "sd", app, commentText)
+        merge_dict_key_with_comment("baseline", sourceApp, "baseline", app, commentText)
         for service in app["services"]:
             sourceService = get_service_from_resource_profile_app(service["name"], sourceApp)
             if not sourceService:
                 sourceService = copy.deepcopy(service)
                 sourceApp["services"].append(sourceService)
-                write_key("name", sourceService, "name", service, commentText)
+                merge_dict_key_with_comment("name", sourceService, "name", service, commentText)
             for param in service["parameters"]:
                 sourceParam = get_param_from_resource_profile_service(param["name"], sourceService)
                 if not sourceParam:
                     sourceParam = copy.deepcopy(param)
                     sourceService["parameters"].append(sourceParam)
-                    write_key("name", sourceParam, "name", param, commentText)
-                    write_key("value", sourceParam, "value", param, commentText)
+                    merge_dict_key_with_comment("name", sourceParam, "name", param, commentText)
+                    merge_dict_key_with_comment("value", sourceParam, "value", param, commentText)
                 else:
-                    write_key("value", sourceParam, "value", param, commentText)
+                    merge_dict_key_with_comment("value", sourceParam, "value", param, commentText)
 
 
 def find_resource_profile(profile_name: str, template_profiles_dir, disk_profile_paths: dict) -> Path | None:
@@ -199,7 +198,6 @@ def collect_resource_profiles(template_profiles_dir, profiles_schema,
 
 
 def apply_generated_override(profile_key, target_profile, generated_path, object_baseline):
-    """Merge the override the PROFILE parameter generated as the last layer, so it wins on conflicts."""
     logger.info(f"Profile key '{profile_key}' applies the generated profile '{generated_path}' on top of its "
                 f"profile '{target_profile.get('name')}'")
     merge_resource_profiles(target_profile, current_env_instance_store().get(generated_path),
@@ -207,18 +205,17 @@ def apply_generated_override(profile_key, target_profile, generated_path, object
 
 
 def result_profile_path(name, profile_key, taken_names):
-    """Path of an assembled profile inside the resulting Profiles directory, keeping the requested name."""
-    if name in taken_names:
-        renamed = f"{name}-{profile_key}"
-        logger.warning(f"This environment already has a profile named '{name}', so the assembled profile of "
-                       f"'{profile_key}' is saved as '{renamed}'")
-        name = renamed
+    requested = name
+    while name in taken_names:
+        name = f"{name}-{profile_key}"
+    if name != requested:
+        logger.warning(f"This environment already has a profile named '{requested}', so the assembled profile of "
+                       f"'{profile_key}' is saved as '{name}'")
     taken_names.add(name)
     return str(current_env_instance_store().env_dir / RESULTING_PROFILES_DIR_NAME / f"{name}.yml")
 
 
 def assemble_profile(profile_key, base_path, base_name, generated_path, object_baseline, taken_names):
-    """Copy `base_path` into the resulting Profiles directory under `base_name`, with the generated layer on top."""
     env_instance_store = current_env_instance_store()
     result_path = result_profile_path(base_name, profile_key, taken_names)
     assembled = copy.deepcopy(env_instance_store.get(base_path))
@@ -228,6 +225,21 @@ def assemble_profile(profile_key, base_path, base_name, generated_path, object_b
     if generated_path and generated_path != base_path:
         apply_generated_override(profile_key, assembled, generated_path, object_baseline)
     return result_path
+
+
+def drop_profiles_without_object(object_paths, *profile_maps):
+    dropped = []
+    for profile_key in dict.fromkeys(key for profile_map in profile_maps for key in profile_map):
+        if profile_key in object_paths:
+            continue
+        for profile_map in profile_maps:
+            profile_map.pop(profile_key, None)
+        dropped.append(profile_key)
+        logger.warning(f"Resource profile key '{profile_key}' matches no 'cloud' and no Namespace of this "
+                       f"environment, so its resource profile is ignored. Remove the key from "
+                       f"'{ENV_SPECIFIC_PROFILES_MAP_KEY}' or '{GENERATED_PROFILES_MAP_KEY}' when the Namespace is "
+                       f"not part of the environment anymore")
+    return dropped
 
 
 def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator,
@@ -248,6 +260,9 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
     profile_keys = list(env_specific_resource_profile_map) + [key for key in generated_profile_defaults_map
                                                              if key not in env_specific_resource_profile_map]
     taken_names = {Path(profile_path).stem for profile_path in all_profiles.values()}
+    taken_names |= {Path(profile_path).stem for profile_key, profile_path in env_specific_resource_profile_map.items()
+                    if not generated_profile_defaults_map.get(profile_key)
+                    and (not merge_mode or all_profiles.get(profile_key) is None)}
     for profile_key in profile_keys:
         env_specific_profile_path = env_specific_resource_profile_map.get(profile_key)
         generated_path = generated_profile_defaults_map.get(profile_key)

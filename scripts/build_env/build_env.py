@@ -1,7 +1,8 @@
 from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, getenv, is_from_template_dir, logger, openJson, openYaml, os, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
-from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
+from build_env.resource_profiles import collect_resource_profiles, drop_profiles_without_object, \
+    override_by_env_specific_profiles, has_valid_profile_name, \
     get_profile_baseline, set_object_profile_field, RESULTING_PROFILES_DIR_NAME
 
 # const
@@ -458,6 +459,8 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
     all_profiles = collect_resource_profiles(resource_profiles_dir, profiles_schema,
                                              needed_resource_profiles_map, render_context)
     object_paths = {"cloud": cloudTemlatePath} | {ns.postfix: ns.definition_path for ns in namespaces}
+    drop_profiles_without_object(object_paths, all_profiles, env_specific_resource_profile_map,
+                                 generated_profile_defaults_map)
     object_baselines = {key: get_profile_baseline(env_instance_store.get(path).get("profile") or {})
                         for key, path in object_paths.items()}
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
