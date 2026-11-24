@@ -216,20 +216,20 @@
         "envSpecificResourceProfiles": {
           "type": "object",
           "title": "Environment-Specific Resource Profiles",
-          "description": "Environment-specific resource profiles override, applied in list order, an earlier entry winning",
+          "description": "Environment-specific resource profiles override",
           "patternProperties": {
             ".*": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              ]
+              "type": "string"
+            }
+          }
+        },
+        "generatedProfileDefaults": {
+          "type": "object",
+          "title": "Generated Profile Defaults",
+          "description": "Resource profiles EnvGene generates from the PROFILE pipeline parameter during the apply_deployment_profile step, one per deploy postfix. EnvGene applies each one on top of the profile its namespace references. Users do not set this key, a name ending with -profile-override is reserved for it",
+          "patternProperties": {
+            ".*": {
+              "type": "string"
             }
           }
         },

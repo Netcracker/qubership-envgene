@@ -280,7 +280,7 @@ class ProcessDeploymentPlanStep(PipelineStep):
 class DeploymentProfileStep(PipelineStep):
     @property
     def name(self) -> str:
-        return "deployment_profile"
+        return "apply_deployment_profile"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if not ctx.params.get("PROFILE"):

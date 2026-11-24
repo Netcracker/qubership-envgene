@@ -854,7 +854,8 @@ class EnvTemplateModel(YamlModel):
     envSpecificParamsets: dict[str, list[str]] = None
     envSpecificTechnicalParamsets: dict[str, list[str]] = None
     envSpecificE2EParamsets: dict[str, list[str]] = None
-    envSpecificResourceProfiles: dict[str, Union[str, list[str]]] = None
+    envSpecificResourceProfiles: dict[str, str] = None
+    generatedProfileDefaults: dict[str, str] = None
     bgNsArtifacts: BgNsArtifactsModel = None
     sharedMasterCredentialFiles: list[str] = None
 
