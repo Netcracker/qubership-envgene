@@ -34,7 +34,7 @@ public class ParameterUtils {
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
 
-    private static final Set<String> SUPPORTED_PARAMETER_TYPES = Set.of("DEPLOY", "E2E");
+    static final Set<String> SUPPORTED_PARAMETER_TYPES = Set.of("DEPLOY", "E2E");
 
     public static void splitBySecure(
             Map<String, Parameter> input,
@@ -60,40 +60,15 @@ public class ParameterUtils {
                     insecureOut.put(key, copyOldValues(param, insecureChild));
                 }
             } else if (value instanceof List<?>) {
-                List<Object> secureList = new ArrayList<>();
-                List<Object> insecureList = new ArrayList<>();
-                for (Object item : (List<?>) value) {
-                    if (item instanceof Parameter) {
-                        Parameter itemParam = (Parameter) item;
-                        Object itemVal = itemParam.getValue();
-                        if (itemVal instanceof Map<?, ?>) {
-                            Map<String, Parameter> secureNested = new LinkedHashMap<>();
-                            Map<String, Parameter> insecureNested = new LinkedHashMap<>();
-                            Map<String, Parameter> valueMap = (Map<String, Parameter>) itemVal;
-                            if (shouldAddExtParams(secureOut, extCredEntities, key, param, valueMap)) return;
-                            splitBySecure(valueMap, secureNested, insecureNested, extCredEntities);
-                            if (!secureNested.isEmpty()) {
-                                secureList.add(copyOldValues(itemParam, secureNested));
-                            }
-                            if (!insecureNested.isEmpty()) {
-                                insecureList.add(copyOldValues(itemParam, insecureNested));
-                            }
-                        } else {
-                            if (itemParam.isSecured()) {
-                                secureList.add(itemParam);
-                            } else {
-                                insecureList.add(itemParam);
-                            }
-                        }
-                    } else {
-                        insecureList.add(item);
-                    }
+                // Helm replaces lists as a whole, so a list is never divided between the outputs.
+                ListSecretScanner scanner = ListSecretScanner.scan((List<?>) value, extCredEntities);
+                if (scanner.isKeySkipped()) {
+                    return;
                 }
-                if (!secureList.isEmpty()) {
-                    secureOut.put(key, copyOldValues(param, secureList));
-                }
-                if (!insecureList.isEmpty()) {
-                    insecureOut.put(key, copyOldValues(param, insecureList));
+                if (scanner.containsSecret() || param.isSecured()) {
+                    secureOut.put(key, copyOldValues(param, scanner.getResolvedValue()));
+                } else {
+                    insecureOut.put(key, param);
                 }
             } else {
                 if (param.isSecured()) {
@@ -121,7 +96,7 @@ public class ParameterUtils {
         }
         return false;
     }
-    private static Parameter copyOldValues(Parameter original, Object newValue) {
+    static Parameter copyOldValues(Parameter original, Object newValue) {
         return Parameter.builder()
                 .value(newValue)
                 .origin(original.getOrigin())

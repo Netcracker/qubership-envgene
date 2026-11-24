@@ -1,7 +1,5 @@
 API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
 APPLICATION_NAME: eso-app
-APP_PARAM: &id001
-- STATIC_VAL: abc
 ARTIFACT_DESCRIPTOR_ARTIFACT_ID: test.platform.system.monitoring_monitoring-operator
 ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.deploy.product
 ARTIFACT_DESCRIPTOR_MAVEN_REPO: https://maven.qubership.org/repository/release
@@ -19,7 +17,7 @@ CONSUL_URL: http://consul.consul:8080
 CUSTOM_HOST: cluster-01.qubership.org
 DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
 DBAAS_ENABLED: true
-DB_TOKEN: &id002
+DB_TOKEN: &id001
   DEPLOY_CFG:
     param_type: deploy
   SECURED_FLAG: 'true'
@@ -35,7 +33,7 @@ PRODUCTION_MODE: false
 PUBLIC_GATEWAY_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
 PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
 SECRET_FLOW: external-values
-SECRET_META: &id003
+SECRET_META: &id002
   normalizedSecretName: test-cluster-01--env-1--app-db-cred
   secretKeys:
   - remoteKeyName: password
@@ -44,10 +42,9 @@ SERVER_HOSTNAME: cluster-01.qubership.org
 SSL_SECRET: defaultsslcertificate
 STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org
 TENANTNAME: Platform
-global: &id004
+global: &id003
   API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
   APPLICATION_NAME: eso-app
-  APP_PARAM: *id001
   ARTIFACT_DESCRIPTOR_ARTIFACT_ID: test.platform.system.monitoring_monitoring-operator
   ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.deploy.product
   ARTIFACT_DESCRIPTOR_MAVEN_REPO: https://maven.qubership.org/repository/release
@@ -65,7 +62,7 @@ global: &id004
   CUSTOM_HOST: cluster-01.qubership.org
   DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
   DBAAS_ENABLED: true
-  DB_TOKEN: *id002
+  DB_TOKEN: *id001
   DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
   GATEWAY_URL: http://internal-gateway-service:8080
   MAAS_ENABLED: false
@@ -78,9 +75,9 @@ global: &id004
   PUBLIC_GATEWAY_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
   PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
   SECRET_FLOW: external-values
-  SECRET_META: *id003
+  SECRET_META: *id002
   SERVER_HOSTNAME: cluster-01.qubership.org
   SSL_SECRET: defaultsslcertificate
   STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org
   TENANTNAME: Platform
-cloud-events-exporter: *id004
+cloud-events-exporter: *id003
