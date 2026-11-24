@@ -236,9 +236,8 @@ def drop_profiles_without_object(object_paths, *profile_maps):
             profile_map.pop(profile_key, None)
         dropped.append(profile_key)
         logger.warning(f"Resource profile key '{profile_key}' matches no 'cloud' and no Namespace of this "
-                       f"environment, so its resource profile is ignored. Remove the key from "
-                       f"'{ENV_SPECIFIC_PROFILES_MAP_KEY}' or '{GENERATED_PROFILES_MAP_KEY}' when the Namespace is "
-                       f"not part of the environment anymore")
+                       f"environment, so its resource profile is ignored. '{GENERATED_PROFILES_MAP_KEY}' is "
+                       f"maintained by EnvGene from the runs that deploy with the 'PROFILE' baseline")
     return dropped
 
 
