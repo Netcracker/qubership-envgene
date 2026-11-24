@@ -79,6 +79,10 @@ Cross-cutting:
 - X4 - rollout: replace the two resolvers (artifact-searcher, DPG) with coexistence or a shadow mode.
 - X6 - failure modes: refine beyond the Topology sketch if needed.
 - X7 - a resolve-response version signal (did the answer change?), a change signal for consumers.
+- X8 - put the defs JSON schema in the defs repo, so the service and the library validate against a
+  versioned schema committed there, selected by the def version, additive-only within a major with the JSON
+  Schema draft pinned. Decouples validation from a code release, not behaviour, the provider and auth
+  mapping stays code. Open: whether to adopt and the compatibility policy. Analogue: k8s CRD, schema registry.
 
 Deliverables (end of design):
 
