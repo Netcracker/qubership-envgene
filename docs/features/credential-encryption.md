@@ -83,14 +83,6 @@ SOPS uses asymmetric age-based encryption. The emit format preserves the file co
 value with an `ENC[...]` token, and appends a top-level `sops:` metadata block with key material and an
 integrity hash. The unencrypted-keys regular expression is `^type$`, so the `type` field stays plaintext.
 
-Each encrypted file carries its own recipient list in the `sops:` metadata block, and SOPS re-encrypts a
-file to that stored list, ignoring the keys passed on the command line. When EnvGene rewrites an encrypted
-credential file, it reconciles the stored list with `PUBLIC_AGE_KEYS`. It adds the recipients the file
-lacks and removes the recipients `PUBLIC_AGE_KEYS` no longer lists. The reconciliation re-wraps the data key
-only, so unchanged values keep their ciphertext bytes. EnvGene skips the reconciliation for a file whose
-metadata also carries a non-age recipient, such as `pgp` or `hc_vault`, because the reconciliation would
-remove it.
-
 Before, an environment instance `credentials.yml`:
 
 ```yaml
@@ -139,8 +131,7 @@ Two keys in `/configuration/config.yml` control encryption:
 
 Both keys are optional. `crypt` defaults to `true` and `crypt_backend` defaults to `SOPS`.
 
-SOPS uses `PUBLIC_AGE_KEYS` for encrypt and `ENVGENE_AGE_PRIVATE_KEY` for decrypt. EnvGene keeps the
-recipient list of an existing credential file in step with `PUBLIC_AGE_KEYS`, see [SOPS](#sops).
+SOPS uses `PUBLIC_AGE_KEYS` for encrypt and `ENVGENE_AGE_PRIVATE_KEY` for decrypt.
 
 ## Encryption rules
 
@@ -289,10 +280,6 @@ Each step names the section that governs it and does not restate the rule conten
 - An encrypt call on an already-encrypted file warns and is a no-op.
 - A decrypt call on a plaintext file or a references-only file warns and is a no-op.
 - An empty file is silently skipped in both encrypt and decrypt.
-- A credential file that carries a non-age SOPS recipient keeps its recipient list as is. EnvGene warns and
-  skips the recipient reconciliation for that file.
-- A recipient reconciliation that leaves the file with a recipient list other than `PUBLIC_AGE_KEYS` fails
-  the run.
 
 ## Cross-links
 

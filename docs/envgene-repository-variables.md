@@ -81,8 +81,6 @@ is used instead.
 Must include at least one key: EnvGene's own AGE public key.
 If an external system provides encrypted parameters, its public AGE key must also be included.
 Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
-EnvGene also applies this list to a credential file it rewrites, so the file gains the keys it lacks and loses the
-keys the list no longer holds. See [Credential encryption](/docs/features/credential-encryption.md#sops).
 
 **Default Value**: None
 
