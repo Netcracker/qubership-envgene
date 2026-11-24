@@ -37,7 +37,8 @@ RUN zip -qd /deployments/app.jar 'licenses/*' && \
     --strip-debug --no-man-pages --no-header-files --compress=2 \
     --output /opt/jre && \
     /opt/jre/bin/java -Xshare:dump && \
-    /opt/jre/bin/java -XX:ArchiveClassesAtExit=/deployments/app.jsa -jar /deployments/app.jar --help
+    /opt/jre/bin/java -Denvgene.appcds.warmup=true -XX:ArchiveClassesAtExit=/deployments/app.jsa \
+        -jar /deployments/app.jar --env-id=warmup --envs-path=. --output=.
 
 # Stage 3: Build Python dependencies
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.4 AS build

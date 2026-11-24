@@ -49,12 +49,15 @@ import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 public class FileDataConverterImpl implements FileDataConverter {
     public static final String CLEANUPER = "cleanuper";
     private final ObjectMapper objectMapper;
+    private final ObjectMapper bomMapper;
     private final FileSystemUtils fileSystemUtils;
 
     @Inject
     public FileDataConverterImpl(FileSystemUtils fileSystemUtils) {
         this.fileSystemUtils = fileSystemUtils;
         this.objectMapper = new ObjectMapper(new YAMLFactory());
+        this.bomMapper = new ObjectMapper();
+        this.bomMapper.addMixIn(Bom.class, BomMixin.class);
     }
 
     @Override
@@ -70,8 +73,6 @@ public class FileDataConverterImpl implements FileDataConverter {
     @Override
     public Bom parseSbomFile(File file) {
         try {
-            ObjectMapper bomMapper = new ObjectMapper();
-            bomMapper.addMixIn(Bom.class, BomMixin.class);
             return bomMapper.readValue(file, Bom.class);
         } catch (IOException | IllegalArgumentException e) {
             if (file.getName().startsWith(CLEANUPER) &&
