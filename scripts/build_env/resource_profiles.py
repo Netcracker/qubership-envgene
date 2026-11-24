@@ -235,10 +235,26 @@ def drop_profiles_without_object(object_paths, *profile_maps):
         for profile_map in profile_maps:
             profile_map.pop(profile_key, None)
         dropped.append(profile_key)
+        hints = [f"'{profile_key}{suffix}'" for suffix in ("-origin", "-peer")
+                 if f"{profile_key}{suffix}" in object_paths]
+        suffix_hint = f" Did you mean {' or '.join(hints)}?" if hints else ""
         logger.warning(f"Resource profile key '{profile_key}' matches no 'cloud' and no Namespace of this "
-                       f"environment, so its resource profile is ignored. '{GENERATED_PROFILES_MAP_KEY}' is "
-                       f"maintained by EnvGene from the runs that deploy with the 'PROFILE' baseline")
+                       f"environment, so its resource profile is ignored.{suffix_hint} "
+                       f"'{GENERATED_PROFILES_MAP_KEY}' is maintained by EnvGene from the runs that deploy with the "
+                       f"'PROFILE' baseline")
     return dropped
+
+
+def warn_on_profile_name_collisions(all_profiles):
+    profile_paths_by_name: dict[str, dict[str, None]] = {}
+    for profile_path in all_profiles.values():
+        profile_paths_by_name.setdefault(Path(profile_path).name, {}).setdefault(profile_path, None)
+    collisions = [(name, *paths) for name, paths in profile_paths_by_name.items() if len(paths) > 1]
+    for name, *profile_paths in collisions:
+        logger.warning(f"The resource profiles {', '.join(repr(path) for path in profile_paths)} share the file name "
+                       f"'{name}', so only the one copied last reaches '{RESULTING_PROFILES_DIR_NAME}' and the other "
+                       f"is lost. Give one of them another file name.")
+    return collisions
 
 
 def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator,

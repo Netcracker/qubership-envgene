@@ -3,7 +3,7 @@ from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, che
 from cloud_passport.cloud_passport import process_cloud_passport
 from build_env.resource_profiles import collect_resource_profiles, drop_profiles_without_object, \
     override_by_env_specific_profiles, has_valid_profile_name, \
-    get_profile_baseline, set_object_profile_field, RESULTING_PROFILES_DIR_NAME
+    get_profile_baseline, set_object_profile_field, RESULTING_PROFILES_DIR_NAME, warn_on_profile_name_collisions
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -490,6 +490,7 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
             logger.info(f"'{profile_key}' has no baseline: neither resource profile '{profile_file_path}' "
                         f"nor the object sets it")
 
+    warn_on_profile_name_collisions(all_profiles)
     for profile_file_path in dict.fromkeys(all_profiles.values()):
         logger.info(f"Copying profile '{profile_file_path}' to resulting directory '{result_profiles_dir}'")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
