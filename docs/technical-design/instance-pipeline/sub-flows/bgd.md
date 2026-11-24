@@ -35,7 +35,7 @@ deploy.
 Flow:
 
 ```text
-1.1 preprocess -> 1.4 change_bg_state -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
+1.1 preprocess -> 1.4 change_bg_state -> 1.16 git_commit -> 1.20 postprocess
 ```
 
 Launch parameters:
@@ -59,7 +59,7 @@ Flow:
 
 ```text
 1.1 preprocess -> 1.4 change_bg_state -> 1.5 warmup -> 1.13 generate_deployment_plan -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.17 generate_argocd_repo -> 1.18 es_pusher -> 1.20 postprocess
+              -> 1.16 git_commit -> 1.17 generate_argocd_repo -> 1.20 postprocess
               -> [job 2] sync
 ```
 
