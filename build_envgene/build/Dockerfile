@@ -46,8 +46,10 @@ ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    'libffi-dev=3.5.2-r0' \
-    'openssl-dev=3.5.9-r0' \
+    'libffi=3.8.1-r0' \
+    'libffi-dev=3.8.1-r0' \
+    'openssl=3.5.9-r1' \
+    'openssl-dev=3.5.9-r1' \
     'python3-dev=3.12.16-r0' \
     'cargo=1.91.1-r2' \
     'rust=1.91.1-r2' \
@@ -128,6 +130,8 @@ ENV LANG='en_US.UTF-8' \
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
+    'libffi=3.8.1-r0' \
+    'openssl=3.5.9-r1' \
     libgcc=15.2.0-r2
 
 COPY --from=jre-build /opt/jre /opt/jre
