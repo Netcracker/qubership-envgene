@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from envgene_shared.crypto.crypt import decrypt_bytes, encrypt_bytes, encryption_rule, get_all_necessary_cred_files
-from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text
+from envgene_shared.crypto.sops_handler import is_encrypted_SOPS_text, sops_age_recipients_missing
 from envgene_shared.utils.business_utils import get_schema_dir
 from envgene_shared.utils.crypt_utils import get_crypt, is_effective_set_cred_file, is_empty_cred_text
 from envgene_shared.utils.yaml_utils import dumpYamlToStr, get_empty_yaml, make_quotes_for_strings, readYaml, \
@@ -115,12 +115,22 @@ class CredStore:
             plain[key] = obj
         return plain
 
+    def _files_missing_recipients(self, skip):
+        missing = {}
+        for key, data in list(self._snapshot.items()):
+            if key in skip or not key.is_file():
+                continue
+            if is_encrypted_SOPS_text(data.decode("utf-8")) and sops_age_recipients_missing(data):
+                missing[key] = self._decrypted.get(key) or self._lazy_decrypt(key)
+        return missing
+
     def write_changed(self) -> None:
         with self._lock:
             decrypted = dict(self._decrypted)
         changed = {key: obj for key, obj in decrypted.items() if self._is_changed(key, obj)}
         if get_crypt():
             changed.update({key: obj for key, obj in self._plain_files().items() if key not in changed})
+            changed.update(self._files_missing_recipients(changed))
         if not changed:
             return
         for key, obj in changed.items():

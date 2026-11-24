@@ -18,6 +18,95 @@ PUBLIC_AGE_KEYS = None
 DCL2ARGO_AGE_PUBLIC_KEY_PARAM = "DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY"
 
 
+def _normalize_age_keys(public_keys):
+    return list(dict.fromkeys([key.strip() for key in public_keys.split(",") if key.strip()]))
+
+
+def _collect_sops_age_recipients(items):
+    if not isinstance(items, list):
+        return
+    for item in items:
+        if isinstance(item, dict) and item.get("recipient"):
+            yield str(item["recipient"])
+
+
+def _sops_age_recipients(encrypted_data):
+    doc = readYaml(encrypted_data.decode("utf-8"))
+    if not isinstance(doc, dict):
+        return []
+    metadata = doc.get("sops")
+    if not isinstance(metadata, dict):
+        return []
+
+    recipients = {}
+    key_groups = metadata.get("key_groups")
+    if isinstance(key_groups, list):
+        for group in key_groups:
+            if isinstance(group, dict):
+                recipients.update(dict.fromkeys(_collect_sops_age_recipients(group.get("age"))))
+    else:
+        recipients.update(dict.fromkeys(_collect_sops_age_recipients(metadata.get("age"))))
+    return list(recipients)
+
+
+def _read_file_bytes(file_path):
+    with open(file_path, "rb") as f:
+        return f.read()
+
+
+def _write_sops_update_keys_config(age_keys):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".sops.yaml", mode="w", encoding="utf-8") as config:
+        config.write("creation_rules:\n")
+        config.write("  - path_regex: '.*'\n")
+        config.write(f'    age: "{",".join(age_keys)}"\n')
+        return config.name
+
+
+def _get_public_age_keys():
+    global PUBLIC_AGE_KEYS
+    if PUBLIC_AGE_KEYS is None:
+        PUBLIC_AGE_KEYS = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
+    return PUBLIC_AGE_KEYS
+
+
+def _missing_age_recipients(encrypted_data, public_keys):
+    """Return the file's age recipients and the PUBLIC_AGE_KEYS recipients the file lacks.
+
+    Recipients the file has beyond public_keys are kept: an extra recipient does not stop
+    EnvGene from decrypting the file.
+    """
+    current_recipients = _sops_age_recipients(encrypted_data)
+    if not current_recipients:
+        return current_recipients, []
+    return current_recipients, [key for key in _normalize_age_keys(public_keys) if key not in current_recipients]
+
+
+def sops_age_recipients_missing(encrypted_data: bytes) -> bool:
+    public_keys = _get_public_age_keys()
+    text = encrypted_data.decode("utf-8")
+    if all(key in text for key in _normalize_age_keys(public_keys)):
+        return False
+    _, missing = _missing_age_recipients(encrypted_data, public_keys)
+    return bool(missing)
+
+
+def _add_sops_age_recipients(file_path, current_recipients, missing):
+    expected = current_recipients + missing
+    config_path = _write_sops_update_keys_config(expected)
+    try:
+        _run_SOPS(["--config", config_path, "updatekeys", "--yes", str(file_path)])
+    finally:
+        if os.path.exists(config_path):
+            os.remove(config_path)
+
+    updated_recipients = _sops_age_recipients(_read_file_bytes(file_path))
+    if set(updated_recipients) != set(expected):
+        raise subprocess.SubprocessError(
+            f"sops updatekeys did not set expected age recipients for {file_path}: "
+            f"{len(updated_recipients)} recipients, expected {len(expected)}"
+        )
+
+
 def _sops_subprocess_env(secret_key=None, **extra):
     global ENVGENE_AGE_PRIVATE_KEY
     env = os.environ.copy()
@@ -137,10 +226,9 @@ def decrypt_SOPS_bytes(data: bytes, file_path, secret_key=None) -> str:
 
 
 def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: bytes = None) -> bytes:
-    global PUBLIC_AGE_KEYS
-    if PUBLIC_AGE_KEYS is None:
-        PUBLIC_AGE_KEYS = getenv_with_error("PUBLIC_AGE_KEYS", no_log=True)
+    public_keys = _get_public_age_keys()
     if old_data is not None:
+        current_recipients, missing = _missing_age_recipients(old_data, public_keys)
         with tempfile.TemporaryDirectory() as tmp:
             old_path = os.path.join(tmp, "old.yml")
             new_path = os.path.join(tmp, "new.yml")
@@ -148,10 +236,12 @@ def encrypt_SOPS_bytes(data: bytes, file_path, encrypted_regex=None, old_data: b
                 f.write(old_data)
             with open(new_path, "wb") as f:
                 f.write(data)
-            _sops_edit(old_path, new_path, PUBLIC_AGE_KEYS)
+            _sops_edit(old_path, new_path, public_keys)
+            if missing:
+                _add_sops_age_recipients(old_path, current_recipients, missing)
             with open(old_path, "rb") as f:
                 return f.read()
-    sops_args = ["encrypt", "--input-type", "yaml", "--output-type", "yaml", "--age", PUBLIC_AGE_KEYS]
+    sops_args = ["encrypt", "--input-type", "yaml", "--output-type", "yaml", "--age", public_keys]
     if encrypted_regex is not None:
         sops_args.extend(["--encrypted-regex", encrypted_regex])
     sops_args.extend(["--filename-override", str(file_path), "/dev/stdin"])
