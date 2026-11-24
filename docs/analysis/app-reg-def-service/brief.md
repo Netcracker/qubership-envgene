@@ -9,41 +9,43 @@ committed change, no OpenSpec folder yet.
 
 ## Decision log
 
-| #   | Decision                                                                  | Status    | Source      |
-|-----|---------------------------------------------------------------------------|-----------|-------------|
-| D1  | Shape: git SOT plus service as a runtime access layer (both)              | settled   | OQ1         |
-| D2  | Credentials: blind (service returns authConfig, consumer mints)           | settled   | diagram     |
-| D3  | DD and SBOM content processing is out of scope                            | settled   | -           |
-| D4  | Resolve returns artifact download-info plus all registry sections, v2     | settled   | research    |
-| D5  | Def source: git only                                                      | settled   | extend      |
-| D6  | Auth: v2 authConfig is the target source of truth                         | direction | challenge 7 |
-| D7  | Resolve includes appdef metadata (release-name, argocd options)           | settled   | QA1         |
-| D8  | getRegDef kept for version-independent registry access                    | settled   | QA2         |
-| D9  | Write response returns the object, no separate verify GET                 | settled   | -           |
-| D10 | Create and update are separate operations, not one upsert                 | settled   | -           |
-| D11 | Consumer builds sub-artifact URLs, no sub-resolve API                     | settled   | QA4         |
-| D12 | Auth within a zone: registry-side form plus ambient identity              | settled   | O1          |
-| D13 | One default zone now, multizonality deferred (optional zone param)        | settled   | zones       |
-| D14 | Dedicated defs repo (def store), separate from instance repos             | settled   | G1.1        |
-| D15 | Flat layout, zone folders deferred                                        | settled   | G1.2        |
-| D16 | Single branch is the SOT, optional manual MR workflow (open)              | settled   | G1.3        |
-| D17 | Zero secrets in the repo, credId refs only, no encryption                 | settled   | G1.4        |
-| D18 | Casing by role: kind PascalCase, path identifiers kebab, fields camelCase | settled   | industry    |
-| D19 | Folders: application-definitions/ and registry-definitions/               | settled   | G1.2        |
-| D20 | Resync triggered by a push webhook plus a periodic timer, not poll-only   | settled   | G2.1        |
-| D21 | Any change triggers a full repo resync, incremental resync deferred       | settled   | G2.3        |
-| D22 | Single-layer cache of def objects, resolve on the fly, memo deferred      | settled   | G3.1        |
-| D23 | Cache store in-process per replica, Redis-ready for shared HA             | settled   | G3.2        |
-| D24 | Indexer is the sole cache writer, the Writer commits and pushes only      | settled   | C1 critic   |
-| D25 | Separate git working copies for resync-read and write, settles G8         | settled   | C1 critic   |
-| D26 | Webhook receiver is a separate component from the consumer API            | settled   | C1 critic   |
-| D27 | Deployment schemas: lite (in-proc) and HA (Redis) from one codebase       | settled   | C2          |
-| D28 | Multi-cluster: one instance per cluster over the shared git SOT           | settled   | C2          |
-| D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer  | settled   | C2          |
-| D30 | Write returns on commit, cache is eventually consistent via resync        | settled   | C2          |
-| D31 | Malformed def is skipped per entry, not an all-or-nothing blackout        | settled   | C2          |
-| D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI     | settled   | challenge   |
-| D33 | Service targets the extended RegDef v2, schema brought up to it           | settled   | challenge   |
+| #   | Decision                                                                     | Status    | Source            |
+|-----|------------------------------------------------------------------------------|-----------|-------------------|
+| D1  | Shape: git SOT plus service as a runtime access layer (both)                 | settled   | OQ1               |
+| D2  | Credentials: blind (service returns authConfig, consumer mints)              | settled   | diagram           |
+| D3  | DD and SBOM content processing is out of scope                               | settled   | -                 |
+| D4  | Resolve returns artifact download-info plus all registry sections, v2        | settled   | research          |
+| D5  | Def source: git only                                                         | settled   | extend            |
+| D6  | Auth: v2 authConfig is the target source of truth                            | direction | challenge 7       |
+| D7  | Resolve includes appdef metadata (release-name, argocd options)              | settled   | QA1               |
+| D8  | getRegDef kept for version-independent registry access                       | settled   | QA2               |
+| D9  | Write response returns the object, no separate verify GET                    | settled   | -                 |
+| D10 | Create and update are separate operations, not one upsert                    | settled   | -                 |
+| D11 | Consumer builds sub-artifact URLs, no sub-resolve API                        | settled   | QA4               |
+| D12 | Auth within a zone: registry-side form plus ambient identity                 | settled   | O1                |
+| D13 | One default zone now, multizonality deferred (optional zone param)           | settled   | zones             |
+| D14 | Dedicated defs repo (def store), separate from instance repos                | settled   | G1.1              |
+| D15 | Flat layout, zone folders deferred                                           | settled   | G1.2              |
+| D16 | Single branch is the SOT, optional manual MR workflow (open)                 | settled   | G1.3              |
+| D17 | Zero secrets in the repo, credId refs only, no encryption                    | settled   | G1.4              |
+| D18 | Casing by role: kind PascalCase, path identifiers kebab, fields camelCase    | settled   | industry          |
+| D19 | Folders: application-definitions/ and registry-definitions/                  | settled   | G1.2              |
+| D20 | Resync triggered by a push webhook plus a periodic timer, not poll-only      | settled   | G2.1              |
+| D21 | Any change triggers a full repo resync, incremental resync deferred          | settled   | G2.3              |
+| D22 | Single-layer cache of def objects, resolve on the fly, memo deferred         | settled   | G3.1              |
+| D23 | Cache store in-process per replica, Redis-ready for shared HA                | settled   | G3.2              |
+| D24 | Indexer is the sole cache writer, the Writer commits and pushes only         | settled   | C1 critic         |
+| D25 | Separate git working copies for resync-read and write, settles G8            | settled   | C1 critic         |
+| D26 | Webhook receiver is a separate component from the consumer API               | settled   | C1 critic         |
+| D27 | Deployment schemas: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2                |
+| D28 | Multi-cluster: one instance per cluster over the shared git SOT              | settled   | C2                |
+| D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer     | settled   | C2                |
+| D30 | Write returns on commit, cache is eventually consistent via resync           | settled   | C2                |
+| D31 | Malformed def is skipped per entry, not an all-or-nothing blackout           | settled   | C2                |
+| D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI        | settled   | challenge         |
+| D33 | Service targets the extended RegDef v2, schema brought up to it              | settled   | challenge         |
+| D34 | Resolve returns the Application model (AppDef with embedded RegDef v1 or v2) | settled   | artifact-searcher |
+| D35 | credId to credential processing stays in the client, feeds the provider      | settled   | challenge         |
 
 ## Change class
 
