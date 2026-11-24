@@ -5,12 +5,19 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarbool import ScalarBoolean
 
 from envgene_linter.model import Category, Scope
-from envgene_linter.template_default_guidance import build_template_default_hint
+from envgene_linter.template_default_guidance import (
+    assign_shared_name,
+    build_template_default_hint,
+    parameter_set_base,
+    render_review_suggestion,
+)
 
 
 def _observed(hint):
-    assert "ParameterSet YAML:\n" in hint
-    snippet = hint.split("ParameterSet YAML:\n", 1)[1].split("\n\n", 1)[0]
+    if "ParameterSet YAML:\n" in hint:
+        snippet = hint.split("ParameterSet YAML:\n", 1)[1].split("\n\n", 1)[0]
+    else:
+        snippet = hint.split('":\n\n', 1)[1].split("\n\n2. ", 1)[0]
     return YAML(typ="safe").load(snippet)
 
 
@@ -65,7 +72,17 @@ def test_no_context_explains_what_how_and_where_without_destination_paths(
         ],
     )
     payload = _observed(hint)
-    assert payload["name"] == "<shared-paramset-name>"
+    token = {
+        Category.DEPLOY: "deploy",
+        Category.E2E: "pipeline",
+        Category.TECHNICAL: "runtime",
+    }[scope.category]
+    parts = ["business", scope.target]
+    if scope.application:
+        parts.append("app-one")
+    parts.append(token)
+    expected_name = "-".join(parts) + "-shared"
+    assert payload["name"] == expected_name
     expected = {
         "ATP_PARAMS_FILE": {"branch": "main"},
         "ATP_PARAMS_FILE.branch": "literal",
@@ -77,37 +94,30 @@ def test_no_context_explains_what_how_and_where_without_destination_paths(
         assert payload["applications"] == [
             {"appName": "app-one", "parameters": expected}
         ]
-    assert "unused ParameterSet name" in hint
-    assert "intentional instance overrides" in hint
-    assert "template consumers" in hint
-    assert "-t" in hint and "--template-repo" in hint
+    assert "REVIEW ONLY. Nothing is applied automatically." in hint
+    assert f'create ParameterSet "{expected_name}"' in hint
+    assert "release a new version of templates:1" in hint
+    assert "envgene-linter check -i <instance> -t <template>." in hint
     for concrete in (
         "Descriptor YAML:",
         "templates/parameters/",
         "Create file:",
         "Edit file:",
-        "namespaces[",
+        "namespaces[0]",
         "Local descriptor:",
     ):
         assert concrete not in hint
     if binding is None:
         assert "no e2eParameters field" in hint
-        assert "Reference item to append:" not in hint
+        assert "to the end of" not in hint
     else:
-        assert 'environment template "business"' in hint
-        association = (
-            "Cloud association"
+        where = (
+            f"cloud.template_override.{binding} (Cloud)"
             if scope.target == "cloud"
-            else 'Namespace association for "oss"'
+            else f'namespaces[oss].template_override.{binding} (Namespace "oss")'
         )
-        assert association in hint
-        assert f"as the last item in template_override.{binding}" in hint
-        item = hint.split("Reference item to append:\n", 1)[1].split("\n\n", 1)[0]
-        assert YAML(typ="safe").load(item) == [payload["name"]]
-        assert "Keep the existing references in their current order" in hint
-        assert "Remove only the shown duplicate parameter entries" in hint
-        if scope.target == "cloud":
-            assert "same value in template_path" in hint
+        assert f'in "business", add "{expected_name}" to the end of {where}.' in hint
+        assert "delete the same 3 keys from the files listed above" in hint
 
 
 def test_context_yaml_preserves_nested_paths_and_literal_dotted_keys(local_templates):
@@ -403,3 +413,90 @@ def test_aliases_and_inherited_entry_locations_do_not_suggest_an_anchor_edit(
     assert "anchors or inherited keys" in hint
     assert "Create file:" not in hint and "Edit file:" not in hint
     assert descriptor.read_text() == text
+
+
+def test_shared_names_follow_template_subject_and_repeated_groups_use_the_first_key():
+    template = "sample-template"
+    cloud = Scope("cloud", Category.DEPLOY)
+    env_files = (
+        ("cluster-01/env-01", "cluster-01-env-01-cloud-deploy"),
+        ("cluster-01/env-02", "cluster-01-env-02-cloud-deploy"),
+    )
+    cloud_base = parameter_set_base(template, cloud, env_files)
+    assert cloud_base == "sample-template-cloud-deploy"
+    assert (
+        assign_shared_name(cloud_base, ["SERVICE_URL"], disambiguate=False, used=set())
+        == "sample-template-cloud-deploy-shared"
+    )
+
+    app = parameter_set_base(
+        template,
+        Scope("cloud", Category.DEPLOY, "app-one"),
+        (("cluster-01/env-01", "catalog-1.2"), ("cluster-01/env-02", "catalog-1.2")),
+    )
+    assert app == "sample-template-cloud-catalog-1.2-app-one"
+
+    pipeline = parameter_set_base(
+        template,
+        Scope("cloud", Category.E2E),
+        (
+            ("cluster-01/env-01", "delivery-pipeline"),
+            ("cluster-01/env-02", "delivery-pipeline"),
+        ),
+    )
+    assert pipeline == "sample-template-cloud-delivery-pipeline"
+
+    namespace = Scope("oss", Category.DEPLOY)
+    repeated = (
+        ("cluster-01/env-01", "cluster-01-env-01-oss-deploy"),
+        ("cluster-01/env-02", "cluster-01-env-02-oss-deploy"),
+    )
+    base = parameter_set_base(template, namespace, repeated)
+    used = set()
+    assert (
+        assign_shared_name(base, ["FIRST_SETTING"], disambiguate=True, used=used)
+        == "sample-template-oss-deploy-first-setting-shared"
+    )
+    assert (
+        assign_shared_name(
+            base, ["option.defaultFlag.enabled"], disambiguate=True, used=used
+        )
+        == "sample-template-oss-deploy-option.defaultflag.enabled-shared"
+    )
+
+    hint = render_review_suggestion(
+        template,
+        "sample-templates",
+        namespace,
+        [(("ALPHA_FLAG",), "true"), (("job.enabled",), "false")],
+        "sample-template-oss-deploy-alpha-flag-shared",
+        keys=["ALPHA_FLAG", "job.enabled"],
+        agreed=7,
+        exception_lines=(
+            "cluster-01/env-03: ALPHA_FLAG is absent",
+            "cluster-01/env-03: job.enabled is absent",
+        ),
+    )
+    assert "REVIEW ONLY. Nothing is applied automatically." in hint
+    assert "Look twice at:" not in hint
+    assert 'create ParameterSet "sample-template-oss-deploy-alpha-flag-shared"' in hint
+    assert (
+        "to the end of namespaces[oss].template_override.deployParameterSets "
+        '(Namespace "oss").'
+    ) in hint
+    assert "update the 7 environments to it." in hint
+    assert "delete the same 2 keys from the files listed above." in hint
+    assert "   Keep as they are:\n   - cluster-01/env-03: ALPHA_FLAG is absent" in hint
+    assert "envgene-linter check -i <instance> -t <template>." in hint
+
+    cautious = render_review_suggestion(
+        template,
+        "sample-templates",
+        cloud,
+        [(("SERVICE_URL",), "https://example.invalid"), (("RUN_MODE",), "local")],
+        "sample-template-cloud-deploy-shared",
+        keys=["SERVICE_URL", "RUN_MODE"],
+        agreed=8,
+    )
+    assert "Look twice at: SERVICE_URL" in cautious
+    assert "RUN_MODE" not in cautious.split("Look twice at: ", 1)[1].split("\n", 1)[0]

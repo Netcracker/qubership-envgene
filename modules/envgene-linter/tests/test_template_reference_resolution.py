@@ -48,7 +48,9 @@ def test_available_passport_reference_paths_continue_the_recipe(
     template = _context(repo, tmp_path, versions)
     hint = _findings(repo, template)[0].hint
     assert "Template relocation proposal not generated." not in hint
-    assert "Create file:" in hint and "Instance repository changes:" in hint
+    assert "Create file:" in hint
+    assert "delete the same key from the files listed above" in hint
+    assert "Instance repository changes:" not in hint
     for version in set(versions):
         assert f"release-{version}-defaults" in hint
     assert "Resolved ParameterSet references:" in hint
@@ -163,7 +165,8 @@ def test_existing_reference_resolved_for_every_participant_is_not_appended_again
     hint = _findings(repo, template)[0].hint
     assert "Merge into file:" in hint
     assert "Descriptor YAML:" not in hint
-    assert "Instance repository changes:" in hint
+    assert "delete the same key from the files listed above" in hint
+    assert "Instance repository changes:" not in hint
 
 
 def test_reference_parser_recursion_limit_is_a_review_failure():
