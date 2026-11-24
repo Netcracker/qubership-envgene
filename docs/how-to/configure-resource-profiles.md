@@ -343,8 +343,9 @@ to it.
   run wins over the baseline your own override sets for it. Scenario 8 keeps its application baselines only for the
   applications the run does not deploy.
 - The applications your own override does not mention start on the baseline of the run, and its custom values stay.
-- A Namespace of the run that references no override of its own takes the generated override, and the profile of
-  that Namespace is named `<deploy-postfix>-profile-override`.
+- A Namespace of the run that references no override of its own takes the generated override as its profile, named
+  `<deploy-postfix>-profile-override`, unless the template of the Namespace has a profile of its own, which keeps its
+  name.
 - In replace mode the template override is dropped and the generated override is merged on top of the override of
   the Namespace, see [Resource profiles](/docs/features/resource-profile.md#replace-mode).
 - An application that does not define the named baseline keeps the baseline it had.
