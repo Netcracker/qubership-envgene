@@ -13,6 +13,11 @@ def _env_specific_profiles_schema():
         "envSpecificResourceProfiles"]
 
 
+def _generated_profiles_schema():
+    return _schema("env-definition.schema.json")["properties"]["envTemplate"]["properties"][
+        "generatedProfileDefaults"]
+
+
 def _schema(name):
     return json.loads((SCHEMAS_DIR / name).read_text(encoding="utf-8"))
 
@@ -31,19 +36,23 @@ def test_override_without_applications_is_valid():
     jsonschema.validate({"name": "inst-bss", "baseline": "prod"}, _schema("resource-profile.schema.json"))
 
 
-def test_override_list_and_single_value_are_valid():
-    jsonschema.validate({"bss": ["first-over", "second-over"], "cloud": "cloud-over"},
-                        _env_specific_profiles_schema())
-
-
-def test_override_list_rejects_entries_that_are_not_names():
+def test_env_specific_override_is_one_name_per_key():
+    jsonschema.validate({"bss": "inst-bss", "cloud": "cloud-over"}, _env_specific_profiles_schema())
     with pytest.raises(jsonschema.ValidationError):
-        jsonschema.validate({"bss": [{"name": "first-over"}]}, _env_specific_profiles_schema())
+        jsonschema.validate({"bss": ["first-over", "second-over"]}, _env_specific_profiles_schema())
 
 
-def test_env_definition_model_accepts_override_list(monkeypatch):
+def test_generated_profiles_map_holds_one_name_per_key():
+    jsonschema.validate({"bss": "bss-profile-override"}, _generated_profiles_schema())
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate({"bss": ["bss-profile-override", "inst-bss"]}, _generated_profiles_schema())
+
+
+def test_env_definition_model_accepts_generated_profiles_map(monkeypatch):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(SCHEMAS_DIR))
     env_definition = EnvDefinitionModel.model_validate(
         {"envTemplate": {"name": "env", "artifact": "env:1",
-                         "envSpecificResourceProfiles": {"bss": ["first-over", "second-over"]}}})
-    assert env_definition.envTemplate.envSpecificResourceProfiles == {"bss": ["first-over", "second-over"]}
+                         "envSpecificResourceProfiles": {"bss": "inst-bss"},
+                         "generatedProfileDefaults": {"bss": "bss-profile-override"}}})
+    assert env_definition.envTemplate.envSpecificResourceProfiles == {"bss": "inst-bss"}
+    assert env_definition.envTemplate.generatedProfileDefaults == {"bss": "bss-profile-override"}
