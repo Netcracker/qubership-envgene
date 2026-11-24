@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EnvPrepareReport",
+  "description": "Per-environment step report produced by the Instance pipeline env_prepare job and published as a job artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "const": "EnvPrepareReport"
+    },
+    "apiVersion": {
+      "const": "v1"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/step"
+      }
+    }
+  },
+  "required": [
+    "kind",
+    "apiVersion",
+    "steps"
+  ],
+  "definitions": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "SUCCESS",
+            "FAILED",
+            "SKIPPED"
+          ]
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^[0-9]+:[0-5][0-9]:[0-5][0-9]$"
+        }
+      },
+      "required": [
+        "name",
+        "status"
+      ]
+    }
+  }
+}
