@@ -23,9 +23,9 @@ human-readable companion to `openapi.yaml`. The objects in the payloads are in [
   is in [deployment-and-operations.md](deployment-and-operations.md).
 - `zone` is an optional query parameter on the read interfaces. There is one default zone today, and it is
   reserved for multizone.
-- the service is blind. It returns defs with `credId` references and never a secret, and it never contacts
-  a registry. Building the artifact and the provider and downloading are the consumer's, through the
-  client and artifacts_finder.
+- the service returns defs with their `credId` references, not the secret values, and it never contacts a
+  registry. Building the artifact and the provider and downloading are the consumer's, through the client
+  and artifacts_finder.
 - errors share one shape and one status-code catalog, in [Error model](#error-model). Each interface notes
   the codes it returns.
 - `listRegDefs` and `listAppDefs` (open, O3) are not specified here yet. The write interfaces are the
@@ -34,7 +34,7 @@ human-readable companion to `openapi.yaml`. The objects in the payloads are in [
 ## GET /api/v1/resolve
 
 Resolves an application to its `Application`, the AppDef attributes with the RegDef joined in.
-Version-independent and blind.
+Version-independent.
 
 **Parameters**
 
@@ -63,7 +63,7 @@ technicalConfigurationParameters:
   LOG_LEVEL: INFO
 metadata:
   releaseName: billing
-# the resolved RegDef, v1 or v2, blind (credId references, no secrets), see ../model.md
+# the resolved RegDef, v1 or v2, see ../model.md
 registry:
   name: shared-platform
   version: v2
@@ -76,7 +76,7 @@ registry:
 2. Look up the RegDef named by the AppDef `registryName`. If it is absent, `422`, the def points at a
    registry that does not exist.
 3. Return the Application, the AppDef attributes with the RegDef joined in as `registry`, as stored, v1 or
-   v2, blind.
+   v2.
 
 The service does not select DD or SD, build an artifact, mint auth, or touch a registry. The consumer does
 that with the version and the credentials, through the client and artifacts_finder.
@@ -134,7 +134,7 @@ GET /api/v1/registry-definitions/shared-platform
 **Response** `200 OK`
 
 ```yaml
-# the RegDef as stored, v1 or v2, blind, see ../model.md
+# the RegDef as stored, v1 or v2, see ../model.md
 name: shared-platform
 version: v2
 authConfig:

@@ -12,7 +12,7 @@ The service is a runtime resolver and cache over a git source of truth, the dedi
 resolves an application to its `Application`, the AppDef attributes with its RegDef joined in as
 `registry`. The resolve is version-independent.
 
-It is blind. It returns the RegDef with its `credId` references and never a secret, and it never contacts a
+It returns the RegDef with its `credId` references, not the secret values, and it never contacts a
 registry. The consumer adds the version and the credentials to build the artifact and the provider and
 download through the client and artifacts_finder.
 
@@ -60,7 +60,7 @@ flowchart TB
 |------------------|--------------------------------------------------------------------------------------------------|
 | Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
 | Webhook receiver | validates the git HMAC and triggers a resync                                                     |
-| Resolver         | looks up the cache, joins the AppDef to its RegDef by name, returns the Application, blind        |
+| Resolver         | looks up the cache, joins the AppDef to its RegDef by name, returns the Application              |
 | Cache            | the cache port, in-proc or Redis, holds the def objects by name                                  |
 | Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
 | Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
@@ -80,7 +80,7 @@ sequenceDiagram
   API->>R: resolve
   R->>Cache: look up appdef and regdef by name
   Cache-->>R: the def objects
-  R->>R: join the appdef and its regdef into the Application, as stored, blind
+  R->>R: join the appdef and its regdef into the Application, as stored
   R-->>API: the Application, the appdef attributes with the resolved registry
   API-->>C: response
 ```
