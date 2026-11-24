@@ -10,8 +10,9 @@ The service's components and its read, resync, and write flows. For the rest, se
 
 In scope now is the single-process service: resolve, the read and write interfaces, and the git sync, with
 an in-process cache. High availability and horizontal scale-out, running several replicas behind a shared
-cache and across clusters, are deferred, and so is authorization. The design stays open to both: the cache
-can move to a shared store later. The rest of this page describes the single-process service.
+cache and across clusters, are deferred, and so are authorization and multizone, with one zone today. The
+design stays open to them: the cache can move to a shared store later. The rest of this page describes the
+single-process service.
 
 ## System overview
 

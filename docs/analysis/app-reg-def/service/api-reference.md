@@ -21,8 +21,6 @@ human-readable companion to `openapi.yaml`. The objects in the payloads are in [
 - base path `/api/v1`, media type `application/json`.
 - authn and authz are deferred, out of scope now. When added, an external auth gate sits in front of the
   API.
-- `zone` is an optional query parameter on the read interfaces. There is one default zone today, and it is
-  reserved for multizone.
 - the service returns defs with their `credId` references, not the secret values, and it never contacts a
   registry. Building the artifact and the provider and downloading are the consumer's, through the client
   and artifacts_finder.
@@ -36,18 +34,17 @@ human-readable companion to `openapi.yaml`. The objects in the payloads are in [
 Resolves an application to its `Application`, the AppDef attributes with the RegDef joined in.
 Version-independent.
 
-**Parameters**
+**Parameters:**
 
 - `app` (query, required): the application name.
-- `zone` (query, optional): the registry zone, one default today.
 
-**Request**
+**Request:**
 
 ```text
 GET /api/v1/resolve?app=billing
 ```
 
-**Response** `200 OK`
+**Response:** `200 OK`
 
 ```yaml
 # the Application: the AppDef attributes with the RegDef joined in as registry
@@ -70,7 +67,7 @@ registry:
   # authConfig and the registry sections
 ```
 
-**Logic**
+**Logic:**
 
 1. Look up the AppDef by `app` in the cache. If it is absent, `404`.
 2. Look up the RegDef named by the AppDef `registryName`. If it is absent, `422`, the def points at a
@@ -85,19 +82,18 @@ that work with the version and the credentials, through the client and artifacts
 
 Resolves a list of applications in one call, each like `GET /api/v1/resolve`.
 
-**Parameters**
+**Parameters:**
 
 - body (required): a list of application names.
-- `zone` (query, optional): applies to the whole batch.
 
-**Request**
+**Request:**
 
 ```yaml
 - app: billing
 - app: payments
 ```
 
-**Response** `200 OK`
+**Response:** `200 OK`
 
 ```yaml
 # one result per entry, in request order
@@ -109,7 +105,7 @@ Resolves a list of applications in one call, each like `GET /api/v1/resolve`.
     message: application payments is not known
 ```
 
-**Logic**
+**Logic:**
 
 1. Validate the body, a non-empty list of application names.
 2. Run the resolve logic for each against the cache.
@@ -120,18 +116,17 @@ Resolves a list of applications in one call, each like `GET /api/v1/resolve`.
 Returns a RegDef by name, with no application. The way to reach a registry directly, for publish and
 promote flows.
 
-**Parameters**
+**Parameters:**
 
 - `name` (path, required): the RegDef name.
-- `zone` (query, optional).
 
-**Request**
+**Request:**
 
 ```text
 GET /api/v1/registry-definitions/shared-platform
 ```
 
-**Response** `200 OK`
+**Response:** `200 OK`
 
 ```yaml
 # the RegDef as stored, v1 or v2, see ../model.md
@@ -153,7 +148,7 @@ registries:
   # ... other artifact types
 ```
 
-**Logic**
+**Logic:**
 
 1. Look up the RegDef by `name` in the cache. If it is absent, `404`.
 2. Return the RegDef as stored.
@@ -162,17 +157,17 @@ registries:
 
 Returns an AppDef by name, without resolving its registry. The raw stored definition.
 
-**Parameters**
+**Parameters:**
 
 - `name` (path, required): the AppDef name.
 
-**Request**
+**Request:**
 
 ```text
 GET /api/v1/application-definitions/billing
 ```
 
-**Response** `200 OK`
+**Response:** `200 OK`
 
 ```yaml
 # the AppDef as stored, see ../model.md
@@ -188,7 +183,7 @@ technicalConfigurationParameters:
   LOG_LEVEL: INFO
 ```
 
-**Logic**
+**Logic:**
 
 1. Look up the AppDef by `name` in the cache. If it is absent, `404`.
 2. Return the AppDef as stored.
@@ -198,11 +193,11 @@ technicalConfigurationParameters:
 Creates a RegDef. Parked (P1), the shape is settled. The write is eventually consistent. The response
 carries the written object, and the cache catches up on the next resync.
 
-**Parameters**
+**Parameters:**
 
 - body (required): the RegDef object.
 
-**Request**
+**Request:**
 
 ```yaml
 name: shared-platform
@@ -222,9 +217,9 @@ registries:
         repoName: maven-releases
 ```
 
-**Response** `201 Created` with the written object. `409` if a def with that name already exists.
+**Response:** `201 Created` with the written object. `409` if a def with that name already exists.
 
-**Logic**
+**Logic:**
 
 1. Validate the body against the schema, and validate or normalize the name to the kebab DNS-safe
    convention.
@@ -236,14 +231,14 @@ registries:
 
 Updates an existing RegDef. Parked (P1), the shape is settled.
 
-**Parameters**
+**Parameters:**
 
 - `name` (path, required): the RegDef name.
 - body (required): the full RegDef object.
 
-**Response** `200 OK` with the written object. `404` if the def is absent.
+**Response:** `200 OK` with the written object. `404` if the def is absent.
 
-**Logic**
+**Logic:**
 
 1. Validate the body against the schema and the name.
 2. If no def with that name exists, `404`.
@@ -256,9 +251,9 @@ Updates an existing RegDef. Parked (P1), the shape is settled.
 Creates an AppDef. The application-definitions write interfaces mirror the registry-definitions ones, over
 the AppDef object. Parked (P1).
 
-**Response** `201 Created` with the written object. `409` if an AppDef with that name already exists.
+**Response:** `201 Created` with the written object. `409` if an AppDef with that name already exists.
 
-**Logic**
+**Logic:**
 
 As `POST /api/v1/registry-definitions`, validating the AppDef schema and writing to the
 `application-definitions/` folder.
@@ -267,9 +262,9 @@ As `POST /api/v1/registry-definitions`, validating the AppDef schema and writing
 
 Updates an existing AppDef. Parked (P1).
 
-**Response** `200 OK` with the written object. `404` if the AppDef is absent.
+**Response:** `200 OK` with the written object. `404` if the AppDef is absent.
 
-**Logic**
+**Logic:**
 
 As `PUT /api/v1/registry-definitions/{name}`, over the AppDef object.
 
