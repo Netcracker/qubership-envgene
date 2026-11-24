@@ -7,8 +7,6 @@ from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from cucumber_tests.shared_steps.calculator_cli_steps import _MOCK_REGISTRY, _PRODUCTION_CLI
 from build_env.deployment_profile import GENERATED_PROFILES_MAP_KEY, PROFILE_OVERRIDE_SUFFIX
 
-# The name and the map the apply_deployment_profile step writes, expected here as a consumer does.
-# The test data of these scenarios deploys with deployPostfix "bss".
 GENERATED_PROFILE_NAME = f"bss{PROFILE_OVERRIDE_SUFFIX}"
 GENERATED_MAP_KEY = GENERATED_PROFILES_MAP_KEY
 

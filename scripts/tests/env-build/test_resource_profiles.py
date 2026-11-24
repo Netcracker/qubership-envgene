@@ -6,8 +6,9 @@ import pytest
 from envgenehelper import dumpYamlToStr, open_current_env_instance_store, readYaml, writeYamlToFile
 
 from build_env.deployment_profile import GENERATED_PROFILES_MAP_KEY, PROFILE_OVERRIDE_SUFFIX, profile_override_name
-from build_env.resource_profiles import get_resource_profiles_map, has_valid_profile_name, \
-    merge_resource_profiles, override_by_env_specific_profiles, set_object_profile_field, validate_resource_profiles
+from build_env.resource_profiles import drop_profiles_without_object, get_resource_profiles_map, \
+    has_valid_profile_name, merge_resource_profiles, override_by_env_specific_profiles, set_object_profile_field, \
+    validate_resource_profiles
 
 RP_SCHEMA = str(Path(__file__).resolve().parents[3] / "schemas" / "resource-profile.schema.json")
 
@@ -37,14 +38,6 @@ def _apps_profile(name, baseline, apps):
 
 def _app(name, baseline, param=None):
     app = {"name": name, "baseline": baseline, "services": []}
-    if param:
-        key, value = param
-        app["services"] = [{"name": "svc", "parameters": [{"name": key, "value": value}]}]
-    return app
-
-
-def _app_without_baseline(name, param=None):
-    app = {"name": name, "services": []}
     if param:
         key, value = param
         app["services"] = [{"name": "svc", "parameters": [{"name": key, "value": value}]}]
@@ -405,10 +398,55 @@ class TestOverrideByEnvSpecificProfiles:
 
         assert result["bss"] == str(tmp_path / "Profiles" / "shared.yml")
         assert result["oss"] == str(tmp_path / "Profiles" / "shared-oss.yml")
-        assert any("shared-oss" in str(call.args[0]) for call in logger.warning.call_args_list)
+        logger.warning.assert_called()
         assert _params_of(env_instance_store.get(result["bss"])) == {"a": 1, "b": 2}
         assert env_instance_store.get(result["oss"])["name"] == "shared-oss"
         assert _params_of(env_instance_store.get(shared)) == {"a": 1}
+
+    def test_an_assembled_profile_never_shares_a_name_with_a_standalone_override(self, tmp_path, env_instance_store):
+        shared = tmp_path / "Inventory" / "resource_profiles" / "shared.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(shared, _profile("shared", params={"a": 1}))
+        env_instance_store.put(generated, _profile("bss-profile-override", params={"b": 2}))
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            result = override_by_env_specific_profiles({}, {"bss": str(shared), "oss": str(shared)},
+                                                       _render_context("true"), {}, {"bss": str(generated)})
+
+        assert result["oss"] == str(shared)
+        assert result["bss"] == str(tmp_path / "Profiles" / "shared-bss.yml")
+        logger.warning.assert_called()
+        assert _params_of(env_instance_store.get(result["bss"])) == {"a": 1, "b": 2}
+        assert _params_of(env_instance_store.get(shared)) == {"a": 1}
+
+
+class TestDropProfilesWithoutObject:
+
+    def test_a_key_without_an_object_is_dropped(self):
+        all_profiles = {"bss-origin": "/tmpl/bss-origin.yml"}
+        generated_map = {"bss": str(Path("Profiles") / "bss-profile-override.yml")}
+        object_paths = {"cloud": "/cloud.yml", "bss-origin": "/ns/bss-origin/namespace.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            dropped = drop_profiles_without_object(object_paths, all_profiles, generated_map)
+
+        assert dropped == ["bss"]
+        assert all_profiles == {"bss-origin": "/tmpl/bss-origin.yml"}
+        assert generated_map == {}
+        logger.warning.assert_called()
+
+    def test_every_key_with_an_object_is_kept(self):
+        all_profiles = {"bss": "/tmpl/bss.yml"}
+        generated_map = {"cloud": str(Path("Profiles") / "cloud-profile-override.yml")}
+        object_paths = {"cloud": "/cloud.yml", "bss": "/ns/bss/namespace.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            dropped = drop_profiles_without_object(object_paths, all_profiles, generated_map)
+
+        assert dropped == []
+        assert all_profiles == {"bss": "/tmpl/bss.yml"}
+        assert generated_map == {"cloud": str(Path("Profiles") / "cloud-profile-override.yml")}
+        logger.warning.assert_not_called()
 
 
 class TestSetObjectProfileField:
@@ -557,7 +595,7 @@ class TestGetEnvSpecificResourceProfiles:
             found = get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
                                                         self._env_definition({"bss": generated_name}))
         assert found == {}
-        assert any(generated_name in str(call.args[0]) for call in logger.warning.call_args_list)
+        logger.warning.assert_called()
 
     def test_another_name_is_kept_in_the_user_map(self, env_dir, env_instance_store):
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-profile", "stage")

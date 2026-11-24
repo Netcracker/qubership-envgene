@@ -1,3 +1,4 @@
+import re
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -268,6 +269,14 @@ class TestProfileOverride:
             header = override_path.read_text(encoding="utf-8")
             assert GENERATED_MARKER in header
             assert PROFILE_DOC in header
+
+    def test_the_profile_doc_link_of_the_header_is_an_anchor_of_the_doc(self):
+        doc_path = Path(__file__).resolve().parents[3] / "docs" / "features" / "resource-profile.md"
+        doc = doc_path.read_text(encoding="utf-8")
+        anchors = {re.sub(r"[^a-z0-9 -]", "", heading.lower()).replace(" ", "-")
+                   for heading in re.findall(r"^#{1,6} (.+)$", doc, re.MULTILINE)}
+
+        assert PROFILE_DOC.split("#")[1] in anchors
 
 
 class TestDeployedGroups:
