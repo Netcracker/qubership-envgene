@@ -1,0 +1,8 @@
+- wave: 0
+  version: uc-cc-dd-compact:1.0
+  deployPostfix: core
+  namespace: core
+- wave: 0
+  version: uc-cc-dd-full:1.0
+  deployPostfix: core
+  namespace: core

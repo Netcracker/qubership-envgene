@@ -33,11 +33,14 @@ def _write_maven_manifest(dest_dir: Path, filename: str, artifact_id: str, versi
     (dest_dir / filename).write_text(content, encoding="utf-8")
 
 
-def _write_app_manifest(dest_dir: Path, filename: str, app_name: str, version: str, deploy_postfix: str) -> None:
+def _write_app_manifest(dest_dir: Path, filename: str, app_name: str, version: str, deploy_postfix: str,
+                        deploy_context_layout: str = "") -> None:
     dest_dir.mkdir(parents=True, exist_ok=True)
+    layout_entry = f',\n    "deployContextLayout": "{deploy_context_layout}"' if deploy_context_layout else ""
     content = _APP_DEPLOYMENT_DESCRIPTOR_PATH.read_text(encoding="utf-8") \
         .replace("__APP_NAME__", app_name).replace("__VERSION__", version) \
-        .replace("__DEPLOY_POSTFIX__", deploy_postfix)
+        .replace("__DEPLOY_POSTFIX__", deploy_postfix) \
+        .replace("__DEPLOY_CONTEXT_LAYOUT__", layout_entry)
     (dest_dir / filename).write_text(content, encoding="utf-8")
 
 
@@ -171,6 +174,13 @@ def mock_nexus(tmp_path_factory):
     crm_dir = base_dir / "release" / "org" / "test" / "crm" / "1.0"
     _write_app_manifest(crm_dir, "crm-1.0.json", "crm", "1.0", "bss")
 
+    # "uc-cc-dd-compact:1.0" / "uc-cc-dd-full:1.0" - UC-CC-DD-1 with different deployContextLayout
+    # values in dd metadata, proving the layout is chosen per application.
+    _write_app_manifest(base_dir / "release" / "org" / "test" / "uc-cc-dd-compact" / "1.0",
+                        "uc-cc-dd-compact-1.0.json", "uc-cc-dd-compact", "1.0", "core", "compact")
+    _write_app_manifest(base_dir / "release" / "org" / "test" / "uc-cc-dd-full" / "1.0",
+                        "uc-cc-dd-full-1.0.json", "uc-cc-dd-full", "1.0", "core", "full")
+
     # "app-vals:1.0" / "app-eso:1.0" - the two applications UC-EC-D-5 deploys side by side to prove
     # VALS and ESO references can coexist in one effective set. Their AppDefs
     # (ext-creds-template/appdefs/app-{vals,eso}.yml.j2) both use groupId=org.test with the
@@ -184,7 +194,8 @@ def mock_nexus(tmp_path_factory):
     _write_maven_manifest(ext_creds_dir, "external-secrets-artifact-v1.json", "external-secrets-artifact", "v1")
     _build_env_template_zip(ext_creds_dir / "external-secrets-artifact-v1.zip", "ext-creds-template")
         
-    for _app in ("test_app", "test_app_2", "app1", "crm", "app-vals", "app-eso"):
+    for _app in ("test_app", "test_app_2", "app1", "crm", "app-vals", "app-eso",
+                 "uc-cc-dd-compact", "uc-cc-dd-full"):
         _build_app_chart_tgz(base_dir / "charts", _app)
 
     proc = subprocess.Popen([sys.executable, "cucumber_tests/mock_server.py", "8000", str(base_dir)])

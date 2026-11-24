@@ -465,3 +465,15 @@ Feature: Calculator CLI
     And the effective set deployment parameters for namespace "dev-1-oss" contain "ORIGIN_NAMESPACE: dev-1-oss"
     And the effective set deployment parameters for namespace "dev-1-oss" contain "BASELINE_ORIGIN: dev-1-core"
     And the effective set deployment parameters for namespace "dev-1-oss" do not contain "CONTROLLER_NAMESPACE"
+
+  # ── Deploy Context Layout (UC-CC-DD-*) ───────────────────────────────────────
+
+  # why: deployContextLayout in DD selects the descriptor layout per application
+  Scenario: UC-CC-DD-1: Deploy descriptor layout is chosen per application
+    Given the workspace is initialized with test data from "e2e/uc_cc_dd_1"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the SBOM for application "uc-cc-dd-compact" has deploy_context_layout property "compact"
+    And the SBOM for application "uc-cc-dd-full" has deploy_context_layout property "full"
+    And the deploy descriptor for application "uc-cc-dd-compact" in namespace "core" uses the compact layout
+    And the deploy descriptor for application "uc-cc-dd-full" in namespace "core" uses the full layout

@@ -1,8 +1,9 @@
 """Step definitions for Calculator CLI BDD scenarios (UC-CC-DP-*, UC-CC-MR-*, UC-CC-HR-*, UC-CC-CR-*,
-UC-CC-PM-*, UC-CC-GI-*, UC-CC-CP-*).
+UC-CC-PM-*, UC-CC-GI-*, UC-CC-CP-*, UC-CC-DD-*).
 
 All generic Given/When/Then steps come from shared_steps and are imported in test_calculator_cli.py.
 """
+import json
 from pathlib import Path
 import re
 import yaml
@@ -377,4 +378,77 @@ def effective_set_ns_params_do_not_contain(workspace: EnvGeneWorkspace, namespac
         if "credentials" not in p.name and key in p.read_text(encoding="utf-8")
     ]
     assert not offending, f"'{key}' unexpectedly found in: {[str(p) for p in offending]}"
+
+
+def _sbom_dd_component(workspace: EnvGeneWorkspace, app_name: str) -> dict:
+    app_dir = workspace.sboms_dir / app_name
+    sboms = sorted(app_dir.glob("*.sbom.json"))
+    assert sboms, (
+        f"No SBOM was generated for '{app_name}' under {app_dir}. SBOM generation was skipped, so the "
+        f"deploy descriptor was never downloaded and this scenario would assert on nothing."
+    )
+    bom = json.loads(sboms[0].read_text(encoding="utf-8"))
+    return bom["metadata"]["component"]["components"][0]
+
+
+@then(parsers.parse(
+    'the SBOM for application "{app_name}" has deploy_context_layout property "{value}"'))
+def sbom_has_deploy_context_layout(workspace: EnvGeneWorkspace, app_name: str, value: str) -> None:
+    dd_component = _sbom_dd_component(workspace, app_name)
+    properties = {p["name"]: p["value"] for p in dd_component.get("properties", [])}
+    assert "deploy_context_layout" in properties, (
+        f"SBOM of '{app_name}' has no deploy_context_layout property; found {sorted(properties)}"
+    )
+    assert properties["deploy_context_layout"] == value, (
+        f"SBOM of '{app_name}' records deploy_context_layout={properties['deploy_context_layout']!r}, "
+        f"expected {value!r}"
+    )
+
+
+def _deploy_descriptor(workspace: EnvGeneWorkspace, namespace: str, app_name: str) -> dict:
+    path = _es_root(workspace) / "deployment" / namespace / app_name / "values" / "deploy-descriptor.yaml"
+    assert path.exists(), f"deploy-descriptor.yaml does not exist for '{app_name}' at {path}"
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+@then(parsers.parse(
+    'the deploy descriptor for application "{app_name}" in namespace "{namespace}" uses the compact layout'))
+def deploy_descriptor_uses_compact_layout(workspace: EnvGeneWorkspace, app_name: str, namespace: str) -> None:
+    descriptor = _deploy_descriptor(workspace, namespace, app_name)
+    assert "deployDescriptor" not in descriptor, (
+        f"compact layout must not repeat deployDescriptor at root; found {sorted(descriptor)}"
+    )
+    assert "deployDescriptor" in descriptor.get("global", {}), (
+        f"compact layout must carry deployDescriptor under global; found {sorted(descriptor.get('global', {}))}"
+    )
+    for service_name in descriptor["global"]["deployDescriptor"]:
+        service_block = descriptor.get(service_name)
+        assert isinstance(service_block, dict), f"service '{service_name}' has no block in {sorted(descriptor)}"
+        assert "deployDescriptor" not in service_block, (
+            f"compact layout must not repeat deployDescriptor in service '{service_name}'"
+        )
+        assert "global" not in service_block, (
+            f"compact layout must not repeat global in service '{service_name}'"
+        )
+
+
+@then(parsers.parse(
+    'the deploy descriptor for application "{app_name}" in namespace "{namespace}" uses the full layout'))
+def deploy_descriptor_uses_full_layout(workspace: EnvGeneWorkspace, app_name: str, namespace: str) -> None:
+    descriptor = _deploy_descriptor(workspace, namespace, app_name)
+    assert "deployDescriptor" in descriptor, (
+        f"full layout must repeat deployDescriptor at root; found {sorted(descriptor)}"
+    )
+    assert "deployDescriptor" in descriptor.get("global", {}), (
+        f"full layout must carry deployDescriptor under global; found {sorted(descriptor.get('global', {}))}"
+    )
+    for service_name in descriptor["global"]["deployDescriptor"]:
+        service_block = descriptor.get(service_name)
+        assert isinstance(service_block, dict), f"service '{service_name}' has no block in {sorted(descriptor)}"
+        assert "deployDescriptor" in service_block, (
+            f"full layout must repeat deployDescriptor in service '{service_name}'"
+        )
+        assert "global" in service_block, (
+            f"full layout must repeat global in service '{service_name}'"
+        )
 
