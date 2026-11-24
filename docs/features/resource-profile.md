@@ -178,7 +178,10 @@ its custom values. The origin and the peer Namespace of a Blue-Green pair share 
 
 Merge mode combines the generated override into the template override, and the result keeps the name of the template
 override. When the Namespace has an override of its own and no template override, EnvGene writes the combined result to
-`Profiles/<name of that override>.yml`: the referenced file keeps its content and the result keeps its name.
+`Profiles/<name of that override>.yml`: the referenced file keeps its content and the result keeps its name. Another
+Namespace of the same environment that keeps that override as it is claims the name first, so the combined result of
+the deployed Namespace is written as `Profiles/<name of that override>-<namespace-folder-name>.yml` and the build warns
+about the rename.
 
 [Replace mode](#replace-mode) drops the template override and keeps the override of the Namespace, and the generated
 override is the exception: EnvGene merges it on top of that result, which then takes the name
@@ -186,7 +189,9 @@ override is the exception: EnvGene merges it on top of that result, which then t
 override as its profile, and it is named the same way.
 
 A name ending with `-profile-override` belongs to the step. The environment build ignores such a name in
-`envSpecificResourceProfiles` and warns about it.
+`envSpecificResourceProfiles` and warns about it. A key of `generatedProfileDefaults` that matches no Cloud and no
+Namespace of the environment is ignored the same way, with a warning: the run that wrote it named the Namespaces it
+deployed before they were rendered, and the profile it generated stays unused.
 
 ### Naming rules for Resource Profile Override
 
