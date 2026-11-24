@@ -55,6 +55,11 @@ def _add_namespace(env_dir: Path, folder: str, name: str | None = None) -> None:
         YAML().dump({"name": name or folder}, f)
 
 
+def _write_bg_domain(env_dir: Path, origin: str, peer: str) -> None:
+    with (env_dir / "bg_domain.yml").open("w", encoding="utf-8") as f:
+        YAML().dump({"name": "app-bg", "originNamespace": {"name": origin}, "peerNamespace": {"name": peer}}, f)
+
+
 def _override_path(env_dir: Path, deploy_postfix: str = POSTFIX) -> Path:
     return env_dir / "Inventory" / "resource_profiles" / f"{profile_override_name(deploy_postfix)}.yml"
 
@@ -312,6 +317,29 @@ class TestDeployedGroups:
             assert groups == {}
             logger.warning.assert_called()
 
+    def test_a_blue_green_pair_is_keyed_by_its_sides_before_its_folders_exist(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan_entries(env_dir, "deploy-plan.yml", [("billing:1.0.0", "app", "app-origin"),
+                                                            ("core:1.0.0", "app", "app-peer")])
+            _write_bg_domain(env_dir, "app-origin", "app-peer")
+
+            groups = deployed_groups(env_dir, deployed_entities(env_dir))
+
+            assert groups == {"app": ["app-origin", "app-peer"]}
+
+    def test_a_blue_green_run_without_a_bg_domain_keeps_the_key_unresolved(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan_entries(env_dir, "deploy-plan.yml", [("billing:1.0.0", "app", "app-origin")])
+
+            with patch("build_env.deployment_profile.getenv", return_value="origin"), \
+                    patch("build_env.deployment_profile.logger") as logger:
+                groups = deployed_groups(env_dir, deployed_entities(env_dir))
+
+            assert groups == {}
+            logger.warning.assert_called()
+
     def test_two_deploy_postfixes_write_two_overrides(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
@@ -400,6 +428,21 @@ class TestGeneratedOverridesAssignment:
             env_definition_path = _write_env_definition(env_dir, {})
             _add_namespace(env_dir, "app-origin", "env-01-app-origin")
             _add_namespace(env_dir, "app-peer", "env-01-app-peer")
+
+            apply_deployment_profile(env_dir, "prod")
+
+            assert _generated_map(env_definition_path) == {"app-origin": profile_override_name("app"),
+                                                           "app-peer": profile_override_name("app")}
+            written = sorted(path.name for path in (env_dir / "Inventory" / "resource_profiles").iterdir())
+            assert written == [f"{profile_override_name('app')}.yml"]
+
+    def test_a_pair_is_assigned_both_side_keys_before_its_folders_exist(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan_entries(env_dir, "deploy-plan.yml", [("billing:1.0.0", "app", "app-origin"),
+                                                            ("core:1.0.0", "app", "app-peer")])
+            env_definition_path = _write_env_definition(env_dir, {})
+            _write_bg_domain(env_dir, "app-origin", "app-peer")
 
             apply_deployment_profile(env_dir, "prod")
 

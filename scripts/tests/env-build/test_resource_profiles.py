@@ -8,7 +8,7 @@ from envgenehelper import dumpYamlToStr, open_current_env_instance_store, readYa
 from build_env.deployment_profile import GENERATED_PROFILES_MAP_KEY, PROFILE_OVERRIDE_SUFFIX, profile_override_name
 from build_env.resource_profiles import drop_profiles_without_object, get_resource_profiles_map, \
     has_valid_profile_name, merge_resource_profiles, override_by_env_specific_profiles, set_object_profile_field, \
-    validate_resource_profiles
+    validate_resource_profiles, warn_on_profile_name_collisions
 
 RP_SCHEMA = str(Path(__file__).resolve().parents[3] / "schemas" / "resource-profile.schema.json")
 
@@ -446,6 +446,48 @@ class TestDropProfilesWithoutObject:
         assert dropped == []
         assert all_profiles == {"bss": "/tmpl/bss.yml"}
         assert generated_map == {"cloud": str(Path("Profiles") / "cloud-profile-override.yml")}
+        logger.warning.assert_not_called()
+
+    def test_the_warning_names_the_sides_a_blue_green_key_missed(self):
+        generated_map = {"bss": str(Path("Profiles") / "bss-profile-override.yml")}
+        object_paths = {"bss-origin": "/ns/bss-origin/namespace.yml", "bss-peer": "/ns/bss-peer/namespace.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            drop_profiles_without_object(object_paths, generated_map)
+
+        message = logger.warning.call_args.args[0]
+        assert GENERATED_PROFILES_MAP_KEY in message
+        assert "'bss-origin' or 'bss-peer'" in message
+
+
+class TestWarnOnProfileNameCollisions:
+
+    def test_two_files_of_one_name_are_reported(self):
+        all_profiles = {"bss": "/templates/Profiles/foo.yml", "oss": "/env/Inventory/resource_profiles/foo.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            collisions = warn_on_profile_name_collisions(all_profiles)
+
+        assert collisions == [("foo.yml", "/templates/Profiles/foo.yml", "/env/Inventory/resource_profiles/foo.yml")]
+        assert logger.warning.call_count == 1
+
+    def test_two_objects_of_one_file_are_not_a_collision(self):
+        all_profiles = {"bss": "/env/Inventory/resource_profiles/foo.yml",
+                        "oss": "/env/Inventory/resource_profiles/foo.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            collisions = warn_on_profile_name_collisions(all_profiles)
+
+        assert collisions == []
+        logger.warning.assert_not_called()
+
+    def test_distinct_names_are_not_reported(self):
+        all_profiles = {"bss": "/templates/Profiles/foo.yml", "oss": "/env/resource_profiles/bar.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            collisions = warn_on_profile_name_collisions(all_profiles)
+
+        assert collisions == []
         logger.warning.assert_not_called()
 
 
