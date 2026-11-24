@@ -28,6 +28,10 @@
   - [`NON_PUB_REG_METHOD`](#non_pub_reg_method)
   - [`NON_PUB_REG_KEY`](#non_pub_reg_key)
   - [`NON_PUB_REG_SECRET`](#non_pub_reg_secret)
+  - [`DCL_GIT_URL`](#dcl_git_url)
+  - [`DCL_GIT_BRANCH`](#dcl_git_branch)
+  - [`DCL_CONFIG_GITLAB_USER`](#dcl_config_gitlab_user)
+  - [`DCL_CONFIG_GITLAB_TOKEN`](#dcl_config_gitlab_token)
 
 These are the parameters EnvGene reads from a Cloud's `e2eParameters`/`pipeline` (the `e2eParameters` block of
 `cloud.yml`). Each entry names the EnvGene component that consumes it. For the RegDef v2 adapter parameters, how each
@@ -217,3 +221,28 @@ fails.
 **Description**: Non-public registry password. Used with the `basic_auth` method only.
 
 **Consumer**: RegDef v2 adapter
+
+## `DCL_GIT_URL`
+
+**Description**: URL of the external GitLab repository the Effective Set is published to in the GitLab-deploy flow. See
+[Publishing in the GitLab-deploy flow](/docs/features/effective-set-generation.md#publishing-in-the-gitlab-deploy-flow).
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_GIT_BRANCH`
+
+**Description**: Target branch in the external GitLab repository. Defaults to `master` when not set.
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_CONFIG_GITLAB_USER`
+
+**Description**: Username for the external GitLab repository credentials.
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_CONFIG_GITLAB_TOKEN`
+
+**Description**: Token or password for the external GitLab repository credentials.
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
