@@ -4,8 +4,7 @@ info:
   version: 0.0.0
 # Placeholder skeleton. Fill in after the design settles, do not freeze the contract early.
 paths: {}
-  # /resolve                          resolve one app (optional zone), returns the Application
-  # /resolve:batch                    resolve a list of apps
+  # /resolve                          GET one app or POST a list, returns the Application(s)
   # /registry-definitions/{name}      getRegDef, create, update
   # /application-definitions/{name}   getAppDef, create, update
 components:

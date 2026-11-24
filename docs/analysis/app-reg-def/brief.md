@@ -129,9 +129,8 @@ duplicated across at least two resolvers with their own models:
 
 The duplication carries fragile seams: the purl (package URL) `repository_id` pointer-name contract, the
 registry-name key reconciliation (`quote` on write vs `%20` un-escape on read), and a v1->v2 projection
-that runs only
-for aws and gcp. The DD is even resolved and downloaded twice, by EnvGene and DPG independently, over a
-shared on-disk cache.
+that runs only for aws and gcp. The DD is even resolved and downloaded twice, by EnvGene and DPG
+independently, over a shared on-disk cache.
 
 A single service over the git source-of-truth unifies resolution, gives cheap API plus cache access
 instead of a git clone, and standardizes on RegDef v2.
@@ -169,7 +168,7 @@ tiers, authenticates, and downloads. The service is the central variant and stop
 joined in as `registry`:
 
 ```yaml
-resolve( app | [app, ...], zone? ):
+resolve( app | [app, ...] ):
   # per app, the Application
   name: ...
   registryName: ...
@@ -193,9 +192,8 @@ Derived from the responsibilities above. This is the list, not the detailed cont
 
 Read and resolve:
 
-- `resolve(app, zone?)` - the Application, the AppDef attributes with the RegDef joined in as `registry`.
-  Version-independent. `zone` is optional with one default zone today. Core.
-- `resolveBatch([app])` - the `resolve` result per entry. Core.
+- `resolve(app)` / `resolve([app])` - the Application for one app or a list in one call, the AppDef
+  attributes with the RegDef joined in as `registry`. Version-independent. Core.
 - `getRegDef(name)` - the reg def object, for version-independent access (publish and promote). Core.
 - `getAppDef(name)` - the app def object. Open (O2).
 - `listRegDefs(filter)` / `listAppDefs(filter)` - a list of defs. Open (O3), filter included.

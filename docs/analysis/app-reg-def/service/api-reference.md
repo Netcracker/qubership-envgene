@@ -2,7 +2,7 @@
 
 - [Conventions](#conventions)
 - [GET /api/v1/resolve](#get-apiv1resolve)
-- [POST /api/v1/resolve:batch](#post-apiv1resolvebatch)
+- [POST /api/v1/resolve](#post-apiv1resolve)
 - [GET /api/v1/registry-definitions/{name}](#get-apiv1registry-definitionsname)
 - [GET /api/v1/application-definitions/{name}](#get-apiv1application-definitionsname)
 - [POST /api/v1/registry-definitions](#post-apiv1registry-definitions)
@@ -78,9 +78,9 @@ registry:
 The service does not select DD or SD, build an artifact, mint auth, or touch a registry. The consumer does
 that work with the version and the credentials, through the client and artifacts_finder.
 
-## POST /api/v1/resolve:batch
+## POST /api/v1/resolve
 
-Resolves a list of applications in one call, each like `GET /api/v1/resolve`.
+Resolves a list of applications in one call, the batch form of `GET /api/v1/resolve`.
 
 **Parameters:**
 
@@ -89,18 +89,17 @@ Resolves a list of applications in one call, each like `GET /api/v1/resolve`.
 **Request:**
 
 ```yaml
-- app: billing
-- app: payments
+- billing
+- payments
 ```
 
 **Response:** `200 OK`
 
 ```yaml
-# one result per entry, in request order
-- app: billing
-  # the Application, as in resolve
-- app: payments
-  error:
+# one entry per request item, in request order
+- name: billing
+  # the Application, as in GET /resolve
+- error:
     code: not_found
     message: application payments is not known
 ```
@@ -109,7 +108,8 @@ Resolves a list of applications in one call, each like `GET /api/v1/resolve`.
 
 1. Validate the body, a non-empty list of application names.
 2. Run the resolve logic for each against the cache.
-3. Return an Application or a per-entry error for each, so one bad entry does not fail the batch.
+3. Return an Application or a per-entry error for each, in request order, so one bad entry does not fail
+   the batch.
 
 ## GET /api/v1/registry-definitions/{name}
 

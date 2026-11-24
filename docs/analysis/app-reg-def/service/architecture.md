@@ -79,7 +79,7 @@ sequenceDiagram
   participant API as Consumer API
   participant R as Reader
   participant Cache
-  C->>API: resolve(app, zone?)
+  C->>API: resolve(app)
   API->>R: resolve
   R->>Cache: look up appdef and regdef by name
   Cache-->>R: the def objects
