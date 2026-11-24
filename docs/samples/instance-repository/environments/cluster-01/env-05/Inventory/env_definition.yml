@@ -1,0 +1,10 @@
+inventory:
+  environmentName: "env-05"
+  tenantName: "tenant"
+  description: "Sample environment with an application-level baseline"
+  owners: "qubership team"
+envTemplate:
+  name: "composite-dev"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  envSpecificResourceProfiles:
+    bss: "bss-app-baselines"

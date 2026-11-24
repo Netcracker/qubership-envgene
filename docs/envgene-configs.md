@@ -166,6 +166,8 @@ envTemplate:
   # See [Namespace folder name generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation)
   # for how that folder name is derived from `deploy_postfix`, the template filename, and Blue-Green role suffixes.
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
+  # A value is usually a string. A list of names applies the overrides in list order, the last one on top.
+  # The PROFILE pipeline parameter adds `<deploy-postfix>-profile-override` as the last item.
   envSpecificResourceProfiles: hashmap
   # Optional
   # Array of filenames in a 'credentials' folder that will override generated and defined for instance credentials

@@ -1,0 +1,12 @@
+inventory:
+  environmentName: "env-06"
+  tenantName: "tenant"
+  description: "Sample environment with a list of Resource Profile Overrides"
+  owners: "qubership team"
+envTemplate:
+  name: "composite-dev"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  envSpecificResourceProfiles:
+    bss:
+      - "cloud-specific-profile"
+      - "bss-profile-override"
