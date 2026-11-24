@@ -259,7 +259,7 @@ class TestProfileOverride:
             logger.warning.assert_not_called()
             assert openYaml(path, safe_load=True)["applications"][0]["baseline"] == "prod2"
 
-    def test_generated_file_header_points_to_the_profile_selection_doc(self):
+    def test_generated_file_header_points_to_the_generated_override_doc(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
@@ -272,7 +272,7 @@ class TestProfileOverride:
 
     def test_the_profile_doc_link_of_the_header_is_an_anchor_of_the_doc(self):
         doc_path = Path(__file__).resolve().parents[3] / "docs" / "features" / "resource-profile.md"
-        doc = doc_path.read_text(encoding="utf-8")
+        doc = re.sub(r"^```.*?^```", "", doc_path.read_text(encoding="utf-8"), flags=re.MULTILINE | re.DOTALL)
         anchors = {re.sub(r"[^a-z0-9 -]", "", heading.lower()).replace(" ", "-")
                    for heading in re.findall(r"^#{1,6} (.+)$", doc, re.MULTILINE)}
 
