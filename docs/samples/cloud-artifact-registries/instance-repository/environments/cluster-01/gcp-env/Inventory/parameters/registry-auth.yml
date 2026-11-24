@@ -1,0 +1,9 @@
+# Registry auth parameters for the Cloud. Reference this ParameterSet by name under
+# envTemplate.envSpecificE2EParamsets.cloud in env_definition.yml.
+name: "registry-auth"
+parameters:
+  MAVEN_PROVIDER: "gcp"
+  PUB_REG_METHOD: "service_account"
+  PUB_REG_SECRET: "${creds.get('gcp-artifact-registry-key').secret}"
+  PUB_REG_PROJECT: "123456789012"
+  PUB_REG_SA_EMAIL: "envgene-artifact-reader@my-project.iam.gserviceaccount.com"

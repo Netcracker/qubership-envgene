@@ -113,16 +113,28 @@ The recommendation reconstructs nested mappings from original leaf paths. Litera
 YAML serialization preserves scalar types and list ordering. String values remain quoted.
 Application values use `applications` entries with `appName` and `parameters`.
 
-Without `-t PATH` / `--template-repo PATH`, show the reconstructed values with the `<shared-paramset-name>` substitution slot.
-Explain that the reader chooses an unused name and uses it for the ParameterSet file and reference.
-Identify the named environment template and existing Cloud or Namespace association target.
-Map the parameter category to its `template_override` ParameterSet list and show only the new item to append last.
-Keep existing references and fields, and explain creation of missing override lists and Cloud string conversion.
-Require publication and generation checks before removing only the shown duplicate entries.
-Do not invent destination paths, list indices, or existing reference lists.
+Without `-t PATH` / `--template-repo PATH`, show a review recipe that creates one new ParameterSet.
+The name is `{template}-{subject}-shared`. A subject is the shared reference when every environment
+selects the same ParameterSet, prefixed by the association target, plus the application name when the
+scope has one. When each environment bakes its own name as `{cluster}-{environment}-{subject}`, the
+subject is that shared tail. Groups that would otherwise share a name add the first parameter key,
+lowercased, with underscores written as hyphens. The recipe names the template, the override list to
+append, the artifact to release, the instance keys to delete, and any environments that keep a
+different value. Keys whose names contain a site address, account, or credential marker are listed
+for a second look. Do not invent destination paths, list indices, or existing reference lists.
 For unsupported Application end-to-end scope, retain its note and withhold attachment instructions.
-With the option, inspect the explicit local repository root or `templates/` directory.
-Prepend both absolute repository roots to complete, partial, and unresolved recommendations.
+With `-t` / `--template-repo`, use the same short recipe.
+The first two lines are the absolute instance root and the absolute template root.
+Step 1 names the template file.
+Add the keys to an existing ParameterSet, reuse a file that already has them, or create
+`templates/parameters/<name>.yml`.
+A whole-file transfer keeps the current reference and writes that file under `templates/parameters/`.
+When the descriptor can be resolved, step 2 names that file in one line and names any resolved
+dynamic references there.
+Do not paste descriptor YAML, existing reference lists, or per-key cleanup coordinates.
+If another consumer or an anchor blocks a deletion, add one Cleanup Review line for that file.
+An identical numeric version stays in the relocated ParameterSet.
+A differing or non-numeric version is omitted, and the recipe says so in one sentence.
 `environments/` source paths belong to the instance root. `templates/` paths belong to the template root.
 For a `templates/` input, identify its parent as the template root without resolving linked sources.
 CLI users can select the instance root with `-i` / `--instance-repo` instead of the positional argument.
@@ -143,7 +155,7 @@ Later Jinja does not block a list already closed by an unconditional root key wh
 membership changes. Statements must occupy separate lines without whitespace controls, and later output must stay
 inside the unrelated root value. Conditional lists, root-key output, includes, and unconfirmed output remain Review.
 A blocked report explicitly states that no relocation proposal was generated and gives the offending source locations.
-Successful source-comparison recipes list resolved references per participant.
+Successful source-comparison recipes name the resolved references on the attachment step.
 Mixed existing-reference membership cannot justify a shared append and retains Review.
 No Jinja rendering, Python evaluation, environment lookup, network access, or configuration edits are performed.
 
@@ -165,10 +177,10 @@ and incomplete local context. Application parameters retain their container and 
 Known primary, origin, and peer artifact consumers participate in the conflict check.
 Physical-source aliases and existing template references block relocation.
 Participants with unresolved role-specific destinations retain partial guidance.
-Identical numeric versions are retained. Other versions are omitted with an explicit note about the deprecated field.
-The report shows an absolute template destination with complete file YAML and lists relative instance source paths.
-These copies can be removed once the environments use a template that contains the ParameterSet.
-It shows each participant's complete reference list as an unchanged binding, rather than replacement YAML.
+Identical numeric versions are retained in the relocated ParameterSet YAML.
+Other versions are omitted, and the recipe says so in one sentence.
+The recipe does not list relative instance paths or each participant's reference list.
+It says to keep the existing Environment Inventory bindings and reference order.
 Files spanning several finding scopes remain partial recommendations.
 See the [relocation design](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-place12-paramset-relocation-design.md).
 
@@ -181,65 +193,51 @@ For partial matches or blocked relocation, prepare descriptor guidance:
 2. Inspect ordinary YAML or the unconditional prefix before the first Jinja statement.
    Compare matching source definitions in object bags, descriptor overrides, and selected ParameterSets.
    Dynamic reference matches and duplicate stems remain explicitly uncertain. Preserve source positions.
-3. Reserve a readable filename such as `oss-common-deploy.yml`. Include `.json`, `.yml`, `.yaml`, and `.j2`
-   ParameterSet inputs when checking occupied names. Avoid existing stems, instance references,
-   selected template references, and other proposed names throughout this check. Use numeric suffixes for collisions.
-4. Show the complete grouped ParameterSet and the selected descriptor entry as a merge fragment.
-   Begin with `Template repository changes:` and show the absolute `Create file:` destination.
-   Show `Edit file:` with the absolute descriptor path and loaded selected-entry line and column.
-   Retain the exact selected entry path in `TemplateProposal.entry_path` and its source coordinates in `entry_position`.
-   A Cloud entry uses `cloud`. A Namespace entry uses its actual zero-based list index, including indices after zero.
-   Render the complete YAML path to the relevant override list.
-   Require occurrence-specific coordinates at every selected path step.
-   Anchored values or inherited keys without those coordinates retain the descriptor and entry selector as Review,
-   with no create or edit action. This avoids directing an edit to a shared anchor definition or fallback position.
-   Retain its path, selectors, and existing category override references. Append the new reference last.
-   Name the existing Cloud or Namespace entry and the exact `template_override` list in the recommendation.
-   Explain that the reader creates the override list if absent and appends the new reference after existing references.
-   Keep unrelated descriptor entries and override fields. A Cloud path string becomes object form with the same path.
-   An unresolved descriptor receives an absolute inspection path when known and no invented file action.
+3. Choose the displayed ParameterSet name with the `{template}-{subject}-shared` rule above.
+   Include `.json`, `.yml`, `.yaml`, and `.j2` ParameterSet inputs when checking occupied names.
+   Avoid existing stems, instance references, selected template references, and other proposed names.
+   A repeated base adds the first parameter key. A further collision uses `-2`, `-3`, and so on before `-shared`.
+4. Show that name in the short review recipe.
+   Step 1 is `Create file:` with the absolute `templates/parameters/<name>.yml` path, `Merge into file:` for an
+   existing ParameterSet, or `Reuse file:` when the keys are already present.
+   A blocked target says that no relocation proposal was generated, gives the reason, and does not name a new file.
+   When the descriptor resolves, step 2 names that absolute file in one line
+   and names resolved dynamic references there.
+   Do not paste descriptor YAML, list indices, or existing reference lists.
+   Anchored values or inherited keys stay Review, with no create or edit action.
+   Append a missing reference last. Keep existing references in place.
+   An unresolved descriptor receives the reason and no invented file action.
 5. Keep source evidence distinct from effective defaults. Local checkout equivalence with the artifact,
    rendered Jinja values, external parents, and other consumers remain unverified.
 
-For example, a local descriptor selects `oss.yml` for the `oss` association target.
-A grouped deployment finding can propose `templates/parameters/oss-common-deploy.yml`:
+For example, environments that share template `business`, target `oss`, and reference `logging-deploy`
+can propose `templates/parameters/business-oss-logging-deploy-shared.yml`:
 
 ```yaml
-name: "oss-common-deploy"
+name: "business-oss-logging-deploy-shared"
 parameters:
   APP_LOG_LEVEL: "info"
   LOG_FORMAT: "json"
 ```
 
-Merge the following fragment into the selected Template Descriptor. Keep the other Namespace entries and fields:
+Step 2 names the descriptor file and the override list. It does not paste the descriptor.
 
-```yaml
-namespaces:
-  - template_path: "{{ templates_dir }}/env_templates/oss.yml"
-    deploy_postfix: "oss"
-    template_override:
-      deployParameterSets:
-        - "oss-common-deploy"
-```
-
-| Category   | Descriptor field                      | Filename suffix |
-|------------|---------------------------------------|-----------------|
-| Deployment | `deployParameterSets`                 | `deploy`        |
-| End-to-end | `e2eParameterSets`                    | `pipeline`      |
-| Technical  | `technicalConfigurationParameterSets` | `runtime`       |
+| Category   | Descriptor field                      | Filename token |
+|------------|---------------------------------------|----------------|
+| Deployment | `deployParameterSets`                 | `deploy`       |
+| End-to-end | `e2eParameterSets`                    | `pipeline`     |
+| Technical  | `technicalConfigurationParameterSets` | `runtime`      |
 
 Descriptor overrides merge before ParameterSet processing. Primitive references append without duplicates.
-Instance-specific references are attached later. A distinct proposed name avoids repeating the instance reference.
-Resolved and portable recipes include an instance cleanup step. The recipe names each instance file once and
-lists YAML paths for the accepted entries.
-Files with the same path set share one list. A map is named once when every child is removed, and a remaining sibling
-keeps the leaf paths. Exact line and column positions stay in the finding locations.
-Keep literal dotted keys distinct from nested paths and retain Application indices.
-Withhold removal for anchored occurrences and physical sources selected by consumers outside the proposal's scope.
-Whole-file relocation retains its complete-source removal instructions and is proposed only when every participant
-agrees. A named exception keeps that instance value in place. Existing-file merges propose key removal.
-Unresolved template associations and unsupported Application end-to-end scope have no cleanup instructions.
-The former generic four-sentence recommendation footer is omitted.
+Instance-specific references are attached later. The shared name does not repeat an environment-specific prefix.
+The recipe then says to release the artifact, delete the same keys from the instance files already listed,
+and rerun the check. Exact line and column positions stay in the finding locations.
+Keep literal dotted keys distinct from nested paths.
+Withhold a delete instruction for anchored occurrences and for a physical source selected outside the proposal.
+A blocked deletion adds one Cleanup Review line for that file.
+Whole-file relocation is proposed only when every participant agrees.
+A named exception stays under `Keep as they are:`.
+Unresolved template associations and unsupported Application end-to-end scope stop before the release and delete steps.
 See [Template Override](/docs/features/template-override.md) and
 [ParameterSet processing](/scripts/build_env/build_env.py).
 

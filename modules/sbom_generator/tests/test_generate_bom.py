@@ -88,7 +88,8 @@ class TestSBOMGenerator:
         for app in applications:
             TestSBOMGenerator.create_get_artifacts_mock(
                 app, app_vers, mock_aio_response, f"{REGISTRY_HELM_BASE}/sample-om-chart-1.0.0.tgz",
-                {"sample-om-chart/charts/sample-api/resource-profiles/dev.yaml": "REPLICAS: 1\n"})
+                {"sample-om-chart/charts/sample-api/resource-profiles/dev.yaml": "REPLICAS: 1\n",
+                 "sample-om-chart/charts/sample-api/resource-profiles/.gitkeep": ""})
         dd_artifacts = TestSBOMGenerator.download_dd_artifacts(
             applications, [item.version for item in app_vers], tmp_path)
 

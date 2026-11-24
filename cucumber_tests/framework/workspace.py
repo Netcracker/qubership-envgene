@@ -8,6 +8,7 @@ from .base_workspace import BaseWorkspace
 
 TEST_AGE_PRIVATE_KEY = "AGE-SECRET-KEY-1AQVCSQDRR5F70H3WJL82EMHMPSDMJPRP0GREJE0Y3M5YJZ25GT9SN0Y6FM"
 TEST_AGE_PUBLIC_KEY = "age1y4hfj9zz05dtqycfk55y4csddch6w2lu9l6wx7r68at5x897ea3qjh0gl9"
+TEST_AGE_EXTRA_PUBLIC_KEY = "age196vkex39py4dtkccfh9gg57vxh8z2tyytk4flht3vdldtfl6pa5s4salhv"
 
 _TEST_DATA_DIR = Path(__file__).parent.parent / "test_data" / "einv" / "common"
 

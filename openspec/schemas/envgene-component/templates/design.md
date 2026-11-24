@@ -1,8 +1,15 @@
 # Design
 
+## Work map
+
+<!-- One row per requirement or spec scenario the change owns:
+     `behavior | spec/task | file or function in this repository | status | evidence`.
+     Status is `tracked`, `new-in-repo` or `not-in-repo`. Verify `tracked` with `git ls-files` and
+     evidence at the current commit. Any `not-in-repo` row is a scope finding and blocks the design. -->
+
 ## Approaches
 
-<!-- 2-3 approaches with trade-offs and a recommendation -->
+<!-- 2-3 approaches with trade-offs and a recommendation; then each shape the brainstorm dropped, one line with the reason -->
 
 ## Decision
 
@@ -19,7 +26,7 @@
 
 ## Constraints
 
-<!-- Team rules from envgene-code-review, one line each -->
+<!-- Constraints specific to this change, one line each. The envgene-code-review rules are not copied here -->
 
 ## Out of Scope
 

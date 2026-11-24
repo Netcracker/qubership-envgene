@@ -86,6 +86,10 @@ and the deletion of the source branch. Use one of:
   `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md`. The
   SHA freezes the design version the CR was scoped to.
 - A previous design issue whose body contains the spec.
+- An OpenSpec change authored through the analyst flow. The design is its change folder (the proposal
+  and delta specs under `openspec/changes/<id>/`) and its ADR under `docs/adr/`. Link the hand-off PR
+  that commits them, or a commit-SHA permalink to each file. Each In scope item links the spec
+  requirement it implements.
 
 Avoid branch-pinned URLs (`.../blob/<branch>/...`). They break when the branch is deleted.
 

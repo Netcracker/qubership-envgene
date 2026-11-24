@@ -33,8 +33,8 @@ An implemented check covers the inputs listed below. Registration alone does not
 
 ## Repository support
 
-Repository terms follow the [Instance Repository](/docs/glossary.md#instance-repository) and
-[Environment Template](/docs/glossary.md#environment-template) definitions.
+Repository terms follow the [Instance Repository](/docs/envgene-objects.md#instance-repository-objects) and
+[Environment Template](/docs/envgene-objects.md#environment-template-objects) definitions.
 The directory names below describe how the CLI selects its execution path.
 
 | Root          | Directories                      | Execution                                                                                        |

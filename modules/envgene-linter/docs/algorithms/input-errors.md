@@ -16,7 +16,9 @@ Known malformed YAML scalar conversions, including invalid explicit tags and YAM
 are normalized at the constructor call even when the library raises Python conversion exceptions.
 
 An iterative graph walk rejects cycles and container depth greater than 256 before recursive consumers run.
-Shared YAML aliases remain valid. YAML composition is checked before construction because the constructor can
+Shared YAML aliases remain valid. An undefined alias whose name starts with `.`, such as unquoted `*.com`,
+is read as that text. A defined anchor of the same name still resolves.
+YAML composition is checked before construction because the constructor can
 replace a recursive mapping alias with `null`. JSON position-map construction remains outside the decoder catch.
 Unexpected implementation exceptions propagate.
 

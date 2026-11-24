@@ -28,6 +28,10 @@
   - [`NON_PUB_REG_METHOD`](#non_pub_reg_method)
   - [`NON_PUB_REG_KEY`](#non_pub_reg_key)
   - [`NON_PUB_REG_SECRET`](#non_pub_reg_secret)
+  - [`DCL_GIT_URL`](#dcl_git_url)
+  - [`DCL_GIT_BRANCH`](#dcl_git_branch)
+  - [`DCL_CONFIG_GITLAB_USER`](#dcl_config_gitlab_user)
+  - [`DCL_CONFIG_GITLAB_TOKEN`](#dcl_config_gitlab_token)
 
 These are the parameters EnvGene reads from a Cloud's `e2eParameters`/`pipeline` (the `e2eParameters` block of
 `cloud.yml`). Each entry names the EnvGene component that consumes it. For the RegDef v2 adapter parameters, how each
@@ -41,7 +45,8 @@ value maps into the synthesized RegDef v2 `authConfig`, and which combinations a
 the RegDef. See
 [`full_chart_name`](/docs/features/sbom-generation.md#full_chart_name).
 
-**Consumer**: SBOM generation
+**Consumer**: SBOM generation, artifact download from AWS and GCP. The pipeline fails when the value is not a map of
+objects with a string `url`.
 
 **Example**:
 
@@ -52,8 +57,9 @@ nc.helm.charts:
 
 ## `MAVEN_PROVIDER`
 
-**Description**: Registry type - `nexus`, `artifactory`, `aws`, `azure`, or `gcp`. When it is `aws`, `azure`, or `gcp`,
-the RegDef v2 adapter synthesizes a RegDef v2 with public cloud registry authentication.
+**Description**: Registry type - `nexus`, `artifactory`, `aws`, `azure`, or `gcp`. When it is `aws` or `gcp`, EnvGene
+authenticates to the registry with the `PUB_REG_*` parameters. When it is not set, EnvGene ignores the registry auth
+parameters.
 
 **Consumer**: RegDef v2 adapter
 
@@ -61,12 +67,14 @@ the RegDef v2 adapter synthesizes a RegDef v2 with public cloud registry authent
 
 ## `PUB_REG_METHOD`
 
-**Description**: Public registry auth method - `secret`, `assume_role`, `federation`, `service_account`, `oauth2`, or
-`basic_auth`.
+**Description**: Public registry auth method - `secret`, `assume_role`, `federation`, `service_account`, `oauth2`,
+`basic_auth`, or `anonymous`. Mandatory when `MAVEN_PROVIDER` is `aws` or `gcp`. For `aws`, EnvGene supports
+`secret` and `anonymous`. For `gcp`, it supports `service_account` and `anonymous`. With any other value, the pipeline
+fails.
 
 **Consumer**: RegDef v2 adapter
 
-**Example**: `assume_role`
+**Example**: `secret`
 
 ## `PUB_REG_KEY`
 
@@ -213,3 +221,28 @@ the RegDef v2 adapter synthesizes a RegDef v2 with public cloud registry authent
 **Description**: Non-public registry password. Used with the `basic_auth` method only.
 
 **Consumer**: RegDef v2 adapter
+
+## `DCL_GIT_URL`
+
+**Description**: URL of the external GitLab repository the Effective Set is published to in the GitLab-deploy flow. See
+[Publishing in the GitLab-deploy flow](/docs/features/effective-set-generation.md#publishing-in-the-gitlab-deploy-flow).
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_GIT_BRANCH`
+
+**Description**: Target branch in the external GitLab repository. Defaults to `master` when not set.
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_CONFIG_GITLAB_USER`
+
+**Description**: Username for the external GitLab repository credentials.
+
+**Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_CONFIG_GITLAB_TOKEN`
+
+**Description**: Token or password for the external GitLab repository credentials.
+
+**Consumer**: Effective Set external export (`argocd-dpg`)

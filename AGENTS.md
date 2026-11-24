@@ -24,18 +24,18 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 | `schemas/` | JSON schemas for all EnvGene objects (validated at runtime) |
 | `docs/` | Comprehensive documentation — start with `docs/envgene-objects.md` and `docs/envgene-configs.md` |
 
-**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/CLAUDE.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `modules/envgene/CLAUDE.md`). `python/` (main's name for the directory below) was renamed to `modules/` in this branch — same pip packages as before, just a clearer top-level name.
+**Removed from `main` in this branch** (no directory exists here for these; superseded by the single-job consolidation): the standalone `base_modules/`, top-level `creds_rotation/`, and `python/integration/` modules were dissolved into `envgenehelper`/`scripts/utils/`/`scripts/cloud_passport/` (credential rotation moved to `scripts/creds_rotation/` — see `scripts/AGENTS.md`); `python/jschon-sort/` is now an external pip dependency (`jschon-tools`), not local source (see `modules/envgene/AGENTS.md`). `python/` (main's name for the directory below) was renamed to `modules/` in this branch — same pip packages as before, just a clearer top-level name.
 
 ### Python module layout
 
-`modules/envgene`, `modules/envgene-shared`, `modules/artifact-searcher`, `modules/external-cred-provision` are ordinary pip packages (`pyproject.toml` + `[build-system]`), installed editable (`pip install -e`) in dev/CI and plain (`pip install`) in the Docker image — see each `pyproject.toml`'s `[project] version`, which is a required-by-setuptools formality, not a tracked release version. None of them are ever published anywhere (no PyPI, no internal registry) — `pip install -e`/`pip install <dir>` only registers the package into the local `site-packages`, nothing leaves the machine. `scripts/` itself is not a package; it's resolved purely via `PYTHONPATH` (see `scripts/CLAUDE.md`). Directory-vs-package-name note: `modules/envgene` contains package `envgenehelper`; `modules/envgene-shared` contains package `envgene_shared`; `modules/artifact-searcher` contains package `artifact_searcher`; `modules/external-cred-provision/src` contains package `external_cred_provision`.
+`modules/envgene`, `modules/envgene-shared`, `modules/artifact-searcher`, `modules/external-cred-provision` are ordinary pip packages (`pyproject.toml` + `[build-system]`), installed editable (`pip install -e`) in dev/CI and plain (`pip install`) in the Docker image — see each `pyproject.toml`'s `[project] version`, which is a required-by-setuptools formality, not a tracked release version. None of them are ever published anywhere (no PyPI, no internal registry) — `pip install -e`/`pip install <dir>` only registers the package into the local `site-packages`, nothing leaves the machine. `scripts/` itself is not a package; it's resolved purely via `PYTHONPATH` (see `scripts/AGENTS.md`). Directory-vs-package-name note: `modules/envgene` contains package `envgenehelper`; `modules/envgene-shared` contains package `envgene_shared`; `modules/artifact-searcher` contains package `artifact_searcher`; `modules/external-cred-provision/src` contains package `external_cred_provision`.
 
 ### Core Concepts
 
 - **Template Repository** → Jinja2 templates for Tenant/Cloud/Namespace/Application objects, ParameterSets, ResourceProfiles, Registry/Application Definitions.
 - **Instance Repository** → `environments/<cluster>/<env>/` tree: `Inventory/env_definition.yml`, `Namespaces/`, `Credentials/credentials.yml`, `Inventory/solution-descriptor/sd.yaml`.
 - **Effective Set** → `effective-set/{topology,pipeline,deployment,runtime,cleanup}/` — final YAML for deployers.
-- **Solution Descriptor (SD)** — list of `application:version` + `deployPostfix` entries driving ES generation. Merge modes: `basic-merge`, `extended-merge`, `basic-exclusion-merge`, `replace`.
+- **Solution Descriptor (SD)** - list of `application:version` + `deployPostfix` entries driving ES generation. Merge modes: `basic-merge`, `basic-exclusion-merge`, `replace`.
 
 ### Key Environment Variables (runtime)
 
@@ -51,12 +51,20 @@ This branch runs all pipeline jobs as **one consolidated job** (`scripts/pipelin
 
 All credential files (matching `*credentials*.yml`, `*creds*.yml` in `Credentials/` or `configuration/`) are encrypted at rest. SOPS is the only encryption backend (`crypt_backend: SOPS` in `configuration/config.yml`). Fernet is used only to decrypt cloud discovery creds with the discovery project's `SECRET_KEY`. The `type` field is never encrypted.
 
+### Glossary and module context
+
+When a word has several meanings, check its senses in the glossary: @docs/glossary.md
+
+Each module keeps its own `AGENTS.md` with the rules for that module. It loads when you work in the module:
+`scripts/`, `scripts/creds_rotation/`, `modules/envgene/`, `modules/envgene-shared/`, `modules/artifact-searcher/`,
+`schemas/`, `build_envgene/`, `build_effective_set_generator/`.
+
 ## Change flow
 
 The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
 
 - Implement does not start without the propose and design gate rows in `ledger.md`.
-- The design (`openspec/changes/<id>/design.md`) is the one design artifact of a change. It defines every contract ID it lists, and the plan covers each of them.
+- The component design (`openspec/changes/<id>/component-design.md`) is the one design artifact the component writes. An upstream `design.md` is read-only input. The component design defines every contract ID it lists, and the plan covers each of them.
 
 ## Code review
 

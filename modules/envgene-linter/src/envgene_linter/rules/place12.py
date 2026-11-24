@@ -10,7 +10,6 @@ from typing import Any
 
 from ..diagnostics import skip_check
 from ..effective import EffectiveLeaf, EnvEffective
-from ..instance_cleanup import cleanup_hint
 from ..model import (
     Action,
     EnvModel,
@@ -23,7 +22,8 @@ from ..model import (
     Scope,
     Severity,
 )
-from ..paramset_merge import MergePlanner
+from ..instance_cleanup import cleanup_hint
+from ..paramset_merge import MergePlanner, selector as _merge_selector
 from ..paramset_relocation import propose_relocation
 from ..paramset_sources import resolve_reference
 from ..passport import Catalogs, resolve_passport
@@ -31,9 +31,11 @@ from ..security_values import is_secret_parameter_name, literal_name
 from ..template_context import TemplateContext
 from ..yamlio import plain
 from ..template_default_guidance import (
-    build_merge_hint,
-    build_relocation_hint,
-    build_template_default_hint,
+    assign_shared_name,
+    attachment_phrase,
+    local_parameter_set_path,
+    parameter_set_base,
+    render_review_suggestion,
 )
 from ..yaml_values import equal
 
@@ -189,6 +191,79 @@ def _agreement_floor(count: int) -> int:
     return count - count // 4
 
 
+def _application_note(scope: Scope) -> str:
+    if scope.category.value == "e2e" and scope.application is not None:
+        return (
+            "The default EnvGene Application object has no e2eParameters field. "
+            "Confirm renderer support."
+        )
+    return ""
+
+
+def _review(
+    template: str,
+    artifact: str,
+    scope: Scope,
+    entries: list,
+    shared_name: str,
+    keys: list[str],
+    agreed: int,
+    exception_lines: tuple[str, ...],
+    *,
+    roots: tuple[str, str] | None = None,
+    **extra,
+) -> str:
+    text = render_review_suggestion(
+        template,
+        artifact,
+        scope,
+        entries,
+        shared_name,
+        keys=keys,
+        agreed=agreed,
+        exception_lines=exception_lines,
+        application_note=_application_note(scope),
+        **extra,
+    )
+    if roots:
+        instance, template_root = roots
+        text = (
+            f"Instance repository: {instance}\n"
+            f"Template repository: {template_root}\n\n" + text
+        )
+    return text
+
+
+def _review_lines(index, scope: Scope, entries) -> str:
+    return "\n".join(
+        line
+        for line in cleanup_hint(index, scope, entries).splitlines()
+        if line.startswith("Cleanup Review:")
+    )
+
+
+def _splice_reviews(hint: str, reviews: str) -> str:
+    if not reviews:
+        return hint
+    block = "\n".join(f"   {line}" for line in reviews.splitlines())
+    marker = "\n5. Instance repo:"
+    if marker in hint:
+        return hint.replace(marker, "\n" + block + marker, 1)
+    return f"{hint}\n{block}"
+
+
+def _conflict_labels(plan, scope: Scope) -> tuple[str, ...]:
+    labels = []
+    for path, state in plan.states.items():
+        if state != "conflict":
+            continue
+        label = _merge_selector(("parameters", *path))
+        if scope.application:
+            label += f" in application {scope.application}"
+        labels.append(label)
+    return tuple(labels)
+
+
 def _exception_line(env: EnvModel, key: str, leaf: EffectiveLeaf | None) -> str:
     if leaf is None:
         return f"{env.full_name}: {key} is absent"
@@ -196,13 +271,6 @@ def _exception_line(env: EnvModel, key: str, leaf: EffectiveLeaf | None) -> str:
         return f"{env.full_name}: {key} = a different value"
     shown = json.dumps(plain(leaf.value), ensure_ascii=False)
     return f"{env.full_name}: {key} = {shown}"
-
-
-def _note_exceptions(hint: str, lines: tuple[str, ...]) -> str:
-    if not lines:
-        return hint
-    listed = "\n".join(f"- {line}" for line in lines)
-    return f"{hint}\nExceptions, leave these instance values in place:\n{listed}\n"
 
 
 def _candidate(
@@ -284,6 +352,8 @@ def check(
     )
     planner = MergePlanner(context) if context is not None else None
     pending = []
+    portable = []
+    moves = []
     all_references = tuple(
         sorted(
             {
@@ -395,28 +465,62 @@ def check(
                         index, name, artifact_name, scope, comparable, context
                     )
                 )
+                shown_entries = [
+                    (path, owners[0][1].value) for path, owners in comparable
+                ]
+                hint = ""
+                reviews = (
+                    _review_lines(index, scope, comparable) if context is not None else ""
+                )
                 if merge is not None:
-                    hint = ""
-                    pending.append((len(findings), merge, scope, comparable, exception_lines))
+                    pending.append(
+                        (
+                            len(findings),
+                            merge,
+                            scope,
+                            shown_entries,
+                            keys,
+                            agreed,
+                            exception_lines,
+                            name,
+                            artifact_name,
+                            reviews,
+                        )
+                    )
                 elif relocation is not None:
-                    hint = build_relocation_hint(relocation, scope, context=context)
+                    moves.append(
+                        (
+                            len(findings),
+                            relocation,
+                            scope,
+                            shown_entries,
+                            keys,
+                            agreed,
+                            exception_lines,
+                            name,
+                            artifact_name,
+                            reviews,
+                        )
+                    )
                 else:
-                    hint = build_template_default_hint(
-                        name,
-                        artifact_name,
-                        scope,
-                        [(path, owners[0][1].value) for path, owners in comparable],
-                        context=context,
-                        identity=identity,
-                        source_references=all_references,
-                        cleanup=cleanup_hint(index, scope, comparable),
+                    portable.append(
+                        (
+                            len(findings),
+                            {
+                                "template": name,
+                                "artifact": artifact_name,
+                                "scope": scope,
+                                "entries": shown_entries,
+                                "identity": identity,
+                                "keys": keys,
+                                "agreed": agreed,
+                                "exception_lines": exception_lines,
+                                "local": context is not None,
+                                "source_references": all_references,
+                                "reviews": reviews,
+                            },
+                        )
                     )
-                if context is not None:
-                    hint = (
-                        f"Instance repository: {index.root.absolute()}\n"
-                        f"Template repository: {context.directory.parent}\n\n" + hint
-                    )
-                hint = _note_exceptions(hint, exception_lines)
                 findings.append(
                     Finding(
                         rule=RULE,
@@ -443,17 +547,210 @@ def check(
                         ),
                     )
                 )
-    # Render only after every claim is known, including conflicts discovered later.
-    for number, merge, scope, entries, exception_lines in pending:
-        hint = build_merge_hint(merge, context)
-        if merge.target.reason is None:
-            hint += cleanup_hint(index, scope, entries, merge.accepted)
+    roots = None
+    if context is not None:
+        roots = (str(index.root.absolute()), str(context.directory.parent))
+    # Names that would collide get the first parameter in the stem, including the first group.
+    bases = [
+        parameter_set_base(data["template"], data["scope"], data["identity"])
+        for _, data in portable
+    ]
+    repeats = {
+        base for base in bases if bases.count(base) > 1
+    }
+    used_names: set[str] = set()
+    for (number, data), base in zip(portable, bases):
+        shared = assign_shared_name(
+            base,
+            data["keys"],
+            disambiguate=base in repeats,
+            used=used_names,
+        )
+        extra = {}
+        if data["local"] and context is not None:
+            extra["destination"] = local_parameter_set_path(context, shared)
+            extra["roots"] = roots
+            if not _application_note(data["scope"]):
+                proposal = context.propose(
+                    data["template"],
+                    data["artifact"],
+                    data["scope"],
+                    data["entries"],
+                    identity=data["identity"],
+                    source_references=data["source_references"],
+                    participants=tuple(item[0] for item in data["identity"]),
+                )
+                if proposal is not None and proposal.reason:
+                    extra["action"] = "blocked"
+                    extra.pop("destination", None)
+                    extra["step_note"] = proposal.reason
+                elif proposal is not None:
+                    note = (
+                        f'In "{data["template"]}", add "{shared}" to the end of '
+                        f"{attachment_phrase(data['scope'])}."
+                    )
+                    if proposal.descriptor:
+                        descriptor = context.directory.parent / proposal.descriptor
+                        note += f" Descriptor: {descriptor}."
+                    if proposal.selection_evidence:
+                        resolved = "; ".join(proposal.selection_evidence)
+                        note += f" Resolved ParameterSet references: {resolved}."
+                    extra["step_note"] = note
         findings[number] = replace(
             findings[number],
-            hint=_note_exceptions(
-                f"Instance repository: {index.root.absolute()}\n"
-                f"Template repository: {context.directory.parent}\n\n" + hint,
-                exception_lines,
+            hint=_splice_reviews(
+                _review(
+                    data["template"],
+                    data["artifact"],
+                    data["scope"],
+                    data["entries"],
+                    shared,
+                    data["keys"],
+                    data["agreed"],
+                    data["exception_lines"],
+                    **extra,
+                ),
+                data["reviews"],
             ),
+        )
+    for (
+        number,
+        relocation,
+        scope,
+        entries,
+        keys,
+        agreed,
+        exception_lines,
+        template_name,
+        artifact_name,
+        reviews,
+    ) in moves:
+        note = (
+            "Whole ParameterSet transfer candidate. "
+            "Keep the existing Environment Inventory bindings and reference order. "
+            f'They already select "{relocation.reference}".'
+        )
+        if relocation.version_note:
+            note = f"{note} {relocation.version_note}"
+        findings[number] = replace(
+            findings[number],
+            hint=_splice_reviews(
+                _review(
+                    template_name,
+                    artifact_name,
+                    scope,
+                    entries,
+                    relocation.reference,
+                    keys,
+                    agreed,
+                    exception_lines,
+                    destination=str(context.directory.parent / relocation.destination),
+                    roots=(str(index.root.absolute()), str(context.directory.parent)),
+                    step_note=note,
+                    document=relocation.payload,
+                ),
+                reviews,
+            ),
+        )
+    for (
+        number,
+        merge,
+        scope,
+        entries,
+        keys,
+        agreed,
+        exception_lines,
+        template_name,
+        artifact_name,
+        reviews,
+    ) in pending:
+        target = merge.target
+        conflicts = _conflict_labels(merge, scope)
+        if target.reason:
+            hint = _review(
+                template_name,
+                artifact_name,
+                scope,
+                [],
+                target.reference,
+                keys,
+                agreed,
+                exception_lines,
+                destination=str(target.path),
+                action="blocked",
+                step_note=target.reason,
+                conflicts=conflicts,
+                roots=roots,
+            )
+        elif merge.additions:
+            if merge.original_binding or (
+                target.attachment is not None and target.attachment.reference_present
+            ):
+                note = (
+                    "Keep the existing Environment Inventory bindings and reference order."
+                    if merge.original_binding
+                    else f'Keep the existing reference "{target.reference}" in its current position.'
+                )
+            else:
+                note = (
+                    f'In "{template_name}", add "{target.reference}" to the end of '
+                    f"{attachment_phrase(scope)}."
+                )
+                if target.attachment is not None and target.attachment.descriptor:
+                    descriptor = context.directory.parent / target.attachment.descriptor
+                    note += f" Descriptor: {descriptor}."
+            moved = [
+                key
+                for key, (path, _value) in zip(keys, entries)
+                if merge.states.get(path) in {"add", "reuse"}
+            ]
+            hint = _review(
+                template_name,
+                artifact_name,
+                scope,
+                merge.additions,
+                target.reference,
+                moved or keys,
+                agreed,
+                exception_lines,
+                destination=str(target.path),
+                action="add",
+                step_note=note,
+                conflicts=conflicts,
+                roots=roots,
+            )
+        elif merge.accepted:
+            hint = _review(
+                template_name,
+                artifact_name,
+                scope,
+                entries,
+                target.reference,
+                keys,
+                agreed,
+                exception_lines,
+                destination=str(target.path),
+                action="keep",
+                conflicts=conflicts,
+                roots=roots,
+            )
+        else:
+            hint = _review(
+                template_name,
+                artifact_name,
+                scope,
+                [],
+                target.reference,
+                keys,
+                agreed,
+                exception_lines,
+                destination=str(target.path),
+                action="blocked",
+                step_note="These keys differ from the template file.",
+                conflicts=conflicts,
+                roots=roots,
+            )
+        findings[number] = replace(
+            findings[number], hint=_splice_reviews(hint, reviews)
         )
     return findings
