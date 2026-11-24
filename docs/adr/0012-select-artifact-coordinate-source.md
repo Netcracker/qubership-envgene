@@ -57,5 +57,5 @@ Rejected:
 - A per-environment difference is not a feature of this key. It is only available through the generic
   env-level configuration override that applies to every configuration key.
 
-References: the decision to download the app chart for SBOM generation, and the `app_reg_def_mode`
-resolution-mode key documented in [envgene-configs.md](/docs/envgene-configs.md).
+References: the decision to download the app chart for SBOM generation, and the configuration keys
+documented in [envgene-configs.md](/docs/envgene-configs.md).

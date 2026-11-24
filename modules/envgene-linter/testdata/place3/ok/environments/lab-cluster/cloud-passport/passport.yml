@@ -1,0 +1,2 @@
+dbaas:
+  DBAAS_AGGREGATOR_ADDRESS: https://dbaas.lab.example

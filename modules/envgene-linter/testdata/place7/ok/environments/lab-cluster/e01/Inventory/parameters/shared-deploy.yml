@@ -1,0 +1,3 @@
+name: shared-deploy
+parameters:
+  LOG_LEVEL: info

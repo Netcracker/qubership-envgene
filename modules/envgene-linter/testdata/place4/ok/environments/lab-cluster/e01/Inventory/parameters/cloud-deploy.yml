@@ -1,0 +1,3 @@
+name: cloud-deploy
+parameters:
+  TENANT: acme

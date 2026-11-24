@@ -67,7 +67,6 @@ for the target flow. The per-component docs in this directory elaborate individu
 3. Crossing a following function in the same job:
    - `generate_deployment_plan`
    - `argocd_repo_generator`
-   - `es-pusher`
    - effective-set calculator
    exchange:
    - structured data via contracted files

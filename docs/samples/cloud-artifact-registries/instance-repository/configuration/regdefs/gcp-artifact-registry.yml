@@ -1,0 +1,20 @@
+# Registry Definition v1.0: registry coordinates only.
+# Authentication comes from the registry auth parameters in Cloud e2eParameters.
+name: "gcp-artifact-registry"
+credentialsId: "gcp-artifact-registry-key"
+mavenConfig:
+  repositoryDomainName: "https://us-central1-maven.pkg.dev/my-project/my-maven-repo"
+  targetSnapshot: "my-maven-repo"
+  targetStaging: "my-maven-repo"
+  targetRelease: "my-maven-repo"
+  snapshotGroup: "my-maven-repo"
+  releaseGroup: "my-maven-repo"
+dockerConfig:
+  snapshotUri: "us-central1-docker.pkg.dev/my-project"
+  stagingUri: "us-central1-docker.pkg.dev/my-project"
+  releaseUri: "us-central1-docker.pkg.dev/my-project"
+  groupUri: "us-central1-docker.pkg.dev/my-project"
+  snapshotRepoName: "my-images"
+  stagingRepoName: "my-images"
+  releaseRepoName: "my-images"
+  groupName: "my-images"

@@ -53,6 +53,13 @@ The `generate_effective_set` step writes the Effective Set under
       delta entries on `OPERATION_TYPE: DEPLOY` and BGD warmup. On `OPERATION_TYPE: CLEAN` the step
       skips SBOM download.
 
+   6. When a deploy plan is resolved, the step generates Application SBOM files under
+      `sboms/<application-name>/` from the Deployment Descriptors of deploy-plan applications. The step skips an
+      application whose file `sboms/<application-name>/<application-name>-<version>.sbom.json` already exists.
+
+   7. When Deployment Descriptor `metadata.deployContextLayout` is set, the step writes its value to Application SBOM
+      property `deploy_context_layout`.
+
 3. **Select Effective Set input on GITLAB_DEPLOY**
 
    1. When pipeline parameter `OPERATION_TYPE` is `CLEAN`, the step selects Calculator CLI invocation
@@ -100,6 +107,10 @@ The `generate_effective_set` step writes the Effective Set under
 
    5. When pipeline parameter `CUSTOM_PARAMS` is set, the step passes it to Calculator CLI as
       custom parameters.
+
+   6. Calculator CLI writes file `deploy-descriptor.yaml` of each application in the compact layout when Application
+      SBOM property `deploy_context_layout` is `compact`. Otherwise Calculator CLI writes the full layout. See
+      [`deploy-descriptor.yaml` layouts](/docs/features/calculator-cli.md#version-20-deploy-descriptoryaml-layouts).
 
 6. **Finalize credentials**
 
@@ -150,3 +161,4 @@ Effective Set is not generated.
 - [`warmup`](/docs/technical-design/instance-pipeline/steps/warmup.md)
 - [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md)
 - [Calculator CLI](/docs/features/calculator-cli.md)
+- [ADR-0012: Write the service map once in a compact deploy descriptor](/docs/adr/0012-write-service-map-once-in-compact-deploy-descriptor.md)

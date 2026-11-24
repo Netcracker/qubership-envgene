@@ -17,6 +17,7 @@
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
     - [`current_env.composite_topology`](#current_envcomposite_topology)
+    - [`current_env.cluster.name`](#current_envclustername)
     - [`current_env.cluster.cloud_api_protocol`](#current_envclustercloud_api_protocol)
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
@@ -167,7 +168,7 @@ name: "{{current_env.name }}-oss"
 name: "{{ current_env.tenant }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
 ### `current_env.cloud`
 
@@ -212,7 +213,7 @@ Notes:
 name: "{{ current_env.cloudNameWithCluster }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cmdb_name`
 
@@ -316,7 +317,7 @@ deployParameters:
   INSTANCES_LEVEL_VAR_CLOUD: "{{ current_env.additionalTemplateVariables.CLOUD_LEVEL_PARAM1 }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/billing.yaml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/bss.yml.j2)
 
 ### `current_env.cloud_passport`
 
@@ -452,6 +453,31 @@ satellites:
 
 **Usage in sample:** TBD
 
+### `current_env.cluster.name`
+
+---
+**Description:** Name of the cluster that the Environment belongs to. The value is the `<clusterName>` folder
+name in the path `/environments/<clusterName>/<environmentName>/`.
+
+The value does not change with the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) or a linked
+[Cloud Passport](/docs/envgene-objects.md#cloud-passport).
+
+**Type:** String
+
+**Default Value:** `<clusterName>` from the Environment path structure
+
+**Basic usage:**
+
+```yaml
+argocd-cred:
+  type: external
+  secretStore: default_store
+  remoteRefPath: "{{ current_env.cluster.name }}"
+```
+
+For the Environment at `/environments/test-cluster-01/test-env-01/`, the rendered value is
+`remoteRefPath: test-cluster-01`.
+
 ### `current_env.cluster.cloud_api_protocol`
 
 ---
@@ -469,7 +495,7 @@ Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs
 protocol: "{{current_env.cluster.cloud_api_protocol}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_url`
 
@@ -488,7 +514,7 @@ Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs
 apiUrl: "{{current_env.cluster.cloud_api_url}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_port`
 
@@ -507,7 +533,7 @@ Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs
 apiPort: "{{current_env.cluster.cloud_api_port}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_public_url`
 
@@ -526,7 +552,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 publicUrl: "{{current_env.cluster.cloud_public_url}}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/common/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `appdefs.overrides`
 
@@ -1322,7 +1348,7 @@ kafka_password: ${creds.get('kafka-cred').password}
 k8s_token: ${creds.get('k8s-cred').secret}
 ```
 
-**Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/migration/test-deploy-creds.yml)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/prjct-cloud-deploy.yml)
 
 ### External Credentials via Credential Reference
 

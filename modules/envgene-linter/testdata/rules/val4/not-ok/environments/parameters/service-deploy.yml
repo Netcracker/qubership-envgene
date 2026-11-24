@@ -1,0 +1,6 @@
+name: "service-deploy"
+parameters:
+  FEATURE_CONFIG: '{"retries": 3, "targets": ["a", "b"]}'
+  TARGETS: |
+    - a
+    - b

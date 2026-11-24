@@ -1,4 +1,5 @@
 from pathlib import Path
+import yaml
 from git_system_follower.develop.api.types import Parameters
 from git_system_follower.develop.api.templates import create_template, get_template_names
 from git_system_follower.develop.api.cicd_variables import CICDVariable, create_variable
@@ -18,6 +19,13 @@ PROTECTED_FILES = {
     'configuration/config.yml',
     'configuration/credentials/credentials.yml',
 }
+
+def _drop_fernet_backend(content: bytes) -> bytes:
+    config = yaml.safe_load(content)
+    if not isinstance(config, dict) or str(config.get('crypt_backend', '')).lower() != 'fernet':
+        return content
+    del config['crypt_backend']
+    return yaml.safe_dump(config, sort_keys=False).encode('utf-8')
 
 
 def _migrate_pipeline_vars_format(content: bytes) -> bytes:
@@ -178,8 +186,14 @@ def main(parameters: Parameters):
     for f in config_paths:
         if f in config_backup:
             path = repo_root / f
+            content = config_backup[f]
+            if f == 'configuration/config.yml':
+                migrated = _drop_fernet_backend(content)
+                if migrated != content:
+                    print(f'\t\tRemoved unsupported crypt_backend: Fernet from {f}')
+                content = migrated
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(config_backup[f])
+            path.write_bytes(content)
             print(f'\t\tFile {f} preserved. Skip overwrite')
 
     internal_files_to_remove = ['history.log']
