@@ -33,8 +33,8 @@ Two skeletons, picked by how much decision there is to carry.
   someone outside the conversation.
 - A bounded change uses the **minimal form** - the three core sections only, kept short. Reach for it
   when the decision is small and self-contained but still had a real choice behind it.
-- A bounded change with no real decision has no ADR at all. That gate lives in the
-  `envgene-analyst-authoring` flow, not here - this skill is only a pointer to it.
+- A decision with no real alternative behind it gets no ADR. No stage of the change flow asks for one: the record is
+  written when someone wants the why to outlive the change, and not written otherwise.
 
 ## Non-negotiables
 

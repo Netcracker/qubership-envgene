@@ -6,8 +6,8 @@ description: >-
   discovery: it takes a raw idea, task, or ticket and converges on a settled understanding of what to build
   and why, captured as one exploration brief the downstream crafts render from. It follows the brainstorming
   method for intent, researches how the system behaves today from code and docs, clarifies the ambiguities,
-  and writes the brief that feeds the proposal, the specs, and the ADR, so those forms cannot drift. It
-  produces only the brief - the proposal, specs, and ADR are authored downstream by
+  and writes the brief that feeds the proposal and the specs, so those forms cannot drift. It
+  produces only the brief - the proposal and specs are authored downstream by
   `envgene-analyst-authoring`, the implementation design is envgene-design, and a docs-vs-code audit is
   discrepancy-audit.
 ---
@@ -16,11 +16,11 @@ description: >-
 
 The first stage of the analyst authoring flow for a qubership-envgene change. It takes a raw
 idea, task, or ticket and converges on a settled understanding of what to build and why - just enough
-for the downstream crafts to render the proposal, the specs, and the ADR, without any of them going back
+for the downstream crafts to render the proposal and the specs, without any of them going back
 to the analyst.
 
 The output is one working document, the **exploration brief**. Everything downstream renders from it.
-That is the whole point: when the proposal, the specs, and the ADR all trace to one settled brief,
+That is the whole point: when the proposal and the specs both trace to one settled brief,
 they describe the same change at different levels of detail and cannot drift apart. This mirrors the
 one-case-list-N-projections discipline the `writing-gherkin` skill uses for scenarios, applied one
 level up to the change itself.
@@ -108,8 +108,8 @@ meaning, and note a genuinely new term as a glossary candidate for the hand-off.
 
 Pull the brainstorm, the research, and the clarifications into the single brief, using the section
 template below. Write each section for its downstream consumer. The brief is the one source every
-downstream craft projects from, so a gap here becomes a gap in the proposal, the specs, and the ADR at
-once - and, equally, a settled point here keeps all three consistent. Classify the change as you converge,
+downstream craft projects from, so a gap here becomes a gap in the proposal and the specs at
+once - and, equally, a settled point here keeps both consistent. Classify the change as you converge,
 say the class out loud so the analyst can overrule it, and let research or clarify upgrade it if the change
 turns out larger than it looked.
 
@@ -151,8 +151,8 @@ it on its own.
   observable, one case per distinct outcome.
 - **Decision + rejected alternatives** - the approach chosen paired with the force that drove it, the cost
   or trade-off the chosen approach accepts, and the real alternatives rejected with a one-clause reason
-  each. Feed the ADR. Capturing the accepted cost here is what lets the ADR carry a Negative consequence
-  and the chosen option's downside that trace back to the brief rather than being invented at ADR time, and
+  each. The proposal carries this as its rationale, and the design phase reads that rationale as a constraint.
+  Capturing the accepted cost here is what keeps the cost visible in the proposal rather than invented later, and
   capturing the rejected options is what stops the team re-litigating dead ends later.
 - **Entities / contracts** (optional) - when the change introduces a new object or data shape, its
   structure and invariants. These feed the specs as requirements (the structural contract stated as
