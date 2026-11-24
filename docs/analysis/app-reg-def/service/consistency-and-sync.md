@@ -2,7 +2,7 @@
 
 How the cache stays correct and fresh, and how writes stay safe. The flows these rules govern are in
 [architecture.md](architecture.md), and the objects they move are in
-[data-model-and-layout.md](data-model-and-layout.md).
+[data-model-and-layout.md](../model.md).
 
 The service is one deployable, not a set of networked services, so the in-process path is trivial. In the
 lite deployment schema one process holds the cache as a local map, the Indexer rebuilds it and the Resolver reads it,

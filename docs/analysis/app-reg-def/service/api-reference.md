@@ -15,7 +15,7 @@ The App Reg Def service exposes a small HTTP API. The read interfaces turn an `a
 registry name, into the coordinates and the blind auth a consumer needs to pull artifacts. The write
 interfaces create and update defs in git. This page is the human-readable companion to `openapi.yaml`,
 which is the machine-readable contract. The objects in the payloads are in
-[data-model-and-layout.md](data-model-and-layout.md).
+[data-model-and-layout.md](../model.md).
 
 ## Conventions
 

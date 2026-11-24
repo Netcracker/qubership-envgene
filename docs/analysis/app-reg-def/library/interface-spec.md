@@ -15,7 +15,7 @@
 
 This specifies the App Reg Def resolver library (working name `appregdef-resolver`) at the contract level,
 enough for a developer to implement without prescribing the internals. The key words MUST, SHOULD, and MAY
-follow RFC 2119. The object shapes are in [data-model-and-layout.md](design/data-model-and-layout.md) and
+follow RFC 2119. The object shapes are in [data-model-and-layout.md](../model.md) and
 the schemas under `/schemas`.
 
 ## Overview and scope

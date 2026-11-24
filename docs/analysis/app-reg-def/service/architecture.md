@@ -2,7 +2,7 @@
 
 The service's components and its read, resync, and write flows. For the rest, see
 [api-reference.md](api-reference.md) for the API contract,
-[data-model-and-layout.md](data-model-and-layout.md) for the data model and repository layout,
+[data-model-and-layout.md](../model.md) for the data model and repository layout,
 [consistency-and-sync.md](consistency-and-sync.md) for the consistency rules, and
 [deployment-and-operations.md](deployment-and-operations.md) for the operational detail.
 
