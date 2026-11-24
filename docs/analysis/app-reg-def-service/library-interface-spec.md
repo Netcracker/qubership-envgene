@@ -4,13 +4,12 @@
 - [Concepts and data contracts](#concepts-and-data-contracts)
 - [Operations](#operations)
   - [open_defs](#open_defs)
-  - [resolve](#resolve)
-  - [provider_for](#provider_for)
-  - [get_regdef](#get_regdef)
-  - [get_appdef](#get_appdef)
+  - [resolve_target](#resolve_target)
+  - [build_provider](#build_provider)
+  - [get_reg_def](#get_reg_def)
+  - [get_app_def](#get_app_def)
   - [create](#create)
   - [update](#update)
-  - [refresh](#refresh)
 - [Behaviors](#behaviors)
 - [Error model](#error-model)
 
@@ -44,7 +43,7 @@ It does not:
   stored.
 - migrate v1 defs to v2. That stays a separate one-time CLI.
 
-The handoff is: `resolve` returns a `ResolvedTarget`, and the consumer runs
+The handoff is: `resolve_target` returns a `ResolvedTarget`, and the consumer runs
 `ArtifactFinder(target.provider).find_artifact_urls(artifact=target.artifact)` and `download_artifact`.
 The tier probing, the snapshot resolution, the auth, and the download are artifacts_finder's contract.
 
@@ -57,10 +56,10 @@ registries.
   it.
 - **Artifact** - an artifacts_finder artifact, the `groupId`, `artifactId`, `version`, and `extension`
   (`json` for a DD, `yaml` for an SD). The library builds it, artifacts_finder consumes it.
-- **Provider** - a configured artifacts_finder provider (Artifactory, Nexus, AWS, GCP, or Azure), its
+- **ArtifactProvider** - a configured artifacts_finder provider (Artifactory, Nexus, AWS, GCP, or Azure), its
   repositories set to the RegDef tiers and its credentials from the RegDef `authConfig`. The library builds
   it, artifacts_finder consumes it.
-- **ResolvedTarget** - what `resolve` returns: the `artifact`, the `kind` (`DD` or `SD`), the `provider`,
+- **ResolvedTarget** - what `resolve_target` returns: the `artifact`, the `kind` (`DD` or `SD`), the `provider`,
   and the `appdef` metadata. It is the handoff to artifacts_finder.
 - **RegistryCredentials** - a lookup from a `credId` to its secret material, supplied by the consumer. The
   library passes it into the provider credentials.
@@ -91,18 +90,18 @@ registries.
 - MUST fetch a shallow and sparse checkout limited to the `application-definitions/` and
   `registry-definitions/` folders.
 - MUST authenticate with `git_auth` when it is given, and attempt anonymous access when it is not.
-- The handle reflects the repo at open time. The consumer re-reads newer state with `refresh`.
+- The handle reflects the repo at open time. The consumer re-reads newer state by calling `open_defs` again.
 
-### resolve
+### resolve_target
 
 **Purpose** resolve an application and version to the artifact coordinates and the configured provider that
 artifacts_finder needs to fetch it.
 
-**Signature** `resolve(app, version, registry_credentials, tier_order = default) -> ResolvedTarget`
+**Signature** `resolve_target(app_name, version, registry_credentials, tier_order = default) -> ResolvedTarget`
 
 **Parameters**
 
-- `app` (string, required): the application name. An AppDef MUST exist for it.
+- `app_name` (string, required): the application name. An AppDef MUST exist for it.
 - `version` (string, required): a release version or a `-SNAPSHOT` version. It is carried into the
   artifact coordinates, not interpreted here.
 - `registry_credentials` (RegistryCredentials, required): the lookup from `credId` to secret, passed into
@@ -128,20 +127,20 @@ artifacts_finder needs to fetch it.
 - MUST NOT contact the registry or download anything. It returns the inputs for artifacts_finder.
 - Read-only, with no side effect on the defs repo.
 
-### provider_for
+### build_provider
 
 **Purpose** map a RegDef to a configured artifacts_finder provider, for flows that address a registry
 directly, such as publish and promote.
 
-**Signature** `provider_for(regdef, registry_credentials, tier_order = default) -> Provider`
+**Signature** `build_provider(reg_def, registry_credentials, tier_order = default) -> ArtifactProvider`
 
 **Parameters**
 
-- `regdef` (RegDef, required): the registry definition.
+- `reg_def` (RegDef, required): the registry definition.
 - `registry_credentials` (RegistryCredentials, required): passed into the provider credentials.
 - `tier_order` (TierOrder, optional, default release-first).
 
-**Returns** a configured artifacts_finder `Provider`.
+**Returns** a configured artifacts_finder `ArtifactProvider`.
 
 **Errors** `UnsupportedProvider`, `UnsupportedAuthMethod`.
 
@@ -151,11 +150,11 @@ directly, such as publish and promote.
   `registry_credentials` to the provider.
 - MUST NOT contact the registry.
 
-### get_regdef
+### get_reg_def
 
 **Purpose** return a RegDef by name.
 
-**Signature** `get_regdef(name) -> RegDef`
+**Signature** `get_reg_def(name) -> RegDef`
 
 **Parameters**
 
@@ -169,11 +168,11 @@ directly, such as publish and promote.
 
 - MUST return the RegDef as stored. Read-only.
 
-### get_appdef
+### get_app_def
 
 **Purpose** return an AppDef by name.
 
-**Signature** `get_appdef(name) -> AppDef`
+**Signature** `get_app_def(name) -> AppDef`
 
 **Parameters**
 
@@ -191,11 +190,11 @@ directly, such as publish and promote.
 
 **Purpose** create a new RegDef or AppDef. The two entry points, one per object, share this contract.
 
-**Signature** `create_regdef(obj) -> RegDef` and `create_appdef(obj) -> AppDef`
+**Signature** `create_reg_def(reg_def) -> RegDef` and `create_app_def(app_def) -> AppDef`
 
 **Parameters**
 
-- `obj` (the def object, required): the RegDef or AppDef to create.
+- `reg_def` or `app_def` (required): the RegDef or AppDef to create.
 
 **Returns** the written object.
 
@@ -203,7 +202,7 @@ directly, such as publish and promote.
 
 **Behavior**
 
-- MUST validate `obj` against its schema and validate that the name is kebab-case and DNS-safe. A failure
+- MUST validate the def object against its schema and validate that the name is kebab-case and DNS-safe. A failure
   is `ValidationError`.
 - MUST fail with `DefExists` when a def with that name already exists.
 - MUST write the file to the matching folder, commit, and push with a fetch-rebase retry on a
@@ -214,12 +213,12 @@ directly, such as publish and promote.
 
 **Purpose** update an existing RegDef or AppDef. The two entry points, one per object, share this contract.
 
-**Signature** `update_regdef(name, obj) -> RegDef` and `update_appdef(name, obj) -> AppDef`
+**Signature** `update_reg_def(name, reg_def) -> RegDef` and `update_app_def(name, app_def) -> AppDef`
 
 **Parameters**
 
 - `name` (string, required): the def name.
-- `obj` (the def object, required): the full def object.
+- `reg_def` or `app_def` (required): the full def object.
 
 **Returns** the written object.
 
@@ -227,65 +226,49 @@ directly, such as publish and promote.
 
 **Behavior**
 
-- MUST validate `obj` against its schema and the name.
+- MUST validate the def object against its schema and the name.
 - MUST fail with `DefNotFound` when no def with that name exists.
 - MUST commit and push with a fetch-rebase retry on a non-fast-forward. A real overlap is `WriteConflict`.
-
-### refresh
-
-**Purpose** re-fetch the defs repo to the latest `ref`.
-
-**Signature** `refresh() -> None`
-
-**Parameters** none.
-
-**Returns** none.
-
-**Errors** `GitUnreachable`, `GitUnauthorized`.
-
-**Behavior**
-
-- MUST re-fetch and reload. Reads after it reflect the new state.
 
 ## Behaviors
 
 ```gherkin
 Scenario: resolve maps a nexus-backed application to a provider and an artifact
   Given an AppDef "billing" pointing at a nexus RegDef "shared-platform"
-  When resolve("billing", "1.2.3", creds)
+  When resolve_target("billing", "1.2.3", creds)
   Then the ResolvedTarget artifact is billing's groupId, artifactId, "1.2.3", extension "json"
   And kind is "DD"
   And the provider is a Nexus provider with the RegDef tiers as its repositories
 
 Scenario: resolve an application whose artifact is a solution descriptor
   Given an AppDef "platform" with solutionDescriptor true
-  When resolve("platform", "2.0.0", creds)
+  When resolve_target("platform", "2.0.0", creds)
   Then the artifact extension is "yaml"
   And kind is "SD"
 
 Scenario: resolve maps an aws assume-role RegDef to aws credentials
   Given a RegDef whose authConfig is aws with assumeRole
-  When resolve runs for an app on that RegDef
+  When resolve_target runs for an app on that RegDef
   Then the provider carries assume-role credentials built from registry_credentials
 
 Scenario: the tier order sets the provider repository order
   Given a RegDef with snapshot, staging, and release tiers
-  When resolve runs with tier_order release-first
+  When resolve_target runs with tier_order release-first
   Then the provider repositories list release before snapshot
 
 Scenario: the application is unknown
   Given no AppDef "unknown"
-  When resolve("unknown", "1.0.0", creds)
+  When resolve_target("unknown", "1.0.0", creds)
   Then it fails with AppNotFound
 
 Scenario: the AppDef points at a missing RegDef
   Given an AppDef whose registryName has no RegDef
-  When resolve runs for that app
+  When resolve_target runs for that app
   Then it fails with RegistryNotFound
 
 Scenario: the RegDef provider is unsupported
   Given a RegDef with a provider artifacts_finder does not support
-  When resolve runs for an app on that RegDef
+  When resolve_target runs for an app on that RegDef
   Then it fails with UnsupportedProvider
 
 Scenario: open a private defs repo
@@ -301,17 +284,17 @@ Scenario: open an anonymous public defs repo
 
 Scenario: create a def that already exists
   Given a RegDef "shared-platform" exists
-  When create_regdef with name "shared-platform"
+  When create_reg_def with name "shared-platform"
   Then it fails with DefExists
 
 Scenario: update a def that does not exist
   Given no AppDef "unknown"
-  When update_appdef("unknown", obj)
+  When update_app_def("unknown", app_def)
   Then it fails with DefNotFound
 
 Scenario: create a def with an invalid name
   Given a def object with name "Shared Platform"
-  When create_regdef(obj)
+  When create_reg_def(reg_def)
   Then it fails with ValidationError
 
 Scenario: a write overlaps the same def
@@ -320,8 +303,8 @@ Scenario: a write overlaps the same def
   Then it fails with WriteConflict
 
 Scenario: read your own write in one DefsSource
-  Given create_regdef("new-registry") returned
-  When get_regdef("new-registry") on the same DefsSource
+  Given create_reg_def("new-registry") returned
+  When get_reg_def("new-registry") on the same DefsSource
   Then it returns the created RegDef
 ```
 
