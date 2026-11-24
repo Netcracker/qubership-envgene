@@ -28,7 +28,7 @@
         "null"
       ],
       "title": "Resource profile override",
-      "description": "Resource profile override for namespace. Can be not set",
+      "description": "Resource profile override for cloud.",
       "properties": {
         "name": {
           "type": [
@@ -38,23 +38,21 @@
           "title": "Name of Resource Profile Override",
           "description": "<<filename>> of Resource profile override",
           "examples": [
-            "dev_override_"
+            "dev_override"
           ]
         },
         "baseline": {
-          "title": "Baseline of RPO",
-          "description": "Baseline name of Resource profile override",
-          "enum": [
-            "dev",
-            "dev-ha",
-            "prod",
-            "prod-nonha"
-          ],
+          "type": "string",
+          "title": "Baseline of Resource Profile Override",
+          "description": "Baseline name of Resource Profile Override.",
           "examples": [
             "dev",
             "dev-ha",
             "prod",
-            "prod-nonha"
+            "prod-nonha",
+            "small",
+            "medium",
+            "large"
           ]
         }
       }
@@ -363,8 +361,6 @@
     "name",
     "apiUrl",
     "apiPort",
-    "privateUrl",
-    "publicUrl",
     "dashboardUrl",
     "labels",
     "defaultCredentialsId",

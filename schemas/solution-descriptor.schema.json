@@ -55,8 +55,7 @@
           }
         },
         "required": [
-          "version",
-          "alias"
+          "version"
         ]
       },
       "examples": [
@@ -163,19 +162,17 @@
       "title": "User Data",
       "description": "Any user-specific data",
       "type": "object",
-      "additionalProperties": { "type": "string" },
+      "additionalProperties": true,
       "examples": [
         { "myKey": "myValue" }
       ]
-    }
-  },
-  "deployGraph": {
+    },
+    "deployGraph": {
       "title": "Deployment Graph",
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "parallel": { "type": "boolean" },
           "chunkName": { "type": "string" },
           "apps": {
             "type": "array",
@@ -186,7 +183,6 @@
       },
       "examples": [
         {
-          "parallel": false,
           "chunkName": "sequentialChunk",
           "apps": [
             "e2e-framework",
@@ -197,7 +193,9 @@
           ]
         }
       ]
-    },
+    }
+  },
   "required": ["version", "type", "applications"]
 }
+
 
