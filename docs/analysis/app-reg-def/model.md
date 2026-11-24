@@ -2,7 +2,7 @@
 
 The objects the App Reg Def capability works with, in brief. The full field definitions live in the schemas
 and the RegDef v2 analysis linked below, not restated here. The behaviour that uses these objects is in
-[resolver-contract.md](resolver-contract.md).
+[library/interface-spec.md](library/interface-spec.md).
 
 ## Objects
 

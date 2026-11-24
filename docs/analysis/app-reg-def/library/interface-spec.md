@@ -2,6 +2,7 @@
 
 - [appregdef-client - interface specification](#appregdef-client---interface-specification)
   - [Overview and scope](#overview-and-scope)
+  - [High-level design](#high-level-design)
   - [Concepts and data contracts](#concepts-and-data-contracts)
   - [Operations](#operations)
 
@@ -41,6 +42,32 @@ The tier probing, the snapshot resolution, the auth, and the download are artifa
 
 The consumer supplies git access to the defs repo and the registry credentials for the artifact
 registries.
+
+## High-level design
+
+The three layers that turn an application into a downloaded artifact, and how the appregdef service and
+the appregdef-client share them.
+
+```mermaid
+flowchart LR
+  repo[("appregdef storage (git)")]
+  subgraph svc["appregdef service"]
+    sr["resolve(app) -> Application"]
+  end
+  subgraph client["appregdef-client (python)"]
+    cr["resolve(app) -> Application"]
+    ba["build_artifact(appdef, version) -> Artifact"]
+    bp["build_provider(registry, creds) -> ArtifactProvider"]
+  end
+  af["artifacts_finder<br/>probe by strategy, auth, download"]
+  repo --> sr
+  repo -. "open_defs" .-> cr
+  sr -. "connect" .-> cr
+  cr -->|appdef| ba
+  cr -->|registry| bp
+  ba -->|Artifact| af
+  bp -->|ArtifactProvider| af
+```
 
 ## Concepts and data contracts
 

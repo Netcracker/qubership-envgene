@@ -9,7 +9,6 @@ Shared, read first:
 
 - [brief.md](brief.md) - the exploration brief, decisions and the open backlog.
 - [model.md](model.md) - the objects and the repository layout.
-- [resolver-contract.md](resolver-contract.md) - the three layers and the resolve-and-build contract.
 - [glossary.md](glossary.md) - the terms.
 
 Service variant:
