@@ -8,12 +8,13 @@ The service's components and its read, resync, and write flows. For the rest, se
 
 ## System overview
 
-The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo.It turns
-`application:version` into the DD or SD download-info plus all registry sections and the appdef metadata,
-auth-ready.
+The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo. It
+resolves an application to its `Application`, the AppDef attributes with its RegDef joined in as
+`registry`. The resolve is version-independent.
 
-It is blind on credentials: it returns the `authConfig` and the credId references, and the consumer mints
-the secret with its own identity.
+It is blind. It returns the RegDef with its `credId` references and never a secret, and it never contacts a
+registry. The consumer adds the version and the credentials to build the artifact and the provider and
+download through the client and artifacts_finder.
 
 ```mermaid
 flowchart LR
@@ -59,7 +60,7 @@ flowchart TB
 |------------------|--------------------------------------------------------------------------------------------------|
 | Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
 | Webhook receiver | validates the git HMAC and triggers a resync                                                     |
-| Resolver         | looks up the cache, selects DD or SD, assembles the resolve response, builds authReady (blind)   |
+| Resolver         | looks up the cache, joins the AppDef to its RegDef by name, returns the Application, blind        |
 | Cache            | the cache port, in-proc or Redis, holds the def objects by name                                  |
 | Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
 | Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
@@ -75,12 +76,12 @@ sequenceDiagram
   participant API as Consumer API
   participant R as Resolver
   participant Cache
-  C->>API: resolve(app:version, zone?)
+  C->>API: resolve(app, zone?)
   API->>R: resolve
   R->>Cache: look up appdef and regdef by name
   Cache-->>R: the def objects
-  R->>R: select DD or SD from the appdef, build authReady from authConfig and credId, no secret
-  R-->>API: artifact (DD or SD) download-info, registry sections, authReady, appdef metadata
+  R->>R: join the appdef and its regdef into the Application, as stored, blind
+  R-->>API: the Application, the appdef attributes with the resolved registry
   API-->>C: response
 ```
 
