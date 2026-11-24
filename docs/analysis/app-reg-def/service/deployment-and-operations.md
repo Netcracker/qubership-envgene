@@ -3,20 +3,14 @@
 > _Placeholder. How to deploy and run the service for an operator. The logical architecture is in
 > architecture.md, this doc is the operational detail._
 
-## Deployment schemas
+## Deployment
 
-> _Placeholder. Lite (one pod, in-process cache) and HA (read-service plus a write/sync singleton plus
-> Redis), selected by config._
+> _Placeholder. One pod with an in-process cache. High availability and scale-out are deferred, see the
+> Scope in architecture.md._
 
 ## Configuration reference
 
-> _Placeholder. A table of config inputs: git URL, branch, credentials, webhook secret, periodic resync interval,
-> cache backend, and the rest._
-
-## Scaling and multi-cluster
-
-> _Placeholder. One instance per cluster over the shared git, leader election for the singleton, and Redis
-> HA._
+> _Placeholder. A table of config inputs: git URL, branch, credentials, and the periodic resync interval._
 
 ## Bootstrap, health, and startup
 
@@ -29,4 +23,4 @@
 
 ## Failure modes and recovery
 
-> _Placeholder. Git unreachable, a missed webhook, a malformed def, and a pod or singleton restart._
+> _Placeholder. Git unreachable, a missed webhook, a malformed def, and a pod restart._

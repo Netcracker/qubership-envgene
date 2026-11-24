@@ -6,11 +6,18 @@ The service's components and its read, resync, and write flows. For the rest, se
 [consistency-and-sync.md](consistency-and-sync.md) for the consistency rules, and
 [deployment-and-operations.md](deployment-and-operations.md) for the operational detail.
 
+## Scope
+
+In scope now is the single-process service: resolve, the read and write interfaces, and the git sync, with
+an in-process cache. High availability and horizontal scale-out, running several replicas behind a shared
+cache and across clusters, are deferred, and so is authorization. The design stays open to both: the cache
+can move to a shared store later. The rest of this page describes the single-process service.
+
 ## System overview
 
 The service is a runtime resolver and cache over a git source of truth, the dedicated defs repo. It
 resolves an application to its `Application`, the AppDef attributes with its RegDef joined in as
-`registry`. The resolve is version-independent.
+`registry`.
 
 It returns the RegDef with its `credId` references, not the secret values, and it never contacts a
 registry. The consumer adds the version and the credentials to build the artifact and the provider and
@@ -25,46 +32,41 @@ flowchart LR
 
 ## Components
 
-One deployable, laid out as ports and adapters, so the calls below are in-process rather than network
-hops.
-
-The inbound adapters are the Consumer API and the Webhook receiver, the core is the Resolver, the
-Indexer, and the Writer, and the outbound adapters are the Cache and the Git adapter.
-
-The Git adapter works two separate worktrees, a read worktree the Indexer resyncs and a write worktree
-the Writer commits on, so the resync and write paths do not race on one checkout.
-
-The Indexer is the sole writer of the cache, the invariant that keeps reads correct.
+One deployable with a small set of components. The calls between them are in-process.
 
 ```mermaid
 flowchart TB
+  authz["Authn and authz<br/>(deferred)"]
   subgraph svc["appregdef service"]
     api["Consumer API"]
     wh["Webhook receiver"]
-    resolver["Resolver"]
+    reader["Reader"]
     writer["Writer"]
     indexer["Indexer"]
     cache[("Cache")]
-    gitad["Git adapter"]
+    gitad["Git client"]
   end
-  api -->|read| resolver
-  resolver -->|lookup| cache
+  authz -.-> api
+  api -->|read| reader
+  reader -->|lookup| cache
   api -->|write| writer
   wh -->|resync| indexer
   indexer -->|rebuild| cache
   indexer -->|fetch| gitad
   writer -->|commit, push| gitad
+  classDef deferred stroke-dasharray:5 5,color:#777;
+  class authz deferred;
 ```
 
-| Module           | Responsibility                                                                                   |
-|------------------|--------------------------------------------------------------------------------------------------|
-| Consumer API     | exposes the REST surface, validates requests, authorizes, routes to the Resolver or the Writer   |
-| Webhook receiver | validates the git HMAC and triggers a resync                                                     |
-| Resolver         | looks up the cache, joins the AppDef to its RegDef by name, returns the Application              |
-| Cache            | the cache port, in-proc or Redis, holds the def objects by name                                  |
-| Indexer          | sole cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
-| Writer           | create and update, validates the schema and the name, commits and pushes to git                  |
-| Git adapter      | the git port, clone, fetch, commit, and push on the read and the write worktrees                 |
+| Component        | Responsibility                                                                              |
+|------------------|---------------------------------------------------------------------------------------------|
+| Consumer API     | exposes the API, validates requests, calls the Reader or the Writer                         |
+| Webhook receiver | receives the git push notification and triggers a resync                                    |
+| Reader           | returns a RegDef or AppDef by name, and for resolve joins them into the Application         |
+| Cache            | holds the def objects by name, an in-process map now, swappable to a shared store later     |
+| Indexer          | cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
+| Writer           | create and update, validates the schema and the name                                        |
+| Git client       | clone, fetch, commit, and push on the read and the write                                    |
 
 ## Data flows
 
@@ -74,7 +76,7 @@ flowchart TB
 sequenceDiagram
   actor C as Consumer
   participant API as Consumer API
-  participant R as Resolver
+  participant R as Reader
   participant Cache
   C->>API: resolve(app, zone?)
   API->>R: resolve
@@ -85,6 +87,9 @@ sequenceDiagram
   API-->>C: response
 ```
 
+`getRegDef` and `getAppDef` are the same cache read without the join: the Reader returns the stored RegDef
+or AppDef by name.
+
 ### Resync
 
 ```mermaid
@@ -92,7 +97,7 @@ sequenceDiagram
   participant GS as git server
   participant WR as Webhook receiver
   participant IX as Indexer
-  participant GA as Git adapter
+  participant GA as Git client
   participant Cache
   Note over GS,Cache: a resync runs on a push webhook or a periodic timer, the safety net for a missed webhook
   GS->>WR: webhook on push
@@ -110,7 +115,7 @@ sequenceDiagram
   actor C as Consumer
   participant API as Consumer API
   participant W as Writer
-  participant GA as Git adapter
+  participant GA as Git client
   C->>API: create or update a def
   API->>W: write request
   W->>W: validate the schema and the name
@@ -122,20 +127,3 @@ sequenceDiagram
 
 A write returns once the commit is pushed. The cache catches up through the resync the push triggers, so
 reads are eventually consistent with a write.
-
-## Logical topology
-
-The same modules run in two deployment schemas. The split that matters at the logical level is the read plane
-(Consumer API and Resolver over the Cache) versus the write and resync plane (Webhook receiver, Indexer,
-Writer). In the lite deployment schema both planes share one process. In the HA deployment schema the read
-plane scales as stateless replicas and the write and resync plane runs as one leader. The replica counts,
-the leader election, the shared store, and the multi-cluster deployment are in
-[deployment-and-operations.md](deployment-and-operations.md).
-
-## Dependency direction
-
-Dependencies point inward through ports, and the graph is acyclic: the Resolver reaches only the Cache,
-and only the Indexer and the Writer reach git, each through the Git adapter. The Cache is warmed in full at
-bootstrap and is authoritative, so a resolve miss is a not-found, never a git fallback on the read path.
-This is what lets the cache move from in-process to Redis and the write and resync plane move to a separate
-process without touching the read path.

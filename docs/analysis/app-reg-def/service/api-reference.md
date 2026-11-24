@@ -19,8 +19,8 @@ human-readable companion to `openapi.yaml`. The objects in the payloads are in [
 ## Conventions
 
 - base path `/api/v1`, media type `application/json`.
-- every request is authorized. Read verbs and write verbs may need different permissions. The authn model
-  is in [deployment-and-operations.md](deployment-and-operations.md).
+- authn and authz are deferred, out of scope now. When added, an external auth gate sits in front of the
+  API.
 - `zone` is an optional query parameter on the read interfaces. There is one default zone today, and it is
   reserved for multizone.
 - the service returns defs with their `credId` references, not the secret values, and it never contacts a

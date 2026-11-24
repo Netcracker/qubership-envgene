@@ -38,14 +38,15 @@ committed change, no OpenSpec folder yet.
 | D25 | Separate git working copies for resync-read and write, settles G8            | settled   | C1 critic         |
 | D26 | Webhook receiver is a separate component from the consumer API               | settled   | C1 critic         |
 | D27 | Deployment schemas: lite (in-proc) and HA (Redis) from one codebase          | settled   | C2                |
-| D28 | Multi-cluster: one instance per cluster over the shared git SOT              | settled   | C2                |
-| D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer     | settled   | C2                |
+| D28 | Multi-cluster: one instance per cluster over the shared git SOT              | deferred  | C2                |
+| D29 | Webhook: one per cluster to the resync owner, no pub/sub, periodic timer     | deferred  | C2                |
 | D30 | Write returns on commit, cache is eventually consistent via resync           | settled   | C2                |
 | D31 | Malformed def is skipped per entry, not an all-or-nothing blackout           | settled   | C2                |
 | D32 | Runtime version-agnostic, store v2, v1-to-v2 a one-time migration CLI        | settled   | challenge         |
 | D33 | Service targets the extended RegDef v2, schema brought up to it              | settled   | challenge         |
 | D34 | Resolve returns the Application model (AppDef with embedded RegDef v1 or v2) | settled   | artifact-searcher |
 | D35 | credId to credential processing stays in the client, feeds the provider      | settled   | challenge         |
+| D36 | authz and HA/scale-out out of scope now, lite ships first, stays extensible  | settled   | scope             |
 
 ## Change class
 
@@ -56,6 +57,9 @@ Architectural. A new capability with an interface that EnvGene, DPG, and other c
 - Multizone-extensibility: multizonality is deferred (P2) and the design proceeds without it. Validate
   each decision against adding it later without a breaking change. The `resolve` API reserves an optional
   zone selector as the hook, and there is one default zone today.
+- Scope: authz and HA/scale-out are deferred (D36). The service ships as one process with an in-process
+  cache, and stays extensible. The cache is swappable to a shared store (D23), and the read path and the
+  write and sync path are independent, so adding HA later needs no rewrite.
 
 ## Backlog
 
@@ -77,7 +81,7 @@ Git and write policy:
 Cross-cutting:
 
 - X1 - observability: refine the metrics and the SLO (sketched in Topology and deployment).
-- X2 - security and authz: refine the authn model for the consumer API (sketched in Topology).
+- X2 - authz: the authn and authz model for the consumer API. Deferred (D36).
 - X4 - rollout: replace the two resolvers (artifact-searcher, DPG) with coexistence or a shadow mode.
 - X6 - failure modes: refine beyond the Topology sketch if needed.
 - X7 - a resolve-response version signal (did the answer change?), a change signal for consumers.
@@ -236,27 +240,14 @@ D2 and D17), a resolve-by-SD entry (the caller expands the SD into a list of app
 
 ## Topology and deployment
 
-Two deployment schemas from one codebase, selected by config (the cache is a port, D23): lite and HA. A
-malformed def is skipped and logged, never an all-or-nothing blackout (D31). A resync is idempotent (fetch
-and re-parse to HEAD), so duplicate or out-of-order webhook deliveries converge.
-
-Lite deployment schema (form 1, ship first):
+One deployable, one process (D27 keeps the codebase open to an HA form later, D36 scopes HA out for now).
 
 - One `Deployment`, `replicas: 1`, `Recreate` strategy, so a rollout never runs two pods writing git.
-- All components in one process, in-process cache, `emptyDir` for the git working copies, no PVC, rebuilt
-  from git on start.
+- All components in one process, an in-process cache, `emptyDir` for the git working copies, no PVC,
+  rebuilt from git on start.
 - Bootstrap: clone the branch (D16), parse every def into the cache, become ready.
 
-HA deployment schema (form 2, additive):
-
-- Read-service: a `Deployment` of N stateless replicas (API plus Resolver) that read the shared Redis
-  cache and hold no git.
-- Write/resync singleton: one active instance (leader-elected via a k8s Lease) that owns the git working
-  copies, the Indexer, the Writer, and the webhook receiver, and writes the shared Redis cache.
-- Redis holds the cache (`defs:appdef:<name>`, `defs:regdef:<name>`) and needs its own HA.
-- Routing: read verbs go to the read-service, write verbs and the webhook go to the singleton.
-
-Git working copies (both deployment schemas):
+Git working copies:
 
 - Read worktree (Indexer): one shallow, blob-filtered, sparse checkout of application-definitions/ and
   registry-definitions/ (D19). A resync is a `git fetch` to HEAD plus a full re-read of the checkout (D21).
@@ -267,28 +258,18 @@ non-fast-forward, then returns the written object (D9). The push fires the webho
 same resync path as an external or manual commit (G6), and the cache is eventually consistent. If a consumer
 ever needs to see its own write immediately, the Writer can run an in-process resync before returning.
 
-Multi-cluster (D28): one independent instance per cluster over the one shared git SOT. Reads are local and
-eventually consistent as each instance resyncs the same git. Writes go through git's own optimistic
-concurrency (the fetch-rebase retry), so git is the cross-cluster write serializer with no distributed
-lock. Each cluster picks its own deployment schema.
+Network: :8080 consumer API, :8081 webhook receiver, :8082 health, :9090 metrics.
 
-Webhook delivery (D29): the repo holds one webhook per cluster, so the cross-cluster fan-out is at cluster
-granularity, which is viable because clusters are few and stable. Inside a cluster the webhook reaches the
-single resync owner (the one pod in lite, the singleton leader in HA) and Redis fans out to the read pods.
-There is no pub/sub. The periodic resync is the guarantee for any missed delivery.
+Observability (X1): resolve latency, cache entry counts, resync lag (time since the last resync), webhook
+deliveries and failures, write latency, and the conflict rate.
 
-Ports and network: :8080 consumer API, :8081 webhook receiver (HMAC), :8082 health, :9090 metrics, each
-behind its own NetworkPolicy. Consumers reach a Service, the git server reaches a webhook Ingress.
+Failure modes (X6): git unreachable serves the stale cache while the periodic resync retries, a missed
+webhook is caught by the periodic resync, a malformed def is skipped per entry (D31), and a restart
+re-clones and warms.
 
-Security (X2): webhook HMAC, consumer authn and authz, git credentials as a least-privilege Secret, and the
-blind boundary (the service reads credId references only and never holds a registry secret, D2 and D17).
-
-Observability (X1): resolve latency, cache entry counts, resync lag (time since the last resync),
-webhook deliveries and failures, write latency, and the conflict rate.
-
-Failure modes (X6): git unreachable serves the stale cache while the periodic resync retries, a missed webhook is
-caught by the periodic resync, a malformed def is skipped per entry (D31), and a restart re-clones and warms (in
-HA the read pods keep serving from Redis).
+High availability, horizontal scale-out, and multi-cluster are deferred (D36). The design stays open to
+them: the cache is swappable to a shared store (D23), and the read path and the write and sync path are
+independent.
 
 Provenance note: current-behavior claims are grounded in code research over qubership-envgene and the
 internal extend repo (env-generator-2). The load-bearing file:line citations are inlined above.

@@ -36,8 +36,8 @@ flowchart LR
 
 The library resolves an application to its registry definition and artifact coordinates from a dedicated
 defs git repo, and maps a RegDef v2 to a provider of the artifacts_finder common library
-(`qubership_pipelines_common_library.v2.artifacts_finder`). It is the defs-specific layer. It does
-not search for or download artifacts. That is artifacts_finder.
+(`qubership_pipelines_common_library.v2.artifacts_finder`). The library is the defs-specific layer. It
+does not search for or download artifacts. That is artifacts_finder.
 
 It does:
 
@@ -52,13 +52,14 @@ It does not:
 
 - probe registry tiers, resolve snapshots, execute the registry auth, or download artifacts. The library
   returns the provider and the artifact, and the consumer runs artifacts_finder with them.
-- run as a long-lived service, hold a shared cache, or need HA. Freshness is the consumer's git fetch.
+- run as a long-lived service, hold a shared cache, or need high availability. Freshness is the consumer's
+  git fetch.
 - hold or persist secrets. It passes the consumer's credentials into the provider it builds, nothing is
   stored.
 - migrate v1 defs to v2. That stays a separate one-time CLI.
 
-The handoff is: `resolve` returns an `Application`, `build_artifact` and `build_provider` turn it with the
-version and the credentials into an `Artifact` and an `ArtifactProvider`, and the consumer runs
+The handoff is: `resolve` returns an `Application`, `build_artifact` and `build_provider` turn it, with
+the version and the credentials, into an `Artifact` and an `ArtifactProvider`, and the consumer runs
 artifacts_finder (`find_artifact_urls` then `download_artifact`) with them. The tier probing, the snapshot
 resolution, the auth, and the download are artifacts_finder's contract.
 
