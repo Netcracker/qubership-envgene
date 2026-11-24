@@ -47,7 +47,7 @@ class MetricsCollectorActivity:
     @staticmethod
     def to_bool(value) -> bool:
         return ConfigParser.BOOLEAN_STATES.get(
-            str(value).strip().lower(), False
+            str(value).strip().lower(), True
         )
 
     def send_running(self, status: str = "IN_PROGRESS", results: list[StepResult] | None = None,
