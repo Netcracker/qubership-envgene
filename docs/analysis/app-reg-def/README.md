@@ -1,24 +1,26 @@
-# App Reg Def service - design docs
+# App Reg Def design docs
 
-> _Placeholder. One paragraph: what the service is - a runtime resolver and cache over a git source of
-> truth that turns `application:version` into artifact download-info plus registry sections, blind on
-> credentials._
+The App Reg Def capability resolves an application to its registry definition and artifact coordinates, so a
+consumer can download its deployment descriptor. It has two variants over one shared model and contract, a
+central blind service and an in-process library.
 
 ## Documentation map
 
-> _Placeholder. The table below is the real map. Each row is one document and the single job it does._
+Shared, read first:
 
-| Document                        | Audience              | Job                                                   |
-|---------------------------------|-----------------------|-------------------------------------------------------|
-| architecture.md                 | developer, architect  | components, flows, logical topology                   |
-| consistency-and-sync.md         | developer             | cache, resync, commit race                            |
-| api-reference.md + openapi.yaml | consumer, developer   | the API contract                                      |
-| data-model-and-layout.md        | def author, developer | RegDef v2, AppDef, repo layout, naming                |
-| deployment-and-operations.md    | operator              | deployment schemas, config, scaling, failure, metrics |
-| adr/                            | architect, reviewer   | the load-bearing decisions and why                    |
-| glossary.md                     | all                   | the terms used across these docs                      |
+- [brief.md](brief.md) - the exploration brief, decisions and the open backlog.
+- [model.md](model.md) - the objects and the repository layout.
+- [resolver-contract.md](resolver-contract.md) - the three layers and the resolve-and-build contract.
+- [glossary.md](glossary.md) - the terms.
 
-## Source
+Service variant:
 
-> _Placeholder. These docs render from the exploration brief (../brief.md), which holds the Decision Log
-> and the open backlog._
+- [service/architecture.md](service/architecture.md) - components, flows, topology.
+- [service/consistency-and-sync.md](service/consistency-and-sync.md) - cache, resync, commit race.
+- [service/api-reference.md](service/api-reference.md) - the HTTP contract.
+- [service/openapi.yaml](service/openapi.yaml) - the machine-readable contract.
+- [service/deployment-and-operations.md](service/deployment-and-operations.md) - profiles, scaling, metrics.
+
+Library variant:
+
+- [library/interface-spec.md](library/interface-spec.md) - the python client and the build functions.
