@@ -18,16 +18,25 @@ def _cred_files(workspace: EnvGeneWorkspace):
     )
 
 
-@given("the cred files of the environment are SOPS-encrypted with the test key")
-def encrypt_cred_files(workspace: EnvGeneWorkspace):
+def _encrypt_cred_files(workspace: EnvGeneWorkspace, public_keys: str):
     for path in _cred_files(workspace):
         text = path.read_text(encoding="utf-8")
         if not text.strip() or text.strip() == "{}" or is_encrypted_SOPS_text(text):
             continue
         subprocess.run(
-            ["sops", "encrypt", "--in-place", "--age", TEST_AGE_PUBLIC_KEY, "--encrypted-regex", "^data$", str(path)],
+            ["sops", "encrypt", "--in-place", "--age", public_keys, "--encrypted-regex", "^data$", str(path)],
             check=True, capture_output=True, text=True,
         )
+
+
+@given("the cred files of the environment are SOPS-encrypted with the test key")
+def encrypt_cred_files(workspace: EnvGeneWorkspace):
+    _encrypt_cred_files(workspace, TEST_AGE_PUBLIC_KEY)
+
+
+@given("the cred files of the environment are SOPS-encrypted with the test key and the added AGE recipient")
+def encrypt_cred_files_with_added_recipient(workspace: EnvGeneWorkspace):
+    _encrypt_cred_files(workspace, f"{TEST_AGE_PUBLIC_KEY},{TEST_AGE_EXTRA_PUBLIC_KEY}")
 
 
 @given("the cred files are recorded as a baseline")
@@ -151,6 +160,7 @@ def _sops_age_recipients(path):
     return recipients
 
 
+@given('the added AGE recipient is enabled in the pipeline parameters')
 @when('the added AGE recipient is enabled in the pipeline parameters')
 def enable_added_age_recipient(workspace: EnvGeneWorkspace):
     set_pipeline_parameter(workspace, "PUBLIC_AGE_KEYS", f"{TEST_AGE_PUBLIC_KEY},{TEST_AGE_EXTRA_PUBLIC_KEY}")
@@ -176,3 +186,26 @@ def decrypted_collision_credentials_value(workspace: EnvGeneWorkspace, app_name:
     file_path = _find_app_file(workspace, "collision-credentials.yaml", app_name)
     value = workspace.get_decrypted_yaml(file_path)[key]
     assert value == expected, f"{file_path}: {key} is '{value}', expected '{expected}'"
+
+
+@then(parsers.parse('in the cred file "{path}" no value has a new ciphertext'))
+def no_ciphertext_changed(workspace: EnvGeneWorkspace, path: str):
+    file_path = workspace.base_dir / path
+    before = _leaves(yaml.safe_load(workspace.cred_baseline[file_path].decode("utf-8")))
+    after = _leaves(yaml.safe_load(file_path.read_text(encoding="utf-8")))
+    encrypted = [name for name, value in before.items() if _is_ciphertext(value)]
+    assert encrypted, f"{path}: no encrypted values in the baseline"
+    changed = sorted(name for name in encrypted if before[name] != after.get(name))
+    assert not changed, f"{path}: values with a new ciphertext {changed}"
+
+
+@when("the added AGE recipient is removed from the pipeline parameters")
+def remove_added_age_recipient(workspace: EnvGeneWorkspace):
+    set_pipeline_parameter(workspace, "PUBLIC_AGE_KEYS", TEST_AGE_PUBLIC_KEY)
+
+
+@then(parsers.parse('the cred file "{path}" has the default and added AGE recipients'))
+def cred_file_default_and_added_age_recipients(workspace: EnvGeneWorkspace, path: str):
+    expected = {TEST_AGE_PUBLIC_KEY, TEST_AGE_EXTRA_PUBLIC_KEY}
+    actual = _sops_age_recipients(workspace.base_dir / path)
+    assert actual == expected, f"{path}: AGE recipients are {sorted(actual)}, expected {sorted(expected)}"

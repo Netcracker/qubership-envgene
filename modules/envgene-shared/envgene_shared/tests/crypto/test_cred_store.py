@@ -241,39 +241,30 @@ def test_same_public_age_keys_keep_encrypted_bytes(env_dir, monkeypatch):
     assert after == before
 
 
-def test_removed_public_age_key_drops_recipient_from_existing_file(env_dir, monkeypatch):
+def test_removed_public_age_key_keeps_recipient_in_existing_file(env_dir, monkeypatch):
     set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
     path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
     before = path.read_bytes()
-    assert sops_age_recipients(before.decode("utf-8")) == {SOPS_DATA["public_key"], SECOND_PUBLIC_AGE_KEY}
 
     set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
     after = encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
 
-    assert sops_age_recipients(after.decode("utf-8")) == {SOPS_DATA["public_key"]}
+    assert after == before
     path.write_bytes(after)
     assert decrypt_file(path, in_place=False)["first_cred"]["data"]["secret"] == "token-placeholder-123"
 
 
-@pytest.mark.parametrize("provider", ["pgp", "kms", "gcp_kms", "azure_kv", "hc_vault"])
-def test_non_age_key_group_skips_key_update(tmp_path, provider):
-    path = tmp_path / "credentials.yml"
-    path.write_text(
-        "first_cred:\n    type: secret\n"
-        "    data:\n        secret: ENC[AES256_GCM,data:placeholder,type:str]\n"
-        "sops:\n    key_groups:\n        - age:\n"
-        f"            - recipient: {SOPS_DATA['public_key']}\n"
-        "              enc: ENC[AES256_GCM,data:placeholder,type:str]\n"
-        f"          {provider}:\n            - recipient: placeholder\n"
-        "              enc: ENC[AES256_GCM,data:placeholder,type:str]\n"
-        "    version: 3.9.0\n",
-        encoding="utf-8",
-    )
+def test_added_public_age_key_keeps_extra_recipient(env_dir, monkeypatch):
+    third_public_key = "age1lggyhqrw2nlhcxprm67z43rta597azn8gknawjehu9d9dl0jq3yqqvfafg"
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
     before = path.read_bytes()
 
-    sops_handler._update_sops_age_keys(path, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{third_public_key}")
+    after = encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
 
-    assert path.read_bytes() == before
+    assert sops_age_recipients(after.decode("utf-8")) == {SOPS_DATA["public_key"], SECOND_PUBLIC_AGE_KEY,
+                                                          third_public_key}
 
 
 def test_key_update_fails_when_recipients_do_not_match(env_dir, monkeypatch):
@@ -286,6 +277,43 @@ def test_key_update_fails_when_recipients_do_not_match(env_dir, monkeypatch):
 
     with pytest.raises(SubprocessError):
         encrypt_SOPS_bytes(CONTENT.encode("utf-8"), path, old_data=before)
+
+
+def test_unchanged_file_with_added_public_age_key_gets_recipient(env_dir, monkeypatch):
+    set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    old_doc = readYaml(path.read_text(encoding="utf-8"))
+
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    with open_cred_store():
+        pass
+
+    after_doc = readYaml(path.read_text(encoding="utf-8"))
+    assert sops_age_recipients(path.read_text(encoding="utf-8")) == {SOPS_DATA["public_key"], SECOND_PUBLIC_AGE_KEY}
+    assert after_doc["first_cred"]["data"]["secret"] == old_doc["first_cred"]["data"]["secret"]
+
+
+def test_unchanged_file_with_removed_public_age_key_is_not_written(env_dir, monkeypatch):
+    set_public_age_keys(monkeypatch, f"{SOPS_DATA['public_key']},{SECOND_PUBLIC_AGE_KEY}")
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+
+    set_public_age_keys(monkeypatch, SOPS_DATA["public_key"])
+    with open_cred_store():
+        pass
+
+    assert path.read_bytes() == before
+
+
+def test_unchanged_file_with_same_public_age_keys_is_not_read(env_dir, monkeypatch):
+    path = make_cred_file(env_dir / "Credentials" / "credentials.yml")
+    before = path.read_bytes()
+    monkeypatch.setattr(sops_handler, "_sops_age_recipients", lambda *args: pytest.fail("metadata parsed"))
+
+    with open_cred_store():
+        pass
+
+    assert path.read_bytes() == before
 
 
 def make_es_file(env_dir, content):
