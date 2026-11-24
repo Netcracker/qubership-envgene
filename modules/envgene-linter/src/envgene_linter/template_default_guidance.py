@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from io import StringIO
 from typing import Any
 
@@ -162,48 +163,255 @@ def build_merge_hint(plan: MergePlan, context: TemplateContext) -> str:
     return text
 
 
-def _portable_template_hint(
-    template_name: str, scope: Scope, paramset: dict, application_note: str
-) -> str:
-    shared_name = "<shared-paramset-name>"
-    recipe = (
-        "Proposed template changes (template repository not inspected):\n"
-        "1. Add a shared ParameterSet to the template repository with these repeated values.\n"
-        f'Replace "{shared_name}" with an unused ParameterSet name. '
-        "Use the same name for the ParameterSet filename and reference.\n\n"
-        f"ParameterSet YAML:\n{_yaml(_quoted({'name': shared_name, **paramset}))}\n\n"
-    )
-    if application_note:
-        recipe += f"2. Confirm renderer support before connecting this ParameterSet.\n{application_note}\n\n"
-    else:
-        binding = {
-            Category.DEPLOY: "deployParameterSets",
-            Category.E2E: "e2eParameterSets",
-            Category.TECHNICAL: "technicalConfigurationParameterSets",
-        }[scope.category]
-        association = (
-            "Cloud association"
-            if scope.target == "cloud"
-            else f"Namespace association for {json.dumps(scope.target, ensure_ascii=False)}"
-        )
-        recipe += (
-            f"2. In environment template {json.dumps(template_name, ensure_ascii=False)}, select the existing {association}.\n"
-            f"Append the reference below as the last item in template_override.{binding}.\n"
-            "Create template_override and this list if absent. Match the existing list's indentation.\n"
-            "Keep the existing references in their current order and preserve other associations and override fields.\n"
-        )
-        if scope.target == "cloud":
-            recipe += "If cloud is a path string, convert it to object form with the same value in template_path.\n"
-        recipe += (
-            f'\nReference item to append:\n- "{shared_name}"\n\n'
-            "3. Remove only the shown duplicate parameter entries from the instance ParameterSets.\n"
-            "Keep other parameters and their existing ParameterSet references.\n\n"
-        )
+_BINDING = {
+    Category.DEPLOY: "deployParameterSets",
+    Category.E2E: "e2eParameterSets",
+    Category.TECHNICAL: "technicalConfigurationParameterSets",
+}
+_CATEGORY_TOKEN = {
+    Category.DEPLOY: "deploy",
+    Category.E2E: "pipeline",
+    Category.TECHNICAL: "runtime",
+}
+# Substrings that often mark a site-specific address, account, or credential.
+_CAUTION_TOKENS = (
+    "url",
+    "host",
+    "user",
+    "credential",
+    "registry",
+    "repo",
+    "branch",
+    "project",
+)
+
+
+def display_keys(entries: list, keys: list[str] | None = None) -> list[str]:
+    if keys is not None:
+        return list(keys)
+    return [".".join(str(part) for part in path) for path, _ in entries]
+
+
+def caution_keys(keys: list[str]) -> list[str]:
+    found = []
+    for key in keys:
+        folded = key.casefold()
+        if any(token in folded for token in _CAUTION_TOKENS):
+            found.append(key)
+    return found
+
+
+def key_slug(key: str) -> str:
+    return key.lower().replace("_", "-")
+
+
+def _kebab(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "shared"
+
+
+def attachment_phrase(scope: Scope) -> str:
+    binding = _BINDING[scope.category]
+    if scope.target == "cloud":
+        return f"cloud.template_override.{binding} (Cloud)"
     return (
-        recipe
-        + "Keep intentional instance overrides and review template consumers before removing matching entries.\n"
-        "Supply -t PATH (--template-repo PATH) for exact destination files and local source comparisons."
+        f"namespaces[{scope.target}].template_override.{binding} "
+        f'(Namespace "{scope.target}")'
     )
+
+
+def parameter_set_base(template: str, scope: Scope, identity: tuple = ()) -> str:
+    """Name stem before ``-shared``, without a colliding-key suffix."""
+    pairs = [(item[0], item[1]) for item in identity if len(item) >= 2]
+    suffixes = []
+    env_specific = bool(pairs)
+    for full_name, reference in pairs:
+        prefix = str(full_name).replace("/", "-") + "-"
+        if reference.startswith(prefix) and len(reference) > len(prefix):
+            suffixes.append(reference[len(prefix) :])
+        else:
+            env_specific = False
+            break
+    if env_specific and len(set(suffixes)) == 1:
+        return f"{template}-{suffixes[0]}"
+    references = list(dict.fromkeys(reference for _, reference in pairs))
+    if len(references) == 1:
+        parts = [template, scope.target, references[0]]
+        if scope.application:
+            parts.append(_kebab(scope.application))
+        return "-".join(parts)
+    parts = [template, scope.target]
+    if scope.application:
+        parts.append(_kebab(scope.application))
+    parts.append(_CATEGORY_TOKEN[scope.category])
+    return "-".join(parts)
+
+
+def assign_shared_name(
+    base: str,
+    keys: list[str],
+    *,
+    disambiguate: bool,
+    used: set[str],
+) -> str:
+    stem = f"{base}-{key_slug(keys[0])}" if disambiguate and keys else base
+    name = f"{stem}-shared"
+    number = 2
+    while name.casefold() in used:
+        name = f"{stem}-{number}-shared"
+        number += 1
+    used.add(name.casefold())
+    return name
+
+
+def render_review_suggestion(
+    template_name: str,
+    artifact: str,
+    scope: Scope,
+    entries: list,
+    shared_name: str,
+    *,
+    keys: list[str],
+    agreed: int | None,
+    exception_lines: tuple[str, ...] = (),
+    application_note: str = "",
+    destination: str | None = None,
+    action: str = "create-name",
+    step_note: str | None = None,
+    conflicts: tuple[str, ...] = (),
+    document: dict | None = None,
+) -> str:
+    parameters = {}
+    for path, value in entries:
+        target = parameters
+        for part in path[:-1]:
+            target = target.setdefault(part, {})
+        target[path[-1]] = value
+    paramset = {"parameters": parameters}
+    if scope.application is not None:
+        paramset = {
+            "applications": [{"appName": scope.application, "parameters": parameters}]
+        }
+    body = document if document is not None else {"name": shared_name, **paramset}
+    if agreed is None:
+        updated = "the environments that share these values"
+    else:
+        noun = "environment" if agreed == 1 else "environments"
+        updated = f"the {agreed} {noun}"
+    same = "the same key" if len(keys) == 1 else f"the same {len(keys)} keys"
+    application = (
+        f" (inside application {scope.application})" if scope.application else ""
+    )
+    lines = [
+        "REVIEW ONLY. Nothing is applied automatically.",
+        "",
+        "Check first (a person decides):",
+        "1. Should every environment using this template get these values?",
+        "2. Does any environment set one of them on purpose to be different?",
+        "If unsure, stop. Nothing needs to change.",
+    ]
+    cautious = caution_keys(keys)
+    if cautious:
+        lines.append("Look twice at: " + ", ".join(cautious))
+    lines.extend(["", "Steps:", ""])
+    if action == "blocked":
+        lines.append("1. Template repo: Template relocation proposal not generated.")
+        if step_note:
+            lines.append(f"   Review: {step_note}")
+        if destination:
+            lines.append(f"   File: {destination}")
+    elif action == "keep":
+        lines.append(
+            f"1. Template repo: Reuse file: {destination}. "
+            "It already has these keys. Leave the file unchanged."
+        )
+    elif action == "add":
+        lines.append(
+            f"1. Template repo: Merge into file: {destination}. "
+            "Leave the other parameters as they are."
+        )
+        lines.append("")
+        fragment = _yaml(_quoted(body))
+        if str(destination).endswith(".json"):
+            lines.append("ParameterSet JSON:")
+            lines.append(
+                json.dumps(
+                    body,
+                    ensure_ascii=False,
+                    indent=2,
+                    allow_nan=False,
+                )
+            )
+        else:
+            lines.append("ParameterSet YAML:")
+            lines.append(fragment)
+        lines.append("")
+    else:
+        if destination:
+            lines.append(f"1. Template repo: Create file: {destination}")
+            lines.append("")
+            lines.append("ParameterSet YAML:")
+            lines.append(_yaml(_quoted(body)))
+            lines.append("")
+        else:
+            lines.append(f'1. Template repo: create ParameterSet "{shared_name}":')
+            lines.append("")
+            lines.append(_yaml(_quoted(body)))
+            lines.append("")
+    if conflicts:
+        lines.extend(f"Conflict: {conflict}. Leave it in the instance." for conflict in conflicts)
+    lines.append("")
+    if action == "blocked":
+        lines.append("2. Stop here. Fix the template input, then run the check again.")
+        if exception_lines:
+            lines.append("   Keep as they are:")
+            lines.extend(f"   - {line}" for line in exception_lines)
+    elif action == "keep":
+        lines.append(
+            step_note
+            or f'2. Template repo: "{shared_name}" is already connected. Do not change the descriptor.'
+        )
+    elif step_note:
+        lines.append(f"2. {step_note}")
+    elif application_note:
+        lines.append(
+            "2. Template repo: the default Application object has no e2eParameters field. "
+            f'Confirm renderer support before connecting "{shared_name}".'
+        )
+    elif action == "add":
+        lines.append(
+            f'2. Template repo: "{shared_name}" stays the ParameterSet name. '
+            f'In "{template_name}", keep its current reference.'
+        )
+    else:
+        lines.append(
+            f'2. Template repo: in "{template_name}", add "{shared_name}" '
+            f"to the end of {attachment_phrase(scope)}."
+        )
+    if action != "blocked":
+        lines.extend(
+            [
+                "",
+                f"3. Template repo: release a new version of {artifact} and update {updated} to it.",
+                "   Do not continue until this is done, otherwise they lose these values.",
+                "",
+                f"4. Instance repo: delete {same} from the files listed above{application}.",
+            ]
+        )
+        if exception_lines:
+            lines.append("   Keep as they are:")
+            lines.extend(f"   - {line}" for line in exception_lines)
+        lines.extend(
+            [
+                "",
+                "5. Instance repo: run envgene-linter check -i <instance> -t <template>.",
+                "   This finding should be gone.",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def local_parameter_set_path(context: TemplateContext, shared_name: str) -> str:
+    return str(context.directory / "parameters" / f"{shared_name}.yml")
 
 
 def build_template_default_hint(
@@ -216,6 +424,10 @@ def build_template_default_hint(
     identity: tuple = (),
     source_references: tuple[str, ...] = (),
     cleanup: str = "",
+    keys: list[str] | None = None,
+    agreed: int | None = None,
+    exception_lines: tuple[str, ...] = (),
+    shared_name: str | None = None,
 ) -> str:
     """Build a portable recipe or a scoped local template recipe."""
     application_note = (
@@ -223,6 +435,7 @@ def build_template_default_hint(
         if scope.category is Category.E2E and scope.application is not None
         else ""
     )
+    shown_keys = display_keys(entries, keys)
     parameters = {}
     for path, value in entries:
         target = parameters
@@ -235,8 +448,26 @@ def build_template_default_hint(
             "applications": [{"appName": scope.application, "parameters": parameters}]
         }
     if context is None:
-        hint = _portable_template_hint(template_name, scope, paramset, application_note)
-        return hint + (cleanup if not application_note else "")
+        chosen = shared_name or assign_shared_name(
+            parameter_set_base(template_name, scope, identity),
+            shown_keys,
+            disambiguate=False,
+            used=set(),
+        )
+        participant_count = agreed
+        if participant_count is None and identity:
+            participant_count = len({item[0] for item in identity if item})
+        return render_review_suggestion(
+            template_name,
+            artifact,
+            scope,
+            entries,
+            chosen,
+            keys=shown_keys,
+            agreed=participant_count,
+            exception_lines=exception_lines,
+            application_note=application_note,
+        )
     proposal = None
     if application_note:
         reason = application_note

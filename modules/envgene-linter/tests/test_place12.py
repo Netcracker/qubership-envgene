@@ -101,8 +101,8 @@ def test_two_clusters_emit_one_information_review(repo):
     assert ARTIFACT in str(finding.related)
     assert "shared-default-value" not in finding.message + str(finding.related)
     assert "shared-default-value" in finding.hint
-    assert "ParameterSet YAML:" in finding.hint
-    assert "--template-repo" in finding.hint
+    assert 'create ParameterSet "business-oss-params-shared"' in finding.hint
+    assert "envgene-linter check -i <instance> -t <template>." in finding.hint
 
 
 def test_same_cluster_emits_one_information_review(repo):
@@ -256,7 +256,7 @@ def test_three_of_four_shared_values_name_the_exception(repo):
     assert "other-value" not in finding.message
     assert "shared-default-value" not in finding.message
     assert {location.path for location in finding.file_locations()} == set(agreed)
-    assert "Exceptions, leave these instance values in place:" in finding.hint
+    assert "Keep as they are:" in finding.hint
     assert '- cluster-04/env-01: SETTING = "other-value"' in finding.hint
     assert "environments/cluster-04/env-01/Inventory/parameters/params.yml" not in finding.hint
 
@@ -287,7 +287,7 @@ def test_full_agreement_does_not_mention_an_exception(repo):
     assert len(findings) == 1
     assert "4 environments using template" in findings[0].message
     assert " of " not in findings[0].message
-    assert "Exceptions, leave these instance values in place:" not in findings[0].hint
+    assert "Keep as they are:" not in findings[0].hint
 
 
 @pytest.mark.parametrize(("same", "expected"), [(6, 1), (5, 0)])
@@ -669,10 +669,12 @@ def test_place12_findings_reach_html_and_six_field_json_reports(repo, second_clu
     assert ARTIFACT not in records[0]["issue"]
     assert ":2.0.0" not in records[0]["issue"]
     hint = records[0]["fix_suggestion"]
-    assert "shared-default-value" in hint and "ParameterSet YAML:" in hint
-    assert 'Namespace association for "oss"' in hint
-    assert "as the last item in template_override.deployParameterSets" in hint
-    assert "Reference item to append:" in hint
+    assert "shared-default-value" in hint
+    assert 'create ParameterSet "business-oss-params-shared"' in hint
+    assert (
+        'to the end of namespaces[oss].template_override.deployParameterSets '
+        '(Namespace "oss").'
+    ) in hint
     assert "Create file:" not in hint and "Edit file:" not in hint
     assert len(records[0]["files"]) == 2
     assert hint in result.output
@@ -791,7 +793,7 @@ def test_common_values_from_one_source_set_form_one_group(repo):
     assert "params" in findings[0].message
     assert len(findings[0].file_locations()) == 4
     assert {loc.path for loc in findings[0].file_locations()} == {first, second}
-    assert findings[0].hint.count("ParameterSet YAML:") == 1
+    assert findings[0].hint.count('create ParameterSet "') == 1
     assert "FIRST" in findings[0].hint and "SECOND" in findings[0].hint
     assert "FIRST" in findings[0].key and "SECOND" in findings[0].key
 
@@ -868,15 +870,12 @@ def test_cli_with_explicit_template_context_emits_one_copyable_recipe(repo, tmp_
         if r["rule_id"] == "PLACE-12"
     ]
     assert len(records) == 1 and len(records[0]["files"]) == 4
-    assert "templates/parameters/oss-common-deploy.yml" in records[0]["fix_suggestion"]
-    assert "templates/env_templates/business.yml" in records[0]["fix_suggestion"]
-    assert "Descriptor YAML:" in records[0]["fix_suggestion"]
-    placement = (
-        'Append "oss-common-deploy" as the last item in '
-        "template_override.deployParameterSets."
-    )
-    assert placement in records[0]["fix_suggestion"]
-    assert 'existing namespaces entry for "oss"' in records[0]["fix_suggestion"]
+    suggestion = records[0]["fix_suggestion"]
+    assert "templates/parameters/business-oss-params-shared.yml" in suggestion
+    assert "templates/env_templates/business.yml" in suggestion
+    assert "Descriptor YAML:" not in suggestion
+    assert 'add "business-oss-params-shared"' in suggestion
+    assert "namespaces[oss]" in suggestion
     body = (repo.root / "envgene-linter-report.html").read_text()
     assert escape(records[0]["fix_suggestion"]) in body
     assert "type" not in records[0]
@@ -932,7 +931,7 @@ def test_proposed_name_reserves_other_selected_instance_references(repo, tmp_pat
         if f.rule == "PLACE-12"
     ]
     assert len(findings) == 1
-    assert 'name: "oss-common-deploy-2"' in findings[0].hint
+    assert 'name: "business-oss-params-shared"' in findings[0].hint
     assert (
         str(source.parent / "parameters/oss-common-deploy.yml") not in findings[0].hint
     )
@@ -1016,21 +1015,17 @@ def test_explicit_repository_paths_identify_both_roots_in_every_recommendation(
     assert f"Instance repository: {repo.root.resolve()}\n" in hint
     assert f"Template repository: {source.absolute()}\n" in hint
     assert ("Whole ParameterSet transfer candidate." in hint) == (variant == "whole")
-    assert ("Descriptor YAML:" in hint) == (variant == "partial")
-    if variant in {"whole", "partial"}:
-        stem = "params" if variant == "whole" else "oss-common-deploy"
-        assert (
-            f"Create file: {source / 'templates/parameters' / (stem + '.yml')}\n"
-            in hint
-        )
-        assert "Template repository changes:\n" in hint
-    if variant == "partial":
-        assert f"Edit file: {source / 'templates/env_templates/business.yml'}:" in hint
-        assert (
-            "YAML path: namespaces[0].template_override.deployParameterSets\n" in hint
-        )
-    if variant == "unresolved":
+    assert "Descriptor YAML:" not in hint
+    assert "Template repository changes:" not in hint
+    if variant == "whole":
+        assert f"Create file: {source / 'templates/parameters/params.yml'}\n" in hint
+    elif variant == "partial":
+        created = source / "templates/parameters/business-oss-params-shared.yml"
+        assert f"Create file: {created}\n" in hint
+        assert "namespaces[oss]" in hint
+    else:
         assert "Create file:" not in hint and "Edit file:" not in hint
+        assert "Template relocation proposal not generated." in hint
     html = (repo.root / "envgene-linter-report.html").read_text()
     assert escape(hint) in html
     assert hint in result.output
@@ -1071,24 +1066,9 @@ def test_complete_paramset_relocation_preserves_the_existing_binding(
     assert (
         "Keep the existing Environment Inventory bindings and reference order." in hint
     )
-    assert FIELDS[category] in hint
     assert "Descriptor YAML:" not in hint
     assert "Edit file:" not in hint
-    assert "No descriptor override is needed." in hint
-    assert "Publish the updated template artifact" not in hint
-    assert "Review actual generation" not in hint
-    assert "Published artifact equivalence" not in hint
-    assert "INT-2 can retain Review" not in hint
-    assert (
-        "3. These copies can be removed once the environments use a template "
-        "that contains this ParameterSet:\n"
-    ) in hint
-    assert (
-        "Keep the references shown above. They select this ParameterSet "
-        "after the file moves into the template."
-    ) in hint
-    assert all(f"- {path.relative_to(repo.root).as_posix()}\n" in hint for path in files)
-    assert all(f"- {path}\n" not in hint for path in files)
+    assert "delete the same key from the files listed above" in hint
     payload = parse_yaml(hint.split("ParameterSet YAML:\n", 1)[1].split("\n\n", 1)[0])
     assert payload == {
         "name": "params",
@@ -1177,7 +1157,8 @@ def test_whole_relocation_rejects_incomplete_or_conflicting_sources(
         assert "Conflict:" in findings[0].hint
         assert "Instance repository changes:" not in findings[0].hint
     else:
-        assert "Descriptor YAML:" in findings[0].hint
+        assert "Create file:" in findings[0].hint
+        assert "REVIEW ONLY" in findings[0].hint
     assert "private-value" not in findings[0].hint
 
 
@@ -1403,6 +1384,7 @@ def test_relocation_report_retains_each_complete_reference_list(repo, tmp_path):
         if f.rule == "PLACE-12"
     )
     assert "Whole ParameterSet transfer candidate." in finding.hint
-    assert '["before", "params", "after"]' in finding.hint
-    assert '["after", "params", "before"]' in finding.hint
+    assert 'They already select "params".' in finding.hint
+    assert '["before", "params", "after"]' not in finding.hint
+    assert '["after", "params", "before"]' not in finding.hint
     assert "Environment Inventory YAML:" not in finding.hint

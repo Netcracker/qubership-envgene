@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -20,6 +21,47 @@ class ParseFailure(Exception):
         self.reason = reason
         self.line = max(1, line)
         self.column = max(1, column)
+
+
+_UNDEFINED_DOT_ALIAS = re.compile(r"found undefined alias '(\.[^']*)'")
+
+
+def _quote_undefined_dot_aliases(text: str) -> str:
+    """Read an unquoted wildcard host such as ``*.com`` as text.
+
+    YAML treats ``*.com`` as an alias named ``.com``. A defined anchor still
+    resolves. An undefined one is the host text used in Cloud Passports.
+    """
+    current = text
+    for _ in range(64):
+        try:
+            YAML(typ='safe', pure=True).compose(current)
+        except YAMLError as exc:
+            match = _UNDEFINED_DOT_ALIAS.search(getattr(exc, 'problem', '') or '')
+            mark = getattr(exc, 'problem_mark', None)
+            if match is None or mark is None:
+                return current
+            lines = current.splitlines(keepends=True)
+            if not 0 <= mark.line < len(lines):
+                return current
+            token = '*' + match.group(1)
+            line = lines[mark.line]
+            if not line.startswith(token, mark.column):
+                return current
+            lines[mark.line] = (
+                line[: mark.column]
+                + '"'
+                + token
+                + '"'
+                + line[mark.column + len(token) :]
+            )
+            updated = ''.join(lines)
+            if updated == current:
+                return current
+            current = updated
+        else:
+            return current
+    return current
 
 
 def _yaml_failure(exc: YAMLError) -> ParseFailure:
@@ -63,6 +105,7 @@ def _validate_containers(value: Any) -> None:
 def parse_yaml(text: str) -> Any:
     # Round-trip construction can replace a recursive mapping alias with None.
     # Validate the composed graph before that information is lost.
+    text = _quote_undefined_dot_aliases(text)
     compose_yaml(text)
     processor = YAML()
     processor.preserve_quotes = True
@@ -81,6 +124,7 @@ def parse_yaml(text: str) -> Any:
 
 
 def compose_yaml(text: str):
+    text = _quote_undefined_dot_aliases(text)
     try:
         value = YAML(typ='safe', pure=True).compose(text)
     except YAMLError as exc:

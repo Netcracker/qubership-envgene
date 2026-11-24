@@ -84,6 +84,27 @@ def test_ordinary_shared_yaml_aliases_remain_readable(tmp_path):
     assert document.doc['parameters'] == {'A': {'VALUE': 1}, 'B': {'VALUE': 1}}
 
 
+def test_undefined_star_dot_host_is_text_and_a_defined_dot_anchor_still_aliases(tmp_path):
+    passport = write(
+        tmp_path,
+        'template-cloud.yml',
+        'cloud:\n  CLOUD_PUBLIC_HOST: *.com\n  OTHER: *.example.com\n'
+        '  URL: https://dashboard.*.com\n  QUOTED: "*.com"\n',
+    )
+    document = load(passport)
+    assert document.doc['cloud'] == {
+        'CLOUD_PUBLIC_HOST': '*.com',
+        'OTHER': '*.example.com',
+        'URL': 'https://dashboard.*.com',
+        'QUOTED': '*.com',
+    }
+    anchored = write(tmp_path, 'anchored.yml', 'a: &.com 1\nb: *.com\n')
+    assert load(anchored).doc == {'a': 1, 'b': 1}
+    missing = write(tmp_path, 'missing.yml', 'a: *missing\n')
+    with pytest.raises(YamlReadError):
+        load(missing)
+
+
 @pytest.mark.parametrize('text', ['parameters: &params\n  SELF: *params\n', '&items [*items]'])
 def test_cyclic_yaml_is_unavailable_instead_of_becoming_a_null_value(tmp_path, text):
     path = write(tmp_path, 'cycle.yml', text)
