@@ -30,16 +30,12 @@ converge on the same state.
 A malformed def is skipped per entry and logged, never an all-or-nothing blackout, so one bad file
 cannot stall the rest.
 
-## Visibility
+## Write visibility
 
-Reads are eventually consistent with writes, since the write and the resync that catches the cache up are
-separate steps. A write returns once its commit is pushed, and the cache catches up through the resync
-the push triggers. A resolve immediately after a write may briefly see the state before the write, for
-at most one resync.
-
-If a consumer ever needs to see its own write immediately, the Writer can run a resync in process before
-returning, which makes the write read-after-write consistent. That is deferred until a write-then-read
-consumer appears.
+A write is visible to reads only after the next resync, not when it returns: the write returns once its
+commit is pushed, and the push-triggered resync then catches the cache up. A read in that window sees the
+pre-write state, for at most one resync. Synchronous read-after-write, where the Writer resyncs in process
+before returning, is deferred until a write-then-read consumer needs it.
 
 ## The commit race
 
@@ -60,3 +56,5 @@ a lock.
 - A missed webhook. The periodic resync catches the change within its interval.
 - A malformed def. It is skipped per entry and logged, and the rest of the repo indexes normally.
 - A restart. The instance re-clones and warms the cache from git before it becomes ready.
+- A write conflict. When two commits change the same def at once, the fetch-rebase retry cannot absorb the
+  push and the write returns a conflict for the caller to retry.
