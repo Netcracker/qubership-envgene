@@ -65,7 +65,7 @@ flowchart TB
 | Reader           | returns a RegDef or AppDef by name, and for resolve joins them into the Application         |
 | Cache            | holds the def objects by name, an in-process map now, swappable to a shared store later     |
 | Indexer          | cache writer, resyncs the whole repo to HEAD on a webhook or a timer and rebuilds the cache |
-| Writer           | create and update, validates the schema and the name                                        |
+| Writer           | create and update, validates then commits and pushes the def                                |
 | Git client       | clone, fetch, commit, and push on the read and the write                                    |
 
 ## Data flows
