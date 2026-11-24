@@ -1,4 +1,4 @@
-# App Reg Def service - exploration brief
+# App Reg Def - exploration brief
 
 Working document for the app reg def service design. Living note: the Decision Log at the top is appended
 to as decisions settle. The brief sections below fill in as the exploration converges, so incremental

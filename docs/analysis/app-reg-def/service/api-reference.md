@@ -11,7 +11,7 @@
   - [PUT /api/v1/application-definitions/{name}](#put-apiv1application-definitionsname)
   - [Error model](#error-model)
 
-The App Reg Def service exposes a small HTTP API. The read interfaces turn an `application:version`, or a
+The appregdef service exposes a small HTTP API. The read interfaces turn an `application:version`, or a
 registry name, into the coordinates and the blind auth a consumer needs to pull artifacts. The write
 interfaces create and update defs in git. This page is the human-readable companion to `openapi.yaml`,
 which is the machine-readable contract. The objects in the payloads are in

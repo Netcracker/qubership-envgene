@@ -17,7 +17,7 @@ the secret with its own identity.
 
 ```mermaid
 flowchart LR
-  consumers["Consumers"] -->|"resolve, read, write"| svc["App Reg Def service"]
+  consumers["Consumers"] -->|"resolve, read, write"| svc["appregdef service"]
   svc <-->|"fetch, push"| git[("git<br/>App Reg Def repo")]
   git -->|"webhook on push"| svc
 ```
@@ -37,7 +37,7 @@ The Indexer is the sole writer of the cache, the invariant that keeps reads corr
 
 ```mermaid
 flowchart TB
-  subgraph svc["App Reg Def service"]
+  subgraph svc["appregdef service"]
     api["Consumer API"]
     wh["Webhook receiver"]
     resolver["Resolver"]

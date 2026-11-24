@@ -1,8 +1,7 @@
 # App Reg Def design docs
 
 The App Reg Def capability resolves an application to its registry definition and artifact coordinates, so a
-consumer can download its deployment descriptor. It has two variants over one shared model and contract, a
-central blind service and an in-process library.
+consumer can download its deployment descriptor as well as do CRUD on application and registry definition.
 
 ## Documentation map
 

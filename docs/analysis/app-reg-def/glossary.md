@@ -1,9 +1,9 @@
 # Glossary
 
-Terms used across the App Reg Def service design docs, one line each. Filled as the design settles, so
+Terms used across the App Reg Def design docs, one line each. Filled as the design settles, so
 a term lands here once it is used in a sibling doc.
 
-- **App Reg Def service** - the runtime resolver and cache over the git defs repo that turns
+- **appregdef service** - the runtime resolver and cache over the git defs repo that turns
   `application:version` into artifact download-info, registry sections, and appdef metadata, blind on
   credentials.
 - **AppDef** - the application definition, a thin pointer with `name`, `registryName`, `groupId`,

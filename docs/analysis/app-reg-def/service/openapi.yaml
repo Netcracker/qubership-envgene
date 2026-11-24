@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: App Reg Def service API
+  title: appregdef service API
   version: 0.0.0
 # Placeholder skeleton. Fill in after the design settles, do not freeze the contract early.
 paths: {}

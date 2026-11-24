@@ -6,12 +6,14 @@ and the RegDef v2 analysis linked below, not restated here. The behaviour that u
 
 ## Objects
 
-- **Application** - an AppDef with its RegDef resolved into it (`registry: Registry | RegistryV2`). The
-  stored AppDef is [appdef.schema.json](/schemas/appdef.schema.json), the runtime model is the `Application`
-  of the artifact-searcher module.
-- **Registry (v1) and RegistryV2 (v2)** - the RegDef, registry coordinates plus auth. v1 is
-  [regdef.schema.json](/schemas/regdef.schema.json), v2 is [regdef-v2.schema.json](/schemas/regdef-v2.schema.json),
-  and the extended v2 target is [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md).
+- **AppDef** - the stored application definition, a thin pointer: `name`, `registryName`, `groupId`,
+  `artifactId`, `solutionDescriptor`, and metadata. [appdef.schema.json](/schemas/appdef.schema.json).
+- **RegDef** - the stored registry definition, `Registry` (v1) or `RegistryV2` (v2): registry coordinates
+  plus auth. v1 [regdef.schema.json](/schemas/regdef.schema.json), v2
+  [regdef-v2.schema.json](/schemas/regdef-v2.schema.json), the extended v2 target in
+  [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md).
+- **Application** - the runtime join of an AppDef and its RegDef (`registry: Registry | RegistryV2`),
+  artifact-searcher's `Application`. This is what `resolve` returns.
 - **Artifact** - the artifacts_finder coordinates of the DD or SD, the `groupId`, `artifactId`, `version`,
   and `extension`.
 - **ArtifactProvider** - a configured artifacts_finder provider, its type, repositories, and credentials.
