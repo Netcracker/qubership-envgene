@@ -79,7 +79,7 @@ registry:
    v2.
 
 The service does not select DD or SD, build an artifact, mint auth, or touch a registry. The consumer does
-that with the version and the credentials, through the client and artifacts_finder.
+that work with the version and the credentials, through the client and artifacts_finder.
 
 ## POST /api/v1/resolve:batch
 

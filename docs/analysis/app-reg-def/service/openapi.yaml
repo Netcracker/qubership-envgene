@@ -4,13 +4,13 @@ info:
   version: 0.0.0
 # Placeholder skeleton. Fill in after the design settles, do not freeze the contract early.
 paths: {}
-  # /resolve                          resolve one app:version (optional zone)
-  # /resolve:batch                    resolve a list of app:version
+  # /resolve                          resolve one app (optional zone), returns the Application
+  # /resolve:batch                    resolve a list of apps
   # /registry-definitions/{name}      getRegDef, create, update
-  # /application-definitions/{name}   getAppDef (open), create, update
+  # /application-definitions/{name}   getAppDef, create, update
 components:
   schemas: {}
-    # ResolveResponse     artifact download-info + registry sections + appdef metadata
-    # RegistryDefinition  v2
+    # Application          appdef attributes + the resolved registry (v1 or v2)
+    # RegistryDefinition   v1 or v2
     # ApplicationDefinition
     # Error

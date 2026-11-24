@@ -10,8 +10,8 @@ and the RegDef v2 analysis linked below, not restated here. The behavior that us
 - **RegDef** - the stored registry definition.
   [regdef.schema.json](/schemas/regdef.schema.json)
   [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md).
-- **Application** - the runtime join of an AppDef and its RegDef, artifact-searcher's `Application`. This is
-  what `resolve` returns.
+- **Application** - the runtime join of an AppDef and its RegDef, reused from artifact-searcher's
+  `Application` model and carrying the full AppDef attributes. This is what `resolve` returns.
 - **Artifact** - the artifacts_finder coordinates of the DD or SD, the `groupId`, `artifactId`, `version`,
   and `extension`.
 - **ArtifactProvider** - a configured artifacts_finder provider, its type, repositories, and credentials.

@@ -14,7 +14,7 @@ committed change, no OpenSpec folder yet.
 | D1  | Shape: git SOT plus service as a runtime access layer (both)                 | settled   | OQ1               |
 | D2  | Credentials: blind (service returns authConfig, consumer mints)              | settled   | diagram           |
 | D3  | DD and SBOM content processing is out of scope                               | settled   | -                 |
-| D4  | Resolve returns artifact download-info plus all registry sections, v2        | settled   | research          |
+| D4  | Resolve returns download-info plus registry sections, superseded by D34      | superseded| research          |
 | D5  | Def source: git only                                                         | settled   | extend            |
 | D6  | Auth: v2 authConfig is the target source of truth                            | direction | challenge 7       |
 | D7  | Resolve includes appdef metadata (release-name, argocd options)              | settled   | QA1               |
@@ -89,8 +89,8 @@ Cross-cutting:
 Deliverables (end of design):
 
 - DL1 - OpenAPI specs for the resolve, read, and write interfaces.
-- DL2 - algorithm descriptions with sequence diagrams: resolve, auth-ready assembly, DD vs SD
-  discrimination, write and commit.
+- DL2 - algorithm descriptions with sequence diagrams: the resolve join, the client build_artifact (DD or
+  SD by `solutionDescriptor`) and build_provider, and write and commit.
 - DL3 - the components and deploy scheme, detailed enough to implement. Largely in Topology and deployment.
 - DL4 - DTO and response schemas plus the error model.
 - DL5 - the v1-to-v2 migration CLI and its spec, a one-time tool separate from the runtime service. Its
@@ -154,28 +154,34 @@ Grounded in code research, provenance kept inline.
 
 ## Intended behavior / cases
 
-Resolve surface and response-format orientation:
+Resolution splits across three layers. The interface `resolve(app) -> Application` is shared by the
+appregdef service and the appregdef-client. The client adds `build_artifact(appdef, version) -> Artifact`
+and `build_provider(registry, creds) -> ArtifactProvider`. The engine artifacts_finder probes the registry
+tiers, authenticates, and downloads. The service is the central variant and stops at `resolve`: it returns
+`credId` references, not secret values, and never contacts a registry. The diagram is in
+[library/interface-spec.md](library/interface-spec.md).
+
+`resolve` is version-independent. Its result is the Application, the AppDef attributes with the RegDef
+joined in as `registry`:
 
 ```yaml
-resolve( app:version | [app:version, ...], zone? ):
-  # per app:
-  artifact:            # the DD or the SD at these coordinates, not named DD-only
-    kind: DD | SD
-    gav: ...
-    downloadUrl: ...
-  authReady: ...       # provider/method + non-secret params + cred ref (blind), registry-level
-  registry:            # all registry sections present in the def
-    maven: ...
-    docker: ...
-    helm: ...
-    helmApp: ...
-    go: ...
-    npm: ...
-    raw: ...
+resolve( app | [app, ...], zone? ):
+  # per app, the Application
+  name: ...
+  registryName: ...
+  groupId: ...
+  artifactId: ...
+  solutionDescriptor: true | false
+  deployParameters: ...
+  technicalConfigurationParameters: ...
+  metadata: ...                        # release-name, argocd options
+  registry:                            # the RegDef v1 or v2, credId references, no secret
+    # authConfig and the registry sections (maven, docker, helm, go, npm, raw)
 ```
 
-The consumer downloads the DD or SD and the chart over API or HTTP. The service does not download or
-parse them. The docker image is pulled by the deployer.
+The consumer adds the version and the credentials, builds the Artifact and the ArtifactProvider with the
+client, and downloads the DD or SD and the chart through artifacts_finder. The service does not download or
+parse. The docker image is pulled by the deployer.
 
 ## API surface
 
@@ -183,11 +189,10 @@ Derived from the responsibilities above. This is the list, not the detailed cont
 
 Read and resolve:
 
-- `resolve(app:version, zone?)` - artifact (DD or SD) download-info, all registry sections, and appdef
-  metadata, auth-ready (blind). `zone` is optional with one default zone today. Core.
-- `resolveBatch([app:version])` - the `resolve` result per entry. Core.
-- `getRegDef(name)` - the v2 reg def object, for version-independent access (publish and
-  promote). Core.
+- `resolve(app, zone?)` - the Application, the AppDef attributes with the RegDef joined in as `registry`.
+  Version-independent. `zone` is optional with one default zone today. Core.
+- `resolveBatch([app])` - the `resolve` result per entry. Core.
+- `getRegDef(name)` - the reg def object, for version-independent access (publish and promote). Core.
 - `getAppDef(name)` - the app def object. Open (O2).
 - `listRegDefs(filter)` / `listAppDefs(filter)` - a list of defs. Open (O3), filter included.
 
@@ -196,10 +201,10 @@ Write (parked, P1). Create and update are separate operations, and each returns 
 - `createRegDef` / `createAppDef` - create a new def, fail if it exists.
 - `updateRegDef` / `updateAppDef` - update an existing def, fail if it is absent.
 
-Deliberately absent: a raw def file (git serves that), artifact download (the consumer downloads over
-API or HTTP), credential minting (blind, D2), a resolve-by-SD entry (the caller expands the SD into a
-list of `app:version`), a sub-artifact resolve (the consumer builds docker and chart URLs from the
-registry sections, D11), and CMDB access (D5).
+Deliberately absent from the service: a raw def file (git serves that), artifact download and provider
+build (the appregdef-client does these through artifacts_finder), secret values (credId references only,
+D2 and D17), a resolve-by-SD entry (the caller expands the SD into a list of apps), a sub-artifact resolve
+(the consumer builds docker and chart coordinates from the registry sections, D11), and CMDB access (D5).
 
 ## Decision and rejected alternatives
 
@@ -219,9 +224,15 @@ registry sections, D11), and CMDB access (D5).
   `solutionDescriptor`, `deployParameters`, `technicalConfigurationParameters`, `metadata`.
 - RegDef v1 (`schemas/regdef.schema.json`) / v2 (`schemas/regdef-v2.schema.json`): registry coordinates
   plus auth. v1 has a single `credentialsId`, v2 has an `authConfig` map.
+- Application: the runtime join of an AppDef and its RegDef, what `resolve` returns. Reused from
+  artifact-searcher's model with the full AppDef attributes. Detailed in model.md. This reuse of a model is
+  not the artifact-searcher versus artifacts_finder consolidation, which is a separate EnvGene concern out
+  of scope here.
+- Artifact and ArtifactProvider: the appregdef-client builds these from the Application, the version, and
+  the credentials over artifacts_finder. Detailed in model.md.
 - DD: the maven artifact the AppDef points to - services, configurations, smartplug, charts. Not served
   by the service.
-- The resolve response shape above is the contract this service exposes.
+- Resolve returns the Application defined in model.md. The write interfaces return the written def.
 
 ## Topology and deployment
 
