@@ -143,6 +143,7 @@ COPY --from=java-native-builder --chown=ci:ci --chmod=755 /project/vals-referenc
 
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write in CI/CD
 # hadolint ignore=DL3002
+
 USER root
 WORKDIR /module/scripts
 CMD ["bash"]
