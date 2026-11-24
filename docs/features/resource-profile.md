@@ -174,7 +174,16 @@ envTemplate:
 The generated override is the last layer of its Namespace, so the baseline it names for an application wins over the
 baseline the override of the Namespace or the template override sets for the same application. What the run does not
 deploy stays as the author wrote it: an application the run skips keeps its baseline, and an override of your own keeps
-its custom values. The origin and the peer Namespace of a Blue-Green pair share one generated override.
+its custom values.
+
+The key of an entry is the folder name of the Namespace under `Namespaces/`. EnvGene derives it the same way it derives
+the folder name, from the deploy postfix and the role the Namespace has in the
+[BG Domain object](/docs/envgene-objects.md#bg-domain), so the key is already right for a Namespace whose folder this
+run renders for the first time. The two Namespaces of a Blue-Green pair get `<deploy-postfix>-origin` and
+`<deploy-postfix>-peer`, and both entries name one generated override. An environment without a BG Domain object has no
+origin or peer role to read, so a run of a Blue-Green deploy plan there records no entry for a Namespace that has no
+folder yet and warns; the generated override file is still written, and the run that has the BG Domain object records
+the entries.
 
 Merge mode combines the generated override into the template override, and the result keeps the name of the template
 override. When the Namespace has an override of its own and no template override, EnvGene writes the combined result to
@@ -190,8 +199,9 @@ override as its profile, and it is named the same way.
 
 A name ending with `-profile-override` belongs to the step. The environment build ignores such a name in
 `envSpecificResourceProfiles` and warns about it. A key of `generatedProfileDefaults` that matches no Cloud and no
-Namespace of the environment is ignored the same way, with a warning: the run that wrote it named the Namespaces it
-deployed before they were rendered, and the profile it generated stays unused.
+Namespace of the environment is ignored the same way, with a warning that also names the `-origin` and `-peer` keys a
+bare deploy postfix could have meant. The step only adds entries and never removes one, so a Namespace you rename or
+delete leaves its entry behind, where the environment build ignores it.
 
 ### Naming rules for Resource Profile Override
 
@@ -217,6 +227,11 @@ When set to `true`, EnvGene prefixes the name of each
 `profile.name` attribute of the Cloud or Namespace.
 
 For example: `acme-prod-eu-west-myprofile`.
+
+The environment build copies every referenced override into the `Profiles/` directory of the Environment Instance under
+its file name. Two override files of one name therefore collide there even when they sit in different scopes: the file
+the build copies last wins and the other never reaches the environment. The build warns about the collision, but it
+keeps only one of the two files, so give them different names.
 
 ## Effective Set calculation: resolving the profile
 

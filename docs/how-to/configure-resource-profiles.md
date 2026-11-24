@@ -346,6 +346,9 @@ to it.
 - A Namespace of the run that references no override of its own takes the generated override as its profile, named
   `<deploy-postfix>-profile-override`, unless the template of the Namespace has a profile of its own, which keeps its
   name.
+- The entry of a Namespace is keyed by its folder name under `Namespaces/`. In a Blue-Green environment that name is
+  the deploy postfix with the `-origin` or `-peer` suffix of the side, so the two Namespaces of a pair get two entries
+  that name one generated override.
 - In replace mode the template override is dropped and the generated override is merged on top of the override of
   the Namespace, see [Resource profiles](/docs/features/resource-profile.md#replace-mode).
 - An application that does not define the named baseline keeps the baseline it had.
@@ -361,6 +364,11 @@ to it.
 **Set a baseline on every override that sets custom values.** An override that sets custom values but no
 `baseline` generates a warning. The `baseline` field is optional in the schema for backward compatibility, but
 setting it is mandated by configuration best practice.
+
+**Give every override file a distinct file name.** The environment build copies every referenced override into the
+`Profiles/` directory of the Environment Instance under its file name, so two files of one name collide there even when
+they sit in different scopes, and only the one copied last reaches the environment. The build warns about the
+collision, see [Resource profiles](/docs/features/resource-profile.md#naming-rules-for-resource-profile-override).
 
 **Do not set `baseline: ""`** (empty string). An empty string is treated as absent in the resolution
 logic. Omit the field instead if you want no baseline selection.
