@@ -134,7 +134,7 @@ class TestStepGating:
     @pytest.mark.unit
     @pytest.mark.parametrize("profile, expected", [("prod", True), ("", False)])
     def test_deployment_profile_step_is_gated_on_profile(self, profile, expected):
-        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, PROFILE=profile)
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="DEPLOY", PROFILE=profile)
 
         assert DeploymentProfileStep().should_run(ctx) == expected
 
@@ -144,4 +144,18 @@ class TestStepGating:
 
         assert not EnvBuildStep().should_run(ctx)
         assert not DeploymentProfileStep().should_run(ctx)
+
+    @pytest.mark.unit
+    def test_deployment_profile_step_skipped_on_gitlab_clean(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN", PROFILE="prod")
+
+        assert EnvBuildStep().should_run(ctx)
+        assert not DeploymentProfileStep().should_run(ctx)
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("sd_version, expected", [("Cloud-Core:1.0", True), ("", False)])
+    def test_legacy_deployment_profile_step_needs_sd_input(self, sd_version, expected):
+        ctx = _ctx(ENV_BUILDER="true", OPERATION_TYPE="DEPLOY", SD_VERSION=sd_version, SD_DATA="", PROFILE="prod")
+
+        assert DeploymentProfileStep().should_run(ctx) == expected
 

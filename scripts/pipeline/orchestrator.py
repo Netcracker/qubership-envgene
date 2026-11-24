@@ -283,7 +283,14 @@ class DeploymentProfileStep(PipelineStep):
         return "deployment_profile"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return bool(ctx.params.get("PROFILE")) and EnvBuildStep().should_run(ctx)
+        if not ctx.params.get("PROFILE"):
+            return False
+        will_run = (OperationType(ctx.params.get('OPERATION_TYPE')) == OperationType.DEPLOY
+                    and (ctx.is_gitlab_deploy() or ctx.has_sd_input())
+                    and EnvBuildStep().should_run(ctx))
+        if not will_run:
+            logger.warning("'PROFILE' is set but this run deploys no application - PROFILE has no effect here")
+        return will_run
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
