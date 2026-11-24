@@ -915,6 +915,9 @@ Each `envSpecificResourceProfiles` entry maps a namespace key (or `cloud`) to th
 Profile Override, written as a string. The sibling fields `envSpecificParamsets`, `envSpecificE2EParamsets`,
 and `envSpecificTechnicalParamsets` take a list, but this field does not. EnvGene resolves the value as a
 single filename, so a list matches no file and generation fails, and the schema rejects a non-string value.
+The `generatedProfileDefaults` map next to this field belongs to the `apply_deployment_profile` step: do not write it
+by hand, and do not name an override ending with `-profile-override` yourself, since such a name is reserved and the
+entry is ignored.
 
 ```yaml
 # OK - one override name, as a string

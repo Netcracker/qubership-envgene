@@ -10,9 +10,8 @@
   - [Scenario 5: Use a baseline with custom values for a cluster](#scenario-5-use-a-baseline-with-custom-values-for-a-cluster)
   - [Scenario 6: Use a baseline with custom values for all environments](#scenario-6-use-a-baseline-with-custom-values-for-all-environments)
   - [Scenario 7: Add custom values for one environment on top of a template override](#scenario-7-add-custom-values-for-one-environment-on-top-of-a-template-override)
-  - [Scenario 8: Stack several overrides on one namespace or on the cloud](#scenario-8-stack-several-overrides-on-one-namespace-or-on-the-cloud)
-  - [Scenario 9: Set the baseline of one application](#scenario-9-set-the-baseline-of-one-application)
-  - [Scenario 10: Deploy every application of the run on one baseline](#scenario-10-deploy-every-application-of-the-run-on-one-baseline)
+  - [Scenario 8: Set the baseline of one application](#scenario-8-set-the-baseline-of-one-application)
+  - [Scenario 9: Deploy every application of the run on one baseline](#scenario-9-deploy-every-application-of-the-run-on-one-baseline)
   - [Best practices](#best-practices)
   - [Related documentation](#related-documentation)
 
@@ -40,9 +39,7 @@ it carries.
 **Association determines what applies.** An override applies to a namespace only when it is referenced by
 name: `profile.name` on the namespace or cloud template (a template override), or an entry in
 `envSpecificResourceProfiles` in `env_definition.yml` (an environment-specific override). An override file
-that nothing references is ignored, wherever it sits. An `envSpecificResourceProfiles` entry is one name or a
-list of names; a list applies its entries one after another and an earlier entry has priority over a later
-one (see Scenario 8).
+that nothing references is ignored, wherever it sits.
 
 **Location determines which file a name resolves to.** A referenced environment-specific name is resolved
 by searching the environment's `Inventory/resource_profiles/` first, then the cluster scope
@@ -303,43 +300,7 @@ conflicting values use the environment-specific value.
 **Sample:** an environment-specific override merged onto a template override -
 `docs/samples/instance-repository/environments/cluster-01/env-02/`.
 
-## Scenario 8: Stack several overrides on one namespace or on the cloud
-
-**When to use:** One namespace, or the NC cloud, needs the custom values of more than one override - for
-example a shared override that several environments use, plus an environment-specific detail.
-
-`envSpecificResourceProfiles` accepts a list of override names for a namespace key or for the `cloud` key.
-EnvGene applies the entries one after another, and an earlier entry has priority over a later one: a parameter,
-or a `baseline`, that two entries set keeps the value of the entry listed first.
-
-```yaml
-# environments/cluster-01/env-01/Inventory/env_definition.yml
-envTemplate:
-  envSpecificResourceProfiles:
-    core:
-      - "core-performance-tuning"
-      - "core-shared-override"
-    cloud:
-      - "cloud-shared-override"
-```
-
-Each name resolves through the same scope search as a single name, so one entry can sit in the environment's
-`Inventory/resource_profiles/` while another sits at cluster or global scope. In replace mode the first entry
-is the one that replaces the template override.
-
-A single name stays valid and behaves as a list of one entry:
-
-```yaml
-envTemplate:
-  envSpecificResourceProfiles:
-    core: "core-prod-override"
-```
-
-**Best practice for the list:** put the most specific override first. Two entries that set the same parameter
-with different `baseline` values produce the merge warning described in Scenario 7 for every entry whose
-baseline differs from the baseline applied before it.
-
-## Scenario 9: Set the baseline of one application
+## Scenario 8: Set the baseline of one application
 
 **When to use:** One application of the namespace has to use another baseline than the rest of the namespace.
 
@@ -367,19 +328,30 @@ applications:
 Reference the override in `env_definition.yml` as in Scenario 4, then commit to the Instance repository and
 trigger environment generation.
 
-## Scenario 10: Deploy every application of the run on one baseline
+## Scenario 9: Deploy every application of the run on one baseline
 
 **When to use:** the applications a run deploys have to start on the baseline named by the run, without editing the
 Instance repository beforehand.
 
 Start the pipeline with the [`PROFILE`](../instance-pipeline-parameters.md#profile) parameter. The
-`deployment_profile` step writes `Inventory/resource_profiles/deployment-profile.yml`, which names that baseline for
-every application of the deployment plan, and appends `deployment-profile` last to the override list of every
-Namespace and of the Cloud.
+`apply_deployment_profile` step writes `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` for every
+deploy postfix of the run, which names that baseline for every application the run deploys, and records it for each
+Namespace in `envTemplate.generatedProfileDefaults` of `env_definition.yml`. EnvGene maintains that map, you do not add
+to it.
 
-- An override you wrote by hand and listed before `deployment-profile` keeps priority, including the baseline it sets
-  for a single application, so Scenario 9 wins over the parameter.
+- The generated override is the last layer of its Namespace, so for an application the run deploys the baseline of the
+  run wins over the baseline your own override sets for it. Scenario 8 keeps its application baselines only for the
+  applications the run does not deploy.
+- The applications your own override does not mention start on the baseline of the run, and its custom values stay.
+- A Namespace of the run that references no override of its own takes the generated override, and the profile of
+  that Namespace is named `<deploy-postfix>-profile-override`.
+- In replace mode the template override is dropped and the generated override is merged on top of the override of
+  the Namespace, see [Resource profiles](/docs/features/resource-profile.md#replace-mode).
 - An application that does not define the named baseline keeps the baseline it had.
+- A name ending with `-profile-override` is reserved for the step. Naming one in `envSpecificResourceProfiles` has no
+  effect and the environment build warns about it.
+- Both files say what they are: the generated file opens with a header that names `PROFILE` and links to its
+  description, and the entry in `env_definition.yml` carries a comment that EnvGene wrote it.
 - The file is rewritten by every run that passes the parameter and deploys at least one application, so change the
   parameter rather than the file.
 

@@ -37,7 +37,7 @@ flowchart TB
         D --> SV[set_template_version]
         SV --> E[app_reg_def_process]
         E --> F[process_sd]
-        F --> DP[deployment_profile]
+        F --> DP[apply_deployment_profile]
         DP --> G[env_build]
         G --> H[generate_effective_set]
         H --> I[git_commit]
@@ -107,8 +107,8 @@ pipeline parameters.
      [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version). A `GITLAB_DEPLOY` pipeline builds the
      deployment plan directly.
 
-8. **deployment_profile** - turns the [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) parameter of the
-   run into a Resource Profile override.
+8. **apply_deployment_profile** - turns the [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) parameter of
+   the run into a Resource Profile override.
    - **Condition**: [`PROFILE`](/docs/instance-pipeline-parameters.md#profile) is set and `env_build` runs.
 
    This step:
@@ -116,13 +116,17 @@ pipeline parameters.
    1. Reads the applications of the run from the delta deployment plan, or from the deployment plan when the run
       produced no delta or its delta deploys no application. The step does nothing when the Environment has no
       deployment plan at all or when no plan names an application.
-   2. Writes `Inventory/resource_profiles/deployment-profile.yml`, which sets the baseline named by `PROFILE` as the
-      default of every one of those applications.
-   3. Appends `deployment-profile` last to the override list of every Namespace and of the Cloud, without adding it
-      twice.
+   2. Writes one `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` per deploy postfix, which sets
+      the baseline named by `PROFILE` for every one of those applications. The file opens with a header that names
+      `PROFILE` as its source and links to its description, because the step rewrites the file on every run. The
+      origin and the peer Namespace of a Blue-Green pair share one such file.
+   3. Records the override it wrote for every Namespace the run deploys in `envTemplate.generatedProfileDefaults` of
+      the Environment Inventory, without writing a key twice and with a comment that marks the entry as generated.
+      EnvGene maintains this map, the environment author does not, and the environment build applies the override it
+      names as the last layer of that Namespace.
 
-   An application that does not define the named baseline keeps the baseline it had, and an override listed before
-   `deployment-profile` keeps priority over it. See
+   An application that does not define the named baseline keeps the baseline it had, and the applications the run does
+   not deploy keep what the author set in `envSpecificResourceProfiles`. See
    [Resource Profiles](/docs/how-to/configure-resource-profiles.md).
 
 9. **env_build** - renders the Environment Instance from Jinja2 templates.
