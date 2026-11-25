@@ -5,8 +5,8 @@
 
 ## Deployment
 
-> _Placeholder. One pod with an in-process cache. High availability and scale-out are deferred, see the
-> Scope in architecture.md._
+> _Placeholder. Two or more identical stateless replicas with an in-memory cache, across more than one
+> cluster for high availability. See the Topology in architecture.md._
 
 ## Configuration reference
 
