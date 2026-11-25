@@ -1,2 +1,4 @@
 requests==2.32.3
 cloudevents==2.2.0
+# Resolved from the wheel built from modules/envgene-shared/pyproject.toml.
+envgene-shared
