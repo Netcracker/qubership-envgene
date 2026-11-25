@@ -366,8 +366,8 @@ and ignores it with a warning once that Namespace is gone.
 `baseline` generates a warning. The `baseline` field is optional in the schema for backward compatibility, but
 setting it is mandated by configuration best practice.
 
-**Give every override file a distinct file name.** The environment build copies every referenced override into the
-`Profiles/` directory of the Environment Instance under its file name, so two files of one name collide there even when
+**Give every override file a distinct filename.** The environment build copies every referenced override into the
+`Profiles/` directory of the Environment Instance under its filename, so two files of one name collide there even when
 they sit in different scopes, and only the one copied last reaches the environment. The build warns about the
 collision, see [Resource profiles](/docs/features/resource-profile.md#naming-rules-for-resource-profile-override).
 

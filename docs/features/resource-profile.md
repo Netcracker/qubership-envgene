@@ -232,7 +232,7 @@ When set to `true`, EnvGene prefixes the name of each
 For example: `acme-prod-eu-west-myprofile`.
 
 The environment build copies every referenced override into the `Profiles/` directory of the Environment Instance under
-its file name. Two override files of one name therefore collide there even when they sit in different scopes: the file
+its filename. Two override files of one name therefore collide there even when they sit in different scopes: the file
 the build copies last wins and the other never reaches the environment. The build warns about the collision, but it
 keeps only one of the two files, so give them different names.
 
