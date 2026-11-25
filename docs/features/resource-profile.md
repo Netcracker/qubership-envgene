@@ -177,6 +177,11 @@ baseline the override of the Namespace or the template override sets for the sam
 deploy stays as the author wrote it: an application the run skips keeps its baseline, and an override of your own keeps
 its custom values.
 
+The map lives in `env_definition.yml`, and the `env_inventory_generation` step rewrites that file from the Solution
+Descriptor of a run that recreates the Environment Inventory. Such a run keeps the entries of the Namespaces it deploys
+and forgets the others, so a Namespace it does not deploy gets its baseline back on its next run with `PROFILE`. The
+generated override file itself stays in the repository.
+
 The key of an entry is the folder name of the Namespace under `Namespaces/`, because that is how the environment build
 keys the Resource Profiles of a Namespace. The two Namespaces of a Blue-Green pair get the folders
 `<deploy-postfix>-origin` and `<deploy-postfix>-peer`, so they get two entries and both name one generated override. A
