@@ -12,6 +12,7 @@ from build_env.deployment_profile import (
     GENERATED_PROFILES_MAP_KEY,
     PROFILE_DOC,
     apply_deployment_profile,
+    apply_run_profile,
     assign_generated_overrides,
     build_profile_override,
     deployed_entities,
@@ -55,13 +56,19 @@ def _add_namespace(env_dir: Path, folder: str, name: str | None = None) -> None:
         YAML().dump({"name": name or folder}, f)
 
 
-def _write_bg_domain(env_dir: Path, origin: str, peer: str) -> None:
-    with (env_dir / "bg_domain.yml").open("w", encoding="utf-8") as f:
-        YAML().dump({"name": "app-bg", "originNamespace": {"name": origin}, "peerNamespace": {"name": peer}}, f)
-
-
 def _override_path(env_dir: Path, deploy_postfix: str = POSTFIX) -> Path:
     return env_dir / "Inventory" / "resource_profiles" / f"{profile_override_name(deploy_postfix)}.yml"
+
+
+def _apply(env_dir: Path, env_definition_path: Path, profile_name: str = "prod") -> list[Path]:
+    """Apply the profile as env build does: with the env definition this run has loaded."""
+    return apply_deployment_profile(env_dir, profile_name, openYaml(env_definition_path))
+
+
+def _assign(env_dir: Path, env_definition_path: Path, overrides: dict[str, str]) -> dict:
+    env_definition = openYaml(env_definition_path)
+    assign_generated_overrides(env_dir, overrides, env_definition)
+    return env_definition
 
 
 def _env_template(env_definition_path: Path) -> dict:
@@ -129,7 +136,7 @@ class TestProfileOverride:
             env_dir = Path(tmp)
 
             assert deployed_entities(env_dir) is None
-            assert apply_deployment_profile(env_dir, "prod") == []
+            assert apply_deployment_profile(env_dir, "prod", {}) == []
             assert not _override_path(env_dir).exists()
 
     def test_run_with_an_empty_plan_and_no_deploy_plan_generates_no_override(self):
@@ -137,7 +144,7 @@ class TestProfileOverride:
             env_dir = Path(tmp)
             _write_plan(env_dir, "delta-deploy-plan.yml", [])
 
-            assert apply_deployment_profile(env_dir, "prod") == []
+            assert apply_deployment_profile(env_dir, "prod", {}) == []
             assert not _override_path(env_dir).exists()
 
     def test_run_without_deploy_plan_touches_nothing(self):
@@ -147,7 +154,7 @@ class TestProfileOverride:
             env_definition_path = _write_env_definition(env_dir, {"bss": "hand-written"})
             before = env_definition_path.read_bytes()
 
-            assert apply_deployment_profile(env_dir, "prod") == []
+            assert _apply(env_dir, env_definition_path) == []
 
             assert not _override_path(env_dir).exists()
             assert env_definition_path.read_bytes() == before
@@ -199,12 +206,13 @@ class TestProfileOverride:
     def test_application_of_a_previous_run_keeps_its_baseline(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
-            _write_env_definition(env_dir, {})
+            env_definition_path = _write_env_definition(env_dir, {})
+            _add_namespace(env_dir, "bss", "bss-pl")
             _write_plan(env_dir, "deploy-plan.yml", ["core:1.0.0", "billing:1.0.0"])
-            apply_deployment_profile(env_dir, "prod")
+            _apply(env_dir, env_definition_path)
             _write_plan(env_dir, "deploy-plan.yml", ["core:1.0.0"])
 
-            apply_deployment_profile(env_dir, "prod")
+            _apply(env_dir, env_definition_path)
 
             override = openYaml(_override_path(env_dir), safe_load=True)
             assert {app["name"]: app["baseline"] for app in override["applications"]} == {
@@ -317,24 +325,12 @@ class TestDeployedGroups:
             assert groups == {}
             logger.warning.assert_called()
 
-    def test_a_blue_green_pair_is_keyed_by_its_sides_before_its_folders_exist(self):
-        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
-            env_dir = Path(tmp)
-            _write_plan_entries(env_dir, "deploy-plan.yml", [("billing:1.0.0", "app", "app-origin"),
-                                                            ("core:1.0.0", "app", "app-peer")])
-            _write_bg_domain(env_dir, "app-origin", "app-peer")
-
-            groups = deployed_groups(env_dir, deployed_entities(env_dir))
-
-            assert groups == {"app": ["app-origin", "app-peer"]}
-
-    def test_a_blue_green_run_without_a_bg_domain_keeps_the_key_unresolved(self):
+    def test_a_namespace_the_run_did_not_render_is_skipped(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             _write_plan_entries(env_dir, "deploy-plan.yml", [("billing:1.0.0", "app", "app-origin")])
 
-            with patch("build_env.deployment_profile.getenv", return_value="origin"), \
-                    patch("build_env.deployment_profile.logger") as logger:
+            with patch("build_env.deployment_profile.logger") as logger:
                 groups = deployed_groups(env_dir, deployed_entities(env_dir))
 
             assert groups == {}
@@ -349,7 +345,7 @@ class TestDeployedGroups:
             _add_namespace(env_dir, "bss", "env-01-bss")
             _add_namespace(env_dir, "core", "env-01-core")
 
-            apply_deployment_profile(env_dir, "prod")
+            _apply(env_dir, env_definition_path)
 
             assert _override_path(env_dir, "bss").is_file()
             assert _override_path(env_dir, "core").is_file()
@@ -365,7 +361,7 @@ class TestGeneratedOverridesAssignment:
             env_dir = Path(tmp)
             env_definition_path = _write_env_definition(env_dir, {"bss": "manual"})
 
-            assign_generated_overrides(env_dir, {"bss": NAME})
+            _assign(env_dir, env_definition_path, {"bss": NAME})
 
             assert _generated_map(env_definition_path) == {"bss": NAME}
             assert _env_specific_map(env_definition_path) == {"bss": "manual"}
@@ -375,7 +371,7 @@ class TestGeneratedOverridesAssignment:
             env_dir = Path(tmp)
             env_definition_path = _write_env_definition(env_dir, {'bss': 'manual'})
 
-            assign_generated_overrides(env_dir, {'bss': NAME})
+            _assign(env_dir, env_definition_path, {'bss': NAME})
 
             assert GENERATED_KEY_COMMENT in env_definition_path.read_text(encoding='utf-8')
 
@@ -384,7 +380,7 @@ class TestGeneratedOverridesAssignment:
             env_dir = Path(tmp)
             env_definition_path = _write_env_definition(env_dir, {"bss": "manual"})
 
-            assign_generated_overrides(env_dir, {"bss": NAME})
+            _assign(env_dir, env_definition_path, {"bss": NAME})
 
             assert _env_specific_map(env_definition_path) == {"bss": "manual"}
             assert _generated_map(env_definition_path) == {"bss": NAME}
@@ -393,10 +389,10 @@ class TestGeneratedOverridesAssignment:
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             env_definition_path = _write_env_definition(env_dir, {"bss": "manual"})
-            assign_generated_overrides(env_dir, {"bss": NAME})
+            _assign(env_dir, env_definition_path, {"bss": NAME})
             written_before = env_definition_path.read_bytes()
 
-            assign_generated_overrides(env_dir, {"bss": NAME})
+            _assign(env_dir, env_definition_path, {"bss": NAME})
 
             assert _generated_map(env_definition_path) == {"bss": NAME}
             assert env_definition_path.read_bytes() == written_before
@@ -406,12 +402,12 @@ class TestGeneratedOverridesAssignment:
             env_dir = Path(tmp)
             _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
             env_definition_path = _write_env_definition(env_dir, {"bss": "manual"})
-            _add_namespace(env_dir, "bss")
+            _add_namespace(env_dir, "bss", "bss-pl")
             generated = env_dir / "Profiles"
             generated.mkdir(parents=True, exist_ok=True)
             (generated / "previous-run.yml").write_text("name: previous-run\n", encoding="utf-8")
             _write(env_dir)
-            assign_generated_overrides(env_dir, {"bss": NAME})
+            _assign(env_dir, env_definition_path, {"bss": NAME})
 
             cleanup_resulting_dir(env_dir)
 
@@ -429,27 +425,23 @@ class TestGeneratedOverridesAssignment:
             _add_namespace(env_dir, "app-origin", "env-01-app-origin")
             _add_namespace(env_dir, "app-peer", "env-01-app-peer")
 
-            apply_deployment_profile(env_dir, "prod")
+            _apply(env_dir, env_definition_path)
 
             assert _generated_map(env_definition_path) == {"app-origin": profile_override_name("app"),
                                                            "app-peer": profile_override_name("app")}
             written = sorted(path.name for path in (env_dir / "Inventory" / "resource_profiles").iterdir())
             assert written == [f"{profile_override_name('app')}.yml"]
 
-    def test_a_pair_is_assigned_both_side_keys_before_its_folders_exist(self):
+    def test_the_deployed_namespace_is_keyed_by_the_folder_the_run_rendered(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
-            _write_plan_entries(env_dir, "deploy-plan.yml", [("billing:1.0.0", "app", "app-origin"),
-                                                            ("core:1.0.0", "app", "app-peer")])
+            _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"], "app", "env-01-app-origin")
             env_definition_path = _write_env_definition(env_dir, {})
-            _write_bg_domain(env_dir, "app-origin", "app-peer")
+            _add_namespace(env_dir, "app-origin", "env-01-app-origin")
 
-            apply_deployment_profile(env_dir, "prod")
+            _apply(env_dir, env_definition_path)
 
-            assert _generated_map(env_definition_path) == {"app-origin": profile_override_name("app"),
-                                                           "app-peer": profile_override_name("app")}
-            written = sorted(path.name for path in (env_dir / "Inventory" / "resource_profiles").iterdir())
-            assert written == [f"{profile_override_name('app')}.yml"]
+            assert _generated_map(env_definition_path) == {"app-origin": profile_override_name("app")}
 
     def test_only_deployed_namespaces_are_assigned(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
@@ -459,18 +451,80 @@ class TestGeneratedOverridesAssignment:
             _add_namespace(env_dir, "bss", "env-01-bss")
             _add_namespace(env_dir, "core", "env-01-core")
 
-            apply_deployment_profile(env_dir, "prod")
+            _apply(env_dir, env_definition_path)
 
             assert _generated_map(env_definition_path) == {"bss": profile_override_name("bss")}
             assert _env_specific_map(env_definition_path) == {"core": "core-override"}
 
-    def test_namespace_not_built_yet_is_keyed_by_deploy_postfix(self):
+    def test_the_env_definition_of_the_run_gets_the_generated_entry(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
+            env_definition_path = _write_env_definition(env_dir, {})
+            _add_namespace(env_dir, "bss", "bss-pl")
+
+            env_definition = openYaml(env_definition_path)
+            apply_deployment_profile(env_dir, "prod", env_definition)
+
+            assert env_definition["envTemplate"][GENERATED_PROFILES_MAP_KEY] == {"bss": NAME}
+            assert _generated_map(env_definition_path) == {"bss": NAME}
+
+    def test_a_namespace_the_run_did_not_render_gets_no_entry(self):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             _write_plan(env_dir, "delta-deploy-plan.yml", ["billing:1.0.0"], "bss", "env-01-bss")
             env_definition_path = _write_env_definition(env_dir, {})
 
-            apply_deployment_profile(env_dir, "prod")
+            with patch("build_env.deployment_profile.logger") as logger:
+                _apply(env_dir, env_definition_path)
 
-            assert _generated_map(env_definition_path) == {"bss": profile_override_name("bss")}
-            assert _env_specific_map(env_definition_path) == {}
+            assert _generated_map(env_definition_path) == {}
+            assert not _override_path(env_dir).exists()
+            logger.warning.assert_called()
+
+
+def _run_profile(env_dir: Path, env_definition_path: Path, variables: dict):
+    with patch("build_env.deployment_profile.getenv",
+               side_effect=lambda name, default=None: variables.get(name, default)), \
+            patch("build_env.deployment_profile.logger") as logger:
+        apply_run_profile(env_dir, openYaml(env_definition_path))
+    return logger
+
+
+class TestRunProfile:
+    def test_a_run_without_profile_changes_nothing(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
+            env_definition_path = _write_env_definition(env_dir, {})
+            _add_namespace(env_dir, "bss", "bss-pl")
+
+            _run_profile(env_dir, env_definition_path, {})
+
+            assert not _override_path(env_dir).exists()
+            assert _generated_map(env_definition_path) == {}
+
+    def test_a_run_that_does_not_deploy_warns_and_changes_nothing(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
+            env_definition_path = _write_env_definition(env_dir, {})
+            _add_namespace(env_dir, "bss", "bss-pl")
+
+            logger = _run_profile(env_dir, env_definition_path, {"PROFILE": "prod", "OPERATION_TYPE": "CLEAN"})
+
+            assert not _override_path(env_dir).exists()
+            assert _generated_map(env_definition_path) == {}
+            logger.warning.assert_called()
+
+    def test_a_deploy_run_applies_the_profile(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            env_dir = Path(tmp)
+            _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
+            env_definition_path = _write_env_definition(env_dir, {})
+            _add_namespace(env_dir, "bss", "bss-pl")
+
+            _run_profile(env_dir, env_definition_path, {"PROFILE": "prod"})
+
+            assert _override_path(env_dir).is_file()
+            assert _generated_map(env_definition_path) == {"bss": NAME}

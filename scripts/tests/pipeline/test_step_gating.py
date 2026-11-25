@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 os.environ.setdefault("CI_PROJECT_DIR", "/tmp")
 os.environ.setdefault("ENV_NAMES", "cluster-01/env-01")
@@ -11,7 +12,6 @@ from envgenehelper.models import PipelineType
 
 from pipeline.orchestrator import (
     AppregdefRenderStep,
-    DeploymentProfileStep,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
     GenerateEffectiveSetStep,
@@ -132,30 +132,29 @@ class TestStepGating:
             assert not GenerateEffectiveSetStep().should_run(ctx)
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("profile, expected", [("prod", True), ("", False)])
-    def test_deployment_profile_step_is_gated_on_profile(self, profile, expected):
-        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="DEPLOY", PROFILE=profile)
-
-        assert DeploymentProfileStep().should_run(ctx) == expected
-
-    @pytest.mark.unit
-    def test_deployment_profile_step_skipped_when_environment_is_not_built(self):
+    def test_env_build_warns_about_profile_when_the_environment_is_not_built(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="promote", PROFILE="prod")
 
-        assert not EnvBuildStep().should_run(ctx)
-        assert not DeploymentProfileStep().should_run(ctx)
+        with patch("pipeline.orchestrator.logger") as logger:
+            assert not EnvBuildStep().should_run(ctx)
+
+        logger.warning.assert_called_once()
 
     @pytest.mark.unit
-    def test_deployment_profile_step_skipped_on_gitlab_clean(self):
+    def test_env_build_stays_silent_about_profile_when_it_builds(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN", PROFILE="prod")
 
-        assert EnvBuildStep().should_run(ctx)
-        assert not DeploymentProfileStep().should_run(ctx)
+        with patch("pipeline.orchestrator.logger") as logger:
+            assert EnvBuildStep().should_run(ctx)
+
+        logger.warning.assert_not_called()
 
     @pytest.mark.unit
-    @pytest.mark.parametrize("sd_version, expected", [("Cloud-Core:1.0", True), ("", False)])
-    def test_legacy_deployment_profile_step_needs_sd_input(self, sd_version, expected):
-        ctx = _ctx(ENV_BUILDER="true", OPERATION_TYPE="DEPLOY", SD_VERSION=sd_version, SD_DATA="", PROFILE="prod")
+    def test_env_build_stays_silent_about_profile_when_it_is_not_set(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="promote", PROFILE="")
 
-        assert DeploymentProfileStep().should_run(ctx) == expected
+        with patch("pipeline.orchestrator.logger") as logger:
+            assert not EnvBuildStep().should_run(ctx)
+
+        logger.warning.assert_not_called()
 

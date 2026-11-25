@@ -62,13 +62,12 @@ Feature: The PROFILE parameter of a run as a resource profile
 
   # The run below builds the environment without a Solution Descriptor and without a GitLab deploy,
   # so it deploys no application and PROFILE has no effect. The overall result of such a run is not
-  # asserted here - only that the step stays out of the way.
+  # asserted here - only that PROFILE stays out of the way.
   Scenario: UC-DP-SKIP-1: A run that deploys no application skips PROFILE
     Given the workspace is initialized with test data from "e2e/uc_rp_dp_1"
     And the pipeline parameter "PROFILE" is set to "prod"
     When the unified pipeline orchestrator runs
-    Then the pipeline step "apply_deployment_profile" has status "SKIPPED"
-    And the run leaves no generated resource profile
+    Then the run leaves no generated resource profile
     And the environment definition has no generated resource profile for "bss"
 
   Scenario: UC-DP-SKIP-2: A CLEAN run skips PROFILE
@@ -78,5 +77,4 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the pipeline parameter "PROFILE" is set to "prod"
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
-    And the pipeline step "apply_deployment_profile" has status "SKIPPED"
     And the run leaves no generated resource profile

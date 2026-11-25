@@ -376,13 +376,14 @@ template artifact version that was actually applied in this run, for example:
 ### `PROFILE`
 
 **Description**: The name of a [Resource Profile](/docs/how-to/configure-resource-profiles.md) baseline. The
-`apply_deployment_profile` step writes one `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` per
-deploy postfix, which sets this baseline for every application the run deploys, and records that override in
-`envTemplate.generatedProfileDefaults` for every Namespace the run deploys. The generated override is the last layer of
-its Namespace, so this baseline wins over the baseline of the overrides under it, and an application that does not
-define the named baseline keeps the baseline it had.
+`env_build` step writes one `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` per deploy postfix,
+which sets this baseline for every application the run deploys, and records that override in
+`envTemplate.generatedProfileDefaults` under the folder name of every Namespace the run deploys. The generated override
+is the last layer of its Namespace, so this baseline wins over the baseline of the overrides under it, and an
+application that does not define the named baseline keeps the baseline it had. The origin and the peer Namespace of a
+Blue-Green pair share one such file and get one entry each.
 
-**Default Value**: None. An absent or empty value skips the `apply_deployment_profile` step.
+**Default Value**: None. An absent or empty value has no effect, and so has any value in a run that does not deploy.
 
 **Mandatory**: No
 

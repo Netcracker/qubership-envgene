@@ -334,7 +334,7 @@ trigger environment generation.
 Instance repository beforehand.
 
 Start the pipeline with the [`PROFILE`](../instance-pipeline-parameters.md#profile) parameter. The
-`apply_deployment_profile` step writes `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` for every
+`env_build` step writes `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` for every
 deploy postfix of the run, which names that baseline for every application the run deploys, and records it for each
 Namespace in `envTemplate.generatedProfileDefaults` of `env_definition.yml`. EnvGene maintains that map. Nothing stops
 you from adding an entry by hand: the environment build applies it like any other override while its Namespace exists,
