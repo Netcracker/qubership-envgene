@@ -139,7 +139,8 @@ def assign_generated_overrides(env_dir: Path, overrides_by_key: dict[str, str], 
     return assigned
 
 
-def apply_deployment_profile(env_dir: Path, profile_name: str, env_definition: dict) -> list[Path]:
+def apply_deployment_profile(env_dir: Path | str, profile_name: str, env_definition: dict) -> list[Path]:
+    env_dir = Path(env_dir)
     entities = deployed_entities(env_dir)
     if entities is None:
         return []
@@ -155,7 +156,7 @@ def apply_deployment_profile(env_dir: Path, profile_name: str, env_definition: d
     return override_paths
 
 
-def apply_run_profile(env_dir: Path, env_definition: dict) -> None:
+def apply_run_profile(env_dir: Path | str, env_definition: dict) -> None:
     """Generate the baseline override of the PROFILE parameter once the Environment Instance is rendered.
 
     The run applies it only when it deploys: an override of a run that only cleans the environment would stay in the

@@ -1,9 +1,11 @@
 import re
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from envgenehelper import openYaml
+import pytest
+
+from envgenehelper import NamespaceRole, get_env_instances_dir, open_current_env_instance_store, openYaml
 from ruamel.yaml import YAML
 
 from build_env.deployment_profile import (
@@ -20,7 +22,7 @@ from build_env.deployment_profile import (
     profile_override_name,
     write_profile_override,
 )
-from build_env.main import cleanup_resulting_dir
+from build_env.main import build_environment, cleanup_resulting_dir
 
 POSTFIX = "bss"
 NAME = profile_override_name(POSTFIX)
@@ -45,7 +47,8 @@ def _write_env_definition(env_dir: Path, profiles: dict) -> Path:
     inventory.mkdir(parents=True, exist_ok=True)
     env_definition_path = inventory / "env_definition.yml"
     with env_definition_path.open("w", encoding="utf-8") as f:
-        YAML().dump({"envTemplate": {"name": "simple", "envSpecificResourceProfiles": profiles}}, f)
+        YAML().dump({"inventory": {"environmentName": env_dir.name},
+                    "envTemplate": {"name": "simple", "envSpecificResourceProfiles": profiles}}, f)
     return env_definition_path
 
 
@@ -483,7 +486,12 @@ class TestGeneratedOverridesAssignment:
             logger.warning.assert_called()
 
 
-def _run_profile(env_dir: Path, env_definition_path: Path, variables: dict):
+def _as_arg(env_dir: Path, env_dir_kind: str) -> Path | str:
+    """Give the environment directory the shape its caller in env build gives it."""
+    return env_dir if env_dir_kind == "path" else str(env_dir)
+
+
+def _run_profile(env_dir: Path | str, env_definition_path: Path, variables: dict):
     with patch("build_env.deployment_profile.getenv",
                side_effect=lambda name, default=None: variables.get(name, default)), \
             patch("build_env.deployment_profile.logger") as logger:
@@ -491,40 +499,78 @@ def _run_profile(env_dir: Path, env_definition_path: Path, variables: dict):
     return logger
 
 
+@pytest.mark.parametrize("env_dir_kind", ["path", "string"])
 class TestRunProfile:
-    def test_a_run_without_profile_changes_nothing(self):
+    def test_a_run_without_profile_changes_nothing(self, env_dir_kind):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
             env_definition_path = _write_env_definition(env_dir, {})
             _add_namespace(env_dir, "bss", "bss-pl")
 
-            _run_profile(env_dir, env_definition_path, {})
+            _run_profile(_as_arg(env_dir, env_dir_kind), env_definition_path, {})
 
             assert not _override_path(env_dir).exists()
             assert _generated_map(env_definition_path) == {}
 
-    def test_a_run_that_does_not_deploy_warns_and_changes_nothing(self):
+    def test_a_run_that_does_not_deploy_warns_and_changes_nothing(self, env_dir_kind):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
             env_definition_path = _write_env_definition(env_dir, {})
             _add_namespace(env_dir, "bss", "bss-pl")
 
-            logger = _run_profile(env_dir, env_definition_path, {"PROFILE": "prod", "OPERATION_TYPE": "CLEAN"})
+            logger = _run_profile(_as_arg(env_dir, env_dir_kind), env_definition_path,
+                                  {"PROFILE": "prod", "OPERATION_TYPE": "CLEAN"})
 
             assert not _override_path(env_dir).exists()
             assert _generated_map(env_definition_path) == {}
             logger.warning.assert_called()
 
-    def test_a_deploy_run_applies_the_profile(self):
+    def test_a_deploy_run_applies_the_profile(self, env_dir_kind):
         with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
             env_dir = Path(tmp)
             _write_plan(env_dir, "deploy-plan.yml", ["billing:1.0.0"])
             env_definition_path = _write_env_definition(env_dir, {})
             _add_namespace(env_dir, "bss", "bss-pl")
 
-            _run_profile(env_dir, env_definition_path, {"PROFILE": "prod"})
+            _run_profile(_as_arg(env_dir, env_dir_kind), env_definition_path, {"PROFILE": "prod"})
 
             assert _override_path(env_dir).is_file()
+            assert _generated_map(env_definition_path) == {"bss": NAME}
+
+
+class TestEnvBuildCallSite:
+    def test_env_build_applies_the_profile_to_the_directories_it_rendered(self):
+        with tempfile.TemporaryDirectory(prefix="profile-override-") as tmp:
+            instances_dir = str(Path(tmp) / "environments")
+            env_dir = get_env_instances_dir("env-01", "cluster-01", instances_dir)
+            env_definition_path = _write_env_definition(Path(env_dir), {})
+            _write_plan(Path(env_dir), "deploy-plan.yml", ["billing:1.0.0"])
+            rendered = []
+
+            def render(env_name, envvars):
+                """The env build cleanup drops Namespaces, so only the render leaves them behind."""
+                _add_namespace(Path(env_dir), "bss", "bss-pl")
+                rendered.append(env_name)
+
+            render_context = MagicMock()
+            render_context.render_config_env.side_effect = render
+            with open_current_env_instance_store(env_dir), \
+                    tempfile.TemporaryDirectory(prefix="templates-") as templates_dir, \
+                    patch.dict("os.environ", {"CI_PROJECT_DIR": tmp, "PROFILE": "prod"}), \
+                    patch("build_env.main.cleanup_resulting_dir"), \
+                    patch("build_env.main.copy_paramsets_to_render_workspace"), \
+                    patch("build_env.main.load_env_inputs", side_effect=lambda *args: openYaml(env_definition_path)), \
+                    patch("build_env.main.get_deployer_config", return_value=("cmdb", None, None)), \
+                    patch("build_env.main.find_cloud_passport_definition", return_value=""), \
+                    patch("build_env.main.EnvGenerator", return_value=render_context), \
+                    patch("build_env.main.get_resource_profiles_map", return_value={}), \
+                    patch("build_env.main.build_env"), \
+                    patch("build_env.main.create_credentials"):
+                build_environment("env-01", "cluster-01", {NamespaceRole.COMMON: templates_dir},
+                                  env_dir, instances_dir, tmp)
+
+            assert rendered == ["env-01"]
+            assert _override_path(Path(env_dir)).is_file()
             assert _generated_map(env_definition_path) == {"bss": NAME}
