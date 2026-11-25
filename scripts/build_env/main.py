@@ -83,7 +83,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["env_definition"] = env_definition
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
-    # the Namespace folders exist only after the render, so the PROFILE baseline is applied here
+    # the Namespaces of the render live in the store of the build, which is open until the env build step is over
     apply_run_profile(source_env_dir, env_definition)
     validate_env_specific_override_keys(source_env_dir, env_definition)
     env_specific_resource_profile_map = get_resource_profiles_map(

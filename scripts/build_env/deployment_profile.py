@@ -1,5 +1,6 @@
-from envgenehelper import INVENTORY_DIR_NAME, OperationType, Path, beautifyYaml, getEnvDefinitionPath, get_namespaces, \
-    get_schema_dir, getenv, logger, openFileAsString, readYaml, set_nested_yaml_attribute, writeYamlToFile
+from envgenehelper import INVENTORY_DIR_NAME, OperationType, Path, beautifyYaml, current_env_instance_store, \
+    getEnvDefinitionPath, get_schema_dir, getenv, logger, openFileAsString, readYaml, set_nested_yaml_attribute, \
+    writeYamlToFile
 from envgenehelper.deploy_plan_adapter import DELTA_DEPLOY_PLAN_FILE_NAME, DEPLOY_PLAN_FILE_NAME, DeployPlanEntity, \
     EnvgeneDeployPlan
 
@@ -47,8 +48,13 @@ def deployed_entities(env_dir: Path) -> list[DeployPlanEntity] | None:
     return entities
 
 
-def deployed_groups(env_dir: Path, entities: list[DeployPlanEntity]) -> dict[str, list[str]]:
-    folder_by_namespace = {namespace.name: namespace.postfix for namespace in get_namespaces(env_dir)}
+def deployed_groups(entities: list[DeployPlanEntity]) -> dict[str, list[str]]:
+    """Group the deployed applications by deployPostfix, keyed by the folder of each rendered Namespace.
+
+    The Namespaces of the run are read from the store of the env build: the build has just emptied the Environment
+    Instance and keeps what it rendered there until it flushes the whole instance to the disk.
+    """
+    folder_by_namespace = {namespace.name: namespace.postfix for namespace in current_env_instance_store().namespaces()}
     keys_by_postfix: dict[str, list[str]] = {}
     for entity in entities:
         postfix = entity.deploy_postfix
@@ -58,8 +64,8 @@ def deployed_groups(env_dir: Path, entities: list[DeployPlanEntity]) -> dict[str
             continue
         key = folder_by_namespace.get(entity.namespace)
         if key is None:
-            logger.warning(f"The Namespace '{entity.namespace}' of deployPostfix '{postfix}' has no folder in the "
-                           f"rendered Environment Instance, so no '{GENERATED_PROFILES_MAP_KEY}' key is recorded for "
+            logger.warning(f"The Namespace '{entity.namespace}' of deployPostfix '{postfix}' is not one of the "
+                           f"Namespaces this run rendered, so no '{GENERATED_PROFILES_MAP_KEY}' key is recorded for "
                            f"it and its baseline is not set by PROFILE")
             continue
         keys = keys_by_postfix.setdefault(postfix, [])
@@ -146,7 +152,7 @@ def apply_deployment_profile(env_dir: Path | str, profile_name: str, env_definit
         return []
     overrides_by_key = {}
     override_paths = []
-    for postfix, keys in deployed_groups(env_dir, entities).items():
+    for postfix, keys in deployed_groups(entities).items():
         postfix_entities = [entity for entity in entities if entity.deploy_postfix == postfix]
         override_paths.append(write_profile_override(env_dir, postfix, postfix_entities, profile_name))
         for key in keys:
