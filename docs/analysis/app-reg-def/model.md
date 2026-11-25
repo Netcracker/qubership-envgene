@@ -26,14 +26,14 @@ file per def, with the schemas alongside.
 ```text
 schemas/
   application-definition/
-    v1.schema.json          # AppDef, by version
+    v1.schema.json
   registry-definition/
-    v1.schema.json          # RegDef v1 (legacy)
-    v2.schema.json          # RegDef v2 (target)
+    v1.schema.json
+    v2.schema.json
 application-definitions/
-  <app-name>.yaml           # one AppDef per file, stem == name
+  <app-name>.yaml           # one AppDef per file
 registry-definitions/
-  <registry-name>.yaml      # one RegDef per file, stem == name
+  <registry-name>.yaml      # one RegDef per file
 ```
 
 - one branch is the source of truth. Changes may optionally go through a manual merge-request workflow.
