@@ -1,0 +1,5 @@
+name: bss-profile-override
+applications:
+  - name: app3
+    baseline: dev
+    services: []

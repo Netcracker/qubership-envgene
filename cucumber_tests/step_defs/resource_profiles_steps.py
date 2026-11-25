@@ -5,8 +5,8 @@ from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from cucumber_tests.shared_steps.calculator_cli_steps import _MOCK_REGISTRY, _PRODUCTION_CLI
-from build_env.deployment_profile import GENERATED_PROFILES_MAP_KEY, PROFILE_OVERRIDE_SUFFIX, \
-    RESOURCE_PROFILES_DIR_NAME
+from build_env.deployment_profile import GENERATED_MARKER, GENERATED_PROFILES_MAP_KEY, PROFILE_DOC, \
+    PROFILE_OVERRIDE_SUFFIX, RESOURCE_PROFILES_DIR_NAME
 
 GENERATED_PROFILE_NAME = f"bss{PROFILE_OVERRIDE_SUFFIX}"
 GENERATED_MAP_KEY = GENERATED_PROFILES_MAP_KEY
@@ -162,3 +162,24 @@ def definition_assigns_generated_profile_by_name(workspace: EnvGeneWorkspace, na
 def definition_keeps_resource_profile(workspace: EnvGeneWorkspace, name: str, key: str):
     profiles = _env_definition(workspace)["envTemplate"].get("envSpecificResourceProfiles") or {}
     assert profiles.get(key) == name, profiles
+
+
+@given(parsers.parse('the pipeline parameter "SD_DATA" is set to a Solution Descriptor that deploys '
+                     '"{app_version}" to the deployPostfixes "{first}" and "{second}"'))
+def sd_data_with_two_deploy_postfixes(workspace: EnvGeneWorkspace, app_version: str, first: str, second: str):
+    sd_content = yaml.dump({
+        "version": 2.2,
+        "type": "solutionDeploy",
+        "applications": [{"version": app_version, "deployPostfix": first},
+                         {"version": app_version, "deployPostfix": second}],
+    })
+    if not hasattr(workspace, "extra_env"):
+        workspace.extra_env = {}
+    workspace.extra_env["SD_DATA"] = sd_content
+
+
+@then("the generated resource profile opens with the marker of EnvGene")
+def generated_profile_opens_with_marker(workspace: EnvGeneWorkspace):
+    lines = _generated_profile_file(workspace).read_text(encoding="utf-8").splitlines()
+    assert lines[0] == f"# {GENERATED_MARKER}", lines[:3]
+    assert any(PROFILE_DOC in line for line in lines), lines[:6]
