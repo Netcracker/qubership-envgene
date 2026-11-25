@@ -7,6 +7,7 @@ from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from cucumber_tests.shared_steps.calculator_cli_steps import _MOCK_REGISTRY, _PRODUCTION_CLI
 from build_env.deployment_profile import GENERATED_KEY_COMMENT, GENERATED_MARKER, GENERATED_PROFILES_MAP_KEY, PROFILE_DOC, \
     PROFILE_OVERRIDE_SUFFIX, RESOURCE_PROFILES_DIR_NAME
+from build_env.resource_profiles import RESULTING_PROFILES_DIR_NAME
 
 GENERATED_MAP_KEY = GENERATED_PROFILES_MAP_KEY
 
@@ -103,7 +104,11 @@ def resource_profile_has_baseline(workspace: EnvGeneWorkspace, name: str, baseli
 
 @then(parsers.parse('the environment instance has no resource profile "{name}"'))
 def environment_has_no_resource_profile(workspace: EnvGeneWorkspace, name: str):
-    assert _resource_profile_file(workspace, name) is None
+    # An assembled profile of that name may be absent for two reasons, and only one of them is the result the
+    # scenario claims: the run assembled profiles, and this one is not among them.
+    profiles_dir = _env_dir(workspace) / RESULTING_PROFILES_DIR_NAME
+    assert profiles_dir.is_dir(), f"the run assembled no resource profile at all in {profiles_dir}"
+    assert _resource_profile_file(workspace, name) is None, name
 
 
 @then(parsers.parse('the service "{service}" of application "{app}" receives "{param}" as "{value}"'))
@@ -140,8 +145,14 @@ def run_leaves_no_generated_profile(workspace: EnvGeneWorkspace):
 
 @then(parsers.parse('the environment definition assigns the generated resource profile to "{key}"'))
 def definition_assigns_generated_profile(workspace: EnvGeneWorkspace, key: str):
+    # The key of the map is the folder of the Namespace and the name is built from the deployPostfix, so the two
+    # coincide only by accident: a Blue-Green pair keys bss-origin and names bss-profile-override.
     generated = _env_definition(workspace)["envTemplate"].get(GENERATED_MAP_KEY) or {}
-    assert generated.get(key) == f"{key}{PROFILE_OVERRIDE_SUFFIX}", generated
+    name = generated.get(key)
+    assert name, generated
+    assert name.endswith(PROFILE_OVERRIDE_SUFFIX), generated
+    profile_file = _override_file(workspace, name)
+    assert profile_file in _generated_profile_files(workspace), f"{name} of {key} carries no marker of EnvGene"
 
 
 @then(parsers.parse('the environment definition has no generated resource profile for "{key}"'))

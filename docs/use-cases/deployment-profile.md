@@ -10,9 +10,9 @@
   - [Active side selection](#active-side-selection)
     - [UC-DP-AS-1: The generated profile makes a Namespace without a profile the active side over the Cloud](#uc-dp-as-1-the-generated-profile-makes-a-namespace-without-a-profile-the-active-side-over-the-cloud)
   - [Merge and replace modes](#merge-and-replace-modes)
-    - [UC-DP-RP-1: Replace mode leaves the generated profile as the only override of the Namespace](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace)
-    - [UC-DP-RP-2: Merge mode keeps the template override and changes only the baseline](#uc-dp-rp-2-merge-mode-keeps-the-template-override-and-changes-only-the-baseline)
-    - [UC-DP-RP-3: Replace mode drops the template override and keeps the values of the environment override](#uc-dp-rp-3-replace-mode-drops-the-template-override-and-keeps-the-values-of-the-environment-override)
+    - [UC-DP-MR-1: Replace mode leaves the generated profile as the only override of the Namespace](#uc-dp-mr-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace)
+    - [UC-DP-MR-2: Merge mode keeps the template override and changes only the baseline](#uc-dp-mr-2-merge-mode-keeps-the-template-override-and-changes-only-the-baseline)
+    - [UC-DP-MR-3: Replace mode drops the template override and keeps the values of the environment override](#uc-dp-mr-3-replace-mode-drops-the-template-override-and-keeps-the-values-of-the-environment-override)
   - [A baseline the application does not have](#a-baseline-the-application-does-not-have)
     - [UC-DP-NB-1: A baseline the deployed application does not have falls back to the baseline of the profile](#uc-dp-nb-1-a-baseline-the-deployed-application-does-not-have-falls-back-to-the-baseline-of-the-profile)
   - [Namespace selection](#namespace-selection)
@@ -29,8 +29,8 @@
     - [UC-DP-RS-1: An author entry that names the generated override is ignored](#uc-dp-rs-1-an-author-entry-that-names-the-generated-override-is-ignored)
     - [UC-DP-HD-1: The generated override says that EnvGene wrote it](#uc-dp-hd-1-the-generated-override-says-that-envgene-wrote-it)
   - [Runs that skip PROFILE](#runs-that-skip-profile)
-    - [UC-DP-SKIP-1: A run that deploys no application skips PROFILE](#uc-dp-skip-1-a-run-that-deploys-no-application-skips-profile)
-    - [UC-DP-SKIP-2: A CLEAN run skips PROFILE](#uc-dp-skip-2-a-clean-run-skips-profile)
+    - [UC-DP-SK-1: A run that deploys no application skips PROFILE](#uc-dp-sk-1-a-run-that-deploys-no-application-skips-profile)
+    - [UC-DP-SK-2: A CLEAN run skips PROFILE](#uc-dp-sk-2-a-clean-run-skips-profile)
 
 ## Overview
 
@@ -303,13 +303,15 @@ Instance pipeline (GitLab or GitHub) is started with parameters identical to tho
    Cloud for all of its applications. The scenario carries one application, so this consequence for the others is
    stated by the feature and not asserted by the scenario.
 
+The identifiers below take their prefix from the subject of this document, `DP` for the deployment profile, and their group letters from the behaviour a group covers: `ES` for the Effective Set, `MR` for merge and replace, `BG` for the Blue-Green pair, `SK` for the runs that skip the parameter.
+
 ## Merge and replace modes
 
 `inventory.config.mergeEnvSpecificResourceProfiles` decides whether an override survives the run. These use cases run
 the same deploy with `PROFILE` against a Namespace that owns a template override, once in each mode, and once with an
 environment-specific override as well.
 
-### UC-DP-RP-1: Replace mode leaves the generated profile as the only override of the Namespace
+### UC-DP-MR-1: Replace mode leaves the generated profile as the only override of the Namespace
 
 **Pre-requisites:**
 
@@ -340,16 +342,16 @@ Namespace above, with `PROFILE: prod`.
 4. The Effective Set of the deployed application has the values of the `prod` baseline, `REPLICAS: 2`, and none of the
    custom values of the template override, so `TEMPLATE_PARAM` is absent.
 
-### UC-DP-RP-2: Merge mode keeps the template override and changes only the baseline
+### UC-DP-MR-2: Merge mode keeps the template override and changes only the baseline
 
 **Pre-requisites:**
 
-1. The same Namespace as in [UC-DP-RP-1](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace),
+1. The same Namespace as in [UC-DP-MR-1](#uc-dp-mr-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace),
    with `inventory.config.mergeEnvSpecificResourceProfiles` unset or `true`.
 
 **Trigger:**
 
-Identical to [UC-DP-RP-1](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace).
+Identical to [UC-DP-MR-1](#uc-dp-mr-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace).
 
 **Steps:**
 
@@ -365,7 +367,7 @@ Identical to [UC-DP-RP-1](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-
 3. The Effective Set of the deployed application keeps the custom values of the template override, `TEMPLATE_PARAM`
    and `REPLICAS: 3`, and takes the values of the `prod` baseline that `PROFILE` set.
 
-### UC-DP-RP-3: Replace mode drops the template override and keeps the values of the environment override
+### UC-DP-MR-3: Replace mode drops the template override and keeps the values of the environment override
 
 **Pre-requisites:**
 
@@ -375,7 +377,7 @@ Identical to [UC-DP-RP-1](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-
 
 **Trigger:**
 
-Identical to [UC-DP-RP-1](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace).
+Identical to [UC-DP-MR-1](#uc-dp-mr-1-replace-mode-leaves-the-generated-profile-as-the-only-override-of-the-namespace).
 
 **Steps:**
 
@@ -412,7 +414,7 @@ SBOM, which the effective-set stage generates after the environment build.
 **Trigger:**
 
 Instance pipeline (GitLab or GitHub) is started with parameters identical to those of
-[UC-DP-RP-2](#uc-dp-rp-2-merge-mode-keeps-the-template-override-and-changes-only-the-baseline), with
+[UC-DP-MR-2](#uc-dp-mr-2-merge-mode-keeps-the-template-override-and-changes-only-the-baseline), with
 `PROFILE: perf-test`.
 
 **Steps:**
@@ -722,7 +724,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 A run that deploys no application must not write a baseline that then sits in the committed environment definition.
 Such a run leaves the generated override and the recorded map alone and warns that the parameter has no effect.
 
-### UC-DP-SKIP-1: A run that deploys no application skips PROFILE
+### UC-DP-SK-1: A run that deploys no application skips PROFILE
 
 **Pre-requisites:**
 
@@ -746,7 +748,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    `envTemplate.generatedProfileDefaults` gains no key.
 2. The log states that the applications the run deploys are unknown and that no override is generated.
 
-### UC-DP-SKIP-2: A CLEAN run skips PROFILE
+### UC-DP-SK-2: A CLEAN run skips PROFILE
 
 **Pre-requisites:**
 
