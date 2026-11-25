@@ -6,15 +6,25 @@ and the RegDef v2 analysis linked below, not restated here. The behavior that us
 
 ## Objects
 
-- **AppDef** - the stored application definition. [appdef.schema.json](/schemas/appdef.schema.json).
+- **AppDef** - the stored application definition.
+  - [description](/docs/envgene-objects.md#application-definition)
+  - [appdef.schema.json](/schemas/appdef.schema.json)
 - **RegDef** - the stored registry definition.
-  [regdef.schema.json](/schemas/regdef.schema.json)
-  [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md).
+  - [description](/docs/envgene-objects.md#registry-definition)
+  - [regdef.schema.json](/schemas/regdef.schema.json)
+  - [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md)
+- **client** - the opened appregdef-client over a backend, returned by `open_defs` (git) or `connect`
+  (service). One object with the defs-store operations.
+  See [library/interface-spec.md](library/interface-spec.md).
 - **Application** - the runtime join of an AppDef and its RegDef, reused from artifact-searcher's
-  `Application` model and carrying the full AppDef attributes. This is what `resolve` returns.
+  - [`Application` model](/modules/artifact-searcher/artifact_searcher/utils/models.py) and carrying the full
+    AppDef attributes. This is what `resolve` returns.
 - **Artifact** - the artifacts_finder coordinates of the DD or SD, the `groupId`, `artifactId`, `version`,
   and `extension`.
 - **ArtifactProvider** - a configured artifacts_finder provider, its type, repositories, and credentials.
+- **REGISTRY_CREDENTIALS** - the consumer CI/CD variable holding the registry secrets, keyed by `credId`.
+  The caller passes it into `create_provider`, the capability never stores it.
+  - [description](/docs/analysis/regdef-v2-extensions.md#ext2--the-registry_credentials-variable)
 - **DD and SD** - the deployment descriptor (`dd.json`) and the solution descriptor (`sd.yaml`) the
   coordinates point to.
 
@@ -30,12 +40,15 @@ schemas/
   registry-definition/
     v1.schema.json
     v2.schema.json
-application-definitions/
+AppDefs/
   <app-name>.yaml           # one AppDef per file
-registry-definitions/
+RegDefs/
   <registry-name>.yaml      # one RegDef per file
 ```
 
+- the def folders are `AppDefs/` and `RegDefs/`, matching the existing central registry repo, so the
+  migration needs no folder move. This is a deliberate exception to the kebab-case path convention, kept
+  for these two fixed folders.
 - one branch is the source of truth. Changes may optionally go through a manual merge-request workflow.
 - zero secrets in the repo, `credId` references only, no encryption.
 - zone folders are deferred. There is one default zone today, and the layout stays flat until multizone
@@ -45,8 +58,8 @@ registry-definitions/
 
 The schemas live in the repo, so validation is versioned with the data and decoupled from a code release.
 
-- each def carries a `kind` (`ApplicationDefinition`, `RegistryDefinition`), added by T2, and a RegDef also
-  carries its `version` (absent for v1, `"2.0"` for v2). The validator maps `(kind, version)` to
+- each def carries a `kind` (`ApplicationDefinition`, `RegistryDefinition`), and a RegDef also carries its
+  `version` (absent for v1, `"2.0"` for v2). The validator maps `(kind, version)` to
   `schemas/<kind-in-kebab>/<major>.schema.json`.
 - the service and the library validate each def against that committed schema, not a schema baked into the
   code. A new def shape ships as a schema commit, with no code release.
@@ -60,8 +73,9 @@ The schemas live in the repo, so validation is versioned with the data and decou
 
 Casing by role, so the same identity reads consistently across the file system and the object.
 
-- path identifiers, the folders, the file names, and the def `name`, are kebab-case and DNS-safe.
+- path identifiers, the def file names and the def `name`, are kebab-case and DNS-safe. The two container
+  folders `AppDefs/` and `RegDefs/` are the inherited exception (see Repository layout).
 - object fields are camelCase.
 - a `kind`, where an object carries one, is PascalCase, for example `RegistryDefinition`.
-- the file stem equals the def `name`, so `registry-definitions/shared-platform.yaml` holds the RegDef
-  named `shared-platform`.
+- the file name without the extension equals the def `name`, so `RegDefs/shared-platform.yaml` holds the
+  RegDef named `shared-platform`.
