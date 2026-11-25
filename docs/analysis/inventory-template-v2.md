@@ -278,9 +278,10 @@ Existing calls with `ENV_INVENTORY_CONTENT` work without changes.
 
 ### Examples
 
-"Before" is the repository state before generate runs. "Action" is what the planner passes to `ENV_INVENTORY_CONTENT`.
+"Target repository before generate" is the state of the repository where the new environment is created, before generate
+runs. "`ENV_INVENTORY_CONTENT` action" is what the planner passes to the executor.
 
-| #  | Case                                   | In the reference                         | Before                                 | Planner decision                            | Action                                            | After                                                                         |
+| #  | Case                                   | Reference environment                    | Target repository before generate      | Planner decision                            | `ENV_INVENTORY_CONTENT` action                    | Generated environment                                                         |
 |----|----------------------------------------|------------------------------------------|----------------------------------------|---------------------------------------------|---------------------------------------------------|-------------------------------------------------------------------------------|
 |    | **Values**                             |                                          |                                        |                                             |                                                   |                                                                               |
 | 1  | `keep` value                           | `replicas: 2`                            | No environment                         | Create with the reference value             | `paramSets[]: create`                             | `replicas: 2`                                                                 |
