@@ -59,7 +59,6 @@ def env_prepare_report_contains_timed_step(workspace, step_name):
 def metrics_collector_is_configured(workspace):
     workspace.extra_env = getattr(workspace, "extra_env", {})
     workspace.extra_env["METRICS_COLLECTOR_URL"] = "https://collector.example.com"
-    workspace.extra_env["ENVGENE_FAN_OUT_CHILD"] = "1"
 
 
 @then("the env_prepare report steps match the Metrics Collector activity record")
