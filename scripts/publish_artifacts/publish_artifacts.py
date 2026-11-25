@@ -15,7 +15,7 @@ LIMIT_MULTIPLIER = 3
 
 
 def artifacts_output_root(work_dir: Path) -> Path:
-    return Path(os.getenv("ARTIFACTS_OUTPUT_DIR", str(work_dir / "artifacts")))
+    return Path(os.getenv("ARTIFACTS_OUTPUT_DIR", str(Path(work_dir) / "artifacts")))
 
 
 def copy_env_artifact(ctx) -> None:
