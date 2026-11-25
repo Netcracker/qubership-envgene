@@ -1,6 +1,6 @@
 import json
 import re
-from pathlib import Path
+import subprocess
 
 from pytest_bdd import given, parsers, scenarios, then
 
@@ -8,13 +8,7 @@ from cucumber_tests.shared_steps.common_steps import *  # noqa: F401,F403
 from cucumber_tests.shared_steps.unified_pipeline_steps import *  # noqa: F401,F403
 
 
-_FEATURE_CANDIDATES = (
-    Path(__file__).resolve().parent.parent / "features" / "env-prepare-report.feature",
-    Path.cwd() / "features" / "env-prepare-report.feature",
-    Path.cwd() / "cucumber_tests" / "features" / "env-prepare-report.feature",
-)
-_FEATURE_PATH = next(path for path in _FEATURE_CANDIDATES if path.exists())
-scenarios(str(_FEATURE_PATH))
+scenarios("../features/env-prepare-report.feature")
 
 
 def _report_path(workspace):
@@ -90,6 +84,28 @@ def use_multiple_environment_names(workspace):
         "CLUSTER_NAME": "",
         "ENVIRONMENT_NAME": "",
     })
+
+
+@given("the test workspace is initialized as a Git repository")
+def initialize_workspace_as_git_repository(workspace):
+    subprocess.run(["git", "init"], cwd=workspace.base_dir, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "bdd-tests@example.com"],
+        cwd=workspace.base_dir,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "BDD Tests"],
+        cwd=workspace.base_dir,
+        check=True,
+    )
+    subprocess.run(["git", "add", "."], cwd=workspace.base_dir, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initialize BDD workspace"],
+        cwd=workspace.base_dir,
+        check=True,
+        capture_output=True,
+    )
 
 
 @then("the published artifacts were trimmed")

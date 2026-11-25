@@ -45,5 +45,7 @@ Feature: EnvPrepareReport job artifact
 
   Scenario: A multi-environment fan-out does not publish a single-environment report
     Given the pipeline uses multiple environment names
+    And the test workspace is initialized as a Git repository
     When the unified pipeline orchestrator runs
-    Then the env_prepare report is not published
+    Then the orchestrator completes successfully
+    And the env_prepare report is not published

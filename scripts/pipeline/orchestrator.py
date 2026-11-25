@@ -446,7 +446,11 @@ def run_single_env_pipeline() -> None:
             recorded = {result.name: result for result in results}
             metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps + final_steps]
             metrics_results.append(recorded["copy_env_artifact"])
-            write_env_prepare_report(artifacts_output_root(ctx.work_dir), serialize_step_results(metrics_results))
+            if not os.getenv("ENVGENE_FAN_OUT_CHILD"):
+                write_env_prepare_report(
+                    artifacts_output_root(ctx.work_dir),
+                    serialize_step_results(metrics_results),
+                )
             metrics.record_completion(str(terminal_status), metrics_results)
             if os.getenv("ENVGENE_FAN_OUT_CHILD"):
                 metrics.send_running(str(terminal_status), results=metrics_results)
