@@ -170,7 +170,8 @@ envTemplate:
   # Written by the apply_deployment_profile step of a run that sets PROFILE, not by the author of this file.
   # Keys are namespace folder names, values are the names of the overrides the run generated,
   # one per deploy postfix and named <deploy-postfix>-profile-override.
-  # Such an override is the last layer of its Namespace, it wins over the entries above it.
+  # Such an override is the last layer of its Namespace: it wins over the override of the Namespace and over
+  # the template override, wherever those two keys sit in this file.
   generatedProfileDefaults: hashmap
   # Optional
   # Array of filenames in a 'credentials' folder that will override generated and defined for instance credentials

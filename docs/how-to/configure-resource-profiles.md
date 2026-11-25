@@ -336,8 +336,9 @@ Instance repository beforehand.
 Start the pipeline with the [`PROFILE`](../instance-pipeline-parameters.md#profile) parameter. The
 `apply_deployment_profile` step writes `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` for every
 deploy postfix of the run, which names that baseline for every application the run deploys, and records it for each
-Namespace in `envTemplate.generatedProfileDefaults` of `env_definition.yml`. EnvGene maintains that map, you do not add
-to it.
+Namespace in `envTemplate.generatedProfileDefaults` of `env_definition.yml`. EnvGene maintains that map. Nothing stops
+you from adding an entry by hand: the environment build applies it like any other override while its Namespace exists,
+and ignores it with a warning once that Namespace is gone.
 
 - The generated override is the last layer of its Namespace, so for an application the run deploys the baseline of the
   run wins over the baseline your own override sets for it. Scenario 8 keeps its application baselines only for the
