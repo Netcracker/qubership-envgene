@@ -50,6 +50,45 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the namespace "bss" references resource profile "bss-dev-baseline"
     And the service "svc1" of application "app1" receives "BASELINE_MEMORY" as "prod-mem"
 
+  # A Namespace can own a template override and an environment override at once, the way a real environment sets its
+  # own baseline over the one the product template ships. The run below sets PROFILE for such a Namespace.
+
+  Scenario: UC-DP-EM-1: PROFILE changes the baseline and keeps the values of the environment override
+    Given the workspace is initialized with test data from "e2e/uc_rp_dp_7"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the Calculator CLI generates the effective set
+    And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
+    And the pipeline parameter "PROFILE" is set to "prod"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the environment definition keeps resource profile "core-tuning" for "core"
+    And the environment definition assigns the generated profile "core-profile-override" to "core"
+    And the namespace "core" references resource profile "core-tmpl" with baseline "dev"
+    And the environment instance has no resource profile "core-profile-override"
+    And the service "svc1" of application "app1" receives "BASELINE_MEMORY" as "prod-mem"
+    And the service "svc1" of application "app1" receives "REPLICAS" as "7"
+    And the service "svc1" of application "app1" receives "TEMPLATE_PARAM" as "from-template"
+
+  # A Namespace that has no profile of its own takes the generated one, and a Namespace with a profile is the active
+  # side of the Effective Set, so the profile of the Cloud stops reaching its applications. The Cloud below owns a
+  # profile with custom values, and the run below deploys to such a Namespace.
+
+  Scenario: UC-DP-AS-1: The generated profile makes a Namespace without a profile the active side over the Cloud
+    Given the workspace is initialized with test data from "e2e/uc_rp_dp_6"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the Calculator CLI generates the effective set
+    And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
+    And the pipeline parameter "PROFILE" is set to "prod"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the run writes the generated resource profile with baseline "prod"
+    And the environment definition assigns the generated resource profile to "bss"
+    And the namespace "bss" references resource profile "bss-profile-override"
+    And the cloud references resource profile "cloud-env-over" with baseline "prod"
+    And the service "svc1" of application "app1" receives "BASELINE_MEMORY" as "prod-mem"
+    And the service "svc1" of application "app1" receives "REPLICAS" as "2"
+    And the service "svc1" of application "app1" does not receive "CLOUD_PARAM"
+
   # The merge mode of the environment decides whether the template override of the Namespace survives the run that
   # sets PROFILE. The Namespace below carries a template override with its own custom values and the object baseline
   # "dev", so the two runs below differ only by inventory.config.mergeEnvSpecificResourceProfiles.
@@ -85,6 +124,23 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the service "svc1" of application "app1" receives "REPLICAS" as "3"
     And the service "svc1" of application "app1" receives "BASELINE_MEMORY" as "prod-mem"
 
+  Scenario: UC-DP-RP-3: Replace mode drops the template override and keeps the values of the environment override
+    Given the workspace is initialized with test data from "e2e/uc_rp_dp_8"
+    And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
+    And the Calculator CLI generates the effective set
+    And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "core" for "app1:1.0"
+    And the pipeline parameter "PROFILE" is set to "prod"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the run writes the generated profile "core-profile-override" with baseline "prod"
+    And the environment definition assigns the generated profile "core-profile-override" to "core"
+    And the environment definition keeps resource profile "core-tuning" for "core"
+    And the namespace "core" references resource profile "core-profile-override" with baseline "dev"
+    And the environment instance has no resource profile "core-tmpl"
+    And the service "svc1" of application "app1" receives "BASELINE_MEMORY" as "prod-mem"
+    And the service "svc1" of application "app1" receives "REPLICAS" as "7"
+    And the service "svc1" of application "app1" does not receive "TEMPLATE_PARAM"
+
   Scenario: UC-DP-NB-1: A baseline the deployed application does not have layers nothing under its services
     Given the workspace is initialized with test data from "e2e/uc_rp_dp_5"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
@@ -107,6 +163,30 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the environment definition assigns the generated resource profile to "bss"
     And the environment definition has no generated resource profile for "core"
     And the namespace "core" has no resource profile
+
+  # The override of a deploy postfix outlives the run that wrote it: the environment commits it, and the next run with
+  # PROFILE rewrites only the baseline of the applications it deploys. The Namespace below carries such a committed
+  # override of an earlier run.
+
+  Scenario: UC-DP-AC-1: A run keeps the applications of the earlier runs and rewrites only its own
+    Given the workspace is initialized with test data from "e2e/uc_rp_dp_9"
+    And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
+    And the pipeline parameter "PROFILE" is set to "dev"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the generated resource profile lists "app3" with baseline "prod"
+    And the generated resource profile lists "app1" with baseline "dev"
+    And the environment definition assigns the generated resource profile to "bss"
+
+  Scenario: UC-DP-AC-2: A rerun with the same PROFILE names its application once
+    Given the workspace is initialized with test data from "e2e/uc_rp_dp_10"
+    And the pipeline parameter "SD_DATA" is set to a Solution Descriptor with deployPostfix "bss" for "app1:1.0"
+    And the pipeline parameter "PROFILE" is set to "prod"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the generated resource profile lists "app1" with baseline "prod"
+    And the run writes the generated resource profile with baseline "prod"
+    And the environment definition assigns the generated resource profile to "bss"
 
   # A Blue-Green environment renders both sides of the pair, while one run deploys one of them. The generated override
   # is named after the deployPostfix both sides share, and every run records the folder it deployed as its own key.
@@ -146,6 +226,7 @@ Feature: The PROFILE parameter of a run as a resource profile
     When the unified pipeline orchestrator runs
     Then the run leaves no generated resource profile
     And the environment definition has no generated resource profile for "bss"
+    And the pipeline log shows "applications deployed by this run are unknown"
 
   Scenario: UC-DP-SKIP-2: A CLEAN run skips PROFILE
     Given the workspace is initialized with test data from "e2e/uc_clean_deploy"
@@ -155,3 +236,4 @@ Feature: The PROFILE parameter of a run as a resource profile
     When the unified pipeline orchestrator runs
     Then the orchestrator completes successfully
     And the run leaves no generated resource profile
+    And the pipeline log shows "but this run does not deploy, so no"

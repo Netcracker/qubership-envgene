@@ -144,6 +144,14 @@ def run_writes_generated_profile_by_name(workspace: EnvGeneWorkspace, name: str,
     assert {application["baseline"] for application in profile["applications"]} == {baseline}, profile
 
 
+@then(parsers.parse('the generated resource profile lists "{app}" with baseline "{baseline}"'))
+def generated_profile_lists_app(workspace: EnvGeneWorkspace, app: str, baseline: str):
+    profile = workspace.get_yaml(_generated_profile_file(workspace))
+    entries = [entry for entry in profile["applications"] if entry.get("name") == app]
+    assert len(entries) == 1, f"{app} is listed {len(entries)} times in {profile['applications']}"
+    assert entries[0]["baseline"] == baseline, profile
+
+
 @then(parsers.parse('the environment definition assigns the generated profile "{name}" to "{key}"'))
 def definition_assigns_generated_profile_by_name(workspace: EnvGeneWorkspace, name: str, key: str):
     generated = _env_definition(workspace)["envTemplate"].get(GENERATED_MAP_KEY) or {}

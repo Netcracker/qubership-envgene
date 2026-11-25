@@ -1,0 +1,9 @@
+name: core-tuning
+baseline: dev
+applications:
+  - name: app1
+    services:
+      - name: svc1
+        parameters:
+          - name: REPLICAS
+            value: 7
