@@ -152,7 +152,7 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the run writes the generated profile "core-profile-override" with baseline "perf-test"
     And the service "svc1" of application "app1" receives "TEMPLATE_PARAM" as "from-template"
     And the service "svc1" of application "app1" receives "REPLICAS" as "3"
-    And the service "svc1" of application "app1" does not receive "BASELINE_MEMORY"
+    And the service "svc1" of application "app1" receives "BASELINE_MEMORY" as "dev-mem"
 
   Scenario: UC-DP-NS-1: Only the namespaces the run deploys get the PROFILE override
     Given the workspace is initialized with test data from "e2e/uc_rp_dp_1"
@@ -162,7 +162,7 @@ Feature: The PROFILE parameter of a run as a resource profile
     Then the orchestrator completes successfully
     And the environment definition assigns the generated resource profile to "bss"
     And the environment definition has no generated resource profile for "core"
-    And the namespace "core" has no resource profile
+    And the namespace "core" references resource profile "core-tmpl" with baseline "dev"
 
   # One run may deploy to more than one deployPostfix, and each of them takes its own generated override and its own
   # key of the recorded map.

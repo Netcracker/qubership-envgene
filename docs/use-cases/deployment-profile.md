@@ -37,8 +37,8 @@
 This document covers use cases for the `PROFILE` pipeline parameter, the baseline a single run applies to the
 applications it deploys. The parameter is one of the ways to choose a baseline, next to the baseline an author sets
 on a Namespace object and the baseline an override carries. For the resolution model itself, see
-[Resource Profiles](/docs/features/resource-profile.md) and its
-[use cases](/docs/use-cases/resource-profiles.md).
+[Resource Profiles](../features/resource-profile.md) and its
+[use cases](./resource-profiles.md).
 
 A run with `PROFILE` does not edit the authored configuration. The `env_build` job writes an override of its own,
 `Inventory/resource_profiles/<deployPostfix>-profile-override.yml`, and records it in
@@ -274,7 +274,7 @@ not only for the application the run deploys.
 
 3. `Inventory/env_definition.yml` references it: `envTemplate.envSpecificResourceProfiles.cloud: cloud-env-over`.
    Without `PROFILE` this configuration makes the Cloud the active side, which is
-   [UC-RP-SS-3](/docs/use-cases/resource-profiles.md#uc-rp-ss-3-cloud-is-the-active-side-when-the-namespace-has-no-baseline-or-override).
+   [UC-RP-SS-3](./resource-profiles.md#uc-rp-ss-3-cloud-is-the-active-side-when-the-namespace-has-no-baseline-or-override).
 
 **Trigger:**
 
@@ -425,7 +425,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters identical to tho
 
 1. `Inventory/resource_profiles/core-profile-override.yml` names the deployed application with `baseline: perf-test`.
 2. The Effective Set of the application keeps the custom values of the profile, `TEMPLATE_PARAM` and `REPLICAS: 3`.
-3. The parameters of a baseline are absent for that service, so `BASELINE_MEMORY` is not in its Effective Set.
+3. The service keeps the baseline of the profile it owns, so `BASELINE_MEMORY` stays `dev-mem`, and the missing
+   `perf-test` baseline adds no parameter of its own.
 4. The pipeline does not fail.
 
 ## Namespace selection
@@ -437,7 +438,8 @@ rendered. Namespaces the plan does not touch are left as they are.
 
 **Pre-requisites:**
 
-1. An Environment Instance with two Namespaces, `bss` and `core`.
+1. An Environment Instance with two Namespaces: `bss` with no resource profile of its own, and `core` with the
+   template profile `core-tmpl` of baseline `dev`.
 
 **Trigger:**
 
@@ -456,7 +458,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. `envTemplate.generatedProfileDefaults` has the key `bss` and no key `core`.
-2. `Namespaces/core/namespace.yml` has no `profile` attribute, and no override is written for `core`.
+2. `Namespaces/core/namespace.yml` still carries its own `core-tmpl` profile with baseline `dev`, and no override of
+   `core` is written.
 
 ### UC-DP-PF-1: One run with PROFILE writes one override per deployPostfix
 
