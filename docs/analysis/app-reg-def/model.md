@@ -20,19 +20,41 @@ and the RegDef v2 analysis linked below, not restated here. The behavior that us
 
 ## Repository layout
 
-A dedicated defs repo, separate from the instance repos, is the source of truth. Flat, one file per def.
+A dedicated defs repo, separate from the instance repos, is the source of truth. The defs are flat, one
+file per def, with the schemas alongside.
 
 ```text
+schemas/
+  application-definition/
+    v1.schema.json          # AppDef, by version
+  registry-definition/
+    v1.schema.json          # RegDef v1 (legacy)
+    v2.schema.json          # RegDef v2 (target)
 application-definitions/
-  <app-name>.yaml           # one AppDef per file
+  <app-name>.yaml           # one AppDef per file, stem == name
 registry-definitions/
-  <registry-name>.yaml      # one RegDef per file
+  <registry-name>.yaml      # one RegDef per file, stem == name
 ```
 
 - one branch is the source of truth. Changes may optionally go through a manual merge-request workflow.
 - zero secrets in the repo, `credId` references only, no encryption.
 - zone folders are deferred. There is one default zone today, and the layout stays flat until multizone
   lands.
+
+## Schema and validation
+
+The schemas live in the repo, so validation is versioned with the data and decoupled from a code release.
+
+- each def carries a `kind` (`ApplicationDefinition`, `RegistryDefinition`), added by T2, and a RegDef also
+  carries its `version` (absent for v1, `"2.0"` for v2). The validator maps `(kind, version)` to
+  `schemas/<kind-in-kebab>/<major>.schema.json`.
+- the service and the library validate each def against that committed schema, not a schema baked into the
+  code. A new def shape ships as a schema commit, with no code release.
+- within a major, changes are additive-only, new optional fields, so an older reader still validates a
+  newer def. A breaking change bumps the major, a new `<major>.schema.json` file plus a migration.
+- each schema pins its JSON Schema draft in `$schema`, so the validator behaves the same everywhere.
+- behavior stays in code. The schema validates the shape, while the mapping of a RegDef to a provider and
+  its auth is code, so a new auth method needs a code change, not only a schema.
 
 ## Naming conventions
 

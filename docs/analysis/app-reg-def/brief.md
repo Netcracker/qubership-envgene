@@ -47,6 +47,7 @@ committed change, no OpenSpec folder yet.
 | D34 | Resolve returns the Application model (AppDef with embedded RegDef v1 or v2) | settled   | artifact-searcher |
 | D35 | credId to credential processing stays in the client, feeds the provider      | settled   | challenge         |
 | D36 | authz and HA/scale-out out of scope now, lite ships first, stays extensible  | settled   | scope             |
+| D37 | Schemas committed in the defs repo as validation SOT, by (kind, version)     | settled   | X8                |
 
 ## Change class
 
@@ -85,10 +86,9 @@ Cross-cutting:
 - X4 - rollout: replace the two resolvers (artifact-searcher, DPG) with coexistence or a shadow mode.
 - X6 - failure modes: refine beyond the Topology sketch if needed.
 - X7 - a resolve-response version signal (did the answer change?), a change signal for consumers.
-- X8 - put the defs JSON schema in the defs repo, so the service and the library validate against a
-  versioned schema committed there, selected by the def version, additive-only within a major with the JSON
-  Schema draft pinned. Decouples validation from a code release, not behaviour, the provider and auth
-  mapping stays code. Open: whether to adopt and the compatibility policy. Analogue: k8s CRD, schema registry.
+- X8 - the defs JSON schema committed in the repo as the validation SOT, selected by `(kind, version)`,
+  additive within a major, a breaking change bumps the major plus a migration. Adopted (D37), detailed in
+  model.md. Analogue: k8s CRD, schema registry.
 
 Deliverables (end of design):
 
